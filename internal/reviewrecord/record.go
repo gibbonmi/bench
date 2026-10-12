@@ -66,6 +66,24 @@ type Amendment struct {
 	To       string              `json:"to"`
 	ChunkIDs map[string][]string `json:"chunk_ids"`
 }
+
+// Fold is one recorded merge of a default-branch commit into the build source. After
+// names the chunk that the fold follows. From is the first parent, Commit the merge, and
+// Incoming the default-branch commit. Resolution lists, in byte order, each path where
+// Commit differs from the automatic merge of From and Incoming. TestPackages lists the
+// packages of the test files that differ between From and Commit.
+type Fold struct {
+	ID               string   `json:"id"`
+	After            string   `json:"after"`
+	From             string   `json:"from"`
+	Commit           string   `json:"commit"`
+	Incoming         string   `json:"incoming"`
+	SourceDigest     string   `json:"source_digest"`
+	Resolution       []string `json:"resolution"`
+	ResolutionDigest string   `json:"resolution_digest"`
+	TestPackages     []string `json:"test_packages"`
+	Reviews          []Review `json:"reviews"`
+}
 type Record struct {
 	Version               int         `json:"version"`
 	Spec                  string      `json:"spec"`
@@ -74,6 +92,7 @@ type Record struct {
 	Chunks                []Chunk     `json:"chunks"`
 	Completion            Completion  `json:"completion"`
 	Amendments            []Amendment `json:"amendments,omitempty"`
+	Folds                 []Fold      `json:"folds,omitempty"`
 }
 
 // CheckReviews grades a chunk's three axes. The excluded set holds every

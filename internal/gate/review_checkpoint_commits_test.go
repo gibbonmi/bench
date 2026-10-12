@@ -28,7 +28,7 @@ func TestReviewCheckpointUncoveredRangeNamesItsCommits(t *testing.T) {
 
 // TestReviewCheckpointChainGapNamesTheExpectedBase grades the chain-gap face. The
 // refusal names the predecessor tip the chunk base must be, and the rule that places
-// plan commits and default-branch merges inside the chunk delta.
+// plan commits in the chunk delta and a default-branch merge in a recorded fold.
 func TestReviewCheckpointChainGapNamesTheExpectedBase(t *testing.T) {
 	f := recordtest.Attach(t, outcomeFixture(t), 2)
 	f.AddChunk()
@@ -46,7 +46,7 @@ func TestReviewCheckpointChainGapNamesTheExpectedBase(t *testing.T) {
 	if code == 0 || !strings.Contains(text, "expected base "+expected) {
 		t.Fatalf("chain-gap refusal = (%d, %q), want expected base %s", code, text, expected)
 	}
-	if !strings.Contains(text, "plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a fold in the last chunk delta, and only record commits and comment-only corrections follow a chunk tip") {
+	if !strings.Contains(text, "plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits and comment-only corrections follow a chunk tip") {
 		t.Fatalf("chain-gap refusal = %q, want the chain rule", text)
 	}
 }

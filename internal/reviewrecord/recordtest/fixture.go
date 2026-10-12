@@ -26,6 +26,8 @@ type Fixture struct {
 	// plan fence without the consumer repeating the surrounding document.
 	spec string
 	body string
+	// primary is the primary checkout of a NewLinked fixture, which holds the default branch.
+	primary string
 }
 
 func New(t testing.TB, count int) *Fixture { return Attach(t, gittest.RepoOnBranch(t, "main"), count) }
@@ -59,7 +61,9 @@ func NewLinked(t testing.TB, count int, options ...Option) (*Fixture, string) {
 			t.Fatalf("git %v: %v", args, err)
 		}
 	}
-	return Prepare(t, linked, count, Spec, "# Example\n\nStatus: staged\n\n", options...), primary
+	f := Prepare(t, linked, count, Spec, "# Example\n\nStatus: staged\n\n", options...)
+	f.primary = primary
+	return f, primary
 }
 
 // WritePlan writes the fixture's current plan back into its spec without

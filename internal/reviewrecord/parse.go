@@ -93,6 +93,11 @@ func Parse(data []byte) (Record, error) {
 			}
 		}
 	}
+	for i, fold := range record.Folds {
+		if fold.ID != foldID(i+1) || !chunks[fold.After] || !objectID.MatchString(fold.From) || !objectID.MatchString(fold.Commit) || !objectID.MatchString(fold.Incoming) || !objectID.MatchString(fold.SourceDigest) {
+			return record, fmt.Errorf("fold %s: invalid fold identity", fold.ID)
+		}
+	}
 	if record.Completion.State != "" && !occurrenceState(record.Completion.State) {
 		return record, errors.New("invalid completion occurrence state")
 	}

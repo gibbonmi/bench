@@ -108,6 +108,7 @@ func TestReviewRecordTerminal(t *testing.T) {
 		{"no embedded result", "native result", func(r *rr.Record) { r.Chunks[0].Reviews[0].NativeRef.Excerpt = "" }},
 		{"bad result digest", "native result", func(r *rr.Record) { r.Chunks[0].Reviews[0].NativeRef.Digest = "bad" }},
 		{"version before hostile reference", "unsupported version", func(r *rr.Record) { r.Version = 99; r.Chunks[0].Reviews[0].NativeRef.Ref = "../../unsafe" }},
+		{"fold option commit", "invalid fold identity", func(r *rr.Record) { r.Folds = []rr.Fold{{ID: "F1", After: r.Chunks[0].ID, Commit: "--output=fold"}} }},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

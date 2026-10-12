@@ -72,7 +72,7 @@ func TestVerificationRepairNamesKnownValues(t *testing.T) {
 // TestCompletionHelpOrdering covers NR22: the completion help row states the record
 // writes in the order that a completion needs, and each step names a record form.
 func TestCompletionHelpOrdering(t *testing.T) {
-	want := []string{"amendment", "chunk", "verification", "review", "final verification", "completion"}
+	want := []string{"amendment", "chunk", "verification", "review", "fold", "final verification", "completion"}
 	var description string
 	for _, row := range recordcmd.HelpRows() {
 		if strings.Fields(row.Suffix)[0] == "completion" {
