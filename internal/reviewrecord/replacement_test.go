@@ -10,14 +10,47 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
-	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
-// failing returns the replacement operation whose stage fails with cause, and whose
-// other stages run natively.
-func failing(stage string, cause error) replacement {
-	rec := &durablefiletest.Recorder{Fail: map[string]error{stage: cause}}
-	return rec.Replacer().Replace
+// failingFile is a native temporary file whose Sync fails with cause.
+type failingFile struct {
+	durablefile.File
+	cause error
+}
+
+func (f failingFile) Sync() error { return f.cause }
+
+// failingDirectory is a native parent directory whose Sync fails with cause.
+type failingDirectory struct {
+	durablefile.Directory
+	cause error
+}
+
+func (d failingDirectory) Sync() error { return d.cause }
+
+// failingSync returns the native replacement operation with the file sync, or the
+// directory sync when directory is true, failing with cause.
+func failingSync(cause error, directory bool) replacement {
+	replacer := durablefile.Native()
+	create, open := replacer.CreateTemp, replacer.OpenDirectory
+	if directory {
+		replacer.OpenDirectory = func(name string) (durablefile.Directory, error) {
+			dir, err := open(name)
+			if err != nil {
+				return nil, err
+			}
+			return failingDirectory{dir, cause}, nil
+		}
+	} else {
+		replacer.CreateTemp = func(dir, pattern string) (durablefile.File, error) {
+			file, err := create(dir, pattern)
+			if err != nil {
+				return nil, err
+			}
+			return failingFile{file, cause}, nil
+		}
+	}
+	return replacer.Replace
 }
 
 // recordRoot returns a root whose name holds spaces, quotes, glob characters, and Unicode,
@@ -56,8 +89,14 @@ func rendered(t *testing.T, document []byte, record Record) []byte {
 // directory of path holds any other file.
 func heldBytes(t *testing.T, path string) []byte {
 	t.Helper()
-	if left := durablefiletest.Siblings(t, path); len(left) != 0 {
-		t.Fatalf("the record directory holds %q beside the record", left)
+	entries, err := os.ReadDir(filepath.Dir(path))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if entry.Name() != filepath.Base(path) {
+			t.Fatalf("the record directory holds %q beside the record", entry.Name())
+		}
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -74,7 +113,7 @@ func TestReviewReplacement(t *testing.T) {
 	t.Run("directory sync failure after the rename", func(t *testing.T) {
 		root, path := recordRoot(t, old)
 		cause := errors.New("injected directory-sync failure")
-		err := writeWith(failing("directory-sync", cause), root, renderSpec, absent(""), update)
+		err := writeWith(failingSync(cause, true), root, renderSpec, absent(""), update)
 		var replaceErr *durablefile.Error
 		if !errors.As(err, &replaceErr) || replaceErr.Stage != "directory-sync" || !replaceErr.Published || !errors.Is(err, cause) {
 			t.Fatalf("write with a failed directory sync = %v, want the published directory-sync cause", err)
@@ -98,7 +137,7 @@ func TestReviewReplacement(t *testing.T) {
 		for _, existing := range [][]byte{old, nil} {
 			root, path := recordRoot(t, existing)
 			create := func(string) (Record, error) { return newRecord, nil }
-			err := writeWith(failing("file-sync", cause), root, renderSpec, create, update)
+			err := writeWith(failingSync(cause, false), root, renderSpec, create, update)
 			var replaceErr *durablefile.Error
 			if !errors.As(err, &replaceErr) || replaceErr.Stage != "file-sync" || replaceErr.Published || !errors.Is(err, cause) {
 				t.Fatalf("write with a failed file sync = %v, want the unpublished file-sync cause", err)

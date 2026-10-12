@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
-	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
 // TestNativeReplacement qualifies the operating-system operations on the filesystem of the
@@ -18,12 +17,12 @@ import (
 func TestNativeReplacement(t *testing.T) {
 	path, payload := destination(t, []byte("old")), []byte("native payload\n")
 	t.Logf("host %s/%s, destination %s", runtime.GOOS, runtime.GOARCH, path)
-	rec := &durablefiletest.Recorder{}
-	if err := rec.Replacer().Replace(path, payload, 0o644); err != nil {
+	rec := &recorder{}
+	if err := rec.replacer().Replace(path, payload, 0o644); err != nil {
 		t.Fatalf("native replacement through each stage: %v", err)
 	}
-	if want := slices.Concat(durablefiletest.BeforeRename, durablefiletest.AfterRename); !slices.Equal(rec.Trace, want) {
-		t.Fatalf("native trace = %q, want %q", rec.Trace, want)
+	if want := slices.Concat(beforeRename, afterRename); !slices.Equal(rec.trace, want) {
+		t.Fatalf("native trace = %q, want %q", rec.trace, want)
 	}
 	if err := durablefile.Replace(path, payload[:6], 0o600); err != nil {
 		t.Fatalf("native Replace: %v", err)

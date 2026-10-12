@@ -1,6 +1,4 @@
-// Package durablefiletest supplies the test replacer of durablefile: the native operations
-// with each stage recorded and any stage able to fail.
-package durablefiletest
+package durablefile_test
 
 import (
 	"io/fs"
@@ -11,37 +9,37 @@ import (
 	"github.com/gibbonmi/bench/internal/durablefile"
 )
 
-// BeforeRename is each stage, in order, that can fail before the rename publishes the new
+// beforeRename is each stage, in order, that can fail before the rename publishes the new
 // bytes.
-var BeforeRename = []string{"create", "mode", "write", "file-sync", "file-close", "rename"}
+var beforeRename = []string{"create", "mode", "write", "file-sync", "file-close", "rename"}
 
-// AfterRename is each stage, in order, that can fail after the rename publishes the new
+// afterRename is each stage, in order, that can fail after the rename publishes the new
 // bytes.
-var AfterRename = []string{"directory-open", "directory-sync", "directory-close"}
+var afterRename = []string{"directory-open", "directory-sync", "directory-close"}
 
-// Recorder supplies the native operations to a replacement and records in Trace each
+// recorder supplies the native operations to a replacement and records in trace each
 // stage that the replacement reaches, with "remove" for the removal of a temporary file.
-// A stage in Fail returns its cause instead of its effect, but a close always releases the
-// real file. Short makes each write keep its last byte back and report no error. Temps
-// holds each temporary file name, Regular reports that the renamed file was a regular
-// file, and Opened is the directory that the replacement opened.
-type Recorder struct {
-	Fail    map[string]error
-	Short   bool
-	Trace   []string
-	Temps   []string
-	Regular bool
-	Opened  string
+// A stage in fail returns its cause instead of its effect, but a close always releases the
+// real file. short makes each write keep its last byte back and report no error. temps
+// holds each temporary file name, regular reports that the renamed file was a regular
+// file, and opened is the directory that the replacement opened.
+type recorder struct {
+	fail    map[string]error
+	short   bool
+	trace   []string
+	temps   []string
+	regular bool
+	opened  string
 }
 
 // step records stage and returns its injected cause.
-func (rec *Recorder) step(stage string) error {
-	rec.Trace = append(rec.Trace, stage)
-	return rec.Fail[stage]
+func (rec *recorder) step(stage string) error {
+	rec.trace = append(rec.trace, stage)
+	return rec.fail[stage]
 }
 
-// Replacer returns the native replacer with each operation routed through rec.
-func (rec *Recorder) Replacer() durablefile.Replacer {
+// replacer returns the native replacer with each operation routed through rec.
+func (rec *recorder) replacer() durablefile.Replacer {
 	native := durablefile.Native()
 	return durablefile.Replacer{
 		CreateTemp: func(dir, pattern string) (durablefile.File, error) {
@@ -52,7 +50,7 @@ func (rec *Recorder) Replacer() durablefile.Replacer {
 			if err != nil {
 				return nil, err
 			}
-			rec.Temps = append(rec.Temps, file.Name())
+			rec.temps = append(rec.temps, file.Name())
 			return &recordedFile{File: file, rec: rec}, nil
 		},
 		Rename: func(oldpath, newpath string) error {
@@ -60,7 +58,7 @@ func (rec *Recorder) Replacer() durablefile.Replacer {
 				return err
 			}
 			if info, err := os.Lstat(oldpath); err == nil {
-				rec.Regular = info.Mode().IsRegular()
+				rec.regular = info.Mode().IsRegular()
 			}
 			return native.Rename(oldpath, newpath)
 		},
@@ -72,7 +70,7 @@ func (rec *Recorder) Replacer() durablefile.Replacer {
 			if err != nil {
 				return nil, err
 			}
-			rec.Opened = name
+			rec.opened = name
 			return &recordedDirectory{Directory: dir, rec: rec}, nil
 		},
 		Remove: func(name string) error {
@@ -86,7 +84,7 @@ func (rec *Recorder) Replacer() durablefile.Replacer {
 
 type recordedFile struct {
 	durablefile.File
-	rec *Recorder
+	rec *recorder
 }
 
 func (f *recordedFile) Chmod(mode fs.FileMode) error {
@@ -100,7 +98,7 @@ func (f *recordedFile) Write(p []byte) (int, error) {
 	if err := f.rec.step("write"); err != nil {
 		return 0, err
 	}
-	if f.rec.Short && len(p) > 0 {
+	if f.rec.short && len(p) > 0 {
 		return f.File.Write(p[:len(p)-1])
 	}
 	return f.File.Write(p)
@@ -123,7 +121,7 @@ func (f *recordedFile) Close() error {
 
 type recordedDirectory struct {
 	durablefile.Directory
-	rec *Recorder
+	rec *recorder
 }
 
 func (d *recordedDirectory) Sync() error {
@@ -141,8 +139,8 @@ func (d *recordedDirectory) Close() error {
 	return err
 }
 
-// Siblings returns the names in the directory of path other than the base of path.
-func Siblings(t testing.TB, path string) []string {
+// siblings returns the names in the directory of path other than the base of path.
+func siblings(t testing.TB, path string) []string {
 	t.Helper()
 	entries, err := os.ReadDir(filepath.Dir(path))
 	if err != nil {
