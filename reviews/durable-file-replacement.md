@@ -1630,15 +1630,99 @@
           "supersedes": [
             "dfr-da-coverage-2"
           ]
+        },
+        {
+          "id": "dfr-da-standards-4",
+          "performer": "claude:dfr_rev_standards_4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_standards_4",
+            "digest": "sha256:7dfd2212f12f00467e4821af617f834e44ff2cb74468aa31db6f9969b18077cb",
+            "excerpt": "Standards reaffirmation, chunk D-A refrozen at 61e6ca30, opus/high, evidence current=true at e14df082. No code or test file changed since 5f1ea9dc. The D32 rescope edits in the spec and ticket obey AGENTS.md and the STE prose rules. Pass; no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "61e6ca30bcf699be0d8ef9d3d10ff9014888af82",
+          "finding_ids": [],
+          "supersedes": [
+            "dfr-da-standards-2"
+          ]
+        },
+        {
+          "id": "dfr-da-spec-4",
+          "performer": "claude:dfr_rev_spec_4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_spec_4",
+            "digest": "sha256:455d568de00aa144c533a277038f65ce41600cb07492928b6e10e7bd79b5cc2e",
+            "excerpt": "Spec reaffirmation, chunk D-A refrozen at 61e6ca30, opus/high, evidence current=true at e14df082. Only the spec, ticket 01, and the review record changed since 5f1ea9dc. Rows D01-D15, D19, and D32 each map to an existing test. The dfr-t1-ev1 entries cover all 11 chunk requirements at source 61e6ca30. Pass; no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "61e6ca30bcf699be0d8ef9d3d10ff9014888af82",
+          "finding_ids": [],
+          "supersedes": [
+            "dfr-da-spec-3"
+          ]
+        },
+        {
+          "id": "dfr-da-coverage-4",
+          "performer": "claude:dfr_rev_coverage_4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_coverage_4",
+            "digest": "sha256:37e115280054615f2331412f82a30648ab263484b92f9ca3e4e488ba4c189042",
+            "excerpt": "Coverage reaffirmation, chunk D-A refrozen at 61e6ca30, opus/high, evidence current=true at e14df082. No code or test file changed since 5f1ea9dc. All 14 dfr-t1-ev1 probes name their mutations, report bit, and restored with pass; write-binding failed replacement_test.go:105 and assignment-binding failed :130. Pass; no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "61e6ca30bcf699be0d8ef9d3d10ff9014888af82",
+          "finding_ids": [],
+          "supersedes": [
+            "dfr-da-coverage-3"
+          ]
         }
       ]
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
+    "state": "completed",
+    "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+    "performer": "claude:dfr-orchestrator-20261011",
+    "reconciliation": {
+      "D01": "covered",
+      "D02": "covered",
+      "D03": "covered",
+      "D04": "covered",
+      "D05": "covered",
+      "D06": "covered",
+      "D07": "covered",
+      "D08": "covered",
+      "D09": "covered",
+      "D10": "covered",
+      "D11": "covered",
+      "D12": "covered",
+      "D13": "covered",
+      "D14": "covered",
+      "D15": "covered",
+      "D19": "covered",
+      "D32": "covered"
+    },
     "verification": [
       {
         "id": "dfr-final-ordinary-integration",
@@ -1689,6 +1773,60 @@
           "ref": "claude-session:dfr-orchestrator-20261011",
           "digest": "sha256:9c1715032bd579af748bb2edccd95d7fbaa950c2e25745cc8abd0d390905e8ea",
           "excerpt": "bench test --check root-conformance at 95969942: internal/conformance pass, tests_run 1, failures[0], skips[0]\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "dfr-final-ordinary-integration-2",
+        "performer": "claude:dfr-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:dfr-orchestrator-20261011",
+          "digest": "sha256:1ac029d91ea0df07b0aec4baad67473c4f2588e34ff5af1ee610a593bb8dff6b",
+          "excerpt": "bench test --package ./... at e14df082 (WSL2 linux/amd64): 127 packages pass, failures[0], skips[7] for host capability (character device creation not permitted; no bin/bench.sh in a capability subject root).\n"
+        },
+        "requirement": "ordinary-integration",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "dfr-final-coverage-2",
+        "performer": "claude:dfr-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:dfr-orchestrator-20261011",
+          "digest": "sha256:7997a8b892a3cdffbe6fbed41ae91a65f16881eda46ffcdd2038cc35e18f3a2e",
+          "excerpt": "bench coverage --check durable-file-replacement at e14df082: ok: coverage map valid — 17 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check durable-file-replacement",
+        "exit_code": 0
+      },
+      {
+        "id": "dfr-final-root-conformance-2",
+        "performer": "claude:dfr-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:dfr-orchestrator-20261011",
+          "digest": "sha256:e2b3a65a24f329f26b4cc33f5ca2b220ff13c1a6d964ef2484f0d0655a302145",
+          "excerpt": "bench test --check root-conformance at e14df082: internal/conformance pass, tests_run 1, failures[0], skips[0]\n"
         },
         "requirement": "root-conformance",
         "command": "bench test --check root-conformance",
