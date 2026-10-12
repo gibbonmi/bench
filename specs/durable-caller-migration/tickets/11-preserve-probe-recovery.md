@@ -29,11 +29,11 @@ A successful restore releases preservation and returns the mutation error at exi
 An independent restore fault retains exact preserved bytes at exit 2.
 The pre-rename fault keeps original bytes and the previous cleanup result.
 
-- [ ] The probe subject caller exposes an injected directory-sync failure. (D27).
-- [ ] A failed probe restore retains its preserved copy. (D34).
-- [ ] A post-rename mutation failure with failed restore retains the preserved copy at exit 2. (D41).
-- [ ] A post-rename mutation failure releases preservation only after verified restore. (D42).
-- [ ] A pre-rename mutation failure retains the original subject and existing cleanup result. (D43).
+- [x] The probe subject caller exposes an injected directory-sync failure. (D27).
+- [x] A failed probe restore retains its preserved copy. (D34).
+- [x] A post-rename mutation failure with failed restore retains the preserved copy at exit 2. (D41).
+- [x] A post-rename mutation failure releases preservation only after verified restore. (D42).
+- [x] A pre-rename mutation failure retains the original subject and existing cleanup result. (D43).
 
 ## Checkpoint verification
 
