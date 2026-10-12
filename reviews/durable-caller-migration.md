@@ -3810,7 +3810,78 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-c4-r1-standards",
+          "performer": "claude:dcm_rev_c4_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_std",
+            "digest": "sha256:81dded4bed91eb462d17e1803794c93a8fd43a218bfd6fdbfc84ef15f523d614",
+            "excerpt": "## Standards (D-C4, 68e390e1..0e86fec9) — 3 findings; worst S1.\nS1 | auto-fix | 4 | internal/probe/replacement_test.go:105 | strings.Cut on a hand-written \"preserved[1]{path,reason}:\" header is a third copy of the preservedTable encoder fact | scope the row without restating the header (derive through preservedTable/toon)\nS2 | auto-fix | 4 | internal/probe/probe.go:217-219 | the shared preservedTable comment speaks of \"a subject the row already refused\", true only for render | state the why without a caller-specific subject\nS3 | auto-fix (orchestrator: same as C2; charge-common corrected) | 5 | reviews/durable-caller-migration.md:3697-3811 | dcm-t11 probe entries disagree with their -r2 twins | record corrected entries at the repair source\nAdvice: shared mutated-source constant; one 0o640 constant; requireSubjectBytes vs RequireBytes is outside 11's Writes (D-D).\n"
+          },
+          "axis": "Standards",
+          "base": "68e390e155699b5aae10125808e86f8eb5eb3b93",
+          "tip": "0e86fec98de40c9c5ff0e21cd719255731934188",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c4-r1-spec",
+          "performer": "claude:dcm_rev_c4_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_spec",
+            "digest": "sha256:36de25f98bd50d9e12aec74712d4bee88fe1594125d2e0ed93794df23e3ba08e",
+            "excerpt": "## Spec (D-C4, 68e390e1..0e86fec9) — 1 finding; worst P1.\nD27, D34, D41, D42, D43 met; coverage cells cite existing tests; no behavior change outside the acceptance.\nP1 | auto-fix (orchestrator, --auto-approve; same branch as C1) | 5 | internal/probe/probe.go:206-209 | when preservedTable refuses (control byte in the subject base name) the exit-2 output drops the mutation cause and the copy path, against spec.md:113-118; render (probe.go:246-249) has the same gap | on a table refusal still print the cause line and name the copy path outside TOON, in both branches\nAdvice: TestProbeMutationRecoverySuccess discards out and code; assert exit 1 and baseline-only per stage.\n"
+          },
+          "axis": "Spec",
+          "base": "68e390e155699b5aae10125808e86f8eb5eb3b93",
+          "tip": "0e86fec98de40c9c5ff0e21cd719255731934188",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c4-r1-coverage",
+          "performer": "claude:dcm_rev_c4_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_cov",
+            "digest": "sha256:7cb51d1094c805ad17e12fffc99b2b9018f3bf8cee7f9b860b35eed830ceeaff",
+            "excerpt": "## Coverage (D-C4, 68e390e1..0e86fec9) — 3 findings; worst C2. Replays O6 and P13 bit, restored yes.\nC2 | auto-fix | 8 | reviews/durable-caller-migration.md:3774,3803; internal/reviewrecord/check.go:59 | the graded -r2 probe entries record probe exit 0, which the checkpoint refuses | record entries with --exit-code 0 and a nonzero --probe-exit-code\nC1 | auto-fix | 7 | internal/probe/probe.go:207-209 | the table-refusal branch of mutationFailure has no red (swap to return \"\", 0 stayed green) | add a BEL base-name witness: published mutation fault plus restore fault, exit 2, copy kept, path named\nC3 | no-op (D30 routed to ticket 14 by a logged learning) | 6 | internal/probe/replacement_test.go | no D30 refusal witness through the replacer-taking form; native refusal tests catch the swallow | none in this chunk\nAdvice: the leading \"probe mutation failed\" line on exit 2 is not pinned.\n"
+          },
+          "axis": "Coverage",
+          "base": "68e390e155699b5aae10125808e86f8eb5eb3b93",
+          "tip": "0e86fec98de40c9c5ff0e21cd719255731934188",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -4513,3 +4584,29 @@ The D-C2 confirming round at 5d295f64 closed S1, S2, C1, and C2. It raised one c
 - S3, auto-fix as an evidence-only comment correction, confidence 6: the comment at `internal/brokermanifest/replacement_test.go:85` names the wrong refusal step. The orchestrator corrects it, and the Standards axis reaffirms it.
 
 The Standards reaffirmation at b92b47f9 closed S3. Chunk D-C2 closed with 1 of its 2 repair cycles used, and the comment-only correction used none.
+
+## Standards (D-C4)
+
+Chunk D-C4 has 3 findings. The worst issue is S1.
+
+- S1, auto-fix, confidence 4: the test at `internal/probe/replacement_test.go:105` cuts the output on a hand-written `preserved` table header. That header is a third copy of the `preservedTable` encoder fact. Scope the row without a restated header.
+- S2, auto-fix, confidence 4: the shared `preservedTable` comment at `internal/probe/probe.go:217-219` speaks of a verdict row that only `render` has. State the why without a subject that one caller owns.
+- S3, auto-fix, confidence 5: the two first `dcm-t11` probe entries disagree with their `-r2` twins. This finding is the same as C2.
+
+## Spec (D-C4)
+
+Chunk D-C4 has 1 finding. The worst issue is P1.
+
+- P1, auto-fix by --auto-approve, confidence 5: `preservedTable` refuses a subject base name with a control byte. The exit-2 output at `internal/probe/probe.go:206-209` then drops the mutation cause and the copy path. The spec says that the refusal policy must not hide the preserved path. The `render` branch at `probe.go:246-249` has the same gap, and the repair closes both branches.
+
+## Coverage (D-C4)
+
+Chunk D-C4 has 3 findings. The worst issue is C2.
+
+- C2, auto-fix, confidence 8: the graded `-r2` probe entries record probe exit 0, and the checkpoint refuses that value. Record entries with exit code 0 and a nonzero probe exit code.
+- C1, auto-fix, confidence 7: the table-refusal branch of `mutationFailure` has no red. Add a witness with a BEL byte in the base name, a published mutation fault, and a restore fault.
+- C3, no-op, confidence 6: no D30 refusal witness goes through the replacer-taking form. A logged learning routes D30 to ticket 14.
+
+## Repair allowance (D-C4)
+
+Chunk D-C4 used 0 of its 2 repair cycles before repair 1. S1, S2, S3, P1, C1, and C2 fall on ticket 11, so one combined repair session takes them.
