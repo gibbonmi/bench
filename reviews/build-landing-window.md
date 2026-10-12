@@ -30,7 +30,7 @@ Findings: 3. Worst issue: C1, a BW7 test that does not detect a second transacti
 {
   "version": 2,
   "spec": "specs/build-landing-window/spec.md",
-  "plan_digest": "sha256:9c7408fd49da2cbcb5c1e08c68770ed29e667560eecc2524aff5518d31fcce3a",
+  "plan_digest": "sha256:52082aafa798935d8dba9b9521a8e470557b9bf38383be1e474ccf3b513f1007",
   "implementation_session": "",
   "chunks": [
     {
@@ -507,6 +507,127 @@ Findings: 3. Worst issue: C1, a BW7 test that does not detect a second transacti
           ]
         }
       ]
+    },
+    {
+      "id": "BW-B",
+      "base": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+      "tip": "6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347",
+      "plan_digest": "sha256:52082aafa798935d8dba9b9521a8e470557b9bf38383be1e474ccf3b513f1007",
+      "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+      "acceptance_rows": [
+        "BW17",
+        "BW18",
+        "BW19",
+        "BW20",
+        "BW21",
+        "BW22",
+        "BW23",
+        "BW24"
+      ],
+      "verification": [
+        {
+          "id": "t2-land-focused-v1",
+          "performer": "claude:blw_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2/t2-land-focused.txt",
+            "digest": "sha256:4616340cebaf4fd2b1dab3531f386ac451fd2a5f3a72795392effc68275ee070",
+            "excerpt": "bench test --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'\n# through bench worktree exec \"FT342-FT253\" at 6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347 (clean); exit 0; elapsed 3.6 s\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1679,20\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-land-focused",
+          "command": "bench test --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap the ancestry condition that maps a completion proof cause to land-destination-moved, so that a completion proof cause over a moved destination routes to land-handback. TestCompletionOverAMovedDestinationNamesTheFold turns red.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2/t2-land-focused.txt",
+              "digest": "sha256:4616340cebaf4fd2b1dab3531f386ac451fd2a5f3a72795392effc68275ee070",
+              "excerpt": "bench test --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'\n# through bench worktree exec \"FT342-FT253\" at 6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347 (clean); exit 0; elapsed 3.6 s\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1679,20\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t2-authorization-focused-v1",
+          "performer": "claude:blw_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2/t2-authorization-focused.txt",
+            "digest": "sha256:a1fb93800970ce12d83a4923c0f276c58e31c4067e3d22e250f8b854eb100438",
+            "excerpt": "bench test --package ./internal/gate/authorization --run 'TestCompletionProofCauseTravelsAsAType'\n# through bench worktree exec \"FT342-FT253\" at 6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347 (clean); exit 0; elapsed 2.0 s\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,66,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-authorization-focused",
+          "command": "bench test --package ./internal/gate/authorization --run 'TestCompletionProofCauseTravelsAsAType'",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-floor-v1",
+          "performer": "claude:blw_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2/t2-floor.txt",
+            "digest": "sha256:a68618894c41f0d6ab1babf069ac42e54d0b34350b519a102a3cae0fdec69d75",
+            "excerpt": "bench test --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/commit --package ./cmd/bench --package ./internal/conformance\n# through bench worktree exec \"FT342-FT253\" at 6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347 (clean); exit 0; elapsed 108.9 s\npackages[12]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,26554,333\n  github.com/gibbonmi/bench/internal/commit,pass,13666,117\n  github.com/gibbonmi/bench/internal/conformance,pass,80467,1690\n  github.com/gibbonmi/bench/internal/gate,pass,31389,430\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,269,14\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,54,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,339,36\n  github.com/gibbonmi/bench/internal/landing,pass,10122,221\n  github.com/gibbonmi/bench/internal/landing/published,no-tests,0,0\n  github.com/gibbonmi/bench/internal/landing/settlepolicy,pass,3,20\n  github.com/gibbonmi/bench/internal/refusalroute,pass,5,17\n  github.com/gibbonmi/bench/internal/worktree,pass,76955,1415\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t2-floor",
+          "command": "bench test --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/commit --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-system-race-v1",
+          "performer": "claude:blw_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2/t2-system-race.txt",
+            "digest": "sha256:1f8acdf583d258f788a43ea201812b1300c79d14a8956db49e8286ea592d434c",
+            "excerpt": "bench test --check system --run TestWorktreeLandPublicRaceAndRerun\n# through bench worktree exec \"FT342-FT253\" at 6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347 (clean, after bench worktree build FT342-FT253); exit 0; elapsed 4.1 s\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,1807,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-system-race",
+          "command": "bench test --check system --run TestWorktreeLandPublicRaceAndRerun",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-root-conformance-v1",
+          "performer": "claude:blw_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2/t2-root-conformance.txt",
+            "digest": "sha256:7519c04d5cf7119afb30485692f151773c306f9bbc036aa0abb32690c6434e5f",
+            "excerpt": "bench test --check root-conformance\n# through bench worktree exec \"FT342-FT253\" at 6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347 (clean); exit 0; elapsed 23.1 s\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18288,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -520,6 +641,15 @@ Findings: 3. Worst issue: C1, a BW7 test that does not detect a second transacti
     {
       "from": "sha256:e5fa3d7f7092f75a9f8bef63b4fd638d15330f29195691d7945b1fecd38042a3",
       "to": "sha256:9c7408fd49da2cbcb5c1e08c68770ed29e667560eecc2524aff5518d31fcce3a",
+      "chunk_ids": {
+        "BW-A": [
+          "BW-A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9c7408fd49da2cbcb5c1e08c68770ed29e667560eecc2524aff5518d31fcce3a",
+      "to": "sha256:52082aafa798935d8dba9b9521a8e470557b9bf38383be1e474ccf3b513f1007",
       "chunk_ids": {
         "BW-A": [
           "BW-A"
