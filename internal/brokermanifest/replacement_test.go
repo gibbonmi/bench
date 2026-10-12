@@ -40,8 +40,13 @@ func TestBrokerReplacement(t *testing.T) {
 	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)
 	durablefiletest.RequireFile(t, filepath.Join(dir, Name), 0o644, "path\t"+broker+"\nversion\t1.2.3\nplatform\t"+Platform()+
 		"\nsha256\tc153e59aa5f0b544d81e9534460e0199291ae0258c26d16040eedaf5d0f92330\n")
-	if len(rec.Temps) != 1 || !strings.HasPrefix(filepath.Base(rec.Temps[0]), TemporaryPrefix) {
-		t.Fatalf("temps = %v, want one staging file named with prefix %q", rec.Temps, TemporaryPrefix)
+	// The staging name ends in a random suffix with no dot, so everything up to its last dot
+	// must equal the prefix exactly; a shorter prefix would still match as a prefix.
+	if len(rec.Temps) != 1 {
+		t.Fatalf("temps = %v, want one staging file", rec.Temps)
+	}
+	if temp := filepath.Base(rec.Temps[0]); temp[:strings.LastIndex(temp, ".")+1] != TemporaryPrefix {
+		t.Fatalf("staging file %q, want it named %q plus a random suffix", temp, TemporaryPrefix)
 	}
 }
 
