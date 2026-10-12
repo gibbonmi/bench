@@ -2,7 +2,7 @@
 
 Blocked by: 5-hold-main-for-an-open-build.md
 Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/record_operations_test.go, internal/commitment/commitmenttest/admission.go, internal/commitment/repository/gap.go (new), internal/commitment/repository/window.go (new), internal/commitment/repository/window_test.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/gate/checkpoint.go, internal/gate/chunk_gap.go (new), internal/gate/chunk_gap_test.go (new), internal/gate/complete_checkpoint_test.go, internal/gate/gate.go, internal/gate/refusal_route_test.go, internal/gate/review_checkpoint_commits_test.go, internal/gate/review_checkpoint_test.go, internal/reviewrecord/assignment.go, internal/reviewrecord/plan.go, internal/reviewrecord/recordcmd/assignment.go, internal/reviewrecord/recordcmd/assignment_test.go, internal/reviewrecord/recordcmd/dispatch_gap_test.go (new), internal/reviewrecord/recordtest/fixture.go, internal/systemtest/owner_landing_fixture_test.go, internal/worktree/delegated_integration_test.go, internal/worktree/land_fixtures_test.go, internal/worktree/land_window_test.go (new), internal/worktree/parallel_census_test.go
-Covers: BW60, BW61, BW62, BW63, BW64, BW65, BW66, BW67, BW68, BW69, BW70, BW95
+Covers: BW60, BW61, BW62, BW63, BW64, BW65, BW66, BW67, BW68, BW69, BW70, BW95, BW99
 
 ## What to build
 
@@ -49,3 +49,4 @@ Move the open-gap seed of `internal/worktree/land_fixtures_test.go`, `internal/s
 - [ ] A second dispatch inside chunk `C2` leaves the ledger bytes unchanged.
 - [ ] A repair dispatch to a chunk-`C1` ticket while the record holds chunk `C3` with `Last` true leaves the ledger bytes unchanged.
 - [ ] A first dispatch that closes the gap during an unbound landing's gate refuses that landing at publish.
+- [ ] A green checkpoint of chunk `C1` while the record holds chunk `C3` with `Last` true leaves the ledger bytes unchanged.

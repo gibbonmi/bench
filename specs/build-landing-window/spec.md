@@ -230,6 +230,7 @@ Its route is the instruction `wait until the landing of assignment <id> ends`, t
 An open build is a claim `(milestone, outcome)` with at least one qualifying binding of that outcome.
 A qualifying binding names a staged-spec deliverable and an assignment that is active in `ledger.Assignments`.
 The staged-spec test reuses the deliverable classification `validateDeliverable` (`internal/commitment/repository/sources.go:90`), which `bench commitment start` calls at `internal/commitment/repository/admission.go:41`.
+A fault that resolves the default-branch tip refuses the landing with `land-infrastructure` and the cause.
 
 The build's assignments are the active bound assignments of that outcome.
 A sibling that `bench worktree create --from` binds is one of them (`internal/commitment/repository/readiness.go:121-150`).
@@ -266,6 +267,9 @@ After `RunCommand` (`internal/gate/gate.go:185-210`) returns a green result for 
 The verb writes the gap record `{Chunk: <id>, Open: true, Last: false}` when two conditions hold.
 The plan names a chunk after `<id>`, and the active assignment of the root holds a binding of an open build.
 Otherwise it writes nothing.
+
+The verb also writes nothing when the gap record names a chunk after `<id>` in plan order.
+So a repair checkpoint of an earlier chunk keeps the recorded chunk and its `Last` value.
 A write failure prints `chunk gap not recorded: <cause>` and exits 1, and a rerun reuses the green verdict and writes the record.
 
 `bench record assignment` closes a gap.
@@ -425,7 +429,7 @@ They also state the back-out route: `git revert --no-commit <commit>` in a fresh
 | BW-A / 1-hold-the-landing-lease.md | One lease per destination from composition through publish, with liveness and takeover | BW1-BW16 | planned lease, land-lease, ledger, and system race tests; recovery and registry tests | no |
 | BW-B / 2-route-a-moved-destination.md | One moved-destination face with a typed proof cause | BW17-BW24 | planned moved-destination and authorization tests; the system race test | no |
 | BW-C / 3-record-a-fold.md, 4-review-a-fold-resolution.md | Fold record, chain acceptance, resolution review, merged-test final checks, fold red route | BW25-BW45, BW93, BW98 | planned fold, record-fold, preflight, and merge-route tests; the chain-gap test; help inventory | yes |
-| BW-D / 5-hold-main-for-an-open-build.md, 6-open-and-close-chunk-gaps.md | Open-build window with its lifetime and its gaps | BW46-BW70, BW94-BW97 | planned window, land-window, chunk-gap, and dispatch-gap tests | yes |
+| BW-D / 5-hold-main-for-an-open-build.md, 6-open-and-close-chunk-gaps.md | Open-build window with its lifetime and its gaps | BW46-BW70, BW94-BW97, BW99, BW100 | planned window, land-window, chunk-gap, and dispatch-gap tests | yes |
 | BW-E / 7-grant-a-reviewer-override.md | Terminal-bound reviewer override, consumption, and guard | BW71-BW84 | planned override, land-override, and guard tests; help inventory | yes |
 | BW-F / 8-document-the-landing-window.md | Guidance, glossary, known issues, and changelog | BW85-BW92 | review-owned reads, anchors, prose | no |
 
@@ -581,6 +585,8 @@ Every expected TOON row derives through `toon.Table`, so a numeric-looking chunk
 | BW93 | 46 | The help inventory lists the `bench record fold` form, and the review form names `--fold` | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | A hand-copied help line drifts from the record form registry. |
 | BW94 | 16, 23 | A spec-less landing from a sibling assignment that `--from` bound to the build refuses with face `land-build-window` while the build is outside a gap | `internal/worktree/land_window_test.go` (`TestWindowAdmitsTheBuildsOwnLanding`) | A rule keyed to the bound assignment alone lets a build worktree land spec-less under a chunk. |
 | BW96 | 17, 19 | After `bench commitment block` during an open gap and a later `bench commitment unblock` and `bench commitment start`, an unbound landing refuses with face `land-build-window` | `internal/commitment/repository/window_test.go` (`TestStartDropsAStaleGap`) | A start that keeps the old open gap reopens the build with `main` already free to move. |
+| BW99 | 27, 30 | A green checkpoint of chunk `C1` while the gap record holds chunk `C3` with `Last` true leaves the ledger bytes unchanged | planned internal/gate/chunk_gap_test.go (TestEarlierChunkCheckpointKeepsTheGap) | A repair checkpoint of an earlier chunk reopens the gap after the last freeze. |
+| BW100 | 14 | An unresolved default branch with a claimed outcome refuses the landing with face `land-infrastructure` | planned internal/commitment/repository/window_test.go (TestWindowFailsClosedOnAGitFault) | A Git fault opens every window. |
 | BW97 | 18, 19 | After `bench commitment block`, and after the build's completion landing publishes, the ledger holds no gap record for the outcome | `internal/commitment/repository/window_test.go` (`TestClosersDropTheGapRecord`) | A closer that keeps the gap record leaves a stale record for the next start to trust. |
 | BW98 | 56 | `paths-authorized` stays red for a recorded resolution path that a later commit changes after the fold | `internal/preflight/folded_main_test.go` (`TestPathsAuthorizedAdmitsARecordedResolutionPath`) | A name-only skip lets a later build write to the path pass the fence. |
 | BW95 | 32 | A repair dispatch to a chunk-`C1` ticket while the gap record holds chunk `C3` with `Last` true leaves the ledger bytes unchanged | `internal/reviewrecord/recordcmd/dispatch_gap_test.go` (`TestDispatchInsideAChunkKeepsTheGap`) | A chunk-inequality rule rewrites the record to `C1`, so the refusal names a past gap and the build loses its last-chunk state. |

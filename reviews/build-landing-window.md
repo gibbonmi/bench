@@ -11,6 +11,9 @@ BW-B used one of its two repair cycles.
 BW-C round 1 reviewed the pair `4057ca20..db1bdc5d`, and repair 1 closed S1, S2, and C1-C4 at `6568c4c2`.
 The BW-C confirming round found S3 and P1, and repair 2 at `901d9152` closed both.
 The third round passed on all three axes, and BW-C used both of its repair cycles.
+
+BW-D round 1 reviewed the pair `901d9152..b68ee13d`, and BW-D has used zero of its two repair cycles.
+A fable/high consultation chose the rules for BW-D C1 and BW-D S3, and added rows BW99 and BW100.
 A fable/high consultation chose the owner for BW-C S1 and the content binding for BW-C C1.
 
 ## Standards
@@ -33,6 +36,12 @@ BW-C findings: 2. Worst issue: BW-C S1, a default-branch ancestry check with two
 - BW-C S2, auto-fix, confidence 6: `MergedTestRequirement` (`internal/reviewrecord/check.go:91-92`) hand-spells the package command that `internal/preflight/check_floor.go:197-203` owns. Give the command one owner. Ticket 4 repairs it.
 - BW-C S3, auto-fix, confidence 8: `foldCoversBase` (`internal/reviewrecord/fold.go:115`) and `coverage.go:46` and `:85` still call the ancestry query through `benchgit.OK`. Route them through `git.IsAncestor`. Ticket 3 repairs it in repair 2.
 
+BW-D findings: 3. Worst issue: BW-D S1, a second derivation of the active-run check.
+
+- BW-D S1, auto-fix, confidence 6: `activeAssignment` (`internal/commitment/repository/window.go:80`) repeats the active-run check of `admission.go:125-127`. Ticket 5 repairs it.
+- BW-D S2, auto-fix, confidence 7: three comment sentences in `recordcmd/assignment.go:30-31` and `dispatch_gap_test.go:23` and `:110` are over 25 words. Ticket 6 repairs it.
+- BW-D S3, auto-fix, confidence 5: `window.go:64` reads a Git fault as no open build. Refuse it with `land-infrastructure` and the cause, and add row BW100. Ticket 5 repairs it.
+
 ## Spec
 
 Findings: 1. Worst issue: P1, a false comparison clause in the Edge inventory.
@@ -44,6 +53,10 @@ BW-B findings: 0. The Spec axis accepted the three author flags. BW23 uses an in
 BW-C findings: 0. The transitive second-fold reading reconciles the spec lines on the covered digest and the fold `From`.
 
 - BW-C P1, auto-fix, confidence 9: the BW-C chunk row omitted row BW98. The orchestrator fixed it in a plan commit before repair 2.
+
+BW-D findings: 1. Worst issue: BW-D P1, the same gap overwrite as BW-D C1.
+
+- BW-D P1, auto-fix, confidence 5: `OpenGap` overwrites a later gap record. The spec gains one sentence, and ticket 6 repairs it with BW-D C1.
 
 ## Coverage
 
@@ -64,6 +77,11 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
 - BW-C C2, auto-fix, confidence 7: no test gives a chunk base with the fold digest that does not descend from the fold commit. Ticket 3 adds it.
 - BW-C C3, auto-fix, confidence 7: no test records a fold whose first parent has only a comment-only gap. Ticket 3 adds it.
 - BW-C C4, auto-fix, confidence 7: no test records two folds in one gap. Ticket 3 adds it.
+
+BW-D findings: 2. Worst issue: BW-D C1, a repair checkpoint that reopens the gap after the last freeze.
+
+- BW-D C1, auto-fix, confidence 7: `OpenGap` (`internal/commitment/repository/gap.go:31-33`) writes over a later gap record. Write nothing when the record names a later chunk, and add row BW99. Ticket 6 repairs it.
+- BW-D C2, auto-fix, confidence 8: no test reaches the `chunk gap not recorded` write failure. Ticket 6 adds it.
 
 ```bench-review-record
 {
@@ -2109,7 +2127,77 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bwd-standards-r1",
+          "performer": "claude:blw_bwd_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwd_standards",
+            "digest": "sha256:13774580edc7ad11859b2addf8f621338544e5c45fa1319df1d8e049966a99eb",
+            "excerpt": "Axis: Standards — 3 findings (S1 blocking, S2 blocking evidence-only, S3 ask-user).\nS1 window.go:80 activeAssignment re-derives admission.go:125-127's active-run predicate; collapse to one.\nS2 recordcmd/assignment.go:30 (28 words), dispatch_gap_test.go:23 and :110 (27 each) exceed the 25-word STE limit.\nS3 window.go:64 drops every validateDeliverable error, so a git or default-branch fault opens the window; ask whether to fail closed.\nAdvice: the aliases are Lazy Elements; merge --from has three literal copies; fixtureBody duplicates recordtest.Body;\ngap key outcome vs milestone+outcome; the ticket-to-chunk lookup is duplicated; the RunCommand doc omits the gap write.\nReviewer direction met: every record write goes through replace; no t.Parallel in reviewrecord tests.\n"
+          },
+          "axis": "Standards",
+          "base": "901d91524635f47b5c646f02c990db0817c6f1b5",
+          "tip": "b68ee13d37c2c3bb3241daba5c2a5f9fdd9700d3",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwd-spec-r1",
+          "performer": "claude:blw_bwd_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwd_spec",
+            "digest": "sha256:c0ceccf5935d2f44368d11762b5d7e106745a0afa2248fad7b4e96dbe77a3dee",
+            "excerpt": "Axis: Spec — 1 finding (ask-user).\nP1 gap.go:31 OpenGap overwrites any record; rerun of an earlier\n  chunk's green checkpoint after BW95's repair turns {C3,Last} into\n  {C1,Open}, contradicting stories 27/30; matches spec.md:266 literally.\nRows BW46-BW70, BW94-BW97: all built and graded by cited tests.\nNotes: (a) structural departure, no behavior loss, flag for veto;\n  (b) fail-open on validation fault — advice; (c),(d) sound.\nAdvice: claim-order pick, unbound dispatch no-write untested.\n"
+          },
+          "axis": "Spec",
+          "base": "901d91524635f47b5c646f02c990db0817c6f1b5",
+          "tip": "b68ee13d37c2c3bb3241daba5c2a5f9fdd9700d3",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwd-coverage-r1",
+          "performer": "claude:blw_bwd_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwd_coverage",
+            "digest": "sha256:1e225556575a778cd628be2f519d87c54eccc8484c98b73f24d53f843c59e801",
+            "excerpt": "Axis: Coverage — 2 findings; worst C1.\nC1 | earlier-chunk checkpoint rerun after a later chunk's first dispatch (BW95 state) | OpenGap gap.go:32 writes {C1,Open:true,Last:false}; main moves after freeze | no row/test; spec Gaps:266-267 silent | ask-user | blocking yes | 7\nC2 | gap ledger write fails after green checkpoint | exit-0 mutation survives; gate green with no gap | no row/test for spec:269 | auto-fix | blocking no | 8\nProbe 1: chunk_gap.go swap \"return 1\"->\"return 0\", ./internal/gate -run Chunk|Gap|Checkpoint: silent, restored yes\nProbe 2: closure.go gap filter \"if true ||\", ./internal/commitment/repository: bit (TestClosersDropTheGapRecord/completion), restored yes\nAdvice: renamed recorded chunk id reads as -1 in CloseGap (gap.go:47) and drops Last on repair.\n"
+          },
+          "axis": "Coverage",
+          "base": "901d91524635f47b5c646f02c990db0817c6f1b5",
+          "tip": "b68ee13d37c2c3bb3241daba5c2a5f9fdd9700d3",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
