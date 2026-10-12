@@ -42,7 +42,17 @@ type Result struct {
 	// every other kind. An operational outcome names no failing check, so without this the
 	// refusal the operator reads would carry the kind and no cause.
 	Reason string
+	// Cause is the refusal face that the gate recorded before its oracle ran, empty when the
+	// oracle ran. A landing routes by this type and never by the reason text.
+	Cause Cause
 }
+
+// Cause is a gate refusal face that a caller outside the gate verb routes by.
+type Cause string
+
+// CompletionProof is the cause of a completion whose graded tree is not the exact transform
+// of its reviewed source.
+const CompletionProof = Cause(gate.CompletionProofFace)
 
 // Bootstrap imports current reusable green proof with an expected prior marker.
 func Bootstrap(root, branch, tip, expected string) error {
@@ -160,7 +170,7 @@ func AuthorizeWithWriters(ctx context.Context, root, tree string, stdout, stderr
 			kind = Candidate
 		}
 	}
-	result := Result{Kind: kind, Evidence: evidenceToken(kind, tree, inspection)}
+	result := Result{Kind: kind, Evidence: evidenceToken(kind, tree, inspection), Cause: Cause(execution.Face)}
 	if kind == Infrastructure {
 		result.Reason = execution.Inspection.Reason
 		fmt.Fprint(stderr, infrastructureDiagnostic(execution, inspection))

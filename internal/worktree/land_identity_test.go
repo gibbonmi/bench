@@ -230,7 +230,7 @@ func TestCommitmentGateRace(t *testing.T) {
 			tip, err := git.Output("-C", root, "rev-parse", "main")
 			return strings.TrimSpace(tip), err
 		}, want: []string{"refused{detail=commitment: ", "is blocked"}},
-		{name: "default-branch-policy", change: switchActiveMilestone, want: []string{"landing destination checkout changed"}},
+		{name: "default-branch-policy", change: switchActiveMilestone, want: []string{"landing destination checkout changed", ",next=" + foldOfMain}},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			t.Parallel()

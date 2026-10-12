@@ -2,6 +2,7 @@ package landing
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -11,9 +12,9 @@ import (
 
 func updateRef(root, ref, new, old string) error { return run(root, "update-ref", ref, new, old) }
 
-// TipMovedError is the compare-and-swap refusal of a destination that moved between the
-// read and the update. A rerun recomposes onto the moved destination, so a caller routes
-// the refusal by the type and never by the sentence.
+// TipMovedError is the refusal of a destination that moved after the read: at the post-gate
+// recheck, or at the compare-and-swap of the update. A rerun recomposes onto the moved
+// destination, so a caller routes the refusal by the type and never by the sentence.
 type TipMovedError struct{ Err error }
 
 func (e TipMovedError) Error() string { return e.Err.Error() }
@@ -29,6 +30,20 @@ func destinationUpdateFailure(root, ref, expected string, updateErr error) error
 	}
 	return updateErr
 }
+
+// destinationUnchanged rechecks the destination after the gate. A ref that moved past base is
+// a TipMovedError. A checkout change over an unmoved ref is not, because no fold repairs it.
+func destinationUnchanged(root, ref, base, fingerprint string) error {
+	changed := errors.New("landing destination checkout changed; rerun the landing to recompose onto the moved destination")
+	if tip, err := benchgit.ResolveCommit(root, ref); err == nil && tip != base {
+		return TipMovedError{changed}
+	}
+	if got, err := CheckoutFingerprint(root); err != nil || got != fingerprint {
+		return changed
+	}
+	return nil
+}
+
 func output(root string, args ...string) (string, error) {
 	return benchgit.Output(append([]string{"-C", root}, args...)...)
 }

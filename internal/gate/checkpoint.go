@@ -131,8 +131,12 @@ var (
 	faceComposition        = checkpointFace{name: "checkpoint-composition"}
 	faceTipMoved           = checkpointFace{name: "checkpoint-tip-moved"}
 	faceSubjectUnavailable = checkpointFace{name: "checkpoint-subject-unavailable"}
-	faceHandback           = checkpointFace{name: "gate-handback"}
+	faceHandback           = checkpointFace{name: CompletionProofFace}
 )
+
+// CompletionProofFace is the face of a completion proof fault, the one funnel cause that
+// hands back to the reviewer. A caller outside the gate verb reads it on Result.Face.
+const CompletionProofFace = "gate-handback"
 
 // faceRecordRepair is the face of an evidence refusal that one record form repairs.
 const faceRecordRepair = "checkpoint-record-repair"
@@ -160,7 +164,9 @@ func funnelFace(err error) checkpointFace {
 // assignment that owns root; with no owner, the label prints its slot.
 func refuse(ctx context.Context, root string, stderr io.Writer, mode runMode, face checkpointFace, reason string) Result {
 	if verb, _ := ctx.Value(verbKey{}).(bool); !verb {
-		return operational(root, 0, stderr, reason)
+		result := operational(root, 0, stderr, reason)
+		result.Face = face.name
+		return result
 	}
 	checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint)
 	owner, _ := intent.AssignmentForWorktree(root)

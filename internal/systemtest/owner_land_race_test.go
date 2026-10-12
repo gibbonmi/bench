@@ -29,7 +29,7 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 	priorRefs := systemGitOutput(t, root, "show-ref", "--head")
 	priorMarker := systemGitOutput(t, root, "rev-parse", "refs/bench/green/main")
 	releaseArtifactBarrier(t, release)
-	if code := systemExitCode(<-loserDone); code != 1 || !strings.HasPrefix(loserOut.String(), "refused{detail=") || !strings.Contains(loserOut.String(), "landing destination checkout changed") || strings.Contains(loserOut.String(), "infrastructure") || !strings.Contains(loserErr.String(), "command-registry:worktree") {
+	if code := systemExitCode(<-loserDone); code != 1 || !strings.HasPrefix(loserOut.String(), "refused{detail=") || !strings.Contains(loserOut.String(), "landing destination checkout changed") || !strings.Contains(loserOut.String(), ",next=bench worktree merge --from 'main' ") || strings.Contains(loserOut.String(), "infrastructure") || !strings.Contains(loserErr.String(), "command-registry:worktree") {
 		t.Fatalf("loser land = (%d, %q, %q)", code, loserOut.String(), loserErr.String())
 	}
 	if got := systemGitOutput(t, root, "show-ref", "--head"); got != priorRefs {

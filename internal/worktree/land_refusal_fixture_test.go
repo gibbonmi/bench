@@ -156,6 +156,19 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			carry: map[int]func(*testing.T, landingFixture){0: func(*testing.T, landingFixture) { otherLanding.Release() }},
 		},
 		{
+			// The destination gains a commit that the reviewed source lacks, so the completion
+			// proof refuses. The printed merge folds it into the source under the planted lane,
+			// and the review of the fold is the record step.
+			face:          faceLandDestinationMoved,
+			stage:         stageComposition,
+			repairsSource: true,
+			mutate: func(t *testing.T, root string, creation Creation) {
+				commitInWorktree(t, root, "moved.txt", "destination bytes\n", "destination moves")
+				plantSourceCommitLane(t, creation)
+			},
+			carry: map[int]func(*testing.T, landingFixture){1: reviewWithoutLane},
+		},
+		{
 			// The destination moves onto a commit the reviewed source also changed, which
 			// is the state a composition conflict outside the rule table reaches.
 			face:   faceCompositionConflict,

@@ -26,6 +26,29 @@ func TestAuthorizeCarriesTheInfrastructureReason(t *testing.T) {
 	t.Logf("infrastructure reason = %q", result.Reason)
 }
 
+// TestCompletionProofCauseTravelsAsAType is BW24. A completion source that names no exact
+// commit is a completion proof fault, so the result carries that cause as a type. Another
+// infrastructure outcome carries no cause.
+func TestCompletionProofCauseTravelsAsAType(t *testing.T) {
+	root, tree := laneFixture(t)
+	for _, row := range []struct {
+		name string
+		ctx  context.Context
+		want Cause
+	}{
+		{"completion proof", gate.WithCompletion(context.Background(), "specs/x/spec.md", "HEAD"), CompletionProof},
+		{"no completion", context.Background(), ""},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			result := AuthorizeWithWriters(row.ctx, root, tree, &stdout, &stderr)
+			if result.Kind != Infrastructure || result.Cause != row.want {
+				t.Fatalf("result = %+v, want kind %q with cause %q; stderr %q", result, Infrastructure, row.want, stderr.String())
+			}
+		})
+	}
+}
+
 // An infrastructure attribution that the gate left without a reason still names what the
 // gate observed, so a refusal with the kind alone has a cause on stderr. A gate reason
 // needs no second line, because the gate printed that reason itself.

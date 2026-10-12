@@ -75,6 +75,19 @@ var landFaces = []Face{
 		Route:     []Step{Instruction(Text("wait until the landing of assignment"), Composed(FactLeaseOwner), Text("ends")), rerun},
 	},
 	{
+		// The fold brings the moved destination into the source. The raising site points the
+		// re-run at the repaired tip.
+		Verb:      Land,
+		Name:      "land-destination-moved",
+		Sentence:  "landing destination moved past the reviewed source",
+		Authority: Agent,
+		Route: []Step{
+			Command(Text("bench worktree merge --from"), Fact(FactFrom), Fact(FactLabel)),
+			Instruction(Text("for a spec landing, record the fold, its review, the merged-test verification, and the completion at the new tip")),
+			rerun,
+		},
+	},
+	{
 		// The composition names the conflicted paths in its own sentence, so the face
 		// declares none.
 		Verb:      Land,
