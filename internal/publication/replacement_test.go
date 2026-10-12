@@ -3,8 +3,10 @@ package publication
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
@@ -68,7 +70,29 @@ func TestPublicationPreRenameFailure(t *testing.T) {
 	err = saveRecordWith(rec.Replacer(), root, replacementRecord("published"))
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	if got, err := os.ReadFile(RecordPath(root)); err != nil || string(got) != string(prior) {
-		t.Fatalf("record = %q (%v), want the prior record %q", got, err, prior)
+	durablefiletest.RequireBytes(t, RecordPath(root), string(prior))
+}
+
+// D30: a record save whose record directory cannot be created refuses before the
+// replacement starts, and no record exists.
+func TestPublicationDirectoryRefusal(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "dist"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	rec := &durablefiletest.Recorder{}
+
+	err := saveRecordWith(rec.Replacer(), root, replacementRecord("staged"))
+
+	var replaceErr *durablefile.Error
+	if err == nil || errors.As(err, &replaceErr) {
+		t.Fatalf("err = %v, want a refusal that is not a *durablefile.Error", err)
+	}
+	if len(rec.Trace) != 0 {
+		t.Fatalf("trace = %v, want no replacement stage", rec.Trace)
+	}
+	if _, err := os.Lstat(RecordPath(root)); err == nil {
+		t.Fatal("a record exists, want no record")
 	}
 }

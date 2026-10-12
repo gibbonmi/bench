@@ -34,6 +34,12 @@ func RequireFile(t testing.TB, path string, mode fs.FileMode, want string) {
 	if !info.Mode().IsRegular() || info.Mode().Perm() != mode {
 		t.Fatalf("%s mode = %v, want a regular file at %v", path, info.Mode(), mode)
 	}
+	RequireBytes(t, path, want)
+}
+
+// RequireBytes fails t unless the bytes of the file at path equal want.
+func RequireBytes(t testing.TB, path, want string) {
+	t.Helper()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
