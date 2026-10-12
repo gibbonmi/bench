@@ -46,7 +46,7 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
 {
   "version": 2,
   "spec": "specs/build-landing-window/spec.md",
-  "plan_digest": "sha256:440c1b0b55e357d00d6e66cc8c8a42b2ceb210a19ec0c64bf37e7427ad156d72",
+  "plan_digest": "sha256:cbbe23b76e3faffd89b75fcdac95b2bd39c75c6bd6a427fc8cb3ade1f8ed32ce",
   "implementation_session": "",
   "chunks": [
     {
@@ -908,6 +908,159 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
           ]
         }
       ]
+    },
+    {
+      "id": "BW-C",
+      "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+      "tip": "db1bdc5d31f26b60c029566175a428aca4563266",
+      "plan_digest": "sha256:cbbe23b76e3faffd89b75fcdac95b2bd39c75c6bd6a427fc8cb3ade1f8ed32ce",
+      "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+      "acceptance_rows": [
+        "BW25",
+        "BW26",
+        "BW27",
+        "BW28",
+        "BW29",
+        "BW30",
+        "BW31",
+        "BW32",
+        "BW33",
+        "BW34",
+        "BW35",
+        "BW36",
+        "BW37",
+        "BW38",
+        "BW41",
+        "BW39",
+        "BW40",
+        "BW42",
+        "BW43",
+        "BW44",
+        "BW45",
+        "BW93"
+      ],
+      "verification": [
+        {
+          "id": "t4-review-focused-v1",
+          "performer": "claude:blw_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4/probe-bw42.log",
+            "digest": "sha256:ff0ebed20f4f251a59607c831bc56dece49455cff8de9facb74bbe4e2ab95428",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestFoldResolutionNeedsReview|TestFoldDerivedFinalRequirements,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,385\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,309,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestFoldDerivedFinalRequirements,\"fold_test.go:107: completion without a merged-test result = <nil>, want the verification form for merged-test:./pkg/a\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-review-focused",
+          "command": "bench test --package ./internal/reviewrecord --run 'TestFoldResolutionNeedsReview|TestFoldDerivedFinalRequirements'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the merged-test derived requirements that checkCompletion adds for each fold package, so that the complete checkpoint passes without a merged-test result. TestFoldDerivedFinalRequirements turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4/probe-bw42.log",
+              "digest": "sha256:ff0ebed20f4f251a59607c831bc56dece49455cff8de9facb74bbe4e2ab95428",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestFoldResolutionNeedsReview|TestFoldDerivedFinalRequirements,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,385\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,309,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestFoldDerivedFinalRequirements,\"fold_test.go:107: completion without a merged-test result = <nil>, want the verification form for merged-test:./pkg/a\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t4-preflight-focused-v1",
+          "performer": "claude:blw_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4/t4-preflight-focused.txt",
+            "digest": "sha256:5cac59e4917efec85a6efa289ae2d2990bddfd43fe32f469f1baea6f9ed384eb",
+            "excerpt": "bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/preflight --run 'TestPathsAuthorizedAdmitsARecordedResolutionPath'\nexit 0; elapsed about 3 s\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,163,1\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-preflight-focused",
+          "command": "bench test --package ./internal/preflight --run 'TestPathsAuthorizedAdmitsARecordedResolutionPath'",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-route-focused-v1",
+          "performer": "claude:blw_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4/t4-route-focused.txt",
+            "digest": "sha256:c219a5f23314e0dc947972dd976daa7a6349ebefe57c074cedaa86ae286d5527",
+            "excerpt": "bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'\nexit 0; elapsed about 5 s\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1307,22\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-route-focused",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-help-focused-v1",
+          "performer": "claude:blw_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4/t4-help-focused.txt",
+            "digest": "sha256:a9da0f5c8428947fbd99b15940ab0a8ad2491acf671fb830318d09ea21156493",
+            "excerpt": "bench worktree exec \"FT342-FT253\" -- bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'\nexit 0; elapsed about 3 s\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,4,1\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-help-focused",
+          "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-floor-v1",
+          "performer": "claude:blw_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4/t4-floor.txt",
+            "digest": "sha256:dc747eadb2ad50c22bc117ae7dd988ad73449bf42fde69074fe72111b192aa4f",
+            "excerpt": "bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/reviewrecord/... --package ./internal/preflight/... --package ./internal/gate/... --package ./internal/worktree --package ./internal/refusalroute --package ./cmd/bench --package ./internal/conformance\nexit 0; elapsed about 122 s\npackages[15]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,24505,333\n  github.com/gibbonmi/bench/internal/conformance,pass,78424,1690\n  github.com/gibbonmi/bench/internal/gate,pass,27842,430\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,254,14\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,46,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,302,36\n  github.com/gibbonmi/bench/internal/preflight,pass,44655,401\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,24890,229\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/refusalroute,pass,5,17\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2563,89\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,10214,179\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/worktree,pass,75661,1418\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-floor",
+          "command": "bench test --package ./internal/reviewrecord/... --package ./internal/preflight/... --package ./internal/gate/... --package ./internal/worktree --package ./internal/refusalroute --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-root-conformance-v1",
+          "performer": "claude:blw_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4/t4-root-conformance.txt",
+            "digest": "sha256:7a0ccedcaee8ba94ea94b89ceee6f83dc43ab565bc556306550be92f1be96502",
+            "excerpt": "bench worktree exec \"FT342-FT253\" -- bench test --check root-conformance\nexit 0; elapsed about 24 s\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18632,1\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -939,6 +1092,18 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
     {
       "from": "sha256:52082aafa798935d8dba9b9521a8e470557b9bf38383be1e474ccf3b513f1007",
       "to": "sha256:440c1b0b55e357d00d6e66cc8c8a42b2ceb210a19ec0c64bf37e7427ad156d72",
+      "chunk_ids": {
+        "BW-A": [
+          "BW-A"
+        ],
+        "BW-B": [
+          "BW-B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:440c1b0b55e357d00d6e66cc8c8a42b2ceb210a19ec0c64bf37e7427ad156d72",
+      "to": "sha256:cbbe23b76e3faffd89b75fcdac95b2bd39c75c6bd6a427fc8cb3ade1f8ed32ce",
       "chunk_ids": {
         "BW-A": [
           "BW-A"
