@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:304dad8ec31f6ef14776693f8e342efca2547b34f3d96073b07864b5d715b986",
+  "plan_digest": "sha256:46a171dbfa4f9e5b92760bbc064c364febc8bd9da34e0bd2e74698781183dd38",
   "implementation_session": "",
   "chunks": [
     {
@@ -349,9 +349,9 @@
     {
       "id": "D-B2",
       "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
-      "tip": "3a3dbbe1a471a4fdd48e24abe38359ff138a1e73",
-      "plan_digest": "sha256:304dad8ec31f6ef14776693f8e342efca2547b34f3d96073b07864b5d715b986",
-      "source_digest": "123e6c7765ecd010a41bd5ebfadaf1c2ee6e5a2a",
+      "tip": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+      "plan_digest": "sha256:46a171dbfa4f9e5b92760bbc064c364febc8bd9da34e0bd2e74698781183dd38",
+      "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
       "acceptance_rows": [
         "D18"
       ],
@@ -579,6 +579,136 @@
               "excerpt": "# preservation at 3a3dbbe1a471a4fdd48e24abe38359ff138a1e73: six bench probe swaps, each bit and restored=yes; the owner rows run over the whole package with no --run\n# Frozen baseline: TestOpenPublishesPrivateOwnerRecordBeforeCheckout, TestOpenRefusesInvalidTemporaryRootsWithoutPublishing, and the sweep tests stay unchanged and pass (38 tests with the new TestOwnerPreRenameFailure).\n## P1 owner encoded newline: prospectiveartifact.go swap \"append(data, '\\n'), RecordMode)\" with \"data, RecordMode)\" --package ./internal/gate/prospectiveartifact\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:24: .../owner.json = {\"schema\":1,\"owner_pid\":4242,\"common_dir\":\"/repo/.git\"}, want {\"schema\":1,\"owner_pid\":4242,\"common_dir\":\"/repo/.git\"}\\n\",1\n## P2 owner 0600 literal (C3 necessity red): prospectiveartifact.go swap \"const RecordMode os.FileMode = 0o600\" with \"const RecordMode os.FileMode = 0o640\" --package ./internal/gate/prospectiveartifact\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,fail,246,38\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:24: .../owner.json mode = -rw-r-----, want a regular file at -rw-------\",1\n## D16/D17 reds after the move to durablefiletest.RequireFailure and RequireFile (--package ./internal/gate --run 'TestVerdictReplacement|TestEvidenceReplacement')\n## G1 mode: engine.go swap \"append(data, '\\n'), 0o600)\" with \"append(data, '\\n'), 0o644)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/engine.go,swap,failed,3,yes\nfailures[3]: TestEvidenceReplacement/evidence, TestEvidenceReplacement/lane, TestVerdictReplacement: \"durable_replacement_test.go:67|30: .../<entry> mode = -rw-r--r--, want a regular file at -rw-------\"\n# The same swap over the whole ./internal/gate package (no --run): bit, failed 22, restored=yes, TestVerdictReplacement among them.\n## G2 newline: engine.go swap \"append(data, '\\n'), 0o600)\" with \"data, 0o600)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/engine.go,swap,failed,3,yes\nfailures[3]: TestEvidenceReplacement/evidence, TestEvidenceReplacement/lane, TestVerdictReplacement: \"durable_replacement_test.go:67|30: .../<entry> = <record without newline>, want <record>\\n\"\n## G3 store-writer bypass: engine.go swap \"return replacer.Replace(filepath.Join(dir, name), append(data, '\\n'), 0o600)\" with \"return durablefile.Replace(filepath.Join(dir, name), append(data, '\\n'), 0o600)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/engine.go,swap,failed,3,yes\nfailures[3]: TestEvidenceReplacement/evidence, TestEvidenceReplacement/lane (line 66), TestVerdictReplacement (line 29): \"err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected <name> directory-sync failure\"\n## G4 verdict-writer bypass: verdict.go swap \"return durableReplaceAt(replacer, gitdir, benchgit.GateCacheFile, rec)\" with \"return durableReplaceAt(durablefile.Native(), gitdir, benchgit.GateCacheFile, rec)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/verdict.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestVerdictReplacement,\"durable_replacement_test.go:29: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected verdict directory-sync failure\",1\n## restored pass at 3a3dbbe1a471a4fdd48e24abe38359ff138a1e73: bench test --package ./internal/gate/prospectiveartifact --package ./internal/durablefile/durablefiletest --package ./internal/gate -> pass, 38 + 450 tests\n"
             }
           }
+        },
+        {
+          "id": "dcm-b2-t03-rep2-caller-tests",
+          "performer": "claude:dcm_t03_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+            "digest": "sha256:5d3b18c666359eac9cdea4570ce8a9e94979bf917556096657b65244cfd56e3d",
+            "excerpt": "# caller-tests at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: bench test --package ./internal/gate/prospectiveartifact (run in the one focused call with ./internal/durablefile/durablefiletest and ./internal/gate)\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,276,38\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-b2-t03-rep2-durablefiletest",
+          "performer": "claude:dcm_t03_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+            "digest": "sha256:5d4f6eb0d36f8b6465ed1d6cacebefc06407f0fadd117200cdeaf49f031876c8",
+            "excerpt": "# durablefiletest at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: bench test --package ./internal/durablefile/durablefiletest (run in the one focused call)\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile/durablefiletest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "durablefiletest",
+          "command": "bench test --package ./internal/durablefile/durablefiletest",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-b2-t03-rep2-gate-tests",
+          "performer": "claude:dcm_t03_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+            "digest": "sha256:0dbd3588dc6a253e524d2e8a45131bf0fbe9a5e82852c57dddd7ac6af4d52b8c",
+            "excerpt": "# gate-tests at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: bench test --package ./internal/gate (run in the one focused call)\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,25540,450\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate-tests",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-b2-t03-rep2-root-conformance",
+          "performer": "claude:dcm_t03_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+            "digest": "sha256:d81a95887e0d98d6014e279ea88804ce0b82a2b1c510990f5eb1e96af163ea8e",
+            "excerpt": "# root-conformance at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: bench test --check root-conformance\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16267,1\nfailures[0]{package,test,line,lines}:\n# also green: bench test --package ./internal/worktree --run 'TestParallelCensusOnTheLiveTree|TestSerialSetStaysBelowTheCeiling' -> pass, 2 tests\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-b2-t03-rep2-omission-proof",
+          "performer": "claude:dcm_t03_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+            "digest": "sha256:7f29e2c4ed976af641bb1332c56fb2b5bf0f07e55d9f5fc19f957c72e0763a20",
+            "excerpt": "# omission-proof at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: three bench probe swaps over the whole ./internal/gate/prospectiveartifact package (no --run), each bit and restored=yes\n## O1 owner bypass (former local sequence): prospectiveartifact.go swap \"return replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode)\" with \"temporary, err := os.CreateTemp(root, \\\".owner-\\\"); if err != nil { return err }; name := temporary.Name(); defer func() { _ = temporary.Close(); _ = os.Remove(name) }(); if err := temporary.Chmod(RecordMode); err != nil { return err }; if _, err := temporary.Write(append(data, '\\n')); err != nil { return err }; if err := temporary.Sync(); err != nil { return err }; if err := temporary.Close(); err != nil { return err }; if err := os.Rename(name, filepath.Join(root, RecordName)); err != nil { return err }; directory, err := os.Open(root); if err != nil { return err }; defer directory.Close(); return directory.Sync()\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,2,yes\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerPreRenameFailure,\"replacement_test.go:37: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected owner rename failure\",1\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:23: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected owner directory-sync failure\",1\n## C1 pre-rename bypass: prospectiveartifact.go swap \"return replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode)\" with \"if err := replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode); err != nil { var replaceErr *durablefile.Error; if errors.As(err, &replaceErr) && !replaceErr.Published { return nil }; return err }; return nil\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerPreRenameFailure,\"replacement_test.go:37: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected owner rename failure\",1\n## R1 record written after a pre-rename failure (necessity red of the kept record-absence check): prospectiveartifact.go swap \"return replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode)\" with \"if err := replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode); err != nil { var replaceErr *durablefile.Error; if errors.As(err, &replaceErr) && !replaceErr.Published { _ = os.WriteFile(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode) }; return err }; return nil\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerPreRenameFailure,\"replacement_test.go:39: owner record stat = <nil>, want no published record\",1\n## restored pass at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: bench test --package ./internal/gate/prospectiveartifact -> pass, 38 tests\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the former local replacement sequence. The real owner-record junction test must detect the missing shared failure.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+              "digest": "sha256:7f29e2c4ed976af641bb1332c56fb2b5bf0f07e55d9f5fc19f957c72e0763a20",
+              "excerpt": "# omission-proof at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: three bench probe swaps over the whole ./internal/gate/prospectiveartifact package (no --run), each bit and restored=yes\n## O1 owner bypass (former local sequence): prospectiveartifact.go swap \"return replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode)\" with \"temporary, err := os.CreateTemp(root, \\\".owner-\\\"); if err != nil { return err }; name := temporary.Name(); defer func() { _ = temporary.Close(); _ = os.Remove(name) }(); if err := temporary.Chmod(RecordMode); err != nil { return err }; if _, err := temporary.Write(append(data, '\\n')); err != nil { return err }; if err := temporary.Sync(); err != nil { return err }; if err := temporary.Close(); err != nil { return err }; if err := os.Rename(name, filepath.Join(root, RecordName)); err != nil { return err }; directory, err := os.Open(root); if err != nil { return err }; defer directory.Close(); return directory.Sync()\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,2,yes\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerPreRenameFailure,\"replacement_test.go:37: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected owner rename failure\",1\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:23: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected owner directory-sync failure\",1\n## C1 pre-rename bypass: prospectiveartifact.go swap \"return replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode)\" with \"if err := replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode); err != nil { var replaceErr *durablefile.Error; if errors.As(err, &replaceErr) && !replaceErr.Published { return nil }; return err }; return nil\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerPreRenameFailure,\"replacement_test.go:37: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected owner rename failure\",1\n## R1 record written after a pre-rename failure (necessity red of the kept record-absence check): prospectiveartifact.go swap \"return replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode)\" with \"if err := replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode); err != nil { var replaceErr *durablefile.Error; if errors.As(err, &replaceErr) && !replaceErr.Published { _ = os.WriteFile(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode) }; return err }; return nil\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerPreRenameFailure,\"replacement_test.go:39: owner record stat = <nil>, want no published record\",1\n## restored pass at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: bench test --package ./internal/gate/prospectiveartifact -> pass, 38 tests\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-b2-t03-rep2-preservation",
+          "performer": "claude:dcm_t03_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+            "digest": "sha256:090d53fadfe2a882af7d18f6aa2404cbf1f5a211106f5ef13ca7f20a42dc0ab0",
+            "excerpt": "# preservation at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: three bench probe swaps over the whole ./internal/gate/prospectiveartifact package (no --run); P1 and P2 bit, L1 silent as intended; each restored=yes\n# Frozen baseline: TestOpenPublishesPrivateOwnerRecordBeforeCheckout, TestOpenRefusesInvalidTemporaryRootsWithoutPublishing, and the sweep tests stay unchanged and pass (38 tests).\n## P1 owner encoded newline: prospectiveartifact.go swap \"append(data, '\\n'), RecordMode)\" with \"data, RecordMode)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]: TestOwnerReplacement \"replacement_test.go:24: .../owner.json = <record without newline>, want <record>\\n\"\n## P2 owner 0600 literal: prospectiveartifact.go swap \"const RecordMode os.FileMode = 0o600\" with \"const RecordMode os.FileMode = 0o640\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:24: .../owner.json mode = -rw-r-----, want a regular file at -rw-------\",1\n## L1 leaf cleanup ownership (DCM-B2-S2): internal/durablefile/replace.go swap \"Err: errors.Join(err, r.Remove(temp.Name()))}\" with \"Err: err}\"\n# at 40aef905 over ./internal/gate/prospectiveartifact: bit, failed 1, restored=yes: TestOwnerPreRenameFailure \"replacement_test.go:43: root entries = [.owner.json.405312725], want no temporary file\"\n# at 40aef905 over ./internal/durablefile: bit, failed 2, restored=yes: TestReplaceTemporaryCleanup (replace_test.go:263), TestReplaceCleanupFailure (replace_test.go:275)\n# at 6eed4ae5 over ./internal/gate/prospectiveartifact: silent, failed 0, restored=yes; the leaf tests alone own temporary-file cleanup\n## restored pass at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: bench test --package ./internal/gate/prospectiveartifact --package ./internal/durablefile/durablefiletest --package ./internal/gate -> pass, 38 + 450 tests\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+              "digest": "sha256:090d53fadfe2a882af7d18f6aa2404cbf1f5a211106f5ef13ca7f20a42dc0ab0",
+              "excerpt": "# preservation at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: three bench probe swaps over the whole ./internal/gate/prospectiveartifact package (no --run); P1 and P2 bit, L1 silent as intended; each restored=yes\n# Frozen baseline: TestOpenPublishesPrivateOwnerRecordBeforeCheckout, TestOpenRefusesInvalidTemporaryRootsWithoutPublishing, and the sweep tests stay unchanged and pass (38 tests).\n## P1 owner encoded newline: prospectiveartifact.go swap \"append(data, '\\n'), RecordMode)\" with \"data, RecordMode)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]: TestOwnerReplacement \"replacement_test.go:24: .../owner.json = <record without newline>, want <record>\\n\"\n## P2 owner 0600 literal: prospectiveartifact.go swap \"const RecordMode os.FileMode = 0o600\" with \"const RecordMode os.FileMode = 0o640\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:24: .../owner.json mode = -rw-r-----, want a regular file at -rw-------\",1\n## L1 leaf cleanup ownership (DCM-B2-S2): internal/durablefile/replace.go swap \"Err: errors.Join(err, r.Remove(temp.Name()))}\" with \"Err: err}\"\n# at 40aef905 over ./internal/gate/prospectiveartifact: bit, failed 1, restored=yes: TestOwnerPreRenameFailure \"replacement_test.go:43: root entries = [.owner.json.405312725], want no temporary file\"\n# at 40aef905 over ./internal/durablefile: bit, failed 2, restored=yes: TestReplaceTemporaryCleanup (replace_test.go:263), TestReplaceCleanupFailure (replace_test.go:275)\n# at 6eed4ae5 over ./internal/gate/prospectiveartifact: silent, failed 0, restored=yes; the leaf tests alone own temporary-file cleanup\n## restored pass at 6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2: bench test --package ./internal/gate/prospectiveartifact --package ./internal/durablefile/durablefiletest --package ./internal/gate -> pass, 38 + 450 tests\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -756,6 +886,18 @@
           "D-B2"
         ]
       }
+    },
+    {
+      "from": "sha256:304dad8ec31f6ef14776693f8e342efca2547b34f3d96073b07864b5d715b986",
+      "to": "sha256:46a171dbfa4f9e5b92760bbc064c364febc8bd9da34e0bd2e74698781183dd38",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ]
+      }
     }
   ]
 }
@@ -825,3 +967,5 @@ The D-B2 confirming round at f0c35260 closed DCM-B2-S1, C1, and C3. It raised on
 - DCM-B2-S2, auto-fix, confidence 5: `internal/gate/prospectiveartifact/replacement_test.go:42-44` asserts the temporary-file cleanup that the leaf test `TestReplaceTemporaryCleanup` owns, and no caller mutation shows that the check is necessary. Remove the sibling check, and keep the record-absence check.
 
 Chunk D-B2 takes repair cycle 2 of 2 for DCM-B2-S2.
+
+DCM-B2-S2 closes in commit 6eed4ae5, and chunk D-B2 used 2 of its 2 repair cycles.
