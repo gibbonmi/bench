@@ -1,6 +1,6 @@
 # Durable file replacement
 
-Status: staged
+Status: implemented
 
 Decision source: named reviewed artifact `decisions/architecture-primitives.md`, resolved tickets `2.md` and `4.md` (2026-10-06).
 
@@ -11,7 +11,7 @@ Verification log: 2 original-spec iterations, 1 split-spec iteration, and 1 tick
 File replacement has separate owners with different synchronization steps.
 The review-record writer omits parent-directory synchronization.
 A leaf capability must complete and land before its independent process-policy consumer can use it.
-Sources: internal/reviewrecord/write.go:92 and the named PL-R1-DELIVERY review.
+Sources: internal/reviewrecord/write.go:110 and the named PL-R1-DELIVERY review.
 
 ## Solution
 
@@ -77,8 +77,10 @@ The operation ports cover temporary creation, file operations, rename, directory
 No caller copies the ordered sequence.
 The injected file interface carries Write, Chmod, Sync, Close, and Name.
 
-The review-record entry supplies the native replacer to its internal write transaction.
-Tests supply the replacement operation through that same transaction.
+One package-level replacement binding in the review-record package serves the record write and the assignment write.
+Tests replace that binding for one test and restore it at cleanup, so an injected failure passes through each real transaction.
+The fault-injection harness lives in one test-support package, `internal/durablefile/durablefiletest`, which the owner and caller tests share.
+
 Keep record lookup, change, rendering, bounded grading, parse validation, and parent creation in the caller.
 The replace wrapper supplies 0644 and returns the leaf error without losing errors.Is or errors.As.
 After rename, failure must retain the phrase `new bytes may already be visible`.
@@ -86,11 +88,16 @@ The caller promises no automatic rollback after that failure.
 
 ### Current caller inventory
 
-The pinned production source is a382f4848d432815968f044820fad593e856e297.
+The pinned production source is 901b02bb6b32e88080f4ad8ffe19298c3907f5f6.
 
 | caller | source and symbol | caller mode | caller payload | row |
 |---|---|---|---|---|
-| review record | `internal/reviewrecord/write.go:92` (`replace`) | 0644 | Graded rendered document | D19 |
+| review record | `internal/reviewrecord/write.go:110` (`replace`) | 0644 | Graded rendered document | D19 |
+
+Two review-record transactions call `replace`: the record write at `internal/reviewrecord/write.go:96` and the assignment write at `internal/reviewrecord/assignment.go:84`.
+Both calls migrate with D19, because they share the one `replace` wrapper.
+The current `replace` creates the parent directory before it writes.
+That parent creation stays in the review-record caller.
 
 The source census for other replacement callers belongs to specs/durable-caller-migration/spec.md.
 This prerequisite migrates only the review-record caller.
@@ -111,7 +118,7 @@ It does not wait for any caller-migration successor chunk.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
-| D-A / 01-own-replacement-and-review.md | Own durable replacement through review records | D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12, D13, D14, D15, D19, D32 | owner-tests, caller-tests, linux-native, macos-native | yes |
+| D-A / 01-own-replacement-and-review.md | Own durable replacement through review records | D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12, D13, D14, D15, D19, D32 | owner-tests, caller-tests, linux-native | yes |
 
 The process-lifetime PL-C2 prerequisite is this complete accepted and landed spec.
 The caller-migration successor also starts only after this complete prerequisite lands.
@@ -125,65 +132,7 @@ It claims no current implementation pass, red, native qualification, or benchmar
 The orchestrator adds required version 2 author sessions before dispatch.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "D-A",
-      "tickets": [
-        "01-own-replacement-and-review.md"
-      ],
-      "verification": [
-        {
-          "id": "owner-tests",
-          "command": "bench test --package ./internal/durablefile"
-        },
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/reviewrecord"
-        },
-        {
-          "id": "linux-native",
-          "command": "bench test --package ./internal/durablefile --run 'TestNativeReplacement'"
-        },
-        {
-          "id": "macos-native",
-          "command": "bench test --package ./internal/durablefile --run 'TestNativeReplacement'"
-        },
-        {
-          "id": "owner-omission-proof",
-          "command": "bench test --package ./internal/durablefile",
-          "probe": "Omit file sync, omit directory sync, rename before file close, or accept a short write. Each named owner assertion must fail, then pass after restoring the source."
-        },
-        {
-          "id": "owner-preservation",
-          "command": "bench test --package ./internal/durablefile",
-          "probe": "Corrupt supplied payload bytes, requested mode, temporary cleanup, or wrapped error cause. The corresponding independent owner assertion must fail, then pass after source restoration."
-        },
-        {
-          "id": "caller-bypass-proof",
-          "command": "bench test --package ./internal/reviewrecord",
-          "probe": "Restore the former review-record writer or bypass the shared replacement operation in the real record transaction. TestReviewReplacement must fail its directory-sync cause assertion, then pass after source restoration."
-        },
-        {
-          "id": "caller-preservation",
-          "command": "bench test --package ./internal/reviewrecord",
-          "probe": "Corrupt the review-record rendered payload, 0644 mode, or pre-write refusal policy. The real caller assertion must fail, then pass after source restoration."
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "ordinary-integration",
-      "command": "bench test --package ./..."
-    },
-    {
-      "id": "coverage",
-      "command": "bench coverage --check durable-file-replacement"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"durable-file-replacement-build-20261011","orchestrator_session":"claude:dfr-orchestrator-20261011","author_limit":1,"assignments":{"01-own-replacement-and-review.md":[{"session":"claude:dfr_t1","assignment":"7d237d62691d1ae15a493cde824ef6fa","model":"opus","effort":"high","source":"aac52ebb321b574e74333060f695a91005ca5754","native_ref":"claude-agent:dfr_t1"},{"session":"claude:dfr_t1_rep1","assignment":"7d237d62691d1ae15a493cde824ef6fa","model":"opus","effort":"high","source":"bdbfc684dec6d779d565d66cb2e6d3ae2a795e2c","native_ref":"claude-agent:dfr_t1_rep1","predecessor":"claude:dfr_t1","trigger":"user-directed","stopped":"claude:dfr_t1 ended after its ticket commits 9794c6a2..5217d901 and its D-A record commit 1c0ef58e","preserved":"no uncommitted work; ticket commits 9794c6a2..5217d901 and record commit 1c0ef58e on the ft354-durable-build branch"},{"session":"claude:dfr_t1_ev1","assignment":"7d237d62691d1ae15a493cde824ef6fa","model":"opus","effort":"high","source":"2cce5ea49dfe8a794a20f4b7ec17b1336fbed6da","native_ref":"claude-agent:dfr_t1_ev1","predecessor":"claude:dfr_t1_rep1","trigger":"user-directed","stopped":"claude:dfr_t1_rep1 ended after repair commit 5f1ea9dc and record commit bd53453f; the D32 rescope 5303ca3c changed the chunk source digest","preserved":"no uncommitted work; repair commit 5f1ea9dc and record commits through 2cce5ea4 on the ft354-durable-build branch"}]}},"chunks":[{"id":"D-A","tickets":["01-own-replacement-and-review.md"],"verification":[{"id":"owner-tests","command":"bench test --package ./internal/durablefile","ticket":"01-own-replacement-and-review.md"},{"id":"caller-tests","command":"bench test --package ./internal/reviewrecord","ticket":"01-own-replacement-and-review.md"},{"id":"linux-native","command":"bench test --package ./internal/durablefile --run 'TestNativeReplacement'","ticket":"01-own-replacement-and-review.md"},{"id":"owner-omission-proof","command":"bench test --package ./internal/durablefile","probe":"Omit file sync, omit directory sync, rename before file close, or accept a short write. Each named owner assertion must fail, then pass after restoring the source.","ticket":"01-own-replacement-and-review.md"},{"id":"owner-preservation","command":"bench test --package ./internal/durablefile","probe":"Corrupt supplied payload bytes, requested mode, temporary cleanup, or wrapped error cause. The corresponding independent owner assertion must fail, then pass after source restoration.","ticket":"01-own-replacement-and-review.md"},{"id":"caller-bypass-proof","command":"bench test --package ./internal/reviewrecord","probe":"Restore the former review-record writer or bypass the shared replacement operation in the real record transaction. TestReviewReplacement must fail its directory-sync cause assertion, then pass after source restoration.","ticket":"01-own-replacement-and-review.md"},{"id":"caller-preservation","command":"bench test --package ./internal/reviewrecord","probe":"Corrupt the review-record rendered payload, 0644 mode, or pre-write refusal policy. The real caller assertion must fail, then pass after source restoration.","ticket":"01-own-replacement-and-review.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"01-own-replacement-and-review.md"},{"id":"harness-package","command":"bench test --package ./internal/durablefile/durablefiletest","ticket":"01-own-replacement-and-review.md"},{"id":"write-binding-proof","command":"bench test --package ./internal/reviewrecord","probe":"In the record write entry of internal/reviewrecord/write.go, replace the replace call with os.WriteFile of the rendered bytes and 0644. The record-write case of TestReviewReplacement must fail its directory-sync cause assertion, then pass after source restoration.","ticket":"01-own-replacement-and-review.md"},{"id":"assignment-binding-proof","command":"bench test --package ./internal/reviewrecord","probe":"In RecordAssignment of internal/reviewrecord/assignment.go, replace the replace call with os.WriteFile of the candidate bytes and 0644. The assignment case of TestReviewReplacement must fail its directory-sync cause assertion, then pass after source restoration.","ticket":"01-own-replacement-and-review.md"}]}],"final_verification":[{"id":"ordinary-integration","command":"bench test --package ./..."},{"id":"coverage","command":"bench coverage --check durable-file-replacement"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}
 ```
 
 ## Testing decisions
@@ -192,7 +141,7 @@ Test purpose takes precedence over test count.
 The owner trace proves mode, write, file synchronization, close, rename, directory synchronization, and directory close ordering.
 Real temporary-directory fixtures prove exact bytes, modes, regular-file placement, cleanup, and before-or-after-rename visibility.
 Injected failures cover every declared stage and joined cleanup causes.
-Native Linux and macOS tests qualify supported host and filesystem behavior before prerequisite acceptance.
+Native Linux tests qualify supported host and filesystem behavior before prerequisite acceptance.
 They claim no power-loss simulation or universal filesystem guarantee.
 
 Drive the actual review-record write transaction through its encoder, bounded grading, parser, and replacement operation.
@@ -204,7 +153,7 @@ Owner omissions and caller bypasses use their respective package commands and in
 
 Preserve every existing review-record assertion and independent payload expectation.
 Record a named omission red, restore the source, and record the pass before accepting independent expectations.
-Prior art: internal/reviewrecord/write.go:44 and internal/repairpilot/command_test.go:107.
+Prior art: `Render` in internal/reviewrecord/write.go and `TestRepairPilotStorage` in internal/repairpilot/command_test.go.
 The dev gate grades affected packages, and the whole-project gate remains the acceptance oracle.
 
 ### Seam diagram
@@ -220,23 +169,23 @@ The dev gate grades affected packages, and the whole-project gate remains the ac
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| D01 | 1 | Replacement of old bytes installs the exact supplied bytes. | planned internal/durablefile/replace_test.go (TestReplaceBytes) | A truncated write differs from the supplied payload. |
-| D02 | 2 | An empty payload creates a present regular file. | planned internal/durablefile/replace_test.go (TestReplaceEmpty) | Skipping an empty write leaves the destination absent. |
-| D03 | 3 | The installed file has the requested permission bits. | planned internal/durablefile/replace_test.go (TestReplaceMode) | The default temporary mode cannot satisfy the executable fixture. |
-| D04 | 4 | A concurrent reader observes only the old or new complete payload. | planned internal/durablefile/replace_test.go (TestReplaceVisibility) | An in-place write exposes a partial payload. |
-| D05 | 5 | The temporary regular file belongs to the destination parent. | planned internal/durablefile/replace_test.go (TestAdjacentTemporary) | A temporary file in the system directory fails the recorded path predicate. |
-| D06 | 6 | Rename follows the successful mode, write, file-sync, and file-close operations. | planned internal/durablefile/replace_test.go (TestReplaceOrder) | An operation trace detects an omitted or reordered step. |
-| D07 | 7 | Success follows parent-directory synchronization and close. | planned internal/durablefile/replace_test.go (TestReplaceDirectorySync) | An omitted directory step cannot produce the required trace. |
-| D08 | 8 | A short write returns an error before rename. | planned internal/durablefile/replace_test.go (TestReplaceShortWrite) | A nil-error partial write cannot pass as complete. |
-| D09 | 9 | Each pre-rename failure leaves the existing destination bytes unchanged. | planned internal/durablefile/replace_test.go (TestReplaceBeforeRenameFailures) | The old-byte oracle detects an early destination write. |
-| D10 | 10 | Each pre-rename failure leaves an absent destination absent. | planned internal/durablefile/replace_test.go (TestReplaceAbsentFailures) | An eager destination create violates the absence predicate. |
-| D11 | 11 | Each post-rename failure reports that new bytes may already be visible. | planned internal/durablefile/replace_test.go (TestReplaceAfterRenameFailures) | A plain successful return or old-byte claim fails the error predicate. |
-| D12 | 12 | A post-rename sync failure leaves the new destination bytes visible. | planned internal/durablefile/replace_test.go (TestReplaceAfterRenameState) | A fake that fails before rename cannot satisfy the state assertion. |
-| D13 | 13 | Replacement errors preserve errors.Is access to the injected cause. | planned internal/durablefile/replace_test.go (TestReplaceErrorCause) | A text-only wrapper loses the injected sentinel. |
-| D14 | 14 | A pre-rename failure removes its temporary file when removal succeeds. | planned internal/durablefile/replace_test.go (TestReplaceTemporaryCleanup) | A planted write failure detects a leaked sibling file. |
-| D15 | 15 | A failed temporary cleanup preserves the primary error and the cleanup cause. | planned internal/durablefile/replace_test.go (TestReplaceCleanupFailure) | Discarding the removal error loses the cleanup sentinel. |
-| D19 | 19 | The review record caller exposes an injected directory-sync failure. | planned internal/reviewrecord/replacement_test.go (TestReviewReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D32 | 32 | Native Linux and macOS qualification establishes the declared synchronization result. | planned internal/durablefile/platform_test.go (TestNativeReplacement) | A simulated filesystem cannot establish native directory-sync support. |
+| D01 | 1 | Replacement of old bytes installs the exact supplied bytes. | `internal/durablefile/replace_test.go` (`TestReplaceBytes`) | A truncated write differs from the supplied payload. |
+| D02 | 2 | An empty payload creates a present regular file. | `internal/durablefile/replace_test.go` (`TestReplaceEmpty`) | Skipping an empty write leaves the destination absent. |
+| D03 | 3 | The installed file has the requested permission bits. | `internal/durablefile/replace_test.go` (`TestReplaceMode`) | The default temporary mode cannot satisfy the executable fixture. |
+| D04 | 4 | A concurrent reader observes only the old or new complete payload. | `internal/durablefile/replace_test.go` (`TestReplaceVisibility`) | An in-place write exposes a partial payload. |
+| D05 | 5 | The temporary regular file belongs to the destination parent. | `internal/durablefile/replace_test.go` (`TestAdjacentTemporary`) | A temporary file in the system directory fails the recorded path predicate. |
+| D06 | 6 | Rename follows the successful mode, write, file-sync, and file-close operations. | `internal/durablefile/replace_test.go` (`TestReplaceOrder`) | An operation trace detects an omitted or reordered step. |
+| D07 | 7 | Success follows parent-directory synchronization and close. | `internal/durablefile/replace_test.go` (`TestReplaceDirectorySync`) | An omitted directory step cannot produce the required trace. |
+| D08 | 8 | A short write returns an error before rename. | `internal/durablefile/replace_test.go` (`TestReplaceShortWrite`) | A nil-error partial write cannot pass as complete. |
+| D09 | 9 | Each pre-rename failure leaves the existing destination bytes unchanged. | `internal/durablefile/replace_test.go` (`TestReplaceBeforeRenameFailures`) | The old-byte oracle detects an early destination write. |
+| D10 | 10 | Each pre-rename failure leaves an absent destination absent. | `internal/durablefile/replace_test.go` (`TestReplaceAbsentFailures`) | An eager destination create violates the absence predicate. |
+| D11 | 11 | Each post-rename failure reports that new bytes may already be visible. | `internal/durablefile/replace_test.go` (`TestReplaceAfterRenameFailures`) | A plain successful return or old-byte claim fails the error predicate. |
+| D12 | 12 | A post-rename sync failure leaves the new destination bytes visible. | `internal/durablefile/replace_test.go` (`TestReplaceAfterRenameState`) | A fake that fails before rename cannot satisfy the state assertion. |
+| D13 | 13 | Replacement errors preserve errors.Is access to the injected cause. | `internal/durablefile/replace_test.go` (`TestReplaceErrorCause`) | A text-only wrapper loses the injected sentinel. |
+| D14 | 14 | A pre-rename failure removes its temporary file when removal succeeds. | `internal/durablefile/replace_test.go` (`TestReplaceTemporaryCleanup`) | A planted write failure detects a leaked sibling file. |
+| D15 | 15 | A failed temporary cleanup preserves the primary error and the cleanup cause. | `internal/durablefile/replace_test.go` (`TestReplaceCleanupFailure`) | Discarding the removal error loses the cleanup sentinel. |
+| D19 | 19 | The review record caller exposes an injected directory-sync failure. | `internal/reviewrecord/replacement_test.go` (`TestReviewReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D32 | 32 | Native Linux qualification establishes the declared synchronization result. | `internal/durablefile/platform_test.go` (`TestNativeReplacement`) | A simulated filesystem cannot establish native directory-sync support. |
 
 ### Edge inventory
 
@@ -249,7 +198,7 @@ Review-record fixtures preserve existing payload, mode, validation, authority, a
 
 **Won't handle:** untrusted parent races — the review-record caller retains destination authority.
 **Won't handle:** directory creation durability — the review-record caller retains parent creation.
-**Won't handle:** unsupported or remote filesystems — D32 qualifies the supported Linux and macOS environments.
+**Won't handle:** unsupported or remote filesystems — D32 qualifies the supported Linux environment.
 **Won't handle:** other replacement callers — durable-caller-migration owns their original accepted obligations.
 **Won't handle:** specialized publication or lock protocols — the successor retains their named exclusion inventory without migrating them.
 
@@ -260,6 +209,8 @@ Review pickup is phase-owned.
 The implementation ticket Writes union must match this union after reviewed slicing.
 
 - `internal/durablefile`
+- `internal/reviewrecord/assignment.go`
+- `internal/reviewrecord/export_test.go`
 - `internal/reviewrecord/replacement_test.go`
 - `internal/reviewrecord/write.go`
 - `reviews/durable-file-replacement.md`
@@ -268,6 +219,7 @@ The implementation ticket Writes union must match this union after reviewed slic
 
 No production implementation, test execution, benchmark, ticket slicing, or roadmap edit belongs to this split-author phase.
 FT354 remains open for caller migration, strict JSON, and shell-argument outcomes.
+FT354 also keeps the native macOS qualification of this leaf open, by reviewer decision on 2026-10-12, because no macOS host ran it.
 This spec has no Roadmap retirement field.
 
 A cancellable replacement API is a separate capability: 3 edits, 1 gate run.

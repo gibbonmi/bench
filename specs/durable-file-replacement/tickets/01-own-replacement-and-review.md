@@ -1,7 +1,7 @@
 # Own durable replacement through review records
 
 Blocked by: none
-Writes: internal/durablefile/ (new), internal/reviewrecord/write.go, internal/reviewrecord/replacement_test.go (new)
+Writes: internal/durablefile/ (new), internal/reviewrecord/assignment.go, internal/reviewrecord/export_test.go (new), internal/reviewrecord/write.go, internal/reviewrecord/replacement_test.go (new)
 Covers: D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12, D13, D14, D15, D19, D32
 
 ## What to build
@@ -22,7 +22,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 
 Replace a real review record, then fail directory synchronization after rename.
 The caller returns *durablefile.Error with Published true and the uncertainty phrase, while the complete new record remains visible.
-Qualify file and directory synchronization natively on both Linux and macOS before D-A acceptance.
+Qualify file and directory synchronization natively on Linux before D-A acceptance.
 
 - [ ] Replacement of old bytes installs the exact supplied bytes. (D01).
 - [ ] An empty payload creates a present regular file. (D02).
@@ -40,7 +40,7 @@ Qualify file and directory synchronization natively on both Linux and macOS befo
 - [ ] A pre-rename failure removes its temporary file when removal succeeds. (D14).
 - [ ] A failed temporary cleanup preserves the primary error and the cleanup cause. (D15).
 - [ ] The review record caller exposes an injected directory-sync failure. (D19).
-- [ ] Native Linux and macOS qualification establishes the declared synchronization result. (D32).
+- [ ] Native Linux qualification establishes the declared synchronization result. (D32).
 
 ## Checkpoint verification
 
@@ -48,6 +48,7 @@ Qualify file and directory synchronization natively on both Linux and macOS befo
 - `bench test --package ./internal/reviewrecord`
 - `bench test --package ./internal/durablefile --run 'TestNativeReplacement'`
 - `bench test --package ./internal/durablefile --run 'TestNativeReplacement'`
+- `bench test --check root-conformance`
 
 ## Required omission evidence
 

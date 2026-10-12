@@ -1068,6 +1068,14 @@
       "identity": "sha256:f4499d582585cd086bf5ef0e46002eff2dbc748ae28253b44883715b64b04ff8",
       "source": "7130e46ec4b764a97085e7a725ddb6d568d3e10c",
       "evidence": "f98ab73b78b16dfbf1d811ba6c2585ce6cc080f3"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT354-durable-replace",
+      "binding": "durable-file-replacement",
+      "identity": "sha256:b871086abe0d08e0674c031ec71ffe7711961dcaebe1d1d6a327d43d23e61fd5",
+      "source": "a20755c34073c55d31c287d3a292790a91c07232",
+      "evidence": "2dbcb476ed848e2563f37bea7a623df290700e8a"
     }
   ]
 }

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 )
 
 // Render returns document with record as the payload of its review-record
@@ -57,13 +58,16 @@ func (s fenceSpan) splice(document, data []byte) []byte {
 	return bytes.Join([][]byte{document[:s.start], data, document[s.end:]}, nil)
 }
 
+// replaceFile is the one replacement operation of every review-record file write: the
+// native durable replacement. A test binds its own operation for one test.
+var replaceFile = durablefile.Replace
+
 // write is the one write transaction on the record of spec under root. It reads the
 // record through the reader, applies change, renders the document, and grades the
 // rendered bytes as the reader grades a file: the bounded classification, then the
-// parse. Only then does it replace the file through a temporary file in
-// the same directory. For an absent file at path, create supplies the record that the
-// file starts from or refuses it. A refusal at any step leaves the record bytes unchanged
-// and leaves no temporary file.
+// parse. Only then does it replace the file through replace. For an absent file at
+// path, create supplies the record that the file starts from or refuses it. A refusal
+// before the replacement leaves the record bytes unchanged and leaves no temporary file.
 func write(root, spec string, create func(path string) (Record, error), change func(*Record) error) error {
 	path, err := RecordPath(spec)
 	if err != nil {
@@ -104,35 +108,14 @@ func absent(chunk string) func(path string) (Record, error) {
 	}
 }
 
-// replace writes data to a temporary file beside path and renames it over path, so a
-// reader sees either the old bytes or the new bytes. It creates the directory of path
-// when that directory is absent.
+// replace creates the directory of path when that directory is absent, then replaces path
+// with data at mode 0644 through replaceFile, so a reader sees either the old bytes or the
+// new bytes. It returns the replacement error unchanged and rolls back nothing.
 func replace(path string, data []byte) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	temp, err := os.CreateTemp(dir, "."+filepath.Base(path)+".*")
-	if err != nil {
-		return err
-	}
-	_, err = temp.Write(data)
-	if err == nil {
-		err = temp.Chmod(0o644)
-	}
-	if err == nil {
-		err = temp.Sync()
-	}
-	if closed := temp.Close(); err == nil {
-		err = closed
-	}
-	if err == nil {
-		err = os.Rename(temp.Name(), path)
-	}
-	if err != nil {
-		_ = os.Remove(temp.Name())
-	}
-	return err
+	return replaceFile(path, data, 0o644)
 }
 
 // RecordChunk writes the entry of planned chunk id for the frozen pair base..tip, both
