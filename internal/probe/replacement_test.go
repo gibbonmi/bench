@@ -2,6 +2,7 @@ package probe
 
 import (
 	"errors"
+	"os"
 	"strings"
 	"testing"
 
@@ -37,15 +38,29 @@ func probeWith(t *testing.T, f *fixture, replacer durablefile.Replacer) (string,
 	return runWith(replacer, f.root, parsed)
 }
 
-// D27: a directory-sync failure after the mutation's rename reaches the caller as the
-// mutation failure at exit 1, after the baseline and before any focused run.
+// D27: the mutation renames the mutated bytes in at the subject mode, and a directory-sync
+// failure after that rename reaches the caller as the mutation failure at exit 1, after the
+// baseline and before any focused run.
 func TestProbeReplacement(t *testing.T) {
 	f := newFixture(t)
+	// The subject mode differs from the fixture default, so a mutation that drops it shows.
+	if err := os.Chmod(f.subject, 0o640); err != nil {
+		t.Fatal(err)
+	}
 	router := subjectFaults()
 	cause := errors.New("injected mutation directory-sync failure")
 	router.Fail[mutationReplacement] = map[string]error{"directory-sync": cause}
+	replacer := router.Replacer()
+	rename := replacer.Rename
+	replacer.Rename = func(oldpath, newpath string) error {
+		err := rename(oldpath, newpath)
+		if router.Count(mutationReplacement.Destination) == mutationReplacement.Ordinal {
+			durablefiletest.RequireFile(t, newpath, 0o640, strings.Replace(clampSource, "n < 0", "n > 0", 1))
+		}
+		return err
+	}
 
-	out, code := probeWith(t, f, router.Replacer())
+	out, code := probeWith(t, f, replacer)
 
 	want := toon.Errorf("probe mutation failed", router.Failure(mutationReplacement.Destination, "directory-sync", true, cause)) + "\n"
 	if out != want || code != 1 {
