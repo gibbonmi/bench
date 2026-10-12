@@ -205,7 +205,6 @@ func writeManifestDir(dir string, m manifest) error {
 	return writeManifestWith(durablefile.Native(), dir, m)
 }
 
-// writeManifestWith encodes m and replaces the manifest in dir through r.
 func writeManifestWith(r durablefile.Replacer, dir string, m manifest) error {
 	data, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
@@ -242,8 +241,8 @@ func replace(path string, data []byte) error {
 	return replaceWith(durablefile.Native(), path, data)
 }
 
-// replaceWith creates the parent directory of path, which the replacement requires, and
-// replaces path with data at mode 0644 through r.
+// replaceWith creates the parent directory first, because the replacement requires an
+// existing parent.
 func replaceWith(r durablefile.Replacer, path string, data []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err

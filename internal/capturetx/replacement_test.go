@@ -9,7 +9,6 @@ import (
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
-// captureManifest returns one capture manifest at state.
 func captureManifest(state string) manifest {
 	return manifest{Schema: 1, ID: "d-0123456789ab", State: state, Sources: []manifestSource{{
 		Name: "ideas", Path: "/repo/capture/IDEAS.md", Blob: "source-0.bin", Bytes: 6, Digest: "abc",
@@ -65,5 +64,11 @@ func TestCapturePreRenameFailure(t *testing.T) {
 	err = writeManifestWith(rec.Replacer(), dir, captureManifest("sealed"))
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	durablefiletest.RequireFile(t, filepath.Join(dir, manifestName), 0o644, string(former))
+	got, err := os.ReadFile(filepath.Join(dir, manifestName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(former) {
+		t.Fatalf("manifest = %q, want the former manifest %q", got, former)
+	}
 }
