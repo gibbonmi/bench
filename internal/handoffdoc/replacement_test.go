@@ -19,7 +19,7 @@ var replacementSection = Section{
 // D21: a directory failure after the rename fails the section write.
 func TestHandoffReplacement(t *testing.T) {
 	t.Parallel()
-	for _, stage := range []string{"directory-open", "directory-sync", "directory-close"} {
+	for _, stage := range durablefiletest.PostRenameStages {
 		t.Run(stage, func(t *testing.T) {
 			t.Parallel()
 			path := filepath.Join(t.TempDir(), "session-handoff.md")

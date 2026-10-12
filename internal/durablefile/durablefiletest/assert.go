@@ -9,6 +9,10 @@ import (
 	"github.com/gibbonmi/bench/internal/durablefile"
 )
 
+// PostRenameStages names each stage that fails after the rename, so a caller test can
+// fail every one of them and expect a published failure.
+var PostRenameStages = []string{"directory-open", "directory-sync", "directory-close"}
+
 // RequireFailure fails t unless err is a *durablefile.Error that failed at stage, whose
 // Published field equals published, and whose chain holds cause.
 func RequireFailure(t testing.TB, err error, stage string, published bool, cause error) {
