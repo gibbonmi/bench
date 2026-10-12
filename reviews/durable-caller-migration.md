@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:1328d3cecb091573d96d49938b9049c6cc47592195da6220c313c0c4dbef2abd",
+  "plan_digest": "sha256:e6d4e71219c6d5808b3d70faeec627fdabed0455e2f06870b25523a882c731d7",
   "implementation_session": "",
   "chunks": [
     {
@@ -2134,6 +2134,149 @@
           ]
         }
       ]
+    },
+    {
+      "id": "D-C1",
+      "base": "641ddbaa6c7f22023c6453abee122954564b8eca",
+      "tip": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+      "plan_digest": "sha256:e6d4e71219c6d5808b3d70faeec627fdabed0455e2f06870b25523a882c731d7",
+      "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+      "acceptance_rows": [
+        "D24"
+      ],
+      "verification": [
+        {
+          "id": "dcm-t08-caller-tests",
+          "performer": "claude:dcm_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+            "digest": "sha256:fe85a28cfcf8c98a512faeda2fee75f16c3fd2e9512fbce89861009b502fb425",
+            "excerpt": "bench test --package ./internal/publication at 17ffac99dfbfaf0ac0d69e340c172839cffe9b29\nD24 witness: TestPublicationReplacement. D36 pre-rename evidence: TestPublicationPreRenameFailure.\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/publication,pass,1157,28\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/publication",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t08-port-registry",
+          "performer": "claude:dcm_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+            "digest": "sha256:f7d8ee532d68dc59498803ff9549ab3a6127e0b3494d4673611b24f2c7e9d440",
+            "excerpt": "bench test --check injected-port-registry at 17ffac99dfbfaf0ac0d69e340c172839cffe9b29 (SaveRecord adds no audited port; registry unchanged)\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\ncheck[1]{name,kind,tests_run,subjects}:\n  injected-port-registry,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,26,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "port-registry",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t08-conformance",
+          "performer": "claude:dcm_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+            "digest": "sha256:74ebd3d854171ce7ce08b31475170da97a13e30f1dca2dc948c113f7ba8188dd",
+            "excerpt": "bench test --package ./internal/conformance at 17ffac99dfbfaf0ac0d69e340c172839cffe9b29\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,74430,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t08-root-conformance",
+          "performer": "claude:dcm_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+            "digest": "sha256:1b15f1751fd97fcd1f149ffbe5eafe89b61f24badc448d75d6f7a85d27703a5a",
+            "excerpt": "bench test --check root-conformance at 17ffac99dfbfaf0ac0d69e340c172839cffe9b29\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,23383,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t08-omission-proof",
+          "performer": "claude:dcm_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+            "digest": "sha256:885a24e1b474b80b34e269a70d91a4b0665795093bc5fedef3541c7421c7710e",
+            "excerpt": "# omission-proof: owner-bypass mutations of SaveRecord through bench probe at 17ffac99dfbfaf0ac0d69e340c172839cffe9b29, whole package ./internal/publication, no --run, each restored\n## 1 former writer. subject internal/publication/record.go\nold: \tif err := r.Replace(path, append(data, '\\n'), 0o644); err != nil {\nnew: \tif err := func() error { temp := path + \".tmp\"; if err := os.WriteFile(temp, append(data, '\\n'), 0o644); err != nil { return err }; return os.Rename(temp, path) }(); err != nil {\nred: TestPublicationReplacement (D24, directory-sync failure hidden) and TestPublicationPreRenameFailure (D36, rename failure hidden); restored yes; package pass after restore\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=12,bytes=976,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833680617547039-750e43e1e2fe7999.out}\n  github.com/gibbonmi/bench/internal/publication,fail,1323,28\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationPreRenameFailure,\"replacement_test.go:70: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected publication rename failure\",1\n  github.com/gibbonmi/bench/internal/publication,TestPublicationReplacement,\"replacement_test.go:34: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected publication directory-sync failure\",1\nskips[0]{package,test,reason}:\n## 2 native owner in place of the injected replacer\nold: if err := r.Replace(path,\nnew: if err := durablefile.Native().Replace(path,\nred: the same two tests; restored yes\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=12,bytes=976,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833692344765788-e7a01be492253800.out}\n  github.com/gibbonmi/bench/internal/publication,fail,1136,28\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationPreRenameFailure,\"replacement_test.go:70: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected publication rename failure\",1\n  github.com/gibbonmi/bench/internal/publication,TestPublicationReplacement,\"replacement_test.go:34: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected publication directory-sync failure\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/publication",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the former unsynchronized writer. The publication record junction test must detect the missing failure.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+              "digest": "sha256:885a24e1b474b80b34e269a70d91a4b0665795093bc5fedef3541c7421c7710e",
+              "excerpt": "# omission-proof: owner-bypass mutations of SaveRecord through bench probe at 17ffac99dfbfaf0ac0d69e340c172839cffe9b29, whole package ./internal/publication, no --run, each restored\n## 1 former writer. subject internal/publication/record.go\nold: \tif err := r.Replace(path, append(data, '\\n'), 0o644); err != nil {\nnew: \tif err := func() error { temp := path + \".tmp\"; if err := os.WriteFile(temp, append(data, '\\n'), 0o644); err != nil { return err }; return os.Rename(temp, path) }(); err != nil {\nred: TestPublicationReplacement (D24, directory-sync failure hidden) and TestPublicationPreRenameFailure (D36, rename failure hidden); restored yes; package pass after restore\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=12,bytes=976,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833680617547039-750e43e1e2fe7999.out}\n  github.com/gibbonmi/bench/internal/publication,fail,1323,28\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationPreRenameFailure,\"replacement_test.go:70: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected publication rename failure\",1\n  github.com/gibbonmi/bench/internal/publication,TestPublicationReplacement,\"replacement_test.go:34: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected publication directory-sync failure\",1\nskips[0]{package,test,reason}:\n## 2 native owner in place of the injected replacer\nold: if err := r.Replace(path,\nnew: if err := durablefile.Native().Replace(path,\nred: the same two tests; restored yes\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=12,bytes=976,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833692344765788-e7a01be492253800.out}\n  github.com/gibbonmi/bench/internal/publication,fail,1136,28\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationPreRenameFailure,\"replacement_test.go:70: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected publication rename failure\",1\n  github.com/gibbonmi/bench/internal/publication,TestPublicationReplacement,\"replacement_test.go:34: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected publication directory-sync failure\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t08-preservation",
+          "performer": "claude:dcm_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+            "digest": "sha256:81c0b3c34e17f7bd22a31c10a7d478ff1003785bc4d8ff554ca24a588043445c",
+            "excerpt": "# preservation: necessity reds of each independent check at 17ffac99dfbfaf0ac0d69e340c172839cffe9b29, whole package ./internal/publication, no --run, each restored\n## 3 mode drift: only TestPublicationReplacement (D24 mode check) fails\nold: append(data, '\\n'), 0o644)\nnew: append(data, '\\n'), 0o640)\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=11,bytes=759,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833699894384376-023334cc254ed1bc.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/publication,fail,1085,28\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationReplacement,\"replacement_test.go:35: /dev/shm/DZURNZ/t/TestPublicationReplacement3995141172/001/dist/publication/publication-record.json mode = -rw-r-----, want a regular file at -rw-r--r--\",1\nskips[0]{package,test,reason}:\n## 4 final-newline omission: only TestPublicationReplacement (D24 payload bytes check) fails\nold: r.Replace(path, append(data, '\\n'), 0o644)\nnew: r.Replace(path, data, 0o644)\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=11,bytes=903,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833707300272744-10870a42ea522570.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/publication,fail,1039,28\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationReplacement,\"replacement_test.go:35: /dev/shm/YV6I3X/t/TestPublicationReplacement2687722160/001/dist/publication/publication-record.json = \\\"{\\\\\\\\n  \\\\\\\\\\\"schema_version\\\\\\\\\\\": 1,\\\\\\\\n  \\\\\\\\\\\"release_index_sha256\\\\\\\\\\\": \\\\\\\\\\\"abc\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"path\\\\\\\\\\\": \\\\\\\\\\\"first\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"profile\\\\\\\\\\\": \\\\\\\\\\\"publi… (747 bytes)\",1\nskips[0]{package,test,reason}:\n## 5 fallback write of the new bytes after an unpublished error: only TestPublicationPreRenameFailure (D36 prior-bytes check) fails at replacement_test.go:72\nold: \tif err := r.Replace(path, append(data, '\\n'), 0o644); err != nil {\nnew: \tif err := r.Replace(path, append(data, '\\n'), 0o644); err != nil {\n\t\t_ = os.WriteFile(path, append(data, '\\n'), 0o644)\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=11,bytes=959,omitted_lines=2,cut_lines=1,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833714879015462-073e62a81c8b30d0.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/publication,fail,1045,28\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationPreRenameFailure,\"replacement_test.go:72: record = \\\"{\\\\\\\\n  \\\\\\\\\\\"schema_version\\\\\\\\\\\": 1,\\\\\\\\n  \\\\\\\\\\\"release_index_sha256\\\\\\\\\\\": \\\\\\\\\\\"abc\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"path\\\\\\\\\\\": \\\\\\\\\\\"first\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"profile\\\\\\\\\\\": \\\\\\\\\\\"public\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"transitions\\\\\\\\\\\": [],\\\\\\\\n  \\\\\\\\\\\"provenance\\\\\\\\\\\": [\\\\\\\\n    {\\\\\\\\n      \\\\\\\\\\\"package\\\\\\\\\\\"\nskips[0]{package,test,reason}:\n## The RequireFailure checks of both rows go red under probes 1 and 2 (omission-proof excerpt).\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/publication",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+              "digest": "sha256:81c0b3c34e17f7bd22a31c10a7d478ff1003785bc4d8ff554ca24a588043445c",
+              "excerpt": "# preservation: necessity reds of each independent check at 17ffac99dfbfaf0ac0d69e340c172839cffe9b29, whole package ./internal/publication, no --run, each restored\n## 3 mode drift: only TestPublicationReplacement (D24 mode check) fails\nold: append(data, '\\n'), 0o644)\nnew: append(data, '\\n'), 0o640)\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=11,bytes=759,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833699894384376-023334cc254ed1bc.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/publication,fail,1085,28\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationReplacement,\"replacement_test.go:35: /dev/shm/DZURNZ/t/TestPublicationReplacement3995141172/001/dist/publication/publication-record.json mode = -rw-r-----, want a regular file at -rw-r--r--\",1\nskips[0]{package,test,reason}:\n## 4 final-newline omission: only TestPublicationReplacement (D24 payload bytes check) fails\nold: r.Replace(path, append(data, '\\n'), 0o644)\nnew: r.Replace(path, data, 0o644)\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=11,bytes=903,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833707300272744-10870a42ea522570.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/publication,fail,1039,28\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationReplacement,\"replacement_test.go:35: /dev/shm/YV6I3X/t/TestPublicationReplacement2687722160/001/dist/publication/publication-record.json = \\\"{\\\\\\\\n  \\\\\\\\\\\"schema_version\\\\\\\\\\\": 1,\\\\\\\\n  \\\\\\\\\\\"release_index_sha256\\\\\\\\\\\": \\\\\\\\\\\"abc\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"path\\\\\\\\\\\": \\\\\\\\\\\"first\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"profile\\\\\\\\\\\": \\\\\\\\\\\"publi… (747 bytes)\",1\nskips[0]{package,test,reason}:\n## 5 fallback write of the new bytes after an unpublished error: only TestPublicationPreRenameFailure (D36 prior-bytes check) fails at replacement_test.go:72\nold: \tif err := r.Replace(path, append(data, '\\n'), 0o644); err != nil {\nnew: \tif err := r.Replace(path, append(data, '\\n'), 0o644); err != nil {\n\t\t_ = os.WriteFile(path, append(data, '\\n'), 0o644)\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,17ffac99dfbfaf0ac0d69e340c172839cffe9b29,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/publication/record.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/publication,all,passed,28\nspilled{lines=11,bytes=959,omitted_lines=2,cut_lines=1,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791833714879015462-073e62a81c8b30d0.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/publication,fail,1045,28\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/publication,TestPublicationPreRenameFailure,\"replacement_test.go:72: record = \\\"{\\\\\\\\n  \\\\\\\\\\\"schema_version\\\\\\\\\\\": 1,\\\\\\\\n  \\\\\\\\\\\"release_index_sha256\\\\\\\\\\\": \\\\\\\\\\\"abc\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"path\\\\\\\\\\\": \\\\\\\\\\\"first\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"profile\\\\\\\\\\\": \\\\\\\\\\\"public\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"transitions\\\\\\\\\\\": [],\\\\\\\\n  \\\\\\\\\\\"provenance\\\\\\\\\\\": [\\\\\\\\n    {\\\\\\\\n      \\\\\\\\\\\"package\\\\\\\\\\\"\nskips[0]{package,test,reason}:\n## The RequireFailure checks of both rows go red under probes 1 and 2 (omission-proof excerpt).\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2285,6 +2428,27 @@
     {
       "from": "sha256:1f71fb49502390cf5c1ccabedb96986f67bf4e6e59abffc47a1a0f1e0f25de2b",
       "to": "sha256:1328d3cecb091573d96d49938b9049c6cc47592195da6220c313c0c4dbef2abd",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1328d3cecb091573d96d49938b9049c6cc47592195da6220c313c0c4dbef2abd",
+      "to": "sha256:e6d4e71219c6d5808b3d70faeec627fdabed0455e2f06870b25523a882c731d7",
       "chunk_ids": {
         "D-B1": [
           "D-B1"
