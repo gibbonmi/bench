@@ -3510,6 +3510,28 @@
           "supersedes": [
             "dcm-c2-r1-coverage"
           ]
+        },
+        {
+          "id": "dcm-c2-r3-standards",
+          "performer": "claude:dcm_rev_c2_std3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c2_std3",
+            "digest": "sha256:31bc929c23969ad08992b88ca6f5a6c52be97c81762833b97ac3b9ae5ffa88b6",
+            "excerpt": "## Standards reaffirmation (D-C2, comment-only commit dccf92f2..b92b47f9) — 0 findings\nS3 closed: internal/brokermanifest/replacement_test.go:85-86 now names the digest refusal; Digest refuses the directory at brokermanifest.go:92-93 before Replace at :53; the commit changes only the comment.\n"
+          },
+          "axis": "Standards",
+          "base": "275c82dfc9fa03d1c87978ebd59c9be4282136bc",
+          "tip": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c2-r2-standards"
+          ]
         }
       ]
     }
@@ -4152,3 +4174,5 @@ The `claude:dcm_t09_rep1` omission-proof and preservation excerpts record each r
 The D-C2 confirming round at 5d295f64 closed S1, S2, C1, and C2. It raised one comment-only finding.
 
 - S3, auto-fix as an evidence-only comment correction, confidence 6: the comment at `internal/brokermanifest/replacement_test.go:85` names the wrong refusal step. The orchestrator corrects it, and the Standards axis reaffirms it.
+
+The Standards reaffirmation at b92b47f9 closed S3. Chunk D-C2 closed with 1 of its 2 repair cycles used, and the comment-only correction used none.
