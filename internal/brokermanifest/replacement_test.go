@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
@@ -26,8 +27,8 @@ func replacementBroker(t *testing.T) (string, string) {
 	return dir, resolved
 }
 
-// D25: a directory-sync failure after the rename fails the manifest write, which the
-// former writer never synchronized.
+// D25: a directory-sync failure after the rename fails the manifest write, because a
+// manifest the land route trusts must be durable before Write succeeds.
 func TestBrokerReplacement(t *testing.T) {
 	t.Parallel()
 	dir, broker := replacementBroker(t)
@@ -51,13 +52,11 @@ func TestBrokerPreRenameFailure(t *testing.T) {
 	_, _, err := write(rec.Replacer(), dir, broker, "1.2.3")
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	if _, err := os.Lstat(filepath.Join(dir, Name)); !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("manifest stat err = %v, want it absent", err)
-	}
+	requireNoManifest(t, dir)
 }
 
-// D30: a broker that is not a regular file refuses the manifest before the replacement
-// starts.
+// D30: a broker that is not a regular file refuses the manifest with the digest error
+// before the replacement starts.
 func TestBrokerRefusalSkipsReplacement(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
@@ -65,7 +64,20 @@ func TestBrokerRefusalSkipsReplacement(t *testing.T) {
 
 	_, _, err := write(rec.Replacer(), dir, dir, "1.2.3")
 
-	if err == nil || len(rec.Trace) != 0 {
-		t.Fatalf("err = %v, trace = %v, want a refusal before any replacement stage", err, rec.Trace)
+	var replaceErr *durablefile.Error
+	if err == nil || errors.As(err, &replaceErr) {
+		t.Fatalf("err = %v, want the caller's own refusal, not a replacement failure", err)
+	}
+	if len(rec.Trace) != 0 {
+		t.Fatalf("trace = %v, want no replacement stage", rec.Trace)
+	}
+	requireNoManifest(t, dir)
+}
+
+// requireNoManifest fails t unless dir holds no manifest.
+func requireNoManifest(t *testing.T, dir string) {
+	t.Helper()
+	if _, err := os.Lstat(filepath.Join(dir, Name)); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("manifest stat err = %v, want it absent", err)
 	}
 }
