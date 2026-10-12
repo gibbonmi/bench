@@ -21,7 +21,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Publish the real record with a directory-sync fault after rename.
 The caller returns classified failure and read-back observes the complete new record.
 
-- [ ] The prospective owner record caller exposes an injected directory-sync failure. (D18).
+- [x] The prospective owner record caller exposes an injected directory-sync failure. (D18).
 
 ## Checkpoint verification
 

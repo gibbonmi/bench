@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -224,40 +225,19 @@ func readRecordAt(path string) (Record, bool) {
 	return record, true
 }
 
-// Publish writes record into root the way an owner publishes its own: an atomic rename of
-// a private regular file, followed by a directory sync.
+// Publish writes record into root the way an owner publishes its own: a durable
+// replacement of a private regular file.
 func Publish(root string, record Record) error {
+	return publish(durablefile.Native(), root, record)
+}
+
+// publish encodes record and replaces the owner record of root with it through replacer.
+func publish(replacer durablefile.Replacer, root string, record Record) error {
 	data, err := json.Marshal(record)
 	if err != nil {
 		return err
 	}
-	temporary, err := os.CreateTemp(root, ".owner-")
-	if err != nil {
-		return err
-	}
-	name := temporary.Name()
-	defer func() { _ = temporary.Close(); _ = os.Remove(name) }()
-	if err := temporary.Chmod(RecordMode); err != nil {
-		return err
-	}
-	if _, err := temporary.Write(append(data, '\n')); err != nil {
-		return err
-	}
-	if err := temporary.Sync(); err != nil {
-		return err
-	}
-	if err := temporary.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(name, filepath.Join(root, RecordName)); err != nil {
-		return err
-	}
-	directory, err := os.Open(root)
-	if err != nil {
-		return err
-	}
-	defer directory.Close()
-	return directory.Sync()
+	return replacer.Replace(filepath.Join(root, RecordName), append(data, '\n'), RecordMode)
 }
 
 func removeBundle(repository, root, checkout string, remove func(string, string) error) error {
