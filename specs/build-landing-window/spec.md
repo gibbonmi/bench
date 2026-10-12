@@ -58,7 +58,7 @@ Each decision below is the author's call inside the 2026-10-09 bounds. Each one 
 - R5 (override trust root): the override verb needs the primary checkout, a terminal on stdin, and the typed assignment id. The follow-on guard denies the verb in an agent tool call. The trust assumption is reviewer-visible: a fabricated pseudo-terminal or a direct ledger edit defeats these honest-mistake layers.
 - R6 (fold review): a non-empty resolution delta takes the same three independent axes as a chunk, scoped to the resolution paths.
 - R7 (final checks): each merged test package becomes a derived final verification requirement, `merged-test:<package>`, with the command `bench test --package <package>`.
-- R8 (fence): the review preflight authorizes a path that a recorded fold lists in its resolution. This is a flagged addition. Without it, a resolved `main` path needs a fence expansion, as the FT337 occurrence records.
+- R8 (fence): the review preflight authorizes a path that a recorded fold lists in its resolution. This is a flagged addition. Without it, a resolved `main` path needs a fence expansion, as the FT337 occurrence records. The skip holds only while the path keeps its bytes and mode from the fold commit.
 - R9 (fold red): `merge-fold-red` keeps reviewer authority. Its route becomes the hand merge with the repair, `bench commit`, and `bench record fold`.
 - R10 (proof fault): a completion proof fault over a source that already holds the destination routes to `land-handback`, not to `bench doctor`.
 - R11 (records): the lease, gap, and override records join `CommitmentState`, so the `DATA_HANDLING.md` inventory check covers them.
@@ -373,6 +373,8 @@ The completion requires a passing result for each derived requirement at the com
 
 `unauthorizedPaths` (`internal/preflight/paths_authorized.go:24`) also skips a path that a fold entry of the record at the source tip lists in `Resolution`.
 The fold review grades that path, so the fence does not need to name it.
+The skip holds only while the path at the source tip keeps its bytes and mode from the fold commit.
+The fold review graded only those bytes.
 
 ### Fold red
 
@@ -580,6 +582,7 @@ Every expected TOON row derives through `toon.Table`, so a numeric-looking chunk
 | BW94 | 16, 23 | A spec-less landing from a sibling assignment that `--from` bound to the build refuses with face `land-build-window` while the build is outside a gap | planned internal/worktree/land_window_test.go (TestWindowAdmitsTheBuildsOwnLanding) | A rule keyed to the bound assignment alone lets a build worktree land spec-less under a chunk. |
 | BW96 | 17, 19 | After `bench commitment block` during an open gap and a later `bench commitment unblock` and `bench commitment start`, an unbound landing refuses with face `land-build-window` | planned internal/commitment/repository/window_test.go (TestStartDropsAStaleGap) | A start that keeps the old open gap reopens the build with `main` already free to move. |
 | BW97 | 18, 19 | After `bench commitment block`, and after the build's completion landing publishes, the ledger holds no gap record for the outcome | planned internal/commitment/repository/window_test.go (TestClosersDropTheGapRecord) | A closer that keeps the gap record leaves a stale record for the next start to trust. |
+| BW98 | 56 | `paths-authorized` stays red for a recorded resolution path that a later commit changes after the fold | planned internal/preflight/folded_main_test.go (TestPathsAuthorizedAdmitsARecordedResolutionPath) | A name-only skip lets a later build write to the path pass the fence. |
 | BW95 | 32 | A repair dispatch to a chunk-`C1` ticket while the gap record holds chunk `C3` with `Last` true leaves the ledger bytes unchanged | planned internal/reviewrecord/recordcmd/dispatch_gap_test.go (TestDispatchInsideAChunkKeepsTheGap) | A chunk-inequality rule rewrites the record to `C1`, so the refusal names a past gap and the build loses its last-chunk state. |
 
 Not covered: story 70 — a reviewed exclusion; the Out of scope section prices it.
@@ -719,6 +722,9 @@ It holds the owner and test files, the command registry closure, the anchor regi
 - `internal/gate/run_transaction.go`
 - `internal/gate/verdict.go`
 - `internal/gocache/lock.go`
+- `internal/git/admin_readers_test.go`
+- `internal/git/default_branch.go`
+- `internal/git/git.go`
 - `internal/guards/guards_test.go`
 - `internal/intent/build_records_test.go`
 - `internal/intent/ledger/commitment.go`
@@ -740,6 +746,7 @@ It holds the owner and test files, the command registry closure, the anchor regi
 - `internal/preflight/folded_main_test.go`
 - `internal/preflight/gather.go`
 - `internal/preflight/gather_inputs.go`
+- `internal/preflight/check_floor.go`
 - `internal/preflight/paths_authorized.go`
 - `internal/preflight/preflighttest/fixture.go`
 - `internal/preflight/review.go`

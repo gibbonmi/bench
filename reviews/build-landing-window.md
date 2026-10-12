@@ -3,9 +3,13 @@
 BW-A round 1 reviewed the pair `dcbbfb80..ced1dedc`.
 Repair 1 at `2aa2bf49` closed all seven findings, and the confirming round passed on all three axes.
 BW-A used one of its two repair cycles.
+
 BW-B round 1 reviewed the pair `2aa2bf49..6c90a3c6`.
 Repair 1 at `4057ca20` closed all five findings, and the confirming round passed on all three axes.
 BW-B used one of its two repair cycles.
+
+BW-C round 1 reviewed the pair `4057ca20..db1bdc5d`, and BW-C has used zero of its two repair cycles.
+A fable/high consultation chose the owner for BW-C S1 and the content binding for BW-C C1.
 
 ## Standards
 
@@ -21,6 +25,11 @@ BW-B findings: 3. Worst issue: BW-B S1, a hand-spelled shell quote in a test exp
 - BW-B S2, auto-fix, confidence 6: `internal/worktree/land_refusal.go:291` strips `refs/heads/` that `land.go:194` added. Pass the branch that the caller already holds.
 - BW-B S3, auto-fix, confidence 5: `destinationUnchanged` at `internal/landing/gitexec.go:145` drops a `ResolveCommit` error without a comment. State that the publish compare-and-swap still refuses.
 
+BW-C findings: 2. Worst issue: BW-C S1, a default-branch ancestry check with two owners that disagree on a failed query.
+
+- BW-C S1, auto-fix, confidence 7: `FoldParents` (`internal/reviewrecord/fold.go:29-30`) repeats the ancestry check of `internal/worktree/merge.go:354-372`. Move it to one `internal/git` owner that refuses on a failed query. Ticket 3 repairs it.
+- BW-C S2, auto-fix, confidence 6: `MergedTestRequirement` (`internal/reviewrecord/check.go:91-92`) hand-spells the package command that `internal/preflight/check_floor.go:197-203` owns. Give the command one owner. Ticket 4 repairs it.
+
 ## Spec
 
 Findings: 1. Worst issue: P1, a false comparison clause in the Edge inventory.
@@ -28,6 +37,8 @@ Findings: 1. Worst issue: P1, a false comparison clause in the Edge inventory.
 - P1, auto-fix, confidence 9: the Edge inventory says that the lease lock opens without following a link "as the gate lock opens its file". The gate lock uses a plain open, so remove that clause.
 
 BW-B findings: 0. The Spec axis accepted the three author flags. BW23 uses an injected typed refusal at the `j.landReviewed` hook, because no real fixture reaches that state.
+
+BW-C findings: 0. The transitive second-fold reading reconciles the spec lines on the covered digest and the fold `From`.
 
 ## Coverage
 
@@ -41,6 +52,13 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
 
 - BW-B C1, auto-fix, confidence 7: a swap of the cause match at `internal/worktree/land_refusal.go:284` to any non-empty cause stays green. Add a row that pins a non-proof gate cause to `land-infrastructure`.
 - BW-B C2, auto-fix, confidence 5: no test reaches the branch where the ancestry query fails. Add a row that pins its handback.
+
+BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later commit can change past the fence.
+
+- BW-C C1, auto-fix, confidence 6: `unauthorizedPaths` skips a resolution path by name alone. Bind the skip to the bytes and mode at the fold commit, and add row BW98. Ticket 4 repairs it.
+- BW-C C2, auto-fix, confidence 7: no test gives a chunk base with the fold digest that does not descend from the fold commit. Ticket 3 adds it.
+- BW-C C3, auto-fix, confidence 7: no test records a fold whose first parent has only a comment-only gap. Ticket 3 adds it.
+- BW-C C4, auto-fix, confidence 7: no test records two folds in one gap. Ticket 3 adds it.
 
 ```bench-review-record
 {
@@ -1161,7 +1179,76 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bwc-standards-r1",
+          "performer": "claude:blw_bwc_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwc_standards",
+            "digest": "sha256:1f8418eae8779f29c2562d6f07ec95c7454f91638e39956d68d69056de73457e",
+            "excerpt": "Axis: Standards — 2 findings, worst S1.\nS1 fold.go:29-30 repeats the default-branch ancestry predicate of\n  merge.go:354-372 (one-source rule); the copies drift on query failure.\n  ask-user, blocking, conf 7.\nS2 check.go:91-92 hand-spells the floor package command that\n  check_floor.go:198-203 owns. ask-user, blocking, conf 6.\nReviewer direction met: record writes use write->replace; no t.Parallel.\nAdvice: swallowed git errors in follows/FoldParents; repairValues omits Fold;\n  FoldParents export unused outside package.\n"
+          },
+          "axis": "Standards",
+          "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "tip": "db1bdc5d31f26b60c029566175a428aca4563266",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwc-spec-r1",
+          "performer": "claude:blw_bwc_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwc_spec",
+            "digest": "sha256:6980645db841a24cb7881956cd64004021b66e67df0aaf6c5533665cd8cf5a92",
+            "excerpt": "Axis: Spec — chunk BW-C, pair 4057ca20..db1bdc5d — 0 findings, pass.\nBW25-BW45 and BW93 are built and graded by their cited tests.\nFold refusals match spec text; each refuses before the record write.\nChain gap and stale source repair through form `fold`; texts match.\nmerged-test:<pkg> derives once in finalRequirements; paths-authorized skips Resolution.\nmerge-fold-red has four steps and no FT342.\nAdvice: coveringFold reads \"From covers the predecessor's digest\" transitively (F2 untested);\nplaceholder <full-destination-commit> differs from the spec's <from-commit>; the Compose\nconflict-tree error path has no direct test.\n"
+          },
+          "axis": "Spec",
+          "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "tip": "db1bdc5d31f26b60c029566175a428aca4563266",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bwc-coverage-r1",
+          "performer": "claude:blw_bwc_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwc_coverage",
+            "digest": "sha256:36628ff195a66358c76b003b971797b254a749bfd1a0e98aa51d304696f15f72",
+            "excerpt": "Axis: Coverage — 4 findings, none blocking.\nC1 ask-user: paths_authorized.go:28 exempts a fold resolution path by name; a later build write to it passes the fence (DefaultTipPaths binds content).\nC2 auto-fix: foldCoversBase ancestry (fold.go:111) untested — probe silent.\nC3 auto-fix: comment-only first parent (fold.go:137, spec:334) untested — probe silent.\nC4 auto-fix: second fold in one gap (fold.go:92) untested — probe silent.\nProbes P1-P3 restored=yes; worktree clean.\nAdvice: resolver not excluded from fold review; backslash/newline path bytes untested.\n"
+          },
+          "axis": "Coverage",
+          "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "tip": "db1bdc5d31f26b60c029566175a428aca4563266",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
