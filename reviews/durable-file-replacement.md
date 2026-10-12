@@ -10,9 +10,9 @@
     {
       "id": "D-A",
       "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
-      "tip": "5f1ea9dc7b6612d8095d883eca4730bcc8853cd9",
-      "plan_digest": "sha256:7a8be2c6a86c8f70f2ee4dd22898e1f83dee922fd0f2c5366c3d885eda7ebe5b",
-      "source_digest": "58796930b5bb3c6483e32048fac3bdb733b175cc",
+      "tip": "5303ca3c9b8d523243b338dcb72d63b0935b4261",
+      "plan_digest": "sha256:13c36574a31cf4b389ddc0c9f802e8f0574155402083cdaf8f59fe459d757a1a",
+      "source_digest": "9107a8aeff98e6bb835081228a1dd13b49ea1939",
       "acceptance_rows": [
         "D01",
         "D02",
@@ -1143,7 +1143,62 @@
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "dfr-final-ordinary-integration",
+        "performer": "claude:dfr-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9107a8aeff98e6bb835081228a1dd13b49ea1939",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:dfr-orchestrator-20261011",
+          "digest": "sha256:ee6b5ca0b560508b548e21a3261c1412ebff96c72e7698a2cde111cb088f7065",
+          "excerpt": "bench test --package ./... at 95969942 (WSL2 linux/amd64): 127 packages pass, failures[0], skips[7] for host capability (character device creation not permitted; no bin/bench.sh in a capability subject root).\n"
+        },
+        "requirement": "ordinary-integration",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "dfr-final-coverage",
+        "performer": "claude:dfr-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9107a8aeff98e6bb835081228a1dd13b49ea1939",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:dfr-orchestrator-20261011",
+          "digest": "sha256:71226fbc8bd22540a2e1539d36a98e8a6aec0b8c0cf9dfa8b5543b0e87a243b0",
+          "excerpt": "bench coverage --check durable-file-replacement at 95969942: ok: coverage map valid — 17 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check durable-file-replacement",
+        "exit_code": 0
+      },
+      {
+        "id": "dfr-final-root-conformance",
+        "performer": "claude:dfr-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "9107a8aeff98e6bb835081228a1dd13b49ea1939",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:dfr-orchestrator-20261011",
+          "digest": "sha256:9c1715032bd579af748bb2edccd95d7fbaa950c2e25745cc8abd0d390905e8ea",
+          "excerpt": "bench test --check root-conformance at 95969942: internal/conformance pass, tests_run 1, failures[0], skips[0]\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
