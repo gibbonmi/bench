@@ -4941,6 +4941,28 @@
           "supersedes": [
             "dcm-c6-r1-coverage"
           ]
+        },
+        {
+          "id": "dcm-c6-r3-standards",
+          "performer": "claude:dcm_rev_c6_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4838805bd7d4cd9248c2e6e37fec7d82edeea771",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c6_std",
+            "digest": "sha256:5699c4bac40491f9742ad4286c2df871df677d6fea65b9c373c93d8c7d99dc28",
+            "excerpt": "## Standards (D-C6 reaffirmation, dc16c457..98bf2bc5) — S2 closed (internal/repairpilot/command.go:55); comment-only diff; 0 new findings.\n"
+          },
+          "axis": "Standards",
+          "base": "3210553dcf40b324eeb975dd04758adbff2a02e9",
+          "tip": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c6-r2-standards"
+          ]
         }
       ]
     }
@@ -5919,3 +5941,5 @@ Commit fee3f738 closes S1: the Store and Replace doc comments state only the cal
 The D-C6 confirming round at c7a75215 closed S1 and C1. It raised one comment-only finding.
 
 - S2, auto-fix as an evidence-only comment correction, confidence 6: the `Store.Replace` comment at `internal/repairpilot/command.go:55-56` restates the encoding and the 0600 mode that `writeDocument` holds. The orchestrator charge asked for that clause. The orchestrator removes it, and the Standards axis reaffirms the correction.
+
+The Standards reaffirmation at 98bf2bc5 closed S2. Chunk D-C6 closed with 1 of its 2 repair cycles used, and the comment-only correction used none.
