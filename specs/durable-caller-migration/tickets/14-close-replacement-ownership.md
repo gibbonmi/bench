@@ -12,6 +12,8 @@ Retain manifestBytes, manifestMode, stageBytes, and the adoption lifecycle trans
 Reconcile every migrated caller against its recorded payload, mode, refusal, and bypass evidence.
 Review the excluded immutable, directory, rollback, rotation, cancellation, and lease owners without migrating them.
 
+The source census also confirms that each exported caller entry binds the native replacer. No caller test can detect a plain write in its place.
+
 Review chunk: D-D.
 Complete acceptance and landing of durable-file-replacement supplies the shared leaf and its native qualification.
 No ticket in this successor starts before that complete prerequisite lands.

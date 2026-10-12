@@ -417,6 +417,7 @@ The implementation ticket Writes union must match this union after reviewed slic
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/dashboard/dashboard.go`
 - `internal/dashboard/replacement_test.go`
+- `internal/durablefile/durablefiletest/assert.go`
 - `internal/gate/complete_checkpoint.go`
 - `internal/gate/durable_replacement_test.go`
 - `internal/gate/engine.go`
