@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/intent"
+	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
 // openBuildFixture is the spec-less landing fixture outside a chunk gap. Its source binds the
@@ -158,24 +159,58 @@ func TestWindowClosesOnAbandon(t *testing.T) {
 	requireLanded(t, runVerb(t, verbLand, light.call(lightLandArgs(request, light)...)), "after the release")
 }
 
-// TestWindowRecheckAtPublish is BW56. A build that starts while the landing's gate runs
-// refuses that landing in the publish decision, so main stays at the base.
+// gapPlan is a completion plan of three chunks with one ticket each, for the gap decisions
+// that a chunk checkpoint and a chunk dispatch make.
+var gapPlan = rr.Plan{Chunks: []rr.PlannedChunk{{ID: "C1", Tickets: []string{"1.md"}}, {ID: "C2", Tickets: []string{"2.md"}}, {ID: "C3", Tickets: []string{"3.md"}}}}
+
+// TestOpenGapAdmitsAnUnrelatedLanding is BW61. The gap that the build's chunk checkpoint
+// opens lets the unbound light-path landing publish.
+func TestOpenGapAdmitsAnUnrelatedLanding(t *testing.T) {
+	t.Parallel()
+	request := "land-window-gap"
+	build, light := windowLanding(t, request)
+	mustNoError(t, commitrepo.Store{Root: build.creation.Path}.OpenGap(gapPlan, "C1"))
+	requireLanded(t, runVerb(t, verbLand, light.call(lightLandArgs(request, light)...)), "in the build's open gap")
+}
+
+// TestWindowRecheckAtPublish is BW56 and BW70. While the landing's gate runs, another build
+// starts, or the first dispatch of its next chunk closes its gap. Either refuses the landing
+// in the publish decision, so main stays at the base. The landing is not bound to that build.
 func TestWindowRecheckAtPublish(t *testing.T) {
 	t.Parallel()
-	request := "land-window-publish"
-	f := barrierLandingFixture(t, request)
-	other := commitmenttest.Assignment(t, f.root, request+"-other")
-	var startErr error
-	done := f.during(func() { startErr = startOtherBuild(f.root, other) })
-	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	select {
-	case err := <-done:
-		mustNoError(t, err)
-	default:
-		t.Fatalf("landing finished without reaching its gate barrier: (%d, %q, %q)", r.exit, r.stdout, r.stderr)
+	for _, row := range []struct {
+		name, wait     string
+		before, during func(root, other string) error
+	}{
+		{name: "build-start", wait: "its first chunk checkpoint", during: startOtherBuild},
+		{name: "gap-close", wait: "the checkpoint of chunk C2", before: func(root, other string) error {
+			if err := startOtherBuild(root, other); err != nil {
+				return err
+			}
+			return commitrepo.Store{Root: other}.OpenGap(gapPlan, "C1")
+		}, during: func(_, other string) error { return commitrepo.Store{Root: other}.CloseGap(gapPlan, "2.md") }},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			request := "land-window-publish-" + row.name
+			f := barrierLandingFixture(t, request)
+			other := commitmenttest.Assignment(t, f.root, request+"-other")
+			if row.before != nil {
+				mustNoError(t, row.before(f.root, other))
+			}
+			var duringErr error
+			done := f.during(func() { duringErr = row.during(f.root, other) })
+			r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+			select {
+			case err := <-done:
+				mustNoError(t, err)
+			default:
+				t.Fatalf("landing finished without reaching its gate barrier: (%d, %q, %q)", r.exit, r.stdout, r.stderr)
+			}
+			mustNoError(t, duringErr)
+			requireWindowRefusal(t, r, f.landingFixture, otherBuild, row.wait)
+		})
 	}
-	mustNoError(t, startErr)
-	requireWindowRefusal(t, r, f.landingFixture, otherBuild, "its first chunk checkpoint")
 }
 
 // TestWindowWinsOverTheLease is BW59. The window decides before the lease, so a landing

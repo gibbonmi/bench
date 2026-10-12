@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"errors"
-	"slices"
 	"strings"
 	"testing"
 
@@ -62,37 +61,8 @@ func windowSource(t *testing.T, root, worktree string) commitrepo.Publication {
 	return source
 }
 
-// editCommitment applies edit to the commitment state of the ledger at root.
-func editCommitment(t *testing.T, root string, edit func(*intent.CommitmentState)) {
-	t.Helper()
-	if err := intent.Transact(root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
-		state := intent.CommitmentState{}
-		if ledger.Commitment != nil {
-			state = *ledger.Commitment
-		}
-		edit(&state)
-		ledger.Commitment = &state
-		return ledger, true, nil
-	}, nil); err != nil {
-		t.Fatal(err)
-	}
-}
-
-// putGap replaces the chunk gap record of gap's outcome, in the active milestone of root, as
-// the chunk checkpoint and the chunk dispatch write it.
-func putGap(t *testing.T, root string, gap intent.ChunkGap) {
-	t.Helper()
-	policy, _, err := commitrepo.Store{Root: root}.Policy()
-	if err != nil {
-		t.Fatal(err)
-	}
-	gap.Milestone = policy.ActiveMilestone
-	editCommitment(t, root, func(state *intent.CommitmentState) {
-		state.Gaps = append(slices.DeleteFunc(slices.Clone(state.Gaps), func(held intent.ChunkGap) bool {
-			return held.Outcome == gap.Outcome
-		}), gap)
-	})
-}
+// putGap is the shared gap seed under the name that the publication tests call.
+var putGap = commitmenttest.PutGap
 
 // requireWindowRefusal fails unless err is the window refusal of an open build that names
 // want: the build, its deliverable, and the gap to wait for.
@@ -162,7 +132,7 @@ func TestWindowNeedsAGapOfEveryOtherBuild(t *testing.T) {
 	putGap(t, root, intent.ChunkGap{Outcome: "A", Chunk: "C1", Open: true})
 	store := commitrepo.Store{Root: root}
 	requireWindowRefusal(t, store.AdmitWindow(unbound), "B ("+specB+"); wait for its first chunk checkpoint")
-	editCommitment(t, root, func(state *intent.CommitmentState) {
+	commitmenttest.EditCommitment(t, root, func(state *intent.CommitmentState) {
 		state.Overrides = append(state.Overrides, intent.LandingOverride{Assignment: unbound.Assignment, Reason: "back out a landed change"})
 	})
 	if err := store.AdmitWindow(unbound); err != nil {

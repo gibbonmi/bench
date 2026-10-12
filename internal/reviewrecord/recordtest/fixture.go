@@ -17,6 +17,9 @@ import (
 
 const Spec = "specs/example/spec.md"
 
+// Body is the staged spec text that a fixture writes before its plan.
+const Body = "# Example\n\nStatus: staged\n\n"
+
 type Fixture struct {
 	T      testing.TB
 	Root   string
@@ -37,12 +40,12 @@ func Attach(t testing.TB, root string, count int) *Fixture {
 }
 
 func AttachAt(t testing.TB, root string, count int, spec string) *Fixture {
-	return Prepare(t, root, count, spec, "# Example\n\nStatus: staged\n\n")
+	return Prepare(t, root, count, spec, Body)
 }
 
 // AttachDelegated is Attach in the version 2 delegated form.
 func AttachDelegated(t testing.TB, root string, count int) *Fixture {
-	return Prepare(t, root, count, Spec, "# Example\n\nStatus: staged\n\n", Delegate)
+	return Prepare(t, root, count, Spec, Body, Delegate)
 }
 
 // NewDelegated is New in the version 2 delegated form.
@@ -61,7 +64,7 @@ func NewLinked(t testing.TB, count int, options ...Option) (*Fixture, string) {
 			t.Fatalf("git %v: %v", args, err)
 		}
 	}
-	f := Prepare(t, linked, count, Spec, "# Example\n\nStatus: staged\n\n", options...)
+	f := Prepare(t, linked, count, Spec, Body, options...)
 	f.primary = primary
 	return f, primary
 }

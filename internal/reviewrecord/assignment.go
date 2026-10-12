@@ -13,12 +13,14 @@ import (
 // that must be HEAD, and Ticket is a planned ticket basename. Assignment is the new
 // occurrence, and RecordAssignment sets its Source. RunID, OrchestratorSession,
 // AuthorLimit, and ReviewMode assert the plan's execution declaration; they never
-// change it, and an empty ReviewMode asserts the default mode.
+// change it, and an empty ReviewMode asserts the default mode. A non-nil BeforeWrite reads
+// the graded plan before the plan write, and its refusal leaves the plan unchanged.
 type AssignmentCall struct {
 	Source, Ticket                         string
 	Assignment                             Assignment
 	RunID, OrchestratorSession, ReviewMode string
 	AuthorLimit                            int
+	BeforeWrite                            func(Plan) error
 }
 
 // RecordAssignment appends one assignment to the history of a ticket in the version 2
@@ -78,6 +80,11 @@ func RecordAssignment(root, spec string, call AssignmentCall) ([]Assignment, err
 	}
 	for _, name := range append([]string{spec}, plan.ticketPaths(spec)...) {
 		if _, err := read(name); err != nil {
+			return nil, err
+		}
+	}
+	if call.BeforeWrite != nil {
+		if err := call.BeforeWrite(plan); err != nil {
 			return nil, err
 		}
 	}

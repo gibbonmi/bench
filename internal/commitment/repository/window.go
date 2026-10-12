@@ -85,12 +85,17 @@ func activeAssignment(ledger intent.Ledger, id string) bool {
 
 // chunkGap is the gap record of the claimed outcome, if the ledger holds one.
 func chunkGap(state intent.CommitmentState, claim intent.OutcomeClaim) (intent.ChunkGap, bool) {
-	for _, gap := range state.Gaps {
-		if gap.Milestone == claim.Milestone && gap.Outcome == claim.Outcome {
-			return gap, true
-		}
+	if i := gapIndex(state, claim); i >= 0 {
+		return state.Gaps[i], true
 	}
 	return intent.ChunkGap{}, false
+}
+
+// gapIndex is the position of the claimed outcome's gap record in state, or -1.
+func gapIndex(state intent.CommitmentState, claim intent.OutcomeClaim) int {
+	return slices.IndexFunc(state.Gaps, func(gap intent.ChunkGap) bool {
+		return gap.Milestone == claim.Milestone && gap.Outcome == claim.Outcome
+	})
 }
 
 // waitFor names the gap that a closed or absent gap record leaves the landing to wait for.

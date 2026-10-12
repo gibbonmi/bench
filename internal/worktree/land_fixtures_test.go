@@ -12,7 +12,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/freshness"
-	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -85,20 +84,8 @@ func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, hom
 // closureAdmission writes the policy that approves closureSpec for the delivery outcome.
 func closureAdmission(t testing.TB, root string) { commitmenttest.SeedAdmission(t, root, closureSpec) }
 
-// openChunkGaps records an open chunk gap for each claimed outcome of the ledger at root,
-// as a green chunk checkpoint records it.
-func openChunkGaps(t *testing.T, root string) {
-	t.Helper()
-	mustNoError(t, intent.Transact(root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
-		state := *ledger.Commitment
-		state.Gaps = nil
-		for _, claim := range state.Claims {
-			state.Gaps = append(state.Gaps, intent.ChunkGap{Milestone: claim.Milestone, Outcome: claim.Outcome, Chunk: "C1", Open: true})
-		}
-		ledger.Commitment = &state
-		return ledger, true, nil
-	}, nil))
-}
+// openChunkGaps is the shared open-gap seed under the name that the landing fixtures call.
+var openChunkGaps = commitmenttest.OpenChunkGaps
 
 // closureSpec is the landing fixture's staged spec.
 const closureSpec = "specs/x/spec.md"
