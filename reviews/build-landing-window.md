@@ -12,7 +12,8 @@ BW-C round 1 reviewed the pair `4057ca20..db1bdc5d`, and repair 1 closed S1, S2,
 The BW-C confirming round found S3 and P1, and repair 2 at `901d9152` closed both.
 The third round passed on all three axes, and BW-C used both of its repair cycles.
 
-BW-D round 1 reviewed the pair `901d9152..b68ee13d`, and BW-D has used zero of its two repair cycles.
+BW-D round 1 reviewed the pair `901d9152..b68ee13d`, and repair 1 closed all five targets at `814a14cc`.
+The confirming round passed on all three axes, and BW-D used one of its two repair cycles.
 A fable/high consultation chose the rules for BW-D C1 and BW-D S3, and added rows BW99 and BW100.
 A fable/high consultation chose the owner for BW-C S1 and the content binding for BW-C C1.
 
@@ -2436,6 +2437,72 @@ BW-D findings: 2. Worst issue: BW-D C1, a repair checkpoint that reopens the gap
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bwd-standards-r2",
+          "performer": "claude:blw_bwd_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bddda7150f7f6afc4944738de7e08d10a6b10081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwd_standards_r2",
+            "digest": "sha256:2dfa73a7f1144731e916ab3e2e9f8f4656717be886971e7d64dc5ea69d85bc07",
+            "excerpt": "Standards confirming round, BW-D, delta b68ee13d..814a14cc: 0 findings.\nS1 closed: activeAssignment has one definition (admission.go:134), used by runtimeState and openBuilds.\nS2 closed: every changed comment sentence is 21 words or fewer.\nS3 closed: openBuilds resolves sourceRevision once (window.go:67); a fault refuses with land-infrastructure\n  (window.go:146-148); a validateDeliverableAt error only skips the binding.\nrecordedPosition, LedgerPath, RequireLedgerKept, and requireOpenGap merge copies; no new duplication.\nAdvice: \"a fault that resolves it\" at window.go:60 reads backwards.\n"
+          },
+          "axis": "Standards",
+          "base": "901d91524635f47b5c646f02c990db0817c6f1b5",
+          "tip": "814a14cce55260b397affab84f1ba90a473b98fe",
+          "finding_ids": [],
+          "supersedes": [
+            "bwd-standards-r1"
+          ]
+        },
+        {
+          "id": "bwd-spec-r2",
+          "performer": "claude:blw_bwd_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bddda7150f7f6afc4944738de7e08d10a6b10081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwd_spec_r2",
+            "digest": "sha256:c1210d78ef723ec871d332e9c9d8bdbcc5f1af3b2cf28ca4a0ad7c1f132ea029",
+            "excerpt": "Spec confirming round, BW-D, delta b68ee13d..814a14cc: 0 findings.\nP1 closed: OpenGap returns nil when recordedPosition > position (gap.go:32-35), matching spec.md:271-272; BW99 grades it.\nS3: a sourceRevision fault refuses with land-infrastructure (window.go:39-42), matching spec.md:233; BW100 grades it;\n  classification errors still only skip the binding (window.go:76-77), as R2 requires.\nBW46-BW70 and BW94-BW97 keep their behavior. Chunk row, coverage map, and ticket Covers lines agree.\nAdvice: t6-gate-focused omits the two new tests; TestUnrecordedGapExitsOne depends on a non-root user.\n"
+          },
+          "axis": "Spec",
+          "base": "901d91524635f47b5c646f02c990db0817c6f1b5",
+          "tip": "814a14cce55260b397affab84f1ba90a473b98fe",
+          "finding_ids": [],
+          "supersedes": [
+            "bwd-spec-r1"
+          ]
+        },
+        {
+          "id": "bwd-coverage-r2",
+          "performer": "claude:blw_bwd_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bddda7150f7f6afc4944738de7e08d10a6b10081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwd_coverage_r2",
+            "digest": "sha256:6814e09d3426da357c55bd577451a00917662599b351016e6135ea9859d58a7a",
+            "excerpt": "Coverage confirming round, BW-D, delta b68ee13d..814a14cc: 0 findings; C1, C2, S3 closed.\nC1 gap.go OpenGap guard weakened: bit, restored yes; CloseGap >= to >: bit; helper no-record -1 to len: bit.\nC2 chunk_gap.go return 1 to return 0: bit, TestUnrecordedGapExitsOne red, restored yes.\nS3 window.go refusal to builds = nil: bit; route to LandBuildWindow: bit; restored yes.\nAdvice (non-blocking): decideGap tip fault swap at gap.go:109-111 is silent (hardening);\n  TestUnrecordedGapExitsOne lacks the capability guard for euid 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "901d91524635f47b5c646f02c990db0817c6f1b5",
+          "tip": "814a14cce55260b397affab84f1ba90a473b98fe",
+          "finding_ids": [],
+          "supersedes": [
+            "bwd-coverage-r1"
+          ]
         }
       ]
     }
