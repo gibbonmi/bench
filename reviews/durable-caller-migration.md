@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:95a4fa23af538a1a3b21d7b5f8d34d8497b07fa508e4ad0dad253db7925d183c",
+  "plan_digest": "sha256:5cb50643a5295119fe76284a8cc58c0cc7bfd797ae01bfecc20e1b30a5df98af",
   "implementation_session": "",
   "chunks": [
     {
@@ -2749,6 +2749,30 @@
     {
       "from": "sha256:e6d4e71219c6d5808b3d70faeec627fdabed0455e2f06870b25523a882c731d7",
       "to": "sha256:95a4fa23af538a1a3b21d7b5f8d34d8497b07fa508e4ad0dad253db7925d183c",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-C1": [
+          "D-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:95a4fa23af538a1a3b21d7b5f8d34d8497b07fa508e4ad0dad253db7925d183c",
+      "to": "sha256:5cb50643a5295119fe76284a8cc58c0cc7bfd797ae01bfecc20e1b30a5df98af",
       "chunk_ids": {
         "D-B1": [
           "D-B1"
