@@ -4541,6 +4541,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-c3-r2-spec",
+          "performer": "claude:dcm_rev_c3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2edd23a96795019c66d36851373250f4b7b5329f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c3_spec",
+            "digest": "sha256:acb4f8b4859fdbc2e068f83ea14f4a481ad3fcf1469d8c07e02a148ca8415a7c",
+            "excerpt": "## Spec (D-C3 confirming, be27b3b8..b20919b1) — pass; 0 findings; refusal output bytes unchanged; D26 still met.\n"
+          },
+          "axis": "Spec",
+          "base": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "tip": "b20919b10799df0f4014df0a588bf70c3cea986c",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c3-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-c3-r2-standards",
+          "performer": "claude:dcm_rev_c3_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2edd23a96795019c66d36851373250f4b7b5329f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c3_std",
+            "digest": "sha256:16cca3a57f60462b58e401cc6c44876e6ab57cdc6c4e69bf3160cedbc04f8cf7",
+            "excerpt": "## Standards (D-C3 confirming, be27b3b8..b20919b1) — S1 closed (dashboard.go:88); S2 closed (replacement_test.go:69-71, probe C whole package); 0 new findings.\nAdvice: the Command doc comment says \"that path\" with no named path; optional wording fix.\n"
+          },
+          "axis": "Standards",
+          "base": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "tip": "b20919b10799df0f4014df0a588bf70c3cea986c",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c3-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-c3-r2-coverage",
+          "performer": "claude:dcm_rev_c3_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2edd23a96795019c66d36851373250f4b7b5329f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c3_cov",
+            "digest": "sha256:fc879f778756b63ede545d7b802334360da5741063ba006f490f5c7db15c33f4",
+            "excerpt": "## Coverage (D-C3 confirming, be27b3b8..b20919b1) — C1 closed (replacement_test.go:69-71; probe C whole package, B replayed, orchestrator pageName drift bit); dcm-t10-rep1 entries graded; 0 new findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "tip": "b20919b10799df0f4014df0a588bf70c3cea986c",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c3-r1-coverage"
+          ]
         }
       ]
     }
@@ -5416,3 +5482,5 @@ Chunk D-C3 used 0 of its 2 repair cycles before repair 1. S1, S2, and C1 fall on
 - C1 closes in commit b20919b1. The swap of "cannot write" to "cannot save" turns only `TestDashboardCommandReportsReplacementFailure` red over the whole package.
 
 Chunk D-C3 used 1 of its 2 repair cycles.
+
+The D-C3 confirming round at 3316f631 closed S1, S2, and C1 with no new findings. Chunk D-C3 closed with 1 of its 2 repair cycles used.
