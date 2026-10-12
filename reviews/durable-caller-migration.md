@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:2649d87242eda6170ea76efadda6c82fe48de463f63982d2b8d7f9e9c64f9323",
+  "plan_digest": "sha256:5f3b8ff2cb08f262254461d3182e5bd26885f2f80ef93f6792bdd716587ef9a2",
   "implementation_session": "",
   "chunks": [
     {
@@ -3538,9 +3538,9 @@
     {
       "id": "D-C4",
       "base": "68e390e155699b5aae10125808e86f8eb5eb3b93",
-      "tip": "0e86fec98de40c9c5ff0e21cd719255731934188",
-      "plan_digest": "sha256:2649d87242eda6170ea76efadda6c82fe48de463f63982d2b8d7f9e9c64f9323",
-      "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+      "tip": "c377e632d4056ebb6853ed1087efbb38e010c824",
+      "plan_digest": "sha256:5f3b8ff2cb08f262254461d3182e5bd26885f2f80ef93f6792bdd716587ef9a2",
+      "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
       "acceptance_rows": [
         "D27",
         "D34",
@@ -3806,6 +3806,208 @@
               "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
               "digest": "sha256:41e55eecdcb1e8d6fd32845cf2ae9937bfaf8f46c40a855a3658754e2ae8b34d",
               "excerpt": "D-C4 preservation probes at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers), bench probe ... --package ./internal/probe, no --run filter. One necessity red for each independent check of the new tests, plus the payload and mode of each migrated writer and the native wrapper's error path. Every verdict bit, every restored yes; the package passes 114 tests after each restore. The omission-proof entry holds O1-O7; their reds also serve D41 copy existence (O1), D42 bytes (O2, O6), D42 home (O4), D27 focused start (O7), and D34 row (O3).\n\nP1 D27 output equality (the mutation cause reaches the caller). probe.go\nOld: \"line := toon.Errorf(\\\"probe mutation failed\\\", err.Error()) + \\\"\\\\n\\\"\"\nNew: \"line := toon.Errorf(\\\"probe mutation failed\\\", \\\"the subject replacement failed\\\") + \\\"\\\\n\\\"\"\nbit, 1 failed, restored yes. TestProbeReplacement :67 only.\n\nP2 D27 mutation mode (constant drift). probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, mutated, 0o644)\"\nbit, 1 failed, restored yes. TestProbeReplacement :58 mode = -rw-r--r--, want -rw-r----- only.\n\nP3 D27 mutation payload. probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, append(mutated, 10), subject.mode)\"\nbit, 2 failed, restored yes. TestProbeReplacement :58 bytes; TestOmitFileUsesExactBytesAndReportsOmit.\n\nP4 restore mode (owned by existing PB17). subject.go\nOld: \"replacer.Replace(subject.path, saved, subject.mode)\"\nNew: \"replacer.Replace(subject.path, saved, 0o644)\"\nbit, 1 failed, restored yes. TestProbeKeepsTheSubjectMode outcome_test.go:130 only.\n\nP5 D34 copy retained after a failed restore sync. probe.go\nOld: \"\\tif restored {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nNew: \"\\tif true {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nbit, 3 failed, restored yes. TestProbeFailedRestore :124 preserved files = ([]); PB14, PB47.\n\nP6 D41 preserved row names the copy path. probe.go\nOld: \"[][]string{{preserved.file, sanitize.Strip(reason)}}\"\nNew: \"[][]string{{preserved.dir, sanitize.Strip(reason)}}\"\nbit, 3 failed, restored yes. TestProbeMutationRecoveryFailure :108; PB14, PB47.\n\nP7 D41 reason carries the mutation cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"\\\"restore: \\\"+reason\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP8 D41 reason carries the restore cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"err.Error()+\\\"; restore: \\\"+reason[:0]\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP9 D41 exit 2. probe.go\nOld: \"return line + block, 2\"  New: \"return line + block, 1\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :102 only.\n\nP10 D41 exact copy bytes (shared with PB12, PB14). subject.go\nOld: \"if err := os.WriteFile(file, subject.start, 0o600); err != nil {\"\nNew: \"if err := os.WriteFile(file, subject.start[1:], 0o600); err != nil {\"\nbit, 29 failed, restored yes. Includes TestProbeMutationRecoveryFailure copy bytes and TestProbeReportsARestoreFailure.\n\nP11 D42 home: a proven restore keeps the copy. probe.go\nOld: \"if restored, reason := restore(replacer, subject, preserved); !restored {\"\nNew: \"if restored, reason := restore(replacer, subject, preserved); restored { return line, 1 } else {\"\nbit, 3 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open, -sync, -close :84 only.\n\nP12 D43 old bytes: fallback write of the new bytes after an unpublished error. probe.go\nOld: \"return mutationFailure(replacer, subject, preserved, err)\"\nNew: \"_ = os.WriteFile(subject.path, mutated, subject.mode); return mutationFailure(replacer, subject, preserved, err)\"\nbit, 2 failed, restored yes. TestProbeMutationPreparationFailure :135 old-bytes check; existing PB45 :284.\n\nP13 D43 home: the rename stage is classified as published. probe.go\nOld: \"errors.As(err, &replaceErr) && replaceErr.Published {\"\nNew: \"errors.As(err, &replaceErr) && (replaceErr.Published || replaceErr.Stage == \\\"rename\\\") {\"\nbit, 1 failed, restored yes. TestProbeMutationPreparationFailure :136 Bench home holds 1 entries only.\n\nP14 native wrapper error path (run supplies durablefile.Native(); PB45 drives it through Command). probe.go\nOld: \"\\treturn runWith(durablefile.Native(), root, parsed)\"\nNew: \"\\tout, code := runWith(durablefile.Native(), root, parsed)\\n\\tif len(out) > 28 && out[:28] == \\\"error: probe mutation failed\\\" {\\n\\t\\treturn \\\"\\\", 0\\n\\t}\\n\\treturn out, code\"\nbit, 1 failed, restored yes. TestProbeRefusesWhenTheMutationWriteFails refusal_test.go:282 only.\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t11-rep1-caller-tests",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:3aa916dce6aac7c3056bda1672082390f2096fe992d0c2d9c7f0dfdaa824998c",
+            "excerpt": "bench test --package ./internal/probe at c377e632d4056ebb6853ed1087efbb38e010c824 (FT354-durable-callers; only reviews/durable-caller-migration.md dirty, no Go source differs from the commit): internal/probe pass, 117 tests run, failures[0], skips[0]. Repair witnesses in internal/probe/replacement_test.go: TestProbeNamesACopyTheEncoderRefuses (D41, both table-refusal branches), TestProbeMutationRecoveryFailure (D41, block scoped after the cause line), TestProbeMutationRecoverySuccess (D42, now asserts exit 1 and the baseline-only run per stage).\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-rep1-command-contract",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:ea7159bb724169f7ef0ad0d46864cfaa502dfbc0111a018acbd53f86d2689e78",
+            "excerpt": "bench test --package ./cmd/bench --run CommandRegistry on the repair source (Go bytes identical to c377e632d4056ebb6853ed1087efbb38e010c824): cmd/bench pass, 5 tests run, failures[0], skips[0]. Command membership, routes, and help are unchanged.\n"
+          },
+          "requirement": "command-contract",
+          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-rep1-axi-registry",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:9466abd804480910dbf3c7a64e995a5c81923e6dfc4e238f64a6751b474625dd",
+            "excerpt": "bench test --check axi-query-registry on the repair source (Go bytes identical to c377e632d4056ebb6853ed1087efbb38e010c824): internal/conformance pass, 1 test run, failures[0], skips[0].\n"
+          },
+          "requirement": "axi-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-rep1-routing",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:d3c1fbb515c43493e00c2e9a58803052956870e184978581f5d005e2b89599ff",
+            "excerpt": "bench test --check subcommand-routing on the repair source (Go bytes identical to c377e632d4056ebb6853ed1087efbb38e010c824): internal/conformance pass, 1 test run, failures[0], skips[0].\n"
+          },
+          "requirement": "routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-rep1-cmd-bench",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:1d256b501a6ccf55fe12d08ef59eb72200268156f76a6b715d4e7b53fe77e969",
+            "excerpt": "bench test --package ./cmd/bench on the repair source (Go bytes identical to c377e632d4056ebb6853ed1087efbb38e010c824): cmd/bench pass, 335 tests run, failures[0], skips[0].\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-rep1-conformance",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:e7e40f10e37b5ea0f929f50969a1cc1a3a5a5b5adcee88b0b4bfd1507fb289e5",
+            "excerpt": "bench test --package ./internal/conformance on the repair source (Go bytes identical to c377e632d4056ebb6853ed1087efbb38e010c824): internal/conformance pass, 1690 tests run, failures[0], skips[1]: TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (capability: privilege: cannot create a character device), an environment capability skip not owned by this ticket.\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-rep1-probetest",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:fb90135624e8a3bc3622da431e7bcbd68b9c4c32435c0b01e5da3b4888d90013",
+            "excerpt": "bench test --package ./internal/probe/probetest at c377e632d4056ebb6853ed1087efbb38e010c824 (FT354-durable-callers; only reviews/durable-caller-migration.md dirty, no Go source differs from the commit): internal/probe/probetest no-tests, 0 tests run, failures[0], skips[0]. The fixture is unchanged by the repair.\n"
+          },
+          "requirement": "probetest",
+          "command": "bench test --package ./internal/probe/probetest",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-rep1-root-conformance",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:a150a649252c79ba3775a7a253070215a83d460abffa1f5817cb9a3946180b8c",
+            "excerpt": "bench test --check root-conformance on the repair source (Go bytes identical to c377e632d4056ebb6853ed1087efbb38e010c824): internal/conformance pass, 1 test run, failures[0], skips[0].\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-rep1-omission-proof",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:a8f25404c54e9e008d4aa89f38e6e3725da3681492a7a97b82b478a6e71cbed0",
+            "excerpt": "D-C4 repair 1 omission-proof probes at c377e632d4056ebb6853ed1087efbb38e010c824 (FT354-durable-callers), each through bench probe <file> --swap <old> --with <new> --package ./internal/probe with no --run filter. Every verdict bit, every restored yes; the package passes 117 tests after each restore.\nNamed probe: release preservation on every mutation error, or treat failed restore sync as success; the preservation-path and focused-start witnesses detect each mutation.\n\nReplayed at the repair tip (O1 swap text adapted, because the repair changed its line):\nO1 (release the copy on the failed-restore exit). internal/probe/probe.go\nOld: \"return line + keptCopy(\"\nNew: \"preserved.release(); return line + keptCopy(\"\nbit, 2 failed, restored yes. TestProbeMutationRecoveryFailure replacement_test.go:111 and TestProbeNamesACopyTheEncoderRefuses/mutation_failure :152: preserved files = ([], <nil>), want exactly one.\n\nO2 (release without restore on every mutation error). internal/probe/probe.go\nOld: \"if errors.As(err, &replaceErr) && replaceErr.Published {\"\nNew: \"if false && errors.As(err, &replaceErr) && replaceErr.Published {\"\nbit, 5 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open, -sync, -close :90 subject holds the mutated bytes; TestProbeNamesACopyTheEncoderRefuses/mutation_failure :150 exit = 1, want 2; TestProbeMutationRecoveryFailure.\n\nO3 (treat failed restore sync as success). internal/probe/subject.go\nOld: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nNew: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil && !strings.Contains(err.Error(), \\\"rename completed\\\") {\"\nbit, 1 failed, restored yes. TestProbeFailedRestore :177 row bit,...,yes in place of restore-failed.\n\nO4 (owner bypass, mutation writer; D27). internal/probe/probe.go\nOld: \"if err := replacer.Replace(subject.path, mutated, subject.mode); err != nil {\"\nNew: \"if err := durablefile.Replace(subject.path, mutated, subject.mode); err != nil {\"\nbit, 9 failed, restored yes. TestProbeReplacement :61; TestProbeMutationRecoverySuccess rows :87 exit = 2, want 1; both TestProbeNamesACopyTheEncoderRefuses rows.\n\nO5 (owner bypass, restore writer). internal/probe/subject.go\nOld: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nNew: \"if err := durablefile.Replace(subject.path, saved, subject.mode); err != nil {\"\nbit, 4 failed, restored yes. TestProbeFailedRestore :177; TestProbeMutationRecoveryFailure :109 exit = 1, want 2; both TestProbeNamesACopyTheEncoderRefuses rows :150.\n\nCited, not replayed (the repair changes neither their production line nor their failing check): O6 and O7 in /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t11/rec/omission-proof.txt at 0e86fec98de40c9c5ff0e21cd719255731934188.\n\nNew repair reds (P1/C1: a table refusal must not hide the copy path or a cause):\nN1 (fallback omits the copy path). internal/probe/probe.go\nOld: \"toon.Errorf(\\\"probe copy kept\\\", strconv.Quote(preserved.file)+\\\": \\\"+reason)\"\nNew: \"toon.Errorf(\\\"probe copy kept\\\", reason)\"\nbit, 2 failed, restored yes. TestProbeNamesACopyTheEncoderRefuses/mutation_failure and /focused_run :161 want it to name the copy. Whole package, no --run: only this test holds the quoted-path literal.\n\nN2 (fallback answers nothing on a table refusal, the pre-repair shape). internal/probe/probe.go\nOld: \"\\tif err == nil {\\n\\t\\treturn block\\n\\t}\"\nNew: \"\\tif true {\\n\\t\\treturn block\\n\\t}\"\nbit, 2 failed, restored yes. TestProbeNamesACopyTheEncoderRefuses/mutation_failure and /focused_run :156 want the restore cause.\n\nN3 (fallback drops the reason). internal/probe/probe.go\nOld: \"strconv.Quote(preserved.file)+\\\": \\\"+reason)\"\nNew: \"strconv.Quote(preserved.file))\"\nbit, 2 failed, restored yes. Both TestProbeNamesACopyTheEncoderRefuses rows :156 want \"injected restore rename failure\".\n\nN4 (mutationFailure branch drops the kept block). internal/probe/probe.go\nOld: \"return line + keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason), 2\"\nNew: \"return line + keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason)[:0], 2\"\nbit, 2 failed, restored yes. TestProbeMutationRecoveryFailure :116; TestProbeNamesACopyTheEncoderRefuses/mutation_failure :156.\n\nN5 (render branch drops the kept block behind an envelope refusal). internal/probe/probe.go\nOld: \"return toon.RenderError(err) + \\\"\\\\n\\\" + preservedBlock, code\"\nNew: \"return toon.RenderError(err) + \\\"\\\\n\\\", code\"\nbit, 2 failed, restored yes. TestProbeNamesACopyTheEncoderRefuses/focused_run :156; existing PB47 outcome_test.go:108.\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Release preservation on every mutation error or treat failed restore sync as success. The preservation-path and focused-start witnesses must detect each mutation.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+              "digest": "sha256:a8f25404c54e9e008d4aa89f38e6e3725da3681492a7a97b82b478a6e71cbed0",
+              "excerpt": "D-C4 repair 1 omission-proof probes at c377e632d4056ebb6853ed1087efbb38e010c824 (FT354-durable-callers), each through bench probe <file> --swap <old> --with <new> --package ./internal/probe with no --run filter. Every verdict bit, every restored yes; the package passes 117 tests after each restore.\nNamed probe: release preservation on every mutation error, or treat failed restore sync as success; the preservation-path and focused-start witnesses detect each mutation.\n\nReplayed at the repair tip (O1 swap text adapted, because the repair changed its line):\nO1 (release the copy on the failed-restore exit). internal/probe/probe.go\nOld: \"return line + keptCopy(\"\nNew: \"preserved.release(); return line + keptCopy(\"\nbit, 2 failed, restored yes. TestProbeMutationRecoveryFailure replacement_test.go:111 and TestProbeNamesACopyTheEncoderRefuses/mutation_failure :152: preserved files = ([], <nil>), want exactly one.\n\nO2 (release without restore on every mutation error). internal/probe/probe.go\nOld: \"if errors.As(err, &replaceErr) && replaceErr.Published {\"\nNew: \"if false && errors.As(err, &replaceErr) && replaceErr.Published {\"\nbit, 5 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open, -sync, -close :90 subject holds the mutated bytes; TestProbeNamesACopyTheEncoderRefuses/mutation_failure :150 exit = 1, want 2; TestProbeMutationRecoveryFailure.\n\nO3 (treat failed restore sync as success). internal/probe/subject.go\nOld: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nNew: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil && !strings.Contains(err.Error(), \\\"rename completed\\\") {\"\nbit, 1 failed, restored yes. TestProbeFailedRestore :177 row bit,...,yes in place of restore-failed.\n\nO4 (owner bypass, mutation writer; D27). internal/probe/probe.go\nOld: \"if err := replacer.Replace(subject.path, mutated, subject.mode); err != nil {\"\nNew: \"if err := durablefile.Replace(subject.path, mutated, subject.mode); err != nil {\"\nbit, 9 failed, restored yes. TestProbeReplacement :61; TestProbeMutationRecoverySuccess rows :87 exit = 2, want 1; both TestProbeNamesACopyTheEncoderRefuses rows.\n\nO5 (owner bypass, restore writer). internal/probe/subject.go\nOld: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nNew: \"if err := durablefile.Replace(subject.path, saved, subject.mode); err != nil {\"\nbit, 4 failed, restored yes. TestProbeFailedRestore :177; TestProbeMutationRecoveryFailure :109 exit = 1, want 2; both TestProbeNamesACopyTheEncoderRefuses rows :150.\n\nCited, not replayed (the repair changes neither their production line nor their failing check): O6 and O7 in /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t11/rec/omission-proof.txt at 0e86fec98de40c9c5ff0e21cd719255731934188.\n\nNew repair reds (P1/C1: a table refusal must not hide the copy path or a cause):\nN1 (fallback omits the copy path). internal/probe/probe.go\nOld: \"toon.Errorf(\\\"probe copy kept\\\", strconv.Quote(preserved.file)+\\\": \\\"+reason)\"\nNew: \"toon.Errorf(\\\"probe copy kept\\\", reason)\"\nbit, 2 failed, restored yes. TestProbeNamesACopyTheEncoderRefuses/mutation_failure and /focused_run :161 want it to name the copy. Whole package, no --run: only this test holds the quoted-path literal.\n\nN2 (fallback answers nothing on a table refusal, the pre-repair shape). internal/probe/probe.go\nOld: \"\\tif err == nil {\\n\\t\\treturn block\\n\\t}\"\nNew: \"\\tif true {\\n\\t\\treturn block\\n\\t}\"\nbit, 2 failed, restored yes. TestProbeNamesACopyTheEncoderRefuses/mutation_failure and /focused_run :156 want the restore cause.\n\nN3 (fallback drops the reason). internal/probe/probe.go\nOld: \"strconv.Quote(preserved.file)+\\\": \\\"+reason)\"\nNew: \"strconv.Quote(preserved.file))\"\nbit, 2 failed, restored yes. Both TestProbeNamesACopyTheEncoderRefuses rows :156 want \"injected restore rename failure\".\n\nN4 (mutationFailure branch drops the kept block). internal/probe/probe.go\nOld: \"return line + keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason), 2\"\nNew: \"return line + keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason)[:0], 2\"\nbit, 2 failed, restored yes. TestProbeMutationRecoveryFailure :116; TestProbeNamesACopyTheEncoderRefuses/mutation_failure :156.\n\nN5 (render branch drops the kept block behind an envelope refusal). internal/probe/probe.go\nOld: \"return toon.RenderError(err) + \\\"\\\\n\\\" + preservedBlock, code\"\nNew: \"return toon.RenderError(err) + \\\"\\\\n\\\", code\"\nbit, 2 failed, restored yes. TestProbeNamesACopyTheEncoderRefuses/focused_run :156; existing PB47 outcome_test.go:108.\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t11-rep1-preservation",
+          "performer": "claude:dcm_t11_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+            "digest": "sha256:dd30b199e3591fa81531ca56057ad18197463514a5c6a7f93ed80ba6dbe4f5b5",
+            "excerpt": "D-C4 repair 1 preservation probes at c377e632d4056ebb6853ed1087efbb38e010c824 (FT354-durable-callers), each through bench probe internal/probe/probe.go --swap <old> --with <new> --package ./internal/probe. Every verdict bit, every restored yes; the package passes 117 tests after each restore. The omission-proof entry of this repair holds O1-O5 and the new reds N1-N5; N1 is the whole-package necessity red of the one kept literal, the Go-quoted copy path.\n\nReplayed at the repair tip, because the repair moved their production line into the keptCopy call or changed the failing check (swap text adapted):\nP6 D41 preserved row names the copy path. Old: \"[][]string{{preserved.file, reason}}\" New: \"[][]string{{preserved.dir, reason}}\" (no --run). bit, 5 failed, restored yes. TestProbeMutationRecoveryFailure; both TestProbeNamesACopyTheEncoderRefuses rows :161; PB14 outcome_test.go:53; PB47 :108.\nP7 D41 reason carries the mutation cause. Old: \"keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason)\" New: \"keptCopy(preserved, \\\"restore: \\\"+reason)\" (--run '^TestProbeMutationRecoveryFailure$'). bit, 1 failed, restored yes. replacement_test.go:116 preserved block lacks the mutation cause.\nP8 D41 reason carries the restore cause. Old: \"keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason)\" New: \"keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason[:0])\" (--run '^TestProbeMutationRecoveryFailure$'). bit, 1 failed, restored yes. replacement_test.go:116.\nP9 D41 exit 2. Old: \"\\\"; restore: \\\"+reason), 2\" New: \"\\\"; restore: \\\"+reason), 1\" (--run '^TestProbeMutationRecoveryFailure$'). bit, 1 failed, restored yes. replacement_test.go:109 exit = 1, want 2.\n\nNew repair red for the D42 exit check the repair adds to TestProbeMutationRecoverySuccess:\nN6 Old: \"\\tpreserved.release()\\n\\treturn line, 1\" New: \"\\tpreserved.release()\\n\\treturn line, 3\" (no --run). bit, 5 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open, -sync, -close :87 exit = 3, want 1; TestProbeReplacement :70; PB45 refusal_test.go:282. The added baseline-only check is the O7 witness, cited below.\n\nCited, not replayed (the repair changes neither their production line nor their failing check): P1-P5 and P10-P14 in /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t11/rec/preservation.txt, and O6-O7 in the omission-proof.txt beside it, all at 0e86fec98de40c9c5ff0e21cd719255731934188.\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "c377e632d4056ebb6853ed1087efbb38e010c824",
+              "digest": "sha256:dd30b199e3591fa81531ca56057ad18197463514a5c6a7f93ed80ba6dbe4f5b5",
+              "excerpt": "D-C4 repair 1 preservation probes at c377e632d4056ebb6853ed1087efbb38e010c824 (FT354-durable-callers), each through bench probe internal/probe/probe.go --swap <old> --with <new> --package ./internal/probe. Every verdict bit, every restored yes; the package passes 117 tests after each restore. The omission-proof entry of this repair holds O1-O5 and the new reds N1-N5; N1 is the whole-package necessity red of the one kept literal, the Go-quoted copy path.\n\nReplayed at the repair tip, because the repair moved their production line into the keptCopy call or changed the failing check (swap text adapted):\nP6 D41 preserved row names the copy path. Old: \"[][]string{{preserved.file, reason}}\" New: \"[][]string{{preserved.dir, reason}}\" (no --run). bit, 5 failed, restored yes. TestProbeMutationRecoveryFailure; both TestProbeNamesACopyTheEncoderRefuses rows :161; PB14 outcome_test.go:53; PB47 :108.\nP7 D41 reason carries the mutation cause. Old: \"keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason)\" New: \"keptCopy(preserved, \\\"restore: \\\"+reason)\" (--run '^TestProbeMutationRecoveryFailure$'). bit, 1 failed, restored yes. replacement_test.go:116 preserved block lacks the mutation cause.\nP8 D41 reason carries the restore cause. Old: \"keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason)\" New: \"keptCopy(preserved, err.Error()+\\\"; restore: \\\"+reason[:0])\" (--run '^TestProbeMutationRecoveryFailure$'). bit, 1 failed, restored yes. replacement_test.go:116.\nP9 D41 exit 2. Old: \"\\\"; restore: \\\"+reason), 2\" New: \"\\\"; restore: \\\"+reason), 1\" (--run '^TestProbeMutationRecoveryFailure$'). bit, 1 failed, restored yes. replacement_test.go:109 exit = 1, want 2.\n\nNew repair red for the D42 exit check the repair adds to TestProbeMutationRecoverySuccess:\nN6 Old: \"\\tpreserved.release()\\n\\treturn line, 1\" New: \"\\tpreserved.release()\\n\\treturn line, 3\" (no --run). bit, 5 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open, -sync, -close :87 exit = 3, want 1; TestProbeReplacement :70; PB45 refusal_test.go:282. The added baseline-only check is the O7 witness, cited below.\n\nCited, not replayed (the repair changes neither their production line nor their failing check): P1-P5 and P10-P14 in /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t11/rec/preservation.txt, and O6-O7 in the omission-proof.txt beside it, all at 0e86fec98de40c9c5ff0e21cd719255731934188.\n"
             }
           }
         }
@@ -4287,6 +4489,39 @@
           "D-C2"
         ]
       }
+    },
+    {
+      "from": "sha256:2649d87242eda6170ea76efadda6c82fe48de463f63982d2b8d7f9e9c64f9323",
+      "to": "sha256:5f3b8ff2cb08f262254461d3182e5bd26885f2f80ef93f6792bdd716587ef9a2",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ],
+        "D-C4": [
+          "D-C4"
+        ]
+      }
     }
   ],
   "folds": [
@@ -4610,3 +4845,11 @@ Chunk D-C4 has 3 findings. The worst issue is C2.
 ## Repair allowance (D-C4)
 
 Chunk D-C4 used 0 of its 2 repair cycles before repair 1. S1, S2, S3, P1, C1, and C2 fall on ticket 11, so one combined repair session takes them.
+
+- P1 closes in commit c377e632. `TestProbeNamesACopyTheEncoderRefuses` proves that both exit-2 branches name the kept copy and each cause.
+- C1 closes in commit c377e632. A fallback that omits the copy path turns only `TestProbeNamesACopyTheEncoderRefuses` red over the whole package.
+- S1 closes in commit c377e632. `TestProbeMutationRecoveryFailure` scopes the preserved block after the cause line and restates no table header.
+- S2 closes in commit c377e632. The shared `keptCopy` comment states why the copy path stays visible, and it names no caller-specific subject.
+- S3 and C2 close in the `dcm-t11-rep1` entries. Each probe entry records exit code 0 and probe exit code 1.
+
+Chunk D-C4 used 1 of its 2 repair cycles.
