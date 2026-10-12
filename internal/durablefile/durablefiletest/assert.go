@@ -37,6 +37,14 @@ func RequireFile(t testing.TB, path string, mode fs.FileMode, want string) {
 	RequireBytes(t, path, want)
 }
 
+// RequireAbsent fails t unless nothing exists at path, not even a symbolic link.
+func RequireAbsent(t testing.TB, path string) {
+	t.Helper()
+	if _, err := os.Lstat(path); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("%s stat err = %v, want it absent", path, err)
+	}
+}
+
 // RequireBytes fails t unless the bytes of the file at path equal want.
 func RequireBytes(t testing.TB, path, want string) {
 	t.Helper()

@@ -22,10 +22,9 @@ import (
 // land route trusts only what it binds: path, version, platform, and executable digest.
 const Name = "bench-broker.manifest"
 
-// TemporaryPrefix begins the name of the staging file that the durable replacement in Write
-// creates beside the manifest. It is exported because a caller that sweeps a publication's
-// leftovers has to match the publisher's own naming; a second copy of the prefix would keep
-// matching after a rename here and report no residue where a temporary had leaked.
+// TemporaryPrefix matches the start of the staging file name that the durable replacement
+// creates for Name, so a sweep of a publication's leftovers can find a leaked staging file.
+// A replacement test pins the value against the staging name.
 const TemporaryPrefix = "." + Name + "."
 
 // boundFields are the four values one manifest carries.
