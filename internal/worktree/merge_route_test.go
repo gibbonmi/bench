@@ -4,7 +4,6 @@
 package worktree
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -219,35 +218,6 @@ func TestRedSourceFoldNamesAnExit(t *testing.T) {
 		commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
 		requireTargetRed(t, runVerb(t, verbMerge, f.merge(mergeTargetArgs(f, "main")...)), target)
 	})
-}
-
-// foldRedFixture produces the fold red of one red cause: main adds the red file to a target
-// whose tip alone grades green. target makes the target set, and it returns the set.
-func foldRedFixture(cause string, target func(t *testing.T) mergeSet) mergeRefusalFixture {
-	return mergeRefusalFixture{
-		face:  faceMergeFoldRed,
-		cause: cause,
-		exit:  1,
-		build: func(t *testing.T) (mergeSet, []string) {
-			f := target(t)
-			commitOnDefault(t, f.root, redFile, "red\n")
-			return f, mergeTargetArgs(f, "main")
-		},
-		names: func(f mergeSet) []string { return []string{"FT342", f.created[0].Assignment.Label} },
-		carry: map[int]func(*testing.T, mergeSet){
-			// The reviewer reads the cause: the target tip alone holds no red.
-			0: func(t *testing.T, f mergeSet) {
-				if _, err := os.Stat(filepath.Join(f.created[0].Path, redFile)); !os.IsNotExist(err) {
-					t.Fatalf("target holds %s: %v, want the red from main alone", redFile, err)
-				}
-			},
-			// The reviewer decides that main repairs the red it added.
-			1: func(t *testing.T, f mergeSet) {
-				gitRun(t, f.root, "rm", "-q", redFile)
-				gitRun(t, f.root, "commit", "-q", "-m", "repair the red main added")
-			},
-		},
-	}
 }
 
 func mergeRefusalFixtures() []mergeRefusalFixture {

@@ -103,42 +103,64 @@ func CheckReviews(chunk Chunk, excluded []string, distinct bool) error {
 	if distinct {
 		reviewerCount = 3
 	}
-	return checkReviews(chunk, excluded, reviewerCount)
+	return checkReviews(chunk.reviewed(), excluded, reviewerCount)
 }
 
-func checkReviews(chunk Chunk, excluded []string, reviewerCount int) error {
-	// Each refusal below repairs through the review form: the chunk lacks a current
+// reviewed is one frozen pair that takes independent review: a chunk entry or a fold entry.
+// scope names the pair in a refusal, at holds its repair target, and reviews is its list.
+type reviewed struct {
+	scope             string
+	at                Repair
+	base, tip, digest string
+	reviews           *[]Review
+}
+
+// reviewed is the frozen pair of a chunk entry.
+func (c *Chunk) reviewed() reviewed {
+	return reviewed{scope: "chunk " + c.ID, at: Repair{Chunk: c.ID}, base: c.Base, tip: c.Tip, digest: c.SourceDigest, reviews: &c.Reviews}
+}
+
+// reviewed is the pair of a fold: its first parent and the fold commit.
+func (f *Fold) reviewed() reviewed {
+	return reviewed{scope: "fold " + f.ID, at: Repair{Fold: f.ID}, base: f.From, tip: f.Commit, digest: f.SourceDigest, reviews: &f.Reviews}
+}
+
+func checkReviews(pair reviewed, excluded []string, reviewerCount int) error {
+	// Each refusal below repairs through the review form: the pair lacks a current
 	// independent result of the named axis, or of the axis set.
 	refused := func(axis string, err error) error {
-		return Repair{Form: FormReview, Chunk: chunk.ID, Axis: axis, Err: err}
+		repair := pair.at
+		repair.Form, repair.Axis, repair.Err = FormReview, axis, err
+		return repair
 	}
+	reviews := *pair.reviews
 	axisOwners := map[string]string{}
 	for _, axis := range Axes() {
 		var current *Review
-		for i := range chunk.Reviews {
-			if chunk.Reviews[i].Axis == axis {
-				current = &chunk.Reviews[i]
+		for i := range reviews {
+			if reviews[i].Axis == axis {
+				current = &reviews[i]
 			}
 		}
 		if current == nil {
-			return refused(axis, fmt.Errorf("chunk %s: missing %s; record the native review result", chunk.ID, axis))
+			return refused(axis, fmt.Errorf("%s: missing %s; record the native review result", pair.scope, axis))
 		}
 		if current.Role != "independent-review" || slices.Contains(excluded, current.Performer) || current.Performer == "" {
-			return refused(axis, fmt.Errorf("chunk %s: invalid %s performer or role; obtain independent review", chunk.ID, axis))
+			return refused(axis, fmt.Errorf("%s: invalid %s performer or role; obtain independent review", pair.scope, axis))
 		}
 		axisOwners[current.Performer] = axis
 		if current.State != "completed" || current.Outcome != "pass" || len(current.FindingIDs) != 0 {
-			return refused(axis, fmt.Errorf("chunk %s: %s %s; resolve findings and obtain a completed result", chunk.ID, current.State, axis))
+			return refused(axis, fmt.Errorf("%s: %s %s; resolve findings and obtain a completed result", pair.scope, current.State, axis))
 		}
-		if current.SourceDigest != chunk.SourceDigest || current.Base != chunk.Base || current.Tip != chunk.Tip {
-			return refused(axis, fmt.Errorf("chunk %s: stale %s; review the current frozen pair", chunk.ID, axis))
+		if current.SourceDigest != pair.digest || current.Base != pair.base || current.Tip != pair.tip {
+			return refused(axis, fmt.Errorf("%s: stale %s; review the current frozen pair", pair.scope, axis))
 		}
 	}
 	if reviewerCount == 3 && len(axisOwners) != 3 {
-		return refused("", fmt.Errorf("chunk %s: use three distinct review sessions", chunk.ID))
+		return refused("", fmt.Errorf("%s: use three distinct review sessions", pair.scope))
 	}
 	if reviewerCount == 1 && len(axisOwners) != 1 {
-		return refused("", fmt.Errorf("chunk %s: unified review requires one reviewer for all three axes", chunk.ID))
+		return refused("", fmt.Errorf("%s: unified review requires one reviewer for all three axes", pair.scope))
 	}
 	return nil
 }

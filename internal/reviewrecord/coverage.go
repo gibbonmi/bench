@@ -96,8 +96,17 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		if err != nil {
 			return err
 		}
-		if err := checkReviews(*chunk, reviewExclusions(current, record), reviewerCount); err != nil {
+		excluded := reviewExclusions(current, record)
+		if err := checkReviews(chunk.reviewed(), excluded, reviewerCount); err != nil {
 			return err
+		}
+		// A fold after the chunk whose resolution is not empty takes the review rule of a chunk.
+		for i := range record.Folds {
+			if fold := &record.Folds[i]; fold.After == chunk.ID && len(fold.Resolution) != 0 {
+				if err := checkReviews(fold.reviewed(), excluded, reviewerCount); err != nil {
+					return err
+				}
+			}
 		}
 		ids, err := mappedIDs(record, plan.Digest, current.Digest, chunk.ID)
 		if err != nil {

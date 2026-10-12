@@ -3,6 +3,7 @@ package preflight
 import (
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
 	specref "github.com/gibbonmi/bench/internal/spec"
 )
 
@@ -84,4 +85,18 @@ func resolveSpecInput(root, slug string, noFollow bool) ([]byte, string, []strin
 
 func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure) {
 	return gatherTicketsWithPolicy(root, dir, mode, tag, false)
+}
+
+// withFoldResolution reads the review record at the source tip and returns facts carrying
+// the resolution paths of its fold entries. A record that does not read lists no path, so
+// each changed path keeps the fence rule.
+func withFoldResolution(root string, facts Facts) Facts {
+	record, err := reviewrecord.ReadTree(root, facts.SourceTip, facts.SpecPath)
+	if err != nil {
+		return facts
+	}
+	for _, fold := range record.Folds {
+		facts.FoldResolutionPaths = append(facts.FoldResolutionPaths, fold.Resolution...)
+	}
+	return facts
 }

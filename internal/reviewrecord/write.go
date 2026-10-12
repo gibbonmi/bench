@@ -205,8 +205,9 @@ type VerificationCall struct {
 
 // RecordVerification appends one completed verification result to the chunk list or to
 // the completion list. The plan at the source tree supplies the requirement, its command,
-// its probe mutation, and the role; the source tree supplies the source digest. A chunk
-// result must name the source of its chunk entry. The answer is the entry as written.
+// its probe mutation, and the role; the source tree supplies the source digest. A final
+// result can also name the merged-test requirement of a fold package. A chunk result must
+// name the source of its chunk entry. The answer is the entry as written.
 func RecordVerification(root, spec string, call VerificationCall) (Verification, error) {
 	var entry Verification
 	err := write(root, spec, absent(call.Chunk), func(record *Record) error {
@@ -229,7 +230,7 @@ func RecordVerification(root, spec string, call VerificationCall) (Verification,
 		if chunk != nil && digest != chunk.SourceDigest {
 			return Repair{Form: FormChunk, Chunk: chunk.ID, Err: fmt.Errorf("source %s differs from the source of chunk %s: %w", source, chunk.ID, ErrNoChunkEntry)}
 		}
-		requirements := plan.FinalVerification
+		requirements := finalRequirements(plan, *record)
 		if chunk != nil {
 			planned := findChunk(plan, chunk.ID)
 			if planned == nil {
@@ -290,23 +291,23 @@ func entryOf(record *Record, id string) (*Chunk, error) {
 }
 
 // ReviewCall is the caller's part of one completed independent review result. Chunk
-// names the recorded chunk, Axis names the review axis, and Findings holds the finding
-// IDs in the order of the call. Evidence supplies the ID, the performer, the model, the
-// effort, and the native result.
+// names the recorded chunk, or Fold names the recorded fold. Axis names the review axis,
+// and Findings holds the finding IDs in the order of the call. Evidence supplies the ID,
+// the performer, the model, the effort, and the native result.
 type ReviewCall struct {
-	Chunk, Axis string
-	Findings    []string
-	Evidence    Evidence
+	Chunk, Fold, Axis string
+	Findings          []string
+	Evidence          Evidence
 }
 
 // RecordReview appends one completed independent review result to the review list of a
-// recorded chunk. The chunk entry supplies the base, the tip, and the source digest, and
-// the result supersedes the last result of the same axis in that chunk. The answer is the
-// entry as written.
+// recorded chunk or fold. The entry supplies the base, the tip, and the source digest. The
+// result supersedes the last result of the same axis in that entry. The answer is the entry
+// as written.
 func RecordReview(root, spec string, call ReviewCall) (Review, error) {
 	var entry Review
 	err := write(root, spec, absent(call.Chunk), func(record *Record) error {
-		chunk, err := entryOf(record, call.Chunk)
+		pair, err := reviewTarget(record, call)
 		if err != nil {
 			return err
 		}
@@ -314,20 +315,38 @@ func RecordReview(root, spec string, call ReviewCall) (Review, error) {
 			return err
 		}
 		supersedes := []string{}
-		for _, prior := range chunk.Reviews {
+		for _, prior := range *pair.reviews {
 			if prior.Axis == call.Axis {
 				supersedes = []string{prior.ID}
 			}
 		}
-		entry = Review{Evidence: call.Evidence, Axis: call.Axis, Base: chunk.Base, Tip: chunk.Tip, FindingIDs: append([]string{}, call.Findings...), Supersedes: supersedes}
-		entry.Role, entry.SourceDigest, entry.State, entry.Outcome = "independent-review", chunk.SourceDigest, "completed", "pass"
+		entry = Review{Evidence: call.Evidence, Axis: call.Axis, Base: pair.base, Tip: pair.tip, FindingIDs: append([]string{}, call.Findings...), Supersedes: supersedes}
+		entry.Role, entry.SourceDigest, entry.State, entry.Outcome = "independent-review", pair.digest, "completed", "pass"
 		if len(call.Findings) != 0 {
 			entry.Outcome = "fail"
 		}
-		chunk.Reviews = append(chunk.Reviews, entry)
+		*pair.reviews = append(*pair.reviews, entry)
 		return nil
 	})
 	return entry, err
+}
+
+// reviewTarget is the frozen pair of the recorded chunk or fold that call names. A fold
+// without an entry needs the fold form first.
+func reviewTarget(record *Record, call ReviewCall) (reviewed, error) {
+	if call.Fold == "" {
+		chunk, err := entryOf(record, call.Chunk)
+		if err != nil {
+			return reviewed{}, err
+		}
+		return chunk.reviewed(), nil
+	}
+	for i := range record.Folds {
+		if record.Folds[i].ID == call.Fold {
+			return record.Folds[i].reviewed(), nil
+		}
+	}
+	return reviewed{}, Repair{Form: FormFold, Err: fmt.Errorf("fold %s has no entry", call.Fold)}
 }
 
 // unclaimed refuses an ID that a verification or review result of record already has,

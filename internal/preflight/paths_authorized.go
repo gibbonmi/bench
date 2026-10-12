@@ -17,15 +17,15 @@ func pathsAuthorizedCheck(f Facts) CheckResult {
 	return green("paths-authorized")
 }
 
-// unauthorizedPaths is every changed path that no authorizing entry covers and that the
-// default-branch tip does not already hold, in changed-path order. The row's detail sentence
-// and the landing's typed path list both read this one answer, so a report and a refusal can
-// never name a different set.
+// unauthorizedPaths is every changed path that no authorizing entry covers, in changed-path
+// order. It omits a path that the default-branch tip already holds or that a recorded fold
+// resolution lists. The row's detail sentence and the landing's typed path list both read
+// this one answer, so a report and a refusal can never name a different set.
 func unauthorizedPaths(f Facts) []string {
 	var unauthorized []string
 	entries := authorizingEntries(f)
 	for _, p := range f.ChangedPaths {
-		if !slices.Contains(f.DefaultTipPaths, p) && !fenceAuthorizes(p, entries) {
+		if !slices.Contains(f.DefaultTipPaths, p) && !slices.Contains(f.FoldResolutionPaths, p) && !fenceAuthorizes(p, entries) {
 			unauthorized = append(unauthorized, p)
 		}
 	}

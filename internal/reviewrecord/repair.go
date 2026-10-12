@@ -17,13 +17,14 @@ const (
 // Repair is a refusal that one record form repairs. Form names that form, and Err is the
 // refusal itself: Repair wraps it, so errors.Is and errors.As still reach its identity.
 // The other fields hold the values that the refusing owner knows, and an empty field is
-// unknown. Chunk is a planned chunk ID, Requirement a planned requirement ID, Ticket a
-// planned ticket basename, Axis a review axis, and Source the full commit ID that the
-// form reads. A verification repair with no Chunk names the final list.
+// unknown. Chunk is a planned chunk ID, and Fold is a recorded fold ID. Requirement is a
+// planned requirement ID, Ticket a planned ticket basename, and Axis a review axis. Source is
+// the full commit ID that the form reads. A verification repair with no Chunk names the
+// final list.
 type Repair struct {
-	Form                                     string
-	Chunk, Requirement, Ticket, Axis, Source string
-	Err                                      error
+	Form                                           string
+	Chunk, Fold, Requirement, Ticket, Axis, Source string
+	Err                                            error
 }
 
 func (r Repair) Error() string { return r.Err.Error() }

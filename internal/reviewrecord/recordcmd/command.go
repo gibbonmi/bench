@@ -69,11 +69,12 @@ func init() {
 	}
 }
 
-var reviewForm = form{name: reviewrecord.FormReview, description: "append one independent review result to a recorded chunk",
-	flags: []flag{{"--chunk", "<id>", true, once}, {"--axis", strings.Join(reviewrecord.Axes(), "|"), false, once}, {"--id", "<id>", true, once},
-		{"--performer", "<session>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
+var reviewForm = form{name: reviewrecord.FormReview, description: "append one independent review result to a recorded chunk or fold",
+	flags: []flag{{"--chunk", "<id>", true, once}, {"--fold", "<id>", true, once}, {"--axis", strings.Join(reviewrecord.Axes(), "|"), false, once},
+		{"--id", "<id>", true, once}, {"--performer", "<session>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
 		{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {"--finding", "<id>", true, repeated}},
-	valid: reviewValid, run: review}
+	layout: []string{"(", "--chunk", "|", "--fold", ")", "--axis", "--id", "--performer", "--model", "--effort", "--ref", "--excerpt", "--finding"},
+	valid:  reviewValid, run: review}
 
 // named returns the registered form called name, or nil when no form has that name.
 func named(name string) *form {
@@ -330,12 +331,12 @@ func review(f form, root, spec string, parsed usage.Result) (string, int) {
 	if out != "" {
 		return out, code
 	}
-	call := reviewrecord.ReviewCall{Chunk: values["--chunk"], Axis: values["--axis"], Findings: parsed.Repeated["--finding"],
+	call := reviewrecord.ReviewCall{Chunk: values["--chunk"], Fold: values["--fold"], Axis: values["--axis"], Findings: parsed.Repeated["--finding"],
 		Evidence: reviewrecord.Evidence{ID: values["--id"], Performer: values["--performer"], Model: values["--model"], Effort: values["--effort"], NativeRef: ref}}
 	entry, err := reviewrecord.RecordReview(root, spec, call)
 	if err != nil {
 		return f.refuse(cause(spec, err))
 	}
-	return row("review", []string{"chunk", "id", "axis", "outcome", "supersedes", "source_digest", "excerpt_digest"},
-		[]string{call.Chunk, entry.ID, entry.Axis, entry.Outcome, strings.Join(entry.Supersedes, ","), entry.SourceDigest, entry.NativeRef.Digest})
+	return row("review", []string{"chunk", "fold", "id", "axis", "outcome", "supersedes", "source_digest", "excerpt_digest"},
+		[]string{call.Chunk, call.Fold, entry.ID, entry.Axis, entry.Outcome, strings.Join(entry.Supersedes, ","), entry.SourceDigest, entry.NativeRef.Digest})
 }

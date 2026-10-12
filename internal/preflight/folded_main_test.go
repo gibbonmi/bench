@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
 // foldedPath is the unfenced path main adds after the source base. Only the fold of main
@@ -114,6 +115,34 @@ func TestPathsAuthorizedKeepsTheFenceRuleForBuildWritesBesideAFold(t *testing.T)
 				t.Fatalf("landing authorization = %v, want only %s unfenced", err, test.unauthorized)
 			}
 		})
+	}
+}
+
+// TestPathsAuthorizedAdmitsARecordedResolutionPath covers BW43 and BW44. The fold commit
+// repairs a main path, and the record at the source tip holds the fold entry. The path is
+// authorized only when that entry lists it in its resolution.
+func TestPathsAuthorizedAdmitsARecordedResolutionPath(t *testing.T) {
+	for _, resolution := range [][]string{{foldedPath}, {}} {
+		root, slug, base := seedFoldedMain(t)
+		preflighttest.MustWriteFile(t, foldedPath, "package outside\n// resolved\n")
+		preflighttest.RunGit(t, "add", foldedPath)
+		preflighttest.RunGit(t, "commit", "-q", "--amend", "--no-edit")
+		fold := preflighttest.RunGit(t, "rev-parse", "HEAD")
+		record := reviewrecord.Record{Version: 1, Spec: "specs/" + slug + "/spec.md", PlanDigest: "sha256:x", ImplementationSession: "author",
+			Chunks: []reviewrecord.Chunk{{ID: "c1", Base: base, Tip: base, PlanDigest: "sha256:x", SourceDigest: base}},
+			Folds:  []reviewrecord.Fold{{ID: "F1", After: "c1", From: base, Commit: fold, Incoming: fold, SourceDigest: fold, Resolution: resolution}}}
+		preflighttest.MustWriteFile(t, "reviews/"+slug+".md", recordFence(t, record))
+		preflighttest.RunGit(t, "add", ".")
+		preflighttest.RunGit(t, "commit", "-q", "-m", "record the fold")
+		want := green("paths-authorized")
+		if len(resolution) == 0 {
+			want = red("paths-authorized", "not authorized by any ownership fence: "+foldedPath)
+		}
+		for _, mode := range []string{modeReview, modeBuild} {
+			if row, _ := pathsAuthorizedRow(t, root, mode, slug, base); row.Verdict != want.Verdict || row.Detail != want.Detail {
+				t.Errorf("%s paths-authorized with resolution %q = %+v, want %+v", mode, resolution, row, want)
+			}
+		}
 	}
 }
 

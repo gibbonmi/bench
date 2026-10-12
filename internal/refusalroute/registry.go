@@ -127,7 +127,8 @@ const (
 	FactRecovery = "recovery"
 	// FactCheckoutGit is the Git command addressed at the conflicted checkout.
 	FactCheckoutGit = "checkout-git"
-	// FactConflictCommit is the commit whose composition conflicted.
+	// FactConflictCommit is the incoming commit of a hand merge: the commit whose composition
+	// conflicted, or whose fold added a red.
 	FactConflictCommit = "full-destination-commit"
 	// FactAssignmentID is the id of the assignment that owns the checkout a step addresses.
 	FactAssignmentID = "id"

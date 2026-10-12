@@ -16,14 +16,17 @@ var mergeFaces = []Face{
 		},
 	},
 	{
-		// The target tip alone grades green, so the fold adds the red. FT342 owns the
-		// decision of who repairs it. The authorization policy owns the sentence.
+		// The target tip alone grades green, so the fold adds the red. The reviewer merges by
+		// hand, repairs the red in the merge commit, and records the fold, so the fold review
+		// reads the repair. The authorization policy owns the sentence.
 		Verb:      Merge,
 		Name:      "merge-fold-red",
 		Authority: Reviewer,
 		Route: []Step{
 			Instruction(Text("the fold of"), Fact(FactFrom), Text("adds a red to"), Fact(FactLabel)),
-			Instruction(Text("decide who repairs a red that the fold of a moved main adds, the open FT342 question")),
+			Command(Composed(FactCheckoutGit), Text("merge"), Fact(FactConflictCommit), Text("(repair the red in the merge commit)")),
+			Command(Text("bench commit")),
+			Command(Text("bench record fold")),
 		},
 	},
 	{

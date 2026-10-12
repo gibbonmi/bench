@@ -53,24 +53,27 @@ func mergeFaceRoute(err error, rerun string) error {
 // mergeRedRefusal picks the face of a fold that the gate ran red, by the red's cause, and
 // passes every other error through. Only the candidate kind attributes the red to the fold.
 // Neither an inherited kind nor a lane fail tells a target red from a fold red, so the face
-// then follows the grade of the target tip alone. A red target is the agent's own repair,
-// a grade that infrastructure stopped takes the infrastructure face, and a green target
-// means that the fold adds the red, which FT342 decides.
-func mergeRedRefusal(err error, grade func() authorization.Result, spelling, label string) error {
+// then follows the grade of the target tip alone. A red target is the agent's own repair.
+// A grade that infrastructure stopped takes the infrastructure face. A green target means
+// that the fold adds the red. The reviewer then merges incoming into the target by hand and
+// repairs the red in the merge commit.
+func mergeRedRefusal(err error, grade func() authorization.Result, spelling, incoming string, target intent.Assignment) error {
 	var refused landing.AuthorizationRefusal
 	if !errors.As(err, &refused) || !landing.RedKind(refused.Result.Kind) {
 		return err
 	}
 	face := faceMergeFoldRed
 	if refused.Result.Kind != authorization.Candidate {
-		switch target := grade().Kind; {
-		case landing.RedKind(target):
+		switch kind := grade().Kind; {
+		case landing.RedKind(kind):
 			face = faceMergeTargetRed
-		case target == authorization.Infrastructure:
+		case kind == authorization.Infrastructure:
 			face = faceMergeInfrastructure
 		}
 	}
-	return refusalError{refusal{detail: err.Error(), face: face, values: map[string]string{refusalroute.FactLabel: label, refusalroute.FactFrom: spelling}}}
+	values := conflictFacts(incoming, target.ID, target.Worktree)
+	values[refusalroute.FactLabel], values[refusalroute.FactFrom] = target.Label, spelling
+	return refusalError{refusal{detail: err.Error(), face: face, values: values}}
 }
 
 // mergeTargetGrade grades the target tip alone with the lane that graded the fold, or with

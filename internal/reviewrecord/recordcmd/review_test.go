@@ -126,8 +126,8 @@ func TestRecordReviewReportsItsRow(t *testing.T) {
 	review(t, f, "Standards", "standards-1")
 	out := review(t, f, "Standards", "standards-2", "R1")
 	got := reviewed(t, f, "standards-2")
-	want, err := toon.Table("review", []string{"chunk", "id", "axis", "outcome", "supersedes", "source_digest", "excerpt_digest"},
-		[][]string{{"1", got.ID, got.Axis, got.Outcome, "standards-1", got.SourceDigest, got.NativeRef.Digest}})
+	want, err := toon.Table("review", []string{"chunk", "fold", "id", "axis", "outcome", "supersedes", "source_digest", "excerpt_digest"},
+		[][]string{{"1", "", got.ID, got.Axis, got.Outcome, "standards-1", got.SourceDigest, got.NativeRef.Digest}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,6 +155,8 @@ func TestRecordReviewGrammarRefusals(t *testing.T) {
 		"axis outside":    {"--axis": "Security"},
 		"missing axis":    {"--axis": drop},
 		"missing excerpt": {"--excerpt": drop},
+		"chunk and fold":  {"--fold": "F1"},
+		"no chunk":        {"--chunk": drop},
 	} {
 		out, code := recordcmd.Command(f.Root, reviewArgs(t, "Standards", "standards-1", nil, edit))
 		if code != 2 || !strings.HasPrefix(out, "usage: bench record review") {

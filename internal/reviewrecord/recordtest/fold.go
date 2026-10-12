@@ -48,13 +48,12 @@ func (f *Fixture) HandFold(incoming string, resolve func()) string {
 	return f.Tip()
 }
 
-// RecordCleanFold records the fold at HEAD through the record owner with an empty
-// resolution and no merged test package, and reloads the record. The record file must
-// hold f.Record first.
-func (f *Fixture) RecordCleanFold() rr.Fold {
+// RecordFold records the fold at HEAD through the record owner with delta in place of the
+// derived delta, and reloads the record. The record file must hold f.Record first.
+func (f *Fixture) RecordFold(delta rr.FoldDelta) rr.Fold {
 	f.T.Helper()
-	clean := func(string, string) (rr.FoldDelta, error) { return rr.FoldDelta{}, nil }
-	fold, err := rr.RecordFold(f.Root, f.Record.Spec, f.Tip(), clean)
+	derive := func(string, string) (rr.FoldDelta, error) { return delta, nil }
+	fold, err := rr.RecordFold(f.Root, f.Record.Spec, f.Tip(), derive)
 	if err != nil {
 		f.T.Fatal(err)
 	}
