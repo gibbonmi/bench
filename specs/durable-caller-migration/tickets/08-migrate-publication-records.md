@@ -21,7 +21,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Drive SaveRecord through its caller encoder and inject a directory-sync fault after rename.
 The operation returns the classified failure without changing release-state policy.
 
-- [ ] The publication record caller exposes an injected directory-sync failure. (D24).
+- [x] The publication record caller exposes an injected directory-sync failure. (D24).
 
 ## Checkpoint verification
 
