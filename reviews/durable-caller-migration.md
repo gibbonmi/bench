@@ -1181,6 +1181,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-b3-r2-standards",
+          "performer": "claude:dcm_rev_b3_std2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "675566c7ba8a376743b520da7edd5780db0a13f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b3_std2",
+            "digest": "sha256:9161869db1e9db25ec61f0d278b76fd69805714bbfb5a35be22ad9aa4bdcd155",
+            "excerpt": "## Standards confirming round (D-B3, repair delta 69e7ecc7..13925a7d) — 0 findings\nS1 closed: the pre-rename row compares the former bytes only (replacement_test.go:67-73); mode is checked only at :46; necessity red probe 4 recorded. S2 closed: the restating comments are gone; transaction.go:244-245 gives only the parent-creation reason.\nAdvice: test doc comments at :34-36 still repeat \"at mode 0644\".\n"
+          },
+          "axis": "Standards",
+          "base": "0cc52e2103645332e77432be7fc6404f977e4bb5",
+          "tip": "3f43adb796df97c91b491c258db5365355d1aff6",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b3-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-b3-r2-spec",
+          "performer": "claude:dcm_rev_b3_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "675566c7ba8a376743b520da7edd5780db0a13f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b3_spec2",
+            "digest": "sha256:6bc6f84ea456e719b989a068ab43b8bde60b187ebf8ed938e7744aee4270581b",
+            "excerpt": "## Spec confirming round (D-B3, repair delta 69e7ecc7..13925a7d) — 0 findings\nD20 holds (TestCaptureReplacement unchanged, :37-47). D36 holds (TestCapturePreRenameFailure :51-74: unpublished rename failure and former bytes). The delta stays inside ticket 04 Writes.\n"
+          },
+          "axis": "Spec",
+          "base": "0cc52e2103645332e77432be7fc6404f977e4bb5",
+          "tip": "3f43adb796df97c91b491c258db5365355d1aff6",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b3-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-b3-r2-coverage",
+          "performer": "claude:dcm_rev_b3_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "675566c7ba8a376743b520da7edd5780db0a13f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b3_cov2",
+            "digest": "sha256:d987f7a0d56bd15b41c6504cf1a57f877f063a29172b7f8953664674cf56ea3b",
+            "excerpt": "## Coverage confirming round (D-B3, repair delta 69e7ecc7..13925a7d) — 0 findings\nC3 closed: MkdirAll omission recorded (probe 3, 2 tests). New probe: MkdirAll of the grandparent only: bit, 2 tests, restored=yes.\nS1 necessity: new probe writes the new bytes before the replacement in writeManifestWith: bit, TestCapturePreRenameFailure:72, restored=yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "0cc52e2103645332e77432be7fc6404f977e4bb5",
+          "tip": "3f43adb796df97c91b491c258db5365355d1aff6",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b3-r1-coverage"
+          ]
         }
       ]
     }
@@ -1364,3 +1430,5 @@ Chunk D-B3 used 0 of its 2 repair cycles before repair 1. S1, S2, and C3 fall on
 - C3 closes in commit 3f43adb7. The `os.MkdirAll` omission in `replaceWith` turns `TestCaptureReplacement` red over the whole package, as the `claude:dcm_t04_rep1` preservation excerpt records with its exact omitted text.
 
 Chunk D-B3 used 1 of its 2 repair cycles.
+
+The D-B3 confirming round at 13925a7d closed S1, S2, and C3 with no new finding. Chunk D-B3 closed with 1 of its 2 repair cycles used.
