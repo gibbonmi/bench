@@ -124,8 +124,12 @@ func TestReviewReplacement(t *testing.T) {
 		if got, want := heldBytes(t, path), rendered(t, old, newRecord); !bytes.Equal(got, want) {
 			t.Fatalf("record = %q, want the rendered new record %q", got, want)
 		}
-		if info, err := os.Stat(path); err != nil || info.Mode().Perm() != 0o644 {
-			t.Fatalf("record mode = %v (%v), want 0644", info, err)
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != 0o644 {
+			t.Fatalf("record permission bits = %v, want 0644", info.Mode().Perm())
 		}
 		if loaded, err := Read(root, renderSpec); err != nil || loaded.Completion.Verification[0].NativeRef.Excerpt != "new" {
 			t.Fatalf("a reader of the record gets %v, %v; want the new record", loaded, err)
@@ -155,16 +159,16 @@ func TestReviewReplacement(t *testing.T) {
 	})
 
 	t.Run("refusal before the replacement", func(t *testing.T) {
-		refused := errors.New("injected change refusal")
-		for _, change := range []func(*Record) error{
-			func(*Record) error { return refused },
-			func(record *Record) error { *record = newRecord; record.Spec = "specs/other/spec.md"; return nil },
-		} {
+		refusals := map[string]func(*Record) error{
+			"injected change refusal":      func(*Record) error { return errors.New("injected change refusal") },
+			"invalid record spec identity": func(record *Record) error { *record = newRecord; record.Spec = "specs/other/spec.md"; return nil },
+		}
+		for refusal, change := range refusals {
 			root, path := recordRoot(t, old)
 			calls := 0
 			replaceFile := func(string, []byte, fs.FileMode) error { calls++; return nil }
-			if err := writeWith(replaceFile, root, renderSpec, absent(""), change); err == nil || calls != 0 {
-				t.Fatalf("write = %v after %d replacements, want a refusal before any replacement", err, calls)
+			if err := writeWith(replaceFile, root, renderSpec, absent(""), change); err == nil || !strings.Contains(err.Error(), refusal) || calls != 0 {
+				t.Fatalf("write = %v after %d replacements, want the refusal %q before any replacement", err, calls, refusal)
 			}
 			if got := heldBytes(t, path); !bytes.Equal(got, old) {
 				t.Fatalf("record = %q, want the old record", got)
