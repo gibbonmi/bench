@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/gibbonmi/bench/internal/durablefile"
 )
 
 const RecordSchemaVersion = 1
@@ -73,11 +75,16 @@ func LoadRecord(root string) (Record, error) {
 	return record, nil
 }
 
-// SaveRecord writes record atomically (temp file + rename) so a crash
-// mid-write never leaves a torn record. It only ever touches
+// SaveRecord replaces the durable record through the shared replacement owner,
+// so a crash mid-write never leaves a torn record. It only ever touches
 // dist/publication/, never dist/preflight/ (the immutable release index and
 // SHA256SUMS) or package bytes.
 func SaveRecord(root string, record Record) error {
+	return saveRecordWith(durablefile.Native(), root, record)
+}
+
+// saveRecordWith encodes record and replaces the durable record under root through r.
+func saveRecordWith(r durablefile.Replacer, root string, record Record) error {
 	record.SchemaVersion = RecordSchemaVersion
 	path := RecordPath(root)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -87,13 +94,8 @@ func SaveRecord(root string, record Record) error {
 	if err != nil {
 		return fmt.Errorf("could not encode publication record: %w", err)
 	}
-	data = append(data, '\n')
-	temp := path + ".tmp"
-	if err := os.WriteFile(temp, data, 0o644); err != nil {
+	if err := r.Replace(path, append(data, '\n'), 0o644); err != nil {
 		return fmt.Errorf("could not write publication record: %w", err)
-	}
-	if err := os.Rename(temp, path); err != nil {
-		return fmt.Errorf("could not commit publication record: %w", err)
 	}
 	return nil
 }
