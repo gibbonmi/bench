@@ -2488,6 +2488,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-c1-r2-standards",
+          "performer": "claude:dcm_rev_c1_std2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2c2a7a21b89b514ed42ea5f51281c1ef521b6dd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c1_std2",
+            "digest": "sha256:a48d1e55d48d578f59e23239922b4881a17b2d4b0720c93baa2c2d0c7e84bdae",
+            "excerpt": "## Standards confirming round (D-C1, repair delta f46af6a5..41bc07d3) — 0 findings\nS1 closed: RequireBytes (assert.go:41-50) holds the only byte read-back; RequireFile calls it (assert.go:37); the pre-rename row uses it (replacement_test.go:73). TestPublicationDirectoryRefusal follows the file layout with a recorded red.\nAdvice: derive the blocking path from RecordPath rather than the \"dist\" literal.\n"
+          },
+          "axis": "Standards",
+          "base": "641ddbaa6c7f22023c6453abee122954564b8eca",
+          "tip": "d816ae02466c9c241ae8330dbb02d894fb6f0344",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c1-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-c1-r2-spec",
+          "performer": "claude:dcm_rev_c1_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2c2a7a21b89b514ed42ea5f51281c1ef521b6dd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c1_spec2",
+            "digest": "sha256:d859d219b621bb4b29e3d426c3e047831d61f8c918c431a783608a595417296c",
+            "excerpt": "## Spec confirming round (D-C1, repair delta f46af6a5..41bc07d3 and plan 7720aa24) — 0 findings\nD24 and the D36 evidence intact. D30 met for this caller: the refusal precedes Replace and the empty Recorder trace shows the observer never ran. Plan 7720aa24 adds only assert.go to Writes and a durablefiletest floor row.\n"
+          },
+          "axis": "Spec",
+          "base": "641ddbaa6c7f22023c6453abee122954564b8eca",
+          "tip": "d816ae02466c9c241ae8330dbb02d894fb6f0344",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c1-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-c1-r2-coverage",
+          "performer": "claude:dcm_rev_c1_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2c2a7a21b89b514ed42ea5f51281c1ef521b6dd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c1_cov2",
+            "digest": "sha256:d2f48d40a4cc95490129de3eb6eeae348c905e379dfae348bbb590fe6123a5bd",
+            "excerpt": "## Coverage confirming round (D-C1, repair delta f46af6a5..41bc07d3) — 0 findings. Four probes, each restored=yes.\nC1 closed: swallow at record.go:91 fails only TestPublicationDirectoryRefusal:90; new probe calls r.Replace then returns the refusal: bit at :93 (trace = [create]), so the trace check bites on its own.\nS1 closed: fallback write fails only at the RequireBytes call (:73); newline drop fails only at the RequireFile call (:37).\nAdvice: the no-record check at :95 is vacuous while dist is a file; delete it or reword the D30 comment.\n"
+          },
+          "axis": "Coverage",
+          "base": "641ddbaa6c7f22023c6453abee122954564b8eca",
+          "tip": "d816ae02466c9c241ae8330dbb02d894fb6f0344",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c1-r1-coverage"
+          ]
         }
       ]
     }
@@ -2913,3 +2979,5 @@ Chunk D-C1 used 0 of its 2 repair cycles before repair 1. S1 and C1 fall on tick
 - C1 closes in commit d816ae02. `TestPublicationDirectoryRefusal` makes the record directory uncreatable and checks a refusal that is not a `*durablefile.Error`, an empty Recorder trace, and no record. The swap of the parent-creation return for `_ = err` was silent before the repair and turns that test red after it. The `claude:dcm_t08_rep1` preservation excerpt records this red.
 
 Chunk D-C1 used 1 of its 2 repair cycles.
+
+The D-C1 confirming round at 41bc07d3 closed S1 and C1 with no new finding. Chunk D-C1 closed with 1 of its 2 repair cycles used.
