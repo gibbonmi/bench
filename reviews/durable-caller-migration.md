@@ -2066,6 +2066,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-b5-r2-standards",
+          "performer": "claude:dcm_rev_b5_std2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c4af640671be8b9686510058a2b060a939e82f09",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b5_std2",
+            "digest": "sha256:3781ab193f12a9a3d56ecd20a488eb08800bd6273fa5d04003c1fec32fe27634",
+            "excerpt": "## Standards confirming round (D-B5, repair delta c73da9c8..d12060c6) — 0 findings\nThe table form of TestTransactionPublishedFailure takes its stages from durablefiletest.PostRenameStages, classifies through RequireFailure, and checks the held lock once inside the compensation; the doc comment states only the constraint.\nAdvice: the rename row's prior-bytes check overlaps TestIntentPreRenameFailure; the test name now also holds an unpublished row.\n"
+          },
+          "axis": "Standards",
+          "base": "2d06e7594c9d31f1ce9f22102d03da660601cea2",
+          "tip": "19422ae3a3d4e5de070edbe562bbf45f201f5421",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b5-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-b5-r2-spec",
+          "performer": "claude:dcm_rev_b5_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c4af640671be8b9686510058a2b060a939e82f09",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b5_spec2",
+            "digest": "sha256:447213e8be3f5f44c24a83851748e503959519fc1a693f092453595606d3c246",
+            "excerpt": "## Spec confirming round (D-B5, repair delta c73da9c8..d12060c6) — 0 findings\nP1 closed: dcm-t06-rep1-preservation records replacer.Replace -> durablefile.Native().Replace in intent.go (bit, 9 failed). D44, D45, D52 and the intent paragraph (compensation once under the held lock) stay intact.\n"
+          },
+          "axis": "Spec",
+          "base": "2d06e7594c9d31f1ce9f22102d03da660601cea2",
+          "tip": "19422ae3a3d4e5de070edbe562bbf45f201f5421",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b5-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-b5-r2-coverage",
+          "performer": "claude:dcm_rev_b5_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c4af640671be8b9686510058a2b060a939e82f09",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b5_cov2",
+            "digest": "sha256:fe666f1b5ccc51f1e8f02a88e94128d1c196fa1dcbafc18a9298bfec77e84de0",
+            "excerpt": "## Coverage confirming round (D-B5, repair delta c73da9c8..d12060c6) — 0 findings\nC1 closed: new probe, replaceErr.Published -> replaceErr.Stage != \"rename\" in published: bit, 2 tests, restored=yes. C2 closed: the recorded release-before-compensate probe fails at the lock check inside the compensation.\n"
+          },
+          "axis": "Coverage",
+          "base": "2d06e7594c9d31f1ce9f22102d03da660601cea2",
+          "tip": "19422ae3a3d4e5de070edbe562bbf45f201f5421",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b5-r1-coverage"
+          ]
         }
       ]
     }
@@ -2419,3 +2485,5 @@ Chunk D-B5 used 0 of its 2 repair cycles before repair 1. P1, C1, and C2 fall on
 - C2 closes in commit 19422ae3. The rename row of `TestTransactionPublishedFailure` checks the lock inside the compensation and its absence after the call. A release before the compensation turns that row red. The `claude:dcm_t06_rep1` omission-proof excerpt records this red.
 
 Chunk D-B5 used 1 of its 2 repair cycles.
+
+The D-B5 confirming round at d12060c6 closed P1, C1, and C2 with no new finding. Chunk D-B5 closed with 1 of its 2 repair cycles used.
