@@ -1,7 +1,7 @@
 # Migrate publication record replacement
 
 Blocked by: none
-Writes: internal/publication/record.go, internal/publication/replacement_test.go (new), internal/conformance/injected_ports_registry_test.go
+Writes: internal/publication/record.go, internal/publication/replacement_test.go (new), internal/durablefile/durablefiletest/assert.go, internal/conformance/injected_ports_registry_test.go
 Covers: D24
 
 ## What to build
