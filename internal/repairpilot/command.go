@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -26,21 +26,15 @@ type Options struct {
 	Files     FileOps
 }
 
-type AtomicFile interface {
-	io.Writer
-	Close() error
-	Name() string
-	Sync() error
-	Chmod(os.FileMode) error
-}
+type AtomicFile = durablefile.File
 
+// FileOps holds the pilot's file operations. The embedded Replacer replaces the pilot
+// document, and its Remove also releases the pilot lock.
 type FileOps struct {
-	MkdirAll   func(string, os.FileMode) error
-	Chmod      func(string, os.FileMode) error
-	OpenFile   func(string, int, os.FileMode) (AtomicFile, error)
-	CreateTemp func(string, string) (AtomicFile, error)
-	Rename     func(string, string) error
-	Remove     func(string) error
+	MkdirAll func(string, os.FileMode) error
+	Chmod    func(string, os.FileMode) error
+	OpenFile func(string, int, os.FileMode) (AtomicFile, error)
+	durablefile.Replacer
 }
 
 type Document struct {
@@ -246,14 +240,18 @@ func (ops FileOps) withDefaults() FileOps {
 			return os.OpenFile(name, flag, perm)
 		}
 	}
+	native := durablefile.Native()
 	if ops.CreateTemp == nil {
-		ops.CreateTemp = func(directory, pattern string) (AtomicFile, error) { return os.CreateTemp(directory, pattern) }
+		ops.CreateTemp = native.CreateTemp
 	}
 	if ops.Rename == nil {
-		ops.Rename = os.Rename
+		ops.Rename = native.Rename
+	}
+	if ops.OpenDirectory == nil {
+		ops.OpenDirectory = native.OpenDirectory
 	}
 	if ops.Remove == nil {
-		ops.Remove = os.Remove
+		ops.Remove = native.Remove
 	}
 	return ops
 }
@@ -263,41 +261,7 @@ func writeDocument(files FileOps, path string, document Document) error {
 	if err != nil {
 		return err
 	}
-	data = append(data, '\n')
-	temporary, err := files.CreateTemp(filepath.Dir(path), ".pilot-*")
-	if err != nil {
-		return fmt.Errorf("create temporary pilot document: %w", err)
-	}
-	temporaryPath := temporary.Name()
-	keep := false
-	defer func() {
-		if !keep {
-			files.Remove(temporaryPath)
-		}
-	}()
-	if err := temporary.Chmod(0o600); err != nil {
-		temporary.Close()
-		return err
-	}
-	if n, err := temporary.Write(data); err != nil {
-		temporary.Close()
-		return fmt.Errorf("write temporary pilot document: %w", err)
-	} else if n != len(data) {
-		temporary.Close()
-		return io.ErrShortWrite
-	}
-	if err := temporary.Sync(); err != nil {
-		temporary.Close()
-		return err
-	}
-	if err := temporary.Close(); err != nil {
-		return err
-	}
-	if err := files.Rename(temporaryPath, path); err != nil {
-		return fmt.Errorf("replace pilot document: %w", err)
-	}
-	keep = true
-	return nil
+	return files.Replacer.Replace(path, append(data, '\n'), 0o600)
 }
 
 func renderDocumentStatus(document Document, now time.Time) (string, int) {
