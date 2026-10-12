@@ -27,13 +27,13 @@ Fail approved-ledger sync separately and retain all three matching new artifacts
 A second restore fault reports its cause and unrestored path without a rollback promise.
 Repeat the applicable cases with no board.
 
-- [ ] The commitment repository caller exposes an injected directory-sync failure. (D23).
-- [ ] An initial post-rename policy failure restores the original policy state before approval returns. (D46).
-- [ ] A post-rename board failure restores both original file states. (D47).
-- [ ] A pre-rename approval-ledger failure restores the original policy and board. (D48).
-- [ ] A post-rename approval-ledger failure retains the new policy and board with its approved receipt. (D49).
-- [ ] A failed stage or compensation restore reports its cause and unrestored path. (D50).
-- [ ] Failed initial policy stage in a board-absent repository restores policy without creating a board. (D51).
+- [x] The commitment repository caller exposes an injected directory-sync failure. (D23).
+- [x] An initial post-rename policy failure restores the original policy state before approval returns. (D46).
+- [x] A post-rename board failure restores both original file states. (D47).
+- [x] A pre-rename approval-ledger failure restores the original policy and board. (D48).
+- [x] A post-rename approval-ledger failure retains the new policy and board with its approved receipt. (D49).
+- [x] A failed stage or compensation restore reports its cause and unrestored path. (D50).
+- [x] Failed initial policy stage in a board-absent repository restores policy without creating a board. (D51).
 
 ## Checkpoint verification
 
