@@ -94,4 +94,4 @@ Spec-backed builds work the unblocked frontier with one fresh author for each ti
 
 A delegated run keeps these serial green ticket checkpoints under the operating guide's delegated policy.
 
-Run focused checks during the ticket, not a standalone full gate. Commit tickets in `Blocked by:` order on one retained integration source, one lane per commit. After each chunk, review freezes its predecessor tip and current tip. `bench worktree land` composes and gates the reconciled source, and final-check reports the evidence.
+Run focused checks during the ticket, not a standalone full gate. Commit tickets in `Blocked by:` order on one retained integration source, one lane per commit. After each chunk, review freezes the chunk base and the current tip, and step 1 of `/bench-review-implementation` states the chunk base. `bench worktree land` composes and gates the reconciled source, and final-check reports the evidence.

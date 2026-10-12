@@ -1,5 +1,5 @@
-// Build window landing tests. While a chunked build is open, the landing refuses each other
-// landing unless the build is in a chunk gap.
+// Build window landing tests. While an open build holds the window, the landing refuses each
+// other landing unless the build is in a chunk gap.
 package worktree
 
 import (

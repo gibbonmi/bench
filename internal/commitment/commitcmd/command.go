@@ -38,7 +38,7 @@ var forms = []form{
 		{"--plan", "<id>"}, {"--decision", "<reference>"}, {"--delayed", "<ids-or-none>"}, {"--removed", "<ids-or-none>"},
 	}},
 	{name: "verify", description: "verify milestone criterion evidence and record a completion receipt", flags: []flag{{"--milestone", "<id>"}, {"--evidence", "<file>"}}},
-	{name: overrideForm, description: "grant one landing a reviewer override through every open build, from the reviewer's terminal", flags: []flag{{"--assignment", "<id>"}, {"--reason", "<text>"}}},
+	{name: overrideForm, description: "grant one assignment a landing override through every open build, from the reviewer's terminal", flags: []flag{{"--assignment", "<id>"}, {"--reason", "<text>"}}},
 }
 
 // suffix is the form's help grammar after the family name: every flag shows its placeholder.

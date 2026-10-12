@@ -226,7 +226,7 @@ func Leases(root string) ([]intent.LandingLease, error) {
 	return ledger.Commitment.Leases, nil
 }
 
-// Overrides is the reviewer override list of the ledger at root.
+// Overrides is the landing override list of the ledger at root.
 func Overrides(root string) ([]intent.LandingOverride, error) {
 	ledger, err := intent.Read(root)
 	if err != nil || ledger.Commitment == nil {

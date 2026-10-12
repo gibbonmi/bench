@@ -10,8 +10,10 @@ package anchors
 // fold in review step 1. They forbid the retired sentences that fold main at the start of the
 // last chunk or refuse a fold between two chunks. They also forbid the retired sentences that put
 // a fold in the review delta of the last chunk or refreeze that chunk. A fold row also pins the
-// craft-delegate sentence that leaves the build's fold timing to the implement phase. The
-// light-path rows pin the build's light-path hold in the implement phase and in ADR 0023. They also forbid the ADR's
+// craft-delegate sentence that leaves the build's fold timing to the implement phase. Another
+// fold row forbids the retired craft-tickets sentence that freezes the predecessor tip as the
+// base of each chunk review.
+// The light-path rows pin the build's light-path hold in the implement phase and in ADR 0023. They also forbid the ADR's
 // retired unscoped clause. The chunk-record rows pin the last ticket author's freeze and chunk
 // record. They pin the chunk checkpoint gate before a successor chunk and the last chunk's close
 // through the complete checkpoint. They also forbid each retired sentence. The build-log rows pin
@@ -43,6 +45,7 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "review delta of the last chunk", Diagnostic: "chunk chain: the implement phase restored the fold in the review delta of the last chunk"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "the last chunk refreezes", Diagnostic: "chunk chain: the implement phase restored the refreeze of the last chunk after a fold"},
 	{Group: AfterImplementSpec, File: craftDelegate, Kind: Require, Needle: "During a build, `/bench-implement-spec` owns the fold timing, and a ticket charge starts without this fold.", Diagnostic: "chunk chain: craft-delegate leaves the build fold timing to the implement phase"},
+	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Forbid, Needle: "review freezes its predecessor tip and current tip", Diagnostic: "chunk chain: craft-tickets restored the predecessor tip as the base of each chunk review"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "After the last ticket of a chunk, that ticket's author freezes the chunk and records the chunk entry with `bench record chunk`.", Diagnostic: "chunk chain: the last ticket's author records the chunk entry at the freeze"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "The last ticket's author performs that freeze, as the Land section states.", Diagnostic: "chunk chain: the Build section dropped the last ticket's author as the freeze owner"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "When the orchestrator freezes a chunk after its last ticket", Diagnostic: "chunk chain: the implement phase restored the orchestrator's chunk record"},

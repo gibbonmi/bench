@@ -78,7 +78,7 @@ var landFaces = []Face{
 	},
 	{
 		// The window policy owns the sentence, which names the build and the gap to wait for.
-		// The build's gap, or a reviewer override for this landing, lets the re-run through.
+		// The build's gap, or a landing override for this assignment, lets the re-run through.
 		Verb:      Land,
 		Name:      LandBuildWindow,
 		Authority: Agent,
