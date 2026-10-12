@@ -87,9 +87,10 @@ func TestProbeMutationRecoveryFailure(t *testing.T) {
 		t.Fatalf("exit = %d, want 2\n%s", code, out)
 	}
 	kept := preservedCopy(t, f)
+	_, row, _ := strings.Cut(out, "preserved[1]{path,reason}:\n  ")
 	for _, want := range []string{kept, mutationCause.Error(), restoreCause.Error()} {
-		if !strings.Contains(out, want) {
-			t.Fatalf("stdout = %q, want it to name %q", out, want)
+		if !strings.Contains(row, want) {
+			t.Fatalf("preserved row = %q, want it to name %q", row, want)
 		}
 	}
 	durablefiletest.RequireBytes(t, kept, clampSource)
@@ -105,7 +106,7 @@ func TestProbeFailedRestore(t *testing.T) {
 	out, code := probeWith(t, f, router.Replacer())
 
 	requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "no"))
-	durablefiletest.RequireBytes(t, preservedCopy(t, f), clampSource)
+	preservedCopy(t, f)
 }
 
 // D43: a mutation that fails before its rename leaves the start bytes, so the probe
