@@ -845,6 +845,72 @@
           "supersedes": [
             "dcm-b2-r1-coverage"
           ]
+        },
+        {
+          "id": "dcm-b2-r3-standards",
+          "performer": "claude:dcm_rev_b2_std3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b2_std3",
+            "digest": "sha256:b5073de6ceb431020e1433a6a4d8bdc0a74aa4781fc7f9a520a59d01f1c21c42",
+            "excerpt": "## Standards second confirming round (D-B2, repair delta 40aef905..79926b97) — 0 findings\nDCM-B2-S2 closed, confidence 9: TestOwnerPreRenameFailure no longer calls durablefiletest.Siblings and keeps RequireFailure and the record-absence check (replacement_test.go:37-40); R1 is the necessity red of the absence check; L1 shows only the leaf tests own cleanup.\n"
+          },
+          "axis": "Standards",
+          "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
+          "tip": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b2-r2-standards"
+          ]
+        },
+        {
+          "id": "dcm-b2-r3-spec",
+          "performer": "claude:dcm_rev_b2_spec3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b2_spec3",
+            "digest": "sha256:9402952984dc6c6ac3029588447317410bb58f2f968a448f757037fe80fcc93d",
+            "excerpt": "## Spec second confirming round (D-B2, repair delta 40aef905..79926b97) — 0 findings\nD18 intact (replacement_test.go:15-25). The D36 pre-rename refusal evidence is intact: the unpublished rename-stage failure (:37) and no published record (:38-40), with recorded reds C1 and R1. Cleanup belongs to the leaf rows D01-D05.\n"
+          },
+          "axis": "Spec",
+          "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
+          "tip": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b2-r2-spec"
+          ]
+        },
+        {
+          "id": "dcm-b2-r3-coverage",
+          "performer": "claude:dcm_rev_b2_cov3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b087942b45c60e7624a0737fd8018970569f1ce1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b2_cov3",
+            "digest": "sha256:55d75daf980d59c8939bae927ba747a7f135c74242d08970af8afc27bd677b8e",
+            "excerpt": "## Coverage second confirming round (D-B2, repair delta 40aef905..79926b97) — 0 findings\nD36 binds the pre-rename refusal result (error and absent record), both asserted. Probe: the caller writes root/.owner.json.stray after a failed Replace and returns the error: silent, restored=yes; not a gap, because it adds caller behavior that no acceptance row forbids.\n"
+          },
+          "axis": "Coverage",
+          "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
+          "tip": "6eed4ae5973ef9b9a9e9c77d8b6fcba5d3c698d2",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b2-r2-coverage"
+          ]
         }
       ]
     }
@@ -969,3 +1035,5 @@ The D-B2 confirming round at f0c35260 closed DCM-B2-S1, C1, and C3. It raised on
 Chunk D-B2 takes repair cycle 2 of 2 for DCM-B2-S2.
 
 DCM-B2-S2 closes in commit 6eed4ae5, and chunk D-B2 used 2 of its 2 repair cycles.
+
+The second D-B2 confirming round at 79926b97 closed DCM-B2-S2 with no new finding. Chunk D-B2 closed with 2 of its 2 repair cycles used.
