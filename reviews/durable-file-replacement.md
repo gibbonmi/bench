@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/durable-file-replacement/spec.md",
-  "plan_digest": "sha256:13c36574a31cf4b389ddc0c9f802e8f0574155402083cdaf8f59fe459d757a1a",
+  "plan_digest": "sha256:286fab6eee12fd2fb29be89f7acf16d6242dd8e57be66c984d59206f683de6df",
   "implementation_session": "",
   "chunks": [
     {
       "id": "D-A",
       "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
-      "tip": "5303ca3c9b8d523243b338dcb72d63b0935b4261",
-      "plan_digest": "sha256:13c36574a31cf4b389ddc0c9f802e8f0574155402083cdaf8f59fe459d757a1a",
-      "source_digest": "9107a8aeff98e6bb835081228a1dd13b49ea1939",
+      "tip": "61e6ca30bcf699be0d8ef9d3d10ff9014888af82",
+      "plan_digest": "sha256:286fab6eee12fd2fb29be89f7acf16d6242dd8e57be66c984d59206f683de6df",
+      "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
       "acceptance_rows": [
         "D01",
         "D02",
@@ -1222,6 +1222,15 @@
     {
       "from": "sha256:7a8be2c6a86c8f70f2ee4dd22898e1f83dee922fd0f2c5366c3d885eda7ebe5b",
       "to": "sha256:13c36574a31cf4b389ddc0c9f802e8f0574155402083cdaf8f59fe459d757a1a",
+      "chunk_ids": {
+        "D-A": [
+          "D-A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:13c36574a31cf4b389ddc0c9f802e8f0574155402083cdaf8f59fe459d757a1a",
+      "to": "sha256:286fab6eee12fd2fb29be89f7acf16d6242dd8e57be66c984d59206f683de6df",
       "chunk_ids": {
         "D-A": [
           "D-A"
