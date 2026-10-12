@@ -1889,7 +1889,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-b5-r1-standards",
+          "performer": "claude:dcm_rev_b5_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f31faf8613dc4f4f281fc93c6c44040dd859c815",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b5_std",
+            "digest": "sha256:49cba09eafd1d55ca218b17adc51ab66277d2cf325665851857dc5960815d7a9",
+            "excerpt": "## Standards (D-B5, 2d06e759..ba35cc83) — 0 findings\nOne transact body serves Transact, TransactWithReplacer, and PurgeAssignments; no copy of the durablefile algorithm; shared durablefiletest assertions and PostRenameStages; comments state only the why; each fact checked once. Veto items accepted: operand order, leaf error text, repeated upsert and reauthorization wants (both with recorded reds).\nAdvice: a bytes-only assertion now has three spellings; name the upsert expectations as fixture constants; the published classifier may be derived again in D-B6 or D-C4.\n"
+          },
+          "axis": "Standards",
+          "base": "2d06e7594c9d31f1ce9f22102d03da660601cea2",
+          "tip": "a6c0ffe56d68d2499f336761de2589f5988801da",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b5-r1-spec",
+          "performer": "claude:dcm_rev_b5_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f31faf8613dc4f4f281fc93c6c44040dd859c815",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b5_spec",
+            "digest": "sha256:6172111808a85e9032ffe6d4d42e751af97c22a4311266086df39bec84138ccb",
+            "excerpt": "## Spec (D-B5, 2d06e759..ba35cc83) — 1 finding; worst P1\nP1 | auto-fix | 6 | reviews/durable-caller-migration.md (D-B5 omission-proof); spec.md:288-289 | the record holds no D22 owner-bypass red with exact swap text | record a probe that swaps intent.go:216 for the former rename sequence or durablefile.Native(), with the red TestIntentReplacement rows, restore, and pass\nD22, D44, D45, D52, the unclassified branch, the seam shape, and the D36 evidence pass. Ticket 07 can consume TransactWithReplacer. The two plan commits add only the 10 and 13 assignments.\nAdvice: a %w wrap would keep the intent ledger label in diagnostics.\n"
+          },
+          "axis": "Spec",
+          "base": "2d06e7594c9d31f1ce9f22102d03da660601cea2",
+          "tip": "a6c0ffe56d68d2499f336761de2589f5988801da",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b5-r1-coverage",
+          "performer": "claude:dcm_rev_b5_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f31faf8613dc4f4f281fc93c6c44040dd859c815",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b5_cov",
+            "digest": "sha256:75b6fdea2526cfb93dc75cb8c415c3ee3757fde166898738fdcc70e391245099",
+            "excerpt": "## Coverage (D-B5, 2d06e759..ba35cc83) — 2 findings; worst C1. Probes q01-q18 re-run: each bit, restored=yes.\nC1 | auto-fix | 9 | internal/intent/transaction.go:88-91 | no rename-stage or directory-open/close fault reaches TransactWithReplacer; three swaps of the published predicate are silent (Stage != \"create\"; Published || Stage == \"rename\"; Stage == \"directory-sync\") | through TransactWithReplacer with the Recorder, range PostRenameStages (compensation 0, new bytes) and inject rename (compensation 1, old bytes); record the three swaps as reds\nC2 | auto-fix | 8 | internal/intent/transaction.go:65,78-79 | releasing the lock before compensation is silent; the D45 test cannot catch it | in the rename-stage test, assert inside the compensation that the lock exists, and after the call that it is gone; record the release-before-compensate swap as its red\nq11 judged acceptable as a bounded necessity red.\n"
+          },
+          "axis": "Coverage",
+          "base": "2d06e7594c9d31f1ce9f22102d03da660601cea2",
+          "tip": "a6c0ffe56d68d2499f336761de2589f5988801da",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2193,3 +2259,24 @@ Chunk D-B4 takes repair cycle 2 of 2 for S2.
 S2 closes in commit 5e49631e, where `TestHandoffReplacement` ranges over `durablefiletest.PostRenameStages`, and chunk D-B4 used 2 of its 2 repair cycles.
 
 The second D-B4 confirming round at 2477c580 closed S2 with no new finding. Chunk D-B4 closed with 2 of its 2 repair cycles used.
+
+## Standards (D-B5)
+
+Chunk D-B5 has 0 findings.
+
+## Spec (D-B5)
+
+Chunk D-B5 has 1 finding. The worst issue is P1.
+
+- P1, auto-fix, confidence 6: the D-B5 record holds no D22 owner-bypass red with its exact swap text. Record a probe that swaps the owner call at `internal/intent/intent.go:216` for the former rename sequence or the native owner.
+
+## Coverage (D-B5)
+
+Chunk D-B5 has 2 findings. The worst issue is C1.
+
+- C1, auto-fix, confidence 9: no rename-stage or directory-open or directory-close fault reaches `TransactWithReplacer`, so three swaps of the `published` predicate at `internal/intent/transaction.go:88-91` stay silent. Range `PostRenameStages` through the transaction with no compensation, inject a rename fault with one compensation, and record the three swaps as reds.
+- C2, auto-fix, confidence 8: releasing the lock before compensation at `internal/intent/transaction.go:78-79` stays silent. Assert inside the compensation that the lock exists, assert after the call that it is gone, and record that swap as its red.
+
+## Repair allowance (D-B5)
+
+Chunk D-B5 used 0 of its 2 repair cycles before repair 1. P1, C1, and C2 fall on ticket 06, so one combined repair session takes them.
