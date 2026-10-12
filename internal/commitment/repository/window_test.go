@@ -13,20 +13,6 @@ import (
 	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
-// windowRepo is the Staged repository of outcomes. A parallel grant lets the outcomes start
-// together, so each one can hold its own open build.
-func windowRepo(t *testing.T, outcomes ...string) string {
-	t.Helper()
-	root := commitmenttest.Staged(t, outcomes...)
-	if len(outcomes) > 1 {
-		commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
-			policy.ParallelGrants = []commitment.ParallelGrant{{Outcomes: outcomes}}
-		})
-		commitmenttest.Commit(t, root, "grant the outcomes in parallel")
-	}
-	return root
-}
-
 // approvedSpec is the staged spec that the policy at root approves for outcome.
 func approvedSpec(t *testing.T, root, outcome string) string {
 	t.Helper()
@@ -78,7 +64,7 @@ func requireWindowRefusal(t *testing.T, err error, want string) {
 // TestWindowNamesTheGapToWaitFor is BW48 and BW49. A closed gap record names the
 // checkpoint of its own chunk, and a closed record of the last chunk names the completion.
 func TestWindowNamesTheGapToWaitFor(t *testing.T) {
-	root := windowRepo(t, "A")
+	root := commitmenttest.Staged(t, "A")
 	spec := approvedSpec(t, root, "A")
 	startBuild(t, root, "build", "A", spec)
 	unbound := windowSource(t, root, commitmenttest.Assignment(t, root, "unbound"))
@@ -98,7 +84,7 @@ func TestWindowNamesTheGapToWaitFor(t *testing.T) {
 // the build open. A started tickets-only deliverable opens no build.
 func TestOpenBuildsDeriveFromActiveOwners(t *testing.T) {
 	t.Run("one-active-owner", func(t *testing.T) {
-		root := windowRepo(t, "A")
+		root := commitmenttest.Staged(t, "A")
 		spec := approvedSpec(t, root, "A")
 		first := startBuild(t, root, "first", "A", spec)
 		startBuild(t, root, "second", "A", spec)
@@ -107,7 +93,7 @@ func TestOpenBuildsDeriveFromActiveOwners(t *testing.T) {
 		requireWindowRefusal(t, commitrepo.Store{Root: root}.AdmitWindow(unbound), "A ("+spec+"); wait for its first chunk checkpoint")
 	})
 	t.Run("tickets-only", func(t *testing.T) {
-		root := windowRepo(t, "A")
+		root := commitmenttest.Staged(t, "A")
 		identity := commitmenttest.WriteTickets(t, root)
 		commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
 			delivery := &policy.Milestones[0].Outcomes[0]
@@ -125,7 +111,7 @@ func TestOpenBuildsDeriveFromActiveOwners(t *testing.T) {
 // TestWindowNeedsAGapOfEveryOtherBuild is BW58. A landing inside the gap of build A still
 // meets build B. An override for the landing's assignment lets it through both builds.
 func TestWindowNeedsAGapOfEveryOtherBuild(t *testing.T) {
-	root := windowRepo(t, "A", "B")
+	root := commitmenttest.StagedInParallel(t, "A", "B")
 	startBuild(t, root, "build-a", "A", approvedSpec(t, root, "A"))
 	specB := approvedSpec(t, root, "B")
 	startBuild(t, root, "build-b", "B", specB)
@@ -144,7 +130,7 @@ func TestWindowNeedsAGapOfEveryOtherBuild(t *testing.T) {
 // TestWindowFailsClosedOnAGitFault is BW100. Without a default-branch tip, the window cannot
 // read the staged spec of a claimed outcome, so it refuses the landing.
 func TestWindowFailsClosedOnAGitFault(t *testing.T) {
-	root := windowRepo(t, "A")
+	root := commitmenttest.Staged(t, "A")
 	startBuild(t, root, "build", "A", approvedSpec(t, root, "A"))
 	unbound := windowSource(t, root, commitmenttest.Assignment(t, root, "unbound"))
 	gittest.Output(t, root, "branch", "-m", "main", "trunk")
@@ -158,7 +144,7 @@ func TestWindowFailsClosedOnAGitFault(t *testing.T) {
 // TestStartDropsAStaleGap is BW96. A start claims the outcome again, so a gap record that
 // survived the earlier claim cannot let a landing through the new build.
 func TestStartDropsAStaleGap(t *testing.T) {
-	root := windowRepo(t, "A")
+	root := commitmenttest.Staged(t, "A")
 	spec := approvedSpec(t, root, "A")
 	build := startBuild(t, root, "build", "A", spec)
 	unbound := windowSource(t, root, commitmenttest.Assignment(t, root, "unbound"))

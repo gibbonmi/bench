@@ -107,6 +107,21 @@ func Admit(t testing.TB, root, request, deliverable string) {
 	}
 }
 
+// StagedInParallel is the Staged repository of outcomes. With more than one outcome, a
+// committed parallel grant lets the outcomes start together, so each one can hold its own
+// open build.
+func StagedInParallel(t testing.TB, outcomes ...string) string {
+	t.Helper()
+	root := Staged(t, outcomes...)
+	if len(outcomes) > 1 {
+		EditPolicy(t, root, func(policy *commitment.Policy) {
+			policy.ParallelGrants = []commitment.ParallelGrant{{Outcomes: outcomes}}
+		})
+		Commit(t, root, "grant the outcomes in parallel")
+	}
+	return root
+}
+
 // BindBuild starts the delivery outcome with deliverable from a new linked checkout of root
 // that the assignment of request owns. It returns that checkout. The policy at main must
 // approve deliverable.
@@ -209,6 +224,15 @@ func Leases(root string) ([]intent.LandingLease, error) {
 		return nil, err
 	}
 	return ledger.Commitment.Leases, nil
+}
+
+// Overrides is the reviewer override list of the ledger at root.
+func Overrides(root string) ([]intent.LandingOverride, error) {
+	ledger, err := intent.Read(root)
+	if err != nil || ledger.Commitment == nil {
+		return nil, err
+	}
+	return ledger.Commitment.Overrides, nil
 }
 
 // Rebind drops the binding of root's assignment and starts it again. A fixture calls it

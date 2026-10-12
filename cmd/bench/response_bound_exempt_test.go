@@ -110,10 +110,33 @@ func TestDashboardStdoutStaysComplete(t *testing.T) {
 
 // `bench commitment override` writes its prompt to the terminal before it reads the
 // confirmation, so it stays outside the bound. Every other commitment form stays bounded.
+// Only the form position names the form, so an operand `override` of another form stays
+// bounded. The form comes after a leading tree-target pair.
 func TestCommitmentOverrideStaysComplete(t *testing.T) {
 	registry := registryWith("commitment", linesHandler(stdoutOf, fixtureLines))
 	requireComplete(t, []string{"commitment", "override"}, withoutRows(runRegistry(t, registry, "commitment", "override")), numberedLines(fixtureLines))
-	requireBounded(t, []string{"commitment", "show"}, withoutRows(runRegistry(t, registry, "commitment", "show")))
+	for _, argv := range [][]string{
+		{"commitment", "show"},
+		{"commitment", "block", "--reason", "override"},
+		{"commitment", "verify", "--milestone", "override"},
+		{"commitment", "plan", "--input", "override"},
+	} {
+		requireBounded(t, argv, withoutRows(runRegistry(t, registry, argv...)))
+	}
+	commitment, _ := commandByName("commitment")
+	for _, row := range []struct {
+		args    []string
+		bounded bool
+	}{
+		{[]string{"override", "--assignment", "x", "--reason", "y"}, false},
+		{[]string{treeTargetFlag, "primary", "override"}, false},
+		{[]string{treeTargetFlag, "primary", "block", "--reason", "override"}, true},
+		{[]string{treeTargetFlag, "override"}, true},
+	} {
+		if got := commitment.bound(row.args).bounded; got != row.bounded {
+			t.Errorf("commitment %q bounded = %t, want %t", row.args, got, row.bounded)
+		}
+	}
 }
 
 // BO12: the exempt set equals its closed members, and each exemption names a reason.

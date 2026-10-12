@@ -9,7 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
-// OverrideTarget is what the reviewer confirms before an override: the label of the
+// OverrideTarget is what the reviewer confirms before an override. It holds the label of the
 // assignment, and the outcome of each open build that refuses the assignment's landing.
 type OverrideTarget struct {
 	Label  string

@@ -29,12 +29,8 @@ func grantOverride(t *testing.T, f landingFixture) intent.LandingOverride {
 // requireOverrides fails unless the ledger at root holds exactly want.
 func requireOverrides(t *testing.T, root string, want []intent.LandingOverride, after string) {
 	t.Helper()
-	ledger, err := intent.Read(root)
+	got, err := commitmenttest.Overrides(root)
 	mustNoError(t, err)
-	var got []intent.LandingOverride
-	if ledger.Commitment != nil {
-		got = ledger.Commitment.Overrides
-	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("overrides %s = %+v, want %+v", after, got, want)
 	}
@@ -55,14 +51,16 @@ func TestOverrideAdmitsOneLandingThroughEveryWindow(t *testing.T) {
 }
 
 // TestOverrideIsConsumedAtPublish is BW74. The publication drops the override of its
-// assignment, so the override admits no later publication.
+// assignment, so the override admits no later publication. The override of the build
+// assignment stays, because only its own landing consumes it.
 func TestOverrideIsConsumedAtPublish(t *testing.T) {
 	t.Parallel()
 	request := "land-override-consumed"
-	_, light := windowLanding(t, request)
+	build, light := windowLanding(t, request)
+	kept := grantOverride(t, build)
 	grantOverride(t, light)
 	requireLanded(t, runVerb(t, verbLand, light.call(lightLandArgs(request, light)...)), "with the override")
-	requireOverrides(t, light.root, nil, "after the publication")
+	requireOverrides(t, light.root, []intent.LandingOverride{kept}, "after the publication")
 }
 
 // TestOverrideSurvivesARefusedLanding is BW75. The overridden landing refuses red at its

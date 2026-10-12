@@ -15,21 +15,24 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// overrideSet is a primary checkout and the active assignment that an override names.
+// overrideSet is a primary checkout, and the checkout and id of the active assignment that
+// an override names.
 type overrideSet struct {
-	root, id string
+	root, checkout, id string
 }
 
 // backOut is the request and the label of the assignment that each override names.
 const backOut = "back-out"
 
 // overrideFixture is a primary checkout whose ledger holds one active assignment, the back-out.
+// Its policy lets outcomes A and B start in parallel.
 func overrideFixture(t *testing.T) overrideSet {
 	t.Helper()
 	t.Setenv("BENCH_HOME", t.TempDir())
-	root := commitmenttest.Staged(t, "A")
-	owner, _ := intent.AssignmentForWorktree(commitmenttest.Assignment(t, root, backOut))
-	return overrideSet{root: root, id: owner.ID}
+	root := commitmenttest.StagedInParallel(t, "A", "B")
+	checkout := commitmenttest.Assignment(t, root, backOut)
+	owner, _ := intent.AssignmentForWorktree(checkout)
+	return overrideSet{root: root, checkout: checkout, id: owner.ID}
 }
 
 // overrideReason is the reason of every override that the tests grant.
@@ -80,33 +83,30 @@ func atTerminal(dir, typed string, args []string) (string, int) {
 	return out.String(), code
 }
 
-// overrides is the override list of the ledger at root.
-func overrides(t *testing.T, root string) []intent.LandingOverride {
-	t.Helper()
-	ledger, err := intent.Read(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if ledger.Commitment == nil {
-		return nil
-	}
-	return ledger.Commitment.Overrides
-}
-
 // BW71: the reviewer confirms the row that names the assignment, its label, the open build
-// that refuses its landing, and the reason. The verb then writes one record.
+// that refuses its landing, and the reason. The verb then writes one record. After the
+// back-out binds outcome B, its own build admits its landing, so the row names only build A.
 func TestOverrideWritesOneRecord(t *testing.T) {
 	f := overrideFixture(t)
 	if err := (commitrepo.Store{Root: commitmenttest.Assignment(t, f.root, "build")}).Start("A", "build", "specs/A/spec.md"); err != nil {
 		t.Fatal(err)
 	}
-	out, code := atTerminal(f.root, f.id+"\n", overrideArgs(f.id, overrideReason))
-	if want := confirmation(t, f.id, "A", overrideReason) + "overridden{assignment=" + f.id + "}\n"; code != 0 || out != want {
-		t.Fatalf("override = (%d, %q), want exit 0 and %q", code, out, want)
+	grant := func(reason string) {
+		t.Helper()
+		out, code := atTerminal(f.root, f.id+"\n", overrideArgs(f.id, reason))
+		if want := confirmation(t, f.id, "A", reason) + "overridden{assignment=" + f.id + "}\n"; code != 0 || out != want {
+			t.Fatalf("override = (%d, %q), want exit 0 and %q", code, out, want)
+		}
+		got, err := commitmenttest.Overrides(f.root)
+		if want := []intent.LandingOverride{{Assignment: f.id, Reason: reason}}; err != nil || !reflect.DeepEqual(got, want) {
+			t.Fatalf("overrides = %+v (%v), want %+v", got, err, want)
+		}
 	}
-	if got, want := overrides(t, f.root), []intent.LandingOverride{{Assignment: f.id, Reason: overrideReason}}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("overrides = %+v, want %+v", got, want)
+	grant(overrideReason)
+	if err := (commitrepo.Store{Root: f.checkout}).Start("B", backOut, "specs/B/spec.md"); err != nil {
+		t.Fatal(err)
 	}
+	grant("back out the bound landing")
 }
 
 // notConfirmed is the refusal of a confirmation that does not type the id.
@@ -139,8 +139,8 @@ func TestOverrideNeedsTheTypedAssignment(t *testing.T) {
 	})
 }
 
-// confirmation is what the verb prints before it reads the typed id: the row that names the
-// back-out assignment, the refusing builds, and reason, and then the prompt.
+// confirmation is what the verb prints before it reads the typed id. It is the row that
+// names the back-out assignment, the refusing builds, and reason, and then the prompt.
 func confirmation(t *testing.T, id, builds, reason string) string {
 	t.Helper()
 	row, err := toon.Table(overrideTable, overrideFields, [][]string{{id, backOut, builds, reason}})
@@ -162,7 +162,7 @@ func TestOverrideRefusesAnInactiveAssignment(t *testing.T) {
 	}
 }
 
-// BW81: the override reason follows the block verb's reason rule, so a blank reason and a
+// BW81: the override reason follows the reason rule of the block verb. A blank reason and a
 // reason with a newline, ESC, or BEL refuse with that rule's sentence before the prompt. The
 // grammar refuses an empty value for both verbs before that rule.
 func TestOverrideRefusesABadReason(t *testing.T) {
