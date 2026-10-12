@@ -1,7 +1,7 @@
 # Recover failed approval stages and retain published receipts
 
 Blocked by: 06-preserve-ledger-effects.md
-Writes: internal/commitment/repository/repository.go, internal/commitment/repository/replacement_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/commitment/repository/replacement.go (new)
+Writes: internal/commitment/repository/repository.go, internal/commitment/repository/replacement_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/commitment/repository/replacement.go (new), internal/commitment/repository/export_test.go (new), internal/durablefile/durablefiletest/router.go (new), internal/gate/durable_replacement_test.go
 Covers: D23, D46, D47, D48, D49, D50, D51
 
 ## What to build
