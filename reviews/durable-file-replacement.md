@@ -454,7 +454,78 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dfr-da-standards-1",
+          "performer": "claude:dfr_rev_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "00bb572250b671e1e40ce1ca18587a1a5bd5793e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_standards",
+            "digest": "sha256:48b32d739d8dd530828b1391c6fb2a3e1586e0d8b644b325847961a472f38d12",
+            "excerpt": "Standards axis, chunk D-A (9433df1b..5217d901), opus/high. 2 findings; worst S1.\nS1 blocking ask-user conf 6: internal/reviewrecord/replacement_test.go:15-54 (failingFile, failingDirectory, failingSync) duplicates the fault-injection harness of internal/durablefile/recorder_test.go:42-83,107-132; AGENTS.md keeps fixture harnesses single-sourced. Fix: export the recorder as a test-support package under internal/durablefile/.\nS2 non-blocking auto-fix conf 5: internal/durablefile/platform_test.go:15-16 comment restates the review-record obligation that ticket line 60 owns. Fix: delete the sentence.\nRefuted: ordered sequence exists once (replace.go:95-134); error wrapping keeps errors.Is/As; stage literals are the spec contract; comment register matches.\n"
+          },
+          "axis": "Standards",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "5217d90168cdf1a39d8dba48483e8be1c9ed6860",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dfr-da-spec-1",
+          "performer": "claude:dfr_rev_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "00bb572250b671e1e40ce1ca18587a1a5bd5793e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_spec",
+            "digest": "sha256:80683704f7549323802f126191be677d8e8c28a3fa7042719c99007edd0457b3",
+            "excerpt": "Spec axis, chunk D-A (9433df1b..5217d901), opus/high. 2 findings; worst P1.\nAll 17 rows D01-D15, D19, D32 audited: each cited test exists and asserts its row; implementation decisions met (replace.go:16-139; write.go:107,121-126; assignment.go:85).\nP1 blocking ask-user conf 10: D32 macos-native requirement (spec:133,186; ticket:25) has no evidence; review record line 84 records Linux (WSL2 tmpfs and ext4) only.\nP2 non-blocking no-op conf 4: assignment.go:85 passes a fixed replacer, so no test injects a failure into RecordAssignment; spec line 96 accepts the shared wrapper.\n"
+          },
+          "axis": "Spec",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "5217d90168cdf1a39d8dba48483e8be1c9ed6860",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dfr-da-coverage-1",
+          "performer": "claude:dfr_rev_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "00bb572250b671e1e40ce1ca18587a1a5bd5793e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_coverage",
+            "digest": "sha256:51ca19ef931857fc0d970ceb0c5d8aa66288fc0b7af3ff7811900d09bf18c917",
+            "excerpt": "Coverage axis, chunk D-A (9433df1b..5217d901), opus/high. 3 findings; worst C1. Ran bench test ./internal/durablefile (16 pass) and ./internal/reviewrecord (88 pass).\nC1 blocking ask-user conf 9: D32 needs native Linux and macOS qualification; no macos-native entry (reviews:84; spec:119,186).\nC2 non-blocking auto-fix conf 7: TestReviewReplacement calls writeWith directly (replacement_test.go:116,144,170; write.go:196-198); no test pins the replacement that the production entry write binds.\nC3 non-blocking auto-fix conf 7: RecordAssignment binds its own replacement (assignment.go:85); no injected failure reaches it through the real transaction. Same fix as C2.\nClean: every stage has a failure witness; edge fixtures present; real transaction driven; recorded probes name plan mutations.\n"
+          },
+          "axis": "Coverage",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "5217d90168cdf1a39d8dba48483e8be1c9ed6860",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -466,3 +537,25 @@
   }
 }
 ```
+
+## Standards
+
+Chunk D-A has 2 findings. The worst issue is S1.
+
+- S1, auto-fix, confidence 6: `internal/reviewrecord/replacement_test.go:15-54` repeats the fault-injection harness of `internal/durablefile/recorder_test.go`. Move the harness to one test-support package under `internal/durablefile/`, and let both test files use it.
+- S2, auto-fix, confidence 5: `internal/durablefile/platform_test.go:15-16` states the evidence obligation that ticket line 60 owns. Delete that sentence.
+
+## Spec
+
+Chunk D-A has 2 findings. The worst issue is P1.
+
+- P1, ask-user, confidence 10: row D32 needs native macOS evidence, and this host has no macOS. The reviewer decides the route.
+- P2, no-op, confidence 4: the C3 repair closes the same gap in `internal/reviewrecord/assignment.go:85`.
+
+## Coverage
+
+Chunk D-A has 3 findings. The worst issue is C1.
+
+- C1, ask-user, confidence 9: this finding is the same as P1.
+- C2, auto-fix, confidence 7: `TestReviewReplacement` calls `writeWith` directly, so no test examines the replacement that the `write` entry binds (`internal/reviewrecord/write.go:196-198`). Inject the failure through the real `write` entry.
+- C3, auto-fix, confidence 7: `RecordAssignment` binds its own replacement (`internal/reviewrecord/assignment.go:85`), and no injected failure reaches it. Inject the failure through the real `RecordAssignment` transaction. C2 and C3 have one repair target.
