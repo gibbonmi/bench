@@ -3089,6 +3089,72 @@
             "C8"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-b6-r2-standards",
+          "performer": "claude:dcm_rev_b6_std2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3d38043c20090c1b33f3011d740349e61b132497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b6_std2",
+            "digest": "sha256:c8db0df55c74f46a61261beff97db2b8f058d4115ff4399157cd5a1221c11e6e",
+            "excerpt": "## Standards confirming round (D-B6, repair delta 635834ac..77835db3 and plan e97d88e9) — 0 findings\nS1-S5 closed: intent.LockPath; one durablefiletest.Router used by the approval and gate tests; ApproveWith through export_test.go with commitmenttest.Repo; subtest t in setup; lock-release check removed. The router doc states its rename-keyed limit.\nAdvice: the D43 pre-rename row fits a plain Recorder; Router.Fail lacks a field comment; long lines from the 398-line compression; requireAbsent could move to durablefiletest.\n"
+          },
+          "axis": "Standards",
+          "base": "3cf04078eb7bf8169f1af53cde9074f0a1da206e",
+          "tip": "91954b3279d3ab379a62f92630c0be55b62e0421",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b6-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-b6-r2-spec",
+          "performer": "claude:dcm_rev_b6_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3d38043c20090c1b33f3011d740349e61b132497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b6_spec2",
+            "digest": "sha256:16b10ecc580a6f7cb7c15c8bde9911c41c81a97014e8a494ab55afca92403e00",
+            "excerpt": "## Spec confirming round (D-B6, repair delta 635834ac..77835db3 and plan e97d88e9) — 0 findings\nD23, D46-D51 intact and stronger; the D-B1 gate rows D16, D17, D37-D40 keep their behavior through the shared router; citations name existing tests; plan e97d88e9 adds fence paths and two floor rows only.\n"
+          },
+          "axis": "Spec",
+          "base": "3cf04078eb7bf8169f1af53cde9074f0a1da206e",
+          "tip": "91954b3279d3ab379a62f92630c0be55b62e0421",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b6-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-b6-r2-coverage",
+          "performer": "claude:dcm_rev_b6_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3d38043c20090c1b33f3011d740349e61b132497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b6_cov2",
+            "digest": "sha256:f169ef439e617f5bdbad1694a56f6c687b9b34688a8af06a2009fe1a8ac73707",
+            "excerpt": "## Coverage confirming round (D-B6, repair delta 635834ac..77835db3) — 0 findings. New-site probes, each restored=yes.\nC1 restoreAll returns at the first error: bit (first-of-two :343). C2 restore dropped on any board failure: bit (4 tests). C3 absent snapshot keeps the policy: bit (:395). C6 ProjectSequence error discarded: bit (:262). C4, C5, C7, C8 closed by recorded evidence. The gate router behaves as the deleted faultPlan, and the recorded gate reds bite through it.\n"
+          },
+          "axis": "Coverage",
+          "base": "3cf04078eb7bf8169f1af53cde9074f0a1da206e",
+          "tip": "91954b3279d3ab379a62f92630c0be55b62e0421",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b6-r1-coverage"
+          ]
         }
       ]
     }
@@ -3639,3 +3705,5 @@ Chunk D-B6 used 0 of its 2 repair cycles before repair 1. Every finding falls on
 Before the repair, each C1 to C6 swap was silent over the whole package. The `claude:dcm_t07_rep1` omission-proof and preservation excerpts record each red at the repair tip.
 
 Chunk D-B6 used 1 of its 2 repair cycles.
+
+The D-B6 confirming round at 77835db3 closed S1 through S5 and C1 through C8 with no new finding. Chunk D-B6 closed with 1 of its 2 repair cycles used.
