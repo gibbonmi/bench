@@ -21,7 +21,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Drive the real document store through the retained failure seam.
 A shared directory-sync failure after rename remains a classified failure with the complete new document visible.
 
-- [ ] The repair pilot document caller exposes an injected directory-sync failure. (D29).
+- [x] The repair pilot document caller exposes an injected directory-sync failure. (D29).
 
 ## Checkpoint verification
 
