@@ -60,26 +60,56 @@ func TestIntentPreRenameFailure(t *testing.T) {
 	requireBytes(t, path, string(prior))
 }
 
-// D44: the new ledger may be visible after a failed directory sync, so the transaction
-// keeps the decision's effects, releases the lock, and returns the classified failure.
+// D44 and D45: the new ledger may be visible after a failure past the rename, so the
+// transaction keeps the decision's effects. A rename failure leaves the prior ledger, so
+// the compensation runs once while the lock still holds. Either way the transaction
+// releases the lock and returns the classified failure.
 func TestTransactionPublishedFailure(t *testing.T) {
-	root, path := mutatorFixture(t)
-	cause := errors.New("injected ledger directory-sync failure")
-	rec := &durablefiletest.Recorder{Fail: map[string]error{"directory-sync": cause}}
-	compensated := 0
-
-	err := TransactWithReplacer(rec.Replacer(), root, StrictRead, func(ledger Ledger) (Ledger, bool, error) {
-		ledger.Entries = append(ledger.Entries, Entry{Key: "added", Kind: KindWorktree, CreatedAt: time.Unix(2, 0).UTC()})
-		return ledger, true, nil
-	}, func() { compensated++ })
-
-	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)
-	if compensated != 0 {
-		t.Fatalf("compensation ran %d times after a completed rename, want 0", compensated)
+	type row struct {
+		stage     string
+		published bool
 	}
-	requireBytes(t, path, `{"schema":2,"entries":[`+addedJSON+`,`+seedEntryJSON+`],"assignments":[`+firstJSON+`]}`+"\n")
-	if _, err := os.Stat(lockOf(path)); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("lock file after a published failure: %v", err)
+	cases := []row{{stage: "rename"}}
+	for _, stage := range durablefiletest.PostRenameStages {
+		cases = append(cases, row{stage: stage, published: true})
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.stage, func(t *testing.T) {
+			root, path := mutatorFixture(t)
+			prior, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			cause := errors.New("injected ledger " + testCase.stage + " failure")
+			rec := &durablefiletest.Recorder{Fail: map[string]error{testCase.stage: cause}}
+			compensated := 0
+
+			err = TransactWithReplacer(rec.Replacer(), root, StrictRead, func(ledger Ledger) (Ledger, bool, error) {
+				ledger.Entries = append(ledger.Entries, Entry{Key: "added", Kind: KindWorktree, CreatedAt: time.Unix(2, 0).UTC()})
+				return ledger, true, nil
+			}, func() {
+				compensated++
+				if _, err := os.Stat(lockOf(path)); err != nil {
+					t.Errorf("lock file during the compensation: %v", err)
+				}
+			})
+
+			durablefiletest.RequireFailure(t, err, testCase.stage, testCase.published, cause)
+			if testCase.published {
+				if compensated != 0 {
+					t.Fatalf("compensation ran %d times after a completed rename, want 0", compensated)
+				}
+				requireBytes(t, path, `{"schema":2,"entries":[`+addedJSON+`,`+seedEntryJSON+`],"assignments":[`+firstJSON+`]}`+"\n")
+			} else {
+				if compensated != 1 {
+					t.Fatalf("compensation ran %d times before a completed rename, want 1", compensated)
+				}
+				requireBytes(t, path, string(prior))
+			}
+			if _, err := os.Stat(lockOf(path)); !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("lock file after a replacement failure: %v", err)
+			}
+		})
 	}
 }
 
