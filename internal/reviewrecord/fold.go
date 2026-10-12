@@ -109,10 +109,13 @@ func coveredAfter(root string, record Record, chunk Chunk) (digest, commit strin
 
 // foldCoversBase reports whether the last fold after chunk covers base, the next chunk
 // base, whose source digest is digest. The fold commit must be an ancestor of base, and
-// base must hold the fold's source digest.
-func foldCoversBase(root string, record Record, chunk Chunk, base, digest string) bool {
+// base must hold the fold's source digest. A failed ancestry query is an error.
+func foldCoversBase(root string, record Record, chunk Chunk, base, digest string) (bool, error) {
 	fold := coveringFold(root, record, chunk)
-	return fold != nil && fold.SourceDigest == digest && benchgit.OK("-C", root, "merge-base", "--is-ancestor", fold.Commit, base)
+	if fold == nil || fold.SourceDigest != digest {
+		return false, nil
+	}
+	return isAncestor(root, fold.Commit, base)
 }
 
 // uncoveredFold returns the newest fold of a default-branch commit in the range from..tip,

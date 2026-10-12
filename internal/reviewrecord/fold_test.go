@@ -68,6 +68,35 @@ func TestFoldChainAcceptsARecordedFoldBetweenChunks(t *testing.T) {
 	}
 }
 
+// TestChainRefusesAFailedAncestryQuery proves that an ancestry query Git cannot run
+// refuses and names the query. The commit is absent, so merge-base exits 128, and no
+// record form repairs it.
+func TestChainRefusesAFailedAncestryQuery(t *testing.T) {
+	const absent = "0123456789abcdef0123456789abcdef01234567"
+	for _, tc := range []struct {
+		name    string
+		corrupt func(record *rr.Record)
+	}{
+		{"chunk base", func(record *rr.Record) { record.Chunks[1].Base = absent }},
+		{"fold commit", func(record *rr.Record) { record.Folds[0].Commit = absent }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f, _ := foldedAfterChunk1(t, 2, rr.FoldDelta{})
+			f.Commit("retain the fold")
+			f.AddChunk()
+			broken := f.Record
+			broken.Chunks = slices.Clone(f.Record.Chunks)
+			broken.Folds = slices.Clone(f.Record.Folds)
+			tc.corrupt(&broken)
+			err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), broken, "2", false)
+			var repair rr.Repair
+			if err == nil || errors.As(err, &repair) || !strings.Contains(err.Error(), "ancestry query of "+absent) {
+				t.Errorf("chunk 2 over an absent %s = %v, want a failed ancestry query with no repair form", tc.name, err)
+			}
+		})
+	}
+}
+
 // TestFoldCoversACompletionSourcePastTheLastChunk covers BW37 and BW38: a recorded fold
 // covers a completion source past the last chunk tip, and without the fold entry the
 // completion refuses the stale source as a repair of the fold form.

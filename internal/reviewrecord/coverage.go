@@ -43,8 +43,14 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 	var previous *Chunk
 	for i := range record.Chunks {
 		chunk := &record.Chunks[i]
-		if !benchgit.OK("-C", root, "merge-base", "--is-ancestor", chunk.Base, chunk.Tip) || !benchgit.OK("-C", root, "merge-base", "--is-ancestor", chunk.Tip, tip) {
-			return fmt.Errorf("chunk %s: stale unrelated base or tip; review the requested source", chunk.ID)
+		for _, pair := range [][2]string{{chunk.Base, chunk.Tip}, {chunk.Tip, tip}} {
+			reachable, err := isAncestor(root, pair[0], pair[1])
+			if err != nil {
+				return fmt.Errorf("chunk %s: %w", chunk.ID, err)
+			}
+			if !reachable {
+				return fmt.Errorf("chunk %s: stale unrelated base or tip; review the requested source", chunk.ID)
+			}
 		}
 		chunkTree, err := benchgit.Output("-C", root, "rev-parse", "--verify", chunk.Tip+"^{tree}")
 		if err != nil {
@@ -82,8 +88,17 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			if err != nil {
 				return err
 			}
-			chained := baseDigest == previous.SourceDigest && benchgit.OK("-C", root, "merge-base", "--is-ancestor", previous.Tip, chunk.Base)
-			chained = chained || foldCoversBase(root, record, *previous, chunk.Base, baseDigest)
+			chained := false
+			if baseDigest == previous.SourceDigest {
+				if chained, err = isAncestor(root, previous.Tip, chunk.Base); err != nil {
+					return fmt.Errorf("chunk %s: %w", chunk.ID, err)
+				}
+			}
+			if !chained {
+				if chained, err = foldCoversBase(root, record, *previous, chunk.Base, baseDigest); err != nil {
+					return fmt.Errorf("chunk %s: %w", chunk.ID, err)
+				}
+			}
 			if !chained {
 				return Repair{Form: FormFold, Chunk: chunk.ID, Err: fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits and comment-only corrections follow a chunk tip; record the fold or review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)}
 			}
@@ -160,6 +175,16 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		return checkCompletion(record, current, digest, tip)
 	}
 	return nil
+}
+
+// isAncestor answers benchgit.IsAncestor. Its failed-query error names both commits, so a
+// refusal names the cause.
+func isAncestor(root, ancestor, descendant string) (bool, error) {
+	reachable, err := benchgit.IsAncestor(root, ancestor, descendant)
+	if err != nil {
+		return false, fmt.Errorf("ancestry query of %s against %s failed: %w", ancestor, descendant, err)
+	}
+	return reachable, nil
 }
 
 // Chunk returns the planned chunk id, or nil when the plan names no such chunk.
