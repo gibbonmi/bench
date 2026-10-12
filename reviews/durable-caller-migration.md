@@ -4172,6 +4172,72 @@
           "supersedes": [
             "dcm-c4-r2-standards"
           ]
+        },
+        {
+          "id": "dcm-c4-r3-spec",
+          "performer": "claude:dcm_rev_c4_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_spec2",
+            "digest": "sha256:1c89af8c1b82416cfc9747c517826cdff9d3357fe0e84b6e4a7dcf17aa619199",
+            "excerpt": "## Spec (D-C4 refrozen pair, 19cb2923..c377e632) — pass; P1 closed; the added delta 19cb2923..68e390e1 is a comment-only test edit (internal/brokermanifest/replacement_test.go:85-86) plus review records; 0 open findings.\n"
+          },
+          "axis": "Spec",
+          "base": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+          "tip": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c4-r2-spec"
+          ]
+        },
+        {
+          "id": "dcm-c4-r3-coverage",
+          "performer": "claude:dcm_rev_c4_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_cov2",
+            "digest": "sha256:c449521f53ce499306c325ee44bcf78370ad0a180b011ae560a233fe79d91b52",
+            "excerpt": "## Coverage (D-C4 refrozen pair, 19cb2923..c377e632) — pass; C1, C2 closed; C3 no-op; the added delta is a comment-only test edit plus review records and needs no witness; dcm-t11-rep1 entries still graded; 0 open findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+          "tip": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c4-r2-coverage"
+          ]
+        },
+        {
+          "id": "dcm-c4-r4-standards",
+          "performer": "claude:dcm_rev_c4_std3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_std3",
+            "digest": "sha256:e242c9db73241d9cab42494bed553a19d7c502ee1e39c9ea66114ef87578a512",
+            "excerpt": "## Standards (D-C4 refrozen pair, 19cb2923..c377e632) — pass; S1-S4 closed; the added delta 19cb2923..68e390e1 is an accurate comment-only test edit plus review records; the post-tip S4 comment fix 5d56efc1 is graded; 0 open findings.\n"
+          },
+          "axis": "Standards",
+          "base": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+          "tip": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c4-r3-standards"
+          ]
         }
       ]
     }
@@ -4949,3 +5015,5 @@ The D-C4 confirming round at 08eb67b3 closed S1, S2, S3, P1, C1, and C2. It rais
 - S4, auto-fix as an evidence-only comment correction, confidence 5: the `render` comment at `internal/probe/probe.go:231-232` says that a failed restore keeps the preserved row. When the copy path refuses, `keptCopy` answers with two error lines instead. The orchestrator corrects the comment, and the Standards axis reaffirms it.
 
 The Standards reaffirmation at 5d56efc1 closed S4. Chunk D-C4 closed with 1 of its 2 repair cycles used, and the comment-only correction used none.
+
+D-C4 is refrozen on the D-C2 tip 19cb2923, because the D-C2 comment-only correction changes the base digest that the chain check compares. The three axes confirmed their results for the wider pair with no new findings.
