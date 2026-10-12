@@ -17,7 +17,8 @@ The confirming round passed on all three axes, and BW-D used one of its two repa
 A fable/high consultation chose the rules for BW-D C1 and BW-D S3, and added rows BW99 and BW100.
 A fable/high consultation chose the owner for BW-C S1 and the content binding for BW-C C1.
 
-BW-E round 1 reviewed the pair `814a14cc..ccd2a6cd`, and repair 1 at `0ac5df86` takes all seven targets.
+BW-E round 1 reviewed the pair `814a14cc..ccd2a6cd`, and repair 1 closed all seven targets at `0ac5df86`.
+The confirming round passed on all three axes, and BW-E used one of its two repair cycles.
 
 ## Standards
 
@@ -2892,6 +2893,72 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bwe-standards-r2",
+          "performer": "claude:blw_bwe_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f5930a5e46d552b581fea96bb03a78daf5afb1bc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwe_standards_r2",
+            "digest": "sha256:7d0884d3fe50d395de9caac47edaf88017845ef30bfb6c0d230e4a40e1695663",
+            "excerpt": "Standards confirming round, BW-E, delta ccd2a6cd..0ac5df86: 0 findings.\nS1 closed: response_bound.go:56 matches the form position; commitment_command.go:14 derives ReviewerVerb[1];\n  dashboard --stdout keeps its any-position match at main.go:84.\nS2 closed: commitmenttest.Overrides at admission.go:230 beside Leases; both callers use it.\nS3 closed: override_test.go:142, :165 and repository/override.go:12 are at 25 words or fewer.\nformArgument --in skip is unreachable from dispatch and reuses leadsWithTreeTarget: harmless.\nStagedInParallel, t.Chdir, and bashEnvelope are correct.\n"
+          },
+          "axis": "Standards",
+          "base": "814a14cce55260b397affab84f1ba90a473b98fe",
+          "tip": "0ac5df869fb38b2d2a6b6845f6b83c9370980386",
+          "finding_ids": [],
+          "supersedes": [
+            "bwe-standards-r1"
+          ]
+        },
+        {
+          "id": "bwe-spec-r2",
+          "performer": "claude:blw_bwe_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f5930a5e46d552b581fea96bb03a78daf5afb1bc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwe_spec_r2",
+            "digest": "sha256:eb23742e9e898aaec524b91061fbd61fb35c08083727729e05f3ca85b1324a95",
+            "excerpt": "Spec confirming round, BW-E, delta ccd2a6cd..0ac5df86: 0 findings.\nP1 closed: main_test.go:425 runs guardBenchFollowOn on three Bash envelopes; spec.md:574 cites it.\nP2 closed: response_bound.go:56 matches the form position only; block, verify, and plan with an override operand stay bounded.\nNo other commitment form escapes the bound; the --in child dispatches commitment override and stays exempt.\nBW71 and BW74 still grade their rows; the chunk row, coverage map, and Covers line agree.\nAdvice: runChild Setpgid may stop a terminal read in the --in primary override form; no row requires that form.\n"
+          },
+          "axis": "Spec",
+          "base": "814a14cce55260b397affab84f1ba90a473b98fe",
+          "tip": "0ac5df869fb38b2d2a6b6845f6b83c9370980386",
+          "finding_ids": [],
+          "supersedes": [
+            "bwe-spec-r1"
+          ]
+        },
+        {
+          "id": "bwe-coverage-r2",
+          "performer": "claude:blw_bwe_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f5930a5e46d552b581fea96bb03a78daf5afb1bc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwe_coverage_r2",
+            "digest": "sha256:bcf19f9b636a3ea635ae2ac42d8c30c7a0aa4ccc72b32602da3b9da16cbb87ac",
+            "excerpt": "Coverage confirming round, BW-E, delta ccd2a6cd..0ac5df86: 1 finding, 0 blocking.\nC1 closed: clear-all and drop-first consumption both turn BW74 red. C2 closed: omit and != binding turn BW71 red.\nP1 closed: guard off turns 3 envelope cases red; guard always-on turns 3 follow-on tests red.\nS1 closed: an any-position match turns 5 cases red; dropping the --in skip turns only the direct bound row red.\nC3 (non-blocking, advice): a drop-last-granted consumption at publication.go:49 is silent; BW74 grants the publisher's override last.\nStagedInParallel and t.Chdir weaken no test. All probes restored yes; git status --short empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "814a14cce55260b397affab84f1ba90a473b98fe",
+          "tip": "0ac5df869fb38b2d2a6b6845f6b83c9370980386",
+          "finding_ids": [],
+          "supersedes": [
+            "bwe-coverage-r1"
+          ]
         }
       ]
     }
