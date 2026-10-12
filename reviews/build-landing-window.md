@@ -107,7 +107,7 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
 {
   "version": 2,
   "spec": "specs/build-landing-window/spec.md",
-  "plan_digest": "sha256:4e95c244b8a9e88117a9e2b620386000dc9123aecae93e97c7a0cbc9dd7c08c5",
+  "plan_digest": "sha256:3570d17d0cd81db0cf48021e5571af155d1ceac322a98a6cde4253a6d4c6a29b",
   "implementation_session": "",
   "chunks": [
     {
@@ -2961,6 +2961,145 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
           ]
         }
       ]
+    },
+    {
+      "id": "BW-F",
+      "base": "ca231f791a289e164f0bfda6ff53ff233dd8a1fb",
+      "tip": "835b31bebc2ded2cf779f418d232d87dd4d0c8be",
+      "plan_digest": "sha256:3570d17d0cd81db0cf48021e5571af155d1ceac322a98a6cde4253a6d4c6a29b",
+      "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+      "acceptance_rows": [
+        "BW85",
+        "BW86",
+        "BW87",
+        "BW88",
+        "BW89",
+        "BW90",
+        "BW91",
+        "BW92"
+      ],
+      "verification": [
+        {
+          "id": "t8-anchors-focused-v1",
+          "performer": "claude:blw_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8/t8-anchors-probe.log",
+            "digest": "sha256:ca4ddfac9bda93d46c7ee3f5609ece14bd1a21ebdfe89dd27d86e8b61cbcfa9b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/anchors/registry_chunk_chain.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestChunkChainAnchors,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,505\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,528,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestChunkChainAnchors,\"registry_chunk_chain_test.go:65: tree broken at \\\"A build folds `main` only before the first chunk, at the start of the last chunk, or before the completion landing.\\\" in .agents/commands/bench-implement-spec.md = [.agents/commands/bench-impl… (1020 bytes)\",5\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-anchors-focused",
+          "command": "bench test --package ./internal/anchors --run 'TestChunkChainAnchors'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the forbid row for the retired sentence that folds main at the start of the last chunk from internal/anchors/registry_chunk_chain.go, so that the old sentence passes the registry. TestChunkChainAnchors turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8/t8-anchors-probe.log",
+              "digest": "sha256:ca4ddfac9bda93d46c7ee3f5609ece14bd1a21ebdfe89dd27d86e8b61cbcfa9b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/anchors/registry_chunk_chain.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestChunkChainAnchors,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,505\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,528,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestChunkChainAnchors,\"registry_chunk_chain_test.go:65: tree broken at \\\"A build folds `main` only before the first chunk, at the start of the last chunk, or before the completion landing.\\\" in .agents/commands/bench-implement-spec.md = [.agents/commands/bench-impl… (1020 bytes)\",5\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t8-floor-v1",
+          "performer": "claude:blw_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8/t8-floor.log",
+            "digest": "sha256:11e69fcc124ab042e8eb248ffaef69285f567d3239eee1dafb001cff8d704371",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,835b31bebc2ded2cf779f418d232d87dd4d0c8be,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16621,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2142,179\n  github.com/gibbonmi/bench/internal/conformance,pass,58222,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nwall_elapsed=62.53s exit=0\n"
+          },
+          "requirement": "t8-floor",
+          "command": "bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-guidance-v1",
+          "performer": "claude:blw_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8/t8-guidance.log",
+            "digest": "sha256:6bc0bae59eb4cbe8f0b015bbb72ae2ac76661c4c6624ceefcb85679408de6d80",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --check docs-currency-workflow\ntree[1]{target,head,dirty}:\n  FT342-FT253,835b31bebc2ded2cf779f418d232d87dd4d0c8be,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6158,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nwall_elapsed=9.41s exit=0\n"
+          },
+          "requirement": "t8-guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-conformance-meta-v1",
+          "performer": "claude:blw_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8/t8-conformance-meta.log",
+            "digest": "sha256:bf10e6eb0371cd9736009e38d7d8255d89a4c6d2366a7813a0fc0d20f767bbab",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --check conformance-meta\ntree[1]{target,head,dirty}:\n  FT342-FT253,835b31bebc2ded2cf779f418d232d87dd4d0c8be,false\ncheck[1]{name,kind,tests_run,subjects}:\n  conformance-meta,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,31,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nwall_elapsed=1.70s exit=0\n"
+          },
+          "requirement": "t8-conformance-meta",
+          "command": "bench test --check conformance-meta",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-prose-v1",
+          "performer": "claude:blw_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8/t8-prose.log",
+            "digest": "sha256:d8a8ee1905ee53d0bfcc8ad6c976b83f661b393824e1f339b839ed282f3d8a6c",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --check prose\ntree[1]{target,head,dirty}:\n  FT342-FT253,835b31bebc2ded2cf779f418d232d87dd4d0c8be,false\ncheck[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,561\nwall_elapsed=0.37s exit=0\n"
+          },
+          "requirement": "t8-prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-root-conformance-v1",
+          "performer": "claude:blw_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8/t8-root-conformance.log",
+            "digest": "sha256:514b459258ceed6331eb3e40ece0eccaf8c7170e347e9e697a457a19d2927d02",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,835b31bebc2ded2cf779f418d232d87dd4d0c8be,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16528,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nwall_elapsed=19.59s exit=0\n"
+          },
+          "requirement": "t8-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -3097,6 +3236,27 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
     {
       "from": "sha256:5c16bcb325728b2f8822c6ca9adb814bd3b40829d01654b9297c5392d653b4f5",
       "to": "sha256:4e95c244b8a9e88117a9e2b620386000dc9123aecae93e97c7a0cbc9dd7c08c5",
+      "chunk_ids": {
+        "BW-A": [
+          "BW-A"
+        ],
+        "BW-B": [
+          "BW-B"
+        ],
+        "BW-C": [
+          "BW-C"
+        ],
+        "BW-D": [
+          "BW-D"
+        ],
+        "BW-E": [
+          "BW-E"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4e95c244b8a9e88117a9e2b620386000dc9123aecae93e97c7a0cbc9dd7c08c5",
+      "to": "sha256:3570d17d0cd81db0cf48021e5571af155d1ceac322a98a6cde4253a6d4c6a29b",
       "chunk_ids": {
         "BW-A": [
           "BW-A"
