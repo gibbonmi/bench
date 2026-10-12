@@ -17,6 +17,8 @@ The confirming round passed on all three axes, and BW-D used one of its two repa
 A fable/high consultation chose the rules for BW-D C1 and BW-D S3, and added rows BW99 and BW100.
 A fable/high consultation chose the owner for BW-C S1 and the content binding for BW-C C1.
 
+BW-E round 1 reviewed the pair `814a14cc..ccd2a6cd`, and repair 1 takes all seven targets.
+
 ## Standards
 
 Findings: 3. Worst issue: S1, a copied gate-barrier fixture harness.
@@ -43,6 +45,12 @@ BW-D findings: 3. Worst issue: BW-D S1, a second derivation of the active-run ch
 - BW-D S2, auto-fix, confidence 7: three comment sentences in `recordcmd/assignment.go:30-31` and `dispatch_gap_test.go:23` and `:110` are over 25 words. Ticket 6 repairs it.
 - BW-D S3, auto-fix, confidence 5: `window.go:64` reads a Git fault as no open build. Refuse it with `land-infrastructure` and the cause, and add row BW100. Ticket 5 repairs it.
 
+BW-E findings: 3. Worst issue: BW-E S1, a bound exemption that matches the word `override` in any argument.
+
+- BW-E S1, auto-fix, confidence 8: `boundExemptWith("override", …)` (`cmd/bench/main.go:102`, `cmd/bench/response_bound.go:44`) exempts `bench commitment block --reason override`. Match the form position only. Ticket 7 repairs it.
+- BW-E S2, auto-fix, confidence 7: `override_test.go:84` and `land_override_test.go:30` repeat one override-list read. Add one `commitmenttest` helper beside `Leases`. Ticket 7 repairs it.
+- BW-E S3, auto-fix, confidence 8: three comment sentences in `override_test.go:142` and `:165` and `repository/override.go:12` are over 25 words. Ticket 7 repairs it.
+
 ## Spec
 
 Findings: 1. Worst issue: P1, a false comparison clause in the Edge inventory.
@@ -58,6 +66,11 @@ BW-C findings: 0. The transitive second-fold reading reconciles the spec lines o
 BW-D findings: 1. Worst issue: BW-D P1, the same gap overwrite as BW-D C1.
 
 - BW-D P1, auto-fix, confidence 5: `OpenGap` overwrites a later gap record. The spec gains one sentence, and ticket 6 repairs it with BW-D C1.
+
+BW-E findings: 2. Worst issue: BW-E P1, a BW82 test that does not run the guard on a Bash envelope.
+
+- BW-E P1, auto-fix, confidence 7: `TestGuardDeniesTheOverrideVerb` calls `ReviewerVerb` directly, so the guard wiring in `cmd/bench/guards.go` has no unit test. Add an envelope case in `cmd/bench/main_test.go`. Ticket 7 repairs it.
+- BW-E P2, auto-fix, confidence 6: the same defect as BW-E S1.
 
 ## Coverage
 
@@ -83,6 +96,11 @@ BW-D findings: 2. Worst issue: BW-D C1, a repair checkpoint that reopens the gap
 
 - BW-D C1, auto-fix, confidence 7: `OpenGap` (`internal/commitment/repository/gap.go:31-33`) writes over a later gap record. Write nothing when the record names a later chunk, and add row BW99. Ticket 6 repairs it.
 - BW-D C2, auto-fix, confidence 8: no test reaches the `chunk gap not recorded` write failure. Ticket 6 adds it.
+
+BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override and stays green.
+
+- BW-E C1, auto-fix, confidence 8: no test holds two overrides when one landing publishes. Add a second override to the BW74 test, and assert that it stays. Ticket 7 adds it.
+- BW-E C2, auto-fix, confidence 7: no test overrides a bound assignment while a second build is open. Add that case to the BW71 test. Ticket 7 adds it.
 
 ```bench-review-record
 {
@@ -2667,7 +2685,78 @@ BW-D findings: 2. Worst issue: BW-D C1, a repair checkpoint that reopens the gap
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bwe-standards-r1",
+          "performer": "claude:blw_bwe_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwe_standards",
+            "digest": "sha256:2717f1c38ea866cf22e46304baeba5f8297768ced7511c945de5bd13bfe6ffd2",
+            "excerpt": "Axis: Standards, BW-E, pair 814a14cc..ccd2a6cd: 3 findings, all blocking.\nS1 main.go:102 / response_bound.go:44: boundExemptWith(\"override\") matches any argument equal to override;\n   commitment block --reason override escapes the bound; the test comment at response_bound_exempt_test.go:112 is false.\nS2 commitcmd/override_test.go:84 and worktree/land_override_test.go:30 paste the override-list read beside commitmenttest.Leases.\nS3 three comment sentences over 25 words: override_test.go:142, :165; repository/override.go:12.\nAuthor notes (c) runScope lookup, (d) guard flag skip, (e) block reason text: not defects.\nAdvice: publication.go:50 drops the withRuntime error; override_test.go:71 hand-spells the refused header.\n"
+          },
+          "axis": "Standards",
+          "base": "814a14cce55260b397affab84f1ba90a473b98fe",
+          "tip": "ccd2a6cdb30eec625a2f2871fb8738ceffcebd12",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwe-spec-r1",
+          "performer": "claude:blw_bwe_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwe_spec",
+            "digest": "sha256:cf5421652911e77324342150ba66bd241c0f299b657e73b949f2ab3713d126f4",
+            "excerpt": "Axis: Spec, BW-E, pair 814a14cc..ccd2a6cd: 2 findings, 0 blocking.\nP1 spec.md:574 \"denies ... in a Bash envelope\": TestGuardDeniesTheOverrideVerb calls ReviewerVerb only;\n   the guards.go:174-177 wiring is graded only by the system test TestBenchFollowOnHookProcess.\nP2 main.go:102 ticket line 28 \"a bound exemption\": the same defect as Standards S1.\nRows BW71-BW81, BW83, BW84 built and graded; BW82 partial. Refusal order, texts, exit 1, no-write,\nprompt before read, one ledger decision, and publish-time consumption hold.\nAdvice: spec 296-299 error: prefix contradicts 293 (flagged for reviewer veto); Override replaces an earlier reason.\n"
+          },
+          "axis": "Spec",
+          "base": "814a14cce55260b397affab84f1ba90a473b98fe",
+          "tip": "ccd2a6cdb30eec625a2f2871fb8738ceffcebd12",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwe-coverage-r1",
+          "performer": "claude:blw_bwe_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwe_coverage",
+            "digest": "sha256:10f0b5328740f091fcdf2aecb6b0a657defdd6a980ad943eeca9156ca5f9418a",
+            "excerpt": "Axis: Coverage, BW-E, pair 814a14cc..ccd2a6cd: 2 findings, 0 blocking.\nC1 two overrides, one publishes: a clear-all consumption at publication.go survives (probe silent); BW74 lacks a second override.\nC2 override of a bound assignment: omit the deliverable lookup at override.go:37 (probe silent); BW71 lacks a bound case.\nProbes: publication.go swap silent, restored yes; override.go omit silent, restored yes;\n  override.go regrant swap silent, restored yes (advice: no regrant rule in the spec).\nAdvice: guard misses exec/time/backtick heads (terminal layer holds). git status --short empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "814a14cce55260b397affab84f1ba90a473b98fe",
+          "tip": "ccd2a6cdb30eec625a2f2871fb8738ceffcebd12",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
