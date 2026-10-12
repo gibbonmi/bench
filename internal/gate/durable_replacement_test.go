@@ -26,8 +26,8 @@ func TestVerdictReplacement(t *testing.T) {
 
 	err := durableReplace(rec.Replacer(), dir, record)
 
-	requirePublishedFailure(t, err, cause)
-	requireRecordFile(t, filepath.Join(dir, benchgit.GateCacheFile),
+	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)
+	durablefiletest.RequireFile(t, filepath.Join(dir, benchgit.GateCacheFile), 0o600,
 		`{"schema":1,"state":"ready","status":"green","tree":"abc123","oracle":"feed","recorded_at":"2026-10-12T00:00:00Z"}`+"\n")
 }
 
@@ -63,8 +63,8 @@ func TestEvidenceReplacement(t *testing.T) {
 			cause := errors.New("injected " + tc.name + " directory-sync failure")
 			rec := &durablefiletest.Recorder{Fail: map[string]error{"directory-sync": cause}}
 
-			requirePublishedFailure(t, tc.write(rec.Replacer(), dir), cause)
-			requireRecordFile(t, filepath.Join(dir, tc.entry), tc.want)
+			durablefiletest.RequireFailure(t, tc.write(rec.Replacer(), dir), "directory-sync", true, cause)
+			durablefiletest.RequireFile(t, filepath.Join(dir, tc.entry), 0o600, tc.want)
 		})
 	}
 }
@@ -286,27 +286,5 @@ func requireUnpersisted(t *testing.T, result Result, gateExit int, stderr string
 	t.Helper()
 	if result.ActionExit != 1 || result.GateExit != gateExit || result.Inspection.ReusableGreen {
 		t.Fatalf("result = %#v, stderr=%q, want ActionExit 1, GateExit %d, and no reusable green", result, stderr, gateExit)
-	}
-}
-
-func requirePublishedFailure(t *testing.T, err, cause error) {
-	t.Helper()
-	var replaceErr *durablefile.Error
-	if !errors.As(err, &replaceErr) || !replaceErr.Published || replaceErr.Stage != "directory-sync" || !errors.Is(err, cause) {
-		t.Fatalf("err = %v, want a published directory-sync *durablefile.Error that wraps %v", err, cause)
-	}
-}
-
-func requireRecordFile(t *testing.T, path, want string) {
-	t.Helper()
-	info, err := os.Stat(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got := info.Mode().Perm(); got != 0o600 {
-		t.Fatalf("mode = %v, want 0600", got)
-	}
-	if got := string(outcomeRead(t, path)); got != want {
-		t.Fatalf("record = %q, want %q", got, want)
 	}
 }

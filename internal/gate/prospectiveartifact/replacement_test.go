@@ -2,11 +2,11 @@ package prospectiveartifact
 
 import (
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
@@ -20,23 +20,26 @@ func TestOwnerReplacement(t *testing.T) {
 
 	err := publish(rec.Replacer(), root, Record{Schema: 1, OwnerPID: 4242, CommonDir: "/repo/.git"})
 
-	var replaceErr *durablefile.Error
-	if !errors.As(err, &replaceErr) || !replaceErr.Published || replaceErr.Stage != "directory-sync" || !errors.Is(err, cause) {
-		t.Fatalf("err = %v, want a published directory-sync *durablefile.Error that wraps %v", err, cause)
-	}
+	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)
+	durablefiletest.RequireFile(t, filepath.Join(root, RecordName), 0o600, `{"schema":1,"owner_pid":4242,"common_dir":"/repo/.git"}`+"\n")
+}
+
+// D36: a rename failure of the owner record replacement returns an unpublished failure
+// that wraps its cause, publishes no record, and leaves no temporary file in the root.
+func TestOwnerPreRenameFailure(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	cause := errors.New("injected owner rename failure")
+	rec := &durablefiletest.Recorder{Fail: map[string]error{"rename": cause}}
+
+	err := publish(rec.Replacer(), root, Record{Schema: 1, OwnerPID: 4242, CommonDir: "/repo/.git"})
+
+	durablefiletest.RequireFailure(t, err, "rename", false, cause)
 	path := filepath.Join(root, RecordName)
-	info, err := os.Lstat(path)
-	if err != nil {
-		t.Fatal(err)
+	if _, err := os.Lstat(path); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("owner record stat = %v, want no published record", err)
 	}
-	if !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
-		t.Fatalf("owner record mode = %v, want a regular 0600 file", info.Mode())
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if want := `{"schema":1,"owner_pid":4242,"common_dir":"/repo/.git"}` + "\n"; string(data) != want {
-		t.Fatalf("owner record = %q, want %q", data, want)
+	if siblings := durablefiletest.Siblings(t, path); len(siblings) != 0 {
+		t.Fatalf("root entries = %v, want no temporary file", siblings)
 	}
 }
