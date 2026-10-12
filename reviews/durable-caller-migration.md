@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:908fc1e6123bcee6feb067edaa58110a42f1ba077bfcf2abe60805d1e61bc234",
+  "plan_digest": "sha256:1f71fb49502390cf5c1ccabedb96986f67bf4e6e59abffc47a1a0f1e0f25de2b",
   "implementation_session": "",
   "chunks": [
     {
@@ -1762,6 +1762,134 @@
           ]
         }
       ]
+    },
+    {
+      "id": "D-B5",
+      "base": "2d06e7594c9d31f1ce9f22102d03da660601cea2",
+      "tip": "a6c0ffe56d68d2499f336761de2589f5988801da",
+      "plan_digest": "sha256:1f71fb49502390cf5c1ccabedb96986f67bf4e6e59abffc47a1a0f1e0f25de2b",
+      "source_digest": "f31faf8613dc4f4f281fc93c6c44040dd859c815",
+      "acceptance_rows": [
+        "D22",
+        "D44",
+        "D45",
+        "D52"
+      ],
+      "verification": [
+        {
+          "id": "dcm-t06-caller-tests",
+          "performer": "claude:dcm_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f31faf8613dc4f4f281fc93c6c44040dd859c815",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "a6c0ffe56d68d2499f336761de2589f5988801da",
+            "digest": "sha256:ed3a05260fc593191ceeb0764fc9d893081715cf541f96fc3a247b9c2529dbf6",
+            "excerpt": "bench test --package ./internal/intent at a6c0ffe56d68d2499f336761de2589f5988801da (FT354-durable-callers). TestIntentReplacement (D22, one row per durablefiletest.PostRenameStages stage), TestIntentPreRenameFailure (D36 rename fault; prior ledger kept), TestTransactionPublishedFailure (D44), TestTransactionUnclassifiedFailureCompensates (unclassified branch), TestReauthorizePublishedFailure (D52), and the unchanged D45 TestLedgerTransactionTerminalWriteFailureKeepsThePreviousBytes pass.\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,pass,999,72\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t06-existing-canary-owner",
+          "performer": "claude:dcm_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f31faf8613dc4f4f281fc93c6c44040dd859c815",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "a6c0ffe56d68d2499f336761de2589f5988801da",
+            "digest": "sha256:dc64111165aae6395ed9de511e6ae2b09bb76d5aef29616be85a3885286c8bca",
+            "excerpt": "bench test --check bounds-policy at a6c0ffe56d68d2499f336761de2589f5988801da (FT354-durable-callers). The canary tests/canary/package-core-guard/bounds-intent-window-fixed is unchanged: its BASE pins paths only, and intent.go keeps bounds.VerdictWindow(bounds.IntentLockTimeout).\ncheck[1]{name,kind,tests_run,subjects}:\n  bounds-policy,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,250,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "existing-canary-owner",
+          "command": "bench test --check bounds-policy",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t06-root-conformance",
+          "performer": "claude:dcm_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f31faf8613dc4f4f281fc93c6c44040dd859c815",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "a6c0ffe56d68d2499f336761de2589f5988801da",
+            "digest": "sha256:3b22fe21353e5e8137e9824e4201d8cf2e06b3587cdd407f5f67611c2e31e949",
+            "excerpt": "bench test --check root-conformance at a6c0ffe56d68d2499f336761de2589f5988801da (FT354-durable-callers)\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16553,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t06-omission-proof",
+          "performer": "claude:dcm_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f31faf8613dc4f4f281fc93c6c44040dd859c815",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "82697755375c32932a82993f9f42432c744a7b66",
+            "digest": "sha256:767ae134625b6455041f2a65d9fce31b798a7ad15fa6f5782de8823855831186",
+            "excerpt": "D-B5 omission-proof probes at 82697755375c32932a82993f9f42432c744a7b66 (FT354-durable-callers; a6c0ffe5 adds only spec text), bench test --package ./internal/intent, no --run filter.\nProbe q09 (compensate every write error). internal/intent/transaction.go swap old (exact): \"if compensate != nil && !published(err) {\" new (exact): \"if compensate != nil {\"\nResult: verdict bit, 2 failed tests (TestTransactionPublishedFailure compensation count; TestReauthorizePublishedFailure rollback count), restored yes.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/transaction.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,501\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1362,72\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestReauthorizePublishedFailure,\"replacement_test.go:138: the rollback ran 1 times after a completed rename, want 0\",1\n  github.com/gibbonmi/bench/internal/intent,TestTransactionPublishedFailure,\"replacement_test.go:78: compensation ran 1 times after a completed rename, want 0\",1\nskips[0]{package,test,reason}:\n\nProbe q13 (omit the reauthorization effect). internal/intent/assignment.go swap old (exact): \"step, err := transition(stored, next)\" new (exact): \"step, err := transition(stored, stored)\"\nResult: verdict bit, 1 failed test (TestReauthorizePublishedFailure at the external-witness check: effect ccc... against ledger request 80f3b5dd...), restored yes.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/assignment.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,461\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,983,72\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestReauthorizePublishedFailure,\"replacement_test.go:150: external effect = \\\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\\\", want the ledger request \\\"80f3b5ddef868a2b4422c3203ef39bec9a3a4db048441b8c968ad92acfd966ab\\\"\",1\nskips[0]{package,test,reason}:\n\nProbe q14 (roll back a published ledger without compensation). internal/intent/transaction.go swap old (exact): \"if err := writePathWith(replacer, path, next); err != nil {\" new (exact): \"old, _ := os.ReadFile(path); if err := writePathWith(replacer, path, next); err != nil { if published(err) { _ = durablefile.Replace(path, old, 0o600) };\"\nResult: verdict bit, 2 failed tests (TestTransactionPublishedFailure and TestReauthorizePublishedFailure at the new-ledger bytes check), restored yes. The package passes 72 tests after restore.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/transaction.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1067\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,949,72\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestReauthorizePublishedFailure,\"replacement_test.go:140: ledger = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"seed\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"shift\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:01Z\\\\\\\\\\\"}],\\\\\\\\\\\"assignments\\\\\\\\\\\":[{\\\\\\\\\\\"schema\\\\\\\\\\\":\\\\\\\\\\\"bench-assignment/v1\\\\\\\\\\\",\\\\\\\\\\\"id\\\\\\\\\\\":\\\\\\\\\\\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\\\\\\\\\",\\\\\\\\\\\"… (1020 bytes)\",2\n  github.com/gibbonmi/bench/internal/intent,TestTransactionPublishedFailure,\"replacement_test.go:80: ledger = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"seed\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"shift\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:01Z\\\\\\\\\\\"}],\\\\\\\\\\\"assignments\\\\\\\\\\\":[{\\\\\\\\\\\"schema\\\\\\\\\\\":\\\\\\\\\\\"bench-assignment/v1\\\\\\\\\\\",\\\\\\\\\\\"id\\\\\\\\\\\":\\\\\\\\\\\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\\\\\\\\\",\\\\\\\\\\\"o… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compensate every write error or omit the reauthorization effect check. The new-ledger and external-witness test must detect their mismatch.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "82697755375c32932a82993f9f42432c744a7b66",
+              "digest": "sha256:767ae134625b6455041f2a65d9fce31b798a7ad15fa6f5782de8823855831186",
+              "excerpt": "D-B5 omission-proof probes at 82697755375c32932a82993f9f42432c744a7b66 (FT354-durable-callers; a6c0ffe5 adds only spec text), bench test --package ./internal/intent, no --run filter.\nProbe q09 (compensate every write error). internal/intent/transaction.go swap old (exact): \"if compensate != nil && !published(err) {\" new (exact): \"if compensate != nil {\"\nResult: verdict bit, 2 failed tests (TestTransactionPublishedFailure compensation count; TestReauthorizePublishedFailure rollback count), restored yes.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/transaction.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,501\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1362,72\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestReauthorizePublishedFailure,\"replacement_test.go:138: the rollback ran 1 times after a completed rename, want 0\",1\n  github.com/gibbonmi/bench/internal/intent,TestTransactionPublishedFailure,\"replacement_test.go:78: compensation ran 1 times after a completed rename, want 0\",1\nskips[0]{package,test,reason}:\n\nProbe q13 (omit the reauthorization effect). internal/intent/assignment.go swap old (exact): \"step, err := transition(stored, next)\" new (exact): \"step, err := transition(stored, stored)\"\nResult: verdict bit, 1 failed test (TestReauthorizePublishedFailure at the external-witness check: effect ccc... against ledger request 80f3b5dd...), restored yes.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/assignment.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,461\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,983,72\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestReauthorizePublishedFailure,\"replacement_test.go:150: external effect = \\\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\\\", want the ledger request \\\"80f3b5ddef868a2b4422c3203ef39bec9a3a4db048441b8c968ad92acfd966ab\\\"\",1\nskips[0]{package,test,reason}:\n\nProbe q14 (roll back a published ledger without compensation). internal/intent/transaction.go swap old (exact): \"if err := writePathWith(replacer, path, next); err != nil {\" new (exact): \"old, _ := os.ReadFile(path); if err := writePathWith(replacer, path, next); err != nil { if published(err) { _ = durablefile.Replace(path, old, 0o600) };\"\nResult: verdict bit, 2 failed tests (TestTransactionPublishedFailure and TestReauthorizePublishedFailure at the new-ledger bytes check), restored yes. The package passes 72 tests after restore.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/transaction.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1067\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,949,72\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestReauthorizePublishedFailure,\"replacement_test.go:140: ledger = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"seed\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"shift\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:01Z\\\\\\\\\\\"}],\\\\\\\\\\\"assignments\\\\\\\\\\\":[{\\\\\\\\\\\"schema\\\\\\\\\\\":\\\\\\\\\\\"bench-assignment/v1\\\\\\\\\\\",\\\\\\\\\\\"id\\\\\\\\\\\":\\\\\\\\\\\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\\\\\\\\\",\\\\\\\\\\\"… (1020 bytes)\",2\n  github.com/gibbonmi/bench/internal/intent,TestTransactionPublishedFailure,\"replacement_test.go:80: ledger = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"seed\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"shift\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:01Z\\\\\\\\\\\"}],\\\\\\\\\\\"assignments\\\\\\\\\\\":[{\\\\\\\\\\\"schema\\\\\\\\\\\":\\\\\\\\\\\"bench-assignment/v1\\\\\\\\\\\",\\\\\\\\\\\"id\\\\\\\\\\\":\\\\\\\\\\\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\\\\\\\\\",\\\\\\\\\\\"o… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t06-preservation",
+          "performer": "claude:dcm_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f31faf8613dc4f4f281fc93c6c44040dd859c815",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "82697755375c32932a82993f9f42432c744a7b66",
+            "digest": "sha256:1ddb828f035d67c3675971734bf8d986caa908dcc9c4155f1a85a499f965238c",
+            "excerpt": "D-B5 preservation probes at 82697755375c32932a82993f9f42432c744a7b66 (FT354-durable-callers; a6c0ffe5 adds only spec text), bench test --package ./internal/intent, no --run filter. TestIntentReplacement owns the mode and bytes expectations; the other new tests check bytes only. Restored yes for each; the package passes 72 tests after restore.\nProbe q04 (mode literal). internal/intent/intent.go swap old (exact): \"return replacer.Replace(path, append(data, '\\n'), 0o600)\" new (exact): \"return replacer.Replace(path, append(data, '\\n'), 0o640)\"\nResult: verdict bit, 3 failed tests (the three TestIntentReplacement stage rows at the mode check only).\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/intent.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,937\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1322,72\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-close,\"replacement_test.go:42: /dev/shm/OYCMYV/t/TestIntentReplacementdirectory-close1076546497/001/.git/bench-intent.json mode = -rw-r-----, want a regular file at -rw-------\",1\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-open,\"replacement_test.go:42: /dev/shm/OYCMYV/t/TestIntentReplacementdirectory-open3840080956/001/.git/bench-intent.json mode = -rw-r-----, want a regular file at -rw-------\",1\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-sync,\"replacement_test.go:42: /dev/shm/OYCMYV/t/TestIntentReplacementdirectory-sync2017259731/001/.git/bench-intent.json mode = -rw-r-----, want a regular file at -rw-------\",1\nskips[0]{package,test,reason}:\n\nProbe q05 (payload literal). internal/intent/intent.go --omit (exact): \"ledger.Schema = Schema\"\nResult: verdict bit, the three TestIntentReplacement rows at the bytes check plus the existing TestPurgeAssignmentsDropsEveryLegacySchemaRecord.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/intent.go,omit,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1784\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1347,72\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-close,\"replacement_test.go:42: /dev/shm/AOLA2L/t/TestIntentReplacementdirectory-close2908410681/001/.git/bench-intent.json = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":0,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"added\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"worktree\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:02Z\\\\\\\\\\\"},{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"s… (509 bytes)\",1\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-open,\"replacement_test.go:42: /dev/shm/AOLA2L/t/TestIntentReplacementdirectory-open3620186243/001/.git/bench-intent.json = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":0,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"added\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"worktree\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:02Z\\\\\\\\\\\"},{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"se… (508 bytes)\",1\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-sync,\"replacement_test.go:42: /dev/shm/AOLA2L/t/TestIntentReplacementdirectory-sync281249581/001/.git/bench-intent.json = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":0,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"added\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"worktree\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:02Z\\\\\\\\\\\"},{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"see… (507 bytes)\",1\n  github.com/gibbonmi/bench/internal/intent,TestPurgeAssignmentsDropsEveryLegacySchemaRecord,\"purge_test.go:86: ledger after legacy purge = ledger.Ledger{Schema:1, Entries:[]ledger.Entry{}, Assignments:[]ledger.Assignment{}, CleanupReceipts:[]ledger.CleanupReceipt(nil), CommitmentReceipts:[]ledger.CommitmentReceipt(nil), MilestoneRe… (328 bytes)\",1\nskips[0]{package,test,reason}:\n\nProbe q07 (pre-rename refusal: fallback write of the new bytes after an unpublished error). internal/intent/intent.go swap old (exact): \"return replacer.Replace(path, append(data, '\\n'), 0o600)\" new (exact): \"if err := replacer.Replace(path, append(data, '\\n'), 0o600); err != nil { var e *durablefile.Error; if errors.As(err, &e) && !e.Published { _ = durablefile.Replace(path, append(data, '\\n'), 0o600) }; return err }; return nil\"\nResult: verdict bit, 1 failed test (TestIntentPreRenameFailure at the prior-ledger check only).\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/intent.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,637\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1489,72\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestIntentPreRenameFailure,\"replacement_test.go:60: ledger = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"added\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"worktree\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:02Z\\\\\\\\\\\"}]}\\\\\\\\n\\\", want \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"seed\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"shift\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970… (748 bytes)\",1\nskips[0]{package,test,reason}:\n\nProbe q17 (unclassified failure overwrites the ledger). internal/intent/intent.go swap old (exact): \"return fmt.Errorf(\\\"encode intent ledger: %w\\\", err)\" new (exact): \"_ = durablefile.Replace(path, []byte(\\\"{}\\n\\\"), 0o600); return fmt.Errorf(\\\"encode intent ledger: %w\\\", err)\"\nResult: verdict bit, 1 failed test (TestTransactionUnclassifiedFailureCompensates at the prior-ledger check only).\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/intent.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,632\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1001,72\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestTransactionUnclassifiedFailureCompensates,\"replacement_test.go:108: ledger = \\\"{}\\\\\\\\n\\\", want \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"seed\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"shift\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:01Z\\\\\\\\\\\"}],\\\\\\\\\\\"assignments\\\\\\\\\\\":[{\\\\\\\\\\\"schema\\\\\\\\\\\":\\\\\\\\\\\"bench-assignment/v1\\\\\\\\\\\",\\\\\\\\\\\"id\\\\\\\\\\\":\\\\\\\\\\\"bbbbbbbbbbbbbbbbbbbbbbbb… (641 bytes)\",1\nskips[0]{package,test,reason}:\n\nEvery other check and its red (q01-q18, with exact swaps) is in the author's probe log; q11 reds the D44 lock check only, q15 the unclassified-error check only, q01-q03 one ignored-error red per PostRenameStages row.\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "82697755375c32932a82993f9f42432c744a7b66",
+              "digest": "sha256:1ddb828f035d67c3675971734bf8d986caa908dcc9c4155f1a85a499f965238c",
+              "excerpt": "D-B5 preservation probes at 82697755375c32932a82993f9f42432c744a7b66 (FT354-durable-callers; a6c0ffe5 adds only spec text), bench test --package ./internal/intent, no --run filter. TestIntentReplacement owns the mode and bytes expectations; the other new tests check bytes only. Restored yes for each; the package passes 72 tests after restore.\nProbe q04 (mode literal). internal/intent/intent.go swap old (exact): \"return replacer.Replace(path, append(data, '\\n'), 0o600)\" new (exact): \"return replacer.Replace(path, append(data, '\\n'), 0o640)\"\nResult: verdict bit, 3 failed tests (the three TestIntentReplacement stage rows at the mode check only).\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/intent.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,937\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1322,72\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-close,\"replacement_test.go:42: /dev/shm/OYCMYV/t/TestIntentReplacementdirectory-close1076546497/001/.git/bench-intent.json mode = -rw-r-----, want a regular file at -rw-------\",1\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-open,\"replacement_test.go:42: /dev/shm/OYCMYV/t/TestIntentReplacementdirectory-open3840080956/001/.git/bench-intent.json mode = -rw-r-----, want a regular file at -rw-------\",1\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-sync,\"replacement_test.go:42: /dev/shm/OYCMYV/t/TestIntentReplacementdirectory-sync2017259731/001/.git/bench-intent.json mode = -rw-r-----, want a regular file at -rw-------\",1\nskips[0]{package,test,reason}:\n\nProbe q05 (payload literal). internal/intent/intent.go --omit (exact): \"ledger.Schema = Schema\"\nResult: verdict bit, the three TestIntentReplacement rows at the bytes check plus the existing TestPurgeAssignmentsDropsEveryLegacySchemaRecord.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/intent.go,omit,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1784\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1347,72\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-close,\"replacement_test.go:42: /dev/shm/AOLA2L/t/TestIntentReplacementdirectory-close2908410681/001/.git/bench-intent.json = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":0,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"added\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"worktree\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:02Z\\\\\\\\\\\"},{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"s… (509 bytes)\",1\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-open,\"replacement_test.go:42: /dev/shm/AOLA2L/t/TestIntentReplacementdirectory-open3620186243/001/.git/bench-intent.json = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":0,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"added\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"worktree\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:02Z\\\\\\\\\\\"},{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"se… (508 bytes)\",1\n  github.com/gibbonmi/bench/internal/intent,TestIntentReplacement/directory-sync,\"replacement_test.go:42: /dev/shm/AOLA2L/t/TestIntentReplacementdirectory-sync281249581/001/.git/bench-intent.json = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":0,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"added\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"worktree\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:02Z\\\\\\\\\\\"},{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"see… (507 bytes)\",1\n  github.com/gibbonmi/bench/internal/intent,TestPurgeAssignmentsDropsEveryLegacySchemaRecord,\"purge_test.go:86: ledger after legacy purge = ledger.Ledger{Schema:1, Entries:[]ledger.Entry{}, Assignments:[]ledger.Assignment{}, CleanupReceipts:[]ledger.CleanupReceipt(nil), CommitmentReceipts:[]ledger.CommitmentReceipt(nil), MilestoneRe… (328 bytes)\",1\nskips[0]{package,test,reason}:\n\nProbe q07 (pre-rename refusal: fallback write of the new bytes after an unpublished error). internal/intent/intent.go swap old (exact): \"return replacer.Replace(path, append(data, '\\n'), 0o600)\" new (exact): \"if err := replacer.Replace(path, append(data, '\\n'), 0o600); err != nil { var e *durablefile.Error; if errors.As(err, &e) && !e.Published { _ = durablefile.Replace(path, append(data, '\\n'), 0o600) }; return err }; return nil\"\nResult: verdict bit, 1 failed test (TestIntentPreRenameFailure at the prior-ledger check only).\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/intent.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,637\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1489,72\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestIntentPreRenameFailure,\"replacement_test.go:60: ledger = \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"added\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"worktree\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:02Z\\\\\\\\\\\"}]}\\\\\\\\n\\\", want \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"seed\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"shift\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970… (748 bytes)\",1\nskips[0]{package,test,reason}:\n\nProbe q17 (unclassified failure overwrites the ledger). internal/intent/intent.go swap old (exact): \"return fmt.Errorf(\\\"encode intent ledger: %w\\\", err)\" new (exact): \"_ = durablefile.Replace(path, []byte(\\\"{}\\n\\\"), 0o600); return fmt.Errorf(\\\"encode intent ledger: %w\\\", err)\"\nResult: verdict bit, 1 failed test (TestTransactionUnclassifiedFailureCompensates at the prior-ledger check only).\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/intent/intent.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,all,passed,72\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,632\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,1001,72\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestTransactionUnclassifiedFailureCompensates,\"replacement_test.go:108: ledger = \\\"{}\\\\\\\\n\\\", want \\\"{\\\\\\\\\\\"schema\\\\\\\\\\\":2,\\\\\\\\\\\"entries\\\\\\\\\\\":[{\\\\\\\\\\\"key\\\\\\\\\\\":\\\\\\\\\\\"seed\\\\\\\\\\\",\\\\\\\\\\\"kind\\\\\\\\\\\":\\\\\\\\\\\"shift\\\\\\\\\\\",\\\\\\\\\\\"created_at\\\\\\\\\\\":\\\\\\\\\\\"1970-01-01T00:00:01Z\\\\\\\\\\\"}],\\\\\\\\\\\"assignments\\\\\\\\\\\":[{\\\\\\\\\\\"schema\\\\\\\\\\\":\\\\\\\\\\\"bench-assignment/v1\\\\\\\\\\\",\\\\\\\\\\\"id\\\\\\\\\\\":\\\\\\\\\\\"bbbbbbbbbbbbbbbbbbbbbbbb… (641 bytes)\",1\nskips[0]{package,test,reason}:\n\nEvery other check and its red (q01-q18, with exact swaps) is in the author's probe log; q11 reds the D44 lock check only, q15 the unclassified-error check only, q01-q03 one ignored-error red per PostRenameStages row.\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1877,6 +2005,24 @@
     {
       "from": "sha256:fd92d1ea9c14b9c23a33447baa5f7cc1afe5b2c99dc7c09f54cc9c666808e6fc",
       "to": "sha256:908fc1e6123bcee6feb067edaa58110a42f1ba077bfcf2abe60805d1e61bc234",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:908fc1e6123bcee6feb067edaa58110a42f1ba077bfcf2abe60805d1e61bc234",
+      "to": "sha256:1f71fb49502390cf5c1ccabedb96986f67bf4e6e59abffc47a1a0f1e0f25de2b",
       "chunk_ids": {
         "D-B1": [
           "D-B1"
