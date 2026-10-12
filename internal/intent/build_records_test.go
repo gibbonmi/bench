@@ -15,8 +15,8 @@ func buildRecords() CommitmentState {
 	}
 }
 
-// TestValidateCommitmentRefusesDuplicateBuildRecords is BW12. A hand edit that adds a
-// second owner of one record, an invalid assignment, or an unreadable reason must not
+// TestValidateCommitmentRefusesDuplicateBuildRecords is BW12. A hand edit can add a second
+// owner of one record, an invalid assignment, or an unreadable reason. Such an edit must not
 // authorize anything, so the ledger refuses each one.
 func TestValidateCommitmentRefusesDuplicateBuildRecords(t *testing.T) {
 	valid := buildRecords()
@@ -51,8 +51,7 @@ func TestValidateCommitmentRefusesDuplicateBuildRecords(t *testing.T) {
 }
 
 // TestTolerantReadKeepsTheBuildRecords is BW13. A recovery pass reads the ledger in the
-// tolerant mode and writes it back, so the lease, the gap, and the override must survive
-// that write.
+// tolerant mode and writes it back. The lease, the gap, and the override must survive that write.
 func TestTolerantReadKeepsTheBuildRecords(t *testing.T) {
 	root, path := mutatorFixture(t)
 	seed, err := readPath(path)

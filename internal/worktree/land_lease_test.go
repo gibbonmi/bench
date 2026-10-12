@@ -57,16 +57,17 @@ func barrierLandingFixture(t *testing.T, request string) barrierLanding {
 	return barrierLanding{landingFixture: f, started: started, release: release}
 }
 
-// during runs inside the gate once the gate reaches its barrier, and it releases the
-// gate when it returns. The landing runs in the caller, so a landing that never reaches
-// its gate leaves during unrun and the caller's receive empty.
-func (f barrierLanding) during(inside func()) <-chan struct{} {
-	done := make(chan struct{}, 1)
+// during runs inside the gate when the gate reaches its barrier. It sends the barrier's
+// read error, and then it releases the gate, so the landing cannot finish first. The
+// landing runs in the caller. A landing that does not reach its gate leaves the receive empty.
+func (f barrierLanding) during(inside func()) <-chan error {
+	done := make(chan error, 1)
 	go func() {
-		if _, err := os.ReadFile(f.started); err == nil {
+		_, err := os.ReadFile(f.started)
+		if err == nil {
 			inside()
 		}
-		done <- struct{}{}
+		done <- err
 		_ = os.WriteFile(f.release, []byte("go\n"), 0)
 	}()
 	return done
@@ -83,7 +84,8 @@ func TestLandHoldsTheDestinationLease(t *testing.T) {
 	done := f.during(func() { atGate, readErr = commitmenttest.Leases(f.root) })
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	select {
-	case <-done:
+	case err := <-done:
+		mustNoError(t, err)
 	default:
 		t.Fatalf("landing finished without reaching its gate barrier: (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
@@ -102,8 +104,8 @@ func TestLandHoldsTheDestinationLease(t *testing.T) {
 }
 
 // TestSecondLandingMeetsTheLease is BW2, BW3, BW4, and BW5. A second landing on the same
-// destination, during the first landing's gate, refuses with the owner's assignment before
-// it composes, so it meets neither the gate lock nor its diagnostic.
+// destination starts during the first landing's gate. It refuses with the owner's assignment
+// before it composes, so it meets neither the gate lock nor its diagnostic.
 func TestSecondLandingMeetsTheLease(t *testing.T) {
 	t.Parallel()
 	request, secondRequest := "land-lease-first", "land-lease-second"
@@ -125,7 +127,8 @@ func TestSecondLandingMeetsTheLease(t *testing.T) {
 	})
 	r1 := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	select {
-	case <-done:
+	case err := <-done:
+		mustNoError(t, err)
 	default:
 		t.Fatalf("first landing finished without reaching its gate barrier: (%d, %q, %q)", r1.exit, r1.stdout, r1.stderr)
 	}
@@ -193,20 +196,38 @@ func TestLandResumeTakesNoLease(t *testing.T) {
 	}
 }
 
-// TestLeaseLockUnavailable is BW15. A directory at the lease's lock path is a lock fault,
-// so the landing refuses before composition rather than run without a lease.
+// TestLeaseLockUnavailable is BW15. A directory or a symbolic link at the lease's lock path
+// is a lock fault. The landing refuses before composition and does not run without a lease.
 func TestLeaseLockUnavailable(t *testing.T) {
 	t.Parallel()
-	request := "land-lease-unavailable"
-	f := publicLandingFixture(t, request, "", "")
-	lock, err := commitrepo.LeaseLockPath(f.root, leasedMain)
-	mustNoError(t, err)
-	mustMkdirAll(t, lock, 0o755)
-	j, composed := forbidLandingComposition()
-	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
-	r.mustViaJoins(t)
-	if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=landing lease unavailable: ") {
-		t.Fatalf("landing over a blocked lease lock = (%d, %q, %q), want the lease fault refusal", r.exit, r.stdout, r.stderr)
+	for _, row := range []struct {
+		name  string
+		block func(t *testing.T, lock string)
+	}{
+		{name: "directory", block: func(t *testing.T, lock string) { mustMkdirAll(t, lock, 0o755) }},
+		{name: "dangling-link", block: func(t *testing.T, lock string) {
+			mustNoError(t, os.Symlink(filepath.Join(t.TempDir(), "absent"), lock))
+		}},
+		{name: "live-link", block: func(t *testing.T, lock string) {
+			target := filepath.Join(t.TempDir(), "target")
+			mustWrite(t, target, nil, 0o600)
+			mustNoError(t, os.Symlink(target, lock))
+		}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			request := "land-lease-unavailable-" + row.name
+			f := publicLandingFixture(t, request, "", "")
+			lock, err := commitrepo.LeaseLockPath(f.root, leasedMain)
+			mustNoError(t, err)
+			row.block(t, lock)
+			j, composed := forbidLandingComposition()
+			r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+			r.mustViaJoins(t)
+			if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=landing lease unavailable: ") {
+				t.Fatalf("landing over a blocked lease lock = (%d, %q, %q), want the lease fault refusal", r.exit, r.stdout, r.stderr)
+			}
+			requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, *composed)
+		})
 	}
-	requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, *composed)
 }

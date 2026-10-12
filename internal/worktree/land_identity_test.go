@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 
@@ -20,8 +19,6 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/refusalroute"
-	"github.com/gibbonmi/bench/internal/sanitize"
-	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // forbidLandingComposition returns a seam set that fails the test if the landing
@@ -238,47 +235,27 @@ func TestCommitmentGateRace(t *testing.T) {
 		t.Run(row.name, func(t *testing.T) {
 			t.Parallel()
 			request := "land-commitment-gate-race-" + row.name
-			barrier := t.TempDir()
-			started, release := filepath.Join(barrier, "started"), filepath.Join(barrier, "release")
-			for _, fifo := range []string{started, release} {
-				mustNoError(t, syscall.Mkfifo(fifo, 0o600))
-			}
-			f := landingFixtureWithGateStep(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), true, func(*testrepo.GateFixture, string) string {
-				return ": > " + sanitize.ShellQuote(started) + "\nIFS= read -r _ < " + sanitize.ShellQuote(release) + "\n"
-			})
-			type changed struct {
-				tip string
-				err error
-			}
-			done := make(chan changed, 1)
-			go func() {
-				// The read returns once the gate has opened and closed its barrier. The
-				// result is sent before the release, so the landing cannot finish first.
-				if _, err := os.ReadFile(started); err != nil {
-					done <- changed{err: err}
-					return
-				}
-				tip, err := row.change(f.root)
-				done <- changed{tip: tip, err: err}
-				_ = os.WriteFile(release, []byte("go\n"), 0)
-			}()
+			f := barrierLandingFixture(t, request)
+			var tip string
+			var changeErr error
+			done := f.during(func() { tip, changeErr = row.change(f.root) })
 			r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-			var got changed
 			select {
-			case got = <-done:
+			case err := <-done:
+				mustNoError(t, err)
 			default:
 				t.Fatalf("landing finished without reaching its gate barrier: (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}
-			if got.err != nil {
-				t.Fatal(got.err)
+			if changeErr != nil {
+				t.Fatal(changeErr)
 			}
 			for _, want := range row.want {
 				if r.exit != 1 || !strings.Contains(r.stdout, want) {
 					t.Fatalf("gate-time change = (%d, %q, %q), want a refusal naming %q", r.exit, r.stdout, r.stderr, want)
 				}
 			}
-			if main := gitOutput(t, f.root, "rev-parse", "main"); main != got.tip {
-				t.Fatalf("gate-time change published main=%s, want %s", main, got.tip)
+			if main := gitOutput(t, f.root, "rev-parse", "main"); main != tip {
+				t.Fatalf("gate-time change published main=%s, want %s", main, tip)
 			}
 			if tally, err := os.ReadFile(f.tally); err != nil || string(tally) != "g" {
 				t.Fatalf("gate tally = %q, %v; want the one prospective run", tally, err)

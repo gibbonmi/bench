@@ -1,7 +1,7 @@
 package refusalroute
 
-// The land faces that a policy outside the landing raises: the landing lease names its
-// owner, and a lease lock fault stops the landing as an infrastructure outcome.
+// A policy outside the landing raises these land faces. The landing lease names its owner,
+// and a lease lock fault stops the landing as an infrastructure outcome.
 const (
 	LandLeaseHeld      = "land-lease-held"
 	LandInfrastructure = "land-infrastructure"

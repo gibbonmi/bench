@@ -24,7 +24,7 @@ func TestTwoLandingProcessesShareOneLease(t *testing.T) {
 	if contended.code != 1 || !strings.HasPrefix(contended.stdout, detail) || strings.Contains(contended.stdout, "bench doctor") {
 		t.Fatalf("contender land = (%d, %q, %q), want the lease refusal naming %s", contended.code, contended.stdout, contended.stderr, holder.assignment)
 	}
-	systemReleaseGateBarrier(t, release)
+	releaseArtifactBarrier(t, release)
 	if code := systemExitCode(<-holderDone); code != 0 || !strings.Contains(holderOut.String(), ",worktree=released,") {
 		t.Fatalf("holder land = (%d, %q, %q), want a released publication", code, holderOut.String(), holderErr.String())
 	}

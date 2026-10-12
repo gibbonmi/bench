@@ -28,7 +28,7 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 
 	priorRefs := systemGitOutput(t, root, "show-ref", "--head")
 	priorMarker := systemGitOutput(t, root, "rev-parse", "refs/bench/green/main")
-	systemReleaseGateBarrier(t, release)
+	releaseArtifactBarrier(t, release)
 	if code := systemExitCode(<-loserDone); code != 1 || !strings.HasPrefix(loserOut.String(), "refused{detail=") || !strings.Contains(loserOut.String(), "landing destination checkout changed") || strings.Contains(loserOut.String(), "infrastructure") || !strings.Contains(loserErr.String(), "command-registry:worktree") {
 		t.Fatalf("loser land = (%d, %q, %q)", code, loserOut.String(), loserErr.String())
 	}
@@ -176,21 +176,6 @@ func systemLandAtBarrier(t *testing.T, root, home, tally, trees, ready, release 
 		t.Fatalf("%s exited before gate barrier = (%d, %q, %v)", source.request, systemExitCode(waitErr), stdout.String(), waitErr)
 	}
 	return done, stdout, stderr
-}
-
-// systemReleaseGateBarrier lets the landing that waits at the fixture's barrier finish its gate.
-func systemReleaseGateBarrier(t *testing.T, release string) {
-	t.Helper()
-	releaseWriter, err := os.OpenFile(release, os.O_WRONLY, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := releaseWriter.Write([]byte("go\n")); err != nil {
-		t.Fatal(err)
-	}
-	if err := releaseWriter.Close(); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func systemCreateLandingWorktree(t *testing.T, root, home, label, request string, extra ...string) systemLandingWorktree {

@@ -603,7 +603,7 @@ The hostile-input walk covers these classes:
 - A guard envelope can spell `&&` as `&&`; the existing benchguard separator tests cover it, and BW83 adds the flag and child forms.
 - A resolution path with a double quote, a backslash, or a space reads through `-z` plumbing (BW29).
 - A chunk id that reads as a number keeps the encoder's quotes, because each expected row derives through `toon.Table`.
-- A dangling or live symbolic link at the landing lock path is opened without following, as the gate lock opens its file.
+- A dangling or live symbolic link at the landing lock path is opened without following.
 - Two processes reload the ledger across a real boundary in BW10.
 - A cwd deeper than the root resolves the root before the primary-checkout test of BW79.
 

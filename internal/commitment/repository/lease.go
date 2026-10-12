@@ -14,8 +14,8 @@ import (
 	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
-// Lease is one landing's hold on its destination ref: the ledger record that names the
-// landing's assignment, and the record lock that proves the landing is alive.
+// Lease is one landing's hold on its destination ref. It is the ledger record that names
+// the landing's assignment, and the record lock that proves that the landing is alive.
 type Lease struct {
 	root   string
 	record intent.LandingLease
