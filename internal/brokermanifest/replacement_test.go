@@ -82,7 +82,8 @@ func TestBrokerRefusalSkipsReplacement(t *testing.T) {
 	durablefiletest.RequireAbsent(t, filepath.Join(dir, Name))
 }
 
-// The public Write returns the refusal of its native replacement path.
+// The public Write returns the digest refusal of a broker that is not a regular file and
+// publishes no manifest.
 func TestBrokerWriteReturnsRefusal(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
