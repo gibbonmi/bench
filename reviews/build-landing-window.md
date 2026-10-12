@@ -22,7 +22,9 @@ The confirming round passed on all three axes, and BW-E used one of its two repa
 
 BW-F round 1 reviewed the pair `ca231f79..835b31be`, after fold F1 of `main` at `ca231f79`.
 Repair 1 at `ca2360e4` closed S1-S3 and P1, and added three forbid rows.
-Repair 2 fixes a false chunk-base sentence and non-glossary override wording outside the first fence.
+Repair 2 at `b8aa94ac` fixed a false chunk-base sentence and non-glossary override wording outside the first fence.
+The confirming round passed on Spec and Coverage. Standards found S4, a comment sentence over 25 words, and the orchestrator made the evidence-only correction.
+BW-F used both of its repair cycles.
 
 ## Standards
 
@@ -3417,6 +3419,74 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
           "tip": "835b31bebc2ded2cf779f418d232d87dd4d0c8be",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "bwf-standards-r2",
+          "performer": "claude:blw_bwf_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "17ff4a28c251d2984f32ae7f0539eb0938db8062",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwf_standards_r2",
+            "digest": "sha256:36c2da463d84aec32da5770d322965454f6096241963b07b519bf6b4c85f0543",
+            "excerpt": "Standards confirming round, BW-F, delta 835b31be..b8aa94ac: 1 finding.\nS1 closed: review step 1 :96 states the chunk base once; registry_data.go:477, test :1229, MUTATE.json:4 match.\nS2 closed: BENCH-reference.md:325-330 drops the guard fact; CONTEXT.md:192-193 owns it.\nS3 closed: ADR 0014:22 and CHANGELOG.md:11 use landing override and open build; the last-chunk wait has no history.\nS4 registry_chunk_chain.go:8-9 header sentence is 26 words (STE 25 max). auto-fix, evidence-only, blocking.\ncraft-tickets:97 and BENCH-reference:279 name the base, not its rule. Forbid rows, help pin, and Avoid edits are sound.\n"
+          },
+          "axis": "Standards",
+          "base": "ca231f791a289e164f0bfda6ff53ff233dd8a1fb",
+          "tip": "b8aa94ac96e1175d06b7a1781242cc87202506b9",
+          "finding_ids": [
+            "S4"
+          ],
+          "supersedes": [
+            "bwf-standards-r1"
+          ]
+        },
+        {
+          "id": "bwf-spec-r2",
+          "performer": "claude:blw_bwf_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "17ff4a28c251d2984f32ae7f0539eb0938db8062",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwf_spec_r2",
+            "digest": "sha256:0016546bd4e699f0f2c597fc0d7a49811f73cf3c8de906d3ea15c801af488e8a",
+            "excerpt": "Spec confirming round, BW-F, delta 835b31be..b8aa94ac: 0 findings.\nP1 closed: BENCH-reference.md:334 states git revert -m 1 --no-commit <commit>, matching spec.md:421.\nThe chunk base after a fold (review :96) matches coverage.go:92-101 and fold.go:113-119.\nThe ADR 0014 last-chunk wait matches gap.go:29-31,57 and window.go:124-125.\nThe final-check pointer to steps 1 and 6 holds; craft-tickets :97 points to step 1.\nBW85-BW92 pass; the chunk row, coverage map, and Covers line agree; the fences hold the expanded Writes.\nAdvice: ADR 0014:22 omits the release of every bound assignment as a window close.\n"
+          },
+          "axis": "Spec",
+          "base": "ca231f791a289e164f0bfda6ff53ff233dd8a1fb",
+          "tip": "b8aa94ac96e1175d06b7a1781242cc87202506b9",
+          "finding_ids": [],
+          "supersedes": [
+            "bwf-spec-r1"
+          ]
+        },
+        {
+          "id": "bwf-coverage-r2",
+          "performer": "claude:blw_bwf_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "17ff4a28c251d2984f32ae7f0539eb0938db8062",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwf_coverage_r2",
+            "digest": "sha256:c57125c1c2c3284fb0ae3e0ed8a29f5783e728bf364c0f9ed6847c3ae73def09",
+            "excerpt": "Coverage confirming round, BW-F, repairs ca2360e4 and b8aa94ac at 7df8edc2: 0 findings.\nImplement \"review delta of the last chunk\" insert: bit; implement \"the last chunk refreezes\" insert: bit.\nReview step 1 \"review delta of the last chunk\" insert: bit; craft-tickets predecessor-tip sentence: bit.\nReview step 1 chunk base reverted to the predecessor-tip form: bit (registry_data anchor).\nOverride help summary reverted: TestHelpInventoryIsComplete bit. All restored yes.\nAdvice: a revert of BENCH-reference \"Semantic review freezes each chunk's base\" is silent; the gap predates the repairs.\n"
+          },
+          "axis": "Coverage",
+          "base": "ca231f791a289e164f0bfda6ff53ff233dd8a1fb",
+          "tip": "b8aa94ac96e1175d06b7a1781242cc87202506b9",
+          "finding_ids": [],
+          "supersedes": [
+            "bwf-coverage-r1"
+          ]
         }
       ]
     }
