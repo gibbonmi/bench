@@ -4364,7 +4364,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-c3-r1-standards",
+          "performer": "claude:dcm_rev_c3_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d77c1ef8c235ca9bc90f4a80f95c22bea5f2751",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c3_std",
+            "digest": "sha256:b2c100900aca7d5d7bf043c48f9da45e831f9aa21dc9932eb0de2dfbf0700588",
+            "excerpt": "## Standards (D-C3, c377e632..ee901c01) — 2 findings; worst S2.\nS1 | auto-fix (orchestrator, --auto-approve) | 6 | internal/dashboard/dashboard.go:88 vs :136 | the refusal literal \"cannot write bench-dashboard.html\" restates pageName | compose the message from pageName; output bytes unchanged\nS2 | auto-fix (same as C1) | 6 | internal/dashboard/replacement_test.go:69-70 | the kept refusal-category literal has no whole-package necessity red | record one whole-package probe that drifts only the category text\nAdvice: test doc comments restate body and mode (D-D sweep); dashboard.go:61-62 doc comment spells the file name.\n"
+          },
+          "axis": "Standards",
+          "base": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "tip": "ee901c01b9c522f654a8524b675f1e94c4e148c2",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c3-r1-spec",
+          "performer": "claude:dcm_rev_c3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d77c1ef8c235ca9bc90f4a80f95c22bea5f2751",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c3_spec",
+            "digest": "sha256:89ea53ce145b273df2141c8d4fa6f79951982d90d5924bd56ff3c98f7ead4144",
+            "excerpt": "## Spec (D-C3, c377e632..ee901c01) — 0 findings.\nD26 met: shared owner, 0600 mode, page bytes, post-rename failure through Command, pre-rename old bytes; coverage cell cites TestDashboardReplacement. spec.md:199 is pinned to 85baca4d and is not stale.\nAdvice: no post-rename failure through Command; D36 tag noted for D-D.\n"
+          },
+          "axis": "Spec",
+          "base": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "tip": "ee901c01b9c522f654a8524b675f1e94c4e148c2",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c3-r1-coverage",
+          "performer": "claude:dcm_rev_c3_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d77c1ef8c235ca9bc90f4a80f95c22bea5f2751",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c3_cov",
+            "digest": "sha256:5d3ebb23b1f8e0db21a013f30feb30c359ca80a46f6b77c2e4be14aa83376432",
+            "excerpt": "## Coverage (D-C3, c377e632..ee901c01) — 1 finding; worst C1.\nC1 | auto-fix | 6 | internal/dashboard/replacement_test.go:69 | the refusal-message literal is a kept independent expectation with no whole-package necessity red | record one whole-package red that changes the message at dashboard.go:88, or derive the expectation\nD26, mode red, D36 fallback red, Command path red, and the five verification entries hold; D30 needs no witness.\nAdvice: Command success path untested (pre-existing); unsynced direct writer would stay green (D-D census).\n"
+          },
+          "axis": "Coverage",
+          "base": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "tip": "ee901c01b9c522f654a8524b675f1e94c4e148c2",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -5175,3 +5241,24 @@ The D-C4 confirming round at 08eb67b3 closed S1, S2, S3, P1, C1, and C2. It rais
 The Standards reaffirmation at 5d56efc1 closed S4. Chunk D-C4 closed with 1 of its 2 repair cycles used, and the comment-only correction used none.
 
 D-C4 is refrozen on the D-C2 tip 19cb2923, because the D-C2 comment-only correction changes the base digest that the chain check compares. The three axes confirmed their results for the wider pair with no new findings.
+
+## Standards (D-C3)
+
+Chunk D-C3 has 2 findings. The worst issue is S2.
+
+- S1, auto-fix by --auto-approve, confidence 6: the refusal at `internal/dashboard/dashboard.go:88` spells the file name that `pageName` owns. Compose the message from `pageName`, so the output bytes stay the same.
+- S2, auto-fix, confidence 6: this finding is the same as C1.
+
+## Spec (D-C3)
+
+Chunk D-C3 has 0 findings.
+
+## Coverage (D-C3)
+
+Chunk D-C3 has 1 finding. The worst issue is C1.
+
+- C1, auto-fix, confidence 6: the test at `internal/dashboard/replacement_test.go:69` keeps the refusal text as an independent literal, and no whole-package red proves it. Record one whole-package red that changes only that text.
+
+## Repair allowance (D-C3)
+
+Chunk D-C3 used 0 of its 2 repair cycles before repair 1. S1, S2, and C1 fall on ticket 10, so one combined repair session takes them.
