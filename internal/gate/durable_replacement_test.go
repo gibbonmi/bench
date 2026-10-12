@@ -73,7 +73,7 @@ func TestEvidenceReplacement(t *testing.T) {
 func TestGatePendingDurabilityFailure(t *testing.T) {
 	root := outcomeFixture(t)
 	cause := errors.New("injected pending directory-sync failure")
-	faults := newFaultPlan(map[fault]map[string]error{{benchgit.GateCacheFile, 1}: {"directory-sync": cause}})
+	faults := newFaultPlan(map[durablefiletest.Fault]map[string]error{{Destination: benchgit.GateCacheFile, Ordinal: 1}: {"directory-sync": cause}})
 
 	result, stderr := executeWithFaults(root, faults)
 
@@ -81,7 +81,7 @@ func TestGatePendingDurabilityFailure(t *testing.T) {
 		t.Fatalf("run counter stat = %v, want no oracle start after the pending failure", err)
 	}
 	requireUnpersisted(t, result, 0, stderr)
-	want := "gate pending persistence failed: " + faults.failure(benchgit.GateCacheFile, "directory-sync", true, cause)
+	want := "gate pending persistence failed: " + faults.Failure(benchgit.GateCacheFile, "directory-sync", true, cause)
 	if !strings.Contains(stderr, want) {
 		t.Fatalf("stderr = %q, want %q", stderr, want)
 	}
@@ -110,12 +110,12 @@ func TestGateTerminalDurabilityFailure(t *testing.T) {
 				t.Cleanup(func() { gateTimeout = previousTimeout })
 			}
 			cause := errors.New("injected terminal directory-sync failure")
-			faults := newFaultPlan(map[fault]map[string]error{{benchgit.GateCacheFile, 2}: {"directory-sync": cause}})
+			faults := newFaultPlan(map[durablefiletest.Fault]map[string]error{{Destination: benchgit.GateCacheFile, Ordinal: 2}: {"directory-sync": cause}})
 
 			result, stderr := executeWithFaults(root, faults)
 
 			requireUnpersisted(t, result, tc.gateExit, stderr)
-			want := tc.category + ": " + faults.failure(benchgit.GateCacheFile, "directory-sync", true, cause)
+			want := tc.category + ": " + faults.Failure(benchgit.GateCacheFile, "directory-sync", true, cause)
 			if !strings.Contains(stderr, want) || strings.Contains(stderr, "pending recovery failed") {
 				t.Fatalf("stderr = %q, want %q and no recovery failure", stderr, want)
 			}
@@ -134,16 +134,16 @@ func TestGateTerminalDurabilityFailure(t *testing.T) {
 func TestGateEvidenceDurabilityFailure(t *testing.T) {
 	root := outcomeFixture(t)
 	cause := errors.New("injected evidence directory-sync failure")
-	faults := newFaultPlan(map[fault]map[string]error{{evidenceDestination, 1}: {"directory-sync": cause}})
+	faults := newFaultPlan(map[durablefiletest.Fault]map[string]error{{Destination: evidenceDestination, Ordinal: 1}: {"directory-sync": cause}})
 
 	result, stderr := executeWithFaults(root, faults)
 
 	requireUnpersisted(t, result, 0, stderr)
-	want := "gate evidence persistence failed: " + faults.failure(evidenceDestination, "directory-sync", true, cause)
+	want := "gate evidence persistence failed: " + faults.Failure(evidenceDestination, "directory-sync", true, cause)
 	if !strings.Contains(stderr, want) {
 		t.Fatalf("stderr = %q, want %q", stderr, want)
 	}
-	if got := faults.count[benchgit.GateCacheFile]; got != 1 {
+	if got := faults.Count(benchgit.GateCacheFile); got != 1 {
 		t.Fatalf("cache replacements = %d, want only the pending record", got)
 	}
 }
@@ -155,16 +155,16 @@ func TestGatePendingRecoveryFailure(t *testing.T) {
 	root := outcomeFixture(t)
 	final := errors.New("injected final directory-sync failure")
 	recovery := errors.New("injected recovery rename failure")
-	faults := newFaultPlan(map[fault]map[string]error{
-		{benchgit.GateCacheFile, 2}: {"directory-sync": final},
-		{benchgit.GateCacheFile, 3}: {"rename": recovery},
+	faults := newFaultPlan(map[durablefiletest.Fault]map[string]error{
+		{Destination: benchgit.GateCacheFile, Ordinal: 2}: {"directory-sync": final},
+		{Destination: benchgit.GateCacheFile, Ordinal: 3}: {"rename": recovery},
 	})
 
 	result, stderr := executeWithFaults(root, faults)
 
 	requireUnpersisted(t, result, 0, stderr)
-	want := "gate final persistence failed: " + faults.failure(benchgit.GateCacheFile, "directory-sync", true, final) +
-		"; pending recovery failed: " + faults.failure(benchgit.GateCacheFile, "rename", false, recovery)
+	want := "gate final persistence failed: " + faults.Failure(benchgit.GateCacheFile, "directory-sync", true, final) +
+		"; pending recovery failed: " + faults.Failure(benchgit.GateCacheFile, "rename", false, recovery)
 	if !strings.Contains(stderr, want) {
 		t.Fatalf("stderr = %q, want %q", stderr, want)
 	}
@@ -207,16 +207,16 @@ func TestGateDemotionDurabilityFailure(t *testing.T) {
 			tc.block(t, root)
 			demotion := errors.New("injected demotion rename failure")
 			recovery := errors.New("injected demotion recovery rename failure")
-			faults := newFaultPlan(map[fault]map[string]error{
-				{benchgit.GateCacheFile, 1}: {"rename": demotion},
-				{benchgit.GateCacheFile, 2}: {"rename": recovery},
+			faults := newFaultPlan(map[durablefiletest.Fault]map[string]error{
+				{Destination: benchgit.GateCacheFile, Ordinal: 1}: {"rename": demotion},
+				{Destination: benchgit.GateCacheFile, Ordinal: 2}: {"rename": recovery},
 			})
 
 			result, stderr := executeWithFaults(root, faults)
 
 			requireUnpersisted(t, result, 0, stderr)
-			want := tc.refusal + "; interrupted-green demotion failed: " + faults.failure(benchgit.GateCacheFile, "rename", false, demotion) +
-				"; pending recovery failed: " + faults.failure(benchgit.GateCacheFile, "rename", false, recovery)
+			want := tc.refusal + "; interrupted-green demotion failed: " + faults.Failure(benchgit.GateCacheFile, "rename", false, demotion) +
+				"; pending recovery failed: " + faults.Failure(benchgit.GateCacheFile, "rename", false, recovery)
 			if !strings.Contains(stderr, want) {
 				t.Fatalf("stderr = %q, want %q", stderr, want)
 			}
@@ -228,57 +228,22 @@ func TestGateDemotionDurabilityFailure(t *testing.T) {
 // content addresses.
 const evidenceDestination = "bench-gate-evidence"
 
-// fault names one replacement by its destination and by its ordinal among the renames of
-// that destination, counting from 1.
-type fault struct {
-	destination string
-	ordinal     int
-}
-
-// faultPlan routes each replacement of one execution through a durablefiletest.Recorder
-// that fails the stages the plan names for that replacement. The replacement is known
-// from its rename, so a plan fails the rename and the stages after it.
-type faultPlan struct {
-	fail  map[fault]map[string]error
-	count map[string]int
-	paths map[string]string
-}
-
-func newFaultPlan(fail map[fault]map[string]error) *faultPlan {
-	return &faultPlan{fail: fail, count: map[string]int{}, paths: map[string]string{}}
-}
-
-func (p *faultPlan) replacer() durablefile.Replacer {
-	native := durablefile.Native()
-	current := native
-	return durablefile.Replacer{
-		CreateTemp: native.CreateTemp,
-		Rename: func(oldpath, newpath string) error {
-			name := filepath.Base(newpath)
-			if filepath.Base(filepath.Dir(newpath)) == evidenceDestination {
-				name = evidenceDestination
-			}
-			p.count[name]++
-			p.paths[name] = newpath
-			current = (&durablefiletest.Recorder{Fail: p.fail[fault{name, p.count[name]}]}).Replacer()
-			return current.Rename(oldpath, newpath)
-		},
-		OpenDirectory: func(name string) (durablefile.Directory, error) { return current.OpenDirectory(name) },
-		Remove:        native.Remove,
-	}
-}
-
-// failure is the message of the injected cause at stage of the last replacement of
-// destination.
-func (p *faultPlan) failure(destination, stage string, published bool, cause error) string {
-	return (&durablefile.Error{Path: p.paths[destination], Stage: stage, Published: published, Err: cause}).Error()
+// newFaultPlan routes each replacement of one execution by its destination: the file name
+// of a cache record, or evidenceDestination for every evidence entry.
+func newFaultPlan(fail map[durablefiletest.Fault]map[string]error) *durablefiletest.Router {
+	return &durablefiletest.Router{Fail: fail, Destination: func(path string) string {
+		if filepath.Base(filepath.Dir(path)) == evidenceDestination {
+			return evidenceDestination
+		}
+		return filepath.Base(path)
+	}}
 }
 
 // executeWithFaults runs one fresh execution of root through faults and returns its
 // result and stderr.
-func executeWithFaults(root string, faults *faultPlan) (Result, string) {
+func executeWithFaults(root string, faults *durablefiletest.Router) (Result, string) {
 	var stdout, stderr bytes.Buffer
-	result := executeSubjectReplacing(context.Background(), root, root, &stdout, &stderr, nil, forceRun, newGateEvaluation(root), nil, "", faults.replacer())
+	result := executeSubjectReplacing(context.Background(), root, root, &stdout, &stderr, nil, forceRun, newGateEvaluation(root), nil, "", faults.Replacer())
 	return result, stderr.String()
 }
 

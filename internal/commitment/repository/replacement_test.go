@@ -1,18 +1,18 @@
-package repository
+package repository_test
 
 import (
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment"
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
-	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -21,125 +21,110 @@ import (
 const (
 	oldPolicyMode  = 0o600
 	boardMode      = 0o640
-	oldBoard       = "# Roadmap\n\n## Recommended sequence\n\n1. old\n"
 	projectedBoard = "# Roadmap\n\n## Recommended sequence\n\n1. A\n2. B\n"
+	decision       = "decision-1"
 )
 
 // approval is one committed repository with one recorded plan that adds outcome B.
 type approval struct {
-	store                 Store
+	store                 commitrepo.Store
 	plan                  commitment.Plan
 	policy, board, ledger string
-	oldPolicy             string
+	oldPolicy, oldBoard   string
 }
 
-// newApproval commits a policy, and a board when withBoard holds, and records the plan.
-// This internal test builds its own repository because the shared commitment fixtures
-// import this package.
-func newApproval(t *testing.T, withBoard bool) approval {
+// policyOf is the policy whose active milestone M1 holds outcomes in order.
+func policyOf(outcomes ...string) commitment.Policy {
+	milestone := commitment.Milestone{ID: "M1"}
+	for _, id := range outcomes {
+		milestone.Outcomes = append(milestone.Outcomes, commitment.Outcome{ID: id, Criteria: []commitment.Criterion{{ID: id + ".done", Text: "The outcome is delivered."}}})
+	}
+	return commitment.Policy{Version: 1, ActiveMilestone: "M1", Milestones: []commitment.Milestone{milestone}}
+}
+
+// newApproval commits the policy of outcome A and the board, keeps each file that its flag
+// names, and records the plan.
+func newApproval(t *testing.T, withPolicy, withBoard bool) approval {
 	t.Helper()
-	root := gittest.RepoOnBranch(t, "main")
-	encode := func(outcomes ...string) []byte {
-		milestone := commitment.Milestone{ID: "M1"}
-		for _, id := range outcomes {
-			milestone.Outcomes = append(milestone.Outcomes, commitment.Outcome{ID: id, Criteria: []commitment.Criterion{{ID: id + ".done", Text: "The outcome is delivered."}}})
+	root := commitmenttest.Repo(t, policyOf("A"))
+	fx := approval{store: commitrepo.Store{Root: root}, policy: filepath.Join(root, filepath.FromSlash(commitment.PolicyPath)), board: filepath.Join(root, "ROADMAP.md")}
+	prepare := func(path string, mode os.FileMode, keep bool) string {
+		data, err := os.ReadFile(path)
+		if err == nil && keep {
+			err = os.Chmod(path, mode)
+		} else if err == nil {
+			err = os.Remove(path)
 		}
-		data, err := commitment.Bytes(commitment.Policy{Version: 1, ActiveMilestone: "M1", Milestones: []commitment.Milestone{milestone}})
 		if err != nil {
 			t.Fatal(err)
 		}
-		return data
+		return string(data)
 	}
-	fx := approval{store: Store{Root: root}, policy: filepath.Join(root, filepath.FromSlash(commitment.PolicyPath)), board: filepath.Join(root, "ROADMAP.md"), oldPolicy: string(encode("A"))}
-	if err := os.MkdirAll(filepath.Dir(fx.policy), 0o755); err != nil {
-		t.Fatal(err)
+	fx.oldPolicy, fx.oldBoard = prepare(fx.policy, oldPolicyMode, withPolicy), prepare(fx.board, boardMode, withBoard)
+	if !withPolicy || !withBoard {
+		commitmenttest.Commit(t, root, "remove a fixture file")
 	}
-	if err := os.WriteFile(fx.policy, []byte(fx.oldPolicy), oldPolicyMode); err != nil {
-		t.Fatal(err)
-	}
-	if withBoard {
-		if err := os.WriteFile(fx.board, []byte(oldBoard), boardMode); err != nil {
-			t.Fatal(err)
-		}
-	}
-	gittest.Output(t, root, "add", "-A")
-	gittest.Output(t, root, "commit", "-qm", "initial")
-	plan, err := fx.store.Plan(encode("A", "B"))
+	data, err := commitment.Bytes(policyOf("A", "B"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	fx.plan = plan
+	if fx.plan, err = fx.store.Plan(data); err != nil {
+		t.Fatal(err)
+	}
 	if fx.ledger, err = intent.Address(root); err != nil {
 		t.Fatal(err)
 	}
 	return fx
 }
 
-// faults routes each replacement to the recorder of its destination and that
-// destination's ordinal, such as "policy#2" for the policy restore. So a stage fault and
-// an independent restore fault fail one approval. It fails t when a replacement runs
-// without the ledger lock, because the stage and its restore belong to the transaction.
+// at names the ordinal replacement of destination.
+func at(destination string, ordinal int) durablefiletest.Fault {
+	return durablefiletest.Fault{Destination: destination, Ordinal: ordinal}
+}
+
+// faults routes each replacement of one approval by destination, such as policy#2 for the
+// policy restore, and after runs its hook once the rename of its replacement succeeds.
 type faults struct {
-	t      *testing.T
-	lock   string
-	names  map[string]string
-	fail   map[string]*durablefiletest.Recorder
-	after  map[string]func()
-	counts map[string]int
-	key    string
-	Trace  []string
+	durablefiletest.Router
+	after map[durablefiletest.Fault]func()
 }
 
-func (fx approval) faults(t *testing.T) *faults {
-	return &faults{
-		t:     t,
-		lock:  fx.ledger + ".lock",
-		names: map[string]string{filepath.Dir(fx.policy): "policy", filepath.Dir(fx.board): "board", filepath.Dir(fx.ledger): "ledger"},
-		fail:  map[string]*durablefiletest.Recorder{}, after: map[string]func(){}, counts: map[string]int{},
+func (fx approval) faults() *faults {
+	names := map[string]string{fx.policy: "policy", fx.board: "board", fx.ledger: "ledger"}
+	return &faults{Router: durablefiletest.Router{Fail: map[durablefiletest.Fault]map[string]error{}, Destination: func(path string) string { return names[path] }}, after: map[durablefiletest.Fault]func(){}}
+}
+
+// approve runs the approval of fx with given through f. Each rename fails t without the
+// ledger lock, because the stage and its restore belong to the transaction.
+func (fx approval) approve(t *testing.T, f *faults, given string) error {
+	lock, err := intent.LockPath(fx.store.Root)
+	if err != nil {
+		t.Fatal(err)
 	}
-}
-
-// inject fails stage of the replacement that key names.
-func (f *faults) inject(key, stage string, cause error) {
-	f.fail[key] = &durablefiletest.Recorder{Fail: map[string]error{stage: cause}}
-}
-
-func (f *faults) recorder() durablefile.Replacer {
-	if rec := f.fail[f.key]; rec != nil {
-		return rec.Replacer()
+	replacer := f.Replacer()
+	rename := replacer.Rename
+	replacer.Rename = func(oldpath, newpath string) error {
+		err := rename(oldpath, newpath)
+		fault := f.Trace[len(f.Trace)-1]
+		if _, statErr := os.Stat(lock); statErr != nil {
+			t.Errorf("%v ran without the ledger lock: %v", fault, statErr)
+		}
+		if after := f.after[fault]; err == nil && after != nil {
+			after()
+		}
+		return err
 	}
-	return durablefile.Native()
-}
-
-func (f *faults) replacer() durablefile.Replacer {
-	return durablefile.Replacer{
-		CreateTemp: func(dir, pattern string) (durablefile.File, error) {
-			name := f.names[dir]
-			f.counts[name]++
-			f.key = fmt.Sprintf("%s#%d", name, f.counts[name])
-			f.Trace = append(f.Trace, f.key)
-			if _, err := os.Stat(f.lock); err != nil {
-				f.t.Errorf("%s ran without the ledger lock: %v", f.key, err)
-			}
-			return f.recorder().CreateTemp(dir, pattern)
-		},
-		Rename: func(oldpath, newpath string) error {
-			if err := f.recorder().Rename(oldpath, newpath); err != nil {
-				return err
-			}
-			if after := f.after[f.key]; after != nil {
-				after()
-			}
-			return nil
-		},
-		OpenDirectory: func(name string) (durablefile.Directory, error) { return f.recorder().OpenDirectory(name) },
-		Remove:        func(name string) error { return f.recorder().Remove(name) },
-	}
-}
-
-func (fx approval) approve(f *faults) error {
-	_, err := fx.store.approve(f.replacer(), fx.plan.ID, "decision-1", fx.plan.Effects.Delayed, fx.plan.Effects.Removed)
+	_, err = commitrepo.ApproveWith(fx.store, replacer, fx.plan.ID, given, fx.plan.Effects.Delayed, fx.plan.Effects.Removed)
 	return err
+}
+
+// fail runs one approval with stage of fault failed, and it returns the approval error and
+// the injected cause.
+func (fx approval) fail(t *testing.T, fault durablefiletest.Fault, stage string) (err, cause error) {
+	f := fx.faults()
+	cause = fmt.Errorf("injected %v %s failure", fault, stage)
+	f.Fail[fault] = map[string]error{stage: cause}
+	return fx.approve(t, f, decision), cause
 }
 
 func requireAbsent(t *testing.T, path string) {
@@ -161,25 +146,12 @@ func (fx approval) requireApproved(t *testing.T, approved bool) {
 		if receipt.Plan != fx.plan.ID {
 			continue
 		}
-		if receipt.Approved != approved || approved && receipt.Decision != "decision-1" {
+		if receipt.Approved != approved || approved && receipt.Decision != decision {
 			t.Fatalf("receipt approved=%t decision=%q, want approved=%t", receipt.Approved, receipt.Decision, approved)
 		}
 		return
 	}
 	t.Fatalf("no receipt for plan %s", fx.plan.ID)
-}
-
-// requireUnrestored fails t unless err holds each cause and names path as unrestored.
-func requireUnrestored(t *testing.T, err error, path string, causes ...error) {
-	t.Helper()
-	for _, cause := range causes {
-		if !errors.Is(err, cause) {
-			t.Fatalf("err = %v, want it to hold %v", err, cause)
-		}
-	}
-	if err == nil || !strings.Contains(err.Error(), "restore "+path+":") {
-		t.Fatalf("err = %v, want it to name the unrestored %s", err, path)
-	}
 }
 
 // D23 and D36: the approval returns the policy replacement's classified failure, and a
@@ -195,12 +167,9 @@ func TestCommitmentReplacement(t *testing.T) {
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.stage, func(t *testing.T) {
-			fx := newApproval(t, true)
-			f := fx.faults(t)
-			cause := errors.New("injected policy " + testCase.stage + " failure")
-			f.inject("policy#1", testCase.stage, cause)
+			fx := newApproval(t, true, true)
 
-			err := fx.approve(f)
+			err, cause := fx.fail(t, at("policy", 1), testCase.stage)
 
 			durablefiletest.RequireFailure(t, err, testCase.stage, testCase.published, cause)
 			if !testCase.published {
@@ -213,83 +182,80 @@ func TestCommitmentReplacement(t *testing.T) {
 // D46: the new policy may be visible after its directory sync fails, so the stage
 // restores the old policy and its mode before approval returns, and no receipt approves.
 func TestApprovalInitialPolicyFailure(t *testing.T) {
-	fx := newApproval(t, true)
-	f := fx.faults(t)
-	cause := errors.New("injected policy directory-sync failure")
-	f.inject("policy#1", "directory-sync", cause)
+	fx := newApproval(t, true, true)
 
-	err := fx.approve(f)
+	err, cause := fx.fail(t, at("policy", 1), "directory-sync")
 
-	if !errors.Is(err, cause) {
-		t.Fatalf("err = %v, want %v", err, cause)
-	}
+	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)
 	durablefiletest.RequireFile(t, fx.policy, oldPolicyMode, fx.oldPolicy)
 	fx.requireApproved(t, false)
 }
 
-// D47: a board failure after the policy was staged restores both files.
+// D47: a board failure after the policy was staged restores both files, whether or not the
+// board rename completed.
 func TestApprovalBoardFailure(t *testing.T) {
-	fx := newApproval(t, true)
-	f := fx.faults(t)
-	cause := errors.New("injected board directory-sync failure")
-	f.inject("board#1", "directory-sync", cause)
+	for _, testCase := range []struct {
+		stage     string
+		published bool
+	}{{stage: "directory-sync", published: true}, {stage: "rename"}} {
+		t.Run(testCase.stage, func(t *testing.T) {
+			fx := newApproval(t, true, true)
 
-	err := fx.approve(f)
+			err, cause := fx.fail(t, at("board", 1), testCase.stage)
 
-	if !errors.Is(err, cause) {
-		t.Fatalf("err = %v, want %v", err, cause)
+			durablefiletest.RequireFailure(t, err, testCase.stage, testCase.published, cause)
+			durablefiletest.RequireFile(t, fx.policy, oldPolicyMode, fx.oldPolicy)
+			durablefiletest.RequireFile(t, fx.board, boardMode, fx.oldBoard)
+		})
 	}
-	durablefiletest.RequireBytes(t, fx.policy, fx.oldPolicy)
-	durablefiletest.RequireFile(t, fx.board, boardMode, oldBoard)
 }
 
 // D48: a receipt write that fails before its rename leaves the old ledger, so the
 // transaction restores both staged files once under the ledger lock.
 func TestApprovalUnpublishedLedgerFailure(t *testing.T) {
-	fx := newApproval(t, true)
-	f := fx.faults(t)
+	fx := newApproval(t, true, true)
+	f := fx.faults()
 	cause := errors.New("injected ledger rename failure")
-	f.inject("ledger#1", "rename", cause)
+	f.Fail[at("ledger", 1)] = map[string]error{"rename": cause}
 
-	err := fx.approve(f)
+	err := fx.approve(t, f, decision)
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	if want := []string{"policy#1", "board#1", "ledger#1", "policy#2", "board#2"}; !slices.Equal(f.Trace, want) {
-		t.Fatalf("replacements = %v, want %v", f.Trace, want)
+	if got, want := fmt.Sprint(f.Trace), "[policy#1 board#1 ledger#1 policy#2 board#2]"; got != want {
+		t.Fatalf("replacements = %s, want %s", got, want)
 	}
 	durablefiletest.RequireBytes(t, fx.policy, fx.oldPolicy)
-	durablefiletest.RequireBytes(t, fx.board, oldBoard)
-	if _, err := os.Stat(f.lock); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("lock file after the restore: %v", err)
-	}
+	durablefiletest.RequireBytes(t, fx.board, fx.oldBoard)
 }
 
 // D30: a refusal before the first write returns the caller's own error, so no
-// replacement starts and the files keep their bytes.
+// replacement starts and each regular file keeps its bytes.
 func TestApprovalRefusal(t *testing.T) {
 	cases := []struct {
 		name, decision string
-		setup          func(approval)
-		kept           func(approval) (string, string)
+		setup          func(*testing.T, approval)
 	}{
-		{name: "decision", decision: "", setup: func(approval) {},
-			kept: func(fx approval) (string, string) { return fx.policy, fx.oldPolicy }},
-		{name: "policy-directory", decision: "decision-1", setup: func(fx approval) {
-			if err := os.Remove(fx.policy); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.Mkdir(fx.policy, 0o755); err != nil {
-				t.Fatal(err)
-			}
-		}, kept: func(fx approval) (string, string) { return fx.board, oldBoard }},
+		{name: "decision", setup: func(*testing.T, approval) {}},
+		{name: "policy-directory", decision: decision, setup: func(t *testing.T, fx approval) { replaceWithDirectory(t, fx.policy) }},
+		{name: "board-directory", decision: decision, setup: func(t *testing.T, fx approval) { replaceWithDirectory(t, fx.board) }},
+		{name: "board-without-sequence", decision: decision, setup: func(t *testing.T, fx approval) {
+			commitmenttest.Write(t, fx.store.Root, "ROADMAP.md", "# Roadmap\n")
+		}},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fx := newApproval(t, true)
-			testCase.setup(fx)
-			f := fx.faults(t)
+			fx := newApproval(t, true, true)
+			testCase.setup(t, fx)
+			kept := map[string]string{}
+			for _, path := range []string{fx.policy, fx.board} {
+				// A directory has no bytes to keep.
+				if data, err := os.ReadFile(path); err == nil {
+					kept[path] = string(data)
+				}
+			}
+			f := fx.faults()
 
-			_, err := fx.store.approve(f.replacer(), fx.plan.ID, testCase.decision, fx.plan.Effects.Delayed, fx.plan.Effects.Removed)
+			err := fx.approve(t, f, testCase.decision)
 
 			var replaceErr *durablefile.Error
 			if err == nil || errors.As(err, &replaceErr) {
@@ -298,9 +264,18 @@ func TestApprovalRefusal(t *testing.T) {
 			if len(f.Trace) != 0 {
 				t.Fatalf("replacements = %v after a refusal, want none", f.Trace)
 			}
-			path, want := testCase.kept(fx)
-			durablefiletest.RequireBytes(t, path, want)
+			for path, want := range kept {
+				durablefiletest.RequireBytes(t, path, want)
+			}
 		})
+	}
+}
+
+// replaceWithDirectory turns the regular file at path into a directory.
+func replaceWithDirectory(t *testing.T, path string) {
+	t.Helper()
+	if err := errors.Join(os.Remove(path), os.Mkdir(path, 0o755)); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -309,12 +284,9 @@ func TestApprovalRefusal(t *testing.T) {
 func TestApprovalPublishedLedgerFailure(t *testing.T) {
 	for _, stage := range durablefiletest.PostRenameStages {
 		t.Run(stage, func(t *testing.T) {
-			fx := newApproval(t, true)
-			f := fx.faults(t)
-			cause := errors.New("injected ledger " + stage + " failure")
-			f.inject("ledger#1", stage, cause)
+			fx := newApproval(t, true, true)
 
-			err := fx.approve(f)
+			err, cause := fx.fail(t, at("ledger", 1), stage)
 
 			durablefiletest.RequireFailure(t, err, stage, true, cause)
 			durablefiletest.RequireFile(t, fx.policy, 0o644, string(fx.plan.Proposed))
@@ -325,37 +297,50 @@ func TestApprovalPublishedLedgerFailure(t *testing.T) {
 }
 
 // D50: a restore that fails, or whose read-back differs from its snapshot, joins its
-// cause to the initiating failure and names the file it left unrestored.
+// cause to the initiating failure and names the file it left unrestored. The restore of
+// the other file still runs.
 func TestApprovalRestoreFailure(t *testing.T) {
 	cases := []struct {
-		name, initial, initialStage, restore, restoreStage string
-		tamper                                             bool
+		name                       string
+		initial, restore           durablefiletest.Fault
+		initialStage, restoreStage string
+		tamper                     func(path string) error
 	}{
-		{name: "stage", initial: "policy#1", initialStage: "directory-sync", restore: "policy#2", restoreStage: "rename"},
-		{name: "compensation", initial: "ledger#1", initialStage: "rename", restore: "board#2", restoreStage: "directory-sync"},
-		{name: "read-back", initial: "board#1", initialStage: "directory-sync", restore: "board#2", tamper: true},
+		{name: "stage", initial: at("policy", 1), initialStage: "directory-sync", restore: at("policy", 2), restoreStage: "rename"},
+		{name: "compensation", initial: at("ledger", 1), initialStage: "rename", restore: at("board", 2), restoreStage: "directory-sync"},
+		{name: "first-of-two", initial: at("ledger", 1), initialStage: "rename", restore: at("policy", 2), restoreStage: "rename"},
+		{name: "read-back-mode", initial: at("board", 1), initialStage: "directory-sync", restore: at("board", 2),
+			tamper: func(path string) error { return os.Chmod(path, 0o666) }},
+		{name: "read-back-bytes", initial: at("board", 1), initialStage: "directory-sync", restore: at("board", 2),
+			tamper: func(path string) error { return os.WriteFile(path, []byte("# Tampered\n"), boardMode) }},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			fx := newApproval(t, true)
-			unrestored := map[string]string{"policy": fx.policy, "board": fx.board}[strings.Split(testCase.restore, "#")[0]]
-			f := fx.faults(t)
-			causes := []error{errors.New("injected " + testCase.initial + " failure")}
-			f.inject(testCase.initial, testCase.initialStage, causes[0])
-			if testCase.tamper {
+			fx := newApproval(t, true, true)
+			unrestored, other, otherMode, otherOld := fx.policy, fx.board, os.FileMode(boardMode), fx.oldBoard
+			if testCase.restore.Destination == "board" {
+				unrestored, other, otherMode, otherOld = fx.board, fx.policy, oldPolicyMode, fx.oldPolicy
+			}
+			f := fx.faults()
+			causes := []error{fmt.Errorf("injected %v failure", testCase.initial)}
+			f.Fail[testCase.initial] = map[string]error{testCase.initialStage: causes[0]}
+			if testCase.tamper != nil {
 				f.after[testCase.restore] = func() {
-					if err := os.Chmod(unrestored, 0o666); err != nil {
+					if err := testCase.tamper(unrestored); err != nil {
 						t.Fatal(err)
 					}
 				}
 			} else {
-				causes = append(causes, errors.New("injected "+testCase.restore+" failure"))
-				f.inject(testCase.restore, testCase.restoreStage, causes[1])
+				causes = append(causes, fmt.Errorf("injected %v failure", testCase.restore))
+				f.Fail[testCase.restore] = map[string]error{testCase.restoreStage: causes[1]}
 			}
 
-			err := fx.approve(f)
+			err := fx.approve(t, f, decision)
 
-			requireUnrestored(t, err, unrestored, causes...)
+			if err == nil || !strings.Contains(err.Error(), "restore "+unrestored+":") || !errors.Is(err, causes[0]) || !errors.Is(err, causes[len(causes)-1]) {
+				t.Fatalf("err = %v, want it to hold %v and name the unrestored %s", err, causes, unrestored)
+			}
+			durablefiletest.RequireFile(t, other, otherMode, otherOld)
 		})
 	}
 }
@@ -364,21 +349,19 @@ func TestApprovalRestoreFailure(t *testing.T) {
 // the ledger outcome.
 func TestApprovalFailureWithoutBoard(t *testing.T) {
 	cases := []struct {
-		key, stage string
-		approved   bool
+		fault    durablefiletest.Fault
+		stage    string
+		approved bool
 	}{
-		{key: "policy#1", stage: "directory-sync"},
-		{key: "ledger#1", stage: "rename"},
-		{key: "ledger#1", stage: "directory-sync", approved: true},
+		{fault: at("policy", 1), stage: "directory-sync"},
+		{fault: at("ledger", 1), stage: "rename"},
+		{fault: at("ledger", 1), stage: "directory-sync", approved: true},
 	}
 	for _, testCase := range cases {
-		t.Run(testCase.key+"/"+testCase.stage, func(t *testing.T) {
-			fx := newApproval(t, false)
-			f := fx.faults(t)
-			cause := errors.New("injected " + testCase.key + " failure")
-			f.inject(testCase.key, testCase.stage, cause)
+		t.Run(testCase.fault.String()+"/"+testCase.stage, func(t *testing.T) {
+			fx := newApproval(t, true, false)
 
-			err := fx.approve(f)
+			err, cause := fx.fail(t, testCase.fault, testCase.stage)
 
 			if !errors.Is(err, cause) {
 				t.Fatalf("err = %v, want %v", err, cause)
@@ -390,6 +373,26 @@ func TestApprovalFailureWithoutBoard(t *testing.T) {
 			durablefiletest.RequireBytes(t, fx.policy, want)
 			requireAbsent(t, fx.board)
 			fx.requireApproved(t, testCase.approved)
+		})
+	}
+}
+
+// A first approval has no policy to restore, so each failure that leaves the old ledger
+// removes the staged policy.
+func TestApprovalFailureWithoutPolicy(t *testing.T) {
+	for _, testCase := range []struct {
+		fault durablefiletest.Fault
+		stage string
+	}{{fault: at("policy", 1), stage: "directory-sync"}, {fault: at("ledger", 1), stage: "rename"}} {
+		t.Run(testCase.fault.String(), func(t *testing.T) {
+			fx := newApproval(t, false, true)
+
+			err, cause := fx.fail(t, testCase.fault, testCase.stage)
+
+			if !errors.Is(err, cause) {
+				t.Fatalf("err = %v, want %v", err, cause)
+			}
+			requireAbsent(t, fx.policy)
 		})
 	}
 }
