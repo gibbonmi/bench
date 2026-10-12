@@ -13,7 +13,16 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
+	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
+
+// beforeRename is each stage, in order, that can fail before the rename publishes the new
+// bytes.
+var beforeRename = []string{"create", "mode", "write", "file-sync", "file-close", "rename"}
+
+// afterRename is each stage, in order, that can fail after the rename publishes the new
+// bytes.
+var afterRename = []string{"directory-open", "directory-sync", "directory-close"}
 
 // destination returns a destination path in a fresh directory whose names hold spaces,
 // embedded quotes, glob characters, and Unicode. When old is not nil, the destination
@@ -124,56 +133,56 @@ func TestReplaceVisibility(t *testing.T) {
 
 func TestAdjacentTemporary(t *testing.T) {
 	path := destination(t, []byte("old"))
-	rec := &recorder{}
-	if err := rec.replacer().Replace(path, []byte("new"), 0o644); err != nil {
+	rec := &durablefiletest.Recorder{}
+	if err := rec.Replacer().Replace(path, []byte("new"), 0o644); err != nil {
 		t.Fatalf("Replace: %v", err)
 	}
-	if len(rec.temps) != 1 || filepath.Dir(rec.temps[0]) != filepath.Dir(path) {
-		t.Fatalf("temporary files %q, want one file in %q", rec.temps, filepath.Dir(path))
+	if len(rec.Temps) != 1 || filepath.Dir(rec.Temps[0]) != filepath.Dir(path) {
+		t.Fatalf("temporary files %q, want one file in %q", rec.Temps, filepath.Dir(path))
 	}
-	if !rec.regular {
-		t.Fatalf("temporary file %q was not a regular file at the rename", rec.temps[0])
+	if !rec.Regular {
+		t.Fatalf("temporary file %q was not a regular file at the rename", rec.Temps[0])
 	}
 }
 
 func TestReplaceOrder(t *testing.T) {
 	path := destination(t, []byte("old"))
-	rec := &recorder{}
-	if err := rec.replacer().Replace(path, []byte("new"), 0o644); err != nil {
+	rec := &durablefiletest.Recorder{}
+	if err := rec.Replacer().Replace(path, []byte("new"), 0o644); err != nil {
 		t.Fatalf("Replace: %v", err)
 	}
 	want := beforeRename
-	if len(rec.trace) < len(want) || !slices.Equal(rec.trace[:len(want)], want) {
-		t.Fatalf("trace = %q, want the prefix %q", rec.trace, want)
+	if len(rec.Trace) < len(want) || !slices.Equal(rec.Trace[:len(want)], want) {
+		t.Fatalf("trace = %q, want the prefix %q", rec.Trace, want)
 	}
 }
 
 func TestReplaceDirectorySync(t *testing.T) {
 	path := destination(t, []byte("old"))
-	rec := &recorder{}
-	if err := rec.replacer().Replace(path, []byte("new"), 0o644); err != nil {
+	rec := &durablefiletest.Recorder{}
+	if err := rec.Replacer().Replace(path, []byte("new"), 0o644); err != nil {
 		t.Fatalf("Replace: %v", err)
 	}
-	rename := slices.Index(rec.trace, "rename")
+	rename := slices.Index(rec.Trace, "rename")
 	want := afterRename
-	if rename < 0 || !slices.Equal(rec.trace[rename+1:], want) {
-		t.Fatalf("trace = %q, want %q after the rename", rec.trace, want)
+	if rename < 0 || !slices.Equal(rec.Trace[rename+1:], want) {
+		t.Fatalf("trace = %q, want %q after the rename", rec.Trace, want)
 	}
-	if rec.opened != filepath.Dir(path) {
-		t.Fatalf("opened directory %q, want the parent %q", rec.opened, filepath.Dir(path))
+	if rec.Opened != filepath.Dir(path) {
+		t.Fatalf("opened directory %q, want the parent %q", rec.Opened, filepath.Dir(path))
 	}
 }
 
 func TestReplaceShortWrite(t *testing.T) {
 	old := []byte("old")
 	path := destination(t, old)
-	rec := &recorder{short: true}
-	err := rec.replacer().Replace(path, []byte("new payload"), 0o644)
+	rec := &durablefiletest.Recorder{Short: true}
+	err := rec.Replacer().Replace(path, []byte("new payload"), 0o644)
 	if !errors.Is(err, io.ErrShortWrite) {
 		t.Fatalf("Replace after a short write = %v, want io.ErrShortWrite", err)
 	}
-	if slices.Contains(rec.trace, "rename") {
-		t.Fatalf("trace = %q renames after a short write", rec.trace)
+	if slices.Contains(rec.Trace, "rename") {
+		t.Fatalf("trace = %q renames after a short write", rec.Trace)
 	}
 	if got := readBack(t, path); !bytes.Equal(got, old) {
 		t.Fatalf("destination = %q, want the old %q", got, old)
@@ -185,8 +194,8 @@ func TestReplaceShortWrite(t *testing.T) {
 func failAt(t *testing.T, path string, data []byte, stage string) (*durablefile.Error, error) {
 	t.Helper()
 	cause := fmt.Errorf("injected %s failure", stage)
-	rec := &recorder{fail: map[string]error{stage: cause}}
-	err := rec.replacer().Replace(path, data, 0o644)
+	rec := &durablefiletest.Recorder{Fail: map[string]error{stage: cause}}
+	err := rec.Replacer().Replace(path, data, 0o644)
 	var replaceErr *durablefile.Error
 	if !errors.As(err, &replaceErr) {
 		t.Fatalf("Replace with a %s failure = %v, want a *durablefile.Error", stage, err)
@@ -250,7 +259,7 @@ func TestReplaceTemporaryCleanup(t *testing.T) {
 	for _, stage := range beforeRename[1:] {
 		path := destination(t, []byte("old"))
 		failAt(t, path, []byte("new"), stage)
-		if left := siblings(t, path); len(left) != 0 {
+		if left := durablefiletest.Siblings(t, path); len(left) != 0 {
 			t.Fatalf("after a %s failure the directory holds %q beside the destination", stage, left)
 		}
 	}
@@ -260,8 +269,8 @@ func TestReplaceCleanupFailure(t *testing.T) {
 	for _, stages := range [][2]string{{"write", "remove"}, {"write", "file-close"}, {"directory-sync", "directory-close"}} {
 		path := destination(t, []byte("old"))
 		primary, cleanup := fmt.Errorf("injected %s failure", stages[0]), fmt.Errorf("injected %s failure", stages[1])
-		rec := &recorder{fail: map[string]error{stages[0]: primary, stages[1]: cleanup}}
-		err := rec.replacer().Replace(path, []byte("new"), 0o644)
+		rec := &durablefiletest.Recorder{Fail: map[string]error{stages[0]: primary, stages[1]: cleanup}}
+		err := rec.Replacer().Replace(path, []byte("new"), 0o644)
 		if !errors.Is(err, primary) || !errors.Is(err, cleanup) {
 			t.Fatalf("Replace = %v, want both the %s cause and the %s cleanup cause", err, stages[0], stages[1])
 		}

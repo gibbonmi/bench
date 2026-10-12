@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -59,23 +58,17 @@ func (s fenceSpan) splice(document, data []byte) []byte {
 	return bytes.Join([][]byte{document[:s.start], data, document[s.end:]}, nil)
 }
 
-// write is the one write transaction on the record of spec under root, and it replaces
-// the file through the native durable replacement.
-func write(root, spec string, create func(path string) (Record, error), change func(*Record) error) error {
-	return writeWith(durablefile.Replace, root, spec, create, change)
-}
+// replaceFile is the one replacement operation of every review-record file write: the
+// native durable replacement. A test binds its own operation for one test.
+var replaceFile = durablefile.Replace
 
-// replacement is the replacement operation of a review-record write: the native
-// durablefile.Replace, or the Replace method of a test's durablefile.Replacer.
-type replacement func(path string, data []byte, mode fs.FileMode) error
-
-// writeWith is the write transaction with its replacement operation. It reads the
+// write is the one write transaction on the record of spec under root. It reads the
 // record through the reader, applies change, renders the document, and grades the
 // rendered bytes as the reader grades a file: the bounded classification, then the
-// parse. Only then does it replace the file through replaceFile. For an absent file at
+// parse. Only then does it replace the file through replace. For an absent file at
 // path, create supplies the record that the file starts from or refuses it. A refusal
 // before the replacement leaves the record bytes unchanged and leaves no temporary file.
-func writeWith(replaceFile replacement, root, spec string, create func(path string) (Record, error), change func(*Record) error) error {
+func write(root, spec string, create func(path string) (Record, error), change func(*Record) error) error {
 	path, err := RecordPath(spec)
 	if err != nil {
 		return err
@@ -104,7 +97,7 @@ func writeWith(replaceFile replacement, root, spec string, create func(path stri
 	if _, err := parseRecord(rendered, spec); err != nil {
 		return err
 	}
-	return replace(replaceFile, filepath.Join(root, filepath.FromSlash(path)), rendered)
+	return replace(filepath.Join(root, filepath.FromSlash(path)), rendered)
 }
 
 // absent refuses an absent record at path. The chunk form writes its first entry, for
@@ -118,7 +111,7 @@ func absent(chunk string) func(path string) (Record, error) {
 // replace creates the directory of path when that directory is absent, then replaces path
 // with data at mode 0644 through replaceFile, so a reader sees either the old bytes or the
 // new bytes. It returns the replacement error unchanged and rolls back nothing.
-func replace(replaceFile replacement, path string, data []byte) error {
+func replace(path string, data []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
