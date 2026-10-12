@@ -1,5 +1,30 @@
 # Review outcomes
 
+BW-A round 1 reviewed the pair `dcbbfb80..ced1dedc`.
+The repair allowance of BW-A is two cycles, and the build has used zero of them.
+
+## Standards
+
+Findings: 3. Worst issue: S1, a copied gate-barrier fixture harness.
+
+- S1, auto-fix, confidence 9: `barrierLandingFixture` in `internal/worktree/land_lease_test.go:47` copies the FIFO gate barrier of `TestCommitmentGateRace` (`internal/worktree/land_identity_test.go:241-264`). Fold that test onto the one harness.
+- S2, auto-fix, confidence 8: `systemReleaseGateBarrier` in `internal/systemtest/owner_land_race_test.go:182` repeats the body of `releaseArtifactBarrier` (`internal/systemtest/owner_artifact_recovery_test.go:147`). Call the existing helper.
+- S3, auto-fix, confidence 8: six new comment sentences are over 25 words. They are in `lease.go:17`, `lease_test.go:26`, `build_records_test.go:18` and `:53`, `faces_land.go:3`, and `land_lease_test.go:104`.
+
+## Spec
+
+Findings: 1. Worst issue: P1, a false comparison clause in the Edge inventory.
+
+- P1, auto-fix, confidence 9: the Edge inventory says that the lease lock opens without following a link "as the gate lock opens its file". The gate lock uses a plain open, so remove that clause.
+
+## Coverage
+
+Findings: 3. Worst issue: C1, a BW7 test that does not detect a second transaction.
+
+- C1, auto-fix, confidence 8: the BW7 test passes when `PublishAdmitted` drops the lease in a second transaction. Make the competing acquire take the intent lock first, and show it red under that mutation.
+- C2, auto-fix, confidence 7: no test makes the ledger write fail after the ref update. Add a test that asserts nil and a lease record that the next acquire takes over.
+- C3, auto-fix, confidence 7: no test puts a symbolic link at the lease lock path. Add a refusal case beside BW15 that expects `landing lease unavailable:`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -188,7 +213,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bwa-standards-r1",
+          "performer": "claude:blw_bwa_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a9c5287c4e471d17997ad54c4176662f29030292",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwa_standards",
+            "digest": "sha256:2a579305eb5624c0889539019bb431135e837a1faca11a659be7a252747ae400",
+            "excerpt": "Axis: Standards — 3 findings (worst: S1)\nS1 | internal/worktree/land_lease_test.go:47 | fixture harness duplicated from land_identity_test.go:241-264 | auto-fix (Writes expansion) | blocking | 9\nS2 | internal/systemtest/owner_land_race_test.go:182 | systemReleaseGateBarrier duplicates releaseArtifactBarrier | auto-fix | blocking | 8\nS3 | six new comment sentences over 25 words (STE) | auto-fix, evidence-only | blocking | 8\nFlag (b) refuted: Composed(FactLeaseOwner) follows faces_reset.go:12 precedent.\nAdvice: Composed doc wording; HoldExclusive/lockForClean overlap; leaseLanding parameter clump.\n"
+          },
+          "axis": "Standards",
+          "base": "dcbbfb805419eef05174ea379b99547cfc8889da",
+          "tip": "ced1dedc83e74057e0af3499d3b3ccdca9930319",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwa-spec-r1",
+          "performer": "claude:blw_bwa_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a9c5287c4e471d17997ad54c4176662f29030292",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwa_spec",
+            "digest": "sha256:c324857b586d09742b97eefc88f66bf0aa483182614d465d42e0fa4071785b8a",
+            "excerpt": "Axis: Spec — BW-A @ ced1dedc (evidence sha256:694e08cf…)\nFindings: 1 (non-blocking)\nP1 spec.md:606 \"opened without following, as the gate lock opens its file\" — the lease\n   uses O_NOFOLLOW (gocache/lock.go:108); the gate lock does not (gate/run_transaction.go:70).\n   Non-behavioral spec contradiction; drop the comparison clause; flag for veto. conf 9.\nRows: BW1-BW16 built and graded.\nAuthor flag (b): PublishAdmitted nil after ref move matches spec:219; no finding.\nAdvice:\n- Test the ledger-write-failure branch at publication.go:47.\n- Pin the land-infrastructure face in TestLeaseLockUnavailable.\n- Gap uniqueness keyed on outcome only (matches spec:183).\n"
+          },
+          "axis": "Spec",
+          "base": "dcbbfb805419eef05174ea379b99547cfc8889da",
+          "tip": "ced1dedc83e74057e0af3499d3b3ccdca9930319",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwa-coverage-r1",
+          "performer": "claude:blw_bwa_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a9c5287c4e471d17997ad54c4176662f29030292",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwa_coverage",
+            "digest": "sha256:d57e0a830cbff268ae9cbd5a48c0f1c57b222caa88091fbcb19891516caff7ec",
+            "excerpt": "Coverage BW-A (tip ced1dedc): 3 findings, 1 blocking.\nC1 BW7 test non-discriminating: lease drop moved to a second Transact inside\n   PublishAdmitted -> probe silent (7 tests), restored. The 10ms O_EXCL poll lets\n   the immediate second transaction win. Blocking.\nC2 Post-publish ledger-write failure: guard `published && err == nil` -> probe\n   silent (109 tests), restored. New failure mode with no row. Non-blocking.\nC3 Symlink at lease lock: O_NOFOLLOW removed -> silent in gocache and worktree\n   lease tests, restored. Edge inventory claims it. Non-blocking.\nAdvice: destination read precedes the lease; the kernel-contended path is proven\nonly by system BW10.\n"
+          },
+          "axis": "Coverage",
+          "base": "dcbbfb805419eef05174ea379b99547cfc8889da",
+          "tip": "ced1dedc83e74057e0af3499d3b3ccdca9930319",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
