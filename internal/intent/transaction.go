@@ -41,7 +41,8 @@ func Transact(root string, mode ReadMode, decide Decision, compensate Compensati
 	return TransactWithReplacer(durablefile.Native(), root, mode, decide, compensate)
 }
 
-// TransactWithReplacer is Transact with the ledger replacement run through replacer.
+// TransactWithReplacer is Transact with the ledger replacement run through replacer, so
+// that a caller can fail one stage of the write under the real lock and decision.
 func TransactWithReplacer(replacer durablefile.Replacer, root string, mode ReadMode, decide Decision, compensate Compensation) error {
 	return transact(replacer, root, mode, func(ledger Ledger, _ int) (Ledger, bool, error) { return decide(ledger) }, compensate)
 }

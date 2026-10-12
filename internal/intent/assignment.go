@@ -160,8 +160,8 @@ func ReauthorizeAssignment(root, id, request string, verify func(Assignment) err
 	return reauthorizeAssignment(durablefile.Native(), root, id, request, verify, transition, beforeCAS)
 }
 
-// reauthorizeAssignment is ReauthorizeAssignment with the ledger replacement run through
-// replacer.
+// reauthorizeAssignment takes the replacer so that a test can fail the ledger write after
+// the real request transition.
 func reauthorizeAssignment(replacer durablefile.Replacer, root, id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
 	var previous Assignment
 	var rollback func()

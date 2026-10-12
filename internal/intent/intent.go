@@ -191,8 +191,8 @@ func writePath(path string, ledger Ledger) error {
 	return writePathWith(durablefile.Native(), path, ledger)
 }
 
-// writePathWith encodes ledger in its stored form and replaces the file at path with it
-// through replacer.
+// writePathWith takes the replacer so that a test can fail one stage of the ledger
+// replacement.
 func writePathWith(replacer durablefile.Replacer, path string, ledger Ledger) error {
 	ledger.Schema = Schema
 	if ledger.Entries == nil {
