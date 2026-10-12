@@ -3,6 +3,7 @@
 BW-A round 1 reviewed the pair `dcbbfb80..ced1dedc`.
 Repair 1 at `2aa2bf49` closed all seven findings, and the confirming round passed on all three axes.
 BW-A used one of its two repair cycles.
+BW-B round 1 reviewed the pair `2aa2bf49..6c90a3c6`, and BW-B has used zero of its two repair cycles.
 
 ## Standards
 
@@ -12,11 +13,19 @@ Findings: 3. Worst issue: S1, a copied gate-barrier fixture harness.
 - S2, auto-fix, confidence 8: `systemReleaseGateBarrier` in `internal/systemtest/owner_land_race_test.go:182` repeats the body of `releaseArtifactBarrier` (`internal/systemtest/owner_artifact_recovery_test.go:147`). Call the existing helper.
 - S3, auto-fix, confidence 8: six new comment sentences are over 25 words. They are in `lease.go:17`, `lease_test.go:26`, `build_records_test.go:18` and `:53`, `faces_land.go:3`, and `land_lease_test.go:104`.
 
+BW-B findings: 3. Worst issue: BW-B S1, a hand-spelled shell quote in a test expectation.
+
+- BW-B S1, auto-fix, confidence 7: `foldOfMain` in `internal/worktree/land_moved_destination_test.go:18` hand-spells the quote of `main`. Derive it through `sanitize.ShellQuote`, as `merge_route_test.go:188` does.
+- BW-B S2, auto-fix, confidence 6: `internal/worktree/land_refusal.go:291` strips `refs/heads/` that `land.go:194` added. Pass the branch that the caller already holds.
+- BW-B S3, auto-fix, confidence 5: `destinationUnchanged` at `internal/landing/gitexec.go:145` drops a `ResolveCommit` error without a comment. State that the publish compare-and-swap still refuses.
+
 ## Spec
 
 Findings: 1. Worst issue: P1, a false comparison clause in the Edge inventory.
 
 - P1, auto-fix, confidence 9: the Edge inventory says that the lease lock opens without following a link "as the gate lock opens its file". The gate lock uses a plain open, so remove that clause.
+
+BW-B findings: 0. The Spec axis accepted the three author flags. BW23 uses an injected typed refusal at the `j.landReviewed` hook, because no real fixture reaches that state.
 
 ## Coverage
 
@@ -25,6 +34,11 @@ Findings: 3. Worst issue: C1, a BW7 test that does not detect a second transacti
 - C1, auto-fix, confidence 8: the BW7 test passes when `PublishAdmitted` drops the lease in a second transaction. Make the competing acquire take the intent lock first, and show it red under that mutation.
 - C2, auto-fix, confidence 7: no test makes the ledger write fail after the ref update. Add a test that asserts nil and a lease record that the next acquire takes over.
 - C3, auto-fix, confidence 7: no test puts a symbolic link at the lease lock path. Add a refusal case beside BW15 that expects `landing lease unavailable:`.
+
+BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detects.
+
+- BW-B C1, auto-fix, confidence 7: a swap of the cause match at `internal/worktree/land_refusal.go:284` to any non-empty cause stays green. Add a row that pins a non-proof gate cause to `land-infrastructure`.
+- BW-B C2, auto-fix, confidence 5: no test reaches the branch where the ancestry query fails. Add a row that pins its handback.
 
 ```bench-review-record
 {
@@ -627,7 +641,75 @@ Findings: 3. Worst issue: C1, a BW7 test that does not detect a second transacti
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bwb-standards-r1",
+          "performer": "claude:blw_bwb_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwb_standards",
+            "digest": "sha256:b69268ccadc2a368691a152564f3f160132e62c8da66056c056f13f1afdbd7bd",
+            "excerpt": "Standards, BW-B, 2aa2bf49..6c90a3c6: 3 findings.\nS1 auto-fix blocking: land_moved_destination_test.go:18 foldOfMain hand-spells ShellQuote(\"main\"); precedent merge_route_test.go:188 derives it; no recorded red.\nS2 auto-fix judgment: land_refusal.go:291 strips refs/heads/ that land.go:194 added; caller holds branch.\nS3 auto-fix: gitexec.go:145 ignores ResolveCommit error without stating the CAS backstop.\nFlags: (a) pre-existing literal pattern, advice; (b) causeJoiner single-sources producer and parser, sound; (c) refuted, see S1.\nAdvice: export gate-handback from refusalroute; Face/Cause dual naming; \"moved past\" wording; rerun built twice in test; system test literal quoting.\n"
+          },
+          "axis": "Standards",
+          "base": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+          "tip": "6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwb-spec-r1",
+          "performer": "claude:blw_bwb_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwb_spec",
+            "digest": "sha256:bf13b3e0f4211ccaeead5f57e0031a7041a59a5402a3328c5d3d287a55f5d9cb",
+            "excerpt": "Axis: Spec — chunk BW-B, base 2aa2bf49, tip 6c90a3c6\nFindings: 0\nBW17-BW24: each row built at the cited seam; tests present, not run by this axis.\nThree refusal sites match spec :390-392; handbacks match :394-395 and R10.\nCause travels as authorization.Cause; no reason-text routing (land_refusal.go:284).\nFlag (a): sentence \": \" cause follows the tree convention at land_refusal.go:151-153.\nFlag (b): BW23 injects the cause at j.landReviewed; ancestry runs on real git.\nFlag (c): ancestry-error handback is unspecified; deferred to Coverage.\nAdvice: record BW23's injected-fixture decision in the review record.\n"
+          },
+          "axis": "Spec",
+          "base": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+          "tip": "6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bwb-coverage-r1",
+          "performer": "claude:blw_bwb_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwb_coverage",
+            "digest": "sha256:8659c930165af3b91b511df8713de14f129066b1425e695ed6591403f1e7eccd",
+            "excerpt": "Axis: Coverage — 2 findings, 0 blocking.\nC1 | non-proof gate face at completion landing | widened Cause match routes it to handback/moved | no landing row pins non-proof Cause -> land-infrastructure | auto-fix | no | 7\nC2 | ancestry query fails | swapped branch routes to land-destination-moved | no row/test for the unreadable-ancestry branch | auto-fix | no | 5\nP1 land_refusal.go:284 swap Cause==CompletionProof -> Cause!=\"\" : silent (1415 tests, ./internal/worktree), restored\nP2 land_refusal.go:285 swap ancestryErr!=nil||holds -> ancestryErr==nil&&holds : silent (374 tests), restored\nAdvice: proof fault over a lagging source always folds; TipMovedError fires on ref rewind.\ngit status --short: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+          "tip": "6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
