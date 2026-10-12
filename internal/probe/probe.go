@@ -229,7 +229,7 @@ func keptCopy(preserved preservation, reason string) string {
 // answers with the shared render error in place of the rows and the report, and the
 // restore has already run by then, which is why an unprintable name still leaves a clean
 // tree. The restore-failed verdict overrides every other answer, so a failed restore keeps
-// the preserved row and exit 2 even when the rows themselves refuse.
+// the answer that names the kept copy and exit 2 even when the rows themselves refuse.
 func render(subject subject, mutation string, outcome testreport.Outcome, focused int, request testreport.Request, report string, preserved preservation, restored bool, reason string, baseline testreport.OutcomeKind) (string, int) {
 	// The baseline cell carries the kind the baseline run observed, so the row joins the two
 	// runs it reports rather than asserting the kind the refusal order implies.
