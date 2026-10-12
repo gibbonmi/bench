@@ -35,6 +35,8 @@ A dispatch from a worktree without a binding of an open build writes no ledger c
 If the plan write fails after the ledger write, a rerun finds the chunk current and writes the plan.
 `internal/reviewrecord` sits below `internal/commitment/repository`, so the ledger decision lives in the record command, not in `internal/reviewrecord`.
 Raise `worktreeTestCount` in `internal/worktree/parallel_census_test.go` in place for each new top-level test.
+Move the open-gap seed of `internal/worktree/land_fixtures_test.go`, `internal/systemtest/owner_landing_fixture_test.go`, and `internal/commitment/repository/window_test.go` into one `commitmenttest` helper.
+`internal/systemtest/owner_landing_fixture_test.go` is system-tagged, so run its callers with `BENCH_KIT` set through `bench test --check system`.
 
 ## Acceptance
 
