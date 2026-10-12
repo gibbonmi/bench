@@ -1355,7 +1355,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-b4-r1-standards",
+          "performer": "claude:dcm_rev_b4_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d3d801af894c7a5d78dd5468fb21bc6811a0bb63",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b4_std",
+            "digest": "sha256:5c9b3e7574f1d97b12a649fbb789d276a5ef840ce37c57de04d40bbbc161d1d5",
+            "excerpt": "## Standards (D-B4, c05092c6..bce8ea45) — 1 finding; worst S1\nS1 | auto-fix | 7 | internal/handoffdoc/replacement_test.go:19-20 | the D21 comment ends \"which the former writer ignored.\", which narrates history | delete the clause\nChecks: no copy of the algorithm; one %w wrap; replacer seam with Native from the exported functions; shared assertions; independent expectations with recorded reds; each fact checked once.\nAdvice: replacementSection is a package-level fixture; a constructor would be safer.\n"
+          },
+          "axis": "Standards",
+          "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+          "tip": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b4-r1-spec",
+          "performer": "claude:dcm_rev_b4_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d3d801af894c7a5d78dd5468fb21bc6811a0bb63",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b4_spec",
+            "digest": "sha256:31dcc66b8b7d3f2c76e4691b8e878bc267bb609c2d4d21efa623538bbf8e8879",
+            "excerpt": "## Spec (D-B4, c05092c6..bce8ea45) — 0 findings\nD21 holds: 0644 and the rendered document at store.go:76; a directory failure returns an error through the %w wrap; replacer seam with Native from Update and WriteSection; the lock and section edits stay with the caller; TestHandoffPreRenameFailure is the D36 evidence. The two plan commits add only the 08 and 09 assignments.\n"
+          },
+          "axis": "Spec",
+          "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+          "tip": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b4-r1-coverage",
+          "performer": "claude:dcm_rev_b4_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d3d801af894c7a5d78dd5468fb21bc6811a0bb63",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b4_cov",
+            "digest": "sha256:cfda4c90de727aa15bd1b1e3b75a46c378332050d56ed1c5b4406a8571a6c907",
+            "excerpt": "## Coverage (D-B4, c05092c6..bce8ea45) — 2 findings; worst F1. Three probes, each restored=yes.\nF1 | auto-fix | 7 | internal/handoffdoc/replacement_test.go:56 | the D36 prior-bytes check has no recorded necessity red; probe A (os.WriteFile of the rendered document before the wrapped return) bit only at :57 | record probe A with exact swap text\nF2 | ask-user (orchestrator: auto-fix) | 4 | tickets/05-migrate-handoff-documents.md:10, store.go:76 | only directory-sync has a caller witness; ignoring directory-open errors is silent (probe C) | make TestHandoffReplacement table-driven over directory-open, directory-sync, and directory-close\nSilent, advice: dropping the caller prefix (probe B); the native bindings belong to the D-D census.\n"
+          },
+          "axis": "Coverage",
+          "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+          "tip": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+          "finding_ids": [
+            "F1",
+            "F2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1554,3 +1620,24 @@ Chunk D-B3 used 0 of its 2 repair cycles before repair 1. S1, S2, and C3 fall on
 Chunk D-B3 used 1 of its 2 repair cycles.
 
 The D-B3 confirming round at 13925a7d closed S1, S2, and C3 with no new finding. Chunk D-B3 closed with 1 of its 2 repair cycles used.
+
+## Standards (D-B4)
+
+Chunk D-B4 has 1 finding. The worst issue is S1.
+
+- S1, auto-fix, confidence 7: the comment at `internal/handoffdoc/replacement_test.go:19-20` narrates history. Delete the clause about the former writer.
+
+## Spec (D-B4)
+
+Chunk D-B4 has 0 findings.
+
+## Coverage (D-B4)
+
+Chunk D-B4 has 2 findings. The worst issue is F1.
+
+- F1, auto-fix, confidence 7: the prior-bytes check of `TestHandoffPreRenameFailure` has no recorded necessity red. Record the fallback-write red with its exact swap text.
+- F2, auto-fix, confidence 4: only directory-sync has a caller witness, and an ignored directory-open error is silent. Make `TestHandoffReplacement` table-driven over directory-open, directory-sync, and directory-close.
+
+## Repair allowance (D-B4)
+
+Chunk D-B4 used 0 of its 2 repair cycles before repair 1. S1, F1, and F2 fall on ticket 05, so one combined repair session takes them.
