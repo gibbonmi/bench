@@ -1019,7 +1019,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-b3-r1-standards",
+          "performer": "claude:dcm_rev_b3_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b034f5f9f948e705edf9e57aa049f3cbfb8e95ab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b3_std",
+            "digest": "sha256:60585ff770be7e5499d50c236d5f2a8091243df55fe009181ab548326934a911",
+            "excerpt": "## Standards (D-B3, 0cc52e21..cbccb028) — 3 findings; worst S1\nS1 | auto-fix (orchestrator: in part) | 5 | internal/capturetx/replacement_test.go:68 | the pre-rename row repeats the 0644 mode check that :47 owns; the former-bytes check needs a recorded necessity red | drop the repeated mode check; keep the caller-observable former-bytes check with its necessity red\nS2 | auto-fix | 6 | internal/capturetx/transaction.go:245-246, :208; replacement_test.go:12 | comments restate the code and the mode literal | keep only the reason for parent creation; delete the restating comments\nS3 | ask-user (orchestrator: no-op) | 4 | replacement_test.go:35, :50 | spec-row tags in test doc comments | no-op: row tags are an established tree convention (D-B1 Standards counted 92 test files)\nAdvice: two Native supply sites; a Middle Man chain in the manifest writers.\n"
+          },
+          "axis": "Standards",
+          "base": "0cc52e2103645332e77432be7fc6404f977e4bb5",
+          "tip": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b3-r1-spec",
+          "performer": "claude:dcm_rev_b3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b034f5f9f948e705edf9e57aa049f3cbfb8e95ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b3_spec",
+            "digest": "sha256:605482547dc4c3c392d479b60f93da63611110af63d00d4db0e532ce405be328",
+            "excerpt": "## Spec (D-B3, 0cc52e21..cbccb028) — 0 findings\nD20 holds: 0644 and caller bytes through replaceWith; Append, Abort, recovery, and the manifest writer reach the shared owner; writeNew and directory promotion unchanged; parent creation stays with the caller; the manifest writer is a sound narrow caller writer; TestCapturePreRenameFailure is the D36 evidence. The four plan commits change only the execution block.\nAdvice: A1 the witness reaches replace only through replaceWith; A2 a post-rename Append failure leaves visible bytes, which the spec gives to the caller.\n"
+          },
+          "axis": "Spec",
+          "base": "0cc52e2103645332e77432be7fc6404f977e4bb5",
+          "tip": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b3-r1-coverage",
+          "performer": "claude:dcm_rev_b3_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b034f5f9f948e705edf9e57aa049f3cbfb8e95ab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b3_cov",
+            "digest": "sha256:df821e91679f3dc0ed01ce7f6de8748192eeef47d10b7eeef4984cc831152e93",
+            "excerpt": "## Coverage (D-B3, 0cc52e21..cbccb028) — 3 findings; worst C1. Six probes, each restored=yes.\nC1 | ask-user (orchestrator: no-op) | 6 | internal/capturetx/transaction.go:241-242, :204-205 | a bypass of the native bindings in replace or writeManifestDir is silent | no-op: the spec forbids ambient swaps, so the D-D source census owns each native binding (ticket 14)\nC2 | ask-user (orchestrator: no-op) | 6 | internal/capturetx/public.go:49 | an Append that discards its replacement error is silent | no-op: spec line 83 accepts a narrow caller writer, and public.go is outside the fence\nC3 | auto-fix | 7 | reviews/durable-caller-migration.md (dcm-t04-preservation) | the MkdirAll omission red that guards \"creates its missing transaction directory\" is not recorded | record the MkdirAll omission red with exact swap text\nBit: replaceWith returns nil when Published (TestCaptureReplacement:46); a fallback os.WriteFile after an unpublished error (TestCapturePreRenameFailure:68). Silent, no requirement: parent mode 0o700.\n"
+          },
+          "axis": "Coverage",
+          "base": "0cc52e2103645332e77432be7fc6404f977e4bb5",
+          "tip": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1156,3 +1225,27 @@ Chunk D-B2 takes repair cycle 2 of 2 for DCM-B2-S2.
 DCM-B2-S2 closes in commit 6eed4ae5, and chunk D-B2 used 2 of its 2 repair cycles.
 
 The second D-B2 confirming round at 79926b97 closed DCM-B2-S2 with no new finding. Chunk D-B2 closed with 2 of its 2 repair cycles used.
+
+## Standards (D-B3)
+
+Chunk D-B3 has 3 findings. The worst issue is S1.
+
+- S1, auto-fix in part, confidence 5: the pre-rename row at `internal/capturetx/replacement_test.go:68` repeats the 0644 check that line 47 owns. Drop the repeated mode check, and keep the former-bytes check with a recorded necessity red.
+- S2, auto-fix, confidence 6: the comments at `internal/capturetx/transaction.go:208`, `:245-246`, and the test line 12 restate the code. Keep only the reason for the parent creation.
+- S3, no-op, confidence 4: spec-row tags in test doc comments are an established tree convention.
+
+## Spec (D-B3)
+
+Chunk D-B3 has 0 findings.
+
+## Coverage (D-B3)
+
+Chunk D-B3 has 3 findings. The worst issue is C1.
+
+- C1, no-op, confidence 6: a bypass of the native bindings in `replace` or `writeManifestDir` is silent. The spec forbids ambient swaps, so the D-D source census owns each native binding.
+- C2, no-op, confidence 6: an Append that discards its replacement error is silent. The spec accepts a narrow caller writer, and Append sits outside the fence.
+- C3, auto-fix, confidence 7: the MkdirAll omission red is not recorded. Record it with its exact swap text.
+
+## Repair allowance (D-B3)
+
+Chunk D-B3 used 0 of its 2 repair cycles before repair 1. S1, S2, and C3 fall on ticket 04, so one combined repair session takes them.
