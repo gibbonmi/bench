@@ -51,14 +51,14 @@ func TestPublicationReplacement(t *testing.T) {
 }
 
 // D36: a rename failure of a record save returns an unpublished failure that wraps its
-// cause and leaves the former record.
+// cause and leaves the prior record bytes.
 func TestPublicationPreRenameFailure(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	if err := SaveRecord(root, replacementRecord("staged")); err != nil {
 		t.Fatal(err)
 	}
-	former, err := os.ReadFile(RecordPath(root))
+	prior, err := os.ReadFile(RecordPath(root))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,5 +68,7 @@ func TestPublicationPreRenameFailure(t *testing.T) {
 	err = saveRecordWith(rec.Replacer(), root, replacementRecord("published"))
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	durablefiletest.RequireFile(t, RecordPath(root), 0o644, string(former))
+	if got, err := os.ReadFile(RecordPath(root)); err != nil || string(got) != string(prior) {
+		t.Fatalf("record = %q (%v), want the prior record %q", got, err, prior)
+	}
 }
