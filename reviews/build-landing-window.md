@@ -1297,6 +1297,107 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
           "requirement": "t4-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t3-record-focused-v2",
+          "performer": "claude:blw_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t3rep1/tip/t3-record-focused.txt",
+            "digest": "sha256:9c8148f1994947e0ed34eb8f4c98ecc35eeebf097cbd66f6d5193ff8293ffe02",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/reviewrecord/recordcmd --run 'TestRecordFold'\nexit=0 wall=2757ms\ntree[1]{target,head,dirty}:\n  FT342-FT253,3cdff1788acc402bb7635c92e3907029f0fa8d72,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,1090,13\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-record-focused",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd --run 'TestRecordFold'",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-chain-focused-v2",
+          "performer": "claude:blw_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t3rep1/tip/t3-chain-focused.txt",
+            "digest": "sha256:e89156e455cd6839cab67ddb75dd721e9160e889a409db748cdb3d3b7879394e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/coverage.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestFoldChainAcceptsARecordedFoldBetweenChunks|TestFoldCoversACompletionSourcePastTheLastChunk,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,910\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,534,4\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestFoldChainAcceptsARecordedFoldBetweenChunks/1_folds,\"fold_test.go:50: chunk 2 on the record commit after 1 recorded folds: chunk 2: stale review chain gap: expected base 49b38266871386554e56d5cb78bf04e710961144, the chunk 1 tip, got bca42d2ed97191bd3f50ce0492d117c917b6c2bc; plan commits land … (458 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestFoldChainAcceptsARecordedFoldBetweenChunks/2_folds,\"fold_test.go:50: chunk 2 on the record commit after 2 recorded folds: chunk 2: stale review chain gap: expected base 49b38266871386554e56d5cb78bf04e710961144, the chunk 1 tip, got f6b9623e63dac2457b7fc52abf4bb90bd2faf9f8; plan commits land … (458 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-chain-focused",
+          "command": "bench test --package ./internal/reviewrecord --run 'TestFoldChainAcceptsARecordedFoldBetweenChunks|TestFoldCoversACompletionSourcePastTheLastChunk'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the fold-coverage branch for a later chunk base in checkSource, so that the record commit after a recorded fold reads as a chain gap. TestFoldChainAcceptsARecordedFoldBetweenChunks turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t3rep1/tip/t3-chain-focused.txt",
+              "digest": "sha256:e89156e455cd6839cab67ddb75dd721e9160e889a409db748cdb3d3b7879394e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/coverage.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestFoldChainAcceptsARecordedFoldBetweenChunks|TestFoldCoversACompletionSourcePastTheLastChunk,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,910\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,534,4\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestFoldChainAcceptsARecordedFoldBetweenChunks/1_folds,\"fold_test.go:50: chunk 2 on the record commit after 1 recorded folds: chunk 2: stale review chain gap: expected base 49b38266871386554e56d5cb78bf04e710961144, the chunk 1 tip, got bca42d2ed97191bd3f50ce0492d117c917b6c2bc; plan commits land … (458 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestFoldChainAcceptsARecordedFoldBetweenChunks/2_folds,\"fold_test.go:50: chunk 2 on the record commit after 2 recorded folds: chunk 2: stale review chain gap: expected base 49b38266871386554e56d5cb78bf04e710961144, the chunk 1 tip, got f6b9623e63dac2457b7fc52abf4bb90bd2faf9f8; plan commits land … (458 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t3-gate-focused-v2",
+          "performer": "claude:blw_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t3rep1/tip/t3-gate-focused.txt",
+            "digest": "sha256:89ca5d6bf7c33a12c9301866026c930da98eb60bfec33e286c8eefae99a4470c",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/gate --run 'TestReviewCheckpointChainGapNamesTheExpectedBase'\nexit=0 wall=1835ms\ntree[1]{target,head,dirty}:\n  FT342-FT253,3cdff1788acc402bb7635c92e3907029f0fa8d72,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,97,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-gate-focused",
+          "command": "bench test --package ./internal/gate --run 'TestReviewCheckpointChainGapNamesTheExpectedBase'",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-floor-v2",
+          "performer": "claude:blw_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t3rep1/tip/t3-floor.txt",
+            "digest": "sha256:cfce18eeec7626fd164ed43dd2f8ea0e959a91bf9884338f77c5d9153821e9c6",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/reviewrecord/... --package ./internal/testreport --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance --package ./internal/git\nexit=0 wall=113417ms\ntree[1]{target,head,dirty}:\n  FT342-FT253,3cdff1788acc402bb7635c92e3907029f0fa8d72,false\npackages[15]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,25032,333\n  github.com/gibbonmi/bench/internal/conformance,pass,80469,1690\n  github.com/gibbonmi/bench/internal/gate,pass,30247,430\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,234,14\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,43,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,277,36\n  github.com/gibbonmi/bench/internal/git,pass,1742,172\n  github.com/gibbonmi/bench/internal/landing,pass,9906,221\n  github.com/gibbonmi/bench/internal/landing/published,no-tests,0,0\n  github.com/gibbonmi/bench/internal/landing/settlepolicy,pass,2,20\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2633,91\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,9238,181\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,92005,225\n  github.com/gibbonmi/bench/internal/worktree,pass,83882,1418\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-floor",
+          "command": "bench test --package ./internal/reviewrecord/... --package ./internal/testreport --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-root-conformance-v2",
+          "performer": "claude:blw_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t3rep1/tip/t3-root-conformance.txt",
+            "digest": "sha256:527d3d074a487cb94bbb25dc492f3697e384144acf5675472711e00eb8680b20",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --check root-conformance\nexit=0 wall=18659ms\ntree[1]{target,head,dirty}:\n  FT342-FT253,3cdff1788acc402bb7635c92e3907029f0fa8d72,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16621,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
