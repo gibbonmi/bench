@@ -9,7 +9,6 @@ import (
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
-// replacementSection is the section that each replacement test writes.
 var replacementSection = Section{
 	Key:    "9f2ab77",
 	Fields: []Field{{LabelRequestToken, "`9f2ab77`"}},
@@ -17,8 +16,8 @@ var replacementSection = Section{
 	State:  "The phase is live.",
 }
 
-// D21: a section write returns the injected directory-sync failure of its replacement
-// after the rename, and the document holds the rendered document at mode 0644.
+// D21: a directory-sync failure after the rename fails the section write, which the
+// former writer ignored.
 func TestHandoffReplacement(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "session-handoff.md")
@@ -32,8 +31,8 @@ func TestHandoffReplacement(t *testing.T) {
 		"## request 9f2ab77\n\nRequest token: `9f2ab77`\nNext command: `bench gate`\n\n### State\n\nThe phase is live.\n\n")
 }
 
-// D36: a rename failure of a section write returns an unpublished failure that wraps its
-// cause and leaves the prior document bytes.
+// D36: a failure before the rename refuses the section write and leaves the prior
+// document.
 func TestHandoffPreRenameFailure(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "session-handoff.md")
@@ -50,5 +49,11 @@ func TestHandoffPreRenameFailure(t *testing.T) {
 	err = writeSection(rec.Replacer(), path, replacementSection)
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	durablefiletest.RequireFile(t, path, 0o644, string(prior))
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(prior) {
+		t.Fatalf("document = %q, want the prior document %q", got, prior)
+	}
 }

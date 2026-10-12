@@ -57,7 +57,8 @@ func Update(path string, mutate func(*Document) error) error {
 	return update(durablefile.Native(), path, mutate)
 }
 
-// update is Update with the replacement operations of replacer.
+// update takes replacer as an operand so a test can fail one replacement stage of a
+// real locked write without a package-level swap.
 func update(replacer durablefile.Replacer, path string, mutate func(*Document) error) error {
 	release, err := acquire(path)
 	if err != nil {
@@ -84,7 +85,6 @@ func WriteSection(path string, section Section) error {
 	return writeSection(durablefile.Native(), path, section)
 }
 
-// writeSection is WriteSection with the replacement operations of replacer.
 func writeSection(replacer durablefile.Replacer, path string, section Section) error {
 	return update(replacer, path, func(doc *Document) error {
 		doc.Put(section)
