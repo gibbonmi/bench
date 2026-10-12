@@ -356,17 +356,9 @@ func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned
 	if peelErr != nil || commit == "" {
 		return "", false, false, nil
 	}
-	branch, ok := git.ResolvedDefault(root)
-	if !ok {
-		return commit, true, false, refusalError{refusal{detail: "default branch is unresolved", observed: from}}
-	}
-	tip, tipErr := git.ResolveCommit(root, branch)
-	if tipErr != nil {
-		return commit, true, false, refusalError{refusal{detail: "default branch tip is unreadable", observed: branch}}
-	}
-	contains, ancestryErr := authorization.IsAncestor(root, commit, tip)
-	if ancestryErr != nil {
-		return commit, true, false, refusalError{refusal{detail: "ancestry query failed: " + ancestryErr.Error(), observed: commit, wanted: tip}}
+	contains, queryErr := git.DefaultContains(root, commit)
+	if queryErr != nil {
+		return commit, true, false, refusalError{refusal{detail: queryErr.Error(), observed: from}}
 	}
 	return commit, true, contains, nil
 }

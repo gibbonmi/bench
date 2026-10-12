@@ -2,6 +2,8 @@ package reviewrecord_test
 
 import (
 	"errors"
+	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -31,18 +33,39 @@ func foldRepair(t *testing.T, err error, want string) {
 }
 
 // TestFoldChainAcceptsARecordedFoldBetweenChunks covers BW34 and BW35: the record commit
-// after a recorded fold serves as the chunk 2 base, and without the fold entry that base
-// is a chain gap that the fold form repairs.
+// after one or two recorded folds serves as the chunk 2 base. Without the fold entries, or
+// off the fold commit, that base is a chain gap that the fold form repairs.
 func TestFoldChainAcceptsARecordedFoldBetweenChunks(t *testing.T) {
-	f, _ := foldedAfterChunk1(t, 2, rr.FoldDelta{})
-	f.Commit("retain the fold")
-	f.AddChunk()
-	if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), f.Record, "2", false); err != nil {
-		t.Errorf("chunk 2 on the record commit after a recorded fold: %v", err)
+	for _, folds := range []int{1, 2} {
+		t.Run(fmt.Sprintf("%d folds", folds), func(t *testing.T) {
+			f, fold := foldedAfterChunk1(t, 2, rr.FoldDelta{})
+			for n := 2; n <= folds; n++ {
+				f.Commit("retain fold " + fold.ID)
+				f.HandFold(f.Mainline(map[string]string{fmt.Sprintf("main%d.txt", n): "main\n"}), nil)
+				fold = f.RecordFold(rr.FoldDelta{})
+			}
+			f.Commit("retain the folds")
+			f.AddChunk()
+			if err := rr.CheckSource(f.Root, f.Tree(), f.Tip(), f.Record, "2", false); err != nil {
+				t.Errorf("chunk 2 on the record commit after %d recorded folds: %v", folds, err)
+			}
+			unrecorded := f.Record
+			unrecorded.Folds = nil
+			foldRepair(t, rr.CheckSource(f.Root, f.Tree(), f.Tip(), unrecorded, "2", false), "stale review chain gap")
+
+			// The same base tree and chunk 2 tree on a parent chain that skips the fold commit.
+			offFold := f.Record
+			offFold.Chunks = slices.Clone(f.Record.Chunks)
+			chunk := &offFold.Chunks[1]
+			chunk.Base = f.Git("commit-tree", chunk.Base+"^{tree}", "-p", offFold.Chunks[0].Tip, "-m", "fold digest off the fold")
+			chunk.Tip = f.Git("commit-tree", chunk.Tip+"^{tree}", "-p", chunk.Base, "-m", "chunk 2 off the fold")
+			chunk.Reviews = slices.Clone(chunk.Reviews)
+			for i := range chunk.Reviews {
+				chunk.Reviews[i].Base, chunk.Reviews[i].Tip = chunk.Base, chunk.Tip
+			}
+			foldRepair(t, rr.CheckSource(f.Root, f.Tree(), chunk.Tip, offFold, "2", false), "stale review chain gap")
+		})
 	}
-	unrecorded := f.Record
-	unrecorded.Folds = nil
-	foldRepair(t, rr.CheckSource(f.Root, f.Tree(), f.Tip(), unrecorded, "2", false), "stale review chain gap")
 }
 
 // TestFoldCoversACompletionSourcePastTheLastChunk covers BW37 and BW38: a recorded fold

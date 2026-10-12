@@ -19,15 +19,19 @@ type FoldDelta struct {
 
 // FoldParents returns the first parent of commit and the default-branch commit that it
 // merges. Any other commit refuses: one that is not a two-parent merge, or one whose second
-// parent is outside the history of the default-branch tip.
+// parent is outside the history of the default-branch tip. A failed default-branch query
+// refuses and names the failure.
 func FoldParents(root, commit string) (from, incoming string, err error) {
 	line, err := benchgit.Output("-C", root, "rev-list", "--parents", "-n", "1", commit)
 	parents := strings.Fields(line)
 	if err != nil || len(parents) != 3 {
 		return "", "", fmt.Errorf("fold %s is not a two-parent merge", commit)
 	}
-	branch, ok := benchgit.ResolvedDefault(root)
-	if !ok || !benchgit.OK("-C", root, "merge-base", "--is-ancestor", parents[2], branch) {
+	contains, err := benchgit.DefaultContains(root, parents[2])
+	if err != nil {
+		return "", "", fmt.Errorf("fold %s: %w", commit, err)
+	}
+	if !contains {
 		return "", "", fmt.Errorf("fold %s does not merge a default-branch commit", commit)
 	}
 	return parents[1], parents[2], nil

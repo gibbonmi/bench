@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -128,18 +127,9 @@ func fullCommit(root, value string) bool {
 	return err == nil && resolved == value
 }
 
-// IsAncestor reports whether ancestor is reachable from descendant. It separates Git's
-// exit 1, which is a truthful "no", from a failed query, which is an error.
+// IsAncestor delegates to the one ancestry owner in internal/git.
 func IsAncestor(root, ancestor, descendant string) (bool, error) {
-	_, err := benchgit.Raw("-C", root, "merge-base", "--is-ancestor", ancestor, descendant)
-	if err == nil {
-		return true, nil
-	}
-	var exitErr *exec.ExitError
-	if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
-		return false, nil
-	}
-	return false, err
+	return benchgit.IsAncestor(root, ancestor, descendant)
 }
 
 func branchAndTipAt(root, branch, tip string) bool {

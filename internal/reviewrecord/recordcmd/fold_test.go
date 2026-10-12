@@ -18,13 +18,11 @@ import (
 )
 
 // folding is a delegated fixture with a committed chunk 1 entry. Its default branch starts
-// at the fixture plan commit, so a default-branch change can conflict with chunk 1.
-func folding(t *testing.T) *recordtest.Fixture {
+// at the fixture plan commit, so a default-branch change can conflict with chunk 1. Each
+// prepare step edits chunk 1 before its commit.
+func folding(t *testing.T, prepare ...func(*recordtest.Fixture)) *recordtest.Fixture {
 	t.Helper()
-	f := linked(t, 2)
-	f.SyncMainline()
-	base, tip := advance(f, "chunk 1")
-	record(t, f, "1", base, tip)
+	f := recorded(t, 2, append([]func(*recordtest.Fixture){(*recordtest.Fixture).SyncMainline}, prepare...)...)
 	f.Commit("retain chunk 1")
 	return f
 }
@@ -67,27 +65,39 @@ func folded(t *testing.T, f *recordtest.Fixture) (string, rr.Fold) {
 }
 
 // TestRecordFoldWritesTheFoldEntry covers BW25 and BW26: a fold that the merge owner
-// published records F1 after chunk 1 with its parents and digest, and no resolution.
+// published records F1 after chunk 1 with its parents and digest, and no resolution. The
+// first parent can follow the chunk 1 tip by a comment-only gap.
 func TestRecordFoldWritesTheFoldEntry(t *testing.T) {
-	f := folding(t)
-	from := f.Tip()
-	incoming := f.Mainline(map[string]string{"main.txt": "main\n"})
-	commit := published(t, f, incoming)
-	out, entry := folded(t, f)
-	got := []string{entry.ID, entry.After, entry.From, entry.Commit, entry.Incoming, entry.SourceDigest}
-	if want := []string{"F1", "1", from, commit, incoming, sourceDigest(t, f)}; !slices.Equal(got, want) {
-		t.Fatalf("fold entry id, after, from, commit, incoming, and digest = %q, want %q", got, want)
-	}
-	if len(entry.Resolution) != 0 {
-		t.Fatalf("published fold resolution = %q, want none", entry.Resolution)
-	}
-	table, err := toon.Table("fold", []string{"id", "after", "commit", "source_digest", "resolution", "test_packages"},
-		[][]string{{entry.ID, entry.After, entry.Commit, entry.SourceDigest, strconv.Itoa(len(entry.Resolution)), strconv.Itoa(len(entry.TestPackages))}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if out != table {
-		t.Fatalf("output = %q, want %q", out, table)
+	for _, tc := range []struct{ name, gap string }{
+		{"on the chunk tip", ""},
+		{"after a comment-only gap", "// Package gap holds a comment-only correction.\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := folding(t, func(f *recordtest.Fixture) { f.Write("gap.go", "package gap\n") })
+			if tc.gap != "" {
+				f.Write("gap.go", tc.gap+"package gap\n")
+				f.Commit("comment-only correction")
+			}
+			from := f.Tip()
+			incoming := f.Mainline(map[string]string{"main.txt": "main\n"})
+			commit := published(t, f, incoming)
+			out, entry := folded(t, f)
+			got := []string{entry.ID, entry.After, entry.From, entry.Commit, entry.Incoming, entry.SourceDigest}
+			if want := []string{"F1", "1", from, commit, incoming, sourceDigest(t, f)}; !slices.Equal(got, want) {
+				t.Fatalf("fold entry id, after, from, commit, incoming, and digest = %q, want %q", got, want)
+			}
+			if len(entry.Resolution) != 0 {
+				t.Fatalf("published fold resolution = %q, want none", entry.Resolution)
+			}
+			table, err := toon.Table("fold", []string{"id", "after", "commit", "source_digest", "resolution", "test_packages"},
+				[][]string{{entry.ID, entry.After, entry.Commit, entry.SourceDigest, strconv.Itoa(len(entry.Resolution)), strconv.Itoa(len(entry.TestPackages))}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if out != table {
+				t.Fatalf("output = %q, want %q", out, table)
+			}
+		})
 	}
 }
 

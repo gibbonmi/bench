@@ -287,6 +287,16 @@ func TestReadersTimeOutUnderTheWorktreeListBound(t *testing.T) {
 	}
 }
 
+// TestDefaultContainsRefusesAFailedQuery proves that an ancestry query Git cannot run is
+// an error, not a "no". The commit is absent, so merge-base exits 128.
+func TestDefaultContainsRefusesAFailedQuery(t *testing.T) {
+	root := newRepo(t)
+	contains, err := DefaultContains(root, "0123456789abcdef0123456789abcdef01234567")
+	if err == nil || !strings.HasPrefix(err.Error(), "ancestry query failed: ") {
+		t.Fatalf("DefaultContains(absent commit) = %v, %v, want an ancestry query failure", contains, err)
+	}
+}
+
 func TestReadersTypeStartFailures(t *testing.T) {
 	root := newRepo(t)
 	t.Setenv("PATH", t.TempDir())
