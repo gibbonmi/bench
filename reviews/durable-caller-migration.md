@@ -1892,6 +1892,20 @@
         ]
       }
     }
+  ],
+  "folds": [
+    {
+      "id": "F1",
+      "after": "D-B4",
+      "from": "5aabee17c744adc872eca23dc08fe1a67c46c0b0",
+      "commit": "51709c6942f766ae6e2c2af36e7ae96c92a2592a",
+      "incoming": "91fde7529c228c0b2276530d5864e5157df169c6",
+      "source_digest": "f4f96ea11906fa29f6ba8c088b237d1f4442b35d",
+      "resolution": [],
+      "resolution_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_packages": [],
+      "reviews": []
+    }
   ]
 }
 ```
