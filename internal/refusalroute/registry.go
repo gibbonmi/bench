@@ -151,6 +151,8 @@ const (
 	// placeholder is the commitment grammar's <id>, and no route reads it beside
 	// FactAssignmentID.
 	FactMilestone = "id"
+	// FactLeaseOwner is the id of the assignment whose landing holds the destination's lease.
+	FactLeaseOwner = "owner"
 )
 
 // Arg renders one value of a command that a raising site composes: shell-quoted, or the

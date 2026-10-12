@@ -123,10 +123,13 @@ const (
 	faceResumeMarker               = "resume-marker"
 	faceLandIncomplete             = "land-incomplete"
 	faceLandHandback               = "land-handback"
+	// The landing lease raises this face before composition, when another live landing
+	// holds the destination.
+	faceLandLeaseHeld = refusalroute.LandLeaseHeld
 	// The landing raises these two from the composed tree's authorization refusal, by the
-	// kind the gate attributed.
+	// kind the gate attributed. A lease lock fault raises the infrastructure face too.
 	faceLandRed            = "land-red"
-	faceLandInfrastructure = "land-infrastructure"
+	faceLandInfrastructure = refusalroute.LandInfrastructure
 )
 
 // retargetSourceTip re-points the caller's own re-run at the source tip the landing read

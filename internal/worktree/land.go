@@ -197,12 +197,17 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
 		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
 	}
+	lease, err := leaseLanding(root, request.Destination, assignment, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path)
+	if err != nil {
+		return landRefusalError(stdout, err)
+	}
 	result, err := j.landReviewed(ctx, request, commitmentAdmission{
 		store:  commitrepo.Store{Root: root},
-		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable()},
+		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable(), Lease: lease},
 		gap:    j.publicationGap,
 	})
 	if err != nil {
+		lease.Release()
 		var conflict landing.ConflictError
 		if errors.As(err, &conflict) {
 			return landRefusalError(stdout, landingConflictRefusal(conflict, destination, assignment.ID, parsed.Flags["--spec"], path, assignment.Worktree))

@@ -10,9 +10,11 @@ import (
 
 // Publication is the source assignment identity a landing froze before its gate, with
 // the reviewed source commit that it publishes and the reviewed deliverable that it
-// closes, if any: a staged spec or a tickets-only folder.
+// closes, if any: a staged spec or a tickets-only folder. Lease is the landing's lease on
+// its destination, if it holds one.
 type Publication struct {
 	Assignment, Request, Worktree, Source, Deliverable string
+	Lease                                              *Lease
 }
 
 // AdmitPublication grades the exact composed tree for the frozen source assignment.
@@ -26,14 +28,26 @@ func (store Store) AdmitPublication(source Publication, tree string) error {
 
 // PublishAdmitted decides tree again under the intent lock and runs publish before that
 // lock releases. No competing claim, blocker, or receipt can change the decision between
-// that final check and the ref update that publish performs.
+// that final check and the ref update that publish performs. The same decision drops the
+// publication's lease, so the next landing can take it once this lock releases.
 func (store Store) PublishAdmitted(source Publication, tree string, publish func() error) error {
-	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	published := false
+	err := intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		if err := store.admitPublication(ledger, source, tree); err != nil {
 			return ledger, false, err
 		}
-		return ledger, false, publish()
+		if err := publish(); err != nil {
+			return ledger, false, err
+		}
+		published = true
+		return source.Lease.drop(ledger)
 	}, nil)
+	// The ref update is the commit point. A write that fails after it leaves the lease
+	// record with no lock holder, and the next acquire takes that record over.
+	if published {
+		return nil
+	}
+	return err
 }
 
 func (store Store) admitPublication(ledger intent.Ledger, source Publication, tree string) error {

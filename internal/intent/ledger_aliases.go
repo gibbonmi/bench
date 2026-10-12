@@ -21,6 +21,9 @@ type (
 	OutcomeClaim       = ledger.OutcomeClaim
 	OutcomeBlocker     = ledger.OutcomeBlocker
 	LegacyContinuation = ledger.LegacyContinuation
+	LandingLease       = ledger.LandingLease
+	ChunkGap           = ledger.ChunkGap
+	LandingOverride    = ledger.LandingOverride
 )
 
 const (

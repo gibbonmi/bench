@@ -19,68 +19,16 @@ import (
 
 func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
-	loser := systemCreateLandingWorktree(t, root, home, "race-loser", "race loser")
 	base := systemGitOutput(t, root, "rev-parse", "main")
-	systemCommit(t, loser.path, "loser.txt", "loser\n", "reviewed loser")
-	loser.tip = systemRetainLandingEvidence(t, loser.path, base)
-	review := systemSelected(t, loser.path, systemLandEnv(root, home, tally, trees, ready, release), "preflight", "review", "x", "--base", base)
-	if review.code != 0 {
-		t.Fatalf("reviewed source %s = (%d, %q, %q)", loser.request, review.code, review.stdout, review.stderr)
-	}
-
-	loserCommand, loserOut, loserErr := systemStartLand(t, root, home, tally, trees, ready, release, loser, base)
-	loserDone := make(chan error, 1)
-	go func() { loserDone <- loserCommand.Wait() }()
-	t.Cleanup(func() {
-		if loserCommand.ProcessState == nil {
-			_ = loserCommand.Process.Kill()
-			<-loserDone
-		}
-	})
-	type gateReady struct {
-		count int
-		byte  []byte
-		err   error
-	}
-	readyResult := make(chan gateReady, 1)
-	go func() {
-		reader, openErr := os.Open(ready)
-		if openErr != nil {
-			readyResult <- gateReady{err: openErr}
-			return
-		}
-		readyByte := make([]byte, 1)
-		count, readErr := reader.Read(readyByte)
-		closeErr := reader.Close()
-		if readErr == nil {
-			readErr = closeErr
-		}
-		readyResult <- gateReady{count: count, byte: readyByte, err: readErr}
-	}()
-	select {
-	case readyState := <-readyResult:
-		if readyState.err != nil || readyState.count != 1 || string(readyState.byte) != "r" {
-			t.Fatalf("loser gate barrier = (%d, %q, %v)", readyState.count, readyState.byte, readyState.err)
-		}
-	case loserWaitErr := <-loserDone:
-		t.Fatalf("loser exited before gate barrier = (%d, %q, %v)", systemExitCode(loserWaitErr), loserOut.String(), loserWaitErr)
-	}
+	loser := systemReviewedLandingWorktree(t, root, home, systemLandEnv(root, home, tally, trees, ready, release), "race-loser", "race loser", "loser.txt", base)
+	loserDone, loserOut, loserErr := systemLandAtBarrier(t, root, home, tally, trees, ready, release, loser, base)
 
 	systemCommit(t, root, "winner.txt", "winner\n", "winner moves destination")
 	winnerCommit := systemGitOutput(t, root, "rev-parse", "main")
 
 	priorRefs := systemGitOutput(t, root, "show-ref", "--head")
 	priorMarker := systemGitOutput(t, root, "rev-parse", "refs/bench/green/main")
-	releaseWriter, err := os.OpenFile(release, os.O_WRONLY, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := releaseWriter.Write([]byte("go\n")); err != nil {
-		t.Fatal(err)
-	}
-	if err := releaseWriter.Close(); err != nil {
-		t.Fatal(err)
-	}
+	systemReleaseGateBarrier(t, release)
 	if code := systemExitCode(<-loserDone); code != 1 || !strings.HasPrefix(loserOut.String(), "refused{detail=") || !strings.Contains(loserOut.String(), "landing destination checkout changed") || strings.Contains(loserOut.String(), "infrastructure") || !strings.Contains(loserErr.String(), "command-registry:worktree") {
 		t.Fatalf("loser land = (%d, %q, %q)", code, loserOut.String(), loserErr.String())
 	}
@@ -169,6 +117,80 @@ func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
 
 type systemLandingWorktree struct {
 	path, assignment, branch, request, tip string
+}
+
+// systemReviewedLandingWorktree creates and admits a landing worktree, commits the fenced
+// file name in it, and records the review that a landing from base reads.
+func systemReviewedLandingWorktree(t *testing.T, root, home string, env []string, label, request, name, base string) systemLandingWorktree {
+	t.Helper()
+	source := systemCreateLandingWorktree(t, root, home, label, request)
+	systemCommit(t, source.path, name, strings.TrimSuffix(name, ".txt")+"\n", "reviewed "+label)
+	source.tip = systemRetainLandingEvidence(t, source.path, base)
+	review := systemSelected(t, source.path, env, "preflight", "review", "x", "--base", base)
+	if review.code != 0 {
+		t.Fatalf("reviewed source %s = (%d, %q, %q)", source.request, review.code, review.stdout, review.stderr)
+	}
+	return source
+}
+
+// systemLandAtBarrier starts the landing of source and returns once its gate signals the
+// fixture's barrier. The channel answers the landing's exit, and a cleanup kills a landing
+// that the test left running.
+func systemLandAtBarrier(t *testing.T, root, home, tally, trees, ready, release string, source systemLandingWorktree, base string) (<-chan error, *bytes.Buffer, *bytes.Buffer) {
+	t.Helper()
+	command, stdout, stderr := systemStartLand(t, root, home, tally, trees, ready, release, source, base)
+	done := make(chan error, 1)
+	go func() { done <- command.Wait() }()
+	t.Cleanup(func() {
+		if command.ProcessState == nil {
+			_ = command.Process.Kill()
+			<-done
+		}
+	})
+	type gateReady struct {
+		count int
+		byte  []byte
+		err   error
+	}
+	readyResult := make(chan gateReady, 1)
+	go func() {
+		reader, openErr := os.Open(ready)
+		if openErr != nil {
+			readyResult <- gateReady{err: openErr}
+			return
+		}
+		readyByte := make([]byte, 1)
+		count, readErr := reader.Read(readyByte)
+		closeErr := reader.Close()
+		if readErr == nil {
+			readErr = closeErr
+		}
+		readyResult <- gateReady{count: count, byte: readyByte, err: readErr}
+	}()
+	select {
+	case readyState := <-readyResult:
+		if readyState.err != nil || readyState.count != 1 || string(readyState.byte) != "r" {
+			t.Fatalf("%s gate barrier = (%d, %q, %v)", source.request, readyState.count, readyState.byte, readyState.err)
+		}
+	case waitErr := <-done:
+		t.Fatalf("%s exited before gate barrier = (%d, %q, %v)", source.request, systemExitCode(waitErr), stdout.String(), waitErr)
+	}
+	return done, stdout, stderr
+}
+
+// systemReleaseGateBarrier lets the landing that waits at the fixture's barrier finish its gate.
+func systemReleaseGateBarrier(t *testing.T, release string) {
+	t.Helper()
+	releaseWriter, err := os.OpenFile(release, os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := releaseWriter.Write([]byte("go\n")); err != nil {
+		t.Fatal(err)
+	}
+	if err := releaseWriter.Close(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func systemCreateLandingWorktree(t *testing.T, root, home, label, request string, extra ...string) systemLandingWorktree {

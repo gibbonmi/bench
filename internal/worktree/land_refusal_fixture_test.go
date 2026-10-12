@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 )
 
 // landingStage names when in a landing a fixture's face prints, which decides how the walk
@@ -88,6 +90,8 @@ func landingRefusalFixtures() []landingRefusalFixture {
 		mustRemove(t, filepath.Join(f.creation.Path, ".bench", "phases.json"))
 		review(t, f)
 	}
+	// The other landing's lease, which its end releases.
+	var otherLanding *commitrepo.Lease
 	return []landingRefusalFixture{
 		{
 			face: faceDestinationNotClean,
@@ -141,6 +145,15 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			tip: func(t *testing.T, creation Creation) string {
 				return gitOutput(t, creation.Path, "rev-parse", "HEAD~1")
 			},
+		},
+		{
+			// Another live landing holds the destination's lease. Its end, which the wait
+			// step stands for, releases the lease, so the re-run takes it.
+			face: faceLandLeaseHeld,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				otherLanding = holdLandingLease(t, root, otherLandingID)
+			},
+			carry: map[int]func(*testing.T, landingFixture){0: func(*testing.T, landingFixture) { otherLanding.Release() }},
 		},
 		{
 			// The destination moves onto a commit the reviewed source also changed, which

@@ -1,5 +1,12 @@
 package refusalroute
 
+// The land faces that a policy outside the landing raises: the landing lease names its
+// owner, and a lease lock fault stops the landing as an infrastructure outcome.
+const (
+	LandLeaseHeld      = "land-lease-held"
+	LandInfrastructure = "land-infrastructure"
+)
+
 // destinationClean is the repair a destination that carries uncommitted work demands. The
 // first run and the resume refuse on the same destination state, so both faces name it.
 var destinationClean = Instruction(Text("commit the destination's uncommitted work, or discard it"))
@@ -59,6 +66,15 @@ var landFaces = []Face{
 		},
 	},
 	{
+		// The lease policy owns the sentence, which names the owner's assignment. The owner's
+		// landing releases the lease when it publishes or refuses. The id is a hex identity,
+		// so the route prints it as the sentence does.
+		Verb:      Land,
+		Name:      LandLeaseHeld,
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("wait until the landing of assignment"), Composed(FactLeaseOwner), Text("ends")), rerun},
+	},
+	{
 		// The composition names the conflicted paths in its own sentence, so the face
 		// declares none.
 		Verb:      Land,
@@ -114,7 +130,7 @@ var landFaces = []Face{
 		// The gate stopped on an infrastructure outcome, so no failure is the diff's. The
 		// authorization policy owns the sentence.
 		Verb:      Land,
-		Name:      "land-infrastructure",
+		Name:      LandInfrastructure,
 		Authority: Agent,
 		Route:     []Step{doctor, rerun},
 	},

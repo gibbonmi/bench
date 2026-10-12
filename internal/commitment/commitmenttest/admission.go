@@ -106,6 +106,16 @@ func Admit(t testing.TB, root, request, deliverable string) {
 	}
 }
 
+// Leases is the landing lease list of the ledger at root. It fails no test, so a
+// goroutine at a gate barrier can read it.
+func Leases(root string) ([]intent.LandingLease, error) {
+	ledger, err := intent.Read(root)
+	if err != nil || ledger.Commitment == nil {
+		return nil, err
+	}
+	return ledger.Commitment.Leases, nil
+}
+
 // Rebind drops the binding of root's assignment and starts it again. A fixture calls it
 // after it commits a re-approved edit of the bound deliverable.
 func Rebind(t testing.TB, root, request, deliverable string) {
