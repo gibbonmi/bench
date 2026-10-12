@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -171,38 +172,17 @@ func (p preservation) release() {
 	}
 }
 
-// replaceAtomic writes data over path through a sibling temporary file and one rename,
-// so a crash between the two writes leaves the subject whole rather than half-written.
-// The temporary carries the subject's mode, so an executable subject stays executable.
-func replaceAtomic(path string, data []byte, mode fs.FileMode) error {
-	temporary, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".probe-")
-	if err != nil {
-		return err
-	}
-	name := temporary.Name()
-	defer os.Remove(name)
-	if _, err := temporary.Write(data); err != nil {
-		temporary.Close()
-		return err
-	}
-	if err := temporary.Close(); err != nil {
-		return err
-	}
-	if err := os.Chmod(name, mode); err != nil {
-		return err
-	}
-	return os.Rename(name, path)
-}
-
-// restore writes the preserved copy back and proves the result byte-exact against the
-// bytes read at the start. The comparison is against those start bytes, never against
-// the copy: a copy that changed under the run would otherwise certify its own damage.
-func restore(subject subject, preserved preservation) (bool, string) {
+// restore writes the preserved copy back through replacer and proves the result byte-exact
+// against the bytes read at the start. The comparison is against those start bytes, never
+// against the copy: a copy that changed under the run would otherwise certify its own
+// damage. A failure after the restore's rename fails the restore too, because the visible
+// start bytes are not yet durable, so the copy stays.
+func restore(replacer durablefile.Replacer, subject subject, preserved preservation) (bool, string) {
 	saved, err := os.ReadFile(preserved.file)
 	if err != nil {
 		return false, err.Error()
 	}
-	if err := replaceAtomic(subject.path, saved, subject.mode); err != nil {
+	if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {
 		return false, err.Error()
 	}
 	back, err := os.ReadFile(subject.path)

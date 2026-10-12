@@ -1,10 +1,12 @@
 package probe
 
 import (
+	"errors"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
@@ -56,11 +58,17 @@ type verdictCells struct {
 	ran      int
 }
 
-// run applies the refusal order, grades the baseline, and then runs the probe itself. Every
-// refusal below answers before preserve writes anything, which is what makes a refused probe
-// leave the tree, the Bench home, and the process table exactly as it found them. The
-// baseline is the last of them, because it is the only one that starts a run child.
+// run is the probe over the native file operations.
 func run(root string, parsed usage.Result) (string, int) {
+	return runWith(durablefile.Native(), root, parsed)
+}
+
+// runWith applies the refusal order, grades the baseline, and then runs the probe itself,
+// with each subject replacement through replacer. Every refusal below answers before
+// preserve writes anything, which is what makes a refused probe leave the tree, the Bench
+// home, and the process table exactly as it found them. The baseline is the last of them,
+// because it is the only one that starts a run child.
+func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (string, int) {
 	subject, line := resolveSubject(root, parsed.Positionals[0])
 	if line != "" {
 		return line, 1
@@ -91,7 +99,7 @@ func run(root string, parsed usage.Result) (string, int) {
 	if line != "" {
 		return line, code
 	}
-	return probe(root, subject, mutationResult.mutated, mutation, request, baseline)
+	return probe(replacer, root, subject, mutationResult.mutated, mutation, request, baseline)
 }
 
 func renderInvalidMutation(subject subject, mutation string, parsed usage.Result) (string, int) {
@@ -164,27 +172,54 @@ func gradeGateLock(root string) string {
 // probe preserves, mutates, runs, and restores. The restore is deferred around the run,
 // so an interrupt or a panic inside the focused run still puts the subject back before
 // the verb answers, and the render runs only after the restore has been proven.
-func probe(root string, subject subject, mutated []byte, mutation string, request testreport.Request, baseline testreport.OutcomeKind) (string, int) {
+func probe(replacer durablefile.Replacer, root string, subject subject, mutated []byte, mutation string, request testreport.Request, baseline testreport.OutcomeKind) (string, int) {
 	preserved, line := preserve(root, subject)
 	if line != "" {
 		return line, 1
 	}
-	if err := replaceAtomic(subject.path, mutated, subject.mode); err != nil {
-		preserved.release()
-		return toon.Errorf("probe mutation failed", err.Error()) + "\n", 1
+	if err := replacer.Replace(subject.path, mutated, subject.mode); err != nil {
+		return mutationFailure(replacer, subject, preserved, err)
 	}
 	var outcome testreport.Outcome
 	var report string
 	var focused int
 	restored, reason := false, ""
 	func() {
-		defer func() { restored, reason = restore(subject, preserved) }()
+		defer func() { restored, reason = restore(replacer, subject, preserved) }()
 		outcome, report, focused = testreport.Execute(root, request)
 	}()
 	if restored {
 		preserved.release()
 	}
 	return render(subject, mutation, outcome, focused, request, report, preserved, restored, reason, baseline)
+}
+
+// mutationFailure answers a mutation that returned an error, and no focused run starts.
+// A failure before the rename left the start bytes in place, so the copy goes at once.
+// After a completed rename the mutated bytes may be visible, so the copy stays until a
+// restore proves the start bytes back, and a failed restore keeps it at exit 2.
+func mutationFailure(replacer durablefile.Replacer, subject subject, preserved preservation, err error) (string, int) {
+	line := toon.Errorf("probe mutation failed", err.Error()) + "\n"
+	var replaceErr *durablefile.Error
+	if errors.As(err, &replaceErr) && replaceErr.Published {
+		if restored, reason := restore(replacer, subject, preserved); !restored {
+			block, tableErr := preservedTable(preserved, err.Error()+"; restore: "+reason)
+			if tableErr != nil {
+				return toon.RenderError(tableErr) + "\n", 2
+			}
+			return line + block, 2
+		}
+	}
+	preserved.release()
+	return line, 1
+}
+
+// preservedTable names the kept copy and the reason it is kept. The reason is diagnostic
+// prose, and a failed write quotes the subject path inside it, so a subject the row already
+// refused would refuse here too and the caller would lose the copy path. The path cell
+// stays verbatim, because a stripped path names a file that is not there.
+func preservedTable(preserved preservation, reason string) (string, error) {
+	return toon.Table("preserved", []string{"path", "reason"}, [][]string{{preserved.file, sanitize.Strip(reason)}})
 }
 
 // render prints the verdict row first, so a caller reads the answer before the evidence.
@@ -208,12 +243,7 @@ func render(subject subject, mutation string, outcome testreport.Outcome, focuse
 	preservedBlock := ""
 	if !restored {
 		cells.verdict, code, cells.restored = "restore-failed", 2, "no"
-		// The reason is diagnostic prose, and a failed write quotes the subject path inside
-		// it, so a subject the row already refused would refuse here too and the caller would
-		// lose the copy path. The path cell stays verbatim, because a stripped path names a
-		// file that is not there.
-		preservedRow := [][]string{{preserved.file, sanitize.Strip(reason)}}
-		block, err := toon.Table("preserved", []string{"path", "reason"}, preservedRow)
+		block, err := preservedTable(preserved, reason)
 		if err != nil {
 			return toon.RenderError(err) + "\n", code
 		}
