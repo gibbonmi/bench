@@ -3263,7 +3263,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-c2-r1-standards",
+          "performer": "claude:dcm_rev_c2_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c01e29c180ed8f9fa4cdff27588e8b70c0a14243",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c2_std",
+            "digest": "sha256:708dd4b541bef0ab2fc888ede93c991b4928b3067dd5084f037bca8d35c04261",
+            "excerpt": "## Standards (D-C2, 275c82df..c3c67fba) — 2 findings; worst S1\nS1 | auto-fix | 7 | internal/brokermanifest/brokermanifest.go:25-29 | TemporaryPrefix restates the leaf temp naming (internal/durablefile/replace.go:97) with no production consumer; the freshness sweep would pass vacuously after a leaf drift; its comment claims the publisher owns the naming | pin the prefix against the Recorder's temp name in a test, record the red, and rewrite the comment; a leaf export is a later reviewer decision\nS2 | auto-fix (plan expansion) | 5 | internal/brokermanifest/replacement_test.go:77-82 | the Lstat-plus-ErrNotExist absence assertion repeats per caller test (prospectiveartifact:38, commitment repository:130, here) | add durablefiletest.RequireAbsent and use it here; log the closed copies for D-D\n"
+          },
+          "axis": "Standards",
+          "base": "275c82dfc9fa03d1c87978ebd59c9be4282136bc",
+          "tip": "cf1112f9cb755606a6bf6b58593958e33f2b6b2d",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c2-r1-spec",
+          "performer": "claude:dcm_rev_c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c01e29c180ed8f9fa4cdff27588e8b70c0a14243",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c2_spec",
+            "digest": "sha256:500999f484b1702e18af0a0c7aa7ebebfc01e48784758d64aee138e9e3dbcc9a",
+            "excerpt": "## Spec (D-C2, 275c82df..c3c67fba) — 0 findings\nD25 holds: digest refusal and tab-framed fields at 0644; owner syncs file and directory; adopt and freshness callers and exclusions unchanged; narrow write(replacer, ...) seam; D30 refusal witness; D36 pre-rename evidence. Plan commit c4d1c95f adds only the 11 assignment.\nAdvice: the caller-package passes are claimed but not shown in the native excerpt.\n"
+          },
+          "axis": "Spec",
+          "base": "275c82dfc9fa03d1c87978ebd59c9be4282136bc",
+          "tip": "cf1112f9cb755606a6bf6b58593958e33f2b6b2d",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c2-r1-coverage",
+          "performer": "claude:dcm_rev_c2_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c01e29c180ed8f9fa4cdff27588e8b70c0a14243",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c2_cov",
+            "digest": "sha256:df09615d4498fec1997a33638446463d89ff4e65382688795ac9a524bec2c8ac",
+            "excerpt": "## Coverage (D-C2, 275c82df..c3c67fba) — 3 findings; worst C1. Probes each restored=yes.\nC1 | auto-fix (same as S1) | 9 | internal/brokermanifest/brokermanifest.go:29 | const TemporaryPrefix = \".bench-broker.\" is silent in brokermanifest and freshness | assert the Recorder temp name starts with TemporaryPrefix; record the red\nC2 | auto-fix | 8 | internal/brokermanifest/brokermanifest.go:37 | a public Write that swallows every error is silent in brokermanifest, adopt, and freshness | test that Write(dir, dir, version) returns an error and leaves no manifest; record the swallow red\nC3 | ask-user (orchestrator: no-op, pre-existing and outside D25; logged as a learning) | 6 | brokermanifest.go:42-44 | dropping symlink resolution is silent | a later ticket may pin the resolved path\n"
+          },
+          "axis": "Coverage",
+          "base": "275c82dfc9fa03d1c87978ebd59c9be4282136bc",
+          "tip": "cf1112f9cb755606a6bf6b58593958e33f2b6b2d",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3841,3 +3909,26 @@ Before the repair, each C1 to C6 swap was silent over the whole package. The `cl
 Chunk D-B6 used 1 of its 2 repair cycles.
 
 The D-B6 confirming round at 77835db3 closed S1 through S5 and C1 through C8 with no new finding. Chunk D-B6 closed with 1 of its 2 repair cycles used.
+
+## Standards (D-C2)
+
+Chunk D-C2 has 2 findings. The worst issue is S1.
+
+- S1, auto-fix, confidence 7: `TemporaryPrefix` at `internal/brokermanifest/brokermanifest.go:25-29` restates the temp naming that the leaf owns, and no test ties the two. Pin the prefix against the Recorder temp name, record the red, and correct the comment.
+- S2, auto-fix by the --auto-approve plan expansion, confidence 5: the absence check at `internal/brokermanifest/replacement_test.go:77-82` repeats a check of other caller tests. Add `durablefiletest.RequireAbsent`, and use it here.
+
+## Spec (D-C2)
+
+Chunk D-C2 has 0 findings.
+
+## Coverage (D-C2)
+
+Chunk D-C2 has 3 findings. The worst issue is C1.
+
+- C1, auto-fix, confidence 9: this finding is the same as S1.
+- C2, auto-fix, confidence 8: a public `Write` at `internal/brokermanifest/brokermanifest.go:37` that swallows every error is silent. Test that the public entry returns its refusal, and record the red of the swallow.
+- C3, no-op, confidence 6: the symlink resolution at `brokermanifest.go:42-44` has no witness, but the gap predates this delta and sits outside D25. A learning records it.
+
+## Repair allowance (D-C2)
+
+Chunk D-C2 used 0 of its 2 repair cycles before repair 1. S1, S2, and C2 fall on ticket 09, so one combined repair session takes them.
