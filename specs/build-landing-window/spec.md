@@ -424,7 +424,7 @@ They also state the back-out route: `git revert --no-commit <commit>` in a fresh
 | --- | --- | --- | --- | --- |
 | BW-A / 1-hold-the-landing-lease.md | One lease per destination from composition through publish, with liveness and takeover | BW1-BW16 | planned lease, land-lease, ledger, and system race tests; recovery and registry tests | no |
 | BW-B / 2-route-a-moved-destination.md | One moved-destination face with a typed proof cause | BW17-BW24 | planned moved-destination and authorization tests; the system race test | no |
-| BW-C / 3-record-a-fold.md, 4-review-a-fold-resolution.md | Fold record, chain acceptance, resolution review, merged-test final checks, fold red route | BW25-BW45, BW93 | planned fold, record-fold, preflight, and merge-route tests; the chain-gap test; help inventory | yes |
+| BW-C / 3-record-a-fold.md, 4-review-a-fold-resolution.md | Fold record, chain acceptance, resolution review, merged-test final checks, fold red route | BW25-BW45, BW93, BW98 | planned fold, record-fold, preflight, and merge-route tests; the chain-gap test; help inventory | yes |
 | BW-D / 5-hold-main-for-an-open-build.md, 6-open-and-close-chunk-gaps.md | Open-build window with its lifetime and its gaps | BW46-BW70, BW94-BW97 | planned window, land-window, chunk-gap, and dispatch-gap tests | yes |
 | BW-E / 7-grant-a-reviewer-override.md | Terminal-bound reviewer override, consumption, and guard | BW71-BW84 | planned override, land-override, and guard tests; help inventory | yes |
 | BW-F / 8-document-the-landing-window.md | Guidance, glossary, known issues, and changelog | BW85-BW92 | review-owned reads, anchors, prose | no |

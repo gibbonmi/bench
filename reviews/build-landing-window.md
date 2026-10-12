@@ -8,7 +8,8 @@ BW-B round 1 reviewed the pair `2aa2bf49..6c90a3c6`.
 Repair 1 at `4057ca20` closed all five findings, and the confirming round passed on all three axes.
 BW-B used one of its two repair cycles.
 
-BW-C round 1 reviewed the pair `4057ca20..db1bdc5d`, and BW-C has used zero of its two repair cycles.
+BW-C round 1 reviewed the pair `4057ca20..db1bdc5d`, and repair 1 closed S1, S2, and C1-C4 at `6568c4c2`.
+The BW-C confirming round found S3 and P1, so BW-C repair 2 follows.
 A fable/high consultation chose the owner for BW-C S1 and the content binding for BW-C C1.
 
 ## Standards
@@ -29,6 +30,7 @@ BW-C findings: 2. Worst issue: BW-C S1, a default-branch ancestry check with two
 
 - BW-C S1, auto-fix, confidence 7: `FoldParents` (`internal/reviewrecord/fold.go:29-30`) repeats the ancestry check of `internal/worktree/merge.go:354-372`. Move it to one `internal/git` owner that refuses on a failed query. Ticket 3 repairs it.
 - BW-C S2, auto-fix, confidence 6: `MergedTestRequirement` (`internal/reviewrecord/check.go:91-92`) hand-spells the package command that `internal/preflight/check_floor.go:197-203` owns. Give the command one owner. Ticket 4 repairs it.
+- BW-C S3, auto-fix, confidence 8: `foldCoversBase` (`internal/reviewrecord/fold.go:115`) and `coverage.go:46` and `:85` still call the ancestry query through `benchgit.OK`. Route them through `git.IsAncestor`. Ticket 3 repairs it in repair 2.
 
 ## Spec
 
@@ -39,6 +41,8 @@ Findings: 1. Worst issue: P1, a false comparison clause in the Edge inventory.
 BW-B findings: 0. The Spec axis accepted the three author flags. BW23 uses an injected typed refusal at the `j.landReviewed` hook, because no real fixture reaches that state.
 
 BW-C findings: 0. The transitive second-fold reading reconciles the spec lines on the covered digest and the fold `From`.
+
+- BW-C P1, auto-fix, confidence 9: the BW-C chunk row omitted row BW98. The orchestrator fixed it in a plan commit before repair 2.
 
 ## Coverage
 
@@ -1468,6 +1472,76 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bwc-standards-r2",
+          "performer": "claude:blw_bwc_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwc_standards_r2",
+            "digest": "sha256:3c30f0df1564ebe792dfc4647ec1b477ff80783ab44d88b91fa5758dd35adc95",
+            "excerpt": "Standards confirming round, BW-C, delta db1bdc5d..6568c4c2: 1 finding.\nS1 closed: git.IsAncestor (internal/git/git.go:219) sole owner;\n  DefaultContains (default_branch.go:39) used by fold.go:30, merge.go:359.\nS2 closed: reviewrecord.PackageTestCommand (check.go:93) used by\n  check.go:100 and check_floor.go:202.\nS3: fold.go:115 foldCoversBase, and coverage.go:46 and :85, call merge-base\n  --is-ancestor through benchgit.OK; a failed query reads as no. One-source rule.\n  The orchestrator grades it blocking under the bounded repair policy.\n"
+          },
+          "axis": "Standards",
+          "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "tip": "6568c4c20f4cde69168fac0ef0c52633d5831950",
+          "finding_ids": [
+            "S3"
+          ],
+          "supersedes": [
+            "bwc-standards-r1"
+          ]
+        },
+        {
+          "id": "bwc-spec-r2",
+          "performer": "claude:blw_bwc_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwc_spec_r2",
+            "digest": "sha256:dcd371ccfb7ffefb3a82c1390f3d502928e7d8c968d45e76066981e3521915dc",
+            "excerpt": "Spec confirming round, BW-C, delta db1bdc5d..6568c4c2: 1 finding.\nP1 spec.md:427: the BW-C chunk row names BW25-BW45 and BW93, but plan commit\n  3032523a added BW98 to ticket 4 Covers. BENCH.md plan-expansion rule. Blocking.\nRows BW25-BW45 and BW93 keep their behavior; the fold refusal texts are unchanged.\nC1 implements the amended R8 and BW98, with the newest listing fold and the dirty guard.\nA failed default-branch query now refuses with its cause, before any write.\n"
+          },
+          "axis": "Spec",
+          "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "tip": "6568c4c20f4cde69168fac0ef0c52633d5831950",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": [
+            "bwc-spec-r1"
+          ]
+        },
+        {
+          "id": "bwc-coverage-r2",
+          "performer": "claude:blw_bwc_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwc_coverage_r2",
+            "digest": "sha256:3403c45fd471629b0b452897f160616b5b7e7f5a21aa649c17a64429090f8921",
+            "excerpt": "Coverage confirming round, BW-C, delta db1bdc5d..6568c4c2: 0 findings; C1-C4 closed.\nC1 gather_inputs.go name-only swap: bit, 3 failed, restored yes.\nC2 foldCoversBase ancestry removed: bit, 2 failed, restored yes.\nC3 follows strict digest: bit, 1 failed, restored yes.\nC4 coveringFold stops advancing: bit, 1 failed, restored yes.\nS1 bypass DefaultContains true on failure, ./internal/... 9744 tests: bit, 1 failed, restored yes.\nDirty rule and newest-fold selection probes: bit.\n"
+          },
+          "axis": "Coverage",
+          "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "tip": "6568c4c20f4cde69168fac0ef0c52633d5831950",
+          "finding_ids": [],
+          "supersedes": [
+            "bwc-coverage-r1"
+          ]
         }
       ]
     }
