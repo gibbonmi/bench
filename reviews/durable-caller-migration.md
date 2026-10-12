@@ -3442,6 +3442,74 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-c2-r2-standards",
+          "performer": "claude:dcm_rev_c2_std2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c2_std2",
+            "digest": "sha256:751fe13ca9f7e99fb2919c8894c8a534d41fd90d6a39932878cd20207b9e0440",
+            "excerpt": "## Standards confirming round (D-C2, repair delta 7b7e9cfd..5d295f64) — 1 finding; S1, S2 closed\nS1 closed: replacement_test.go:45-50 pins TemporaryPrefix against the staging name cut at its last dot; the constant comment states the current fact. S2 closed: RequireAbsent (assert.go:40-46) replaces the local helper.\nS3 | auto-fix (comment-only, evidence-only correction) | 6 | internal/brokermanifest/replacement_test.go:85 | the comment names the refusal of the native replacement path, but the refusal comes from Digest before any replacement | reword to the digest refusal of a broker that is not a regular file\n"
+          },
+          "axis": "Standards",
+          "base": "275c82dfc9fa03d1c87978ebd59c9be4282136bc",
+          "tip": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+          "finding_ids": [
+            "S3"
+          ],
+          "supersedes": [
+            "dcm-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-c2-r2-spec",
+          "performer": "claude:dcm_rev_c2_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c2_spec2",
+            "digest": "sha256:b4a200142e0f7d9bb0409ecf63b0dbbbf7bbcdf53edfd2ab18ff1aaf374eb5d1",
+            "excerpt": "## Spec confirming round (D-C2, repair delta 7b7e9cfd..5d295f64 and plan d723f0c3) — 0 findings\nD25, D30, and the D36 evidence intact; TestBrokerWriteReturnsRefusal meets D30 for the exported Write; plan d723f0c3 adds assert.go and one floor row only.\n"
+          },
+          "axis": "Spec",
+          "base": "275c82dfc9fa03d1c87978ebd59c9be4282136bc",
+          "tip": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-c2-r2-coverage",
+          "performer": "claude:dcm_rev_c2_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c2_cov2",
+            "digest": "sha256:b2a85b190064d99408b820fa65506984e21f6296fe53f0fc76b855a7afa68afc",
+            "excerpt": "## Coverage confirming round (D-C2, repair delta 7b7e9cfd..5d295f64) — 0 findings\nC1 closed: new probe \".\" + Name (no trailing dot): bit at replacement_test.go:49, restored=yes. C2 closed: new probe, Write swallows every error except replacement errors: bit at :91, restored=yes.\nAdvice: a public Write that hides only replacement errors is silent; the native replacement cannot be faulted through Write.\n"
+          },
+          "axis": "Coverage",
+          "base": "275c82dfc9fa03d1c87978ebd59c9be4282136bc",
+          "tip": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c2-r1-coverage"
+          ]
         }
       ]
     }
@@ -4080,3 +4148,7 @@ Chunk D-C2 used 0 of its 2 repair cycles before repair 1. S1, S2, and C2 fall on
 - C2 closes in commit 2fd8872c. `TestBrokerWriteReturnsRefusal` calls the public `Write` with a directory as the broker. A public `Write` that returns nil for every error turns only that test red.
 
 The `claude:dcm_t09_rep1` omission-proof and preservation excerpts record each red at 19cb2923. Chunk D-C2 used 1 of its 2 repair cycles.
+
+The D-C2 confirming round at 5d295f64 closed S1, S2, C1, and C2. It raised one comment-only finding.
+
+- S3, auto-fix as an evidence-only comment correction, confidence 6: the comment at `internal/brokermanifest/replacement_test.go:85` names the wrong refusal step. The orchestrator corrects it, and the Standards axis reaffirms it.
