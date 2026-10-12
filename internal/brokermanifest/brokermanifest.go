@@ -14,17 +14,19 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/durablefile"
 )
 
 // Name is the manifest file name. It sits beside the resolved wrapper, and the wrapper's
 // land route trusts only what it binds: path, version, platform, and executable digest.
 const Name = "bench-broker.manifest"
 
-// TemporaryPrefix names the staging file Write promotes into the manifest. It is exported
-// because a caller that sweeps a publication's leftovers has to match the publisher's own
-// naming; a second copy of the prefix would keep matching after a rename here and report
-// no residue where a temporary had leaked.
-const TemporaryPrefix = ".bench-broker."
+// TemporaryPrefix begins the name of the staging file that the durable replacement in Write
+// creates beside the manifest. It is exported because a caller that sweeps a publication's
+// leftovers has to match the publisher's own naming; a second copy of the prefix would keep
+// matching after a rename here and report no residue where a temporary had leaked.
+const TemporaryPrefix = "." + Name + "."
 
 // boundFields are the four values one manifest carries.
 var boundFields = []string{"path", "version", "platform", "sha256"}
@@ -32,6 +34,11 @@ var boundFields = []string{"path", "version", "platform", "sha256"}
 // Write publishes the manifest in dir, binding broker as the promotion broker for
 // version. It returns the manifest path and the symlink-resolved broker it bound.
 func Write(dir, broker, version string) (string, string, error) {
+	return write(durablefile.Native(), dir, broker, version)
+}
+
+// write is Write through the replacement operations of replacer.
+func write(replacer durablefile.Replacer, dir, broker, version string) (string, string, error) {
 	if resolved, err := filepath.EvalSymlinks(broker); err == nil {
 		broker = resolved
 	}
@@ -44,26 +51,7 @@ func Write(dir, broker, version string) (string, string, error) {
 		"version\t" + version + "\n" +
 		"platform\t" + Platform() + "\n" +
 		"sha256\t" + digest + "\n"
-	tmp, err := os.CreateTemp(dir, TemporaryPrefix)
-	if err != nil {
-		return "", "", fmt.Errorf("publish broker manifest at %s: %w", path, err)
-	}
-	name := tmp.Name()
-	if _, err := tmp.WriteString(content); err != nil {
-		_ = tmp.Close()
-		_ = os.Remove(name)
-		return "", "", fmt.Errorf("publish broker manifest at %s: %w", path, err)
-	}
-	if err := tmp.Close(); err != nil {
-		_ = os.Remove(name)
-		return "", "", fmt.Errorf("publish broker manifest at %s: %w", path, err)
-	}
-	if err := os.Chmod(name, 0o644); err != nil {
-		_ = os.Remove(name)
-		return "", "", fmt.Errorf("publish broker manifest at %s: %w", path, err)
-	}
-	if err := os.Rename(name, path); err != nil {
-		_ = os.Remove(name)
+	if err := replacer.Replace(path, []byte(content), 0o644); err != nil {
 		return "", "", fmt.Errorf("publish broker manifest at %s: %w", path, err)
 	}
 	return path, broker, nil
