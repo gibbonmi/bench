@@ -30,7 +30,7 @@ type heldLock struct {
 	count int
 }
 
-// held tracks this process's shared cache locks by lock path. POSIX record locks are owned
+// held tracks this process's record locks by lock path. POSIX record locks are owned
 // per process: a second request on the same file replaces the first, and F_GETLK never
 // reports the caller's own lock. So the in-process answer cannot come from the kernel, and
 // this map is that answer — the same posture the gate execution lock keeps.
@@ -39,7 +39,7 @@ var held = struct {
 	paths map[string]*heldLock
 }{paths: map[string]*heldLock{}}
 
-// Holder is one acquired shared cache lock. Release returns the hold; the descriptor stays
+// Holder is one acquired record lock. Release returns the hold; the descriptor stays
 // open while any holder in this process still needs it.
 type Holder struct {
 	path     string
@@ -89,6 +89,36 @@ func HoldDir(dir string) (*Holder, error) {
 func acquireShared(file *os.File) error {
 	lock := RecordLock(syscall.F_RDLCK)
 	return syscall.FcntlFlock(file.Fd(), syscall.F_SETLKW, &lock)
+}
+
+// ErrHeld is the refusal of HoldExclusive when a holder in this process or in another
+// process already has the lock.
+var ErrHeld = errors.New("lock is held")
+
+// HoldExclusive takes the exclusive record lock on the file at path without waiting, and
+// keeps its descriptor open until Release. It creates the file at mode 0600 and never
+// follows a link at path. A holder in this process refuses before the open, because
+// closing a second descriptor would drop that holder's lock.
+func HoldExclusive(path string) (*Holder, error) {
+	held.Lock()
+	defer held.Unlock()
+	if held.paths[path] != nil {
+		return nil, ErrHeld
+	}
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW, 0o600)
+	if err != nil {
+		return nil, err
+	}
+	lock := RecordLock(syscall.F_WRLCK)
+	if err := syscall.FcntlFlock(file.Fd(), syscall.F_SETLK, &lock); err != nil {
+		file.Close()
+		if contended(err) {
+			return nil, ErrHeld
+		}
+		return nil, err
+	}
+	held.paths[path] = &heldLock{file: file, count: 1}
+	return &Holder{path: path}, nil
 }
 
 // Release returns this hold. The descriptor closes, and the record lock with it, when the

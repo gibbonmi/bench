@@ -19,7 +19,7 @@ The commit verb refuses the primary checkout and directs the user to a Bench wor
 
 ## Consequences
 
-- Two sessions can land in either order. The second composes onto the moved default branch, and only a genuine conflict outside the table stops it.
+- Two sessions land one at a time, in either order. The second composes onto the moved default branch, and a genuine conflict outside the table stops it. During an open build, another landing waits for a chunk gap or a landing override. The last chunk opens no gap. During the last chunk, another landing waits for the build's completion landing, a block of its outcome, or a landing override.
 - Hand landings on the default branch stop being the writes that move it under everyone else.
 - A worktree that loses its request token cannot land until it is reauthorized; the refusal names that verb.
 - The worktree merge verb moves a retained worktree onto a new base, and it folds a sibling's tip. The conflict repair stays raw Git, because that conflict is one the composition cannot settle.

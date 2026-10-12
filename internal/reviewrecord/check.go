@@ -3,6 +3,7 @@ package reviewrecord
 import (
 	"errors"
 	"fmt"
+	"slices"
 )
 
 // Check grades retained occurrences against the requested source and obligation.
@@ -67,7 +68,8 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 }
 
 // checkCompletion grades the completion entry and the final verification against the
-// current plan at source, the digest of tip.
+// current plan at source, the digest of tip. The final list includes the merged-test
+// requirements of the folds.
 func checkCompletion(record Record, plan Plan, source, tip string) error {
 	completion := record.Completion
 	reconciler := completionReconciler(record, plan)
@@ -81,5 +83,33 @@ func checkCompletion(record Record, plan Plan, source, tip string) error {
 			}
 		}
 	}
-	return checkVerification(completion.Verification, plan.FinalVerification, plan, record, source, Repair{Source: tip})
+	return checkVerification(completion.Verification, finalRequirements(plan, record), plan, record, source, Repair{Source: tip})
+}
+
+// TestCommand is the command whose requirements run test selections.
+const TestCommand = "bench test"
+
+// PackageTestCommand is the exact command that runs every test of one package.
+func PackageTestCommand(pkg string) string {
+	return TestCommand + " --package " + pkg
+}
+
+// MergedTestRequirement is the final requirement that a fold derives for one merged test
+// package.
+func MergedTestRequirement(pkg string) Requirement {
+	return Requirement{ID: "merged-test:" + pkg, Command: PackageTestCommand(pkg)}
+}
+
+// finalRequirements is the final verification list of record under plan: the planned list,
+// then the merged-test requirement of each fold package, each package once.
+func finalRequirements(plan Plan, record Record) []Requirement {
+	requirements := append([]Requirement{}, plan.FinalVerification...)
+	for _, fold := range record.Folds {
+		for _, pkg := range fold.TestPackages {
+			if merged := MergedTestRequirement(pkg); !slices.Contains(requirements, merged) {
+				requirements = append(requirements, merged)
+			}
+		}
+	}
+	return requirements
 }

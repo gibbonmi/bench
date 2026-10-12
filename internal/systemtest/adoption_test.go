@@ -249,6 +249,7 @@ func TestCommitmentInstalledAuthority(t *testing.T) {
 	if admitted.code != 0 {
 		t.Fatalf("candidate admission = (%d, %q, %q)", admitted.code, admitted.stdout, admitted.stderr)
 	}
+	openChunkGaps(t, project.root)
 	project.publish(t, candidate, base)
 	if got := systemGitOutput(t, project.root, "show", "main:displaced.txt"); got != "displaced" {
 		t.Fatalf("published candidate content = %q", got)

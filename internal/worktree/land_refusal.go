@@ -9,6 +9,7 @@ import (
 	"maps"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/refusalroute"
@@ -123,10 +124,18 @@ const (
 	faceResumeMarker               = "resume-marker"
 	faceLandIncomplete             = "land-incomplete"
 	faceLandHandback               = "land-handback"
+	// The landing lease raises this face before composition, when another live landing
+	// holds the destination.
+	faceLandLeaseHeld = refusalroute.LandLeaseHeld
+	// The build window raises this face before the lease and again at publish, for a
+	// landing that an open build holds outside its gap.
+	faceLandBuildWindow = refusalroute.LandBuildWindow
+	// The landing raises this face for a destination that moved past the reviewed source.
+	faceLandDestinationMoved = "land-destination-moved"
 	// The landing raises these two from the composed tree's authorization refusal, by the
-	// kind the gate attributed.
+	// kind the gate attributed. A lease lock fault raises the infrastructure face too.
 	faceLandRed            = "land-red"
-	faceLandInfrastructure = "land-infrastructure"
+	faceLandInfrastructure = refusalroute.LandInfrastructure
 )
 
 // retargetSourceTip re-points the caller's own re-run at the source tip the landing read
@@ -150,12 +159,15 @@ func landingFaceOf(raised refusal) (string, bool) {
 		return raised.face, true
 	}
 	for _, face := range refusalroute.Faces(refusalroute.Land) {
-		if face.Sentence != "" && (face.Sentence == raised.detail || strings.HasPrefix(raised.detail, face.Sentence+": ")) {
+		if face.Sentence != "" && (face.Sentence == raised.detail || strings.HasPrefix(raised.detail, face.Sentence+causeJoiner)) {
 			return face.Name, true
 		}
 	}
 	return "", false
 }
+
+// causeJoiner joins a face's declared sentence to the cause that follows it.
+const causeJoiner = ": "
 
 // landingFaceRefusal is the one constructor a landing face travels through. raised carries
 // what the proof observed: the sentence for a face whose sentence a policy owns, the paths,
@@ -256,10 +268,31 @@ func landingFaceName(err error) string {
 // commit moves the tip the caller named, so the face's re-run names the repaired tip.
 func repairsSource(name string) bool {
 	switch name {
-	case faceSourceNotClean, faceSourceNotFenced, faceLandRed, refusalroute.CommitmentLightPathOutside:
+	case faceSourceNotClean, faceSourceNotFenced, faceLandRed, faceLandDestinationMoved, refusalroute.CommitmentLightPathOutside:
 		return true
 	}
 	return false
+}
+
+// movedDestination raises the moved-destination face for a ref that moved after the read.
+// It raises it too for a completion proof fault over a source that lacks the destination
+// base. The face's sentence leads, and the cause follows it. Its fold merges from branch.
+//
+// A proof fault over a source that holds the destination base hands back, because no fold
+// repairs it. An unreadable ancestry hands back too. Every other error passes through.
+func movedDestination(err error, r landing.ReviewedRequest, branch string) error {
+	var refused landing.AuthorizationRefusal
+	switch {
+	case errors.As(err, new(landing.TipMovedError)):
+	case errors.As(err, &refused) && refused.Result.Cause == authorization.CompletionProof:
+		if holds, ancestryErr := authorization.IsAncestor(r.Root, r.DestinationBase, r.SourceTip); ancestryErr != nil || holds {
+			return refusalError{refusal{detail: err.Error(), face: faceLandHandback}}
+		}
+	default:
+		return err
+	}
+	detail := refusalroute.Sentence(faceLandDestinationMoved) + causeJoiner + err.Error()
+	return refusalError{refusal{detail: detail, face: faceLandDestinationMoved, values: map[string]string{refusalroute.FactFrom: branch}}}
 }
 
 // landingSourceRoute attaches the caller's own re-run to a first-run source proof's

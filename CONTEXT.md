@@ -189,8 +189,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   verb" — repository-scoped verb.
 - **follow-on** — a Bash tool call that adds a redirection or a control operator to
   a Bench-headed segment. The follow-on guard reads the first Bench segment and
-  refuses the call. A lead is not a follow-on: a `;` or `&&` before the segment is
-  legal when no earlier command changes the directory or the environment. A
+  refuses the call. The same guard denies the reviewer verb
+  `bench commitment override` in any segment, also as an exec child. A lead is not a
+  follow-on: a `;` or `&&` before the segment is legal when no earlier command changes
+  the directory or the environment. A
   `bench worktree exec` head also allows a heredoc in the segment, and a `;` or `&&`
   before a later non-Bench step.
   Not "pipeline", not "chain", not "shell wrapper" — follow-on.
@@ -376,6 +378,24 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **landing destination** — the expected tip of the branch that receives a
   landing source. To move it, compose the tree again and get a new gate verdict; a
   new source review alone is not enough. Not the source's frozen base.
+- **landing lease** — the intent-ledger record that names the one assignment whose
+  landing holds a landing destination, from composition through publish. Avoid
+  "landing lock", "gate lock", "queue slot" — landing lease.
+- **open build** — a claimed outcome with a bound staged-spec deliverable and at
+  least one active bound assignment. Bench derives it from the ledger; it is never a
+  stored state. It holds the landing window of the default branch.
+  Avoid "active build", "running build" — open build.
+- **chunk gap** — the ledger state of an **open build** between a green chunk
+  checkpoint and the first dispatch of the next chunk. Avoid "pause", "window",
+  "between-chunk slot" — chunk gap.
+- **fold record** — the review-record entry that `bench record fold` writes for one
+  merge of the default branch into the source. It names the chunk it follows, its
+  parents, its resolution paths, and its merged test packages. Avoid "merge record",
+  "sync entry" — fold record.
+- **landing override** — the reviewer's recorded grant that admits the landing of one
+  assignment through every **open build**. The reviewer writes it with
+  `bench commitment override`. Avoid "bypass", "force land", "exemption" — landing
+  override.
 - **prospective landing tree** — the exact Git tree produced by composing a
   landing source onto an expected landing destination, including any authorized
   final transition. It is the whole-project gate subject. Not the source diff,

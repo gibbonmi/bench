@@ -8,6 +8,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"testing"
 
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -70,6 +71,17 @@ func commitmentRecordFields() []string {
 		}
 	}
 	return fields
+}
+
+// TestCommitmentRecordInventoryNamesTheBuildRecords is BW14. The derived field set reaches
+// the lease, gap, and override lists, so the inventory check grades each of their fields.
+func TestCommitmentRecordInventoryNamesTheBuildRecords(t *testing.T) {
+	fields := commitmentRecordFields()
+	for _, want := range []string{"commitment.leases.destination", "commitment.gaps.chunk", "commitment.overrides.reason"} {
+		if !slices.Contains(fields, want) {
+			t.Errorf("commitment record fields = %q, want them to name %q", fields, want)
+		}
+	}
 }
 
 // appendLeafFields appends the path of each leaf JSON field of a struct type below prefix.

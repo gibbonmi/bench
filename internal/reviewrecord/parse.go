@@ -72,25 +72,16 @@ func Parse(data []byte) (Record, error) {
 		if err := validateVerification(chunk.Verification); err != nil {
 			return record, err
 		}
-		previous := map[string]string{}
-		for _, review := range chunk.Reviews {
-			if err := validateEvidence(review.Evidence); err != nil {
-				return record, err
-			}
-			if !slices.Contains(Axes(), review.Axis) || review.Role != "independent-review" || (record.Version == 1 && review.Performer == record.ImplementationSession) {
-				return record, fmt.Errorf("%s: invalid independent review axis or performer", review.ID)
-			}
-			if !objectID.MatchString(review.Base) || !objectID.MatchString(review.Tip) {
-				return record, fmt.Errorf("%s: invalid review pair", review.ID)
-			}
-			prior := previous[review.Axis]
-			if (prior == "" && len(review.Supersedes) != 0) || (prior != "" && (len(review.Supersedes) != 1 || review.Supersedes[0] != prior)) {
-				return record, fmt.Errorf("%s: invalid supersession; retain and name the preceding axis occurrence", review.ID)
-			}
-			previous[review.Axis] = review.ID
-			if review.State == "completed" && ((review.Outcome == "pass") != (len(review.FindingIDs) == 0)) {
-				return record, fmt.Errorf("%s: inconsistent review outcome and findings", review.ID)
-			}
+		if err := validateReviews(chunk.Reviews, record); err != nil {
+			return record, err
+		}
+	}
+	for i, fold := range record.Folds {
+		if fold.ID != foldID(i+1) || !chunks[fold.After] || !objectID.MatchString(fold.From) || !objectID.MatchString(fold.Commit) || !objectID.MatchString(fold.Incoming) || !objectID.MatchString(fold.SourceDigest) {
+			return record, fmt.Errorf("fold %s: invalid fold identity", fold.ID)
+		}
+		if err := validateReviews(fold.Reviews, record); err != nil {
+			return record, err
 		}
 	}
 	if record.Completion.State != "" && !occurrenceState(record.Completion.State) {
@@ -103,6 +94,31 @@ func Parse(data []byte) (Record, error) {
 		return record, err
 	}
 	return record, nil
+}
+
+// validateReviews grades the review list of one chunk or fold entry of record.
+func validateReviews(reviews []Review, record Record) error {
+	previous := map[string]string{}
+	for _, review := range reviews {
+		if err := validateEvidence(review.Evidence); err != nil {
+			return err
+		}
+		if !slices.Contains(Axes(), review.Axis) || review.Role != "independent-review" || (record.Version == 1 && review.Performer == record.ImplementationSession) {
+			return fmt.Errorf("%s: invalid independent review axis or performer", review.ID)
+		}
+		if !objectID.MatchString(review.Base) || !objectID.MatchString(review.Tip) {
+			return fmt.Errorf("%s: invalid review pair", review.ID)
+		}
+		prior := previous[review.Axis]
+		if (prior == "" && len(review.Supersedes) != 0) || (prior != "" && (len(review.Supersedes) != 1 || review.Supersedes[0] != prior)) {
+			return fmt.Errorf("%s: invalid supersession; retain and name the preceding axis occurrence", review.ID)
+		}
+		previous[review.Axis] = review.ID
+		if review.State == "completed" && ((review.Outcome == "pass") != (len(review.FindingIDs) == 0)) {
+			return fmt.Errorf("%s: inconsistent review outcome and findings", review.ID)
+		}
+	}
+	return nil
 }
 
 func validateVerification(items []Verification) error {
@@ -130,9 +146,9 @@ func validateVerification(items []Verification) error {
 	return nil
 }
 
-// evidenceIDs returns the evidence ID of each verification and review result of record,
-// from the lists of each chunk and then from the completion list. It is the one walk of
-// the evidence lists for the ID rule.
+// evidenceIDs returns the evidence ID of each verification and review result of record. It
+// reads the lists of each chunk, the review list of each fold, and the completion list, in
+// that order. It is the one walk of the evidence lists for the ID rule.
 func evidenceIDs(record Record) []string {
 	ids := []string{}
 	for _, chunk := range record.Chunks {
@@ -140,6 +156,11 @@ func evidenceIDs(record Record) []string {
 			ids = append(ids, result.ID)
 		}
 		for _, review := range chunk.Reviews {
+			ids = append(ids, review.ID)
+		}
+	}
+	for _, fold := range record.Folds {
+		for _, review := range fold.Reviews {
 			ids = append(ids, review.ID)
 		}
 	}

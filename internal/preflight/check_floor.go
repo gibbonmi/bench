@@ -16,7 +16,7 @@ const checkFloorName = "check-floor"
 
 // testCommand is the command whose plan requirements can satisfy a floor element, and the
 // command that each red names.
-const testCommand = "bench test"
+const testCommand = reviewrecord.TestCommand
 
 // commandPackageElement is the floor element of the command tests. A ticket owes it when
 // it writes into a bound command package or touches an embed.
@@ -199,5 +199,5 @@ func floorCommand(element string) string {
 	if element == testreport.RootConformanceCheckName {
 		return testCommand + " --check " + element
 	}
-	return testCommand + " --package " + element
+	return reviewrecord.PackageTestCommand(element)
 }

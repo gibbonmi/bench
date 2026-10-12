@@ -10,8 +10,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/census"
+	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -410,7 +412,30 @@ func followOnEnvelope(home, root string) (string, string) {
 	id := strings.Repeat("b", 32)
 	segment := poolkey.AssignmentSegment(owner, id)
 	path := filepath.Join(poolkey.Pool(home, root), segment, "x")
-	return `{"tool_input":{"command":"sed -n 1p ` + path + `"}}`, id
+	return bashEnvelope("sed -n 1p " + path), id
+}
+
+// bashEnvelope builds the Bash tool-call envelope of command, which holds no quote.
+func bashEnvelope(command string) string {
+	return `{"tool_input":{"command":"` + command + `"}}`
+}
+
+// BW82: the follow-on guard denies a Bash envelope that runs the reviewer verb. The plain
+// form, the tree-target form, and the child form of an exec call each meet the denial.
+func TestFollowOnGuardDeniesTheOverrideEnvelope(t *testing.T) {
+	t.Chdir(t.TempDir())
+	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "home"))
+	want := benchguard.ReviewerVerbMessage(commitcmd.ReviewerVerb) + "\n"
+	for _, command := range []string{
+		"bench commitment override --assignment x --reason y",
+		"bench commitment --in primary override",
+		"bench worktree exec t -- bench commitment override",
+	} {
+		var errb bytes.Buffer
+		if code := guardBenchFollowOn(nil, strings.NewReader(bashEnvelope(command)), io.Discard, &errb); code != 2 || errb.String() != want {
+			t.Errorf("%q = (%d, %q), want exit 2 and %q", command, code, errb.String(), want)
+		}
+	}
 }
 
 // TestGuardBenchFollowOnRecordsRawCall covers EC09: a raw-call envelope whose command
@@ -419,14 +444,7 @@ func followOnEnvelope(home, root string) (string, string) {
 // never surface here.
 func TestGuardBenchFollowOnRecordsRawCall(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
-	oldWD, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	t.Chdir(root)
 	home := filepath.Join(t.TempDir(), "home")
 	t.Setenv("BENCH_HOME", home)
 	envelope, id := followOnEnvelope(home, root)
@@ -447,14 +465,7 @@ func TestGuardBenchFollowOnRecordsRawCall(t *testing.T) {
 // surfaces as a diagnostic or a block.
 func TestGuardBenchFollowOnUnwritableHomeStaysSilent(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
-	oldWD, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	t.Chdir(root)
 	home := filepath.Join(t.TempDir(), "home-is-a-file")
 	if err := os.WriteFile(home, []byte("not a directory"), 0o600); err != nil {
 		t.Fatal(err)
@@ -475,14 +486,7 @@ func TestGuardBenchFollowOnUnwritableHomeStaysSilent(t *testing.T) {
 // the record call.
 func TestGuardBenchFollowOnNoCommandFieldRecordsNothing(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
-	oldWD, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	t.Chdir(root)
 	home := filepath.Join(t.TempDir(), "home")
 	t.Setenv("BENCH_HOME", home)
 	var errb bytes.Buffer
@@ -501,20 +505,11 @@ func TestGuardBenchFollowOnNoCommandFieldRecordsNothing(t *testing.T) {
 // before any root resolution: outside a git repository, a plain command still exits 0,
 // so the verb never called git.Root for it.
 func TestGuardBenchFollowOnWithoutPoolPrefixResolvesNoRoot(t *testing.T) {
-	dir := t.TempDir()
-	oldWD, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	t.Chdir(t.TempDir())
 	home := filepath.Join(t.TempDir(), "home")
 	t.Setenv("BENCH_HOME", home)
 	var errb bytes.Buffer
-	envelope := `{"tool_input":{"command":"echo hi"}}`
-	if code := guardBenchFollowOn(nil, strings.NewReader(envelope), io.Discard, &errb); code != 0 {
+	if code := guardBenchFollowOn(nil, strings.NewReader(bashEnvelope("echo hi")), io.Discard, &errb); code != 0 {
 		t.Fatalf("exit = %d, want 0", code)
 	}
 	if _, err := os.Stat(filepath.Join(home, "census")); !os.IsNotExist(err) {

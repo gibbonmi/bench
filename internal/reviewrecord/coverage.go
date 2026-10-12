@@ -43,8 +43,14 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 	var previous *Chunk
 	for i := range record.Chunks {
 		chunk := &record.Chunks[i]
-		if !benchgit.OK("-C", root, "merge-base", "--is-ancestor", chunk.Base, chunk.Tip) || !benchgit.OK("-C", root, "merge-base", "--is-ancestor", chunk.Tip, tip) {
-			return fmt.Errorf("chunk %s: stale unrelated base or tip; review the requested source", chunk.ID)
+		for _, pair := range [][2]string{{chunk.Base, chunk.Tip}, {chunk.Tip, tip}} {
+			reachable, err := isAncestor(root, pair[0], pair[1])
+			if err != nil {
+				return fmt.Errorf("chunk %s: %w", chunk.ID, err)
+			}
+			if !reachable {
+				return fmt.Errorf("chunk %s: stale unrelated base or tip; review the requested source", chunk.ID)
+			}
 		}
 		chunkTree, err := benchgit.Output("-C", root, "rev-parse", "--verify", chunk.Tip+"^{tree}")
 		if err != nil {
@@ -82,8 +88,19 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			if err != nil {
 				return err
 			}
-			if baseDigest != previous.SourceDigest || !benchgit.OK("-C", root, "merge-base", "--is-ancestor", previous.Tip, chunk.Base) {
-				return fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a fold in the last chunk delta, and only record commits and comment-only corrections follow a chunk tip; review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)
+			chained := false
+			if baseDigest == previous.SourceDigest {
+				if chained, err = isAncestor(root, previous.Tip, chunk.Base); err != nil {
+					return fmt.Errorf("chunk %s: %w", chunk.ID, err)
+				}
+			}
+			if !chained {
+				if chained, err = foldCoversBase(root, record, *previous, chunk.Base, baseDigest); err != nil {
+					return fmt.Errorf("chunk %s: %w", chunk.ID, err)
+				}
+			}
+			if !chained {
+				return Repair{Form: FormFold, Chunk: chunk.ID, Err: fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits and comment-only corrections follow a chunk tip; record the fold or review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)}
 			}
 		}
 		// Verification ownership reads the frozen plan above, so a historical
@@ -94,8 +111,17 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		if err != nil {
 			return err
 		}
-		if err := checkReviews(*chunk, reviewExclusions(current, record), reviewerCount); err != nil {
+		excluded := reviewExclusions(current, record)
+		if err := checkReviews(chunk.reviewed(), excluded, reviewerCount); err != nil {
 			return err
+		}
+		// A fold after the chunk whose resolution is not empty takes the review rule of a chunk.
+		for i := range record.Folds {
+			if fold := &record.Folds[i]; fold.After == chunk.ID && len(fold.Resolution) != 0 {
+				if err := checkReviews(fold.reviewed(), excluded, reviewerCount); err != nil {
+					return err
+				}
+			}
 		}
 		ids, err := mappedIDs(record, plan.Digest, current.Digest, chunk.ID)
 		if err != nil {
@@ -124,14 +150,19 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 	if !complete && !matched {
 		return Repair{Form: FormChunk, Chunk: chunkID, Err: fmt.Errorf("missing chunk %s; record its completed evidence", chunkID)}
 	}
-	if previous.SourceDigest != digest && commentgap.Prove(root, previous.SourceDigest, digest) != nil {
-		// The reviewed tip and the requested tip bound the delta no review covers. When they
-		// are one commit, the delta is the uncommitted work past that commit.
-		uncovered := previous.Tip + ".." + tip
-		if previous.Tip == tip {
+	coveredDigest, coveredTip := coveredAfter(root, record, *previous)
+	if coveredDigest != digest && commentgap.Prove(root, coveredDigest, digest) != nil {
+		// The covered tip and the requested tip bound the delta that no review or fold
+		// covers. When they are one commit, the delta is the uncommitted work past that commit.
+		uncovered := coveredTip + ".." + tip
+		if coveredTip == tip {
 			uncovered = "the uncommitted work past " + tip
 		}
-		return fmt.Errorf("chunk %s: stale reviewed source: no chunk review covers %s; cover the later source or repair delta", previous.ID, uncovered)
+		err := fmt.Errorf("chunk %s: stale reviewed source: no chunk review covers %s; cover the later source or repair delta", previous.ID, uncovered)
+		if fold := uncoveredFold(root, coveredTip, tip); fold != "" {
+			return Repair{Form: FormFold, Source: fold, Err: err}
+		}
+		return err
 	}
 	if complete {
 		for _, planned := range current.Chunks {
@@ -144,6 +175,16 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		return checkCompletion(record, current, digest, tip)
 	}
 	return nil
+}
+
+// isAncestor answers benchgit.IsAncestor. Its failed-query error names both commits, so a
+// refusal names the cause.
+func isAncestor(root, ancestor, descendant string) (bool, error) {
+	reachable, err := benchgit.IsAncestor(root, ancestor, descendant)
+	if err != nil {
+		return false, fmt.Errorf("ancestry query of %s against %s failed: %w", ancestor, descendant, err)
+	}
+	return reachable, nil
 }
 
 // Chunk returns the planned chunk id, or nil when the plan names no such chunk.

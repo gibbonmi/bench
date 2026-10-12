@@ -1,6 +1,7 @@
 package commitmenttest
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -104,6 +105,134 @@ func Admit(t testing.TB, root, request, deliverable string) {
 	if err := (commitrepo.Store{Root: root}).Start(DeliveryOutcome, request, deliverable); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// StagedInParallel is the Staged repository of outcomes. With more than one outcome, a
+// committed parallel grant lets the outcomes start together, so each one can hold its own
+// open build.
+func StagedInParallel(t testing.TB, outcomes ...string) string {
+	t.Helper()
+	root := Staged(t, outcomes...)
+	if len(outcomes) > 1 {
+		EditPolicy(t, root, func(policy *commitment.Policy) {
+			policy.ParallelGrants = []commitment.ParallelGrant{{Outcomes: outcomes}}
+		})
+		Commit(t, root, "grant the outcomes in parallel")
+	}
+	return root
+}
+
+// BindBuild starts the delivery outcome with deliverable from a new linked checkout of root
+// that the assignment of request owns. It returns that checkout. The policy at main must
+// approve deliverable.
+func BindBuild(t testing.TB, root, request, deliverable string) string {
+	t.Helper()
+	build := Assignment(t, root, request)
+	Admit(t, build, request, deliverable)
+	return build
+}
+
+// EditCommitment applies edit to the commitment state of the ledger at root.
+func EditCommitment(t testing.TB, root string, edit func(*intent.CommitmentState)) {
+	t.Helper()
+	err := intent.Transact(root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+		state := intent.CommitmentState{}
+		if ledger.Commitment != nil {
+			state = *ledger.Commitment
+		}
+		edit(&state)
+		ledger.Commitment = &state
+		return ledger, true, nil
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// PutGap replaces the chunk gap record of gap's outcome in the ledger at root, as the chunk
+// checkpoint and the chunk dispatch write it. An empty milestone takes the policy's active
+// milestone.
+func PutGap(t testing.TB, root string, gap intent.ChunkGap) {
+	t.Helper()
+	if gap.Milestone == "" {
+		policy, _, err := (commitrepo.Store{Root: root}).Policy()
+		if err != nil {
+			t.Fatal(err)
+		}
+		gap.Milestone = policy.ActiveMilestone
+	}
+	EditCommitment(t, root, func(state *intent.CommitmentState) {
+		state.Gaps = append(slices.DeleteFunc(slices.Clone(state.Gaps), func(held intent.ChunkGap) bool {
+			return held.Outcome == gap.Outcome
+		}), gap)
+	})
+}
+
+// OpenChunkGaps records an open gap of chunk C1 for each claimed outcome of the ledger at
+// root, as a green chunk checkpoint records it. A spec-less landing from a bound source
+// passes the build window only in a gap.
+func OpenChunkGaps(t testing.TB, root string) {
+	t.Helper()
+	ledger, err := intent.Read(root)
+	if err != nil || ledger.Commitment == nil {
+		t.Fatalf("ledger at %s = %+v, %v; want claimed outcomes", root, ledger.Commitment, err)
+	}
+	for _, claim := range ledger.Commitment.Claims {
+		PutGap(t, root, intent.ChunkGap{Milestone: claim.Milestone, Outcome: claim.Outcome, Chunk: "C1", Open: true})
+	}
+}
+
+// LedgerPath is the intent ledger file of the repository at root.
+func LedgerPath(t testing.TB, root string) string {
+	t.Helper()
+	path, err := intent.Address(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+// RequireLedgerKept runs act and fails unless the ledger at root keeps its exact bytes.
+func RequireLedgerKept(t testing.TB, root string, act func()) {
+	t.Helper()
+	path := LedgerPath(t, root)
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	act()
+	if after, err := os.ReadFile(path); err != nil || !bytes.Equal(before, after) {
+		t.Fatalf("ledger = %s (%v), want the bytes %s", after, err, before)
+	}
+}
+
+// ClaimedGaps is the chunk gap list of the ledger at root, and the one claim of that ledger.
+func ClaimedGaps(t testing.TB, root string) ([]intent.ChunkGap, intent.OutcomeClaim) {
+	t.Helper()
+	ledger, err := intent.Read(root)
+	if err != nil || ledger.Commitment == nil || len(ledger.Commitment.Claims) != 1 {
+		t.Fatalf("ledger at %s = %+v, %v; want one claim", root, ledger.Commitment, err)
+	}
+	return ledger.Commitment.Gaps, ledger.Commitment.Claims[0]
+}
+
+// Leases is the landing lease list of the ledger at root. It fails no test, so a
+// goroutine at a gate barrier can read it.
+func Leases(root string) ([]intent.LandingLease, error) {
+	ledger, err := intent.Read(root)
+	if err != nil || ledger.Commitment == nil {
+		return nil, err
+	}
+	return ledger.Commitment.Leases, nil
+}
+
+// Overrides is the landing override list of the ledger at root.
+func Overrides(root string) ([]intent.LandingOverride, error) {
+	ledger, err := intent.Read(root)
+	if err != nil || ledger.Commitment == nil {
+		return nil, err
+	}
+	return ledger.Commitment.Overrides, nil
 }
 
 // Rebind drops the binding of root's assignment and starts it again. A fixture calls it

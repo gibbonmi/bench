@@ -1076,6 +1076,14 @@
       "identity": "sha256:b871086abe0d08e0674c031ec71ffe7711961dcaebe1d1d6a327d43d23e61fd5",
       "source": "a20755c34073c55d31c287d3a292790a91c07232",
       "evidence": "2dbcb476ed848e2563f37bea7a623df290700e8a"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT342-FT253",
+      "binding": "build-landing-window",
+      "identity": "sha256:bbb72629c91efb80a2d6536a53304aaf8a73577f05940bc26afef87bd6620dbf",
+      "source": "474b64ea6dbf51ebb545b0947a5dc3ad6f13b5c8",
+      "evidence": "d426e319c2d99300be3f4f7b84f1b3e78cd395ad"
     }
   ]
 }

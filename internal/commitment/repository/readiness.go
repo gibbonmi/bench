@@ -57,7 +57,7 @@ func (store Store) readyFor(ledger intent.Ledger, owner intent.Assignment, deliv
 		approved := false
 		for _, source := range outcome.Deliverables {
 			if source.Source.Path == binding.Deliverable && source.Source.Identity == binding.Identity {
-				if err := store.validateDeliverable(source.Source); err != nil {
+				if _, err := store.validateDeliverable(source.Source); err != nil {
 					return err
 				}
 				approved = true

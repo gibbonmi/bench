@@ -280,8 +280,8 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 	if fingerprint, fingerprintErr := CheckoutFingerprint(r.SourceWorktree); fingerprintErr != nil || fingerprint != r.SourceFingerprint {
 		return ReviewedResult{}, errors.New("reviewed source checkout changed")
 	}
-	if fingerprint, fingerprintErr := CheckoutFingerprint(r.Root); fingerprintErr != nil || fingerprint != r.DestinationFingerprint {
-		return ReviewedResult{}, errors.New("landing destination checkout changed; rerun the landing to recompose onto the moved destination")
+	if err := destinationUnchanged(r.Root, r.Destination, destination, r.DestinationFingerprint); err != nil {
+		return ReviewedResult{}, err
 	}
 	var commit string
 	err = admission.Publish(tree, func() error {

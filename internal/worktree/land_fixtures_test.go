@@ -68,15 +68,30 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 // landingFixtureWithGateStep is landingFixtureAtHome with one more prospective gate line.
 // A non-nil step receives the gate fixture, so the step declares each command it runs,
 // and the destination root. Its line runs after the tally.
+//
+// A fixture whose gate grades no spec serves a spec-less or tickets-only landing. Such a
+// landing from the bound source passes the build window only in a chunk gap, so the
+// fixture opens one.
 func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string) landingFixture {
 	t.Helper()
-	return seededLandingFixture(t, request, ignored, declaration, home, gradeSpec, step, func(t testing.TB, root string) {
-		commitmenttest.SeedAdmission(t, root, closureSpec)
-	})
+	f := seededLandingFixture(t, request, ignored, declaration, home, gradeSpec, step, closureAdmission)
+	if !gradeSpec {
+		openChunkGaps(t, f.root)
+	}
+	return f
 }
+
+// closureAdmission writes the policy that approves closureSpec for the delivery outcome.
+func closureAdmission(t testing.TB, root string) { commitmenttest.SeedAdmission(t, root, closureSpec) }
+
+// openChunkGaps is the shared open-gap seed under the name that the landing fixtures call.
+var openChunkGaps = commitmenttest.OpenChunkGaps
 
 // closureSpec is the landing fixture's staged spec.
 const closureSpec = "specs/x/spec.md"
+
+// reviewedSource is the bytes of owned.txt that the landing fixture's source commits.
+const reviewedSource = "reviewed bytes\n"
 
 // seededLandingFixture is landingFixtureWithGateStep with the approved policy that seed
 // writes before the review base. The seed must approve closureSpec for the delivery
@@ -122,7 +137,7 @@ func seededLandingFixture(t *testing.T, request, ignored, declaration, home stri
 	base := prepared.Tip()
 	creation := mustCreate(t, root, home, request, "public landing")
 	commitmenttest.Admit(t, creation.Path, request, closureSpec)
-	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes\n", "reviewed source")
+	commitInWorktree(t, creation.Path, "owned.txt", reviewedSource, "reviewed source")
 	refreshLandingEvidence(t, creation.Path, base)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	if ignored != "" {

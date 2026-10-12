@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 )
 
 // landingStage names when in a landing a fixture's face prints, which decides how the walk
@@ -88,6 +91,8 @@ func landingRefusalFixtures() []landingRefusalFixture {
 		mustRemove(t, filepath.Join(f.creation.Path, ".bench", "phases.json"))
 		review(t, f)
 	}
+	// The other landing's lease, which its end releases.
+	var otherLanding *commitrepo.Lease
 	return []landingRefusalFixture{
 		{
 			face: faceDestinationNotClean,
@@ -141,6 +146,37 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			tip: func(t *testing.T, creation Creation) string {
 				return gitOutput(t, creation.Path, "rev-parse", "HEAD~1")
 			},
+		},
+		{
+			// Another live landing holds the destination's lease. Its end, which the wait
+			// step stands for, releases the lease, so the re-run takes it.
+			face: faceLandLeaseHeld,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				otherLanding = holdLandingLease(t, root, otherLandingID)
+			},
+			carry: map[int]func(*testing.T, landingFixture){0: func(*testing.T, landingFixture) { otherLanding.Release() }},
+		},
+		{
+			// A second build holds main outside its gap. Its gap, which the wait step stands
+			// for, lets the re-run through.
+			face: faceLandBuildWindow,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				mustNoError(t, startOtherBuild(root, commitmenttest.Assignment(t, root, "landing-face-other-build")))
+			},
+			carry: map[int]func(*testing.T, landingFixture){0: func(t *testing.T, f landingFixture) { openChunkGaps(t, f.root) }},
+		},
+		{
+			// The destination gains a commit that the reviewed source lacks, so the completion
+			// proof refuses. The printed merge folds it into the source under the planted lane,
+			// and the review of the fold is the record step.
+			face:          faceLandDestinationMoved,
+			stage:         stageComposition,
+			repairsSource: true,
+			mutate: func(t *testing.T, root string, creation Creation) {
+				commitInWorktree(t, root, "moved.txt", "destination bytes\n", "destination moves")
+				plantSourceCommitLane(t, creation)
+			},
+			carry: map[int]func(*testing.T, landingFixture){1: reviewWithoutLane},
 		},
 		{
 			// The destination moves onto a commit the reviewed source also changed, which

@@ -29,8 +29,8 @@ func cause(spec string, err error) string {
 // the flags it declares, so a flag that the repair form lacks drops out there.
 func known(spec string, repair reviewrecord.Repair) map[string]string {
 	slug, _ := reviewrecord.Slug(spec)
-	return map[string]string{refusalroute.FactSlug: slug, "--chunk": repair.Chunk, "--requirement": repair.Requirement, "--ticket": repair.Ticket, "--axis": repair.Axis,
-		"--source": repair.Source}
+	return map[string]string{refusalroute.FactSlug: slug, "--chunk": repair.Chunk, "--fold": repair.Fold, "--requirement": repair.Requirement, "--ticket": repair.Ticket,
+		"--axis": repair.Axis, "--source": repair.Source}
 }
 
 // completionOrder is the completion form's note on the order of the record writes that

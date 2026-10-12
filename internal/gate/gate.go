@@ -206,6 +206,9 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	finishLog(result)
 	finishSpan(result)
+	if result.ActionExit == 0 && checkpoint.Chunk != "" {
+		return openChunkGap(root, checkpoint, stderr)
+	}
 	return result.ActionExit
 }
 
@@ -229,6 +232,9 @@ type Result struct {
 	GateExit   int
 	ActionExit int
 	Inspection Inspection
+	// Face names the refusal face of a run outside the gate verb that refused before its
+	// oracle ran. Such a caller prints its own route, so it reads the face here.
+	Face string
 }
 
 // Execute selects, executes, and records root's gate with the ordinary reuse policy.

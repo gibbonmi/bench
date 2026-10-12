@@ -99,7 +99,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	}
 	sealPresent, sealRefusal := binarySealFacts(root)
 
-	return withCompletionPlan(root, Facts{
+	return withFoldResolution(root, withCompletionPlan(root, Facts{
 		Mode:                  mode,
 		SpecPath:              filepath.ToSlash(specref.RelTo(root, resolved)),
 		DefaultBranch:         defaultBranch,
@@ -130,7 +130,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		TicketsDirExists:      ticketFacts.dirExists,
 		BinarySealPresent:     sealPresent,
 		BinarySealRefusal:     sealRefusal,
-	}), nil
+	})), nil
 }
 
 // resolvePin resolves a --source-tip value to its full commit identity. An

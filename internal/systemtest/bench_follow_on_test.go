@@ -173,6 +173,14 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		}
 	}
 
+	// The reviewer's override verb refuses in a tool call, as a bare call, as a tree target,
+	// and as an exec child. (Coverage rows BW82 and BW83.)
+	for _, command := range []string{"bench commitment override --assignment x --reason y", "bench commitment --in primary override", "bench worktree exec t -- bench commitment override"} {
+		if result := run(repo, command); result.code != 2 || !strings.Contains(result.stderr, "BLOCKED: bench commitment override is the reviewer's verb") {
+			t.Errorf("reviewer verb %q = (%d, %q, %q), want the reviewer-verb refusal", command, result.code, result.stdout, result.stderr)
+		}
+	}
+
 	alias := filepath.Join(repo, "kit-command")
 	if err := os.Symlink(filepath.Join(repo, "bin", "bench.sh"), alias); err != nil {
 		t.Fatal(err)

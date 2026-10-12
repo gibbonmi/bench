@@ -1,5 +1,14 @@
 package refusalroute
 
+// A policy outside the landing raises these land faces. The landing lease names its owner,
+// and a lease lock fault stops the landing as an infrastructure outcome. The build window
+// names the open build that holds the destination.
+const (
+	LandLeaseHeld      = "land-lease-held"
+	LandInfrastructure = "land-infrastructure"
+	LandBuildWindow    = "land-build-window"
+)
+
 // destinationClean is the repair a destination that carries uncommitted work demands. The
 // first run and the resume refuse on the same destination state, so both faces name it.
 var destinationClean = Instruction(Text("commit the destination's uncommitted work, or discard it"))
@@ -59,6 +68,36 @@ var landFaces = []Face{
 		},
 	},
 	{
+		// The lease policy owns the sentence, which names the owner's assignment. The owner's
+		// landing releases the lease when it publishes or refuses. The id is a hex identity,
+		// so the route prints it as the sentence does.
+		Verb:      Land,
+		Name:      LandLeaseHeld,
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("wait until the landing of assignment"), Composed(FactLeaseOwner), Text("ends")), rerun},
+	},
+	{
+		// The window policy owns the sentence, which names the build and the gap to wait for.
+		// The build's gap, or a landing override for this assignment, lets the re-run through.
+		Verb:      Land,
+		Name:      LandBuildWindow,
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("wait for the gap that the refusal names, or ask the reviewer for an override")), rerun},
+	},
+	{
+		// The fold brings the moved destination into the source. The raising site points the
+		// re-run at the repaired tip.
+		Verb:      Land,
+		Name:      "land-destination-moved",
+		Sentence:  "landing destination moved past the reviewed source",
+		Authority: Agent,
+		Route: []Step{
+			Command(Text("bench worktree merge --from"), Fact(FactFrom), Fact(FactLabel)),
+			Instruction(Text("for a spec landing, record the fold, its review, the merged-test verification, and the completion at the new tip")),
+			rerun,
+		},
+	},
+	{
 		// The composition names the conflicted paths in its own sentence, so the face
 		// declares none.
 		Verb:      Land,
@@ -114,7 +153,7 @@ var landFaces = []Face{
 		// The gate stopped on an infrastructure outcome, so no failure is the diff's. The
 		// authorization policy owns the sentence.
 		Verb:      Land,
-		Name:      "land-infrastructure",
+		Name:      LandInfrastructure,
 		Authority: Agent,
 		Route:     []Step{doctor, rerun},
 	},

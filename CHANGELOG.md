@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Build landing window
+
+- Added a landing lease, a landing window, and a landing override to `bench worktree land`. A landing holds a lease on its destination from composition through publish, so a second landing refuses with `land-lease-held` and names the owner. During an open build, the landing refuses each other landing with `land-build-window` outside a chunk gap. The reviewer admits one landing with `bench commitment override` from a terminal in the primary checkout. `bench record fold` records a fold of `main`, so the review chain accepts it between and after chunks, and only its resolution takes review. A landing over a moved destination refuses with `land-destination-moved` and names `bench worktree merge`; before, it named `bench doctor`.
+
 ### Spec stage binding
 
 - Changed the spec-stage close so that one spec-less landing publishes the staged spec and its deliverable binding. `bench commitment plan` and `bench commitment approve` read a new deliverable at the worktree's HEAD, and `bench commit` and `bench worktree land` read it in the candidate tree. `/bench-write-spec` now states the close order, and `.bench/BENCH.md` lets a spec-stage close bind its spec on the reviewer's sign-off. The slicing checks put `.bench/commitment.json` in the fence and in one ticket's `Writes:` line, so the plan-only preflight stays green. After the landing, `bench status` prints the complete `bench commitment start` command with the spec path. Before, the binding needed a second landing and a second gate.

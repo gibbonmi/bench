@@ -121,7 +121,7 @@ func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Re
 			err = refusalError{refusal{detail: conflict.Error(), paths: conflict.Paths, face: faceMergeConflict, values: conflictFacts(incoming, target.ID, target.Worktree)}}
 		}
 		// A red fold takes the face of its cause, which the target tip's own grade decides.
-		err = mergeRedRefusal(err, func() authorization.Result { return mergeTargetGrade(a.kit, request) }, spelling, target.Label)
+		err = mergeRedRefusal(err, func() authorization.Result { return mergeTargetGrade(a.kit, request) }, spelling, incoming, target)
 		return refuse(err)
 	}
 	if len(result.Resolved) > 0 {
@@ -356,17 +356,9 @@ func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned
 	if peelErr != nil || commit == "" {
 		return "", false, false, nil
 	}
-	branch, ok := git.ResolvedDefault(root)
-	if !ok {
-		return commit, true, false, refusalError{refusal{detail: "default branch is unresolved", observed: from}}
-	}
-	tip, tipErr := git.ResolveCommit(root, branch)
-	if tipErr != nil {
-		return commit, true, false, refusalError{refusal{detail: "default branch tip is unreadable", observed: branch}}
-	}
-	contains, ancestryErr := authorization.IsAncestor(root, commit, tip)
-	if ancestryErr != nil {
-		return commit, true, false, refusalError{refusal{detail: "ancestry query failed: " + ancestryErr.Error(), observed: commit, wanted: tip}}
+	contains, queryErr := git.DefaultContains(root, commit)
+	if queryErr != nil {
+		return commit, true, false, refusalError{refusal{detail: queryErr.Error(), observed: from}}
 	}
 	return commit, true, contains, nil
 }

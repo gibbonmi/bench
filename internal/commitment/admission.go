@@ -1,6 +1,7 @@
 package commitment
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -45,8 +46,16 @@ func Admit(policy Policy, state intent.CommitmentState, binding intent.DeliveryB
 	}
 	if !active[binding.Outcome] {
 		state.Claims = append(slices.Clone(state.Claims), intent.OutcomeClaim{Milestone: policy.ActiveMilestone, Outcome: binding.Outcome})
+		// A new claim starts a new build, and a gap record from an earlier claim is stale.
+		state.Gaps = withoutGap(state.Gaps, binding.Outcome)
 	}
 	return state, nil
+}
+
+// withoutGap drops the chunk gap record of outcome, so a gap never outlives the claim of the
+// build that recorded it.
+func withoutGap(gaps []intent.ChunkGap, outcome string) []intent.ChunkGap {
+	return slices.DeleteFunc(slices.Clone(gaps), func(gap intent.ChunkGap) bool { return gap.Outcome == outcome })
 }
 
 // eligible is the one admission decision for an outcome start: it refuses an uncommitted,
@@ -140,6 +149,15 @@ func permitsParallel(policy Policy, active map[string]bool, continuations []inte
 	return false
 }
 
+// ValidReason refuses an empty reason or a reason with a control byte, so a recorded reason
+// stays one readable line. An outcome blocker and a landing override both apply this rule.
+func ValidReason(reason string) error {
+	if strings.TrimSpace(reason) == "" || !sanitize.LineSafe(reason) {
+		return errors.New("reason must be one nonempty line")
+	}
+	return nil
+}
+
 // SetBlocker records or clears a blocker without displacing another active claim.
 func SetBlocker(policy Policy, state intent.CommitmentState, outcome, reason string, blocked bool) (intent.CommitmentState, error) {
 	if _, err := ActiveOutcome(policy, outcome); err != nil {
@@ -148,13 +166,16 @@ func SetBlocker(policy Policy, state intent.CommitmentState, outcome, reason str
 	if deliveredOutcomes(policy)[outcome] {
 		return state, fmt.Errorf("outcome %q is already delivered", outcome)
 	}
-	if blocked && (strings.TrimSpace(reason) == "" || !sanitize.LineSafe(reason)) {
-		return state, fmt.Errorf("blocker reason must be one nonempty line")
+	if blocked {
+		if err := ValidReason(reason); err != nil {
+			return state, err
+		}
 	}
 	state.Blockers = slices.DeleteFunc(slices.Clone(state.Blockers), func(item intent.OutcomeBlocker) bool { return item.Outcome == outcome })
 	if blocked {
 		state.Blockers = append(state.Blockers, intent.OutcomeBlocker{Outcome: outcome, Reason: reason})
 		state.Claims = slices.DeleteFunc(slices.Clone(state.Claims), func(item intent.OutcomeClaim) bool { return item.Outcome == outcome })
+		state.Gaps = withoutGap(state.Gaps, outcome)
 	}
 	return state, nil
 }

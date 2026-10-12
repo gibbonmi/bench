@@ -187,11 +187,10 @@ const GateCacheFile = "bench-last-gate"
 // reverseAppliesToDefault names the exact forms. The cost of refusing is an orphaned
 // branch. The cost of a wrong true is lost work with nothing standing behind it.
 func LandedInDefault(root, branch, def string) (landed, byContent bool, err error) {
-	ancestor := exec.Command("git", "-C", root, "merge-base", "--is-ancestor", branch, def)
-	if err := ancestor.Run(); err == nil {
-		return true, false, nil
-	} else if exit, ok := err.(*exec.ExitError); !ok || exit.ExitCode() != 1 {
+	if ancestor, err := IsAncestor(root, branch, def); err != nil {
 		return false, false, fmt.Errorf("merge-base %s against %s: %w", branch, def, err)
+	} else if ancestor {
+		return true, false, nil
 	}
 	merges, err := Output("-C", root, "rev-list", "--merges", "--max-count=1", def+".."+branch)
 	if err != nil {
@@ -213,6 +212,20 @@ func LandedInDefault(root, branch, def string) (landed, byContent bool, err erro
 		}
 	}
 	return true, true, nil
+}
+
+// IsAncestor reports whether ancestor is reachable from descendant. It separates Git's
+// exit 1, which is a truthful "no", from a failed query, which is an error.
+func IsAncestor(root, ancestor, descendant string) (bool, error) {
+	_, err := Raw("-C", root, "merge-base", "--is-ancestor", ancestor, descendant)
+	if err == nil {
+		return true, nil
+	}
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+		return false, nil
+	}
+	return false, err
 }
 
 // ResolveCommit returns the verified commit ID for revision.

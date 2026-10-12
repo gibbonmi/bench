@@ -93,10 +93,11 @@ func (store Store) Closure(tree string, delivery Delivery) ([]Edit, error) {
 	return edits, nil
 }
 
-// ReconcileDelivered releases each local claim and binding whose outcome the published
-// default-branch policy records as delivered, and each legacy continuation whose scope
-// that policy records as delivered. The published fact is the authority, so a failure
-// here leaves the delivered obligation closed, and a retry changes nothing more.
+// ReconcileDelivered releases each local claim, binding, and chunk gap record whose outcome
+// the published default-branch policy records as delivered. It also releases each legacy
+// continuation whose scope that policy records as delivered. The published fact is the
+// authority, so a failure here leaves the delivered obligation closed, and a retry changes
+// nothing more.
 func (store Store) ReconcileDelivered() error {
 	policy, exists, err := store.Policy()
 	if err != nil || !exists {
@@ -120,6 +121,13 @@ func (store Store) ReconcileDelivered() error {
 		for _, binding := range state.Bindings {
 			if open(binding.Milestone, binding.Outcome) {
 				next.Bindings = append(next.Bindings, binding)
+			}
+		}
+		// The gap record goes with the claim, so a later start of the outcome finds none.
+		next.Gaps = nil
+		for _, gap := range state.Gaps {
+			if open(gap.Milestone, gap.Outcome) {
+				next.Gaps = append(next.Gaps, gap)
 			}
 		}
 		next.Continuations = commitment.OpenContinuations(policy, state)

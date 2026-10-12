@@ -1,6 +1,10 @@
 package git
 
-import "strings"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
 // mainCandidate is the branch name the code probes when origin/HEAD is unset. It is a
 // candidate, and not an answer, until the object database confirms it. A repository with
@@ -28,6 +32,24 @@ func ResolvedDefault(root string) (string, bool) {
 		return branches[0], true
 	}
 	return "", false
+}
+
+// DefaultContains reports whether the history of the default-branch tip contains commit.
+// A query that cannot run is an error that names the failed step, never a "no".
+func DefaultContains(root, commit string) (bool, error) {
+	branch, ok := ResolvedDefault(root)
+	if !ok {
+		return false, errors.New("default branch is unresolved")
+	}
+	tip, err := ResolveCommit(root, branch)
+	if err != nil {
+		return false, errors.New("default branch tip is unreadable")
+	}
+	contains, err := IsAncestor(root, commit, tip)
+	if err != nil {
+		return false, fmt.Errorf("ancestry query failed: %w", err)
+	}
+	return contains, nil
 }
 
 // RemoteDefaultRef returns `origin/<default branch>`, or "" when the default does not

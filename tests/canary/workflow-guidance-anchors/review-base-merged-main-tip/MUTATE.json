@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-review-implementation.md",
-    "old": "The first chunk base is the `main` tip merged into the source. Each later chunk base is the accepted predecessor tip, so the range holds only that chunk's delta.",
+    "old": "The first chunk base is the `main` tip merged into the source. Each later chunk base is the last recorded fold after the accepted predecessor tip, or that tip when no fold follows it. The range then holds only that chunk's delta.",
     "new": "Every chunk uses whichever base the reviewer recalls."
   }
 ]

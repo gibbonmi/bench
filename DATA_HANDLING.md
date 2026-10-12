@@ -207,6 +207,15 @@ same field set from the ledger types, so a new field cannot stay undocumented.
 | `commitment.continuations.assignment` | An existing run that an approved plan lists and lets finish. |
 | `commitment.continuations.request` | The digest of that run's request. |
 | `commitment.continuations.scope` | The paths that the run can still deliver. |
+| `commitment.leases.destination` | The destination ref that a landing holds from its composition through its publish. |
+| `commitment.leases.assignment` | The assignment whose landing holds that destination. |
+| `commitment.gaps.milestone` | The milestone of a chunked build. |
+| `commitment.gaps.outcome` | The outcome of that build. |
+| `commitment.gaps.chunk` | The chunk that the build last checkpointed or dispatched. |
+| `commitment.gaps.open` | Whether an unrelated landing can land before the next chunk. |
+| `commitment.gaps.last` | Whether that chunk is the last chunk of the plan. |
+| `commitment.overrides.assignment` | The assignment that the reviewer lets land through every open build. |
+| `commitment.overrides.reason` | The one-line override reason that the reviewer wrote. |
 
 <!-- commitment-record:end -->
 

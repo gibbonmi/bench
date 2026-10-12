@@ -68,6 +68,9 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	return root, home, tally, trees, ready, release
 }
 
+// openChunkGaps is the shared open-gap seed under the name that the journey fixtures call.
+var openChunkGaps = commitmenttest.OpenChunkGaps
+
 // linkedDeliverable is the staged spec that a linked project's adoption approves.
 const linkedDeliverable = "specs/x/spec.md"
 

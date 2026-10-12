@@ -3,6 +3,7 @@ package preflight
 import (
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
 	specref "github.com/gibbonmi/bench/internal/spec"
 )
 
@@ -84,4 +85,68 @@ func resolveSpecInput(root, slug string, noFollow bool) ([]byte, string, []strin
 
 func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure) {
 	return gatherTicketsWithPolicy(root, dir, mode, tag, false)
+}
+
+// withFoldResolution reads the review record at the source tip and returns facts with the
+// admitted resolution paths. A path is admitted while it keeps its bytes and mode from the
+// newest fold that lists it. The fold review graded only those bytes. A record or a tree
+// that does not read lists no path, so each changed path keeps the fence rule.
+func withFoldResolution(root string, facts Facts) Facts {
+	record, err := reviewrecord.ReadTree(root, facts.SourceTip, facts.SpecPath)
+	if err != nil {
+		return facts
+	}
+	newest := map[string]int{}
+	for i, fold := range record.Folds {
+		for _, path := range fold.Resolution {
+			newest[path] = i
+		}
+	}
+	var admitted []string
+	for i, fold := range record.Folds {
+		var listed []string
+		for _, path := range fold.Resolution {
+			if newest[path] == i {
+				listed = append(listed, path)
+			}
+		}
+		unchanged, failure := unchangedPaths(root, fold.Commit, facts.SourceTip, listed)
+		if failure != nil {
+			return facts
+		}
+		admitted = append(admitted, unchanged...)
+	}
+	facts.FoldResolutionPaths = admitted
+	return facts
+}
+
+// unchangedPaths is the subset of paths whose bytes and mode at to equal those at from.
+// The raw tree diff owns the comparison, so a gitlink compares by its commit too.
+// An untracked path is absent at both commits, so a dirty source answers none.
+func unchangedPaths(root, from, to string, paths []string) ([]string, *BootstrapFailure) {
+	if len(paths) == 0 {
+		return nil, nil
+	}
+	dirty, err := git.WorktreeDirty(root)
+	if err != nil {
+		return nil, &BootstrapFailure{"source status unreadable", err.Error()}
+	}
+	if dirty {
+		return nil, nil
+	}
+	differences, err := git.TreeChangesIncludingSubmodules(root, from, to)
+	if err != nil {
+		return nil, &BootstrapFailure{"tree comparison not readable", err.Error()}
+	}
+	differs := make(map[string]bool, len(differences))
+	for _, change := range differences {
+		differs[change.Path] = true
+	}
+	var equal []string
+	for _, path := range paths {
+		if !differs[path] {
+			equal = append(equal, path)
+		}
+	}
+	return equal, nil
 }

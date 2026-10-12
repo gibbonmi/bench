@@ -27,6 +27,9 @@ func TestIntentReExportsEveryMovedLedgerName(t *testing.T) {
 		{"Recovery", reflect.TypeOf(Recovery{}), reflect.TypeOf(ledger.Recovery{})},
 		{"Assignment", reflect.TypeOf(Assignment{}), reflect.TypeOf(ledger.Assignment{})},
 		{"CleanupReceipt", reflect.TypeOf(CleanupReceipt{}), reflect.TypeOf(ledger.CleanupReceipt{})},
+		{"LandingLease", reflect.TypeOf(LandingLease{}), reflect.TypeOf(ledger.LandingLease{})},
+		{"ChunkGap", reflect.TypeOf(ChunkGap{}), reflect.TypeOf(ledger.ChunkGap{})},
+		{"LandingOverride", reflect.TypeOf(LandingOverride{}), reflect.TypeOf(ledger.LandingOverride{})},
 	}
 	for _, row := range types {
 		if row.alias != row.own {

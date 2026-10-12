@@ -1,6 +1,6 @@
 # Build landing window
 
-Status: staged
+Status: implemented
 
 Roadmap: FT342
 
@@ -58,7 +58,7 @@ Each decision below is the author's call inside the 2026-10-09 bounds. Each one 
 - R5 (override trust root): the override verb needs the primary checkout, a terminal on stdin, and the typed assignment id. The follow-on guard denies the verb in an agent tool call. The trust assumption is reviewer-visible: a fabricated pseudo-terminal or a direct ledger edit defeats these honest-mistake layers.
 - R6 (fold review): a non-empty resolution delta takes the same three independent axes as a chunk, scoped to the resolution paths.
 - R7 (final checks): each merged test package becomes a derived final verification requirement, `merged-test:<package>`, with the command `bench test --package <package>`.
-- R8 (fence): the review preflight authorizes a path that a recorded fold lists in its resolution. This is a flagged addition. Without it, a resolved `main` path needs a fence expansion, as the FT337 occurrence records.
+- R8 (fence): the review preflight authorizes a path that a recorded fold lists in its resolution. This is a flagged addition. Without it, a resolved `main` path needs a fence expansion, as the FT337 occurrence records. The skip holds only while the path keeps its bytes and mode from the fold commit.
 - R9 (fold red): `merge-fold-red` keeps reviewer authority. Its route becomes the hand merge with the repair, `bench commit`, and `bench record fold`.
 - R10 (proof fault): a completion proof fault over a source that already holds the destination routes to `land-handback`, not to `bench doctor`.
 - R11 (records): the lease, gap, and override records join `CommitmentState`, so the `DATA_HANDLING.md` inventory check covers them.
@@ -230,6 +230,7 @@ Its route is the instruction `wait until the landing of assignment <id> ends`, t
 An open build is a claim `(milestone, outcome)` with at least one qualifying binding of that outcome.
 A qualifying binding names a staged-spec deliverable and an assignment that is active in `ledger.Assignments`.
 The staged-spec test reuses the deliverable classification `validateDeliverable` (`internal/commitment/repository/sources.go:90`), which `bench commitment start` calls at `internal/commitment/repository/admission.go:41`.
+A fault that resolves the default-branch tip refuses the landing with `land-infrastructure` and the cause.
 
 The build's assignments are the active bound assignments of that outcome.
 A sibling that `bench worktree create --from` binds is one of them (`internal/commitment/repository/readiness.go:121-150`).
@@ -266,6 +267,9 @@ After `RunCommand` (`internal/gate/gate.go:185-210`) returns a green result for 
 The verb writes the gap record `{Chunk: <id>, Open: true, Last: false}` when two conditions hold.
 The plan names a chunk after `<id>`, and the active assignment of the root holds a binding of an open build.
 Otherwise it writes nothing.
+
+The verb also writes nothing when the gap record names a chunk after `<id>` in plan order.
+So a repair checkpoint of an earlier chunk keeps the recorded chunk and its `Last` value.
 A write failure prints `chunk gap not recorded: <cause>` and exits 1, and a rerun reuses the green verdict and writes the record.
 
 `bench record assignment` closes a gap.
@@ -373,6 +377,8 @@ The completion requires a passing result for each derived requirement at the com
 
 `unauthorizedPaths` (`internal/preflight/paths_authorized.go:24`) also skips a path that a fold entry of the record at the source tip lists in `Resolution`.
 The fold review grades that path, so the fence does not need to name it.
+The skip holds only while the path at the source tip keeps its bytes and mode from the fold commit.
+The fold review graded only those bytes.
 
 ### Fold red
 
@@ -412,7 +418,7 @@ The anchors at `internal/anchors/registry_chunk_chain.go:30-36` and `:56` move t
 
 `.bench/BENCH-reference.md` Command Notes state the lease, the window, the gap, and the override.
 They also name `bench commitment block` as the reviewer's stop for a stalled build that still holds the window.
-They also state the back-out route: `git revert --no-commit <commit>` in a fresh worktree, `bench commit`, and a landing with the override.
+They also state the back-out route: `git revert -m 1 --no-commit <commit>` in a fresh worktree, `bench commit`, and a landing with the override.
 `CONTEXT.md` defines **landing lease**, **open build**, **chunk gap**, **fold record**, and **landing override**.
 `docs/known-issues.md:14` leaves, and `CHANGELOG.md` gains one entry.
 
@@ -422,8 +428,8 @@ They also state the back-out route: `git revert --no-commit <commit>` in a fresh
 | --- | --- | --- | --- | --- |
 | BW-A / 1-hold-the-landing-lease.md | One lease per destination from composition through publish, with liveness and takeover | BW1-BW16 | planned lease, land-lease, ledger, and system race tests; recovery and registry tests | no |
 | BW-B / 2-route-a-moved-destination.md | One moved-destination face with a typed proof cause | BW17-BW24 | planned moved-destination and authorization tests; the system race test | no |
-| BW-C / 3-record-a-fold.md, 4-review-a-fold-resolution.md | Fold record, chain acceptance, resolution review, merged-test final checks, fold red route | BW25-BW45, BW93 | planned fold, record-fold, preflight, and merge-route tests; the chain-gap test; help inventory | yes |
-| BW-D / 5-hold-main-for-an-open-build.md, 6-open-and-close-chunk-gaps.md | Open-build window with its lifetime and its gaps | BW46-BW70, BW94-BW97 | planned window, land-window, chunk-gap, and dispatch-gap tests | yes |
+| BW-C / 3-record-a-fold.md, 4-review-a-fold-resolution.md | Fold record, chain acceptance, resolution review, merged-test final checks, fold red route | BW25-BW45, BW93, BW98 | planned fold, record-fold, preflight, and merge-route tests; the chain-gap test; help inventory | yes |
+| BW-D / 5-hold-main-for-an-open-build.md, 6-open-and-close-chunk-gaps.md | Open-build window with its lifetime and its gaps | BW46-BW70, BW94-BW97, BW99, BW100 | planned window, land-window, chunk-gap, and dispatch-gap tests | yes |
 | BW-E / 7-grant-a-reviewer-override.md | Terminal-bound reviewer override, consumption, and guard | BW71-BW84 | planned override, land-override, and guard tests; help inventory | yes |
 | BW-F / 8-document-the-landing-window.md | Guidance, glossary, known issues, and changelog | BW85-BW92 | review-owned reads, anchors, prose | no |
 
@@ -435,121 +441,13 @@ BW-F comes last, because its guidance names every form.
 
 ### Completion plan
 
-This version-1 plan is a planning inventory, not a dispatch plan.
-Before the first dispatch, the coordinator amends it to version 2.
+Run line, by reviewer direction on 2026-10-11: opus / high for each ticket author, opus / high for each review axis, and fable / high for each consultation. The reviewer gave `--auto-approve`, so the orchestrator decides each fence, spec, and repair question and flags it.
+
+This version 2 completion plan declares the delegated run and one verification inventory for each ticket.
+Each probe field names the mutation kind, its site, and the test that turns red, and the author derives the exact mutated text.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "BW-A",
-      "tickets": ["1-hold-the-landing-lease.md"],
-      "verification": [
-        {"id": "intent", "command": "bench test --package ./internal/intent/..."},
-        {"id": "commitment", "command": "bench test --package ./internal/commitment/..."},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "gate", "command": "bench test --package ./internal/gate/..."},
-        {"id": "gocache", "command": "bench test --package ./internal/gocache"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "data-handling", "command": "bench test --check data-handling-derivation"},
-        {"id": "system-lease", "command": "bench test --check system --run TestTwoLandingProcessesShareOneLease"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "BW-B",
-      "tickets": ["2-route-a-moved-destination.md"],
-      "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate/..."},
-        {"id": "landing", "command": "bench test --package ./internal/landing/..."},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "commit", "command": "bench test --package ./internal/commit"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "system-race", "command": "bench test --check system --run TestWorktreeLandPublicRaceAndRerun"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "BW-C",
-      "tickets": ["3-record-a-fold.md", "4-review-a-fold-resolution.md"],
-      "verification": [
-        {"id": "reviewrecord", "command": "bench test --package ./internal/reviewrecord/..."},
-        {"id": "testreport", "command": "bench test --package ./internal/testreport"},
-        {"id": "gate", "command": "bench test --package ./internal/gate/..."},
-        {"id": "landing", "command": "bench test --package ./internal/landing/..."},
-        {"id": "preflight", "command": "bench test --package ./internal/preflight/..."},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "BW-D",
-      "tickets": ["5-hold-main-for-an-open-build.md", "6-open-and-close-chunk-gaps.md"],
-      "verification": [
-        {"id": "intent", "command": "bench test --package ./internal/intent/..."},
-        {"id": "commitment", "command": "bench test --package ./internal/commitment/..."},
-        {"id": "gate", "command": "bench test --package ./internal/gate/..."},
-        {"id": "reviewrecord", "command": "bench test --package ./internal/reviewrecord/..."},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "data-handling", "command": "bench test --check data-handling-derivation"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "BW-E",
-      "tickets": ["7-grant-a-reviewer-override.md"],
-      "verification": [
-        {"id": "commitment", "command": "bench test --package ./internal/commitment/..."},
-        {"id": "intent", "command": "bench test --package ./internal/intent/..."},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "benchguard", "command": "bench test --package ./internal/benchguard"},
-        {"id": "guards", "command": "bench test --package ./internal/guards"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "data-handling", "command": "bench test --check data-handling-derivation"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "BW-F",
-      "tickets": ["8-document-the-landing-window.md"],
-      "verification": [
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "conformance-meta", "command": "bench test --check conformance-meta"},
-        {"id": "prose", "command": "bench test --check prose"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "coverage", "command": "bench coverage --check specs/build-landing-window/spec.md"},
-    {"id": "intent", "command": "bench test --package ./internal/intent/..."},
-    {"id": "commitment", "command": "bench test --package ./internal/commitment/..."},
-    {"id": "reviewrecord", "command": "bench test --package ./internal/reviewrecord/..."},
-    {"id": "gate", "command": "bench test --package ./internal/gate/..."},
-    {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-    {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-    {"id": "system", "command": "bench test --check system"}
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"build-landing-window-build-20261011","orchestrator_session":"claude:blw-orchestrator-20261011","author_limit":1,"assignments":{"1-hold-the-landing-lease.md":[{"session":"claude:blw_t1","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"4206c20488bce8b4711d7760c53202bebe392a86","native_ref":"claude-agent:blw_t1"},{"session":"claude:blw_t1_rep1","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"fd00c07f85fb466ca6560d7e7bfc81903e7c2890","native_ref":"claude-agent:blw_t1_rep1","predecessor":"claude:blw_t1","trigger":"user-directed","stopped":"claude:blw_t1 ended after its ticket commit ced1dedc and its BW-A verification entries in record commit 3401d028","preserved":"no uncommitted work; the ticket commit ced1dedc and the record commit 3401d028 on the FT342-FT253 integration branch"}],"2-route-a-moved-destination.md":[{"session":"claude:blw_t2","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"e002c6cab0f376a127f18afe4509535a51a090fc","native_ref":"claude-agent:blw_t2"},{"session":"claude:blw_t2_rep1","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"d7656bcd2a56664c47733ed5d17c098770e284a8","native_ref":"claude-agent:blw_t2_rep1","predecessor":"claude:blw_t2","trigger":"user-directed","stopped":"claude:blw_t2 ended after its ticket commit 6c90a3c6 and its BW-B verification entries in record commit 0ceb0a3d","preserved":"no uncommitted work; the ticket commit 6c90a3c6 and the record commit 0ceb0a3d on the FT342-FT253 integration branch"}],"3-record-a-fold.md":[{"session":"claude:blw_t3","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"64ed906be5a2dec8df48a850d6cd532c8b0f2150","native_ref":"claude-agent:blw_t3"},{"session":"claude:blw_t3_rep1","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"3032523a32f5c2367101fdd14753b2bd27b142b2","native_ref":"claude-agent:blw_t3_rep1","predecessor":"claude:blw_t3","trigger":"user-directed","stopped":"claude:blw_t3 ended after its ticket commit 12a2d5e1 and its BW-C verification entries in record commit 96f67c82","preserved":"no uncommitted work; the ticket commit 12a2d5e1 and the record commit 96f67c82 on the FT342-FT253 integration branch"},{"session":"claude:blw_t3_rep2","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"fa4a6ee7975ec272730bf55288829f0b51602762","native_ref":"claude-agent:blw_t3_rep2","predecessor":"claude:blw_t3_rep1","trigger":"user-directed","stopped":"claude:blw_t3_rep1 ended after its repair commit eae5349c and its BW-C verification entries in record commit 0bea3e83","preserved":"no uncommitted work; the repair commit eae5349c and the record commit 0bea3e83 on the FT342-FT253 integration branch"}],"4-review-a-fold-resolution.md":[{"session":"claude:blw_t4","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"12a2d5e16090abb7a5aa80febbd69548ea631662","native_ref":"claude-agent:blw_t4"},{"session":"claude:blw_t4_rep1","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"450e75d8523645ef8488cbddf7bdd3d5c36ef359","native_ref":"claude-agent:blw_t4_rep1","predecessor":"claude:blw_t4","trigger":"user-directed","stopped":"claude:blw_t4 ended after its ticket commit db1bdc5d and its BW-C freeze and verification entries in record commit 3dd6beda","preserved":"no uncommitted work; the ticket commit db1bdc5d and the record commit 3dd6beda on the FT342-FT253 integration branch"}],"5-hold-main-for-an-open-build.md":[{"session":"claude:blw_t5","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"c470114448c428d4d7c3a2cf918436d3b3c367b3","native_ref":"claude-agent:blw_t5"},{"session":"claude:blw_t5_rep1","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"d5b5c1ae81fc92162eb843b050c074a66be89855","native_ref":"claude-agent:blw_t5_rep1","predecessor":"claude:blw_t5","trigger":"user-directed","stopped":"claude:blw_t5 ended after its ticket commit bd34ab9d and its BW-D verification entries in record commit debd4735","preserved":"no uncommitted work; the ticket commit bd34ab9d and the record commit debd4735 on the FT342-FT253 integration branch"}],"6-open-and-close-chunk-gaps.md":[{"session":"claude:blw_t6","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"e50fb99d324226ed149b37429175b1fe21b1c5f7","native_ref":"claude-agent:blw_t6"},{"session":"claude:blw_t6_rep1","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"da8a1550ee061b517fd53f1618e3675e2dbec75f","native_ref":"claude-agent:blw_t6_rep1","predecessor":"claude:blw_t6","trigger":"user-directed","stopped":"claude:blw_t6 ended after its ticket commit b68ee13d and its BW-D freeze and verification entries in record commit e09c7f3f","preserved":"no uncommitted work; the ticket commit b68ee13d and the record commit e09c7f3f on the FT342-FT253 integration branch"}],"7-grant-a-reviewer-override.md":[{"session":"claude:blw_t7","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"9bef27b3b05bd8214f8142db8e0a36abe1d6cbb9","native_ref":"claude-agent:blw_t7"},{"session":"claude:blw_t7_rep1","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"76fdea60b9b2a78f3e78a5a8067e11e7008ffc2b","native_ref":"claude-agent:blw_t7_rep1","predecessor":"claude:blw_t7","trigger":"user-directed","stopped":"claude:blw_t7 ended after its ticket commit ccd2a6cd and its BW-E freeze and verification entries in record commit 2fa2960e","preserved":"no uncommitted work; the ticket commit ccd2a6cd and the record commit 2fa2960e on the FT342-FT253 integration branch"}],"8-document-the-landing-window.md":[{"session":"claude:blw_t8","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"8f593c5f8bc4ef0de7da876d43d3599a40e44f30","native_ref":"claude-agent:blw_t8"},{"session":"claude:blw_t8_rep1","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"fae727cb3567fbed037fc6df7efc18635aad8a2d","native_ref":"claude-agent:blw_t8_rep1","predecessor":"claude:blw_t8","trigger":"user-directed","stopped":"claude:blw_t8 ended after its ticket commit 835b31be and its BW-F freeze and verification entries in record commit cff2aec3","preserved":"no uncommitted work; the ticket commit 835b31be and the record commit cff2aec3 on the FT342-FT253 integration branch"},{"session":"claude:blw_t8_rep2","assignment":"5e861f162efb8534058c864f8d4b9594","model":"opus","effort":"high","source":"ea8917f0ca1f717bbf41f2bd8bad1a2f81d1e180","native_ref":"claude-agent:blw_t8_rep2","predecessor":"claude:blw_t8_rep1","trigger":"user-directed","stopped":"claude:blw_t8_rep1 ended after its repair commit ca2360e4 and its BW-F refreeze and verification entries in record commit d23be037","preserved":"no uncommitted work; the repair commit ca2360e4 and the record commit d23be037 on the FT342-FT253 integration branch"}]}},"chunks":[{"id":"BW-A","tickets":["1-hold-the-landing-lease.md"],"verification":[{"id":"t1-land-focused","command":"bench test --package ./internal/worktree --run 'TestLandHoldsTheDestinationLease|TestSecondLandingMeetsTheLease|TestLandReleasesTheLeaseOnRefusal|TestLandResumeTakesNoLease|TestLeaseLockUnavailable|TestLandingRefusalRegistryHasAProducingFixture'","probe":"Omit the lease acquire call that the landing makes after its admission proofs and before landReviewed, so that a second landing reaches composition and the gate lock. TestSecondLandingMeetsTheLease turns red.","ticket":"1-hold-the-landing-lease.md"},{"id":"t1-lease-focused","command":"bench test --package ./internal/commitment/repository --run 'TestPublishReleasesTheLeaseInItsDecision|TestLeaseTakesOverADeadOwner'","ticket":"1-hold-the-landing-lease.md"},{"id":"t1-records-focused","command":"bench test --package ./internal/intent --run 'TestValidateCommitmentRefusesDuplicateBuildRecords|TestTolerantReadKeepsTheBuildRecords|TestIntentReExportsEveryMovedLedgerName'","ticket":"1-hold-the-landing-lease.md"},{"id":"t1-inventory-focused","command":"bench test --package ./internal/conformance --run 'TestCommitmentRecordInventoryNamesTheBuildRecords'","ticket":"1-hold-the-landing-lease.md"},{"id":"t1-floor","command":"bench test --package ./internal/intent/... --package ./internal/commitment/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/gate/... --package ./internal/gocache --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance","ticket":"1-hold-the-landing-lease.md"},{"id":"t1-data-handling","command":"bench test --check data-handling-derivation","ticket":"1-hold-the-landing-lease.md"},{"id":"t1-system-lease","command":"bench test --check system --run TestTwoLandingProcessesShareOneLease","ticket":"1-hold-the-landing-lease.md"},{"id":"t1-root-conformance","command":"bench test --check root-conformance","ticket":"1-hold-the-landing-lease.md"}]},{"id":"BW-B","tickets":["2-route-a-moved-destination.md"],"verification":[{"id":"t2-land-focused","command":"bench test --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'","probe":"Swap the ancestry condition that maps a completion proof cause to land-destination-moved, so that a completion proof cause over a moved destination routes to land-handback. TestCompletionOverAMovedDestinationNamesTheFold turns red.","ticket":"2-route-a-moved-destination.md"},{"id":"t2-authorization-focused","command":"bench test --package ./internal/gate/authorization --run 'TestCompletionProofCauseTravelsAsAType'","ticket":"2-route-a-moved-destination.md"},{"id":"t2-floor","command":"bench test --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/commit --package ./cmd/bench --package ./internal/conformance","ticket":"2-route-a-moved-destination.md"},{"id":"t2-system-race","command":"bench test --check system --run TestWorktreeLandPublicRaceAndRerun","ticket":"2-route-a-moved-destination.md"},{"id":"t2-root-conformance","command":"bench test --check root-conformance","ticket":"2-route-a-moved-destination.md"}]},{"id":"BW-C","tickets":["3-record-a-fold.md","4-review-a-fold-resolution.md"],"verification":[{"id":"t3-record-focused","command":"bench test --package ./internal/reviewrecord/recordcmd --run 'TestRecordFold'","ticket":"3-record-a-fold.md"},{"id":"t3-chain-focused","command":"bench test --package ./internal/reviewrecord --run 'TestFoldChainAcceptsARecordedFoldBetweenChunks|TestFoldCoversACompletionSourcePastTheLastChunk'","probe":"Omit the fold-coverage branch for a later chunk base in checkSource, so that the record commit after a recorded fold reads as a chain gap. TestFoldChainAcceptsARecordedFoldBetweenChunks turns red.","ticket":"3-record-a-fold.md"},{"id":"t3-gate-focused","command":"bench test --package ./internal/gate --run 'TestReviewCheckpointChainGapNamesTheExpectedBase'","ticket":"3-record-a-fold.md"},{"id":"t3-floor","command":"bench test --package ./internal/reviewrecord/... --package ./internal/testreport --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance --package ./internal/git","ticket":"3-record-a-fold.md"},{"id":"t3-root-conformance","command":"bench test --check root-conformance","ticket":"3-record-a-fold.md"},{"id":"t4-review-focused","command":"bench test --package ./internal/reviewrecord --run 'TestFoldResolutionNeedsReview|TestFoldDerivedFinalRequirements'","probe":"Omit the merged-test derived requirements that checkCompletion adds for each fold package, so that the complete checkpoint passes without a merged-test result. TestFoldDerivedFinalRequirements turns red.","ticket":"4-review-a-fold-resolution.md"},{"id":"t4-preflight-focused","command":"bench test --package ./internal/preflight --run 'TestPathsAuthorizedAdmitsARecordedResolutionPath'","ticket":"4-review-a-fold-resolution.md"},{"id":"t4-route-focused","command":"bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'","ticket":"4-review-a-fold-resolution.md"},{"id":"t4-help-focused","command":"bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'","ticket":"4-review-a-fold-resolution.md"},{"id":"t4-floor","command":"bench test --package ./internal/reviewrecord/... --package ./internal/preflight/... --package ./internal/gate/... --package ./internal/worktree --package ./internal/refusalroute --package ./cmd/bench --package ./internal/conformance --package ./internal/git","ticket":"4-review-a-fold-resolution.md"},{"id":"t4-root-conformance","command":"bench test --check root-conformance","ticket":"4-review-a-fold-resolution.md"}]},{"id":"BW-D","tickets":["5-hold-main-for-an-open-build.md","6-open-and-close-chunk-gaps.md"],"verification":[{"id":"t5-land-focused","command":"bench test --package ./internal/worktree --run 'TestLandRefusesAnUnrelatedLandingInAnOpenBuild|TestWindowAdmitsTheBuildsOwnLanding|TestWindowClosesAtCompletion|TestWindowClosesOnBlock|TestWindowClosesOnAbandon|TestWindowRecheckAtPublish|TestWindowWinsOverTheLease|TestLandingRefusalRegistryHasAProducingFixture'","probe":"Omit the window decision from the publish decision in PublishAdmitted, so that only the acquire decision decides the window. TestWindowRecheckAtPublish turns red.","ticket":"5-hold-main-for-an-open-build.md"},{"id":"t5-window-focused","command":"bench test --package ./internal/commitment/repository --run 'TestWindowNamesTheGapToWaitFor|TestOpenBuildsDeriveFromActiveOwners|TestWindowNeedsAGapOfEveryOtherBuild|TestStartDropsAStaleGap|TestClosersDropTheGapRecord|TestWindowFailsClosedOnAGitFault'","ticket":"5-hold-main-for-an-open-build.md"},{"id":"t5-floor","command":"bench test --package ./internal/intent/... --package ./internal/commitment/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance","ticket":"5-hold-main-for-an-open-build.md"},{"id":"t5-data-handling","command":"bench test --check data-handling-derivation","ticket":"5-hold-main-for-an-open-build.md"},{"id":"t5-system","command":"bench test --check system","ticket":"5-hold-main-for-an-open-build.md"},{"id":"t5-root-conformance","command":"bench test --check root-conformance","ticket":"5-hold-main-for-an-open-build.md"},{"id":"t6-gate-focused","command":"bench test --package ./internal/gate --run 'TestGreenChunkCheckpointOpensAGap|TestLastChunkOpensNoGap|TestRedCheckpointOpensNoGap|TestUnboundCheckpointOpensNoGap'","ticket":"6-open-and-close-chunk-gaps.md"},{"id":"t6-dispatch-focused","command":"bench test --package ./internal/reviewrecord/recordcmd --run 'TestFirstDispatchClosesTheGap|TestDispatchRefusesAnUnfoldedMain|TestDispatchInsideAChunkKeepsTheGap'","probe":"Omit the default-branch ancestry refusal from the first-dispatch ledger decision, so that a dispatch over an unfolded main closes the gap. TestDispatchRefusesAnUnfoldedMain turns red.","ticket":"6-open-and-close-chunk-gaps.md"},{"id":"t6-land-focused","command":"bench test --package ./internal/worktree --run 'TestOpenGapAdmitsAnUnrelatedLanding|TestWindowRecheckAtPublish'","ticket":"6-open-and-close-chunk-gaps.md"},{"id":"t6-floor","command":"bench test --package ./internal/commitment/... --package ./internal/gate/... --package ./internal/reviewrecord/... --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance","ticket":"6-open-and-close-chunk-gaps.md"},{"id":"t6-system","command":"bench test --check system","ticket":"6-open-and-close-chunk-gaps.md"},{"id":"t6-root-conformance","command":"bench test --check root-conformance","ticket":"6-open-and-close-chunk-gaps.md"}]},{"id":"BW-E","tickets":["7-grant-a-reviewer-override.md"],"verification":[{"id":"t7-verb-focused","command":"bench test --package ./internal/commitment/commitcmd --run 'TestOverride'","probe":"Omit the terminal predicate check from the override verb, so that a pipe on stdin reaches the confirmation read. TestOverrideRefusesWithoutATerminal turns red.","ticket":"7-grant-a-reviewer-override.md"},{"id":"t7-land-focused","command":"bench test --package ./internal/worktree --run 'TestOverrideAdmitsOneLandingThroughEveryWindow|TestOverrideIsConsumedAtPublish|TestOverrideSurvivesARefusedLanding'","ticket":"7-grant-a-reviewer-override.md"},{"id":"t7-guard-focused","command":"bench test --package ./internal/benchguard --run 'TestGuardDeniesTheOverrideVerb'","ticket":"7-grant-a-reviewer-override.md"},{"id":"t7-help-focused","command":"bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete|TestFollowOnGuardDeniesTheOverrideEnvelope'","ticket":"7-grant-a-reviewer-override.md"},{"id":"t7-floor","command":"bench test --package ./internal/commitment/... --package ./internal/intent/... --package ./internal/refusalroute --package ./internal/benchguard --package ./internal/guards --package ./internal/anchors --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance","ticket":"7-grant-a-reviewer-override.md"},{"id":"t7-data-handling","command":"bench test --check data-handling-derivation","ticket":"7-grant-a-reviewer-override.md"},{"id":"t7-root-conformance","command":"bench test --check root-conformance","ticket":"7-grant-a-reviewer-override.md"}]},{"id":"BW-F","tickets":["8-document-the-landing-window.md"],"verification":[{"id":"t8-anchors-focused","command":"bench test --package ./internal/anchors --run 'TestChunkChainAnchors'","probe":"Omit the forbid row for the retired sentence that folds main at the start of the last chunk from internal/anchors/registry_chunk_chain.go, so that the old sentence passes the registry. TestChunkChainAnchors turns red.","ticket":"8-document-the-landing-window.md"},{"id":"t8-floor","command":"bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest --package ./internal/refusalroute --package ./internal/worktree","ticket":"8-document-the-landing-window.md"},{"id":"t8-guidance","command":"bench test --check docs-currency-workflow","ticket":"8-document-the-landing-window.md"},{"id":"t8-conformance-meta","command":"bench test --check conformance-meta","ticket":"8-document-the-landing-window.md"},{"id":"t8-prose","command":"bench test --check prose","ticket":"8-document-the-landing-window.md"},{"id":"t8-root-conformance","command":"bench test --check root-conformance","ticket":"8-document-the-landing-window.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/build-landing-window/spec.md"},{"id":"intent","command":"bench test --package ./internal/intent/..."},{"id":"commitment","command":"bench test --package ./internal/commitment/..."},{"id":"reviewrecord","command":"bench test --package ./internal/reviewrecord/..."},{"id":"gate","command":"bench test --package ./internal/gate/..."},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ## Testing decisions
@@ -592,89 +490,89 @@ Every expected TOON row derives through `toon.Table`, so a numeric-looking chunk
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| BW1 | 1, 9 | A landing that reaches its gate holds a lease record for `refs/heads/main` with its own assignment id in the ledger | planned internal/worktree/land_lease_test.go (TestLandHoldsTheDestinationLease) | A lease taken after the gate leaves the composition unleased. |
-| BW2 | 2, 8 | A second landing during the first landing's gate refuses with the detail `landing destination refs/heads/main is leased by assignment <first-id>` | planned internal/worktree/land_lease_test.go (TestSecondLandingMeetsTheLease) | The current second landing meets the gate lock and names `bench doctor`. |
-| BW3 | 3 | That refusal's `next=` begins with `wait until the landing of assignment <first-id> ends` and ends with the caller's rerun | planned internal/worktree/land_lease_test.go (TestSecondLandingMeetsTheLease) | A route without the wait sends the operator to rerun into the same refusal. |
-| BW4 | 2 | The second landing runs no composition and no gate, so the gate tally holds one run | planned internal/worktree/land_lease_test.go (TestSecondLandingMeetsTheLease) | A lease checked after composition spends a gate run before the refusal. |
-| BW5 | 8 | The second landing's output holds no `bench doctor` and no `gate owner: pid` | planned internal/worktree/land_lease_test.go (TestSecondLandingMeetsTheLease) | A lease that loses the order to the gate lock keeps the old faces. |
-| BW6 | 4 | After a published landing, the ledger holds no lease for the destination | planned internal/worktree/land_lease_test.go (TestLandHoldsTheDestinationLease) | A lease kept past publish blocks the next landing. |
-| BW7 | 4 | A competing acquire that waits on the intent lock during the publish decision sees no lease | planned internal/commitment/repository/lease_test.go (TestPublishReleasesTheLeaseInItsDecision) | A release in a later transaction leaves a window where the published landing still holds the lease. |
-| BW8 | 5 | After a landing refuses red at its gate, the next landing acquires the lease | planned internal/worktree/land_lease_test.go (TestLandReleasesTheLeaseOnRefusal) | A release only on publish blocks the destination after every red. |
-| BW9 | 6 | A seeded lease record for another assignment, with no holder of the lock file, is replaced by the next landing's record | planned internal/commitment/repository/lease_test.go (TestLeaseTakesOverADeadOwner) | A presence-only lease refuses forever after a kill. |
-| BW10 | 6, 1 | Two landing processes contend, and the loser refuses with the lease detail while the winner publishes | planned internal/systemtest/owner_land_lease_test.go (TestTwoLandingProcessesShareOneLease) | An in-process map alone cannot see a second process. |
-| BW11 | 7 | A `--resume` of a published landing completes while another landing holds the lease | planned internal/worktree/land_lease_test.go (TestLandResumeTakesNoLease) | A resume that takes the lease waits on unrelated work. |
-| BW12 | 10 | `ValidateCommitment` refuses a ledger with two leases on one destination | planned internal/intent/build_records_test.go (TestValidateCommitmentRefusesDuplicateBuildRecords) | A hand-edited second owner then authorizes two landings. |
-| BW13 | 12 | A tolerant transaction over a ledger that holds a lease, a gap, and an override writes all three back | planned internal/intent/build_records_test.go (TestTolerantReadKeepsTheBuildRecords) | The second field list drops a new record on a tolerant write. |
-| BW14 | 11 | The commitment record inventory names `commitment.leases.destination`, `commitment.gaps.chunk`, and `commitment.overrides.reason` | planned internal/conformance/commitment_record_test.go (TestCommitmentRecordInventoryNamesTheBuildRecords) | An undocumented field passes only if the inventory skips the new lists. |
-| BW15 | 13 | A directory at the landing lock path refuses with `landing lease unavailable:` before composition | planned internal/worktree/land_lease_test.go (TestLeaseLockUnavailable) | A lease fault that proceeds runs the landing without a lease. |
+| BW1 | 1, 9 | A landing that reaches its gate holds a lease record for `refs/heads/main` with its own assignment id in the ledger | `internal/worktree/land_lease_test.go` (`TestLandHoldsTheDestinationLease`) | A lease taken after the gate leaves the composition unleased. |
+| BW2 | 2, 8 | A second landing during the first landing's gate refuses with the detail `landing destination refs/heads/main is leased by assignment <first-id>` | `internal/worktree/land_lease_test.go` (`TestSecondLandingMeetsTheLease`) | The current second landing meets the gate lock and names `bench doctor`. |
+| BW3 | 3 | That refusal's `next=` begins with `wait until the landing of assignment <first-id> ends` and ends with the caller's rerun | `internal/worktree/land_lease_test.go` (`TestSecondLandingMeetsTheLease`) | A route without the wait sends the operator to rerun into the same refusal. |
+| BW4 | 2 | The second landing runs no composition and no gate, so the gate tally holds one run | `internal/worktree/land_lease_test.go` (`TestSecondLandingMeetsTheLease`) | A lease checked after composition spends a gate run before the refusal. |
+| BW5 | 8 | The second landing's output holds no `bench doctor` and no `gate owner: pid` | `internal/worktree/land_lease_test.go` (`TestSecondLandingMeetsTheLease`) | A lease that loses the order to the gate lock keeps the old faces. |
+| BW6 | 4 | After a published landing, the ledger holds no lease for the destination | `internal/worktree/land_lease_test.go` (`TestLandHoldsTheDestinationLease`) | A lease kept past publish blocks the next landing. |
+| BW7 | 4 | A competing acquire that waits on the intent lock during the publish decision sees no lease | `internal/commitment/repository/lease_test.go` (`TestPublishReleasesTheLeaseInItsDecision`) | A release in a later transaction leaves a window where the published landing still holds the lease. |
+| BW8 | 5 | After a landing refuses red at its gate, the next landing acquires the lease | `internal/worktree/land_lease_test.go` (`TestLandReleasesTheLeaseOnRefusal`) | A release only on publish blocks the destination after every red. |
+| BW9 | 6 | A seeded lease record for another assignment, with no holder of the lock file, is replaced by the next landing's record | `internal/commitment/repository/lease_test.go` (`TestLeaseTakesOverADeadOwner`) | A presence-only lease refuses forever after a kill. |
+| BW10 | 6, 1 | Two landing processes contend, and the loser refuses with the lease detail while the winner publishes | `internal/systemtest/owner_land_lease_test.go` (`TestTwoLandingProcessesShareOneLease`) | An in-process map alone cannot see a second process. |
+| BW11 | 7 | A `--resume` of a published landing completes while another landing holds the lease | `internal/worktree/land_lease_test.go` (`TestLandResumeTakesNoLease`) | A resume that takes the lease waits on unrelated work. |
+| BW12 | 10 | `ValidateCommitment` refuses a ledger with two leases on one destination | `internal/intent/build_records_test.go` (`TestValidateCommitmentRefusesDuplicateBuildRecords`) | A hand-edited second owner then authorizes two landings. |
+| BW13 | 12 | A tolerant transaction over a ledger that holds a lease, a gap, and an override writes all three back | `internal/intent/build_records_test.go` (`TestTolerantReadKeepsTheBuildRecords`) | The second field list drops a new record on a tolerant write. |
+| BW14 | 11 | The commitment record inventory names `commitment.leases.destination`, `commitment.gaps.chunk`, and `commitment.overrides.reason` | `internal/conformance/commitment_record_test.go` (`TestCommitmentRecordInventoryNamesTheBuildRecords`) | An undocumented field passes only if the inventory skips the new lists. |
+| BW15 | 13 | A directory at the landing lock path refuses with `landing lease unavailable:` before composition | `internal/worktree/land_lease_test.go` (`TestLeaseLockUnavailable`) | A lease fault that proceeds runs the landing without a lease. |
 | BW16 | 2 | The recovery matrix and the landing face fixtures hold `land-lease-held` | `internal/worktree/identity_component_test.go` (`TestLandingRefusalRegistryHasAProducingFixture`) | A face without a producing fixture reds the registry test. |
-| BW17 | 59 | A completion landing over a destination with one new commit refuses with face `land-destination-moved` | planned internal/worktree/land_moved_destination_test.go (TestCompletionOverAMovedDestinationNamesTheFold) | The current route is `land-infrastructure`. |
-| BW18 | 59 | That refusal's `next=` holds `bench worktree merge --from main` and ends with the caller's rerun | planned internal/worktree/land_moved_destination_test.go (TestCompletionOverAMovedDestinationNamesTheFold) | A route that keeps the family word without the merge command passes a token check. |
-| BW19 | 59 | That refusal's output holds no `bench doctor` | planned internal/worktree/land_moved_destination_test.go (TestCompletionOverAMovedDestinationNamesTheFold) | The infrastructure face survives beside the new face. |
+| BW17 | 59 | A completion landing over a destination with one new commit refuses with face `land-destination-moved` | `internal/worktree/land_moved_destination_test.go` (`TestCompletionOverAMovedDestinationNamesTheFold`) | The current route is `land-infrastructure`. |
+| BW18 | 59 | That refusal's `next=` holds `bench worktree merge --from main` and ends with the caller's rerun | `internal/worktree/land_moved_destination_test.go` (`TestCompletionOverAMovedDestinationNamesTheFold`) | A route that keeps the family word without the merge command passes a token check. |
+| BW19 | 59 | That refusal's output holds no `bench doctor` | `internal/worktree/land_moved_destination_test.go` (`TestCompletionOverAMovedDestinationNamesTheFold`) | The infrastructure face survives beside the new face. |
 | BW20 | 60 | A raw commit on the destination during the loser's gate gives a refusal whose `next=` holds `bench worktree merge --from main` | `internal/systemtest/owner_land_race_test.go` (`TestWorktreeLandPublicRaceAndRerun`) | The post-gate recheck still routes to the reviewer handback. |
-| BW21 | 61 | A destination that moves inside the publication gap gives a `TipMovedError` refusal with face `land-destination-moved` | planned internal/worktree/land_moved_destination_test.go (TestCompareAndSwapRefusalNamesTheFold) | The landing gives the compare-and-swap refusal no face of its own. |
-| BW22 | 62 | An ignored-file change in the destination checkout during the gate, with an unmoved ref, keeps face `land-handback` | planned internal/worktree/land_moved_destination_test.go (TestCheckoutChangeWithoutARefMoveKeepsTheHandback) | A face picked by the recheck alone prescribes a fold for an ignored file. |
-| BW23 | 63 | A completion proof fault over a source that holds the destination base gives face `land-handback` | planned internal/worktree/land_moved_destination_test.go (TestProofFaultOverACurrentSourceHandsBack) | An ancestry-blind mapping prescribes a fold where none helps. |
-| BW24 | 64 | `authorization.Result` carries the completion proof cause as a typed field when the gate refuses a completion proof | planned internal/gate/authorization/authorization_test.go (TestCompletionProofCauseTravelsAsAType) | A reason-string match breaks when the proof text changes. |
-| BW25 | 46 | `bench record fold` over a fold that `bench worktree merge` published writes entry `F1` with `After`, `From`, `Commit`, `Incoming`, and the source digest | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldWritesTheFoldEntry) | A form that writes no parents cannot bind the fold to the chain. |
-| BW26 | 47 | That clean fold's `Resolution` is empty | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldWritesTheFoldEntry) | A resolution that lists every merged path demands review of a clean fold. |
-| BW27 | 48 | A hand-resolved conflict fold lists exactly the conflicted path in `Resolution` | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldNamesTheResolutionPaths) | A first-parent diff lists every merged path. |
-| BW28 | 48 | A clean fold with one extra hand edit lists exactly the edited path in `Resolution` | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldNamesTheResolutionPaths) | A conflict-only rule hides a hand edit in a clean fold. |
-| BW29 | 48 | A resolution path that holds a space and a double quote is recorded with its exact bytes | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldNamesTheResolutionPaths) | A quoted-header parse records `"a \"b"` instead of the path. |
-| BW30 | 53 | A source that is not HEAD refuses with `is not HEAD` before any write | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldRefusesANonFold) | A form that records an old commit binds the wrong fold. |
-| BW31 | 53 | A one-parent commit refuses with `is not a two-parent merge` | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldRefusesANonFold) | Any commit then passes as a fold. |
-| BW32 | 53 | A merge of a sibling tip outside the default branch refuses with `does not merge a default-branch commit` | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldRefusesANonFold) | A sibling fold skips the chunk review. |
-| BW33 | 53 | A fold whose first parent holds an unreviewed code commit refuses with `does not follow the reviewed source` | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldRefusesANonFold) | A fold record covers build work that no chunk reviewed. |
-| BW34 | 50, 58 | A chunk-2 checkpoint passes when chunk 2's base is the record commit that follows a recorded clean fold over the chunk-1 tip | planned internal/reviewrecord/fold_test.go (TestFoldChainAcceptsARecordedFoldBetweenChunks) | The current chain refuses that base as a stale gap. |
-| BW35 | 52 | The same chunk-2 checkpoint without the fold entry refuses as a repair of form `fold` | planned internal/reviewrecord/fold_test.go (TestFoldChainAcceptsARecordedFoldBetweenChunks) | A chain that accepts any merge base skips the fold record. |
+| BW21 | 61 | A destination that moves inside the publication gap gives a `TipMovedError` refusal with face `land-destination-moved` | `internal/worktree/land_moved_destination_test.go` (`TestCompareAndSwapRefusalNamesTheFold`) | The landing gives the compare-and-swap refusal no face of its own. |
+| BW22 | 62 | An ignored-file change in the destination checkout during the gate, with an unmoved ref, keeps face `land-handback` | `internal/worktree/land_moved_destination_test.go` (`TestCheckoutChangeWithoutARefMoveKeepsTheHandback`) | A face picked by the recheck alone prescribes a fold for an ignored file. |
+| BW23 | 63 | A completion proof fault over a source that holds the destination base gives face `land-handback` | `internal/worktree/land_moved_destination_test.go` (`TestProofFaultOverACurrentSourceHandsBack`) | An ancestry-blind mapping prescribes a fold where none helps. |
+| BW24 | 64 | `authorization.Result` carries the completion proof cause as a typed field when the gate refuses a completion proof | `internal/gate/authorization/authorization_test.go` (`TestCompletionProofCauseTravelsAsAType`) | A reason-string match breaks when the proof text changes. |
+| BW25 | 46 | `bench record fold` over a fold that `bench worktree merge` published writes entry `F1` with `After`, `From`, `Commit`, `Incoming`, and the source digest | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldWritesTheFoldEntry`) | A form that writes no parents cannot bind the fold to the chain. |
+| BW26 | 47 | That clean fold's `Resolution` is empty | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldWritesTheFoldEntry`) | A resolution that lists every merged path demands review of a clean fold. |
+| BW27 | 48 | A hand-resolved conflict fold lists exactly the conflicted path in `Resolution` | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldNamesTheResolutionPaths`) | A first-parent diff lists every merged path. |
+| BW28 | 48 | A clean fold with one extra hand edit lists exactly the edited path in `Resolution` | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldNamesTheResolutionPaths`) | A conflict-only rule hides a hand edit in a clean fold. |
+| BW29 | 48 | A resolution path that holds a space and a double quote is recorded with its exact bytes | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldNamesTheResolutionPaths`) | A quoted-header parse records `"a \"b"` instead of the path. |
+| BW30 | 53 | A source that is not HEAD refuses with `is not HEAD` before any write | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldRefusesANonFold`) | A form that records an old commit binds the wrong fold. |
+| BW31 | 53 | A one-parent commit refuses with `is not a two-parent merge` | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldRefusesANonFold`) | Any commit then passes as a fold. |
+| BW32 | 53 | A merge of a sibling tip outside the default branch refuses with `does not merge a default-branch commit` | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldRefusesANonFold`) | A sibling fold skips the chunk review. |
+| BW33 | 53 | A fold whose first parent holds an unreviewed code commit refuses with `does not follow the reviewed source` | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldRefusesANonFold`) | A fold record covers build work that no chunk reviewed. |
+| BW34 | 50, 58 | A chunk-2 checkpoint passes when chunk 2's base is the record commit that follows a recorded clean fold over the chunk-1 tip | `internal/reviewrecord/fold_test.go` (`TestFoldChainAcceptsARecordedFoldBetweenChunks`) | The current chain refuses that base as a stale gap. |
+| BW35 | 52 | The same chunk-2 checkpoint without the fold entry refuses as a repair of form `fold` | `internal/reviewrecord/fold_test.go` (`TestFoldChainAcceptsARecordedFoldBetweenChunks`) | A chain that accepts any merge base skips the fold record. |
 | BW36 | 52 | The chain-gap refusal holds `a default-branch merge lands before the first chunk or as a recorded fold` | `internal/gate/review_checkpoint_commits_test.go` (`TestReviewCheckpointChainGapNamesTheExpectedBase`) | The old text sends the operator to a last-chunk fold. |
-| BW37 | 51 | `bench record completion` passes at a source past the last chunk tip when a clean recorded fold covers it | planned internal/reviewrecord/fold_test.go (TestFoldCoversACompletionSourcePastTheLastChunk) | The current refusal demands a refreeze and a full re-record. |
-| BW38 | 52 | A completion at that source without the fold entry refuses with `stale reviewed source` as a repair of form `fold` | planned internal/reviewrecord/fold_test.go (TestFoldCoversACompletionSourcePastTheLastChunk) | A refusal without the form leaves the operator on the refreeze route. |
-| BW39 | 49 | A fold with a non-empty resolution and two passing axes refuses the checkpoint until the third axis passes | planned internal/reviewrecord/fold_test.go (TestFoldResolutionNeedsReview) | A rule that counts one review passes a partly reviewed repair. |
-| BW40 | 47 | A fold with an empty resolution and no review passes the checkpoint | planned internal/reviewrecord/fold_test.go (TestFoldResolutionNeedsReview) | A rule that always demands review costs a round for a clean fold. |
-| BW41 | 54, 55 | A fold that brings in `pkg/a/a_test.go` stores `TestPackages` equal to `testreport.WritesFloor` over that path | planned internal/reviewrecord/recordcmd/fold_test.go (TestRecordFoldDerivesMergedTestPackages) | A second path-to-package rule drifts from the `--changed` index. |
-| BW42 | 54 | The complete checkpoint refuses until a passing final result exists for `merged-test:<package>` | planned internal/reviewrecord/fold_test.go (TestFoldDerivedFinalRequirements) | The ft336 final checks omitted the merged package and stayed green. |
-| BW43 | 56 | `paths-authorized` passes for a resolution path that the record's fold entry lists and the fence omits | planned internal/preflight/folded_main_test.go (TestPathsAuthorizedAdmitsARecordedResolutionPath) | The FT337 landing needed a fence expansion for merged paths. |
-| BW44 | 56 | `paths-authorized` stays red for the same path when no fold entry lists it | planned internal/preflight/folded_main_test.go (TestPathsAuthorizedAdmitsARecordedResolutionPath) | A rule that admits every merge path unfences the build's own writes. |
+| BW37 | 51 | `bench record completion` passes at a source past the last chunk tip when a clean recorded fold covers it | `internal/reviewrecord/fold_test.go` (`TestFoldCoversACompletionSourcePastTheLastChunk`) | The current refusal demands a refreeze and a full re-record. |
+| BW38 | 52 | A completion at that source without the fold entry refuses with `stale reviewed source` as a repair of form `fold` | `internal/reviewrecord/fold_test.go` (`TestFoldCoversACompletionSourcePastTheLastChunk`) | A refusal without the form leaves the operator on the refreeze route. |
+| BW39 | 49 | A fold with a non-empty resolution and two passing axes refuses the checkpoint until the third axis passes | `internal/reviewrecord/fold_test.go` (`TestFoldResolutionNeedsReview`) | A rule that counts one review passes a partly reviewed repair. |
+| BW40 | 47 | A fold with an empty resolution and no review passes the checkpoint | `internal/reviewrecord/fold_test.go` (`TestFoldResolutionNeedsReview`) | A rule that always demands review costs a round for a clean fold. |
+| BW41 | 54, 55 | A fold that brings in `pkg/a/a_test.go` stores `TestPackages` equal to `testreport.WritesFloor` over that path | `internal/reviewrecord/recordcmd/fold_test.go` (`TestRecordFoldDerivesMergedTestPackages`) | A second path-to-package rule drifts from the `--changed` index. |
+| BW42 | 54 | The complete checkpoint refuses until a passing final result exists for `merged-test:<package>` | `internal/reviewrecord/fold_test.go` (`TestFoldDerivedFinalRequirements`) | The ft336 final checks omitted the merged package and stayed green. |
+| BW43 | 56 | `paths-authorized` passes for a resolution path that the record's fold entry lists and the fence omits | `internal/preflight/folded_main_test.go` (`TestPathsAuthorizedAdmitsARecordedResolutionPath`) | The FT337 landing needed a fence expansion for merged paths. |
+| BW44 | 56 | `paths-authorized` stays red for the same path when no fold entry lists it | `internal/preflight/folded_main_test.go` (`TestPathsAuthorizedAdmitsARecordedResolutionPath`) | A rule that admits every merge path unfences the build's own writes. |
 | BW45 | 57 | The `merge-fold-red` route names the hand merge, `bench commit`, and `bench record fold`, and names no `FT342` | `internal/worktree/merge_route_test.go` (`TestMergeFacesFollowTheirRoutes`) | The current route names the open FT342 question. |
-| BW46 | 14, 17 | After `bench commitment start` binds a staged spec, an unbound landing refuses with face `land-build-window` | planned internal/worktree/land_window_test.go (TestLandRefusesAnUnrelatedLandingInAnOpenBuild) | The current landing admits any landing during a build. |
-| BW47 | 15, 17 | That refusal names the outcome, the deliverable, and `its first chunk checkpoint` | planned internal/worktree/land_window_test.go (TestLandRefusesAnUnrelatedLandingInAnOpenBuild) | A refusal without the gap leaves the operator to poll. |
-| BW48 | 15 | With a closed gap record for chunk `C2` that is not last, the refusal names `the checkpoint of chunk C2` | planned internal/commitment/repository/window_test.go (TestWindowNamesTheGapToWaitFor) | A refusal that names the recorded chunk's predecessor sends the operator to a past gap. |
-| BW49 | 15, 27 | With a closed gap record whose `Last` is true, the refusal names `its completion landing` | planned internal/commitment/repository/window_test.go (TestWindowNamesTheGapToWaitFor) | A refusal that names a checkpoint after the last chunk waits for a gap that never opens. |
-| BW50 | 16 | A landing of the bound spec from a sibling assignment that `--from` bound to the build passes the window | planned internal/worktree/land_window_test.go (TestWindowAdmitsTheBuildsOwnLanding) | A rule keyed to one assignment refuses the build's own worktrees. |
-| BW51 | 18 | After the build's completion landing publishes, an unbound landing publishes | planned internal/worktree/land_window_test.go (TestWindowClosesAtCompletion) | A window kept past delivery freezes `main` for good. |
-| BW52 | 19 | After `bench commitment block` on the outcome, an unbound landing publishes | planned internal/worktree/land_window_test.go (TestWindowClosesOnBlock) | A window keyed to bindings survives the block, which keeps the binding. |
-| BW53 | 20 | After the release of every bound assignment, an unbound landing publishes | planned internal/worktree/land_window_test.go (TestWindowClosesOnAbandon) | A window keyed to the claim alone survives an abandoned build. |
-| BW54 | 20 | With one of two bound assignments released, an unbound landing still refuses | planned internal/commitment/repository/window_test.go (TestOpenBuildsDeriveFromActiveOwners) | A rule that needs every bound assignment active closes the window early. |
-| BW55 | 21 | A started outcome whose deliverable is a tickets-only folder refuses no landing | planned internal/commitment/repository/window_test.go (TestOpenBuildsDeriveFromActiveOwners) | A window for every binding holds `main` for a one-ticket outcome. |
-| BW56 | 22, 33 | A build that starts during an unrelated landing's gate refuses that landing at publish, and `main` stays unchanged | planned internal/worktree/land_window_test.go (TestWindowRecheckAtPublish) | A check only at acquisition lets the landing publish under the new build. |
-| BW57 | 23 | A light-path landing with a tickets-only `--spec` refuses with `land-build-window` while a build is outside a gap | planned internal/worktree/land_window_test.go (TestLandRefusesAnUnrelatedLandingInAnOpenBuild) | A rule that admits every closing landing lets the build's own light-path dispatch move `main`. |
-| BW58 | 24 | With two open builds, a landing inside build A's gap and outside build B's gap refuses and names build B | planned internal/commitment/repository/window_test.go (TestWindowNeedsAGapOfEveryOtherBuild) | A rule that checks one build ignores the parallel grant. |
-| BW59 | 25 | With an open build outside a gap and a live lease holder, the refusal is the window refusal | planned internal/worktree/land_window_test.go (TestWindowWinsOverTheLease) | The reversed order sends the operator to wait for a lease and then meet the window. |
-| BW60 | 26 | A green `bench gate --checkpoint <spec> --chunk C1` in the bound integration worktree writes an open gap for chunk `C1` | planned internal/gate/chunk_gap_test.go (TestGreenChunkCheckpointOpensAGap) | No gap opens, so no landing can ever land during the build. |
-| BW61 | 29 | During that open gap, an unbound landing publishes | planned internal/worktree/land_window_test.go (TestOpenGapAdmitsAnUnrelatedLanding) | A window that ignores the gap record refuses every landing. |
-| BW62 | 27 | A green checkpoint of the plan's last chunk writes no gap | planned internal/gate/chunk_gap_test.go (TestLastChunkOpensNoGap) | A gap after the last chunk lets `main` move after the freeze. |
-| BW63 | 28 | A red chunk checkpoint writes no gap | planned internal/gate/chunk_gap_test.go (TestRedCheckpointOpensNoGap) | A gap before acceptance lets `main` move under an unreviewed chunk. |
-| BW64 | 34 | A green chunk checkpoint in an unbound worktree writes no gap | planned internal/gate/chunk_gap_test.go (TestUnboundCheckpointOpensNoGap) | Any checkpoint run then opens a gap for an unrelated build. |
-| BW65 | 30 | The first `bench record assignment` of chunk `C2` writes a closed gap for `C2` | planned internal/reviewrecord/recordcmd/dispatch_gap_test.go (TestFirstDispatchClosesTheGap) | A gap that stays open lets `main` move during chunk `C2`. |
-| BW66 | 31 | That dispatch refuses with `dispatch refused: the default branch tip` when `main` moved past HEAD | planned internal/reviewrecord/recordcmd/dispatch_gap_test.go (TestDispatchRefusesAnUnfoldedMain) | The charge then pins a base behind `main`. |
-| BW67 | 31 | That refusal names `bench worktree merge --from main` and `bench record fold` and leaves the plan fence unchanged | planned internal/reviewrecord/recordcmd/dispatch_gap_test.go (TestDispatchRefusesAnUnfoldedMain) | A refusal that writes the plan first records a dispatch that never ran. |
-| BW68 | 32 | A second dispatch inside chunk `C2` leaves the ledger bytes unchanged | planned internal/reviewrecord/recordcmd/dispatch_gap_test.go (TestDispatchInsideAChunkKeepsTheGap) | A dispatch that rewrites the record can reopen or move the gap. |
-| BW69 | 17, 30 | The first dispatch of the first chunk writes a closed gap for that chunk | planned internal/reviewrecord/recordcmd/dispatch_gap_test.go (TestFirstDispatchClosesTheGap) | Without it, the refusal cannot name the chunk to wait for. |
-| BW70 | 33 | A first dispatch that closes the gap during an unbound landing's gate refuses that landing at publish | planned internal/worktree/land_window_test.go (TestWindowRecheckAtPublish) | A landing that publishes after the close moves the dispatched chunk's base. |
-| BW71 | 35 | An override for an active assignment writes one record with its reason and prints `overridden{assignment=<id>}` | planned internal/commitment/commitcmd/override_test.go (TestOverrideWritesOneRecord) | A verb that prints success without the record admits nothing. |
-| BW72 | 36 | A landing whose assignment holds an override publishes while two builds are outside their gaps | planned internal/worktree/land_override_test.go (TestOverrideAdmitsOneLandingThroughEveryWindow) | An override scoped to one build leaves the parallel build's window shut. |
-| BW73 | 36 | A landing of another assignment still refuses while the override exists | planned internal/worktree/land_override_test.go (TestOverrideAdmitsOneLandingThroughEveryWindow) | An override that lifts the window for all landings is a second open gap. |
-| BW74 | 37 | After the overridden landing publishes, the ledger holds no override for its assignment | planned internal/worktree/land_override_test.go (TestOverrideIsConsumedAtPublish) | A kept override admits a later publication. |
-| BW75 | 38 | After the overridden landing refuses red at its gate, the override record stays | planned internal/worktree/land_override_test.go (TestOverrideSurvivesARefusedLanding) | A consumption at acquisition forces a second grant for each rerun. |
-| BW76 | 39 | With a pipe on stdin, the verb refuses with `needs the reviewer at a terminal` and writes nothing | planned internal/commitment/commitcmd/override_test.go (TestOverrideRefusesWithoutATerminal) | A verb without the predicate lets an agent tool call grant itself. |
-| BW77 | 40 | With `/dev/null` on stdin, the verb refuses with `not confirmed` and writes nothing | planned internal/commitment/commitcmd/override_test.go (TestOverrideNeedsTheTypedAssignment) | The null device passes the character-device predicate, so only the confirmation stops it. |
-| BW78 | 40 | With an injected terminal and a confirmation line that differs in one byte, the verb refuses with `not confirmed` | planned internal/commitment/commitcmd/override_test.go (TestOverrideNeedsTheTypedAssignment) | A prefix or trimmed compare accepts a wrong id. |
-| BW79 | 41 | From a Bench worktree, the verb refuses with `runs from the primary checkout` before the terminal check | planned internal/commitment/commitcmd/override_test.go (TestOverrideRefusesOutsideThePrimaryCheckout) | A worktree's own executable writes the override. |
-| BW80 | 43 | An override for an unknown assignment refuses with `is not active` | planned internal/commitment/commitcmd/override_test.go (TestOverrideRefusesAnInactiveAssignment) | A typo then grants a record that no landing uses. |
-| BW81 | 44 | A reason with a newline, and an empty reason, each refuse with the block verb's reason refusal | planned internal/commitment/commitcmd/override_test.go (TestOverrideRefusesABadReason) | A second reason rule drifts from the block verb's rule. |
-| BW82 | 42 | The follow-on guard denies `bench commitment override --assignment x --reason y` in a Bash envelope | planned internal/benchguard/benchguard_test.go (TestGuardDeniesTheOverrideVerb) | The guard classifies only follow-ons today, so the verb runs. |
-| BW83 | 42 | The guard denies `bench commitment --in primary override` and `bench worktree exec t -- bench commitment override` | planned internal/benchguard/benchguard_test.go (TestGuardDeniesTheOverrideVerb) | A first-word match misses the flag form and the child form. |
+| BW46 | 14, 17 | After `bench commitment start` binds a staged spec, an unbound landing refuses with face `land-build-window` | `internal/worktree/land_window_test.go` (`TestLandRefusesAnUnrelatedLandingInAnOpenBuild`) | The current landing admits any landing during a build. |
+| BW47 | 15, 17 | That refusal names the outcome, the deliverable, and `its first chunk checkpoint` | `internal/worktree/land_window_test.go` (`TestLandRefusesAnUnrelatedLandingInAnOpenBuild`) | A refusal without the gap leaves the operator to poll. |
+| BW48 | 15 | With a closed gap record for chunk `C2` that is not last, the refusal names `the checkpoint of chunk C2` | `internal/commitment/repository/window_test.go` (`TestWindowNamesTheGapToWaitFor`) | A refusal that names the recorded chunk's predecessor sends the operator to a past gap. |
+| BW49 | 15, 27 | With a closed gap record whose `Last` is true, the refusal names `its completion landing` | `internal/commitment/repository/window_test.go` (`TestWindowNamesTheGapToWaitFor`) | A refusal that names a checkpoint after the last chunk waits for a gap that never opens. |
+| BW50 | 16 | A landing of the bound spec from a sibling assignment that `--from` bound to the build passes the window | `internal/worktree/land_window_test.go` (`TestWindowAdmitsTheBuildsOwnLanding`) | A rule keyed to one assignment refuses the build's own worktrees. |
+| BW51 | 18 | After the build's completion landing publishes, an unbound landing publishes | `internal/worktree/land_window_test.go` (`TestWindowClosesAtCompletion`) | A window kept past delivery freezes `main` for good. |
+| BW52 | 19 | After `bench commitment block` on the outcome, an unbound landing publishes | `internal/worktree/land_window_test.go` (`TestWindowClosesOnBlock`) | A window keyed to bindings survives the block, which keeps the binding. |
+| BW53 | 20 | After the release of every bound assignment, an unbound landing publishes | `internal/worktree/land_window_test.go` (`TestWindowClosesOnAbandon`) | A window keyed to the claim alone survives an abandoned build. |
+| BW54 | 20 | With one of two bound assignments released, an unbound landing still refuses | `internal/commitment/repository/window_test.go` (`TestOpenBuildsDeriveFromActiveOwners`) | A rule that needs every bound assignment active closes the window early. |
+| BW55 | 21 | A started outcome whose deliverable is a tickets-only folder refuses no landing | `internal/commitment/repository/window_test.go` (`TestOpenBuildsDeriveFromActiveOwners`) | A window for every binding holds `main` for a one-ticket outcome. |
+| BW56 | 22, 33 | A build that starts during an unrelated landing's gate refuses that landing at publish, and `main` stays unchanged | `internal/worktree/land_window_test.go` (`TestWindowRecheckAtPublish`) | A check only at acquisition lets the landing publish under the new build. |
+| BW57 | 23 | A light-path landing with a tickets-only `--spec` refuses with `land-build-window` while a build is outside a gap | `internal/worktree/land_window_test.go` (`TestLandRefusesAnUnrelatedLandingInAnOpenBuild`) | A rule that admits every closing landing lets the build's own light-path dispatch move `main`. |
+| BW58 | 24 | With two open builds, a landing inside build A's gap and outside build B's gap refuses and names build B | `internal/commitment/repository/window_test.go` (`TestWindowNeedsAGapOfEveryOtherBuild`) | A rule that checks one build ignores the parallel grant. |
+| BW59 | 25 | With an open build outside a gap and a live lease holder, the refusal is the window refusal | `internal/worktree/land_window_test.go` (`TestWindowWinsOverTheLease`) | The reversed order sends the operator to wait for a lease and then meet the window. |
+| BW60 | 26 | A green `bench gate --checkpoint <spec> --chunk C1` in the bound integration worktree writes an open gap for chunk `C1` | `internal/gate/chunk_gap_test.go` (`TestGreenChunkCheckpointOpensAGap`) | No gap opens, so no landing can ever land during the build. |
+| BW61 | 29 | During that open gap, an unbound landing publishes | `internal/worktree/land_window_test.go` (`TestOpenGapAdmitsAnUnrelatedLanding`) | A window that ignores the gap record refuses every landing. |
+| BW62 | 27 | A green checkpoint of the plan's last chunk writes no gap | `internal/gate/chunk_gap_test.go` (`TestLastChunkOpensNoGap`) | A gap after the last chunk lets `main` move after the freeze. |
+| BW63 | 28 | A red chunk checkpoint writes no gap | `internal/gate/chunk_gap_test.go` (`TestRedCheckpointOpensNoGap`) | A gap before acceptance lets `main` move under an unreviewed chunk. |
+| BW64 | 34 | A green chunk checkpoint in an unbound worktree writes no gap | `internal/gate/chunk_gap_test.go` (`TestUnboundCheckpointOpensNoGap`) | Any checkpoint run then opens a gap for an unrelated build. |
+| BW65 | 30 | The first `bench record assignment` of chunk `C2` writes a closed gap for `C2` | `internal/reviewrecord/recordcmd/dispatch_gap_test.go` (`TestFirstDispatchClosesTheGap`) | A gap that stays open lets `main` move during chunk `C2`. |
+| BW66 | 31 | That dispatch refuses with `dispatch refused: the default branch tip` when `main` moved past HEAD | `internal/reviewrecord/recordcmd/dispatch_gap_test.go` (`TestDispatchRefusesAnUnfoldedMain`) | The charge then pins a base behind `main`. |
+| BW67 | 31 | That refusal names `bench worktree merge --from main` and `bench record fold` and leaves the plan fence unchanged | `internal/reviewrecord/recordcmd/dispatch_gap_test.go` (`TestDispatchRefusesAnUnfoldedMain`) | A refusal that writes the plan first records a dispatch that never ran. |
+| BW68 | 32 | A second dispatch inside chunk `C2` leaves the ledger bytes unchanged | `internal/reviewrecord/recordcmd/dispatch_gap_test.go` (`TestDispatchInsideAChunkKeepsTheGap`) | A dispatch that rewrites the record can reopen or move the gap. |
+| BW69 | 17, 30 | The first dispatch of the first chunk writes a closed gap for that chunk | `internal/reviewrecord/recordcmd/dispatch_gap_test.go` (`TestFirstDispatchClosesTheGap`) | Without it, the refusal cannot name the chunk to wait for. |
+| BW70 | 33 | A first dispatch that closes the gap during an unbound landing's gate refuses that landing at publish | `internal/worktree/land_window_test.go` (`TestWindowRecheckAtPublish`) | A landing that publishes after the close moves the dispatched chunk's base. |
+| BW71 | 35 | An override for an active assignment writes one record with its reason and prints `overridden{assignment=<id>}` | `internal/commitment/commitcmd/override_test.go` (`TestOverrideWritesOneRecord`) | A verb that prints success without the record admits nothing. |
+| BW72 | 36 | A landing whose assignment holds an override publishes while two builds are outside their gaps | `internal/worktree/land_override_test.go` (`TestOverrideAdmitsOneLandingThroughEveryWindow`) | An override scoped to one build leaves the parallel build's window shut. |
+| BW73 | 36 | A landing of another assignment still refuses while the override exists | `internal/worktree/land_override_test.go` (`TestOverrideAdmitsOneLandingThroughEveryWindow`) | An override that lifts the window for all landings is a second open gap. |
+| BW74 | 37 | After the overridden landing publishes, the ledger holds no override for its assignment | `internal/worktree/land_override_test.go` (`TestOverrideIsConsumedAtPublish`) | A kept override admits a later publication. |
+| BW75 | 38 | After the overridden landing refuses red at its gate, the override record stays | `internal/worktree/land_override_test.go` (`TestOverrideSurvivesARefusedLanding`) | A consumption at acquisition forces a second grant for each rerun. |
+| BW76 | 39 | With a pipe on stdin, the verb refuses with `needs the reviewer at a terminal` and writes nothing | `internal/commitment/commitcmd/override_test.go` (`TestOverrideRefusesWithoutATerminal`) | A verb without the predicate lets an agent tool call grant itself. |
+| BW77 | 40 | With `/dev/null` on stdin, the verb refuses with `not confirmed` and writes nothing | `internal/commitment/commitcmd/override_test.go` (`TestOverrideNeedsTheTypedAssignment`) | The null device passes the character-device predicate, so only the confirmation stops it. |
+| BW78 | 40 | With an injected terminal and a confirmation line that differs in one byte, the verb refuses with `not confirmed` | `internal/commitment/commitcmd/override_test.go` (`TestOverrideNeedsTheTypedAssignment`) | A prefix or trimmed compare accepts a wrong id. |
+| BW79 | 41 | From a Bench worktree, the verb refuses with `runs from the primary checkout` before the terminal check | `internal/commitment/commitcmd/override_test.go` (`TestOverrideRefusesOutsideThePrimaryCheckout`) | A worktree's own executable writes the override. |
+| BW80 | 43 | An override for an unknown assignment refuses with `is not active` | `internal/commitment/commitcmd/override_test.go` (`TestOverrideRefusesAnInactiveAssignment`) | A typo then grants a record that no landing uses. |
+| BW81 | 44 | A reason with a newline, and an empty reason, each refuse with the block verb's reason refusal | `internal/commitment/commitcmd/override_test.go` (`TestOverrideRefusesABadReason`) | A second reason rule drifts from the block verb's rule. |
+| BW82 | 42 | The follow-on guard denies `bench commitment override --assignment x --reason y` in a Bash envelope | `cmd/bench/main_test.go` (`TestFollowOnGuardDeniesTheOverrideEnvelope`) | The guard classifies only follow-ons today, so the verb runs. |
+| BW83 | 42 | The guard denies `bench commitment --in primary override` and `bench worktree exec t -- bench commitment override` | `internal/benchguard/benchguard_test.go` (`TestGuardDeniesTheOverrideVerb`) | A first-word match misses the flag form and the child form. |
 | BW84 | 35 | The help inventory lists the `bench commitment override` form | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | A hand-copied help line drifts from the commitment form table. |
 | BW85 | 65 | The implement-spec `Land` section states the gap fold before the first dispatch of the next chunk and the fold record | review-owned: the reviewer reads the section; the anchor check reds a drift of the new needles | No check reads the meaning of the fold rule. |
 | BW86 | 65 | The implement-spec guidance holds no sentence that folds `main` at the start of the last chunk | review-owned: the reviewer reads the section; a forbid anchor names the old sentence | A surviving old sentence routes a fold that the chain refuses. |
@@ -685,10 +583,13 @@ Every expected TOON row derives through `toon.Table`, so a numeric-looking chunk
 | BW91 | 58, 69 | `docs/known-issues.md` holds no `base-current` row | review-owned: the reviewer reads the table | No check reads the issue table. |
 | BW92 | 69 | `CHANGELOG.md` names the lease, the window, the override, the fold record, and the moved-destination face | review-owned: the reviewer reads the entry | No check reads the changelog content. |
 | BW93 | 46 | The help inventory lists the `bench record fold` form, and the review form names `--fold` | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | A hand-copied help line drifts from the record form registry. |
-| BW94 | 16, 23 | A spec-less landing from a sibling assignment that `--from` bound to the build refuses with face `land-build-window` while the build is outside a gap | planned internal/worktree/land_window_test.go (TestWindowAdmitsTheBuildsOwnLanding) | A rule keyed to the bound assignment alone lets a build worktree land spec-less under a chunk. |
-| BW96 | 17, 19 | After `bench commitment block` during an open gap and a later `bench commitment unblock` and `bench commitment start`, an unbound landing refuses with face `land-build-window` | planned internal/commitment/repository/window_test.go (TestStartDropsAStaleGap) | A start that keeps the old open gap reopens the build with `main` already free to move. |
-| BW97 | 18, 19 | After `bench commitment block`, and after the build's completion landing publishes, the ledger holds no gap record for the outcome | planned internal/commitment/repository/window_test.go (TestClosersDropTheGapRecord) | A closer that keeps the gap record leaves a stale record for the next start to trust. |
-| BW95 | 32 | A repair dispatch to a chunk-`C1` ticket while the gap record holds chunk `C3` with `Last` true leaves the ledger bytes unchanged | planned internal/reviewrecord/recordcmd/dispatch_gap_test.go (TestDispatchInsideAChunkKeepsTheGap) | A chunk-inequality rule rewrites the record to `C1`, so the refusal names a past gap and the build loses its last-chunk state. |
+| BW94 | 16, 23 | A spec-less landing from a sibling assignment that `--from` bound to the build refuses with face `land-build-window` while the build is outside a gap | `internal/worktree/land_window_test.go` (`TestWindowAdmitsTheBuildsOwnLanding`) | A rule keyed to the bound assignment alone lets a build worktree land spec-less under a chunk. |
+| BW96 | 17, 19 | After `bench commitment block` during an open gap and a later `bench commitment unblock` and `bench commitment start`, an unbound landing refuses with face `land-build-window` | `internal/commitment/repository/window_test.go` (`TestStartDropsAStaleGap`) | A start that keeps the old open gap reopens the build with `main` already free to move. |
+| BW99 | 27, 30 | A green checkpoint of chunk `C1` while the gap record holds chunk `C3` with `Last` true leaves the ledger bytes unchanged | `internal/gate/chunk_gap_test.go` (`TestEarlierChunkCheckpointKeepsTheGap`) | A repair checkpoint of an earlier chunk reopens the gap after the last freeze. |
+| BW100 | 14 | An unresolved default branch with a claimed outcome refuses the landing with face `land-infrastructure` | `internal/commitment/repository/window_test.go` (`TestWindowFailsClosedOnAGitFault`) | A Git fault opens every window. |
+| BW97 | 18, 19 | After `bench commitment block`, and after the build's completion landing publishes, the ledger holds no gap record for the outcome | `internal/commitment/repository/window_test.go` (`TestClosersDropTheGapRecord`) | A closer that keeps the gap record leaves a stale record for the next start to trust. |
+| BW98 | 56 | `paths-authorized` stays red for a recorded resolution path that a later commit changes after the fold | `internal/preflight/folded_main_test.go` (`TestPathsAuthorizedAdmitsARecordedResolutionPath`) | A name-only skip lets a later build write to the path pass the fence. |
+| BW95 | 32 | A repair dispatch to a chunk-`C1` ticket while the gap record holds chunk `C3` with `Last` true leaves the ledger bytes unchanged | `internal/reviewrecord/recordcmd/dispatch_gap_test.go` (`TestDispatchInsideAChunkKeepsTheGap`) | A chunk-inequality rule rewrites the record to `C1`, so the refusal names a past gap and the build loses its last-chunk state. |
 
 Not covered: story 70 — a reviewed exclusion; the Out of scope section prices it.
 Not covered: story 71 — a reviewed exclusion; the Edge inventory keeps the current gate-lock face.
@@ -711,7 +612,7 @@ The hostile-input walk covers these classes:
 - A guard envelope can spell `&&` as `&&`; the existing benchguard separator tests cover it, and BW83 adds the flag and child forms.
 - A resolution path with a double quote, a backslash, or a space reads through `-z` plumbing (BW29).
 - A chunk id that reads as a number keeps the encoder's quotes, because each expected row derives through `toon.Table`.
-- A dangling or live symbolic link at the landing lock path is opened without following, as the gate lock opens its file.
+- A dangling or live symbolic link at the landing lock path is opened without following.
 - Two processes reload the ledger across a real boundary in BW10.
 - A cwd deeper than the root resolves the root before the primary-checkout test of BW79.
 
@@ -737,6 +638,7 @@ It holds the owner and test files, the command registry closure, the anchor regi
 - `.agents/commands/bench-review-implementation.md`
 - `.agents/commands/bench-write-spec.md`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
+- `.agents/skills/bench-craft-tickets/SKILL.md`
 - `.bench/BENCH-reference.md`
 - `.bench/commitment.json`
 - `.bench/hooks/block-bench-follow-on.sh`
@@ -754,7 +656,9 @@ It holds the owner and test files, the command registry closure, the anchor regi
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/isolated_command_fixtures_test.go`
 - `cmd/bench/main.go`
+- `cmd/bench/main_test.go`
 - `cmd/bench/record_operations_test.go`
+- `cmd/bench/response_bound.go`
 - `cmd/bench/response_bound_exempt_test.go`
 - `docs/adr/0014-main-receives-writes-only-through-landings.md`
 - `docs/known-issues.md`
@@ -827,6 +731,9 @@ It holds the owner and test files, the command registry closure, the anchor regi
 - `internal/gate/run_transaction.go`
 - `internal/gate/verdict.go`
 - `internal/gocache/lock.go`
+- `internal/git/admin_readers_test.go`
+- `internal/git/default_branch.go`
+- `internal/git/git.go`
 - `internal/guards/guards_test.go`
 - `internal/intent/build_records_test.go`
 - `internal/intent/ledger/commitment.go`
@@ -845,9 +752,11 @@ It holds the owner and test files, the command registry closure, the anchor regi
 - `internal/landing/merge.go`
 - `internal/landing/state_test.go`
 - `internal/preflight/decision.go`
+- `internal/preflight/default_branch.go`
 - `internal/preflight/folded_main_test.go`
 - `internal/preflight/gather.go`
 - `internal/preflight/gather_inputs.go`
+- `internal/preflight/check_floor.go`
 - `internal/preflight/paths_authorized.go`
 - `internal/preflight/preflighttest/fixture.go`
 - `internal/preflight/review.go`
@@ -942,6 +851,11 @@ It holds the owner and test files, the command registry closure, the anchor regi
 - `tests/canary/docs-currency-token-diet`
 - `tests/canary/guidance-prose-budgets`
 - `tests/canary/line-routing`
+- `tests/canary/package-core-guard/bounds-raw-wait-deadline`
+- `tests/canary/package-core-guard/bounds-raw-wait-duration`
+- `tests/canary/package-core-guard/bounds-reassigned-wait-duration`
+- `tests/canary/package-core-guard/bounds-redeclared-wait-duration`
+- `tests/canary/package-core-guard/bounds-worktree-window-unwrapped`
 - `tests/canary/load-validity-metadata/readme-shared-rule-drift`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 - `tests/canary/row-next-grammar/token-table-lacks-kit-edit`

@@ -29,11 +29,13 @@ type CompositionResult struct {
 
 // Conflict describes why Git could not produce one prospective tree, and names
 // every path it could not merge. Refusal carries the settle refusal when the capture
-// policy was engaged and refused; its zero value means the policy settled nothing.
+// policy was engaged and refused; its zero value means the policy settled nothing. Tree is
+// the tree that Git writes with its conflict markers at the conflicted paths.
 type Conflict struct {
 	Kind    string
 	Paths   []string
 	Refusal settlepolicy.Refusal
+	Tree    string
 }
 
 // ConflictError is the refusal a conflicted reviewed landing returns. Its message leads
@@ -87,6 +89,9 @@ func (o Owner) Compose(r CompositionRequest) (CompositionResult, error) {
 		return CompositionResult{Base: base, Tree: tree, Resolved: resolved}, nil
 	}
 	conflict.Refusal = refusal
+	if conflict.Tree, err = mergeTreeResult(out); err != nil {
+		return CompositionResult{}, err
+	}
 	return CompositionResult{Base: base, Conflict: conflict}, nil
 }
 
