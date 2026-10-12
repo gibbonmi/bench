@@ -277,6 +277,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-b1-r2-standards",
+          "performer": "claude:dcm_rev_b1_std2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2b201e4e9ad334e3d653d68e027c3c415b1aecf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b1_std2",
+            "digest": "sha256:dfa11d09f99f619139d8721cd830e11ea8954525651ec9b38b106fb2c0a25dca",
+            "excerpt": "## Standards confirming round (D-B1, repair delta ce013f61..9c9ae1c0) — 0 findings\nS1 closed, confidence 9: durableReplace calls durableReplaceAt(replacer, gitdir, benchgit.GateCacheFile, rec) at internal/gate/verdict.go:91; the encoding lives only at engine.go:174-178 and the newline and 0o600 only at engine.go:186; the comments at engine.go:182-184 and lane.go:316-317 are now true. The new test rows assert production literals with recorded reds.\nAdvice: a withGateTimeout test helper for the four gateTimeout overrides; lane.go could call durableReplaceAt directly.\n"
+          },
+          "axis": "Standards",
+          "base": "69cffaf6a7416abab014e5e1b352a683f3cbd566",
+          "tip": "e886531e4923b056e469e1fd9b06daa698b39b8e",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b1-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-b1-r2-spec",
+          "performer": "claude:dcm_rev_b1_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2b201e4e9ad334e3d653d68e027c3c415b1aecf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b1_spec2",
+            "digest": "sha256:a53e485fee16c9ad4ac6d977c448d1bb87064cbbbe108f37684a693c34d0f708",
+            "excerpt": "## Spec confirming round (D-B1, repair delta ce013f61..9c9ae1c0) — 0 findings\nThe repair delta keeps D16, D17, D37-D40 and the gate seam rules intact. The timeout row meets spec.md:95 and :98; the lock-contention row meets the two-caller demotion rule. The repair touches only verdict.go and durable_replacement_test.go inside ticket 02 Writes.\nAdvice: the gateTimeout swap is a timing knob, not the replacement seam; the D38 why-clause names only green and red branches.\n"
+          },
+          "axis": "Spec",
+          "base": "69cffaf6a7416abab014e5e1b352a683f3cbd566",
+          "tip": "e886531e4923b056e469e1fd9b06daa698b39b8e",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b1-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-b1-r2-coverage",
+          "performer": "claude:dcm_rev_b1_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2b201e4e9ad334e3d653d68e027c3c415b1aecf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b1_cov2",
+            "digest": "sha256:31a0021f89e5574b1588c2fc94133e96350bba5696b219cea5ea8b5c611a135e",
+            "excerpt": "## Coverage confirming round (D-B1, repair delta ce013f61..9c9ae1c0) — 0 findings\nC1 closed: timeout row at durable_replacement_test.go:100; probe run_transaction.go:187 persistenceFailure(storageRoot, 124 -> 0 ...) bit, restored=yes.\nC2 closed: lock contention row at durable_replacement_test.go:196-200; probe run_transaction.go:83 replacer -> durablefile.Native() bit, restored=yes.\nC3 closed: dcm-t02-rep1-preservation and -omission-proof record exact swap text; probe lane.go:332 durableReplaceRecordAt(replacer -> durablefile.Native() ...) bit in TestEvidenceReplacement/lane, restored=yes.\nAdvice: the preservation excerpt heading count is off by one; the gateTimeout override needs non-parallel tests.\n"
+          },
+          "axis": "Coverage",
+          "base": "69cffaf6a7416abab014e5e1b352a683f3cbd566",
+          "tip": "e886531e4923b056e469e1fd9b06daa698b39b8e",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b1-r1-coverage"
+          ]
         }
       ]
     }
@@ -330,3 +396,5 @@ Chunk D-B1 used 0 of its 2 repair cycles before repair 1. S1, C1, C2, and C3 fal
 - C3 closes in commit e886531e. The preservation and omission-proof excerpts of `claude:dcm_t02_rep1` record the exact swap and the red for each expectation.
 
 Chunk D-B1 used 1 of its 2 repair cycles.
+
+The D-B1 confirming round at 9c9ae1c0 closed S1, C1, C2, and C3 with no new finding. Chunk D-B1 closed with 1 of its 2 repair cycles used.
