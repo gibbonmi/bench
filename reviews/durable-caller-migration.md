@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:72b9fa252493911657c1f94490e46fcf1041db627c4c8802b35acba37d1e8a29",
+  "plan_digest": "sha256:2649d87242eda6170ea76efadda6c82fe48de463f63982d2b8d7f9e9c64f9323",
   "implementation_session": "",
   "chunks": [
     {
@@ -3534,6 +3534,283 @@
           ]
         }
       ]
+    },
+    {
+      "id": "D-C4",
+      "base": "68e390e155699b5aae10125808e86f8eb5eb3b93",
+      "tip": "0e86fec98de40c9c5ff0e21cd719255731934188",
+      "plan_digest": "sha256:2649d87242eda6170ea76efadda6c82fe48de463f63982d2b8d7f9e9c64f9323",
+      "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+      "acceptance_rows": [
+        "D27",
+        "D34",
+        "D41",
+        "D42",
+        "D43"
+      ],
+      "verification": [
+        {
+          "id": "dcm-t11-caller-tests",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:84207ed2f0c273cc3bf1d8ee2d2fa5881ea6cac7ce642e70ea87a03e15d035d7",
+            "excerpt": "bench test --package ./internal/probe at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers, clean): internal/probe pass, 114 tests run, failures[0], skips[0].\nThe five ticket 11 witnesses are in internal/probe/replacement_test.go: TestProbeReplacement (D27), TestProbeFailedRestore (D34), TestProbeMutationRecoveryFailure (D41), TestProbeMutationRecoverySuccess (D42, over durablefiletest.PostRenameStages), TestProbeMutationPreparationFailure (D43).\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-command-contract",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:f0086d1339026ee09e29b43e071f029aec1f94ccf95f9e6b8e0a737ad0bfe5b3",
+            "excerpt": "bench test --package ./cmd/bench --run CommandRegistry at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers, clean): cmd/bench pass, 5 tests run, failures[0], skips[0]. Command membership, routes, and help are unchanged; probe.Command keeps its signature.\n"
+          },
+          "requirement": "command-contract",
+          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-axi-registry",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:43de5ffaeb3b65b18c344b766a861714566be79f85728a72abeacf1271a8b4d7",
+            "excerpt": "bench test --check axi-query-registry at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers, clean): internal/conformance pass, 1 test run, failures[0], skips[0].\n"
+          },
+          "requirement": "axi-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-routing",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:bcb1fd2fa80dea84f99ea2aeabfd2ddc67bf87737674c80c81695de698e8db4a",
+            "excerpt": "bench test --check subcommand-routing at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers, clean): internal/conformance pass, 1 test run, failures[0], skips[0].\n"
+          },
+          "requirement": "routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-cmd-bench",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:8829a137cafc68e46ca1588f5a923ce60d72cfba21352ac6914573316fc3201b",
+            "excerpt": "bench test --package ./cmd/bench at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers, clean): cmd/bench pass, 335 tests run, failures[0], skips[0].\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-conformance",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:047d82c2bbb7877493df1ecb7315f48f602d45e1b3549600a2fff7f7c2662dd9",
+            "excerpt": "bench test --package ./internal/conformance at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers, clean): internal/conformance pass, 1690 tests run, failures[0], skips[1]: TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (capability: privilege: cannot create a character device: operation not permitted), an environment capability skip not owned by this ticket.\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-probetest",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:d5f1d4d597721dddb7117b80104534d80b9cb9e873aa55e6f4beb55db39903aa",
+            "excerpt": "bench test --package ./internal/probe/probetest at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers, clean): internal/probe/probetest no-tests, 0 tests run, failures[0], skips[0]. The fixture is unchanged: startCount and requireBaselineOnly in the probe package already separate the baseline start from the focused start.\n"
+          },
+          "requirement": "probetest",
+          "command": "bench test --package ./internal/probe/probetest",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-root-conformance",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:3be31271cf580676dfbe2729d81ac0dc1ef22486cb7ff18dcfebecad25ae04e5",
+            "excerpt": "bench test --check root-conformance at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers, clean): internal/conformance pass, 1 test run, failures[0], skips[0].\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t11-omission-proof",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:1ea91b2a2f61d60f38c301e05c1b4f15d1f8e5e779e706e3f5ff03d006d933a2",
+            "excerpt": "D-C4 omission-proof probes at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers), bench probe ... --package ./internal/probe, no --run filter. Every verdict bit, every restored yes; the package passes 114 tests after each restore.\nNamed probe: release preservation on every mutation error, or treat failed restore sync as success; the preservation-path and focused-start witnesses detect each mutation.\n\nO1 (central self-probe: release the copy on the failed-restore exit). internal/probe/probe.go\nSwap old (exact): \"return line + block, 2\"\nSwap new (exact): \"preserved.release(); return line + block, 2\"\nVerdict bit, 1 failed, restored yes. TestProbeMutationRecoveryFailure replacement_test.go:104: preserved files = ([], <nil>), want exactly one.\n\nO2 (release without restore on every mutation error). internal/probe/probe.go\nSwap old: \"if errors.As(err, &replaceErr) && replaceErr.Published {\"\nSwap new: \"if false && errors.As(err, &replaceErr) && replaceErr.Published {\"\nVerdict bit, 4 failed, restored yes. TestProbeMutationRecoveryFailure :102 exit = 1, want 2; TestProbeMutationRecoverySuccess/directory-open, /directory-sync, /directory-close :83 subject holds the mutated bytes.\n\nO3 (treat failed restore sync as success). internal/probe/subject.go\nSwap old: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nSwap new: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil && !strings.Contains(err.Error(), \\\"rename completed\\\") {\"\nVerdict bit, 1 failed, restored yes. TestProbeFailedRestore :123 row bit,...,yes in place of restore-failed at exit 2.\n\nO4 (owner bypass, mutation writer; D27). internal/probe/probe.go\nSwap old: \"if err := replacer.Replace(subject.path, mutated, subject.mode); err != nil {\"\nSwap new: \"if err := durablefile.Replace(subject.path, mutated, subject.mode); err != nil {\"\nVerdict bit, 7 failed, restored yes. TestProbeReplacement :58 (the injected failure is hidden; the first routed rename is the restore); TestProbeMutationRecoverySuccess x3 :84 Bench home holds 1 entries.\n\nO5 (owner bypass, restore writer). internal/probe/subject.go\nSwap old: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nSwap new: \"if err := durablefile.Replace(subject.path, saved, subject.mode); err != nil {\"\nVerdict bit, 2 failed, restored yes. TestProbeFailedRestore :123; TestProbeMutationRecoveryFailure :102 exit = 1, want 2.\n\nO6 (classification swap; Published replaced by a stage literal). internal/probe/probe.go\nSwap old: \"errors.As(err, &replaceErr) && replaceErr.Published {\"\nSwap new: \"errors.As(err, &replaceErr) && replaceErr.Stage == \\\"directory-sync\\\" {\"\nVerdict bit, 2 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open and /directory-close :83 subject holds the mutated bytes.\n\nO7 (focused-start witness: a focused run starts after a failed mutation). internal/probe/probe.go\nSwap old: \"return mutationFailure(replacer, subject, preserved, err)\"\nSwap new: \"testreport.Execute(root, request); return mutationFailure(replacer, subject, preserved, err)\"\nVerdict bit, 2 failed, restored yes. TestProbeReplacement :69 Go test starts = 2, want only the baseline's one; existing PB45 TestProbeRefusesWhenTheMutationWriteFails :286 same.\n\nClassification note: mutationFailure classifies inline with errors.As(err, &replaceErr) && replaceErr.Published. The probe chooses between an immediate copy release and a restore-first path from that fact. The same derivation is the private published() in internal/intent/transaction.go; a shared durablefile predicate is outside this ticket's fence, and review decides where it belongs.\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 1,
+          "probe": {
+            "mutation": "Release preservation on every mutation error or treat failed restore sync as success. The preservation-path and focused-start witnesses must detect each mutation.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+              "digest": "sha256:1ea91b2a2f61d60f38c301e05c1b4f15d1f8e5e779e706e3f5ff03d006d933a2",
+              "excerpt": "D-C4 omission-proof probes at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers), bench probe ... --package ./internal/probe, no --run filter. Every verdict bit, every restored yes; the package passes 114 tests after each restore.\nNamed probe: release preservation on every mutation error, or treat failed restore sync as success; the preservation-path and focused-start witnesses detect each mutation.\n\nO1 (central self-probe: release the copy on the failed-restore exit). internal/probe/probe.go\nSwap old (exact): \"return line + block, 2\"\nSwap new (exact): \"preserved.release(); return line + block, 2\"\nVerdict bit, 1 failed, restored yes. TestProbeMutationRecoveryFailure replacement_test.go:104: preserved files = ([], <nil>), want exactly one.\n\nO2 (release without restore on every mutation error). internal/probe/probe.go\nSwap old: \"if errors.As(err, &replaceErr) && replaceErr.Published {\"\nSwap new: \"if false && errors.As(err, &replaceErr) && replaceErr.Published {\"\nVerdict bit, 4 failed, restored yes. TestProbeMutationRecoveryFailure :102 exit = 1, want 2; TestProbeMutationRecoverySuccess/directory-open, /directory-sync, /directory-close :83 subject holds the mutated bytes.\n\nO3 (treat failed restore sync as success). internal/probe/subject.go\nSwap old: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nSwap new: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil && !strings.Contains(err.Error(), \\\"rename completed\\\") {\"\nVerdict bit, 1 failed, restored yes. TestProbeFailedRestore :123 row bit,...,yes in place of restore-failed at exit 2.\n\nO4 (owner bypass, mutation writer; D27). internal/probe/probe.go\nSwap old: \"if err := replacer.Replace(subject.path, mutated, subject.mode); err != nil {\"\nSwap new: \"if err := durablefile.Replace(subject.path, mutated, subject.mode); err != nil {\"\nVerdict bit, 7 failed, restored yes. TestProbeReplacement :58 (the injected failure is hidden; the first routed rename is the restore); TestProbeMutationRecoverySuccess x3 :84 Bench home holds 1 entries.\n\nO5 (owner bypass, restore writer). internal/probe/subject.go\nSwap old: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nSwap new: \"if err := durablefile.Replace(subject.path, saved, subject.mode); err != nil {\"\nVerdict bit, 2 failed, restored yes. TestProbeFailedRestore :123; TestProbeMutationRecoveryFailure :102 exit = 1, want 2.\n\nO6 (classification swap; Published replaced by a stage literal). internal/probe/probe.go\nSwap old: \"errors.As(err, &replaceErr) && replaceErr.Published {\"\nSwap new: \"errors.As(err, &replaceErr) && replaceErr.Stage == \\\"directory-sync\\\" {\"\nVerdict bit, 2 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open and /directory-close :83 subject holds the mutated bytes.\n\nO7 (focused-start witness: a focused run starts after a failed mutation). internal/probe/probe.go\nSwap old: \"return mutationFailure(replacer, subject, preserved, err)\"\nSwap new: \"testreport.Execute(root, request); return mutationFailure(replacer, subject, preserved, err)\"\nVerdict bit, 2 failed, restored yes. TestProbeReplacement :69 Go test starts = 2, want only the baseline's one; existing PB45 TestProbeRefusesWhenTheMutationWriteFails :286 same.\n\nClassification note: mutationFailure classifies inline with errors.As(err, &replaceErr) && replaceErr.Published. The probe chooses between an immediate copy release and a restore-first path from that fact. The same derivation is the private published() in internal/intent/transaction.go; a shared durablefile predicate is outside this ticket's fence, and review decides where it belongs.\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t11-preservation",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:41e55eecdcb1e8d6fd32845cf2ae9937bfaf8f46c40a855a3658754e2ae8b34d",
+            "excerpt": "D-C4 preservation probes at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers), bench probe ... --package ./internal/probe, no --run filter. One necessity red for each independent check of the new tests, plus the payload and mode of each migrated writer and the native wrapper's error path. Every verdict bit, every restored yes; the package passes 114 tests after each restore. The omission-proof entry holds O1-O7; their reds also serve D41 copy existence (O1), D42 bytes (O2, O6), D42 home (O4), D27 focused start (O7), and D34 row (O3).\n\nP1 D27 output equality (the mutation cause reaches the caller). probe.go\nOld: \"line := toon.Errorf(\\\"probe mutation failed\\\", err.Error()) + \\\"\\\\n\\\"\"\nNew: \"line := toon.Errorf(\\\"probe mutation failed\\\", \\\"the subject replacement failed\\\") + \\\"\\\\n\\\"\"\nbit, 1 failed, restored yes. TestProbeReplacement :67 only.\n\nP2 D27 mutation mode (constant drift). probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, mutated, 0o644)\"\nbit, 1 failed, restored yes. TestProbeReplacement :58 mode = -rw-r--r--, want -rw-r----- only.\n\nP3 D27 mutation payload. probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, append(mutated, 10), subject.mode)\"\nbit, 2 failed, restored yes. TestProbeReplacement :58 bytes; TestOmitFileUsesExactBytesAndReportsOmit.\n\nP4 restore mode (owned by existing PB17). subject.go\nOld: \"replacer.Replace(subject.path, saved, subject.mode)\"\nNew: \"replacer.Replace(subject.path, saved, 0o644)\"\nbit, 1 failed, restored yes. TestProbeKeepsTheSubjectMode outcome_test.go:130 only.\n\nP5 D34 copy retained after a failed restore sync. probe.go\nOld: \"\\tif restored {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nNew: \"\\tif true {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nbit, 3 failed, restored yes. TestProbeFailedRestore :124 preserved files = ([]); PB14, PB47.\n\nP6 D41 preserved row names the copy path. probe.go\nOld: \"[][]string{{preserved.file, sanitize.Strip(reason)}}\"\nNew: \"[][]string{{preserved.dir, sanitize.Strip(reason)}}\"\nbit, 3 failed, restored yes. TestProbeMutationRecoveryFailure :108; PB14, PB47.\n\nP7 D41 reason carries the mutation cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"\\\"restore: \\\"+reason\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP8 D41 reason carries the restore cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"err.Error()+\\\"; restore: \\\"+reason[:0]\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP9 D41 exit 2. probe.go\nOld: \"return line + block, 2\"  New: \"return line + block, 1\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :102 only.\n\nP10 D41 exact copy bytes (shared with PB12, PB14). subject.go\nOld: \"if err := os.WriteFile(file, subject.start, 0o600); err != nil {\"\nNew: \"if err := os.WriteFile(file, subject.start[1:], 0o600); err != nil {\"\nbit, 29 failed, restored yes. Includes TestProbeMutationRecoveryFailure copy bytes and TestProbeReportsARestoreFailure.\n\nP11 D42 home: a proven restore keeps the copy. probe.go\nOld: \"if restored, reason := restore(replacer, subject, preserved); !restored {\"\nNew: \"if restored, reason := restore(replacer, subject, preserved); restored { return line, 1 } else {\"\nbit, 3 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open, -sync, -close :84 only.\n\nP12 D43 old bytes: fallback write of the new bytes after an unpublished error. probe.go\nOld: \"return mutationFailure(replacer, subject, preserved, err)\"\nNew: \"_ = os.WriteFile(subject.path, mutated, subject.mode); return mutationFailure(replacer, subject, preserved, err)\"\nbit, 2 failed, restored yes. TestProbeMutationPreparationFailure :135 old-bytes check; existing PB45 :284.\n\nP13 D43 home: the rename stage is classified as published. probe.go\nOld: \"errors.As(err, &replaceErr) && replaceErr.Published {\"\nNew: \"errors.As(err, &replaceErr) && (replaceErr.Published || replaceErr.Stage == \\\"rename\\\") {\"\nbit, 1 failed, restored yes. TestProbeMutationPreparationFailure :136 Bench home holds 1 entries only.\n\nP14 native wrapper error path (run supplies durablefile.Native(); PB45 drives it through Command). probe.go\nOld: \"\\treturn runWith(durablefile.Native(), root, parsed)\"\nNew: \"\\tout, code := runWith(durablefile.Native(), root, parsed)\\n\\tif len(out) > 28 && out[:28] == \\\"error: probe mutation failed\\\" {\\n\\t\\treturn \\\"\\\", 0\\n\\t}\\n\\treturn out, code\"\nbit, 1 failed, restored yes. TestProbeRefusesWhenTheMutationWriteFails refusal_test.go:282 only.\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 1,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+              "digest": "sha256:41e55eecdcb1e8d6fd32845cf2ae9937bfaf8f46c40a855a3658754e2ae8b34d",
+              "excerpt": "D-C4 preservation probes at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers), bench probe ... --package ./internal/probe, no --run filter. One necessity red for each independent check of the new tests, plus the payload and mode of each migrated writer and the native wrapper's error path. Every verdict bit, every restored yes; the package passes 114 tests after each restore. The omission-proof entry holds O1-O7; their reds also serve D41 copy existence (O1), D42 bytes (O2, O6), D42 home (O4), D27 focused start (O7), and D34 row (O3).\n\nP1 D27 output equality (the mutation cause reaches the caller). probe.go\nOld: \"line := toon.Errorf(\\\"probe mutation failed\\\", err.Error()) + \\\"\\\\n\\\"\"\nNew: \"line := toon.Errorf(\\\"probe mutation failed\\\", \\\"the subject replacement failed\\\") + \\\"\\\\n\\\"\"\nbit, 1 failed, restored yes. TestProbeReplacement :67 only.\n\nP2 D27 mutation mode (constant drift). probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, mutated, 0o644)\"\nbit, 1 failed, restored yes. TestProbeReplacement :58 mode = -rw-r--r--, want -rw-r----- only.\n\nP3 D27 mutation payload. probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, append(mutated, 10), subject.mode)\"\nbit, 2 failed, restored yes. TestProbeReplacement :58 bytes; TestOmitFileUsesExactBytesAndReportsOmit.\n\nP4 restore mode (owned by existing PB17). subject.go\nOld: \"replacer.Replace(subject.path, saved, subject.mode)\"\nNew: \"replacer.Replace(subject.path, saved, 0o644)\"\nbit, 1 failed, restored yes. TestProbeKeepsTheSubjectMode outcome_test.go:130 only.\n\nP5 D34 copy retained after a failed restore sync. probe.go\nOld: \"\\tif restored {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nNew: \"\\tif true {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nbit, 3 failed, restored yes. TestProbeFailedRestore :124 preserved files = ([]); PB14, PB47.\n\nP6 D41 preserved row names the copy path. probe.go\nOld: \"[][]string{{preserved.file, sanitize.Strip(reason)}}\"\nNew: \"[][]string{{preserved.dir, sanitize.Strip(reason)}}\"\nbit, 3 failed, restored yes. TestProbeMutationRecoveryFailure :108; PB14, PB47.\n\nP7 D41 reason carries the mutation cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"\\\"restore: \\\"+reason\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP8 D41 reason carries the restore cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"err.Error()+\\\"; restore: \\\"+reason[:0]\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP9 D41 exit 2. probe.go\nOld: \"return line + block, 2\"  New: \"return line + block, 1\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :102 only.\n\nP10 D41 exact copy bytes (shared with PB12, PB14). subject.go\nOld: \"if err := os.WriteFile(file, subject.start, 0o600); err != nil {\"\nNew: \"if err := os.WriteFile(file, subject.start[1:], 0o600); err != nil {\"\nbit, 29 failed, restored yes. Includes TestProbeMutationRecoveryFailure copy bytes and TestProbeReportsARestoreFailure.\n\nP11 D42 home: a proven restore keeps the copy. probe.go\nOld: \"if restored, reason := restore(replacer, subject, preserved); !restored {\"\nNew: \"if restored, reason := restore(replacer, subject, preserved); restored { return line, 1 } else {\"\nbit, 3 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open, -sync, -close :84 only.\n\nP12 D43 old bytes: fallback write of the new bytes after an unpublished error. probe.go\nOld: \"return mutationFailure(replacer, subject, preserved, err)\"\nNew: \"_ = os.WriteFile(subject.path, mutated, subject.mode); return mutationFailure(replacer, subject, preserved, err)\"\nbit, 2 failed, restored yes. TestProbeMutationPreparationFailure :135 old-bytes check; existing PB45 :284.\n\nP13 D43 home: the rename stage is classified as published. probe.go\nOld: \"errors.As(err, &replaceErr) && replaceErr.Published {\"\nNew: \"errors.As(err, &replaceErr) && (replaceErr.Published || replaceErr.Stage == \\\"rename\\\") {\"\nbit, 1 failed, restored yes. TestProbeMutationPreparationFailure :136 Bench home holds 1 entries only.\n\nP14 native wrapper error path (run supplies durablefile.Native(); PB45 drives it through Command). probe.go\nOld: \"\\treturn runWith(durablefile.Native(), root, parsed)\"\nNew: \"\\tout, code := runWith(durablefile.Native(), root, parsed)\\n\\tif len(out) > 28 && out[:28] == \\\"error: probe mutation failed\\\" {\\n\\t\\treturn \\\"\\\", 0\\n\\t}\\n\\treturn out, code\"\nbit, 1 failed, restored yes. TestProbeRefusesWhenTheMutationWriteFails refusal_test.go:282 only.\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t11-omission-proof-r2",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:1ea91b2a2f61d60f38c301e05c1b4f15d1f8e5e779e706e3f5ff03d006d933a2",
+            "excerpt": "D-C4 omission-proof probes at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers), bench probe ... --package ./internal/probe, no --run filter. Every verdict bit, every restored yes; the package passes 114 tests after each restore.\nNamed probe: release preservation on every mutation error, or treat failed restore sync as success; the preservation-path and focused-start witnesses detect each mutation.\n\nO1 (central self-probe: release the copy on the failed-restore exit). internal/probe/probe.go\nSwap old (exact): \"return line + block, 2\"\nSwap new (exact): \"preserved.release(); return line + block, 2\"\nVerdict bit, 1 failed, restored yes. TestProbeMutationRecoveryFailure replacement_test.go:104: preserved files = ([], <nil>), want exactly one.\n\nO2 (release without restore on every mutation error). internal/probe/probe.go\nSwap old: \"if errors.As(err, &replaceErr) && replaceErr.Published {\"\nSwap new: \"if false && errors.As(err, &replaceErr) && replaceErr.Published {\"\nVerdict bit, 4 failed, restored yes. TestProbeMutationRecoveryFailure :102 exit = 1, want 2; TestProbeMutationRecoverySuccess/directory-open, /directory-sync, /directory-close :83 subject holds the mutated bytes.\n\nO3 (treat failed restore sync as success). internal/probe/subject.go\nSwap old: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nSwap new: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil && !strings.Contains(err.Error(), \\\"rename completed\\\") {\"\nVerdict bit, 1 failed, restored yes. TestProbeFailedRestore :123 row bit,...,yes in place of restore-failed at exit 2.\n\nO4 (owner bypass, mutation writer; D27). internal/probe/probe.go\nSwap old: \"if err := replacer.Replace(subject.path, mutated, subject.mode); err != nil {\"\nSwap new: \"if err := durablefile.Replace(subject.path, mutated, subject.mode); err != nil {\"\nVerdict bit, 7 failed, restored yes. TestProbeReplacement :58 (the injected failure is hidden; the first routed rename is the restore); TestProbeMutationRecoverySuccess x3 :84 Bench home holds 1 entries.\n\nO5 (owner bypass, restore writer). internal/probe/subject.go\nSwap old: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nSwap new: \"if err := durablefile.Replace(subject.path, saved, subject.mode); err != nil {\"\nVerdict bit, 2 failed, restored yes. TestProbeFailedRestore :123; TestProbeMutationRecoveryFailure :102 exit = 1, want 2.\n\nO6 (classification swap; Published replaced by a stage literal). internal/probe/probe.go\nSwap old: \"errors.As(err, &replaceErr) && replaceErr.Published {\"\nSwap new: \"errors.As(err, &replaceErr) && replaceErr.Stage == \\\"directory-sync\\\" {\"\nVerdict bit, 2 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open and /directory-close :83 subject holds the mutated bytes.\n\nO7 (focused-start witness: a focused run starts after a failed mutation). internal/probe/probe.go\nSwap old: \"return mutationFailure(replacer, subject, preserved, err)\"\nSwap new: \"testreport.Execute(root, request); return mutationFailure(replacer, subject, preserved, err)\"\nVerdict bit, 2 failed, restored yes. TestProbeReplacement :69 Go test starts = 2, want only the baseline's one; existing PB45 TestProbeRefusesWhenTheMutationWriteFails :286 same.\n\nClassification note: mutationFailure classifies inline with errors.As(err, &replaceErr) && replaceErr.Published. The probe chooses between an immediate copy release and a restore-first path from that fact. The same derivation is the private published() in internal/intent/transaction.go; a shared durablefile predicate is outside this ticket's fence, and review decides where it belongs.\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Release preservation on every mutation error or treat failed restore sync as success. The preservation-path and focused-start witnesses must detect each mutation.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+              "digest": "sha256:1ea91b2a2f61d60f38c301e05c1b4f15d1f8e5e779e706e3f5ff03d006d933a2",
+              "excerpt": "D-C4 omission-proof probes at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers), bench probe ... --package ./internal/probe, no --run filter. Every verdict bit, every restored yes; the package passes 114 tests after each restore.\nNamed probe: release preservation on every mutation error, or treat failed restore sync as success; the preservation-path and focused-start witnesses detect each mutation.\n\nO1 (central self-probe: release the copy on the failed-restore exit). internal/probe/probe.go\nSwap old (exact): \"return line + block, 2\"\nSwap new (exact): \"preserved.release(); return line + block, 2\"\nVerdict bit, 1 failed, restored yes. TestProbeMutationRecoveryFailure replacement_test.go:104: preserved files = ([], <nil>), want exactly one.\n\nO2 (release without restore on every mutation error). internal/probe/probe.go\nSwap old: \"if errors.As(err, &replaceErr) && replaceErr.Published {\"\nSwap new: \"if false && errors.As(err, &replaceErr) && replaceErr.Published {\"\nVerdict bit, 4 failed, restored yes. TestProbeMutationRecoveryFailure :102 exit = 1, want 2; TestProbeMutationRecoverySuccess/directory-open, /directory-sync, /directory-close :83 subject holds the mutated bytes.\n\nO3 (treat failed restore sync as success). internal/probe/subject.go\nSwap old: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nSwap new: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil && !strings.Contains(err.Error(), \\\"rename completed\\\") {\"\nVerdict bit, 1 failed, restored yes. TestProbeFailedRestore :123 row bit,...,yes in place of restore-failed at exit 2.\n\nO4 (owner bypass, mutation writer; D27). internal/probe/probe.go\nSwap old: \"if err := replacer.Replace(subject.path, mutated, subject.mode); err != nil {\"\nSwap new: \"if err := durablefile.Replace(subject.path, mutated, subject.mode); err != nil {\"\nVerdict bit, 7 failed, restored yes. TestProbeReplacement :58 (the injected failure is hidden; the first routed rename is the restore); TestProbeMutationRecoverySuccess x3 :84 Bench home holds 1 entries.\n\nO5 (owner bypass, restore writer). internal/probe/subject.go\nSwap old: \"if err := replacer.Replace(subject.path, saved, subject.mode); err != nil {\"\nSwap new: \"if err := durablefile.Replace(subject.path, saved, subject.mode); err != nil {\"\nVerdict bit, 2 failed, restored yes. TestProbeFailedRestore :123; TestProbeMutationRecoveryFailure :102 exit = 1, want 2.\n\nO6 (classification swap; Published replaced by a stage literal). internal/probe/probe.go\nSwap old: \"errors.As(err, &replaceErr) && replaceErr.Published {\"\nSwap new: \"errors.As(err, &replaceErr) && replaceErr.Stage == \\\"directory-sync\\\" {\"\nVerdict bit, 2 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open and /directory-close :83 subject holds the mutated bytes.\n\nO7 (focused-start witness: a focused run starts after a failed mutation). internal/probe/probe.go\nSwap old: \"return mutationFailure(replacer, subject, preserved, err)\"\nSwap new: \"testreport.Execute(root, request); return mutationFailure(replacer, subject, preserved, err)\"\nVerdict bit, 2 failed, restored yes. TestProbeReplacement :69 Go test starts = 2, want only the baseline's one; existing PB45 TestProbeRefusesWhenTheMutationWriteFails :286 same.\n\nClassification note: mutationFailure classifies inline with errors.As(err, &replaceErr) && replaceErr.Published. The probe chooses between an immediate copy release and a restore-first path from that fact. The same derivation is the private published() in internal/intent/transaction.go; a shared durablefile predicate is outside this ticket's fence, and review decides where it belongs.\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t11-preservation-r2",
+          "performer": "claude:dcm_t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e6ce538abb8886a1123ff7ec066fac3b7e74dbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+            "digest": "sha256:41e55eecdcb1e8d6fd32845cf2ae9937bfaf8f46c40a855a3658754e2ae8b34d",
+            "excerpt": "D-C4 preservation probes at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers), bench probe ... --package ./internal/probe, no --run filter. One necessity red for each independent check of the new tests, plus the payload and mode of each migrated writer and the native wrapper's error path. Every verdict bit, every restored yes; the package passes 114 tests after each restore. The omission-proof entry holds O1-O7; their reds also serve D41 copy existence (O1), D42 bytes (O2, O6), D42 home (O4), D27 focused start (O7), and D34 row (O3).\n\nP1 D27 output equality (the mutation cause reaches the caller). probe.go\nOld: \"line := toon.Errorf(\\\"probe mutation failed\\\", err.Error()) + \\\"\\\\n\\\"\"\nNew: \"line := toon.Errorf(\\\"probe mutation failed\\\", \\\"the subject replacement failed\\\") + \\\"\\\\n\\\"\"\nbit, 1 failed, restored yes. TestProbeReplacement :67 only.\n\nP2 D27 mutation mode (constant drift). probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, mutated, 0o644)\"\nbit, 1 failed, restored yes. TestProbeReplacement :58 mode = -rw-r--r--, want -rw-r----- only.\n\nP3 D27 mutation payload. probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, append(mutated, 10), subject.mode)\"\nbit, 2 failed, restored yes. TestProbeReplacement :58 bytes; TestOmitFileUsesExactBytesAndReportsOmit.\n\nP4 restore mode (owned by existing PB17). subject.go\nOld: \"replacer.Replace(subject.path, saved, subject.mode)\"\nNew: \"replacer.Replace(subject.path, saved, 0o644)\"\nbit, 1 failed, restored yes. TestProbeKeepsTheSubjectMode outcome_test.go:130 only.\n\nP5 D34 copy retained after a failed restore sync. probe.go\nOld: \"\\tif restored {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nNew: \"\\tif true {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nbit, 3 failed, restored yes. TestProbeFailedRestore :124 preserved files = ([]); PB14, PB47.\n\nP6 D41 preserved row names the copy path. probe.go\nOld: \"[][]string{{preserved.file, sanitize.Strip(reason)}}\"\nNew: \"[][]string{{preserved.dir, sanitize.Strip(reason)}}\"\nbit, 3 failed, restored yes. TestProbeMutationRecoveryFailure :108; PB14, PB47.\n\nP7 D41 reason carries the mutation cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"\\\"restore: \\\"+reason\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP8 D41 reason carries the restore cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"err.Error()+\\\"; restore: \\\"+reason[:0]\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP9 D41 exit 2. probe.go\nOld: \"return line + block, 2\"  New: \"return line + block, 1\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :102 only.\n\nP10 D41 exact copy bytes (shared with PB12, PB14). subject.go\nOld: \"if err := os.WriteFile(file, subject.start, 0o600); err != nil {\"\nNew: \"if err := os.WriteFile(file, subject.start[1:], 0o600); err != nil {\"\nbit, 29 failed, restored yes. Includes TestProbeMutationRecoveryFailure copy bytes and TestProbeReportsARestoreFailure.\n\nP11 D42 home: a proven restore keeps the copy. probe.go\nOld: \"if restored, reason := restore(replacer, subject, preserved); !restored {\"\nNew: \"if restored, reason := restore(replacer, subject, preserved); restored { return line, 1 } else {\"\nbit, 3 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open, -sync, -close :84 only.\n\nP12 D43 old bytes: fallback write of the new bytes after an unpublished error. probe.go\nOld: \"return mutationFailure(replacer, subject, preserved, err)\"\nNew: \"_ = os.WriteFile(subject.path, mutated, subject.mode); return mutationFailure(replacer, subject, preserved, err)\"\nbit, 2 failed, restored yes. TestProbeMutationPreparationFailure :135 old-bytes check; existing PB45 :284.\n\nP13 D43 home: the rename stage is classified as published. probe.go\nOld: \"errors.As(err, &replaceErr) && replaceErr.Published {\"\nNew: \"errors.As(err, &replaceErr) && (replaceErr.Published || replaceErr.Stage == \\\"rename\\\") {\"\nbit, 1 failed, restored yes. TestProbeMutationPreparationFailure :136 Bench home holds 1 entries only.\n\nP14 native wrapper error path (run supplies durablefile.Native(); PB45 drives it through Command). probe.go\nOld: \"\\treturn runWith(durablefile.Native(), root, parsed)\"\nNew: \"\\tout, code := runWith(durablefile.Native(), root, parsed)\\n\\tif len(out) > 28 && out[:28] == \\\"error: probe mutation failed\\\" {\\n\\t\\treturn \\\"\\\", 0\\n\\t}\\n\\treturn out, code\"\nbit, 1 failed, restored yes. TestProbeRefusesWhenTheMutationWriteFails refusal_test.go:282 only.\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "0e86fec98de40c9c5ff0e21cd719255731934188",
+              "digest": "sha256:41e55eecdcb1e8d6fd32845cf2ae9937bfaf8f46c40a855a3658754e2ae8b34d",
+              "excerpt": "D-C4 preservation probes at 0e86fec98de40c9c5ff0e21cd719255731934188 (FT354-durable-callers), bench probe ... --package ./internal/probe, no --run filter. One necessity red for each independent check of the new tests, plus the payload and mode of each migrated writer and the native wrapper's error path. Every verdict bit, every restored yes; the package passes 114 tests after each restore. The omission-proof entry holds O1-O7; their reds also serve D41 copy existence (O1), D42 bytes (O2, O6), D42 home (O4), D27 focused start (O7), and D34 row (O3).\n\nP1 D27 output equality (the mutation cause reaches the caller). probe.go\nOld: \"line := toon.Errorf(\\\"probe mutation failed\\\", err.Error()) + \\\"\\\\n\\\"\"\nNew: \"line := toon.Errorf(\\\"probe mutation failed\\\", \\\"the subject replacement failed\\\") + \\\"\\\\n\\\"\"\nbit, 1 failed, restored yes. TestProbeReplacement :67 only.\n\nP2 D27 mutation mode (constant drift). probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, mutated, 0o644)\"\nbit, 1 failed, restored yes. TestProbeReplacement :58 mode = -rw-r--r--, want -rw-r----- only.\n\nP3 D27 mutation payload. probe.go\nOld: \"replacer.Replace(subject.path, mutated, subject.mode)\"\nNew: \"replacer.Replace(subject.path, append(mutated, 10), subject.mode)\"\nbit, 2 failed, restored yes. TestProbeReplacement :58 bytes; TestOmitFileUsesExactBytesAndReportsOmit.\n\nP4 restore mode (owned by existing PB17). subject.go\nOld: \"replacer.Replace(subject.path, saved, subject.mode)\"\nNew: \"replacer.Replace(subject.path, saved, 0o644)\"\nbit, 1 failed, restored yes. TestProbeKeepsTheSubjectMode outcome_test.go:130 only.\n\nP5 D34 copy retained after a failed restore sync. probe.go\nOld: \"\\tif restored {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nNew: \"\\tif true {\\n\\t\\tpreserved.release()\\n\\t}\\n\\treturn render(\"\nbit, 3 failed, restored yes. TestProbeFailedRestore :124 preserved files = ([]); PB14, PB47.\n\nP6 D41 preserved row names the copy path. probe.go\nOld: \"[][]string{{preserved.file, sanitize.Strip(reason)}}\"\nNew: \"[][]string{{preserved.dir, sanitize.Strip(reason)}}\"\nbit, 3 failed, restored yes. TestProbeMutationRecoveryFailure :108; PB14, PB47.\n\nP7 D41 reason carries the mutation cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"\\\"restore: \\\"+reason\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP8 D41 reason carries the restore cause. probe.go\nOld: \"err.Error()+\\\"; restore: \\\"+reason\"  New: \"err.Error()+\\\"; restore: \\\"+reason[:0]\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :108 only.\n\nP9 D41 exit 2. probe.go\nOld: \"return line + block, 2\"  New: \"return line + block, 1\"\nbit, 1 failed, restored yes. TestProbeMutationRecoveryFailure :102 only.\n\nP10 D41 exact copy bytes (shared with PB12, PB14). subject.go\nOld: \"if err := os.WriteFile(file, subject.start, 0o600); err != nil {\"\nNew: \"if err := os.WriteFile(file, subject.start[1:], 0o600); err != nil {\"\nbit, 29 failed, restored yes. Includes TestProbeMutationRecoveryFailure copy bytes and TestProbeReportsARestoreFailure.\n\nP11 D42 home: a proven restore keeps the copy. probe.go\nOld: \"if restored, reason := restore(replacer, subject, preserved); !restored {\"\nNew: \"if restored, reason := restore(replacer, subject, preserved); restored { return line, 1 } else {\"\nbit, 3 failed, restored yes. TestProbeMutationRecoverySuccess/directory-open, -sync, -close :84 only.\n\nP12 D43 old bytes: fallback write of the new bytes after an unpublished error. probe.go\nOld: \"return mutationFailure(replacer, subject, preserved, err)\"\nNew: \"_ = os.WriteFile(subject.path, mutated, subject.mode); return mutationFailure(replacer, subject, preserved, err)\"\nbit, 2 failed, restored yes. TestProbeMutationPreparationFailure :135 old-bytes check; existing PB45 :284.\n\nP13 D43 home: the rename stage is classified as published. probe.go\nOld: \"errors.As(err, &replaceErr) && replaceErr.Published {\"\nNew: \"errors.As(err, &replaceErr) && (replaceErr.Published || replaceErr.Stage == \\\"rename\\\") {\"\nbit, 1 failed, restored yes. TestProbeMutationPreparationFailure :136 Bench home holds 1 entries only.\n\nP14 native wrapper error path (run supplies durablefile.Native(); PB45 drives it through Command). probe.go\nOld: \"\\treturn runWith(durablefile.Native(), root, parsed)\"\nNew: \"\\tout, code := runWith(durablefile.Native(), root, parsed)\\n\\tif len(out) > 28 && out[:28] == \\\"error: probe mutation failed\\\" {\\n\\t\\treturn \\\"\\\", 0\\n\\t}\\n\\treturn out, code\"\nbit, 1 failed, restored yes. TestProbeRefusesWhenTheMutationWriteFails refusal_test.go:282 only.\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -3883,6 +4160,36 @@
     {
       "from": "sha256:93a6235e5beda74d1bde28cbbad80df6658b3235cc2436e55544d1e14d979dce",
       "to": "sha256:72b9fa252493911657c1f94490e46fcf1041db627c4c8802b35acba37d1e8a29",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:72b9fa252493911657c1f94490e46fcf1041db627c4c8802b35acba37d1e8a29",
+      "to": "sha256:2649d87242eda6170ea76efadda6c82fe48de463f63982d2b8d7f9e9c64f9323",
       "chunk_ids": {
         "D-B1": [
           "D-B1"
