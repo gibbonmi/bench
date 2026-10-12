@@ -1,7 +1,7 @@
 # Preserve durability failures through gate execution
 
 Blocked by: none
-Writes: internal/gate/verdict.go, internal/gate/engine.go, internal/gate/run_transaction.go, internal/gate/durable_replacement_test.go (new), internal/gate/run_durability.go (new)
+Writes: internal/gate/verdict.go, internal/gate/engine.go, internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/lane.go, internal/gate/complete_checkpoint.go, internal/gate/durable_replacement_test.go (new), internal/gate/run_durability.go (new)
 Covers: D16, D17, D37, D38, D39, D40
 
 ## What to build
@@ -10,6 +10,9 @@ Migrate verdict, evidence, and lane replacement through accepted D-A.
 Pass a per-invocation replacer through complete gate execution rather than fabricated results.
 Preserve pending, timeout, evidence, and final categories while retaining the typed cause.
 Interrupted-green demotion returns persistence failure to its diagnostic caller.
+
+The demotion path has no error return now, and its two callers on lock failure and lock contention receive the new error.
+The internal execution form has callers in gate.go, engine.go, and complete_checkpoint.go, and the lane record writes through lane.go.
 Keep pending recovery and report both causes when recovery also fails.
 
 Review chunk: D-B1.

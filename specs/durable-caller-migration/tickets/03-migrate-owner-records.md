@@ -8,6 +8,7 @@ Covers: D18
 
 Use the accepted leaf for the prospective owner record.
 Keep RecordMode, encoded newline, destination authorization, and existing refusal policy.
+Keep the exported Publish signature; it supplies the native replacer to an unexported form in the same file, and the test injects through that form.
 
 Review chunk: D-B2.
 Complete acceptance and landing of durable-file-replacement supplies the shared leaf and its native qualification.

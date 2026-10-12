@@ -7,6 +7,8 @@ Covers: D28
 ## What to build
 
 Compose the existing assessment FileOps seam into D-A rather than copy the ordered writer.
+FileOps replaces its WriteFile hook with CreateTemp, OpenDirectory, and Remove hooks beside Rename, and it composes into one durablefile.Replacer.
+The existing write and rename failure cases of TestAssessmentRecordUpdates inject through those hooks and keep their failure intent.
 Keep validation, 0600 mode, indented record bytes, newline, and old failure assertions.
 Update only the affected audited port disposition with its real Record producer.
 

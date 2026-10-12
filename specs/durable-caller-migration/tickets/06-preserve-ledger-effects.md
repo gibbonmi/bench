@@ -8,6 +8,7 @@ Covers: D22, D44, D45, D52
 
 Add the accepted TransactWithReplacer form and migrate writePath through D-A.
 Keep one address, lock, decision, replacement, compensation, and release implementation.
+Keep the writePath signature, because test seeds outside this fence call it; a replacer form beside it serves the transaction.
 Compensate exactly once only when ledger rename did not complete.
 A published ledger failure retains the decision effects and returns classified failure.
 Exercise the real reauthorization request transition through the same invocation seam.

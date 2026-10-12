@@ -7,6 +7,7 @@ Covers: D29
 ## What to build
 
 Compose the existing repair-pilot replacement seam into D-A.
+FileOps adds an OpenDirectory hook beside its existing hooks and composes into one durablefile.Replacer.
 Keep 0600 mode, document validation, encoded bytes, newline, and all create, short-write, and rename assertions.
 
 Review chunk: D-C6.

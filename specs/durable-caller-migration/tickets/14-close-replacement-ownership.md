@@ -1,12 +1,13 @@
 # Remove the unused replacement owner and close caller coverage
 
 Blocked by: 02-preserve-gate-failures.md, 03-migrate-owner-records.md, 04-migrate-capture-documents.md, 05-migrate-handoff-documents.md, 06-preserve-ledger-effects.md, 07-recover-approval-stage.md, 08-migrate-publication-records.md, 09-migrate-broker-manifests.md, 10-migrate-dashboard-artifacts.md, 11-preserve-probe-recovery.md, 12-migrate-assessment-records.md, 13-migrate-repair-documents.md
-Writes: internal/adopt/manifest.go
+Writes: internal/adopt/manifest.go, internal/adopt/lifecycle_preview_test.go, internal/adopt/lifecycle_consumption_test.go
 Covers: D30, D31, D33, D35, D36
 
 ## What to build
 
-Delete only unused adopt.writeManifest after confirming its absent static consumers.
+Delete only adopt.writeManifest, which has no production consumer.
+Two adoption tests seed a manifest through it; seed those manifests from manifestBytes and manifestMode without a replacement algorithm.
 Retain manifestBytes, manifestMode, stageBytes, and the adoption lifecycle transaction.
 Reconcile every migrated caller against its recorded payload, mode, refusal, and bypass evidence.
 Review the excluded immutable, directory, rollback, rotation, cancellation, and lease owners without migrating them.

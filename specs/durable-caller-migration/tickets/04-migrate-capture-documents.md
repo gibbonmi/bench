@@ -9,6 +9,7 @@ Covers: D20
 Use D-A for replace operations in Append, Abort, recovery, and the manifest writer.
 Keep their encoders, 0644 mode, rollback authority, and existing transaction outcomes.
 Exclusive writeNew and directory promotion remain with their existing owners.
+Keep the parent-directory creation in replace before the shared call, because the leaf requires an existing parent.
 
 Review chunk: D-B3.
 Complete acceptance and landing of durable-file-replacement supplies the shared leaf and its native qualification.

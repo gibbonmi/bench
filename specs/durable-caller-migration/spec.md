@@ -103,7 +103,8 @@ Report a failed recovery attempt beside the original failure.
 Do not claim that pending bytes survived when the final rename completed and recovery failed.
 The classified error describes possible visibility, not a universal rollback result.
 The interrupted-green demotion path must return its persistence error to the diagnostic caller.
-Sources: `internal/gate/run_transaction.go:175`, `internal/gate/run_transaction.go:213`, and `internal/gate/run_transaction.go:230`.
+That path has no error return now, and its two callers on lock failure and lock contention receive the new error.
+Sources: `internal/gate/run_transaction.go:166` (pending), `:182` (timeout), `:213` (final), and `:227` (interrupted-green demotion).
 
 A failed probe mutation before rename retains its existing refusal and cleanup behavior.
 After a completed mutation rename, keep the preservation copy until restore succeeds and read-back matches the original bytes.
@@ -115,7 +116,7 @@ The reason carries both the mutation failure and the restore failure.
 A completed restore rename with failed synchronization still counts as failed restore.
 The preserved bytes remain available even when the visible subject already matches them.
 The existing TOON refusal policy must not hide the preserved path.
-Sources: `internal/probe/probe.go:148`, `internal/probe/probe.go:197`, and `internal/probe/outcome_test.go:44`.
+Sources: `internal/probe/probe.go:172` (mutation), `internal/probe/subject.go:205` (restore), and `internal/probe/outcome_test.go:45`.
 
 Intent compensates a failed ledger write only when its rename did not complete.
 That compensation runs once under the existing lock.
@@ -129,14 +130,14 @@ Construct the complete restore closure before that write.
 A failed policy or board stage invokes restore, including a failed initial policy write after rename.
 With successful restore, the original policy and board bytes or absence return before approval fails.
 The receipt remains unapproved because the ledger write never starts.
-Sources: `internal/commitment/repository/repository.go:275` and `internal/commitment/repository/repository.go:297`.
+Sources: `internal/commitment/repository/repository.go:282` and `internal/commitment/repository/repository.go:295`.
 
 After complete stage, a pre-rename ledger failure restores the external snapshots once.
 A post-rename ledger failure retains the new policy, projected board, and approved receipt together.
 Approve returns an error even when that coherent new state is visible.
 No compensation may pair an approved new receipt with old policy or board bytes.
 The board-absent branch retains absence in each outcome.
-Sources: `internal/commitment/repository/repository.go:165` and `internal/commitment/store_test.go:89`.
+Sources: `internal/commitment/repository/repository.go:159` and `internal/commitment/store_test.go:89`.
 
 Restore returns an error instead of discarding it.
 Approve captures compensation failure without changing the public Compensation callback signature.
@@ -159,6 +160,12 @@ A mutation failure permits the completed baseline but no focused mutation start.
 The test injects separate mutation and restore failures through the same caller invocation.
 Do not call replaceAtomic alone for these outcomes.
 
+The prospective owner record keeps its exported Publish signature, which supplies the native replacer to an unexported form in the same file.
+The intent ledger keeps the writePath signature, because existing test seeds call it, and a replacer form beside it serves the transaction.
+The assessment FileOps and the repair-pilot FileOps compose into one durablefile.Replacer each.
+The assessment FileOps replaces its WriteFile hook with CreateTemp, OpenDirectory, and Remove hooks, and its existing write and rename failure cases inject through them.
+The repair-pilot FileOps adds an OpenDirectory hook beside its existing hooks.
+
 Add intent.TransactWithReplacer with the existing Transact operands and one durablefile.Replacer operand.
 The existing Transact delegates to that form with the native replacer.
 Both forms share address resolution, lock, decision, write, compensation, and release logic.
@@ -174,7 +181,7 @@ Source: `internal/intent/assignment.go:158` and `internal/intent/transaction_tes
 
 ### Current caller inventory
 
-The sources below pin the tree at `a382f4848d432815968f044820fad593e856e297`.
+The sources below pin the tree at `85baca4dbd701a1677af2401e22dfccd164d362c`.
 A source change invalidates its inventory row.
 The row IDs below each require caller composition evidence.
 
@@ -186,7 +193,7 @@ The row IDs below each require caller composition evidence.
 | capture transaction files | `internal/capturetx/transaction.go:235` (`replace`) | 0644 | Caller document and manifest bytes | D20 |
 | handoff document | `internal/handoffdoc/store.go:191` (`replace`) | 0644 | Caller rendered document | D21 |
 | intent ledger | `internal/intent/intent.go:189` (`writePath`) | 0600 | Sorted ledger plus final newline | D22 |
-| commitment repository | `internal/commitment/repository/repository.go:355` (`atomicWrite`) | Caller mode | Stage bytes and snapshot restore bytes | D23 |
+| commitment repository | `internal/commitment/repository/repository.go:340` (`atomicWrite`) | Caller mode | Stage bytes and snapshot restore bytes | D23 |
 | publication record | `internal/publication/record.go:80` (`SaveRecord`) | 0644 | Indented record plus final newline | D24 |
 | broker manifest | `internal/brokermanifest/brokermanifest.go:34` (`Write`) | 0644 | Validated digest and tab-framed fields | D25 |
 | dashboard artifact | `internal/dashboard/dashboard.go:138` (`atomicWrite`) | 0600 | Rendered HTML | D26 |
@@ -194,9 +201,10 @@ The row IDs below each require caller composition evidence.
 | assessment record | `internal/assessment/store.go:116` (`replace`) | 0600 | Validated indented record plus final newline | D28 |
 | repair pilot document | `internal/repairpilot/command.go:261` (`writeDocument`) | 0600 | Indented document plus final newline | D29 |
 
-Gate verdict callers are execution and interrupted-pending persistence in `internal/gate/run_transaction.go:175`.
+Gate verdict callers are execution and interrupted-pending persistence in `internal/gate/run_transaction.go:166`.
 Their full execution failure outcomes belong to D37-D40.
 Gate evidence also serves lane records through `internal/gate/lane.go:331`.
+The internal execution form has callers in `internal/gate/gate.go`, `internal/gate/engine.go`, and `internal/gate/complete_checkpoint.go`.
 
 Capture replacement serves Append, Abort, recovery, and its manifest writer.
 Commitment replacement serves stage and file-snapshot restore.
@@ -204,11 +212,12 @@ Intent transaction and commitment approval compose these operations through D44-
 Probe replacement serves mutation and restore.
 The complete probe caller retains recovery authority through D41-D43.
 The publication state machine retains its release lock and state transitions.
-Sources: `internal/capturetx/public.go:49`, `internal/capturetx/transaction.go:77`, `internal/commitment/repository/repository.go:297`, and `internal/publication/statemachine.go:115`.
+Sources: `internal/capturetx/public.go:49`, `internal/capturetx/transaction.go:77`, `internal/commitment/repository/repository.go:295`, and `internal/publication/statemachine.go:115`.
 
-The unused `internal/adopt/manifest.go:76` writeManifest has no static consumer in the current tree.
-The real adoption manifest path uses stageBytes in `internal/adopt/link_stage.go:101`.
-Delete only the unused replacement helper.
+The `internal/adopt/manifest.go:76` writeManifest has no production consumer in the current tree.
+Two adoption tests use it to seed a manifest: `internal/adopt/lifecycle_preview_test.go:47` and `internal/adopt/lifecycle_consumption_test.go:253`.
+The real adoption manifest path stages through stageManifest in `internal/adopt/link_stage.go:132`, which calls stageBytes in `internal/adopt/transaction.go:20`.
+Delete only the replacement helper, and seed those two test manifests from manifestBytes and manifestMode without a replacement algorithm.
 Keep manifestBytes, manifestMode, and the lifecycle transaction unchanged.
 
 
@@ -258,13 +267,35 @@ Each chunk requires its own real caller tests and independent review before depe
 
 ### Completion plan
 
-The version 1 plan records future implementation evidence.
+The version 2 plan records future implementation evidence.
 It claims no current implementation pass, red, native qualification, or benchmark.
-The orchestrator adds required version 2 author sessions before dispatch.
+The orchestrator records each ticket author session before that author's dispatch.
+Each ticket carries the root conformance pass, and each ticket that writes a command or conformance registry carries its package floor.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "durable-caller-migration-build-20261012",
+    "orchestrator_session": "claude:dcm-orchestrator-20261012",
+    "author_limit": 1,
+    "assignments": {
+      "02-preserve-gate-failures.md": [],
+      "03-migrate-owner-records.md": [],
+      "04-migrate-capture-documents.md": [],
+      "05-migrate-handoff-documents.md": [],
+      "06-preserve-ledger-effects.md": [],
+      "07-recover-approval-stage.md": [],
+      "08-migrate-publication-records.md": [],
+      "09-migrate-broker-manifests.md": [],
+      "10-migrate-dashboard-artifacts.md": [],
+      "11-preserve-probe-recovery.md": [],
+      "12-migrate-assessment-records.md": [],
+      "13-migrate-repair-documents.md": [],
+      "14-close-replacement-ownership.md": []
+    }
+  },
   "chunks": [
     {
       "id": "D-B1",
@@ -274,17 +305,25 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "gate-tests",
-          "command": "bench test --package ./internal/gate"
+          "command": "bench test --package ./internal/gate",
+          "ticket": "02-preserve-gate-failures.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/gate",
-          "probe": "Discard the leaf cause, allow oracle start after pending failure, hide evidence failure, or discard the recovery error. Each mutation must fail its real execution witness."
+          "probe": "Discard the leaf cause, allow oracle start after pending failure, hide evidence failure, or discard the recovery error. Each mutation must fail its real execution witness.",
+          "ticket": "02-preserve-gate-failures.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/gate",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "02-preserve-gate-failures.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "02-preserve-gate-failures.md"
         }
       ]
     },
@@ -296,17 +335,25 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/gate/prospectiveartifact"
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "ticket": "03-migrate-owner-records.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/gate/prospectiveartifact",
-          "probe": "Restore the former local replacement sequence. The real owner-record junction test must detect the missing shared failure."
+          "probe": "Restore the former local replacement sequence. The real owner-record junction test must detect the missing shared failure.",
+          "ticket": "03-migrate-owner-records.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/gate/prospectiveartifact",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "03-migrate-owner-records.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "03-migrate-owner-records.md"
         }
       ]
     },
@@ -318,17 +365,25 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/capturetx"
+          "command": "bench test --package ./internal/capturetx",
+          "ticket": "04-migrate-capture-documents.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/capturetx",
-          "probe": "Bypass the shared owner in capture replace. The capture operation failure witness must turn red."
+          "probe": "Bypass the shared owner in capture replace. The capture operation failure witness must turn red.",
+          "ticket": "04-migrate-capture-documents.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/capturetx",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "04-migrate-capture-documents.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "04-migrate-capture-documents.md"
         }
       ]
     },
@@ -340,17 +395,25 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/handoffdoc"
+          "command": "bench test --package ./internal/handoffdoc",
+          "ticket": "05-migrate-handoff-documents.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/handoffdoc",
-          "probe": "Restore ignored directory errors or bypass the leaf. The section-writing composition test must detect the missing failure."
+          "probe": "Restore ignored directory errors or bypass the leaf. The section-writing composition test must detect the missing failure.",
+          "ticket": "05-migrate-handoff-documents.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/handoffdoc",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "05-migrate-handoff-documents.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "05-migrate-handoff-documents.md"
         }
       ]
     },
@@ -362,21 +425,30 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/intent"
+          "command": "bench test --package ./internal/intent",
+          "ticket": "06-preserve-ledger-effects.md"
         },
         {
           "id": "existing-canary-owner",
-          "command": "bench test --check bounds-policy"
+          "command": "bench test --check bounds-policy",
+          "ticket": "06-preserve-ledger-effects.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/intent",
-          "probe": "Compensate every write error or omit the reauthorization effect check. The new-ledger and external-witness test must detect their mismatch."
+          "probe": "Compensate every write error or omit the reauthorization effect check. The new-ledger and external-witness test must detect their mismatch.",
+          "ticket": "06-preserve-ledger-effects.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/intent",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "06-preserve-ledger-effects.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "06-preserve-ledger-effects.md"
         }
       ]
     },
@@ -388,33 +460,55 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "repository-tests",
-          "command": "bench test --package ./internal/commitment/repository"
+          "command": "bench test --package ./internal/commitment/repository",
+          "ticket": "07-recover-approval-stage.md"
         },
         {
           "id": "approval-tests",
-          "command": "bench test --package ./internal/commitment"
+          "command": "bench test --package ./internal/commitment",
+          "ticket": "07-recover-approval-stage.md"
         },
         {
           "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'"
+          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'",
+          "ticket": "07-recover-approval-stage.md"
         },
         {
           "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
+          "command": "bench test --check axi-query-registry",
+          "ticket": "07-recover-approval-stage.md"
         },
         {
           "id": "routing",
-          "command": "bench test --check subcommand-routing"
+          "command": "bench test --check subcommand-routing",
+          "ticket": "07-recover-approval-stage.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/commitment/repository",
-          "probe": "Create restore only after policy write, compensate a published ledger, restore only one file, or discard restore failure. Each mutation must fail the corresponding real approval witness."
+          "probe": "Create restore only after policy write, compensate a published ledger, restore only one file, or discard restore failure. Each mutation must fail the corresponding real approval witness.",
+          "ticket": "07-recover-approval-stage.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/commitment/repository",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "07-recover-approval-stage.md"
+        },
+        {
+          "id": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "07-recover-approval-stage.md"
+        },
+        {
+          "id": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "07-recover-approval-stage.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "07-recover-approval-stage.md"
         }
       ]
     },
@@ -426,21 +520,35 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/publication"
+          "command": "bench test --package ./internal/publication",
+          "ticket": "08-migrate-publication-records.md"
         },
         {
           "id": "port-registry",
-          "command": "bench test --check injected-port-registry"
+          "command": "bench test --check injected-port-registry",
+          "ticket": "08-migrate-publication-records.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/publication",
-          "probe": "Restore the former unsynchronized writer. The publication record junction test must detect the missing failure."
+          "probe": "Restore the former unsynchronized writer. The publication record junction test must detect the missing failure.",
+          "ticket": "08-migrate-publication-records.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/publication",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "08-migrate-publication-records.md"
+        },
+        {
+          "id": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "08-migrate-publication-records.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "08-migrate-publication-records.md"
         }
       ]
     },
@@ -452,17 +560,25 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/brokermanifest"
+          "command": "bench test --package ./internal/brokermanifest",
+          "ticket": "09-migrate-broker-manifests.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/brokermanifest",
-          "probe": "Bypass the leaf with the former manifest writer. The manifest composition test must report the injected missing-failure red."
+          "probe": "Bypass the leaf with the former manifest writer. The manifest composition test must report the injected missing-failure red.",
+          "ticket": "09-migrate-broker-manifests.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/brokermanifest",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "09-migrate-broker-manifests.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "09-migrate-broker-manifests.md"
         }
       ]
     },
@@ -474,21 +590,30 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/dashboard"
+          "command": "bench test --package ./internal/dashboard",
+          "ticket": "10-migrate-dashboard-artifacts.md"
         },
         {
           "id": "existing-canary-owner",
-          "command": "bench test --check git-plumbing-owner"
+          "command": "bench test --check git-plumbing-owner",
+          "ticket": "10-migrate-dashboard-artifacts.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/dashboard",
-          "probe": "Select 0644 by assumption or restore the former writer. The mode or injected-failure witness must turn red."
+          "probe": "Select 0644 by assumption or restore the former writer. The mode or injected-failure witness must turn red.",
+          "ticket": "10-migrate-dashboard-artifacts.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/dashboard",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "10-migrate-dashboard-artifacts.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "10-migrate-dashboard-artifacts.md"
         }
       ]
     },
@@ -500,29 +625,55 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/probe"
+          "command": "bench test --package ./internal/probe",
+          "ticket": "11-preserve-probe-recovery.md"
         },
         {
           "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'"
+          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'",
+          "ticket": "11-preserve-probe-recovery.md"
         },
         {
           "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
+          "command": "bench test --check axi-query-registry",
+          "ticket": "11-preserve-probe-recovery.md"
         },
         {
           "id": "routing",
-          "command": "bench test --check subcommand-routing"
+          "command": "bench test --check subcommand-routing",
+          "ticket": "11-preserve-probe-recovery.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/probe",
-          "probe": "Release preservation on every mutation error or treat failed restore sync as success. The preservation-path and focused-start witnesses must detect each mutation."
+          "probe": "Release preservation on every mutation error or treat failed restore sync as success. The preservation-path and focused-start witnesses must detect each mutation.",
+          "ticket": "11-preserve-probe-recovery.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/probe",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "11-preserve-probe-recovery.md"
+        },
+        {
+          "id": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "11-preserve-probe-recovery.md"
+        },
+        {
+          "id": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "11-preserve-probe-recovery.md"
+        },
+        {
+          "id": "probetest",
+          "command": "bench test --package ./internal/probe/probetest",
+          "ticket": "11-preserve-probe-recovery.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "11-preserve-probe-recovery.md"
         }
       ]
     },
@@ -534,33 +685,55 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/assessment"
+          "command": "bench test --package ./internal/assessment",
+          "ticket": "12-migrate-assessment-records.md"
         },
         {
           "id": "port-registry",
-          "command": "bench test --check injected-port-registry"
+          "command": "bench test --check injected-port-registry",
+          "ticket": "12-migrate-assessment-records.md"
         },
         {
           "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'"
+          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'",
+          "ticket": "12-migrate-assessment-records.md"
         },
         {
           "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
+          "command": "bench test --check axi-query-registry",
+          "ticket": "12-migrate-assessment-records.md"
         },
         {
           "id": "routing",
-          "command": "bench test --check subcommand-routing"
+          "command": "bench test --check subcommand-routing",
+          "ticket": "12-migrate-assessment-records.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/assessment",
-          "probe": "Retain the FileOps local replacement copy or bypass shared sync. The Record failure-composition witness must turn red."
+          "probe": "Retain the FileOps local replacement copy or bypass shared sync. The Record failure-composition witness must turn red.",
+          "ticket": "12-migrate-assessment-records.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/assessment",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "12-migrate-assessment-records.md"
+        },
+        {
+          "id": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "12-migrate-assessment-records.md"
+        },
+        {
+          "id": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "12-migrate-assessment-records.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "12-migrate-assessment-records.md"
         }
       ]
     },
@@ -572,17 +745,25 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/repairpilot"
+          "command": "bench test --package ./internal/repairpilot",
+          "ticket": "13-migrate-repair-documents.md"
         },
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/repairpilot",
-          "probe": "Restore the local file-only sequence or weaken the short-write assertion. The corresponding real Store.Replace witness must turn red."
+          "probe": "Restore the local file-only sequence or weaken the short-write assertion. The corresponding real Store.Replace witness must turn red.",
+          "ticket": "13-migrate-repair-documents.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/repairpilot",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "13-migrate-repair-documents.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "13-migrate-repair-documents.md"
         }
       ]
     },
@@ -594,16 +775,29 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "adoption-tests",
-          "command": "bench test --package ./internal/adopt"
+          "command": "bench test --package ./internal/adopt",
+          "ticket": "14-close-replacement-ownership.md"
         },
         {
           "id": "coverage",
-          "command": "bench coverage --check durable-caller-migration"
+          "command": "bench coverage --check durable-caller-migration",
+          "ticket": "14-close-replacement-ownership.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/adopt",
-          "probe": "Alter the surviving adoption stage bytes or its lifecycle transaction result. The existing real adoption assertion must fail, then pass after restoration. The source algorithm census remains independently review-owned."
+          "probe": "Alter the surviving adoption stage bytes or its lifecycle transaction result. The existing real adoption assertion must fail, then pass after restoration. The source algorithm census remains independently review-owned.",
+          "ticket": "14-close-replacement-ownership.md"
+        },
+        {
+          "id": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "14-close-replacement-ownership.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "14-close-replacement-ownership.md"
         }
       ]
     }
@@ -620,6 +814,10 @@ The orchestrator adds required version 2 author sessions before dispatch.
     {
       "id": "ticket-grammar",
       "command": "bench test --check ticket-grammar"
+    },
+    {
+      "id": "root-conformance",
+      "command": "bench test --check root-conformance"
     }
   ]
 }
@@ -645,7 +843,7 @@ Do not derive an expected payload from the new encoder under test.
 
 Prior art: `internal/repairpilot/command_test.go:107` exercises create, short-write, and rename failures through Store.Replace.
 Prior art: `internal/assessment/record_test.go:184` exercises Record write and rename failures.
-Prior art: `internal/handoffdoc/store_test.go:19` exercises competing writers through WriteSection.
+Prior art: `internal/handoffdoc/store_test.go:26` exercises competing writers through WriteSection.
 Read enforcement: `internal/conformance/injected_ports_registry_test.go:6` and `internal/conformance/injected_ports_test.go:40`.
 The dev gate unit phase runs the affected Go packages.
 The whole-project gate remains the acceptance oracle.
@@ -748,6 +946,8 @@ The implementation ticket Writes union must match this union after reviewed slic
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
+- `internal/adopt/lifecycle_consumption_test.go`
+- `internal/adopt/lifecycle_preview_test.go`
 - `internal/adopt/manifest.go`
 - `internal/assessment/record_test.go`
 - `internal/assessment/replacement_test.go`
@@ -764,8 +964,11 @@ The implementation ticket Writes union must match this union after reviewed slic
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/dashboard/dashboard.go`
 - `internal/dashboard/replacement_test.go`
+- `internal/gate/complete_checkpoint.go`
 - `internal/gate/durable_replacement_test.go`
 - `internal/gate/engine.go`
+- `internal/gate/gate.go`
+- `internal/gate/lane.go`
 - `internal/gate/prospectiveartifact/prospectiveartifact.go`
 - `internal/gate/prospectiveartifact/replacement_test.go`
 - `internal/gate/run_durability.go`
@@ -778,6 +981,7 @@ The implementation ticket Writes union must match this union after reviewed slic
 - `internal/intent/replacement_test.go`
 - `internal/intent/transaction.go`
 - `internal/probe/probe.go`
+- `internal/probe/probetest/fixture.go`
 - `internal/probe/replacement_test.go`
 - `internal/probe/subject.go`
 - `internal/publication/record.go`
@@ -884,7 +1088,7 @@ Independent ticket review accepted this graph before spec-stage close.
 
 The split addresses PL-R1-DELIVERY without changing accepted behavior.
 Whole-spec completion, acceptance reconciliation, and landing require all planned chunks and rows.
-Sources: internal/reviewrecord/coverage.go:132, internal/reviewrecord/check.go:64, and the independent delivery review.
+Sources: internal/reviewrecord/coverage.go, internal/reviewrecord/check.go, and the independent delivery review.
 The shared parent decision map stays in place.
 
 ### Ticket fence closure additions
@@ -901,7 +1105,7 @@ The bound package registry also adds its five canonical command-registry files t
 
 ### Source headroom
 
-The gate execution source has 398 lines, and repository.go has 400 at the pinned source.
+The gate execution source has 389 lines, and repository.go has 385 at the pinned source.
 D-B1 co-owns run_durability.go for cohesive persistence-failure and recovery helpers.
 D-B6 co-owns replacement.go for snapshot replacement and restore.
 Each extraction lands with its complete caller outcome and preserves the accepted interface.

@@ -9,6 +9,7 @@ Covers: D21
 Use D-A for handoff document replacement with the existing lock, rendered bytes, and 0644 mode.
 Directory-open and directory-sync failures now fail the operation instead of being ignored.
 Keep caller validation and section ownership.
+Prior art: TestTwoWritersOnDistinctSectionsBothSurvive in internal/handoffdoc/store_test.go:26.
 
 Review chunk: D-B4.
 Complete acceptance and landing of durable-file-replacement supplies the shared leaf and its native qualification.
