@@ -203,23 +203,25 @@ func mutationFailure(replacer durablefile.Replacer, subject subject, preserved p
 	var replaceErr *durablefile.Error
 	if errors.As(err, &replaceErr) && replaceErr.Published {
 		if restored, reason := restore(replacer, subject, preserved); !restored {
-			block, tableErr := preservedTable(preserved, err.Error()+"; restore: "+reason)
-			if tableErr != nil {
-				return toon.RenderError(tableErr) + "\n", 2
-			}
-			return line + block, 2
+			return line + keptCopy(preserved, err.Error()+"; restore: "+reason), 2
 		}
 	}
 	preserved.release()
 	return line, 1
 }
 
-// preservedTable names the kept copy and the reason it is kept. The reason is diagnostic
-// prose, and a failed write quotes the subject path inside it, so a subject the row already
-// refused would refuse here too and the caller would lose the copy path. The path cell
-// stays verbatim, because a stripped path names a file that is not there.
-func preservedTable(preserved preservation, reason string) (string, error) {
-	return toon.Table("preserved", []string{"path", "reason"}, [][]string{{preserved.file, sanitize.Strip(reason)}})
+// keptCopy names the kept copy and the reason it is kept, because the caller restores the
+// subject from that copy by hand. The reason is diagnostic prose that can quote the subject
+// path, so its control bytes are stripped. A stripped path names a file that is not there,
+// so the path stays verbatim, and a path the encoder refuses is Go-quoted outside the table
+// beside that refusal, so the refusal never hides the copy.
+func keptCopy(preserved preservation, reason string) string {
+	reason = sanitize.Strip(reason)
+	block, err := toon.Table("preserved", []string{"path", "reason"}, [][]string{{preserved.file, reason}})
+	if err == nil {
+		return block
+	}
+	return toon.RenderError(err) + "\n" + toon.Errorf("probe copy kept", strconv.Quote(preserved.file)+": "+reason) + "\n"
 }
 
 // render prints the verdict row first, so a caller reads the answer before the evidence.
@@ -243,11 +245,7 @@ func render(subject subject, mutation string, outcome testreport.Outcome, focuse
 	preservedBlock := ""
 	if !restored {
 		cells.verdict, code, cells.restored = "restore-failed", 2, "no"
-		block, err := preservedTable(preserved, reason)
-		if err != nil {
-			return toon.RenderError(err) + "\n", code
-		}
-		preservedBlock = block
+		preservedBlock = keptCopy(preserved, reason)
 	}
 	e := selected(subject, mutation, cells, request)
 	e.command, e.focused = code, &focused

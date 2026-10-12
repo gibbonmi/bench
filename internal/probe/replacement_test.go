@@ -3,6 +3,8 @@ package probe
 import (
 	"errors"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -26,12 +28,13 @@ func subjectFaults() *durablefiletest.Router {
 	}
 }
 
-// probeWith runs the accepted probe invocation over f with each subject replacement through
-// replacer. The mutated run catches the mutation, so a probe that reached it would bite.
-func probeWith(t *testing.T, f *fixture, replacer durablefile.Replacer) (string, int) {
+// probeWith runs the probe invocation that probeArgs answers for spelled over f, with each
+// subject replacement through replacer. The mutated run catches the mutation, so a probe
+// that reached it would bite.
+func probeWith(t *testing.T, f *fixture, replacer durablefile.Replacer, spelled ...string) (string, int) {
 	t.Helper()
 	installStubGo(t, f, cannedFailure("caught"), 1, "")
-	parsed, line, _ := usage.Parse(grammar, probeArgs())
+	parsed, line, _ := usage.Parse(grammar, probeArgs(spelled...))
 	if line != "" {
 		t.Fatalf("parse refused the accepted invocation: %q", line)
 	}
@@ -78,8 +81,12 @@ func TestProbeMutationRecoverySuccess(t *testing.T) {
 			router := subjectFaults()
 			router.Fail[mutationReplacement] = map[string]error{stage: errors.New("injected mutation " + stage + " failure")}
 
-			probeWith(t, f, router.Replacer())
+			out, code := probeWith(t, f, router.Replacer())
 
+			if code != 1 {
+				t.Fatalf("exit = %d, want 1\n%s", code, out)
+			}
+			requireBaselineOnly(t, f)
 			durablefiletest.RequireBytes(t, f.subject, clampSource)
 			requireHomeEmpty(t, f)
 		})
@@ -102,13 +109,60 @@ func TestProbeMutationRecoveryFailure(t *testing.T) {
 		t.Fatalf("exit = %d, want 2\n%s", code, out)
 	}
 	kept := preservedCopy(t, f)
-	_, row, _ := strings.Cut(out, "preserved[1]{path,reason}:\n  ")
+	// The first line is the mutation failure, so only the preserved block follows it.
+	_, block, _ := strings.Cut(out, "\n")
 	for _, want := range []string{kept, mutationCause.Error(), restoreCause.Error()} {
-		if !strings.Contains(row, want) {
-			t.Fatalf("preserved row = %q, want it to name %q", row, want)
+		if !strings.Contains(block, want) {
+			t.Fatalf("preserved block = %q, want it to name %q", block, want)
 		}
 	}
 	durablefiletest.RequireBytes(t, kept, clampSource)
+}
+
+// D41: a copy path the encoder refuses still reaches the caller with every cause, on the
+// mutation-failure branch and on the focused-run branch alike.
+func TestProbeNamesACopyTheEncoderRefuses(t *testing.T) {
+	// The BEL byte sits in the base name, so the copy path carries it too.
+	name := "data\aalert.txt"
+	mutationCause := errors.New("injected mutation directory-sync failure")
+	restoreCause := errors.New("injected restore rename failure")
+	for _, tc := range []struct {
+		label  string
+		faults map[durablefiletest.Fault]map[string]error
+	}{
+		{"mutation failure", map[durablefiletest.Fault]map[string]error{
+			mutationReplacement: {"directory-sync": mutationCause},
+			restoreReplacement:  {"rename": restoreCause},
+		}},
+		{"focused run", map[durablefiletest.Fault]map[string]error{
+			restoreReplacement: {"rename": restoreCause},
+		}},
+	} {
+		t.Run(tc.label, func(t *testing.T) {
+			f := newFixture(t)
+			writeFixtureFile(t, filepath.Join(f.root, name), "alpha\n", 0o644)
+			router := subjectFaults()
+			router.Fail = tc.faults
+
+			out, code := probeWith(t, f, router.Replacer(), name, "--swap", "alpha", "--with", "beta", "--package", "./")
+
+			if code != 2 {
+				t.Fatalf("exit = %d, want 2\n%s", code, out)
+			}
+			kept := preservedCopy(t, f)
+			for _, cause := range tc.faults {
+				for _, err := range cause {
+					if !strings.Contains(out, err.Error()) {
+						t.Fatalf("stdout = %q, want it to name %q", out, err.Error())
+					}
+				}
+			}
+			if !strings.Contains(out, strconv.Quote(kept)) {
+				t.Fatalf("stdout = %q, want it to name the copy %s", out, strconv.Quote(kept))
+			}
+			durablefiletest.RequireBytes(t, kept, "alpha\n")
+		})
+	}
 }
 
 // D34: a restore whose directory sync fails is not proven, even though the subject already
