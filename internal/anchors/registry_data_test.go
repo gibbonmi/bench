@@ -1226,7 +1226,7 @@ func TestCensusChangelogAndReviewBaseAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    ".agents/commands/bench-review-implementation.md",
 				section: "Process",
-				needle:  "The first chunk base is the `main` tip merged into the source. Each later chunk base is the accepted predecessor tip, so the range holds only that chunk's delta.",
+				needle:  "The first chunk base is the `main` tip merged into the source. Each later chunk base is the last recorded fold after the accepted predecessor tip, or that tip when no fold follows it. The range then holds only that chunk's delta.",
 				want:    ".agents/commands/bench-review-implementation.md Pin the diff dropped first-or-later chunk base selection",
 			},
 		},

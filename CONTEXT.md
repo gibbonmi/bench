@@ -384,14 +384,14 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **open build** — a claimed outcome with a bound staged-spec deliverable and at
   least one active bound assignment. Bench derives it from the ledger; it is never a
   stored state. It holds the landing window of the default branch.
-  Avoid "active build", "running build", "freeze" — open build.
+  Avoid "active build", "running build" — open build.
 - **chunk gap** — the ledger state of an **open build** between a green chunk
   checkpoint and the first dispatch of the next chunk. Avoid "pause", "window",
   "between-chunk slot" — chunk gap.
 - **fold record** — the review-record entry that `bench record fold` writes for one
   merge of the default branch into the source. It names the chunk it follows, its
   parents, its resolution paths, and its merged test packages. Avoid "merge record",
-  "fold commit", "sync entry" — fold record.
+  "sync entry" — fold record.
 - **landing override** — the reviewer's recorded grant that admits the landing of one
   assignment through every **open build**. The reviewer writes it with
   `bench commitment override`. Avoid "bypass", "force land", "exemption" — landing

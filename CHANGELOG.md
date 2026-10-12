@@ -8,7 +8,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Build landing window
 
-- Added a landing lease, a landing window, and a reviewer override to `bench worktree land`. A landing holds a lease on its destination from composition through publish, so a second landing refuses with `land-lease-held` and names the owner. While a chunked build is open, the landing refuses each other landing with `land-build-window` until the build reaches a chunk gap. The reviewer admits one landing with `bench commitment override` from a terminal in the primary checkout. `bench record fold` records a fold of `main`, so the review chain accepts it between and after chunks, and only its resolution takes review. A landing over a moved destination refuses with `land-destination-moved` and names `bench worktree merge`; before, it named `bench doctor`.
+- Added a landing lease, a landing window, and a landing override to `bench worktree land`. A landing holds a lease on its destination from composition through publish, so a second landing refuses with `land-lease-held` and names the owner. During an open build, the landing refuses each other landing with `land-build-window` outside a chunk gap. The reviewer admits one landing with `bench commitment override` from a terminal in the primary checkout. `bench record fold` records a fold of `main`, so the review chain accepts it between and after chunks, and only its resolution takes review. A landing over a moved destination refuses with `land-destination-moved` and names `bench worktree merge`; before, it named `bench doctor`.
 
 ### Spec stage binding
 

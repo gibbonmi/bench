@@ -5,12 +5,13 @@ package anchors
 // The first row pins the build-entry route that sends a staleness-class preflight red
 // to the staleness pass before the chain starts. The next two rows pin the implement
 // phase's pointer to the staleness-pass reference and the cheap-tier fan-out charge that
-// the reference states. The fold rows pin the build's fold points, its gap fold, and its fold
-// record in the implement phase and the recorded fold in review step 1. They also forbid each
-// retired sentence that folds main at the start of the last chunk or refuses a fold between two
-// chunks. A fold row also pins the craft-delegate sentence that leaves the build's fold timing to
-// the implement phase. The light-path rows pin
-// the build's light-path hold in the implement phase and in ADR 0023. They also forbid the ADR's
+// the reference states. The fold rows pin the build's fold points, its gap fold, its pointer to
+// the chunk gap notes, and its fold record in the implement phase. They also pin the recorded
+// fold in review step 1. They forbid the retired sentences that fold main at the start of the
+// last chunk or refuse a fold between two chunks. They also forbid the retired sentences that put
+// a fold in the review delta of the last chunk or refreeze that chunk. A fold row also pins the
+// craft-delegate sentence that leaves the build's fold timing to the implement phase. The
+// light-path rows pin the build's light-path hold in the implement phase and in ADR 0023. They also forbid the ADR's
 // retired unscoped clause. The chunk-record rows pin the last ticket author's freeze and chunk
 // record. They pin the chunk checkpoint gate before a successor chunk and the last chunk's close
 // through the complete checkpoint. They also forbid each retired sentence. The build-log rows pin
@@ -39,6 +40,8 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Inside a chunk, the post-ticket preflight passes the chunk's `--base` and the current `--source-tip`, so a moved `main` does not route a fold.", Diagnostic: "chunk chain: the in-chunk preflight passes the chunk base and the current source tip"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "folds `main` only before the first chunk, at the start of the last chunk", Diagnostic: "chunk chain: the implement phase restored the main fold at the start of the last chunk"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "The fold at the start of the last chunk comes before its first ticket dispatch.", Diagnostic: "chunk chain: the implement phase restored the last-chunk fold before its first ticket dispatch"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "review delta of the last chunk", Diagnostic: "chunk chain: the implement phase restored the fold in the review delta of the last chunk"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "the last chunk refreezes", Diagnostic: "chunk chain: the implement phase restored the refreeze of the last chunk after a fold"},
 	{Group: AfterImplementSpec, File: craftDelegate, Kind: Require, Needle: "During a build, `/bench-implement-spec` owns the fold timing, and a ticket charge starts without this fold.", Diagnostic: "chunk chain: craft-delegate leaves the build fold timing to the implement phase"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "After the last ticket of a chunk, that ticket's author freezes the chunk and records the chunk entry with `bench record chunk`.", Diagnostic: "chunk chain: the last ticket's author records the chunk entry at the freeze"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "The last ticket's author performs that freeze, as the Land section states.", Diagnostic: "chunk chain: the Build section dropped the last ticket's author as the freeze owner"},
@@ -58,8 +61,9 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "`--full <spec>`", Needle: "A green chunk checkpoint and its handoff refresh are not a phase exit. The orchestrator continues into the successor chunk in the same turn, and it stops only on a `craft-line` stop condition.", Diagnostic: "chunk chain: a green chunk checkpoint is not a phase exit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Write the ordinary assessment record before the `bench worktree land` step, and append the landing evidence after it.", Diagnostic: "chunk chain: the assessment record precedes the landing"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 1, Needle: "A later plan commit is never a chunk base.", Diagnostic: "chunk chain: a plan commit is never a chunk base"},
-	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 1, Needle: "Merge `main` into the source before the first chunk. `/bench-implement-spec` owns each later fold point and its `bench record fold` step. The review chain accepts a recorded fold between two chunks and after the last chunk, and the fold then serves as the next chunk base.", Diagnostic: "chunk chain: a main merge lands before the first chunk or as a recorded fold"},
+	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 1, Needle: "Merge `main` into the source before the first chunk. `/bench-implement-spec` owns each later fold point and its `bench record fold` step. The review chain accepts a recorded fold between two chunks and after the last chunk.", Diagnostic: "chunk chain: a main merge lands before the first chunk or as a recorded fold"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "so the review chain refuses a `main` merge between two chunks", Diagnostic: "chunk chain: the review phase restored the chain refusal of a main merge between two chunks"},
+	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "review delta of the last chunk", Diagnostic: "chunk chain: the review phase restored the fold in the review delta of the last chunk"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInSection, Section: "Review modes", Needle: "A chunk that ends on a repair takes one confirming round of all three axes at its final tip.", Diagnostic: "chunk chain: a repair-ending chunk takes one confirming round"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInSection, Section: "Review modes", Needle: "Its charge names those findings and the folds to confirm.", Diagnostic: "chunk chain: a confirming round's charge dropped its named findings or its folds"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "look first for duplicated knowledge in the repair delta", Diagnostic: "chunk chain: the review phase restored the Standards first look that widens a confirming round"},

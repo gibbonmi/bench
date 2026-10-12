@@ -23,8 +23,9 @@ gate checks the composed tree against the reviewed source. It permits only
 the exact broker-owned status transform and this spec's review-record delta.
 When the destination moved past the reviewed source, the landing refuses with
 `land-destination-moved`. Follow its `next=` route, which folds the destination
-with `bench worktree merge` and reruns the landing. `/bench-review-implementation`
-step 1 owns the fold record and its review before that rerun.
+with `bench worktree merge` and reruns the landing. Before that rerun,
+`/bench-review-implementation` step 1 owns the fold record and its review, and
+its step 6 owns the merged-test verification and the completion entry.
 
 A spec changes the promotion broker source when its diff changes a Bench build input.
 Before the first landing of such a spec, run `bench worktree build <target>` and then `bench worktree exec <target> -- ./dist/bench doctor`.
