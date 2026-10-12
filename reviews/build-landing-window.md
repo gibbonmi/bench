@@ -20,6 +20,9 @@ A fable/high consultation chose the owner for BW-C S1 and the content binding fo
 BW-E round 1 reviewed the pair `814a14cc..ccd2a6cd`, and repair 1 closed all seven targets at `0ac5df86`.
 The confirming round passed on all three axes, and BW-E used one of its two repair cycles.
 
+BW-F round 1 reviewed the pair `ca231f79..835b31be`, after fold F1 of `main` at `ca231f79`.
+Repair 1 takes S1-S3 and P1.
+
 ## Standards
 
 Findings: 3. Worst issue: S1, a copied gate-barrier fixture harness.
@@ -52,6 +55,12 @@ BW-E findings: 3. Worst issue: BW-E S1, a bound exemption that matches the word 
 - BW-E S2, auto-fix, confidence 7: `override_test.go:84` and `land_override_test.go:30` repeat one override-list read. Add one `commitmenttest` helper beside `Leases`. Ticket 7 repairs it.
 - BW-E S3, auto-fix, confidence 8: three comment sentences in `override_test.go:142` and `:165` and `repository/override.go:12` are over 25 words. Ticket 7 repairs it.
 
+BW-F findings: 3. Worst issue: BW-F S1, two statements of the chunk base after a fold that disagree.
+
+- BW-F S1, auto-fix, confidence 7: review step 1 gives two chunk bases after a fold, and they disagree. State the base once, and move its anchor, test, and canary. Ticket 8 repairs it.
+- BW-F S2, auto-fix, confidence 5: `.bench/BENCH-reference.md:328` restates the guard fact that `CONTEXT.md` owns. Name the term instead. Ticket 8 repairs it.
+- BW-F S3, auto-fix, confidence 6: ADR 0014 and `CHANGELOG.md` say "reviewer override" and "a chunked build is open". Use the glossary terms landing override and open build. Ticket 8 repairs it.
+
 ## Spec
 
 Findings: 1. Worst issue: P1, a false comparison clause in the Edge inventory.
@@ -72,6 +81,10 @@ BW-E findings: 2. Worst issue: BW-E P1, a BW82 test that does not run the guard 
 
 - BW-E P1, auto-fix, confidence 7: `TestGuardDeniesTheOverrideVerb` calls `ReviewerVerb` directly, so the guard wiring in `cmd/bench/guards.go` has no unit test. Add an envelope case in `cmd/bench/main_test.go`. Ticket 7 repairs it.
 - BW-E P2, auto-fix, confidence 6: the same defect as BW-E S1.
+
+BW-F findings: 1. Worst issue: BW-F P1, a back-out route that Git refuses for a landing merge commit.
+
+- BW-F P1, auto-fix, confidence 8: a landing commit has two parents, so `git revert` needs `-m 1`. The spec and ticket 8 now state `git revert -m 1 --no-commit <commit>`. Ticket 8 repairs the reference guide.
 
 ## Coverage
 
@@ -3099,7 +3112,74 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bwf-standards-r1",
+          "performer": "claude:blw_bwf_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwf_standards",
+            "digest": "sha256:3fb8ea9879195a2b419914fcd0b96e51a217bd87c61fe3f35b8f0d1aef445eea",
+            "excerpt": "Axis: Standards, BW-F, pair ca231f79..835b31be: 3 findings, all blocking.\nS1 bench-review-implementation.md:96 vs :99: two chunk-base statements disagree after a fold\n   (coverage.go:92-101 accepts either); the anchor files are in Writes. auto-fix.\nS2 BENCH-reference.md:328 restates the override guard fact that CONTEXT.md:192-193 owns. auto-fix.\nS3 ADR 0014:22 and CHANGELOG.md:126 say \"reviewer override\" and \"a chunked build is open\"\n   instead of landing override and open build. auto-fix.\nAdvice: forbid rows for the refreeze and join-delta sentences; \"freeze\" in the open-build Avoid list;\n  coverage.go:103 error text predates the fold rule.\n"
+          },
+          "axis": "Standards",
+          "base": "ca231f791a289e164f0bfda6ff53ff233dd8a1fb",
+          "tip": "835b31bebc2ded2cf779f418d232d87dd4d0c8be",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwf-spec-r1",
+          "performer": "claude:blw_bwf_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwf_spec",
+            "digest": "sha256:2f24a11c74edb0411fa8bcfc6a04cf8a8efe4ea773d0d96aedf097775641a4a0",
+            "excerpt": "Axis: Spec, BW-F, pair ca231f79..835b31be: 1 finding, 0 blocking.\nP1 BENCH-reference.md:335 back-out `git revert --no-commit <commit>` (spec:421) fails on a two-parent\n   landing merge without -m 1; a spec defect. auto-fix under --auto-approve, flagged for reviewer veto.\nRows BW85-BW92 built and review-graded; BW89 carries P1.\nAuthor notes: (a) acceptable; (b) confirmed by gap.go:29-31,57 and window.go:124-125; (c) true but\n  incomplete for the last chunk.\nAdvice: ADR 0014 last-chunk wait; final-check step pointer; :99 \"next chunk base\" after the last chunk;\n  CONTEXT Avoid list names \"fold commit\", which the guidance uses correctly.\n"
+          },
+          "axis": "Spec",
+          "base": "ca231f791a289e164f0bfda6ff53ff233dd8a1fb",
+          "tip": "835b31bebc2ded2cf779f418d232d87dd4d0c8be",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bwf-coverage-r1",
+          "performer": "claude:blw_bwf_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwf_coverage",
+            "digest": "sha256:b2d6938ba8d948e226d1f0c566812c974765bdef5d4d60325e9b5d02f215a2f5",
+            "excerpt": "Axis: Coverage, BW-F, pair ca231f79..835b31be: 0 findings.\nProbe review-implementation.md + retired :99 sentence: bit, restored yes.\nProbe implement-spec.md \"without a refreeze\" -> \"and the last chunk refreezes\": bit, restored yes.\nProbe review-implementation.md + \"fold joins the review delta of the last chunk, and the last chunk refreezes\":\n  silent, restored yes; review-owned, advice only.\nBW89-BW92 content is review-only. Every new command form exists in its verb --help. git status --short empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "ca231f791a289e164f0bfda6ff53ff233dd8a1fb",
+          "tip": "835b31bebc2ded2cf779f418d232d87dd4d0c8be",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {

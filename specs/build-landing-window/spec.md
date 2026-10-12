@@ -418,7 +418,7 @@ The anchors at `internal/anchors/registry_chunk_chain.go:30-36` and `:56` move t
 
 `.bench/BENCH-reference.md` Command Notes state the lease, the window, the gap, and the override.
 They also name `bench commitment block` as the reviewer's stop for a stalled build that still holds the window.
-They also state the back-out route: `git revert --no-commit <commit>` in a fresh worktree, `bench commit`, and a landing with the override.
+They also state the back-out route: `git revert -m 1 --no-commit <commit>` in a fresh worktree, `bench commit`, and a landing with the override.
 `CONTEXT.md` defines **landing lease**, **open build**, **chunk gap**, **fold record**, and **landing override**.
 `docs/known-issues.md:14` leaves, and `CHANGELOG.md` gains one entry.
 

@@ -29,7 +29,7 @@ The `.agents/commands/bench-final-check.md` paragraph that holds line 24 names t
 
 Add Command Notes to `.bench/BENCH-reference.md` for the lease, the window, the gap, and the override.
 They also name `bench commitment block` as the reviewer's stop for a stalled build that still holds the window.
-They state the back-out route: `git revert --no-commit <commit>` in a fresh worktree, `bench commit`, and a landing with the override.
+They state the back-out route: `git revert -m 1 --no-commit <commit>` in a fresh worktree, `bench commit`, and a landing with the override.
 `main` is never reset.
 A new heading there must not repeat a `.bench/BENCH.md` heading.
 
