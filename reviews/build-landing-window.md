@@ -120,7 +120,7 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
 {
   "version": 2,
   "spec": "specs/build-landing-window/spec.md",
-  "plan_digest": "sha256:3570d17d0cd81db0cf48021e5571af155d1ceac322a98a6cde4253a6d4c6a29b",
+  "plan_digest": "sha256:266d0c89509ae4abc0eeb861c0421fee51362d9bc10c444c460b9434e381293e",
   "implementation_session": "",
   "chunks": [
     {
@@ -2978,9 +2978,9 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
     {
       "id": "BW-F",
       "base": "ca231f791a289e164f0bfda6ff53ff233dd8a1fb",
-      "tip": "835b31bebc2ded2cf779f418d232d87dd4d0c8be",
-      "plan_digest": "sha256:3570d17d0cd81db0cf48021e5571af155d1ceac322a98a6cde4253a6d4c6a29b",
-      "source_digest": "bb4bd1eb31536fecbd84c83bb279a12ef7c95d67",
+      "tip": "ca2360e47dd15889a040621bf0b32de94805417e",
+      "plan_digest": "sha256:266d0c89509ae4abc0eeb861c0421fee51362d9bc10c444c460b9434e381293e",
+      "source_digest": "6e0d63faf6c4e11259e52c42da9dfa65806d0986",
       "acceptance_rows": [
         "BW85",
         "BW86",
@@ -3106,6 +3106,125 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
             "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8/t8-root-conformance.log",
             "digest": "sha256:514b459258ceed6331eb3e40ece0eccaf8c7170e347e9e697a457a19d2927d02",
             "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,835b31bebc2ded2cf779f418d232d87dd4d0c8be,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16528,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nwall_elapsed=19.59s exit=0\n"
+          },
+          "requirement": "t8-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-anchors-focused-v2",
+          "performer": "claude:blw_t8_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6e0d63faf6c4e11259e52c42da9dfa65806d0986",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8rep1/t8-anchors-focused.log",
+            "digest": "sha256:4d0f7600bbfd55b80f02bd0f3cb7a5d9e0db75a576b08454f575fe51b4412bd9",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/anchors/registry_chunk_chain.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestChunkChainAnchors,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,505\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,562,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestChunkChainAnchors,\"registry_chunk_chain_test.go:68: tree broken at \\\"A build folds `main` only before the first chunk, at the start of the last chunk, or before the completion landing.\\\" in .agents/commands/bench-implement-spec.md = [.agents/commands/bench-impl… (1020 bytes)\",5\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-anchors-focused",
+          "command": "bench test --package ./internal/anchors --run 'TestChunkChainAnchors'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the forbid row for the retired sentence that folds main at the start of the last chunk from internal/anchors/registry_chunk_chain.go, so that the old sentence passes the registry. TestChunkChainAnchors turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8rep1/t8-anchors-focused.log",
+              "digest": "sha256:4d0f7600bbfd55b80f02bd0f3cb7a5d9e0db75a576b08454f575fe51b4412bd9",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/anchors/registry_chunk_chain.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestChunkChainAnchors,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,505\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,562,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestChunkChainAnchors,\"registry_chunk_chain_test.go:68: tree broken at \\\"A build folds `main` only before the first chunk, at the start of the last chunk, or before the completion landing.\\\" in .agents/commands/bench-implement-spec.md = [.agents/commands/bench-impl… (1020 bytes)\",5\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t8-floor-v2",
+          "performer": "claude:blw_t8_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6e0d63faf6c4e11259e52c42da9dfa65806d0986",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8rep1/t8-floor.log",
+            "digest": "sha256:e11149c5db630a7dce41d178e2382fdb7cf503fc459733b0e40d3278222a8a9d",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,ca2360e47dd15889a040621bf0b32de94805417e,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17050,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2537,179\n  github.com/gibbonmi/bench/internal/conformance,pass,61232,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nwall_elapsed=65.95s exit=0\n"
+          },
+          "requirement": "t8-floor",
+          "command": "bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-guidance-v2",
+          "performer": "claude:blw_t8_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6e0d63faf6c4e11259e52c42da9dfa65806d0986",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8rep1/t8-guidance.log",
+            "digest": "sha256:539516d074cc8581161490058b19e513996d41a9b728c7080ed389c500822f80",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --check docs-currency-workflow\ntree[1]{target,head,dirty}:\n  FT342-FT253,ca2360e47dd15889a040621bf0b32de94805417e,true\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6074,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nwall_elapsed=9.13s exit=0\n"
+          },
+          "requirement": "t8-guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-conformance-meta-v2",
+          "performer": "claude:blw_t8_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6e0d63faf6c4e11259e52c42da9dfa65806d0986",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8rep1/t8-conformance-meta.log",
+            "digest": "sha256:f0b6a068802c1d0fce3882ef68e9f69095bb9416d9a899d1d35e7c46739eb183",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --check conformance-meta\ntree[1]{target,head,dirty}:\n  FT342-FT253,ca2360e47dd15889a040621bf0b32de94805417e,true\ncheck[1]{name,kind,tests_run,subjects}:\n  conformance-meta,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,30,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nwall_elapsed=1.81s exit=0\n"
+          },
+          "requirement": "t8-conformance-meta",
+          "command": "bench test --check conformance-meta",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-prose-v2",
+          "performer": "claude:blw_t8_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6e0d63faf6c4e11259e52c42da9dfa65806d0986",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8rep1/t8-prose.log",
+            "digest": "sha256:8014768f67fcdb6cf096862fa980cb7f6681fd2c6e71d49858a2d06be72a5103",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --check prose\ntree[1]{target,head,dirty}:\n  FT342-FT253,ca2360e47dd15889a040621bf0b32de94805417e,true\ncheck[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,561\nwall_elapsed=0.38s exit=0\n"
+          },
+          "requirement": "t8-prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-root-conformance-v2",
+          "performer": "claude:blw_t8_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6e0d63faf6c4e11259e52c42da9dfa65806d0986",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t8rep1/t8-root-conformance.log",
+            "digest": "sha256:5661f87cc29b37581abdd7075004a934a4b9d732b14542dec5d8ecd2b7bd0957",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- /usr/bin/time -f \"wall_elapsed=%es exit=%x\" bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,ca2360e47dd15889a040621bf0b32de94805417e,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17755,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nwall_elapsed=19.60s exit=0\n"
           },
           "requirement": "t8-root-conformance",
           "command": "bench test --check root-conformance",
@@ -3352,6 +3471,30 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
         ],
         "BW-E": [
           "BW-E"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3570d17d0cd81db0cf48021e5571af155d1ceac322a98a6cde4253a6d4c6a29b",
+      "to": "sha256:266d0c89509ae4abc0eeb861c0421fee51362d9bc10c444c460b9434e381293e",
+      "chunk_ids": {
+        "BW-A": [
+          "BW-A"
+        ],
+        "BW-B": [
+          "BW-B"
+        ],
+        "BW-C": [
+          "BW-C"
+        ],
+        "BW-D": [
+          "BW-D"
+        ],
+        "BW-E": [
+          "BW-E"
+        ],
+        "BW-F": [
+          "BW-F"
         ]
       }
     }
