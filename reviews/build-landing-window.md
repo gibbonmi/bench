@@ -88,7 +88,7 @@ BW-D findings: 2. Worst issue: BW-D C1, a repair checkpoint that reopens the gap
 {
   "version": 2,
   "spec": "specs/build-landing-window/spec.md",
-  "plan_digest": "sha256:6d35dc7cb62659d11dee13f693a308921e4797ca22ae1418702f700caf48429d",
+  "plan_digest": "sha256:5c16bcb325728b2f8822c6ca9adb814bd3b40829d01654b9297c5392d653b4f5",
   "implementation_session": "",
   "chunks": [
     {
@@ -2505,6 +2505,169 @@ BW-D findings: 2. Worst issue: BW-D C1, a repair checkpoint that reopens the gap
           ]
         }
       ]
+    },
+    {
+      "id": "BW-E",
+      "base": "814a14cce55260b397affab84f1ba90a473b98fe",
+      "tip": "ccd2a6cdb30eec625a2f2871fb8738ceffcebd12",
+      "plan_digest": "sha256:5c16bcb325728b2f8822c6ca9adb814bd3b40829d01654b9297c5392d653b4f5",
+      "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+      "acceptance_rows": [
+        "BW71",
+        "BW72",
+        "BW73",
+        "BW74",
+        "BW75",
+        "BW76",
+        "BW77",
+        "BW78",
+        "BW79",
+        "BW80",
+        "BW81",
+        "BW82",
+        "BW83",
+        "BW84"
+      ],
+      "verification": [
+        {
+          "id": "t7-verb-focused-v1",
+          "performer": "claude:blw_t7",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t7/plan-probe-answer.out",
+            "digest": "sha256:3e3ee283b5cc933c35a0c976ba1ae6bdf94d03f426e12b830c297f7fb8a7c5c4",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/commitcmd/override.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/commitcmd,TestOverride,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,fail,168,6\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,TestOverrideRefusesWithoutATerminal,\"override_test.go:204: override = (0, \\\"override[1]{assignment,label,builds,reason}:\\\\\\\\n  247039720609e2ed4a8030d3f1bc7111,back-out,\\\\\\\\\\\"\\\\\\\\\\\",back out the broken landing\\\\\\\\ntype the assignment id to confirm:\\\\\\\\noverridden{assignment=247039720609e2ed4a80… (417 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-verb-focused",
+          "command": "bench test --package ./internal/commitment/commitcmd --run 'TestOverride'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the terminal predicate check from the override verb, so that a pipe on stdin reaches the confirmation read. TestOverrideRefusesWithoutATerminal turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t7/plan-probe-answer.out",
+              "digest": "sha256:3e3ee283b5cc933c35a0c976ba1ae6bdf94d03f426e12b830c297f7fb8a7c5c4",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/commitcmd/override.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/commitcmd,TestOverride,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,fail,168,6\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,TestOverrideRefusesWithoutATerminal,\"override_test.go:204: override = (0, \\\"override[1]{assignment,label,builds,reason}:\\\\\\\\n  247039720609e2ed4a8030d3f1bc7111,back-out,\\\\\\\\\\\"\\\\\\\\\\\",back out the broken landing\\\\\\\\ntype the assignment id to confirm:\\\\\\\\noverridden{assignment=247039720609e2ed4a80… (417 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t7-land-focused-v1",
+          "performer": "claude:blw_t7",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t7/t7-land-focused.txt",
+            "digest": "sha256:88988924ca3248369604eea957ef8aceae5a2bcc71d0ee71ceaf10050322c0ca",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/worktree --run 'TestOverrideAdmitsOneLandingThroughEveryWindow|TestOverrideIsConsumedAtPublish|TestOverrideSurvivesARefusedLanding'\ntree[1]{target,head,dirty}:\n  FT342-FT253,ccd2a6cdb30eec625a2f2871fb8738ceffcebd12,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,826,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall 4.18 s\n"
+          },
+          "requirement": "t7-land-focused",
+          "command": "bench test --package ./internal/worktree --run 'TestOverrideAdmitsOneLandingThroughEveryWindow|TestOverrideIsConsumedAtPublish|TestOverrideSurvivesARefusedLanding'",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-guard-focused-v1",
+          "performer": "claude:blw_t7",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t7/t7-guard-focused.txt",
+            "digest": "sha256:5b19e7fce243c861349adae13a29b3f570c7bc9ccf30cf9553bc59ad945f1eaa",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/benchguard --run 'TestGuardDeniesTheOverrideVerb'\ntree[1]{target,head,dirty}:\n  FT342-FT253,ccd2a6cdb30eec625a2f2871fb8738ceffcebd12,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/benchguard,pass,2,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall 1.47 s\n"
+          },
+          "requirement": "t7-guard-focused",
+          "command": "bench test --package ./internal/benchguard --run 'TestGuardDeniesTheOverrideVerb'",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-help-focused-v1",
+          "performer": "claude:blw_t7",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t7/t7-help-focused.txt",
+            "digest": "sha256:ebe630ffde0534d86c6d238bbe4cfbf4a4908a5c84fc4e004d805e3ae96527cb",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'\ntree[1]{target,head,dirty}:\n  FT342-FT253,ccd2a6cdb30eec625a2f2871fb8738ceffcebd12,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,4,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall 2.06 s\n"
+          },
+          "requirement": "t7-help-focused",
+          "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-floor-v1",
+          "performer": "claude:blw_t7",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t7/t7-floor.txt",
+            "digest": "sha256:0fd1d49d23fbbf2cb676bd79c483187750ab5d6d95e865dc553876687e729d42",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/commitment/... --package ./internal/intent/... --package ./internal/refusalroute --package ./internal/benchguard --package ./internal/guards --package ./internal/anchors --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,ccd2a6cdb30eec625a2f2871fb8738ceffcebd12,false\npackages[14]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22940,334\n  github.com/gibbonmi/bench/internal/anchors,pass,2451,179\n  github.com/gibbonmi/bench/internal/benchguard,pass,2,11\n  github.com/gibbonmi/bench/internal/commitment,pass,5914,175\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,964,25\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,6366,120\n  github.com/gibbonmi/bench/internal/conformance,pass,75172,1690\n  github.com/gibbonmi/bench/internal/guards,pass,77,24\n  github.com/gibbonmi/bench/internal/intent,pass,1077,64\n  github.com/gibbonmi/bench/internal/intent/admissionpolicy,pass,3,28\n  github.com/gibbonmi/bench/internal/intent/ledger,pass,2,1\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,17\n  github.com/gibbonmi/bench/internal/worktree,pass,71844,1433\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nexit 0; wall 86.42 s\n"
+          },
+          "requirement": "t7-floor",
+          "command": "bench test --package ./internal/commitment/... --package ./internal/intent/... --package ./internal/refusalroute --package ./internal/benchguard --package ./internal/guards --package ./internal/anchors --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-data-handling-v1",
+          "performer": "claude:blw_t7",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t7/t7-data-handling.txt",
+            "digest": "sha256:37977a9c8ecdd2927740f0b084a8dd3f15bc576cd4f92fbcfe90fbb730fbe71c",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --check data-handling-derivation\ntree[1]{target,head,dirty}:\n  FT342-FT253,ccd2a6cdb30eec625a2f2871fb8738ceffcebd12,false\ncheck[1]{name,kind,tests_run,subjects}:\n  data-handling-derivation,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,10,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall 1.65 s\n"
+          },
+          "requirement": "t7-data-handling",
+          "command": "bench test --check data-handling-derivation",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-root-conformance-v1",
+          "performer": "claude:blw_t7",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef9271e860f4ade2141514cc2c58e3e3ed6afd52",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/29ecc6e7-353a-4f08-869d-129522ed4412/scratchpad/blw/t7/t7-root-conformance.txt",
+            "digest": "sha256:50371b873373a6f503ce68e72794215bf8fca1cd301c94c0db898fc0bb99d10f",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,ccd2a6cdb30eec625a2f2871fb8738ceffcebd12,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16327,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall 19.11 s\n"
+          },
+          "requirement": "t7-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2605,6 +2768,24 @@ BW-D findings: 2. Worst issue: BW-D C1, a repair checkpoint that reopens the gap
     {
       "from": "sha256:8904922ddfc352d633273c7ad04451a6f79cd3ae66cfcc47ca01822aa510b0fb",
       "to": "sha256:6d35dc7cb62659d11dee13f693a308921e4797ca22ae1418702f700caf48429d",
+      "chunk_ids": {
+        "BW-A": [
+          "BW-A"
+        ],
+        "BW-B": [
+          "BW-B"
+        ],
+        "BW-C": [
+          "BW-C"
+        ],
+        "BW-D": [
+          "BW-D"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6d35dc7cb62659d11dee13f693a308921e4797ca22ae1418702f700caf48429d",
+      "to": "sha256:5c16bcb325728b2f8822c6ca9adb814bd3b40829d01654b9297c5392d653b4f5",
       "chunk_ids": {
         "BW-A": [
           "BW-A"
