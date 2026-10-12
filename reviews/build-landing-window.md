@@ -3115,6 +3115,23 @@ BW-E findings: 2. Worst issue: BW-E C1, a consumption that clears every override
         ]
       }
     }
+  ],
+  "folds": [
+    {
+      "id": "F1",
+      "after": "BW-E",
+      "from": "184bb09ffe3270e6dad02d9d507760e06b079de7",
+      "commit": "ca231f791a289e164f0bfda6ff53ff233dd8a1fb",
+      "incoming": "19b84bbe62aeab8a24488f295ffa87072bda34ce",
+      "source_digest": "d7a7ca84ab71bca5d0b30d1871c0fcd2fa41e010",
+      "resolution": [],
+      "resolution_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_packages": [
+        "./internal/durablefile",
+        "./internal/reviewrecord"
+      ],
+      "reviews": []
+    }
   ]
 }
 ```
