@@ -93,7 +93,11 @@ func (store Store) decideGap(decide func(gap intent.ChunkGap, recorded bool, own
 		if !owned {
 			return ledger, false, nil
 		}
-		for _, build := range store.openBuilds(ledger) {
+		builds, err := store.openBuilds(ledger)
+		if err != nil {
+			return ledger, false, err
+		}
+		for _, build := range builds {
 			if _, bound := build.bound[owner.ID]; !bound {
 				continue
 			}

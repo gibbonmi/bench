@@ -122,14 +122,19 @@ func runtimeState(ledger intent.Ledger) intent.CommitmentState {
 		return state
 	}
 	state.Continuations = slices.DeleteFunc(slices.Clone(state.Continuations), func(continuation intent.LegacyContinuation) bool {
-		return !slices.ContainsFunc(ledger.Assignments, func(run intent.Assignment) bool {
-			return run.ID == continuation.Assignment && run.State == intent.StateActive
-		})
+		return !activeAssignment(ledger, continuation.Assignment)
 	})
 	if len(state.Continuations) == 0 {
 		state.Continuations = nil
 	}
 	return state
+}
+
+// activeAssignment reports whether the ledger holds id as an active assignment.
+func activeAssignment(ledger intent.Ledger, id string) bool {
+	return slices.ContainsFunc(ledger.Assignments, func(run intent.Assignment) bool {
+		return run.ID == id && run.State == intent.StateActive
+	})
 }
 
 // storedState is the commitment state as the ledger holds it.

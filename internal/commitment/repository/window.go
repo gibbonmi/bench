@@ -36,7 +36,11 @@ func (store Store) window(ledger intent.Ledger, source Publication) error {
 	if slices.ContainsFunc(state.Overrides, func(override intent.LandingOverride) bool { return override.Assignment == source.Assignment }) {
 		return nil
 	}
-	for _, build := range store.openBuilds(ledger) {
+	builds, err := store.openBuilds(ledger)
+	if err != nil {
+		return refusalroute.Raised{Name: refusalroute.LandInfrastructure, Err: fmt.Errorf("build window unavailable: %w", err)}
+	}
+	for _, build := range builds {
 		if deliverable, own := build.bound[source.Assignment]; own && deliverable == source.Deliverable {
 			continue
 		}
@@ -51,9 +55,17 @@ func (store Store) window(ledger intent.Ledger, source Publication) error {
 
 // openBuilds derives the open builds of ledger in claim order. A qualifying binding names an
 // assignment that is active in the ledger. The start's own validation reads its deliverable
-// as a staged spec at the default-branch tip.
-func (store Store) openBuilds(ledger intent.Ledger) []openBuild {
+// as a staged spec at the default-branch tip. A claimed outcome needs that tip, so a fault
+// that resolves it is an error. A classification refusal only disqualifies the binding.
+func (store Store) openBuilds(ledger intent.Ledger) ([]openBuild, error) {
 	state := runtimeState(ledger)
+	if len(state.Claims) == 0 {
+		return nil, nil
+	}
+	revision, err := store.sourceRevision()
+	if err != nil {
+		return nil, err
+	}
 	var builds []openBuild
 	for _, claim := range state.Claims {
 		build := openBuild{claim: claim, bound: map[string]string{}}
@@ -61,7 +73,7 @@ func (store Store) openBuilds(ledger intent.Ledger) []openBuild {
 			if binding.Milestone != claim.Milestone || binding.Outcome != claim.Outcome || !activeAssignment(ledger, binding.Assignment) {
 				continue
 			}
-			if staged, err := store.validateDeliverable(commitment.SourceBinding{ID: binding.Deliverable, Path: binding.Deliverable, Identity: binding.Identity}); err != nil || !staged {
+			if staged, err := store.validateDeliverableAt(revision, commitment.SourceBinding{ID: binding.Deliverable, Path: binding.Deliverable, Identity: binding.Identity}); err != nil || !staged {
 				continue
 			}
 			if len(build.bound) == 0 {
@@ -73,14 +85,7 @@ func (store Store) openBuilds(ledger intent.Ledger) []openBuild {
 			builds = append(builds, build)
 		}
 	}
-	return builds
-}
-
-// activeAssignment reports whether the ledger holds id as an active assignment.
-func activeAssignment(ledger intent.Ledger, id string) bool {
-	return slices.ContainsFunc(ledger.Assignments, func(owner intent.Assignment) bool {
-		return owner.ID == id && owner.State == intent.StateActive
-	})
+	return builds, nil
 }
 
 // chunkGap is the gap record of the claimed outcome, if the ledger holds one.

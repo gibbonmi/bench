@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 )
@@ -137,6 +138,20 @@ func TestWindowNeedsAGapOfEveryOtherBuild(t *testing.T) {
 	})
 	if err := store.AdmitWindow(unbound); err != nil {
 		t.Fatalf("window for an overridden assignment = %v, want admission through both builds", err)
+	}
+}
+
+// TestWindowFailsClosedOnAGitFault is BW100. Without a default-branch tip, the window cannot
+// read the staged spec of a claimed outcome, so it refuses the landing.
+func TestWindowFailsClosedOnAGitFault(t *testing.T) {
+	root := windowRepo(t, "A")
+	startBuild(t, root, "build", "A", approvedSpec(t, root, "A"))
+	unbound := windowSource(t, root, commitmenttest.Assignment(t, root, "unbound"))
+	gittest.Output(t, root, "branch", "-m", "main", "trunk")
+	err := commitrepo.Store{Root: root}.AdmitWindow(unbound)
+	var raised refusalroute.Raised
+	if !errors.As(err, &raised) || raised.Name != refusalroute.LandInfrastructure {
+		t.Fatalf("window over an unresolved default branch = %v, want the %s refusal", err, refusalroute.LandInfrastructure)
 	}
 }
 
