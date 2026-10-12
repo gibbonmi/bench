@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-file-replacement/spec.md",
-  "plan_digest": "sha256:d500c83005b78119c2c91ab82b12285c5ebe048c3f6f88d845ad83b896fca219",
+  "plan_digest": "sha256:7a4c1e409bfe8a274ca0cdaca77ce869f2efab34752d3692aa7cb5e7e6057754",
   "implementation_session": "",
   "chunks": [
     {
@@ -534,7 +534,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:d500c83005b78119c2c91ab82b12285c5ebe048c3f6f88d845ad83b896fca219",
+      "to": "sha256:7a4c1e409bfe8a274ca0cdaca77ce869f2efab34752d3692aa7cb5e7e6057754",
+      "chunk_ids": {
+        "D-A": [
+          "D-A"
+        ]
+      }
+    }
+  ]
 }
 ```
 
