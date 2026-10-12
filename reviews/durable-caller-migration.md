@@ -4150,6 +4150,28 @@
           "supersedes": [
             "dcm-c4-r1-coverage"
           ]
+        },
+        {
+          "id": "dcm-c4-r3-standards",
+          "performer": "claude:dcm_rev_c4_std3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_std3",
+            "digest": "sha256:3bb3b674f9a882b0f1aa54e40a27450165b6296b1dc013780e85a1d8964dbf0f",
+            "excerpt": "## Standards (D-C4 reaffirmation, 2453d334..5d56efc1) — S4 closed (internal/probe/probe.go:231-232); comment-only diff; 0 new findings.\n"
+          },
+          "axis": "Standards",
+          "base": "68e390e155699b5aae10125808e86f8eb5eb3b93",
+          "tip": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c4-r2-standards"
+          ]
         }
       ]
     }
@@ -4925,3 +4947,5 @@ Chunk D-C4 used 1 of its 2 repair cycles.
 The D-C4 confirming round at 08eb67b3 closed S1, S2, S3, P1, C1, and C2. It raised one comment-only finding.
 
 - S4, auto-fix as an evidence-only comment correction, confidence 5: the `render` comment at `internal/probe/probe.go:231-232` says that a failed restore keeps the preserved row. When the copy path refuses, `keptCopy` answers with two error lines instead. The orchestrator corrects the comment, and the Standards axis reaffirms it.
+
+The Standards reaffirmation at 5d56efc1 closed S4. Chunk D-C4 closed with 1 of its 2 repair cycles used, and the comment-only correction used none.
