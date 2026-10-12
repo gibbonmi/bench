@@ -22,7 +22,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Drive the capture operation through its real encoder and fail shared directory synchronization after rename.
 The operation retains the classified cause and its existing transaction recovery contract.
 
-- [ ] The capture transaction files caller exposes an injected directory-sync failure. (D20).
+- [x] The capture transaction files caller exposes an injected directory-sync failure. (D20).
 
 ## Checkpoint verification
 
