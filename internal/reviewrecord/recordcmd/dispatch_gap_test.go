@@ -1,7 +1,6 @@
 package recordcmd_test
 
 import (
-	"bytes"
 	"reflect"
 	"slices"
 	"testing"
@@ -20,9 +19,9 @@ func pairedSecond(plan *rr.Plan) {
 	plan.Chunks = slices.Delete(plan.Chunks, 2, 3)
 }
 
-// boundBuild is an undispatched delegated plan of chunks 1, 2, and 4 in the checkout of the
-// assignment that holds the open build of its approved spec. It also answers the primary
-// checkout, which holds main.
+// boundBuild is an undispatched delegated plan of chunks 1, 2, and 4 in the build checkout.
+// The assignment of that checkout holds the open build of the approved spec. It also answers
+// the primary checkout, which holds main.
 func boundBuild(t *testing.T) (*recordtest.Fixture, string) {
 	t.Helper()
 	t.Setenv("BENCH_HOME", t.TempDir())
@@ -43,16 +42,6 @@ func advanceMain(t *testing.T, primary string) {
 	commitmenttest.Commit(t, primary, "advance main")
 }
 
-// ledgerBytes is the exact intent ledger of the repository at root.
-func ledgerBytes(t *testing.T, root string) []byte {
-	t.Helper()
-	path, err := intent.Address(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return bytesOf(t, path)
-}
-
 // requireGap fails unless the ledger at the root of f holds only the gap record want, in the
 // milestone and outcome of the build's claim.
 func requireGap(t *testing.T, f *recordtest.Fixture, want intent.ChunkGap) {
@@ -61,16 +50,6 @@ func requireGap(t *testing.T, f *recordtest.Fixture, want intent.ChunkGap) {
 	want.Milestone, want.Outcome = claim.Milestone, claim.Outcome
 	if !reflect.DeepEqual(got, []intent.ChunkGap{want}) {
 		t.Fatalf("gap records = %+v, want only %+v", got, want)
-	}
-}
-
-// requireLedgerKept runs dispatch and fails unless the ledger at the root of f keeps its bytes.
-func requireLedgerKept(t *testing.T, f *recordtest.Fixture, dispatch func()) {
-	t.Helper()
-	before := ledgerBytes(t, f.Root)
-	dispatch()
-	if after := ledgerBytes(t, f.Root); !bytes.Equal(before, after) {
-		t.Fatalf("ledger after the dispatch = %s, want the bytes %s", after, before)
 	}
 }
 
@@ -104,12 +83,13 @@ func TestDispatchRefusesAnUnfoldedMain(t *testing.T) {
 	want := "dispatch refused: the default branch tip " + gittest.Output(t, primary, "rev-parse", "main") +
 		" is not an ancestor of the source; fold it with bench worktree merge --from main " + owner.ID +
 		" and record it with bench record fold " + slug + " --source <fold-commit> before the dispatch"
-	requireLedgerKept(t, f, func() { refuseAssignment(t, f, 1, want, assignArgs(t, *f.Plan.Execution, "1.md")) })
+	commitmenttest.RequireLedgerKept(t, f.Root, func() { refuseAssignment(t, f, 1, want, assignArgs(t, *f.Plan.Execution, "1.md")) })
 }
 
-// TestDispatchInsideAChunkKeepsTheGap is BW68 and BW95. A second dispatch inside chunk 2, and
-// a repair dispatch to a chunk 1 ticket while the record holds the last chunk, each keep the
-// ledger bytes. Main moves first, so a dispatch that read as a chunk's first would refuse.
+// TestDispatchInsideAChunkKeepsTheGap is BW68 and BW95. A second dispatch inside chunk 2 keeps
+// the ledger bytes. A repair dispatch to a chunk 1 ticket while the record holds the last
+// chunk also keeps them. Main moves first, so a dispatch that read as a chunk's first would
+// refuse.
 func TestDispatchInsideAChunkKeepsTheGap(t *testing.T) {
 	f, primary := boundBuild(t)
 	for _, ticket := range []string{"1.md", "2.md"} {
@@ -117,12 +97,12 @@ func TestDispatchInsideAChunkKeepsTheGap(t *testing.T) {
 		f.Commit("dispatch " + ticket)
 	}
 	advanceMain(t, primary)
-	requireLedgerKept(t, f, func() { dispatch(t, f, "3.md") })
+	commitmenttest.RequireLedgerKept(t, f.Root, func() { dispatch(t, f, "3.md") })
 	f.Commit("dispatch 3.md")
 	commitmenttest.PutGap(t, f.Root, intent.ChunkGap{Outcome: commitmenttest.DeliveryOutcome, Chunk: "4", Last: true})
 	repair := map[string]string{"--performer": "repair-author", "--assignment": "repair-1.md", "--ref": "native:repair-1.md",
 		"--predecessor": recordtest.Author("1.md"), "--trigger": "terminal-failure", "--stopped": "native:stopped-1", "--preserved": "refs/bench/reset/1"}
-	requireLedgerKept(t, f, func() { dispatch(t, f, "1.md", repair) })
+	commitmenttest.RequireLedgerKept(t, f.Root, func() { dispatch(t, f, "1.md", repair) })
 	if history := committedPlan(t, f, "repair 1.md").Execution.Assignments["1.md"]; len(history) != 2 {
 		t.Fatalf("1.md history = %+v, want the first dispatch and the repair", history)
 	}

@@ -1,6 +1,7 @@
 package commitmenttest
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -163,6 +164,30 @@ func OpenChunkGaps(t testing.TB, root string) {
 	}
 	for _, claim := range ledger.Commitment.Claims {
 		PutGap(t, root, intent.ChunkGap{Milestone: claim.Milestone, Outcome: claim.Outcome, Chunk: "C1", Open: true})
+	}
+}
+
+// LedgerPath is the intent ledger file of the repository at root.
+func LedgerPath(t testing.TB, root string) string {
+	t.Helper()
+	path, err := intent.Address(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+// RequireLedgerKept runs act and fails unless the ledger at root keeps its exact bytes.
+func RequireLedgerKept(t testing.TB, root string, act func()) {
+	t.Helper()
+	path := LedgerPath(t, root)
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	act()
+	if after, err := os.ReadFile(path); err != nil || !bytes.Equal(before, after) {
+		t.Fatalf("ledger = %s (%v), want the bytes %s", after, err, before)
 	}
 }
 

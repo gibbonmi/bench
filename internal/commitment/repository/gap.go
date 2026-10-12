@@ -18,7 +18,8 @@ func (unfolded UnfoldedDefault) Error() string {
 }
 
 // OpenGap opens the gap of the build that the store root's assignment binds, after a green
-// checkpoint of chunk in plan. The plan's last chunk and an unbound root open no gap.
+// checkpoint of chunk in plan. The plan's last chunk and an unbound root open no gap. A
+// record of a later chunk stays, so a repair checkpoint keeps the build's state.
 func (store Store) OpenGap(plan reviewrecord.Plan, chunk string) error {
 	order := chunkOrder(plan)
 	position := slices.Index(order, chunk)
@@ -28,7 +29,10 @@ func (store Store) OpenGap(plan reviewrecord.Plan, chunk string) error {
 	if position == len(order)-1 {
 		return nil
 	}
-	return store.decideGap(func(intent.ChunkGap, bool, intent.Assignment) (*intent.ChunkGap, error) {
+	return store.decideGap(func(gap intent.ChunkGap, recorded bool, _ intent.Assignment) (*intent.ChunkGap, error) {
+		if recordedPosition(order, gap, recorded) > position {
+			return nil, nil
+		}
 		return &intent.ChunkGap{Chunk: chunk, Open: true}, nil
 	})
 }
@@ -44,7 +48,7 @@ func (store Store) CloseGap(plan reviewrecord.Plan, ticket string) error {
 	}
 	order := chunkOrder(plan)
 	return store.decideGap(func(gap intent.ChunkGap, recorded bool, owner intent.Assignment) (*intent.ChunkGap, error) {
-		if recorded && slices.Index(order, gap.Chunk) >= position {
+		if recordedPosition(order, gap, recorded) >= position {
 			return nil, nil
 		}
 		if err := store.holdsDefault(owner); err != nil {
@@ -52,6 +56,15 @@ func (store Store) CloseGap(plan reviewrecord.Plan, ticket string) error {
 		}
 		return &intent.ChunkGap{Chunk: order[position], Last: position == len(order)-1}, nil
 	})
+}
+
+// recordedPosition is the position of the recorded gap's chunk in order. No record, and a
+// chunk that order does not hold, answer -1, so each reads as an earlier chunk.
+func recordedPosition(order []string, gap intent.ChunkGap, recorded bool) int {
+	if !recorded {
+		return -1
+	}
+	return slices.Index(order, gap.Chunk)
 }
 
 // chunkOrder is the chunk ids of plan in plan order.

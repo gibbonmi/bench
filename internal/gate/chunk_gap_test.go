@@ -4,6 +4,8 @@ package gate_test
 
 import (
 	"bytes"
+	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -53,15 +55,53 @@ func requireNoGap(t *testing.T, root string) {
 	}
 }
 
+// requireOpenGap fails unless the ledger at root holds only the open gap of chunk 1.
+func requireOpenGap(t *testing.T, root string) {
+	t.Helper()
+	gaps, claim := commitmenttest.ClaimedGaps(t, root)
+	if want := []intent.ChunkGap{{Milestone: claim.Milestone, Outcome: claim.Outcome, Chunk: "1", Open: true}}; !reflect.DeepEqual(gaps, want) {
+		t.Fatalf("gap records = %+v, want %+v", gaps, want)
+	}
+}
+
 // TestGreenChunkCheckpointOpensAGap is BW60. The green checkpoint of chunk 1, which chunk 2
 // follows, in the bound checkout writes an open gap for chunk 1.
 func TestGreenChunkCheckpointOpensAGap(t *testing.T) {
 	f := chunkCheckpoint(t, 2, true)
 	requireGreen(t, f)
-	gaps, claim := commitmenttest.ClaimedGaps(t, f.Root)
-	if want := []intent.ChunkGap{{Milestone: claim.Milestone, Outcome: claim.Outcome, Chunk: "1", Open: true}}; !reflect.DeepEqual(gaps, want) {
-		t.Fatalf("gap records = %+v, want %+v", gaps, want)
+	requireOpenGap(t, f.Root)
+}
+
+// TestEarlierChunkCheckpointKeepsTheGap is BW99. A green checkpoint of chunk 1 keeps the
+// ledger bytes while the gap record holds the last chunk 3 with Last true.
+func TestEarlierChunkCheckpointKeepsTheGap(t *testing.T) {
+	f := chunkCheckpoint(t, 3, true)
+	commitmenttest.PutGap(t, f.Root, intent.ChunkGap{Outcome: commitmenttest.DeliveryOutcome, Chunk: "3", Last: true})
+	commitmenttest.RequireLedgerKept(t, f.Root, func() { requireGreen(t, f) })
+}
+
+// TestUnrecordedGapExitsOne is the gap write failure. A ledger with no read bit fails the
+// gap write after a green checkpoint, so the verb exits 1 with the cause. A rerun on a
+// readable ledger reuses the green verdict and writes the gap.
+func TestUnrecordedGapExitsOne(t *testing.T) {
+	f := chunkCheckpoint(t, 2, true)
+	path := commitmenttest.LedgerPath(t, f.Root)
+	if err := os.Chmod(path, 0o200); err != nil {
+		t.Fatal(err)
 	}
+	_, cause := intent.Read(f.Root)
+	code, out := checkpointChunk(t, f)
+	if err := os.Chmod(path, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if want := "chunk gap not recorded: " + fmt.Sprint(cause); cause == nil || code != 1 || !strings.Contains(out, want) {
+		t.Fatalf("checkpoint = exit %d: %s; want exit 1 and %q", code, out, want)
+	}
+	requireNoGap(t, f.Root)
+	if code, out := checkpointChunk(t, f); code != 0 || !strings.Contains(out, "reused") {
+		t.Fatalf("rerun = exit %d: %s; want the reused green verdict", code, out)
+	}
+	requireOpenGap(t, f.Root)
 }
 
 // TestLastChunkOpensNoGap is BW62. The green checkpoint of the plan's last chunk writes no gap.
