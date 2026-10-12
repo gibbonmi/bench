@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:0b967f69bea388bd20a0fb6062db10215905fe7652985d627efd96fbef58f01d",
+  "plan_digest": "sha256:93a6235e5beda74d1bde28cbbad80df6658b3235cc2436e55544d1e14d979dce",
   "implementation_session": "",
   "chunks": [
     {
@@ -3161,9 +3161,9 @@
     {
       "id": "D-C2",
       "base": "275c82dfc9fa03d1c87978ebd59c9be4282136bc",
-      "tip": "cf1112f9cb755606a6bf6b58593958e33f2b6b2d",
-      "plan_digest": "sha256:0b967f69bea388bd20a0fb6062db10215905fe7652985d627efd96fbef58f01d",
-      "source_digest": "c01e29c180ed8f9fa4cdff27588e8b70c0a14243",
+      "tip": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+      "plan_digest": "sha256:93a6235e5beda74d1bde28cbbad80df6658b3235cc2436e55544d1e14d979dce",
+      "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
       "acceptance_rows": [
         "D25"
       ],
@@ -3259,6 +3259,118 @@
               "ref": "cf1112f9cb755606a6bf6b58593958e33f2b6b2d",
               "digest": "sha256:59e32b8cafd4882deaf3f0684b9f18c7ca148c791a32a8495e23c9208340f736",
               "excerpt": "D-C2 preservation probes at cf1112f9cb755606a6bf6b58593958e33f2b6b2d (FT354-durable-callers), subject internal/brokermanifest/brokermanifest.go, bench test --package ./internal/brokermanifest, no --run filter. One necessity red for each independent check; each red names exactly one test and one assertion line. Every verdict bit, every restored yes; the package passes 3 tests after each restore. Mode 0644 and the tab-framed payload are frozen from the pre-migration writer; the sha256 literal is the independent digest of the fixture broker bytes.\n\nTemporaryPrefix judgment: the leaf stages under \".\" + base + \".*\", so the exported sweep prefix is \".\" + Name + \".\" to stay tied to the manifest name; it restates the leaf naming rule because internal/durablefile exports no pattern (outside this fence). The freshness residue sweep (freshness_publish_test.go:430) still matches and its package passes.\n\nProbe 1 (mode literal, TestBrokerReplacement RequireFile mode). Swap old (exact): \"replacer.Replace(path, []byte(content), 0o644)\" new (exact): \"replacer.Replace(path, []byte(content), 0o640)\"\n  bit,1 failed,restored yes: TestBrokerReplacement,\"replacement_test.go:41: .../bench-broker.manifest mode = -rw-r-----, want a regular file at -rw-r--r--\"\n\nProbe 2 (payload literal, TestBrokerReplacement RequireFile bytes). Swap old (exact): \"\\\"sha256\\\\t\\\" + digest + \\\"\\\\n\\\"\" new (exact): \"\\\"sha256\\\\t\\\" + digest[:63] + \\\"\\\\n\\\"\"\n  bit,1 failed,restored yes: TestBrokerReplacement,\"replacement_test.go:41: .../bench-broker.manifest = \\\"path\\\\t.../bench\\\\nversion\\\\t1.2.3\\\\nplatform\\\\tlinux-x64\\\\nsha256\\\\tc153e59aa5f0b544d81e95344… (468 bytes)\"\n\nProbe 3 (pre-rename absence, D36: fallback write of the new bytes after an unpublished error). Swap old (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\" new (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\\n\\t\\tif replaceErr := (*durablefile.Error)(nil); errors.As(err, &replaceErr) && !replaceErr.Published {\\n\\t\\t\\t_ = os.WriteFile(path, []byte(content), 0o644)\\n\\t\\t}\"\n  bit,1 failed,restored yes: TestBrokerPreRenameFailure,\"replacement_test.go:55: manifest stat err = <nil>, want it absent\"\n\nProbe 4 (D30 refusal swallowed). Swap old (exact): \"\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"digest promotion broker %s: %w\\\", broker, err)\" new (exact): \"\\t\\t_ = err\"\n  bit,1 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:69: err = <nil>, want the caller's own refusal, not a replacement failure\"\n\nProbe 5 (D30 refusal reported as a replacement failure). Same old; new (exact): \"\\t\\treturn \\\"\\\", \\\"\\\", &durablefile.Error{Path: broker, Stage: \\\"digest\\\", Err: err}\"\n  bit,1 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:69: err = replace .../001: digest: not a regular file, want the caller's own refusal, not a replacement failure\"\n\nProbe 6 (D30 refusal starts a replacement). Same old; new (exact): \"\\t\\t_ = replacer.Replace(filepath.Join(dir, \\\".probe\\\"), nil, 0o644)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"digest promotion broker %s: %w\\\", broker, err)\"\n  bit,1 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:72: trace = [create mode write file-sync file-close rename directory-open directory-sync directory-close], want no replacement stage\"\n\nProbe 7 (D30 refusal writes a manifest). Same old; new (exact): \"\\t\\t_ = os.WriteFile(filepath.Join(dir, Name), nil, 0o644)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"digest promotion broker %s: %w\\\", broker, err)\"\n  bit,1 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:74: manifest stat err = <nil>, want it absent\"\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t09-r1-caller-tests",
+          "performer": "claude:dcm_t09_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+            "digest": "sha256:ec2d35ef1591c3c576aa1bacecd832548f53bd2f13910e112e667ec022b1bfb4",
+            "excerpt": "bench test --package ./internal/brokermanifest at 19cb292348cf4aae0f895a139ec39cf8a6ba8edb (FT354-durable-callers). TestBrokerReplacement (D25 post-rename directory-sync; mode and bytes; staging name pins TemporaryPrefix), TestBrokerPreRenameFailure (D36 rename fault; no manifest via durablefiletest.RequireAbsent), TestBrokerRefusalSkipsReplacement (D30 digest refusal), and TestBrokerWriteReturnsRefusal (public Write returns its refusal; no manifest) pass. Callers of Write also pass: bench test --package ./internal/brokermanifest --package ./internal/durablefile/durablefiletest --package ./internal/freshness --package ./internal/adopt (4, no-tests, 79, 244).\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,19cb292348cf4aae0f895a139ec39cf8a6ba8edb,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/brokermanifest,pass,2,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n(dirty: reviews/durable-caller-migration.md record edits only)\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/brokermanifest",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t09-r1-durablefiletest",
+          "performer": "claude:dcm_t09_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+            "digest": "sha256:5c64e8ffa3e1ea1e6b13c79be6a26617eaf9e9e0f94d9564d58d60abdfc9a71d",
+            "excerpt": "bench test --package ./internal/durablefile/durablefiletest at 19cb292348cf4aae0f895a139ec39cf8a6ba8edb (FT354-durable-callers). The package builds with the new RequireAbsent(t testing.TB, path string) helper; its callers in internal/brokermanifest pass (4 tests), and the helper's red is recorded in the preservation excerpt (probes 3 and 7).\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,19cb292348cf4aae0f895a139ec39cf8a6ba8edb,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile/durablefiletest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n(dirty: reviews/durable-caller-migration.md record edits only)\n"
+          },
+          "requirement": "durablefiletest",
+          "command": "bench test --package ./internal/durablefile/durablefiletest",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t09-r1-root-conformance",
+          "performer": "claude:dcm_t09_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+            "digest": "sha256:072f830015ed034ba8716fddb90f31b9d4806d560d81af5b2bc3f0e8e7e80c5e",
+            "excerpt": "bench test --check root-conformance at 19cb292348cf4aae0f895a139ec39cf8a6ba8edb (FT354-durable-callers)\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16144,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t09-r1-omission-proof",
+          "performer": "claude:dcm_t09_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+            "digest": "sha256:d15f35de396a7df01ebcc6d28c3f8942c3325eb2a28fafb894f9b7cc6b37e0bf",
+            "excerpt": "D-C2 omission-proof probes at 19cb292348cf4aae0f895a139ec39cf8a6ba8edb (FT354-durable-callers), subject internal/brokermanifest/brokermanifest.go, bench test --package ./internal/brokermanifest, no --run filter.\n\nProbe 1 (bypass the leaf with the former manifest writer).\nSwap old (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\"\nSwap new (exact, the pre-migration writer): \"\\ttmp, err := os.CreateTemp(dir, TemporaryPrefix)\\n\\tif err != nil {\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\\n\\tname := tmp.Name()\\n\\tif _, err := tmp.WriteString(content); err != nil {\\n\\t\\t_ = tmp.Close()\\n\\t\\t_ = os.Remove(name)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\\n\\tif err := tmp.Close(); err != nil {\\n\\t\\t_ = os.Remove(name)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\\n\\tif err := os.Chmod(name, 0o644); err != nil {\\n\\t\\t_ = os.Remove(name)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\\n\\tif err := os.Rename(name, path); err != nil {\\n\\t\\t_ = os.Remove(name)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/brokermanifest/brokermanifest.go,swap,failed,2,yes\n  github.com/gibbonmi/bench/internal/brokermanifest,fail,3,4\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/brokermanifest,TestBrokerPreRenameFailure,\"replacement_test.go:62: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected broker rename failure\",1\n  github.com/gibbonmi/bench/internal/brokermanifest,TestBrokerReplacement,\"replacement_test.go:40: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected broker directory-sync failure\",1\n\nProbe 2 (native owner in place of the injected replacer).\nSwap old (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\"\nSwap new (exact): \"\\tif err := durablefile.Replace(path, []byte(content), 0o644); err != nil {\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/brokermanifest/brokermanifest.go,swap,failed,2,yes\n  github.com/gibbonmi/bench/internal/brokermanifest,fail,2,4\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/brokermanifest,TestBrokerPreRenameFailure,\"replacement_test.go:62: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected broker rename failure\",1\n  github.com/gibbonmi/bench/internal/brokermanifest,TestBrokerReplacement,\"replacement_test.go:40: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected broker directory-sync failure\",1\n\nThe package passes 4 tests after each restore.\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/brokermanifest",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Bypass the leaf with the former manifest writer. The manifest composition test must report the injected missing-failure red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+              "digest": "sha256:d15f35de396a7df01ebcc6d28c3f8942c3325eb2a28fafb894f9b7cc6b37e0bf",
+              "excerpt": "D-C2 omission-proof probes at 19cb292348cf4aae0f895a139ec39cf8a6ba8edb (FT354-durable-callers), subject internal/brokermanifest/brokermanifest.go, bench test --package ./internal/brokermanifest, no --run filter.\n\nProbe 1 (bypass the leaf with the former manifest writer).\nSwap old (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\"\nSwap new (exact, the pre-migration writer): \"\\ttmp, err := os.CreateTemp(dir, TemporaryPrefix)\\n\\tif err != nil {\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\\n\\tname := tmp.Name()\\n\\tif _, err := tmp.WriteString(content); err != nil {\\n\\t\\t_ = tmp.Close()\\n\\t\\t_ = os.Remove(name)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\\n\\tif err := tmp.Close(); err != nil {\\n\\t\\t_ = os.Remove(name)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\\n\\tif err := os.Chmod(name, 0o644); err != nil {\\n\\t\\t_ = os.Remove(name)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\\n\\tif err := os.Rename(name, path); err != nil {\\n\\t\\t_ = os.Remove(name)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"publish broker manifest at %s: %w\\\", path, err)\\n\\t}\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/brokermanifest/brokermanifest.go,swap,failed,2,yes\n  github.com/gibbonmi/bench/internal/brokermanifest,fail,3,4\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/brokermanifest,TestBrokerPreRenameFailure,\"replacement_test.go:62: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected broker rename failure\",1\n  github.com/gibbonmi/bench/internal/brokermanifest,TestBrokerReplacement,\"replacement_test.go:40: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected broker directory-sync failure\",1\n\nProbe 2 (native owner in place of the injected replacer).\nSwap old (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\"\nSwap new (exact): \"\\tif err := durablefile.Replace(path, []byte(content), 0o644); err != nil {\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/brokermanifest/brokermanifest.go,swap,failed,2,yes\n  github.com/gibbonmi/bench/internal/brokermanifest,fail,2,4\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/brokermanifest,TestBrokerPreRenameFailure,\"replacement_test.go:62: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected broker rename failure\",1\n  github.com/gibbonmi/bench/internal/brokermanifest,TestBrokerReplacement,\"replacement_test.go:40: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected broker directory-sync failure\",1\n\nThe package passes 4 tests after each restore.\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t09-r1-preservation",
+          "performer": "claude:dcm_t09_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de2e4bde5f117c8f461ebe3ebf1bbbdb21a05cff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+            "digest": "sha256:bee8515c2344b53b5683866a95031abea4da13045c68d862b5e48cc77f481b88",
+            "excerpt": "D-C2 preservation probes at 19cb292348cf4aae0f895a139ec39cf8a6ba8edb (FT354-durable-callers), subject internal/brokermanifest/brokermanifest.go, bench test --package ./internal/brokermanifest, no --run filter. Every verdict bit, every restored yes; the package passes 4 tests after each restore. Probes 1 to 7 rerun the dcm_t09 set; probes 8 and 9 are the repair's new reds (S1/C1 and C2).\n\nProbe 1 (mode literal). Swap old (exact): \"replacer.Replace(path, []byte(content), 0o644)\" new (exact): \"replacer.Replace(path, []byte(content), 0o640)\"\n  bit,1 failed,restored yes: TestBrokerReplacement,\"replacement_test.go:41: .../bench-broker.manifest mode = -rw-r-----, want a regular file at -rw-r--r--\"\n\nProbe 2 (payload literal). Swap old (exact): \"\\\"sha256\\\\t\\\" + digest + \\\"\\\\n\\\"\" new (exact): \"\\\"sha256\\\\t\\\" + digest[:63] + \\\"\\\\n\\\"\"\n  bit,1 failed,restored yes: TestBrokerReplacement,\"replacement_test.go:41: .../bench-broker.manifest = \\\"path\\\\t.../bench\\\\nversion\\\\t1.2.3\\\\nplatform\\\\tlinux-x64\\\\nsha256\\\\tc153e59aa5f0b544d81e95344... (468 bytes)\"\n\nProbe 3 (D36 fallback write after an unpublished error). Swap old (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\" new (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\\n\\t\\tif replaceErr := (*durablefile.Error)(nil); errors.As(err, &replaceErr) && !replaceErr.Published {\\n\\t\\t\\t_ = os.WriteFile(path, []byte(content), 0o644)\\n\\t\\t}\"\n  bit,1 failed,restored yes: TestBrokerPreRenameFailure,\"replacement_test.go:63: .../bench-broker.manifest stat err = <nil>, want it absent\" (durablefiletest.RequireAbsent)\n\nProbe 4 (D30 refusal swallowed). Swap old (exact): \"\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"digest promotion broker %s: %w\\\", broker, err)\" new (exact): \"\\t\\t_ = err\"\n  bit,2 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:77: err = <nil>, want the caller's own refusal, not a replacement failure\"; TestBrokerWriteReturnsRefusal,\"replacement_test.go:91: Write err = nil, want the refusal of a broker that is not a regular file\"\n\nProbe 5 (D30 refusal reported as a replacement failure). Same old; new (exact): \"\\t\\treturn \\\"\\\", \\\"\\\", &durablefile.Error{Path: broker, Stage: \\\"digest\\\", Err: err}\"\n  bit,1 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:77: err = replace .../001: digest: not a regular file, want the caller's own refusal, not a replacement failure\"\n\nProbe 6 (D30 refusal starts a replacement). Same old; new (exact): \"\\t\\t_ = replacer.Replace(filepath.Join(dir, \\\".probe\\\"), nil, 0o644)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"digest promotion broker %s: %w\\\", broker, err)\"\n  bit,1 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:80: trace = [create mode write file-sync file-close rename directory-open directory-sync directory-close], want no replacement stage\"\n\nProbe 7 (D30 refusal writes a manifest). Same old; new (exact): \"\\t\\t_ = os.WriteFile(filepath.Join(dir, Name), nil, 0o644)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"digest promotion broker %s: %w\\\", broker, err)\"\n  bit,2 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:82: .../bench-broker.manifest stat err = <nil>, want it absent\"; TestBrokerWriteReturnsRefusal,\"replacement_test.go:93: .../bench-broker.manifest stat err = <nil>, want it absent\"\n\nProbe 8 (S1/C1 prefix drift). Swap old (exact): \"const TemporaryPrefix = \\\".\\\" + Name + \\\".\\\"\" new (exact): \"const TemporaryPrefix = \\\".bench-broker.\\\"\"\n  bit,1 failed,restored yes: TestBrokerReplacement,\"replacement_test.go:49: staging file \\\".bench-broker.manifest.2834163907\\\", want it named \\\".bench-broker.\\\" plus a random suffix\"\n  Debug note: at 2fd8872c the pin used strings.HasPrefix and this probe was silent (passed, 0 failed, restored yes), because \".bench-broker.\" is still a prefix of the staging name. 19cb2923 compares the staging name up to its last dot.\n\nProbe 9 (C2 public Write swallows every error). Swap old (exact): \"\\treturn write(durablefile.Native(), dir, broker, version)\" new (exact): \"\\tpath, resolved, _ := write(durablefile.Native(), dir, broker, version)\\n\\treturn path, resolved, nil\"\n  bit,1 failed,restored yes: TestBrokerWriteReturnsRefusal,\"replacement_test.go:91: Write err = nil, want the refusal of a broker that is not a regular file\"\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/brokermanifest",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "19cb292348cf4aae0f895a139ec39cf8a6ba8edb",
+              "digest": "sha256:bee8515c2344b53b5683866a95031abea4da13045c68d862b5e48cc77f481b88",
+              "excerpt": "D-C2 preservation probes at 19cb292348cf4aae0f895a139ec39cf8a6ba8edb (FT354-durable-callers), subject internal/brokermanifest/brokermanifest.go, bench test --package ./internal/brokermanifest, no --run filter. Every verdict bit, every restored yes; the package passes 4 tests after each restore. Probes 1 to 7 rerun the dcm_t09 set; probes 8 and 9 are the repair's new reds (S1/C1 and C2).\n\nProbe 1 (mode literal). Swap old (exact): \"replacer.Replace(path, []byte(content), 0o644)\" new (exact): \"replacer.Replace(path, []byte(content), 0o640)\"\n  bit,1 failed,restored yes: TestBrokerReplacement,\"replacement_test.go:41: .../bench-broker.manifest mode = -rw-r-----, want a regular file at -rw-r--r--\"\n\nProbe 2 (payload literal). Swap old (exact): \"\\\"sha256\\\\t\\\" + digest + \\\"\\\\n\\\"\" new (exact): \"\\\"sha256\\\\t\\\" + digest[:63] + \\\"\\\\n\\\"\"\n  bit,1 failed,restored yes: TestBrokerReplacement,\"replacement_test.go:41: .../bench-broker.manifest = \\\"path\\\\t.../bench\\\\nversion\\\\t1.2.3\\\\nplatform\\\\tlinux-x64\\\\nsha256\\\\tc153e59aa5f0b544d81e95344... (468 bytes)\"\n\nProbe 3 (D36 fallback write after an unpublished error). Swap old (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\" new (exact): \"\\tif err := replacer.Replace(path, []byte(content), 0o644); err != nil {\\n\\t\\tif replaceErr := (*durablefile.Error)(nil); errors.As(err, &replaceErr) && !replaceErr.Published {\\n\\t\\t\\t_ = os.WriteFile(path, []byte(content), 0o644)\\n\\t\\t}\"\n  bit,1 failed,restored yes: TestBrokerPreRenameFailure,\"replacement_test.go:63: .../bench-broker.manifest stat err = <nil>, want it absent\" (durablefiletest.RequireAbsent)\n\nProbe 4 (D30 refusal swallowed). Swap old (exact): \"\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"digest promotion broker %s: %w\\\", broker, err)\" new (exact): \"\\t\\t_ = err\"\n  bit,2 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:77: err = <nil>, want the caller's own refusal, not a replacement failure\"; TestBrokerWriteReturnsRefusal,\"replacement_test.go:91: Write err = nil, want the refusal of a broker that is not a regular file\"\n\nProbe 5 (D30 refusal reported as a replacement failure). Same old; new (exact): \"\\t\\treturn \\\"\\\", \\\"\\\", &durablefile.Error{Path: broker, Stage: \\\"digest\\\", Err: err}\"\n  bit,1 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:77: err = replace .../001: digest: not a regular file, want the caller's own refusal, not a replacement failure\"\n\nProbe 6 (D30 refusal starts a replacement). Same old; new (exact): \"\\t\\t_ = replacer.Replace(filepath.Join(dir, \\\".probe\\\"), nil, 0o644)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"digest promotion broker %s: %w\\\", broker, err)\"\n  bit,1 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:80: trace = [create mode write file-sync file-close rename directory-open directory-sync directory-close], want no replacement stage\"\n\nProbe 7 (D30 refusal writes a manifest). Same old; new (exact): \"\\t\\t_ = os.WriteFile(filepath.Join(dir, Name), nil, 0o644)\\n\\t\\treturn \\\"\\\", \\\"\\\", fmt.Errorf(\\\"digest promotion broker %s: %w\\\", broker, err)\"\n  bit,2 failed,restored yes: TestBrokerRefusalSkipsReplacement,\"replacement_test.go:82: .../bench-broker.manifest stat err = <nil>, want it absent\"; TestBrokerWriteReturnsRefusal,\"replacement_test.go:93: .../bench-broker.manifest stat err = <nil>, want it absent\"\n\nProbe 8 (S1/C1 prefix drift). Swap old (exact): \"const TemporaryPrefix = \\\".\\\" + Name + \\\".\\\"\" new (exact): \"const TemporaryPrefix = \\\".bench-broker.\\\"\"\n  bit,1 failed,restored yes: TestBrokerReplacement,\"replacement_test.go:49: staging file \\\".bench-broker.manifest.2834163907\\\", want it named \\\".bench-broker.\\\" plus a random suffix\"\n  Debug note: at 2fd8872c the pin used strings.HasPrefix and this probe was silent (passed, 0 failed, restored yes), because \".bench-broker.\" is still a prefix of the staging name. 19cb2923 compares the staging name up to its last dot.\n\nProbe 9 (C2 public Write swallows every error). Swap old (exact): \"\\treturn write(durablefile.Native(), dir, broker, version)\" new (exact): \"\\tpath, resolved, _ := write(durablefile.Native(), dir, broker, version)\\n\\treturn path, resolved, nil\"\n  bit,1 failed,restored yes: TestBrokerWriteReturnsRefusal,\"replacement_test.go:91: Write err = nil, want the refusal of a broker that is not a regular file\"\n"
             }
           }
         }
@@ -3647,6 +3759,36 @@
           "D-C1"
         ]
       }
+    },
+    {
+      "from": "sha256:0b967f69bea388bd20a0fb6062db10215905fe7652985d627efd96fbef58f01d",
+      "to": "sha256:93a6235e5beda74d1bde28cbbad80df6658b3235cc2436e55544d1e14d979dce",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ]
+      }
     }
   ],
   "folds": [
@@ -3932,3 +4074,9 @@ Chunk D-C2 has 3 findings. The worst issue is C1.
 ## Repair allowance (D-C2)
 
 Chunk D-C2 used 0 of its 2 repair cycles before repair 1. S1, S2, and C2 fall on ticket 09, so one combined repair session takes them.
+
+- S1 and C1 close in commit 19cb2923. `TestBrokerReplacement` compares the staging name up to its last dot with `TemporaryPrefix`, and the drifted prefix `".bench-broker."` turns only that test red. The constant's comment states that its value matches the staging name for `Name` and that a test pins it.
+- S2 closes in commit 2fd8872c. `durablefiletest.RequireAbsent` holds the absence check, and the local `requireNoManifest` is gone.
+- C2 closes in commit 2fd8872c. `TestBrokerWriteReturnsRefusal` calls the public `Write` with a directory as the broker. A public `Write` that returns nil for every error turns only that test red.
+
+The `claude:dcm_t09_rep1` omission-proof and preservation excerpts record each red at 19cb2923. Chunk D-C2 used 1 of its 2 repair cycles.
