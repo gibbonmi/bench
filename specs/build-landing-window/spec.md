@@ -582,7 +582,7 @@ Every expected TOON row derives through `toon.Table`, so a numeric-looking chunk
 | BW94 | 16, 23 | A spec-less landing from a sibling assignment that `--from` bound to the build refuses with face `land-build-window` while the build is outside a gap | planned internal/worktree/land_window_test.go (TestWindowAdmitsTheBuildsOwnLanding) | A rule keyed to the bound assignment alone lets a build worktree land spec-less under a chunk. |
 | BW96 | 17, 19 | After `bench commitment block` during an open gap and a later `bench commitment unblock` and `bench commitment start`, an unbound landing refuses with face `land-build-window` | planned internal/commitment/repository/window_test.go (TestStartDropsAStaleGap) | A start that keeps the old open gap reopens the build with `main` already free to move. |
 | BW97 | 18, 19 | After `bench commitment block`, and after the build's completion landing publishes, the ledger holds no gap record for the outcome | planned internal/commitment/repository/window_test.go (TestClosersDropTheGapRecord) | A closer that keeps the gap record leaves a stale record for the next start to trust. |
-| BW98 | 56 | `paths-authorized` stays red for a recorded resolution path that a later commit changes after the fold | planned internal/preflight/folded_main_test.go (TestPathsAuthorizedAdmitsARecordedResolutionPath) | A name-only skip lets a later build write to the path pass the fence. |
+| BW98 | 56 | `paths-authorized` stays red for a recorded resolution path that a later commit changes after the fold | `internal/preflight/folded_main_test.go` (`TestPathsAuthorizedAdmitsARecordedResolutionPath`) | A name-only skip lets a later build write to the path pass the fence. |
 | BW95 | 32 | A repair dispatch to a chunk-`C1` ticket while the gap record holds chunk `C3` with `Last` true leaves the ledger bytes unchanged | planned internal/reviewrecord/recordcmd/dispatch_gap_test.go (TestDispatchInsideAChunkKeepsTheGap) | A chunk-inequality rule rewrites the record to `C1`, so the refusal names a past gap and the build loses its last-chunk state. |
 
 Not covered: story 70 — a reviewed exclusion; the Out of scope section prices it.
@@ -743,6 +743,7 @@ It holds the owner and test files, the command registry closure, the anchor regi
 - `internal/landing/merge.go`
 - `internal/landing/state_test.go`
 - `internal/preflight/decision.go`
+- `internal/preflight/default_branch.go`
 - `internal/preflight/folded_main_test.go`
 - `internal/preflight/gather.go`
 - `internal/preflight/gather_inputs.go`
