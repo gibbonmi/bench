@@ -1,7 +1,7 @@
 # Migrate broker manifest replacement
 
 Blocked by: none
-Writes: internal/brokermanifest/brokermanifest.go, internal/brokermanifest/replacement_test.go (new)
+Writes: internal/brokermanifest/brokermanifest.go, internal/brokermanifest/replacement_test.go (new), internal/durablefile/durablefiletest/assert.go
 Covers: D25
 
 ## What to build
