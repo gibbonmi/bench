@@ -88,11 +88,7 @@ type subject struct {
 
 // durableReplace installs rec as the verdict cache of gitdir through replacer.
 func durableReplace(replacer durablefile.Replacer, gitdir string, rec verdictRecord) error {
-	data, err := json.Marshal(rec)
-	if err != nil {
-		return err
-	}
-	return replacer.Replace(filepath.Join(gitdir, benchgit.GateCacheFile), append(data, '\n'), 0o600)
+	return durableReplaceAt(replacer, gitdir, benchgit.GateCacheFile, rec)
 }
 
 func Inspect(root string) Inspection { return inspectAt(root, time.Now().UTC()) }

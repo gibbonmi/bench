@@ -87,26 +87,35 @@ func TestGatePendingDurabilityFailure(t *testing.T) {
 	}
 }
 
-// D38: a failed final write after a real green or red oracle result keeps its classified
-// cause at ActionExit 1, and the recovery leaves the pending record.
+// D38: a failed terminal write after a real green, red, or timed-out oracle result keeps
+// its classified cause at ActionExit 1, and the recovery leaves the pending record.
 func TestGateTerminalDurabilityFailure(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
-		red      bool
-		gateExit int
-	}{{"green", false, 0}, {"red", true, 7}} {
+		name, marker, category string
+		timeout                time.Duration
+		gateExit               int
+	}{
+		{name: "green", category: "gate final persistence failed"},
+		{name: "red", marker: ".gate-red", category: "gate final persistence failed", gateExit: 7},
+		{name: "timeout", marker: ".gate-sleep", category: "gate timeout persistence failed", timeout: 100 * time.Millisecond, gateExit: 124},
+	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := outcomeFixture(t)
-			if tc.red {
-				outcomeWrite(t, root, ".gate-red", "\n", 0o644)
+			root := failureOutcomeFixture(t)
+			if tc.marker != "" {
+				outcomeWrite(t, root, tc.marker, "\n", 0o644)
 			}
-			cause := errors.New("injected final directory-sync failure")
+			if tc.timeout != 0 {
+				previousTimeout := gateTimeout
+				gateTimeout = tc.timeout
+				t.Cleanup(func() { gateTimeout = previousTimeout })
+			}
+			cause := errors.New("injected terminal directory-sync failure")
 			faults := newFaultPlan(map[fault]map[string]error{{benchgit.GateCacheFile, 2}: {"directory-sync": cause}})
 
 			result, stderr := executeWithFaults(root, faults)
 
 			requireUnpersisted(t, result, tc.gateExit, stderr)
-			want := "gate final persistence failed: " + faults.failure(benchgit.GateCacheFile, "directory-sync", true, cause)
+			want := tc.category + ": " + faults.failure(benchgit.GateCacheFile, "directory-sync", true, cause)
 			if !strings.Contains(stderr, want) || strings.Contains(stderr, "pending recovery failed") {
 				t.Fatalf("stderr = %q, want %q and no recovery failure", stderr, want)
 			}
@@ -164,34 +173,54 @@ func TestGatePendingRecoveryFailure(t *testing.T) {
 	}
 }
 
-// The interrupted-green demotion on a lock failure reports its failed persistence beside
-// the lock refusal.
+// The interrupted-green demotion on an unavailable lock and on a contended lock reports
+// its failed persistence beside the lock refusal.
 func TestGateDemotionDurabilityFailure(t *testing.T) {
-	root := outcomeFixture(t)
-	if result := Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
-		t.Fatalf("green result = %#v", result)
-	}
-	lock := gateLockPath(outcomeGit(t, root, "rev-parse", "--absolute-git-dir"))
-	if err := os.Remove(lock); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Mkdir(lock, 0o700); err != nil {
-		t.Fatal(err)
-	}
-	demotion := errors.New("injected demotion rename failure")
-	recovery := errors.New("injected demotion recovery rename failure")
-	faults := newFaultPlan(map[fault]map[string]error{
-		{benchgit.GateCacheFile, 1}: {"rename": demotion},
-		{benchgit.GateCacheFile, 2}: {"rename": recovery},
-	})
+	for _, tc := range []struct {
+		name, refusal string
+		block         func(t *testing.T, root string)
+	}{
+		{
+			name:    "lock unavailable",
+			refusal: "gate lock unavailable",
+			block: func(t *testing.T, root string) {
+				lock := gateLockPath(outcomeGit(t, root, "rev-parse", "--absolute-git-dir"))
+				if err := os.Remove(lock); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Mkdir(lock, 0o700); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name:    "lock contention",
+			refusal: "gate execution already in progress",
+			block:   func(t *testing.T, root string) { startGateLockHolder(t, root) },
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := outcomeFixture(t)
+			if result := Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
+				t.Fatalf("green result = %#v", result)
+			}
+			tc.block(t, root)
+			demotion := errors.New("injected demotion rename failure")
+			recovery := errors.New("injected demotion recovery rename failure")
+			faults := newFaultPlan(map[fault]map[string]error{
+				{benchgit.GateCacheFile, 1}: {"rename": demotion},
+				{benchgit.GateCacheFile, 2}: {"rename": recovery},
+			})
 
-	result, stderr := executeWithFaults(root, faults)
+			result, stderr := executeWithFaults(root, faults)
 
-	requireUnpersisted(t, result, 0, stderr)
-	want := "gate lock unavailable; interrupted-green demotion failed: " + faults.failure(benchgit.GateCacheFile, "rename", false, demotion) +
-		"; pending recovery failed: " + faults.failure(benchgit.GateCacheFile, "rename", false, recovery)
-	if !strings.Contains(stderr, want) {
-		t.Fatalf("stderr = %q, want %q", stderr, want)
+			requireUnpersisted(t, result, 0, stderr)
+			want := tc.refusal + "; interrupted-green demotion failed: " + faults.failure(benchgit.GateCacheFile, "rename", false, demotion) +
+				"; pending recovery failed: " + faults.failure(benchgit.GateCacheFile, "rename", false, recovery)
+			if !strings.Contains(stderr, want) {
+				t.Fatalf("stderr = %q, want %q", stderr, want)
+			}
+		})
 	}
 }
 
