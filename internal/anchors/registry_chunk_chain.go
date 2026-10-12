@@ -5,8 +5,9 @@ package anchors
 // The first row pins the build-entry route that sends a staleness-class preflight red
 // to the staleness pass before the chain starts. The next two rows pin the implement
 // phase's pointer to the staleness-pass reference and the cheap-tier fan-out charge that
-// the reference states. The fold rows pin the build's fold points, its gap fold, its pointer to
-// the chunk gap notes, and its fold record in the implement phase. They also pin the recorded
+// the reference states. The fold rows pin the build's fold points and its gap fold in the
+// implement phase. They also pin that phase's pointer to the chunk gap notes and its fold
+// record. They also pin the recorded
 // fold in review step 1. They forbid the retired sentences that fold main at the start of the
 // last chunk or refuse a fold between two chunks. They also forbid the retired sentences that put
 // a fold in the review delta of the last chunk or refreeze that chunk. A fold row also pins the
