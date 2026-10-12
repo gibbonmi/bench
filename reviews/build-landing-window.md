@@ -1,7 +1,8 @@
 # Review outcomes
 
 BW-A round 1 reviewed the pair `dcbbfb80..ced1dedc`.
-The repair allowance of BW-A is two cycles, and the build has used zero of them.
+Repair 1 at `2aa2bf49` closed all seven findings, and the confirming round passed on all three axes.
+BW-A used one of its two repair cycles.
 
 ## Standards
 
@@ -438,6 +439,72 @@ Findings: 3. Worst issue: C1, a BW7 test that does not detect a second transacti
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bwa-standards-r2",
+          "performer": "claude:blw_bwa_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5ef9843142d8ce9ad3693414c3b91b6c32e33141",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwa_standards_r2",
+            "digest": "sha256:221a9d4bace14f3d5d8feb20d5852a53ddd7741d3c6c83ce6a533ade13e82733",
+            "excerpt": "Axis: Standards (confirming) — 0 findings\nS1 closed | land_identity_test.go:238 uses barrierLandingFixture; barrier only at land_lease_test.go:47\nS2 closed | systemReleaseGateBarrier removed; releaseArtifactBarrier sole source (owner_artifact_recovery_test.go:147)\nS3 closed | all delta comment sentences <=22 words\nC1 helper: second copy of intent lock taking (intent.go:249); not blocking per publication_lock_test.go precedent\nAdvice: an intent test helper that holds the lock would give both tests one source\n"
+          },
+          "axis": "Standards",
+          "base": "dcbbfb805419eef05174ea379b99547cfc8889da",
+          "tip": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+          "finding_ids": [],
+          "supersedes": [
+            "bwa-standards-r1"
+          ]
+        },
+        {
+          "id": "bwa-spec-r2",
+          "performer": "claude:blw_bwa_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5ef9843142d8ce9ad3693414c3b91b6c32e33141",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwa_spec_r2",
+            "digest": "sha256:069c7397a0c25a98ed90ac32ec2538501c00ca594e50eb334fc87021501082b4",
+            "excerpt": "Spec confirming round, BW-A, delta ced1dedc..2aa2bf49.\nP1 closed: spec.md:606 now reads \"...is opened without following.\" with the gate-lock comparison removed.\nProduction delta is comment-only (lease.go:17-18, faces_land.go:3-4); Landing lease and Records sections unchanged.\nTestPublishKeepsTheLeaseWhenTheLedgerWriteFails grades spec.md:219: nil publish, stale record kept, takeover clears it.\nTestLeaseLockUnavailable dangling-link and live-link rows grade spec.md:606 via the O_NOFOLLOW refusal.\nNew findings: 0. Blocking: none.\n"
+          },
+          "axis": "Spec",
+          "base": "dcbbfb805419eef05174ea379b99547cfc8889da",
+          "tip": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+          "finding_ids": [],
+          "supersedes": [
+            "bwa-spec-r1"
+          ]
+        },
+        {
+          "id": "bwa-coverage-r2",
+          "performer": "claude:blw_bwa_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5ef9843142d8ce9ad3693414c3b91b6c32e33141",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwa_coverage_r2",
+            "digest": "sha256:abe570796f62b2ef721716ee3dea9abd2633fcfdc312c2a6eb9049552ea61fc7",
+            "excerpt": "Coverage confirming round, BW-A, delta ced1dedc..2aa2bf49: 0 findings; C1, C2, C3 closed.\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/publication.go,swap,failed,1,yes\n  TestPublishReleasesTheLeaseInItsDecision,\"lease_test.go:118: at the end of the publish decision: leases [{Destination:refs/heads/main Assignment:5e1cf428…}], lease lock lock is held; want no lease and a free lock\"\n  bit,internal/commitment/repository/publication.go,swap,failed,1,yes\n  TestPublishKeepsTheLeaseWhenTheLedgerWriteFails,\"lease_test.go:140: publication whose ledger write fails = replace intent ledger: rename …\"\n  bit,internal/gocache/lock.go,swap,failed,2,yes\n  TestLeaseLockUnavailable/dangling-link + /live-link,\"land_lease_test.go:228: … refused{detail=composition must not start …\"\nAdvice: the C1 helper spins hot until bounds.TestDeadline.\n"
+          },
+          "axis": "Coverage",
+          "base": "dcbbfb805419eef05174ea379b99547cfc8889da",
+          "tip": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+          "finding_ids": [],
+          "supersedes": [
+            "bwa-coverage-r1"
+          ]
         }
       ]
     }
