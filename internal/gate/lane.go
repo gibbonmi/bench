@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/otelrecord"
@@ -166,7 +167,7 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 		result.Diagnostic = diagnostics.firstLine(settled.Name, settled.StartErr)
 		break
 	}
-	if err := writeLaneRecord(gitdir, result); err != nil {
+	if err := writeLaneRecord(durablefile.Native(), gitdir, result); err != nil {
 		return LaneResult{}, fmt.Errorf("gate: lane record persistence failed: %w", err)
 	}
 	return result, nil
@@ -312,11 +313,11 @@ func fileDigest(path string) (string, error) {
 	return hex.EncodeToString(digest.Sum(nil)), nil
 }
 
-// writeLaneRecord installs the record through the store's durable temp-then-rename path,
-// the same one every other record class publishes through. It writes only the lane file.
+// writeLaneRecord installs the record through replacer on the store's durable path, the
+// same one every other record class publishes through. It writes only the lane file.
 // The verdict cache and the evidence store stay untouched, because a lane grades a check
 // list and not the oracle.
-func writeLaneRecord(gitdir string, result LaneResult) error {
+func writeLaneRecord(replacer durablefile.Replacer, gitdir string, result LaneResult) error {
 	data, err := json.Marshal(verdictRecord{
 		Schema:     verdictSchema,
 		Tree:       result.Tree,
@@ -328,5 +329,5 @@ func writeLaneRecord(gitdir string, result LaneResult) error {
 	if err != nil {
 		return err
 	}
-	return durableReplaceRecordAt(gitdir, laneRecordFile, data)
+	return durableReplaceRecordAt(replacer, gitdir, laneRecordFile, data)
 }

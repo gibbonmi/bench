@@ -8,10 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	benchgit "github.com/gibbonmi/bench/internal/git"
@@ -170,48 +170,20 @@ func openProspectiveArtifacts(root, tree string) (*prospectiveartifact.Owner, er
 	return artifacts, nil
 }
 
-func durableReplaceAt(dir, name string, rec verdictRecord) error {
+func durableReplaceAt(replacer durablefile.Replacer, dir, name string, rec verdictRecord) error {
 	data, err := json.Marshal(rec)
 	if err != nil {
 		return err
 	}
-	return durableReplaceRecordAt(dir, name, data)
+	return durableReplaceRecordAt(replacer, dir, name, data)
 }
 
-// durableReplaceRecordAt installs data as the store entry named name. It writes a private
-// temporary file beside the entry, syncs it, and renames it over whatever was there. It
-// then syncs the directory so the rename itself survives a crash. Every record class in
-// the store publishes through here, so a reader never observes a half-written or
-// world-readable record, whatever class wrote it.
-func durableReplaceRecordAt(dir, name string, data []byte) error {
-	data = append(data, '\n')
-	tmp, err := os.CreateTemp(dir, ".bench-gate-evidence-")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-	defer func() { _ = tmp.Close(); _ = os.Remove(tmpName) }()
-	if err := tmp.Chmod(0o600); err != nil {
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(tmpName, filepath.Join(dir, name)); err != nil {
-		return err
-	}
-	file, err := os.Open(dir)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	return file.Sync()
+// durableReplaceRecordAt installs data with a final newline as the private store entry
+// named name through replacer. Every record class in the store publishes through here,
+// so a reader never observes a half-written or world-readable record, whatever class
+// wrote it.
+func durableReplaceRecordAt(replacer durablefile.Replacer, dir, name string, data []byte) error {
+	return replacer.Replace(filepath.Join(dir, name), append(data, '\n'), 0o600)
 }
 
 // reusableEvidence projects the verdict state from the plan the caller already accepted.

@@ -27,12 +27,12 @@ Fail the final directory sync after a real green or red oracle result, then inde
 ActionExit is 1, the returned Inspection is not reusable green, and diagnostics retain both causes without claiming old pending bytes.
 A failed initial pending write starts no oracle; a failed evidence write retains its classified cause.
 
-- [ ] The gate verdict caller exposes an injected directory-sync failure. (D16).
-- [ ] The gate evidence and lane caller exposes an injected directory-sync failure. (D17).
-- [ ] Pending persistence failure prints its cause and prevents oracle execution. (D37).
-- [ ] Final persistence failure retains its diagnostic cause at ActionExit 1. (D38).
-- [ ] Green-evidence persistence failure prints the classified cause at ActionExit 1. (D39).
-- [ ] Failed pending recovery reports both persistence errors. (D40).
+- [x] The gate verdict caller exposes an injected directory-sync failure. (D16).
+- [x] The gate evidence and lane caller exposes an injected directory-sync failure. (D17).
+- [x] Pending persistence failure prints its cause and prevents oracle execution. (D37).
+- [x] Final persistence failure retains its diagnostic cause at ActionExit 1. (D38).
+- [x] Green-evidence persistence failure prints the classified cause at ActionExit 1. (D39).
+- [x] Failed pending recovery reports both persistence errors. (D40).
 
 ## Checkpoint verification
 
