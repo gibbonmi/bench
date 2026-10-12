@@ -64,7 +64,7 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
 {
   "version": 2,
   "spec": "specs/build-landing-window/spec.md",
-  "plan_digest": "sha256:cbbe23b76e3faffd89b75fcdac95b2bd39c75c6bd6a427fc8cb3ade1f8ed32ce",
+  "plan_digest": "sha256:b48b0493be97dee45f23a112128b66238d7c62246a8f6d5c50f0d04f36db7781",
   "implementation_session": "",
   "chunks": [
     {
@@ -930,9 +930,9 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
     {
       "id": "BW-C",
       "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
-      "tip": "db1bdc5d31f26b60c029566175a428aca4563266",
-      "plan_digest": "sha256:cbbe23b76e3faffd89b75fcdac95b2bd39c75c6bd6a427fc8cb3ade1f8ed32ce",
-      "source_digest": "476ab806de9a78412dbe22cdc072481e915ec1f0",
+      "tip": "6568c4c20f4cde69168fac0ef0c52633d5831950",
+      "plan_digest": "sha256:b48b0493be97dee45f23a112128b66238d7c62246a8f6d5c50f0d04f36db7781",
+      "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
       "acceptance_rows": [
         "BW25",
         "BW26",
@@ -955,7 +955,8 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
         "BW43",
         "BW44",
         "BW45",
-        "BW93"
+        "BW93",
+        "BW98"
       ],
       "verification": [
         {
@@ -1177,6 +1178,125 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
           "requirement": "t3-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t4-review-focused-v2",
+          "performer": "claude:blw_t4_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4rep1/t4-review-focused.txt",
+            "digest": "sha256:b47920c56b1b425e25a2cd794ec814dfd2602b63ea111dafbc44036f3267e818",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestFoldResolutionNeedsReview|TestFoldDerivedFinalRequirements,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,385\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,287,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestFoldDerivedFinalRequirements,\"fold_test.go:130: completion without a merged-test result = <nil>, want the verification form for merged-test:./pkg/a\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-review-focused",
+          "command": "bench test --package ./internal/reviewrecord --run 'TestFoldResolutionNeedsReview|TestFoldDerivedFinalRequirements'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the merged-test derived requirements that checkCompletion adds for each fold package, so that the complete checkpoint passes without a merged-test result. TestFoldDerivedFinalRequirements turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4rep1/t4-review-focused.txt",
+              "digest": "sha256:b47920c56b1b425e25a2cd794ec814dfd2602b63ea111dafbc44036f3267e818",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestFoldResolutionNeedsReview|TestFoldDerivedFinalRequirements,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,385\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,287,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestFoldDerivedFinalRequirements,\"fold_test.go:130: completion without a merged-test result = <nil>, want the verification form for merged-test:./pkg/a\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t4-preflight-focused-v2",
+          "performer": "claude:blw_t4_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4rep1/t4-preflight-focused.txt",
+            "digest": "sha256:742fff6f75a511fe2908e725f0cb6aa1be27f9d02515398a38d11caa24639a1d",
+            "excerpt": "$ bench test --package ./internal/preflight --run 'TestPathsAuthorizedAdmitsARecordedResolutionPath'\ntree[1]{target,head,dirty}:\n  FT342-FT253,6568c4c20f4cde69168fac0ef0c52633d5831950,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,480,7\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit: 0\n"
+          },
+          "requirement": "t4-preflight-focused",
+          "command": "bench test --package ./internal/preflight --run 'TestPathsAuthorizedAdmitsARecordedResolutionPath'",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-route-focused-v2",
+          "performer": "claude:blw_t4_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4rep1/t4-route-focused.txt",
+            "digest": "sha256:cb209cd3b7d83fea84d8858c0d1b3e127a4e8e8d657562ec1f6e20cf32b0ad4a",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  FT342-FT253,6568c4c20f4cde69168fac0ef0c52633d5831950,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1306,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit: 0\n"
+          },
+          "requirement": "t4-route-focused",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-help-focused-v2",
+          "performer": "claude:blw_t4_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4rep1/t4-help-focused.txt",
+            "digest": "sha256:5fc47b1d4b960237c488090417d700e0f5441644c84ca3a813b5a6d9a1d46ad4",
+            "excerpt": "$ bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'\ntree[1]{target,head,dirty}:\n  FT342-FT253,6568c4c20f4cde69168fac0ef0c52633d5831950,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,5,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit: 0\n"
+          },
+          "requirement": "t4-help-focused",
+          "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-floor-v2",
+          "performer": "claude:blw_t4_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4rep1/t4-floor.txt",
+            "digest": "sha256:73422c34a5b057f81ad56118a9d1f3c21611a6602ad8374fc2912888cc2fab89",
+            "excerpt": "$ bench test --package ./internal/reviewrecord/... --package ./internal/preflight/... --package ./internal/gate/... --package ./internal/worktree --package ./internal/refusalroute --package ./cmd/bench --package ./internal/conformance --package ./internal/git\ntree[1]{target,head,dirty}:\n  FT342-FT253,6568c4c20f4cde69168fac0ef0c52633d5831950,true\npackages[16]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,23358,333\n  github.com/gibbonmi/bench/internal/conformance,pass,73864,1690\n  github.com/gibbonmi/bench/internal/gate,pass,27588,430\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,243,14\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,45,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,287,36\n  github.com/gibbonmi/bench/internal/git,pass,1737,172\n  github.com/gibbonmi/bench/internal/preflight,pass,43731,407\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,24302,229\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/refusalroute,pass,6,17\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2755,91\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,9714,181\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/worktree,pass,72587,1418\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nexit: 0\n"
+          },
+          "requirement": "t4-floor",
+          "command": "bench test --package ./internal/reviewrecord/... --package ./internal/preflight/... --package ./internal/gate/... --package ./internal/worktree --package ./internal/refusalroute --package ./cmd/bench --package ./internal/conformance --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-root-conformance-v2",
+          "performer": "claude:blw_t4_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t4rep1/t4-root-conformance.txt",
+            "digest": "sha256:b1544149311e7ae02ce3fc7196f3562bd807b2576e1030e5a854b0b8ce830c65",
+            "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,6568c4c20f4cde69168fac0ef0c52633d5831950,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17178,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit: 0\n"
+          },
+          "requirement": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -1298,6 +1418,21 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
         ],
         "BW-B": [
           "BW-B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:cbbe23b76e3faffd89b75fcdac95b2bd39c75c6bd6a427fc8cb3ade1f8ed32ce",
+      "to": "sha256:b48b0493be97dee45f23a112128b66238d7c62246a8f6d5c50f0d04f36db7781",
+      "chunk_ids": {
+        "BW-A": [
+          "BW-A"
+        ],
+        "BW-B": [
+          "BW-B"
+        ],
+        "BW-C": [
+          "BW-C"
         ]
       }
     }
