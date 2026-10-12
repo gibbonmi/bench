@@ -167,23 +167,23 @@ The dev gate grades affected packages, and the whole-project gate remains the ac
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| D01 | 1 | Replacement of old bytes installs the exact supplied bytes. | planned internal/durablefile/replace_test.go (TestReplaceBytes) | A truncated write differs from the supplied payload. |
-| D02 | 2 | An empty payload creates a present regular file. | planned internal/durablefile/replace_test.go (TestReplaceEmpty) | Skipping an empty write leaves the destination absent. |
-| D03 | 3 | The installed file has the requested permission bits. | planned internal/durablefile/replace_test.go (TestReplaceMode) | The default temporary mode cannot satisfy the executable fixture. |
-| D04 | 4 | A concurrent reader observes only the old or new complete payload. | planned internal/durablefile/replace_test.go (TestReplaceVisibility) | An in-place write exposes a partial payload. |
-| D05 | 5 | The temporary regular file belongs to the destination parent. | planned internal/durablefile/replace_test.go (TestAdjacentTemporary) | A temporary file in the system directory fails the recorded path predicate. |
-| D06 | 6 | Rename follows the successful mode, write, file-sync, and file-close operations. | planned internal/durablefile/replace_test.go (TestReplaceOrder) | An operation trace detects an omitted or reordered step. |
-| D07 | 7 | Success follows parent-directory synchronization and close. | planned internal/durablefile/replace_test.go (TestReplaceDirectorySync) | An omitted directory step cannot produce the required trace. |
-| D08 | 8 | A short write returns an error before rename. | planned internal/durablefile/replace_test.go (TestReplaceShortWrite) | A nil-error partial write cannot pass as complete. |
-| D09 | 9 | Each pre-rename failure leaves the existing destination bytes unchanged. | planned internal/durablefile/replace_test.go (TestReplaceBeforeRenameFailures) | The old-byte oracle detects an early destination write. |
-| D10 | 10 | Each pre-rename failure leaves an absent destination absent. | planned internal/durablefile/replace_test.go (TestReplaceAbsentFailures) | An eager destination create violates the absence predicate. |
-| D11 | 11 | Each post-rename failure reports that new bytes may already be visible. | planned internal/durablefile/replace_test.go (TestReplaceAfterRenameFailures) | A plain successful return or old-byte claim fails the error predicate. |
-| D12 | 12 | A post-rename sync failure leaves the new destination bytes visible. | planned internal/durablefile/replace_test.go (TestReplaceAfterRenameState) | A fake that fails before rename cannot satisfy the state assertion. |
-| D13 | 13 | Replacement errors preserve errors.Is access to the injected cause. | planned internal/durablefile/replace_test.go (TestReplaceErrorCause) | A text-only wrapper loses the injected sentinel. |
-| D14 | 14 | A pre-rename failure removes its temporary file when removal succeeds. | planned internal/durablefile/replace_test.go (TestReplaceTemporaryCleanup) | A planted write failure detects a leaked sibling file. |
-| D15 | 15 | A failed temporary cleanup preserves the primary error and the cleanup cause. | planned internal/durablefile/replace_test.go (TestReplaceCleanupFailure) | Discarding the removal error loses the cleanup sentinel. |
-| D19 | 19 | The review record caller exposes an injected directory-sync failure. | planned internal/reviewrecord/replacement_test.go (TestReviewReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D32 | 32 | Native Linux and macOS qualification establishes the declared synchronization result. | planned internal/durablefile/platform_test.go (TestNativeReplacement) | A simulated filesystem cannot establish native directory-sync support. |
+| D01 | 1 | Replacement of old bytes installs the exact supplied bytes. | `internal/durablefile/replace_test.go` (`TestReplaceBytes`) | A truncated write differs from the supplied payload. |
+| D02 | 2 | An empty payload creates a present regular file. | `internal/durablefile/replace_test.go` (`TestReplaceEmpty`) | Skipping an empty write leaves the destination absent. |
+| D03 | 3 | The installed file has the requested permission bits. | `internal/durablefile/replace_test.go` (`TestReplaceMode`) | The default temporary mode cannot satisfy the executable fixture. |
+| D04 | 4 | A concurrent reader observes only the old or new complete payload. | `internal/durablefile/replace_test.go` (`TestReplaceVisibility`) | An in-place write exposes a partial payload. |
+| D05 | 5 | The temporary regular file belongs to the destination parent. | `internal/durablefile/replace_test.go` (`TestAdjacentTemporary`) | A temporary file in the system directory fails the recorded path predicate. |
+| D06 | 6 | Rename follows the successful mode, write, file-sync, and file-close operations. | `internal/durablefile/replace_test.go` (`TestReplaceOrder`) | An operation trace detects an omitted or reordered step. |
+| D07 | 7 | Success follows parent-directory synchronization and close. | `internal/durablefile/replace_test.go` (`TestReplaceDirectorySync`) | An omitted directory step cannot produce the required trace. |
+| D08 | 8 | A short write returns an error before rename. | `internal/durablefile/replace_test.go` (`TestReplaceShortWrite`) | A nil-error partial write cannot pass as complete. |
+| D09 | 9 | Each pre-rename failure leaves the existing destination bytes unchanged. | `internal/durablefile/replace_test.go` (`TestReplaceBeforeRenameFailures`) | The old-byte oracle detects an early destination write. |
+| D10 | 10 | Each pre-rename failure leaves an absent destination absent. | `internal/durablefile/replace_test.go` (`TestReplaceAbsentFailures`) | An eager destination create violates the absence predicate. |
+| D11 | 11 | Each post-rename failure reports that new bytes may already be visible. | `internal/durablefile/replace_test.go` (`TestReplaceAfterRenameFailures`) | A plain successful return or old-byte claim fails the error predicate. |
+| D12 | 12 | A post-rename sync failure leaves the new destination bytes visible. | `internal/durablefile/replace_test.go` (`TestReplaceAfterRenameState`) | A fake that fails before rename cannot satisfy the state assertion. |
+| D13 | 13 | Replacement errors preserve errors.Is access to the injected cause. | `internal/durablefile/replace_test.go` (`TestReplaceErrorCause`) | A text-only wrapper loses the injected sentinel. |
+| D14 | 14 | A pre-rename failure removes its temporary file when removal succeeds. | `internal/durablefile/replace_test.go` (`TestReplaceTemporaryCleanup`) | A planted write failure detects a leaked sibling file. |
+| D15 | 15 | A failed temporary cleanup preserves the primary error and the cleanup cause. | `internal/durablefile/replace_test.go` (`TestReplaceCleanupFailure`) | Discarding the removal error loses the cleanup sentinel. |
+| D19 | 19 | The review record caller exposes an injected directory-sync failure. | `internal/reviewrecord/replacement_test.go` (`TestReviewReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D32 | 32 | Native Linux and macOS qualification establishes the declared synchronization result. | `internal/durablefile/platform_test.go` (`TestNativeReplacement`) | A simulated filesystem cannot establish native directory-sync support. |
 
 ### Edge inventory
 

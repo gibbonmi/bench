@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 )
 
 // Render returns document with record as the payload of its review-record
@@ -57,14 +59,23 @@ func (s fenceSpan) splice(document, data []byte) []byte {
 	return bytes.Join([][]byte{document[:s.start], data, document[s.end:]}, nil)
 }
 
-// write is the one write transaction on the record of spec under root. It reads the
+// write is the one write transaction on the record of spec under root, and it replaces
+// the file through the native durable replacement.
+func write(root, spec string, create func(path string) (Record, error), change func(*Record) error) error {
+	return writeWith(durablefile.Replace, root, spec, create, change)
+}
+
+// replacement is the replacement operation of a review-record write: the native
+// durablefile.Replace, or the Replace method of a test's durablefile.Replacer.
+type replacement func(path string, data []byte, mode fs.FileMode) error
+
+// writeWith is the write transaction with its replacement operation. It reads the
 // record through the reader, applies change, renders the document, and grades the
 // rendered bytes as the reader grades a file: the bounded classification, then the
-// parse. Only then does it replace the file through a temporary file in
-// the same directory. For an absent file at path, create supplies the record that the
-// file starts from or refuses it. A refusal at any step leaves the record bytes unchanged
-// and leaves no temporary file.
-func write(root, spec string, create func(path string) (Record, error), change func(*Record) error) error {
+// parse. Only then does it replace the file through replaceFile. For an absent file at
+// path, create supplies the record that the file starts from or refuses it. A refusal
+// before the replacement leaves the record bytes unchanged and leaves no temporary file.
+func writeWith(replaceFile replacement, root, spec string, create func(path string) (Record, error), change func(*Record) error) error {
 	path, err := RecordPath(spec)
 	if err != nil {
 		return err
@@ -93,7 +104,7 @@ func write(root, spec string, create func(path string) (Record, error), change f
 	if _, err := parseRecord(rendered, spec); err != nil {
 		return err
 	}
-	return replace(filepath.Join(root, filepath.FromSlash(path)), rendered)
+	return replace(replaceFile, filepath.Join(root, filepath.FromSlash(path)), rendered)
 }
 
 // absent refuses an absent record at path. The chunk form writes its first entry, for
@@ -104,35 +115,14 @@ func absent(chunk string) func(path string) (Record, error) {
 	}
 }
 
-// replace writes data to a temporary file beside path and renames it over path, so a
-// reader sees either the old bytes or the new bytes. It creates the directory of path
-// when that directory is absent.
-func replace(path string, data []byte) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+// replace creates the directory of path when that directory is absent, then replaces path
+// with data at mode 0644 through replaceFile, so a reader sees either the old bytes or the
+// new bytes. It returns the replacement error unchanged and rolls back nothing.
+func replace(replaceFile replacement, path string, data []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	temp, err := os.CreateTemp(dir, "."+filepath.Base(path)+".*")
-	if err != nil {
-		return err
-	}
-	_, err = temp.Write(data)
-	if err == nil {
-		err = temp.Chmod(0o644)
-	}
-	if err == nil {
-		err = temp.Sync()
-	}
-	if closed := temp.Close(); err == nil {
-		err = closed
-	}
-	if err == nil {
-		err = os.Rename(temp.Name(), path)
-	}
-	if err != nil {
-		_ = os.Remove(temp.Name())
-	}
-	return err
+	return replaceFile(path, data, 0o644)
 }
 
 // RecordChunk writes the entry of planned chunk id for the frozen pair base..tip, both

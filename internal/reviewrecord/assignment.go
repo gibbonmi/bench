@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -81,7 +82,7 @@ func RecordAssignment(root, spec string, call AssignmentCall) ([]Assignment, err
 			return nil, err
 		}
 	}
-	return history, replace(filepath.Join(root, filepath.FromSlash(spec)), candidate)
+	return history, replace(durablefile.Replace, filepath.Join(root, filepath.FromSlash(spec)), candidate)
 }
 
 // ticketPaths is the repository path of every planned ticket beside spec.
