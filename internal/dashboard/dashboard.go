@@ -59,7 +59,7 @@ type Snapshot struct {
 }
 
 // Command implements `bench dashboard [--stdout]`. With no argument, Command writes the
-// rendered page atomically to `<git-dir>/bench-dashboard.html`. Command then prints that
+// rendered page atomically into the git dir. Command then prints that
 // path, exit 0. `--stdout` emits the HTML on stdout instead. It writes nothing else.
 //
 // `--stdout` is the only accepted flag. Any other argument gives a usage error, exit 2.
@@ -85,7 +85,7 @@ func Command(args []string) (string, int) {
 	}
 	target := filepath.Join(gitDir, pageName)
 	if err := atomicWrite(durablefile.Native(), target, page); err != nil {
-		return toon.Errorf("cannot write bench-dashboard.html", err.Error()) + "\n", 1
+		return toon.Errorf("cannot write "+pageName, err.Error()) + "\n", 1
 	}
 	return target + "\n", 0
 }

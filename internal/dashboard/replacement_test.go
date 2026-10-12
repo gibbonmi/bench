@@ -66,7 +66,8 @@ func TestDashboardCommandReportsReplacementFailure(t *testing.T) {
 
 	r, c := Command(nil)
 
-	if c != 1 || !strings.Contains(r, "cannot write bench-dashboard.html") {
-		t.Fatalf("Command(nil) = %q, %d, want exit 1 and %q", r, c, "cannot write bench-dashboard.html")
+	const refusal = "cannot write bench-dashboard.html"
+	if c != 1 || !strings.Contains(r, refusal) {
+		t.Fatalf("Command(nil) = %q, %d, want exit 1 and %q", r, c, refusal)
 	}
 }
