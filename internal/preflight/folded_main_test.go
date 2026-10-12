@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -118,31 +119,87 @@ func TestPathsAuthorizedKeepsTheFenceRuleForBuildWritesBesideAFold(t *testing.T)
 	}
 }
 
-// TestPathsAuthorizedAdmitsARecordedResolutionPath covers BW43 and BW44. The fold commit
-// repairs a main path, and the record at the source tip holds the fold entry. The path is
-// authorized only when that entry lists it in its resolution.
+// commitFold commits the folded path with content and returns the commit.
+func commitFold(t *testing.T, content string, flags ...string) string {
+	t.Helper()
+	preflighttest.MustWriteFile(t, foldedPath, content)
+	preflighttest.RunGit(t, "add", foldedPath)
+	preflighttest.RunGit(t, append([]string{"commit", "-q"}, flags...)...)
+	return preflighttest.RunGit(t, "rev-parse", "HEAD")
+}
+
+// commitFoldRecord commits a review record that holds one fold entry for each commit, and
+// each entry lists resolution.
+func commitFoldRecord(t *testing.T, slug, base string, resolution []string, commits ...string) {
+	t.Helper()
+	record := reviewrecord.Record{Version: 1, Spec: "specs/" + slug + "/spec.md", PlanDigest: "sha256:x", ImplementationSession: "author",
+		Chunks: []reviewrecord.Chunk{{ID: "c1", Base: base, Tip: base, PlanDigest: "sha256:x", SourceDigest: base}}}
+	for i, commit := range commits {
+		record.Folds = append(record.Folds, reviewrecord.Fold{ID: "F" + strconv.Itoa(i+1), After: "c1", From: base, Commit: commit, Incoming: commit, SourceDigest: commit, Resolution: resolution})
+	}
+	preflighttest.MustWriteFile(t, "reviews/"+slug+".md", recordFence(t, record))
+	preflighttest.RunGit(t, "add", ".")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "record the fold")
+}
+
+// TestPathsAuthorizedAdmitsARecordedResolutionPath covers BW43, BW44, and BW98. The fold
+// commit repairs a main path, and the record at the source tip holds the fold entry. The
+// path is authorized only while the newest entry that lists it holds its source bytes.
 func TestPathsAuthorizedAdmitsARecordedResolutionPath(t *testing.T) {
-	for _, resolution := range [][]string{{foldedPath}, {}} {
-		root, slug, base := seedFoldedMain(t)
-		preflighttest.MustWriteFile(t, foldedPath, "package outside\n// resolved\n")
-		preflighttest.RunGit(t, "add", foldedPath)
-		preflighttest.RunGit(t, "commit", "-q", "--amend", "--no-edit")
-		fold := preflighttest.RunGit(t, "rev-parse", "HEAD")
-		record := reviewrecord.Record{Version: 1, Spec: "specs/" + slug + "/spec.md", PlanDigest: "sha256:x", ImplementationSession: "author",
-			Chunks: []reviewrecord.Chunk{{ID: "c1", Base: base, Tip: base, PlanDigest: "sha256:x", SourceDigest: base}},
-			Folds:  []reviewrecord.Fold{{ID: "F1", After: "c1", From: base, Commit: fold, Incoming: fold, SourceDigest: fold, Resolution: resolution}}}
-		preflighttest.MustWriteFile(t, "reviews/"+slug+".md", recordFence(t, record))
-		preflighttest.RunGit(t, "add", ".")
-		preflighttest.RunGit(t, "commit", "-q", "-m", "record the fold")
-		want := green("paths-authorized")
-		if len(resolution) == 0 {
-			want = red("paths-authorized", "not authorized by any ownership fence: "+foldedPath)
-		}
-		for _, mode := range []string{modeReview, modeBuild} {
-			if row, _ := pathsAuthorizedRow(t, root, mode, slug, base); row.Verdict != want.Verdict || row.Detail != want.Detail {
-				t.Errorf("%s paths-authorized with resolution %q = %+v, want %+v", mode, resolution, row, want)
+	unfenced := red("paths-authorized", "not authorized by any ownership fence: "+foldedPath)
+	bothModes := []string{modeReview, modeBuild}
+	for _, test := range []struct {
+		name       string
+		resolution []string
+		later      func(t *testing.T, slug, base, fold string)
+		modes      []string
+		want       CheckResult
+	}{
+		{name: "a listed path", resolution: []string{foldedPath}, modes: bothModes, want: green("paths-authorized")},
+		{name: "an unlisted path", resolution: []string{}, modes: bothModes, want: unfenced},
+		{
+			name: "a listed path that a later commit edits", resolution: []string{foldedPath}, modes: bothModes, want: unfenced,
+			later: func(t *testing.T, _, _, _ string) {
+				commitFold(t, "package outside\n// later\n", "-m", "build write")
+			},
+		},
+		{
+			name: "a listed path that a later commit changes in mode", resolution: []string{foldedPath}, modes: bothModes, want: unfenced,
+			later: func(t *testing.T, _, _, _ string) {
+				if err := os.Chmod(foldedPath, 0o755); err != nil {
+					t.Fatal(err)
+				}
+				preflighttest.RunGit(t, "update-index", "--chmod=+x", foldedPath)
+				preflighttest.RunGit(t, "commit", "-q", "-m", "build mode write")
+			},
+		},
+		{
+			name: "a listed path that a dirty edit changes", resolution: []string{foldedPath}, modes: []string{modeBuild}, want: unfenced,
+			later: func(t *testing.T, _, _, _ string) {
+				preflighttest.MustWriteFile(t, foldedPath, "package outside\n// dirty\n")
+			},
+		},
+		{
+			name: "a listed path that a newer fold lists again", resolution: []string{foldedPath}, modes: bothModes, want: green("paths-authorized"),
+			later: func(t *testing.T, slug, base, fold string) {
+				refold := commitFold(t, "package outside\n// resolved again\n", "-m", "fold main again")
+				commitFoldRecord(t, slug, base, []string{foldedPath}, fold, refold)
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root, slug, base := seedFoldedMain(t)
+			fold := commitFold(t, "package outside\n// resolved\n", "--amend", "--no-edit")
+			commitFoldRecord(t, slug, base, test.resolution, fold)
+			if test.later != nil {
+				test.later(t, slug, base, fold)
 			}
-		}
+			for _, mode := range test.modes {
+				if row, _ := pathsAuthorizedRow(t, root, mode, slug, base); row.Verdict != test.want.Verdict || row.Detail != test.want.Detail {
+					t.Errorf("%s paths-authorized = %+v, want %+v", mode, row, test.want)
+				}
+			}
+		})
 	}
 }
 

@@ -64,7 +64,8 @@ type Facts struct {
 	// default branch, so it is no write of the build.
 	DefaultTipPaths []string
 	// FoldResolutionPaths is every path that a fold entry of the review record at SourceTip
-	// lists in its resolution. The fold review grades such a path, so no fence names it.
+	// lists in its resolution. Each path keeps its bytes and mode from the newest such fold.
+	// The fold review grades such a path, so no fence names it.
 	FoldResolutionPaths []string
 	// FenceEntries is the spec's declared `## Ownership fences` tokens: backticked,
 	// outside parentheses. paths-authorized checks every changed path against these.

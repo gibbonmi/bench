@@ -86,10 +86,18 @@ func checkCompletion(record Record, plan Plan, source, tip string) error {
 	return checkVerification(completion.Verification, finalRequirements(plan, record), plan, record, source, Repair{Source: tip})
 }
 
+// TestCommand is the command whose requirements run test selections.
+const TestCommand = "bench test"
+
+// PackageTestCommand is the exact command that runs every test of one package.
+func PackageTestCommand(pkg string) string {
+	return TestCommand + " --package " + pkg
+}
+
 // MergedTestRequirement is the final requirement that a fold derives for one merged test
 // package.
 func MergedTestRequirement(pkg string) Requirement {
-	return Requirement{ID: "merged-test:" + pkg, Command: "bench test --package " + pkg}
+	return Requirement{ID: "merged-test:" + pkg, Command: PackageTestCommand(pkg)}
 }
 
 // finalRequirements is the final verification list of record under plan: the planned list,

@@ -19,7 +19,7 @@ func pathsAuthorizedCheck(f Facts) CheckResult {
 
 // unauthorizedPaths is every changed path that no authorizing entry covers, in changed-path
 // order. It omits a path that the default-branch tip already holds or that a recorded fold
-// resolution lists. The row's detail sentence and the landing's typed path list both read
+// resolution admits. The row's detail sentence and the landing's typed path list both read
 // this one answer, so a report and a refusal can never name a different set.
 func unauthorizedPaths(f Facts) []string {
 	var unauthorized []string

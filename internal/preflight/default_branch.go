@@ -26,21 +26,12 @@ func baseCurrentFacts(root string) (branch string, resolved, current bool) {
 }
 
 // defaultTipEqualPaths is the changed subset whose bytes and mode at sourceTip equal those
-// at the default-branch tip. git.ResolvedDefault owns the default branch, and the raw tree
-// diff owns the comparison, so a gitlink compares by its commit too. A path absent at both
-// tips reads as equal, and an untracked path is absent at both. So a dirty source, a
-// missing tip, or an unresolved default branch answers none, and the fence rule grades
-// every path.
+// at the default-branch tip. git.ResolvedDefault owns the default branch, and
+// unchangedPaths owns the comparison and its dirty-source rule. A missing tip or an
+// unresolved default branch answers none, and the fence rule grades every path.
 func defaultTipEqualPaths(root, sourceTip string, changed []string) ([]string, *BootstrapFailure) {
 	branch, resolved := git.ResolvedDefault(root)
 	if !resolved || sourceTip == "" || len(changed) == 0 {
-		return nil, nil
-	}
-	dirty, err := git.WorktreeDirty(root)
-	if err != nil {
-		return nil, &BootstrapFailure{"source status unreadable", err.Error()}
-	}
-	if dirty {
 		return nil, nil
 	}
 	// The commit identity keeps a file named like the branch from making the diff ambiguous.
@@ -48,19 +39,5 @@ func defaultTipEqualPaths(root, sourceTip string, changed []string) ([]string, *
 	if err != nil {
 		return nil, &BootstrapFailure{"default-branch tip not readable", err.Error()}
 	}
-	differences, err := git.TreeChangesIncludingSubmodules(root, defaultTip, sourceTip)
-	if err != nil {
-		return nil, &BootstrapFailure{"default-branch tree not readable", err.Error()}
-	}
-	differs := make(map[string]bool, len(differences))
-	for _, change := range differences {
-		differs[change.Path] = true
-	}
-	var equal []string
-	for _, path := range changed {
-		if !differs[path] {
-			equal = append(equal, path)
-		}
-	}
-	return equal, nil
+	return unchangedPaths(root, defaultTip, sourceTip, changed)
 }
