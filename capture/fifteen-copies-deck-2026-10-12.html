@@ -309,6 +309,10 @@ h1 { margin: 0; font: 800 clamp(22px, 3.4vw, 36px)/1.1 var(--display); font-stre
 .caller rect { fill: var(--surface); stroke: var(--fg); stroke-width: 1.8; }
 .caller text { font: 600 16px var(--mono); fill: var(--fg); text-anchor: middle; }
 .fnbox { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.6; }
+.tchip rect { fill: var(--surface); stroke: var(--c); stroke-width: 2; }
+.tchip text { font: 600 12px var(--mono); fill: var(--fg); }
+.t-tpurpose { font: 700 26px var(--sans); fill: var(--fg); text-anchor: middle; }
+.t-tline { font: 500 17px var(--sans); fill: var(--muted); text-anchor: middle; }
 .t-fnbox { font: 700 17px var(--mono); fill: var(--accent); text-anchor: middle; }
 .seamframe { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 6 5; }
 .t-seam { font: 700 16px var(--sans); fill: var(--accent); text-anchor: middle; letter-spacing: .04em; }
@@ -662,6 +666,23 @@ function renderSafe(on, n) {
   if (!on) return;
   [safeHead, ...safeOut].forEach(e => show(e, n >= 1));
 }
+
+/* ---------- Build: the title, the whole story in one picture ---------- */
+const titleG = el('g', { class: 'anim', style: 'opacity:0' }, LF);
+el('text', { class: 't-tpurpose', x: 640, y: 120 }, titleG, 'How seams and deep modules keep a large, agent-built codebase maintainable.');
+el('text', { class: 't-nhead', x: 110, y: 214 }, titleG, '15 COPIES, 4 BEHAVIORS');
+C.forEach((c, i) => {
+  const x = 110 + (i % 3) * 150, y = 232 + Math.floor(i / 3) * 44;
+  const g = el('g', { class: 'tchip', style: '--c:' + COLOR[c.beh] }, titleG);
+  el('rect', { x, y, width: 140, height: 32, rx: 5 }, g);
+  el('text', { x: x + 10, y: y + 21 }, g, c.fn.length > 17 ? c.fn.slice(0, 16) + '…' : c.fn);
+});
+el('line', { class: 'ln', x1: 600, y1: 342, x2: 760, y2: 342, 'marker-end': 'url(#ah)' }, titleG);
+el('text', { class: 't-arrowsm', x: 680, y: 330 }, titleG, 'one seam');
+el('text', { class: 't-nhead', x: 776, y: 286 }, titleG, '1 OWNER, 1 BEHAVIOR');
+el('rect', { class: 'fnbox', x: 776, y: 302, width: 300, height: 80, rx: 10 }, titleG);
+el('text', { class: 't-fnbox', x: 926, y: 349 }, titleG, 'durablefile.Replace');
+el('text', { class: 't-tline', x: 640, y: 520 }, titleG, 'Nothing here is new. Agents make the drift arrive in weeks, not years.');
 
 /* ---------- Build: the seam ---------- */
 const seam = el('g', { class: 'anim', style: 'opacity:0' }, LF);
@@ -1077,7 +1098,7 @@ function render(s) {
   const sum = st.id === 'numbers';
   $('overlay').style.opacity = k === 8 || sum ? .95 : 0;
   show(summary, sum); sumRows.forEach(r => show(r, true));
-  show(notnewG, st.id === 'notnew'); nnCards.forEach(c => show(c, true)); show(habitsG, st.id === 'habits'); hbCards.forEach(c => show(c, true));
+  show(titleG, st.id === 'title'); show(notnewG, st.id === 'notnew'); nnCards.forEach(c => show(c, true)); show(habitsG, st.id === 'habits'); hbCards.forEach(c => show(c, true));
   show(audit, k === 8); show(counters, k === 8);
   show(block, k === 3);
   show(search, k === 5); sq.textContent = QUERY; show(sr, true);
