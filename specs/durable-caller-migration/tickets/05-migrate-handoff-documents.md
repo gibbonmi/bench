@@ -22,7 +22,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Write a real section, then fail directory synchronization after rename.
 The returned error retains uncertainty and the section encoder keeps its exact payload.
 
-- [ ] The handoff document caller exposes an injected directory-sync failure. (D21).
+- [x] The handoff document caller exposes an injected directory-sync failure. (D21).
 
 ## Checkpoint verification
 
