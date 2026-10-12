@@ -4873,6 +4873,74 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-c6-r2-spec",
+          "performer": "claude:dcm_rev_c6_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4838805bd7d4cd9248c2e6e37fec7d82edeea771",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c6_spec",
+            "digest": "sha256:b9ec6878027c3341efff1df693f3622c50c43544e1b8bc099433eb89db8df94a",
+            "excerpt": "## Spec (D-C6 confirming, 2bd55623..fee3f738) — pass; comment-only command.go change; D29 still met; mode pinned by custody.\n"
+          },
+          "axis": "Spec",
+          "base": "3210553dcf40b324eeb975dd04758adbff2a02e9",
+          "tip": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c6-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-c6-r2-standards",
+          "performer": "claude:dcm_rev_c6_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4838805bd7d4cd9248c2e6e37fec7d82edeea771",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c6_std",
+            "digest": "sha256:2abdc711b3a62e4ce5837c7ea0244b84bc6e7e6441facc666687fad29cfedb9f",
+            "excerpt": "## Standards (D-C6 confirming, 2bd55623..fee3f738) — S1 closed (command.go:49, 55-56); 1 new finding.\nS2 | auto-fix (orchestrator: evidence-only comment correction; Standards reaffirms) | 6 | internal/repairpilot/command.go:55-56 | the Replace comment restates the encoding and the 0600 mode that writeDocument holds | keep only: Replace writes the document through Files and returns the replacement error unchanged\n"
+          },
+          "axis": "Standards",
+          "base": "3210553dcf40b324eeb975dd04758adbff2a02e9",
+          "tip": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+          "finding_ids": [
+            "S2"
+          ],
+          "supersedes": [
+            "dcm-c6-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-c6-r2-coverage",
+          "performer": "claude:dcm_rev_c6_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4838805bd7d4cd9248c2e6e37fec7d82edeea771",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c6_cov",
+            "digest": "sha256:866c046b21d9392504965452754b43491dd8d84d509809f1abae71b4d1fb63cf",
+            "excerpt": "## Coverage (D-C6 confirming, 2bd55623..fee3f738) — C1 closed (replacement_test.go:23; mode red only custody, bytes red only TestPilotReplacement); dcm-t13-rep1 entries graded; 0 new findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "3210553dcf40b324eeb975dd04758adbff2a02e9",
+          "tip": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c6-r1-coverage"
+          ]
         }
       ]
     }
@@ -5847,3 +5915,7 @@ Chunk D-C6 has 1 finding. The worst issue is C1.
 Chunk D-C6 used 0 of its 2 repair cycles before repair 1. S1 and C1 fall on ticket 13, so one combined repair session takes them.
 
 Commit fee3f738 closes S1: the Store and Replace doc comments state only the caller's own facts, and TestPilotReplacement stays green. Commit fee3f738 closes C1: TestPilotReplacement checks bytes through RequireBytes, and TestRepairPilotStorage/custody alone catches the 0640 mode red. Chunk D-C6 used 1 of its 2 repair cycles.
+
+The D-C6 confirming round at c7a75215 closed S1 and C1. It raised one comment-only finding.
+
+- S2, auto-fix as an evidence-only comment correction, confidence 6: the `Store.Replace` comment at `internal/repairpilot/command.go:55-56` restates the encoding and the 0600 mode that `writeDocument` holds. The orchestrator charge asked for that clause. The orchestrator removes it, and the Standards axis reaffirms the correction.
