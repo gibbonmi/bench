@@ -451,7 +451,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-b2-r1-standards",
+          "performer": "claude:dcm_rev_b2_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6bc8eab39ace6f03dde72a6e14e14d96f675f046",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b2_std",
+            "digest": "sha256:f883e1d98be0f7a2519e306c8e55fa3fbd922f962dc3d216588504e6737e4b77",
+            "excerpt": "## Standards (D-B2, ea32f1f8..6415ae0f) — 1 finding; worst DCM-B2-S1\nDCM-B2-S1 | ask-user (orchestrator accepted as auto-fix under --auto-approve) | 6 | internal/gate/prospectiveartifact/replacement_test.go:22-41 | copies the published-failure predicate and the record-file check of internal/gate/durable_replacement_test.go:292-312 (requirePublishedFailure, requireRecordFile); ten more caller packages will need them | move one exported assertion into internal/durablefile/durablefiletest and call it from both packages\nChecks: no copy of the durablefile algorithm; the seam follows the gate idiom; error handling unchanged; independent literals have recorded reds.\nAdvice: the temp name change to .owner.json.* is acceptable.\n"
+          },
+          "axis": "Standards",
+          "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
+          "tip": "649a980b5139c79657092f7987aec1aa6ea49edc",
+          "finding_ids": [
+            "DCM-B2-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b2-r1-spec",
+          "performer": "claude:dcm_rev_b2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6bc8eab39ace6f03dde72a6e14e14d96f675f046",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b2_spec",
+            "digest": "sha256:1bb970bef690f0b465800b9300224d9c440405e78fee60c30dcd36df30588476",
+            "excerpt": "## Spec (D-B2, ea32f1f8..6415ae0f) — 0 findings\nD18 holds: RecordMode and Marshal plus final newline at prospectiveartifact.go:236-240; exported Publish keeps its signature and calls publish(durablefile.Native(), root, record); caller authority stays in Factory.Open; read-back observes the exact new record. D30 claim holds: Publish had no pre-write refusal beyond an unreachable marshal error.\nAdvice: seed an older record before the fault so read-back proves replacement.\n"
+          },
+          "axis": "Spec",
+          "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
+          "tip": "649a980b5139c79657092f7987aec1aa6ea49edc",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b2-r1-coverage",
+          "performer": "claude:dcm_rev_b2_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6bc8eab39ace6f03dde72a6e14e14d96f675f046",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b2_cov",
+            "digest": "sha256:5e6651cd65f038c37b49800c950ff7ad9b8d81111bd6b8a3661c39256800127b",
+            "excerpt": "## Coverage (D-B2, ea32f1f8..6415ae0f) — 3 findings; worst C1. Five probes, each restored=yes.\nC1 | auto-fix | 8 | internal/gate/prospectiveartifact/replacement_test.go:19-25; prospectiveartifact.go:240 | only the post-rename branch is tested; a publish that returns nil on every unpublished *durablefile.Error is silent (0 of 505) | add a pre-rename row (for example a rename fault) asserting Published=false, errors.Is the cause, owner.json absent, and no siblings; record its bypass red\nC2 | no-op | 6 | prospectiveartifact.go:231 | no test detects a plain os.WriteFile in exported Publish; the seam accepts this limit | the D-D source census checks the native binding\nC3 | auto-fix | 7 | reviews/durable-caller-migration.md (dcm-b2-t03-preservation P2) | the P2 mode red ran with --run TestOwnerReplacement, so it does not show the 0600 literal is necessary; const RecordMode 0o600 -> 0o640 over the whole package bites only TestOwnerReplacement:33 | record the whole-package constant-drift red\nAdvice: the marshal refusal is unreachable for Record's fields.\n"
+          },
+          "axis": "Coverage",
+          "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
+          "tip": "649a980b5139c79657092f7987aec1aa6ea49edc",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -514,3 +581,25 @@ Chunk D-B1 used 0 of its 2 repair cycles before repair 1. S1, C1, C2, and C3 fal
 Chunk D-B1 used 1 of its 2 repair cycles.
 
 The D-B1 confirming round at 9c9ae1c0 closed S1, C1, C2, and C3 with no new finding. Chunk D-B1 closed with 1 of its 2 repair cycles used.
+
+## Standards (D-B2)
+
+Chunk D-B2 has 1 finding. The worst issue is DCM-B2-S1.
+
+- DCM-B2-S1, auto-fix by the --auto-approve plan expansion, confidence 6: `internal/gate/prospectiveartifact/replacement_test.go:22-41` copies the published-failure and record-file checks of `internal/gate/durable_replacement_test.go:292-312`. Move one exported assertion into `internal/durablefile/durablefiletest`, and let both caller tests use it.
+
+## Spec (D-B2)
+
+Chunk D-B2 has 0 findings.
+
+## Coverage (D-B2)
+
+Chunk D-B2 has 3 findings. The worst issue is C1.
+
+- C1, auto-fix, confidence 8: no test fails the pre-rename branch of `publish` at `internal/gate/prospectiveartifact/prospectiveartifact.go:240`. Add a pre-rename row that asserts an unpublished classified error, the cause, and an absent record, and record its bypass red.
+- C2, no-op, confidence 6: no caller test detects a plain write in exported `Publish`, and the seam accepts that limit. The D-D source census confirms the native binding.
+- C3, auto-fix, confidence 7: the mode red ran only one test. Record the whole-package red of the `RecordMode` constant drift to 0o640.
+
+## Repair allowance (D-B2)
+
+Chunk D-B2 used 0 of its 2 repair cycles before repair 1. DCM-B2-S1, C1, and C3 fall on ticket 03, so one combined repair session takes them.
