@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:016cf63ba39a08352f69ad366b45a159ad6aca725a2e36a7620f02367440b05b",
+  "plan_digest": "sha256:caaaa230b74e8cf3a79cb22fa805c3a28bafb054e1b4053e68684ed4a0dee7cf",
   "implementation_session": "",
   "chunks": [
     {
@@ -4244,9 +4244,9 @@
     {
       "id": "D-C3",
       "base": "c377e632d4056ebb6853ed1087efbb38e010c824",
-      "tip": "ee901c01b9c522f654a8524b675f1e94c4e148c2",
-      "plan_digest": "sha256:016cf63ba39a08352f69ad366b45a159ad6aca725a2e36a7620f02367440b05b",
-      "source_digest": "4d77c1ef8c235ca9bc90f4a80f95c22bea5f2751",
+      "tip": "b20919b10799df0f4014df0a588bf70c3cea986c",
+      "plan_digest": "sha256:caaaa230b74e8cf3a79cb22fa805c3a28bafb054e1b4053e68684ed4a0dee7cf",
+      "source_digest": "2edd23a96795019c66d36851373250f4b7b5329f",
       "acceptance_rows": [
         "D26"
       ],
@@ -4360,6 +4360,118 @@
               "ref": "claude-agent:dcm_t10",
               "digest": "sha256:e0e9d4fcb6a55b89e22a959cfc423026cf8df24672fe911195040e639debe792",
               "excerpt": "D-C3 preservation probes at ee901c01b9c522f654a8524b675f1e94c4e148c2 (FT354-durable-callers), subject internal/dashboard/dashboard.go, bench test --package ./internal/dashboard.\n\nBaseline comparison against the frozen caller: the payload is the rendered page from Render (an unchanged encoder), so TestDashboardReplacement derives the expected bytes from it and needs no red. Mode 0600 is the frozen baseline (the implicit os.CreateTemp mode), kept as an independent literal; its necessity red is omission-proof probe 2 (pageMode 0o600 -> 0o644, whole package, only TestDashboardReplacement:34 red). Refusal category \"cannot write bench-dashboard.html\" with exit 1 and the stdout and git-dir authority paths are unchanged; the existing TestCommandArgs and TestDashboardWriteRefusesWhenTheReaderFails pass.\n\nProbe A (D36 refusal: fallback write of the new bytes after an unpublished error; whole package, no --run filter).\nSwap old (exact): \"\\treturn r.Replace(target, []byte(content), pageMode)\"\nSwap new (exact): \"\\terr := r.Replace(target, []byte(content), pageMode)\\n\\tif err != nil {\\n\\t\\tdurablefile.Replace(target, []byte(content), pageMode)\\n\\t}\\n\\treturn err\"\nResult: verdict bit, cause failed, failed_tests 1 of 23, restored yes. Mutated package run exit 1.\nFailure: only TestDashboardPreRenameFailure replacement_test.go:51 (the RequireBytes prior-page check): the page holds the rendered HTML, want \"<!DOCTYPE html>prior page\".\n\nProbe B (the exported Command entry that supplies durablefile.Native() must report its error; omission probe with --run '^TestDashboardCommandReportsReplacementFailure$').\nSwap old (exact): \"atomicWrite(durablefile.Native(), target, page); err != nil {\"\nSwap new (exact): \"atomicWrite(durablefile.Native(), target, page); err != nil && false {\"\nResult: verdict bit, cause failed, failed_tests 1, restored yes. Mutated package run exit 1.\nFailure: TestDashboardCommandReportsReplacementFailure replacement_test.go:70: Command(nil) = \".../.git/bench-dashboard.html\\n\", 0, want exit 1 and \"cannot write bench-dashboard.html\".\n\nRestoration: bench probe restored the source each time (restored=yes); bench test --package ./internal/dashboard passes at ee901c01 (23 tests).\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t10-rep1-caller-tests",
+          "performer": "claude:dcm_t10_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2edd23a96795019c66d36851373250f4b7b5329f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_t10_rep1",
+            "digest": "sha256:cfc5d4dfe6b33fc1c796daed19ba1a835789a8dd075bf59e6b9a14af01c1459b",
+            "excerpt": "D-C3 repair 1 caller-tests at b20919b10799df0f4014df0a588bf70c3cea986c (FT354-durable-callers, clean): bench test --package ./internal/dashboard\npackages: github.com/gibbonmi/bench/internal/dashboard,pass,tests_run=23; failures 0; skips 0.\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/dashboard",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t10-rep1-existing-canary-owner",
+          "performer": "claude:dcm_t10_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2edd23a96795019c66d36851373250f4b7b5329f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_t10_rep1",
+            "digest": "sha256:da334bfc639968b46555f5a48aa534b315c3f4c12311a77689c684bcf437a32a",
+            "excerpt": "D-C3 repair 1 existing-canary-owner at b20919b10799df0f4014df0a588bf70c3cea986c (FT354-durable-callers, clean): bench test --check git-plumbing-owner\ncheck git-plumbing-owner, conformance, tests_run=1; internal/conformance pass; failures 0; skips 0.\nThe git-flag-retyped fixture's MUTATE.json old line \"\\tgitDir, err := git.AdminDir(root)\\n\" stays intact in dashboard.go; the repair does not touch it. bench test --check package-core-guard also passed at this tip (tests_run=1, failures 0).\n"
+          },
+          "requirement": "existing-canary-owner",
+          "command": "bench test --check git-plumbing-owner",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t10-rep1-root-conformance",
+          "performer": "claude:dcm_t10_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2edd23a96795019c66d36851373250f4b7b5329f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_t10_rep1",
+            "digest": "sha256:13e23f7ed338429afd33e71802dd1453faeb10834023680a17c57feed482843f",
+            "excerpt": "D-C3 repair 1 root-conformance at b20919b10799df0f4014df0a588bf70c3cea986c (FT354-durable-callers, clean): bench test --check root-conformance\ncheck root-conformance, conformance, tests_run=1; internal/conformance pass; failures 0; skips 0.\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t10-rep1-omission-proof",
+          "performer": "claude:dcm_t10_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2edd23a96795019c66d36851373250f4b7b5329f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_t10_rep1",
+            "digest": "sha256:578338373de1e045d5a33278e54674f3612808ff926532fb60e36e220052881f",
+            "excerpt": "D-C3 repair 1 omission-proof at b20919b10799df0f4014df0a588bf70c3cea986c (FT354-durable-callers), subject internal/dashboard/dashboard.go, bench test --package ./internal/dashboard.\n\nThe repair changes no line of atomicWrite, pageMode, TestDashboardReplacement, or TestDashboardPreRenameFailure, so no omission-proof red is replayed.\nCited unchanged: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t10/p2/omission.txt Probe 1 (restore the former writer; owner bypass; --run '^TestDashboardReplacement$'; bit, restored yes, exit 1).\nCited unchanged: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t10/p2/omission.txt Probe 2 (pageMode 0o600 -> 0o644, whole package; only TestDashboardReplacement:34 red; bit, restored yes, exit 1).\nAfter the repair, bench test --package ./internal/dashboard passes at b20919b1 (23 tests).\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/dashboard",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Select 0644 by assumption or restore the former writer. The mode or injected-failure witness must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dcm_t10_rep1",
+              "digest": "sha256:578338373de1e045d5a33278e54674f3612808ff926532fb60e36e220052881f",
+              "excerpt": "D-C3 repair 1 omission-proof at b20919b10799df0f4014df0a588bf70c3cea986c (FT354-durable-callers), subject internal/dashboard/dashboard.go, bench test --package ./internal/dashboard.\n\nThe repair changes no line of atomicWrite, pageMode, TestDashboardReplacement, or TestDashboardPreRenameFailure, so no omission-proof red is replayed.\nCited unchanged: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t10/p2/omission.txt Probe 1 (restore the former writer; owner bypass; --run '^TestDashboardReplacement$'; bit, restored yes, exit 1).\nCited unchanged: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t10/p2/omission.txt Probe 2 (pageMode 0o600 -> 0o644, whole package; only TestDashboardReplacement:34 red; bit, restored yes, exit 1).\nAfter the repair, bench test --package ./internal/dashboard passes at b20919b1 (23 tests).\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t10-rep1-preservation",
+          "performer": "claude:dcm_t10_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2edd23a96795019c66d36851373250f4b7b5329f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_t10_rep1",
+            "digest": "sha256:7245b308f1af75faa84a7a22f9805dc87a43613702b2e8872a1a4d77c4136e3b",
+            "excerpt": "D-C3 repair 1 preservation probes at b20919b10799df0f4014df0a588bf70c3cea986c (FT354-durable-callers, clean), subject internal/dashboard/dashboard.go, bench test --package ./internal/dashboard.\n\nThe refusal now composes from pageName (\"cannot write \"+pageName); output bytes are unchanged. The test keeps \"cannot write bench-dashboard.html\" as one frozen baseline literal (const refusal), proven by Probe C.\n\nProbe C (new; necessity red for the kept refusal literal; whole package, no --run filter).\nSwap old (exact): \"\\\"cannot write \\\"+pageName\"\nSwap new (exact): \"\\\"cannot save \\\"+pageName\"\nResult: verdict bit, cause failed, failed_tests 1 of 23, restored yes. Mutated package run exit 1.\nFailure: only TestDashboardCommandReportsReplacementFailure replacement_test.go:71: Command(nil) = \"error: cannot save bench-dashboard.html — replace .../.git/bench-dashboard.html: rename: ...\".\n\nProbe B (replayed, because the repair moves its witness lines; --run '^TestDashboardCommandReportsReplacementFailure$'; swap text unchanged).\nSwap old (exact): \"atomicWrite(durablefile.Native(), target, page); err != nil {\"\nSwap new (exact): \"atomicWrite(durablefile.Native(), target, page); err != nil && false {\"\nResult: verdict bit, cause failed, failed_tests 1, restored yes. Mutated package run exit 1.\nFailure: TestDashboardCommandReportsReplacementFailure replacement_test.go:71: Command(nil) = \".../.git/bench-dashboard.html\\n\", 0, want exit 1 and \"cannot write bench-dashboard.html\".\n\nCited unchanged: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t10/p2/preservation.txt Probe A (fallback write after an unpublished error; whole package; only TestDashboardPreRenameFailure:51 red; bit, restored yes, exit 1).\n\nRestoration: bench probe restored the source each time (restored=yes, tree dirty=false); bench test --package ./internal/dashboard passes at b20919b1 (23 tests).\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/dashboard",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dcm_t10_rep1",
+              "digest": "sha256:7245b308f1af75faa84a7a22f9805dc87a43613702b2e8872a1a4d77c4136e3b",
+              "excerpt": "D-C3 repair 1 preservation probes at b20919b10799df0f4014df0a588bf70c3cea986c (FT354-durable-callers, clean), subject internal/dashboard/dashboard.go, bench test --package ./internal/dashboard.\n\nThe refusal now composes from pageName (\"cannot write \"+pageName); output bytes are unchanged. The test keeps \"cannot write bench-dashboard.html\" as one frozen baseline literal (const refusal), proven by Probe C.\n\nProbe C (new; necessity red for the kept refusal literal; whole package, no --run filter).\nSwap old (exact): \"\\\"cannot write \\\"+pageName\"\nSwap new (exact): \"\\\"cannot save \\\"+pageName\"\nResult: verdict bit, cause failed, failed_tests 1 of 23, restored yes. Mutated package run exit 1.\nFailure: only TestDashboardCommandReportsReplacementFailure replacement_test.go:71: Command(nil) = \"error: cannot save bench-dashboard.html — replace .../.git/bench-dashboard.html: rename: ...\".\n\nProbe B (replayed, because the repair moves its witness lines; --run '^TestDashboardCommandReportsReplacementFailure$'; swap text unchanged).\nSwap old (exact): \"atomicWrite(durablefile.Native(), target, page); err != nil {\"\nSwap new (exact): \"atomicWrite(durablefile.Native(), target, page); err != nil && false {\"\nResult: verdict bit, cause failed, failed_tests 1, restored yes. Mutated package run exit 1.\nFailure: TestDashboardCommandReportsReplacementFailure replacement_test.go:71: Command(nil) = \".../.git/bench-dashboard.html\\n\", 0, want exit 1 and \"cannot write bench-dashboard.html\".\n\nCited unchanged: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t10/p2/preservation.txt Probe A (fallback write after an unpublished error; whole package; only TestDashboardPreRenameFailure:51 red; bit, restored yes, exit 1).\n\nRestoration: bench probe restored the source each time (restored=yes, tree dirty=false); bench test --package ./internal/dashboard passes at b20919b1 (23 tests).\n"
             }
           }
         }
@@ -4902,6 +5014,42 @@
           "D-C4"
         ]
       }
+    },
+    {
+      "from": "sha256:016cf63ba39a08352f69ad366b45a159ad6aca725a2e36a7620f02367440b05b",
+      "to": "sha256:caaaa230b74e8cf3a79cb22fa805c3a28bafb054e1b4053e68684ed4a0dee7cf",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ],
+        "D-C3": [
+          "D-C3"
+        ],
+        "D-C4": [
+          "D-C4"
+        ]
+      }
     }
   ],
   "folds": [
@@ -5262,3 +5410,9 @@ Chunk D-C3 has 1 finding. The worst issue is C1.
 ## Repair allowance (D-C3)
 
 Chunk D-C3 used 0 of its 2 repair cycles before repair 1. S1, S2, and C1 fall on ticket 10, so one combined repair session takes them.
+
+- S1 closes in commit b20919b1. The `Command` refusal composes its text from `pageName`, and `TestDashboardCommandReportsReplacementFailure` shows the same output bytes.
+- S2 closes in commit b20919b1. `TestDashboardCommandReportsReplacementFailure` names the frozen refusal literal once.
+- C1 closes in commit b20919b1. The swap of "cannot write" to "cannot save" turns only `TestDashboardCommandReportsReplacementFailure` red over the whole package.
+
+Chunk D-C3 used 1 of its 2 repair cycles.
