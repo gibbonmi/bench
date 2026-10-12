@@ -273,11 +273,11 @@ func repairsSource(name string) bool {
 
 // movedDestination raises the moved-destination face for a ref that moved after the read.
 // It raises it too for a completion proof fault over a source that lacks the destination
-// base. The face's sentence leads, and the cause follows it.
+// base. The face's sentence leads, and the cause follows it. Its fold merges from branch.
 //
 // A proof fault over a source that holds the destination base hands back, because no fold
 // repairs it. An unreadable ancestry hands back too. Every other error passes through.
-func movedDestination(err error, r landing.ReviewedRequest) error {
+func movedDestination(err error, r landing.ReviewedRequest, branch string) error {
 	var refused landing.AuthorizationRefusal
 	switch {
 	case errors.As(err, new(landing.TipMovedError)):
@@ -288,9 +288,8 @@ func movedDestination(err error, r landing.ReviewedRequest) error {
 	default:
 		return err
 	}
-	from := strings.TrimPrefix(r.Destination, "refs/heads/")
 	detail := refusalroute.Sentence(faceLandDestinationMoved) + causeJoiner + err.Error()
-	return refusalError{refusal{detail: detail, face: faceLandDestinationMoved, values: map[string]string{refusalroute.FactFrom: from}}}
+	return refusalError{refusal{detail: detail, face: faceLandDestinationMoved, values: map[string]string{refusalroute.FactFrom: branch}}}
 }
 
 // landingSourceRoute attaches the caller's own re-run to a first-run source proof's

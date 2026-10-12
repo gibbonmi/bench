@@ -31,10 +31,13 @@ func destinationUpdateFailure(root, ref, expected string, updateErr error) error
 	return updateErr
 }
 
-// destinationUnchanged rechecks the destination after the gate. A ref that moved past base is
-// a TipMovedError. A checkout change over an unmoved ref is not, because no fold repairs it.
+// destinationUnchanged rechecks the destination after the gate. A ref tip that differs from
+// base is a TipMovedError. A checkout change over an unmoved ref is not, because no fold
+// repairs it.
 func destinationUnchanged(root, ref, base, fingerprint string) error {
 	changed := errors.New("landing destination checkout changed; rerun the landing to recompose onto the moved destination")
+	// An unreadable ref is no move here, because the publish compare-and-swap still
+	// refuses a moved ref.
 	if tip, err := benchgit.ResolveCommit(root, ref); err == nil && tip != base {
 		return TipMovedError{changed}
 	}

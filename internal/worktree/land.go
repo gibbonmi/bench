@@ -212,7 +212,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		if errors.As(err, &conflict) {
 			return landRefusalError(stdout, landingConflictRefusal(conflict, destination, assignment.ID, parsed.Flags["--spec"], path, assignment.Worktree))
 		}
-		return landRefusalError(stdout, landingCompositionRoute(movedDestination(err, request), parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment))
+		return landRefusalError(stdout, landingCompositionRoute(movedDestination(err, request, branch), parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment))
 	}
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.

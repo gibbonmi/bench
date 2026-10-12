@@ -12,10 +12,11 @@ import (
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // foldOfMain opens the printed fold of main into the source.
-const foldOfMain = "bench worktree merge --from 'main' "
+var foldOfMain = "bench worktree merge --from " + sanitize.ShellQuote("main") + " "
 
 // movedFacts are the facts the moved-destination route reads: the source's label, and the
 // destination branch that the fold merges from.
@@ -85,17 +86,51 @@ func TestCheckoutChangeWithoutARefMoveKeepsTheHandback(t *testing.T) {
 	}
 }
 
-// TestProofFaultOverACurrentSourceHandsBack is BW23. The reviewed source holds the
-// destination base, so a completion proof fault is no moved destination.
+// TestProofFaultOverACurrentSourceHandsBack is BW23 and two neighbour rows. An injected
+// authorization refusal that no fold repairs keeps the route of its own cause.
 func TestProofFaultOverACurrentSourceHandsBack(t *testing.T) {
 	t.Parallel()
-	request := "land-moved-current-source"
-	f := publicLandingFixture(t, request, "", "")
-	j := defaultJoins()
-	j.landReviewed = func(context.Context, landing.ReviewedRequest, landing.Admission) (landing.ReviewedResult, error) {
-		return landing.ReviewedResult{}, landing.AuthorizationRefusal{Result: authorization.Result{Kind: authorization.Infrastructure, Reason: "completion proof fault", Cause: authorization.CompletionProof}}
+	proofFault := authorization.Result{Kind: authorization.Infrastructure, Reason: "completion proof fault", Cause: authorization.CompletionProof}
+	for _, tc := range []struct {
+		name   string
+		result authorization.Result
+		// unreadable hides the source tip's object, so the ancestry query fails.
+		unreadable bool
+		face       string
+	}{
+		// BW23: the reviewed source holds the destination base, so the proof fault is no
+		// moved destination.
+		{name: "current-source", result: proofFault, face: faceLandHandback},
+		// A gate cause other than the completion proof keeps the infrastructure face.
+		{name: "non-proof-cause", result: authorization.Result{Kind: authorization.Infrastructure, Reason: "completion evidence missing", Cause: "checkpoint-completion-evidence"}, face: faceLandInfrastructure},
+		// An ancestry query that fails proves no moved destination, so the proof fault hands
+		// back.
+		{name: "unreadable-ancestry", result: proofFault, unreadable: true, face: faceLandHandback},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			request := "land-moved-" + tc.name
+			f := publicLandingFixture(t, request, "", "")
+			object := mustAdminPath(t, f.root, "objects/"+f.tip[:2]+"/"+f.tip[2:])
+			var hideErr error
+			j := defaultJoins()
+			j.landReviewed = func(context.Context, landing.ReviewedRequest, landing.Admission) (landing.ReviewedResult, error) {
+				if tc.unreadable {
+					hideErr = os.Rename(object, object+".hidden")
+				}
+				return landing.ReviewedResult{}, landing.AuthorizationRefusal{Result: tc.result}
+			}
+			r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+			mustNoError(t, hideErr)
+			if tc.unreadable {
+				mustNoError(t, os.Rename(object+".hidden", object))
+			}
+			r.mustViaJoins(t)
+			next, printed := landingFaceNext(r.stdout, landing.AuthorizationRefusal{Result: tc.result}.Error())
+			want := landingRoute(tc.face, landArgsRerun(request, f.base, f.tip, f.creation.Path), labelOf(f.creation))
+			if r.exit != 1 || !printed || next != want {
+				t.Fatalf("%s = (%d, %q, %q), want the %s face with next=%q", tc.name, r.exit, r.stdout, r.stderr, tc.face, want)
+			}
+		})
 	}
-	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
-	r.mustViaJoins(t)
-	requireHandback(t, r, "prospective authorization refused: infrastructure (completion proof fault)")
 }
