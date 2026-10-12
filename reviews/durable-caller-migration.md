@@ -1694,6 +1694,72 @@
           "supersedes": [
             "dcm-b4-r1-coverage"
           ]
+        },
+        {
+          "id": "dcm-b4-r3-standards",
+          "performer": "claude:dcm_rev_b4_std3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "253d32d0972a9499f4d7c52f935285154c9173c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b4_std3",
+            "digest": "sha256:76ccf4f49fff9e5ec64897daa4c7b443970d65aca0fe056b1f01ab928d881fba",
+            "excerpt": "## Standards second confirming round (D-B4, repair delta 8b01ad82..2477c580) — 0 findings\nS2 closed: TestHandoffReplacement ranges over durablefiletest.PostRenameStages (assert.go:14), the one in-fence copy of the stage set; the leaf test's afterRename copy is out of fence and recorded as a learning.\nAdvice: the doc comment could say \"can fail\" and Published=true; an exported func would avoid a mutable slice.\n"
+          },
+          "axis": "Standards",
+          "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+          "tip": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b4-r2-standards"
+          ]
+        },
+        {
+          "id": "dcm-b4-r3-spec",
+          "performer": "claude:dcm_rev_b4_spec3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "253d32d0972a9499f4d7c52f935285154c9173c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b4_spec3",
+            "digest": "sha256:62bce732ad60f538c687ae8e7b17ddcdbedfc92778064bf9538878a13044c6e2",
+            "excerpt": "## Spec second confirming round (D-B4, repair delta 8b01ad82..2477c580 and plan ae2055d6..8b01ad82) — 0 findings\nD21, its citation, and the behavior-change rule hold; the plan expansion adds assert.go and a floor row only; the delta stays inside the expanded ticket 05 Writes.\n"
+          },
+          "axis": "Spec",
+          "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+          "tip": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b4-r2-spec"
+          ]
+        },
+        {
+          "id": "dcm-b4-r3-coverage",
+          "performer": "claude:dcm_rev_b4_cov3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "253d32d0972a9499f4d7c52f935285154c9173c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b4_cov3",
+            "digest": "sha256:f11025067d758ab4810603c560ef3544ef7dd8bb6274541a9671237b0dab645c",
+            "excerpt": "## Coverage second confirming round (D-B4, repair delta 8b01ad82..2477c580) — 0 findings\nProbes at store.go:76-77, each restored=yes: ignore directory-sync only (bit, its row only); ignore every Published error (bit, three rows); %w -> %v (bit, four tests). No silent caller-side mutation.\n"
+          },
+          "axis": "Coverage",
+          "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+          "tip": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b4-r2-coverage"
+          ]
         }
       ]
     }
@@ -1965,3 +2031,5 @@ The D-B4 confirming round at 92da1312 closed S1, F1, and F2. It raised one new f
 Chunk D-B4 takes repair cycle 2 of 2 for S2.
 
 S2 closes in commit 5e49631e, where `TestHandoffReplacement` ranges over `durablefiletest.PostRenameStages`, and chunk D-B4 used 2 of its 2 repair cycles.
+
+The second D-B4 confirming round at 2477c580 closed S2 with no new finding. Chunk D-B4 closed with 2 of its 2 repair cycles used.
