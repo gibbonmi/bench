@@ -1020,6 +1020,76 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dfr-da-standards-2",
+          "performer": "claude:dfr_rev_standards_2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "58796930b5bb3c6483e32048fac3bdb733b175cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_standards_2",
+            "digest": "sha256:0133e505ea7ad8b49502353b74c5b63fc8957abd6ea635c06812299d7fea5dd9",
+            "excerpt": "Standards confirming round, chunk D-A, repair delta fc9a1d33..5f1ea9dc, opus/high. Evidence current=true at bd53453f.\nS1 closed: the harness lives once in internal/durablefile/durablefiletest/recorder.go; owner tests (replace_test.go, platform_test.go) and caller test (replacement_test.go:21,61) use it; no other copy in internal/.\nS2 closed: the sentence is gone from platform_test.go:14-16.\nreplaceFile binding (write.go:61-63) and export_test.go conform to AGENTS.md and the comment register. No new blocking defect.\nAdvice: rename the local replaceFile at replacement_test.go:122.\n"
+          },
+          "axis": "Standards",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "5f1ea9dc7b6612d8095d883eca4730bcc8853cd9",
+          "finding_ids": [],
+          "supersedes": [
+            "dfr-da-standards-1"
+          ]
+        },
+        {
+          "id": "dfr-da-spec-2",
+          "performer": "claude:dfr_rev_spec_2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "58796930b5bb3c6483e32048fac3bdb733b175cc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_spec_2",
+            "digest": "sha256:589771ca19aecfd358de8a42509ffc512bae956084e5009967926fd4d160eee4",
+            "excerpt": "Spec confirming round, chunk D-A, repair delta fc9a1d33..5f1ea9dc plus spec amendment 87e2713e..d1053edb, opus/high. Evidence current=true at bd53453f.\nP1 open: D32 macOS evidence absent (reviews lines 84, 522, 1071); reviewer decision.\nP2 closed: one binding write.go:63 serves write.go:100 and assignment.go:84; assignment case replacement_test.go:120-145 drives the real RecordAssignment.\nAmended implementation decisions met. Rows D01-D15 and D19 hold their cited tests. No row broken by the repair.\n"
+          },
+          "axis": "Spec",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "5f1ea9dc7b6612d8095d883eca4730bcc8853cd9",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": [
+            "dfr-da-spec-1"
+          ]
+        },
+        {
+          "id": "dfr-da-coverage-2",
+          "performer": "claude:dfr_rev_coverage_2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "58796930b5bb3c6483e32048fac3bdb733b175cc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_coverage_2",
+            "digest": "sha256:36cb8cd7dc2f070deb1c8022bd6f87f4e5291bc4e01cc4ca10066fdc00fdd6f3",
+            "excerpt": "Coverage confirming round, chunk D-A, repair delta fc9a1d33..5f1ea9dc, opus/high. The axis ran --check-current from the primary checkout (refused: base not an ancestor), so its currency check is unknown; it read and tested the worktree tip bd53453f.\nC1 open: D32 macOS evidence absent (reviews:1079-1080).\nC2 closed: the record-write case binds a directory-sync failure through the real write entry (replacement_test.go:104-105); write-binding-proof bit and restored.\nC3 closed: the assignment case drives the real RecordAssignment (replacement_test.go:115-142); assignment-binding-proof bit and restored.\nAll nine stage witnesses kept after the harness move. Ran bench test on ./internal/reviewrecord (89 pass) and ./internal/durablefile/... (16 pass). No new gap.\n"
+          },
+          "axis": "Coverage",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "5f1ea9dc7b6612d8095d883eca4730bcc8853cd9",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": [
+            "dfr-da-coverage-1"
+          ]
         }
       ]
     }
