@@ -3,7 +3,9 @@
 BW-A round 1 reviewed the pair `dcbbfb80..ced1dedc`.
 Repair 1 at `2aa2bf49` closed all seven findings, and the confirming round passed on all three axes.
 BW-A used one of its two repair cycles.
-BW-B round 1 reviewed the pair `2aa2bf49..6c90a3c6`, and BW-B has used zero of its two repair cycles.
+BW-B round 1 reviewed the pair `2aa2bf49..6c90a3c6`.
+Repair 1 at `4057ca20` closed all five findings, and the confirming round passed on all three axes.
+BW-B used one of its two repair cycles.
 
 ## Standards
 
@@ -809,6 +811,72 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bwb-standards-r2",
+          "performer": "claude:blw_bwb_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca6bd4b8092b1010171b96b3b14eecbe92d48e51",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwb_standards_r2",
+            "digest": "sha256:366d1a013d055d3813a41945cdff6c4f9c9f95a721031741a65a59f68f31c2ec",
+            "excerpt": "Standards (confirming), BW-B, 6c90a3c6..4057ca20: 0 findings.\nS1 closed: land_moved_destination_test.go:19 derives via sanitize.ShellQuote(\"main\").\nS2 closed: land.go:215 passes branch; land_refusal.go TrimPrefix removed.\nS3 closed: gitexec.go comment states the publish CAS backstop.\nComments: all added sentences <=17 words, present tense.\nAdvice: non-proof-cause literal mirrors gate face name; test name vs infrastructure row.\n"
+          },
+          "axis": "Standards",
+          "base": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+          "tip": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "finding_ids": [],
+          "supersedes": [
+            "bwb-standards-r1"
+          ]
+        },
+        {
+          "id": "bwb-spec-r2",
+          "performer": "claude:blw_bwb_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca6bd4b8092b1010171b96b3b14eecbe92d48e51",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwb_spec_r2",
+            "digest": "sha256:31766cef5f4ff91f25b107823af59012d5d76126d2c5c59d78e16962c1cfdb80",
+            "excerpt": "Spec confirming round, BW-B, delta 6c90a3c6..4057ca20. Findings: 0.\nFace, three-step route, three refusal sites, two land-handback cases, and the typed cause are unchanged (spec :383-400).\nThe fold fact now comes from the caller's branch (land_refusal.go:292, land.go:215); same --from value.\nNon-proof row expects land-infrastructure: matches spec :392 and :23.\nUnreadable-ancestry row expects land-handback: the spec does not decide this case; no contradiction.\nThe axis ran its binding from the primary checkout; the orchestrator reran --check-current through the worktree: current=true at 38430278.\nAdvice: a spec line for the unreadable-ancestry handback would record the intent.\n"
+          },
+          "axis": "Spec",
+          "base": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+          "tip": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "finding_ids": [],
+          "supersedes": [
+            "bwb-spec-r1"
+          ]
+        },
+        {
+          "id": "bwb-coverage-r2",
+          "performer": "claude:blw_bwb_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca6bd4b8092b1010171b96b3b14eecbe92d48e51",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwb_coverage_r2",
+            "digest": "sha256:da4a5e3d1592c4d7e0e257c252d46dc87d1a9f422d34feb816215151c1a7d05e",
+            "excerpt": "Coverage confirming round, BW-B, delta 6c90a3c6..4057ca20: 0 findings; C1 and C2 closed.\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/land_refusal.go,swap,failed,1,yes\n  TestProofFaultOverACurrentSourceHandsBack/non-proof-cause, land_moved_destination_test.go:132 (Cause != \"\" swap)\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/land_refusal.go,swap,failed,1,yes\n  TestProofFaultOverACurrentSourceHandsBack/unreadable-ancestry, land_moved_destination_test.go:132 (ancestry branch swap)\nThe unreadable-ancestry row proves that IsAncestor returned an error; no flake source found.\nAdvice: put the object restore in t.Cleanup right after the hide.\n"
+          },
+          "axis": "Coverage",
+          "base": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
+          "tip": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "finding_ids": [],
+          "supersedes": [
+            "bwb-coverage-r1"
+          ]
         }
       ]
     }
