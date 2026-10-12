@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:4b8198b6b5417276e4d9ccfeb3ddbd2f4b4439b06c5f3a27abc84d74e6645358",
+  "plan_digest": "sha256:dc91be82e1b6ac107878451efa8d5156e3743e0ddef4341f9fb07a7495dfd3ae",
   "implementation_session": "",
   "chunks": [
     {
@@ -345,6 +345,113 @@
           ]
         }
       ]
+    },
+    {
+      "id": "D-B2",
+      "base": "abb83117cef0ce6306de2e06fca0f263b4776cb2",
+      "tip": "649a980b5139c79657092f7987aec1aa6ea49edc",
+      "plan_digest": "sha256:dc91be82e1b6ac107878451efa8d5156e3743e0ddef4341f9fb07a7495dfd3ae",
+      "source_digest": "6bc8eab39ace6f03dde72a6e14e14d96f675f046",
+      "acceptance_rows": [
+        "D18"
+      ],
+      "verification": [
+        {
+          "id": "dcm-b2-t03-caller-tests",
+          "performer": "claude:dcm_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6bc8eab39ace6f03dde72a6e14e14d96f675f046",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "649a980b5139c79657092f7987aec1aa6ea49edc",
+            "digest": "sha256:d1dd65f2db545473c9aeb3bbd231cb858b10d5b625fad400077322cbb525de20",
+            "excerpt": "# caller-tests at 649a980b5139c79657092f7987aec1aa6ea49edc: bench test --package ./internal/gate/prospectiveartifact\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,274,37\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n# consumer package: bench test --package ./internal/gate -> pass, 450 tests\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-b2-t03-root-conformance",
+          "performer": "claude:dcm_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6bc8eab39ace6f03dde72a6e14e14d96f675f046",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "649a980b5139c79657092f7987aec1aa6ea49edc",
+            "digest": "sha256:f3282407dde0fd892b57d3b38c50cd0d08cb31e33a98e7ba0ef7b163b54e4b3c",
+            "excerpt": "# root-conformance at 649a980b5139c79657092f7987aec1aa6ea49edc: bench test --check root-conformance\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16673,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-b2-t03-omission-proof",
+          "performer": "claude:dcm_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6bc8eab39ace6f03dde72a6e14e14d96f675f046",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "649a980b5139c79657092f7987aec1aa6ea49edc",
+            "digest": "sha256:3e8be1747e3af634fa80264c9183c180687779b61b76c8dc6b6f7f422c2ab1f4",
+            "excerpt": "# omission-proof at 649a980b5139c79657092f7987aec1aa6ea49edc: bench probe swap, bit and restored=yes\n## O1 owner bypass: prospectiveartifact.go swap 'return replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode)' with 'temporary, err := os.CreateTemp(root, \".owner-\"); if err != nil { return err }; name := temporary.Name(); defer func() { _ = temporary.Close(); _ = os.Remove(name) }(); if err := temporary.Chmod(RecordMode); err != nil { return err }; if _, err := temporary.Write(append(data, '\\n')); err != nil { return err }; if err := temporary.Sync(); err != nil { return err }; if err := temporary.Close(); err != nil { return err }; if err := os.Rename(name, filepath.Join(root, RecordName)); err != nil { return err }; directory, err := os.Open(root); if err != nil { return err }; defer directory.Close(); return directory.Sync()'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate/prospectiveartifact,all,passed,37\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,fail,280,37\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:25: err = <nil>, want a published directory-sync *durablefile.Error that wraps injected owner directory-sync failure\",1\n## restored pass at 649a980b5139c79657092f7987aec1aa6ea49edc: bench test --package ./internal/gate/prospectiveartifact -> pass, 37 tests\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the former local replacement sequence. The real owner-record junction test must detect the missing shared failure.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "649a980b5139c79657092f7987aec1aa6ea49edc",
+              "digest": "sha256:3e8be1747e3af634fa80264c9183c180687779b61b76c8dc6b6f7f422c2ab1f4",
+              "excerpt": "# omission-proof at 649a980b5139c79657092f7987aec1aa6ea49edc: bench probe swap, bit and restored=yes\n## O1 owner bypass: prospectiveartifact.go swap 'return replacer.Replace(filepath.Join(root, RecordName), append(data, '\\n'), RecordMode)' with 'temporary, err := os.CreateTemp(root, \".owner-\"); if err != nil { return err }; name := temporary.Name(); defer func() { _ = temporary.Close(); _ = os.Remove(name) }(); if err := temporary.Chmod(RecordMode); err != nil { return err }; if _, err := temporary.Write(append(data, '\\n')); err != nil { return err }; if err := temporary.Sync(); err != nil { return err }; if err := temporary.Close(); err != nil { return err }; if err := os.Rename(name, filepath.Join(root, RecordName)); err != nil { return err }; directory, err := os.Open(root); if err != nil { return err }; defer directory.Close(); return directory.Sync()'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate/prospectiveartifact,all,passed,37\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,fail,280,37\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:25: err = <nil>, want a published directory-sync *durablefile.Error that wraps injected owner directory-sync failure\",1\n## restored pass at 649a980b5139c79657092f7987aec1aa6ea49edc: bench test --package ./internal/gate/prospectiveartifact -> pass, 37 tests\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-b2-t03-preservation",
+          "performer": "claude:dcm_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6bc8eab39ace6f03dde72a6e14e14d96f675f046",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "649a980b5139c79657092f7987aec1aa6ea49edc",
+            "digest": "sha256:6224e068bc2b7a84abd96c62e3e64fd6532f3bbacc87acd4fee4dab9349900be",
+            "excerpt": "# preservation at 649a980b5139c79657092f7987aec1aa6ea49edc: two bench probe swaps on the independent expectations of TestOwnerReplacement, each bit and restored=yes\n# Frozen baseline: TestOpenPublishesPrivateOwnerRecordBeforeCheckout (regular RecordMode file, decoded record), TestOpenRefusesInvalidTemporaryRootsWithoutPublishing (refused root publishes nothing), and the sweep tests that read records through Publish stay unchanged and pass (37 tests).\n## P1 encoded newline: prospectiveartifact.go swap \"append(data, '\\n'), RecordMode)\" with \"data, RecordMode)\" over the whole package; only the independent bytes literal catches it\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:40: owner record = {\"schema\":1,\"owner_pid\":4242,\"common_dir\":\"/repo/.git\"}, want {\"schema\":1,\"owner_pid\":4242,\"common_dir\":\"/repo/.git\"}\\n\",1\n## P2 record mode: prospectiveartifact.go swap \"append(data, '\\n'), RecordMode)\" with \"append(data, '\\n'), 0o644)\" --run TestOwnerReplacement\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:33: owner record mode = -rw-r--r--, want a regular 0600 file\",1\n## restored pass at 649a980b5139c79657092f7987aec1aa6ea49edc: bench test --package ./internal/gate/prospectiveartifact -> pass, 37 tests\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "649a980b5139c79657092f7987aec1aa6ea49edc",
+              "digest": "sha256:6224e068bc2b7a84abd96c62e3e64fd6532f3bbacc87acd4fee4dab9349900be",
+              "excerpt": "# preservation at 649a980b5139c79657092f7987aec1aa6ea49edc: two bench probe swaps on the independent expectations of TestOwnerReplacement, each bit and restored=yes\n# Frozen baseline: TestOpenPublishesPrivateOwnerRecordBeforeCheckout (regular RecordMode file, decoded record), TestOpenRefusesInvalidTemporaryRootsWithoutPublishing (refused root publishes nothing), and the sweep tests that read records through Publish stay unchanged and pass (37 tests).\n## P1 encoded newline: prospectiveartifact.go swap \"append(data, '\\n'), RecordMode)\" with \"data, RecordMode)\" over the whole package; only the independent bytes literal catches it\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:40: owner record = {\"schema\":1,\"owner_pid\":4242,\"common_dir\":\"/repo/.git\"}, want {\"schema\":1,\"owner_pid\":4242,\"common_dir\":\"/repo/.git\"}\\n\",1\n## P2 record mode: prospectiveartifact.go swap \"append(data, '\\n'), RecordMode)\" with \"append(data, '\\n'), 0o644)\" --run TestOwnerReplacement\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,TestOwnerReplacement,\"replacement_test.go:33: owner record mode = -rw-r--r--, want a regular 0600 file\",1\n## restored pass at 649a980b5139c79657092f7987aec1aa6ea49edc: bench test --package ./internal/gate/prospectiveartifact -> pass, 37 tests\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -358,6 +465,15 @@
     {
       "from": "sha256:e952476f7701550400bde51f65f6db4fa0961f9d5b42c481a78e78b23e168ed5",
       "to": "sha256:4b8198b6b5417276e4d9ccfeb3ddbd2f4b4439b06c5f3a27abc84d74e6645358",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4b8198b6b5417276e4d9ccfeb3ddbd2f4b4439b06c5f3a27abc84d74e6645358",
+      "to": "sha256:dc91be82e1b6ac107878451efa8d5156e3743e0ddef4341f9fb07a7495dfd3ae",
       "chunk_ids": {
         "D-B1": [
           "D-B1"
