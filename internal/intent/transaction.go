@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/gibbonmi/bench/internal/durablefile"
 )
 
 // ReadMode names how a transaction reads the ledger before it hands it to the decision.
@@ -25,16 +27,23 @@ const (
 type Decision func(Ledger) (Ledger, bool, error)
 
 // Compensation rolls back an effect a decision applied outside the ledger. The
-// transaction runs it exactly once, and only when the write fails.
+// transaction runs it exactly once, and only when the write fails before its rename
+// completes. After a completed rename the new ledger may be visible, so the effect that
+// matches it stays.
 type Compensation func()
 
 // Transact applies one ledger-to-ledger decision under the ledger's lock. It resolves
 // the address, acquires the lock, reads in the caller's mode, calls the decision, and
-// replaces the file atomically on a reported change. It releases the lock on every
+// replaces the file durably on a reported change. It releases the lock on every
 // exit, including every error exit. A nil compensation runs nothing, so only a caller
 // with an external effect pays for one.
 func Transact(root string, mode ReadMode, decide Decision, compensate Compensation) error {
-	return transact(root, mode, func(ledger Ledger, _ int) (Ledger, bool, error) { return decide(ledger) }, compensate)
+	return TransactWithReplacer(durablefile.Native(), root, mode, decide, compensate)
+}
+
+// TransactWithReplacer is Transact with the ledger replacement run through replacer.
+func TransactWithReplacer(replacer durablefile.Replacer, root string, mode ReadMode, decide Decision, compensate Compensation) error {
+	return transact(replacer, root, mode, func(ledger Ledger, _ int) (Ledger, bool, error) { return decide(ledger) }, compensate)
 }
 
 // countedDecision also receives how many assignment records the file held. Only the
@@ -43,7 +52,7 @@ func Transact(root string, mode ReadMode, decide Decision, compensate Compensati
 // that needs it, so the count stays off the exported decision.
 type countedDecision func(Ledger, int) (Ledger, bool, error)
 
-func transact(root string, mode ReadMode, decide countedDecision, compensate Compensation) error {
+func transact(replacer durablefile.Replacer, root string, mode ReadMode, decide countedDecision, compensate Compensation) error {
 	path, err := Address(root)
 	if err != nil {
 		return err
@@ -64,13 +73,20 @@ func transact(root string, mode ReadMode, decide countedDecision, compensate Com
 	if !changed {
 		return nil
 	}
-	if err := writePath(path, next); err != nil {
-		if compensate != nil {
+	if err := writePathWith(replacer, path, next); err != nil {
+		if compensate != nil && !published(err) {
 			compensate()
 		}
 		return err
 	}
 	return nil
+}
+
+// published reports that err is a replacement failure after its rename completed. Any
+// other failure, including one the replacement did not classify, left the ledger as it was.
+func published(err error) bool {
+	var replaceErr *durablefile.Error
+	return errors.As(err, &replaceErr) && replaceErr.Published
 }
 
 func readMode(path string, mode ReadMode) (Ledger, int, error) {
