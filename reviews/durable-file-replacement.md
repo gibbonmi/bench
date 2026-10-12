@@ -948,6 +948,502 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/assignment.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,424\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1616,89\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/assignment_write_directory_sync_failure_after_the_rename,\"replacement_test.go:130: write with a failed directory sync = <nil>, want the published directory-sync cause\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "dfr-t1-ev1-omit-file-sync",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/omit-file-sync",
+            "digest": "sha256:654a9fdfe7c9c8c0e3b9af14a92fdc98dca85385577713ff6b01c11435622bfd",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,6,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1396\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,15,16\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestNativeReplacement,\"platform_test.go:19: host linux/amd64, destination /dev/shm/KMEIMB/t/TestNativeReplacement3645472541/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAbsentFailures,\"replace_test.go:225: Replace with a file-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceBeforeRenameFailures,\"replace_test.go:213: Replace with a file-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceErrorCause,\"replace_test.go:251: Replace with a file-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceOrder,\"replace_test.go:156: trace = [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-close\\\" \\\"rename\\\" \\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"], want the prefix [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"file-close\\\" \\\"rename\\\"]\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceTemporaryCleanup,\"replace_test.go:261: Replace with a file-sync failure = <nil>, want a *durablefile.Error\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-omission-proof",
+          "command": "bench test --package ./internal/durablefile",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit file sync, omit directory sync, rename before file close, or accept a short write. Each named owner assertion must fail, then pass after restoring the source.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/omit-file-sync",
+              "digest": "sha256:654a9fdfe7c9c8c0e3b9af14a92fdc98dca85385577713ff6b01c11435622bfd",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,6,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1396\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,15,16\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestNativeReplacement,\"platform_test.go:19: host linux/amd64, destination /dev/shm/KMEIMB/t/TestNativeReplacement3645472541/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAbsentFailures,\"replace_test.go:225: Replace with a file-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceBeforeRenameFailures,\"replace_test.go:213: Replace with a file-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceErrorCause,\"replace_test.go:251: Replace with a file-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceOrder,\"replace_test.go:156: trace = [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-close\\\" \\\"rename\\\" \\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"], want the prefix [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"file-close\\\" \\\"rename\\\"]\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceTemporaryCleanup,\"replace_test.go:261: Replace with a file-sync failure = <nil>, want a *durablefile.Error\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-omit-directory-sync",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/omit-directory-sync",
+            "digest": "sha256:bea05bd652af698492177525e157d26bb266940b67d000a5d66842011121e34f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,6,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1580\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,15,16\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestNativeReplacement,\"platform_test.go:19: host linux/amd64, destination /dev/shm/O7DFHR/t/TestNativeReplacement2314741318/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAfterRenameFailures,\"replace_test.go:234: Replace with a directory-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAfterRenameState,\"replace_test.go:243: Replace with a directory-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceCleanupFailure,\"replace_test.go:275: Replace = replace /dev/shm/O7DFHR/t/TestReplaceCleanupFailure1848186037/003/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: directory-close: injected directory-close failure; the rename completed, so new bytes may a… (335 bytes)\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceDirectorySync,\"replace_test.go:169: trace = [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"file-close\\\" \\\"rename\\\" \\\"directory-open\\\" \\\"directory-close\\\"], want [\\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"] after the rename\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceErrorCause,\"replace_test.go:251: Replace with a directory-sync failure = <nil>, want a *durablefile.Error\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-omission-proof",
+          "command": "bench test --package ./internal/durablefile",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit file sync, omit directory sync, rename before file close, or accept a short write. Each named owner assertion must fail, then pass after restoring the source.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/omit-directory-sync",
+              "digest": "sha256:bea05bd652af698492177525e157d26bb266940b67d000a5d66842011121e34f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,6,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1580\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,15,16\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestNativeReplacement,\"platform_test.go:19: host linux/amd64, destination /dev/shm/O7DFHR/t/TestNativeReplacement2314741318/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAfterRenameFailures,\"replace_test.go:234: Replace with a directory-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAfterRenameState,\"replace_test.go:243: Replace with a directory-sync failure = <nil>, want a *durablefile.Error\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceCleanupFailure,\"replace_test.go:275: Replace = replace /dev/shm/O7DFHR/t/TestReplaceCleanupFailure1848186037/003/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: directory-close: injected directory-close failure; the rename completed, so new bytes may a… (335 bytes)\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceDirectorySync,\"replace_test.go:169: trace = [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"file-close\\\" \\\"rename\\\" \\\"directory-open\\\" \\\"directory-close\\\"], want [\\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"] after the rename\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceErrorCause,\"replace_test.go:251: Replace with a directory-sync failure = <nil>, want a *durablefile.Error\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-rename-before-close",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/rename-before-close",
+            "digest": "sha256:718d75ae51adf369842a7973aa61d573bd4c4e1e5072690f971e9d65ca600a19",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,5,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1408\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,15,16\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestNativeReplacement,\"platform_test.go:19: host linux/amd64, destination /dev/shm/U7PJO7/t/TestNativeReplacement946250289/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAbsentFailures,\"replace_test.go:227: after a file-close failure the absent destination is present: <nil>\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceBeforeRenameFailures,\"replace_test.go:217: after a file-close failure the destination = \\\"new\\\", want the old \\\"old bytes\\\"\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceDirectorySync,\"replace_test.go:169: trace = [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"rename\\\" \\\"file-close\\\" \\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"], want [\\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"] after the rename\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceOrder,\"replace_test.go:156: trace = [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"rename\\\" \\\"file-close\\\" \\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"], want the prefix [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"file-close\\\" \\\"rename\\\"]\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-omission-proof",
+          "command": "bench test --package ./internal/durablefile",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit file sync, omit directory sync, rename before file close, or accept a short write. Each named owner assertion must fail, then pass after restoring the source.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/rename-before-close",
+              "digest": "sha256:718d75ae51adf369842a7973aa61d573bd4c4e1e5072690f971e9d65ca600a19",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,5,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1408\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,15,16\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestNativeReplacement,\"platform_test.go:19: host linux/amd64, destination /dev/shm/U7PJO7/t/TestNativeReplacement946250289/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAbsentFailures,\"replace_test.go:227: after a file-close failure the absent destination is present: <nil>\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceBeforeRenameFailures,\"replace_test.go:217: after a file-close failure the destination = \\\"new\\\", want the old \\\"old bytes\\\"\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceDirectorySync,\"replace_test.go:169: trace = [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"rename\\\" \\\"file-close\\\" \\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"], want [\\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"] after the rename\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceOrder,\"replace_test.go:156: trace = [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"rename\\\" \\\"file-close\\\" \\\"directory-open\\\" \\\"directory-sync\\\" \\\"directory-close\\\"], want the prefix [\\\"create\\\" \\\"mode\\\" \\\"write\\\" \\\"file-sync\\\" \\\"file-close\\\" \\\"rename\\\"]\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-accept-short-write",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/accept-short-write",
+            "digest": "sha256:05d29fa836bb8969647fc4a3f36d87375df6f607b2ef6e867cb43dc570a49abb",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,14,16\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceShortWrite,\"replace_test.go:182: Replace after a short write = <nil>, want io.ErrShortWrite\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-omission-proof",
+          "command": "bench test --package ./internal/durablefile",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit file sync, omit directory sync, rename before file close, or accept a short write. Each named owner assertion must fail, then pass after restoring the source.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/accept-short-write",
+              "digest": "sha256:05d29fa836bb8969647fc4a3f36d87375df6f607b2ef6e867cb43dc570a49abb",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,14,16\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceShortWrite,\"replace_test.go:182: Replace after a short write = <nil>, want io.ErrShortWrite\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-corrupt-payload",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/corrupt-payload",
+            "digest": "sha256:0ee4479090e6f5ca0bec595af4a78cdc39a896daa8467b7272e78d389ec41a89",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,987\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,9,16\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestNativeReplacement,\"platform_test.go:19: host linux/amd64, destination /dev/shm/TLVVLG/t/TestNativeReplacement748493308/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAfterRenameState,\"replace_test.go:245: after a directory-sync failure the destination = \\\"new p\\\", want the new \\\"new payload\\\"\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceBytes,\"replace_test.go:62: destination = \\\"new\\\\\\\\x00payload\\\\\\\\n\\\\\\\\twith a\\\", want \\\"new\\\\\\\\x00payload\\\\\\\\n\\\\\\\\twith a NUL, a tab, and ü\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceVisibility,\"replace_test.go:126: a concurrent reader observed 524288 bytes that are neither complete payload\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-preservation",
+          "command": "bench test --package ./internal/durablefile",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Corrupt supplied payload bytes, requested mode, temporary cleanup, or wrapped error cause. The corresponding independent owner assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/corrupt-payload",
+              "digest": "sha256:0ee4479090e6f5ca0bec595af4a78cdc39a896daa8467b7272e78d389ec41a89",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,987\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,9,16\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestNativeReplacement,\"platform_test.go:19: host linux/amd64, destination /dev/shm/TLVVLG/t/TestNativeReplacement748493308/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceAfterRenameState,\"replace_test.go:245: after a directory-sync failure the destination = \\\"new p\\\", want the new \\\"new payload\\\"\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceBytes,\"replace_test.go:62: destination = \\\"new\\\\\\\\x00payload\\\\\\\\n\\\\\\\\twith a\\\", want \\\"new\\\\\\\\x00payload\\\\\\\\n\\\\\\\\twith a NUL, a tab, and ü\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceVisibility,\"replace_test.go:126: a concurrent reader observed 524288 bytes that are neither complete payload\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-corrupt-mode",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/corrupt-mode",
+            "digest": "sha256:51279c7d425c4618acf10377ed58ae5dcc6d793e04175a76b727df8a774469be",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,326\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,14,16\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceMode,\"replace_test.go:91: destination permission bits = -rw-------, want -rwxr-xr-x\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-preservation",
+          "command": "bench test --package ./internal/durablefile",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Corrupt supplied payload bytes, requested mode, temporary cleanup, or wrapped error cause. The corresponding independent owner assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/corrupt-mode",
+              "digest": "sha256:51279c7d425c4618acf10377ed58ae5dcc6d793e04175a76b727df8a774469be",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,326\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,14,16\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceMode,\"replace_test.go:91: destination permission bits = -rw-------, want -rwxr-xr-x\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-corrupt-cleanup",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/corrupt-cleanup",
+            "digest": "sha256:e59c1eecd64ed6da8d664a06fa4ffedabe18e6d18cc06187d4c5272ba2596b7e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,701\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,15,16\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceCleanupFailure,\"replace_test.go:275: Replace = replace /dev/shm/IEE2FJ/t/TestReplaceCleanupFailure1736565026/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: write: injected write failure, want both the write cause and the remove cleanup cause\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceTemporaryCleanup,\"replace_test.go:263: after a mode failure the directory holds [\\\".record 'one' *.md.1164422696\\\"] beside the destination\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-preservation",
+          "command": "bench test --package ./internal/durablefile",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Corrupt supplied payload bytes, requested mode, temporary cleanup, or wrapped error cause. The corresponding independent owner assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/corrupt-cleanup",
+              "digest": "sha256:e59c1eecd64ed6da8d664a06fa4ffedabe18e6d18cc06187d4c5272ba2596b7e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,701\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,15,16\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceCleanupFailure,\"replace_test.go:275: Replace = replace /dev/shm/IEE2FJ/t/TestReplaceCleanupFailure1736565026/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: write: injected write failure, want both the write cause and the remove cleanup cause\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceTemporaryCleanup,\"replace_test.go:263: after a mode failure the directory holds [\\\".record 'one' *.md.1164422696\\\"] beside the destination\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-corrupt-cause",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/corrupt-cause",
+            "digest": "sha256:70c8ec711a9b89d7be07c96b963e07579d073c171a2bc9e641f8b03cc91f6e08",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1037\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,14,16\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceCleanupFailure,\"replace_test.go:275: Replace = replace /dev/shm/OHHEGO/t/TestReplaceCleanupFailure3154585380/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: write: injected write failure\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceErrorCause,\"replace_test.go:253: a create failure = replace /dev/shm/OHHEGO/t/TestReplaceErrorCause365970704/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: create: injected create failure, which does not hold the injected cause\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceShortWrite,\"replace_test.go:182: Replace after a short write = replace /dev/shm/OHHEGO/t/TestReplaceShortWrite1899522818/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: write: short write, want io.ErrShortWrite\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-preservation",
+          "command": "bench test --package ./internal/durablefile",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Corrupt supplied payload bytes, requested mode, temporary cleanup, or wrapped error cause. The corresponding independent owner assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/corrupt-cause",
+              "digest": "sha256:70c8ec711a9b89d7be07c96b963e07579d073c171a2bc9e641f8b03cc91f6e08",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/durablefile/replace.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/durablefile,all,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1037\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile,fail,14,16\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceCleanupFailure,\"replace_test.go:275: Replace = replace /dev/shm/OHHEGO/t/TestReplaceCleanupFailure3154585380/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: write: injected write failure\",2\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceErrorCause,\"replace_test.go:253: a create failure = replace /dev/shm/OHHEGO/t/TestReplaceErrorCause365970704/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: create: injected create failure, which does not hold the injected cause\",1\n  github.com/gibbonmi/bench/internal/durablefile,TestReplaceShortWrite,\"replace_test.go:182: Replace after a short write = replace /dev/shm/OHHEGO/t/TestReplaceShortWrite1899522818/001/parent \\\"quoted\\\" [glob]*? ünïcödé/record 'one' *.md: write: short write, want io.ErrShortWrite\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-caller-bypass",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/caller-bypass",
+            "digest": "sha256:5dc9fbd3fb6329d60ed997f673b85b443c45f62edc57e59d5427a9205f568c0c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,875\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1609,89\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/assignment_write_directory_sync_failure_after_the_rename,\"replacement_test.go:130: write with a failed directory sync = <nil>, want the published directory-sync cause\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/file_sync_failure_before_the_rename,\"replacement_test.go:154: write with a failed file sync = <nil>, want the unpublished file-sync cause\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/record_write_directory_sync_failure_after_the_rename,\"replacement_test.go:105: write with a failed directory sync = <nil>, want the published directory-sync cause\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-bypass-proof",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the former review-record writer or bypass the shared replacement operation in the real record transaction. TestReviewReplacement must fail its directory-sync cause assertion, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/caller-bypass",
+              "digest": "sha256:5dc9fbd3fb6329d60ed997f673b85b443c45f62edc57e59d5427a9205f568c0c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,875\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1609,89\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/assignment_write_directory_sync_failure_after_the_rename,\"replacement_test.go:130: write with a failed directory sync = <nil>, want the published directory-sync cause\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/file_sync_failure_before_the_rename,\"replacement_test.go:154: write with a failed file sync = <nil>, want the unpublished file-sync cause\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/record_write_directory_sync_failure_after_the_rename,\"replacement_test.go:105: write with a failed directory sync = <nil>, want the published directory-sync cause\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-caller-payload",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/caller-payload",
+            "digest": "sha256:89e11290b709a560c945cd6cc56f9b90526dcf1acbf852a8c7e7af342164a025",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,657\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1476,89\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/record_write_directory_sync_failure_after_the_rename,\"replacement_test.go:107: record = \\\"# Review outcomes\\\\\\\\n\\\\\\\\n```bench-review-record\\\\\\\\n{\\\\\\\\n  \\\\\\\\\\\"version\\\\\\\\\\\": 1,\\\\\\\\n  \\\\\\\\\\\"spec\\\\\\\\\\\": \\\\\\\\\\\"specs/example/spec.md\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"plan_digest\\\\\\\\\\\": \\\\\\\\\\\"sha256:plan\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"implementation_session\\\\\\\\\\\": \\\\\\\\\\\"author\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"chunks\\\\\\\\\\\": null… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-preservation",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Corrupt the review-record rendered payload, 0644 mode, or pre-write refusal policy. The real caller assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/caller-payload",
+              "digest": "sha256:89e11290b709a560c945cd6cc56f9b90526dcf1acbf852a8c7e7af342164a025",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,657\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1476,89\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/record_write_directory_sync_failure_after_the_rename,\"replacement_test.go:107: record = \\\"# Review outcomes\\\\\\\\n\\\\\\\\n```bench-review-record\\\\\\\\n{\\\\\\\\n  \\\\\\\\\\\"version\\\\\\\\\\\": 1,\\\\\\\\n  \\\\\\\\\\\"spec\\\\\\\\\\\": \\\\\\\\\\\"specs/example/spec.md\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"plan_digest\\\\\\\\\\\": \\\\\\\\\\\"sha256:plan\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"implementation_session\\\\\\\\\\\": \\\\\\\\\\\"author\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"chunks\\\\\\\\\\\": null… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-caller-mode",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/caller-mode",
+            "digest": "sha256:d9360cb47549bcff8ada4f6548d1c2471208bc9a68d5d224a4cfdbd458d9c3e2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,850\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1430,89\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/assignment_write_directory_sync_failure_after_the_rename,\"replacement_test.go:135: /dev/shm/5BINER/t/TestReviewReplacementassignment_write_directory_sync_failure_af3026090135/002/linked/specs/example/spec.md permission bits = -rw-------, want 0644\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/record_write_directory_sync_failure_after_the_rename,\"replacement_test.go:109: /dev/shm/5BINER/t/TestReviewReplacementrecord_write_directory_sync_failure_after_409601696/001/root \\\"quoted\\\" [glob]*? ünïcödé/reviews/example.md permission bits = -rw-------, want 0644\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-preservation",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Corrupt the review-record rendered payload, 0644 mode, or pre-write refusal policy. The real caller assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/caller-mode",
+              "digest": "sha256:d9360cb47549bcff8ada4f6548d1c2471208bc9a68d5d224a4cfdbd458d9c3e2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,850\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1430,89\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/assignment_write_directory_sync_failure_after_the_rename,\"replacement_test.go:135: /dev/shm/5BINER/t/TestReviewReplacementassignment_write_directory_sync_failure_af3026090135/002/linked/specs/example/spec.md permission bits = -rw-------, want 0644\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/record_write_directory_sync_failure_after_the_rename,\"replacement_test.go:109: /dev/shm/5BINER/t/TestReviewReplacementrecord_write_directory_sync_failure_after_409601696/001/root \\\"quoted\\\" [glob]*? ünïcödé/reviews/example.md permission bits = -rw-------, want 0644\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-caller-refusal",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/caller-refusal",
+            "digest": "sha256:f3750e7f7ac7d582303197a3bcc36cb42cee6d79ddbae9c578a55a89cf4ae335",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,423\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1521,89\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/refusal_before_the_replacement,\"replacement_test.go:179: write = <nil> after 1 replacements, want the refusal \\\"invalid record spec identity\\\" before any replacement\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-preservation",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Corrupt the review-record rendered payload, 0644 mode, or pre-write refusal policy. The real caller assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/caller-refusal",
+              "digest": "sha256:f3750e7f7ac7d582303197a3bcc36cb42cee6d79ddbae9c578a55a89cf4ae335",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,423\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1521,89\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/refusal_before_the_replacement,\"replacement_test.go:179: write = <nil> after 1 replacements, want the refusal \\\"invalid record spec identity\\\" before any replacement\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-write-binding",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/write-binding",
+            "digest": "sha256:eed574ffcf39c616ba013184c831623149fbbcd67fa4687ba4cf9d744a12cb26",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,633\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1482,89\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/file_sync_failure_before_the_rename,\"replacement_test.go:154: write with a failed file sync = <nil>, want the unpublished file-sync cause\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/record_write_directory_sync_failure_after_the_rename,\"replacement_test.go:105: write with a failed directory sync = <nil>, want the published directory-sync cause\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "write-binding-proof",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In the record write entry of internal/reviewrecord/write.go, replace the replace call with os.WriteFile of the rendered bytes and 0644. The record-write case of TestReviewReplacement must fail its directory-sync cause assertion, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/write-binding",
+              "digest": "sha256:eed574ffcf39c616ba013184c831623149fbbcd67fa4687ba4cf9d744a12cb26",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,633\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1482,89\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/file_sync_failure_before_the_rename,\"replacement_test.go:154: write with a failed file sync = <nil>, want the unpublished file-sync cause\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/record_write_directory_sync_failure_after_the_rename,\"replacement_test.go:105: write with a failed directory sync = <nil>, want the published directory-sync cause\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-assignment-binding",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/assignment-binding",
+            "digest": "sha256:3b389a4ef27a33576b215925363d2d140b09b72583030ed25c05cd62aeee45d8",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/assignment.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,424\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1466,89\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/assignment_write_directory_sync_failure_after_the_rename,\"replacement_test.go:130: write with a failed directory sync = <nil>, want the published directory-sync cause\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "assignment-binding-proof",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In RecordAssignment of internal/reviewrecord/assignment.go, replace the replace call with os.WriteFile of the candidate bytes and 0644. The assignment case of TestReviewReplacement must fail its directory-sync cause assertion, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dfr_t1_ev1/assignment-binding",
+              "digest": "sha256:3b389a4ef27a33576b215925363d2d140b09b72583030ed25c05cd62aeee45d8",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/assignment.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,all,passed,89\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,424\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,1466,89\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestReviewReplacement/assignment_write_directory_sync_failure_after_the_rename,\"replacement_test.go:130: write with a failed directory sync = <nil>, want the published directory-sync cause\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dfr-t1-ev1-owner-tests",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/owner-tests",
+            "digest": "sha256:acaccb53877eb21b05890f418c432c5304eabfff55e51101a71090e8e081b986",
+            "excerpt": "tree: ft354-durable-build 94a0591bd9196a461abdf428bea10df534722855 clean; chunk D-A source 61e6ca30bcf699be0d8ef9d3d10ff9014888af82\nbench test --package ./internal/durablefile\ngithub.com/gibbonmi/bench/internal/durablefile,pass,17,16\nfailures[0] skips[0]\n"
+          },
+          "requirement": "owner-tests",
+          "command": "bench test --package ./internal/durablefile",
+          "exit_code": 0
+        },
+        {
+          "id": "dfr-t1-ev1-caller-tests",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/caller-tests",
+            "digest": "sha256:7852cc62d463521cbc70927c7414b9a101f2cfc5cbbf482019ecf30e1a368e29",
+            "excerpt": "tree: ft354-durable-build 94a0591bd9196a461abdf428bea10df534722855 clean; chunk D-A source 61e6ca30bcf699be0d8ef9d3d10ff9014888af82\nbench test --package ./internal/reviewrecord\ngithub.com/gibbonmi/bench/internal/reviewrecord,pass,1802,89\nfailures[0] skips[0]\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "dfr-t1-ev1-harness-package",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/harness-package",
+            "digest": "sha256:60a3150d23a1aca3155c87ef30efc8dc5a67c3c8c0fe1ef8f5343cc758021fce",
+            "excerpt": "tree: ft354-durable-build 94a0591bd9196a461abdf428bea10df534722855 clean; chunk D-A source 61e6ca30bcf699be0d8ef9d3d10ff9014888af82\nbench test --package ./internal/durablefile/durablefiletest\ngithub.com/gibbonmi/bench/internal/durablefile/durablefiletest,no-tests,0,0\nfailures[0] skips[0]\nThe package is the shared fault-injection harness; the owner and caller packages exercise it.\n"
+          },
+          "requirement": "harness-package",
+          "command": "bench test --package ./internal/durablefile/durablefiletest",
+          "exit_code": 0
+        },
+        {
+          "id": "dfr-t1-ev1-root-conformance",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/root-conformance",
+            "digest": "sha256:856c27f781c5adeedb016bfd08acc0a9307a30351e42eb876f597c67c6376f25",
+            "excerpt": "tree: ft354-durable-build 94a0591bd9196a461abdf428bea10df534722855 clean; chunk D-A source 61e6ca30bcf699be0d8ef9d3d10ff9014888af82\nbench test --check root-conformance\nroot-conformance,conformance,1,0\ngithub.com/gibbonmi/bench/internal/conformance,pass,21378,1\nfailures[0] skips[0]\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dfr-t1-ev1-linux-native",
+          "performer": "claude:dfr_t1_ev1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ea1b2395d2ae721f63c905b289bbde1a4100b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_t1_ev1/linux-native",
+            "digest": "sha256:094dc377e35374bc2a449230d6c118cb09b6872e6933093ab8cdcf2e06c7341e",
+            "excerpt": "tree: ft354-durable-build 94a0591bd9196a461abdf428bea10df534722855 clean; chunk D-A source 61e6ca30bcf699be0d8ef9d3d10ff9014888af82\nhost: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64 (WSL2), GOOS linux/amd64\nbench test --package ./internal/durablefile --run 'TestNativeReplacement'\nrun 1, default kit TMPDIR under /dev/shm, filesystem tmpfs: github.com/gibbonmi/bench/internal/durablefile,pass,2,1; failures[0] skips[0]\nrun 2, caller TMPDIR on a scratch directory with filesystem ext2/ext3 magic ef53 (mount / ext4): github.com/gibbonmi/bench/internal/durablefile,pass,12,1; failures[0] skips[0]\nbench test uses the caller TMPDIR: a mutated TestNativeReplacement run under the same TMPDIR logged its destination under that ext4 scratch directory (platform_test.go:19).\nTestNativeReplacement asserts the native trace create, mode, write, file-sync, file-close, rename, directory-open, directory-sync, directory-close with no error, then the native Replace bytes and mode.\nScope: row D32 is Linux only; macOS is out of scope.\n"
+          },
+          "requirement": "linux-native",
+          "command": "bench test --package ./internal/durablefile --run 'TestNativeReplacement'",
+          "exit_code": 0
         }
       ],
       "reviews": [
