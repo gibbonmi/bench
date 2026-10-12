@@ -4715,7 +4715,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-c6-r1-standards",
+          "performer": "claude:dcm_rev_c6_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f2d751e5d1918bc60b6724a738649a3747a748d4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c6_std",
+            "digest": "sha256:c44398c3b331137195b63bc91a8b62f6bc8aef11f58a1acb218bc47fae868965",
+            "excerpt": "## Standards (D-C6, 3210553d..e2a36eb3) — 1 finding; worst S1.\nS1 | auto-fix | 6 | internal/repairpilot/command.go:49, :55 | two doc comments still name Store as the replacement owner and restate the leaf contract (\"unless the final rename succeeds\") | state only caller-owned facts: writes through Files and the shared replacement; indented document plus newline at 0600; returns the replacement error unchanged\nVeto items graded acceptable: FileOps embedding and AtomicFile alias, withDefaults, durablefile.Error refusal text, .pilot.json.* temp name.\nAdvice: assertDocumentBytes is a pass-through; replacement_test.go:187 exit check is redundant.\n"
+          },
+          "axis": "Standards",
+          "base": "3210553dcf40b324eeb975dd04758adbff2a02e9",
+          "tip": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c6-r1-spec",
+          "performer": "claude:dcm_rev_c6_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f2d751e5d1918bc60b6724a738649a3747a748d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c6_spec",
+            "digest": "sha256:15fbe863a9b800353b7cf6de122ae9f58b5e8b61196c29e6581deb3a5a1eefc6",
+            "excerpt": "## Spec (D-C6, 3210553d..e2a36eb3) — 0 findings.\nD29 met; seam, mode and bytes, pre-rename refusal, pilot lock, and activate directory refusal kept; directory sync permitted by spec.md:232; the .pilot.json.* temp name and the durablefile.Error refusal text are permitted.\nAdvice: D-D should claim TestPilotDirectoryRefusal under D30; the refusal now prints the absolute home path.\n"
+          },
+          "axis": "Spec",
+          "base": "3210553dcf40b324eeb975dd04758adbff2a02e9",
+          "tip": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c6-r1-coverage",
+          "performer": "claude:dcm_rev_c6_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f2d751e5d1918bc60b6724a738649a3747a748d4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c6_cov",
+            "digest": "sha256:c048c20ed4142f40f28c5473c656495f76be12baf4f492b554134b792d9b225b",
+            "excerpt": "## Coverage (D-C6, 3210553d..e2a36eb3) — 1 finding; worst C1.\nC1 | auto-fix (orchestrator, --auto-approve) | 6 | internal/repairpilot/replacement_test.go:23 | the kept 0o600 literal is not a necessary independent expectation: its whole-package red also failed the preserved TestRepairPilotStorage/custody, which already pins the mode | check bytes only in TestPilotReplacement and let custody own the mode\nD29, bytes red, D36 row, withDefaults (derived), D30 witness, and the four verification entries hold.\nAdvice: other pilot pre-write refusals lack D30 witnesses (D-D); no Command-level replacement-failure test.\n"
+          },
+          "axis": "Coverage",
+          "base": "3210553dcf40b324eeb975dd04758adbff2a02e9",
+          "tip": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -5627,3 +5692,23 @@ Chunk D-C3 used 0 of its 2 repair cycles before repair 1. S1, S2, and C1 fall on
 Chunk D-C3 used 1 of its 2 repair cycles.
 
 The D-C3 confirming round at 3316f631 closed S1, S2, and C1 with no new findings. Chunk D-C3 closed with 1 of its 2 repair cycles used.
+
+## Standards (D-C6)
+
+Chunk D-C6 has 1 finding. The worst issue is S1.
+
+- S1, auto-fix, confidence 6: two doc comments at `internal/repairpilot/command.go:49` and `:55` still name `Store` as the replacement owner. One of them restates the leaf contract. State only the facts that the caller owns.
+
+## Spec (D-C6)
+
+Chunk D-C6 has 0 findings.
+
+## Coverage (D-C6)
+
+Chunk D-C6 has 1 finding. The worst issue is C1.
+
+- C1, auto-fix by --auto-approve, confidence 6: the post-rename row at `internal/repairpilot/replacement_test.go:23` checks the 0600 mode again. The preserved custody row already pins that mode, so the second check is not a necessary independent expectation. Check bytes only in that row.
+
+## Repair allowance (D-C6)
+
+Chunk D-C6 used 0 of its 2 repair cycles before repair 1. S1 and C1 fall on ticket 13, so one combined repair session takes them.
