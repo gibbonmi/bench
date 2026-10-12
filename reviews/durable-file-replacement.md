@@ -1090,6 +1090,50 @@
           "supersedes": [
             "dfr-da-coverage-1"
           ]
+        },
+        {
+          "id": "dfr-da-spec-3",
+          "performer": "claude:dfr_rev_spec_3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "58796930b5bb3c6483e32048fac3bdb733b175cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_spec_3",
+            "digest": "sha256:e8bd183df77658ef3ddf2b8040b062f659acfc39142ff80810c8bd45a0b33ed9",
+            "excerpt": "Spec reaffirmation, chunk D-A, rescope diff 5280f304..5303ca3c, opus/high. Evidence current=true at a4fc1773.\nP1 closed: the reviewer decided on 2026-10-12 that D32 is Linux only. Row D32 (spec.md:189), Testing decisions (:144), Won't handle (:201), the chunk table (:121), and the ticket say Linux only; the plan (:135) has no macos-native entry; Out of scope (:222) keeps the macOS qualification open on FT354. The linux-native entry dfr-t1-rep1-linux-native covers the rescoped row; internal/durablefile has no diff from 5f1ea9dc to a4fc1773. No new inconsistency.\n"
+          },
+          "axis": "Spec",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "5f1ea9dc7b6612d8095d883eca4730bcc8853cd9",
+          "finding_ids": [],
+          "supersedes": [
+            "dfr-da-spec-2"
+          ]
+        },
+        {
+          "id": "dfr-da-coverage-3",
+          "performer": "claude:dfr_rev_coverage_3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "58796930b5bb3c6483e32048fac3bdb733b175cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dfr_rev_coverage_3",
+            "digest": "sha256:1d0cf9ba63940b41fca4ae48c8f65fbe8377f7ea31839bd6aa12d36fc85652b6",
+            "excerpt": "Coverage reaffirmation, chunk D-A, rescope diff 5280f304..5303ca3c, opus/high. Evidence current=true at a4fc1773.\nC1 closed: the plan no longer requires macos-native (spec.md:121,135). TestNativeReplacement (platform_test.go:17-37) asserts the native trace with the directory sync, and the linux-native entry records tmpfs and ext4 passes on WSL2 x86_64. Reran TestNativeReplacement at a4fc1773: pass. No other row lost coverage. No new gap.\n"
+          },
+          "axis": "Coverage",
+          "base": "9433df1bc7cc583dd77f237856b07c9cbf29250f",
+          "tip": "5f1ea9dc7b6612d8095d883eca4730bcc8853cd9",
+          "finding_ids": [],
+          "supersedes": [
+            "dfr-da-coverage-2"
+          ]
         }
       ]
     }
@@ -1148,6 +1192,7 @@ Chunk D-A has 2 findings. The worst issue is P1.
 
 - P1, ask-user, confidence 10: row D32 needs native macOS evidence, and this host has no macOS. The reviewer decides the route.
   - Repair 5f1ea9dc: not fixed. This host has no macOS, so the reviewer decision stays open.
+  - Closed at 5303ca3c: the reviewer decided on 2026-10-12 that D32 is Linux only, and FT354 keeps the macOS qualification open.
 - P2, no-op, confidence 4: the C3 repair closes the same gap in `internal/reviewrecord/assignment.go:85`.
   - Repair 5f1ea9dc: fixed by the C3 repair.
 
@@ -1157,6 +1202,7 @@ Chunk D-A has 3 findings. The worst issue is C1.
 
 - C1, ask-user, confidence 9: this finding is the same as P1.
   - Repair 5f1ea9dc: not fixed. This host has no macOS, so the reviewer decision stays open.
+  - Closed at 5303ca3c: the reviewer decided on 2026-10-12 that D32 is Linux only, and FT354 keeps the macOS qualification open.
 - C2, auto-fix, confidence 7: `TestReviewReplacement` calls `writeWith` directly, so no test examines the replacement that the `write` entry binds (`internal/reviewrecord/write.go:196-198`). Inject the failure through the real `write` entry.
   - Repair 5f1ea9dc: fixed. The record-write case of `TestReviewReplacement` injects the failure through the one `replaceFile` binding and the real `write` entry, and the write-binding-proof probe bit.
 - C3, auto-fix, confidence 7: `RecordAssignment` binds its own replacement (`internal/reviewrecord/assignment.go:85`), and no injected failure reaches it. Inject the failure through the real `RecordAssignment` transaction. C2 and C3 have one repair target.
