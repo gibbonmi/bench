@@ -1,7 +1,7 @@
 # Own durable replacement through review records
 
 Blocked by: none
-Writes: internal/durablefile/ (new), internal/reviewrecord/assignment.go, internal/reviewrecord/write.go, internal/reviewrecord/replacement_test.go (new)
+Writes: internal/durablefile/ (new), internal/reviewrecord/assignment.go, internal/reviewrecord/export_test.go (new), internal/reviewrecord/write.go, internal/reviewrecord/replacement_test.go (new)
 Covers: D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12, D13, D14, D15, D19, D32
 
 ## What to build
