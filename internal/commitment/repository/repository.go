@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/commitment"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
@@ -148,6 +147,12 @@ func (store Store) Plan(input []byte) (commitment.Plan, error) {
 
 // Approve stages the exact policy transition named by planID.
 func (store Store) Approve(planID, decision string, delayed, removed []string) (bool, error) {
+	return store.approve(durablefile.Native(), planID, decision, delayed, removed)
+}
+
+// approve runs the policy, board, and ledger replacements through one replacer, so a test
+// can fail one destination under the real stage and ledger transaction.
+func (store Store) approve(replacer durablefile.Replacer, planID, decision string, delayed, removed []string) (bool, error) {
 	if strings.TrimSpace(decision) == "" || !sanitize.LineSafe(decision) {
 		return false, errors.New("commitment approval refused: decision must be one nonempty line")
 	}
@@ -155,8 +160,10 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 		return false, errors.New("commitment approval refused: effect operands contain duplicates")
 	}
 	var changed bool
-	var restore func()
-	err := intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	var restore func() error
+	// The Compensation callback returns nothing, so its restore failure travels here.
+	var restoreErr error
+	err := intent.TransactWithReplacer(replacer, store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		for i := range ledger.CommitmentReceipts {
 			receipt := &ledger.CommitmentReceipts[i]
 			if receipt.Plan != planID {
@@ -212,7 +219,7 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 			if err := store.listedRuns(ledger, current, plan.Continuations); err != nil {
 				return ledger, false, replan(err)
 			}
-			restore, err = store.stage(plan)
+			restore, err = store.stage(replacer, plan)
 			if err != nil {
 				return ledger, false, err
 			}
@@ -224,10 +231,10 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 		return ledger, false, fmt.Errorf("commitment approval refused: plan %q is unknown", planID)
 	}, func() {
 		if restore != nil {
-			restore()
+			restoreErr = restore()
 		}
 	})
-	return changed, err
+	return changed, errors.Join(err, restoreErr)
 }
 
 func (store Store) defaultPolicy() (*commitment.Policy, string, error) {
@@ -260,109 +267,6 @@ func (store Store) policyAt(branch string) (*commitment.Policy, string, error) {
 		return nil, "", err
 	}
 	return &policy, commitment.Identity(canonical), nil
-}
-
-func (store Store) stage(plan commitment.Plan) (func(), error) {
-	policyPath := filepath.Join(store.Root, filepath.FromSlash(commitment.PolicyPath))
-	roadmapPath := filepath.Join(store.Root, roadmap.RoadmapFile)
-	policyBefore, err := snapshotFile(policyPath, true)
-	if err != nil {
-		return nil, err
-	}
-	roadmapBefore, err := snapshotFile(roadmapPath, true)
-	if err != nil {
-		return nil, err
-	}
-	policy, err := commitment.Parse(plan.Proposed)
-	if err != nil {
-		return nil, err
-	}
-	// A project with no board has no sequence to project, so approval stages the policy alone.
-	if !roadmapBefore.present {
-		if err := atomicWrite(policyPath, plan.Proposed, 0o644); err != nil {
-			return nil, err
-		}
-		return func() { _ = policyBefore.restore() }, nil
-	}
-	projected, err := roadmap.ProjectSequence(roadmapBefore.data, commitment.Remaining(policy))
-	if err != nil {
-		return nil, err
-	}
-	restore := func() {
-		_ = policyBefore.restore()
-		_ = roadmapBefore.restore()
-	}
-	if err := atomicWrite(policyPath, plan.Proposed, 0o644); err != nil {
-		return nil, err
-	}
-	if err := atomicWrite(roadmapPath, projected, roadmapBefore.mode); err != nil {
-		restore()
-		return nil, err
-	}
-	return restore, nil
-}
-
-type fileSnapshot struct {
-	path    string
-	data    []byte
-	mode    os.FileMode
-	present bool
-}
-
-func snapshotFile(path string, allowAbsent bool) (fileSnapshot, error) {
-	info, err := os.Lstat(path)
-	if errors.Is(err, os.ErrNotExist) && allowAbsent {
-		return fileSnapshot{path: path, mode: 0o644}, nil
-	}
-	if err != nil {
-		return fileSnapshot{}, fmt.Errorf("read commitment output %s: %w", path, err)
-	}
-	if !info.Mode().IsRegular() {
-		return fileSnapshot{}, fmt.Errorf("read commitment output %s: not a regular file", path)
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return fileSnapshot{}, fmt.Errorf("read commitment output %s: %w", path, err)
-	}
-	return fileSnapshot{path: path, data: data, mode: info.Mode().Perm(), present: true}, nil
-}
-
-func (snapshot fileSnapshot) restore() error {
-	if !snapshot.present {
-		if err := os.Remove(snapshot.path); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
-		return nil
-	}
-	return atomicWrite(snapshot.path, snapshot.data, snapshot.mode)
-}
-
-func atomicWrite(path string, data []byte, mode os.FileMode) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".bench-commitment-*")
-	if err != nil {
-		return err
-	}
-	name := tmp.Name()
-	defer os.Remove(name)
-	if err := tmp.Chmod(mode); err != nil {
-		tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(name, path)
 }
 
 func sameSet(left, right []string) bool {
