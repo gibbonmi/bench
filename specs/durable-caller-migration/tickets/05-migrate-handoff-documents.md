@@ -1,7 +1,7 @@
 # Migrate handoff document replacement
 
 Blocked by: none
-Writes: internal/handoffdoc/store.go, internal/handoffdoc/replacement_test.go (new)
+Writes: internal/handoffdoc/store.go, internal/handoffdoc/replacement_test.go (new), internal/durablefile/durablefiletest/assert.go
 Covers: D21
 
 ## What to build
