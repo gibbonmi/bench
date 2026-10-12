@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:0a9c82011a15380bda3c64cc4ee87594038caa6080e5ec3d4f7ff5bef371daf6",
+  "plan_digest": "sha256:2f11fea432ed007be9b4a2d448773d4d89fd641c6d5d71a3dc35049f992a7f5f",
   "implementation_session": "",
   "chunks": [
     {
@@ -4613,9 +4613,9 @@
     {
       "id": "D-C6",
       "base": "3210553dcf40b324eeb975dd04758adbff2a02e9",
-      "tip": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
-      "plan_digest": "sha256:0a9c82011a15380bda3c64cc4ee87594038caa6080e5ec3d4f7ff5bef371daf6",
-      "source_digest": "f2d751e5d1918bc60b6724a738649a3747a748d4",
+      "tip": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+      "plan_digest": "sha256:2f11fea432ed007be9b4a2d448773d4d89fd641c6d5d71a3dc35049f992a7f5f",
+      "source_digest": "4838805bd7d4cd9248c2e6e37fec7d82edeea771",
       "acceptance_rows": [
         "D29"
       ],
@@ -4711,6 +4711,100 @@
               "ref": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
               "digest": "sha256:6812936303c0c8e5f5f9bac475864b5cabd34995e8903fe880bbf00a4bb25ab5",
               "excerpt": "preservation for D29 at FT354-durable-callers e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6 (clean tree). Package run: bench test --package ./internal/repairpilot passes (136 tests).\nKept literals (spec inventory row D29 freezes 0600 and the indented document plus final newline): the mode 0o600 and the expected bytes from the test-side documentBytes encoder in TestPilotReplacement. Each restored=yes, mutated package exit 1.\n\n1. Bytes necessity (whole package, no --run): command.go\n  OLD: data, err := json.MarshalIndent(document, \"\", \"  \")\n  NEW: data, err := json.MarshalIndent(document, \"\", \"\\t\")\n  bit, failed_tests=1: TestPilotReplacement replacement_test.go:23 (bytes mismatch). Only the kept expectation catches it.\n\n2. Mode necessity (whole package, no --run): command.go\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: return files.Replacer.Replace(path, append(data, '\\n'), 0o640)\n  bit, failed_tests=2: TestPilotReplacement replacement_test.go:23 (mode -rw-r----- want -rw-------), TestRepairPilotStorage/custody command_test.go:146.\n\n3. Pre-rename refusal (D36 row, --run TestRepairPilotStorage/replace-failure): fallback write of the new bytes after an unpublished error, command.go\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: if err := files.Replacer.Replace(path, append(data, '\\n'), 0o600); err != nil { var failure *durablefile.Error; if errors.As(err, &failure) && !failure.Published { _ = os.WriteFile(path, append(data, '\\n'), 0o600) }; return err }; return nil\n  bit, failed_tests=1: TestRepairPilotStorage/replace-failure command_test.go:214, only at the old-bytes check (RequireBytes).\n\n4. D30 refusal witness (--run TestPilotDirectoryRefusal): swallow the pilot directory creation refusal, command.go withPilotLock\n  OLD: if err := files.MkdirAll(directory, 0o700); err != nil {\n  NEW: if err := files.MkdirAll(directory, 0o700); err != nil && false {\n  bit, failed_tests=1: TestPilotDirectoryRefusal replacement_test.go:40 (output names the chmod failure, not the injected refusal).\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t13-rep1-caller-tests",
+          "performer": "claude:dcm_t13_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4838805bd7d4cd9248c2e6e37fec7d82edeea771",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+            "digest": "sha256:f5b1c13b3292e1efbca345f7d1b40e844dfe9185f60b488e7ff5f713cc93d0b5",
+            "excerpt": "bench test --package ./internal/repairpilot at FT354-durable-callers fee3f738b47405a330c80db698ae6c42bd3f0526 (clean tree)\npackages: github.com/gibbonmi/bench/internal/repairpilot,pass,165,136\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/repairpilot",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t13-rep1-root-conformance",
+          "performer": "claude:dcm_t13_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4838805bd7d4cd9248c2e6e37fec7d82edeea771",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+            "digest": "sha256:b58afd0e5db4436c6619693c86b262b69b7ff83f6023db56f46e408885d45a68",
+            "excerpt": "bench test --check root-conformance at FT354-durable-callers fee3f738b47405a330c80db698ae6c42bd3f0526 (clean tree)\ncheck: root-conformance,conformance,1 test\npackages: github.com/gibbonmi/bench/internal/conformance,pass,17968,1\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t13-rep1-omission-proof",
+          "performer": "claude:dcm_t13_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4838805bd7d4cd9248c2e6e37fec7d82edeea771",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+            "digest": "sha256:cba413134a8f7075604a3efe88baa61932592556eaaf099813d37ac08eb0514e",
+            "excerpt": "omission-proof for D29, repair dcm_t13_rep1 at FT354-durable-callers fee3f738b47405a330c80db698ae6c42bd3f0526 (clean tree).\nNot replayed: the repair diff changes neither the owner-bypass production line nor the witness line (replacement_test.go:22 RequireFailure).\nCited red: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/omission-proof.txt and /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/omission-owner-bypass.out (bench probe --run TestPilotReplacement; owner-bypass swap of\n  return files.Replacer.Replace(path, append(data, '\\n'), 0o600); bit, failed_tests=1, restored=yes, mutated package exit 1).\nComment-only change S1 (command.go Store and Replace doc comments) needs no red.\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/repairpilot",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the local file-only sequence or weaken the short-write assertion. The corresponding real Store.Replace witness must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+              "digest": "sha256:cba413134a8f7075604a3efe88baa61932592556eaaf099813d37ac08eb0514e",
+              "excerpt": "omission-proof for D29, repair dcm_t13_rep1 at FT354-durable-callers fee3f738b47405a330c80db698ae6c42bd3f0526 (clean tree).\nNot replayed: the repair diff changes neither the owner-bypass production line nor the witness line (replacement_test.go:22 RequireFailure).\nCited red: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/omission-proof.txt and /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/omission-owner-bypass.out (bench probe --run TestPilotReplacement; owner-bypass swap of\n  return files.Replacer.Replace(path, append(data, '\\n'), 0o600); bit, failed_tests=1, restored=yes, mutated package exit 1).\nComment-only change S1 (command.go Store and Replace doc comments) needs no red.\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t13-rep1-preservation",
+          "performer": "claude:dcm_t13_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4838805bd7d4cd9248c2e6e37fec7d82edeea771",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+            "digest": "sha256:7f25f385d0c12f67dac3c7f8dfb584bc4324c89dba11b3c0f4709c2a0ef79baa",
+            "excerpt": "preservation for D29, repair dcm_t13_rep1 at FT354-durable-callers fee3f738b47405a330c80db698ae6c42bd3f0526 (clean tree). Package run passes (136 tests).\nRepair C1: TestPilotReplacement checks bytes only (durablefiletest.RequireBytes); TestRepairPilotStorage/custody owns the 0600 mode.\nReplayed reds (whole package, no --run), each restored=yes, mutated package exit 1:\n\n1. Mode necessity: command.go\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: return files.Replacer.Replace(path, append(data, '\\n'), 0o640)\n  bit, failed_tests=1: TestRepairPilotStorage/custody command_test.go:146 \"custody modes = file 0640 dir 0700; want 0600 and 0700\". TestPilotReplacement no longer checks mode.\n\n2. Bytes necessity (witness line changed to RequireBytes): command.go\n  OLD: data, err := json.MarshalIndent(document, \"\", \"  \")\n  NEW: data, err := json.MarshalIndent(document, \"\", \"\\t\")\n  bit, failed_tests=1: TestPilotReplacement replacement_test.go:23 (bytes mismatch). Only the kept expectation catches it.\n\nNot replayed (the repair diff changes neither its test nor its production line); cited from /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/preservation.txt (entry ids dcm-t13 phase 2):\n  3. Pre-rename refusal fallback, TestRepairPilotStorage/replace-failure command_test.go:214: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/pres-prerename-fallback.out\n  4. D30 refusal swallow, TestPilotDirectoryRefusal replacement_test.go:40: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/pres-d30-swallow.out\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/repairpilot",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+              "digest": "sha256:7f25f385d0c12f67dac3c7f8dfb584bc4324c89dba11b3c0f4709c2a0ef79baa",
+              "excerpt": "preservation for D29, repair dcm_t13_rep1 at FT354-durable-callers fee3f738b47405a330c80db698ae6c42bd3f0526 (clean tree). Package run passes (136 tests).\nRepair C1: TestPilotReplacement checks bytes only (durablefiletest.RequireBytes); TestRepairPilotStorage/custody owns the 0600 mode.\nReplayed reds (whole package, no --run), each restored=yes, mutated package exit 1:\n\n1. Mode necessity: command.go\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: return files.Replacer.Replace(path, append(data, '\\n'), 0o640)\n  bit, failed_tests=1: TestRepairPilotStorage/custody command_test.go:146 \"custody modes = file 0640 dir 0700; want 0600 and 0700\". TestPilotReplacement no longer checks mode.\n\n2. Bytes necessity (witness line changed to RequireBytes): command.go\n  OLD: data, err := json.MarshalIndent(document, \"\", \"  \")\n  NEW: data, err := json.MarshalIndent(document, \"\", \"\\t\")\n  bit, failed_tests=1: TestPilotReplacement replacement_test.go:23 (bytes mismatch). Only the kept expectation catches it.\n\nNot replayed (the repair diff changes neither its test nor its production line); cited from /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/preservation.txt (entry ids dcm-t13 phase 2):\n  3. Pre-rename refusal fallback, TestRepairPilotStorage/replace-failure command_test.go:214: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/pres-prerename-fallback.out\n  4. D30 refusal swallow, TestPilotDirectoryRefusal replacement_test.go:40: /tmp/claude-1000/-home-mgibs-workspace-bench/a142325d-036b-4e84-b387-f6b875be269c/scratchpad/dcm_t13/phase2/pres-d30-swallow.out\n"
             }
           }
         }
@@ -5324,6 +5418,45 @@
           "D-C4"
         ]
       }
+    },
+    {
+      "from": "sha256:0a9c82011a15380bda3c64cc4ee87594038caa6080e5ec3d4f7ff5bef371daf6",
+      "to": "sha256:2f11fea432ed007be9b4a2d448773d4d89fd641c6d5d71a3dc35049f992a7f5f",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ],
+        "D-C3": [
+          "D-C3"
+        ],
+        "D-C4": [
+          "D-C4"
+        ],
+        "D-C6": [
+          "D-C6"
+        ]
+      }
     }
   ],
   "folds": [
@@ -5712,3 +5845,5 @@ Chunk D-C6 has 1 finding. The worst issue is C1.
 ## Repair allowance (D-C6)
 
 Chunk D-C6 used 0 of its 2 repair cycles before repair 1. S1 and C1 fall on ticket 13, so one combined repair session takes them.
+
+Commit fee3f738 closes S1: the Store and Replace doc comments state only the caller's own facts, and TestPilotReplacement stays green. Commit fee3f738 closes C1: TestPilotReplacement checks bytes through RequireBytes, and TestRepairPilotStorage/custody alone catches the 0640 mode red. Chunk D-C6 used 1 of its 2 repair cycles.
