@@ -301,6 +301,41 @@ each landing refusal prints one exact next command. It also prints its failed
 paths when its own face reads them. `bench recovery` prints the recovery
 matrix: each registered face with its verb, its authority, and its route.
 
+A landing holds one landing lease on its destination in the intent ledger, from
+composition through publish. A second landing on that destination refuses before
+composition with `land-lease-held`, which names the owner's assignment. Wait until
+that landing ends, then rerun. The lease releases when its landing publishes or
+refuses, and the next landing takes over the lease of a killed owner. A `--resume`
+takes no lease.
+
+An open build holds the landing window of the default branch from its
+`bench commitment start` until its completion landing publishes. While the window
+is open, the landing refuses each other landing with `land-build-window`, unless
+the build is in a chunk gap. That refusal names the build and the gap to wait for.
+A spec-less or tickets-only landing from a worktree of the build waits the same
+way. `bench commitment block` also closes the window, and so does the release of
+every bound assignment.
+
+A green `bench gate --checkpoint <spec-path> --chunk <id>` in a bound worktree opens the
+build's chunk gap when the plan names a later chunk. The first
+`bench record assignment` of the next chunk closes the gap. That record refuses
+until the source holds the default branch tip, and its refusal names the fold
+and `bench record fold`. The last chunk opens no gap.
+
+The reviewer grants one landing a landing override with
+`bench commitment override --assignment <id> --reason <text>`. The verb runs only
+from the primary checkout with a terminal on stdin, and the reviewer types the
+assignment id to confirm it. The follow-on guard denies the verb in an agent
+tool call. The override admits the landing of that assignment through every open
+build. Its publication consumes the override, and a refused landing keeps it
+for the rerun.
+
+When a stalled build still holds the window, the reviewer stops it with
+`bench commitment block`. To back out a landed commit, run
+`git revert --no-commit <commit>` in a fresh Bench worktree. Commit the revert
+with `bench commit`, and land it with `bench worktree land` under a landing
+override. Never reset `main`.
+
 A conflicted `capture/` path composes by a rule table with three verbs:
 `source`, `destination`, and `union`. `capture/session-handoff.md` takes
 `source`; `capture/learnings.md` and `capture/IDEAS.md` take `union`; every

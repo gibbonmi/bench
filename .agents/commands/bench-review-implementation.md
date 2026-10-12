@@ -96,7 +96,9 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    The first chunk base is the `main` tip merged into the source. Each later chunk base is the accepted predecessor tip, so the range holds only that chunk's delta.
    A later plan commit is never a chunk base.
 
-   Merge `main` into the source before the first chunk. A later chunk base holds the tree of the accepted predecessor tip, so the review chain refuses a `main` merge between two chunks. When `main` moves during the build, the source folds `main` with `bench worktree merge --from main <target>` before the completion landing. The fold joins the review delta of the last chunk. The review preflight authorizes each path that the fold brings in unchanged from the `main` tip. It counts each path that the build changed against the ownership fences.
+   Merge `main` into the source before the first chunk. `/bench-implement-spec` owns each later fold point and its `bench record fold` step. The review chain accepts a recorded fold between two chunks and after the last chunk, and the fold then serves as the next chunk base. The fold record lists each resolution path, where the fold commit differs from the automatic merge. A fold with an empty resolution needs no review. A fold with a resolution takes the three axes over its own pair.
+
+   The review preflight authorizes each path that a fold brings in unchanged from the `main` tip. It also authorizes a recorded resolution path while that path keeps its bytes and mode from the fold commit. It counts each path that the build changed against the ownership fences.
 
 2. **Find the sources.** The spec source is `specs/<feature>/spec.md` for this
    work, or the path I give you. The standards sources are `AGENTS.md` and
@@ -212,9 +214,11 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    Write each completed chunk, verification, review, and amendment entry with `bench record`, not with hand-built JSON.
    `bench record chunk` writes the frozen pair and its digests, and `bench record review` appends one axis result.
    `bench record verification` appends one planned result, and `bench record amendment` records a plan-digest change.
+   `bench record fold` writes one fold entry, and `bench record review --fold <id>` appends one axis result for its resolution.
    Supply the performer, model, effort, and native result. The verb derives the role, the source, and each digest.
 
    `bench record completion` writes the completion entry after the final verification.
+   Each test package that a fold brings in adds the final requirement `merged-test:<package>`, which `bench record verification --final` records.
    Each result in the failed, skipped, or pending state stays hand-written, because `bench record` has no form for it.
    A hand-written entry names its performer, role, model, effort, source digest, state, and native result.
    It embeds the minimal native excerpt with the SHA-256 digest of that excerpt.
@@ -241,7 +245,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
 
    A clean chunk review hands its frozen pair back to the orchestrator. The orchestrator starts the successor ticket's fresh author or performs final reconciliation. Only the reconciled final source proceeds to `bench worktree land`; `/bench-final-check` reports that landing's oracle.
 
-   The landing base is the `main` tip merged before the first chunk. `bench worktree land --base` takes that `main` tip after a fold too. A chunk base or the folded `main` tip narrows the range that the landing authorizes.
+   The landing base is the `main` tip merged before the first chunk. `bench worktree land --base` takes that `main` tip after each recorded fold too. A chunk base or the folded `main` tip narrows the range that the landing authorizes.
 
 ## Ordinary assessment evidence
 
