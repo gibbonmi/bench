@@ -21,7 +21,8 @@ BW-E round 1 reviewed the pair `814a14cc..ccd2a6cd`, and repair 1 closed all sev
 The confirming round passed on all three axes, and BW-E used one of its two repair cycles.
 
 BW-F round 1 reviewed the pair `ca231f79..835b31be`, after fold F1 of `main` at `ca231f79`.
-Repair 1 takes S1-S3 and P1.
+Repair 1 at `ca2360e4` closed S1-S3 and P1, and added three forbid rows.
+Repair 2 fixes a false chunk-base sentence and non-glossary override wording outside the first fence.
 
 ## Standards
 

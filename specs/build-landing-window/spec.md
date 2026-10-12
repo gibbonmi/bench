@@ -638,6 +638,7 @@ It holds the owner and test files, the command registry closure, the anchor regi
 - `.agents/commands/bench-review-implementation.md`
 - `.agents/commands/bench-write-spec.md`
 - `.agents/skills/bench-craft-delegate/SKILL.md`
+- `.agents/skills/bench-craft-tickets/SKILL.md`
 - `.bench/BENCH-reference.md`
 - `.bench/commitment.json`
 - `.bench/hooks/block-bench-follow-on.sh`
