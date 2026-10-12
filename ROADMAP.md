@@ -319,16 +319,17 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT354-strict-json
-2. FT411
-3. FT380-plan-commit
-4. FT414
-5. FT403
-6. FT168-probe-subjects
-7. FT168-probe-batch
-8. FT293-ownership-closure
-9. FT375-spec-staleness
-10. FT405
-11. FT379
-12. FT409
-13. FT402
+1. FT354-durable-callers
+2. FT354-strict-json
+3. FT411
+4. FT380-plan-commit
+5. FT414
+6. FT403
+7. FT168-probe-subjects
+8. FT168-probe-batch
+9. FT293-ownership-closure
+10. FT375-spec-staleness
+11. FT405
+12. FT379
+13. FT409
+14. FT402

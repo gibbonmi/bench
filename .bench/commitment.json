@@ -593,6 +593,33 @@
           ]
         },
         {
+          "id": "FT354-durable-callers",
+          "criteria": [
+            {
+              "id": "FT354-durable-callers.callers",
+              "text": "Every remaining classified replacement caller replaces its file through the internal/durablefile leaf, and no migrated caller keeps its own temporary-file, synchronization, and rename sequence."
+            },
+            {
+              "id": "FT354-durable-callers.preserved",
+              "text": "Each migrated caller keeps its payload, mode, validation, destination authority, sentinel translation, and recovery policy, and each caller failure has a witness."
+            },
+            {
+              "id": "FT354-durable-callers.open",
+              "text": "The delivery closes no roadmap row, and FT354 stays open for its other outcomes."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "durable-caller-migration",
+                "path": "specs/durable-caller-migration/spec.md",
+                "identity": "sha256:df0321cdcd6c414a95c680d9bbf98ef72d2f2c696f73195522df75e652ef0329"
+              }
+            }
+          ]
+        },
+        {
           "id": "FT354-strict-json",
           "criteria": [
             {
