@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:46a171dbfa4f9e5b92760bbc064c364febc8bd9da34e0bd2e74698781183dd38",
+  "plan_digest": "sha256:92aeb66c2921bc9839cb0631f660389236b0a1cc8f5551f4743c244d38d0e6e7",
   "implementation_session": "",
   "chunks": [
     {
@@ -913,6 +913,113 @@
           ]
         }
       ]
+    },
+    {
+      "id": "D-B3",
+      "base": "0cc52e2103645332e77432be7fc6404f977e4bb5",
+      "tip": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+      "plan_digest": "sha256:92aeb66c2921bc9839cb0631f660389236b0a1cc8f5551f4743c244d38d0e6e7",
+      "source_digest": "b034f5f9f948e705edf9e57aa049f3cbfb8e95ab",
+      "acceptance_rows": [
+        "D20"
+      ],
+      "verification": [
+        {
+          "id": "dcm-t04-caller-tests",
+          "performer": "claude:dcm_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b034f5f9f948e705edf9e57aa049f3cbfb8e95ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+            "digest": "sha256:7d0de11d341e727b81c32c403f37634774db503b107790fcd8835a937a24713a",
+            "excerpt": "bench test --package ./internal/capturetx at c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301 (FT354-durable-callers). TestCaptureReplacement (D20 post-rename directory-sync) and TestCapturePreRenameFailure (D36 pre-rename rename fault) pass.\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capturetx,pass,212,26\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/capturetx",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t04-root-conformance",
+          "performer": "claude:dcm_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b034f5f9f948e705edf9e57aa049f3cbfb8e95ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+            "digest": "sha256:fba72a65af14b533a62edeb80fd7960fbd6ab09918316876e9140594ac7c5cd8",
+            "excerpt": "bench test --check root-conformance at c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301 (FT354-durable-callers)\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18498,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t04-omission-proof",
+          "performer": "claude:dcm_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b034f5f9f948e705edf9e57aa049f3cbfb8e95ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+            "digest": "sha256:b4a2b9d7bf89dcce54c9a3f1e6b1a01c8da6ed42f86ef440656496e1a4c9105a",
+            "excerpt": "D-B3 omission-proof probe at c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301 (FT354-durable-callers), subject internal/capturetx/transaction.go, bench test --package ./internal/capturetx, no --run filter.\nSwap old (exact): \"\\treturn r.Replace(path, data, 0o644)\\n}\"\nSwap new (exact): the former sequence: \"\\ttmp, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+\\\".tmp-*\\\")\\n\\tif err != nil {\\n\\t\\treturn err\\n\\t}\\n\\tname := tmp.Name()\\n\\tdefer os.Remove(name)\\n\\tif _, err := tmp.Write(data); err != nil {\\n\\t\\ttmp.Close()\\n\\t\\treturn err\\n\\t}\\n\\tif err := tmp.Sync(); err != nil {\\n\\t\\ttmp.Close()\\n\\t\\treturn err\\n\\t}\\n\\tif err := tmp.Close(); err != nil {\\n\\t\\treturn err\\n\\t}\\n\\tif err := os.Chmod(name, 0o644); err != nil {\\n\\t\\treturn err\\n\\t}\\n\\treturn os.Rename(name, path)\\n}\"\nResult: verdict bit, 2 failed tests (TestCaptureReplacement D20 witness; TestCapturePreRenameFailure D36 pre-rename evidence), restored yes; package passes 26 tests after restore.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/capturetx/transaction.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capturetx,all,passed,26\nspilled{lines=12,bytes=954,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791826326202107373-a73004d9cef18703.out}\n  github.com/gibbonmi/bench/internal/capturetx,fail,131,26\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capturetx,TestCapturePreRenameFailure,\"replacement_test.go:67: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected capture rename failure\",1\n  github.com/gibbonmi/bench/internal/capturetx,TestCaptureReplacement,\"replacement_test.go:46: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected capture directory-sync failure\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/capturetx",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Bypass the shared owner in capture replace. The capture operation failure witness must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+              "digest": "sha256:b4a2b9d7bf89dcce54c9a3f1e6b1a01c8da6ed42f86ef440656496e1a4c9105a",
+              "excerpt": "D-B3 omission-proof probe at c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301 (FT354-durable-callers), subject internal/capturetx/transaction.go, bench test --package ./internal/capturetx, no --run filter.\nSwap old (exact): \"\\treturn r.Replace(path, data, 0o644)\\n}\"\nSwap new (exact): the former sequence: \"\\ttmp, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+\\\".tmp-*\\\")\\n\\tif err != nil {\\n\\t\\treturn err\\n\\t}\\n\\tname := tmp.Name()\\n\\tdefer os.Remove(name)\\n\\tif _, err := tmp.Write(data); err != nil {\\n\\t\\ttmp.Close()\\n\\t\\treturn err\\n\\t}\\n\\tif err := tmp.Sync(); err != nil {\\n\\t\\ttmp.Close()\\n\\t\\treturn err\\n\\t}\\n\\tif err := tmp.Close(); err != nil {\\n\\t\\treturn err\\n\\t}\\n\\tif err := os.Chmod(name, 0o644); err != nil {\\n\\t\\treturn err\\n\\t}\\n\\treturn os.Rename(name, path)\\n}\"\nResult: verdict bit, 2 failed tests (TestCaptureReplacement D20 witness; TestCapturePreRenameFailure D36 pre-rename evidence), restored yes; package passes 26 tests after restore.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/capturetx/transaction.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capturetx,all,passed,26\nspilled{lines=12,bytes=954,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791826326202107373-a73004d9cef18703.out}\n  github.com/gibbonmi/bench/internal/capturetx,fail,131,26\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capturetx,TestCapturePreRenameFailure,\"replacement_test.go:67: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected capture rename failure\",1\n  github.com/gibbonmi/bench/internal/capturetx,TestCaptureReplacement,\"replacement_test.go:46: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected capture directory-sync failure\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t04-preservation",
+          "performer": "claude:dcm_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b034f5f9f948e705edf9e57aa049f3cbfb8e95ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+            "digest": "sha256:3e2027a2fcf9db842d3fd8534381d7b19d9dca64dd88109bb4e5edfe40a19a95",
+            "excerpt": "D-B3 preservation probes at c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301 (FT354-durable-callers), subject internal/capturetx/transaction.go, bench test --package ./internal/capturetx, no --run filter. Each red names only the new independent caller assertions; restored yes, and the package passes 26 tests after restore.\nProbe 1 (payload literal necessity). Swap old (exact): \"return replaceWith(r, filepath.Join(dir, manifestName), append(data, '\\n'))\" new (exact): \"return replaceWith(r, filepath.Join(dir, manifestName), data)\". Verdict bit, 1 failed test: TestCaptureReplacement (sealedManifest bytes), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/capturetx/transaction.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capturetx,all,passed,26\nspilled{lines=11,bytes=909,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791826329705781023-7a98ad56d30c2d2d.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capturetx,fail,170,26\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capturetx,TestCaptureReplacement,\"replacement_test.go:47: /dev/shm/BYTEJG/t/TestCaptureReplacement3696050737/001/bench-capture-drain/manifest.json = \\\"{\\\\\\\\n  \\\\\\\\\\\"schema\\\\\\\\\\\": 1,\\\\\\\\n  \\\\\\\\\\\"id\\\\\\\\\\\": \\\\\\\\\\\"d-0123456789ab\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"state\\\\\\\\\\\": \\\\\\\\\\\"sealed\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"sources\\\\\\\\\\\": [\\\\\\\\n    {\\\\\\\\n      \\\\\\\\\\\"name\\\\\\\\\\\": \\\\\\\\\\\"ide… (672 bytes)\",1\nskips[0]{package,test,reason}:\n\nProbe 2 (mode literal necessity). Swap old (exact): \"return r.Replace(path, data, 0o644)\" new (exact): \"return r.Replace(path, data, 0o640)\". Verdict bit, 2 failed tests: TestCaptureReplacement and TestCapturePreRenameFailure (D36 pre-rename: former bytes at 0644), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/capturetx/transaction.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capturetx,all,passed,26\nspilled{lines=12,bytes=970,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791826332990128801-881eb3fe5a3028a0.out}\n  github.com/gibbonmi/bench/internal/capturetx,fail,165,26\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capturetx,TestCapturePreRenameFailure,\"replacement_test.go:68: /dev/shm/JX4MH5/t/TestCapturePreRenameFailure1487139520/001/manifest.json mode = -rw-r-----, want a regular file at -rw-r--r--\",1\n  github.com/gibbonmi/bench/internal/capturetx,TestCaptureReplacement,\"replacement_test.go:47: /dev/shm/JX4MH5/t/TestCaptureReplacement2756281889/001/bench-capture-drain/manifest.json mode = -rw-r-----, want a regular file at -rw-r--r--\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/capturetx",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301",
+              "digest": "sha256:3e2027a2fcf9db842d3fd8534381d7b19d9dca64dd88109bb4e5edfe40a19a95",
+              "excerpt": "D-B3 preservation probes at c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301 (FT354-durable-callers), subject internal/capturetx/transaction.go, bench test --package ./internal/capturetx, no --run filter. Each red names only the new independent caller assertions; restored yes, and the package passes 26 tests after restore.\nProbe 1 (payload literal necessity). Swap old (exact): \"return replaceWith(r, filepath.Join(dir, manifestName), append(data, '\\n'))\" new (exact): \"return replaceWith(r, filepath.Join(dir, manifestName), data)\". Verdict bit, 1 failed test: TestCaptureReplacement (sealedManifest bytes), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/capturetx/transaction.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capturetx,all,passed,26\nspilled{lines=11,bytes=909,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791826329705781023-7a98ad56d30c2d2d.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capturetx,fail,170,26\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capturetx,TestCaptureReplacement,\"replacement_test.go:47: /dev/shm/BYTEJG/t/TestCaptureReplacement3696050737/001/bench-capture-drain/manifest.json = \\\"{\\\\\\\\n  \\\\\\\\\\\"schema\\\\\\\\\\\": 1,\\\\\\\\n  \\\\\\\\\\\"id\\\\\\\\\\\": \\\\\\\\\\\"d-0123456789ab\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"state\\\\\\\\\\\": \\\\\\\\\\\"sealed\\\\\\\\\\\",\\\\\\\\n  \\\\\\\\\\\"sources\\\\\\\\\\\": [\\\\\\\\n    {\\\\\\\\n      \\\\\\\\\\\"name\\\\\\\\\\\": \\\\\\\\\\\"ide… (672 bytes)\",1\nskips[0]{package,test,reason}:\n\nProbe 2 (mode literal necessity). Swap old (exact): \"return r.Replace(path, data, 0o644)\" new (exact): \"return r.Replace(path, data, 0o640)\". Verdict bit, 2 failed tests: TestCaptureReplacement and TestCapturePreRenameFailure (D36 pre-rename: former bytes at 0644), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,c7a940a3e0bdf6af8653c2d8f726ec2fadd7f301,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/capturetx/transaction.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capturetx,all,passed,26\nspilled{lines=12,bytes=970,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791826332990128801-881eb3fe5a3028a0.out}\n  github.com/gibbonmi/bench/internal/capturetx,fail,165,26\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capturetx,TestCapturePreRenameFailure,\"replacement_test.go:68: /dev/shm/JX4MH5/t/TestCapturePreRenameFailure1487139520/001/manifest.json mode = -rw-r-----, want a regular file at -rw-r--r--\",1\n  github.com/gibbonmi/bench/internal/capturetx,TestCaptureReplacement,\"replacement_test.go:47: /dev/shm/JX4MH5/t/TestCaptureReplacement2756281889/001/bench-capture-drain/manifest.json mode = -rw-r-----, want a regular file at -rw-r--r--\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -956,6 +1063,18 @@
     {
       "from": "sha256:304dad8ec31f6ef14776693f8e342efca2547b34f3d96073b07864b5d715b986",
       "to": "sha256:46a171dbfa4f9e5b92760bbc064c364febc8bd9da34e0bd2e74698781183dd38",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:46a171dbfa4f9e5b92760bbc064c364febc8bd9da34e0bd2e74698781183dd38",
+      "to": "sha256:92aeb66c2921bc9839cb0631f660389236b0a1cc8f5551f4743c244d38d0e6e7",
       "chunk_ids": {
         "D-B1": [
           "D-B1"
