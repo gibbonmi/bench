@@ -9,7 +9,8 @@ Repair 1 at `4057ca20` closed all five findings, and the confirming round passed
 BW-B used one of its two repair cycles.
 
 BW-C round 1 reviewed the pair `4057ca20..db1bdc5d`, and repair 1 closed S1, S2, and C1-C4 at `6568c4c2`.
-The BW-C confirming round found S3 and P1, so BW-C repair 2 follows.
+The BW-C confirming round found S3 and P1, and repair 2 at `901d9152` closed both.
+The third round passed on all three axes, and BW-C used both of its repair cycles.
 A fable/high consultation chose the owner for BW-C S1 and the content binding for BW-C C1.
 
 ## Standards
@@ -1761,6 +1762,72 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
           "finding_ids": [],
           "supersedes": [
             "bwc-coverage-r1"
+          ]
+        },
+        {
+          "id": "bwc-standards-r3",
+          "performer": "claude:blw_bwc_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "141da2f0e03766e1dd8147aec1dd793a0d0c69dd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwc_standards_r3",
+            "digest": "sha256:82ef04dd2ac4b8a860991413e9eb3b489784ce0ccef01017e3348521678fc95b",
+            "excerpt": "Axis: Standards (confirming r3) — chunk BW-C, repair 2\nS3 closed: coverage.go:47, :93 and fold.go:118 call benchgit.IsAncestor through\n  isAncestor (coverage.go:182), which only adds commit names to the error.\nrg \"is-ancestor\" internal/reviewrecord: no match.\nComments in the delta pass craft-comments (each sentence 25 words or fewer, present tense).\nFindings: none. Advice: \"answers\" -> \"calls\" at coverage.go:180.\n"
+          },
+          "axis": "Standards",
+          "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "tip": "901d91524635f47b5c646f02c990db0817c6f1b5",
+          "finding_ids": [],
+          "supersedes": [
+            "bwc-standards-r2"
+          ]
+        },
+        {
+          "id": "bwc-spec-r3",
+          "performer": "claude:blw_bwc_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "141da2f0e03766e1dd8147aec1dd793a0d0c69dd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwc_spec_r3",
+            "digest": "sha256:5520e76332df24c037ea2058faa8981a5a6969e78058cfb87efec11917e6df86",
+            "excerpt": "Axis: Spec (confirming r3) — chunk BW-C, repair 2: 0 findings.\nP1 closed: spec.md:427 lists BW25-BW45, BW93, BW98; ticket Covers lines match exactly.\nExit 1 keeps the unrelated-base and chain-gap refusals (coverage.go:52, :103); BW34-BW38 hold.\nA failed query refuses with no repair form; spec.md:360 and :362 give the fold form only to the chain gap and stale source.\n"
+          },
+          "axis": "Spec",
+          "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "tip": "901d91524635f47b5c646f02c990db0817c6f1b5",
+          "finding_ids": [],
+          "supersedes": [
+            "bwc-spec-r2"
+          ]
+        },
+        {
+          "id": "bwc-coverage-r3",
+          "performer": "claude:blw_bwc_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "141da2f0e03766e1dd8147aec1dd793a0d0c69dd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:blw_bwc_coverage_r3",
+            "digest": "sha256:ef4815d3cf320feed1ead5559ed26588c806d6cb3ca1f72a41cc8f286f521ea7",
+            "excerpt": "Axis: Coverage (confirming r3) — chunk BW-C, repair 2: 0 findings; S3 coverage closed.\nisAncestor wrapper error dropped: bit, 2 failed, restored yes.\ncoverage.go:98 foldCoversBase error dropped: bit, 1 failed, restored yes.\ngit.go:225 exit 128 read as no: bit, 2 failed, restored yes.\nAdvice: coverage.go:93 error drop is silent; that site fails closed and no fixture can force the failure.\n"
+          },
+          "axis": "Coverage",
+          "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
+          "tip": "901d91524635f47b5c646f02c990db0817c6f1b5",
+          "finding_ids": [],
+          "supersedes": [
+            "bwc-coverage-r2"
           ]
         }
       ]
