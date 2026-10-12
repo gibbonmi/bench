@@ -44,7 +44,7 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
 {
   "version": 2,
   "spec": "specs/build-landing-window/spec.md",
-  "plan_digest": "sha256:52082aafa798935d8dba9b9521a8e470557b9bf38383be1e474ccf3b513f1007",
+  "plan_digest": "sha256:440c1b0b55e357d00d6e66cc8c8a42b2ceb210a19ec0c64bf37e7427ad156d72",
   "implementation_session": "",
   "chunks": [
     {
@@ -525,9 +525,9 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
     {
       "id": "BW-B",
       "base": "2aa2bf491f2b9009ba46acd15a48fe1301ded44f",
-      "tip": "6c90a3c648d6d283b0ede6d7dd3dee0bcbf24347",
-      "plan_digest": "sha256:52082aafa798935d8dba9b9521a8e470557b9bf38383be1e474ccf3b513f1007",
-      "source_digest": "0ffb66e4290a68a222c8d14c98cec94fcae5da90",
+      "tip": "4057ca206c8859f1f6f9634345426bebc8d77954",
+      "plan_digest": "sha256:440c1b0b55e357d00d6e66cc8c8a42b2ceb210a19ec0c64bf37e7427ad156d72",
+      "source_digest": "ca6bd4b8092b1010171b96b3b14eecbe92d48e51",
       "acceptance_rows": [
         "BW17",
         "BW18",
@@ -639,6 +639,107 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
           "requirement": "t2-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t2-land-focused-v2",
+          "performer": "claude:blw_t2_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca6bd4b8092b1010171b96b3b14eecbe92d48e51",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2rep1/t2-land-focused.txt",
+            "digest": "sha256:8ed2b63652e45e77867c5f90c21fca0ddb4b1e6cd1145627dc89e86fc669f5d6",
+            "excerpt": "bench test --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'\n# through bench worktree exec \"FT342-FT253\" at 4057ca206c8859f1f6f9634345426bebc8d77954 (clean); exit 0; elapsed 3 s\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1527,23\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n# plan probe:\nbench probe internal/worktree/land_refusal.go --swap 'ancestryErr != nil || holds' --with 'ancestryErr != nil || !holds' --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'\n# through bench worktree exec \"FT342-FT253\" at 4057ca206c8859f1f6f9634345426bebc8d77954 (clean); exit 0; elapsed 11 s; plan probe of t2-land-focused\ntree[1]{target,head,dirty}:\n  FT342-FT253,4057ca206c8859f1f6f9634345426bebc8d77954,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/land_refusal.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture,passed,23\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCompletionOverAMovedDestinationNamesTheFold,\"land_moved_destination_test.go:43: face land-destination-moved = (1, \\\"refused{detail=prospective authorization refused: infrastructure (gate subject unavailable: completion composition changes moved.txt; review the destination delta),next=r… (950 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestLandingRefusalRegistryHasAProducingFixture/land-destination-moved,\"identity_component_test.go:238: face land-destination-moved = (1, \\\"refused{detail=prospective authorization refused: infrastructure (gate subject unavailable: completion composition changes moved.txt; review the destination delta),next=revi… (964 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestProofFaultOverACurrentSourceHandsBack/current-source,\"land_moved_destination_test.go:132: current-source = (1, \\\"refused{detail=landing destination moved past the reviewed source: prospective authorization refused: infrastructure (completion proof fault),next=bench worktree merge --from 'main' … (1020 bytes)\",2\nskips[0]{package,test,reason}:\n# probe exit 0 (reread without a wrapper), restored=yes\n# exit 0 confirmed by a second run at the same head (only reviews/build-landing-window.md dirty, from the chunk record); outcome pass, failures 0\n"
+          },
+          "requirement": "t2-land-focused",
+          "command": "bench test --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap the ancestry condition that maps a completion proof cause to land-destination-moved, so that a completion proof cause over a moved destination routes to land-handback. TestCompletionOverAMovedDestinationNamesTheFold turns red.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2rep1/t2-land-focused.txt",
+              "digest": "sha256:8ed2b63652e45e77867c5f90c21fca0ddb4b1e6cd1145627dc89e86fc669f5d6",
+              "excerpt": "bench test --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'\n# through bench worktree exec \"FT342-FT253\" at 4057ca206c8859f1f6f9634345426bebc8d77954 (clean); exit 0; elapsed 3 s\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1527,23\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n# plan probe:\nbench probe internal/worktree/land_refusal.go --swap 'ancestryErr != nil || holds' --with 'ancestryErr != nil || !holds' --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'\n# through bench worktree exec \"FT342-FT253\" at 4057ca206c8859f1f6f9634345426bebc8d77954 (clean); exit 0; elapsed 11 s; plan probe of t2-land-focused\ntree[1]{target,head,dirty}:\n  FT342-FT253,4057ca206c8859f1f6f9634345426bebc8d77954,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/land_refusal.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture,passed,23\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCompletionOverAMovedDestinationNamesTheFold,\"land_moved_destination_test.go:43: face land-destination-moved = (1, \\\"refused{detail=prospective authorization refused: infrastructure (gate subject unavailable: completion composition changes moved.txt; review the destination delta),next=r… (950 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestLandingRefusalRegistryHasAProducingFixture/land-destination-moved,\"identity_component_test.go:238: face land-destination-moved = (1, \\\"refused{detail=prospective authorization refused: infrastructure (gate subject unavailable: completion composition changes moved.txt; review the destination delta),next=revi… (964 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestProofFaultOverACurrentSourceHandsBack/current-source,\"land_moved_destination_test.go:132: current-source = (1, \\\"refused{detail=landing destination moved past the reviewed source: prospective authorization refused: infrastructure (completion proof fault),next=bench worktree merge --from 'main' … (1020 bytes)\",2\nskips[0]{package,test,reason}:\n# probe exit 0 (reread without a wrapper), restored=yes\n# exit 0 confirmed by a second run at the same head (only reviews/build-landing-window.md dirty, from the chunk record); outcome pass, failures 0\n"
+            }
+          }
+        },
+        {
+          "id": "t2-authorization-focused-v2",
+          "performer": "claude:blw_t2_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca6bd4b8092b1010171b96b3b14eecbe92d48e51",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2rep1/t2-authorization-focused.txt",
+            "digest": "sha256:71f590a408d5a43c4c09956e52e6ea0fa91b8b91497578f27efe0d8a024463a4",
+            "excerpt": "bench test --package ./internal/gate/authorization --run 'TestCompletionProofCauseTravelsAsAType'\n# through bench worktree exec \"FT342-FT253\" at 4057ca206c8859f1f6f9634345426bebc8d77954 (clean); exit 0; elapsed 1 s\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,67,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n# exit 0 confirmed by a second run at the same head (only reviews/build-landing-window.md dirty, from the chunk record); outcome pass, failures 0\n"
+          },
+          "requirement": "t2-authorization-focused",
+          "command": "bench test --package ./internal/gate/authorization --run 'TestCompletionProofCauseTravelsAsAType'",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-floor-v2",
+          "performer": "claude:blw_t2_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca6bd4b8092b1010171b96b3b14eecbe92d48e51",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2rep1/t2-floor.txt",
+            "digest": "sha256:a2c57ea64d441bfe6dc02586b70b98f21fef76ce866b85776997eab563404082",
+            "excerpt": "bench test --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/commit --package ./cmd/bench --package ./internal/conformance\n# through bench worktree exec \"FT342-FT253\" at 4057ca206c8859f1f6f9634345426bebc8d77954 (clean); exit 0; elapsed 104 s\npackages[12]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,24164,333\n  github.com/gibbonmi/bench/internal/commit,pass,12875,117\n  github.com/gibbonmi/bench/internal/conformance,pass,79818,1690\n  github.com/gibbonmi/bench/internal/gate,pass,31248,430\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,254,14\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,50,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,320,36\n  github.com/gibbonmi/bench/internal/landing,pass,9849,221\n  github.com/gibbonmi/bench/internal/landing/published,no-tests,0,0\n  github.com/gibbonmi/bench/internal/landing/settlepolicy,pass,2,20\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,17\n  github.com/gibbonmi/bench/internal/worktree,pass,76068,1418\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n# exit 0 confirmed by a second run at the same head (only reviews/build-landing-window.md dirty, from the chunk record); outcome pass, failures 0\n"
+          },
+          "requirement": "t2-floor",
+          "command": "bench test --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/commit --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-system-race-v2",
+          "performer": "claude:blw_t2_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca6bd4b8092b1010171b96b3b14eecbe92d48e51",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2rep1/t2-system-race.txt",
+            "digest": "sha256:f25f573c742cdc59fa86beddde6c2f4f61258c84f2aa9e57293a305e27c8f75e",
+            "excerpt": "bench test --check system --run TestWorktreeLandPublicRaceAndRerun\n# through bench worktree exec \"FT342-FT253\" at 4057ca206c8859f1f6f9634345426bebc8d77954 (clean), after bench worktree build FT342-FT253; exit 0; elapsed 4 s\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,1811,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n# exit 0 confirmed by a second run at the same head (only reviews/build-landing-window.md dirty, from the chunk record); outcome pass, failures 0\n"
+          },
+          "requirement": "t2-system-race",
+          "command": "bench test --check system --run TestWorktreeLandPublicRaceAndRerun",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-root-conformance-v2",
+          "performer": "claude:blw_t2_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca6bd4b8092b1010171b96b3b14eecbe92d48e51",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t2rep1/t2-root-conformance.txt",
+            "digest": "sha256:d8f953cb773080c8c8dff734a7a0d3544b39a6bbc53778b26c51568c2011d053",
+            "excerpt": "bench test --check root-conformance\n# through bench worktree exec \"FT342-FT253\" at 4057ca206c8859f1f6f9634345426bebc8d77954 (clean); exit 0; elapsed 20 s\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17914,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n# exit 0 confirmed by a second run at the same head (only reviews/build-landing-window.md dirty, from the chunk record); outcome pass, failures 0\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -735,6 +836,18 @@ BW-B findings: 2. Worst issue: BW-B C1, a widened cause match that no test detec
       "chunk_ids": {
         "BW-A": [
           "BW-A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:52082aafa798935d8dba9b9521a8e470557b9bf38383be1e474ccf3b513f1007",
+      "to": "sha256:440c1b0b55e357d00d6e66cc8c8a42b2ceb210a19ec0c64bf37e7427ad156d72",
+      "chunk_ids": {
+        "BW-A": [
+          "BW-A"
+        ],
+        "BW-B": [
+          "BW-B"
         ]
       }
     }
