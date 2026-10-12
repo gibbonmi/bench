@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:0c585206337b1291a396cf3b404bad1b24a48b69e43d8dc10a70727f573ea631",
+  "plan_digest": "sha256:d9f4749fa22291bd7c2bec9da3823c664d5f1398f310b8f905792fb89a8fe34f",
   "implementation_session": "",
   "chunks": [
     {
@@ -1249,6 +1249,113 @@
           ]
         }
       ]
+    },
+    {
+      "id": "D-B4",
+      "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+      "tip": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+      "plan_digest": "sha256:d9f4749fa22291bd7c2bec9da3823c664d5f1398f310b8f905792fb89a8fe34f",
+      "source_digest": "d3d801af894c7a5d78dd5468fb21bc6811a0bb63",
+      "acceptance_rows": [
+        "D21"
+      ],
+      "verification": [
+        {
+          "id": "dcm-t05-caller-tests",
+          "performer": "claude:dcm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d3d801af894c7a5d78dd5468fb21bc6811a0bb63",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+            "digest": "sha256:e4b42df12401dea2e307497feff464f8d674b4c7d9b7a125682ea9c8f2154505",
+            "excerpt": "bench test --package ./internal/handoffdoc at 4fc0e3162cdc3e33779be1c49dcfd7ba51818eff (FT354-durable-callers). TestHandoffReplacement (D21 post-rename directory-sync) and TestHandoffPreRenameFailure (D36 pre-rename rename fault; prior document kept) pass.\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,pass,32,26\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/handoffdoc",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t05-root-conformance",
+          "performer": "claude:dcm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d3d801af894c7a5d78dd5468fb21bc6811a0bb63",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+            "digest": "sha256:104cc037d93da491dafc821004e9b2227e1f67ae83ab6fee535c30c7c3ade446",
+            "excerpt": "bench test --check root-conformance at 4fc0e3162cdc3e33779be1c49dcfd7ba51818eff (FT354-durable-callers)\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19669,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t05-omission-proof",
+          "performer": "claude:dcm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d3d801af894c7a5d78dd5468fb21bc6811a0bb63",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+            "digest": "sha256:7df322b02a7c16f53fa08b94b6be8433e475192b559c03f52bc0e2fc03e27302",
+            "excerpt": "D-B4 omission-proof probes at 4fc0e3162cdc3e33779be1c49dcfd7ba51818eff (FT354-durable-callers), subject internal/handoffdoc/store.go, bench test --package ./internal/handoffdoc, no --run filter.\nProbe 1 (restore ignored directory errors). Swap old (exact): \"\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nSwap new (exact): \"\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil && !func() bool { var published *durablefile.Error; return errors.As(err, &published) && published.Published }() {\"\nResult: verdict bit, 1 failed test (TestHandoffReplacement, D21 witness), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,4fc0e3162cdc3e33779be1c49dcfd7ba51818eff,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,all,passed,26\nspilled{lines=11,bytes=729,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791828022592018805-3900910443a601c2.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,31,26\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement,\"replacement_test.go:29: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected handoff directory-sync failure\",1\nskips[0]{package,test,reason}:\n\nProbe 2 (bypass the injected leaf with the native owner). Swap old (exact): \"\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nSwap new (exact): \"\tif err := durablefile.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nResult: verdict bit, 2 failed tests (TestHandoffReplacement D21 witness; TestHandoffPreRenameFailure D36 pre-rename evidence), restored yes; package passes 26 tests after restore.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,4fc0e3162cdc3e33779be1c49dcfd7ba51818eff,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,all,passed,26\nspilled{lines=12,bytes=952,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791828033001097924-ddd758aac05191da.out}\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,33,26\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffPreRenameFailure,\"replacement_test.go:51: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected handoff rename failure\",1\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement,\"replacement_test.go:29: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected handoff directory-sync failure\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/handoffdoc",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore ignored directory errors or bypass the leaf. The section-writing composition test must detect the missing failure.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+              "digest": "sha256:7df322b02a7c16f53fa08b94b6be8433e475192b559c03f52bc0e2fc03e27302",
+              "excerpt": "D-B4 omission-proof probes at 4fc0e3162cdc3e33779be1c49dcfd7ba51818eff (FT354-durable-callers), subject internal/handoffdoc/store.go, bench test --package ./internal/handoffdoc, no --run filter.\nProbe 1 (restore ignored directory errors). Swap old (exact): \"\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nSwap new (exact): \"\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil && !func() bool { var published *durablefile.Error; return errors.As(err, &published) && published.Published }() {\"\nResult: verdict bit, 1 failed test (TestHandoffReplacement, D21 witness), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,4fc0e3162cdc3e33779be1c49dcfd7ba51818eff,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,all,passed,26\nspilled{lines=11,bytes=729,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791828022592018805-3900910443a601c2.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,31,26\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement,\"replacement_test.go:29: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected handoff directory-sync failure\",1\nskips[0]{package,test,reason}:\n\nProbe 2 (bypass the injected leaf with the native owner). Swap old (exact): \"\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nSwap new (exact): \"\tif err := durablefile.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nResult: verdict bit, 2 failed tests (TestHandoffReplacement D21 witness; TestHandoffPreRenameFailure D36 pre-rename evidence), restored yes; package passes 26 tests after restore.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,4fc0e3162cdc3e33779be1c49dcfd7ba51818eff,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,all,passed,26\nspilled{lines=12,bytes=952,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791828033001097924-ddd758aac05191da.out}\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,33,26\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffPreRenameFailure,\"replacement_test.go:51: err = <nil>, want a *durablefile.Error at stage rename with Published=false that wraps injected handoff rename failure\",1\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement,\"replacement_test.go:29: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected handoff directory-sync failure\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t05-preservation",
+          "performer": "claude:dcm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d3d801af894c7a5d78dd5468fb21bc6811a0bb63",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+            "digest": "sha256:73c58abd129962b5946db2e1674209eab380cfca816e095971e768b439a77739",
+            "excerpt": "D-B4 preservation probes at 4fc0e3162cdc3e33779be1c49dcfd7ba51818eff (FT354-durable-callers), subject internal/handoffdoc/store.go, bench test --package ./internal/handoffdoc, no --run filter. Each red names only TestHandoffReplacement, the owner of the independent mode and bytes expectations (frozen from the pre-migration writer); restored yes, and the package passes 26 tests after restore. TestHandoffPreRenameFailure checks only the caller refusal outcome (prior document bytes).\nProbe 1 (mode literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()), 0o640)\"\nResult: verdict bit, 1 failed test (TestHandoffReplacement mode), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,4fc0e3162cdc3e33779be1c49dcfd7ba51818eff,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,all,passed,26\nspilled{lines=11,bytes=722,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791828041671539024-337aa15fdd8b958b.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,36,26\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement,\"replacement_test.go:30: /dev/shm/4573PW/t/TestHandoffReplacement1551975842/001/session-handoff.md mode = -rw-r-----, want a regular file at -rw-r--r--\",1\nskips[0]{package,test,reason}:\n\nProbe 2 (payload literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()+\\\"<!-- -->\\\\n\\\"), 0o644)\"\nResult: verdict bit, 1 failed test (TestHandoffReplacement bytes), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,4fc0e3162cdc3e33779be1c49dcfd7ba51818eff,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,all,passed,26\nspilled{lines=11,bytes=867,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791828050717363019-7be50526b97d176b.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,34,26\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement,\"replacement_test.go:30: /dev/shm/HV7SYV/t/TestHandoffReplacement1198845858/001/session-handoff.md = \\\"## main\\\\\\\\n\\\\\\\\nNext command:\\\\\\\\n\\\\\\\\n### State\\\\\\\\n\\\\\\\\n## request 9f2ab77\\\\\\\\n\\\\\\\\nRequest token: `9f2ab77`\\\\\\\\nNext command: `bench gate`\\\\\\\\n\\\\\\\\n### State\\\\\\\\n\\\\\\\\nThe pha… (429 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/handoffdoc",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "4fc0e3162cdc3e33779be1c49dcfd7ba51818eff",
+              "digest": "sha256:73c58abd129962b5946db2e1674209eab380cfca816e095971e768b439a77739",
+              "excerpt": "D-B4 preservation probes at 4fc0e3162cdc3e33779be1c49dcfd7ba51818eff (FT354-durable-callers), subject internal/handoffdoc/store.go, bench test --package ./internal/handoffdoc, no --run filter. Each red names only TestHandoffReplacement, the owner of the independent mode and bytes expectations (frozen from the pre-migration writer); restored yes, and the package passes 26 tests after restore. TestHandoffPreRenameFailure checks only the caller refusal outcome (prior document bytes).\nProbe 1 (mode literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()), 0o640)\"\nResult: verdict bit, 1 failed test (TestHandoffReplacement mode), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,4fc0e3162cdc3e33779be1c49dcfd7ba51818eff,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,all,passed,26\nspilled{lines=11,bytes=722,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791828041671539024-337aa15fdd8b958b.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,36,26\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement,\"replacement_test.go:30: /dev/shm/4573PW/t/TestHandoffReplacement1551975842/001/session-handoff.md mode = -rw-r-----, want a regular file at -rw-r--r--\",1\nskips[0]{package,test,reason}:\n\nProbe 2 (payload literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()+\\\"<!-- -->\\\\n\\\"), 0o644)\"\nResult: verdict bit, 1 failed test (TestHandoffReplacement bytes), restored yes.\n\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,4fc0e3162cdc3e33779be1c49dcfd7ba51818eff,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,all,passed,26\nspilled{lines=11,bytes=867,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/00b4e1c8d78f5645bd35ac462e410538/1791828050717363019-7be50526b97d176b.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,34,26\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement,\"replacement_test.go:30: /dev/shm/HV7SYV/t/TestHandoffReplacement1198845858/001/session-handoff.md = \\\"## main\\\\\\\\n\\\\\\\\nNext command:\\\\\\\\n\\\\\\\\n### State\\\\\\\\n\\\\\\\\n## request 9f2ab77\\\\\\\\n\\\\\\\\nRequest token: `9f2ab77`\\\\\\\\nNext command: `bench gate`\\\\\\\\n\\\\\\\\n### State\\\\\\\\n\\\\\\\\nThe pha… (429 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1316,6 +1423,21 @@
     {
       "from": "sha256:92aeb66c2921bc9839cb0631f660389236b0a1cc8f5551f4743c244d38d0e6e7",
       "to": "sha256:0c585206337b1291a396cf3b404bad1b24a48b69e43d8dc10a70727f573ea631",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0c585206337b1291a396cf3b404bad1b24a48b69e43d8dc10a70727f573ea631",
+      "to": "sha256:d9f4749fa22291bd7c2bec9da3823c664d5f1398f310b8f905792fb89a8fe34f",
       "chunk_ids": {
         "D-B1": [
           "D-B1"
