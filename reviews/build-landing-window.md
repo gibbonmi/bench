@@ -68,7 +68,7 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
 {
   "version": 2,
   "spec": "specs/build-landing-window/spec.md",
-  "plan_digest": "sha256:b48b0493be97dee45f23a112128b66238d7c62246a8f6d5c50f0d04f36db7781",
+  "plan_digest": "sha256:b02696cfc82f5e064c45f5a220cc8788f75b5d8615aec9daf12beb59d9b6815e",
   "implementation_session": "",
   "chunks": [
     {
@@ -934,9 +934,9 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
     {
       "id": "BW-C",
       "base": "4057ca206c8859f1f6f9634345426bebc8d77954",
-      "tip": "6568c4c20f4cde69168fac0ef0c52633d5831950",
-      "plan_digest": "sha256:b48b0493be97dee45f23a112128b66238d7c62246a8f6d5c50f0d04f36db7781",
-      "source_digest": "b0928e81bb076546ec03ff2f77a55d2d7e3c6479",
+      "tip": "901d91524635f47b5c646f02c990db0817c6f1b5",
+      "plan_digest": "sha256:b02696cfc82f5e064c45f5a220cc8788f75b5d8615aec9daf12beb59d9b6815e",
+      "source_digest": "141da2f0e03766e1dd8147aec1dd793a0d0c69dd",
       "acceptance_rows": [
         "BW25",
         "BW26",
@@ -1599,6 +1599,21 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
     {
       "from": "sha256:cbbe23b76e3faffd89b75fcdac95b2bd39c75c6bd6a427fc8cb3ade1f8ed32ce",
       "to": "sha256:b48b0493be97dee45f23a112128b66238d7c62246a8f6d5c50f0d04f36db7781",
+      "chunk_ids": {
+        "BW-A": [
+          "BW-A"
+        ],
+        "BW-B": [
+          "BW-B"
+        ],
+        "BW-C": [
+          "BW-C"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b48b0493be97dee45f23a112128b66238d7c62246a8f6d5c50f0d04f36db7781",
+      "to": "sha256:b02696cfc82f5e064c45f5a220cc8788f75b5d8615aec9daf12beb59d9b6815e",
       "chunk_ids": {
         "BW-A": [
           "BW-A"
