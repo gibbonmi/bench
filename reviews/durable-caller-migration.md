@@ -647,6 +647,74 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-b2-r2-standards",
+          "performer": "claude:dcm_rev_b2_std2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "123e6c7765ecd010a41bd5ebfadaf1c2ee6e5a2a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b2_std2",
+            "digest": "sha256:3afbef56bfa0d76d684cad4773b4e63ea57550fbe0c9fb4bfc1dd9b87a732d1b",
+            "excerpt": "## Standards confirming round (D-B2, repair delta db1f156a..f0c35260) — 1 finding; DCM-B2-S1 closed\nDCM-B2-S1 closed: RequireFailure and RequireFile in internal/durablefile/durablefiletest/assert.go:18-46; both caller tests use them; no local copy remains.\nDCM-B2-S2 | auto-fix | 5 | internal/gate/prospectiveartifact/replacement_test.go:42-44 | TestOwnerPreRenameFailure asserts durablefiletest.Siblings is empty, a leaf postcondition that TestReplaceTemporaryCleanup (internal/durablefile/replace_test.go:262) owns; no caller mutation shows the check is necessary | remove the sibling check; keep the record-absence check\nAdvice: the published bool reads unclearly; a RequireAbsent helper when a second caller needs it; the durablefiletest package comment names only the harness; ticket 03 says one assertion where two exist.\n"
+          },
+          "axis": "Standards",
+          "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
+          "tip": "3a3dbbe1a471a4fdd48e24abe38359ff138a1e73",
+          "finding_ids": [
+            "DCM-B2-S2"
+          ],
+          "supersedes": [
+            "dcm-b2-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-b2-r2-spec",
+          "performer": "claude:dcm_rev_b2_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "123e6c7765ecd010a41bd5ebfadaf1c2ee6e5a2a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b2_spec2",
+            "digest": "sha256:840f617b85efbbf813954d8fddcbd39aa221547aeaa6c6e26ec4762e51ab4034",
+            "excerpt": "## Spec confirming round (D-B2, repair delta db1f156a..f0c35260 and plan b511def3..db1f156a) — 0 findings\nD16, D17, D18 hold after the move to the shared helpers. TestOwnerPreRenameFailure meets the expanded ticket 03 text. The plan expansion adds no acceptance row and weakens no guarantee.\nAdvice: ticket 03 wording says one assertion; ticket 14 rationale sentence is universal; the pre-rename test uses an empty root.\n"
+          },
+          "axis": "Spec",
+          "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
+          "tip": "3a3dbbe1a471a4fdd48e24abe38359ff138a1e73",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b2-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-b2-r2-coverage",
+          "performer": "claude:dcm_rev_b2_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "123e6c7765ecd010a41bd5ebfadaf1c2ee6e5a2a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b2_cov2",
+            "digest": "sha256:6c624de091ab9e410a0df1b68b756f31ac7f52463753330f3b91df0a90fef740",
+            "excerpt": "## Coverage confirming round (D-B2, repair delta db1f156a..f0c35260) — 0 findings. Six probes, each restored=yes.\nC1 closed: publish returns nil on an unpublished *durablefile.Error, whole package: bit at replacement_test.go:37.\nC3 closed: RecordMode 0o600 -> 0o640, whole package: bit, only TestOwnerReplacement.\nD16/D17 after the move: engine.go mode 0o644: bit, 3 failed via RequireFile.\nHelpers are not vacuous: wrong stage (replace.go:114 rename -> file-close) bit; Published true on pre-rename bit; fresh Err at replace.go:130 bit in 9 tests.\nAdvice: a self-test for durablefiletest assertions; hand-summarized G2-G4 failure rows in the preservation excerpt.\n"
+          },
+          "axis": "Coverage",
+          "base": "ea32f1f8c853243a523b0113b0b9d3453c8dd135",
+          "tip": "3a3dbbe1a471a4fdd48e24abe38359ff138a1e73",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b2-r1-coverage"
+          ]
         }
       ]
     }
@@ -751,3 +819,9 @@ Chunk D-B2 used 0 of its 2 repair cycles before repair 1. DCM-B2-S1, C1, and C3 
 - C3 closes in commit 3a3dbbe1. The `RecordMode` drift to 0o640 turns `TestOwnerReplacement` red over the whole package, as the `claude:dcm_t03_rep1` preservation excerpt records.
 
 Chunk D-B2 used 1 of its 2 repair cycles.
+
+The D-B2 confirming round at f0c35260 closed DCM-B2-S1, C1, and C3. It raised one new finding.
+
+- DCM-B2-S2, auto-fix, confidence 5: `internal/gate/prospectiveartifact/replacement_test.go:42-44` asserts the temporary-file cleanup that the leaf test `TestReplaceTemporaryCleanup` owns, and no caller mutation shows that the check is necessary. Remove the sibling check, and keep the record-absence check.
+
+Chunk D-B2 takes repair cycle 2 of 2 for DCM-B2-S2.
