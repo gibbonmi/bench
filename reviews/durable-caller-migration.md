@@ -2276,7 +2276,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-c1-r1-standards",
+          "performer": "claude:dcm_rev_c1_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c1_std",
+            "digest": "sha256:3e9e2032fbb196ffbf50325370894f2f1eb3ed12a98959705c80339cd1f0a78b",
+            "excerpt": "## Standards (D-C1, 641ddbaa..dafb4e2d) — 1 finding; worst S1\nS1 | auto-fix (orchestrator: RequireBytes route by plan expansion) | 5 | internal/publication/replacement_test.go:61-64,71-73 | the prior-bytes check copies the read-back that durablefiletest.RequireFile owns | add durablefiletest.RequireBytes, let RequireFile call it for its byte step, and use it here; log the closed copies for D-D\nClean: no copy of the algorithm; one %w wrap; saveRecordWith seam idiom; independent expectations with recorded reds; comment register.\nAdvice: two comments restate the owner contract or the code.\n"
+          },
+          "axis": "Standards",
+          "base": "641ddbaa6c7f22023c6453abee122954564b8eca",
+          "tip": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c1-r1-spec",
+          "performer": "claude:dcm_rev_c1_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c1_spec",
+            "digest": "sha256:e7ff6c862a3cc59473be27d6f05d82d66332754c47ab2db7780d9f09cabf0cab",
+            "excerpt": "## Spec (D-C1, 641ddbaa..dafb4e2d) — 0 findings\nD24 holds: MarshalIndent plus newline at 0644; parent creation stays with the caller; the state machine and release lock are unchanged; no new audited port; narrow saveRecordWith seam; TestPublicationPreRenameFailure is the D36 evidence. Plan commit 607638cd adds only the 07 assignment.\nAdvice: no run compared the former writer's bytes to the literal; best-effort SaveRecord calls discard the published signal.\n"
+          },
+          "axis": "Spec",
+          "base": "641ddbaa6c7f22023c6453abee122954564b8eca",
+          "tip": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c1-r1-coverage",
+          "performer": "claude:dcm_rev_c1_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d5010a7c7ea7de4e46f377d692d2ed05a9a2adcc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c1_cov",
+            "digest": "sha256:8251519c492fa74025443a2116db03d441c9415883e8b807b357d178488bf638",
+            "excerpt": "## Coverage (D-C1, 641ddbaa..dafb4e2d) — 1 finding; worst C1. Three probes, each restored=yes.\nC1 | auto-fix | 7 | internal/publication/record.go:90-92 | swallowing the MkdirAll destination refusal is silent; the replacement observer then fires (D30, D36) | add a test that makes root/dist a regular file, calls saveRecordWith, and asserts a non-durablefile error, an empty Recorder trace, and no record; record the swallow red\nBit: omit SchemaVersion (3 tests). Silent, no requirement: record directory mode 0o700.\n"
+          },
+          "axis": "Coverage",
+          "base": "641ddbaa6c7f22023c6453abee122954564b8eca",
+          "tip": "17ffac99dfbfaf0ac0d69e340c172839cffe9b29",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2651,3 +2716,23 @@ Chunk D-B5 used 0 of its 2 repair cycles before repair 1. P1, C1, and C2 fall on
 Chunk D-B5 used 1 of its 2 repair cycles.
 
 The D-B5 confirming round at d12060c6 closed P1, C1, and C2 with no new finding. Chunk D-B5 closed with 1 of its 2 repair cycles used.
+
+## Standards (D-C1)
+
+Chunk D-C1 has 1 finding. The worst issue is S1.
+
+- S1, auto-fix by the --auto-approve plan expansion, confidence 5: the prior-bytes check at `internal/publication/replacement_test.go:61-73` copies the read-back that `durablefiletest.RequireFile` owns. Add `durablefiletest.RequireBytes`, let `RequireFile` call it for its byte step, and use it here.
+
+## Spec (D-C1)
+
+Chunk D-C1 has 0 findings.
+
+## Coverage (D-C1)
+
+Chunk D-C1 has 1 finding. The worst issue is C1.
+
+- C1, auto-fix, confidence 7: swallowing the parent-creation refusal at `internal/publication/record.go:90-92` is silent, and the replacement observer then fires. Add the D30 refusal witness, and record the red of the swallow.
+
+## Repair allowance (D-C1)
+
+Chunk D-C1 used 0 of its 2 repair cycles before repair 1. S1 and C1 fall on ticket 08, so one combined repair session takes them.
