@@ -2246,6 +2246,125 @@ BW-D findings: 2. Worst issue: BW-D C1, a repair checkpoint that reopens the gap
           "requirement": "t6-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t5-land-focused-v2",
+          "performer": "claude:blw_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bddda7150f7f6afc4944738de7e08d10a6b10081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t5rep1/tip/plan-probe-answer.out",
+            "digest": "sha256:644900b010218180be463e45733b580e2d99ac8880e0f552d6cf52b021ef074b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/publication.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestLandRefusesAnUnrelatedLandingInAnOpenBuild|TestWindowAdmitsTheBuildsOwnLanding|TestWindowClosesAtCompletion|TestWindowClosesOnBlock|TestWindowClosesOnAbandon|TestWindowRecheckAtPublish|TestWindowWinsOverTheLease|TestLandingRefusalRegistryHasAProducingFixture,passed,26\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,886\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,2330,26\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestWindowRecheckAtPublish/build-start,\"land_window_test.go:211: landing = (0, \\\"effects[2]{effect,result}:\\\\\\\\n  refresh,not-applicable\\\\\\\\n  cleanup,complete\\\\\\\\nlanded{source_base=6dd98940f258e9488aa4b4f94cc44506cbdf0552,source_tip=d307d2ec477e3557ad747e2ac3dd343bf3f9ec5a,destination_ba… (708 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestWindowRecheckAtPublish/gap-close,\"land_window_test.go:211: landing = (0, \\\"effects[2]{effect,result}:\\\\\\\\n  refresh,not-applicable\\\\\\\\n  cleanup,complete\\\\\\\\nlanded{source_base=953117f4ecc272376b4991bfd2b2f46c37805629,source_tip=9b73f22cbc30277da5b804e6ba8a4e7657f81a9a,destination_ba… (708 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-land-focused",
+          "command": "bench test --package ./internal/worktree --run 'TestLandRefusesAnUnrelatedLandingInAnOpenBuild|TestWindowAdmitsTheBuildsOwnLanding|TestWindowClosesAtCompletion|TestWindowClosesOnBlock|TestWindowClosesOnAbandon|TestWindowRecheckAtPublish|TestWindowWinsOverTheLease|TestLandingRefusalRegistryHasAProducingFixture'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the window decision from the publish decision in PublishAdmitted, so that only the acquire decision decides the window. TestWindowRecheckAtPublish turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t5rep1/tip/plan-probe-answer.out",
+              "digest": "sha256:644900b010218180be463e45733b580e2d99ac8880e0f552d6cf52b021ef074b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/publication.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestLandRefusesAnUnrelatedLandingInAnOpenBuild|TestWindowAdmitsTheBuildsOwnLanding|TestWindowClosesAtCompletion|TestWindowClosesOnBlock|TestWindowClosesOnAbandon|TestWindowRecheckAtPublish|TestWindowWinsOverTheLease|TestLandingRefusalRegistryHasAProducingFixture,passed,26\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,886\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,2330,26\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestWindowRecheckAtPublish/build-start,\"land_window_test.go:211: landing = (0, \\\"effects[2]{effect,result}:\\\\\\\\n  refresh,not-applicable\\\\\\\\n  cleanup,complete\\\\\\\\nlanded{source_base=6dd98940f258e9488aa4b4f94cc44506cbdf0552,source_tip=d307d2ec477e3557ad747e2ac3dd343bf3f9ec5a,destination_ba… (708 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestWindowRecheckAtPublish/gap-close,\"land_window_test.go:211: landing = (0, \\\"effects[2]{effect,result}:\\\\\\\\n  refresh,not-applicable\\\\\\\\n  cleanup,complete\\\\\\\\nlanded{source_base=953117f4ecc272376b4991bfd2b2f46c37805629,source_tip=9b73f22cbc30277da5b804e6ba8a4e7657f81a9a,destination_ba… (708 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t5-window-focused-v2",
+          "performer": "claude:blw_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bddda7150f7f6afc4944738de7e08d10a6b10081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t5rep1/tip/t5-window-focused.txt",
+            "digest": "sha256:28c718fb7d32b3f0d82c6288060be85db18d689dc9918eb73b92064553d2579d",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/commitment/repository --run 'TestWindowNamesTheGapToWaitFor|TestOpenBuildsDeriveFromActiveOwners|TestWindowNeedsAGapOfEveryOtherBuild|TestStartDropsAStaleGap|TestClosersDropTheGapRecord|TestWindowFailsClosedOnAGitFault'\ntree[1]{target,head,dirty}:\n  FT342-FT253,db551f1e881c4395c9cc8f94750df509c1684cd2,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,447,10\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0\n"
+          },
+          "requirement": "t5-window-focused",
+          "command": "bench test --package ./internal/commitment/repository --run 'TestWindowNamesTheGapToWaitFor|TestOpenBuildsDeriveFromActiveOwners|TestWindowNeedsAGapOfEveryOtherBuild|TestStartDropsAStaleGap|TestClosersDropTheGapRecord|TestWindowFailsClosedOnAGitFault'",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-floor-v2",
+          "performer": "claude:blw_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bddda7150f7f6afc4944738de7e08d10a6b10081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t5rep1/tip/t5-floor.txt",
+            "digest": "sha256:d6ea92257c25385d048efe93cf793fad01077daea3e04b645f1f8686d44ee331",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/intent/... --package ./internal/commitment/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,db551f1e881c4395c9cc8f94750df509c1684cd2,false\npackages[12]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,21191,333\n  github.com/gibbonmi/bench/internal/anchors,pass,2082,179\n  github.com/gibbonmi/bench/internal/commitment,pass,5470,175\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,786,19\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,5915,120\n  github.com/gibbonmi/bench/internal/conformance,pass,76345,1690\n  github.com/gibbonmi/bench/internal/intent,pass,1102,64\n  github.com/gibbonmi/bench/internal/intent/admissionpolicy,pass,3,28\n  github.com/gibbonmi/bench/internal/intent/ledger,pass,3,1\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,17\n  github.com/gibbonmi/bench/internal/worktree,pass,72196,1430\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nexit 0; wall about 84 s\n"
+          },
+          "requirement": "t5-floor",
+          "command": "bench test --package ./internal/intent/... --package ./internal/commitment/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-data-handling-v2",
+          "performer": "claude:blw_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bddda7150f7f6afc4944738de7e08d10a6b10081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t5rep1/tip/t5-data-handling.txt",
+            "digest": "sha256:d43c507c1e6b26594bb89829234330bb2beac86efe92613b10aa28e76dffe0cb",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --check data-handling-derivation\ntree[1]{target,head,dirty}:\n  FT342-FT253,db551f1e881c4395c9cc8f94750df509c1684cd2,false\ncheck[1]{name,kind,tests_run,subjects}:\n  data-handling-derivation,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0\n"
+          },
+          "requirement": "t5-data-handling",
+          "command": "bench test --check data-handling-derivation",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-system-v2",
+          "performer": "claude:blw_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bddda7150f7f6afc4944738de7e08d10a6b10081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t5rep1/tip/t5-system.txt",
+            "digest": "sha256:ac75bfe762cfd3b3225911720044c7a73b32f6150155d2dd1a26abdfb0677298",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --check system\ntree[1]{target,head,dirty}:\n  FT342-FT253,db551f1e881c4395c9cc8f94750df509c1684cd2,false\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,169,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,67787,169\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall about 70 s\n"
+          },
+          "requirement": "t5-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-root-conformance-v2",
+          "performer": "claude:blw_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bddda7150f7f6afc4944738de7e08d10a6b10081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t5rep1/tip/t5-root-conformance.txt",
+            "digest": "sha256:1b1ad3d0086c8fa45a93c0405185feae798c584ea4d0a404b721fdcf5a1d9aef",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,db551f1e881c4395c9cc8f94750df509c1684cd2,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16763,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall about 23 s\n"
+          },
+          "requirement": "t5-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
