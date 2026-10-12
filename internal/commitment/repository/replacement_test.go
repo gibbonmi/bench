@@ -142,18 +142,6 @@ func (fx approval) approve(f *faults) error {
 	return err
 }
 
-// requireBytes fails t unless the file at path holds want, whatever its mode.
-func requireBytes(t *testing.T, path, want string) {
-	t.Helper()
-	got, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(got) != want {
-		t.Fatalf("%s = %q, want %q", path, got, want)
-	}
-}
-
 func requireAbsent(t *testing.T, path string) {
 	t.Helper()
 	if _, err := os.Lstat(path); !errors.Is(err, os.ErrNotExist) {
@@ -216,7 +204,7 @@ func TestCommitmentReplacement(t *testing.T) {
 
 			durablefiletest.RequireFailure(t, err, testCase.stage, testCase.published, cause)
 			if !testCase.published {
-				requireBytes(t, fx.policy, fx.oldPolicy)
+				durablefiletest.RequireBytes(t, fx.policy, fx.oldPolicy)
 			}
 		})
 	}
@@ -251,7 +239,7 @@ func TestApprovalBoardFailure(t *testing.T) {
 	if !errors.Is(err, cause) {
 		t.Fatalf("err = %v, want %v", err, cause)
 	}
-	durablefiletest.RequireFile(t, fx.policy, oldPolicyMode, fx.oldPolicy)
+	durablefiletest.RequireBytes(t, fx.policy, fx.oldPolicy)
 	durablefiletest.RequireFile(t, fx.board, boardMode, oldBoard)
 }
 
@@ -269,8 +257,51 @@ func TestApprovalUnpublishedLedgerFailure(t *testing.T) {
 	if want := []string{"policy#1", "board#1", "ledger#1", "policy#2", "board#2"}; !slices.Equal(f.Trace, want) {
 		t.Fatalf("replacements = %v, want %v", f.Trace, want)
 	}
-	requireBytes(t, fx.policy, fx.oldPolicy)
-	requireBytes(t, fx.board, oldBoard)
+	durablefiletest.RequireBytes(t, fx.policy, fx.oldPolicy)
+	durablefiletest.RequireBytes(t, fx.board, oldBoard)
+	if _, err := os.Stat(f.lock); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("lock file after the restore: %v", err)
+	}
+}
+
+// D30: a refusal before the first write returns the caller's own error, so no
+// replacement starts and the files keep their bytes.
+func TestApprovalRefusal(t *testing.T) {
+	cases := []struct {
+		name, decision string
+		setup          func(approval)
+		kept           func(approval) (string, string)
+	}{
+		{name: "decision", decision: "", setup: func(approval) {},
+			kept: func(fx approval) (string, string) { return fx.policy, fx.oldPolicy }},
+		{name: "policy-directory", decision: "decision-1", setup: func(fx approval) {
+			if err := os.Remove(fx.policy); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Mkdir(fx.policy, 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}, kept: func(fx approval) (string, string) { return fx.board, oldBoard }},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			fx := newApproval(t, true)
+			testCase.setup(fx)
+			f := fx.faults(t)
+
+			_, err := fx.store.approve(f.replacer(), fx.plan.ID, testCase.decision, fx.plan.Effects.Delayed, fx.plan.Effects.Removed)
+
+			var replaceErr *durablefile.Error
+			if err == nil || errors.As(err, &replaceErr) {
+				t.Fatalf("err = %v, want the caller's refusal", err)
+			}
+			if len(f.Trace) != 0 {
+				t.Fatalf("replacements = %v after a refusal, want none", f.Trace)
+			}
+			path, want := testCase.kept(fx)
+			durablefiletest.RequireBytes(t, path, want)
+		})
+	}
 }
 
 // D49: the approved receipt may be visible after a failure past the ledger rename, so
@@ -356,7 +387,7 @@ func TestApprovalFailureWithoutBoard(t *testing.T) {
 			if testCase.approved {
 				want = string(fx.plan.Proposed)
 			}
-			requireBytes(t, fx.policy, want)
+			durablefiletest.RequireBytes(t, fx.policy, want)
 			requireAbsent(t, fx.board)
 			fx.requireApproved(t, testCase.approved)
 		})
