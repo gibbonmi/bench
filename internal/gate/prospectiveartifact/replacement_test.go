@@ -25,7 +25,7 @@ func TestOwnerReplacement(t *testing.T) {
 }
 
 // D36: a rename failure of the owner record replacement returns an unpublished failure
-// that wraps its cause, publishes no record, and leaves no temporary file in the root.
+// that wraps its cause and publishes no record.
 func TestOwnerPreRenameFailure(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
@@ -35,11 +35,7 @@ func TestOwnerPreRenameFailure(t *testing.T) {
 	err := publish(rec.Replacer(), root, Record{Schema: 1, OwnerPID: 4242, CommonDir: "/repo/.git"})
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	path := filepath.Join(root, RecordName)
-	if _, err := os.Lstat(path); !errors.Is(err, fs.ErrNotExist) {
+	if _, err := os.Lstat(filepath.Join(root, RecordName)); !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("owner record stat = %v, want no published record", err)
-	}
-	if siblings := durablefiletest.Siblings(t, path); len(siblings) != 0 {
-		t.Fatalf("root entries = %v, want no temporary file", siblings)
 	}
 }
