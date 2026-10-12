@@ -1514,6 +1514,74 @@
             "F2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-b4-r2-standards",
+          "performer": "claude:dcm_rev_b4_std2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54e5145003126d1570f2fe5cd55b825e71b6f3ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b4_std2",
+            "digest": "sha256:a42a856ef2bbc14bd8d967e17831668b38a3fcf0dd32681ec59dd557acddee86",
+            "excerpt": "## Standards confirming round (D-B4, repair delta 12864fc1..92da1312) — 1 finding; S1 closed\nS1 closed: replacement_test.go:19 states the current behavior in present tense.\nS2 | ask-user (orchestrator: auto-fix by plan expansion) | 6 | internal/handoffdoc/replacement_test.go:22 | the table writes out the post-rename stage set that internal/durablefile/replace.go:121-127, durablefiletest/recorder.go, and afterRename in internal/durablefile/replace_test.go:25 already define | export the set once from durablefiletest and range over it\n"
+          },
+          "axis": "Standards",
+          "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+          "tip": "5e6c8994901d776291446a2836e669b1997d7005",
+          "finding_ids": [
+            "S2"
+          ],
+          "supersedes": [
+            "dcm-b4-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-b4-r2-spec",
+          "performer": "claude:dcm_rev_b4_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54e5145003126d1570f2fe5cd55b825e71b6f3ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b4_spec2",
+            "digest": "sha256:a0a91f8cff43295139b638fa95f63b7538a5681089ba964f65f604300b623aed",
+            "excerpt": "## Spec confirming round (D-B4, repair delta 12864fc1..92da1312) — 0 findings\nD21 and its citation intact; the three directory-stage rows meet the behavior-change rule (spec.md:233); D36 pre-rename evidence unchanged; the delta stays inside ticket 05 Writes.\n"
+          },
+          "axis": "Spec",
+          "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+          "tip": "5e6c8994901d776291446a2836e669b1997d7005",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b4-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-b4-r2-coverage",
+          "performer": "claude:dcm_rev_b4_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54e5145003126d1570f2fe5cd55b825e71b6f3ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b4_cov2",
+            "digest": "sha256:cc8c5791967c118548fe9c94a4e92385c0292549cf82aa604ef5206ef921ce34",
+            "excerpt": "## Coverage confirming round (D-B4, repair delta 12864fc1..92da1312) — 0 findings\nF1 closed: new probe, a fallback durablefile.Native().Replace before the wrapped return: bit only at replacement_test.go:61, restored=yes.\nF2 closed: new probe, swallow every Published error: bit in the three stage rows at :31, restored=yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "c05092c603ff080970397570ac6a5c497d3663f4",
+          "tip": "5e6c8994901d776291446a2836e669b1997d7005",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-b4-r1-coverage"
+          ]
         }
       ]
     }
@@ -1759,3 +1827,9 @@ Chunk D-B4 used 0 of its 2 repair cycles before repair 1. S1, F1, and F2 fall on
 - F2 closes in commit 5e6c8994. `TestHandoffReplacement` is table-driven over directory-open, directory-sync, and directory-close. An ignored error at each stage turns its own row red over the whole package. The `claude:dcm_t05_rep1` omission-proof excerpt records each red.
 
 Chunk D-B4 used 1 of its 2 repair cycles.
+
+The D-B4 confirming round at 92da1312 closed S1, F1, and F2. It raised one new finding.
+
+- S2, auto-fix by the --auto-approve plan expansion, confidence 6: `internal/handoffdoc/replacement_test.go:22` writes out the post-rename stage set that the leaf owns. Export the set once from `internal/durablefile/durablefiletest`, and range over it.
+
+Chunk D-B4 takes repair cycle 2 of 2 for S2.
