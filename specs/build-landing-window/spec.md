@@ -435,107 +435,113 @@ BW-F comes last, because its guidance names every form.
 
 ### Completion plan
 
-This version-1 plan is a planning inventory, not a dispatch plan.
-Before the first dispatch, the coordinator amends it to version 2.
+Run line, by reviewer direction on 2026-10-11: opus / high for each ticket author, opus / high for each review axis, and fable / high for each consultation. The reviewer gave `--auto-approve`, so the orchestrator decides each fence, spec, and repair question and flags it.
+
+This version 2 completion plan declares the delegated run and one verification inventory for each ticket.
+Each probe field names the mutation kind, its site, and the test that turns red, and the author derives the exact mutated text.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "build-landing-window-build-20261011",
+    "orchestrator_session": "claude:blw-orchestrator-20261011",
+    "author_limit": 1,
+    "assignments": {
+      "1-hold-the-landing-lease.md": [],
+      "2-route-a-moved-destination.md": [],
+      "3-record-a-fold.md": [],
+      "4-review-a-fold-resolution.md": [],
+      "5-hold-main-for-an-open-build.md": [],
+      "6-open-and-close-chunk-gaps.md": [],
+      "7-grant-a-reviewer-override.md": [],
+      "8-document-the-landing-window.md": []
+    }
+  },
   "chunks": [
     {
       "id": "BW-A",
       "tickets": ["1-hold-the-landing-lease.md"],
       "verification": [
-        {"id": "intent", "command": "bench test --package ./internal/intent/..."},
-        {"id": "commitment", "command": "bench test --package ./internal/commitment/..."},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "gate", "command": "bench test --package ./internal/gate/..."},
-        {"id": "gocache", "command": "bench test --package ./internal/gocache"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "data-handling", "command": "bench test --check data-handling-derivation"},
-        {"id": "system-lease", "command": "bench test --check system --run TestTwoLandingProcessesShareOneLease"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "t1-land-focused", "ticket": "1-hold-the-landing-lease.md", "command": "bench test --package ./internal/worktree --run 'TestLandHoldsTheDestinationLease|TestSecondLandingMeetsTheLease|TestLandReleasesTheLeaseOnRefusal|TestLandResumeTakesNoLease|TestLeaseLockUnavailable|TestLandingRefusalRegistryHasAProducingFixture'", "probe": "Omit the lease acquire call that the landing makes after its admission proofs and before landReviewed, so that a second landing reaches composition and the gate lock. TestSecondLandingMeetsTheLease turns red."},
+        {"id": "t1-lease-focused", "ticket": "1-hold-the-landing-lease.md", "command": "bench test --package ./internal/commitment/repository --run 'TestPublishReleasesTheLeaseInItsDecision|TestLeaseTakesOverADeadOwner'"},
+        {"id": "t1-records-focused", "ticket": "1-hold-the-landing-lease.md", "command": "bench test --package ./internal/intent --run 'TestValidateCommitmentRefusesDuplicateBuildRecords|TestTolerantReadKeepsTheBuildRecords|TestIntentReExportsEveryMovedLedgerName'"},
+        {"id": "t1-inventory-focused", "ticket": "1-hold-the-landing-lease.md", "command": "bench test --package ./internal/conformance --run 'TestCommitmentRecordInventoryNamesTheBuildRecords'"},
+        {"id": "t1-floor", "ticket": "1-hold-the-landing-lease.md", "command": "bench test --package ./internal/intent/... --package ./internal/commitment/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/gate/... --package ./internal/gocache --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t1-data-handling", "ticket": "1-hold-the-landing-lease.md", "command": "bench test --check data-handling-derivation"},
+        {"id": "t1-system-lease", "ticket": "1-hold-the-landing-lease.md", "command": "bench test --check system --run TestTwoLandingProcessesShareOneLease"},
+        {"id": "t1-root-conformance", "ticket": "1-hold-the-landing-lease.md", "command": "bench test --check root-conformance"}
       ]
     },
     {
       "id": "BW-B",
       "tickets": ["2-route-a-moved-destination.md"],
       "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate/..."},
-        {"id": "landing", "command": "bench test --package ./internal/landing/..."},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "commit", "command": "bench test --package ./internal/commit"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "system-race", "command": "bench test --check system --run TestWorktreeLandPublicRaceAndRerun"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "t2-land-focused", "ticket": "2-route-a-moved-destination.md", "command": "bench test --package ./internal/worktree --run 'TestCompletionOverAMovedDestinationNamesTheFold|TestCompareAndSwapRefusalNamesTheFold|TestCheckoutChangeWithoutARefMoveKeepsTheHandback|TestProofFaultOverACurrentSourceHandsBack|TestLandingRefusalRegistryHasAProducingFixture'", "probe": "Swap the ancestry condition that maps a completion proof cause to land-destination-moved, so that a completion proof cause over a moved destination routes to land-handback. TestCompletionOverAMovedDestinationNamesTheFold turns red."},
+        {"id": "t2-authorization-focused", "ticket": "2-route-a-moved-destination.md", "command": "bench test --package ./internal/gate/authorization --run 'TestCompletionProofCauseTravelsAsAType'"},
+        {"id": "t2-floor", "ticket": "2-route-a-moved-destination.md", "command": "bench test --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/commit --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t2-system-race", "ticket": "2-route-a-moved-destination.md", "command": "bench test --check system --run TestWorktreeLandPublicRaceAndRerun"},
+        {"id": "t2-root-conformance", "ticket": "2-route-a-moved-destination.md", "command": "bench test --check root-conformance"}
       ]
     },
     {
       "id": "BW-C",
       "tickets": ["3-record-a-fold.md", "4-review-a-fold-resolution.md"],
       "verification": [
-        {"id": "reviewrecord", "command": "bench test --package ./internal/reviewrecord/..."},
-        {"id": "testreport", "command": "bench test --package ./internal/testreport"},
-        {"id": "gate", "command": "bench test --package ./internal/gate/..."},
-        {"id": "landing", "command": "bench test --package ./internal/landing/..."},
-        {"id": "preflight", "command": "bench test --package ./internal/preflight/..."},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "t3-record-focused", "ticket": "3-record-a-fold.md", "command": "bench test --package ./internal/reviewrecord/recordcmd --run 'TestRecordFold'"},
+        {"id": "t3-chain-focused", "ticket": "3-record-a-fold.md", "command": "bench test --package ./internal/reviewrecord --run 'TestFoldChainAcceptsARecordedFoldBetweenChunks|TestFoldCoversACompletionSourcePastTheLastChunk'", "probe": "Omit the fold-coverage branch for a later chunk base in checkSource, so that the record commit after a recorded fold reads as a chain gap. TestFoldChainAcceptsARecordedFoldBetweenChunks turns red."},
+        {"id": "t3-gate-focused", "ticket": "3-record-a-fold.md", "command": "bench test --package ./internal/gate --run 'TestReviewCheckpointChainGapNamesTheExpectedBase'"},
+        {"id": "t3-floor", "ticket": "3-record-a-fold.md", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/testreport --package ./internal/gate/... --package ./internal/landing/... --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t3-root-conformance", "ticket": "3-record-a-fold.md", "command": "bench test --check root-conformance"},
+        {"id": "t4-review-focused", "ticket": "4-review-a-fold-resolution.md", "command": "bench test --package ./internal/reviewrecord --run 'TestFoldResolutionNeedsReview|TestFoldDerivedFinalRequirements'", "probe": "Omit the merged-test derived requirements that checkCompletion adds for each fold package, so that the complete checkpoint passes without a merged-test result. TestFoldDerivedFinalRequirements turns red."},
+        {"id": "t4-preflight-focused", "ticket": "4-review-a-fold-resolution.md", "command": "bench test --package ./internal/preflight --run 'TestPathsAuthorizedAdmitsARecordedResolutionPath'"},
+        {"id": "t4-route-focused", "ticket": "4-review-a-fold-resolution.md", "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'"},
+        {"id": "t4-help-focused", "ticket": "4-review-a-fold-resolution.md", "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'"},
+        {"id": "t4-floor", "ticket": "4-review-a-fold-resolution.md", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/preflight/... --package ./internal/gate/... --package ./internal/worktree --package ./internal/refusalroute --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t4-root-conformance", "ticket": "4-review-a-fold-resolution.md", "command": "bench test --check root-conformance"}
       ]
     },
     {
       "id": "BW-D",
       "tickets": ["5-hold-main-for-an-open-build.md", "6-open-and-close-chunk-gaps.md"],
       "verification": [
-        {"id": "intent", "command": "bench test --package ./internal/intent/..."},
-        {"id": "commitment", "command": "bench test --package ./internal/commitment/..."},
-        {"id": "gate", "command": "bench test --package ./internal/gate/..."},
-        {"id": "reviewrecord", "command": "bench test --package ./internal/reviewrecord/..."},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "data-handling", "command": "bench test --check data-handling-derivation"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "t5-land-focused", "ticket": "5-hold-main-for-an-open-build.md", "command": "bench test --package ./internal/worktree --run 'TestLandRefusesAnUnrelatedLandingInAnOpenBuild|TestWindowAdmitsTheBuildsOwnLanding|TestWindowClosesAtCompletion|TestWindowClosesOnBlock|TestWindowClosesOnAbandon|TestWindowRecheckAtPublish|TestWindowWinsOverTheLease|TestLandingRefusalRegistryHasAProducingFixture'", "probe": "Omit the window decision from the publish decision in PublishAdmitted, so that only the acquire decision decides the window. TestWindowRecheckAtPublish turns red."},
+        {"id": "t5-window-focused", "ticket": "5-hold-main-for-an-open-build.md", "command": "bench test --package ./internal/commitment/repository --run 'TestWindowNamesTheGapToWaitFor|TestOpenBuildsDeriveFromActiveOwners|TestWindowNeedsAGapOfEveryOtherBuild|TestStartDropsAStaleGap|TestClosersDropTheGapRecord'"},
+        {"id": "t5-floor", "ticket": "5-hold-main-for-an-open-build.md", "command": "bench test --package ./internal/intent/... --package ./internal/commitment/... --package ./internal/worktree --package ./internal/refusalroute --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t5-data-handling", "ticket": "5-hold-main-for-an-open-build.md", "command": "bench test --check data-handling-derivation"},
+        {"id": "t5-system", "ticket": "5-hold-main-for-an-open-build.md", "command": "bench test --check system"},
+        {"id": "t5-root-conformance", "ticket": "5-hold-main-for-an-open-build.md", "command": "bench test --check root-conformance"},
+        {"id": "t6-gate-focused", "ticket": "6-open-and-close-chunk-gaps.md", "command": "bench test --package ./internal/gate --run 'TestGreenChunkCheckpointOpensAGap|TestLastChunkOpensNoGap|TestRedCheckpointOpensNoGap|TestUnboundCheckpointOpensNoGap'"},
+        {"id": "t6-dispatch-focused", "ticket": "6-open-and-close-chunk-gaps.md", "command": "bench test --package ./internal/reviewrecord/recordcmd --run 'TestFirstDispatchClosesTheGap|TestDispatchRefusesAnUnfoldedMain|TestDispatchInsideAChunkKeepsTheGap'", "probe": "Omit the default-branch ancestry refusal from the first-dispatch ledger decision, so that a dispatch over an unfolded main closes the gap. TestDispatchRefusesAnUnfoldedMain turns red."},
+        {"id": "t6-land-focused", "ticket": "6-open-and-close-chunk-gaps.md", "command": "bench test --package ./internal/worktree --run 'TestOpenGapAdmitsAnUnrelatedLanding|TestWindowRecheckAtPublish'"},
+        {"id": "t6-floor", "ticket": "6-open-and-close-chunk-gaps.md", "command": "bench test --package ./internal/commitment/... --package ./internal/gate/... --package ./internal/reviewrecord/... --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t6-root-conformance", "ticket": "6-open-and-close-chunk-gaps.md", "command": "bench test --check root-conformance"}
       ]
     },
     {
       "id": "BW-E",
       "tickets": ["7-grant-a-reviewer-override.md"],
       "verification": [
-        {"id": "commitment", "command": "bench test --package ./internal/commitment/..."},
-        {"id": "intent", "command": "bench test --package ./internal/intent/..."},
-        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "benchguard", "command": "bench test --package ./internal/benchguard"},
-        {"id": "guards", "command": "bench test --package ./internal/guards"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "data-handling", "command": "bench test --check data-handling-derivation"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "t7-verb-focused", "ticket": "7-grant-a-reviewer-override.md", "command": "bench test --package ./internal/commitment/commitcmd --run 'TestOverride'", "probe": "Omit the terminal predicate check from the override verb, so that a pipe on stdin reaches the confirmation read. TestOverrideRefusesWithoutATerminal turns red."},
+        {"id": "t7-land-focused", "ticket": "7-grant-a-reviewer-override.md", "command": "bench test --package ./internal/worktree --run 'TestOverrideAdmitsOneLandingThroughEveryWindow|TestOverrideIsConsumedAtPublish|TestOverrideSurvivesARefusedLanding'"},
+        {"id": "t7-guard-focused", "ticket": "7-grant-a-reviewer-override.md", "command": "bench test --package ./internal/benchguard --run 'TestGuardDeniesTheOverrideVerb'"},
+        {"id": "t7-help-focused", "ticket": "7-grant-a-reviewer-override.md", "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'"},
+        {"id": "t7-floor", "ticket": "7-grant-a-reviewer-override.md", "command": "bench test --package ./internal/commitment/... --package ./internal/intent/... --package ./internal/refusalroute --package ./internal/benchguard --package ./internal/guards --package ./internal/anchors --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t7-data-handling", "ticket": "7-grant-a-reviewer-override.md", "command": "bench test --check data-handling-derivation"},
+        {"id": "t7-root-conformance", "ticket": "7-grant-a-reviewer-override.md", "command": "bench test --check root-conformance"}
       ]
     },
     {
       "id": "BW-F",
       "tickets": ["8-document-the-landing-window.md"],
       "verification": [
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "conformance-meta", "command": "bench test --check conformance-meta"},
-        {"id": "prose", "command": "bench test --check prose"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "t8-anchors-focused", "ticket": "8-document-the-landing-window.md", "command": "bench test --package ./internal/anchors --run 'TestChunkChainAnchors'", "probe": "Omit the forbid row for the retired sentence that folds main at the start of the last chunk from internal/anchors/registry_chunk_chain.go, so that the old sentence passes the registry. TestChunkChainAnchors turns red."},
+        {"id": "t8-floor", "ticket": "8-document-the-landing-window.md", "command": "bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t8-guidance", "ticket": "8-document-the-landing-window.md", "command": "bench test --check docs-currency-workflow"},
+        {"id": "t8-conformance-meta", "ticket": "8-document-the-landing-window.md", "command": "bench test --check conformance-meta"},
+        {"id": "t8-prose", "ticket": "8-document-the-landing-window.md", "command": "bench test --check prose"},
+        {"id": "t8-root-conformance", "ticket": "8-document-the-landing-window.md", "command": "bench test --check root-conformance"}
       ]
     }
   ],
