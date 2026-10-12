@@ -52,8 +52,7 @@ type Store struct {
 	Files FileOps
 }
 
-// Replace encodes the indented document plus a final newline at 0600 and returns the
-// replacement error unchanged.
+// Replace writes document through Files and returns the replacement error unchanged.
 func (store Store) Replace(document Document) error {
 	return writeDocument(store.Files.withDefaults(), store.Path, document)
 }
