@@ -26,10 +26,10 @@ Fail ledger directory sync after completed rename.
 The new ledger and matching witness remain, compensation does not run, the lock releases, and the call returns uncertainty.
 Fail before rename separately and keep the existing old-byte and compensation-count assertions.
 
-- [ ] The intent ledger caller exposes an injected directory-sync failure. (D22).
-- [ ] A post-rename ledger failure skips compensation. (D44).
-- [ ] A pre-rename ledger failure compensates exactly once. (D45).
-- [ ] A post-rename reauthorization failure retains the next request and its matching external effect. (D52).
+- [x] The intent ledger caller exposes an injected directory-sync failure. (D22).
+- [x] A post-rename ledger failure skips compensation. (D44).
+- [x] A pre-rename ledger failure compensates exactly once. (D45).
+- [x] A post-rename reauthorization failure retains the next request and its matching external effect. (D52).
 
 ## Checkpoint verification
 
