@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:fd92d1ea9c14b9c23a33447baa5f7cc1afe5b2c99dc7c09f54cc9c666808e6fc",
+  "plan_digest": "sha256:908fc1e6123bcee6feb067edaa58110a42f1ba077bfcf2abe60805d1e61bc234",
   "implementation_session": "",
   "chunks": [
     {
@@ -1253,9 +1253,9 @@
     {
       "id": "D-B4",
       "base": "c05092c603ff080970397570ac6a5c497d3663f4",
-      "tip": "5e6c8994901d776291446a2836e669b1997d7005",
-      "plan_digest": "sha256:fd92d1ea9c14b9c23a33447baa5f7cc1afe5b2c99dc7c09f54cc9c666808e6fc",
-      "source_digest": "54e5145003126d1570f2fe5cd55b825e71b6f3ad",
+      "tip": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+      "plan_digest": "sha256:908fc1e6123bcee6feb067edaa58110a42f1ba077bfcf2abe60805d1e61bc234",
+      "source_digest": "253d32d0972a9499f4d7c52f935285154c9173c6",
       "acceptance_rows": [
         "D21"
       ],
@@ -1445,6 +1445,118 @@
               "ref": "5e6c8994901d776291446a2836e669b1997d7005",
               "digest": "sha256:a2e9e3a0e19b0953b1600842d1712f05810b9b1138fafa2197ec2eeba1cfff44",
               "excerpt": "D-B4 preservation probes at 5e6c8994901d776291446a2836e669b1997d7005 (FT354-durable-callers), subject internal/handoffdoc/store.go, bench probe ... --package ./internal/handoffdoc, no --run filter. Each probe restored yes; the package passes 29 tests after restore. TestHandoffReplacement holds the one independent mode and bytes assertion (frozen from the pre-migration writer) for its three post-rename rows. TestHandoffPreRenameFailure checks only the caller refusal outcome (prior document bytes).\n\nProbe 1 (mode literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()), 0o640)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,3,yes\nfailures[3]: TestHandoffReplacement/directory-open, /directory-sync, /directory-close, each \"replacement_test.go:32: .../session-handoff.md mode = -rw-r-----, want a regular file at -rw-r--r--\".\n\nProbe 2 (payload literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()+\\\"<!-- -->\\\\n\\\"), 0o644)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,3,yes\nfailures[3]: TestHandoffReplacement/directory-open, /directory-sync, /directory-close, each \"replacement_test.go:32: .../session-handoff.md = \\\"## main\\\\n\\\\nNext command: ... (442-444 bytes)\".\n\nProbe 3 (prior-bytes necessity: a fallback write after an unpublished error). Swap old (exact): \"\\t\\treturn fmt.Errorf(\\\"write handoff document: %w\\\", err)\"\nSwap new (exact): \"\\t\\t_ = os.WriteFile(path, []byte(doc.Render()), 0o644)\\n\\t\\treturn fmt.Errorf(\\\"write handoff document: %w\\\", err)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffPreRenameFailure,\"replacement_test.go:61: document = \\\"## main\\\\n\\\\nNext command:\\\\n\\\\n### State\\\\n\\\\n## request 9f2ab77 ... The phase is live.\\\\n\\\\n\\\", want the prior document \\\"## main\\\\n\\\\nNext comman… (260 bytes)\",1\nThe red falls only at the prior-bytes check (line 61); the RequireFailure check at line 55 passes, because the error is still wrapped.\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t05-rep2-caller-tests",
+          "performer": "claude:dcm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "253d32d0972a9499f4d7c52f935285154c9173c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+            "digest": "sha256:8be8889ffd3884b26217152364cd4f6d21d37ebf7d513d90eb99265e0e07eb34",
+            "excerpt": "bench test --package ./internal/handoffdoc at 5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7 (FT354-durable-callers). TestHandoffReplacement ranges its D21 post-rename rows over durablefiletest.PostRenameStages (directory-open, directory-sync, directory-close; Published=true; one bytes and 0644 mode assertion), and TestHandoffPreRenameFailure (D36 rename fault; prior document kept) passes.\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,pass,29,29\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/handoffdoc",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t05-rep2-durablefiletest",
+          "performer": "claude:dcm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "253d32d0972a9499f4d7c52f935285154c9173c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+            "digest": "sha256:627e57eb7c8e80758fdb42aaf252362b65e05d8c2ffb7508cae9cec21982b345",
+            "excerpt": "bench test --package ./internal/durablefile/durablefiletest at 5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7 (FT354-durable-callers). The package compiles and has no own tests; it exports PostRenameStages, RequireFailure, and RequireFile to the caller tests, which pass in the focused call over ./internal/handoffdoc, ./internal/durablefile, ./internal/capturetx, ./internal/gate/prospectiveartifact, and ./internal/gate.\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/durablefile/durablefiletest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "durablefiletest",
+          "command": "bench test --package ./internal/durablefile/durablefiletest",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t05-rep2-root-conformance",
+          "performer": "claude:dcm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "253d32d0972a9499f4d7c52f935285154c9173c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+            "digest": "sha256:015ee3a4240bc24c1de0ee744cb5096c295b4bfa9250d10cb7b7bc9c5ee2a2fa",
+            "excerpt": "bench test --check root-conformance at 5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7 (FT354-durable-callers)\ntree[1]{target,head,dirty}:\n  FT354-durable-callers,5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15772,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t05-rep2-omission-proof",
+          "performer": "claude:dcm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "253d32d0972a9499f4d7c52f935285154c9173c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+            "digest": "sha256:01eb4420884dbd2a8339f0b00cf0d2b923f00fb9bbe25c752f99b9d7d7285be5",
+            "excerpt": "D-B4 omission-proof probes at 5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7 (FT354-durable-callers), bench probe ... --package ./internal/handoffdoc, no --run filter. Each probe restored yes; the package passes 29 tests after restore. TestHandoffReplacement ranges over durablefiletest.PostRenameStages.\n\nProbe 0 (S2 set-ownership pair; subject internal/durablefile/durablefiletest/assert.go). Swap old (exact): \"var PostRenameStages = []string{\\\"directory-open\\\", \\\"directory-sync\\\", \\\"directory-close\\\"}\"\nSwap new (exact): \"var PostRenameStages = []string{\\\"directory-sync\\\", \\\"directory-close\\\"}\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  silent,internal/durablefile/durablefiletest/assert.go,swap,passed,0,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,pass,30,28\nThe handoff test loses its directory-open row (28 tests, not 29), so the row set comes from the exported set. Probe 1 is the pair: with the set intact, an ignored directory-open error turns that row red.\n\nProbe 1 (ignore a directory-open error; subject internal/handoffdoc/store.go). Swap old (exact): \"\\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nSwap new (exact): \"\\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil && !func() bool { var e *durablefile.Error; return errors.As(err, &e) && e.Stage == \\\"directory-open\\\" }() {\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement/directory-open,\"replacement_test.go:31: err = <nil>, want a *durablefile.Error at stage directory-open with Published=true that wraps injected handoff directory-open failure\",1\n\nProbe 2 (ignore a directory-sync error). Swap old: same as Probe 1. Swap new (exact): the Probe 1 new text with \"directory-sync\" in place of \"directory-open\".\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement/directory-sync,\"replacement_test.go:31: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected handoff directory-sync failure\",1\n\nProbe 3 (ignore a directory-close error). Swap old: same as Probe 1. Swap new (exact): the Probe 1 new text with \"directory-close\" in place of \"directory-open\".\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement/directory-close,\"replacement_test.go:31: err = <nil>, want a *durablefile.Error at stage directory-close with Published=true that wraps injected handoff directory-close failure\",1\n\nProbe 4 (bypass the injected leaf with the native owner). Swap old (exact): \"\\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nSwap new (exact): \"\\tif err := durablefile.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,4,yes\nfailures[4]: TestHandoffPreRenameFailure (replacement_test.go:55, err = <nil>, want stage rename Published=false), TestHandoffReplacement/directory-open, TestHandoffReplacement/directory-sync, TestHandoffReplacement/directory-close (replacement_test.go:31, err = <nil>).\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/handoffdoc",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore ignored directory errors or bypass the leaf. The section-writing composition test must detect the missing failure.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+              "digest": "sha256:01eb4420884dbd2a8339f0b00cf0d2b923f00fb9bbe25c752f99b9d7d7285be5",
+              "excerpt": "D-B4 omission-proof probes at 5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7 (FT354-durable-callers), bench probe ... --package ./internal/handoffdoc, no --run filter. Each probe restored yes; the package passes 29 tests after restore. TestHandoffReplacement ranges over durablefiletest.PostRenameStages.\n\nProbe 0 (S2 set-ownership pair; subject internal/durablefile/durablefiletest/assert.go). Swap old (exact): \"var PostRenameStages = []string{\\\"directory-open\\\", \\\"directory-sync\\\", \\\"directory-close\\\"}\"\nSwap new (exact): \"var PostRenameStages = []string{\\\"directory-sync\\\", \\\"directory-close\\\"}\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  silent,internal/durablefile/durablefiletest/assert.go,swap,passed,0,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,pass,30,28\nThe handoff test loses its directory-open row (28 tests, not 29), so the row set comes from the exported set. Probe 1 is the pair: with the set intact, an ignored directory-open error turns that row red.\n\nProbe 1 (ignore a directory-open error; subject internal/handoffdoc/store.go). Swap old (exact): \"\\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nSwap new (exact): \"\\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil && !func() bool { var e *durablefile.Error; return errors.As(err, &e) && e.Stage == \\\"directory-open\\\" }() {\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement/directory-open,\"replacement_test.go:31: err = <nil>, want a *durablefile.Error at stage directory-open with Published=true that wraps injected handoff directory-open failure\",1\n\nProbe 2 (ignore a directory-sync error). Swap old: same as Probe 1. Swap new (exact): the Probe 1 new text with \"directory-sync\" in place of \"directory-open\".\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement/directory-sync,\"replacement_test.go:31: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected handoff directory-sync failure\",1\n\nProbe 3 (ignore a directory-close error). Swap old: same as Probe 1. Swap new (exact): the Probe 1 new text with \"directory-close\" in place of \"directory-open\".\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffReplacement/directory-close,\"replacement_test.go:31: err = <nil>, want a *durablefile.Error at stage directory-close with Published=true that wraps injected handoff directory-close failure\",1\n\nProbe 4 (bypass the injected leaf with the native owner). Swap old (exact): \"\\tif err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nSwap new (exact): \"\\tif err := durablefile.Replace(path, []byte(doc.Render()), 0o644); err != nil {\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,4,yes\nfailures[4]: TestHandoffPreRenameFailure (replacement_test.go:55, err = <nil>, want stage rename Published=false), TestHandoffReplacement/directory-open, TestHandoffReplacement/directory-sync, TestHandoffReplacement/directory-close (replacement_test.go:31, err = <nil>).\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t05-rep2-preservation",
+          "performer": "claude:dcm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "253d32d0972a9499f4d7c52f935285154c9173c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+            "digest": "sha256:69ebb3be7bad3f85787f032b73e6eaaa10a1a4fa4b02d3ea634eeae9c047858c",
+            "excerpt": "D-B4 preservation probes at 5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7 (FT354-durable-callers), subject internal/handoffdoc/store.go, bench probe ... --package ./internal/handoffdoc, no --run filter. Each probe restored yes; the package passes 29 tests after restore. TestHandoffReplacement holds the one independent mode and bytes assertion (frozen from the pre-migration writer) for each row of durablefiletest.PostRenameStages. TestHandoffPreRenameFailure checks only the caller refusal outcome (prior document bytes).\n\nProbe 1 (mode literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()), 0o640)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,3,yes\nfailures[3]: TestHandoffReplacement/directory-open, /directory-sync, /directory-close, each \"replacement_test.go:32: .../session-handoff.md mode = -rw-r-----, want a regular file at -rw-r--r--\".\n\nProbe 2 (payload literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()+\\\"<!-- -->\\\\n\\\"), 0o644)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,3,yes\nfailures[3]: TestHandoffReplacement/directory-open, /directory-sync, /directory-close, each \"replacement_test.go:32: .../session-handoff.md = \\\"## main\\\\n\\\\nNext command: ... (443 bytes)\".\n\nProbe 3 (prior-bytes necessity: a fallback write after an unpublished error). Swap old (exact): \"\\t\\treturn fmt.Errorf(\\\"write handoff document: %w\\\", err)\"\nSwap new (exact): \"\\t\\t_ = os.WriteFile(path, []byte(doc.Render()), 0o644)\\n\\t\\treturn fmt.Errorf(\\\"write handoff document: %w\\\", err)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffPreRenameFailure,\"replacement_test.go:61: document = \\\"## main\\\\n\\\\nNext command:\\\\n\\\\n### State\\\\n\\\\n## request 9f2ab77 ... The phase is live.\\\\n\\\\n\\\", want the prior document \\\"## main\\\\n\\\\nNext comman… (260 bytes)\",1\nThe red falls only at the prior-bytes check (line 61); the RequireFailure check at line 55 passes, because the error is still wrapped.\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/handoffdoc",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7",
+              "digest": "sha256:69ebb3be7bad3f85787f032b73e6eaaa10a1a4fa4b02d3ea634eeae9c047858c",
+              "excerpt": "D-B4 preservation probes at 5e49631e1c32bff364b2b48a3c1b0afc17cbf8d7 (FT354-durable-callers), subject internal/handoffdoc/store.go, bench probe ... --package ./internal/handoffdoc, no --run filter. Each probe restored yes; the package passes 29 tests after restore. TestHandoffReplacement holds the one independent mode and bytes assertion (frozen from the pre-migration writer) for each row of durablefiletest.PostRenameStages. TestHandoffPreRenameFailure checks only the caller refusal outcome (prior document bytes).\n\nProbe 1 (mode literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()), 0o640)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,3,yes\nfailures[3]: TestHandoffReplacement/directory-open, /directory-sync, /directory-close, each \"replacement_test.go:32: .../session-handoff.md mode = -rw-r-----, want a regular file at -rw-r--r--\".\n\nProbe 2 (payload literal necessity). Swap old (exact): \"[]byte(doc.Render()), 0o644)\" new (exact): \"[]byte(doc.Render()+\\\"<!-- -->\\\\n\\\"), 0o644)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,3,yes\nfailures[3]: TestHandoffReplacement/directory-open, /directory-sync, /directory-close, each \"replacement_test.go:32: .../session-handoff.md = \\\"## main\\\\n\\\\nNext command: ... (443 bytes)\".\n\nProbe 3 (prior-bytes necessity: a fallback write after an unpublished error). Swap old (exact): \"\\t\\treturn fmt.Errorf(\\\"write handoff document: %w\\\", err)\"\nSwap new (exact): \"\\t\\t_ = os.WriteFile(path, []byte(doc.Render()), 0o644)\\n\\t\\treturn fmt.Errorf(\\\"write handoff document: %w\\\", err)\"\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoffdoc/store.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestHandoffPreRenameFailure,\"replacement_test.go:61: document = \\\"## main\\\\n\\\\nNext command:\\\\n\\\\n### State\\\\n\\\\n## request 9f2ab77 ... The phase is live.\\\\n\\\\n\\\", want the prior document \\\"## main\\\\n\\\\nNext comman… (260 bytes)\",1\nThe red falls only at the prior-bytes check (line 61); the RequireFailure check at line 55 passes, because the error is still wrapped.\n"
             }
           }
         }
@@ -1695,6 +1807,24 @@
           "D-B4"
         ]
       }
+    },
+    {
+      "from": "sha256:fd92d1ea9c14b9c23a33447baa5f7cc1afe5b2c99dc7c09f54cc9c666808e6fc",
+      "to": "sha256:908fc1e6123bcee6feb067edaa58110a42f1ba077bfcf2abe60805d1e61bc234",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ]
+      }
     }
   ]
 }
@@ -1833,3 +1963,5 @@ The D-B4 confirming round at 92da1312 closed S1, F1, and F2. It raised one new f
 - S2, auto-fix by the --auto-approve plan expansion, confidence 6: `internal/handoffdoc/replacement_test.go:22` writes out the post-rename stage set that the leaf owns. Export the set once from `internal/durablefile/durablefiletest`, and range over it.
 
 Chunk D-B4 takes repair cycle 2 of 2 for S2.
+
+S2 closes in commit 5e49631e, where `TestHandoffReplacement` ranges over `durablefiletest.PostRenameStages`, and chunk D-B4 used 2 of its 2 repair cycles.
