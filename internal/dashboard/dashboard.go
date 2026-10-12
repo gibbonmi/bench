@@ -83,7 +83,7 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.Errorf("cannot resolve git dir", err.Error()) + "\n", 1
 	}
-	target := filepath.Join(gitDir, "bench-dashboard.html")
+	target := filepath.Join(gitDir, pageName)
 	if err := atomicWrite(durablefile.Native(), target, page); err != nil {
 		return toon.Errorf("cannot write bench-dashboard.html", err.Error()) + "\n", 1
 	}
@@ -132,7 +132,10 @@ func poolWorktrees(regs []worktree.Registered) []worktree.Registered {
 	return out
 }
 
-const pageMode fs.FileMode = 0o600
+const (
+	pageName             = "bench-dashboard.html"
+	pageMode fs.FileMode = 0o600
+)
 
 // atomicWrite replaces target with content through r, so a reader of the published path
 // sees a whole page and never a partial one.
