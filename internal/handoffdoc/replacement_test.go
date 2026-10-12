@@ -16,19 +16,23 @@ var replacementSection = Section{
 	State:  "The phase is live.",
 }
 
-// D21: a directory-sync failure after the rename fails the section write, which the
-// former writer ignored.
+// D21: a directory failure after the rename fails the section write.
 func TestHandoffReplacement(t *testing.T) {
 	t.Parallel()
-	path := filepath.Join(t.TempDir(), "session-handoff.md")
-	cause := errors.New("injected handoff directory-sync failure")
-	rec := &durablefiletest.Recorder{Fail: map[string]error{"directory-sync": cause}}
+	for _, stage := range []string{"directory-open", "directory-sync", "directory-close"} {
+		t.Run(stage, func(t *testing.T) {
+			t.Parallel()
+			path := filepath.Join(t.TempDir(), "session-handoff.md")
+			cause := errors.New("injected handoff " + stage + " failure")
+			rec := &durablefiletest.Recorder{Fail: map[string]error{stage: cause}}
 
-	err := writeSection(rec.Replacer(), path, replacementSection)
+			err := writeSection(rec.Replacer(), path, replacementSection)
 
-	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)
-	durablefiletest.RequireFile(t, path, 0o644, "## main\n\nNext command:\n\n### State\n\n"+
-		"## request 9f2ab77\n\nRequest token: `9f2ab77`\nNext command: `bench gate`\n\n### State\n\nThe phase is live.\n\n")
+			durablefiletest.RequireFailure(t, err, stage, true, cause)
+			durablefiletest.RequireFile(t, path, 0o644, "## main\n\nNext command:\n\n### State\n\n"+
+				"## request 9f2ab77\n\nRequest token: `9f2ab77`\nNext command: `bench gate`\n\n### State\n\nThe phase is live.\n\n")
+		})
+	}
 }
 
 // D36: a failure before the rename refuses the section write and leaves the prior
