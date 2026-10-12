@@ -4082,6 +4082,74 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-c4-r2-standards",
+          "performer": "claude:dcm_rev_c4_std2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_std2",
+            "digest": "sha256:a8686cedde438890b5bded068574b765532355907d45cce1df4aec316d881e16",
+            "excerpt": "## Standards (D-C4 confirming, f3e417f8..c377e632) — S1, S2, S3 closed; 1 new finding.\nS4 | auto-fix (orchestrator: evidence-only comment correction; Standards reaffirms) | 5 | internal/probe/probe.go:231-232 | the render doc comment says a failed restore keeps \"the preserved row\", but keptCopy answers with two fallback error lines when the copy path refuses | say that a failed restore keeps the answer that names the kept copy\nVeto items graded with no defect: keptCopy rename, the fallback shape, the variadic probeWith argument.\n"
+          },
+          "axis": "Standards",
+          "base": "68e390e155699b5aae10125808e86f8eb5eb3b93",
+          "tip": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "finding_ids": [
+            "S4"
+          ],
+          "supersedes": [
+            "dcm-c4-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-c4-r2-spec",
+          "performer": "claude:dcm_rev_c4_spec2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_spec2",
+            "digest": "sha256:be690513cf0d98313120a5afa836217528f9fd157efc2a2008ff7980686eeaa6",
+            "excerpt": "## Spec (D-C4 confirming, f3e417f8..c377e632) — P1 closed (probe.go:206, 218-225, 248, 257); 0 new findings.\nNo behavior change outside ticket 11's acceptance; encodable paths are byte-identical.\nAdvice: the mutation-cause line prints err.Error() unstripped; older behavior, not required by the spec.\n"
+          },
+          "axis": "Spec",
+          "base": "68e390e155699b5aae10125808e86f8eb5eb3b93",
+          "tip": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c4-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-c4-r2-coverage",
+          "performer": "claude:dcm_rev_c4_cov2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "808f0b78dfb2cc543b4bcadac7683c7900b809d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c4_cov2",
+            "digest": "sha256:cb3db9e7d0f276eb8e161d7958825e4b99de7016d08fff75c17be143dec88895",
+            "excerpt": "## Coverage (D-C4 confirming, f3e417f8..c377e632) — C1 closed (replacement_test.go:124-166; reds N1-N5); C2 closed (dcm-t11-rep1 probe entries: exit 0, bit, probe exit 1, restore pass); 0 new findings.\nNo probe replayed; the orchestrator's independent sanitize.Strip probe bit, restored yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "68e390e155699b5aae10125808e86f8eb5eb3b93",
+          "tip": "c377e632d4056ebb6853ed1087efbb38e010c824",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c4-r1-coverage"
+          ]
         }
       ]
     }
@@ -4853,3 +4921,7 @@ Chunk D-C4 used 0 of its 2 repair cycles before repair 1. S1, S2, S3, P1, C1, an
 - S3 and C2 close in the `dcm-t11-rep1` entries. Each probe entry records exit code 0 and probe exit code 1.
 
 Chunk D-C4 used 1 of its 2 repair cycles.
+
+The D-C4 confirming round at 08eb67b3 closed S1, S2, S3, P1, C1, and C2. It raised one comment-only finding.
+
+- S4, auto-fix as an evidence-only comment correction, confidence 5: the `render` comment at `internal/probe/probe.go:231-232` says that a failed restore keeps the preserved row. When the copy path refuses, `keptCopy` answers with two error lines instead. The orchestrator corrects the comment, and the Standards axis reaffirms it.
