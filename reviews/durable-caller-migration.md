@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:caaaa230b74e8cf3a79cb22fa805c3a28bafb054e1b4053e68684ed4a0dee7cf",
+  "plan_digest": "sha256:0a9c82011a15380bda3c64cc4ee87594038caa6080e5ec3d4f7ff5bef371daf6",
   "implementation_session": "",
   "chunks": [
     {
@@ -4609,6 +4609,113 @@
           ]
         }
       ]
+    },
+    {
+      "id": "D-C6",
+      "base": "3210553dcf40b324eeb975dd04758adbff2a02e9",
+      "tip": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+      "plan_digest": "sha256:0a9c82011a15380bda3c64cc4ee87594038caa6080e5ec3d4f7ff5bef371daf6",
+      "source_digest": "f2d751e5d1918bc60b6724a738649a3747a748d4",
+      "acceptance_rows": [
+        "D29"
+      ],
+      "verification": [
+        {
+          "id": "dc6-caller-tests-1",
+          "performer": "claude:dcm_t13",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f2d751e5d1918bc60b6724a738649a3747a748d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+            "digest": "sha256:7917750030b24558683794abd46aabf0cfe58f491fdfe357e126e65ccb9d117e",
+            "excerpt": "bench test --package ./internal/repairpilot at FT354-durable-callers e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6 (clean tree)\npackages: github.com/gibbonmi/bench/internal/repairpilot,pass,175,136\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/repairpilot",
+          "exit_code": 0
+        },
+        {
+          "id": "dc6-root-conformance-1",
+          "performer": "claude:dcm_t13",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f2d751e5d1918bc60b6724a738649a3747a748d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+            "digest": "sha256:2d26c84cf179dc83d6f0daeceec0381f53441dbfe40b12af89e5c45440dfd728",
+            "excerpt": "bench test --check root-conformance at FT354-durable-callers e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6 (clean tree)\ncheck: root-conformance,conformance,1 test\npackages: github.com/gibbonmi/bench/internal/conformance,pass,17932,1\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc6-omission-proof-1",
+          "performer": "claude:dcm_t13",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f2d751e5d1918bc60b6724a738649a3747a748d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+            "digest": "sha256:de2cb074847965624660558a48d873e59290353394e6f379efcffafad0923987",
+            "excerpt": "omission-proof for D29 at FT354-durable-callers e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6 (clean tree).\nPlan probe: restore the local file-only sequence. Package run: bench test --package ./internal/repairpilot passes (136 tests).\n\nbench probe internal/repairpilot/command.go --package ./internal/repairpilot --run TestPilotReplacement\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: temporary, err := files.CreateTemp(filepath.Dir(path), \".pilot-*\"); if err != nil { return err }; defer files.Remove(temporary.Name()); if err := temporary.Chmod(0o600); err != nil { return err }; if _, err := temporary.Write(append(data, '\\n')); err != nil { return err }; if err := temporary.Sync(); err != nil { return err }; if err := temporary.Close(); err != nil { return err }; return files.Rename(temporary.Name(), path)\n  verdict=bit cause=failed failed_tests=1 restored=yes mutated package exit 1\n  TestPilotReplacement replacement_test.go:22: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected pilot directory-sync failure\n\nThe weakened short-write alternative ran in phase 1 at dcm-t13 3e9301f7 (internal/durablefile/replace.go \"if err == nil && n < len(data) {\" -> \"if err == nil && n < 0 {\"): bit, TestRepairPilotStorage/write-failure command_test.go:193 \"partial write = <nil>; want short write\", restored=yes. The plan names it as an alternative (\"or\"), so it was not rerun.\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/repairpilot",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the local file-only sequence or weaken the short-write assertion. The corresponding real Store.Replace witness must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+              "digest": "sha256:de2cb074847965624660558a48d873e59290353394e6f379efcffafad0923987",
+              "excerpt": "omission-proof for D29 at FT354-durable-callers e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6 (clean tree).\nPlan probe: restore the local file-only sequence. Package run: bench test --package ./internal/repairpilot passes (136 tests).\n\nbench probe internal/repairpilot/command.go --package ./internal/repairpilot --run TestPilotReplacement\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: temporary, err := files.CreateTemp(filepath.Dir(path), \".pilot-*\"); if err != nil { return err }; defer files.Remove(temporary.Name()); if err := temporary.Chmod(0o600); err != nil { return err }; if _, err := temporary.Write(append(data, '\\n')); err != nil { return err }; if err := temporary.Sync(); err != nil { return err }; if err := temporary.Close(); err != nil { return err }; return files.Rename(temporary.Name(), path)\n  verdict=bit cause=failed failed_tests=1 restored=yes mutated package exit 1\n  TestPilotReplacement replacement_test.go:22: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected pilot directory-sync failure\n\nThe weakened short-write alternative ran in phase 1 at dcm-t13 3e9301f7 (internal/durablefile/replace.go \"if err == nil && n < len(data) {\" -> \"if err == nil && n < 0 {\"): bit, TestRepairPilotStorage/write-failure command_test.go:193 \"partial write = <nil>; want short write\", restored=yes. The plan names it as an alternative (\"or\"), so it was not rerun.\n"
+            }
+          }
+        },
+        {
+          "id": "dc6-preservation-1",
+          "performer": "claude:dcm_t13",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f2d751e5d1918bc60b6724a738649a3747a748d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+            "digest": "sha256:6812936303c0c8e5f5f9bac475864b5cabd34995e8903fe880bbf00a4bb25ab5",
+            "excerpt": "preservation for D29 at FT354-durable-callers e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6 (clean tree). Package run: bench test --package ./internal/repairpilot passes (136 tests).\nKept literals (spec inventory row D29 freezes 0600 and the indented document plus final newline): the mode 0o600 and the expected bytes from the test-side documentBytes encoder in TestPilotReplacement. Each restored=yes, mutated package exit 1.\n\n1. Bytes necessity (whole package, no --run): command.go\n  OLD: data, err := json.MarshalIndent(document, \"\", \"  \")\n  NEW: data, err := json.MarshalIndent(document, \"\", \"\\t\")\n  bit, failed_tests=1: TestPilotReplacement replacement_test.go:23 (bytes mismatch). Only the kept expectation catches it.\n\n2. Mode necessity (whole package, no --run): command.go\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: return files.Replacer.Replace(path, append(data, '\\n'), 0o640)\n  bit, failed_tests=2: TestPilotReplacement replacement_test.go:23 (mode -rw-r----- want -rw-------), TestRepairPilotStorage/custody command_test.go:146.\n\n3. Pre-rename refusal (D36 row, --run TestRepairPilotStorage/replace-failure): fallback write of the new bytes after an unpublished error, command.go\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: if err := files.Replacer.Replace(path, append(data, '\\n'), 0o600); err != nil { var failure *durablefile.Error; if errors.As(err, &failure) && !failure.Published { _ = os.WriteFile(path, append(data, '\\n'), 0o600) }; return err }; return nil\n  bit, failed_tests=1: TestRepairPilotStorage/replace-failure command_test.go:214, only at the old-bytes check (RequireBytes).\n\n4. D30 refusal witness (--run TestPilotDirectoryRefusal): swallow the pilot directory creation refusal, command.go withPilotLock\n  OLD: if err := files.MkdirAll(directory, 0o700); err != nil {\n  NEW: if err := files.MkdirAll(directory, 0o700); err != nil && false {\n  bit, failed_tests=1: TestPilotDirectoryRefusal replacement_test.go:40 (output names the chmod failure, not the injected refusal).\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/repairpilot",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6",
+              "digest": "sha256:6812936303c0c8e5f5f9bac475864b5cabd34995e8903fe880bbf00a4bb25ab5",
+              "excerpt": "preservation for D29 at FT354-durable-callers e2a36eb3bb2726e9c3edbdb3c6662898cf6b82c6 (clean tree). Package run: bench test --package ./internal/repairpilot passes (136 tests).\nKept literals (spec inventory row D29 freezes 0600 and the indented document plus final newline): the mode 0o600 and the expected bytes from the test-side documentBytes encoder in TestPilotReplacement. Each restored=yes, mutated package exit 1.\n\n1. Bytes necessity (whole package, no --run): command.go\n  OLD: data, err := json.MarshalIndent(document, \"\", \"  \")\n  NEW: data, err := json.MarshalIndent(document, \"\", \"\\t\")\n  bit, failed_tests=1: TestPilotReplacement replacement_test.go:23 (bytes mismatch). Only the kept expectation catches it.\n\n2. Mode necessity (whole package, no --run): command.go\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: return files.Replacer.Replace(path, append(data, '\\n'), 0o640)\n  bit, failed_tests=2: TestPilotReplacement replacement_test.go:23 (mode -rw-r----- want -rw-------), TestRepairPilotStorage/custody command_test.go:146.\n\n3. Pre-rename refusal (D36 row, --run TestRepairPilotStorage/replace-failure): fallback write of the new bytes after an unpublished error, command.go\n  OLD: return files.Replacer.Replace(path, append(data, '\\n'), 0o600)\n  NEW: if err := files.Replacer.Replace(path, append(data, '\\n'), 0o600); err != nil { var failure *durablefile.Error; if errors.As(err, &failure) && !failure.Published { _ = os.WriteFile(path, append(data, '\\n'), 0o600) }; return err }; return nil\n  bit, failed_tests=1: TestRepairPilotStorage/replace-failure command_test.go:214, only at the old-bytes check (RequireBytes).\n\n4. D30 refusal witness (--run TestPilotDirectoryRefusal): swallow the pilot directory creation refusal, command.go withPilotLock\n  OLD: if err := files.MkdirAll(directory, 0o700); err != nil {\n  NEW: if err := files.MkdirAll(directory, 0o700); err != nil && false {\n  bit, failed_tests=1: TestPilotDirectoryRefusal replacement_test.go:40 (output names the chmod failure, not the injected refusal).\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -5084,6 +5191,42 @@
     {
       "from": "sha256:016cf63ba39a08352f69ad366b45a159ad6aca725a2e36a7620f02367440b05b",
       "to": "sha256:caaaa230b74e8cf3a79cb22fa805c3a28bafb054e1b4053e68684ed4a0dee7cf",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ],
+        "D-C3": [
+          "D-C3"
+        ],
+        "D-C4": [
+          "D-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:caaaa230b74e8cf3a79cb22fa805c3a28bafb054e1b4053e68684ed4a0dee7cf",
+      "to": "sha256:0a9c82011a15380bda3c64cc4ee87594038caa6080e5ec3d4f7ff5bef371daf6",
       "chunk_ids": {
         "D-B1": [
           "D-B1"
