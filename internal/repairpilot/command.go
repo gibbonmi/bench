@@ -46,13 +46,14 @@ type Document struct {
 	Audits        []audit       `json:"audits"`
 }
 
-// Store owns atomic replacement for one pilot document.
+// Store writes one pilot document through Files and the shared replacement.
 type Store struct {
 	Path  string
 	Files FileOps
 }
 
-// Replace preserves the prior document unless the final rename succeeds.
+// Replace encodes the indented document plus a final newline at 0600 and returns the
+// replacement error unchanged.
 func (store Store) Replace(document Document) error {
 	return writeDocument(store.Files.withDefaults(), store.Path, document)
 }

@@ -10,8 +10,8 @@ import (
 )
 
 // D29: the pilot document store returns the injected directory-sync failure of its
-// replacement after the rename, and the document holds the encoded replacement at the
-// pilot mode. The replace-failure row of TestRepairPilotStorage holds the pre-rename refusal.
+// replacement after the rename, and the document holds the encoded replacement. The custody
+// and replace-failure rows of TestRepairPilotStorage hold the mode and the pre-rename refusal.
 func TestPilotReplacement(t *testing.T) {
 	options, replacement, _ := replacementFixture(t)
 	cause := errors.New("injected pilot directory-sync failure")
@@ -20,7 +20,7 @@ func TestPilotReplacement(t *testing.T) {
 	err := (Store{Path: documentPath(options), Files: FileOps{Replacer: rec.Replacer()}}).Replace(replacement)
 
 	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)
-	durablefiletest.RequireFile(t, documentPath(options), 0o600, string(documentBytes(t, replacement)))
+	durablefiletest.RequireBytes(t, documentPath(options), string(documentBytes(t, replacement)))
 }
 
 // D30: activation refuses a pilot directory that it cannot create before any replacement
