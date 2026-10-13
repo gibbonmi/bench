@@ -8,6 +8,7 @@ Covers: none
 
 This ticket is a prefactor with no new behavior.
 It prepares the seam that the mutant-set entry grammar of ticket 4 reads.
+It is its own review chunk, PM-C1, so its review closes before ticket 4 starts.
 
 Move the mutation flag declarations in `internal/probe/command.go` into one list.
 The top-level grammar reads that list, and ticket 4 builds its entry grammar from the same list.
@@ -24,7 +25,7 @@ The command registry files join this `Writes:` line through the binding registry
 
 ## Acceptance
 
-- [ ] The probe's `--help` output is byte-identical to its output at this ticket's base.
-- [ ] Every existing form-matrix refusal keeps its line and its exit 2, through the two halves.
-- [ ] `--expect` with `--check prose` still prints the usage line at exit 2.
-- [ ] `internal/probe/command.go` declares each mutation flag once.
+- [ ] The probe's help inventory line is unchanged, and `TestHelpInventoryIsComplete` stays green.
+- [ ] Every existing form-matrix refusal keeps its line and its exit 2 through the two halves, and the form-matrix tests stay green.
+- [ ] `--expect` with `--check prose` still prints the usage line at exit 2, as the prose case of `TestExpectRequiresTheNamedWitness` shows.
+- [ ] Review confirms that `internal/probe/command.go` declares each mutation flag once.

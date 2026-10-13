@@ -1,6 +1,6 @@
 # Hold one run binary across several focused runs
 
-Blocked by: 1-repeat-the-probe-package.md
+Blocked by: none
 Writes: internal/runbinary/runbinary.go, internal/runbinary/runbinary_test.go, internal/testreport/cancel_test.go, internal/testreport/command.go, internal/testreport/held_runs.go (new), internal/testreport/held_runs_test.go (new), internal/testreport/outcome.go, internal/testreport/runbinary_test.go
 Covers: PM27, PM28, PM29, PM31, PM70, PM76
 
@@ -30,7 +30,7 @@ A prose request selects no run binary, so its build count is 0.
 Drive the seam through a factory-valued test seam with a stub builder and a stub verifier.
 Today `installTestSelectionFactory` installs only the `ReuseOrOwn` function value, so extend that seam and keep its current callers green.
 The cancelled-build row reuses the parking builder of `internal/testreport/cancel_test.go`.
-`internal/testreport` already holds more files than its structure budget, so put the owner and its tests in the two new files only.
+Put the owner and its tests in the two new files, so `internal/testreport/command.go` stays well under its 400-line file budget.
 
 ## Acceptance
 
