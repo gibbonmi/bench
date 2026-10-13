@@ -1,7 +1,7 @@
 # Migrate broker manifest replacement
 
 Blocked by: none
-Writes: internal/brokermanifest/brokermanifest.go, internal/brokermanifest/replacement_test.go (new)
+Writes: internal/brokermanifest/brokermanifest.go, internal/brokermanifest/replacement_test.go (new), internal/durablefile/durablefiletest/assert.go
 Covers: D25
 
 ## What to build
@@ -20,7 +20,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Write a valid real manifest, then fail directory sync after rename.
 The error preserves uncertainty and read-back keeps the exact manifest fields.
 
-- [ ] The broker manifest caller exposes an injected directory-sync failure. (D25).
+- [x] The broker manifest caller exposes an injected directory-sync failure. (D25).
 
 ## Checkpoint verification
 

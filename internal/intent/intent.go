@@ -1,6 +1,6 @@
 // Package intent persists machine-written work intent in the repository's shared
 // git common directory. It is the only package that knows the ledger's address,
-// schema, locking, atomic replacement, and proof-based lifecycle.
+// schema, locking, and proof-based lifecycle.
 package intent
 
 import (
@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
 	"github.com/gibbonmi/bench/internal/jsonfile"
@@ -187,6 +188,12 @@ func Upsert(root string, entry Entry) error {
 }
 
 func writePath(path string, ledger Ledger) error {
+	return writePathWith(durablefile.Native(), path, ledger)
+}
+
+// writePathWith takes the replacer so that a test can fail one stage of the ledger
+// replacement.
+func writePathWith(replacer durablefile.Replacer, path string, ledger Ledger) error {
 	ledger.Schema = Schema
 	if ledger.Entries == nil {
 		ledger.Entries = []Entry{}
@@ -206,36 +213,7 @@ func writePath(path string, ledger Ledger) error {
 	if err != nil {
 		return fmt.Errorf("encode intent ledger: %w", err)
 	}
-	data = append(data, '\n')
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".bench-intent-*")
-	if err != nil {
-		return fmt.Errorf("create intent ledger temporary file: %w", err)
-	}
-	tmpName := tmp.Name()
-	defer os.Remove(tmpName)
-	if err := tmp.Chmod(0o600); err != nil {
-		tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return fmt.Errorf("write intent ledger: %w", err)
-	}
-	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return fmt.Errorf("sync intent ledger: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		return fmt.Errorf("close intent ledger: %w", err)
-	}
-	if err := os.Rename(tmpName, path); err != nil {
-		return fmt.Errorf("replace intent ledger: %w", err)
-	}
-	if dir, err := os.Open(filepath.Dir(path)); err == nil {
-		_ = dir.Sync()
-		_ = dir.Close()
-	}
-	return nil
+	return replacer.Replace(path, append(data, '\n'), 0o600)
 }
 
 var lockWindow = bounds.VerdictWindow(bounds.IntentLockTimeout)

@@ -1,7 +1,7 @@
 # Preserve probe recovery after failed mutation
 
 Blocked by: 07-recover-approval-stage.md
-Writes: internal/probe/subject.go, internal/probe/probe.go, internal/probe/replacement_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/probe/subject.go, internal/probe/probe.go, internal/probe/replacement_test.go (new), internal/probe/probetest/fixture.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: D27, D34, D41, D42, D43
 
 ## What to build
@@ -11,6 +11,9 @@ Classify failed mutation before preservation release.
 After mutation rename completes, attempt restore before a focused mutation run.
 Release preservation only after successful synchronization and verified original-byte read-back.
 Failed restore retains the copy, exits 2, and reports both causes with the preserved path.
+
+The probe entry supplies the native replacer to its internal form; do not add an ambient package variable.
+Current sources: the mutation call at internal/probe/probe.go:172, restore at internal/probe/subject.go:205, and the exit 2 test at internal/probe/outcome_test.go:45.
 
 Review chunk: D-C4.
 Complete acceptance and landing of durable-file-replacement supplies the shared leaf and its native qualification.
@@ -26,11 +29,11 @@ A successful restore releases preservation and returns the mutation error at exi
 An independent restore fault retains exact preserved bytes at exit 2.
 The pre-rename fault keeps original bytes and the previous cleanup result.
 
-- [ ] The probe subject caller exposes an injected directory-sync failure. (D27).
-- [ ] A failed probe restore retains its preserved copy. (D34).
-- [ ] A post-rename mutation failure with failed restore retains the preserved copy at exit 2. (D41).
-- [ ] A post-rename mutation failure releases preservation only after verified restore. (D42).
-- [ ] A pre-rename mutation failure retains the original subject and existing cleanup result. (D43).
+- [x] The probe subject caller exposes an injected directory-sync failure. (D27).
+- [x] A failed probe restore retains its preserved copy. (D34).
+- [x] A post-rename mutation failure with failed restore retains the preserved copy at exit 2. (D41).
+- [x] A post-rename mutation failure releases preservation only after verified restore. (D42).
+- [x] A pre-rename mutation failure retains the original subject and existing cleanup result. (D43).
 
 ## Checkpoint verification
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 )
 
 var lockDeadline = bounds.VerdictWindow(bounds.HandoffLockTimeout)
@@ -49,10 +50,16 @@ func Read(path string) (*Document, error) {
 }
 
 // Update runs one read-modify-write under an exclusive lock, then replaces the
-// file by rename. The lock is what makes two live phases safe: temp-and-rename
-// alone makes each write atomic, but two writers that both read the old document
-// still land one section apiece and the later rename drops the other's.
+// file through the durable replacement. The lock is what makes two live phases safe:
+// temp-and-rename alone makes each write atomic, but two writers that both read the
+// old document still land one section apiece and the later rename drops the other's.
 func Update(path string, mutate func(*Document) error) error {
+	return update(durablefile.Native(), path, mutate)
+}
+
+// update takes replacer as an operand so a test can fail one replacement stage of a
+// real locked write without a package-level swap.
+func update(replacer durablefile.Replacer, path string, mutate func(*Document) error) error {
 	release, err := acquire(path)
 	if err != nil {
 		return err
@@ -66,13 +73,20 @@ func Update(path string, mutate func(*Document) error) error {
 	if err := mutate(doc); err != nil {
 		return err
 	}
-	return replace(path, doc.Render())
+	if err := replacer.Replace(path, []byte(doc.Render()), 0o644); err != nil {
+		return fmt.Errorf("write handoff document: %w", err)
+	}
+	return nil
 }
 
 // WriteSection rewrites one section and leaves every other section's bytes as the
 // file had them.
 func WriteSection(path string, section Section) error {
-	return Update(path, func(doc *Document) error {
+	return writeSection(durablefile.Native(), path, section)
+}
+
+func writeSection(replacer durablefile.Replacer, path string, section Section) error {
+	return update(replacer, path, func(doc *Document) error {
 		doc.Put(section)
 		doc.EnsureMain()
 		return nil
@@ -183,39 +197,4 @@ func isFileAt(file *os.File, path string) bool {
 		return false
 	}
 	return os.SameFile(opened, current)
-}
-
-// replace writes the rendered document to a sibling temp file, syncs it, and
-// renames it over the document. A writer killed between the write and the rename
-// leaves the prior document intact.
-func replace(path, content string) error {
-	dir := filepath.Dir(path)
-	tmp, err := os.CreateTemp(dir, filepath.Base(path)+".tmp-*")
-	if err != nil {
-		return fmt.Errorf("write handoff document: %w", err)
-	}
-	name := tmp.Name()
-	defer os.Remove(name)
-	if _, err := tmp.WriteString(content); err != nil {
-		_ = tmp.Close()
-		return fmt.Errorf("write handoff document: %w", err)
-	}
-	if err := tmp.Sync(); err != nil {
-		_ = tmp.Close()
-		return fmt.Errorf("sync handoff document: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		return fmt.Errorf("close handoff document: %w", err)
-	}
-	if err := os.Chmod(name, 0o644); err != nil {
-		return fmt.Errorf("write handoff document: %w", err)
-	}
-	if err := os.Rename(name, path); err != nil {
-		return fmt.Errorf("replace handoff document: %w", err)
-	}
-	if handle, err := os.Open(dir); err == nil {
-		_ = handle.Sync()
-		_ = handle.Close()
-	}
-	return nil
 }

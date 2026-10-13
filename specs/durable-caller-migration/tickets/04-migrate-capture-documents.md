@@ -9,6 +9,7 @@ Covers: D20
 Use D-A for replace operations in Append, Abort, recovery, and the manifest writer.
 Keep their encoders, 0644 mode, rollback authority, and existing transaction outcomes.
 Exclusive writeNew and directory promotion remain with their existing owners.
+Keep the parent-directory creation in replace before the shared call, because the leaf requires an existing parent.
 
 Review chunk: D-B3.
 Complete acceptance and landing of durable-file-replacement supplies the shared leaf and its native qualification.
@@ -21,7 +22,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Drive the capture operation through its real encoder and fail shared directory synchronization after rename.
 The operation retains the classified cause and its existing transaction recovery contract.
 
-- [ ] The capture transaction files caller exposes an injected directory-sync failure. (D20).
+- [x] The capture transaction files caller exposes an injected directory-sync failure. (D20).
 
 ## Checkpoint verification
 

@@ -250,9 +250,7 @@ func TestLifecycleOwnerConsumption(t *testing.T) {
 			}
 			writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), teamProse, 0o644)
 			withdrawn := manifestRow{lifecycleWithdrawn, plantWithdrawn(t, filepath.Join(root, lifecycleWithdrawn))}
-			if err := writeManifest(previewManifestPath(root), "1.0.0", []manifestRow{withdrawn}); err != nil {
-				t.Fatal(err)
-			}
+			writeFixtureFile(t, previewManifestPath(root), string(manifestBytes("1.0.0", []manifestRow{withdrawn})), manifestMode)
 			entry.run(t, root)
 			requireInstalled(t, root, lifecycleDoc)
 			requireWithdrawn(t, root)

@@ -1001,6 +1001,14 @@
       "identity": "sha256:bbb72629c91efb80a2d6536a53304aaf8a73577f05940bc26afef87bd6620dbf",
       "source": "474b64ea6dbf51ebb545b0947a5dc3ad6f13b5c8",
       "evidence": "d426e319c2d99300be3f4f7b84f1b3e78cd395ad"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT354-durable-callers",
+      "binding": "durable-caller-migration",
+      "identity": "sha256:df0321cdcd6c414a95c680d9bbf98ef72d2f2c696f73195522df75e652ef0329",
+      "source": "f1f625cc328d4d93f548d0e4088b729203234c7a",
+      "evidence": "69b97ecba89054d1a37cce214143746cc2169c9f"
     }
   ]
 }

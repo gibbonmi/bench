@@ -1,6 +1,6 @@
 # Durable caller migration
 
-Status: staged
+Status: implemented
 
 Decision source: named reviewed artifact `decisions/architecture-primitives.md`, resolved tickets `2.md` and `4.md` (2026-10-06).
 
@@ -103,7 +103,8 @@ Report a failed recovery attempt beside the original failure.
 Do not claim that pending bytes survived when the final rename completed and recovery failed.
 The classified error describes possible visibility, not a universal rollback result.
 The interrupted-green demotion path must return its persistence error to the diagnostic caller.
-Sources: `internal/gate/run_transaction.go:175`, `internal/gate/run_transaction.go:213`, and `internal/gate/run_transaction.go:230`.
+That path has no error return now, and its two callers on lock failure and lock contention receive the new error.
+Sources: `internal/gate/run_transaction.go:166` (pending), `:182` (timeout), `:213` (final), and `:227` (interrupted-green demotion).
 
 A failed probe mutation before rename retains its existing refusal and cleanup behavior.
 After a completed mutation rename, keep the preservation copy until restore succeeds and read-back matches the original bytes.
@@ -115,7 +116,7 @@ The reason carries both the mutation failure and the restore failure.
 A completed restore rename with failed synchronization still counts as failed restore.
 The preserved bytes remain available even when the visible subject already matches them.
 The existing TOON refusal policy must not hide the preserved path.
-Sources: `internal/probe/probe.go:148`, `internal/probe/probe.go:197`, and `internal/probe/outcome_test.go:44`.
+Sources: `internal/probe/probe.go:172` (mutation), `internal/probe/subject.go:205` (restore), and `internal/probe/outcome_test.go:45`.
 
 Intent compensates a failed ledger write only when its rename did not complete.
 That compensation runs once under the existing lock.
@@ -129,14 +130,14 @@ Construct the complete restore closure before that write.
 A failed policy or board stage invokes restore, including a failed initial policy write after rename.
 With successful restore, the original policy and board bytes or absence return before approval fails.
 The receipt remains unapproved because the ledger write never starts.
-Sources: `internal/commitment/repository/repository.go:275` and `internal/commitment/repository/repository.go:297`.
+Sources: `internal/commitment/repository/repository.go:282` and `internal/commitment/repository/repository.go:295`.
 
 After complete stage, a pre-rename ledger failure restores the external snapshots once.
 A post-rename ledger failure retains the new policy, projected board, and approved receipt together.
 Approve returns an error even when that coherent new state is visible.
 No compensation may pair an approved new receipt with old policy or board bytes.
 The board-absent branch retains absence in each outcome.
-Sources: `internal/commitment/repository/repository.go:165` and `internal/commitment/store_test.go:89`.
+Sources: `internal/commitment/repository/repository.go:159` and `internal/commitment/store_test.go:89`.
 
 Restore returns an error instead of discarding it.
 Approve captures compensation failure without changing the public Compensation callback signature.
@@ -159,6 +160,12 @@ A mutation failure permits the completed baseline but no focused mutation start.
 The test injects separate mutation and restore failures through the same caller invocation.
 Do not call replaceAtomic alone for these outcomes.
 
+The prospective owner record keeps its exported Publish signature, which supplies the native replacer to an unexported form in the same file.
+The intent ledger keeps the writePath signature, because existing test seeds call it, and a replacer form beside it serves the transaction.
+The assessment FileOps and the repair-pilot FileOps compose into one durablefile.Replacer each.
+The assessment FileOps replaces its WriteFile hook with CreateTemp, OpenDirectory, and Remove hooks, and its existing write and rename failure cases inject through them.
+The repair-pilot FileOps adds an OpenDirectory hook beside its existing hooks.
+
 Add intent.TransactWithReplacer with the existing Transact operands and one durablefile.Replacer operand.
 The existing Transact delegates to that form with the native replacer.
 Both forms share address resolution, lock, decision, write, compensation, and release logic.
@@ -174,7 +181,7 @@ Source: `internal/intent/assignment.go:158` and `internal/intent/transaction_tes
 
 ### Current caller inventory
 
-The sources below pin the tree at `a382f4848d432815968f044820fad593e856e297`.
+The sources below pin the tree at `85baca4dbd701a1677af2401e22dfccd164d362c`.
 A source change invalidates its inventory row.
 The row IDs below each require caller composition evidence.
 
@@ -186,7 +193,7 @@ The row IDs below each require caller composition evidence.
 | capture transaction files | `internal/capturetx/transaction.go:235` (`replace`) | 0644 | Caller document and manifest bytes | D20 |
 | handoff document | `internal/handoffdoc/store.go:191` (`replace`) | 0644 | Caller rendered document | D21 |
 | intent ledger | `internal/intent/intent.go:189` (`writePath`) | 0600 | Sorted ledger plus final newline | D22 |
-| commitment repository | `internal/commitment/repository/repository.go:355` (`atomicWrite`) | Caller mode | Stage bytes and snapshot restore bytes | D23 |
+| commitment repository | `internal/commitment/repository/repository.go:340` (`atomicWrite`) | Caller mode | Stage bytes and snapshot restore bytes | D23 |
 | publication record | `internal/publication/record.go:80` (`SaveRecord`) | 0644 | Indented record plus final newline | D24 |
 | broker manifest | `internal/brokermanifest/brokermanifest.go:34` (`Write`) | 0644 | Validated digest and tab-framed fields | D25 |
 | dashboard artifact | `internal/dashboard/dashboard.go:138` (`atomicWrite`) | 0600 | Rendered HTML | D26 |
@@ -194,9 +201,10 @@ The row IDs below each require caller composition evidence.
 | assessment record | `internal/assessment/store.go:116` (`replace`) | 0600 | Validated indented record plus final newline | D28 |
 | repair pilot document | `internal/repairpilot/command.go:261` (`writeDocument`) | 0600 | Indented document plus final newline | D29 |
 
-Gate verdict callers are execution and interrupted-pending persistence in `internal/gate/run_transaction.go:175`.
+Gate verdict callers are execution and interrupted-pending persistence in `internal/gate/run_transaction.go:166`.
 Their full execution failure outcomes belong to D37-D40.
 Gate evidence also serves lane records through `internal/gate/lane.go:331`.
+The internal execution form has callers in `internal/gate/gate.go`, `internal/gate/engine.go`, and `internal/gate/complete_checkpoint.go`.
 
 Capture replacement serves Append, Abort, recovery, and its manifest writer.
 Commitment replacement serves stage and file-snapshot restore.
@@ -204,11 +212,12 @@ Intent transaction and commitment approval compose these operations through D44-
 Probe replacement serves mutation and restore.
 The complete probe caller retains recovery authority through D41-D43.
 The publication state machine retains its release lock and state transitions.
-Sources: `internal/capturetx/public.go:49`, `internal/capturetx/transaction.go:77`, `internal/commitment/repository/repository.go:297`, and `internal/publication/statemachine.go:115`.
+Sources: `internal/capturetx/public.go:49`, `internal/capturetx/transaction.go:77`, `internal/commitment/repository/repository.go:295`, and `internal/publication/statemachine.go:115`.
 
-The unused `internal/adopt/manifest.go:76` writeManifest has no static consumer in the current tree.
-The real adoption manifest path uses stageBytes in `internal/adopt/link_stage.go:101`.
-Delete only the unused replacement helper.
+The `internal/adopt/manifest.go:76` writeManifest has no production consumer in the current tree.
+Two adoption tests use it to seed a manifest: `internal/adopt/lifecycle_preview_test.go:47` and `internal/adopt/lifecycle_consumption_test.go:253`.
+The real adoption manifest path stages through stageManifest in `internal/adopt/link_stage.go:132`, which calls stageBytes in `internal/adopt/transaction.go:20`.
+Delete only the replacement helper, and seed those two test manifests from manifestBytes and manifestMode without a replacement algorithm.
 Keep manifestBytes, manifestMode, and the lifecycle transaction unchanged.
 
 
@@ -258,371 +267,13 @@ Each chunk requires its own real caller tests and independent review before depe
 
 ### Completion plan
 
-The version 1 plan records future implementation evidence.
+The version 2 plan records future implementation evidence.
 It claims no current implementation pass, red, native qualification, or benchmark.
-The orchestrator adds required version 2 author sessions before dispatch.
+The orchestrator records each ticket author session before that author's dispatch.
+Each ticket carries the root conformance pass, and each ticket that writes a command or conformance registry carries its package floor.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "D-B1",
-      "tickets": [
-        "02-preserve-gate-failures.md"
-      ],
-      "verification": [
-        {
-          "id": "gate-tests",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/gate",
-          "probe": "Discard the leaf cause, allow oracle start after pending failure, hide evidence failure, or discard the recovery error. Each mutation must fail its real execution witness."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/gate",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-B2",
-      "tickets": [
-        "03-migrate-owner-records.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/gate/prospectiveartifact"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/gate/prospectiveartifact",
-          "probe": "Restore the former local replacement sequence. The real owner-record junction test must detect the missing shared failure."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/gate/prospectiveartifact",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-B3",
-      "tickets": [
-        "04-migrate-capture-documents.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/capturetx"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/capturetx",
-          "probe": "Bypass the shared owner in capture replace. The capture operation failure witness must turn red."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/capturetx",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-B4",
-      "tickets": [
-        "05-migrate-handoff-documents.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/handoffdoc"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/handoffdoc",
-          "probe": "Restore ignored directory errors or bypass the leaf. The section-writing composition test must detect the missing failure."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/handoffdoc",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-B5",
-      "tickets": [
-        "06-preserve-ledger-effects.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/intent"
-        },
-        {
-          "id": "existing-canary-owner",
-          "command": "bench test --check bounds-policy"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/intent",
-          "probe": "Compensate every write error or omit the reauthorization effect check. The new-ledger and external-witness test must detect their mismatch."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/intent",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-B6",
-      "tickets": [
-        "07-recover-approval-stage.md"
-      ],
-      "verification": [
-        {
-          "id": "repository-tests",
-          "command": "bench test --package ./internal/commitment/repository"
-        },
-        {
-          "id": "approval-tests",
-          "command": "bench test --package ./internal/commitment"
-        },
-        {
-          "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'"
-        },
-        {
-          "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/commitment/repository",
-          "probe": "Create restore only after policy write, compensate a published ledger, restore only one file, or discard restore failure. Each mutation must fail the corresponding real approval witness."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/commitment/repository",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-C1",
-      "tickets": [
-        "08-migrate-publication-records.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/publication"
-        },
-        {
-          "id": "port-registry",
-          "command": "bench test --check injected-port-registry"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/publication",
-          "probe": "Restore the former unsynchronized writer. The publication record junction test must detect the missing failure."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/publication",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-C2",
-      "tickets": [
-        "09-migrate-broker-manifests.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/brokermanifest"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/brokermanifest",
-          "probe": "Bypass the leaf with the former manifest writer. The manifest composition test must report the injected missing-failure red."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/brokermanifest",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-C3",
-      "tickets": [
-        "10-migrate-dashboard-artifacts.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/dashboard"
-        },
-        {
-          "id": "existing-canary-owner",
-          "command": "bench test --check git-plumbing-owner"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/dashboard",
-          "probe": "Select 0644 by assumption or restore the former writer. The mode or injected-failure witness must turn red."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/dashboard",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-C4",
-      "tickets": [
-        "11-preserve-probe-recovery.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/probe"
-        },
-        {
-          "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'"
-        },
-        {
-          "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/probe",
-          "probe": "Release preservation on every mutation error or treat failed restore sync as success. The preservation-path and focused-start witnesses must detect each mutation."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/probe",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-C5",
-      "tickets": [
-        "12-migrate-assessment-records.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/assessment"
-        },
-        {
-          "id": "port-registry",
-          "command": "bench test --check injected-port-registry"
-        },
-        {
-          "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'"
-        },
-        {
-          "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/assessment",
-          "probe": "Retain the FileOps local replacement copy or bypass shared sync. The Record failure-composition witness must turn red."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/assessment",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-C6",
-      "tickets": [
-        "13-migrate-repair-documents.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/repairpilot"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/repairpilot",
-          "probe": "Restore the local file-only sequence or weaken the short-write assertion. The corresponding real Store.Replace witness must turn red."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/repairpilot",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "D-D",
-      "tickets": [
-        "14-close-replacement-ownership.md"
-      ],
-      "verification": [
-        {
-          "id": "adoption-tests",
-          "command": "bench test --package ./internal/adopt"
-        },
-        {
-          "id": "coverage",
-          "command": "bench coverage --check durable-caller-migration"
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/adopt",
-          "probe": "Alter the surviving adoption stage bytes or its lifecycle transaction result. The existing real adoption assertion must fail, then pass after restoration. The source algorithm census remains independently review-owned."
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "ordinary-integration",
-      "command": "bench test --package ./..."
-    },
-    {
-      "id": "coverage",
-      "command": "bench coverage --check durable-caller-migration"
-    },
-    {
-      "id": "ticket-grammar",
-      "command": "bench test --check ticket-grammar"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"durable-caller-migration-build-20261012","orchestrator_session":"claude:dcm-orchestrator-20261012","author_limit":3,"assignments":{"02-preserve-gate-failures.md":[{"session":"claude:dcm_t02","assignment":"6350420074dfbf7b814c65eb6b6d029b","model":"opus","effort":"medium","source":"98ed4ac487bd964c1b0176e8acfcf3e91bfa16a2","native_ref":"claude-agent:dcm_t02"},{"session":"claude:dcm_t02_rep1","assignment":"6350420074dfbf7b814c65eb6b6d029b","model":"opus","effort":"medium","source":"c15dcdd6607e56fb5e41734d312753fc2b244a7f","native_ref":"claude-agent:dcm_t02_rep1","predecessor":"claude:dcm_t02","trigger":"user-directed","stopped":"claude:dcm_t02 ended after its ticket commit c87faf66 and its D-B1 record commit 90d67d63","preserved":"no uncommitted work; ticket commit c87faf66, record commit 90d67d63, and review record c15dcdd6 on the FT354-durable-callers branch"}],"03-migrate-owner-records.md":[{"session":"claude:dcm_t03","assignment":"d136ce8e9ad36e758ce4896ce9ca1f9d","model":"opus","effort":"medium","source":"ea32f1f8c853243a523b0113b0b9d3453c8dd135","native_ref":"claude-agent:dcm_t03"},{"session":"claude:dcm_t03_rep1","assignment":"d136ce8e9ad36e758ce4896ce9ca1f9d","model":"opus","effort":"medium","source":"1bbf76fb931c9d04110ca669158bd50c551b4b38","native_ref":"claude-agent:dcm_t03_rep1","predecessor":"claude:dcm_t03","trigger":"user-directed","stopped":"claude:dcm_t03 ended after its ticket commit 649a980b and its D-B2 record commit c6ef329d","preserved":"no uncommitted work; ticket commit 649a980b and records through b511def3 on the FT354-durable-callers branch"},{"session":"claude:dcm_t03_rep2","assignment":"d136ce8e9ad36e758ce4896ce9ca1f9d","model":"opus","effort":"medium","source":"4ba07a167ad5528d561dc402f34267283a5c2481","native_ref":"claude-agent:dcm_t03_rep2","predecessor":"claude:dcm_t03_rep1","trigger":"user-directed","stopped":"claude:dcm_t03_rep1 ended after its repair commit 3a3dbbe1 and its record commit f0c35260","preserved":"no uncommitted work; repair commit 3a3dbbe1 and records through 4ba07a16 on the FT354-durable-callers branch"}],"04-migrate-capture-documents.md":[{"session":"claude:dcm_t04","assignment":"12313621ee765170f4d30aca3bc9a835","model":"opus","effort":"medium","source":"763d01900346c8580257c01dbbc2c74174c0dbf8","native_ref":"claude-agent:dcm_t04"},{"session":"claude:dcm_t04_rep1","assignment":"12313621ee765170f4d30aca3bc9a835","model":"opus","effort":"medium","source":"4f5e7612be41facd1cec549abfc9598a94d7bc6e","native_ref":"claude-agent:dcm_t04_rep1","predecessor":"claude:dcm_t04","trigger":"user-directed","stopped":"claude:dcm_t04 ended after its merged ticket commit f529429a, its spec commit c7a940a3, and its D-B3 record commit cbccb028","preserved":"no uncommitted work; merge 78b73ff9 and records through 4f5e7612 on the FT354-durable-callers branch"}],"05-migrate-handoff-documents.md":[{"session":"claude:dcm_t05","assignment":"45d9aae9027a8aaaa889cf62904b3d80","model":"opus","effort":"medium","source":"e05466f76a01f0f4a7134f99ae45c02b733d62bb","native_ref":"claude-agent:dcm_t05"},{"session":"claude:dcm_t05_rep1","assignment":"45d9aae9027a8aaaa889cf62904b3d80","model":"opus","effort":"medium","source":"e750771dc27a6598b52ad927c5babf596f84aed3","native_ref":"claude-agent:dcm_t05_rep1","predecessor":"claude:dcm_t05","trigger":"user-directed","stopped":"claude:dcm_t05 ended after its merged ticket commit 1d174198, fix 3eacb910, spec commit 4fc0e316, and D-B4 record commit bce8ea45","preserved":"no uncommitted work; merge 57313120 and records through e750771d on the FT354-durable-callers branch"},{"session":"claude:dcm_t05_rep2","assignment":"45d9aae9027a8aaaa889cf62904b3d80","model":"opus","effort":"medium","source":"e8c902ab6966a013d2e10c1d3d38e6280235f2e6","native_ref":"claude-agent:dcm_t05_rep2","predecessor":"claude:dcm_t05_rep1","trigger":"user-directed","stopped":"claude:dcm_t05_rep1 ended after its repair commit 5e6c8994 and record commit 92da1312","preserved":"no uncommitted work; repair 5e6c8994 and records through e8c902ab on the FT354-durable-callers branch"}],"06-preserve-ledger-effects.md":[{"session":"claude:dcm_t06","assignment":"b984c4d80185e3e308a5b54d9b724dee","model":"opus","effort":"medium","source":"e8d99f2e893f22e6c00493fc701b73d0bfaed592","native_ref":"claude-agent:dcm_t06"},{"session":"claude:dcm_t06_rep1","assignment":"b984c4d80185e3e308a5b54d9b724dee","model":"opus","effort":"medium","source":"4200b0e3c72f9b037f168996e6635fdff137902d","native_ref":"claude-agent:dcm_t06_rep1","predecessor":"claude:dcm_t06","trigger":"user-directed","stopped":"claude:dcm_t06 ended after its merged ticket commit bafb6c3d, repair 82697755, spec commit a6c0ffe5, and D-B5 record commit ba35cc83","preserved":"no uncommitted work; merge ecea2b92 and records through 4200b0e3 on the FT354-durable-callers branch"}],"07-recover-approval-stage.md":[{"session":"claude:dcm_t07","assignment":"16088017801ba62045f0f5744c51d2dc","model":"opus","effort":"medium","source":"641ddbaa6c7f22023c6453abee122954564b8eca","native_ref":"claude-agent:dcm_t07"},{"session":"claude:dcm_t07_rep1","assignment":"16088017801ba62045f0f5744c51d2dc","model":"opus","effort":"medium","source":"e97d88e975cea2ed644cb3a0f541675ae6d2a152","native_ref":"claude-agent:dcm_t07_rep1","predecessor":"claude:dcm_t07","trigger":"user-directed","stopped":"claude:dcm_t07 ended after its merged ticket commit 835ecb63, rule alignment 6212b4b1, spec commit 67d8443b, and D-B6 record commit c9670e29","preserved":"no uncommitted work; merge 7cf1b2dd and records through e97d88e9 on the FT354-durable-callers branch"}],"08-migrate-publication-records.md":[{"session":"claude:dcm_t08","assignment":"a599e53e8655b83a1d574c55c04986aa","model":"opus","effort":"medium","source":"c05092c603ff080970397570ac6a5c497d3663f4","native_ref":"claude-agent:dcm_t08"},{"session":"claude:dcm_t08_rep1","assignment":"a599e53e8655b83a1d574c55c04986aa","model":"opus","effort":"medium","source":"7720aa244959fe1a8008704e1b9b83513a151c8b","native_ref":"claude-agent:dcm_t08_rep1","predecessor":"claude:dcm_t08","trigger":"user-directed","stopped":"claude:dcm_t08 ended after its merged ticket commit 2f3f4848, fix 79e07b55, spec commit 17ffac99, and D-C1 record commit dafb4e2d","preserved":"no uncommitted work; merge 2be50c31 and records through 7720aa24 on the FT354-durable-callers branch"}],"09-migrate-broker-manifests.md":[{"session":"claude:dcm_t09","assignment":"f48ec5a8d1227cc72f325429bd730df4","model":"opus","effort":"medium","source":"7fab7aff504ebf2534404fa8b31cee3fc3ef00ee","native_ref":"claude-agent:dcm_t09"},{"session":"claude:dcm_t09_rep1","assignment":"f48ec5a8d1227cc72f325429bd730df4","model":"opus","effort":"medium","source":"d723f0c3872c7f3157f73d569adb1ef57ed05ece","native_ref":"claude-agent:dcm_t09_rep1","predecessor":"claude:dcm_t09","trigger":"user-directed","stopped":"claude:dcm_t09 ended after its merged ticket commit 31cdf381, rule fixes de7d7067, spec commit cf1112f9, and D-C2 record commit c3c67fba","preserved":"no uncommitted work; merge 8825ed5c and records through d723f0c3 on the FT354-durable-callers branch"}],"10-migrate-dashboard-artifacts.md":[{"session":"claude:dcm_t10","assignment":"92ffbc6395c532dadcd0489ddc7979d8","model":"opus","effort":"medium","source":"2d06e7594c9d31f1ce9f22102d03da660601cea2","native_ref":"claude-agent:dcm_t10"},{"session":"claude:dcm_t10_rep1","assignment":"92ffbc6395c532dadcd0489ddc7979d8","model":"opus","effort":"medium","source":"1efc3865484f7385fb7610dcc124bfb5b256b87f","native_ref":"claude-agent:dcm_t10_rep1","predecessor":"claude:dcm_t10","trigger":"user-directed","stopped":"claude:dcm_t10 ended after its merged ticket commit 97842086, rule fixes a071663e, spec commit ee901c01, and D-C3 record commit 1edf8a09","preserved":"no uncommitted work; merge fb96b058 and records through 1efc3865 on the FT354-durable-callers branch"}],"11-preserve-probe-recovery.md":[{"session":"claude:dcm_t11","assignment":"f262dc17abfc8c1f084f3040388a99f0","model":"opus","effort":"medium","source":"275c82dfc9fa03d1c87978ebd59c9be4282136bc","native_ref":"claude-agent:dcm_t11"},{"session":"claude:dcm_t11_rep1","assignment":"f262dc17abfc8c1f084f3040388a99f0","model":"opus","effort":"medium","source":"33122a439d448170df5e2cf61a2ca97303f93493","native_ref":"claude-agent:dcm_t11_rep1","predecessor":"claude:dcm_t11","trigger":"user-directed","stopped":"claude:dcm_t11 ended after its merged ticket commit f879ea41, spec commit 0e86fec9, and D-C4 record commit 7e7e1ceb","preserved":"no uncommitted work; merge 12a8b3e3 and records through 33122a43 on the FT354-durable-callers branch"}],"12-migrate-assessment-records.md":[{"session":"claude:dcm_t12","assignment":"7a13ecb0501689b071da762b56646660","model":"opus","effort":"medium","source":"7e91ffeef114c0414f59eb3f559a2905d78b3d7b","native_ref":"claude-agent:dcm_t12"}],"13-migrate-repair-documents.md":[{"session":"claude:dcm_t13","assignment":"cf9e3f680a469247696eeed91d788122","model":"opus","effort":"medium","source":"d01cf4b0d0c4fb9358ed7f9b3094d80a064c92a8","native_ref":"claude-agent:dcm_t13"},{"session":"claude:dcm_t13_rep1","assignment":"cf9e3f680a469247696eeed91d788122","model":"opus","effort":"medium","source":"5ee3e1a61615ff79ce2b145573d6cbff1b30bd2c","native_ref":"claude-agent:dcm_t13_rep1","predecessor":"claude:dcm_t13","trigger":"user-directed","stopped":"claude:dcm_t13 ended after its merged ticket commit 3e9301f7, rule fixes 2cacb2f3, spec commit e2a36eb3, and D-C6 record commit 38c2fd4f","preserved":"no uncommitted work; merge fae312dd and records through 5ee3e1a6 on the FT354-durable-callers branch"}],"14-close-replacement-ownership.md":[{"session":"claude:dcm_t14","assignment":"00b4e1c8d78f5645bd35ac462e410538","model":"opus","effort":"medium","source":"ea408aec17419b96f3619b852601370f0d21939e","native_ref":"claude-agent:dcm_t14"},{"session":"claude:dcm_t14_rep1","assignment":"00b4e1c8d78f5645bd35ac462e410538","model":"opus","effort":"medium","source":"7250b68cead32ecd8a24acd71fd31aaa46ede2fc","native_ref":"claude-agent:dcm_t14_rep1","predecessor":"claude:dcm_t14","trigger":"user-directed","stopped":"claude:dcm_t14 ended after its ticket commits a528da94, dfe8477b, 2cae9a86, spec commit 3e4fd1d1, and D-D record commit 222b77eb","preserved":"no uncommitted work; records through 7250b68c on the FT354-durable-callers branch"},{"session":"claude:dcm_t14_rep2","assignment":"00b4e1c8d78f5645bd35ac462e410538","model":"opus","effort":"medium","source":"d2bb70c0cffddf9f897e277e5dc9cdb1736c1fb9","native_ref":"claude-agent:dcm_t14_rep2","predecessor":"claude:dcm_t14_rep1","trigger":"user-directed","stopped":"claude:dcm_t14_rep1 ended after its repair commit 79980f96 and D-D record commit 7a8a060f","preserved":"no uncommitted work; records through d2bb70c0 on the FT354-durable-callers branch"}]}},"chunks":[{"id":"D-B1","tickets":["02-preserve-gate-failures.md"],"verification":[{"id":"gate-tests","command":"bench test --package ./internal/gate","ticket":"02-preserve-gate-failures.md"},{"id":"omission-proof","command":"bench test --package ./internal/gate","probe":"Discard the leaf cause, allow oracle start after pending failure, hide evidence failure, or discard the recovery error. Each mutation must fail its real execution witness.","ticket":"02-preserve-gate-failures.md"},{"id":"preservation","command":"bench test --package ./internal/gate","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"02-preserve-gate-failures.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"02-preserve-gate-failures.md"}]},{"id":"D-B2","tickets":["03-migrate-owner-records.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/gate/prospectiveartifact","ticket":"03-migrate-owner-records.md"},{"id":"omission-proof","command":"bench test --package ./internal/gate/prospectiveartifact","probe":"Restore the former local replacement sequence. The real owner-record junction test must detect the missing shared failure.","ticket":"03-migrate-owner-records.md"},{"id":"preservation","command":"bench test --package ./internal/gate/prospectiveartifact","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"03-migrate-owner-records.md"},{"id":"durablefiletest","command":"bench test --package ./internal/durablefile/durablefiletest","ticket":"03-migrate-owner-records.md"},{"id":"gate-tests","command":"bench test --package ./internal/gate","ticket":"03-migrate-owner-records.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"03-migrate-owner-records.md"}]},{"id":"D-B3","tickets":["04-migrate-capture-documents.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/capturetx","ticket":"04-migrate-capture-documents.md"},{"id":"omission-proof","command":"bench test --package ./internal/capturetx","probe":"Bypass the shared owner in capture replace. The capture operation failure witness must turn red.","ticket":"04-migrate-capture-documents.md"},{"id":"preservation","command":"bench test --package ./internal/capturetx","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"04-migrate-capture-documents.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"04-migrate-capture-documents.md"}]},{"id":"D-B4","tickets":["05-migrate-handoff-documents.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/handoffdoc","ticket":"05-migrate-handoff-documents.md"},{"id":"omission-proof","command":"bench test --package ./internal/handoffdoc","probe":"Restore ignored directory errors or bypass the leaf. The section-writing composition test must detect the missing failure.","ticket":"05-migrate-handoff-documents.md"},{"id":"preservation","command":"bench test --package ./internal/handoffdoc","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"05-migrate-handoff-documents.md"},{"id":"durablefiletest","command":"bench test --package ./internal/durablefile/durablefiletest","ticket":"05-migrate-handoff-documents.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"05-migrate-handoff-documents.md"}]},{"id":"D-B5","tickets":["06-preserve-ledger-effects.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/intent","ticket":"06-preserve-ledger-effects.md"},{"id":"existing-canary-owner","command":"bench test --check bounds-policy","ticket":"06-preserve-ledger-effects.md"},{"id":"omission-proof","command":"bench test --package ./internal/intent","probe":"Compensate every write error or omit the reauthorization effect check. The new-ledger and external-witness test must detect their mismatch.","ticket":"06-preserve-ledger-effects.md"},{"id":"preservation","command":"bench test --package ./internal/intent","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"06-preserve-ledger-effects.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"06-preserve-ledger-effects.md"}]},{"id":"D-C1","tickets":["08-migrate-publication-records.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/publication","ticket":"08-migrate-publication-records.md"},{"id":"port-registry","command":"bench test --check injected-port-registry","ticket":"08-migrate-publication-records.md"},{"id":"omission-proof","command":"bench test --package ./internal/publication","probe":"Restore the former unsynchronized writer. The publication record junction test must detect the missing failure.","ticket":"08-migrate-publication-records.md"},{"id":"preservation","command":"bench test --package ./internal/publication","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"08-migrate-publication-records.md"},{"id":"conformance","command":"bench test --package ./internal/conformance","ticket":"08-migrate-publication-records.md"},{"id":"durablefiletest","command":"bench test --package ./internal/durablefile/durablefiletest","ticket":"08-migrate-publication-records.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"08-migrate-publication-records.md"}]},{"id":"D-B6","tickets":["07-recover-approval-stage.md"],"verification":[{"id":"repository-tests","command":"bench test --package ./internal/commitment/repository","ticket":"07-recover-approval-stage.md"},{"id":"approval-tests","command":"bench test --package ./internal/commitment","ticket":"07-recover-approval-stage.md"},{"id":"command-contract","command":"bench test --package ./cmd/bench --run 'CommandRegistry'","ticket":"07-recover-approval-stage.md"},{"id":"axi-registry","command":"bench test --check axi-query-registry","ticket":"07-recover-approval-stage.md"},{"id":"routing","command":"bench test --check subcommand-routing","ticket":"07-recover-approval-stage.md"},{"id":"omission-proof","command":"bench test --package ./internal/commitment/repository","probe":"Create restore only after policy write, compensate a published ledger, restore only one file, or discard restore failure. Each mutation must fail the corresponding real approval witness.","ticket":"07-recover-approval-stage.md"},{"id":"preservation","command":"bench test --package ./internal/commitment/repository","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"07-recover-approval-stage.md"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench","ticket":"07-recover-approval-stage.md"},{"id":"conformance","command":"bench test --package ./internal/conformance","ticket":"07-recover-approval-stage.md"},{"id":"durablefiletest","command":"bench test --package ./internal/durablefile/durablefiletest","ticket":"07-recover-approval-stage.md"},{"id":"gate-tests","command":"bench test --package ./internal/gate","ticket":"07-recover-approval-stage.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"07-recover-approval-stage.md"}]},{"id":"D-C2","tickets":["09-migrate-broker-manifests.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/brokermanifest","ticket":"09-migrate-broker-manifests.md"},{"id":"omission-proof","command":"bench test --package ./internal/brokermanifest","probe":"Bypass the leaf with the former manifest writer. The manifest composition test must report the injected missing-failure red.","ticket":"09-migrate-broker-manifests.md"},{"id":"preservation","command":"bench test --package ./internal/brokermanifest","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"09-migrate-broker-manifests.md"},{"id":"durablefiletest","command":"bench test --package ./internal/durablefile/durablefiletest","ticket":"09-migrate-broker-manifests.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"09-migrate-broker-manifests.md"}]},{"id":"D-C4","tickets":["11-preserve-probe-recovery.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/probe","ticket":"11-preserve-probe-recovery.md"},{"id":"command-contract","command":"bench test --package ./cmd/bench --run 'CommandRegistry'","ticket":"11-preserve-probe-recovery.md"},{"id":"axi-registry","command":"bench test --check axi-query-registry","ticket":"11-preserve-probe-recovery.md"},{"id":"routing","command":"bench test --check subcommand-routing","ticket":"11-preserve-probe-recovery.md"},{"id":"omission-proof","command":"bench test --package ./internal/probe","probe":"Release preservation on every mutation error or treat failed restore sync as success. The preservation-path and focused-start witnesses must detect each mutation.","ticket":"11-preserve-probe-recovery.md"},{"id":"preservation","command":"bench test --package ./internal/probe","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"11-preserve-probe-recovery.md"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench","ticket":"11-preserve-probe-recovery.md"},{"id":"conformance","command":"bench test --package ./internal/conformance","ticket":"11-preserve-probe-recovery.md"},{"id":"probetest","command":"bench test --package ./internal/probe/probetest","ticket":"11-preserve-probe-recovery.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"11-preserve-probe-recovery.md"}]},{"id":"D-C3","tickets":["10-migrate-dashboard-artifacts.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/dashboard","ticket":"10-migrate-dashboard-artifacts.md"},{"id":"existing-canary-owner","command":"bench test --check git-plumbing-owner","ticket":"10-migrate-dashboard-artifacts.md"},{"id":"omission-proof","command":"bench test --package ./internal/dashboard","probe":"Select 0644 by assumption or restore the former writer. The mode or injected-failure witness must turn red.","ticket":"10-migrate-dashboard-artifacts.md"},{"id":"preservation","command":"bench test --package ./internal/dashboard","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"10-migrate-dashboard-artifacts.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"10-migrate-dashboard-artifacts.md"}]},{"id":"D-C6","tickets":["13-migrate-repair-documents.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/repairpilot","ticket":"13-migrate-repair-documents.md"},{"id":"omission-proof","command":"bench test --package ./internal/repairpilot","probe":"Restore the local file-only sequence or weaken the short-write assertion. The corresponding real Store.Replace witness must turn red.","ticket":"13-migrate-repair-documents.md"},{"id":"preservation","command":"bench test --package ./internal/repairpilot","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"13-migrate-repair-documents.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"13-migrate-repair-documents.md"}]},{"id":"D-C5","tickets":["12-migrate-assessment-records.md"],"verification":[{"id":"caller-tests","command":"bench test --package ./internal/assessment","ticket":"12-migrate-assessment-records.md"},{"id":"port-registry","command":"bench test --check injected-port-registry","ticket":"12-migrate-assessment-records.md"},{"id":"command-contract","command":"bench test --package ./cmd/bench --run 'CommandRegistry'","ticket":"12-migrate-assessment-records.md"},{"id":"axi-registry","command":"bench test --check axi-query-registry","ticket":"12-migrate-assessment-records.md"},{"id":"routing","command":"bench test --check subcommand-routing","ticket":"12-migrate-assessment-records.md"},{"id":"omission-proof","command":"bench test --package ./internal/assessment","probe":"Retain the FileOps local replacement copy or bypass shared sync. The Record failure-composition witness must turn red.","ticket":"12-migrate-assessment-records.md"},{"id":"preservation","command":"bench test --package ./internal/assessment","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"12-migrate-assessment-records.md"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench","ticket":"12-migrate-assessment-records.md"},{"id":"conformance","command":"bench test --package ./internal/conformance","ticket":"12-migrate-assessment-records.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"12-migrate-assessment-records.md"}]},{"id":"D-D","tickets":["14-close-replacement-ownership.md"],"verification":[{"id":"adoption-tests","command":"bench test --package ./internal/adopt","ticket":"14-close-replacement-ownership.md"},{"id":"coverage","command":"bench coverage --check durable-caller-migration","ticket":"14-close-replacement-ownership.md"},{"id":"caller-reconciliation","command":"bench test --package ./internal/assessment --package ./internal/brokermanifest --package ./internal/capturetx --package ./internal/commitment/repository --package ./internal/durablefile/durablefiletest --package ./internal/gate --package ./internal/gate/prospectiveartifact --package ./internal/handoffdoc --package ./internal/intent --package ./internal/probe --package ./internal/publication --package ./internal/repairpilot","ticket":"14-close-replacement-ownership.md"},{"id":"preservation","command":"bench test --package ./internal/adopt","probe":"Alter the surviving adoption stage bytes or its lifecycle transaction result. The existing real adoption assertion must fail, then pass after restoration. The source algorithm census remains independently review-owned.","ticket":"14-close-replacement-ownership.md"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench","ticket":"14-close-replacement-ownership.md"},{"id":"command-contract","command":"bench test --package ./cmd/bench --run 'CommandRegistry'","ticket":"14-close-replacement-ownership.md"},{"id":"axi-registry","command":"bench test --check axi-query-registry","ticket":"14-close-replacement-ownership.md"},{"id":"routing","command":"bench test --check subcommand-routing","ticket":"14-close-replacement-ownership.md"},{"id":"conformance","command":"bench test --package ./internal/conformance","ticket":"14-close-replacement-ownership.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"14-close-replacement-ownership.md"}]}],"final_verification":[{"id":"ordinary-integration","command":"bench test --package ./..."},{"id":"coverage","command":"bench coverage --check durable-caller-migration"},{"id":"ticket-grammar","command":"bench test --check ticket-grammar"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}
 ```
 
 ## Testing decisions
@@ -645,7 +296,7 @@ Do not derive an expected payload from the new encoder under test.
 
 Prior art: `internal/repairpilot/command_test.go:107` exercises create, short-write, and rename failures through Store.Replace.
 Prior art: `internal/assessment/record_test.go:184` exercises Record write and rename failures.
-Prior art: `internal/handoffdoc/store_test.go:19` exercises competing writers through WriteSection.
+Prior art: `internal/handoffdoc/store_test.go:26` exercises competing writers through WriteSection.
 Read enforcement: `internal/conformance/injected_ports_registry_test.go:6` and `internal/conformance/injected_ports_test.go:40`.
 The dev gate unit phase runs the affected Go packages.
 The whole-project gate remains the acceptance oracle.
@@ -664,41 +315,41 @@ The whole-project gate remains the acceptance oracle.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| D16 | 16 | The gate verdict caller exposes an injected directory-sync failure. | planned internal/gate/durable_replacement_test.go (TestVerdictReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D17 | 17 | The gate evidence and lane caller exposes an injected directory-sync failure. | planned internal/gate/durable_replacement_test.go (TestEvidenceReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D18 | 18 | The prospective owner record caller exposes an injected directory-sync failure. | planned internal/gate/prospectiveartifact/replacement_test.go (TestOwnerReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D20 | 20 | The capture transaction files caller exposes an injected directory-sync failure. | planned internal/capturetx/replacement_test.go (TestCaptureReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D21 | 21 | The handoff document caller exposes an injected directory-sync failure. | planned internal/handoffdoc/replacement_test.go (TestHandoffReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D22 | 22 | The intent ledger caller exposes an injected directory-sync failure. | planned internal/intent/replacement_test.go (TestIntentReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D23 | 23 | The commitment repository caller exposes an injected directory-sync failure. | planned internal/commitment/repository/replacement_test.go (TestCommitmentReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D24 | 24 | The publication record caller exposes an injected directory-sync failure. | planned internal/publication/replacement_test.go (TestPublicationReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D25 | 25 | The broker manifest caller exposes an injected directory-sync failure. | planned internal/brokermanifest/replacement_test.go (TestBrokerReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D26 | 26 | The dashboard artifact caller exposes an injected directory-sync failure. | planned internal/dashboard/replacement_test.go (TestDashboardReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D27 | 27 | The probe subject caller exposes an injected directory-sync failure. | planned internal/probe/replacement_test.go (TestProbeReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D28 | 28 | The assessment record caller exposes an injected directory-sync failure. | planned internal/assessment/replacement_test.go (TestAssessmentReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D29 | 29 | The repair pilot document caller exposes an injected directory-sync failure. | planned internal/repairpilot/replacement_test.go (TestPilotReplacement) | Replacing the owner call with the former rename sequence hides the injected failure. |
-| D30 | 30 | Each migrated caller retains its pre-write validation and sentinel category. | planned caller tests from the migration table | A refused payload or destination cannot trigger the replacement observer. |
-| D31 | 31 | Migrated callers contain no independent temporary-write and rename algorithm. | review-owned caller inventory and implementation diff | The reviewer rejects a surviving algorithm even when its happy path passes. |
-| D33 | 33 | Excluded protocols retain their current assertions and operation owners. | review-owned exclusion inventory and focused existing tests | An indiscriminate migration changes the excluded protocol or its assertions. |
-| D34 | 34 | A failed probe restore retains its preserved copy. | planned internal/probe/replacement_test.go (TestProbeFailedRestore) | A post-rename error cannot authorize deletion of the recovery copy. |
-| D35 | 35 | The unused adopt writeManifest helper no longer defines a replacement algorithm. | review-owned internal/adopt/manifest.go caller census | Keeping the unused implementation fails the source inspection. |
-| D36 | 36 | Differential fixtures preserve each migrated caller payload, mode, and pre-rename refusal result. | planned caller tests from the migration table | A helper-only test cannot detect a changed caller encoder or mode. |
-| D37 | 37 | Pending persistence failure prints its cause and prevents oracle execution. | planned internal/gate/durable_replacement_test.go (TestGatePendingDurabilityFailure) | A caller that discards the leaf error loses the visibility phrase or starts the oracle. |
-| D38 | 38 | Final persistence failure retains its diagnostic cause at ActionExit 1. | planned internal/gate/durable_replacement_test.go (TestGateTerminalDurabilityFailure) | The real green and red branches must expose the injected post-rename cause. |
-| D39 | 39 | Green-evidence persistence failure prints the classified cause at ActionExit 1. | planned internal/gate/durable_replacement_test.go (TestGateEvidenceDurabilityFailure) | A narrow writer test misses the caller that replaces the error with generic text. |
-| D40 | 40 | Failed pending recovery reports both persistence errors. | planned internal/gate/durable_replacement_test.go (TestGatePendingRecoveryFailure) | Independent final-sync and recovery-rename faults expose a discarded recovery cause. |
-| D41 | 41 | A post-rename mutation failure with failed restore retains the preserved copy at exit 2. | planned internal/probe/replacement_test.go (TestProbeMutationRecoveryFailure) | The existing unconditional release deletes the byte-exact recovery copy. |
-| D42 | 42 | A post-rename mutation failure releases preservation only after verified restore. | planned internal/probe/replacement_test.go (TestProbeMutationRecoverySuccess) | A successful real restore must precede copy release and an exit 1 failure. |
-| D43 | 43 | A pre-rename mutation failure retains the original subject and existing cleanup result. | planned internal/probe/replacement_test.go (TestProbeMutationPreparationFailure) | The old-byte and home-state witnesses preserve the existing refusal contract. |
-| D44 | 44 | A post-rename ledger failure skips compensation. | planned internal/intent/replacement_test.go (TestTransactionPublishedFailure) | A compensation counter and new ledger bytes detect the former unconditional rollback. |
+| D16 | 16 | The gate verdict caller exposes an injected directory-sync failure. | `internal/gate/durable_replacement_test.go` (`TestGateReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D17 | 17 | The gate evidence and lane caller exposes an injected directory-sync failure. | `internal/gate/durable_replacement_test.go` (`TestGateReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D18 | 18 | The prospective owner record caller exposes an injected directory-sync failure. | `internal/gate/prospectiveartifact/replacement_test.go` (`TestOwnerReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D20 | 20 | The capture transaction files caller exposes an injected directory-sync failure. | `internal/capturetx/replacement_test.go` (`TestCaptureReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D21 | 21 | The handoff document caller exposes an injected directory-sync failure. | `internal/handoffdoc/replacement_test.go` (`TestHandoffReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D22 | 22 | The intent ledger caller exposes an injected directory-sync failure. | `internal/intent/replacement_test.go` (`TestIntentReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D23 | 23 | The commitment repository caller exposes an injected directory-sync failure. | `internal/commitment/repository/replacement_test.go` (`TestCommitmentReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D24 | 24 | The publication record caller exposes an injected directory-sync failure. | `internal/publication/replacement_test.go` (`TestPublicationReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D25 | 25 | The broker manifest caller exposes an injected directory-sync failure. | `internal/brokermanifest/replacement_test.go` (`TestBrokerReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D26 | 26 | The dashboard artifact caller exposes an injected directory-sync failure. | `internal/dashboard/replacement_test.go` (`TestDashboardReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D27 | 27 | The probe subject caller exposes an injected directory-sync failure. | `internal/probe/replacement_test.go` (`TestProbeReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D28 | 28 | The assessment record caller exposes an injected directory-sync failure. | `internal/assessment/replacement_test.go` (`TestAssessmentReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D29 | 29 | The repair pilot document caller exposes an injected directory-sync failure. | `internal/repairpilot/replacement_test.go` (`TestPilotReplacement`) | Replacing the owner call with the former rename sequence hides the injected failure. |
+| D30 | 30 | Each migrated caller retains its pre-write validation and sentinel category. | `internal/gate/durable_replacement_test.go` (`TestGateEvidenceDirectoryRefusal`), `internal/capturetx/replacement_test.go` (`TestCaptureDirectoryRefusal`), `internal/handoffdoc/replacement_test.go` (`TestHandoffRefusalSkipsReplacement`), `internal/intent/replacement_test.go` (`TestTransactionUnclassifiedFailureCompensates`), `internal/commitment/repository/replacement_test.go` (`TestApprovalRefusal`), `internal/publication/replacement_test.go` (`TestPublicationDirectoryRefusal`), `internal/brokermanifest/replacement_test.go` (`TestBrokerRefusalSkipsReplacement`), `internal/dashboard/dashboard_test.go` (`TestDashboardWriteRefusesWhenTheReaderFails`), `internal/probe/replacement_test.go` (`TestProbeSubjectRefusalSkipsReplacement`), `internal/assessment/replacement_test.go` (`TestAssessmentRefusalSkipsReplacement`), `internal/repairpilot/replacement_test.go` (`TestPilotDirectoryRefusal`) | A refused payload or destination cannot trigger the replacement observer. |
+| D31 | 31 | Migrated callers contain no independent temporary-write and rename algorithm. | review-owned: caller inventory and implementation diff | The reviewer rejects a surviving algorithm even when its happy path passes. |
+| D33 | 33 | Excluded protocols retain their current assertions and operation owners. | review-owned: exclusion inventory and focused existing tests | An indiscriminate migration changes the excluded protocol or its assertions. |
+| D34 | 34 | A failed probe restore retains its preserved copy. | `internal/probe/replacement_test.go` (`TestProbeFailedRestore`) | A post-rename error cannot authorize deletion of the recovery copy. |
+| D35 | 35 | The unused adopt writeManifest helper no longer defines a replacement algorithm. | review-owned: internal/adopt/manifest.go caller census | Keeping the unused implementation fails the source inspection. |
+| D36 | 36 | Differential fixtures preserve each migrated caller payload, mode, and pre-rename refusal result. | `internal/gate/durable_replacement_test.go` (`TestGatePreRenameFailure`), `internal/gate/prospectiveartifact/replacement_test.go` (`TestOwnerPreRenameFailure`), `internal/capturetx/replacement_test.go` (`TestCapturePreRenameFailure`), `internal/handoffdoc/replacement_test.go` (`TestHandoffPreRenameFailure`), `internal/intent/replacement_test.go` (`TestIntentPreRenameFailure`), `internal/commitment/repository/replacement_test.go` (`TestCommitmentReplacement`), `internal/publication/replacement_test.go` (`TestPublicationPreRenameFailure`), `internal/brokermanifest/replacement_test.go` (`TestBrokerPreRenameFailure`), `internal/dashboard/replacement_test.go` (`TestDashboardPreRenameFailure`), `internal/probe/replacement_test.go` (`TestProbeMutationPreparationFailure`), `internal/assessment/record_test.go` (`TestAssessmentRecordUpdates`), `internal/repairpilot/command_test.go` (`TestRepairPilotStorage`), `internal/reviewrecord/replacement_test.go` (`TestReviewReplacement`) | A helper-only test cannot detect a changed caller encoder or mode. |
+| D37 | 37 | Pending persistence failure prints its cause and prevents oracle execution. | `internal/gate/durable_replacement_test.go` (`TestGatePendingDurabilityFailure`) | A caller that discards the leaf error loses the visibility phrase or starts the oracle. |
+| D38 | 38 | Final persistence failure retains its diagnostic cause at ActionExit 1. | `internal/gate/durable_replacement_test.go` (`TestGateTerminalDurabilityFailure`) | The real green and red branches must expose the injected post-rename cause. |
+| D39 | 39 | Green-evidence persistence failure prints the classified cause at ActionExit 1. | `internal/gate/durable_replacement_test.go` (`TestGateEvidenceDurabilityFailure`) | A narrow writer test misses the caller that replaces the error with generic text. |
+| D40 | 40 | Failed pending recovery reports both persistence errors. | `internal/gate/durable_replacement_test.go` (`TestGatePendingRecoveryFailure`) | Independent final-sync and recovery-rename faults expose a discarded recovery cause. |
+| D41 | 41 | A post-rename mutation failure with failed restore retains the preserved copy at exit 2. | `internal/probe/replacement_test.go` (`TestProbeMutationRecoveryFailure`) | The existing unconditional release deletes the byte-exact recovery copy. |
+| D42 | 42 | A post-rename mutation failure releases preservation only after verified restore. | `internal/probe/replacement_test.go` (`TestProbeMutationRecoverySuccess`) | A successful real restore must precede copy release and an exit 1 failure. |
+| D43 | 43 | A pre-rename mutation failure retains the original subject and existing cleanup result. | `internal/probe/replacement_test.go` (`TestProbeMutationPreparationFailure`) | The old-byte and home-state witnesses preserve the existing refusal contract. |
+| D44 | 44 | A post-rename ledger failure skips compensation. | `internal/intent/replacement_test.go` (`TestTransactionPublishedFailure`) | A compensation counter and new ledger bytes detect the former unconditional rollback. |
 | D45 | 45 | A pre-rename ledger failure compensates exactly once. | `internal/intent/transaction_test.go` (`TestLedgerTransactionTerminalWriteFailureKeepsThePreviousBytes`) | The existing test compares old bytes and the compensation count under the real lock. |
-| D46 | 46 | An initial post-rename policy failure restores the original policy state before approval returns. | planned internal/commitment/repository/replacement_test.go (TestApprovalInitialPolicyFailure) | The initial policy rename succeeds before sync fails, which reaches the previously unfurnished restore path. |
-| D47 | 47 | A post-rename board failure restores both original file states. | planned internal/commitment/repository/replacement_test.go (TestApprovalBoardFailure) | Distinct original bytes detect a restore that handles only one file. |
-| D48 | 48 | A pre-rename approval-ledger failure restores the original policy and board. | planned internal/commitment/repository/replacement_test.go (TestApprovalUnpublishedLedgerFailure) | The real ledger transaction must run the stage restore exactly once. |
-| D49 | 49 | A post-rename approval-ledger failure retains the new policy and board with its approved receipt. | planned internal/commitment/repository/replacement_test.go (TestApprovalPublishedLedgerFailure) | Read-back of all three artifacts detects an approved receipt paired with old external files. |
-| D50 | 50 | A failed stage or compensation restore reports its cause and unrestored path. | planned internal/commitment/repository/replacement_test.go (TestApprovalRestoreFailure) | A second independent fault detects discarded snapshot-restore errors. |
-| D51 | 51 | Failed initial policy stage in a board-absent repository restores policy without creating a board. | planned internal/commitment/repository/replacement_test.go (TestApprovalFailureWithoutBoard) | The fixture verifies original policy or absence and an unapproved receipt with no board. |
-| D52 | 52 | A post-rename reauthorization failure retains the next request and its matching external effect. | planned internal/intent/replacement_test.go (TestReauthorizePublishedFailure) | The real transition witness detects rollback of an effect whose ledger swap is already visible. |
+| D46 | 46 | An initial post-rename policy failure restores the original policy state before approval returns. | `internal/commitment/repository/replacement_test.go` (`TestApprovalInitialPolicyFailure`) | The initial policy rename succeeds before sync fails, which reaches the previously unfurnished restore path. |
+| D47 | 47 | A post-rename board failure restores both original file states. | `internal/commitment/repository/replacement_test.go` (`TestApprovalBoardFailure`) | Distinct original bytes detect a restore that handles only one file. |
+| D48 | 48 | A pre-rename approval-ledger failure restores the original policy and board. | `internal/commitment/repository/replacement_test.go` (`TestApprovalUnpublishedLedgerFailure`) | The real ledger transaction must run the stage restore exactly once. |
+| D49 | 49 | A post-rename approval-ledger failure retains the new policy and board with its approved receipt. | `internal/commitment/repository/replacement_test.go` (`TestApprovalPublishedLedgerFailure`) | Read-back of all three artifacts detects an approved receipt paired with old external files. |
+| D50 | 50 | A failed stage or compensation restore reports its cause and unrestored path. | `internal/commitment/repository/replacement_test.go` (`TestApprovalRestoreFailure`) | A second independent fault detects discarded snapshot-restore errors. |
+| D51 | 51 | Failed initial policy stage in a board-absent repository restores policy without creating a board. | `internal/commitment/repository/replacement_test.go` (`TestApprovalFailureWithoutBoard`) | The fixture verifies original policy or absence and an unapproved receipt with no board. |
+| D52 | 52 | A post-rename reauthorization failure retains the next request and its matching external effect. | `internal/intent/replacement_test.go` (`TestReauthorizePublishedFailure`) | The real transition witness detects rollback of an effect whose ledger swap is already visible. |
 
 ### Edge inventory
 
@@ -748,6 +399,8 @@ The implementation ticket Writes union must match this union after reviewed slic
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
+- `internal/adopt/lifecycle_consumption_test.go`
+- `internal/adopt/lifecycle_preview_test.go`
 - `internal/adopt/manifest.go`
 - `internal/assessment/record_test.go`
 - `internal/assessment/replacement_test.go`
@@ -756,6 +409,7 @@ The implementation ticket Writes union must match this union after reviewed slic
 - `internal/brokermanifest/replacement_test.go`
 - `internal/capturetx/replacement_test.go`
 - `internal/capturetx/transaction.go`
+- `internal/commitment/repository/export_test.go`
 - `internal/commitment/repository/replacement.go`
 - `internal/commitment/repository/replacement_test.go`
 - `internal/commitment/repository/repository.go`
@@ -764,8 +418,13 @@ The implementation ticket Writes union must match this union after reviewed slic
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/dashboard/dashboard.go`
 - `internal/dashboard/replacement_test.go`
+- `internal/durablefile/durablefiletest/assert.go`
+- `internal/durablefile/durablefiletest/router.go`
+- `internal/gate/complete_checkpoint.go`
 - `internal/gate/durable_replacement_test.go`
 - `internal/gate/engine.go`
+- `internal/gate/gate.go`
+- `internal/gate/lane.go`
 - `internal/gate/prospectiveartifact/prospectiveartifact.go`
 - `internal/gate/prospectiveartifact/replacement_test.go`
 - `internal/gate/run_durability.go`
@@ -778,6 +437,7 @@ The implementation ticket Writes union must match this union after reviewed slic
 - `internal/intent/replacement_test.go`
 - `internal/intent/transaction.go`
 - `internal/probe/probe.go`
+- `internal/probe/probetest/fixture.go`
 - `internal/probe/replacement_test.go`
 - `internal/probe/subject.go`
 - `internal/publication/record.go`
@@ -884,7 +544,7 @@ Independent ticket review accepted this graph before spec-stage close.
 
 The split addresses PL-R1-DELIVERY without changing accepted behavior.
 Whole-spec completion, acceptance reconciliation, and landing require all planned chunks and rows.
-Sources: internal/reviewrecord/coverage.go:132, internal/reviewrecord/check.go:64, and the independent delivery review.
+Sources: internal/reviewrecord/coverage.go, internal/reviewrecord/check.go, and the independent delivery review.
 The shared parent decision map stays in place.
 
 ### Ticket fence closure additions
@@ -901,7 +561,7 @@ The bound package registry also adds its five canonical command-registry files t
 
 ### Source headroom
 
-The gate execution source has 398 lines, and repository.go has 400 at the pinned source.
+The gate execution source has 389 lines, and repository.go has 385 at the pinned source.
 D-B1 co-owns run_durability.go for cohesive persistence-failure and recovery helpers.
 D-B6 co-owns replacement.go for snapshot replacement and restore.
 Each extraction lands with its complete caller outcome and preserves the accepted interface.

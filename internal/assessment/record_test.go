@@ -1,8 +1,9 @@
 package assessment
 
 import (
-	"bytes"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/durablefile"
+	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"os"
 	"path/filepath"
@@ -197,10 +198,10 @@ func TestAssessmentRecordUpdates(t *testing.T) {
 			refusal := false
 			switch kind {
 			case "A27 identical":
-				s.Files.WriteFile = func(string, []byte, os.FileMode) error {
+				s.Files = &FileOps{CreateTemp: func(string, string) (durablefile.File, error) {
 					t.Error("identical update attempted a write")
-					return fmt.Errorf("unexpected write")
-				}
+					return nil, fmt.Errorf("unexpected write")
+				}}
 			case "A14 identity":
 				r.Attempts[0].SessionID = "foreign"
 				r.Attempts[0].Usage[0].SessionID = "foreign"
@@ -219,20 +220,19 @@ func TestAssessmentRecordUpdates(t *testing.T) {
 				refusal = true
 			case "A17 write":
 				r.State = "failed"
-				s.Files.WriteFile = func(string, []byte, os.FileMode) error { return fmt.Errorf("injected write failure") }
+				s.Files = recordedOps(&durablefiletest.Recorder{Fail: map[string]error{"write": fmt.Errorf("injected write failure")}})
 				refusal = true
 			case "A17 rename":
 				r.State = "failed"
-				s.Files.Rename = func(string, string) error { return fmt.Errorf("injected rename failure") }
+				s.Files = recordedOps(&durablefiletest.Recorder{Fail: map[string]error{"rename": fmt.Errorf("injected rename failure")}})
 				refusal = true
 			}
 			err := s.Record(r)
 			if (err != nil) != refusal {
 				t.Fatalf("refusal=%v err=%v", refusal, err)
 			}
-			after, _ := os.ReadFile(path)
-			if (refusal || kind == "A27 identical") && !bytes.Equal(before, after) {
-				t.Fatal("prior bytes changed")
+			if refusal || kind == "A27 identical" {
+				durablefiletest.RequireBytes(t, path, string(before))
 			}
 			got, err := s.Read(r.RunID)
 			if err != nil {

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
 func TestRepairPilotActivation(t *testing.T) {
@@ -320,13 +322,7 @@ func replacementFixture(t *testing.T) (Options, Document, []byte) {
 
 func assertDocumentBytes(t *testing.T, path string, want []byte) {
 	t.Helper()
-	got, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(got) != string(want) {
-		t.Fatalf("pilot document changed\nwant: %s\ngot: %s", want, got)
-	}
+	durablefiletest.RequireBytes(t, path, string(want))
 }
 
 func testOptions(home string) Options {

@@ -21,7 +21,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Render a real dashboard file with a directory-sync failure after rename.
 The complete HTML and 0600 mode remain visible while the caller reports classified failure.
 
-- [ ] The dashboard artifact caller exposes an injected directory-sync failure. (D26).
+- [x] The dashboard artifact caller exposes an injected directory-sync failure. (D26).
 
 ## Checkpoint verification
 

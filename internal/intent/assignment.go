@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
 )
 
@@ -156,9 +157,15 @@ func PutAssignment(root string, assignment Assignment) error {
 // external transition succeeds. The rollback keeps that derived state coherent when
 // the expected-old write cannot commit.
 func ReauthorizeAssignment(root, id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
+	return reauthorizeAssignment(durablefile.Native(), root, id, request, verify, transition, beforeCAS)
+}
+
+// reauthorizeAssignment takes the replacer so that a test can fail the ledger write after
+// the real request transition.
+func reauthorizeAssignment(replacer durablefile.Replacer, root, id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
 	var previous Assignment
 	var rollback func()
-	err := Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+	err := TransactWithReplacer(replacer, root, StrictRead, func(current Ledger) (Ledger, bool, error) {
 		index := -1
 		for i := range current.Assignments {
 			if current.Assignments[i].ID == id {
@@ -225,7 +232,7 @@ func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
 		return 0, fmt.Errorf("purge intent ledger: %w", err)
 	}
 	dropped := 0
-	err = transact(root, TolerantRead, func(current Ledger, records int) (Ledger, bool, error) {
+	err = transact(durablefile.Native(), root, TolerantRead, func(current Ledger, records int) (Ledger, bool, error) {
 		next, count, changed, err := admissionpolicy.PurgeAssignments(current, records, keep)
 		dropped = count
 		return next, changed, err

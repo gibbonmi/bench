@@ -37,7 +37,7 @@ type injectedPortRow struct {
 // in auditedPortPackages. Rows are grouped by package and ordered as the derivation
 // reports them. A diff against a re-derived inventory therefore reads straight down.
 var injectedPortRegistry = []injectedPortRow{
-	{pkg: "internal/assessment", port: "FileOps", testFile: "internal/assessment/record_test.go", testName: "TestAssessmentRecordUpdates"},
+	{pkg: "internal/assessment", port: "FileOps", testFile: "internal/assessment/replacement_test.go", testName: "TestAssessmentReplacement"},
 	{
 		pkg: "internal/chargeevidence", port: "ExportWrite",
 		testFile: "internal/preflight/evidencecmd/evidence_export_test.go", testName: "TestEvidenceExportWritesSources",

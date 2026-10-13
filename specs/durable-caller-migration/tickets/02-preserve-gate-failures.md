@@ -1,7 +1,7 @@
 # Preserve durability failures through gate execution
 
 Blocked by: none
-Writes: internal/gate/verdict.go, internal/gate/engine.go, internal/gate/run_transaction.go, internal/gate/durable_replacement_test.go (new), internal/gate/run_durability.go (new)
+Writes: internal/gate/verdict.go, internal/gate/engine.go, internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/lane.go, internal/gate/complete_checkpoint.go, internal/gate/durable_replacement_test.go (new), internal/gate/run_durability.go (new)
 Covers: D16, D17, D37, D38, D39, D40
 
 ## What to build
@@ -10,6 +10,9 @@ Migrate verdict, evidence, and lane replacement through accepted D-A.
 Pass a per-invocation replacer through complete gate execution rather than fabricated results.
 Preserve pending, timeout, evidence, and final categories while retaining the typed cause.
 Interrupted-green demotion returns persistence failure to its diagnostic caller.
+
+The demotion path has no error return now, and its two callers on lock failure and lock contention receive the new error.
+The internal execution form has callers in gate.go, engine.go, and complete_checkpoint.go, and the lane record writes through lane.go.
 Keep pending recovery and report both causes when recovery also fails.
 
 Review chunk: D-B1.
@@ -24,12 +27,12 @@ Fail the final directory sync after a real green or red oracle result, then inde
 ActionExit is 1, the returned Inspection is not reusable green, and diagnostics retain both causes without claiming old pending bytes.
 A failed initial pending write starts no oracle; a failed evidence write retains its classified cause.
 
-- [ ] The gate verdict caller exposes an injected directory-sync failure. (D16).
-- [ ] The gate evidence and lane caller exposes an injected directory-sync failure. (D17).
-- [ ] Pending persistence failure prints its cause and prevents oracle execution. (D37).
-- [ ] Final persistence failure retains its diagnostic cause at ActionExit 1. (D38).
-- [ ] Green-evidence persistence failure prints the classified cause at ActionExit 1. (D39).
-- [ ] Failed pending recovery reports both persistence errors. (D40).
+- [x] The gate verdict caller exposes an injected directory-sync failure. (D16).
+- [x] The gate evidence and lane caller exposes an injected directory-sync failure. (D17).
+- [x] Pending persistence failure prints its cause and prevents oracle execution. (D37).
+- [x] Final persistence failure retains its diagnostic cause at ActionExit 1. (D38).
+- [x] Green-evidence persistence failure prints the classified cause at ActionExit 1. (D39).
+- [x] Failed pending recovery reports both persistence errors. (D40).
 
 ## Checkpoint verification
 

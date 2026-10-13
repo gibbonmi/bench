@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -201,11 +202,15 @@ func writeManifest(common string, m manifest) error {
 }
 
 func writeManifestDir(dir string, m manifest) error {
+	return writeManifestWith(durablefile.Native(), dir, m)
+}
+
+func writeManifestWith(r durablefile.Replacer, dir string, m manifest) error {
 	data, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		return err
 	}
-	return replace(filepath.Join(dir, manifestName), append(data, '\n'))
+	return replaceWith(r, filepath.Join(dir, manifestName), append(data, '\n'))
 }
 
 func readOptional(path string) ([]byte, error) {
@@ -233,31 +238,16 @@ func writeNew(path string, data []byte) error {
 }
 
 func replace(path string, data []byte) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	return replaceWith(durablefile.Native(), path, data)
+}
+
+// replaceWith creates the parent directory first, because the replacement requires an
+// existing parent.
+func replaceWith(r durablefile.Replacer, path string, data []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	tmp, err := os.CreateTemp(dir, filepath.Base(path)+".tmp-*")
-	if err != nil {
-		return err
-	}
-	name := tmp.Name()
-	defer os.Remove(name)
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Chmod(name, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(name, path)
+	return r.Replace(path, data, 0o644)
 }
 
 func digest(data []byte) string {

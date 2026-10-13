@@ -8,6 +8,7 @@ Covers: D22, D44, D45, D52
 
 Add the accepted TransactWithReplacer form and migrate writePath through D-A.
 Keep one address, lock, decision, replacement, compensation, and release implementation.
+Keep the writePath signature, because test seeds outside this fence call it; a replacer form beside it serves the transaction.
 Compensate exactly once only when ledger rename did not complete.
 A published ledger failure retains the decision effects and returns classified failure.
 Exercise the real reauthorization request transition through the same invocation seam.
@@ -25,10 +26,10 @@ Fail ledger directory sync after completed rename.
 The new ledger and matching witness remain, compensation does not run, the lock releases, and the call returns uncertainty.
 Fail before rename separately and keep the existing old-byte and compensation-count assertions.
 
-- [ ] The intent ledger caller exposes an injected directory-sync failure. (D22).
-- [ ] A post-rename ledger failure skips compensation. (D44).
-- [ ] A pre-rename ledger failure compensates exactly once. (D45).
-- [ ] A post-rename reauthorization failure retains the next request and its matching external effect. (D52).
+- [x] The intent ledger caller exposes an injected directory-sync failure. (D22).
+- [x] A post-rename ledger failure skips compensation. (D44).
+- [x] A pre-rename ledger failure compensates exactly once. (D45).
+- [x] A post-rename reauthorization failure retains the next request and its matching external effect. (D52).
 
 ## Checkpoint verification
 

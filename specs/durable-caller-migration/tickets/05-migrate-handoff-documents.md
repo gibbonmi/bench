@@ -1,7 +1,7 @@
 # Migrate handoff document replacement
 
 Blocked by: none
-Writes: internal/handoffdoc/store.go, internal/handoffdoc/replacement_test.go (new)
+Writes: internal/handoffdoc/store.go, internal/handoffdoc/replacement_test.go (new), internal/durablefile/durablefiletest/assert.go
 Covers: D21
 
 ## What to build
@@ -9,6 +9,7 @@ Covers: D21
 Use D-A for handoff document replacement with the existing lock, rendered bytes, and 0644 mode.
 Directory-open and directory-sync failures now fail the operation instead of being ignored.
 Keep caller validation and section ownership.
+Prior art: TestTwoWritersOnDistinctSectionsBothSurvive in internal/handoffdoc/store_test.go:26.
 
 Review chunk: D-B4.
 Complete acceptance and landing of durable-file-replacement supplies the shared leaf and its native qualification.
@@ -21,7 +22,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Write a real section, then fail directory synchronization after rename.
 The returned error retains uncertainty and the section encoder keeps its exact payload.
 
-- [ ] The handoff document caller exposes an injected directory-sync failure. (D21).
+- [x] The handoff document caller exposes an injected directory-sync failure. (D21).
 
 ## Checkpoint verification
 

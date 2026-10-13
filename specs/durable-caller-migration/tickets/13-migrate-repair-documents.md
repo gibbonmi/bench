@@ -7,6 +7,7 @@ Covers: D29
 ## What to build
 
 Compose the existing repair-pilot replacement seam into D-A.
+FileOps adds an OpenDirectory hook beside its existing hooks and composes into one durablefile.Replacer.
 Keep 0600 mode, document validation, encoded bytes, newline, and all create, short-write, and rename assertions.
 
 Review chunk: D-C6.
@@ -20,7 +21,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Drive the real document store through the retained failure seam.
 A shared directory-sync failure after rename remains a classified failure with the complete new document visible.
 
-- [ ] The repair pilot document caller exposes an injected directory-sync failure. (D29).
+- [x] The repair pilot document caller exposes an injected directory-sync failure. (D29).
 
 ## Checkpoint verification
 

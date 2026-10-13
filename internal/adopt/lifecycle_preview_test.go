@@ -44,9 +44,7 @@ func editPreviewManifest(t *testing.T, root string, edit func(map[string]string)
 		t.Fatal(err)
 	}
 	edit(m.hashes)
-	if err := writeManifest(previewManifestPath(root), m.KitVersion, m.Rows()); err != nil {
-		t.Fatal(err)
-	}
+	writeFixtureFile(t, previewManifestPath(root), string(manifestBytes(m.KitVersion, m.Rows())), manifestMode)
 }
 
 // previewEntry returns the first real link plan entry of kind.

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -36,10 +37,16 @@ func productionRunBinaryOwner() runBinaryOwner {
 	return nil
 }
 
+// executeSubjectWithRunBinary runs the execution with the operating-system replacement.
+func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner, baseline string) Result {
+	return executeSubjectReplacing(ctx, runtimeRoot, storageRoot, stdout, stderr, arm, mode, evaluation, owner, baseline, durablefile.Native())
+}
+
 // baseline, when set, is the landing destination whose phase schedule grades the
 // prospective tree. It reaches the oracle as one environment entry, so the candidate's
-// own phase manifest never selects what runs against it.
-func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner, baseline string) Result {
+// own phase manifest never selects what runs against it. Every record the execution
+// persists goes through replacer.
+func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner, baseline string, replacer durablefile.Replacer) Result {
 	plan, err := evaluation.acceptPre()
 	if err != nil {
 		return refuse(ctx, storageRoot, stderr, mode, funnelFace(err), fmt.Sprintf("gate subject unavailable: %v", err))
@@ -69,13 +76,11 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	}
 	lock, err := os.OpenFile(gateLockPath(gitdir), os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
-		persistInterruptedIfGreen(storageRoot, gitdir, plan)
-		return operational(storageRoot, 0, stderr, "gate lock unavailable")
+		return operational(storageRoot, 0, stderr, besideDemotion("gate lock unavailable", persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
 	}
 	defer lock.Close()
 	if err := acquireExecutionLock(lock); err != nil {
-		persistInterruptedIfGreen(storageRoot, gitdir, plan)
-		fmt.Fprintln(stderr, "gate execution already in progress")
+		fmt.Fprintln(stderr, besideDemotion("gate execution already in progress", persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
 		writeOwnerDiagnostic(stderr, gateOwnerPath(gitdir))
 		inspection := inspectAt(storageRoot, time.Now().UTC())
 		inspection.ReusableGreen = false
@@ -163,9 +168,8 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	// Persist the interrupted posture before the oracle starts. The branch-native gate
 	// always grades the complete subject; there is no component partition to retain.
 	pending := interruptedRecord(plan, time.Now().UTC())
-	if err := durableReplace(gitdir, pending); err != nil {
-		_ = durableReplace(gitdir, pending)
-		return operational(storageRoot, 0, stderr, "gate pending persistence failed")
+	if err := persistRecovering(replacer, gitdir, pending, pending); err != nil {
+		return persistenceFailure(storageRoot, 0, stderr, "gate pending persistence failed", err)
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
 	rc := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
@@ -179,9 +183,8 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 			return operational(storageRoot, 124, stderr, "gate evidence invalidation failed")
 		}
 		ready := verdictRecord{Schema: 1, State: Ready, Status: "timeout", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
-		if err := durableReplace(gitdir, ready); err != nil {
-			_ = durableReplace(gitdir, pending)
-			return operational(storageRoot, 124, stderr, "gate timeout persistence failed")
+		if err := persistRecovering(replacer, gitdir, ready, pending); err != nil {
+			return persistenceFailure(storageRoot, 124, stderr, "gate timeout persistence failed", err)
 		}
 		return Result{GateExit: 124, ActionExit: 124, Inspection: inspectAt(storageRoot, time.Now().UTC())}
 	}
@@ -201,31 +204,18 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 	recordedAt := time.Now().UTC()
 	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
 	if status == "green" {
-		if err := retainGreen(storageRoot, plan, recordedAt); err != nil {
-			fmt.Fprintln(stderr, "gate evidence persistence failed")
-			return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, time.Now().UTC())}
+		if err := retainGreen(replacer, storageRoot, plan, recordedAt); err != nil {
+			return persistenceFailure(storageRoot, rc, stderr, "gate evidence persistence failed", err)
 		}
 	} else {
 		if err := invalidateEvidence(storageRoot, plan); err != nil {
 			return operational(storageRoot, rc, stderr, "gate evidence invalidation failed")
 		}
 	}
-	if err := durableReplace(gitdir, ready); err != nil {
-		_ = durableReplace(gitdir, pending)
-		fmt.Fprintln(stderr, "gate final persistence failed")
-		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, time.Now().UTC())}
+	if err := persistRecovering(replacer, gitdir, ready, pending); err != nil {
+		return persistenceFailure(storageRoot, rc, stderr, "gate final persistence failed", err)
 	}
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, time.Now().UTC())}
-}
-
-func persistInterruptedIfGreen(root, gitdir string, plan subject) {
-	if !inspectAt(root, time.Now().UTC()).ReusableGreen {
-		return
-	}
-	pending := interruptedRecord(plan, time.Now().UTC())
-	if err := durableReplace(gitdir, pending); err != nil {
-		_ = durableReplace(gitdir, pending)
-	}
 }
 
 func acquireExecutionLock(f *os.File) error {
@@ -249,35 +239,6 @@ func unlockExecutionLock(f *os.File) error {
 	err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock)
 	delete(executionLockOwners.paths, f.Name())
 	return err
-}
-
-func retainGreen(root string, plan subject, recordedAt time.Time) error {
-	gitdir, err := benchgit.CommonDir(root)
-	if err != nil {
-		return err
-	}
-	dir := filepath.Join(gitdir, "bench-gate-evidence")
-	if err := ensureEvidenceDir(gitdir, dir); err != nil {
-		return err
-	}
-	record := verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
-	return durableReplaceAt(dir, evidenceName(plan), record)
-}
-
-func ensureEvidenceDir(parent, dir string) error {
-	if err := os.Mkdir(dir, 0o700); err != nil && !errors.Is(err, os.ErrExist) {
-		return err
-	}
-	info, err := os.Stat(dir)
-	if err != nil || !info.IsDir() || info.Mode().Perm() != 0o700 {
-		return errors.New("invalid evidence directory")
-	}
-	parentFile, err := os.Open(parent)
-	if err != nil {
-		return err
-	}
-	defer parentFile.Close()
-	return parentFile.Sync()
 }
 
 func invalidateEvidence(root string, plan subject) error {
@@ -325,10 +286,6 @@ func writeOwnerDiagnostic(stderr io.Writer, path string) {
 		liveness = "not alive"
 	}
 	fmt.Fprintf(stderr, "gate owner: pid %d (%s)\n", pid, liveness)
-}
-
-func interruptedRecord(plan subject, now time.Time) verdictRecord {
-	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
 }
 
 func sameSubject(a, b subject) bool {

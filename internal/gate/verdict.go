@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -85,51 +86,9 @@ type subject struct {
 	Env          []string
 }
 
-func durableReplace(gitdir string, rec verdictRecord) error {
-	data, err := json.Marshal(rec)
-	if err != nil {
-		return err
-	}
-	data = append(data, '\n')
-	tmp, err := os.CreateTemp(gitdir, ".bench-last-gate-")
-	if err != nil {
-		return err
-	}
-	name, installed := tmp.Name(), false
-	defer func() {
-		_ = tmp.Close()
-		if !installed {
-			_ = os.Remove(name)
-		}
-	}()
-	if err := tmp.Chmod(0o600); err != nil {
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(name, filepath.Join(gitdir, benchgit.GateCacheFile)); err != nil {
-		return err
-	}
-	dir, err := os.Open(gitdir)
-	if err != nil {
-		return err
-	}
-	syncErr, closeErr := dir.Sync(), dir.Close()
-	if syncErr != nil {
-		return syncErr
-	}
-	if closeErr != nil {
-		return closeErr
-	}
-	installed = true
-	return nil
+// durableReplace installs rec as the verdict cache of gitdir through replacer.
+func durableReplace(replacer durablefile.Replacer, gitdir string, rec verdictRecord) error {
+	return durableReplaceAt(replacer, gitdir, benchgit.GateCacheFile, rec)
 }
 
 func Inspect(root string) Inspection { return inspectAt(root, time.Now().UTC()) }

@@ -14,12 +14,13 @@
 package dashboard
 
 import (
-	"os"
+	"io/fs"
 	"path/filepath"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/status"
@@ -58,7 +59,7 @@ type Snapshot struct {
 }
 
 // Command implements `bench dashboard [--stdout]`. With no argument, Command writes the
-// rendered page atomically to `<git-dir>/bench-dashboard.html`. Command then prints that
+// rendered page atomically into the git dir. Command then prints that
 // path, exit 0. `--stdout` emits the HTML on stdout instead. It writes nothing else.
 //
 // `--stdout` is the only accepted flag. Any other argument gives a usage error, exit 2.
@@ -82,9 +83,9 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.Errorf("cannot resolve git dir", err.Error()) + "\n", 1
 	}
-	target := filepath.Join(gitDir, "bench-dashboard.html")
-	if err := atomicWrite(target, page); err != nil {
-		return toon.Errorf("cannot write bench-dashboard.html", err.Error()) + "\n", 1
+	target := filepath.Join(gitDir, pageName)
+	if err := atomicWrite(durablefile.Native(), target, page); err != nil {
+		return toon.Errorf("cannot write "+pageName, err.Error()) + "\n", 1
 	}
 	return target + "\n", 0
 }
@@ -131,29 +132,13 @@ func poolWorktrees(regs []worktree.Registered) []worktree.Registered {
 	return out
 }
 
-// atomicWrite renders to a sibling temp file in the target's directory, then renames it
-// over the target. So an interrupt mid-write never leaves a half-written page at the
-// published path. A reader never sees a partial file. On any error, atomicWrite removes
-// the temp file, leaving no leftover scratch.
-func atomicWrite(target, content string) error {
-	dir := filepath.Dir(target)
-	tmp, err := os.CreateTemp(dir, "bench-dashboard-*.html.tmp")
-	if err != nil {
-		return err
-	}
-	name := tmp.Name()
-	if _, err := tmp.WriteString(content); err != nil {
-		tmp.Close()
-		os.Remove(name)
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		os.Remove(name)
-		return err
-	}
-	if err := os.Rename(name, target); err != nil {
-		os.Remove(name)
-		return err
-	}
-	return nil
+const (
+	pageName             = "bench-dashboard.html"
+	pageMode fs.FileMode = 0o600
+)
+
+// atomicWrite replaces target with content through r, so a reader of the published path
+// sees a whole page and never a partial one.
+func atomicWrite(r durablefile.Replacer, target, content string) error {
+	return r.Replace(target, []byte(content), pageMode)
 }
