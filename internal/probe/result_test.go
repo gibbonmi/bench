@@ -184,11 +184,10 @@ func setAnswer(t *testing.T) (string, [][]any) {
 	return out, rows
 }
 
-// mutantResult derives what ReadMutant answers for one expected mutants row of an answer whose
-// command exit is command.
-func mutantResult(row []any, command int) MutantResult {
+// mutantResult derives what ReadMutant answers for one expected mutants row.
+func mutantResult(row []any) MutantResult {
 	cell := func(field string) any { return row[slices.Index(mutantFieldsOfSet, field)] }
-	result := MutantResult{Verdict: cell("verdict").(string), Restored: cell("restored") == restoredCell, RowExit: cell("exit_code").(int), CommandExit: command}
+	result := MutantResult{Verdict: cell("verdict").(string), Restored: cell("restored") == restoredCell, RowExit: cell("exit_code").(int)}
 	if focused, ok := cell("focused_exit_code").(int); ok {
 		result.FocusedExit = &focused
 	}
@@ -209,8 +208,8 @@ func TestReadMutantRequiresTheCompleteAnswer(t *testing.T) {
 	out, rows := setAnswer(t)
 	requireTrailingBytes(t, out, 1)
 	for i, row := range rows {
-		if got, err := ReadMutant([]byte(out), i+1); err != nil || !reflect.DeepEqual(got, mutantResult(row, 1)) {
-			t.Errorf("ReadMutant(row %d) = (%+v, %v), want %+v", i+1, got, err, mutantResult(row, 1))
+		if got, err := ReadMutant([]byte(out), i+1); err != nil || !reflect.DeepEqual(got, mutantResult(row)) {
+			t.Errorf("ReadMutant(row %d) = (%+v, %v), want %+v", i+1, got, err, mutantResult(row))
 		}
 	}
 	for name, data := range map[string]string{"cut": out[:len(out)-1], "extended": out + "x"} {

@@ -106,22 +106,6 @@ func decodeSetEnvelope(tables [][]cellReader) (setEnvelope, error) {
 	return e, readError(tables)
 }
 
-// RenderMutantSet renders the complete answer of a set whose rows read results, through the
-// verb's own render, with its command exit. That exit derives from the row exits, so each
-// CommandExit is ignored. The cells that MutantResult does not carry render empty. A consumer
-// test builds its set answer here rather than by hand.
-func RenderMutantSet(results []MutantResult) (string, int) {
-	s := &setRun{rows: make([]mutantRow, len(results))}
-	for i, result := range results {
-		restored := "no"
-		if result.Restored {
-			restored = restoredCell
-		}
-		s.rows[i] = mutantRow{cells: verdictCells{verdict: result.Verdict, restored: restored}, focused: result.FocusedExit, exit: result.RowExit}
-	}
-	return s.answer(setEnvelope{}, "")
-}
-
 // setRun is one mutant set in flight: the subject, the held runs, the entries and their rows
 // in entry order, and the preserved table of a failed restore.
 type setRun struct {

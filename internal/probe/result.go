@@ -38,8 +38,6 @@ type MutantResult struct {
 	RowExit int
 	// FocusedExit is the normalized exit of the row's mutated run, or nil when none started.
 	FocusedExit *int
-	// CommandExit is the exit of the whole set, which no row import binds.
-	CommandExit int
 }
 
 // ErrMutantSet is ReadResult's refusal of a mutant-set answer, which holds no single probe.
@@ -102,7 +100,7 @@ func ReadMutant(data []byte, n int) (MutantResult, error) {
 		return MutantResult{}, &RowRangeError{Rows: len(e.rows)}
 	}
 	row := e.rows[n-1]
-	return MutantResult{Verdict: row.cells.verdict, Restored: row.cells.restored == restoredCell, RowExit: row.exit, FocusedExit: row.focused, CommandExit: e.command}, nil
+	return MutantResult{Verdict: row.cells.verdict, Restored: row.cells.restored == restoredCell, RowExit: row.exit, FocusedExit: row.focused}, nil
 }
 
 // readForm reads one complete answer of form. A projection or spill-failed frame refuses
