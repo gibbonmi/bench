@@ -221,7 +221,7 @@ The normal shell sets no inherited value, and `bench worktree exec` removes it.
 
 The verdict row gains the cell `first_failure` after `failed_tests`.
 The cell holds the first entry of the failed-name list.
-It reads null when that list is empty, which includes a build failure, a prose run, and every refusal.
+It reads null when that list is empty, which includes a build failure, a prose run, and every other refusal.
 A red baseline names its own first failure, because its failed-name list is not empty.
 The schema token changes to `bench-probe-result-v2`, and `probe.ReadResult` reads the new field set.
 
@@ -393,7 +393,7 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PS36 | 25 | A substring miss with an unknown check answers the unknown-check refusal with exit 2 | `internal/probe/subject_check_test.go` (`TestSelectionPrecedesTheSubstringMiss`) | The current order answers the miss before the selection parse. |
 | PS37 | 25 | A check-form substring miss names the named-check run pattern in its run cell | `internal/probe/subject_check_test.go` (`TestSelectionPrecedesTheSubstringMiss`) | A hard-coded `all` cell is a second source of the selection. |
 | PS38 | 26 | A bite with two failed tests names the first in package-then-test order in `first_failure` | `internal/probe/verdict_test.go` (`TestFirstFailureNamesTheFirstFailedTest`) | A cell from the last event or from map order names the wrong test. |
-| PS39 | 27 | A silent run, a build failure, a prose bite, and a baseline refusal each read `first_failure` null | `internal/probe/verdict_test.go` (`TestFirstFailureNamesTheFirstFailedTest`) | An empty string or a package name reads as a test name. |
+| PS39 | 27 | A silent run, a build failure, a prose bite, and a refused baseline each read `first_failure` null | `internal/probe/verdict_test.go` (`TestFirstFailureNamesTheFirstFailedTest`) | An empty string or a package name reads as a test name. |
 | PS40 | 28 | `--expect TestClampNegative` over a failure of that test reads `bit` | `internal/probe/verdict_test.go` (`TestExpectRequiresTheNamedWitness`) | A form that ignores the value cannot show that it compares. |
 | PS41 | 28 | `--expect TestClampNegative` over a failure of only `TestClampNegative/zero` reads `bit` | `internal/probe/verdict_test.go` (`TestExpectRequiresTheNamedWitness`) | An exact-only compare misses a parent whose subtest failed. |
 | PS42 | 29 | `--expect TestClampPositive` over a failure of only `TestClampNegative` reads `invalid`, `expect-missed`, and exit 1 | `internal/probe/verdict_test.go` (`TestExpectRequiresTheNamedWitness`) | A bite by another test counts as the witness. |
