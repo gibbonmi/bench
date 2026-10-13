@@ -131,9 +131,9 @@ func installTestSelectionFactory(t *testing.T, factory runbinary.Factory) {
 			t.Fatal(err)
 		}
 	}
-	previous := selectRunBinary
-	selectRunBinary = factory.ReuseOrOwn
-	t.Cleanup(func() { selectRunBinary = previous })
+	previous := runBinaryFactory
+	runBinaryFactory = factory
+	t.Cleanup(func() { runBinaryFactory = previous })
 }
 
 func selectedPathTestModule(t *testing.T) (string, string) {

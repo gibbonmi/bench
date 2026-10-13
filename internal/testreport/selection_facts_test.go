@@ -145,7 +145,7 @@ func runEvent(test string) string {
 
 const packagePass = `{"Action":"pass","Package":"counted","Elapsed":0.01}` + "\n"
 
-// TestProbeNotesDeriveTheirTokens grades that the notes hold exactly the probe's package
+// TestProbeNotesDeriveTheirTokens grades that the notes hold exactly the bench test package
 // note and the check-inventory note. The prose check and the system suite are probe
 // targets, and each run without an inherited selection builds its own run binary, so a
 // not-a-target clause or a rebuild note states a route that the probe does not take. The
@@ -153,7 +153,7 @@ const packagePass = `{"Action":"pass","Package":"counted","Elapsed":0.01}` + "\n
 // name a conformance check misstates two of them.
 func TestProbeNotesDeriveTheirTokens(t *testing.T) {
 	notes := ProbeNotes()
-	if !strings.HasPrefix(notes, "notes:\n  "+probePackageNote+"\n  --check <name> ") {
+	if !strings.HasPrefix(notes, "notes:\n  "+PackageExpressionNote+"\n  --check <name> ") {
 		t.Fatalf("notes = %q, want the package note and then the check-inventory note", notes)
 	}
 	if lines := strings.Count(notes, "\n  "); lines != 2 {

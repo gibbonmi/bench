@@ -43,11 +43,11 @@ func TestUnwrapCallRejectsInvalidShapes(t *testing.T) {
 
 func TestMutateUnwrapMatchesExactlyOnce(t *testing.T) {
 	unwrap := mutation{cell: "unwrap", finds: []find{{form: "unwrap", old: "wrap(x)"}}}
-	got, line := mutate([]byte("a(wrap(x))"), unwrap, "subject")
-	if line != "" || got.miss || string(got.mutated) != "a(x)" {
-		t.Fatalf("mutate = (%q, %v, %q)", got.mutated, got.miss, line)
+	got, refused := mutate([]byte("a(wrap(x))"), unwrap, "subject")
+	if refused != nil || got.miss || string(got.mutated) != "a(x)" {
+		t.Fatalf("mutate = (%q, %v, %v)", got.mutated, got.miss, refused)
 	}
-	if _, line := mutate([]byte("wrap(x) wrap(x)"), unwrap, "subject"); line == "" {
+	if _, refused := mutate([]byte("wrap(x) wrap(x)"), unwrap, "subject"); refused == nil {
 		t.Fatal("expected ambiguous unwrap refusal")
 	}
 }

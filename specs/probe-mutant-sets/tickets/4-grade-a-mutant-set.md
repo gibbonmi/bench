@@ -2,7 +2,7 @@
 
 Blocked by: 1-repeat-the-probe-package.md, 2-hold-one-run-binary-across-runs.md, 3-share-the-mutation-flag-grammar.md
 Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main.go, cmd/bench/record_operations_test.go, cmd/bench/test_command.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/baseline.go, internal/probe/baseline_test.go, internal/probe/combined_test.go, internal/probe/command.go, internal/probe/edit.go, internal/probe/edit_test.go, internal/probe/lock_holder_test.go, internal/probe/lock_test.go, internal/probe/mutation_input.go, internal/probe/outcome_test.go, internal/probe/probe.go, internal/probe/probe_test.go, internal/probe/probetest/fixture.go, internal/probe/refusal_test.go, internal/probe/replacement_test.go, internal/probe/set.go (new), internal/probe/set_input.go (new), internal/probe/set_input_test.go (new), internal/probe/set_test.go (new), internal/probe/subject.go, internal/probe/subject_check_fixture_test.go, internal/probe/unwrap_test.go, internal/probe/verdict.go, internal/probe/verdict_test.go, tests/canary/package-core-guard/unrouted-subcommand
-Covers: PM1, PM2, PM3, PM4, PM5, PM6, PM7, PM8, PM9, PM10, PM11, PM12, PM13, PM14, PM15, PM16, PM17, PM18, PM19, PM20, PM21, PM22, PM23, PM24, PM25, PM26, PM30, PM32, PM33, PM35, PM36, PM37, PM38, PM39, PM40, PM41, PM43, PM44, PM51, PM67, PM69, PM71, PM72, PM77, PM78
+Covers: PM1, PM2, PM3, PM4, PM5, PM6, PM7, PM8, PM9, PM10, PM11, PM12, PM13, PM14, PM15, PM16, PM17, PM18, PM19, PM20, PM21, PM22, PM23, PM24, PM25, PM26, PM30, PM32, PM33, PM35, PM36, PM37, PM38, PM39, PM40, PM41, PM43, PM44, PM51, PM67, PM69, PM71, PM72, PM77, PM78, PM81, PM82, PM83, PM84, PM85, PM86
 
 ## What to build
 
@@ -19,7 +19,8 @@ Refuse a top-level `null` and a `null` entry as malformed, and hold the 64-entry
 
 One cancel context from `subprocess.NotifyCancel` spans the set from the baseline to the last restore.
 Before each mutant write, examine that context and grade the gate lock again.
-Apply the stop cells `set-stopped`, `gate-held`, `gate-unavailable`, `mutation-failed`, and `interrupted` as the spec states.
+Apply the stop cells `set-stopped`, `gate-held`, `gate-unavailable`, `mutation-failed`, `preserve-failed`, and `interrupted` as the spec states.
+A `substring-miss` row keeps its cause through every stop and a failed baseline.
 A restore failure stops the set, keeps the copy, and exits 2.
 
 Keep the set tables in their own registry, apart from `resultTables`, so `FieldSource` never sees a set field.
@@ -48,3 +49,7 @@ If the subject-lock row needs a second process that tries the lock, extend `star
 - [ ] With an owned run binary, a two-entry set over `clamp.go` records one build, and its `builds` cell reads 1.
 - [ ] The single form still builds twice, and its second build reads the mutant bytes.
 - [ ] The help inventory's probe line names `--mutants <path>`, and its description states one or several mutants.
+- [ ] A missed row keeps `substring-miss` through a stop and a failed baseline.
+- [ ] A failed preservation reads `preserve-failed`, and a published write failure whose restore fails exits 2.
+- [ ] A signal during a restore stops the next row with `set-stopped`.
+- [ ] `trailing_bytes` counts the `preserved` table and the baseline report, and a failed owned baseline reads `builds` 1.

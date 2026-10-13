@@ -2,7 +2,7 @@
 
 Blocked by: 4-grade-a-mutant-set.md
 Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/record_operations_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/probe.go, internal/probe/probetest/fixture.go, internal/probe/result.go, internal/probe/result_test.go, internal/probe/set.go (new), internal/reviewrecord/recordcmd/command.go, internal/reviewrecord/recordcmd/verification.go, internal/reviewrecord/recordcmd/verification_import_test.go, internal/reviewrecord/recordcmd/verification_test.go
-Covers: PM34, PM42, PM52, PM53, PM54, PM55, PM56, PM57, PM58, PM59, PM60, PM74
+Covers: PM34, PM42, PM52, PM53, PM54, PM55, PM56, PM57, PM58, PM59, PM60, PM74, PM87
 
 ## What to build
 
@@ -18,7 +18,10 @@ The two readers share today's completeness, spill-frame, strict-decode, and cano
 The refusal lines are the exact lines of the spec's Record import section.
 The probe package keeps the `--mutant` wording out of its own errors, and `recordcmd` maps each sentinel to its line.
 The help text names each set field through a probe-owned field-source function, as `probeSources` does for the single form.
+
 Build each record row's answer through the probe owner's renderer or a probe run, not a hand-typed envelope.
+Each imported row carries the cells that the producer writes for that row, so a missed row reads `substring-miss` and `untouched`.
+Add no production field or function that only a test or a probe reads.
 The command registry files join this `Writes:` line through the binding registry.
 
 ## Acceptance
@@ -31,3 +34,4 @@ The command registry files join this `Writes:` line through the binding registry
 - [ ] `--mutant 0`, `--mutant x`, and `--mutant` without `--probe-result` each print the form usage at exit 2.
 - [ ] `ReadMutant` refuses a cut answer, a spill frame, a non-canonical row, and a repeated `mutants` table.
 - [ ] The help inventory's record verification line names `--mutant <n>` and `mutants.exit_code`.
+- [ ] `--mutant 1` of a `restore-failed` row writes one entry whose outcome is `restore-failed` and whose restore reads `fail`.

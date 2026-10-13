@@ -14,22 +14,38 @@ import (
 // buildEachRun replaces the fixture's inherited run binary with a build script, so each
 // focused run owns its selection. The script copies the subject named by rel into the
 // returned records directory, one numbered file for each build, and then copies the
-// fixture's sealed executable pair to the output. The freshness verifier accepts the copy,
-// because the bytes and the adjacent seal are unchanged, the subject is outside the
-// digest closure, and the private directory holds no symlink component.
+// fixture's sealed executable pair to the output.
 func buildEachRun(t *testing.T, f *fixture, rel string) string {
 	t.Helper()
-	sealed := os.Getenv(runbinary.Env)
 	records := scratchDir(t)
+	record := "n=$(ls " + sanitize.ShellQuote(records) + " | wc -l)\n" +
+		"cp \"$1\"/" + sanitize.ShellQuote(rel) + " " + sanitize.ShellQuote(records) + "/\"$n\"\n"
+	installSealedBuild(t, f, record)
+	return records
+}
+
+// parkSecondBuild replaces the fixture's inherited run binary with a build script. Its first
+// call copies the sealed pair, and its second call writes the returned marker and parks.
+func parkSecondBuild(t *testing.T, f *fixture) string {
+	t.Helper()
+	dir := scratchDir(t)
+	first, parked := sanitize.ShellQuote(filepath.Join(dir, "first")), filepath.Join(dir, "parked")
+	installSealedBuild(t, f, "if [ -e "+first+" ]; then : > "+sanitize.ShellQuote(parked)+"; sleep 60; exit 1; fi\n: > "+first+"\n")
+	return parked
+}
+
+// installSealedBuild installs a build script that runs step and then copies the fixture's
+// sealed executable pair to the output. The freshness verifier accepts the copy while the
+// digest closure keeps its start bytes. TMPDIR moves, so each private directory is observable.
+func installSealedBuild(t *testing.T, f *fixture, step string) {
+	t.Helper()
+	sealed := os.Getenv(runbinary.Env)
 	script := "set -eu\n" +
-		"if [ \"$1\" = --manifest-dir ]; then shift 2; fi\n" +
-		"n=$(ls " + sanitize.ShellQuote(records) + " | wc -l)\n" +
-		"cp \"$1\"/" + sanitize.ShellQuote(rel) + " " + sanitize.ShellQuote(records) + "/\"$n\"\n" +
+		"if [ \"$1\" = --manifest-dir ]; then shift 2; fi\n" + step +
 		"cp " + sanitize.ShellQuote(sealed) + " \"$2\"\n" +
 		"cp " + sanitize.ShellQuote(sealed+".seal") + " \"$2.seal\"\n"
 	installBuildScript(t, f, script)
 	t.Setenv("TMPDIR", scratchDir(t))
-	return records
 }
 
 // installBuildScript writes script as the fixture's run-binary build script and removes the

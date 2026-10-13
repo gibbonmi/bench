@@ -319,12 +319,11 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT168-probe-batch
-2. FT402
-3. FT379
-4. FT405
-5. FT375-spec-staleness
-6. FT293-ownership-closure
-7. FT380-plan-commit
-8. FT411
-9. FT409
+1. FT402
+2. FT379
+3. FT405
+4. FT375-spec-staleness
+5. FT293-ownership-closure
+6. FT380-plan-commit
+7. FT411
+8. FT409

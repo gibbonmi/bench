@@ -48,8 +48,8 @@ func TestTicketSlicingPasses(t *testing.T) {
 // TestWriteSpecChunkedSlicing keeps the write-spec spec review, research round, per-chunk
 // slicing, one ticket review, context checkpoint, review-line, and fence-narrowing rules
 // red-capable. Each needle and diagnostic is written here independently of the registry, so
-// a rewrite that drops a rule cannot define itself green. The moved-code guard, the witness
-// cap, and the known-issues pointer to that cap have their rules here too.
+// a rewrite that drops a rule cannot define itself green. The moved-code guard and the
+// witness cap have their rules here too.
 func TestWriteSpecChunkedSlicing(t *testing.T) {
 	const writeSpec = ".agents/commands/bench-write-spec.md"
 	const implementSpec = ".agents/commands/bench-implement-spec.md"
@@ -88,7 +88,6 @@ func TestWriteSpecChunkedSlicing(t *testing.T) {
 		{file: implementSpec, needle: "The charge caps the witnesses at one for each coverage row plus one for each production branch that the ticket adds.", want: "witness cap: the charge caps the witnesses by coverage rows and new production branches"},
 		{file: implementSpec, needle: "The author meets the cap with fewer independent expectations, such as one table-driven test, and skips no witness.", want: "witness cap: the author meets the cap with fewer expectations and skips no witness"},
 		{file: implementSpec, needle: "The author runs the floor checks and witnesses of several packages in one `bench test` call that repeats `--package`.", want: "witness cap: the author runs several packages in one bench test call"},
-		{file: issues, needle: "Apply the witness cap and the batched `bench test` call that `/bench-implement-spec` states.", want: "witness cap: the known-issues row points to implement-spec for the cap"},
 		{file: issues, needle: "Cap the witnesses in a charge", want: "witness cap: the known-issues row kept a copy of the cap", forbidden: true},
 	}}.check(t)
 }

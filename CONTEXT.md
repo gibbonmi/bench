@@ -375,6 +375,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   `--swap` and `--omit` edits. Each edit matches the start bytes of the subject,
   and one mutated run grades all the edits together. Avoid "multi-mutation",
   "mutation batch", "batch probe" — combined mutant.
+- **mutant set** — the list of independent mutants that one `bench probe` call
+  grades against one probe baseline. Each mutant runs in its own mutated run and
+  has its own restore. Avoid "probe batch", "mutant batch", "multi-probe" —
+  mutant set.
 - **expected witness** — the test that `bench probe --expect` names. A mutated run
   that fails without that test or one of its subtests gives the **probe verdict**
   `invalid` with the cause `expect-missed`. Avoid "expected red", "target test",

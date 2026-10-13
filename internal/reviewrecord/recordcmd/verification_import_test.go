@@ -1,15 +1,22 @@
 package recordcmd_test
 
 import (
+	"encoding/json"
 	"os"
+	"path/filepath"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/probe"
+	"github.com/gibbonmi/bench/internal/probe/probetest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // checkpoint adds one independent review for each axis to the chunk 1 record, commits it,
@@ -122,6 +129,133 @@ func TestVerificationImportRefusals(t *testing.T) {
 	combined["--probe-outcome"], combined["--probe-exit-code"], combined["--probe-restore"] = "bit", "1", "pass"
 	if out, code := recordcmd.Command(f.Root, verifyArgs(t, combined)); code != 2 || !strings.HasPrefix(out, "usage: bench record verification") {
 		t.Fatalf("scalar and import together = exit %d, output %q; want the usage line and exit 2", code, out)
+	}
+}
+
+// The mutant-set answers below come from probe runs over the clamp repository. The silent
+// row reads exit 1 and focused exit 0, and the biting row reads exit 0 and focused exit 1. The
+// missed entry matches no clamp bytes.
+var (
+	silentEntry = []string{"--swap", "return n", "--with", "return -n"}
+	bitingEntry = []string{"--swap", "n < 0", "--with", "n > 0"}
+	missedEntry = []string{"--omit", "absent"}
+	bite        = probetest.ClampFailure("caught")
+)
+
+// producer runs `bench probe --mutants` over entries, with their mutated runs in order, and
+// answers its complete stdout and exit.
+type producer func(entries [][]string, mutated ...probetest.Start) (string, int)
+
+// setProducer makes the root of f the clamp repository and answers its producer and its Bench home.
+func setProducer(t *testing.T, f *recordtest.Fixture) (producer, string) {
+	t.Helper()
+	_, home := probetest.Repository(t, f.Root, freshness.Publish)
+	marker := filepath.Join(t.TempDir(), "go-started")
+	return func(entries [][]string, mutated ...probetest.Start) (string, int) {
+		t.Helper()
+		body, err := json.Marshal(entries)
+		if err != nil {
+			t.Fatal(err)
+		}
+		probetest.InstallSequence(t, marker, probetest.ClampPass, mutated...)
+		return probe.Command(slices.Concat([]string{probetest.ClampPath, "--mutants", excerptFile(t, "mutants.json", string(body))}, probetest.ClampSelection))
+	}, home
+}
+
+// silentThenBiting is the two-row answer of the silent entry and then the biting entry.
+func silentThenBiting(produce producer) (string, int) {
+	return produce([][]string{silentEntry, bitingEntry}, probetest.ClampPass, bite)
+}
+
+// importingRow edits a verification call to import the row named by row from the answer in data.
+func importingRow(t *testing.T, data string, exit int, row string) map[string]string {
+	t.Helper()
+	edits := importing(t, data, exit)
+	edits["--mutant"] = row
+	return edits
+}
+
+// --mutant 2 imports row 2 alone: its verdict, its focused exit, and its restore.
+func TestVerificationImportsOneMutantRow(t *testing.T) {
+	f := recorded(t, 1)
+	produce, _ := setProducer(t, f)
+	data, _ := silentThenBiting(produce)
+	requireImportedRow(t, f, data, 0, "2", rr.Probe{Outcome: "bit", ExitCode: 1, Restore: "pass"})
+}
+
+// --mutant 1 of a row whose restore failed records that outcome and a failed restore. The
+// mutated run removes the preserved copy, so the restore cannot put the start bytes back.
+func TestVerificationImportsARestoreFailedRow(t *testing.T) {
+	f := recorded(t, 1)
+	produce, home := setProducer(t, f)
+	damaging := bite
+	damaging.Hook = "find " + sanitize.ShellQuote(home) + " -name clamp.go -delete\n"
+	data, _ := produce([][]string{bitingEntry}, damaging)
+	requireImportedRow(t, f, data, 2, "1", rr.Probe{Outcome: "restore-failed", ExitCode: 1, Restore: "fail"})
+}
+
+// requireImportedRow imports row of the answer in data with the explicit exit, and requires the
+// one recorded probe want against the chunk's planned mutation, with the exact answer bytes.
+func requireImportedRow(t *testing.T, f *recordtest.Fixture, data string, exit int, row string, want rr.Probe) {
+	t.Helper()
+	verify(t, f, importingRow(t, data, exit, row))
+	got := onlyResult(t, f)
+	want.Mutation, want.NativeRef = f.Plan.Chunks[0].Verification[0].Probe, got.NativeRef
+	if got.Probe == nil || !reflect.DeepEqual(*got.Probe, want) || got.NativeRef.Excerpt != data {
+		t.Fatalf("probe = %+v with excerpt %q, want %+v and the exact answer bytes", got.Probe, got.NativeRef.Excerpt, want)
+	}
+}
+
+// The explicit exit is checked against the row's exit_code, never the set's command exit.
+func TestVerificationChecksTheRowExit(t *testing.T) {
+	f := recorded(t, 1)
+	produce, _ := setProducer(t, f)
+	data, command := silentThenBiting(produce)
+	if command != 1 {
+		t.Fatalf("command exit = %d, want 1, apart from row 2's exit", command)
+	}
+	refuseVerify(t, f, "— --exit-code 1 differs from the imported mutants.exit_code 0\n", importingRow(t, data, 1, "2"))
+}
+
+// A mutant-set answer without --mutant refuses by name and routes to --mutant.
+func TestVerificationRefusesAMutantSetWithoutARow(t *testing.T) {
+	f := recorded(t, 1)
+	produce, _ := setProducer(t, f)
+	data, command := silentThenBiting(produce)
+	refuseVerify(t, f, "— --probe-result is a mutant-set answer; name one row with --mutant <n>\n", importing(t, data, command))
+}
+
+// --mutant refuses a single-form answer, a row past the answer, and a row whose mutated run never
+// started. A bad row number, or --mutant without --probe-result, prints the form usage.
+func TestVerificationMutantRefusals(t *testing.T) {
+	f := recorded(t, 1)
+	produce, _ := setProducer(t, f)
+	set, _ := silentThenBiting(produce)
+	missed, _ := produce([][]string{missedEntry, bitingEntry}, bite)
+	if row := strings.Split(missed, "\n")[1]; !strings.Contains(row, ",substring-miss,") || !strings.HasSuffix(row, ",untouched") {
+		t.Fatalf("missed row = %q, want the producer's substring-miss row", row)
+	}
+	for name, tc := range map[string]struct {
+		edits map[string]string
+		want  string
+	}{
+		"single-form answer":  {importingRow(t, answer("bit", "yes", 0, "1", report), 0, "1"), "--mutant needs a mutant-set answer; --probe-result holds a bench-probe-result-v2 answer"},
+		"row past the answer": {importingRow(t, set, 1, "3"), "--mutant 3 names no row; the answer holds 2 rows"},
+		"null focused exit":   {importingRow(t, missed, 1, "1"), "the imported mutants.focused_exit_code is null, because no mutated run started"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			refuseVerify(t, f, "— "+tc.want+"\n", tc.edits)
+		})
+	}
+	for name, edits := range map[string]map[string]string{
+		"zero row":           importingRow(t, set, 0, "0"),
+		"negative row":       importingRow(t, set, 0, "-1"),
+		"non-decimal row":    importingRow(t, set, 0, "x"),
+		"row with no import": {"--mutant": "1"},
+	} {
+		if out, code := recordcmd.Command(f.Root, verifyArgs(t, edits)); code != 2 || !strings.HasPrefix(out, "usage: bench record verification") {
+			t.Errorf("%s = exit %d, output %q; want the usage line and exit 2", name, code, out)
+		}
 	}
 }
 
