@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"syscall"
 	"testing"
 	"time"
 
@@ -93,44 +92,44 @@ func TestHeldRunsInterruptACancelledBuild(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	factory := tree.factory()
-	seal, park := factory.Build, parkingBuild(parkingBuilderSource(t))
-	parked := ""
-	factory.Build = func(ctx context.Context, source, output string) error {
-		if len(tree.read) == 0 {
-			return seal(ctx, source, output)
-		}
-		parked = output
-		return park(ctx, source, output)
-	}
-	pidFile := filepath.Join(t.TempDir(), "builder-descendant")
-	t.Setenv(cancelGoPIDEnv, pidFile)
-	t.Setenv(cancelParkingPath, os.Args[0])
+	parked := tree.park(t, &factory, 1)
 	held := tree.hold(t, ctx, factory)
 	runHeld(t, held, OutcomePassed)
 	tree.write(t, "v2")
-
-	outcomes := make(chan Outcome, 1)
-	go func() {
-		outcome, _, _ := held.Run()
-		outcomes <- outcome
-	}()
-	descendant := waitForPID(t, pidFile)
-	t.Cleanup(func() { _ = syscall.Kill(descendant, syscall.SIGKILL) })
-	cancel()
-	select {
-	case outcome := <-outcomes:
-		if outcome.Kind != OutcomeInterrupted {
-			t.Fatalf("cancelled build = %q, want %q", outcome.Kind, OutcomeInterrupted)
-		}
-	case <-time.After(deadline()):
-		t.Fatalf("cancelled held run did not return within %s", deadline())
-	}
-	requireProcessGone(t, descendant)
-	if _, err := os.Stat(filepath.Dir(parked)); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("parked build directory after cancel = %v, want removed", err)
-	}
+	parked.interrupt(t, held, cancel)
 	if got := held.Builds(); got != len(tree.read) {
 		t.Fatalf("Builds() = %d, want %d", got, len(tree.read))
+	}
+}
+
+func TestHeldRunsInterruptACancelledFirstBuild(t *testing.T) {
+	tree := newSealedTree(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	factory := tree.factory()
+	parked := tree.park(t, &factory, 0)
+	held := tree.hold(t, ctx, factory)
+	parked.interrupt(t, held, cancel)
+	if got := held.Builds(); got != 0 {
+		t.Fatalf("Builds() = %d, want 0", got)
+	}
+}
+
+func TestHeldRunsFailAStaleRunWhoseBuildFails(t *testing.T) {
+	tree := newSealedTree(t)
+	factory := tree.factory()
+	tree.replaceAfter(&factory, 1, func(context.Context, string, string) error {
+		return runbinary.BuildError{Err: errors.New("exit status 1"), Output: "./tree.go:1:1: syntax error\n"}
+	})
+	held := tree.hold(t, context.Background(), factory)
+	runHeld(t, held, OutcomePassed)
+	if err := os.Remove(tree.marker); err != nil {
+		t.Fatal(err)
+	}
+	tree.write(t, "v2")
+	runHeld(t, held, OutcomeBuildFailed)
+	if _, err := os.Stat(tree.marker); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("Go child marker after the failed build = %v, want no Go child", err)
 	}
 }
 
@@ -226,6 +225,62 @@ func (s *sealedTree) hold(t *testing.T, ctx context.Context, factory runbinary.F
 	held := Hold(ctx, s.root, request)
 	t.Cleanup(func() { _ = held.Close() })
 	return held
+}
+
+// replaceAfter makes factory's builder call build once the sealed builder has read sealed trees.
+func (s *sealedTree) replaceAfter(factory *runbinary.Factory, sealed int, build runbinary.Builder) {
+	seal := factory.Build
+	factory.Build = func(ctx context.Context, source, output string) error {
+		if len(s.read) < sealed {
+			return seal(ctx, source, output)
+		}
+		return build(ctx, source, output)
+	}
+}
+
+// parkedBuild is a parking builder that records the output path it parks on.
+type parkedBuild struct {
+	parking
+	output string
+}
+
+// park arms the parking script, and factory's builder parks once the sealed builder has read
+// sealed trees.
+func (s *sealedTree) park(t *testing.T, factory *runbinary.Factory, sealed int) *parkedBuild {
+	t.Helper()
+	parked := &parkedBuild{parking: armParking(t)}
+	parked.setenv(t)
+	park := parkingBuild(parkingBuilderSource(t))
+	s.replaceAfter(factory, sealed, func(ctx context.Context, source, output string) error {
+		parked.output = output
+		return park(ctx, source, output)
+	})
+	return parked
+}
+
+// interrupt cancels a held run while its build parks. The run must read interrupted, and the
+// parked descendant and the parked build directory must be gone.
+func (p *parkedBuild) interrupt(t *testing.T, held *HeldRuns, cancel context.CancelFunc) {
+	t.Helper()
+	outcomes := make(chan Outcome, 1)
+	go func() {
+		outcome, _, _ := held.Run()
+		outcomes <- outcome
+	}()
+	descendant := p.descendant(t)
+	cancel()
+	select {
+	case outcome := <-outcomes:
+		if outcome.Kind != OutcomeInterrupted {
+			t.Fatalf("cancelled build = %q, want %q", outcome.Kind, OutcomeInterrupted)
+		}
+	case <-time.After(deadline()):
+		t.Fatalf("cancelled held run did not return within %s", deadline())
+	}
+	requireProcessGone(t, descendant)
+	if _, err := os.Stat(filepath.Dir(p.output)); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("parked build directory after cancel = %v, want removed", err)
+	}
 }
 
 // inherit names an inherited run binary sealed from the current tree. It follows hold,
