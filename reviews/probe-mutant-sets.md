@@ -3275,6 +3275,72 @@
           "supersedes": [
             "pm-e-coverage-r1"
           ]
+        },
+        {
+          "id": "pm-e-standards-r3",
+          "performer": "claude:pm_e_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_e_standards_r3",
+            "digest": "sha256:57296c149147563935fd2a6a5971b16d95950af1ffe2be36a1963f3ebad96389",
+            "excerpt": "Standards axis claude:pm_e_standards_r3 (opus/high), PM-E narrow confirming round 3, chunk pair 2ae8d55c..5c646a5b, delta e10b7d35..a7a290a0 -- .bench/ .agents/, evidence sha256:60e0c68b current.\ncount: 0\nworst: none\nS4 closed, confidence 9: BENCH-reference.md:300 \"When every row reads substring-miss, the set takes no lock and starts no run.\" matches set.go:136-143 and the paragraph's own usage.\nS5 closed, confidence 9: SKILL.md:105 \"A probe runs through bench probe, which preserves the subject, applies one mutation, and proves the restore.\" (18 words, active).\nP4 line passes, confidence 8: about 22-24 words, active, present tense, CONTEXT.md terms.\nAdvice: BENCH-reference.md:300 is about 96 characters wide; the six-item inline list predates the repair.\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
+          "tip": "a7a290a0143872126464283fb314b8354e9b651c",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-e-standards-r2"
+          ]
+        },
+        {
+          "id": "pm-e-spec-r3",
+          "performer": "claude:pm_e_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_e_spec_r3",
+            "digest": "sha256:df0243b71e7c3d999718c979215d9b2aee6b2b2cfdf7d984fd15795ff5d6af6e",
+            "excerpt": "Spec axis claude:pm_e_spec_r3 (opus/high), PM-E narrow confirming round 3, chunk pair 2ae8d55c..5c646a5b, delta ef6e240f..5c646a5b, evidence sha256:60e0c68b current.\ncount: 0\nworst: none\nP4 closed (BENCH-reference.md:258-259 reads \"... a deletion, or a combined mutant, and bench probe --help holds the grammar.\"), confidence 10.\nThe S4 line (:300-301) stays true: every row starts as substring-miss and the all-miss path returns before holdSubject and the baseline (set.go:136-153); spec 200-201 and story 13 agree.\nThe S5 line (SKILL.md:105) stays true; the help pointer gives the grammar.\nPM62 and PM63 stay met. Seven pm-t06-rep2 entries at a7a290a0, source digest 6325249b; plan digest dd263d40.\nAdvice: BENCH-reference.md:300 is a long physical line; three entries cite one combined run.\nImplementation command: no command change.\n"
+          },
+          "axis": "Spec",
+          "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
+          "tip": "a7a290a0143872126464283fb314b8354e9b651c",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-e-spec-r2"
+          ]
+        },
+        {
+          "id": "pm-e-coverage-r3",
+          "performer": "claude:pm_e_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_e_coverage_r3",
+            "digest": "sha256:5948e5ce223a40e40778c19be51f753271939a71b0814a019f5fba96a33bbea7",
+            "excerpt": "Coverage axis claude:pm_e_coverage_r3 (opus/high), PM-E narrow confirming round 3, chunk pair 2ae8d55c..5c646a5b, repair delta e10b7d35..a7a290a0 -- .bench/ .agents/, evidence sha256:60e0c68b current.\ncount: 0\nworst: none\nBENCH-reference.md: 47 needles all hold; edited lines 258 and 300 sit near no needle. SKILL.md: 67 needles all hold; edited line 105; nearest needles at 103 and 106 still resolve. SKILL.md 126 lines (budget 126). docs-currency-workflow and guidance-prose-budgets pass. No test or check pins the old or new phrases.\nAdvice: SKILL.md has no headroom left.\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
+          "tip": "a7a290a0143872126464283fb314b8354e9b651c",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-e-coverage-r2"
+          ]
         }
       ]
     }
@@ -3986,3 +4052,20 @@ Count 1. Worst issue: P4. P1, P2, and P3 are closed, and row PM62 is met.
 ### Coverage
 
 Count 0. Worst issue: none. Every anchor in the two guidance files still matches, and an independent probe bit.
+
+## PM-E round 3
+
+The narrow round read the delta from ef6e240f to 5c646a5b, with the small-fix commit a7a290a0.
+PM-E closes with repair cycle 2 of 2 used.
+
+### Standards
+
+Count 0. Worst issue: none. S4 and S5 are closed, and the restored list conjunction meets the prose rules.
+
+### Spec
+
+Count 0. Worst issue: none. P4 is closed, and rows PM62 and PM63 stay met.
+
+### Coverage
+
+Count 0. Worst issue: none. Every anchor in the two guidance files still holds, and the delegate skill stays at its line budget.
