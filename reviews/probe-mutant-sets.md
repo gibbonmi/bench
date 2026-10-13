@@ -1971,9 +1971,9 @@
     {
       "id": "PM-D",
       "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
-      "tip": "fc4c772eab1d55cbe6fc8e46faf6cccc6709cd1c",
-      "plan_digest": "sha256:2d2a1f9466ffc76362c39594e0c13eddc9994c0fa59884d007540acae89abbba",
-      "source_digest": "d88eb672abcf7273668e74f584b006b59838673f",
+      "tip": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+      "plan_digest": "sha256:9991026f819b1b4561ced20dd66fcea641105979c3797228b93b3e4eeac3f255",
+      "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
       "acceptance_rows": [
         "PM34",
         "PM42",
@@ -2225,6 +2225,125 @@
               "ref": "fc4c772eab1d55cbe6fc8e46faf6cccc6709cd1c",
               "digest": "sha256:1335aca59b1b80a21fe4817a0a70b934710117a4fc513d4c3217726fb865d32b",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/verification.go,swap,failed,3,TestVerificationChecksTheRowExit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,192\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1144\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,11001,192\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationChecksTheRowExit,\"verification_import_test.go:216: verification = exit 0, output \\\"verification[1]{list,chunk,id,requirement,role,outcome,source_digest,excerpt_digest}:\\\\\\\\n  chunk,\\\\\\\\\\\"1\\\\\\\\\\\",tests-1,tests,author-verification,fail,bdf67c11e413902be858a01300e96d4553d6… (411 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationImportsARestoreFailedRow,\"verification_import_test.go:193: verification = exit 1, output \\\"error: bench record verification refused — --exit-code 2 differs from the imported mutants.exit_code 1\\\\\\\\n\\\"; want exit 0\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationImportsOneMutantRow,\"verification_import_test.go:182: verification = exit 1, output \\\"error: bench record verification refused — --exit-code 0 differs from the imported mutants.exit_code 1\\\\\\\\n\\\"; want exit 0\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "pm-t05-rep2-probe-family",
+          "performer": "claude:pm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+            "digest": "sha256:c74feabcde0120e79ed9463ed0651ce373bb9a508024869f7fadc8f2dd6d1cab",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/conformance --package ./internal/freshness\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18448,335\n  github.com/gibbonmi/bench/internal/conformance,pass,63673,1690\n  github.com/gibbonmi/bench/internal/freshness,pass,12418,79\n  github.com/gibbonmi/bench/internal/probe,pass,68295,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3074,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,15724,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-rep2-record-forms",
+          "performer": "claude:pm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+            "digest": "sha256:c74feabcde0120e79ed9463ed0651ce373bb9a508024869f7fadc8f2dd6d1cab",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/conformance --package ./internal/freshness\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18448,335\n  github.com/gibbonmi/bench/internal/conformance,pass,63673,1690\n  github.com/gibbonmi/bench/internal/freshness,pass,12418,79\n  github.com/gibbonmi/bench/internal/probe,pass,68295,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3074,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,15724,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "record-forms",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-rep2-command-package",
+          "performer": "claude:pm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+            "digest": "sha256:c74feabcde0120e79ed9463ed0651ce373bb9a508024869f7fadc8f2dd6d1cab",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/conformance --package ./internal/freshness\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18448,335\n  github.com/gibbonmi/bench/internal/conformance,pass,63673,1690\n  github.com/gibbonmi/bench/internal/freshness,pass,12418,79\n  github.com/gibbonmi/bench/internal/probe,pass,68295,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3074,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,15724,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-rep2-conformance-package",
+          "performer": "claude:pm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+            "digest": "sha256:c74feabcde0120e79ed9463ed0651ce373bb9a508024869f7fadc8f2dd6d1cab",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/conformance --package ./internal/freshness\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18448,335\n  github.com/gibbonmi/bench/internal/conformance,pass,63673,1690\n  github.com/gibbonmi/bench/internal/freshness,pass,12418,79\n  github.com/gibbonmi/bench/internal/probe,pass,68295,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3074,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,15724,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-rep2-root-conformance",
+          "performer": "claude:pm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+            "digest": "sha256:60fb6bf8a7ed3800a10f56b97646d4d3e890130dd5cb5bf673c1dd757e79d2d6",
+            "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,d06742eaf734007eb38bf43c9c2d187277c9a7d4,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15608,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-rep2-central-property",
+          "performer": "claude:pm_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+            "digest": "sha256:96863a7d2ec2d3b812ebd02435e951ac183ab9ad05e30336661f3197d227e2d4",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/verification.go,swap,failed,3,TestVerificationChecksTheRowExit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,192\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1144\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,11668,192\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationChecksTheRowExit,\"verification_import_test.go:217: verification = exit 0, output \\\"verification[1]{list,chunk,id,requirement,role,outcome,source_digest,excerpt_digest}:\\\\\\\\n  chunk,\\\\\\\\\\\"1\\\\\\\\\\\",tests-1,tests,author-verification,fail,bdf67c11e413902be858a01300e96d4553d6… (411 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationImportsARestoreFailedRow,\"verification_import_test.go:194: verification = exit 1, output \\\"error: bench record verification refused — --exit-code 2 differs from the imported mutants.exit_code 1\\\\\\\\n\\\"; want exit 0\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationImportsOneMutantRow,\"verification_import_test.go:183: verification = exit 1, output \\\"error: bench record verification refused — --exit-code 0 differs from the imported mutants.exit_code 1\\\\\\\\n\\\"; want exit 0\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Check --exit-code against the selected row's focused exit instead of its row exit. TestVerificationChecksTheRowExit must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+              "digest": "sha256:96863a7d2ec2d3b812ebd02435e951ac183ab9ad05e30336661f3197d227e2d4",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/verification.go,swap,failed,3,TestVerificationChecksTheRowExit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,192\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1144\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,11668,192\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationChecksTheRowExit,\"verification_import_test.go:217: verification = exit 0, output \\\"verification[1]{list,chunk,id,requirement,role,outcome,source_digest,excerpt_digest}:\\\\\\\\n  chunk,\\\\\\\\\\\"1\\\\\\\\\\\",tests-1,tests,author-verification,fail,bdf67c11e413902be858a01300e96d4553d6… (411 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationImportsARestoreFailedRow,\"verification_import_test.go:194: verification = exit 1, output \\\"error: bench record verification refused — --exit-code 2 differs from the imported mutants.exit_code 1\\\\\\\\n\\\"; want exit 0\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationImportsOneMutantRow,\"verification_import_test.go:183: verification = exit 1, output \\\"error: bench record verification refused — --exit-code 0 differs from the imported mutants.exit_code 1\\\\\\\\n\\\"; want exit 0\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
