@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: internal/runbinary/runbinary.go, internal/runbinary/runbinary_test.go, internal/testreport/cancel_test.go, internal/testreport/command.go, internal/testreport/held_runs.go (new), internal/testreport/held_runs_test.go (new), internal/testreport/outcome.go, internal/testreport/runbinary_test.go
-Covers: PM27, PM28, PM29, PM31, PM70, PM76
+Covers: PM27, PM28, PM29, PM31, PM70, PM76, PM79, PM80
 
 ## What to build
 
@@ -40,3 +40,5 @@ Put the owner and its tests in the two new files, so `internal/testreport/comman
 - [ ] After a stale run returns, its fresh private directory is gone, and after close no held directory remains.
 - [ ] A cancel while a stale run's fresh build parks gives that run `interrupted`, and the parked builder's directory is gone.
 - [ ] A cancel while the held validation of an inherited binary runs gives that run `interrupted`, not `refused`.
+- [ ] When a stale owned binary's fresh build fails with no cancel, that run reads `build-failed` and starts no Go child.
+- [ ] A cancel while the first held run's build parks gives that run `interrupted`, removes the parked directory, and leaves the build count at 0.
