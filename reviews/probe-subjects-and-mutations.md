@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/probe-subjects-and-mutations/spec.md",
-  "plan_digest": "sha256:eda3f737cedfbbb29511d8b04197c36b17a332d75a896cb01b29bc4bf2acf8e4",
+  "plan_digest": "sha256:95540fdff85b79045b84441bbcf357fda6bcb980917f14f3acf6ea387f7ac7b9",
   "implementation_session": "",
   "chunks": [
     {
@@ -1006,9 +1006,9 @@
     {
       "id": "PS-C",
       "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
-      "tip": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
-      "plan_digest": "sha256:eda3f737cedfbbb29511d8b04197c36b17a332d75a896cb01b29bc4bf2acf8e4",
-      "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+      "tip": "7a55152eebda40993195f4279847529b1dc982c0",
+      "plan_digest": "sha256:95540fdff85b79045b84441bbcf357fda6bcb980917f14f3acf6ea387f7ac7b9",
+      "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
       "acceptance_rows": [
         "PS38",
         "PS39",
@@ -1377,6 +1377,179 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/verdict.go,swap,failed,1,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestExpectRequiresTheNamedWitness$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,615\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1200,6\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,\"verdict_test.go:57: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  invalid,clamp.go,swap,expect-missed,1,TestClampNegative/zero,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^Tes… (737 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "ps-t04-rep1-t4-probe-family",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-testreport",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-runbinary",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-record-forms",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-gate-readers",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-gate-readers",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-command-package",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-conformance-package",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-root-conformance",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8beb59e2e86120562e1c4ccf9bd58a81c439b51c9b4fbe28b8fac224e68e7397",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15098,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-central-property",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8c0740bcb885dffe8e517a4ac4e666bcaa383f205965d60fd361cc002a4a99b7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/outcome.go,swap,failed,3,TestExecuteClassifiesTheOutcome/refused,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,232\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,973\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,55125,232\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestExecuteClassifiesTheOutcome/refused,\"outcome_test.go:73: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",1\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/a_cancelled_build,\"outcome_test.go:161: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/no_Go_on_PATH,\"outcome_test.go:168: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-central-property",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Map every builder error to build-failed instead of only a BuildError. TestOnlyAScriptFailureIsBuildFailed must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+              "digest": "sha256:8c0740bcb885dffe8e517a4ac4e666bcaa383f205965d60fd361cc002a4a99b7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/outcome.go,swap,failed,3,TestExecuteClassifiesTheOutcome/refused,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,232\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,973\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,55125,232\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestExecuteClassifiesTheOutcome/refused,\"outcome_test.go:73: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",1\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/a_cancelled_build,\"outcome_test.go:161: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/no_Go_on_PATH,\"outcome_test.go:168: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1508,6 +1681,21 @@
         ],
         "PS-B": [
           "PS-B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:eda3f737cedfbbb29511d8b04197c36b17a332d75a896cb01b29bc4bf2acf8e4",
+      "to": "sha256:95540fdff85b79045b84441bbcf357fda6bcb980917f14f3acf6ea387f7ac7b9",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ],
+        "PS-C": [
+          "PS-C"
         ]
       }
     }
