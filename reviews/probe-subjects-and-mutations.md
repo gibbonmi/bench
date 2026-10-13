@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/probe-subjects-and-mutations/spec.md",
-  "plan_digest": "sha256:1f98cd1548c8bf824e1354271e8243b50d888c06d4ff8f7d4fd2b9d1d5c43052",
+  "plan_digest": "sha256:0ad5a6ea21f4e91ab9ccbe9d8e88aec3d43731b81fbac8a784791fcea3a05631",
   "implementation_session": "",
   "chunks": [
     {
@@ -418,6 +418,149 @@
           ]
         }
       ]
+    },
+    {
+      "id": "PS-B",
+      "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+      "tip": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+      "plan_digest": "sha256:0ad5a6ea21f4e91ab9ccbe9d8e88aec3d43731b81fbac8a784791fcea3a05631",
+      "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+      "acceptance_rows": [
+        "PS26",
+        "PS27",
+        "PS28",
+        "PS29",
+        "PS30",
+        "PS31",
+        "PS32",
+        "PS33",
+        "PS34",
+        "PS35",
+        "PS36",
+        "PS37"
+      ],
+      "verification": [
+        {
+          "id": "ps-t02-probe-family",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:4dde806d4e60720b8054c19d861f8180b412ce025f2f5103141df555078dd5fe",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,28131,335\n  github.com/gibbonmi/bench/internal/conformance,pass,86029,1690\n  github.com/gibbonmi/bench/internal/probe,pass,56144,186\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,80298,226\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-testreport",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:4dde806d4e60720b8054c19d861f8180b412ce025f2f5103141df555078dd5fe",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,28131,335\n  github.com/gibbonmi/bench/internal/conformance,pass,86029,1690\n  github.com/gibbonmi/bench/internal/probe,pass,56144,186\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,80298,226\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-command-package",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:4dde806d4e60720b8054c19d861f8180b412ce025f2f5103141df555078dd5fe",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,28131,335\n  github.com/gibbonmi/bench/internal/conformance,pass,86029,1690\n  github.com/gibbonmi/bench/internal/probe,pass,56144,186\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,80298,226\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-conformance-package",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:4dde806d4e60720b8054c19d861f8180b412ce025f2f5103141df555078dd5fe",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,28131,335\n  github.com/gibbonmi/bench/internal/conformance,pass,86029,1690\n  github.com/gibbonmi/bench/internal/probe,pass,56144,186\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,80298,226\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-root-conformance",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:fd3654017fc345739f1aabf59a89c09276742a7335f5ce81949a71ca981a3b31",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19252,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-central-property",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Answer the substring miss before the selection parse with a hard-coded all run cell. TestSelectionPrecedesTheSubstringMiss must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+              "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -431,6 +574,15 @@
     {
       "from": "sha256:be6c53c260f9f2d5de9df46ee418c9be074fa8fa1932cdf443e747e2b1c446ce",
       "to": "sha256:1f98cd1548c8bf824e1354271e8243b50d888c06d4ff8f7d4fd2b9d1d5c43052",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1f98cd1548c8bf824e1354271e8243b50d888c06d4ff8f7d4fd2b9d1d5c43052",
+      "to": "sha256:0ad5a6ea21f4e91ab9ccbe9d8e88aec3d43731b81fbac8a784791fcea3a05631",
       "chunk_ids": {
         "PS-A": [
           "PS-A"
