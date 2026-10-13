@@ -2109,7 +2109,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "pm-d-standards-r1",
+          "performer": "claude:pm_d_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_standards",
+            "digest": "sha256:22f0652391ea483aae7430d2883a3ad49d11c00dcd9e3d6b4f8901cb24aad474",
+            "excerpt": "Standards axis claude:pm_d_standards (opus/high), PM-D round 1, frozen pair 1870269d..520f4899 (chunk tip 6b447a69), evidence sha256:d4c5162f current.\ncount: 1\nworst: S1\nS1 | ask-user | 7 | result.go:42 CommandExit in MutantResult, set at result.go:105 (ReadMutant), ignored by RenderMutantSet (set.go:109-111), read only by result_test.go mutantResult (~191). Speculative Generality and spec.md:303 / ticket 5 line 13 (\"MutantResult carries Verdict, Restored, RowExit, and FocusedExit, so no field named for the command exit carries a row exit\"). The only production .CommandExit reader is verification.go:115 on probe.Result. Needed: remove the field, the command parameter of mutantResult, and the \"CommandExit is ignored\" sentence; re-record the central probe on a mutation that needs no new surface.\nClean: ReadResult and ReadMutant share readForm, splitEnvelope, decodeTables, requireSchema; FieldSource and SetFieldSource share fieldSource; importRefusal owns the three lines; no --mutant wording in internal/probe; no second header-count parser.\nAdvice: RenderMutantSet is approved by spec.md:389 and reuses setRun.answer; probe.ResultSchema has a production reader; the producer trailing count is derived at probe.go:332 and set.go:278 (pre-existing); set.go:116 repeats \"no\"; result.go:204 wording \"want one mutants row\"; result_test.go setAnswer drops its exit code; TestReadMutantSharesTheReaderRules recomputes the trailing bytes; mutantSet only wraps RenderMutantSet; missedRow has an empty cause.\nImplementation command: charge \"Add no production surface that only a test or a probe reads; if a named mutation needs one, report it.\"\n"
+          },
+          "axis": "Standards",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "6b447a69eabfae707aa27b72f08034495070386e",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pm-d-spec-r1",
+          "performer": "claude:pm_d_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_spec",
+            "digest": "sha256:e0c1bbe0f6f9796a74a61fd9765f076830fd4486f5a0b76b39b011f49474ec1b",
+            "excerpt": "Spec axis claude:pm_d_spec (opus/high), PM-D round 1, frozen pair 1870269d..520f4899 (chunk tip 6b447a69), evidence sha256:d4c5162f current.\ncount: 2\nworst: P1\nP1 | ask-user | 7 | spec.md:303 \"MutantResult carries Verdict, Restored, RowExit, and FocusedExit, so no field named for the command exit carries a row exit\"; result.go:41-42 adds CommandExit, which no production code reads (only result_test.go:191). Options: accept as a flagged deviation, or remove it and re-author the central probe on the declared API (for example bind the row import's exit to FocusedExit).\nP2 | ask-user | 6 | spec.md:477 PM59 \"--mutant 1 of a row that reads substring-miss refuses with the null focused-exit line\"; the test's missedRow renders through RenderMutantSet with cause \"\", restored no, mutation \"\", not substring-miss/untouched. The null-to-0 mutation is still caught. Options: record the renderer decision and amend PM59, or build PM59's answer through a probe run (spec.md:390).\nRows: PM34, PM42, PM52-PM58, PM60, PM74 met; PM59 partial. All four bindings match spec.md:307-309. Exact refusal lines match.\nFlags: header row count for both forms is not a finding; PM58's coordinator red is valid by trace.\nScope creep: none beyond P1.\nAdvice: readImported uses mutant 0 for \"no --mutant\"; an explicit presence bool would decouple it from verificationValid.\nImplementation command: phrase central-property probes over the spec's declared API; a renderer-built row should carry the cells its acceptance row names.\n"
+          },
+          "axis": "Spec",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "6b447a69eabfae707aa27b72f08034495070386e",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pm-d-coverage-r1",
+          "performer": "claude:pm_d_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_coverage",
+            "digest": "sha256:34b51dbaf4b3e994008f07da36a2e03a7cde5dc59325c068f9bf77cfcac5d146",
+            "excerpt": "Coverage axis claude:pm_d_coverage (opus/high), PM-D round 1, frozen pair 1870269d..520f4899 (chunk tip 6b447a69), evidence sha256:d4c5162f current.\ncount: 1\nworst: C1\nC1 | auto-fix | 8 | recordcmd verification.go readImported mutant branch (restored: result.Restored) vs spec.md:308 \"It binds ... the restore to its restored cell\": an import of a restore-failed row is unpinned. Probe restored: true over ./internal/reviewrecord/... and ./cmd/bench (625 tests): silent, restored yes. Needed: a recordcmd case importing {Verdict: restore-failed, Restored: false, RowExit: 2, FocusedExit: 1} with --exit-code 2, asserting outcome restore-failed and restore fail.\nProbes (restored yes): ReadMutant Restored: true: bit; ReadMutant rows[len-n]: silent in probe, bit in recordcmd (3 tests); readForm trailing > check: bit.\nInput family covered: bit, silent, invalid null focus, restore-failed on the reader side; cut and extended answers; spill frames; quoted cell; repeated table; schema substitution; single form with and without --mutant; --mutant 0, -1, x, out of range, alone; command-exit vs row-exit. Header row-count variants all refuse. Each sentinel line pinned. Hostile-input walk clean.\nAdvice: setAnswer rows 1 and 3 project to the same MutantResult; no ReadMutant test reads an answer with a preserved table; integer() accepts +1 and 01 (pre-existing).\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "6b447a69eabfae707aa27b72f08034495070386e",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2549,3 +2617,32 @@ PM-C2 used three repair cycles, and the third cycle used the reviewer's `--auto-
 
 - Decision D3 came from the build consultant, so the reviewer can veto it.
 - The PM84 test waits 50 ms for the cancel. A deterministic wait needs a production test seam for the set cancel context.
+
+## PM-D round 1
+
+Frozen pair: 1870269d to 520f4899, with the chunk tip 6b447a69.
+Repair allowance: cycle 1 of 2 starts for S1, P1, P2, and C1.
+The orchestrator took the PM58 red with a probe that bit, and the `restored` cell read `yes`.
+
+### Standards
+
+Count 1. Worst issue: S1.
+
+- S1, ask-user, confidence 7: `MutantResult` gained a `CommandExit` field that no production code reads, against the four fields of the spec. The spec decides it, so the repair removes the field. The plan probe becomes a mutation over the declared fields.
+
+### Spec
+
+Count 2. Worst issue: P1.
+
+- P1, ask-user, confidence 7: this finding is S1, and the same repair closes it.
+- P2, ask-user, confidence 6: the PM59 record row has empty cells, not the producer's `substring-miss` row. The repair builds that row from the producer, through a probe run or the producer's own row constructor.
+
+### Coverage
+
+Count 1. Worst issue: C1.
+
+- C1, auto-fix, confidence 8: no test imports a row whose restore failed. A mutant that always records `pass` read silent. Row PM87 pins the `fail` side of the restore binding.
+
+### Advice
+
+- The reader test rows 1 and 3 project to the same result, so only the record tests catch a reversed row index.
