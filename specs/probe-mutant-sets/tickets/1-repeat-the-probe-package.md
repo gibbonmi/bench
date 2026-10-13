@@ -1,7 +1,7 @@
 # Repeat the probe package in one call
 
 Blocked by: none
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main.go, cmd/bench/test_command.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/outcome_test.go, internal/probe/package_test.go (new), internal/probe/probe.go, internal/probe/probetest/fixture.go, internal/probe/refusal_test.go, internal/probe/subject_check_fixture_test.go, internal/testreport/command.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main.go, cmd/bench/test_command.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/outcome_test.go, internal/probe/package_test.go (new), internal/probe/probe.go, internal/probe/probetest/fixture.go, internal/probe/refusal_test.go, internal/probe/subject_check_fixture_test.go, internal/testreport/command.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go, tests/canary/package-core-guard/unrouted-subcommand
 Covers: PM45, PM46, PM47, PM48, PM49, PM50
 
 ## What to build
