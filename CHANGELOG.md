@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Map-only route
+
+- Added the reviewer-selected map-only route for `/bench-write-spec` in `.agents/skills/bench-craft-spec/references/map-only-route.md`, with a pointer in `/bench-write-spec` and anchors in `internal/anchors`. For a ready compiled map with exact-predicate decisions, one fresh slicer writes the thin spec's stories, coverage rows, tickets, and gap log. The coordinator then completes the chunk table and completion plan, runs `--propose-writes` and one ticket review, and presents the approval table. When a decision is not an exact predicate or a code seam stays open, the slicer stops and recommends the full route. Before, every ready compiled map ran the full route's research fan-out, spec fork, spec review, and paired slicing readers.
+
 ### Probe mutant sets
 
 - Added `--mutants <path>`, repeated `--package`, and `bench record verification --probe-result <file> --mutant <n>`. `--mutants <path>` grades a mutant set of 1 to 64 independent mutants against one probe baseline and answers under `bench-probe-set-v1`. Each mutant outside the run binary's source closure reuses the baseline's run binary, and a mutant inside that closure builds its own. Repeated `--package` expressions run in one `go test` call for each run, and `--mutant <n>` imports one row of a mutant-set answer. Before, each mutant needed its own `bench probe` call, a probe took one `--package` expression, and `--probe-result` read only a single-form answer.
