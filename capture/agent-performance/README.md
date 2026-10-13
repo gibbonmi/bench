@@ -2,12 +2,12 @@
 
 These working documents guide model and effort routing from observed landing
 quality, cost, and coordination load. They record current aggregates, not a run
-log. Provider-specific evidence lives in `open-ai-models.md` and
-`claude-models.md`.
+log. Provider-specific evidence lives in `open-ai-models.md`,
+`claude-models.md`, and `google-models.md`.
 
 ## Update contract
 
-- During every implementation retro, read both provider scorecards and refresh
+- During every implementation retro, read every provider scorecard and refresh
   each provider whose models served as implementer, reviewer, or orchestrator.
   Leave an uninvolved provider unchanged.
 - Replace the provider's last-incorporated-landing line and rewrite affected rows
