@@ -197,7 +197,7 @@ The substring-miss answer then reads its form, target, and run cells from the pr
 That request is the one source of those cells, so a check-form miss names the named-check run pattern, not `all`.
 An unknown check therefore wins over a substring miss.
 
-The refusal order is: usage, repository, subject, mutation input, mutation match, selection, substring miss, gate lock, subject lock, subject re-read, then baseline.
+The refusal order is: usage, repository, subject, mutation input, mutation match, selection, not-graded subject, substring miss, gate lock, subject lock, subject re-read, then baseline.
 
 ### Subjects
 
@@ -209,7 +209,7 @@ Each named check runs through `testreport.Execute`, which owns the prose grade, 
 
 A prose probe grades the whole tree twice, once for the baseline and once for the mutant.
 A `--check prose` subject that `prose.IsSubjectName` rejects refuses after the selection parse and before the substring miss, with exit 1.
-The refusal is `error: probe subject not graded — --check prose grades only .md files, and <subject> is not one`.
+The refusal is `error: probe subject not graded — <subject> is not a prose subject`.
 The prose runner already counts each finding in `FailedTests`, so a finding over the mutant reads `bit`.
 
 A system probe runs the gate's system suite with the caller's `--run` pattern.
