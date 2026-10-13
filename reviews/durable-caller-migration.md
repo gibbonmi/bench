@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:4208fc2b6b43f9aec3f0c1df55ae3673e1c0a444f92c48548567f1a74f79498b",
+  "plan_digest": "sha256:5702dc6f89831e10d0f6b0d178f2fdbc44371d1bfaa04efbb7cf74d32737fb85",
   "implementation_session": "",
   "chunks": [
     {
@@ -5270,9 +5270,9 @@
     {
       "id": "D-D",
       "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
-      "tip": "79980f96e474ff4ac0c44882483ffd47f088daeb",
-      "plan_digest": "sha256:4208fc2b6b43f9aec3f0c1df55ae3673e1c0a444f92c48548567f1a74f79498b",
-      "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+      "tip": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+      "plan_digest": "sha256:5702dc6f89831e10d0f6b0d178f2fdbc44371d1bfaa04efbb7cf74d32737fb85",
+      "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
       "acceptance_rows": [
         "D30",
         "D31",
@@ -5658,6 +5658,197 @@
             "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
             "digest": "sha256:7b3ab215bd0daa4da2c964d9796af14fcaf56adba15c4e64551f7f30871d8a4a",
             "excerpt": "requirement root-conformance: bench test --check root-conformance at 79980f96\npass, 1 test, failures[0]\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep2-adoption-tests",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:b9d62e4c9e1ac831650985bd5ae8189d7ccaa9c0a4a1b2e69ef74101e9ff7b5e",
+            "excerpt": "requirement adoption-tests: bench test --package ./internal/adopt at 5bc20b22\npackages[1]: github.com/gibbonmi/bench/internal/adopt,pass,244 tests; failures[0] skips[0]\n"
+          },
+          "requirement": "adoption-tests",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep2-coverage",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:a01034a08a9ea942268da4c88f71ca0c9a3a6033b5a121213e57abfd038d2891",
+            "excerpt": "requirement coverage: bench coverage --check durable-caller-migration at 5bc20b22\nok: coverage map valid - 35 row(s)\n"
+          },
+          "requirement": "coverage",
+          "command": "bench coverage --check durable-caller-migration",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep2-caller-reconciliation",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:22041503837fc72cd25d2e8be44736960ede06eeead8482ed19fd18ac6952c37",
+            "excerpt": "requirement caller-reconciliation: bench test over the 12 plan packages at 5bc20b22\npackages[12] all pass, failures[0], skips[0]; publication pass, 29 tests.\nRepair 2 changes only the TestPublicationDirectoryRefusal blocker setup: the blocker is filepath.Dir(RecordPath(root)) under a created parent, in place of the literal dist path (finding N1).\nIt moves no production line that a recorded red mutates, so the reds of dcm-t14-caller-reconciliation and dcm-t14-rep1-caller-reconciliation stand and are cited, not replayed.\n"
+          },
+          "requirement": "caller-reconciliation",
+          "command": "bench test --package ./internal/assessment --package ./internal/brokermanifest --package ./internal/capturetx --package ./internal/commitment/repository --package ./internal/durablefile/durablefiletest --package ./internal/gate --package ./internal/gate/prospectiveartifact --package ./internal/handoffdoc --package ./internal/intent --package ./internal/probe --package ./internal/publication --package ./internal/repairpilot",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep2-preservation",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:6af001ddb3995ab9f6c1fa22081486c44e438f0ba49e182d96e678626f8ef801",
+            "excerpt": "requirement preservation (probe): cites dcm-t14-preservation (bench probe on ./internal/adopt at 2cae9a86, internal/adopt/transaction.go swap 'if _, err = f.Write(data); err == nil {' -> \"if _, err = f.Write(append(data, '#')); err == nil {\": bit, focused exit 1, restored yes).\nRepair 2 leaves internal/adopt unchanged, so the mutated line is unchanged at 5bc20b22.\nRerun at 5bc20b22: bench test --package ./internal/adopt pass, 244 tests, failures[0].\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Alter the surviving adoption stage bytes or its lifecycle transaction result. The existing real adoption assertion must fail, then pass after restoration. The source algorithm census remains independently review-owned.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+              "digest": "sha256:6af001ddb3995ab9f6c1fa22081486c44e438f0ba49e182d96e678626f8ef801",
+              "excerpt": "requirement preservation (probe): cites dcm-t14-preservation (bench probe on ./internal/adopt at 2cae9a86, internal/adopt/transaction.go swap 'if _, err = f.Write(data); err == nil {' -> \"if _, err = f.Write(append(data, '#')); err == nil {\": bit, focused exit 1, restored yes).\nRepair 2 leaves internal/adopt unchanged, so the mutated line is unchanged at 5bc20b22.\nRerun at 5bc20b22: bench test --package ./internal/adopt pass, 244 tests, failures[0].\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t14-rep2-cmd-bench",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:df09af7d15cd314dcfc7b6aa6a8fdf6e2cad595d6460225297e397842ad3c448",
+            "excerpt": "requirement cmd-bench: bench test --package ./cmd/bench at 5bc20b22\npass, 335 tests, failures[0], skips[0]\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep2-command-contract",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:5da05a3bf33929865ca332ce8a6caa7f12702540b5ce470ca24fd1a118b25043",
+            "excerpt": "requirement command-contract: bench test --package ./cmd/bench --run CommandRegistry at 5bc20b22\npass, 5 tests, failures[0]\n"
+          },
+          "requirement": "command-contract",
+          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep2-axi-registry",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:a778541243cc446eee5cc0269e69fede27207cd5e89f56ec51cda4dcad51b7ef",
+            "excerpt": "requirement axi-registry: bench test --check axi-query-registry at 5bc20b22\npass, 1 test, failures[0]\n"
+          },
+          "requirement": "axi-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep2-routing",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:52c0ec88d042c46a336747464037ae50930934bec9f6ab71faf826a6bdfec57f",
+            "excerpt": "requirement routing: bench test --check subcommand-routing at 5bc20b22\npass, 1 test, failures[0]\n"
+          },
+          "requirement": "routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep2-conformance",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:4684488d9cf49e525606d85a0ba4c9e96d4bd8fcf6764e0bb6da96d577720462",
+            "excerpt": "requirement conformance: bench test --package ./internal/conformance at 5bc20b22\npass, 1690 tests, failures[0]; skip: TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (capability: privilege)\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep2-root-conformance",
+          "performer": "claude:dcm_t14_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+            "digest": "sha256:b98f25616e75a84826b0383d6ff5e3b6b1de6286eba9de6906a6b0f647d82fce",
+            "excerpt": "requirement root-conformance: bench test --check root-conformance at 5bc20b22\npass, 1 test, failures[0]\n"
           },
           "requirement": "root-conformance",
           "command": "bench test --check root-conformance",
@@ -6558,6 +6749,51 @@
           "D-D"
         ]
       }
+    },
+    {
+      "from": "sha256:4208fc2b6b43f9aec3f0c1df55ae3673e1c0a444f92c48548567f1a74f79498b",
+      "to": "sha256:5702dc6f89831e10d0f6b0d178f2fdbc44371d1bfaa04efbb7cf74d32737fb85",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ],
+        "D-C3": [
+          "D-C3"
+        ],
+        "D-C4": [
+          "D-C4"
+        ],
+        "D-C5": [
+          "D-C5"
+        ],
+        "D-C6": [
+          "D-C6"
+        ],
+        "D-D": [
+          "D-D"
+        ]
+      }
     }
   ],
   "folds": [
@@ -7008,3 +7244,5 @@ Chunk D-D used 1 of its 2 repair cycles.
 The D-D confirming round at 7a8a060f closed S1 to S5, SP1, C1, and C2. It raised one new finding.
 
 - N1, auto-fix, confidence 3: the publication witness at `internal/publication/replacement_test.go:163` writes the `dist` layout that `RecordPath` owns. Derive the blocker path from `RecordPath`. A fresh repair session takes it as repair 2.
+
+Commit 5bc20b22 closes N1: `TestPublicationDirectoryRefusal` gets its blocker path from `RecordPath`. Chunk D-D used 2 of its 2 repair cycles.
