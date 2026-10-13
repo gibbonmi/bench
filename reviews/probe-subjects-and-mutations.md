@@ -162,7 +162,77 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ps-a-standards-1",
+          "performer": "claude:ps-a-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-standards",
+            "digest": "sha256:75edeac305c2d2c7475ea2f940ec3cb4bdbe4a8967f4d92fdb4dd8734a6c7016",
+            "excerpt": "Standards axis, chunk PS-A, pair 8209612990d2..9de43b5280ba, opus medium. Findings: 2.\nS1 internal/probe/command.go:81 vs internal/probe/mutation_input.go:39-74: gradeForms and mutationInput each derive the mutation group; two derivations of one fact (AGENTS.md one source per fact). Confidence 5.\nS2 internal/probe/edit.go:46: the empty-mutation refusal names --with equals --swap for a --with-file swap whose file bytes equal the old string; a refusal names the caller's actual input (craft-cli). Confidence 4.\nAdvice: occurrence(parsed) runs twice; placeholder <new> vs <text> for --with.\n"
+          },
+          "axis": "Standards",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-a-spec-1",
+          "performer": "claude:ps-a-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-spec",
+            "digest": "sha256:1a99e43e96f6530736e886ce44b99b0d77be128a9121e1d8b854d14fff76d640",
+            "excerpt": "Spec axis, chunk PS-A (PS1-PS25, PS76), pair 8209612990d2..9de43b5280ba, opus medium. Findings: 1.\nP1 internal/probe/combined_test.go:49-51 with internal/probe/command.go:146-147: PS18 --with-file case hits the earlier withs>0&&withFile refusal; the combined&&withFile case has no isolating test. Confidence 8.\nEvery other row matches the spec and its cited test asserts it. The --delete Replacer.Remove decision holds.\nAdvice: ambiguous-versus-miss precedence in a combined mutant is unstated; single --omit emptying not tested.\n"
+          },
+          "axis": "Spec",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-a-coverage-1",
+          "performer": "claude:ps-a-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-coverage",
+            "digest": "sha256:25d8dd1a852363befafd42a850759425ca52791dc10cad7db819f7972422905d",
+            "excerpt": "Coverage axis, chunk PS-A, pair 8209612990d2..9de43b5280ba, opus medium. Findings: 3.\nC1 internal/probe/command.go:109: the combined && withFile refusal has no red-capable test; probe swap combined&&withFile -> false&&withFile read silent, restored yes. Confidence 9.\nC2 internal/probe/mutation_input.go:91: no test reaches the err == nil term for an overflowing --occurrence value. Confidence 8.\nC3 internal/probe/subject.go:140: the Lstat error branch of the restore mode check is unreachable without a race. Confidence 6.\nProbes: 1 (swap, command.go:109, silent, restored yes).\n"
+          },
+          "axis": "Coverage",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -174,3 +244,30 @@
   }
 }
 ```
+
+## Repair allowance
+
+Chunk PS-A has used 0 of its 2 repair cycles after its initial review.
+
+## Standards
+
+PS-A: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 5): `internal/probe/command.go:81` and `internal/probe/mutation_input.go:39-74` derive the mutation group twice. `gradeForms` must give the one group, and `mutationInput` must read that group.
+- S2 (auto-fix, confidence 4): `internal/probe/edit.go:46` names `--with equals --swap` for a `--with-file` swap. The refusal must name the flag that the caller gave.
+
+## Spec
+
+PS-A: 1 finding. The worst issue is P1.
+
+- P1 (auto-fix, confidence 8): `internal/probe/combined_test.go:49-51` reaches the earlier `--with` and `--with-file` refusal. A PS18 subtest must send `--swap` with `--with-file` and `--omit`, and no `--with`. This finding has the same fix as C1.
+
+## Coverage
+
+PS-A: 3 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 9): `internal/probe/command.go:109` has no red-capable test, and a probe there read `silent`. The P1 subtest closes it.
+- C2 (auto-fix, confidence 8): `internal/probe/mutation_input.go:91` has no test for an overflowing `--occurrence` value. The PS8 value list must add one.
+- C3 (no-op, confidence 6): `internal/probe/subject.go:140` is reachable only through a race after the byte check.
+
+Repair targets: 4 (S1, S2, P1 with C1, and C2) for ticket 1.
