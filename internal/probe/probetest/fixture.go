@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
-	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/treetarget/kittest"
@@ -42,11 +41,15 @@ func ClampFailure(diagnostic string) Start {
 {"Action":"fail","Package":"benchkit/clamp","Elapsed":0.01}`, diagnostic), Exit: 1}
 }
 
+// Publisher is the sealed run-binary publication that a test file passes to Repository. The
+// call stays in test code, so the one production publication call stays the only one.
+type Publisher func(root, staged, executable, dir, name string) error
+
 // Repository writes a kit tree and the clamp package into the Git checkout dir and publishes a
-// sealed run binary for it. For the rest of the test, it binds the kit, the run binary, a
+// sealed run binary for it with publish. For the rest of the test, it binds the kit, the run binary, a
 // private Bench home, and the working directory to that root. It answers the root with every
 // link resolved, and the home.
-func Repository(t testing.TB, dir string) (string, string) {
+func Repository(t testing.TB, dir string, publish Publisher) (string, string) {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(dir)
 	if err != nil {
@@ -69,7 +72,7 @@ func Repository(t testing.TB, dir string) (string, string) {
 			t.Fatal(err)
 		}
 	}
-	if err := freshness.Publish(root, staged, executable, filepath.Dir(executable), "probetest"); err != nil {
+	if err := publish(root, staged, executable, filepath.Dir(executable), "probetest"); err != nil {
 		t.Fatal(err)
 	}
 	home := t.TempDir()

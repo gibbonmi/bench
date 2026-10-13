@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
@@ -127,7 +128,7 @@ func TestNativeRecordCLIJourney(t *testing.T) {
 // biting mutated run exits 1, so the probe command exits 0 and its focused execution exits 1.
 // A silent mutated run passes, so the command exits 1 and its focused execution exits 0.
 func probeImportJourney(t *testing.T, f *recordtest.Fixture, slug, record string) {
-	root, home := probetest.Repository(t, f.Root)
+	root, home := probetest.Repository(t, f.Root, freshness.Publish)
 	marker := filepath.Join(t.TempDir(), "go-started")
 	produce := func(mutated probetest.Start, full bool) (string, int) {
 		probetest.InstallStarts(t, marker, probetest.ClampPass, mutated)

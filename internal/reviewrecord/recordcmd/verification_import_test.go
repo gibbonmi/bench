@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/probe"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
@@ -148,7 +149,7 @@ type producer func(entries [][]string, mutated ...probetest.Start) (string, int)
 // setProducer makes the root of f the clamp repository and answers its producer and its Bench home.
 func setProducer(t *testing.T, f *recordtest.Fixture) (producer, string) {
 	t.Helper()
-	_, home := probetest.Repository(t, f.Root)
+	_, home := probetest.Repository(t, f.Root, freshness.Publish)
 	marker := filepath.Join(t.TempDir(), "go-started")
 	return func(entries [][]string, mutated ...probetest.Start) (string, int) {
 		t.Helper()
