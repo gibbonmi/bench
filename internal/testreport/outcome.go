@@ -27,7 +27,7 @@ const (
 	// OutcomeRefused is every refusal before or after the Go child that is not an interrupt
 	// or a failed run-binary build script.
 	OutcomeRefused OutcomeKind = "refused"
-	// OutcomeInterrupted is a run a cancel signal ended.
+	// OutcomeInterrupted is a run that a cancel signal or its caller's cancelled context ended.
 	OutcomeInterrupted OutcomeKind = "interrupted"
 )
 

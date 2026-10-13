@@ -268,18 +268,21 @@ func signalCancelHelper(t *testing.T, signal syscall.Signal) (string, int) {
 // is production's: Command's signal context cancels canonicalBuild, which drains
 // the group it detached.
 func runCancelHelper(t *testing.T) {
-	factory := runbinary.Factory{
+	installTestSelectionFactory(t, runbinary.Factory{
 		TempRoot: os.Getenv(cancelTempRootEnv),
+		Build:    parkingBuild(os.Getenv(cancelSourceEnv)),
 		Verify:   func(string, string) error { return nil },
-	}
-	source := os.Getenv(cancelSourceEnv)
-	previous := selectRunBinary
-	selectRunBinary = func(ctx context.Context, _ string) (*runbinary.Selection, error) {
-		return factory.Own(ctx, source)
-	}
-	t.Cleanup(func() { selectRunBinary = previous })
+	})
 	out, code := Command(t.TempDir(), []string{"./..."})
 	fmt.Print(out, code)
+}
+
+// parkingBuild is the canonical build over the parking source, whatever source the
+// selection names.
+func parkingBuild(source string) runbinary.Builder {
+	return func(ctx context.Context, _, output string) error {
+		return runbinary.Build(ctx, source, output)
+	}
 }
 
 // parkingBuilderSource writes a source root whose builder reports one live

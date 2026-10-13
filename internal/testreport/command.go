@@ -40,7 +40,13 @@ var grammar = usage.Grammar{
 	MaxArgs: 1,
 }
 
-var selectRunBinary = runbinary.ReuseOrOwn
+// runBinaryFactory is the run-binary seam of every focused run.
+var runBinaryFactory runbinary.Factory
+
+// selectRunBinary reuses the inherited run binary for root's kit, or builds one.
+func selectRunBinary(ctx context.Context, root string) (*runbinary.Selection, error) {
+	return runBinaryFactory.ReuseOrOwn(ctx, testBenchSource(root))
+}
 
 const goChildGroupCancelled = "child process group cancelled"
 
@@ -143,27 +149,45 @@ func (request focusedRequest) listing() func(root string) (Outcome, string, int)
 }
 
 func runFocusedRequest(root string, request focusedRequest) (Outcome, string, int) {
-	if list := request.listing(); list != nil {
-		return list(root)
-	}
-	// The refusals precede the run-owner selection, which builds a Bench executable with
-	// Go. A root the check may not grade therefore starts no child at all.
-	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {
-		return refusedOutcome(toon.Errorf("system check unavailable", "the system suite grades the kit checkout only")+"\n", 1)
-	}
-	if request.check == RootConformanceCheckName && !gate.RootConformanceRuns(root, testBenchSource(root)) {
-		return refusedOutcome(toon.Errorf(rootConformanceUnavailable, "root conformance grades a kit checkout that declares its entry test only")+"\n", 1)
-	}
-	if request.check == ProseCheckName {
-		return runProseCheck(root, request.full)
+	if outcome, out, code, answered := request.answerWithoutSelection(root); answered {
+		return outcome, out, code
 	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
-	selection, err := selectRunBinary(ctx, testBenchSource(root))
+	selection, err := selectRunBinary(ctx, root)
 	if err != nil {
 		return selectionFailure(err)
 	}
 	defer selection.Close()
+	return runSelected(ctx, root, request, selection)
+}
+
+// answerWithoutSelection answers a listing, a refused check, and the prose check, which
+// select no run binary. answered is false for a request that runs under a selection.
+func (request focusedRequest) answerWithoutSelection(root string) (outcome Outcome, out string, code int, answered bool) {
+	if list := request.listing(); list != nil {
+		outcome, out, code = list(root)
+		return outcome, out, code, true
+	}
+	// The refusals precede the run-owner selection, which builds a Bench executable with
+	// Go. A root the check may not grade therefore starts no child at all.
+	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {
+		outcome, out, code = refusedOutcome(toon.Errorf("system check unavailable", "the system suite grades the kit checkout only")+"\n", 1)
+		return outcome, out, code, true
+	}
+	if request.check == RootConformanceCheckName && !gate.RootConformanceRuns(root, testBenchSource(root)) {
+		outcome, out, code = refusedOutcome(toon.Errorf(rootConformanceUnavailable, "root conformance grades a kit checkout that declares its entry test only")+"\n", 1)
+		return outcome, out, code, true
+	}
+	if request.check == ProseCheckName {
+		outcome, out, code = runProseCheck(root, request.full)
+		return outcome, out, code, true
+	}
+	return Outcome{}, "", 0, false
+}
+
+// runSelected runs request under selection and ctx. The caller owns the selection's lifetime.
+func runSelected(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
 	if request.changed {
 		subject, kind, hint := diff.ResolveChangedSubject(root, request.base, request.sourceTip)
 		if kind != "" {
