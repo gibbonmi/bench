@@ -6065,11 +6065,120 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "3de178f279f425a409f7887126f40fd7d2caa509",
+    "performer": "claude:dcm-orchestrator-20261012",
+    "reconciliation": {
+      "D16": "covered",
+      "D17": "covered",
+      "D18": "covered",
+      "D20": "covered",
+      "D21": "covered",
+      "D22": "covered",
+      "D23": "covered",
+      "D24": "covered",
+      "D25": "covered",
+      "D26": "covered",
+      "D27": "covered",
+      "D28": "covered",
+      "D29": "covered",
+      "D30": "covered",
+      "D31": "covered",
+      "D33": "covered",
+      "D34": "covered",
+      "D35": "covered",
+      "D36": "covered",
+      "D37": "covered",
+      "D38": "covered",
+      "D39": "covered",
+      "D40": "covered",
+      "D41": "covered",
+      "D42": "covered",
+      "D43": "covered",
+      "D44": "covered",
+      "D45": "covered",
+      "D46": "covered",
+      "D47": "covered",
+      "D48": "covered",
+      "D49": "covered",
+      "D50": "covered",
+      "D51": "covered",
+      "D52": "covered"
+    },
+    "verification": [
+      {
+        "id": "dcm-final-ordinary-integration",
+        "performer": "claude:dcm-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "3de178f279f425a409f7887126f40fd7d2caa509",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "49e6f264480efdd103179abe5b9bbc31df09469d",
+          "digest": "sha256:982c2df3f6ebe5117301b0a11d79875def19a64e02487288bed3be62d8236927",
+          "excerpt": "bench test --package ./... at 49e6f264: 127 packages pass, failures[0]; skips are capability-only (character device privilege, missing bin/bench.sh in a subject root).\n"
+        },
+        "requirement": "ordinary-integration",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "dcm-final-coverage",
+        "performer": "claude:dcm-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "3de178f279f425a409f7887126f40fd7d2caa509",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "49e6f264480efdd103179abe5b9bbc31df09469d",
+          "digest": "sha256:3830d77d6a4e3741feb6ad9ccb2dd60a11265aa85f27be2aaf6ef1cf74b9edcf",
+          "excerpt": "bench coverage --check durable-caller-migration at 49e6f264: ok: coverage map valid — 35 row(s).\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check durable-caller-migration",
+        "exit_code": 0
+      },
+      {
+        "id": "dcm-final-ticket-grammar",
+        "performer": "claude:dcm-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "3de178f279f425a409f7887126f40fd7d2caa509",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "49e6f264480efdd103179abe5b9bbc31df09469d",
+          "digest": "sha256:51d3de4bdc5d37cfdade5051038cd5df9c5d9c90ea9426d59656341910810854",
+          "excerpt": "bench test --check ticket-grammar at 49e6f264: pass, 1 test, failures[0].\n"
+        },
+        "requirement": "ticket-grammar",
+        "command": "bench test --check ticket-grammar",
+        "exit_code": 0
+      },
+      {
+        "id": "dcm-final-root-conformance",
+        "performer": "claude:dcm-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "3de178f279f425a409f7887126f40fd7d2caa509",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "49e6f264480efdd103179abe5b9bbc31df09469d",
+          "digest": "sha256:3e0024702e3cf6b80d93772c6785642a6919f58ec43d134603a85d074b01c174",
+          "excerpt": "bench test --check root-conformance at 49e6f264: pass, 1 test, failures[0].\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -7326,3 +7435,16 @@ The D-D confirming round at 7a8a060f closed S1 to S5, SP1, C1, and C2. It raised
 Commit 5bc20b22 closes N1: `TestPublicationDirectoryRefusal` gets its blocker path from `RecordPath`. Chunk D-D used 2 of its 2 repair cycles.
 
 The D-D round on repair 2 at 7f619cd2 closed N1 with no new findings. All three axes confirmed their results for the pair 930225e5..5bc20b22. Chunk D-D closed with 2 of its 2 repair cycles used.
+
+## Final reconciliation
+
+All 13 planned chunks are reviewed, and all 35 coverage rows are valid. The completion source 49e6f264 folds main 878631b4 as F2, with no conflict resolution. The four final rows pass there, and the orchestrator recorded them as integration verification.
+
+The source census finds no migrated temporary-write and rename algorithm outside `internal/durablefile`. Each exported caller entry binds `durablefile.Native()`, and the excluded owners are unchanged.
+
+These calls stay open for reviewer veto:
+
+- The D-C1 checkpoint is graded inside the D-B6 checkpoint, after a plan reorder.
+- The dashboard family has no injected D30 witness, because its writer owns no refusal. The D30 cell cites its existing refusal test instead.
+- The intent and probe packages keep two production copies of the `published` classifier. A shared predicate is a spec-level change, and a learning holds it.
+- Comment-only corrections close D-C2, D-C4, D-C5, and D-C6. Each successor chunk freezes on the previous chunk tip, because the chain check compares source digests by equality.
