@@ -78,7 +78,10 @@ func TestPublicationDirectoryRefusal(t *testing.T) {
 	t.Parallel()
 	const blocked = "blocking file"
 	root := t.TempDir()
-	blocker := filepath.Join(root, "dist")
+	blocker := filepath.Dir(RecordPath(root))
+	if err := os.MkdirAll(filepath.Dir(blocker), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(blocker, []byte(blocked), 0o644); err != nil {
 		t.Fatal(err)
 	}
