@@ -83,41 +83,69 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 	if _, ok := parsed.Flags[mutantsFlag.Name]; ok {
 		return runSet(replacer, root, parsed, subject)
 	}
-	input, refused := mutationInput(parsed)
+	input, mutant, refused := resolveMutation(parsed, subject)
 	if refused != nil {
 		return refused.line(), 1
 	}
-	mutant, refused := mutate(subject.start, input, subject.display)
-	if refused != nil {
-		return refused.line(), 1
-	}
-	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
+	request, line, code := prepareSelection(root, parsed, subject)
 	if line != "" {
 		return line, code
-	}
-	if line := gradeProseSubject(subject, request); line != "" {
-		return line, 1
 	}
 	if mutant.miss {
 		return renderInvalidMutation(subject, input.cell, request)
 	}
-	if line := gradeGateLock(root); line != "" {
-		return line, 1
-	}
-	held, line := lockSubject(subject)
+	held, line := holdSubject(root, parsed.Positionals[0], subject)
 	if line != "" {
 		return line, 1
 	}
 	defer held.release()
-	if line := rereadSubject(root, parsed.Positionals[0], subject); line != "" {
-		return line, 1
-	}
 	mutation := input.cell
 	line, code, baseline := gradeBaseline(root, subject, mutation, request)
 	if line != "" {
 		return line, code
 	}
 	return probe(replacer, root, subject, mutant, mutation, request, baseline, parsed.Flags["--expect"])
+}
+
+// resolveMutation resolves the mutation of parsed and then its mutant over the subject's start
+// bytes, or the first refusal of the two.
+func resolveMutation(parsed usage.Result, subject subject) (mutation, mutationResult, *refusal) {
+	input, refused := mutationInput(parsed)
+	if refused != nil {
+		return mutation{}, mutationResult{}, refused
+	}
+	mutant, refused := mutate(subject.start, input, subject.display)
+	return input, mutant, refused
+}
+
+// prepareSelection prepares the focused selection of parsed and then grades the prose subject.
+// It answers the request, or the refusal line and its exit.
+func prepareSelection(root string, parsed usage.Result, subject subject) (testreport.Request, string, int) {
+	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
+	if line != "" {
+		return request, line, code
+	}
+	if line := gradeProseSubject(subject, request); line != "" {
+		return request, line, 1
+	}
+	return request, "", 0
+}
+
+// holdSubject grades the gate lock, takes the subject lock, and reads the subject again under
+// that lock. It answers the held lock, or the refusal line with no lock held.
+func holdSubject(root, operand string, subject subject) (subjectLock, string) {
+	if line := gradeGateLock(root); line != "" {
+		return subjectLock{}, line
+	}
+	held, line := lockSubject(subject)
+	if line != "" {
+		return subjectLock{}, line
+	}
+	if line := rereadSubject(root, operand, subject); line != "" {
+		held.release()
+		return subjectLock{}, line
+	}
+	return held, ""
 }
 
 // gradeProseSubject refuses a prose probe of a file that the prose grade never reads,

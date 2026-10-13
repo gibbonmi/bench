@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/durablefile"
+	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -27,10 +28,20 @@ var (
 )
 
 // bite and pass are the canned mutated runs: one fails TestClampNegative, and one passes.
+// alreadyRed is a baseline that fails TestClampNegative before any write.
 var (
-	bite = probetest.Start{Events: cannedFailure("caught"), Exit: 1}
-	pass = probetest.Start{Events: cannedPass}
+	bite       = probetest.Start{Events: cannedFailure("caught"), Exit: 1}
+	pass       = probetest.Start{Events: cannedPass}
+	alreadyRed = probetest.Start{Events: cannedFailure("already red"), Exit: 1}
 )
+
+// runBinaryCases are the two run-binary sources of a set: an inherited binary builds nothing,
+// and an owned one builds once.
+var runBinaryCases = []struct {
+	name   string
+	owned  bool
+	builds int
+}{{"inherited", false, 0}, {"owned", true, 1}}
 
 // clampSelection is the selection that most set rows run.
 var clampSelection = []string{"--package", "./", "--run", "^TestClampNegative$"}
@@ -84,6 +95,37 @@ func missRow(n int) []any {
 // untouchedRow is the row of entry n that ended before any write, with cause.
 func untouchedRow(n int, cause string) []any {
 	return []any{n, "invalid", "swap", cause, 0, nil, 0, nil, 1, nil, "untouched"}
+}
+
+// redRow is the row of entry n, a swap, after an alreadyRed baseline.
+func redRow(n int) []any {
+	return []any{n, "invalid", "swap", "baseline-failed", 1, "TestClampNegative", 0, nil, 1, nil, "untouched"}
+}
+
+// requireTrailingBytes asserts the execution row of out, with its trailing_bytes cell derived
+// from the bytes that follow that row.
+func requireTrailingBytes(t *testing.T, out string, command int) {
+	t.Helper()
+	header, _, _ := strings.Cut(setExecution(t, command, 0), "\n")
+	_, after, found := strings.Cut(out, "\n"+header+"\n")
+	row, suffix, _ := strings.Cut(after, "\n")
+	if !found {
+		t.Fatalf("stdout = %q, want an execution row", out)
+	}
+	if got, want := header+"\n"+row+"\n", setExecution(t, command, len(suffix)); got != want {
+		t.Fatalf("execution row = %q, want %q", got, want)
+	}
+}
+
+// requirePreserved asserts the preserved table of out, which names the one kept copy, and that
+// copy's start bytes.
+func requirePreserved(t *testing.T, f *fixture, out string) {
+	t.Helper()
+	kept := preservedCopy(t, f)
+	if !strings.Contains(out, "preserved[1]{path,reason}:\n  "+kept) {
+		t.Fatalf("stdout = %q, want the preserved row naming %s", out, kept)
+	}
+	durablefiletest.RequireBytes(t, kept, clampSource)
 }
 
 // setSelection derives the expected selection table of clampSelection.

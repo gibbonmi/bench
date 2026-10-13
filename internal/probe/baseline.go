@@ -48,12 +48,7 @@ func gradeBaseline(root string, subject subject, mutation string, request testre
 // baselineCells answers the cells of a probe whose baseline did not pass. The row is invalid,
 // its cause and failures are the baseline's own, and the subject is untouched.
 func baselineCells(outcome testreport.Outcome) verdictCells {
-	return verdictCells{
-		verdict:  "invalid",
-		cause:    baselineCause + string(outcome.Kind),
-		failed:   outcome.FailedTests,
-		first:    firstFailure(outcome),
-		restored: untouchedCell,
-		baseline: string(outcome.Kind),
-	}
+	cells := untouchedCells(baselineCause + string(outcome.Kind))
+	cells.failed, cells.first, cells.baseline = outcome.FailedTests, firstFailure(outcome), string(outcome.Kind)
+	return cells
 }

@@ -102,21 +102,27 @@ func TestMutantSetSharesOneBaseline(t *testing.T) {
 	requireStarts(t, f, 4)
 }
 
-// A failed baseline gives every row its kind before any write, and its report follows.
+// A failed baseline gives every row its kind before any write, and its report follows. The
+// builds cell counts the baseline's own build.
 func TestMutantSetBaselineEndsTheSet(t *testing.T) {
-	f := newFixture(t)
-	probetest.InstallSequence(t, f.marker, probetest.Start{Events: cannedFailure("already red"), Exit: 1}, bite, bite)
-	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
-	red := func(n int) []any {
-		return []any{n, "invalid", "swap", "baseline-failed", 1, "TestClampNegative", 0, nil, 1, nil, "untouched"}
+	for _, tc := range runBinaryCases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t)
+			if tc.owned {
+				buildEachRun(t, f, "clamp.go")
+			}
+			probetest.InstallSequence(t, f.marker, alreadyRed, bite, bite)
+			out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
+			requireRow(t, out, code, 1, setRows(t, redRow(1), redRow(2))+setSelection(t, "failed", tc.builds))
+			if !strings.Contains(out, "already red") {
+				t.Fatalf("stdout = %q, want the baseline's own report", out)
+			}
+			requireTrailingBytes(t, out, 1)
+			requireStarts(t, f, 1)
+			requireSubjectBytes(t, f, clampSource)
+			requireHomeEmpty(t, f)
+		})
 	}
-	requireRow(t, out, code, 1, setRows(t, red(1), red(2))+setSelection(t, "failed", 0))
-	if !strings.Contains(out, "already red") {
-		t.Fatalf("stdout = %q, want the baseline's own report", out)
-	}
-	requireStarts(t, f, 1)
-	requireSubjectBytes(t, f, clampSource)
-	requireHomeEmpty(t, f)
 }
 
 // Each mutant runs alone: its write replaces the start bytes, never an earlier mutant, and its
@@ -170,36 +176,60 @@ func TestMutantSetStopsOnARestoreFailure(t *testing.T) {
 	out, code := runSetWith(t, f, router.Replacer(), setArgs(mutantsFile(t, guardSwap, returnSwap)))
 	failed := []any{1, "restore-failed", "swap", "failed", 1, "TestClampNegative", 1, 1, 2, nil, "no"}
 	requireRow(t, out, code, 2, setRows(t, failed, untouchedRow(2, "set-stopped")))
-	kept := preservedCopy(t, f)
-	if !strings.Contains(out, "preserved[1]{path,reason}:\n  "+kept) {
-		t.Fatalf("stdout = %q, want the preserved row naming %s", out, kept)
-	}
-	durablefiletest.RequireBytes(t, kept, clampSource)
+	requirePreserved(t, f, out)
+	requireTrailingBytes(t, out, 2)
 	requireStarts(t, f, 2)
 }
 
 // A failed write of mutant 1 stops the set. An unpublished failure leaves the subject
-// untouched, and a published one restores it.
+// untouched, and a published one restores it. A failed restore of a published failure keeps
+// the copy at exit 2.
 func TestMutantSetStopsOnAMutationFailure(t *testing.T) {
+	published := map[string]error{"directory-sync": os.ErrPermission}
+	failed := func(verdict string, exit int, restored string) []any {
+		return []any{1, verdict, "swap", "mutation-failed", 0, nil, 0, nil, exit, nil, restored}
+	}
 	for _, tc := range []struct {
-		stage, restored string
+		name    string
+		fail    map[durablefiletest.Fault]map[string]error
+		row     []any
+		command int
 	}{
-		{"rename", "untouched"},
-		{"directory-sync", "yes"},
+		{"rename", map[durablefiletest.Fault]map[string]error{mutationReplacement: {"rename": os.ErrPermission}}, failed("invalid", 1, "untouched"), 1},
+		{"directory-sync", map[durablefiletest.Fault]map[string]error{mutationReplacement: published}, failed("invalid", 1, "yes"), 1},
+		{"failed restore", map[durablefiletest.Fault]map[string]error{mutationReplacement: published, restoreReplacement: {"rename": os.ErrPermission}}, failed("restore-failed", 2, "no"), 2},
 	} {
-		t.Run(tc.stage, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			f := newFixture(t)
 			installSet(t, f, bite, bite)
 			router := subjectFaults()
-			router.Fail[mutationReplacement] = map[string]error{tc.stage: os.ErrPermission}
+			router.Fail = tc.fail
 			out, code := runSetWith(t, f, router.Replacer(), setArgs(mutantsFile(t, guardSwap, returnSwap)))
-			failed := []any{1, "invalid", "swap", "mutation-failed", 0, nil, 0, nil, 1, nil, tc.restored}
-			requireRow(t, out, code, 1, setRows(t, failed, untouchedRow(2, "set-stopped")))
+			requireRow(t, out, code, tc.command, setRows(t, tc.row, untouchedRow(2, "set-stopped")))
 			requireStarts(t, f, 1)
+			if tc.command == 2 {
+				requirePreserved(t, f, out)
+				return
+			}
 			requireSubjectBytes(t, f, clampSource)
 			requireHomeEmpty(t, f)
 		})
 	}
+}
+
+// A failed preservation stops the set before mutant 1's write, and the answer prints no
+// failure text.
+func TestMutantSetStopsOnAPreserveFailure(t *testing.T) {
+	f := newFixture(t)
+	writeFixtureFile(t, filepath.Join(f.home, "probe"), "not a directory\n", 0o644)
+	installSet(t, f, bite, bite)
+	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
+	want := setRows(t, untouchedRow(1, "preserve-failed"), untouchedRow(2, "set-stopped")) + setSelection(t, "passed", 0) + setExecution(t, 1, 0)
+	if out != want || code != 1 {
+		t.Fatalf("stdout = (%q, %d), want (%q, 1)", out, code, want)
+	}
+	requireStarts(t, f, 1)
+	requireSubjectBytes(t, f, clampSource)
 }
 
 // A mutant outside the run binary's closure reuses the baseline's build.
@@ -216,14 +246,7 @@ func TestMutantSetReusesTheBuildOutsideTheClosure(t *testing.T) {
 
 // The builds cell counts the builds that the set owned: none over an inherited binary.
 func TestMutantSetReportsTheBuildCount(t *testing.T) {
-	for _, tc := range []struct {
-		name   string
-		owned  bool
-		builds int
-	}{
-		{"inherited", false, 0},
-		{"owned", true, 1},
-	} {
+	for _, tc := range runBinaryCases {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newFixture(t)
 			if tc.owned {

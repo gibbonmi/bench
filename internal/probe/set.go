@@ -41,6 +41,7 @@ const (
 	gateHeldCause        = "gate-held"
 	gateUnavailableCause = "gate-unavailable"
 	mutationFailedCause  = "mutation-failed"
+	preserveFailedCause  = "preserve-failed"
 )
 
 // mutantRow is one mutants row and its evidence. focused is nil when the mutated run never
@@ -88,14 +89,15 @@ func (e setEnvelope) head() (string, error) {
 	return out, nil
 }
 
-// setRun is one mutant set in flight: the subject, the held runs, the rows in entry order,
-// and the preserved table of a failed restore.
+// setRun is one mutant set in flight: the subject, the held runs, the entries and their rows
+// in entry order, and the preserved table of a failed restore.
 type setRun struct {
 	replacer  durablefile.Replacer
 	root      string
 	subject   subject
 	ctx       context.Context
 	runs      *testreport.HeldRuns
+	entries   []setEntry
 	rows      []mutantRow
 	preserved string
 }
@@ -108,34 +110,25 @@ func runSet(replacer durablefile.Replacer, root string, parsed usage.Result, sub
 	if line != "" {
 		return line, code
 	}
-	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
+	request, line, code := prepareSelection(root, parsed, subject)
 	if line != "" {
 		return line, code
 	}
-	if line := gradeProseSubject(subject, request); line != "" {
-		return line, 1
-	}
-	s := &setRun{replacer: replacer, root: root, subject: subject, rows: make([]mutantRow, len(entries))}
+	s := &setRun{replacer: replacer, root: root, subject: subject, entries: entries, rows: make([]mutantRow, len(entries))}
 	e := setEnvelope{form: request.Form(), target: request.Target(), run: request.Run()}
 	matched := false
 	for i, entry := range entries {
-		s.rows[i] = untouched(entry.input.cell, substringMissCause)
+		s.rows[i] = unwritten(entry.input.cell, untouchedCells(substringMissCause))
 		matched = matched || !entry.mutant.miss
 	}
 	if !matched {
 		return s.answer(e, "")
 	}
-	if line := gradeGateLock(root); line != "" {
-		return line, 1
-	}
-	held, line := lockSubject(subject)
+	held, line := holdSubject(root, parsed.Positionals[0], subject)
 	if line != "" {
 		return line, 1
 	}
 	defer held.release()
-	if line := rereadSubject(root, parsed.Positionals[0], subject); line != "" {
-		return line, 1
-	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	s.ctx, s.runs = ctx, testreport.Hold(ctx, root, request)
@@ -143,9 +136,7 @@ func runSet(replacer durablefile.Replacer, root string, parsed usage.Result, sub
 	baseline, report, _ := s.runs.Run()
 	e.baseline = string(baseline.Kind)
 	if baseline.Kind != testreport.OutcomePassed {
-		for i := range s.rows {
-			s.rows[i] = mutantRow{mutation: s.rows[i].mutation, cells: baselineCells(baseline), exit: 1}
-		}
+		s.stopFrom(0, baselineCells(baseline))
 		e.builds = s.runs.Builds()
 		return s.answer(e, report)
 	}
@@ -159,20 +150,21 @@ func runSet(replacer durablefile.Replacer, root string, parsed usage.Result, sub
 }
 
 // grade checks the stop conditions before entry i's write, and then preserves, writes, runs,
-// and restores that mutant. It answers false when the set stops.
+// and restores that mutant. It answers false when the set stops. A run that a signal ended
+// stops the set at the next write's context check.
 func (s *setRun) grade(i int, entry setEntry) bool {
 	if cause := s.stopCause(); cause != "" {
-		s.stopFrom(i, cause)
+		s.stopFrom(i, untouchedCells(cause))
 		return false
 	}
 	preserved, line := preserve(s.root, s.subject)
 	if line != "" {
-		s.rows[i] = untouched(entry.input.cell, mutationFailedCause)
-		s.stopFrom(i+1, setStoppedCause)
+		s.rows[i] = unwritten(entry.input.cell, untouchedCells(preserveFailedCause))
+		s.stopFrom(i+1, untouchedCells(setStoppedCause))
 		return false
 	}
 	if published, err := entry.mutant.write(s.replacer, s.subject); err != nil {
-		s.rows[i] = untouched(entry.input.cell, mutationFailedCause)
+		s.rows[i] = unwritten(entry.input.cell, untouchedCells(mutationFailedCause))
 		if published {
 			s.rows[i].cells.restored = restoredCell
 		}
@@ -180,7 +172,7 @@ func (s *setRun) grade(i int, entry setEntry) bool {
 			s.rows[i].exit = s.rows[i].cells.failRestore()
 			s.preserved = keptCopy(preserved, kept)
 		}
-		s.stopFrom(i+1, setStoppedCause)
+		s.stopFrom(i+1, untouchedCells(setStoppedCause))
 		return false
 	}
 	run := runRestored(s.replacer, s.subject, preserved, s.runs.Run)
@@ -189,11 +181,7 @@ func (s *setRun) grade(i int, entry setEntry) bool {
 	if !run.restored {
 		s.rows[i].exit = s.rows[i].cells.failRestore()
 		s.preserved = keptCopy(preserved, run.reason)
-		s.stopFrom(i+1, setStoppedCause)
-		return false
-	}
-	if run.outcome.Kind == testreport.OutcomeInterrupted {
-		s.stopFrom(i+1, setStoppedCause)
+		s.stopFrom(i+1, untouchedCells(setStoppedCause))
 		return false
 	}
 	return true
@@ -215,16 +203,19 @@ func (s *setRun) stopCause() string {
 	return ""
 }
 
-// stopFrom marks row i and every later row as stopped with cause before its write.
-func (s *setRun) stopFrom(i int, cause string) {
+// stopFrom gives row i and every later matching row the cells of a stop before its write. A
+// missed row keeps its substring-miss cause.
+func (s *setRun) stopFrom(i int, cells verdictCells) {
 	for j := i; j < len(s.rows); j++ {
-		s.rows[j] = untouched(s.rows[j].mutation, cause)
+		if !s.entries[j].mutant.miss {
+			s.rows[j] = unwritten(s.rows[j].mutation, cells)
+		}
 	}
 }
 
-// untouched answers the row of a mutant that ended before any write: invalid, with cause.
-func untouched(mutation, cause string) mutantRow {
-	return mutantRow{mutation: mutation, cells: untouchedCells(cause), exit: 1}
+// unwritten answers the row of a mutant that ended with cells before its write, at exit 1.
+func unwritten(mutation string, cells verdictCells) mutantRow {
+	return mutantRow{mutation: mutation, cells: cells, exit: 1}
 }
 
 // answer renders the three tables and then the suffix: the preserved table of a failed

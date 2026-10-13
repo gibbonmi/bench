@@ -74,11 +74,7 @@ func resolveEntry(n int, argv []string, top usage.Result, subject subject) (setE
 		line, code := usageLine()
 		return setEntry{}, toon.Errorf("probe mutant set entry refused", fmt.Sprintf("entry %d does not match the mutation grammar", n)) + "\n" + line, code
 	}
-	input, refused := mutationInput(parsed)
-	var mutant mutationResult
-	if refused == nil {
-		mutant, refused = mutate(subject.start, input, subject.display)
-	}
+	input, mutant, refused := resolveMutation(parsed, subject)
 	if refused != nil {
 		refused.detail = fmt.Sprintf("entry %d: %s", n, refused.detail)
 		return setEntry{}, refused.line(), 1

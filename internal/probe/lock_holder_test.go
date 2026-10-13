@@ -29,7 +29,7 @@ const (
 // lockProcessArgv re-enters this test binary through TestProbeRefusesUnderALiveGateRun, which
 // holds or tries a lock as its environment names.
 func lockProcessArgv() []string {
-	return []string{os.Args[0], "-test.run=^TestProbeRefusesUnderALiveGateRun$", "-test.timeout=" + interruptDeadline().String()}
+	return reentryArgv("TestProbeRefusesUnderALiveGateRun")
 }
 
 // lockHolderEnv answers the environment of a holder of path, its release marker, and its ready
@@ -42,11 +42,10 @@ func lockHolderEnv(t *testing.T, path string) (env []string, release, ready stri
 	release, ready = filepath.Join(dir, "release"), filepath.Join(dir, "ready")
 	t.Cleanup(func() {
 		_ = os.WriteFile(release, nil, 0o644)
-		for expiry := time.Now().Add(interruptDeadline()); time.Now().Before(expiry); time.Sleep(10 * time.Millisecond) {
-			if _, err := os.Stat(ready); os.IsNotExist(err) {
-				return
-			}
-		}
+		pollUntil(func() bool {
+			_, err := os.Stat(ready)
+			return os.IsNotExist(err)
+		})
 	})
 	return []string{lockHolderPathEnv + "=" + path, lockHolderReleaseEnv + "=" + release, lockHolderReadyEnv + "=" + ready}, release, ready
 }
@@ -148,15 +147,13 @@ func holdRecordLock(t *testing.T, path, releaseMarker, readyMarker string) {
 // just before the step that the waiter observes.
 func awaitFile(t *testing.T, path string) {
 	t.Helper()
-	expiry := time.Now().Add(interruptDeadline())
-	for time.Now().Before(expiry) {
-		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() {
-			time.Sleep(50 * time.Millisecond)
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
+	if !pollUntil(func() bool {
+		info, err := os.Stat(path)
+		return err == nil && info.Mode().IsRegular()
+	}) {
+		t.Fatalf("no process created %s within %s", path, interruptDeadline())
 	}
-	t.Fatalf("no process created %s within %s", path, interruptDeadline())
+	time.Sleep(settleDelay)
 }
 
 // setHook installs hook in slot for the test's span and then puts the earlier value back.

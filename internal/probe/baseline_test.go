@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -196,7 +198,7 @@ func TestProbeRestoresOnInterrupt(t *testing.T) {
 // A signal during mutant 1's run stops the set after that mutant's restore.
 func TestMutantSetStopsOnInterrupt(t *testing.T) {
 	f := newFixture(t)
-	installSet(t, f, probetest.Start{Hook: "sleep 60\n", Events: cannedPass}, bite)
+	installSet(t, f, sleepingRun, bite)
 	out := interruptedProbe(t, f, setArgs(mutantsFile(t, guardSwap, returnSwap)), func() { awaitStubStart(t, f, 2) })
 	if want := setRows(t, interruptedRow, untouchedRow(2, "set-stopped")); !strings.HasPrefix(out, want) {
 		t.Fatalf("helper stdout = %q, want %q first", out, want)
@@ -228,8 +230,64 @@ func TestMutantSetStopsOnAnInterruptedBuild(t *testing.T) {
 	}
 }
 
-// interruptedRow is the row of entry 1 whose run a signal ended after its write.
-var interruptedRow = []any{1, "invalid", "swap", "interrupted", 0, nil, 0, 1, 1, nil, "yes"}
+// A missed row keeps substring-miss through an interrupt and through a failed baseline, so
+// only the matching rows take the stop or the baseline cause.
+func TestMutantSetMissKeepsItsCause(t *testing.T) {
+	args := func(t *testing.T) []string { return setArgs(mutantsFile(t, guardSwap, missEntry, returnSwap)) }
+	t.Run("interrupt", func(t *testing.T) {
+		f := newFixture(t)
+		installSet(t, f, sleepingRun, bite)
+		out := interruptedProbe(t, f, args(t), func() { awaitStubStart(t, f, 2) })
+		if want := setRows(t, interruptedRow, missRow(2), untouchedRow(3, "set-stopped")); !strings.HasPrefix(out, want) {
+			t.Fatalf("helper stdout = %q, want %q first", out, want)
+		}
+	})
+	t.Run("baseline", func(t *testing.T) {
+		f := newFixture(t)
+		probetest.InstallSequence(t, f.marker, alreadyRed, bite, bite)
+		out, code := runProbe(t, args(t)...)
+		requireRow(t, out, code, 1, setRows(t, redRow(1), missRow(2), redRow(3)))
+	})
+}
+
+// A signal during mutant 1's restore, after its run completed, stops mutant 2 before its write.
+// The test's own handler keeps that signal from ending the test binary.
+func TestMutantSetStopsOnASignalDuringARestore(t *testing.T) {
+	f := newFixture(t)
+	installSet(t, f, bite, bite)
+	caught := make(chan os.Signal, 1)
+	signal.Notify(caught, os.Interrupt)
+	defer signal.Stop(caught)
+	native := durablefile.Native()
+	replacer, renames := native, 0
+	replacer.Rename = func(oldpath, newpath string) error {
+		// The second rename of the subject is mutant 1's restore.
+		if renames++; renames == 2 {
+			if err := syscall.Kill(os.Getpid(), syscall.SIGINT); err != nil {
+				t.Fatal(err)
+			}
+			select {
+			case <-caught:
+				time.Sleep(settleDelay)
+			case <-time.After(interruptDeadline()):
+				t.Fatalf("the signal did not arrive within %s", interruptDeadline())
+			}
+		}
+		return native.Rename(oldpath, newpath)
+	}
+	out, code := runSetWith(t, f, replacer, setArgs(mutantsFile(t, guardSwap, returnSwap)))
+	requireRow(t, out, code, 1, setRows(t, biteRow(1, "swap"), untouchedRow(2, "set-stopped")))
+	requireStarts(t, f, 2)
+	requireSubjectBytes(t, f, clampSource)
+	requireHomeEmpty(t, f)
+}
+
+// interruptedRow is the row of entry 1 whose run a signal ended after its write, and
+// sleepingRun is a mutated run that waits for that signal.
+var (
+	interruptedRow = []any{1, "invalid", "swap", "interrupted", 0, nil, 0, 1, 1, nil, "yes"}
+	sleepingRun    = probetest.Start{Hook: "sleep 60\n", Events: cannedPass}
+)
 
 // interruptedProbe runs the verb over argv in a helper process, signals it once await returns,
 // and answers what the verb printed.
@@ -239,7 +297,8 @@ func interruptedProbe(t *testing.T, f *fixture, argv []string, await func()) str
 	if err != nil {
 		t.Fatal(err)
 	}
-	helper := exec.Command(os.Args[0], "-test.run=^TestProbeRestoresOnInterrupt$", "-test.timeout="+interruptDeadline().String())
+	reentry := reentryArgv("TestProbeRestoresOnInterrupt")
+	helper := exec.Command(reentry[0], reentry[1:]...)
 	helper.Env = append(os.Environ(), interruptHelperEnv+"="+f.root, interruptArgvEnv+"="+string(encoded))
 	stdout, err := helper.StdoutPipe()
 	if err != nil {
@@ -290,14 +349,29 @@ func runInterruptHelper(t *testing.T, root string) {
 // baseline's start from the mutated run's.
 func awaitStubStart(t *testing.T, f *fixture, want int) {
 	t.Helper()
-	expiry := time.Now().Add(interruptDeadline())
-	for time.Now().Before(expiry) {
-		if startCount(t, f) >= want {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
+	if !pollUntil(func() bool { return startCount(t, f) >= want }) {
+		t.Fatalf("Go test start %d did not happen within %s", want, interruptDeadline())
 	}
-	t.Fatalf("Go test start %d did not happen within %s", want, interruptDeadline())
 }
 
 func interruptDeadline() time.Duration { return bounds.TestDeadline(runbinary.BuilderCancelGrace) }
+
+// settleDelay is the wait after an observed step, so the step that the observer awaits
+// completes too.
+const settleDelay = 50 * time.Millisecond
+
+// pollUntil polls done every 10 ms until done answers true or the interrupt deadline passes.
+// It reports whether done answered true.
+func pollUntil(done func() bool) bool {
+	for expiry := time.Now().Add(interruptDeadline()); time.Now().Before(expiry); time.Sleep(10 * time.Millisecond) {
+		if done() {
+			return true
+		}
+	}
+	return false
+}
+
+// reentryArgv runs this test binary again through the named test, under the interrupt deadline.
+func reentryArgv(test string) []string {
+	return []string{os.Args[0], "-test.run=^" + test + "$", "-test.timeout=" + interruptDeadline().String()}
+}
