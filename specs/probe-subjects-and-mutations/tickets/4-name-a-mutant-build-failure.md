@@ -1,7 +1,7 @@
 # Name a run-binary or mutant build failure in its own outcome
 
 Blocked by: 1-add-probe-mutation-forms.md, 2-probe-prose-and-system-checks.md, 3-name-the-first-failure-and-expected-witness.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/probe.go, internal/probe/verdict.go (new), internal/probe/verdict_test.go (new), internal/runbinary/build_script_test.go (new), internal/runbinary/runbinary.go, internal/runbinary/runbinary_test.go, internal/testreport/canned_go_test.go (new), internal/testreport/command.go, internal/testreport/full_failure_test.go, internal/testreport/outcome.go, internal/testreport/outcome_test.go, internal/testreport/testreport.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/probe.go, internal/probe/subject_check_fixture_test.go, internal/probe/verdict.go (new), internal/probe/verdict_test.go (new), internal/runbinary/build_script_test.go (new), internal/runbinary/runbinary.go, internal/runbinary/runbinary_test.go, internal/testreport/canned_go_test.go (new), internal/testreport/command.go, internal/testreport/full_failure_test.go, internal/testreport/outcome.go, internal/testreport/outcome_test.go, internal/testreport/testreport.go
 Covers: PS44, PS45, PS46, PS47, PS48, PS49, PS50, PS51, PS52, PS53
 
 ## What to build
