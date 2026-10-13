@@ -6,6 +6,16 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Probe subjects and mutations
+
+- Added mutation forms to `bench probe`. `--with-file <path>` reads the text of a swap or an insertion from a file. `--insert-before <anchor>` puts the text before the anchor. `--delete` removes the subject for the run, and a mutation that empties the subject refuses and names `--delete`. `--occurrence <n>` selects one match of an old string that matches more than once. Before, a probe took one swap or one omission, and `--omit-file` could leave an empty subject.
+- Added the combined mutant to `bench probe`. Repeated `--swap` and `--omit` edits make one mutant, and each edit matches the start bytes of the subject. Two edits that touch the same bytes refuse. Before, a probe took one edit.
+- Added `--check prose` and `--check system --run <pattern>` as `bench probe` targets. A prose probe grades a Markdown subject, and its `failed_tests` cell counts the prose findings. A prose probe of a file that the prose check does not read refuses with `probe subject not graded`. The mutated run builds its run binary from the mutant, so a system probe needs no manual rebuild. Before, the probe refused both checks.
+- Added `--expect <test>` to `bench probe`. A mutated run that fails without that test or one of its subtests reads `invalid` with the cause `expect-missed`. The verdict row adds a `first_failure` cell that names the first failed test, or `null`. Before, the row named only the count of failed tests.
+- Changed the `bench probe` answer for a mutant that does not compile. The verdict reads `invalid` with the cause `build-failed`, and a `mutant` table names the first build line in its `first_build_line` cell. A baseline whose run binary does not build reads `baseline-build-failed`. Before, only the report named the compile error, and a failed run-binary build read `refused`.
+- Added a subject lock to `bench probe`. While one probe runs, a second probe of the same subject refuses with `probe subject in use`, and a probe of another subject runs. Under the lock, the probe reads the subject again and refuses when the subject changed. Before, two probes of one file could restore each other's mutant.
+- Changed the probe result schema to `bench-probe-result-v2`, because the verdict row added the `first_failure` cell. `bench record verification --probe-result` refuses a result with another schema. Before, the schema was `bench-probe-result-v1`.
+
 ### Build landing window
 
 - Added a landing lease, a landing window, and a landing override to `bench worktree land`. A landing holds a lease on its destination from composition through publish, so a second landing refuses with `land-lease-held` and names the owner. During an open build, the landing refuses each other landing with `land-build-window` outside a chunk gap. The reviewer admits one landing with `bench commitment override` from a terminal in the primary checkout. `bench record fold` records a fold of `main`, so the review chain accepts it between and after chunks, and only its resolution takes review. A landing over a moved destination refuses with `land-destination-moved` and names `bench worktree merge`; before, it named `bench doctor`.
