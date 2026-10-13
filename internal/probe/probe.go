@@ -68,7 +68,9 @@ func run(root string, parsed usage.Result) (string, int) {
 // runWith applies the refusal order, grades the baseline, and then runs the probe itself,
 // with each subject replacement through replacer. Every refusal below answers before
 // preserve writes anything, which is what makes a refused probe leave the tree, the Bench
-// home, and the process table exactly as it found them. The baseline is the last of them,
+// home, and the process table exactly as it found them. The subject lock is the one entry
+// that a refusal can write under the Bench home, and its deferred release removes it on every
+// later answer, an interrupt and a kept copy included. The baseline is the last refusal,
 // because it is the only one that starts a run child.
 func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (string, int) {
 	subject, line := resolveSubject(root, parsed.Positionals[0])
@@ -94,6 +96,14 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 		return renderInvalidMutation(subject, input.cell, request)
 	}
 	if line := gradeGateLock(root); line != "" {
+		return line, 1
+	}
+	held, line := lockSubject(subject)
+	if line != "" {
+		return line, 1
+	}
+	defer held.release()
+	if line := rereadSubject(root, parsed.Positionals[0], subject); line != "" {
 		return line, 1
 	}
 	mutation := input.cell

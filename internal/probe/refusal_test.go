@@ -2,23 +2,14 @@ package probe
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
-	"time"
-
-	"github.com/gibbonmi/bench/internal/gocache"
 )
 
-// gateHolderRootEnv and gateHolderReleaseEnv carry the fixture and the release marker to
-// the lock-holding half of the gate row. A live gate holds its lock from another process,
-// so the refusal is only proven by another process holding it here too.
-const (
-	gateHolderRootEnv    = "BENCH_PROBE_GATE_ROOT"
-	gateHolderReleaseEnv = "BENCH_PROBE_GATE_RELEASE"
-)
+// gateRefusal is the refusal a probe answers while a gate run holds the tree.
+const gateRefusal = "error: gate execution in progress — wait for the gate run to finish before you mutate the tree\n"
 
 // probeArgs answers the accepted invocation when it is called bare, and the argv spelled
 // in full otherwise. Every refusal row reads beside the accepted call it departs from, so
@@ -77,76 +68,24 @@ func TestProbeRefusesAnEmptyMutation(t *testing.T) {
 }
 
 // PB20: the gate grades the bytes it read, so a probe refuses while a gate run holds the
-// tree rather than changing the gate's subject under it.
+// tree rather than changing the gate's subject under it. The test is also the lock holder's
+// entry: a process that startLockHolder starts holds the lock its environment names.
 func TestProbeRefusesUnderALiveGateRun(t *testing.T) {
-	if root := os.Getenv(gateHolderRootEnv); root != "" {
-		holdGateLock(t, root, os.Getenv(gateHolderReleaseEnv))
+	if path := os.Getenv(lockHolderPathEnv); path != "" {
+		holdRecordLock(t, path, os.Getenv(lockHolderReleaseEnv))
 		return
 	}
 	f := refusalFixture(t)
-	release := startGateHolder(t, f)
+	release := startLockHolder(t, gateLockPath(f.root))
 	defer release()
 	out, code := runProbe(t, probeArgs()...)
-	want := "error: gate execution in progress — wait for the gate run to finish before you mutate the tree\n"
-	requireRefused(t, f, out, code, want, 1)
-}
-
-// startGateHolder runs the lock-holding half in its own process and answers the release.
-func startGateHolder(t *testing.T, f *fixture) func() {
-	t.Helper()
-	releaseMarker := filepath.Join(scratchDir(t), "gate-release")
-	holder := exec.Command(os.Args[0], "-test.run=^TestProbeRefusesUnderALiveGateRun$", "-test.timeout="+interruptDeadline().String())
-	holder.Env = append(os.Environ(), gateHolderRootEnv+"="+f.root, gateHolderReleaseEnv+"="+releaseMarker)
-	if err := holder.Start(); err != nil {
-		t.Fatal(err)
-	}
-	awaitFile(t, gateLockPath(f.root))
-	return func() {
-		_ = os.WriteFile(releaseMarker, nil, 0o644)
-		_ = holder.Wait()
-	}
+	requireRefused(t, f, out, code, gateRefusal, 1)
 }
 
 // gateLockPath spells the execution lock both halves of the gate row name. internal/gate
 // does not export the path, so this file owns the one spelling the test side derives.
 func gateLockPath(root string) string {
 	return filepath.Join(root, ".git", "bench-gate.lock")
-}
-
-// holdGateLock takes the execution lock the gate takes and parks until the release marker
-// appears, so the refusal under test observes a genuinely held lock.
-func holdGateLock(t *testing.T, root, releaseMarker string) {
-	t.Helper()
-	lock, err := os.OpenFile(gateLockPath(root), os.O_CREATE|os.O_RDWR, 0o600)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer lock.Close()
-	held := gocache.RecordLock(syscall.F_WRLCK)
-	if err := syscall.FcntlFlock(lock.Fd(), syscall.F_SETLK, &held); err != nil {
-		t.Fatal(err)
-	}
-	for {
-		if _, err := os.Stat(releaseMarker); err == nil {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-}
-
-// awaitFile waits for the holder's lock file to appear and then settles, because the
-// create and the lock are two steps in the holder's own process.
-func awaitFile(t *testing.T, path string) {
-	t.Helper()
-	expiry := time.Now().Add(interruptDeadline())
-	for time.Now().Before(expiry) {
-		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() {
-			time.Sleep(50 * time.Millisecond)
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	t.Fatalf("the gate lock holder did not create %s within %s", path, interruptDeadline())
 }
 
 // PB21: only a regular file inside the repository mutates, so each hostile subject names

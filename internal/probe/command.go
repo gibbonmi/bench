@@ -44,7 +44,7 @@ var grammar = usage.Grammar{
 // Command parses one probe invocation, resolves the repository root, and runs the probe.
 // The refusal order is fixed: usage, not in a repository, the subject, the mutation input,
 // the mutation match, the selection, a subject the selected grade never reads, the
-// substring miss, the gate lock, then the baseline.
+// substring miss, the gate lock, the subject lock, the subject re-read, then the baseline.
 // Every one of those runs before the preserved copy is written, and only the baseline
 // starts a run child.
 func Command(args []string) (string, int) {
