@@ -1,7 +1,7 @@
 # Remove the unused replacement owner and close caller coverage
 
 Blocked by: 02-preserve-gate-failures.md, 03-migrate-owner-records.md, 04-migrate-capture-documents.md, 05-migrate-handoff-documents.md, 06-preserve-ledger-effects.md, 07-recover-approval-stage.md, 08-migrate-publication-records.md, 09-migrate-broker-manifests.md, 10-migrate-dashboard-artifacts.md, 11-preserve-probe-recovery.md, 12-migrate-assessment-records.md, 13-migrate-repair-documents.md
-Writes: internal/adopt/manifest.go, internal/adopt/lifecycle_preview_test.go, internal/adopt/lifecycle_consumption_test.go
+Writes: internal/adopt/manifest.go, internal/adopt/lifecycle_preview_test.go, internal/adopt/lifecycle_consumption_test.go, internal/durablefile/durablefiletest/assert.go, internal/gate/durable_replacement_test.go, internal/gate/prospectiveartifact/replacement_test.go, internal/capturetx/replacement_test.go, internal/handoffdoc/replacement_test.go, internal/intent/replacement_test.go, internal/commitment/repository/replacement_test.go, internal/publication/replacement_test.go, internal/brokermanifest/replacement_test.go, internal/probe/replacement_test.go, internal/assessment/replacement_test.go, internal/assessment/record_test.go, internal/repairpilot/replacement_test.go
 Covers: D30, D31, D33, D35, D36
 
 ## What to build
@@ -12,6 +12,10 @@ Retain manifestBytes, manifestMode, stageBytes, and the adoption lifecycle trans
 Reconcile every migrated caller against its recorded payload, mode, refusal, and bypass evidence.
 Review the excluded immutable, directory, rollback, rotation, cancellation, and lease owners without migrating them.
 
+Close D30 and D36 for every migrated caller family in its caller test.
+Add one shared refusal assertion to durablefiletest and move each pasted refusal block to it.
+Each caller family gets one payload or destination refusal witness and one pre-rename row.
+Each pre-rename row reads back through RequireBytes or RequireAbsent.
 The source census also confirms that each exported caller entry binds the native replacer. No caller test can detect a plain write in its place.
 
 Review chunk: D-D.
