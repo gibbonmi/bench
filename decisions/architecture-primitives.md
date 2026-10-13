@@ -47,12 +47,9 @@ Use craft-spec, craft-seams, and craft-cli for the separate specs.
 - Path: `internal/releasepreflight/vulnerability.go`
   Supports: the exception parser's incomplete suffix check.
   Drift: a change to ValidateVulnerabilityPolicy.
-- Path: `internal/gate/verdict.go`
-  Supports: a file-and-directory synchronization example.
-  Drift: a change to durableReplace.
-- Path: `internal/reviewrecord/write.go`
-  Supports: a replace operation without directory synchronization.
-  Drift: a change to replace.
+- Path: `internal/durablefile/replace.go`
+  Supports: the one durable file-replacement owner that every caller uses.
+  Drift: a change to Replace.
 - Path: `internal/sanitize/sanitize.go`
   Supports: the existing always-quoted shell argument function.
   Drift: a change to ShellQuote.
