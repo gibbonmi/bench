@@ -142,7 +142,71 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "pm-a-standards-r1",
+          "performer": "claude:pm_a_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f2262ac58ba52b36216c7d449600a955fb84029",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_a_standards",
+            "digest": "sha256:0d6fa2e47b2ffd5fcd13b1544a3d6e8a29a3692a1eb8eaf302fe251028677077",
+            "excerpt": "Standards axis claude:pm_a_standards (opus/high), PM-A round 1, frozen pair a6739258..14bec38c (chunk tip 868975d7), evidence sha256:d787d670 current.\ncount: 1 (no-op only; recorded with no finding ID)\nworst: S1\nS1 | no-op | 6 | refusal_test.go:225 holds a hand copy of PackageExpressionNote (producer selection_facts.go:93). Ticket 1 line 20 directs \"Update the independent note copy in internal/probe/refusal_test.go\", and the copy's red is recorded (TestProbeHelpSpellings test-first). No change.\nRefuted: comment prose (command.go:28-30, probe.go:140-141, selection_facts.go:90-92, selection_facts_test.go:148, package_test.go) is current-code and within 25 words; packageValueRule and probePackageNote have no references; BENCH-reference.md:260 staleness is owned by ticket 6; bothPackages red is in the central probe excerpt; the review record shape matches recordcmd/verification.go.\nAdvice: four floor rows share one combined excerpt; selection_facts_test.go:148 could say \"the shared package note\"; package_test.go:33 and :47 both count two starts; the argv hook repeats an incidental shell idiom.\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "a6739258f810d1dcdd1efc2a028a0fe9726d8083",
+          "tip": "868975d7ed65806ddf627da3821948b075a9cb74",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "pm-a-spec-r1",
+          "performer": "claude:pm_a_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f2262ac58ba52b36216c7d449600a955fb84029",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_a_spec",
+            "digest": "sha256:cb3230bd4ccef8c25c791116251c71032217d9d62a76791bca332861d6da140c",
+            "excerpt": "Spec axis claude:pm_a_spec (opus/high), PM-A round 1, frozen pair a6739258..14bec38c (chunk tip 868975d7), evidence sha256:d787d670 current.\ncount: 0\nworst: none\nPM45 met: TestProbeRepeatsThePackage (internal/probe/package_test.go:69-92) requires 2 starts, each ending \" ./clamp ./other\"; selectionArgs loops parsed.Repeated[\"--package\"] (probe.go:142-150).\nPM46 met: TestProbePackagesShareOneBuildPerRun (package_test.go:95-108) asserts startCount == 2 and len(buildRecords) == 2.\nPM47 met: TestProbeRepeatsThePackage requires selectionRow(..., \"./clamp ./other\", ...).\nPM48 met: TestProbeHelpSpellings whole-help equality against the updated copy (refusal_test.go:224-244); \"run one call per package\" survives in no help, code, or guidance.\nPM49 met: probePackageNote and packageValueRule deleted; ProbeNotes starts with PackageExpressionNote (selection_facts.go:93-101); TestProbeNotesDeriveTheirTokens prefix and count 2.\nPM50 met: probeHelpSuffix derives from probe.Usage (cmd/bench/test_command.go:14); TestHelpInventoryIsComplete pins [--package <expr>]...\nScope: the spec edit rewrites only the PM45-PM47 seam cells, as bench-implement-spec.md:52 requires. No scope creep.\nAdvice: the PM45 suffix check passes if an argv repeats a package before the final \" ./clamp ./other\".\nImplementation command: no command change.\n"
+          },
+          "axis": "Spec",
+          "base": "a6739258f810d1dcdd1efc2a028a0fe9726d8083",
+          "tip": "868975d7ed65806ddf627da3821948b075a9cb74",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "pm-a-coverage-r1",
+          "performer": "claude:pm_a_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f2262ac58ba52b36216c7d449600a955fb84029",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_a_coverage",
+            "digest": "sha256:ca069ff566d046b630b5d0e1ea60617f6f55e4f4646807a9782251981c6cca6a",
+            "excerpt": "Coverage axis claude:pm_a_coverage (opus/high), PM-A round 1, frozen pair a6739258..14bec38c (chunk tip 868975d7), evidence sha256:d787d670 current.\ncount: 2\nworst: C1\nC1 | auto-fix | 8 | Input: selectionArgs joins the repeated values into one --package value \"./clamp ./other\". Real Go reads one argument and fails as one missing directory (selection_facts.go:90-93). The stub hook records \"$*\" (package_test.go:72), which erases argument boundaries, and the assertion is HasSuffix(start, \" ./clamp ./other\") (package_test.go:86-89). Probe: swap the loop at probe.go:147 to join later values into args[1]; bench probe --package ./internal/probe read silent, 229 tests, 0 failed, restored yes. PM45 is not proven. Needed: record each argv element on its own line and assert the last two elements equal ./clamp and ./other.\nC2 | auto-fix | 6 | Input: --package ./clamp --package \"\". No test pins the empty-value refusal for a later occurrence of a repeatable flag (usage/parse.go:179; parse_test.go:419-447; refusal_test.go). Probe: guard swapped to skip a repeated occurrence; silent over probe, usage, testreport, worktree; restored yes. Current behavior is correct (exit 2, usage refusal). Needed: a refusal_test.go row with exit 2, subject unchanged, no run child. Hardening cycle.\nAdvice: duplicate --package values are undecided; --check beside a repeated --package is covered by the two-selections row.\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "a6739258f810d1dcdd1efc2a028a0fe9726d8083",
+          "tip": "868975d7ed65806ddf627da3821948b075a9cb74",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -154,3 +218,29 @@
   }
 }
 ```
+
+## PM-A round 1
+
+Frozen pair: a6739258 to 14bec38c, with the chunk tip 868975d7.
+Repair allowance: cycle 1 of 2 starts for C1 and C2, and it is also the hardening cycle.
+
+### Standards
+
+Count 0 after disposition. Worst issue: none.
+S1 closes as no-op at confidence 6, because ticket 1 directs the independent note copy in `internal/probe/refusal_test.go`.
+
+### Spec
+
+Count 0. Worst issue: none. Rows PM45 to PM50 are met.
+
+### Coverage
+
+Count 2. Worst issue: C1.
+
+- C1, auto-fix, confidence 8: the stub hook records `"$*"`, so `TestProbeRepeatsThePackage` cannot tell two arguments from one joined argument. A joined-value probe read silent. Record each argument on its own line and assert the last two elements.
+- C2, auto-fix, confidence 6: no row pins the empty-value refusal for a later `--package`. Add a row to `internal/probe/refusal_test.go` with exit 2, the subject unchanged, and no run child.
+
+### Advice
+
+- Four floor rows share one combined excerpt, and each row names one package.
+- A duplicate `--package` value has no decided behavior.
