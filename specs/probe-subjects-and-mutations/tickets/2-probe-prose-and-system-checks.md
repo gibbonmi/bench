@@ -1,8 +1,8 @@
 # Probe the prose check and the system suite through the check owner
 
 Blocked by: 1-add-probe-mutation-forms.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/outcome_test.go, internal/probe/probe.go, internal/probe/refusal_test.go, internal/probe/replacement_test.go, internal/probe/subject_check_fixture_test.go (new), internal/probe/subject_check_test.go (new), internal/testreport/runbinary_test.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go
-Covers: PS26, PS27, PS28, PS29, PS30, PS31, PS32, PS33, PS34, PS35, PS36, PS37
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/outcome_test.go, internal/probe/probe.go, internal/probe/refusal_test.go, internal/probe/replacement_test.go, internal/probe/subject_check_fixture_test.go (new), internal/probe/subject_check_test.go (new), internal/testreport/command.go, internal/testreport/runbinary_test.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go
+Covers: PS26, PS27, PS28, PS29, PS30, PS31, PS32, PS33, PS34, PS35, PS36, PS37, PS77
 
 ## What to build
 
@@ -43,6 +43,7 @@ Ticket 3 receives probe targets that include a prose run, which leaves the faile
 ## Acceptance
 
 - [ ] A Markdown mutation under `--check prose` that adds a long sentence reads `bit`.
+- [ ] A `--check prose` probe of a subject that `prose.IsSubjectName` rejects refuses with the not-graded line and exit 1.
 - [ ] The `failed_tests` cell of that prose bite equals the count of prose findings over the mutant.
 - [ ] `--check system --run <pattern>` passes the baseline and runs the mutant through the system-suite argv.
 - [ ] A system probe over a root that is not the kit reads `invalid` with the cause `baseline-refused`.

@@ -208,6 +208,8 @@ The rebuild note retires, because each focused run without an inherited selectio
 Each named check runs through `testreport.Execute`, which owns the prose grade, the system suite, and the private run-binary selection.
 
 A prose probe grades the whole tree twice, once for the baseline and once for the mutant.
+A `--check prose` subject that `prose.IsSubjectName` rejects refuses after the selection parse and before the substring miss, with exit 1.
+The refusal is `error: probe subject not graded — --check prose grades only .md files, and <subject> is not one`.
 The prose runner already counts each finding in `FailedTests`, so a finding over the mutant reads `bit`.
 
 A system probe runs the gate's system suite with the caller's `--run` pattern.
@@ -427,6 +429,7 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PS73 | 47 | `docs/known-issues.md` holds no row that names an unused probe import or an unused probe variable | review-owned: the reviewer reads the table | No check reads the issue table. |
 | PS74 | 48 | The probe-cost row names the batch obligation as its retire condition, and `roadmap/FT168.md` keeps that obligation | review-owned: the reviewer reads both files | The current condition holds once the combined mutant ships and forces an early removal. |
 | PS75 | 38 | A subject that the start-read hook deletes reads the absent-subject line at the re-read, and no run child starts | planned internal/probe/lock_test.go (TestSubjectLockRereadsTheSubject) | A re-read that compares only bytes fails on a read error with no named cause. |
+| PS77 | 17 | A `--check prose` probe of a `.go` subject refuses with the not-graded line and exit 1, and no run child starts | planned internal/probe/subject_check_test.go (TestProbeRefusesAnUngradedProseSubject) | A probe that grades a file that the prose walk never reads answers a false `silent`. |
 | PS76 | 14 | Each argv that names two mutation groups, `--delete` or `--insert-before` included, prints the usage line with exit 2 | `internal/probe/refusal_test.go` (`TestProbeUsageNamesOneSelectionAndOneMutation`) | A pair rule that names only the four current forms lets a new form combine in silence. |
 
 Not covered: story 49 — a reviewed exclusion under D2; the Out of scope section prices it.
@@ -456,6 +459,7 @@ A lock path derives from a digest, so no operand byte reaches the lock file name
 **Won't handle** — a lock that blocks and waits — a waiting probe hides a concurrent author, and the refusal names the subject.
 
 **Won't handle** — a read of a v1 probe result after the upgrade — `probe.ReadResult` refuses it by schema, and a fresh probe gives a v2 result.
+**Won't handle** — an untracked, `testdata`, or excluded Markdown subject under `--check prose` — the prose exclusion set owns that rule.
 **Won't handle** — concurrent probes on two files of one package — each run can see the other's mutant, and the caller serializes probes per package.
 
 ## Ownership fences
