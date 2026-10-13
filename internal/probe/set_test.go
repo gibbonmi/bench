@@ -174,8 +174,7 @@ func TestMutantSetStopsOnARestoreFailure(t *testing.T) {
 	router := subjectFaults()
 	router.Fail[restoreReplacement] = map[string]error{"rename": os.ErrPermission}
 	out, code := runSetWith(t, f, router.Replacer(), setArgs(mutantsFile(t, guardSwap, returnSwap)))
-	failed := []any{1, "restore-failed", "swap", "failed", 1, "TestClampNegative", 1, 1, 2, nil, "no"}
-	requireRow(t, out, code, 2, setRows(t, failed, untouchedRow(2, "set-stopped")))
+	requireRow(t, out, code, 2, setRows(t, restoreFailedRow(1), untouchedRow(2, "set-stopped")))
 	requirePreserved(t, f, out)
 	requireTrailingBytes(t, out, 2)
 	requireStarts(t, f, 2)
@@ -306,7 +305,6 @@ func TestMutantSetRowsKeepTheirSchema(t *testing.T) {
 // restore failed, and 1 otherwise.
 func TestMutantSetCommandExit(t *testing.T) {
 	silent := []any{2, "silent", "swap", "passed", 0, nil, 1, 0, 1, nil, "yes"}
-	restoreFailed := []any{2, "restore-failed", "swap", "failed", 1, "TestClampNegative", 1, 1, 2, nil, "no"}
 	for _, tc := range []struct {
 		name    string
 		second  probetest.Start
@@ -316,7 +314,7 @@ func TestMutantSetCommandExit(t *testing.T) {
 	}{
 		{"bit and silent", pass, nil, silent, 1},
 		{"two bites", bite, nil, biteRow(2, "swap"), 0},
-		{"bit and restore-failed", bite, map[durablefiletest.Fault]map[string]error{{Destination: "subject", Ordinal: 4}: {"rename": os.ErrPermission}}, restoreFailed, 2},
+		{"bit and restore-failed", bite, map[durablefiletest.Fault]map[string]error{{Destination: "subject", Ordinal: 4}: {"rename": os.ErrPermission}}, restoreFailedRow(2), 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newFixture(t)

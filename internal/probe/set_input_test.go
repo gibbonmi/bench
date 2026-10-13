@@ -102,6 +102,11 @@ func redRow(n int) []any {
 	return []any{n, "invalid", "swap", "baseline-failed", 1, "TestClampNegative", 0, nil, 1, nil, "untouched"}
 }
 
+// restoreFailedRow is the row of entry n, a swap that bit and whose restore failed.
+func restoreFailedRow(n int) []any {
+	return []any{n, "restore-failed", "swap", "failed", 1, "TestClampNegative", 1, 1, 2, nil, "no"}
+}
+
 // requireTrailingBytes asserts the execution row of out, with its trailing_bytes cell derived
 // from the bytes that follow that row.
 func requireTrailingBytes(t *testing.T, out string, command int) {

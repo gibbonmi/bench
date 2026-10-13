@@ -253,8 +253,7 @@ func TestMutantSetMissKeepsItsCause(t *testing.T) {
 		router := subjectFaults()
 		router.Fail[restoreReplacement] = map[string]error{"rename": os.ErrPermission}
 		out, code := runSetWith(t, f, router.Replacer(), args(t))
-		failed := []any{1, "restore-failed", "swap", "failed", 1, "TestClampNegative", 1, 1, 2, nil, "no"}
-		requireRow(t, out, code, 2, setRows(t, failed, missRow(2), untouchedRow(3, "set-stopped")))
+		requireRow(t, out, code, 2, setRows(t, restoreFailedRow(1), missRow(2), untouchedRow(3, "set-stopped")))
 	})
 }
 
