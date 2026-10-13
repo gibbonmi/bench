@@ -2356,6 +2356,28 @@
           "supersedes": [
             "ps-d-coverage-1"
           ]
+        },
+        {
+          "id": "ps-d-spec-3",
+          "performer": "claude:ps-d-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-spec-3",
+            "digest": "sha256:ce02a1dfc090e279509665e168c72942b390eadaaee275bb22f7c357f6967082",
+            "excerpt": "Spec reaffirmation, chunk PS-D, plan commit 15bf62a2, opus medium.\nP1 closed (9): spec.md:272-279 lists five faults that match step 3 and internal/probe/lock.go:78-83; PS78's test at lock_test.go:179-184 asserts the ENOLCK lock-unavailable line, exit 1, unchanged bytes, and no run child. No new blocking item.\n"
+          },
+          "axis": "Spec",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-d-spec-2"
+          ]
         }
       ]
     }
@@ -2580,7 +2602,7 @@ Repair targets: 4. Ticket 3 takes S1 and C1, and ticket 4 takes S2 and C2.
 
 ## PS-D pickup
 
-Chunk PS-D has used 0 of its 2 repair cycles after its initial review.
+Chunk PS-D has used 1 of its 2 repair cycles after its initial review. Repair 6fb92fad and da666592 closed S1, C1, C2, and C3. The plan commit 15bf62a2 closed the confirming-round Spec finding P1 and added row PS78, and PS-D is re-frozen there.
 
 ### Standards
 
