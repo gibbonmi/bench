@@ -1323,7 +1323,82 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "pm-c2-standards-r1",
+          "performer": "claude:pm_c2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7246a8b8542d6fc74225bfb6f69a693d842b935b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_standards",
+            "digest": "sha256:1c7289194c9e1cf41495e1eb2a6b95579d76a0dd9dc9d84fa91dfaf5ca962fb2",
+            "excerpt": "Standards axis claude:pm_c2_standards (opus/high), PM-C2 round 1, frozen pair 6584e93e..dfc5b339 (chunk tip b647725e), evidence sha256:40515554 current.\ncount: 3\nworst: S1\nS1 | auto-fix | 6 | AGENTS.md one source per fact: the single form's refusal order after the mutation input is spelled twice (set.go:111-139 vs probe.go:94-114: Prepare, gradeProseSubject, miss branch, gradeGateLock, lockSubject with deferred release, rereadSubject); the mutationInput-then-mutate pair is composed twice (set_input.go:77-80 vs probe.go:86-93). Needed: shared probe.go helpers for Prepare plus prose check, gate plus lock plus reread, and mutation resolution, called by both forms.\nS2 | auto-fix | 5 | baseline.go:14-16 and :50-58: baselineCells repeats the invalid/untouched pair that untouchedCells now owns. Build baselineCells from untouchedCells.\nS3 | auto-fix | 5 | lockProcessArgv (lock_holder_test.go:32) copies the helper re-entry argv of baseline_test.go:242; the ready-marker wait in lockHolderEnv (:45) is a third deadline poll loop after awaitFile (:151-159) and awaitStubStart (baseline_test.go:293-300). One reentryArgv helper and one poll helper.\nClean: one *refusal path for mutation titles; runRestored, recoverMutation, failRestore, keptCopy, mutatedCells single-sourced; setTables apart from resultTables; maxMutants, setSchema, resultSchema constants; InstallStarts and InstallSequence share install and answer; interruptedProbe and startLockHolder generalized; probeHelpSuffix derives from Usage; main.go 429 lines at base and tip; files under 400 lines; comments within bounds.\nAdvice: set.go:236-240 special-cases exit 2; set.go:147 and :227 restate the invalid exit; set_test.go:312 wrap width; \"probe subject in use\" literal twice; subjectFromPath comment; set helpers live in set_input_test.go.\nImplementation command: S1, the ticket's \"put the loop in set.go\" invites copying the admission sequence; name shared probe.go helpers in such a ticket.\n"
+          },
+          "axis": "Standards",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "b647725ed4f1a49e5635ed7e9bb9ea3fe8df118f",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pm-c2-spec-r1",
+          "performer": "claude:pm_c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7246a8b8542d6fc74225bfb6f69a693d842b935b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_spec",
+            "digest": "sha256:594311ee6078cec119ac65afa937496ef7fa53931f15cb67fb61ab0dc58f903d",
+            "excerpt": "Spec axis claude:pm_c2_spec (opus/high), PM-C2 round 1, frozen pair 6584e93e..dfc5b339 (chunk tip b647725e), evidence sha256:40515554 current.\ncount: 3\nworst: P1\nP1 | ask-user | 6 | set.go stopFrom and the baseline loop vs spec lines 195, 202, 213, 227: \"An unmatched entry marks its row invalid with the cause substring-miss\" collides with \"A failed baseline gives every row...\" and \"each later row reads set-stopped\". The code lets the stop or baseline cause overwrite the miss; the result depends on position ([m, miss, m] with a gate run during m1 gives row 2 substring-miss and row 3 gate-held; an interrupt gives row 2 set-stopped). The spec states no precedence.\nP2 | ask-user | 6 | set.go grade preserve branch vs spec line 218 (\"preserves, writes, runs, and restores that mutant as the single form does\"): the single form answers a preserve failure with \"error: probe preservation failed — <err>\" at exit 1 (subject.go:104-106, probe.go:183-186); the set prints a mutation-failed + untouched row and drops the error text. No set test covers this path.\nP3 | no-op | 7 | spec PM20 why-it-catches cell (line 424) says a skipped restore \"stacks the edits, and the hook refuses them\"; mutants come from the start bytes (line 187), so the replaced-bytes sequence is the real catch. Non-behavioral spec inaccuracy, flagged for veto.\nRows: PM1-PM26, PM30, PM32, PM33, PM35-PM41, PM43, PM44, PM51, PM67, PM69, PM71, PM72, PM77, PM78 all met; lines, cells, cause tokens, exits, refusal order, table headers, command-exit rule, report suffix, and trailing_bytes match.\nAuthor flags: (a) P1; (b) P2; (c) wording follows the <path>: <reason> shape, no finding; (d) PM20 met.\nScope: no creep.\nAdvice: an interrupted fresh build (PM71) gets a non-null focused_exit_code, so a mutant_report prints for a run whose Go child never started; spec line 277 does not decide this.\nImplementation command: no command change.\n"
+          },
+          "axis": "Spec",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "b647725ed4f1a49e5635ed7e9bb9ea3fe8df118f",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pm-c2-coverage-r1",
+          "performer": "claude:pm_c2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7246a8b8542d6fc74225bfb6f69a693d842b935b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_coverage",
+            "digest": "sha256:fb5b95ccd0ecf95fd0fb227023cd15e2ce80868f19756941f050c26cd306d417",
+            "excerpt": "Coverage axis claude:pm_c2_coverage (opus/high), PM-C2 round 1, frozen pair 6584e93e..dfc5b339 (chunk tip b647725e), evidence sha256:40515554 current.\ncount: 5\nworst: C1\nC1 | auto-fix | 8 | set.go:179-181: a published mutant write failure whose restore also fails should read restore-failed/no, a preserved table, and exit 2. Probe omit \"s.rows[i].exit = s.rows[i].cells.failRestore()\" (occurrence 1): silent over 47 ^TestMutantSet tests, restored yes. Needed: a TestMutantSetStopsOnAMutationFailure case with mutation fault directory-sync and restore fault rename.\nC2 | auto-fix | 7 | set.go:205: a signal after a run completes (during its restore or between runs) should stop the next row with set-stopped/untouched (spec 212-214). Probes that disabled the s.ctx.Err() check and the OutcomeInterrupted branch (set.go:195) were each silent. Needed: an in-process row that raises SIGINT during mutant 1's restore and asserts row 2 set-stopped/untouched and 2 Go starts.\nC3 | auto-fix | 7 | set.go:254: trailing_bytes must count every byte after the execution row (spec 278); only report suffixes and all-miss 0 are asserted. Probe e.trailing = len(reports): silent. Needed: assert setExecution with the byte count in TestMutantSetBaselineEndsTheSet and TestMutantSetStopsOnARestoreFailure.\nC4 | auto-fix | 5 | set.go:149: on a failed baseline over an owned binary the builds cell should read 1; probe omitting the assignment: silent. Needed: an owned case of the failed-baseline test.\nC5 | ask-user | 4 | set.go:168-173: a preserve failure reads mutation-failed/untouched and drops \"probe preservation failed — <err>\" (the single form refuses with that line, refusal_test.go:211). Probe swapping the cause to set-stopped: silent. Decision needed, then a row.\nBit (restored yes): swapped expectFitsSelection arguments (PM72 red); cap compared with >= (PM11 red); last-row command exit without the 2-rank (PM22 red).\nAdvice: a write-failure row drops err.Error() unless the restore also fails; the row.exit == 2 break adds nothing to max.\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "b647725ed4f1a49e5635ed7e9bb9ea3fe8df118f",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1561,3 +1636,40 @@ Count 0. Worst issue: none. The existing tests pin every moved rule except two g
 The orchestrator committed the comment-only correction 1c524805 and refroze PM-C1 from 32dc3858 to 1c524805.
 The ticket 3 author re-recorded its five requirements at that tip, and the central probe bit again.
 Each axis reaffirmed its result at that tip, and S1 is closed. PM-C1 used no repair cycle.
+
+## PM-C2 round 1
+
+Frozen pair: 6584e93e to dfc5b339, with the chunk tip b647725e.
+Repair allowance: cycle 1 of 2 starts for S1 to S3, P1, P2, and C1 to C5.
+The orchestrator took reds for PM6, PM67, and PM69 with three probes, and each probe bit with the `restored` cell `yes`.
+
+### Standards
+
+Count 3. Worst issue: S1.
+
+- S1, auto-fix, confidence 6: `set.go` repeats the single form's refusal order after the mutation input, and it composes `mutationInput` and `mutate` a second time. Share both through `probe.go` helpers.
+- S2, auto-fix, confidence 5: `baselineCells` repeats the cell pair that `untouchedCells` owns.
+- S3, auto-fix, confidence 5: the lock holder copies the helper re-entry argv, and it adds a third poll loop.
+
+### Spec
+
+Count 3. Worst issue: P1.
+
+- P1, ask-user, confidence 6: a stop or a failed baseline overwrote a missed row. Decision D3 keeps `substring-miss`, and row PM81 pins it.
+- P2, ask-user, confidence 6: a failed preservation read `mutation-failed`. Decision D3 adds the cause `preserve-failed`, and row PM82 pins it.
+- P3, no-op, confidence 7: the PM20 why cell described stacked edits. The plan commit fixes that cell, and the code is correct.
+
+### Coverage
+
+Count 5. Worst issue: C1.
+
+- C1, auto-fix, confidence 8: no row pinned a published write failure whose restore fails. Row PM83 pins it.
+- C2, auto-fix, confidence 7: no row pinned a signal during a restore. Row PM84 pins it.
+- C3, auto-fix, confidence 7: `trailing_bytes` was not asserted for the `preserved` table or the baseline report. Row PM85 pins it.
+- C4, auto-fix, confidence 5: no row pinned `builds` 1 for a failed owned baseline. Row PM86 pins it.
+- C5, ask-user, confidence 4: this finding is P2, and D3 decides it.
+
+### Advice
+
+- An interrupted fresh build prints a `mutant_report` for a run whose Go child never started.
+- The `row.exit == 2` break adds nothing to the maximum.
