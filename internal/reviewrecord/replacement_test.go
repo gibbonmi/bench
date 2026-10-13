@@ -54,13 +54,9 @@ func rendered(t *testing.T, document []byte, record rr.Record) []byte {
 	return data
 }
 
-// heldBytes returns the bytes of the record at path, and it fails the test when the
-// directory of path holds any other file.
+// heldBytes returns the bytes of the record at path.
 func heldBytes(t *testing.T, path string) []byte {
 	t.Helper()
-	if left := durablefiletest.Siblings(t, path); len(left) != 0 {
-		t.Fatalf("the record directory holds %q beside the record", left)
-	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

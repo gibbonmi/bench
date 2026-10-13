@@ -86,3 +86,31 @@ func TestBrokerWriteReturnsRefusal(t *testing.T) {
 	}
 	durablefiletest.RequireAbsent(t, filepath.Join(dir, Name))
 }
+
+// Write resolves a symbolic-link broker path to its target executable and binds that
+// resolved path in the manifest.
+func TestBrokerWriteResolvesSymlink(t *testing.T) {
+	t.Parallel()
+	dir, broker := replacementBroker(t)
+	link := filepath.Join(dir, "bench-link")
+	if err := os.Symlink(broker, link); err != nil {
+		t.Fatal(err)
+	}
+
+	path, bound, err := Write(dir, link, "1.2.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bound != broker {
+		t.Fatalf("bound broker = %q, want %q", bound, broker)
+	}
+	durablefiletest.RequireFile(t, path, 0o644, "path\t"+broker+"\nversion\t1.2.3\nplatform\t"+Platform()+
+		"\nsha256\tc153e59aa5f0b544d81e9534460e0199291ae0258c26d16040eedaf5d0f92330\n")
+	info, err := os.Lstat(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode()&os.ModeSymlink == 0 {
+		t.Fatalf("%s mode = %v, want a symbolic link", link, info.Mode())
+	}
+}
