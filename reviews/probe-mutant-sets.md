@@ -1712,6 +1712,74 @@
           "supersedes": [
             "pm-c2-coverage-r1"
           ]
+        },
+        {
+          "id": "pm-c2-standards-r3",
+          "performer": "claude:pm_c2_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5e5f4291a5286ba17939b513998d18a1483e3621",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_standards_r2",
+            "digest": "sha256:e1d8f5cbf74dd337c30b24b84c9364e421cbe8849d225b60720371377d64f340",
+            "excerpt": "Standards axis claude:pm_c2_standards_r2 (opus/high), PM-C2 narrow confirming round 3, delta 9d484121..ae0f9b8b -- internal/.\ncount: 1\nworst: S5\nS4 closed: sleepingRun replaces the local at baseline_test.go:174 and the literal at lock_test.go:114; rg for \"sleep 60\" finds only the definition (baseline_test.go:297) and an unrelated build script.\nS5 | auto-fix | 7 | AGENTS.md one source per fact: the restore-failed row {1, \"restore-failed\", \"swap\", \"failed\", 1, \"TestClampNegative\", 1, 1, 2, nil, \"no\"} is authored by hand at baseline_test.go:256 (new), set_test.go:177, and set_test.go:309; the file already collapses row shapes into biteRow, missRow, untouchedRow, redRow (set_input_test.go:85-103). Add restoreFailedRow(n) beside them and use it at all three sites.\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "ae0f9b8b96384ce2136f4b437c2004bef6296a39",
+          "finding_ids": [
+            "S5"
+          ],
+          "supersedes": [
+            "pm-c2-standards-r2"
+          ]
+        },
+        {
+          "id": "pm-c2-spec-r3",
+          "performer": "claude:pm_c2_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5e5f4291a5286ba17939b513998d18a1483e3621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_spec_r2",
+            "digest": "sha256:c75bc2062904d867d5cf7baf8cae78679aad1dddb891e0d1e83fa090f568f48d",
+            "excerpt": "Spec axis claude:pm_c2_spec_r2 (opus/high), PM-C2 narrow confirming round 3, delta 28d4a4e4..ccd8c12c -- specs/ internal/ (plan 58e6eca9, small fix ae0f9b8b).\ncount: 0\nworst: none\nP21 closed: spec.md:232 now reads \"A failed preservation, a failed write, and a stop print no error line, and a kept copy's reason prints only in the preserved table.\" No conflict with lines 206 and 283; the code matches (set.go:156-176, keptCopy).\nP22 closed: the PM24 why cell names the context check (stopCause, set.go:193).\nThe restore-failure subtest of TestMutantSetMissKeepsItsCause (baseline_test.go:250-258) meets PM81 and adds no behavior; the sleepingRun replacements are neutral refactors.\nAdvice: the opus/low small-fix assignment follows the reviewer direction for small-fix delegates.\n"
+          },
+          "axis": "Spec",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "ae0f9b8b96384ce2136f4b437c2004bef6296a39",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-c2-spec-r2"
+          ]
+        },
+        {
+          "id": "pm-c2-coverage-r3",
+          "performer": "claude:pm_c2_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5e5f4291a5286ba17939b513998d18a1483e3621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_coverage_r2",
+            "digest": "sha256:ddd5856716bc4c0b694f8fe50c8e6c9e97d9d514818cf1068a861e350d626caa",
+            "excerpt": "Coverage axis claude:pm_c2_coverage_r2 (opus/high), PM-C2 narrow confirming round 3, delta 9d484121..ae0f9b8b -- internal/, head ccd8c12c clean.\ncount: 0\nworst: none\nQuestion (a) closed: the restore-failure subtest of TestMutantSetMissKeepsItsCause (baseline_test.go:250-258) calls stopFrom(1) over the miss row and asserts restore-failed, missRow(2), set-stopped, exit 2; the j-i guard swap bit on /restore_failure.\nsleepingRun replacements keep the tests red-capable. Own probe: baseline_test.go:297 sleepingRun to probetest.Start{Events: cannedPass}, run TestProbeRestoresOnInterrupt, TestSubjectLockReleasesOnInterrupt, TestMutantSetStopsOnInterrupt: bit, 4 failed, restored yes.\nNo command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "ae0f9b8b96384ce2136f4b437c2004bef6296a39",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-c2-coverage-r2"
+          ]
         }
       ]
     }
@@ -2069,3 +2137,22 @@ Count 0. Worst issue: none. C1 to C5 and row PM81 are closed.
 
 - No test pins a missed row after a stop at a later index. The S4 repair adds that subtest to row PM81.
 - The PM84 test waits 50 ms for the cancel, so a starved host can give a false red. A deterministic wait needs a production seam, so it stays a reviewer call.
+
+## PM-C2 round 3
+
+The narrow round read the delta from 9d484121 to ccd8c12c, with the small-fix commit ae0f9b8b.
+Repair allowance: both cycles are used. Under `--auto-approve`, the reviewer approved repair rounds past the allowance in advance, so cycle 3 starts for S5 alone.
+
+### Standards
+
+Count 1. Worst issue: S5. S4 is closed.
+
+- S5, auto-fix, confidence 7: the `restore-failed` row is now spelled by hand in three tests. Add one `restoreFailedRow` helper beside `biteRow` and use it at all three sites.
+
+### Spec
+
+Count 0. Worst issue: none. P21 and P22 are closed, and the new subtest meets row PM81.
+
+### Coverage
+
+Count 0. Worst issue: none. A miss row after a later stop is now pinned, and the `sleepingRun` tests stay red-capable.
