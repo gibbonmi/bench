@@ -518,9 +518,94 @@ The canonical edge classes at the probe seam:
 
 ## Ownership fences
 
-Written after the ticket slice. The coverage check requires the review pickup in a declared fence section, so it stands here now.
+The fence is the union of the six ticket `Writes:` lines and the review pickup.
 
+- `.agents/commands/bench-implement-spec.md`
+- `.agents/skills/bench-craft-delegate/SKILL.md`
+- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
+- `.bench/BENCH-reference.md`
+- `.bench/commitment.json`
+- `CHANGELOG.md`
+- `CONTEXT.md`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `cmd/bench/main.go`
+- `cmd/bench/record_operations_test.go`
+- `cmd/bench/test_command.go`
+- `docs/known-issues.md`
+- `internal/anchors/registry_calibration.go`
+- `internal/anchors/registry_calibration_test.go`
+- `internal/anchors/registry_charge_binding.go`
+- `internal/anchors/registry_charge_binding_test.go`
+- `internal/anchors/registry_check_floor_test.go`
+- `internal/anchors/registry_chunk_chain.go`
+- `internal/anchors/registry_chunk_chain_test.go`
+- `internal/anchors/registry_commitment.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry_decision_maps.go`
+- `internal/anchors/registry_decision_maps_test.go`
+- `internal/anchors/registry_ft311_preparation.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/anchors/registry_ticket_passes.go`
+- `internal/anchors/registry_ticket_passes_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `internal/probe/baseline.go`
+- `internal/probe/baseline_test.go`
+- `internal/probe/combined_test.go`
+- `internal/probe/command.go`
+- `internal/probe/edit.go`
+- `internal/probe/edit_test.go`
+- `internal/probe/lock_holder_test.go`
+- `internal/probe/lock_test.go`
+- `internal/probe/mutation_input.go`
+- `internal/probe/outcome_test.go`
+- `internal/probe/package_test.go`
+- `internal/probe/probe.go`
+- `internal/probe/probe_test.go`
+- `internal/probe/probetest/fixture.go`
+- `internal/probe/refusal_test.go`
+- `internal/probe/replacement_test.go`
+- `internal/probe/result.go`
+- `internal/probe/result_test.go`
+- `internal/probe/set.go`
+- `internal/probe/set_input.go`
+- `internal/probe/set_input_test.go`
+- `internal/probe/set_test.go`
+- `internal/probe/subject.go`
+- `internal/probe/subject_check_fixture_test.go`
+- `internal/probe/unwrap_test.go`
+- `internal/probe/verdict.go`
+- `internal/probe/verdict_test.go`
+- `internal/reviewrecord/recordcmd/command.go`
+- `internal/reviewrecord/recordcmd/verification.go`
+- `internal/reviewrecord/recordcmd/verification_import_test.go`
+- `internal/reviewrecord/recordcmd/verification_test.go`
+- `internal/runbinary/runbinary.go`
+- `internal/runbinary/runbinary_test.go`
+- `internal/testreport/cancel_test.go`
+- `internal/testreport/command.go`
+- `internal/testreport/held_runs.go`
+- `internal/testreport/held_runs_test.go`
+- `internal/testreport/outcome.go`
+- `internal/testreport/runbinary_test.go`
+- `internal/testreport/selection_facts.go`
+- `internal/testreport/selection_facts_test.go`
+- `projects/benchkit.md`
 - `reviews/probe-mutant-sets.md`
+- `roadmap/FT168.md`
+- `tests/canary/claude-agent-definitions/`
+- `tests/canary/docs-currency-token-diet/`
+- `tests/canary/guidance-prose-budgets/`
+- `tests/canary/line-routing/`
+- `tests/canary/package-core-guard/unrouted-subcommand`
+- `tests/canary/skill-description-budgets/`
+- `tests/canary/skills-index-command-adapters/`
+- `tests/canary/workflow-guidance-anchors/`
 
 ## Out of scope
 
