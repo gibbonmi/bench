@@ -5,6 +5,8 @@
 package probe
 
 import (
+	"slices"
+
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -14,30 +16,38 @@ import (
 // Usage is the one owner of the bench probe grammar line.
 const Usage = "bench probe <file> (--swap <old> (--with <new> | --with-file <path>) [--occurrence <n>] | --omit <old> [--occurrence <n>] | --unwrap <call> [--occurrence <n>] | --insert-before <anchor> (--with <text> | --with-file <path>) [--occurrence <n>] | --omit-file <path> | --delete | (--swap <old> --with <new> | --omit <old>)...) (--package <expr> [--package <expr>]... [--run <go-regex>] | --check <name> | --check system --run <go-regex>) [--expect <test>] [--full]"
 
+// mutationFlags declares each flag of the mutation groups once, so every grammar that parses
+// a mutation reads the same declarations. --swap, --with, and --omit repeat, because their
+// repetitions make one combined mutant.
+var mutationFlags = []usage.Flag{
+	{Name: "--swap", HasValue: true, NoEmptyValue: true, Repeatable: true},
+	{Name: "--with", HasValue: true, NoEmptyValue: true, Repeatable: true},
+	{Name: "--with-file", HasValue: true, NoEmptyValue: true},
+	{Name: "--omit", HasValue: true, NoEmptyValue: true, Repeatable: true},
+	{Name: "--unwrap", HasValue: true, NoEmptyValue: true},
+	{Name: "--omit-file", HasValue: true, NoEmptyValue: true},
+	{Name: "--insert-before", HasValue: true, NoEmptyValue: true},
+	{Name: "--occurrence", HasValue: true, NoEmptyValue: true},
+	{Name: "--delete"},
+}
+
+// expectFlag declares --expect, the test that a mutant must fail.
+var expectFlag = usage.Flag{Name: "--expect", HasValue: true, NoEmptyValue: true}
+
 // grammar declares the one argument shape the verb parses through usage.Parse. Exactly
 // one mutation group and exactly one selection form are required, because a probe that
-// defaulted either would mutate or run something the caller did not name. --swap, --with,
-// and --omit repeat, because their repetitions make one combined mutant. --package repeats,
+// defaulted either would mutate or run something the caller did not name. --package repeats,
 // because each run passes every expression to one Go start.
 var grammar = usage.Grammar{
 	Cmd:  usage.CommandName(Usage),
 	Help: "usage: " + Usage,
-	Flags: []usage.Flag{
-		{Name: "--swap", HasValue: true, NoEmptyValue: true, Repeatable: true},
-		{Name: "--with", HasValue: true, NoEmptyValue: true, Repeatable: true},
-		{Name: "--with-file", HasValue: true, NoEmptyValue: true},
-		{Name: "--omit", HasValue: true, NoEmptyValue: true, Repeatable: true},
-		{Name: "--unwrap", HasValue: true, NoEmptyValue: true},
-		{Name: "--omit-file", HasValue: true, NoEmptyValue: true},
-		{Name: "--insert-before", HasValue: true, NoEmptyValue: true},
-		{Name: "--occurrence", HasValue: true, NoEmptyValue: true},
-		{Name: "--delete"},
+	Flags: slices.Concat(mutationFlags, []usage.Flag{
 		{Name: "--package", HasValue: true, NoEmptyValue: true, Repeatable: true},
 		{Name: "--run", HasValue: true, NoEmptyValue: true},
 		{Name: "--check", HasValue: true, NoEmptyValue: true},
-		{Name: "--expect", HasValue: true, NoEmptyValue: true},
+		expectFlag,
 		{Name: "--full"},
-	},
+	}),
 	MinArgs: 1,
 	MaxArgs: 1,
 }
@@ -95,8 +105,8 @@ var groupFlags = [...][]string{
 }
 
 // namedGroup answers the mutation group that the argv names, and ok is false when the argv
-// names no group or several. gradeForms and mutationInput both read the group here, so the
-// form that the grader accepts is the form that the input builds.
+// names no group or several. mutationFormFits and mutationInput both read the group here, so
+// the form that the grader accepts is the form that the input builds.
 func namedGroup(parsed usage.Result) (mutationGroup, bool) {
 	group, count := editGroup, 0
 	for g, flags := range groupFlags {
@@ -115,47 +125,69 @@ func namedGroup(parsed usage.Result) (mutationGroup, bool) {
 // grades one flag at a time, so the rules between flags are graded here, and each answers
 // with the grammar's own usage line.
 func gradeForms(parsed usage.Result) (string, int) {
-	has := func(flag string) bool { _, ok := parsed.Flags[flag]; return ok }
+	if !mutationFormFits(parsed) || !selectionFormFits(parsed) || !expectFitsSelection(parsed, parsed) {
+		return usageLine()
+	}
+	return "", 0
+}
+
+// mutationFormFits grades the mutation half of the form matrix: the argv names exactly one
+// mutation group, and that group takes only its partner flags.
+func mutationFormFits(parsed usage.Result) bool {
+	_, withFile := parsed.Flags["--with-file"]
+	_, hasOccurrence := parsed.Flags["--occurrence"]
 	group, oneGroup := namedGroup(parsed)
 	swaps, withs, omits := len(parsed.Repeated["--swap"]), len(parsed.Repeated["--with"]), len(parsed.Repeated["--omit"])
-	withFile, insert := has("--with-file"), group == insertGroup
+	insert := group == insertGroup
 	combined := swaps+omits > 1
 	texts := withs
 	if withFile {
 		texts++
 	}
 	_, validOccurrence := occurrence(parsed)
+	switch {
+	case !oneGroup:
+		return false
+	// --with and --with-file are two spellings of one text.
+	case withs > 0 && withFile:
+		return false
+	// An insertion takes exactly one text.
+	case insert && texts != 1:
+		return false
+	// Outside an insertion, each text pairs with one --swap, so a text without a swap and a
+	// swap without a text both refuse, --delete and the omission forms included.
+	case !insert && texts != swaps:
+		return false
+	// A combined mutant takes scalar texts only.
+	case combined && withFile:
+		return false
+	case hasOccurrence && (!validOccurrence || group == omitFileGroup || group == deleteGroup || combined):
+		return false
+	}
+	return true
+}
+
+// selectionFormFits grades the selection half of the form matrix: the argv names exactly one
+// selection form, and that form takes only its partner flags.
+func selectionFormFits(parsed usage.Result) bool {
 	_, pkg := parsed.Flags["--package"]
 	_, run := parsed.Flags["--run"]
 	_, check := parsed.Flags["--check"]
 	switch {
-	case !oneGroup:
-		return usageLine()
-	// --with and --with-file are two spellings of one text.
-	case withs > 0 && withFile:
-		return usageLine()
-	// An insertion takes exactly one text.
-	case insert && texts != 1:
-		return usageLine()
-	// Outside an insertion, each text pairs with one --swap, so a text without a swap and a
-	// swap without a text both refuse, --delete and the omission forms included.
-	case !insert && texts != swaps:
-		return usageLine()
-	// A combined mutant takes scalar texts only.
-	case combined && withFile:
-		return usageLine()
-	case has("--occurrence") && (!validOccurrence || group == omitFileGroup || group == deleteGroup || combined):
-		return usageLine()
 	case pkg == check:
-		return usageLine()
+		return false
 	// A run pattern selects within a package expression or a check that takes one.
 	case run && !pkg && !testreport.CheckTakesRun(parsed.Flags["--check"]):
-		return usageLine()
-	// A prose run names no test, so an expected witness there could never match.
-	case has("--expect") && parsed.Flags["--check"] == testreport.ProseCheckName:
-		return usageLine()
+		return false
 	}
-	return "", 0
+	return true
+}
+
+// expectFitsSelection grades the one rule that spans both halves: an --expect in mutationArgs
+// must name a test that the selection runs. A prose run names no test, so --expect refuses there.
+func expectFitsSelection(mutationArgs, selection usage.Result) bool {
+	_, expect := mutationArgs.Flags[expectFlag.Name]
+	return !expect || selection.Flags["--check"] != testreport.ProseCheckName
 }
 
 func usageLine() (string, int) { return grammar.Help + "\n", 2 }
