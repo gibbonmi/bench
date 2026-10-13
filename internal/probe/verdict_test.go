@@ -58,6 +58,13 @@ func TestExpectRequiresTheNamedWitness(t *testing.T) {
 			requireSubjectBytes(t, f, clampSource)
 		})
 	}
+	t.Run("a passing mutated run", func(t *testing.T) {
+		f := newFixture(t)
+		installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Events: cannedPass})
+		out, code := runProbe(t, append(probeArgs(), "--expect", "TestClampNegative")...)
+		requireRow(t, out, code, 1, probeRow(t, "silent", "clamp.go", "swap", "passed", 0, nil, "yes"))
+		requireSubjectBytes(t, f, clampSource)
+	})
 	t.Run("prose check", func(t *testing.T) {
 		f := refusalFixture(t)
 		out, code := runProbe(t, "clamp.go", "--omit", "n < 0", "--check", "prose", "--expect", "TestClampNegative")

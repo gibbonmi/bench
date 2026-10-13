@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"slices"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -119,10 +119,16 @@ func executeSelection(t *testing.T, root string, args []string) Outcome {
 	return outcome
 }
 
-// sameOutcome compares two outcomes field by field, because the FailedNames slice makes
-// Outcome incomparable with ==.
+// sameOutcome compares two outcomes as whole values, because the FailedNames slice makes
+// Outcome incomparable with ==. An empty FailedNames equals a nil one.
 func sameOutcome(got, want Outcome) bool {
-	return got.Kind == want.Kind && got.FailedTests == want.FailedTests && got.Ran == want.Ran && slices.Equal(got.FailedNames, want.FailedNames) && got.BuildLine == want.BuildLine
+	if len(got.FailedNames) == 0 {
+		got.FailedNames = nil
+	}
+	if len(want.FailedNames) == 0 {
+		want.FailedNames = nil
+	}
+	return reflect.DeepEqual(got, want)
 }
 
 // TestOnlyAScriptFailureIsBuildFailed covers PS45, PS46, PS47, PS51, and PS52. A run-binary
