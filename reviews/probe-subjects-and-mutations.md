@@ -350,6 +350,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ps-a-standards-2",
+          "performer": "claude:ps-a-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-standards-2",
+            "digest": "sha256:24cc922ef26e6ba870819cbb14b17b0a7dd14cd4a5d1c45a333512465699b70f",
+            "excerpt": "Standards confirming round, chunk PS-A, repair delta 9de43b5280ba..6175e732579f, opus medium.\nS1 closed (confidence 8): namedGroup with the groupFlags table is the one source that gradeForms and mutationInput call.\nS2 closed (confidence 9): find.textFlag names --with or --with-file in the empty-mutation refusal; edit_test.go asserts the --with-file wording.\nAdvice: the namedGroup comment names its callers.\n"
+          },
+          "axis": "Standards",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-a-standards-1"
+          ]
+        },
+        {
+          "id": "ps-a-spec-2",
+          "performer": "claude:ps-a-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-spec-2",
+            "digest": "sha256:d6973cbec9a78a3119405e8f84e9ae9eaa84f9ab95e63f482e38cb2cbdca5c98",
+            "excerpt": "Spec confirming round, chunk PS-A, repair delta 9de43b5280ba..6175e732579f, opus medium.\nP1 closed (confidence 9): combined_test.go:66-72 sends --swap, --with-file, and --omit with no --with; only the combined-with-file case refuses it.\nNo other drift; the namedGroup refactor keeps every refusal.\nAdvice: the spec did not name the --with-file empty-mutation text; the orchestrator added it to the spec.\n"
+          },
+          "axis": "Spec",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-a-spec-1"
+          ]
+        },
+        {
+          "id": "ps-a-coverage-2",
+          "performer": "claude:ps-a-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-coverage-2",
+            "digest": "sha256:40f53235bbdd88105f0028dddd3eb4e09c08aa7302c6b9f10e8ece81d2a78a04",
+            "excerpt": "Coverage confirming round, chunk PS-A, repair delta 9de43b5280ba..6175e732579f, opus medium.\nC1 closed (confidence 9): the new subtest reaches only the combined-with-file case.\nC2 closed (confidence 9): the overflow row alone turns red when err == nil is dropped.\nC3 stays no-op. No new findings. Probes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-a-coverage-1"
+          ]
         }
       ]
     }
@@ -377,7 +443,7 @@
 
 ## Repair allowance
 
-Chunk PS-A has used 0 of its 2 repair cycles after its initial review.
+Chunk PS-A has used 1 of its 2 repair cycles after its initial review. Repair 6175e732 closed S1, S2, P1, C1, and C2, and the confirming round of all three axes passed.
 
 ## Standards
 
@@ -401,3 +467,8 @@ PS-A: 3 findings. The worst issue is C1.
 - C3 (no-op, confidence 6): `internal/probe/subject.go:140` is reachable only through a race after the byte check.
 
 Repair targets: 4 (S1, S2, P1 with C1, and C2) for ticket 1.
+
+## Advice
+
+- PS-A Standards: the `namedGroup` comment names its callers.
+- PS-A Spec: the spec does not yet name the `--with-file equals --swap` refusal text. The orchestrator adds it in the ticket 2 plan commit.
