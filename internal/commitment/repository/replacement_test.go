@@ -11,7 +11,6 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
-	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -125,13 +124,6 @@ func (fx approval) fail(t *testing.T, fault durablefiletest.Fault, stage string)
 	cause = fmt.Errorf("injected %v %s failure", fault, stage)
 	f.Fail[fault] = map[string]error{stage: cause}
 	return fx.approve(t, f, decision), cause
-}
-
-func requireAbsent(t *testing.T, path string) {
-	t.Helper()
-	if _, err := os.Lstat(path); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("%s exists after approval: %v", path, err)
-	}
 }
 
 // requireApproved fails t unless the plan's receipt records approved and, when approved,
@@ -257,13 +249,7 @@ func TestApprovalRefusal(t *testing.T) {
 
 			err := fx.approve(t, f, testCase.decision)
 
-			var replaceErr *durablefile.Error
-			if err == nil || errors.As(err, &replaceErr) {
-				t.Fatalf("err = %v, want the caller's refusal", err)
-			}
-			if len(f.Trace) != 0 {
-				t.Fatalf("replacements = %v after a refusal, want none", f.Trace)
-			}
+			durablefiletest.RequireRefusal(t, err, f.Trace)
 			for path, want := range kept {
 				durablefiletest.RequireBytes(t, path, want)
 			}
@@ -371,7 +357,7 @@ func TestApprovalFailureWithoutBoard(t *testing.T) {
 				want = string(fx.plan.Proposed)
 			}
 			durablefiletest.RequireBytes(t, fx.policy, want)
-			requireAbsent(t, fx.board)
+			durablefiletest.RequireAbsent(t, fx.board)
 			fx.requireApproved(t, testCase.approved)
 		})
 	}
@@ -392,7 +378,7 @@ func TestApprovalFailureWithoutPolicy(t *testing.T) {
 			if !errors.Is(err, cause) {
 				t.Fatalf("err = %v, want %v", err, cause)
 			}
-			requireAbsent(t, fx.policy)
+			durablefiletest.RequireAbsent(t, fx.policy)
 		})
 	}
 }

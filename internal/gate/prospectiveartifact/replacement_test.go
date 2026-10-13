@@ -2,8 +2,6 @@ package prospectiveartifact
 
 import (
 	"errors"
-	"io/fs"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -35,7 +33,5 @@ func TestOwnerPreRenameFailure(t *testing.T) {
 	err := publish(rec.Replacer(), root, Record{Schema: 1, OwnerPID: 4242, CommonDir: "/repo/.git"})
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	if _, err := os.Lstat(filepath.Join(root, RecordName)); !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("owner record stat = %v, want no published record", err)
-	}
+	durablefiletest.RequireAbsent(t, filepath.Join(root, RecordName))
 }

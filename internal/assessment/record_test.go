@@ -1,7 +1,6 @@
 package assessment
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
@@ -232,9 +231,8 @@ func TestAssessmentRecordUpdates(t *testing.T) {
 			if (err != nil) != refusal {
 				t.Fatalf("refusal=%v err=%v", refusal, err)
 			}
-			after, _ := os.ReadFile(path)
-			if (refusal || kind == "A27 identical") && !bytes.Equal(before, after) {
-				t.Fatal("prior bytes changed")
+			if refusal || kind == "A27 identical" {
+				durablefiletest.RequireBytes(t, path, string(before))
 			}
 			got, err := s.Read(r.RunID)
 			if err != nil {

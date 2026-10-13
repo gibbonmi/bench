@@ -64,11 +64,22 @@ func TestCapturePreRenameFailure(t *testing.T) {
 	err = writeManifestWith(rec.Replacer(), dir, captureManifest("sealed"))
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	got, err := os.ReadFile(filepath.Join(dir, manifestName))
-	if err != nil {
+	durablefiletest.RequireBytes(t, filepath.Join(dir, manifestName), string(former))
+}
+
+// D30: a manifest write whose transaction directory cannot be created refuses before the
+// replacement starts, and no manifest exists.
+func TestCaptureDirectoryRefusal(t *testing.T) {
+	t.Parallel()
+	parent := filepath.Join(t.TempDir(), "file")
+	if err := os.WriteFile(parent, nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if string(got) != string(former) {
-		t.Fatalf("manifest = %q, want the former manifest %q", got, former)
-	}
+	dir := filepath.Join(parent, directoryName)
+	rec := &durablefiletest.Recorder{}
+
+	err := writeManifestWith(rec.Replacer(), dir, captureManifest("sealed"))
+
+	durablefiletest.RequireRefusal(t, err, rec.Trace)
+	durablefiletest.RequireAbsent(t, filepath.Join(dir, manifestName))
 }

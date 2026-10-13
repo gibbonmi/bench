@@ -7,21 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
-
-// requireBytes fails t unless the file at path holds want.
-func requireBytes(t *testing.T, path, want string) {
-	t.Helper()
-	got, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(got) != want {
-		t.Fatalf("ledger = %q, want %q", got, want)
-	}
-}
 
 // D22: a directory failure after the rename fails the ledger write, and the ledger holds
 // the sorted encoding at mode 0600.
@@ -57,7 +44,7 @@ func TestIntentPreRenameFailure(t *testing.T) {
 	err = writePathWith(rec.Replacer(), path, Ledger{Entries: []Entry{{Key: "added", Kind: KindWorktree, CreatedAt: time.Unix(2, 0).UTC()}}})
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	requireBytes(t, path, string(prior))
+	durablefiletest.RequireBytes(t, path, string(prior))
 }
 
 // D44 and D45: the new ledger may be visible after a failure past the rename, so the
@@ -99,12 +86,12 @@ func TestTransactionPublishedFailure(t *testing.T) {
 				if compensated != 0 {
 					t.Fatalf("compensation ran %d times after a completed rename, want 0", compensated)
 				}
-				requireBytes(t, path, `{"schema":2,"entries":[`+addedJSON+`,`+seedEntryJSON+`],"assignments":[`+firstJSON+`]}`+"\n")
+				durablefiletest.RequireBytes(t, path, `{"schema":2,"entries":[`+addedJSON+`,`+seedEntryJSON+`],"assignments":[`+firstJSON+`]}`+"\n")
 			} else {
 				if compensated != 1 {
 					t.Fatalf("compensation ran %d times before a completed rename, want 1", compensated)
 				}
-				requireBytes(t, path, string(prior))
+				durablefiletest.RequireBytes(t, path, string(prior))
 			}
 			if _, err := os.Stat(lockOf(path)); !errors.Is(err, os.ErrNotExist) {
 				t.Fatalf("lock file after a replacement failure: %v", err)
@@ -113,29 +100,28 @@ func TestTransactionPublishedFailure(t *testing.T) {
 	}
 }
 
-// A failure the replacement did not classify leaves the ledger as it was, so the
-// compensation runs once. A creation instant past year 9999 has no JSON encoding.
+// D30: a ledger the caller cannot encode refuses before the replacement starts and
+// leaves the ledger as it was, so the compensation runs once. A creation instant past
+// year 9999 has no JSON encoding.
 func TestTransactionUnclassifiedFailureCompensates(t *testing.T) {
 	root, path := mutatorFixture(t)
 	prior, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
+	rec := &durablefiletest.Recorder{}
 	compensated := 0
 
-	err = Transact(root, StrictRead, func(ledger Ledger) (Ledger, bool, error) {
+	err = TransactWithReplacer(rec.Replacer(), root, StrictRead, func(ledger Ledger) (Ledger, bool, error) {
 		ledger.Entries = append(ledger.Entries, Entry{Key: "unencodable", Kind: KindWorktree, CreatedAt: time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC)})
 		return ledger, true, nil
 	}, func() { compensated++ })
 
-	var replaceErr *durablefile.Error
-	if err == nil || errors.As(err, &replaceErr) {
-		t.Fatalf("err = %v, want an unclassified encoding failure", err)
-	}
+	durablefiletest.RequireRefusal(t, err, rec.Trace)
 	if compensated != 1 {
 		t.Fatalf("compensation ran %d times, want 1", compensated)
 	}
-	requireBytes(t, path, string(prior))
+	durablefiletest.RequireBytes(t, path, string(prior))
 }
 
 // D52: the swapped request may be visible after a failed directory sync, so the
@@ -167,7 +153,7 @@ func TestReauthorizePublishedFailure(t *testing.T) {
 	if rolledBack != 0 {
 		t.Fatalf("the rollback ran %d times after a completed rename, want 0", rolledBack)
 	}
-	requireBytes(t, path, `{"schema":2,"entries":[`+seedEntryJSON+`],"assignments":[`+swappedJSON+`]}`+"\n")
+	durablefiletest.RequireBytes(t, path, `{"schema":2,"entries":[`+seedEntryJSON+`],"assignments":[`+swappedJSON+`]}`+"\n")
 	stored, err := Read(root)
 	if err != nil {
 		t.Fatal(err)

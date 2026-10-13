@@ -39,8 +39,6 @@ func TestPilotDirectoryRefusal(t *testing.T) {
 	if code != 1 || !strings.Contains(out, cause.Error()) {
 		t.Fatalf("activate = output %q, exit %d; want the injected refusal at exit 1", out, code)
 	}
-	if len(rec.Trace) != 0 {
-		t.Fatalf("replacement trace = %v, want no replacement stage", rec.Trace)
-	}
+	durablefiletest.RequireNoReplacement(t, rec.Trace)
 	durablefiletest.RequireAbsent(t, documentPath(options))
 }

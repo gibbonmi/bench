@@ -13,6 +13,47 @@ import (
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
+)
+
+// gateWriter is one gate record writer: the entry it replaces in its directory, and the
+// encoded record that entry holds after the rename.
+type gateWriter struct {
+	name, entry, want string
+	write             func(durablefile.Replacer, string) error
+}
+
+// replacementVerdict is the record that the verdict and evidence writers encode, and
+// replacementVerdictJSON is its encoding.
+var replacementVerdict = verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: "abc123", Oracle: "feed", RecordedAt: "2026-10-12T00:00:00Z"}
+
+const replacementVerdictJSON = `{"schema":1,"state":"ready","status":"green","tree":"abc123","oracle":"feed","recorded_at":"2026-10-12T00:00:00Z"}` + "\n"
+
+var (
+	verdictWriter = gateWriter{
+		name:  "verdict",
+		entry: benchgit.GateCacheFile,
+		want:  replacementVerdictJSON,
+		write: func(replacer durablefile.Replacer, dir string) error {
+			return durableReplace(replacer, dir, replacementVerdict)
+		},
+	}
+	evidenceWriter = gateWriter{
+		name:  "evidence",
+		entry: "entry",
+		want:  replacementVerdictJSON,
+		write: func(replacer durablefile.Replacer, dir string) error {
+			return durableReplaceAt(replacer, dir, "entry", replacementVerdict)
+		},
+	}
+	laneWriter = gateWriter{
+		name:  "lane",
+		entry: laneRecordFile,
+		want:  `{"schema":1,"tree":"abc123","recorded_at":"2026-10-12T00:00:00Z","lane":"fast","outcome":"pass","run_binary":"beef"}` + "\n",
+		write: func(replacer durablefile.Replacer, dir string) error {
+			return writeLaneRecord(replacer, dir, LaneResult{Outcome: lanePass, Tree: "abc123", Lane: "fast", RunBinary: "beef", RecordedAt: time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC)})
+		},
+	}
 )
 
 // D16: the verdict writer returns the injected directory-sync failure of its replacement
@@ -22,41 +63,18 @@ func TestVerdictReplacement(t *testing.T) {
 	dir := t.TempDir()
 	cause := errors.New("injected verdict directory-sync failure")
 	rec := &durablefiletest.Recorder{Fail: map[string]error{"directory-sync": cause}}
-	record := verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: "abc123", Oracle: "feed", RecordedAt: "2026-10-12T00:00:00Z"}
 
-	err := durableReplace(rec.Replacer(), dir, record)
+	err := verdictWriter.write(rec.Replacer(), dir)
 
 	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)
-	durablefiletest.RequireFile(t, filepath.Join(dir, benchgit.GateCacheFile), 0o600,
-		`{"schema":1,"state":"ready","status":"green","tree":"abc123","oracle":"feed","recorded_at":"2026-10-12T00:00:00Z"}`+"\n")
+	durablefiletest.RequireFile(t, filepath.Join(dir, verdictWriter.entry), 0o600, verdictWriter.want)
 }
 
 // D17: the evidence writer and the lane writer return the injected directory-sync failure
 // of their shared store replacement, and each entry holds its encoded record at mode 0600.
 func TestEvidenceReplacement(t *testing.T) {
 	t.Parallel()
-	recordedAt := time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC)
-	for _, tc := range []struct {
-		name, entry, want string
-		write             func(durablefile.Replacer, string) error
-	}{
-		{
-			name:  "evidence",
-			entry: "entry",
-			want:  `{"schema":1,"state":"ready","status":"green","tree":"abc123","oracle":"feed","recorded_at":"2026-10-12T00:00:00Z"}` + "\n",
-			write: func(replacer durablefile.Replacer, dir string) error {
-				return durableReplaceAt(replacer, dir, "entry", verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: "abc123", Oracle: "feed", RecordedAt: "2026-10-12T00:00:00Z"})
-			},
-		},
-		{
-			name:  "lane",
-			entry: laneRecordFile,
-			want:  `{"schema":1,"tree":"abc123","recorded_at":"2026-10-12T00:00:00Z","lane":"fast","outcome":"pass","run_binary":"beef"}` + "\n",
-			write: func(replacer durablefile.Replacer, dir string) error {
-				return writeLaneRecord(replacer, dir, LaneResult{Outcome: lanePass, Tree: "abc123", Lane: "fast", RunBinary: "beef", RecordedAt: recordedAt})
-			},
-		},
-	} {
+	for _, tc := range []gateWriter{evidenceWriter, laneWriter} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			dir := t.TempDir()
@@ -67,6 +85,44 @@ func TestEvidenceReplacement(t *testing.T) {
 			durablefiletest.RequireFile(t, filepath.Join(dir, tc.entry), 0o600, tc.want)
 		})
 	}
+}
+
+// D36: a rename failure of each gate record writer returns an unpublished failure that
+// wraps its cause and leaves no entry.
+func TestGatePreRenameFailure(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			dir := t.TempDir()
+			cause := errors.New("injected " + tc.name + " rename failure")
+			rec := &durablefiletest.Recorder{Fail: map[string]error{"rename": cause}}
+
+			durablefiletest.RequireFailure(t, tc.write(rec.Replacer(), dir), "rename", false, cause)
+			durablefiletest.RequireAbsent(t, filepath.Join(dir, tc.entry))
+		})
+	}
+}
+
+// D30: an evidence directory with a mode other than private refuses the green evidence
+// before the replacement starts, and no evidence entry exists.
+func TestGateEvidenceDirectoryRefusal(t *testing.T) {
+	t.Parallel()
+	root := gittest.RepoOnBranch(t, "main")
+	dir := filepath.Join(root, ".git", evidenceDestination)
+	if err := os.Mkdir(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	plan := subject{Tree: replacementVerdict.Tree, Oracle: replacementVerdict.Oracle}
+	rec := &durablefiletest.Recorder{}
+
+	err := retainGreen(rec.Replacer(), root, plan, time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC))
+
+	durablefiletest.RequireRefusal(t, err, rec.Trace)
+	durablefiletest.RequireAbsent(t, filepath.Join(dir, evidenceName(plan)))
 }
 
 // D37: a failed pending write prints its classified cause and starts no oracle.

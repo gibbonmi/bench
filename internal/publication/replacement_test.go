@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
@@ -85,14 +84,6 @@ func TestPublicationDirectoryRefusal(t *testing.T) {
 
 	err := saveRecordWith(rec.Replacer(), root, replacementRecord("staged"))
 
-	var replaceErr *durablefile.Error
-	if err == nil || errors.As(err, &replaceErr) {
-		t.Fatalf("err = %v, want a refusal that is not a *durablefile.Error", err)
-	}
-	if len(rec.Trace) != 0 {
-		t.Fatalf("trace = %v, want no replacement stage", rec.Trace)
-	}
-	if _, err := os.Lstat(RecordPath(root)); err == nil {
-		t.Fatal("a record exists, want no record")
-	}
+	durablefiletest.RequireRefusal(t, err, rec.Trace)
+	durablefiletest.RequireAbsent(t, RecordPath(root))
 }

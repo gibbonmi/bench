@@ -53,11 +53,18 @@ func TestHandoffPreRenameFailure(t *testing.T) {
 	err = writeSection(rec.Replacer(), path, replacementSection)
 
 	durablefiletest.RequireFailure(t, err, "rename", false, cause)
-	got, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(got) != string(prior) {
-		t.Fatalf("document = %q, want the prior document %q", got, prior)
-	}
+	durablefiletest.RequireBytes(t, path, string(prior))
+}
+
+// D30: a refused document change returns its own error before the replacement starts,
+// and no document exists.
+func TestHandoffRefusalSkipsReplacement(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "session-handoff.md")
+	rec := &durablefiletest.Recorder{}
+
+	err := update(rec.Replacer(), path, func(*Document) error { return errors.New("injected handoff change refusal") })
+
+	durablefiletest.RequireRefusal(t, err, rec.Trace)
+	durablefiletest.RequireAbsent(t, path)
 }

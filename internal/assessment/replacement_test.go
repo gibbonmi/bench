@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	"github.com/gibbonmi/bench/internal/poolkey"
 )
@@ -80,13 +79,7 @@ func TestAssessmentRefusalSkipsReplacement(t *testing.T) {
 
 			err := s.Record(r)
 
-			var replaceErr *durablefile.Error
-			if err == nil || errors.As(err, &replaceErr) {
-				t.Fatalf("err = %v, want the caller's own refusal, not a replacement failure", err)
-			}
-			if len(rec.Trace) != 0 {
-				t.Fatalf("trace = %v, want no replacement stage", rec.Trace)
-			}
+			durablefiletest.RequireRefusal(t, err, rec.Trace)
 			path, err := s.path(r.RunID)
 			if err != nil {
 				t.Fatal(err)

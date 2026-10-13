@@ -178,6 +178,21 @@ func TestProbeFailedRestore(t *testing.T) {
 	preservedCopy(t, f)
 }
 
+// D30: a symbolic-link subject refuses before preserve or any replacement starts, and
+// the link target keeps its bytes.
+func TestProbeSubjectRefusalSkipsReplacement(t *testing.T) {
+	f := newFixture(t)
+	if err := os.Symlink("clamp.go", filepath.Join(f.root, "link.go")); err != nil {
+		t.Fatal(err)
+	}
+	rec := &durablefiletest.Recorder{}
+
+	out, code := probeWith(t, f, rec.Replacer(), "link.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./")
+
+	requireRefused(t, f, out, code, unavailable("link.go", "a symlink"), 1)
+	durablefiletest.RequireNoReplacement(t, rec.Trace)
+}
+
 // D43: a mutation that fails before its rename leaves the start bytes, so the probe
 // releases the copy without a restore.
 func TestProbeMutationPreparationFailure(t *testing.T) {

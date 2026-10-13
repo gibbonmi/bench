@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 )
 
@@ -72,13 +71,7 @@ func TestBrokerRefusalSkipsReplacement(t *testing.T) {
 
 	_, _, err := write(rec.Replacer(), dir, dir, "1.2.3")
 
-	var replaceErr *durablefile.Error
-	if err == nil || errors.As(err, &replaceErr) {
-		t.Fatalf("err = %v, want the caller's own refusal, not a replacement failure", err)
-	}
-	if len(rec.Trace) != 0 {
-		t.Fatalf("trace = %v, want no replacement stage", rec.Trace)
-	}
+	durablefiletest.RequireRefusal(t, err, rec.Trace)
 	durablefiletest.RequireAbsent(t, filepath.Join(dir, Name))
 }
 
