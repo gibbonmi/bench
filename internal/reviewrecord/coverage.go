@@ -100,7 +100,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 				}
 			}
 			if !chained {
-				return Repair{Form: FormFold, Chunk: chunk.ID, Err: fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits and comment-only corrections follow a chunk tip; record the fold or review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)}
+				return Repair{Form: FormFold, Chunk: chunk.ID, Err: fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits, recorded folds, and comment-only corrections follow a chunk tip; record the fold or review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)}
 			}
 		}
 		// Verification ownership reads the frozen plan above, so a historical
