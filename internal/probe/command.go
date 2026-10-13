@@ -183,8 +183,8 @@ func selectionFormFits(parsed usage.Result) bool {
 	return true
 }
 
-// expectFitsSelection grades the one rule that spans both halves: an --expect in mutationArgs
-// must name a test that the selection runs. A prose run names no test, so --expect refuses there.
+// expectFitsSelection grades the one rule that spans both halves: a prose run names no test,
+// so an --expect in mutationArgs refuses under a prose selection.
 func expectFitsSelection(mutationArgs, selection usage.Result) bool {
 	_, expect := mutationArgs.Flags[expectFlag.Name]
 	return !expect || selection.Flags["--check"] != testreport.ProseCheckName
