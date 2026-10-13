@@ -917,7 +917,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "pm-c1-standards-r1",
+          "performer": "claude:pm_c1_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "843ac87c4e23efe5b5de4e73516218b7a953557c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_c1_standards",
+            "digest": "sha256:368369e2d9a8d9b518b3c5ac2ace3dbc6df96039e7b44f8dbf4e856a1e5258c7",
+            "excerpt": "Standards axis claude:pm_c1_standards (opus/high), PM-C1 round 1, frozen pair 32dc3858..c4ec0f13 (chunk tip dd3cdaec), evidence sha256:0ae93234 current.\ncount: 1\nworst: S1\nS1 | auto-fix | 5 | internal/probe/command.go:186-187: the expectFitsSelection doc comment says \"an --expect in mutationArgs must name a test that the selection runs\", but the body (189-190) only refuses --expect under --check prose (spec line 164). craft-comments: a comment describes the code as it stands. Reword to the narrow rule. Comment-only, evidence-only under bounded-repair-policy line 47.\nClean: each mutation flag declared once (mutationFlags 22-32, expectFlag 35); no rule copied between the halves; moved comments accurate; behavior preserved through short-circuit order; no tags.\nAdvice: mutation_input.go:25 goes stale in ticket 4; mixed flag-name lookup styles; the mutationFlags comment anticipates ticket 4's grammar; parameter names mutationArgs/selection.\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "32dc3858c6e91b286869293d5a86ecec7f3ece79",
+          "tip": "dd3cdaecb1d9d1a3a57bcd89707629380f27d177",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pm-c1-spec-r1",
+          "performer": "claude:pm_c1_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "843ac87c4e23efe5b5de4e73516218b7a953557c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c1_spec",
+            "digest": "sha256:040d825d542d90a7b7e5268eb5f0cd27b2feb04232ef53ba328c3de71e907389",
+            "excerpt": "Spec axis claude:pm_c1_spec (opus/high), PM-C1 round 1, frozen pair 32dc3858..c4ec0f13 (chunk tip dd3cdaec), evidence sha256:0ae93234 current.\ncount: 0\nworst: none\nOne flag list: mutationFlags (command.go:22-32) declares each mutation flag once; grammar reads it through slices.Concat (:44); expectFlag (:35) stands alone for ticket 4's entry grammar.\nFlag set and order unchanged; Usage not in the diff, so the help inventory line cannot change.\nTwo halves: mutationFormFits (136-168) reads only mutation flags; selectionFormFits (172-184) reads only --package, --run, --check; gradeForms runs both.\nRefusals: every old case condition carries over; every failure returns usageLine() at exit 2.\nCross-half rule: expectFitsSelection(mutationArgs, selection) (188-191) reproduces the prose --expect refusal; called as (parsed, parsed) at the top level; fits ticket 4 line 16.\nNothing of ticket 4 built; no test file changed.\nAdvice: the expectFitsSelection doc comment's first sentence promises more than the function checks.\nImplementation command: no command change.\n"
+          },
+          "axis": "Spec",
+          "base": "32dc3858c6e91b286869293d5a86ecec7f3ece79",
+          "tip": "dd3cdaecb1d9d1a3a57bcd89707629380f27d177",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "pm-c1-coverage-r1",
+          "performer": "claude:pm_c1_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "843ac87c4e23efe5b5de4e73516218b7a953557c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c1_coverage",
+            "digest": "sha256:18cdf58dadade5a4dec88d6cfe23955c25794ac6b57c0fee1dd50091ae1640ad",
+            "excerpt": "Coverage axis claude:pm_c1_coverage (opus/high), PM-C1 round 1, frozen pair 32dc3858..c4ec0f13 (chunk tip dd3cdaec), evidence sha256:0ae93234 current.\ncount: 0\nworst: none\nRules of base gradeForms and their pins: R1 !oneGroup (refusal_test.go:145-158); R3 insert texts != 1 (edit_test.go:84, zero texts only); R4 (edit_test.go:83,88-90; refusal_test.go:154-157); R5 combined && withFile (combined_test.go:66-72); R6-R9 occurrence (edit_test.go:66-71, 85-87); R10 (refusal_test.go:142-143); R11 (refusal_test.go:144, outcome_test.go:200); R12 prose --expect (verdict_test.go:66-70). R2 withs > 0 && withFile is covered by R3-R5 and cannot be the only refusing rule.\nProbes (restored yes): R3 upper bound dropped: silent (unpinned at base); R2 to false: silent (redundant rule); R8 control, remove deleteGroup from the occurrence case: bit.\nRefactor safety: short-circuit order kept; has(x) equals the Flags lookup; slices.Concat keeps order; Usage unchanged.\nAdvice: no row for an insert with two texts (pre-existing); R2 is redundant; expectFitsSelection argument roles are not pinned until ticket 4.\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "32dc3858c6e91b286869293d5a86ecec7f3ece79",
+          "tip": "dd3cdaecb1d9d1a3a57bcd89707629380f27d177",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1094,3 +1157,28 @@ Count 0. Worst issue: none. C1 and C2 are closed, and the `cancel_test.go` refac
 ### Advice
 
 - An omission of one `drainBuilderGroup` call in `runbinary.go` leaves the cancel test green. That code is older than this build.
+
+## PM-C1 round 1
+
+Frozen pair: 32dc3858 to c4ec0f13, with the chunk tip dd3cdaec.
+PM-C1 uses no repair cycle, because its one finding is a comment-only correction.
+
+### Standards
+
+Count 1. Worst issue: S1.
+
+- S1, auto-fix, confidence 5: the `expectFitsSelection` doc comment claims a test-name check that the body does not make. The orchestrator rewrites the comment to the narrow prose rule, and the issuing axis reaffirms it.
+
+### Spec
+
+Count 0. Worst issue: none. The prefactor keeps the usage line, the flag set, and every refusal, and its seam fits ticket 4.
+
+### Coverage
+
+Count 0. Worst issue: none. The existing tests pin every moved rule except two gaps that are older than this build.
+
+### Advice
+
+- No row pins an `--insert-before` with two texts. That gap is older than this build.
+- The `withs > 0 && withFile` rule is redundant, because later rules refuse every case that it refuses.
+- Ticket 4 must pin the argument roles of `expectFitsSelection`.
