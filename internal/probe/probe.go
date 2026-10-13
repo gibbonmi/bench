@@ -104,8 +104,7 @@ func gradeProseSubject(subject subject, request testreport.Request) string {
 	if !request.GradesProse() || prose.IsSubjectName(subject.display) {
 		return ""
 	}
-	hint := "--check " + request.Target() + " grades only .md files, and " + subject.display + " is not one"
-	return toon.Errorf("probe subject not graded", hint) + "\n"
+	return toon.Errorf("probe subject not graded", subject.display+" is not a prose subject") + "\n"
 }
 
 // renderInvalidMutation answers a substring miss. Its selection cells come from the prepared

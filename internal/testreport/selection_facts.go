@@ -69,15 +69,14 @@ func (r Request) Run() string {
 	return AllTests
 }
 
-// GradesProse answers whether the request runs the prose grade, which reads only the
-// subjects that prose.IsSubjectName accepts.
+// GradesProse answers whether the request names the prose check.
 func (r Request) GradesProse() bool {
 	return r.focused.check == proseCheckName
 }
 
 // CheckTakesRun answers whether the named check takes a --run pattern. Only the system
 // suite does. Every other check runs a fixed pattern, so a caller's pattern there would be
-// dropped in silence. The bench test grammar and the probe grammar both refuse by it.
+// dropped in silence.
 func CheckTakesRun(check string) bool {
 	return check == gate.SystemPhaseName
 }

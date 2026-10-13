@@ -48,7 +48,7 @@ func TestProbeTakesTheProseCheck(t *testing.T) {
 // PS77: the prose grade never reads a Go file, so a prose probe of one refuses before the
 // substring miss rather than answering a false silent, and no run child starts.
 func TestProbeRefusesAnUngradedProseSubject(t *testing.T) {
-	want := "error: probe subject not graded — --check prose grades only .md files, and clamp.go is not one\n"
+	want := "error: probe subject not graded — clamp.go is not a prose subject\n"
 	for name, mutation := range map[string][]string{"matched": {"--omit", "n < 0"}, "substring miss": {"--omit", "absent"}} {
 		t.Run(name, func(t *testing.T) {
 			f := refusalFixture(t)
