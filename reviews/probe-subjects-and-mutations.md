@@ -746,6 +746,75 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ps-b-standards-2",
+          "performer": "claude:ps-b-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-standards-2",
+            "digest": "sha256:35c2bbce59104d51831578cfb74cb616a11de37f03b02cc8723770a4bf29f404",
+            "excerpt": "Standards confirming round, chunk PS-B, repair delta 0d91e20b73d3..d4f03f030be1, opus medium.\nS1 closed (9): testreport.CheckTakesRun owns the --run rule for three callers.\nS2 closed (9): the inventory note no longer names a conformance class.\nS4 open (auto-fix, 7): internal/probe/probe.go:107 hint 'grades only .md files' advertises the suffix rule of internal/prose/walk.go:27 (AGENTS.md enforcement and advertisement).\nS3 new (auto-fix, 5): the CheckTakesRun comment names its callers and misses Request.Run; the GradesProse comment describes prose.IsSubjectName, which it never consults.\n"
+          },
+          "axis": "Standards",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+          "finding_ids": [
+            "S3",
+            "S4"
+          ],
+          "supersedes": [
+            "ps-b-standards-1"
+          ]
+        },
+        {
+          "id": "ps-b-spec-2",
+          "performer": "claude:ps-b-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-spec-2",
+            "digest": "sha256:191b7e517033f12d987d2de5e3c11a45413b4531debded569b731f322ff70d89",
+            "excerpt": "Spec confirming round, chunk PS-B, repair delta 0d91e20b73d3..d4f03f030be1, opus medium.\nPS77 holds (9): order, exit 1, exact text, and the cited test assert it. PS26-PS37 still hold (8).\nRuling: the refusal-order summary sentence omits the not-graded step, a non-behavioral contradiction for the orchestrator to fix in the spec.\n"
+          },
+          "axis": "Spec",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-spec-1"
+          ]
+        },
+        {
+          "id": "ps-b-coverage-2",
+          "performer": "claude:ps-b-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-coverage-2",
+            "digest": "sha256:55ecfa92eefcd5e221027b0cce8b43d6b4af7a980eb3731f26b559a8d7c9a610",
+            "excerpt": "Coverage confirming round, chunk PS-B, repair delta 0d91e20b73d3..d4f03f030be1, opus medium.\nC1 closed (8): TestProbeRefusesAnUngradedProseSubject reds without the guard in both subtests.\nC2 closed (7): the bare --check system row reds under a swap that requires --run.\nC3 (no-op): non-system --run refusal of bench test is pinned at internal/testreport/check_test.go:151 and :176 and usage_text_test.go:16. Probes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-coverage-1"
+          ]
         }
       ]
     }
@@ -826,7 +895,7 @@ Repair targets: 4 (S1, S2, P1 with C1, and C2) for ticket 1.
 
 ## PS-B pickup
 
-Chunk PS-B has used 0 of its 2 repair cycles after its initial review.
+Chunk PS-B has used 1 of its 2 repair cycles after its initial review. Repair d4f03f03 closed S1, S2, C1, and C2. The confirming round opened S3 and S4 for repair cycle 2.
 
 ### Standards
 
@@ -847,3 +916,9 @@ PS-B: 2 findings. The worst issue is C1.
 - C2 (auto-fix, confidence 5): `internal/probe/command.go:149` has no row that accepts `--check system` without `--run`.
 
 Repair targets: 4 (S1, S2, C1, and C2) for ticket 2.
+
+### PS-B confirming round
+
+- S3 (auto-fix, confidence 5): the `CheckTakesRun` comment in `internal/testreport/selection_facts.go` names its callers and misses `Request.Run`. The `GradesProse` comment describes `prose.IsSubjectName`, which that method never consults.
+- S4 (auto-fix, confidence 7): the not-graded hint at `internal/probe/probe.go:107` states the `.md` rule that `prose.IsSubjectName` enforces. The hint must say that the subject is not a prose subject, without the rule.
+- C3 (no-op): `internal/testreport/check_test.go:151` and `:176` already pin the non-system `--run` refusal of `bench test`.
