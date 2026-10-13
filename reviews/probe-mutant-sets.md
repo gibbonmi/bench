@@ -10,9 +10,9 @@
     {
       "id": "PM-A",
       "base": "a6739258f810d1dcdd1efc2a028a0fe9726d8083",
-      "tip": "868975d7ed65806ddf627da3821948b075a9cb74",
-      "plan_digest": "sha256:bb382785f355201ccac68fe63e38675f5033c694a0f62850ef28f7860ba80ee9",
-      "source_digest": "7f2262ac58ba52b36216c7d449600a955fb84029",
+      "tip": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+      "plan_digest": "sha256:faebeaa6ca8f219e2c4e6b61652d1e446266fd81a33e37d53f9b07e8d56f925e",
+      "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
       "acceptance_rows": [
         "PM45",
         "PM46",
@@ -138,6 +138,125 @@
               "ref": "868975d7ed65806ddf627da3821948b075a9cb74",
               "digest": "sha256:1ca2580ff2102b585d0bdaa85e0cba26686f29567c386e0401dd04263a36a603",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/probe.go,swap,failed,1,TestProbeRepeatsThePackage,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestProbeRepeatsThePackage$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,579\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,283,1\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestProbeRepeatsThePackage,\"package_test.go:29: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  bit,clamp.go,swap,failed,1,TestClampNegative,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./other,^TestClampNegat… (817 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "pm-t01-rep1-probe-family",
+          "performer": "claude:pm_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+            "digest": "sha256:46f717be1c2b5f3f945e1a6079f75bbb9b5dc823e509506d7fbdef4ecb403371",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/probe/... --package ./internal/testreport --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,cc2abf92b66b5430ed598624ba3c86aaa7f19d90,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22053,335\n  github.com/gibbonmi/bench/internal/conformance,pass,71312,1690\n  github.com/gibbonmi/bench/internal/probe,pass,59838,230\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,68328,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t01-rep1-testreport",
+          "performer": "claude:pm_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+            "digest": "sha256:46f717be1c2b5f3f945e1a6079f75bbb9b5dc823e509506d7fbdef4ecb403371",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/probe/... --package ./internal/testreport --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,cc2abf92b66b5430ed598624ba3c86aaa7f19d90,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22053,335\n  github.com/gibbonmi/bench/internal/conformance,pass,71312,1690\n  github.com/gibbonmi/bench/internal/probe,pass,59838,230\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,68328,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t01-rep1-command-package",
+          "performer": "claude:pm_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+            "digest": "sha256:46f717be1c2b5f3f945e1a6079f75bbb9b5dc823e509506d7fbdef4ecb403371",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/probe/... --package ./internal/testreport --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,cc2abf92b66b5430ed598624ba3c86aaa7f19d90,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22053,335\n  github.com/gibbonmi/bench/internal/conformance,pass,71312,1690\n  github.com/gibbonmi/bench/internal/probe,pass,59838,230\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,68328,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t01-rep1-conformance-package",
+          "performer": "claude:pm_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+            "digest": "sha256:46f717be1c2b5f3f945e1a6079f75bbb9b5dc823e509506d7fbdef4ecb403371",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/probe/... --package ./internal/testreport --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,cc2abf92b66b5430ed598624ba3c86aaa7f19d90,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22053,335\n  github.com/gibbonmi/bench/internal/conformance,pass,71312,1690\n  github.com/gibbonmi/bench/internal/probe,pass,59838,230\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,68328,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t01-rep1-root-conformance",
+          "performer": "claude:pm_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+            "digest": "sha256:44d03a4c7dc4e308001731be08f5005747e79e17b9c0d394e7f2b0e30dfcfb85",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,cc2abf92b66b5430ed598624ba3c86aaa7f19d90,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15606,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t01-rep1-central-property",
+          "performer": "claude:pm_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+            "digest": "sha256:b26f673263bf9a79ceb0bc6a677d2708fcfe7bb9eed489e06ea94655afa4c1dd",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/probe.go,swap,failed,1,TestProbeRepeatsThePackage,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestProbeRepeatsThePackage$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,579\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,313,1\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestProbeRepeatsThePackage,\"package_test.go:31: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  bit,clamp.go,swap,failed,1,TestClampNegative,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./other,^TestClampNegat… (817 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Pass only the last --package value from selectionArgs. TestProbeRepeatsThePackage must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+              "digest": "sha256:b26f673263bf9a79ceb0bc6a677d2708fcfe7bb9eed489e06ea94655afa4c1dd",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/probe.go,swap,failed,1,TestProbeRepeatsThePackage,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestProbeRepeatsThePackage$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,579\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,313,1\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestProbeRepeatsThePackage,\"package_test.go:31: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  bit,clamp.go,swap,failed,1,TestClampNegative,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./other,^TestClampNegat… (817 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
