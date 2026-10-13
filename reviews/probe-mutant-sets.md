@@ -2669,6 +2669,72 @@
           "supersedes": [
             "pm-d-coverage-r2"
           ]
+        },
+        {
+          "id": "pm-d-standards-r3b",
+          "performer": "claude:pm_d_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "456f02d1d293ca255fea43fc0b1b63799e0111ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_standards_r3",
+            "digest": "sha256:25ad7293e035376abbf8814b753a0e6824b835e4dd197937b65d30d5dab70387",
+            "excerpt": "Standards axis claude:pm_d_standards_r3 (opus/high), PM-D reaffirmation of S31 and S32 at the correction tip, delta d06742ea..bf1a69d4 -- internal/.\ncount: 0\nworst: none\nS31 closed, confidence 9: Publisher is func(root, staged, executable, manifestDir, version string) error, matching freshness.Publish (freshness_publish.go:42).\nS32 closed: the comment now says a test file supplies the publication, so the non-test package cannot publish a sealed run binary on its own (internal/probe/probetest/fixture.go:44-46). No new defect.\nAdvice: the comment states twice that a test file provides the value.\n"
+          },
+          "axis": "Standards",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "bf1a69d4a27fc1e0b5ef4f0807f6c718e5f1840d",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-d-standards-r3"
+          ]
+        },
+        {
+          "id": "pm-d-spec-r3b",
+          "performer": "claude:pm_d_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "456f02d1d293ca255fea43fc0b1b63799e0111ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_spec_r3",
+            "digest": "sha256:6163bc3230b12ef7235f3e28c387e2a84bda705774dd785289871167a35c8e8e",
+            "excerpt": "Spec axis claude:pm_d_spec_r3 (opus/high), PM-D reaffirmation at the correction tip, delta d06742ea..bf1a69d4 -- internal/.\ncount: 0\nworst: none\nRound 3 result holds, confidence 9: only the Publisher doc comment and its func-type parameter names changed (internal/probe/probetest/fixture.go:44-46); the names now match freshness.Publish (freshness_publish.go:42); no PM-D row, test, or behavior changed.\n"
+          },
+          "axis": "Spec",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "bf1a69d4a27fc1e0b5ef4f0807f6c718e5f1840d",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-d-spec-r3"
+          ]
+        },
+        {
+          "id": "pm-d-coverage-r3b",
+          "performer": "claude:pm_d_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "456f02d1d293ca255fea43fc0b1b63799e0111ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_coverage_r3",
+            "digest": "sha256:ef8da9bcbc63d08f1d737e0454ed5a35928322ff1417f8d85007081faed1f825",
+            "excerpt": "Coverage axis claude:pm_d_coverage_r3 (opus/high), PM-D reaffirmation at the correction tip, delta d06742ea..bf1a69d4 -- internal/.\ncount: 0\nworst: none\nRound 3 result holds, confidence 9: the only change is the Publisher comment and its last two parameter names (internal/probe/probetest/fixture.go:12-14, type Publisher func(root, staged, executable, manifestDir, version string) error); the call site, both test callers, and the topology check are unchanged, so the round 3 probes still apply.\n"
+          },
+          "axis": "Coverage",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "bf1a69d4a27fc1e0b5ef4f0807f6c718e5f1840d",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-d-coverage-r3"
+          ]
         }
       ]
     }
@@ -3253,3 +3319,9 @@ Count 0. Worst issue: none.
 ### Coverage
 
 Count 0. Worst issue: none. The topology check still bites a non-test call, and both callers fail with a publisher that does nothing.
+
+## PM-D close
+
+The orchestrator corrected S31 and S32 at bf1a69d4 and refroze PM-D from 1870269d to bf1a69d4.
+The ticket 5 small-fix author re-recorded its six requirements at that tip, and the central probe bit again.
+Each axis reaffirmed its result at that tip. PM-D used two repair cycles.
