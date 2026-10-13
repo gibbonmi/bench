@@ -2101,6 +2101,125 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/lock.go,swap,failed,2,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,221\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,30983,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,\"lock_test.go:158: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  silent,clamp.go,swap,passed,0,null,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^TestClampNegative$,passed,1\\\\\\\\np… (534 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_once,\"lock_test.go:146: lock-owner hook calls = 1, want 2: one replaced file and one retry\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "ps-t05-rep1b-probe-family",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:9693bccb5ba04fcb3a2b93179ee6ce0dcfc9fefb453658d8264c84130aba14af",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16722,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59054,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,158,42\n  github.com/gibbonmi/bench/internal/probe,pass,44887,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-gocache",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:9693bccb5ba04fcb3a2b93179ee6ce0dcfc9fefb453658d8264c84130aba14af",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16722,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59054,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,158,42\n  github.com/gibbonmi/bench/internal/probe,pass,44887,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "gocache",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-command-package",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:9693bccb5ba04fcb3a2b93179ee6ce0dcfc9fefb453658d8264c84130aba14af",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16722,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59054,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,158,42\n  github.com/gibbonmi/bench/internal/probe,pass,44887,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-conformance-package",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:9693bccb5ba04fcb3a2b93179ee6ce0dcfc9fefb453658d8264c84130aba14af",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16722,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59054,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,158,42\n  github.com/gibbonmi/bench/internal/probe,pass,44887,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-root-conformance",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:cc7305f9099847a36aa46540491bc6163040114d68a8289536e70a6876d9c094",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14798,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-central-property",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:929852008e3fb06da92bf47df394d9d2929f6e8c5cbe9fa3a77da3861385f434",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/lock.go,swap,failed,2,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,221\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,30983,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,\"lock_test.go:158: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  silent,clamp.go,swap,passed,0,null,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^TestClampNegative$,passed,1\\\\\\\\np… (534 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_once,\"lock_test.go:146: lock-owner hook calls = 1, want 2: one replaced file and one retry\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the fstat and lstat identity recheck after the record lock. TestSubjectLockRechecksTheIdentity must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+              "digest": "sha256:929852008e3fb06da92bf47df394d9d2929f6e8c5cbe9fa3a77da3861385f434",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/lock.go,swap,failed,2,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,221\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,30983,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,\"lock_test.go:158: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  silent,clamp.go,swap,passed,0,null,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^TestClampNegative$,passed,1\\\\\\\\np… (534 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_once,\"lock_test.go:146: lock-owner hook calls = 1, want 2: one replaced file and one retry\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
