@@ -22,17 +22,28 @@ const (
 	longSentence = "The probe grades this note with one sentence that keeps on going past the bound, because every added word counts toward the limit that the prose rule states for each sentence in a file."
 )
 
-// PS26, PS27: a Markdown mutation under the prose check bites, and failed_tests counts
-// the prose findings over the mutant.
-func TestProbeTakesTheProseCheck(t *testing.T) {
-	f := newFixture(t)
+// proseArgs is the prose probe that puts longSentence in place of shortLine in note.md.
+var proseArgs = []string{"note.md", "--swap", shortLine, "--with", longSentence, "--check", "prose"}
+
+// trackProseNote tracks the clean note.md in f and answers the prose finding count of the
+// proseArgs mutant.
+func trackProseNote(t *testing.T, f *fixture) int {
+	t.Helper()
 	// An absent exclusion list is a prose finding of its own, and an empty one excludes nothing.
 	writeFixtureFile(t, filepath.Join(f.root, filepath.FromSlash(prose.ExclusionFile)), "", 0o644)
 	trackFixtureFile(t, f, "note.md", strings.Replace(proseNote, shortLine, longSentence, 1))
 	findings := len(prose.Grade(f.root))
 	trackFixtureFile(t, f, "note.md", proseNote)
-	out, code := runProbe(t, "note.md", "--swap", shortLine, "--with", longSentence, "--check", "prose")
-	want := probeRow(t, "bit", "note.md", "swap", "failed", findings, "yes") +
+	return findings
+}
+
+// PS26, PS27: a Markdown mutation under the prose check bites, and failed_tests counts
+// the prose findings over the mutant.
+func TestProbeTakesTheProseCheck(t *testing.T) {
+	f := newFixture(t)
+	findings := trackProseNote(t, f)
+	out, code := runProbe(t, proseArgs...)
+	want := probeRow(t, "bit", "note.md", "swap", "failed", findings, nil, "yes") +
 		selectionRow(t, "check", "prose", testreport.AllTests, "passed", 0)
 	requireRow(t, out, code, 0, want)
 	if findings == 0 {
@@ -70,7 +81,7 @@ func TestProbeTakesTheSystemCheck(t *testing.T) {
 		hook := "printf '%s\\n' \"$*\" > " + sanitize.ShellQuote(argv) + "\n"
 		installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Hook: hook, Events: cannedFailure("caught"), Exit: 1})
 		out, code := runProbe(t, append(probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0"), systemSelection...)...)
-		want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes") +
+		want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes") +
 			selectionRow(t, "check", gate.SystemPhaseName, "^TestClampNegative$", "passed", 1)
 		requireRow(t, out, code, 0, want)
 		operands, _ := gate.SystemSuite(f.root)
@@ -85,7 +96,7 @@ func TestProbeTakesTheSystemCheck(t *testing.T) {
 		t.Setenv("BENCH_KIT", scratchDir(t))
 		report, _ := testreport.Command(f.root, systemSelection)
 		out, code := runProbe(t, append(probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0"), systemSelection...)...)
-		want := probeRow(t, "invalid", "clamp.go", "swap", "baseline-refused", 0, "untouched") +
+		want := probeRow(t, "invalid", "clamp.go", "swap", "baseline-refused", 0, nil, "untouched") +
 			selectionRow(t, "check", gate.SystemPhaseName, "^TestClampNegative$", "refused", 0) +
 			executionRow(t, 1, nil, len(report)) + report
 		requireRefused(t, f, out, code, want, 1)
@@ -99,7 +110,7 @@ func TestProbeBuildsTheMutantRunBinary(t *testing.T) {
 	records := buildEachRun(t, f, "clamp.go")
 	installStubGo(t, f, cannedFailure("caught"), 1, "")
 	out, code := runProbe(t, append(probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0"), systemSelection...)...)
-	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes"))
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes"))
 	want := []string{clampSource, strings.Replace(clampSource, "n < 0", "n > 0", 1)}
 	if got := buildRecords(t, records); !reflect.DeepEqual(got, want) {
 		t.Fatalf("build script reads = %q, want the start bytes and then the mutant", got)
@@ -128,7 +139,7 @@ func TestSelectionPrecedesTheSubstringMiss(t *testing.T) {
 				t.Fatalf("prepare refused %v: %q", selection, line)
 			}
 			out, code := runProbe(t, append([]string{"clamp.go", "--omit", "absent"}, selection...)...)
-			want := probeRow(t, "invalid", "clamp.go", "omit", "substring-miss", 0, "untouched") +
+			want := probeRow(t, "invalid", "clamp.go", "omit", "substring-miss", 0, nil, "untouched") +
 				selectionRow(t, request.Form(), request.Target(), request.Run(), "", 0) + executionRow(t, 1, nil, 0)
 			requireRefused(t, f, out, code, want, 1)
 		})

@@ -35,6 +35,7 @@ func gradeBaseline(root string, subject subject, mutation string, request testre
 		verdict:  "invalid",
 		cause:    baselineCause + string(outcome.Kind),
 		failed:   outcome.FailedTests,
+		first:    firstFailure(outcome),
 		restored: untouchedCell,
 		baseline: string(outcome.Kind),
 	}

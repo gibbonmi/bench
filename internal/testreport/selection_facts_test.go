@@ -20,7 +20,7 @@ func TestSelectionFactsNameTheRun(t *testing.T) {
 	}{
 		{"conformance check", []string{"--check", "line-routing"}, CheckForm, "line-routing", "^" + rootConformanceTestName + "$"},
 		{"system check", []string{"--check", gate.SystemPhaseName}, CheckForm, gate.SystemPhaseName, AllTests},
-		{"prose check", []string{"--check", proseCheckName}, CheckForm, proseCheckName, AllTests},
+		{"prose check", []string{"--check", ProseCheckName}, CheckForm, ProseCheckName, AllTests},
 		{"package", []string{"--package", "./internal/..."}, PackageForm, "./internal/...", AllTests},
 		{"package and run", []string{"--package", "./...", "--run", "^TestClamp$"}, PackageForm, "./...", "^TestClamp$"},
 		{"repeated package", []string{"--package", "./a", "--package", "./b/..."}, PackageForm, "./a ./b/...", AllTests},

@@ -59,7 +59,7 @@ func (r Request) Runs() bool {
 // so it answers AllTests. The system suite passes the caller's pattern, or none.
 func (r Request) Run() string {
 	switch {
-	case r.focused.check == proseCheckName:
+	case r.focused.check == ProseCheckName:
 		return AllTests
 	case r.focused.check != "" && !CheckTakesRun(r.focused.check):
 		return namedCheckRunPattern()
@@ -71,7 +71,7 @@ func (r Request) Run() string {
 
 // GradesProse answers whether the request names the prose check.
 func (r Request) GradesProse() bool {
-	return r.focused.check == proseCheckName
+	return r.focused.check == ProseCheckName
 }
 
 // CheckTakesRun answers whether the named check takes a --run pattern. Only the system

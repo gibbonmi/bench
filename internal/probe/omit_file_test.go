@@ -84,7 +84,7 @@ func TestOmitFileRefusesZeroAndMultipleMatchesSeparately(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "mutation")
 		writeFixtureFile(t, path, "absent", 0o644)
 		out, code := runProbe(t, "clamp.go", "--omit-file", path, "--package", "./", "--run", "^TestClampNegative$")
-		want := probeRow(t, "invalid", "clamp.go", "omit", "substring-miss", 0, "untouched") +
+		want := probeRow(t, "invalid", "clamp.go", "omit", "substring-miss", 0, nil, "untouched") +
 			selectionRow(t, "package", "./", "^TestClampNegative$", "", 0) + executionRow(t, 1, nil, 0)
 		requireRefused(t, f, out, code, want, 1)
 	})

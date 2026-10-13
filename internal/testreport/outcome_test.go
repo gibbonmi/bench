@@ -5,7 +5,9 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -116,7 +118,7 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 		want  Outcome
 		count int
 	}{
-		{set: "failing", want: Outcome{Kind: OutcomeFailed, FailedTests: 1, Ran: 1}},
+		{set: "failing", want: Outcome{Kind: OutcomeFailed, FailedTests: 1, FailedNames: []string{"TestCanned"}, Ran: 1}},
 		{set: "passing", want: Outcome{Kind: OutcomePassed, Ran: 1}},
 		{set: "build-fail", want: Outcome{Kind: OutcomeBuildFailed}},
 		{set: "no-run", want: Outcome{Kind: OutcomeNoTestRun}},
@@ -126,7 +128,7 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 			installCannedSelection(t)
 
 			outcome := executeSelection(t, t.TempDir(), []string{"--package", "./..."})
-			if outcome != tc.want {
+			if !sameOutcome(outcome, tc.want) {
 				t.Fatalf("outcome = %+v, want %+v", outcome, tc.want)
 			}
 		})
@@ -136,7 +138,7 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 		installCannedGo(t, cannedSetNamed(t, "build-fail"))
 		installCannedSelection(t)
 		outcome := executeSelection(t, t.TempDir(), []string{"--package", "./...", "--run", "^TestCanned$"})
-		if want := (Outcome{Kind: OutcomeBuildFailed}); outcome != want {
+		if want := (Outcome{Kind: OutcomeBuildFailed}); !sameOutcome(outcome, want) {
 			t.Fatalf("outcome = %+v, want %+v", outcome, want)
 		}
 	})
@@ -146,7 +148,7 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 		installCannedSelection(t)
 
 		outcome := executeSelection(t, t.TempDir(), []string{"--package", "./...", "--run", "^TestCanned$"})
-		if want := (Outcome{Kind: OutcomeNoTestRun}); outcome != want {
+		if want := (Outcome{Kind: OutcomeNoTestRun}); !sameOutcome(outcome, want) {
 			t.Fatalf("outcome = %+v, want %+v", outcome, want)
 		}
 	})
@@ -160,7 +162,7 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 		})
 
 		outcome := executeSelection(t, t.TempDir(), []string{"--package", "./..."})
-		if want := (Outcome{Kind: OutcomeRefused}); outcome != want {
+		if want := (Outcome{Kind: OutcomeRefused}); !sameOutcome(outcome, want) {
 			t.Fatalf("outcome = %+v, want %+v", outcome, want)
 		}
 	})
@@ -170,7 +172,7 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 		installCannedSelection(t)
 
 		outcome := executeSelection(t, t.TempDir(), []string{"--package", "./..."})
-		if want := (Outcome{Kind: OutcomeInterrupted}); outcome != want {
+		if want := (Outcome{Kind: OutcomeInterrupted}); !sameOutcome(outcome, want) {
 			t.Fatalf("outcome = %+v, want %+v", outcome, want)
 		}
 	})
@@ -208,6 +210,40 @@ func executeSelection(t *testing.T, root string, args []string) Outcome {
 	}
 	outcome, _, _ := Execute(root, request)
 	return outcome
+}
+
+// sameOutcome compares two outcomes field by field, because the FailedNames slice makes
+// Outcome incomparable with ==.
+func sameOutcome(got, want Outcome) bool {
+	return got.Kind == want.Kind && got.FailedTests == want.FailedTests && got.Ran == want.Ran && slices.Equal(got.FailedNames, want.FailedNames)
+}
+
+// TestOutcomeNamesTheFailedTests covers PS56: FailedNames lists the failed tests in the
+// order that the failures table prints them, package first and then test, whatever the
+// event order. A prose run counts its findings and names no test.
+func TestOutcomeNamesTheFailedTests(t *testing.T) {
+	set := cannedSet{name: t.Name(), exit: 1}
+	for _, failed := range [][2]string{{"z", "TestA"}, {"a", "TestC"}, {"a", "TestB"}} {
+		set.events = append(set.events,
+			`{"Action":"run","Package":"`+failed[0]+`","Test":"`+failed[1]+`"}`,
+			`{"Action":"output","Package":"`+failed[0]+`","Test":"`+failed[1]+`","Output":"    boom\n"}`,
+			`{"Action":"fail","Package":"`+failed[0]+`","Test":"`+failed[1]+`","Elapsed":0}`)
+	}
+	set.events = append(set.events, `{"Action":"fail","Package":"z","Elapsed":0.1}`, `{"Action":"fail","Package":"a","Elapsed":0.1}`)
+	installCannedGo(t, set)
+	installCannedSelection(t)
+	outcome := executeSelection(t, t.TempDir(), []string{"--package", "./..."})
+	if want := (Outcome{Kind: OutcomeFailed, FailedTests: 3, FailedNames: []string{"TestB", "TestC", "TestA"}, Ran: 3}); !sameOutcome(outcome, want) {
+		t.Fatalf("outcome = %+v, want %+v", outcome, want)
+	}
+
+	root := t.TempDir()
+	writeProseCheckFile(t, root, ".bench/prose-exclusions", "")
+	writeProseCheckFile(t, root, "long.md", strings.Repeat("word ", 27)+".\n")
+	prose := executeSelection(t, root, []string{"--check", ProseCheckName})
+	if prose.Kind != OutcomeFailed || prose.FailedTests == 0 || len(prose.FailedNames) != 0 {
+		t.Fatalf("prose outcome = %+v, want a failed run with findings and no failed names", prose)
+	}
 }
 
 func cannedSetNamed(t *testing.T, name string) cannedSet {

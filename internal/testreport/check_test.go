@@ -189,7 +189,7 @@ func TestNamedCheckHelpListsEverySupportedCheck(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("named-check help = %d, want 0\n%s", code, output)
 	}
-	for _, check := range append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName, RootConformanceCheckName) {
+	for _, check := range append(registry.Names(registry.Dev), gate.SystemPhaseName, ProseCheckName, RootConformanceCheckName) {
 		if !strings.Contains(output, "\n  "+check+"\n") {
 			t.Errorf("named-check help missing %q:\n%s", check, output)
 		}

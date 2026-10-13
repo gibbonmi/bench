@@ -111,7 +111,7 @@ func TestZeroMatchesStayASubstringMiss(t *testing.T) {
 			f := refusalFixture(t)
 			argv := append(append([]string{"clamp.go"}, tc.args...), "--package", "./", "--run", "^TestClampNegative$")
 			out, code := runProbe(t, argv...)
-			want := probeRow(t, "invalid", "clamp.go", tc.mutation, "substring-miss", 0, "untouched") +
+			want := probeRow(t, "invalid", "clamp.go", tc.mutation, "substring-miss", 0, nil, "untouched") +
 				selectionRow(t, "package", "./", "^TestClampNegative$", "", 0) + executionRow(t, 1, nil, 0)
 			requireRefused(t, f, out, code, want, 1)
 		})

@@ -17,7 +17,7 @@ import (
 
 // probeFields is the verdict row's schema. failed_tests is a genuine count, so the row
 // renders through toon.TableTyped and that cell stays an integer on a round-trip.
-var probeFields = []string{"verdict", "subject", "mutation", "cause", "failed_tests", "restored"}
+var probeFields = []string{"verdict", "subject", "mutation", "cause", "failed_tests", "first_failure", "restored"}
 
 // selectionFields is the schema of the row that names what the probe ran. ran is a genuine
 // count, so the row renders through toon.TableTyped and that cell stays an integer.
@@ -38,17 +38,20 @@ var resultTables = []struct {
 // restoredCell is the restored cell of a probe whose restore was proven byte-exact.
 const restoredCell = "yes"
 
-// resultSchema is the schema cell of the execution row. A reader refuses any other value.
-const resultSchema = "bench-probe-result-v1"
+// resultSchema is the schema cell of the execution row. It names the field set of the
+// three tables, so it changes with them, and a reader refuses any other value.
+const resultSchema = "bench-probe-result-v2"
 
-// verdictCells is one probe answer's variable half: the four cells the verdict row takes
+// verdictCells is one probe answer's variable half: the five cells the verdict row takes
 // from a run, and the two cells the selection row takes from the baseline and the mutated
-// run. The six travel together, because they come from two different runs and one outcome
-// value cannot carry both.
+// run. The seven travel together, because they come from two different runs and one
+// outcome value cannot carry both.
 type verdictCells struct {
-	verdict  string
-	cause    string
-	failed   int
+	verdict string
+	cause   string
+	failed  int
+	// first is the first_failure cell that firstFailure answers.
+	first    *string
 	restored string
 	baseline string
 	ran      int
@@ -95,7 +98,7 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 	if line != "" {
 		return line, code
 	}
-	return probe(replacer, root, subject, mutant, mutation, request, baseline)
+	return probe(replacer, root, subject, mutant, mutation, request, baseline, parsed.Flags["--expect"])
 }
 
 // gradeProseSubject refuses a prose probe of a file that the prose grade never reads,
@@ -156,7 +159,7 @@ func gradeGateLock(root string) string {
 // probe preserves, mutates, runs, and restores. The restore is deferred around the run,
 // so an interrupt or a panic inside the focused run still puts the subject back before
 // the verb answers, and the render runs only after the restore has been proven.
-func probe(replacer durablefile.Replacer, root string, subject subject, mutant mutationResult, mutation string, request testreport.Request, baseline testreport.OutcomeKind) (string, int) {
+func probe(replacer durablefile.Replacer, root string, subject subject, mutant mutationResult, mutation string, request testreport.Request, baseline testreport.OutcomeKind, expect string) (string, int) {
 	preserved, line := preserve(root, subject)
 	if line != "" {
 		return line, 1
@@ -175,7 +178,8 @@ func probe(replacer durablefile.Replacer, root string, subject subject, mutant m
 	if restored {
 		preserved.release()
 	}
-	return render(subject, mutation, outcome, focused, request, report, preserved, restored, reason, baseline)
+	cells, code := mutatedCells(outcome, expect, baseline)
+	return render(subject, mutation, cells, code, focused, request, report, preserved, restored, reason)
 }
 
 // write puts the mutant in place of the subject: a removal through replacer for --delete,
@@ -221,23 +225,13 @@ func keptCopy(preserved preservation, reason string) string {
 }
 
 // render prints the verdict row first, so a caller reads the answer before the evidence.
-// focused is the normalized exit of the mutated run. A subject the encoder cannot carry
-// answers with the shared render error in place of the rows and the report, and the
-// restore has already run by then, which is why an unprintable name still leaves a clean
-// tree. The restore-failed verdict overrides every other answer, so a failed restore keeps
-// the answer that names the kept copy and exit 2 even when the rows themselves refuse.
-func render(subject subject, mutation string, outcome testreport.Outcome, focused int, request testreport.Request, report string, preserved preservation, restored bool, reason string, baseline testreport.OutcomeKind) (string, int) {
-	// The baseline cell carries the kind the baseline run observed, so the row joins the two
-	// runs it reports rather than asserting the kind the refusal order implies.
-	cells := verdictCells{
-		cause:    string(outcome.Kind),
-		failed:   outcome.FailedTests,
-		restored: restoredCell,
-		baseline: string(baseline),
-		ran:      outcome.Ran,
-	}
-	var code int
-	cells.verdict, code = verdictFor(outcome.Kind)
+// cells and code are the mutated run's cells and exit, and focused is that run's
+// normalized exit. A subject the encoder cannot carry answers with the shared render
+// error in place of the rows and the report, and the restore has already run by then,
+// which is why an unprintable name still leaves a clean tree. The restore-failed verdict
+// overrides every other answer, so a failed restore keeps the answer that names the kept
+// copy and exit 2 even when the rows themselves refuse.
+func render(subject subject, mutation string, cells verdictCells, code, focused int, request testreport.Request, report string, preserved preservation, restored bool, reason string) (string, int) {
 	preservedBlock := ""
 	if !restored {
 		cells.verdict, code, cells.restored = "restore-failed", 2, "no"
@@ -287,12 +281,15 @@ func (e envelope) answer(suffix string) (string, error) {
 }
 
 func (e envelope) rows() (string, error) {
-	var focused any
+	var focused, first any
 	if e.focused != nil {
 		focused = *e.focused
 	}
+	if e.cells.first != nil {
+		first = *e.cells.first
+	}
 	cells := [][]any{
-		{e.cells.verdict, e.subject, e.mutation, e.cells.cause, e.cells.failed, e.cells.restored},
+		{e.cells.verdict, e.subject, e.mutation, e.cells.cause, e.cells.failed, first, e.cells.restored},
 		{e.form, e.target, e.run, e.cells.baseline, e.cells.ran},
 		{resultSchema, e.command, focused, e.trailing},
 	}

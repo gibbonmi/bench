@@ -12,7 +12,7 @@ import (
 )
 
 // Usage is the one owner of the bench probe grammar line.
-const Usage = "bench probe <file> (--swap <old> (--with <new> | --with-file <path>) [--occurrence <n>] | --omit <old> [--occurrence <n>] | --unwrap <call> [--occurrence <n>] | --insert-before <anchor> (--with <text> | --with-file <path>) [--occurrence <n>] | --omit-file <path> | --delete | (--swap <old> --with <new> | --omit <old>)...) (--package <expr> [--run <go-regex>] | --check <name> | --check system --run <go-regex>) [--full]"
+const Usage = "bench probe <file> (--swap <old> (--with <new> | --with-file <path>) [--occurrence <n>] | --omit <old> [--occurrence <n>] | --unwrap <call> [--occurrence <n>] | --insert-before <anchor> (--with <text> | --with-file <path>) [--occurrence <n>] | --omit-file <path> | --delete | (--swap <old> --with <new> | --omit <old>)...) (--package <expr> [--run <go-regex>] | --check <name> | --check system --run <go-regex>) [--expect <test>] [--full]"
 
 // grammar declares the one argument shape the verb parses through usage.Parse. Exactly
 // one mutation group and exactly one selection form are required, because a probe that
@@ -34,6 +34,7 @@ var grammar = usage.Grammar{
 		{Name: "--package", HasValue: true, NoEmptyValue: true},
 		{Name: "--run", HasValue: true, NoEmptyValue: true},
 		{Name: "--check", HasValue: true, NoEmptyValue: true},
+		{Name: "--expect", HasValue: true, NoEmptyValue: true},
 		{Name: "--full"},
 	},
 	MinArgs: 1,
@@ -148,6 +149,9 @@ func gradeForms(parsed usage.Result) (string, int) {
 		return usageLine()
 	// A run pattern selects within a package expression or a check that takes one.
 	case run && !pkg && !testreport.CheckTakesRun(parsed.Flags["--check"]):
+		return usageLine()
+	// A prose run names no test, so an expected witness there could never match.
+	case has("--expect") && parsed.Flags["--check"] == testreport.ProseCheckName:
 		return usageLine()
 	}
 	return "", 0

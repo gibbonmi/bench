@@ -154,7 +154,7 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	if request.check == RootConformanceCheckName && !gate.RootConformanceRuns(root, testBenchSource(root)) {
 		return refusedOutcome(toon.Errorf(rootConformanceUnavailable, "root conformance grades a kit checkout that declares its entry test only")+"\n", 1)
 	}
-	if request.check == proseCheckName {
+	if request.check == ProseCheckName {
 		return runProseCheck(root, request.full)
 	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())

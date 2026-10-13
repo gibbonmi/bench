@@ -20,7 +20,7 @@ func ensureNonNegative(n int) int {
 `
 	writeFixtureFile(t, f.subject, wrapped, 0o644)
 	out, code := runProbe(t, "clamp.go", "--unwrap", "ensureNonNegative(n)", "--package", "./", "--run", "^TestClampNegative$")
-	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "unwrap", "failed", 1, "yes"))
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "unwrap", "failed", 1, "TestClampNegative", "yes"))
 	requireSubjectBytes(t, f, wrapped)
 	requireHomeEmpty(t, f)
 }

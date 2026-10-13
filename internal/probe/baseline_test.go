@@ -78,10 +78,10 @@ func TestProbeRunsTheBaselineFirst(t *testing.T) {
 // requireBaselineRefusal drives one probe whose baseline did not pass and answers what the
 // verb printed. Every non-passing kind owes the same four facts: the invalid row with the
 // untouched cell, an unchanged subject, a home the probe never wrote to, and one Go start.
-func requireBaselineRefusal(t *testing.T, f *fixture, cause string, failed int, args ...string) string {
+func requireBaselineRefusal(t *testing.T, f *fixture, cause string, failed int, first any, args ...string) string {
 	t.Helper()
 	out, code := runProbe(t, args...)
-	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", cause, failed, "untouched"))
+	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", cause, failed, first, "untouched"))
 	requireSubjectBytes(t, f, clampSource)
 	requireHomeEmpty(t, f)
 	requireBaselineOnly(t, f)
@@ -93,7 +93,7 @@ func requireBaselineRefusal(t *testing.T, f *fixture, cause string, failed int, 
 func TestProbeRefusesARedBaseline(t *testing.T) {
 	f := newFixture(t)
 	installStubStarts(t, f, probetest.Start{Events: cannedFailure("already red"), Exit: 1}, probetest.Start{Events: cannedPass})
-	out := requireBaselineRefusal(t, f, "baseline-failed", 1, probeArgs()...)
+	out := requireBaselineRefusal(t, f, "baseline-failed", 1, "TestClampNegative", probeArgs()...)
 	if want := selectionRow(t, "package", "./", "^TestClampNegative$", "failed", 0); !strings.Contains(out, want) {
 		t.Fatalf("stdout = %q, want the selection row %q", out, want)
 	}
@@ -117,7 +117,7 @@ func TestProbeReportsABaselineWithoutAVerdict(t *testing.T) {
 		t.Run(tc.cause, func(t *testing.T) {
 			f := newFixture(t)
 			installStubStarts(t, f, probetest.Start{Events: tc.events, Exit: tc.exit}, probetest.Start{Events: cannedPass})
-			requireBaselineRefusal(t, f, tc.cause, 0, tc.args...)
+			requireBaselineRefusal(t, f, tc.cause, 0, nil, tc.args...)
 		})
 	}
 }
@@ -127,7 +127,7 @@ func TestProbeReportsABaselineWithoutAVerdict(t *testing.T) {
 func TestProbeReportsABaselineRefusal(t *testing.T) {
 	f := newFixture(t)
 	installStubStarts(t, f, probetest.Start{Exit: 1}, probetest.Start{Events: cannedPass})
-	requireBaselineRefusal(t, f, "baseline-refused", 0, probeArgs()...)
+	requireBaselineRefusal(t, f, "baseline-refused", 0, nil, probeArgs()...)
 }
 
 // PB9, DG12: --full reaches both runs, so a long diagnostic from either one is previewed
@@ -178,7 +178,7 @@ func TestProbeRestoresOnInterrupt(t *testing.T) {
 			f := newFixture(t)
 			installStubStarts(t, f, tc.baseline, sleeping)
 			out := interruptedProbe(t, f, tc.start)
-			want := probeRow(t, "invalid", "clamp.go", "swap", tc.cause, 0, tc.restored)
+			want := probeRow(t, "invalid", "clamp.go", "swap", tc.cause, 0, nil, tc.restored)
 			if !strings.Contains(out, want) {
 				t.Fatalf("helper stdout = %q, want the interrupted row %q", out, want)
 			}

@@ -23,12 +23,14 @@ const (
 
 // Outcome is the typed verdict beside the rendered report. FailedTests counts the
 // distinct failed tests, not the printed rows, so a caller cites the count without
-// parsing the report. Ran counts the distinct tests that emitted a run event, and it
-// reads 0 when the run did not start, so a caller can never read no execution as
-// evidence.
+// parsing the report. FailedNames names those Go tests in the order that the failures
+// table prints them; a prose run counts its findings in FailedTests and names no test.
+// Ran counts the distinct tests that emitted a run event, and it reads 0 when the run did
+// not start, so a caller can never read no execution as evidence.
 type Outcome struct {
 	Kind        OutcomeKind
 	FailedTests int
+	FailedNames []string
 	Ran         int
 }
 
@@ -84,14 +86,14 @@ func (r *report) outcome() Outcome {
 	for _, tests := range r.ranTests {
 		ran += len(tests)
 	}
-	failed := 0
+	var names []string
 	for _, f := range r.failed() {
 		if f.test != "" {
-			failed++
+			names = append(names, f.test)
 		}
 	}
-	if failed != 0 {
-		return Outcome{Kind: OutcomeFailed, FailedTests: failed, Ran: ran}
+	if len(names) != 0 {
+		return Outcome{Kind: OutcomeFailed, FailedTests: len(names), FailedNames: names, Ran: ran}
 	}
 	for _, status := range r.statuses {
 		if status == "fail" {

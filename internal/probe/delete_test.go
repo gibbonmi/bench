@@ -36,7 +36,7 @@ func TestDeleteRemovesTheSubjectForTheRun(t *testing.T) {
 	executableSubject(t, f)
 	installStubGo(t, f, cannedFailure("caught"), 1, "[ ! -e "+sanitize.ShellQuote(f.subject)+" ] || exit 99\n")
 	out, code := runProbe(t, deleteArgs...)
-	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "delete", "failed", 1, "yes"))
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "delete", "failed", 1, "TestClampNegative", "yes"))
 	durablefiletest.RequireFile(t, f.subject, 0o750, clampSource)
 	requireHomeEmpty(t, f)
 }
@@ -79,7 +79,7 @@ func TestDeleteReportsARestoreFailure(t *testing.T) {
 			return modeless{file}, nil
 		}
 		out, code := probeWith(t, f, replacer, deleteArgs...)
-		requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "delete", "failed", 1, "no"))
+		requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "delete", "failed", 1, "TestClampNegative", "no"))
 		if kept := preservedCopy(t, f); !strings.Contains(out, kept) {
 			t.Fatalf("stdout = %q, want it to name the copy %s", out, kept)
 		}
