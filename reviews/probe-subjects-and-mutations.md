@@ -2288,6 +2288,74 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ps-d-standards-2",
+          "performer": "claude:ps-d-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-standards-2",
+            "digest": "sha256:8f32f16c9ee57b31c88e693a9549855e0ba527e0d5207c3d744f822bc715d658",
+            "excerpt": "Standards confirming round, chunk PS-D, repair delta c446eaf576c8..da6665921, opus medium.\nS1 closed (9): gocache.Contended at internal/gocache/lock.go:163 is the one contention rule, used by HoldExclusive, clean.go, and lockSubject; no forwarder remains. No new blocking findings.\nAdvice: a gocache TryLock helper would collapse three lock-request spellings.\n"
+          },
+          "axis": "Standards",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-d-standards-1"
+          ]
+        },
+        {
+          "id": "ps-d-spec-2",
+          "performer": "claude:ps-d-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-spec-2",
+            "digest": "sha256:3d1133348aa1337179fc337734bd732580d6eb812db2963e7306e6dbb113e8c0",
+            "excerpt": "Spec confirming round, chunk PS-D, repair delta c446eaf576c8..da6665921, opus medium. Findings: 1.\nHolds: the code matches the changed step 3; the third-ENOENT, ELOOP, and mode tests match the spec; PS58-PS68 and PS75 hold.\nP1 (7): the spec's lock-unavailable fault list still says four faults and omits a lock error that is not contention.\nAdvice: no row names TestSubjectLockReadsOnlyContentionAsInUse.\n"
+          },
+          "axis": "Spec",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": [
+            "ps-d-spec-1"
+          ]
+        },
+        {
+          "id": "ps-d-coverage-2",
+          "performer": "claude:ps-d-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-coverage-2",
+            "digest": "sha256:314625b1b5f17e7ae3aa18d5ca45ed0e2098c04e53edcd48db0caa045b46769f",
+            "excerpt": "Coverage confirming round, chunk PS-D, repair delta c446eaf576c8..da6665921, opus medium.\nC1 closed (9), C2 closed (9), C3 closed (8); the contention split is tested on both sides. No new blocking findings. Probes: none.\nAdvice: the mode test depends on the runner's umask.\n"
+          },
+          "axis": "Coverage",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-d-coverage-1"
+          ]
         }
       ]
     }
