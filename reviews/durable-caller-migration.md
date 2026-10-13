@@ -5179,7 +5179,71 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-c5-r1-coverage",
+          "performer": "claude:dcm_rev_c5_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c5_cov",
+            "digest": "sha256:564bde2a29e66e09fbf7f60f9b461a4f89d2adfcc93d425cc29b9a36a4f8cebb",
+            "excerpt": "## Coverage (D-C5, fee3f738..930225e5) — 0 findings.\nD28 owner-bypass red; whole-package bytes and mode reds (no preserved test pins 0600); D36 A17 rename case is derived; D30 validation and authority rows with reds; MkdirAll masked by the lock Mkdir; ten verification entries hold.\nAdvice: the orchestrator nil-branch probe (Native -> Replacer{}) bit TestAssessmentCollectionPublication, restored yes; cmd-bench and conformance ran as one combined superset run.\n"
+          },
+          "axis": "Coverage",
+          "base": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+          "tip": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c5-r1-spec",
+          "performer": "claude:dcm_rev_c5_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c5_spec",
+            "digest": "sha256:9f58b053f6400bf4c0b13e7c533dccb7575b75b14ee983f59492743e9c7b9086",
+            "excerpt": "## Spec (D-C5, fee3f738..930225e5) — 0 findings.\nD28 met; FileOps hook set and one-Replacer composition; A17 and A27 cases keep their intent; validation, mode, bytes, newline kept; only the FileOps port row changed; Store.Files *FileOps (nil means native) is permitted by spec.md:81-84.\nAdvice: nil hooks of a partly filled FileOps panic; type FileOps durablefile.Replacer would give the fields one source.\n"
+          },
+          "axis": "Spec",
+          "base": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+          "tip": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-c5-r1-standards",
+          "performer": "claude:dcm_rev_c5_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c5_std",
+            "digest": "sha256:f7186c31480292e7a64e916ba58008ef8294af566bf0fcfc387f783a3b7e558f",
+            "excerpt": "## Standards (D-C5, fee3f738..930225e5) — 2 findings; worst S1.\nS1 | no-op in D-C5 (orchestrator: routed to D-D; the D-D plan expansion adds one shared durablefiletest refusal assertion and collapses all copies at once) | 7 | internal/assessment/replacement_test.go:83-89 | the D30 refusal block (not a *durablefile.Error; empty trace) is a fourth pasted copy, beside brokermanifest:75-81, publication:88-94, commitment/repository:260-266 | one shared refusal assertion in durablefiletest/assert.go, called by every caller test\nS2 | auto-fix (orchestrator: evidence-only comment correction; Standards reaffirms) | 7 | internal/assessment/replacement_test.go:18-19 | the test comment restates the 0600 mode and the payload that RequireFile holds | keep only the D28 behavior clause\nVeto items accepted: Files *FileOps with the Replacer conversion; the leaf temp prefix.\n"
+          },
+          "axis": "Standards",
+          "base": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+          "tip": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -6197,3 +6261,18 @@ The D-C6 confirming round at c7a75215 closed S1 and C1. It raised one comment-on
 - S2, auto-fix as an evidence-only comment correction, confidence 6: the `Store.Replace` comment at `internal/repairpilot/command.go:55-56` restates the encoding and the 0600 mode that `writeDocument` holds. The orchestrator charge asked for that clause. The orchestrator removes it, and the Standards axis reaffirms the correction.
 
 The Standards reaffirmation at 98bf2bc5 closed S2. Chunk D-C6 closed with 1 of its 2 repair cycles used, and the comment-only correction used none.
+
+## Standards (D-C5)
+
+Chunk D-C5 has 2 findings. The worst issue is S1.
+
+- S1, routed to D-D by --auto-approve, confidence 7: the refusal block at `internal/assessment/replacement_test.go:83-89` is a fourth copy of the D30 refusal assertion. The D-D plan expansion adds one shared refusal assertion to `durablefiletest` and moves every copy to it.
+- S2, auto-fix as an evidence-only comment correction, confidence 7: the test comment at `internal/assessment/replacement_test.go:18-19` restates the 0600 mode and the payload. The orchestrator corrects it, and the Standards axis reaffirms it.
+
+## Spec (D-C5)
+
+Chunk D-C5 has 0 findings.
+
+## Coverage (D-C5)
+
+Chunk D-C5 has 0 findings. The orchestrator probe that breaks the native branch of `replacer` turned `TestAssessmentCollectionPublication` red, and the file was restored.
