@@ -934,6 +934,72 @@
           "supersedes": [
             "ps-b-coverage-1"
           ]
+        },
+        {
+          "id": "ps-b-standards-3",
+          "performer": "claude:ps-b-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-standards-3",
+            "digest": "sha256:74b42820e23c4fffd2e64eca71eeb735feb4470946d7a7e81e8071cdd9b485a9",
+            "excerpt": "Standards confirming round 2, chunk PS-B, repair delta d4f03f030be1..145d5439330c, opus medium.\nS4 closed (9): the hint at internal/probe/probe.go:107 reads <subject> is not a prose subject.\nS3 closed (9): the GradesProse and CheckTakesRun comments state the code without the prose rule or a caller list. No new blocking findings.\n"
+          },
+          "axis": "Standards",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-standards-2"
+          ]
+        },
+        {
+          "id": "ps-b-spec-3",
+          "performer": "claude:ps-b-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-spec-3",
+            "digest": "sha256:ccef94fd91bb3c4d736d776c6128c929fb53973c7c551eeb875ffc44521b187b",
+            "excerpt": "Spec confirming round 2, chunk PS-B, repair delta d4f03f030be1..145d5439330c, opus medium.\nHolds (9): the code prints the spec's not-graded refusal exactly, and the test pins it. PS77 and PS26-PS37 hold, and the refusal-order sentence matches the code.\n"
+          },
+          "axis": "Spec",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-spec-2"
+          ]
+        },
+        {
+          "id": "ps-b-coverage-3",
+          "performer": "claude:ps-b-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-coverage-3",
+            "digest": "sha256:34ffeda9383c9b72e4fc23fe73de34956e748fa0fc663bcdae82cc717a251216",
+            "excerpt": "Coverage confirming round 2, chunk PS-B, repair delta d4f03f030be1..145d5439330c, opus medium.\nClosed: subject_check_test.go:51 pins the changed refusal text through an exact compare; the delta adds no production branch. Probes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-coverage-2"
+          ]
         }
       ]
     }
@@ -1026,7 +1092,7 @@ Repair targets: 4 (S1, S2, P1 with C1, and C2) for ticket 1.
 
 ## PS-B pickup
 
-Chunk PS-B has used 1 of its 2 repair cycles after its initial review. Repair d4f03f03 closed S1, S2, C1, and C2. The confirming round opened S3 and S4 for repair cycle 2.
+Chunk PS-B has used 2 of its 2 repair cycles after its initial review. Repair d4f03f03 closed S1, S2, C1, and C2. Repair 145d5439 closed S3 and S4, and the second confirming round of all three axes passed.
 
 ### Standards
 
