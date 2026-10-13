@@ -222,6 +222,7 @@ The normal shell sets no inherited value, and `bench worktree exec` removes it.
 The verdict row gains the cell `first_failure` after `failed_tests`.
 The cell holds the first entry of the failed-name list.
 It reads null when that list is empty, which includes a build failure, a prose run, and every refusal.
+A red baseline names its own first failure, because its failed-name list is not empty.
 The schema token changes to `bench-probe-result-v2`, and `probe.ReadResult` reads the new field set.
 
 `testreport.Outcome` gains `FailedNames`, the failed Go test names in the order that the failures table prints them.
