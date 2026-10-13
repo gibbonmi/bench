@@ -1348,6 +1348,35 @@
           "requirement": "t3-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "ps-t03-t3-central-property",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:0a423e60a0983c3c736f6018ca43f81b0722c541f90898b2f6e4aabdbff405ba",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/verdict.go,swap,failed,1,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestExpectRequiresTheNamedWitness$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,615\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1200,6\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,\"verdict_test.go:57: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  invalid,clamp.go,swap,expect-missed,1,TestClampNegative/zero,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^Tes… (737 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Match --expect by exact name only and drop the parent-and-slash match. TestExpectRequiresTheNamedWitness must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+              "digest": "sha256:0a423e60a0983c3c736f6018ca43f81b0722c541f90898b2f6e4aabdbff405ba",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/verdict.go,swap,failed,1,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestExpectRequiresTheNamedWitness$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,615\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1200,6\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,\"verdict_test.go:57: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  invalid,clamp.go,swap,expect-missed,1,TestClampNegative/zero,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^Tes… (737 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": []
