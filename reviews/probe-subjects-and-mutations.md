@@ -2559,7 +2559,74 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ps-e-standards-1",
+          "performer": "claude:ps-e-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-e-standards",
+            "digest": "sha256:079f22d264eac484a23be4fdcb1c4e194b48b905026687af43a1b1df17cc9a46",
+            "excerpt": "Standards axis, chunk PS-E, pair 15bf62a21f6b..2643e8d1, opus medium. Findings: 2.\nS1 .agents/skills/bench-craft-delegate/SKILL.md:105: a sentence copies a partial flag list that bench probe --help owns, already missing --run, --omit-file, and --unwrap (AGENTS.md one source per fact; craft-skills duplication). Confidence 6.\nS2 .bench/BENCH-reference.md:259-267: the probe paragraphs restate flag-level grammar and selection that bench probe --help owns. Confidence 5.\nLine 81 needle byte-identical; no history in guidance.\n"
+          },
+          "axis": "Standards",
+          "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "tip": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-e-spec-1",
+          "performer": "claude:ps-e-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-e-spec",
+            "digest": "sha256:5a7f633c3de5e24600c41f52df862dc642d9af6a4d568c8bb3104ca8ef89de3c",
+            "excerpt": "Spec axis, chunk PS-E (PS69-PS74), pair 15bf62a21f6b..2643e8d1, opus medium. Findings: 0 blocking.\nAll six review-owned rows hold against the code and bench probe --help.\nAdvice P1: the reference's --occurrence sentence could imply it works in a combined mutant. Ruling: the stale FT168 occurrence clause belongs to the landing closure of the roadmap row, not this chunk.\n"
+          },
+          "axis": "Spec",
+          "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "tip": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ps-e-coverage-1",
+          "performer": "claude:ps-e-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-e-coverage",
+            "digest": "sha256:93d01d087d3deed19c830d682ed90d5eecffa86a6ec75fac8201753a39f0ffdc",
+            "excerpt": "Coverage axis, chunk PS-E, pair 15bf62a21f6b..2643e8d1, opus medium. Findings: 2, none blocking.\nC1 SKILL.md:81: the anchored charge example still says omission or swap; PS71 keeps it by spec decision (no-op).\nC2 spec.md:434: PS71 cites line 104, now line 105 (orchestrator spec fix).\nguidance-prose-budgets passes at 126 of 126 lines (orchestrator run).\n"
+          },
+          "axis": "Coverage",
+          "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "tip": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2821,3 +2888,27 @@ PS-D: 3 findings. The worst issue is C1.
 - C3 (auto-fix, confidence 7): no test asserts the 0700 directory mode or the 0600 file mode that the spec states.
 
 Repair targets: 4 (S1, C1, C2, and C3) for ticket 5.
+
+## PS-E pickup
+
+Chunk PS-E has used 0 of its 2 repair cycles after its initial review.
+
+### Standards
+
+PS-E: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, small fix, confidence 6): `.agents/skills/bench-craft-delegate/SKILL.md:105` copies a partial flag list that `bench probe --help` owns. The sentence must go, or it must only point at the help.
+- S2 (auto-fix, small fix, confidence 5): `.bench/BENCH-reference.md:259-267` restates the flag-level grammar and the selection that `bench probe --help` owns. The paragraphs keep the form names, the subject lock, and the `mutant` table, and they point at the help for the grammar.
+
+### Spec
+
+PS-E: 0 blocking findings. The advice P1 on the `--occurrence` sentence folds into the S2 repair.
+
+### Coverage
+
+PS-E: 2 findings, none blocking.
+
+- C1 (no-op): the anchored line 81 keeps "omission or swap" by the PS71 decision.
+- C2 (orchestrator spec fix): row PS71 cites line 104, and the probe sentence is now at line 105.
+
+Repair targets: 2 (S1 and S2) for ticket 6.
