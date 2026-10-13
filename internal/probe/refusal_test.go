@@ -197,7 +197,7 @@ func TestProbeUsageNamesOneSelectionAndOneMutation(t *testing.T) {
 	}{
 		{"no selection", []string{"clamp.go", "--omit", "n < 0"}},
 		{"two selections", []string{"clamp.go", "--omit", "n < 0", "--package", "./", "--check", "line-routing"}},
-		{"run without package", []string{"clamp.go", "--omit", "n < 0", "--check", "line-routing", "--run", "^X$"}},
+		{"run with a check other than system", []string{"clamp.go", "--omit", "n < 0", "--check", "line-routing", "--run", "^X$"}},
 		{"delete with omit", []string{"clamp.go", "--delete", "--omit", "n < 0", "--package", "./"}},
 		{"delete with unwrap", []string{"clamp.go", "--delete", "--unwrap", "ensureNonNegative(n)", "--package", "./"}},
 		{"delete with omit-file", []string{"clamp.go", "--delete", "--omit-file", "x", "--package", "./"}},
@@ -232,20 +232,6 @@ func TestProbeRefusesAnUnknownCheckBeforeAnyWrite(t *testing.T) {
 	requireSubjectBytes(t, f, clampSource)
 	requireHomeEmpty(t, f)
 	requireNoRunChild(t, f)
-}
-
-// PB24: the probe refuses the prose grade and the system suite, and the refusal names the
-// hand route through `bench test`, which stays the caller for both checks.
-func TestProbeRefusesProseAndSystemChecks(t *testing.T) {
-	for _, check := range []string{"prose", "system"} {
-		t.Run(check, func(t *testing.T) {
-			f := refusalFixture(t)
-			out, code := runProbe(t, probeArgs("clamp.go", "--omit", "n < 0", "--check", check)...)
-			want := "error: probe focused run unsupported — --check prose and --check system are not probe targets; " +
-				"copy the file aside, edit it, run bench test --check <name>, and restore the copy\n"
-			requireRefused(t, f, out, code, want, 1)
-		})
-	}
 }
 
 // PB26: the verb answers the shared not-in-repo error outside a repository, so it matches
@@ -291,17 +277,16 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	requireBaselineOnly(t, f)
 }
 
-// probeHelpNotes is the four facts the help owes, spelled independently of the producer.
-// A dropped or reworded note reds this row rather than passing as a fresh expectation.
+// probeHelpNotes is the two facts the help owes, spelled independently of the producer.
+// A dropped, reworded, or extra note reds this row rather than passing as a fresh
+// expectation.
 var probeHelpNotes = []string{
 	"--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; run one call per package or use a parent ./... pattern.",
-	"--check <name> names a conformance check from the bench test --help inventory, and prose and system are not probe targets.",
-	"For prose or system, copy the file aside, edit it, run bench test --check <name>, and restore the copy.",
-	"A named check compiles from the run binary's source, so an edited tree needs bench worktree build <target> first.",
+	"--check <name> names a conformance check from the bench test --help inventory.",
 }
 
-// PB30 and DG4: every help spelling answers the usage line and then the notes block with
-// exit 0.
+// PB30, DG4, PS35: every help spelling answers the usage line and then the notes block with
+// exit 0, and the notes name no copy-aside route and no not-a-target sentence.
 func TestProbeHelpSpellings(t *testing.T) {
 	for _, spelling := range []string{"--help", "-h", "help"} {
 		t.Run(spelling, func(t *testing.T) {

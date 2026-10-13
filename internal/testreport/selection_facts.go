@@ -6,7 +6,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
-	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // CheckForm and PackageForm are the two selection forms a prepared request carries. A
@@ -76,10 +75,6 @@ func namedCheckRunPattern() string {
 	return "^" + registry.RootConformanceTest + "$"
 }
 
-// HandProbeRoute is the route for the two checks the probe refuses. `bench test` stays the
-// caller for them after a hand mutation, so the probe's refusal and its help name this route.
-const HandProbeRoute = "copy the file aside, edit it, run bench test --check <name>, and restore the copy"
-
 // packageValueRule states the one-expression rule of each --package value. The run passes
 // the value to Go as one typed argument, so a space-separated list fails as one missing
 // directory. The bench test help and the probe help each add the remedy their grammar takes.
@@ -91,17 +86,12 @@ const PackageExpressionNote = packageValueRule + "; repeat --package to run seve
 // probePackageNote is the probe help's package note. Its grammar takes one --package.
 const probePackageNote = packageValueRule + "; run one call per package or use a parent ./... pattern."
 
-// ProbeNotes states the four facts a caller needs to name a focused run correctly: what
-// each selection form takes, which two names are not probe targets, the hand route for
-// those two, and why an edited tree needs a rebuild first. The probe's help prints this
-// block, so the owner's behavior and its description stay one source.
+// ProbeNotes states what each of the two selection forms takes, so a caller names a
+// focused run correctly. The probe's help prints this block, so the owner's behavior and
+// its description stay one source.
 func ProbeNotes() string {
 	return "notes:\n  " + strings.Join([]string{
 		probePackageNote,
-		"--check <name> names a conformance check from the bench test --help inventory, and " +
-			proseCheckName + " and " + gate.SystemPhaseName + " are not probe targets.",
-		"For " + proseCheckName + " or " + gate.SystemPhaseName + ", " + HandProbeRoute + ".",
-		"A named check compiles from the run binary's source, so an edited tree needs " +
-			usage.WorktreeBuild + " first.",
+		"--check <name> names a conformance check from the bench test --help inventory.",
 	}, "\n  ")
 }

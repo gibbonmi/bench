@@ -14,11 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// proseCheck names the one `bench test` check that grades sentences instead of running a
-// Go test. The probe refuses it and the system suite as targets, because `bench test`
-// stays the caller for both after a hand mutation, and the refusal names that route.
-const proseCheck = "prose"
-
 // probeFields is the verdict row's schema. failed_tests is a genuine count, so the row
 // renders through toon.TableTyped and that cell stays an integer on a round-trip.
 var probeFields = []string{"verdict", "subject", "mutation", "cause", "failed_tests", "restored"}
@@ -81,15 +76,12 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 	if line != "" {
 		return line, 1
 	}
-	if mutant.miss {
-		return renderInvalidMutation(subject, input.cell, parsed)
-	}
 	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
 	if line != "" {
 		return line, code
 	}
-	if line := gradeCheckTarget(parsed); line != "" {
-		return line, 1
+	if mutant.miss {
+		return renderInvalidMutation(subject, input.cell, request)
 	}
 	if line := gradeGateLock(root); line != "" {
 		return line, 1
@@ -102,15 +94,13 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 	return probe(replacer, root, subject, mutant, mutation, request, baseline)
 }
 
-func renderInvalidMutation(subject subject, mutation string, parsed usage.Result) (string, int) {
+// renderInvalidMutation answers a substring miss. Its selection cells come from the prepared
+// request, so the row names the selection that the focused run would have run.
+func renderInvalidMutation(subject subject, mutation string, request testreport.Request) (string, int) {
 	cells := verdictCells{verdict: "invalid", cause: "substring-miss", restored: untouchedCell}
-	form, target, run := "package", parsed.Flags["--package"], testreport.AllTests
-	if check, ok := parsed.Flags["--check"]; ok {
-		form, target = "check", check
-	} else if pattern, ok := parsed.Flags["--run"]; ok {
-		run = pattern
-	}
-	out, err := envelope{cells: cells, subject: subject.display, mutation: mutation, form: form, target: target, run: run, command: 1}.answer("")
+	e := selected(subject, mutation, cells, request)
+	e.command = 1
+	out, err := e.answer("")
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
@@ -125,23 +115,14 @@ func selectionArgs(parsed usage.Result) []string {
 		args = append(args, "--check", check)
 	} else {
 		args = append(args, "--package", parsed.Flags["--package"])
-		if run, ok := parsed.Flags["--run"]; ok {
-			args = append(args, "--run", run)
-		}
+	}
+	if run, ok := parsed.Flags["--run"]; ok {
+		args = append(args, "--run", run)
 	}
 	if _, ok := parsed.Flags["--full"]; ok {
 		args = append(args, "--full")
 	}
 	return args
-}
-
-func gradeCheckTarget(parsed usage.Result) string {
-	switch parsed.Flags["--check"] {
-	case proseCheck, gate.SystemPhaseName:
-		hint := "--check prose and --check system are not probe targets; " + testreport.HandProbeRoute
-		return toon.Errorf("probe focused run unsupported", hint) + "\n"
-	}
-	return ""
 }
 
 // gradeGateLock refuses while a gate run holds the tree. The gate grades the bytes it

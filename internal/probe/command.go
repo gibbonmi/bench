@@ -5,6 +5,7 @@
 package probe
 
 import (
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -12,7 +13,7 @@ import (
 )
 
 // Usage is the one owner of the bench probe grammar line.
-const Usage = "bench probe <file> (--swap <old> (--with <new> | --with-file <path>) [--occurrence <n>] | --omit <old> [--occurrence <n>] | --unwrap <call> [--occurrence <n>] | --insert-before <anchor> (--with <text> | --with-file <path>) [--occurrence <n>] | --omit-file <path> | --delete | (--swap <old> --with <new> | --omit <old>)...) (--package <expr> [--run <go-regex>] | --check <name>) [--full]"
+const Usage = "bench probe <file> (--swap <old> (--with <new> | --with-file <path>) [--occurrence <n>] | --omit <old> [--occurrence <n>] | --unwrap <call> [--occurrence <n>] | --insert-before <anchor> (--with <text> | --with-file <path>) [--occurrence <n>] | --omit-file <path> | --delete | (--swap <old> --with <new> | --omit <old>)...) (--package <expr> [--run <go-regex>] | --check <name> | --check system --run <go-regex>) [--full]"
 
 // grammar declares the one argument shape the verb parses through usage.Parse. Exactly
 // one mutation group and exactly one selection form are required, because a probe that
@@ -42,8 +43,9 @@ var grammar = usage.Grammar{
 
 // Command parses one probe invocation, resolves the repository root, and runs the probe.
 // The refusal order is fixed: usage, not in a repository, the subject, the mutation input,
-// the mutation match, the selection, the unsupported check, then the gate lock. Every one of those
-// runs before the preserved copy is written and before any run child starts.
+// the mutation match, the selection, the substring miss, the gate lock, then the baseline.
+// Every one of those runs before the preserved copy is written, and only the baseline
+// starts a run child.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(probeGrammar(), args)
 	if line != "" {
@@ -144,7 +146,9 @@ func gradeForms(parsed usage.Result) (string, int) {
 		return usageLine()
 	case pkg == check:
 		return usageLine()
-	case run && !pkg:
+	// A run pattern selects within a package expression or the system suite. Every other
+	// check runs a fixed pattern, so a pattern there would be dropped in silence.
+	case run && !pkg && parsed.Flags["--check"] != gate.SystemPhaseName:
 		return usageLine()
 	}
 	return "", 0

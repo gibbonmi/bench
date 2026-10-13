@@ -191,27 +191,32 @@ func listRecordSurfaces(t *testing.T, f *fixture) string {
 	return strings.Join(lines, "\n")
 }
 
-// PB7: the check form builds the request `bench test` builds for the same check name, so
-// the two verbs cannot disagree about what a named check selects.
+// PB7, PS30: the check form builds the request `bench test` builds for the same selection,
+// a system run pattern included, so the two verbs cannot disagree about what a named check
+// selects.
 func TestProbeSelectsTheCheckForm(t *testing.T) {
 	f := newFixture(t)
-	parsed, line, code := usage.Parse(grammar, []string{"clamp.go", "--omit", "n < 0", "--check", "line-routing"})
-	if line != "" {
-		t.Fatalf("parse = (%q, %d), want an accepted selection", line, code)
-	}
-	if got := strings.Join(selectionArgs(parsed), " "); got != "--check line-routing" {
-		t.Fatalf("selection args = %q, want %q", got, "--check line-routing")
-	}
-	got, line, _ := testreport.Prepare(f.root, selectionArgs(parsed))
-	if line != "" {
-		t.Fatalf("prepare refused the probe's check form: %q", line)
-	}
-	want, line, _ := testreport.Prepare(f.root, []string{"--check", "line-routing"})
-	if line != "" {
-		t.Fatalf("prepare refused the reference check form: %q", line)
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("probe request = %#v, want %#v", got, want)
+	for _, selection := range [][]string{{"--check", "line-routing"}, {"--check", "system", "--run", "^X$"}} {
+		t.Run(strings.Join(selection, " "), func(t *testing.T) {
+			parsed, line, code := usage.Parse(grammar, append([]string{"clamp.go", "--omit", "n < 0"}, selection...))
+			if line != "" {
+				t.Fatalf("parse = (%q, %d), want an accepted selection", line, code)
+			}
+			if got := selectionArgs(parsed); !reflect.DeepEqual(got, selection) {
+				t.Fatalf("selection args = %q, want %q", got, selection)
+			}
+			got, line, _ := testreport.Prepare(f.root, selectionArgs(parsed))
+			if line != "" {
+				t.Fatalf("prepare refused the probe's check form: %q", line)
+			}
+			want, line, _ := testreport.Prepare(f.root, selection)
+			if line != "" {
+				t.Fatalf("prepare refused the reference check form: %q", line)
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Fatalf("probe request = %#v, want %#v", got, want)
+			}
+		})
 	}
 }
 
