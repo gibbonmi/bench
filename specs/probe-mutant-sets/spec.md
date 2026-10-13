@@ -353,7 +353,292 @@ The authored plan uses version 1, as `references/completion-plan.md` states. The
 Each code chunk names one central-property probe.
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"PM-A","tickets":["1-repeat-the-probe-package.md"],"verification":[{"id":"probe-family","command":"bench test --package ./internal/probe/..."},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"central-property","command":"bench test --package ./internal/probe/...","probe":"Pass only the last --package value from selectionArgs. TestProbeRepeatsThePackage must turn red."}]},{"id":"PM-B","tickets":["2-hold-one-run-binary-across-runs.md"],"verification":[{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"runbinary","command":"bench test --package ./internal/runbinary"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"central-property","command":"bench test --package ./internal/testreport","probe":"Reuse the held run binary without its validation before a later run. TestHeldRunsOwnAFreshBuildWhenStale must turn red."}]},{"id":"PM-C1","tickets":["3-share-the-mutation-flag-grammar.md"],"verification":[{"id":"probe-family","command":"bench test --package ./internal/probe/..."},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"central-property","command":"bench test --package ./internal/probe/...","probe":"Drop the prose --expect case from the cross-half rule. TestExpectRequiresTheNamedWitness must turn red."}]},{"id":"PM-C2","tickets":["4-grade-a-mutant-set.md"],"verification":[{"id":"probe-family","command":"bench test --package ./internal/probe/..."},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"central-property","command":"bench test --package ./internal/probe/...","probe":"Skip the restore between two mutants, so the second mutant stacks on the first. TestMutantSetRunsEachMutantAlone must turn red."}]},{"id":"PM-D","tickets":["5-import-one-mutant-row.md"],"verification":[{"id":"probe-family","command":"bench test --package ./internal/probe/..."},{"id":"record-forms","command":"bench test --package ./internal/reviewrecord/..."},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"central-property","command":"bench test --package ./internal/reviewrecord/recordcmd","probe":"Check --exit-code against the command exit instead of the selected row's exit. TestVerificationChecksTheRowExit must turn red."}]},{"id":"PM-E","tickets":["6-document-the-mutant-set.md"],"verification":[{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"conformance-meta","command":"bench test --check conformance-meta"},{"id":"prose","command":"bench test --check prose"},{"id":"anchors-package","command":"bench test --package ./internal/anchors"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/probe-mutant-sets/spec.md"},{"id":"probe-family","command":"bench test --package ./internal/probe/..."},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"runbinary","command":"bench test --package ./internal/runbinary"},{"id":"record-forms","command":"bench test --package ./internal/reviewrecord/..."},{"id":"anchors-package","command":"bench test --package ./internal/anchors"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"system","command":"bench test --check system"}]}
+{
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "probe-mutant-sets-build-20261013",
+    "orchestrator_session": "claude:pm-orchestrator-20261013",
+    "author_limit": 1,
+    "assignments": {
+      "1-repeat-the-probe-package.md": [],
+      "2-hold-one-run-binary-across-runs.md": [],
+      "3-share-the-mutation-flag-grammar.md": [],
+      "4-grade-a-mutant-set.md": [],
+      "5-import-one-mutant-row.md": [],
+      "6-document-the-mutant-set.md": []
+    }
+  },
+  "chunks": [
+    {
+      "id": "PM-A",
+      "tickets": [
+        "1-repeat-the-probe-package.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "ticket": "1-repeat-the-probe-package.md"
+        },
+        {
+          "id": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "ticket": "1-repeat-the-probe-package.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "1-repeat-the-probe-package.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "1-repeat-the-probe-package.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "1-repeat-the-probe-package.md"
+        },
+        {
+          "id": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "probe": "Pass only the last --package value from selectionArgs. TestProbeRepeatsThePackage must turn red.",
+          "ticket": "1-repeat-the-probe-package.md"
+        }
+      ]
+    },
+    {
+      "id": "PM-B",
+      "tickets": [
+        "2-hold-one-run-binary-across-runs.md"
+      ],
+      "verification": [
+        {
+          "id": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "ticket": "2-hold-one-run-binary-across-runs.md"
+        },
+        {
+          "id": "runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "ticket": "2-hold-one-run-binary-across-runs.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "2-hold-one-run-binary-across-runs.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "2-hold-one-run-binary-across-runs.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "2-hold-one-run-binary-across-runs.md"
+        },
+        {
+          "id": "central-property",
+          "command": "bench test --package ./internal/testreport",
+          "probe": "Reuse the held run binary without its validation before a later run. TestHeldRunsOwnAFreshBuildWhenStale must turn red.",
+          "ticket": "2-hold-one-run-binary-across-runs.md"
+        }
+      ]
+    },
+    {
+      "id": "PM-C1",
+      "tickets": [
+        "3-share-the-mutation-flag-grammar.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "ticket": "3-share-the-mutation-flag-grammar.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "3-share-the-mutation-flag-grammar.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "3-share-the-mutation-flag-grammar.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "3-share-the-mutation-flag-grammar.md"
+        },
+        {
+          "id": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "probe": "Drop the prose --expect case from the cross-half rule. TestExpectRequiresTheNamedWitness must turn red.",
+          "ticket": "3-share-the-mutation-flag-grammar.md"
+        }
+      ]
+    },
+    {
+      "id": "PM-C2",
+      "tickets": [
+        "4-grade-a-mutant-set.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "ticket": "4-grade-a-mutant-set.md"
+        },
+        {
+          "id": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "ticket": "4-grade-a-mutant-set.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "4-grade-a-mutant-set.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "4-grade-a-mutant-set.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "4-grade-a-mutant-set.md"
+        },
+        {
+          "id": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "probe": "Skip the restore between two mutants, so the second mutant stacks on the first. TestMutantSetRunsEachMutantAlone must turn red.",
+          "ticket": "4-grade-a-mutant-set.md"
+        }
+      ]
+    },
+    {
+      "id": "PM-D",
+      "tickets": [
+        "5-import-one-mutant-row.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "ticket": "5-import-one-mutant-row.md"
+        },
+        {
+          "id": "record-forms",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "ticket": "5-import-one-mutant-row.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "5-import-one-mutant-row.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "5-import-one-mutant-row.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "5-import-one-mutant-row.md"
+        },
+        {
+          "id": "central-property",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "probe": "Check --exit-code against the command exit instead of the selected row's exit. TestVerificationChecksTheRowExit must turn red.",
+          "ticket": "5-import-one-mutant-row.md"
+        }
+      ]
+    },
+    {
+      "id": "PM-E",
+      "tickets": [
+        "6-document-the-mutant-set.md"
+      ],
+      "verification": [
+        {
+          "id": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "ticket": "6-document-the-mutant-set.md"
+        },
+        {
+          "id": "conformance-meta",
+          "command": "bench test --check conformance-meta",
+          "ticket": "6-document-the-mutant-set.md"
+        },
+        {
+          "id": "prose",
+          "command": "bench test --check prose",
+          "ticket": "6-document-the-mutant-set.md"
+        },
+        {
+          "id": "anchors-package",
+          "command": "bench test --package ./internal/anchors",
+          "ticket": "6-document-the-mutant-set.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "6-document-the-mutant-set.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "6-document-the-mutant-set.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "6-document-the-mutant-set.md"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "coverage",
+      "command": "bench coverage --check specs/probe-mutant-sets/spec.md"
+    },
+    {
+      "id": "probe-family",
+      "command": "bench test --package ./internal/probe/..."
+    },
+    {
+      "id": "testreport",
+      "command": "bench test --package ./internal/testreport"
+    },
+    {
+      "id": "runbinary",
+      "command": "bench test --package ./internal/runbinary"
+    },
+    {
+      "id": "record-forms",
+      "command": "bench test --package ./internal/reviewrecord/..."
+    },
+    {
+      "id": "anchors-package",
+      "command": "bench test --package ./internal/anchors"
+    },
+    {
+      "id": "command-package",
+      "command": "bench test --package ./cmd/bench"
+    },
+    {
+      "id": "system",
+      "command": "bench test --check system"
+    }
+  ]
+}
 ```
 
 ## Testing decisions
