@@ -1983,7 +1983,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ps-d-standards-1",
+          "performer": "claude:ps-d-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-standards",
+            "digest": "sha256:24f448d28d9b3d97474d0fe3f11ddb30304bfd78e7c29b3d54ff0224039babab",
+            "excerpt": "Standards axis, chunk PS-D, pair 7a55152eebda..c446eaf576c8, opus medium. Findings: 1.\nS1 internal/probe/lock.go:62-74 against internal/gocache/lock.go:102-119,162: lockSubject reports any F_SETLK error as in use, while gocache's contended() owns the contention rule (EAGAIN or EACCES); an ENOLCK prints a false in-use line (AGENTS.md one source per fact). Confidence 6.\nHolder refactor confirmed with no new process seam; adopt/transaction/lock.go is a different fact.\n"
+          },
+          "axis": "Standards",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "c446eaf576c86000c18c2d03b271d93071533919",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-d-spec-1",
+          "performer": "claude:ps-d-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-spec",
+            "digest": "sha256:3d0d12c87e8439f70512ebff6a17bcbedf30fa36f7a962c5a0df7d3f112f4385",
+            "excerpt": "Spec axis, chunk PS-D (PS58-PS68, PS75), pair 7a55152eebda..c446eaf576c8, opus medium. Findings: 0.\nAll rows hold, and the release runs on the exit-2 kept-copy answer without touching the copy.\nRuling: release() ignoring every removal error is non-behavioral and follows preservation.release.\nAdvice: A1 only EAGAIN or EACCES reads in use; A2 a non-ENOENT lstat error loses its cause; A3 no test asserts probe-locks absent after exit 2.\n"
+          },
+          "axis": "Spec",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "c446eaf576c86000c18c2d03b271d93071533919",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ps-d-coverage-1",
+          "performer": "claude:ps-d-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-coverage",
+            "digest": "sha256:62a28c5e32c32258d05088574e76260a29c0ba0751f5c60a4757aef92a305250",
+            "excerpt": "Coverage axis, chunk PS-D, pair 7a55152eebda..c446eaf576c8, opus medium. Findings: 3.\nC1 internal/probe/lock.go:63-66: no test drives the open ENOENT retry or the third-ENOENT refusal. Confidence 8.\nC2 internal/probe/lock.go:62,67-69: no test drives O_NOFOLLOW or another open error (ELOOP or EACCES). Confidence 8.\nC3 internal/probe/lock.go:58,62: no test asserts directory mode 0700 or file mode 0600. Confidence 7.\nProbes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "c446eaf576c86000c18c2d03b271d93071533919",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2167,3 +2234,27 @@ PS-C: 2 findings. The worst issue is C1.
 - C2 (auto-fix, ticket 4, confidence 8): no test puts a control byte in the first build line, so `sanitize.Preview` at `internal/probe/verdict.go:49` has no red-capable test.
 
 Repair targets: 4. Ticket 3 takes S1 and C1, and ticket 4 takes S2 and C2.
+
+## PS-D pickup
+
+Chunk PS-D has used 0 of its 2 repair cycles after its initial review.
+
+### Standards
+
+PS-D: 1 finding.
+
+- S1 (auto-fix after a fence expansion, confidence 6): `internal/probe/lock.go:62-74` reads every `F_SETLK` error as in use. The contention rule of `internal/gocache/lock.go:162` (EAGAIN or EACCES) must be the one source, and any other lock error must read lock-unavailable.
+
+### Spec
+
+PS-D: 0 findings. The release that ignores every removal error follows `preservation.release`, and the orchestrator flags it for reviewer veto.
+
+### Coverage
+
+PS-D: 3 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 8): no test drives the open ENOENT retry or the third-ENOENT refusal at `internal/probe/lock.go:63-66`.
+- C2 (auto-fix, confidence 8): no test drives `O_NOFOLLOW` or another open error at `internal/probe/lock.go:62` and `:67-69`.
+- C3 (auto-fix, confidence 7): no test asserts the 0700 directory mode or the 0600 file mode that the spec states.
+
+Repair targets: 4 (S1, C1, C2, and C3) for ticket 5.
