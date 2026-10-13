@@ -102,7 +102,7 @@ A ticket author commits its ticket on a lane pass before the next charge starts.
 
 A worktree isolates the working tree, not the repo-global stash stack a concurrent delegate shares. A charge bans `git stash` and names the substitute, because the destructive-git guard refuses only `git stash drop` and `git stash clear`.
 
-A probe runs through `bench probe`, which preserves the subject, applies one mutation, and proves the restore. A mutation is a swap, an omission, an unwrap, an insertion, a deletion, or a combined mutant of repeated `--swap` and `--omit` edits. The grammar in `bench probe --help` includes `--insert-before`, `--delete`, `--with-file`, `--occurrence`, `--expect`, and the prose and system check targets. The copy-aside sequence stays for a non-probe edit that must test the committed version.
+A probe runs through `bench probe`, which preserves the subject, applies one mutation, and proves the restore. A mutation is a swap, an omission, an unwrap, an insertion, a deletion, or a combined mutant of repeated `--swap` and `--omit` edits. `bench probe --help` holds the grammar. The copy-aside sequence stays for a non-probe edit that must test the committed version.
 `cp` the working file aside, restore the committed version with `git show HEAD:<path> > <path>`, test, then copy it back. The copy lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a
 glob.
 

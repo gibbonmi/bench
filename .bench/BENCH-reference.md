@@ -257,14 +257,7 @@ target operand.
 
 The mutation is a swap, an omission, an unwrap, an insertion, a deletion, or a
 combined mutant, and `bench probe --help` holds the grammar of each form.
-`--insert-before <anchor>` puts the text before the anchor.
-A swap or an insertion reads its text from `--with`, or from a file through `--with-file`.
-`--delete` removes the subject for the run, and a mutation that empties the subject refuses and names `--delete`.
-Repeated `--swap` and `--omit` edits make one combined mutant, and each edit matches the start bytes of the subject.
-An old string that matches more than once refuses, unless `--occurrence <n>` selects one match.
-
-The focused run is one `--package` expression or one check from the
-`bench test --help` inventory, and `--check system` also takes a `--run` pattern.
+The focused run is one package or one check from the `bench test --help` inventory.
 A `--check prose` probe grades a Markdown subject, and its `failed_tests` cell counts the prose findings.
 A prose probe of a file that the prose check does not read refuses with `probe subject not graded`.
 The mutated run builds its run binary from the mutant, so a system probe needs no manual rebuild.
@@ -284,7 +277,6 @@ A `selection[1]{form,target,run,baseline,ran}` row follows the verdict row. Its
 cells name the form, the target, the `-run` pattern, the baseline outcome, and
 the count of the tests that ran. A `probe_execution` row follows with the result
 schema, the command exit, the mutated-run exit or `null`, and the byte count after it.
-The help names the `--package` and `--check` forms in a `notes:` block.
 
 The verdict row's `first_failure` cell names the first failed test, or `null` when the run names no failed test.
 `--expect <test>` names the expected witness, and a prose probe takes no `--expect`.
