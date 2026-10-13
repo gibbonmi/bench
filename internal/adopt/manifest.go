@@ -10,7 +10,6 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"io"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -71,28 +70,6 @@ func ReadManifest(path string) (Manifest, error) {
 
 type manifestRow struct {
 	rel, hash string
-}
-
-func writeManifest(path, version string, rows []manifestRow) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	tmp := path + ".tmp"
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, manifestMode)
-	if err != nil {
-		return err
-	}
-	_, err = f.Write(manifestBytes(version, rows))
-	cerr := f.Close()
-	if err != nil {
-		_ = os.Remove(tmp)
-		return err
-	}
-	if cerr != nil {
-		_ = os.Remove(tmp)
-		return cerr
-	}
-	return os.Rename(tmp, path)
 }
 
 func manifestBytes(version string, rows []manifestRow) []byte {
