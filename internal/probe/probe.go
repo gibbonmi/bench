@@ -29,14 +29,22 @@ var selectionFields = []string{"form", "target", "run", "baseline", "ran"}
 // the row, so a reader can tell a complete answer from a cut one.
 var executionFields = []string{"schema", "command_exit_code", "focused_exit_code", "trailing_bytes"}
 
+// answerTable is one table of an answer's envelope. A table that is not several holds exactly
+// one row.
+type answerTable struct {
+	name    string
+	fields  []string
+	several bool
+}
+
 // resultTables names the envelope's three one-row tables in their printed order.
-var resultTables = []struct {
-	name   string
-	fields []string
-}{{"probe", probeFields}, {"selection", selectionFields}, {"probe_execution", executionFields}}
+var resultTables = []answerTable{{name: "probe", fields: probeFields}, {name: "selection", fields: selectionFields}, {name: "probe_execution", fields: executionFields}}
 
 // restoredCell is the restored cell of a probe whose restore was proven byte-exact.
 const restoredCell = "yes"
+
+// substringMissCause is the cause of a mutation whose old string the subject does not hold.
+const substringMissCause = "substring-miss"
 
 // resultSchema is the schema cell of the execution row. It names the field set of the
 // three tables, so it changes with them, and a reader refuses any other value.
@@ -77,41 +85,72 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 	if line != "" {
 		return line, 1
 	}
-	input, line := mutationInput(parsed)
-	if line != "" {
-		return line, 1
+	if _, ok := parsed.Flags[mutantsFlag.Name]; ok {
+		return runSet(replacer, root, parsed, subject)
 	}
-	mutant, line := mutate(subject.start, input, subject.display)
-	if line != "" {
-		return line, 1
+	input, mutant, refused := resolveMutation(parsed, subject)
+	if refused != nil {
+		return refused.line(), 1
 	}
-	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
+	request, line, code := prepareSelection(root, parsed, subject)
 	if line != "" {
 		return line, code
-	}
-	if line := gradeProseSubject(subject, request); line != "" {
-		return line, 1
 	}
 	if mutant.miss {
 		return renderInvalidMutation(subject, input.cell, request)
 	}
-	if line := gradeGateLock(root); line != "" {
-		return line, 1
-	}
-	held, line := lockSubject(subject)
+	held, line := holdSubject(root, parsed.Positionals[0], subject)
 	if line != "" {
 		return line, 1
 	}
 	defer held.release()
-	if line := rereadSubject(root, parsed.Positionals[0], subject); line != "" {
-		return line, 1
-	}
 	mutation := input.cell
 	line, code, baseline := gradeBaseline(root, subject, mutation, request)
 	if line != "" {
 		return line, code
 	}
 	return probe(replacer, root, subject, mutant, mutation, request, baseline, parsed.Flags["--expect"])
+}
+
+// resolveMutation resolves the mutation of parsed and then its mutant over the subject's start
+// bytes, or the first refusal of the two.
+func resolveMutation(parsed usage.Result, subject subject) (mutation, mutationResult, *refusal) {
+	input, refused := mutationInput(parsed)
+	if refused != nil {
+		return mutation{}, mutationResult{}, refused
+	}
+	mutant, refused := mutate(subject.start, input, subject.display)
+	return input, mutant, refused
+}
+
+// prepareSelection prepares the focused selection of parsed and then grades the prose subject.
+// It answers the request, or the refusal line and its exit.
+func prepareSelection(root string, parsed usage.Result, subject subject) (testreport.Request, string, int) {
+	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
+	if line != "" {
+		return request, line, code
+	}
+	if line := gradeProseSubject(subject, request); line != "" {
+		return request, line, 1
+	}
+	return request, "", 0
+}
+
+// holdSubject grades the gate lock, takes the subject lock, and reads the subject again under
+// that lock. It answers the held lock, or the refusal line with no lock held.
+func holdSubject(root, operand string, subject subject) (subjectLock, string) {
+	if line := gradeGateLock(root); line != "" {
+		return subjectLock{}, line
+	}
+	held, line := lockSubject(subject)
+	if line != "" {
+		return subjectLock{}, line
+	}
+	if line := rereadSubject(root, operand, subject); line != "" {
+		held.release()
+		return subjectLock{}, line
+	}
+	return held, ""
 }
 
 // gradeProseSubject refuses a prose probe of a file that the prose grade never reads,
@@ -126,8 +165,7 @@ func gradeProseSubject(subject subject, request testreport.Request) string {
 // renderInvalidMutation answers a substring miss. Its selection cells come from the prepared
 // request, so the row names the selection that the focused run would have run.
 func renderInvalidMutation(subject subject, mutation string, request testreport.Request) (string, int) {
-	cells := verdictCells{verdict: "invalid", cause: "substring-miss", restored: untouchedCell}
-	e := selected(subject, mutation, cells, request)
+	e := selected(subject, mutation, untouchedCells(substringMissCause), request)
 	e.command = 1
 	out, err := e.answer("")
 	if err != nil {
@@ -137,13 +175,16 @@ func renderInvalidMutation(subject subject, mutation string, request testreport.
 }
 
 // selectionArgs spells the focused run in `bench test`'s own grammar, so the probe and
-// the verb it composes can never disagree about what a selection means.
+// the verb it composes can never disagree about what a selection means. Flags keeps only
+// the last --package value, so the package form reads Repeated.
 func selectionArgs(parsed usage.Result) []string {
 	var args []string
 	if check, ok := parsed.Flags["--check"]; ok {
 		args = append(args, "--check", check)
 	} else {
-		args = append(args, "--package", parsed.Flags["--package"])
+		for _, pkg := range parsed.Repeated["--package"] {
+			args = append(args, "--package", pkg)
+		}
 	}
 	if run, ok := parsed.Flags["--run"]; ok {
 		args = append(args, "--run", run)
@@ -169,9 +210,8 @@ func gradeGateLock(root string) string {
 	return ""
 }
 
-// probe preserves, mutates, runs, and restores. The restore is deferred around the run,
-// so an interrupt or a panic inside the focused run still puts the subject back before
-// the verb answers, and the render runs only after the restore has been proven.
+// probe preserves, mutates, runs, and restores. The render runs only after the restore has
+// been proven.
 func probe(replacer durablefile.Replacer, root string, subject subject, mutant mutationResult, mutation string, request testreport.Request, baseline testreport.OutcomeKind, expect string) (string, int) {
 	preserved, line := preserve(root, subject)
 	if line != "" {
@@ -180,19 +220,9 @@ func probe(replacer durablefile.Replacer, root string, subject subject, mutant m
 	if published, err := mutant.write(replacer, subject); err != nil {
 		return mutationFailure(replacer, subject, preserved, err, published)
 	}
-	var outcome testreport.Outcome
-	var report string
-	var focused int
-	restored, reason := false, ""
-	func() {
-		defer func() { restored, reason = restore(replacer, subject, preserved) }()
-		outcome, report, focused = testreport.Execute(root, request)
-	}()
-	if restored {
-		preserved.release()
-	}
-	cells, code := mutatedCells(outcome, expect, baseline)
-	return render(subject, mutation, cells, code, focused, request, report, preserved, restored, reason)
+	run := runRestored(replacer, subject, preserved, func() (testreport.Outcome, string, int) { return testreport.Execute(root, request) })
+	cells, code := mutatedCells(run.outcome, expect, baseline)
+	return render(subject, mutation, cells, code, run.focused, request, run.report, preserved, run.restored, run.reason)
 }
 
 // write puts the mutant in place of the subject: a removal through replacer for --delete,
@@ -214,13 +244,22 @@ func (r mutationResult) write(replacer durablefile.Replacer, subject subject) (b
 // the start bytes back, and a failed restore keeps it at exit 2.
 func mutationFailure(replacer durablefile.Replacer, subject subject, preserved preservation, err error, published bool) (string, int) {
 	line := toon.Errorf("probe mutation failed", err.Error()) + "\n"
+	if kept := recoverMutation(replacer, subject, preserved, err, published); kept != "" {
+		return line + keptCopy(preserved, kept), 2
+	}
+	return line, 1
+}
+
+// recoverMutation restores the subject after a published failed write and releases the copy
+// unless that restore failed. It answers the reason of a kept copy, or an empty string.
+func recoverMutation(replacer durablefile.Replacer, subject subject, preserved preservation, err error, published bool) string {
 	if published {
 		if restored, reason := restore(replacer, subject, preserved); !restored {
-			return line + keptCopy(preserved, err.Error()+"; restore: "+reason), 2
+			return err.Error() + "; restore: " + reason
 		}
 	}
 	preserved.release()
-	return line, 1
+	return ""
 }
 
 // keptCopy names the kept copy and the reason it is kept, because the caller restores the
@@ -247,7 +286,7 @@ func keptCopy(preserved preservation, reason string) string {
 func render(subject subject, mutation string, cells verdictCells, code, focused int, request testreport.Request, report string, preserved preservation, restored bool, reason string) (string, int) {
 	preservedBlock := ""
 	if !restored {
-		cells.verdict, code, cells.restored = "restore-failed", 2, "no"
+		code = cells.failRestore()
 		preservedBlock = keptCopy(preserved, reason)
 	}
 	e := selected(subject, mutation, cells, request)
@@ -291,14 +330,18 @@ func (e envelope) answer(suffix string) (string, error) {
 	}
 	suffix = mutant + suffix
 	e.trailing = len(suffix)
-	head, err := e.rows()
+	head, err := e.head()
 	if err != nil {
 		return "", err
 	}
 	return head + suffix, nil
 }
 
-func (e envelope) rows() (string, error) {
+// trailingBytes is the trailing_bytes cell.
+func (e envelope) trailingBytes() int { return e.trailing }
+
+// head renders the three tables, so a reader can compare a decoded envelope to its bytes.
+func (e envelope) head() (string, error) {
 	var focused, first any
 	if e.focused != nil {
 		focused = *e.focused
@@ -320,6 +363,13 @@ func (e envelope) rows() (string, error) {
 		out += block
 	}
 	return out, nil
+}
+
+// failRestore marks the cells of a failed restore and answers its exit, because that verdict
+// overrides every other answer.
+func (c *verdictCells) failRestore() int {
+	c.verdict, c.restored = "restore-failed", "no"
+	return 2
 }
 
 // verdictFor maps the focused run's outcome onto the word a caller cites. A failing test is

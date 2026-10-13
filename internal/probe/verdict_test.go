@@ -43,25 +43,25 @@ func TestExpectRequiresTheNamedWitness(t *testing.T) {
 		verdict, cause       string
 		first                string
 	}{
-		{"the named test", cannedFailure("caught"), "TestClampNegative", 0, "bit", "failed", "TestClampNegative"},
+		{"the named test", probetest.ClampFailure("caught").Events, "TestClampNegative", 0, "bit", "failed", "TestClampNegative"},
 		{"a subtest of the named test", subtestFailure, "TestClampNegative", 0, "bit", "failed", "TestClampNegative/zero"},
-		{"another test", cannedFailure("caught"), "TestClampPositive", 1, "invalid", "expect-missed", "TestClampNegative"},
-		{"a name prefix", cannedFailure("caught"), "TestClampNeg", 1, "invalid", "expect-missed", "TestClampNegative"},
+		{"another test", probetest.ClampFailure("caught").Events, "TestClampPositive", 1, "invalid", "expect-missed", "TestClampNegative"},
+		{"a name prefix", probetest.ClampFailure("caught").Events, "TestClampNeg", 1, "invalid", "expect-missed", "TestClampNegative"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFixture(t)
+			f := clampFixture(t)
 			installStubGo(t, f, tc.events, 1, "")
 			out, code := runProbe(t, append(probeArgs(), "--expect", tc.expect)...)
 			requireRow(t, out, code, tc.code, probeRow(t, tc.verdict, "clamp.go", "swap", tc.cause, 1, tc.first, "yes"))
-			requireSubjectBytes(t, f, clampSource)
+			requireSubjectBytes(t, f, probetest.ClampSource)
 		})
 	}
 	t.Run("a passing mutated run", func(t *testing.T) {
-		f := newFixture(t)
-		installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Events: cannedPass})
+		f := clampFixture(t)
+		installStubStarts(t, f, probetest.ClampPass, probetest.ClampPass)
 		out, code := runProbe(t, append(probeArgs(), "--expect", "TestClampNegative")...)
 		requireRow(t, out, code, 1, probeRow(t, "silent", "clamp.go", "swap", "passed", 0, nil, "yes"))
-		requireSubjectBytes(t, f, clampSource)
+		requireSubjectBytes(t, f, probetest.ClampSource)
 	})
 	t.Run("prose check", func(t *testing.T) {
 		f := refusalFixture(t)
@@ -74,7 +74,7 @@ func TestExpectRequiresTheNamedWitness(t *testing.T) {
 // it reads null for every run that named no failed test.
 func TestFirstFailureNamesTheFirstFailedTest(t *testing.T) {
 	t.Run("two failed tests", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		installStubGo(t, f, unorderedFailures, 1, "")
 		out, code := runProbe(t, probeArgs()...)
 		requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 3, "TestClampNegative", "yes"))
@@ -86,19 +86,19 @@ func TestFirstFailureNamesTheFirstFailedTest(t *testing.T) {
 		args                     []string
 		verdict, cause, restored string
 	}{
-		{"silent run", probetest.Start{Events: cannedPass}, probetest.Start{Events: cannedPass}, probeArgs(), "silent", "passed", "yes"},
-		{"build failure", probetest.Start{Events: cannedPass}, probetest.Start{Events: buildFailedRun, Exit: 1}, unpatterned, "invalid", "build-failed", "yes"},
-		{"baseline refusal", probetest.Start{Exit: 1}, probetest.Start{Events: cannedPass}, probeArgs(), "invalid", "baseline-refused", "untouched"},
+		{"silent run", probetest.ClampPass, probetest.ClampPass, probeArgs(), "silent", "passed", "yes"},
+		{"build failure", probetest.ClampPass, probetest.Start{Events: buildFailedRun, Exit: 1}, unpatterned, "invalid", "build-failed", "yes"},
+		{"baseline refusal", probetest.Start{Exit: 1}, probetest.ClampPass, probeArgs(), "invalid", "baseline-refused", "untouched"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFixture(t)
+			f := clampFixture(t)
 			installStubStarts(t, f, tc.baseline, tc.mutated)
 			out, code := runProbe(t, tc.args...)
 			requireRow(t, out, code, 1, probeRow(t, tc.verdict, "clamp.go", "swap", tc.cause, 0, nil, tc.restored))
 		})
 	}
 	t.Run("prose bite", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		findings := trackProseNote(t, f)
 		out, code := runProbe(t, proseArgs...)
 		requireRow(t, out, code, 0, probeRow(t, "bit", "note.md", "swap", "failed", findings, nil, "yes"))
@@ -116,7 +116,7 @@ const unusedImport = `{"Action":"build-output","ImportPath":"probefixture","Outp
 // reads the cause baseline-build-failed.
 func TestMutantBuildFailureNamesItself(t *testing.T) {
 	t.Run("an unused import", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		installStubGo(t, f, unusedImport, 1, "")
 		out, code := runProbe(t, probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./")...)
 		mutant, err := toon.TableTyped("mutant", mutantFields, [][]any{{`./clamp.go:3:8: "fmt" imported and not used`}})
@@ -131,10 +131,10 @@ func TestMutantBuildFailureNamesItself(t *testing.T) {
 		if code != 1 || out[:at] != head {
 			t.Fatalf("stdout = (%q, %d), want %q then the mutant table and 1", out, code, head)
 		}
-		requireSubjectBytes(t, f, clampSource)
+		requireSubjectBytes(t, f, probetest.ClampSource)
 	})
 	t.Run("a control byte in the first build line", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		const line = "./clamp.go:3:8: \x1b[31mbroken"
 		events := `{"Action":"build-output","ImportPath":"probefixture","Output":"./clamp.go:3:8: \u001b[31mbroken\n"}
 {"Action":"build-fail","ImportPath":"probefixture"}`
@@ -149,12 +149,12 @@ func TestMutantBuildFailureNamesItself(t *testing.T) {
 		}
 	})
 	t.Run("a run-binary build script failure at the baseline", func(t *testing.T) {
-		f := newFixture(t)
-		installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Events: cannedPass})
+		f := clampFixture(t)
+		installStubStarts(t, f, probetest.ClampPass, probetest.ClampPass)
 		installBuildScript(t, f, "#!/usr/bin/env bash\necho './cmd/bench/main.go:1:1: broken'\nexit 1\n")
 		out, code := runProbe(t, probeArgs()...)
 		requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "baseline-build-failed", 0, nil, "untouched"))
-		requireSubjectBytes(t, f, clampSource)
+		requireSubjectBytes(t, f, probetest.ClampSource)
 		requireHomeEmpty(t, f)
 	})
 }

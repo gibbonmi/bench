@@ -1057,6 +1057,14 @@
       "identity": "sha256:00a18d3eb59b4da0834f6bbbba079133350770b086903c31108b5cec2cbcd5e2",
       "source": "e582e98d628cb08c7d771cede6351e5b7d84aa0f",
       "evidence": "cb75a5b9b80b60d5acdb2cb5a7a6c35d418095c5"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT168-probe-batch",
+      "binding": "probe-mutant-sets",
+      "identity": "sha256:c907642fa7b944932fc5b3cdfd8e37301cdd448c971c72124c09415727f6b869",
+      "source": "239400fcc5a5d253103eff590c8f98f91e47ad46",
+      "evidence": "91965a4ee32a8a9fa5f8bf6b0e4817314535e374"
     }
   ]
 }

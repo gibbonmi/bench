@@ -10,6 +10,11 @@ import (
 // describes what happened to the subject.
 const untouchedCell = "untouched"
 
+// untouchedCells answers the cells of a probe that ended with cause before any write.
+func untouchedCells(cause string) verdictCells {
+	return verdictCells{verdict: "invalid", cause: cause, restored: untouchedCell}
+}
+
 // baselineCause prefixes the baseline's own outcome kind, so a cause names which of the two
 // runs reached the kind it carries.
 const baselineCause = "baseline-"
@@ -31,19 +36,19 @@ func gradeBaseline(root string, subject subject, mutation string, request testre
 	if outcome.Kind == testreport.OutcomePassed {
 		return "", 0, outcome.Kind
 	}
-	cells := verdictCells{
-		verdict:  "invalid",
-		cause:    baselineCause + string(outcome.Kind),
-		failed:   outcome.FailedTests,
-		first:    firstFailure(outcome),
-		restored: untouchedCell,
-		baseline: string(outcome.Kind),
-	}
-	e := selected(subject, mutation, cells, request)
+	e := selected(subject, mutation, baselineCells(outcome), request)
 	e.command = 1
 	out, err := e.answer(report)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1, outcome.Kind
 	}
 	return out, 1, outcome.Kind
+}
+
+// baselineCells answers the cells of a probe whose baseline did not pass. The row is invalid,
+// its cause and failures are the baseline's own, and the subject is untouched.
+func baselineCells(outcome testreport.Outcome) verdictCells {
+	cells := untouchedCells(baselineCause + string(outcome.Kind))
+	cells.failed, cells.first, cells.baseline = outcome.FailedTests, firstFailure(outcome), string(outcome.Kind)
+	return cells
 }

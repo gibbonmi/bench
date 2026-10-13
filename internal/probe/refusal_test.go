@@ -6,6 +6,10 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/probe/probetest"
+	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // gateRefusal is the refusal a probe answers while a gate run holds the tree.
@@ -28,7 +32,7 @@ func requireRefused(t *testing.T, f *fixture, out string, code int, want string,
 	if out != want || code != wantCode {
 		t.Fatalf("refusal = (%q, %d), want (%q, %d)", out, code, want, wantCode)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 	requireNoRunChild(t, f)
 }
@@ -37,8 +41,8 @@ func requireRefused(t *testing.T, f *fixture, out string, code int, want string,
 // observable on every refusal row.
 func refusalFixture(t *testing.T) *fixture {
 	t.Helper()
-	f := newFixture(t)
-	installStubGo(t, f, cannedPass, 0, "")
+	f := clampFixture(t)
+	installStubGo(t, f, probetest.ClampPass.Events, 0, "")
 	return f
 }
 
@@ -68,11 +72,15 @@ func TestProbeRefusesAnEmptyMutation(t *testing.T) {
 }
 
 // PB20: the gate grades the bytes it read, so a probe refuses while a gate run holds the
-// tree rather than changing the gate's subject under it. The test is also the lock holder's
-// entry: a process that startLockHolder starts holds the lock its environment names.
+// tree rather than changing the gate's subject under it. The test is also the entry of the
+// lock processes: one holds the lock its environment names, and one tries a subject lock once.
 func TestProbeRefusesUnderALiveGateRun(t *testing.T) {
 	if path := os.Getenv(lockHolderPathEnv); path != "" {
-		holdRecordLock(t, path, os.Getenv(lockHolderReleaseEnv))
+		holdRecordLock(t, path, os.Getenv(lockHolderReleaseEnv), os.Getenv(lockHolderReadyEnv))
+		return
+	}
+	if subject := os.Getenv(lockTrySubjectEnv); subject != "" {
+		tryRecordLock(subject)
 		return
 	}
 	f := refusalFixture(t)
@@ -123,7 +131,7 @@ func TestProbeRefusesAHostileSubject(t *testing.T) {
 		if !strings.HasSuffix(out, " is outside the repository\n") || code != 1 {
 			t.Fatalf("refusal = (%q, %d), want the outside-the-repository line and 1", out, code)
 		}
-		requireSubjectBytes(t, f, clampSource)
+		requireSubjectBytes(t, f, probetest.ClampSource)
 		requireHomeEmpty(t, f)
 		requireNoRunChild(t, f)
 	})
@@ -162,6 +170,14 @@ func TestProbeUsageNamesOneSelectionAndOneMutation(t *testing.T) {
 	}
 }
 
+// A later --package with an empty value refuses as the empty flag value, because an empty
+// expression names no package.
+func TestProbeRefusesAnEmptyLaterPackage(t *testing.T) {
+	f := refusalFixture(t)
+	out, code := runProbe(t, probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--package", "", "--run", "^TestClampNegative$")...)
+	requireRefused(t, f, out, code, toon.Usage(grammar.Cmd, usage.EmptyFlagValue("--package"))+"\n", 2)
+}
+
 // PB23: the selection is parsed before any write, so an unknown check answers `bench
 // test`'s own refusal and leaves no copy behind.
 func TestProbeRefusesAnUnknownCheckBeforeAnyWrite(t *testing.T) {
@@ -170,7 +186,7 @@ func TestProbeRefusesAnUnknownCheckBeforeAnyWrite(t *testing.T) {
 	if code != 2 || !strings.HasPrefix(out, "unknown check: no-such-check\n") || !strings.Contains(out, "checks:\n") {
 		t.Fatalf("refusal = (%q, %d), want the unknown-check inventory and 2", out, code)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 	requireNoRunChild(t, f)
 }
@@ -196,7 +212,7 @@ func TestProbeRefusesWhenPreservationFails(t *testing.T) {
 	if code != 1 || !strings.HasPrefix(out, "error: probe preservation failed — ") {
 		t.Fatalf("refusal = (%q, %d), want the preservation failure and 1", out, code)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireBaselineOnly(t, f)
 }
 
@@ -213,7 +229,7 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	if code != 1 || !strings.HasPrefix(out, "error: probe mutation failed — ") {
 		t.Fatalf("refusal = (%q, %d), want the mutation failure and 1", out, code)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 	requireBaselineOnly(t, f)
 }
@@ -222,7 +238,7 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 // A dropped, reworded, or extra note reds this row rather than passing as a fresh
 // expectation.
 var probeHelpNotes = []string{
-	"--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; run one call per package or use a parent ./... pattern.",
+	"--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; repeat --package to run several expressions in one call, or use a parent ./... pattern.",
 	"--check <name> names a check from the bench test --help inventory.",
 }
 
@@ -232,7 +248,7 @@ func TestProbeHelpSpellings(t *testing.T) {
 	for _, spelling := range []string{"--help", "-h", "help"} {
 		t.Run(spelling, func(t *testing.T) {
 			out, code := Command([]string{spelling})
-			if !strings.HasPrefix(out, "usage: bench probe <file> (--swap") {
+			if !strings.HasPrefix(out, "usage: bench probe <file> ((--swap") {
 				t.Fatalf("usage line = %q", out)
 			}
 			want := grammar.Help + "\nnotes:\n  " + strings.Join(probeHelpNotes, "\n  ") + "\n"

@@ -95,17 +95,47 @@ func TestParkingChild(t *testing.T) {
 	select {}
 }
 
+// parking is the pid-file contract of a parking builder or Go stub. Its parked parent is this
+// test binary, and that parent writes the parked descendant's pid to pidFile.
+type parking struct{ pidFile string }
+
+func armParking(t *testing.T) parking {
+	t.Helper()
+	return parking{pidFile: filepath.Join(t.TempDir(), "parked-descendant")}
+}
+
+// env is the environment that arms a parking script in a child process.
+func (p parking) env() []string {
+	return []string{cancelGoPIDEnv + "=" + p.pidFile, cancelParkingPath + "=" + os.Args[0]}
+}
+
+// setenv arms a parking script that this test process starts.
+func (p parking) setenv(t *testing.T) {
+	t.Helper()
+	for _, entry := range p.env() {
+		name, value, _ := strings.Cut(entry, "=")
+		t.Setenv(name, value)
+	}
+}
+
+// descendant waits for the parked descendant's pid and kills that process at cleanup.
+func (p parking) descendant(t *testing.T) int {
+	t.Helper()
+	pid := waitForPID(t, p.pidFile)
+	t.Cleanup(func() { _ = syscall.Kill(pid, syscall.SIGKILL) })
+	return pid
+}
+
 func signalGoHopCancelHelper(t *testing.T, testName, mode string) {
 	t.Helper()
-	pidFile := filepath.Join(t.TempDir(), "go-list-descendant")
+	parked := armParking(t)
 	goPath := parkingGo(t, mode == "test-after-decode")
 	helper := exec.Command(os.Args[0], "-test.run=^"+testName+"$", "-test.timeout="+deadline().String())
 	helper.Env = append(os.Environ(),
 		cancelGoModeEnv+"="+mode,
 		cancelGoPathEnv+"="+goPath,
-		cancelGoPIDEnv+"="+pidFile,
-		cancelParkingPath+"="+os.Args[0],
 	)
+	helper.Env = append(helper.Env, parked.env()...)
 	output, err := helper.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)
@@ -118,8 +148,7 @@ func signalGoHopCancelHelper(t *testing.T, testName, mode string) {
 	go func() { _, _ = io.ReadAll(output); waited <- helper.Wait() }()
 	t.Cleanup(func() { _ = helper.Process.Kill() })
 
-	descendant := waitForPID(t, pidFile)
-	t.Cleanup(func() { _ = syscall.Kill(descendant, syscall.SIGKILL) })
+	descendant := parked.descendant(t)
 	if err := helper.Process.Signal(syscall.SIGINT); err != nil {
 		t.Fatal(err)
 	}
@@ -226,15 +255,14 @@ func TestCommandDrainsBuilderGroupOnCancelSignal(t *testing.T) {
 func signalCancelHelper(t *testing.T, signal syscall.Signal) (string, int) {
 	t.Helper()
 	tempRoot := t.TempDir()
-	pidFile := filepath.Join(t.TempDir(), "builder-descendant")
+	parked := armParking(t)
 	helper := exec.Command(os.Args[0], "-test.run=^TestCommandDrainsBuilderGroupOnCancelSignal$", "-test.timeout="+deadline().String())
 	helper.Env = append(os.Environ(),
 		cancelHelperEnv+"="+signal.String(),
 		cancelTempRootEnv+"="+tempRoot,
 		cancelSourceEnv+"="+parkingBuilderSource(t),
-		cancelGoPIDEnv+"="+pidFile,
-		cancelParkingPath+"="+os.Args[0],
 	)
+	helper.Env = append(helper.Env, parked.env()...)
 	output, err := helper.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)
@@ -247,8 +275,7 @@ func signalCancelHelper(t *testing.T, signal syscall.Signal) (string, int) {
 	go func() { _, _ = io.ReadAll(output); waited <- helper.Wait() }()
 	t.Cleanup(func() { _ = helper.Process.Kill() })
 
-	descendant := waitForPID(t, pidFile)
-	t.Cleanup(func() { _ = syscall.Kill(descendant, syscall.SIGKILL) })
+	descendant := parked.descendant(t)
 	if err := helper.Process.Signal(signal); err != nil {
 		t.Fatal(err)
 	}
@@ -268,18 +295,21 @@ func signalCancelHelper(t *testing.T, signal syscall.Signal) (string, int) {
 // is production's: Command's signal context cancels canonicalBuild, which drains
 // the group it detached.
 func runCancelHelper(t *testing.T) {
-	factory := runbinary.Factory{
+	installTestSelectionFactory(t, runbinary.Factory{
 		TempRoot: os.Getenv(cancelTempRootEnv),
+		Build:    parkingBuild(os.Getenv(cancelSourceEnv)),
 		Verify:   func(string, string) error { return nil },
-	}
-	source := os.Getenv(cancelSourceEnv)
-	previous := selectRunBinary
-	selectRunBinary = func(ctx context.Context, _ string) (*runbinary.Selection, error) {
-		return factory.Own(ctx, source)
-	}
-	t.Cleanup(func() { selectRunBinary = previous })
+	})
 	out, code := Command(t.TempDir(), []string{"./..."})
 	fmt.Print(out, code)
+}
+
+// parkingBuild is the canonical build over the parking source, whatever source the
+// selection names.
+func parkingBuild(source string) runbinary.Builder {
+	return func(ctx context.Context, _, output string) error {
+		return runbinary.Build(ctx, source, output)
+	}
 }
 
 // parkingBuilderSource writes a source root whose builder reports one live

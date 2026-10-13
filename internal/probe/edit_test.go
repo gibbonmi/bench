@@ -4,16 +4,18 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/probe/probetest"
 )
 
 // PS1: a --with-file swap puts the exact multiline bytes of the file in place of the match.
 func TestWithFileSwapsMultilineBytes(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	old := "if n < 0 {\n\t\treturn 0\n\t}\n"
 	replacement := "if n < 0 {\n\t\tn = -n\n\t}\n\t// widened\n"
 	input := filepath.Join(scratchDir(t), "replacement")
 	writeFixtureFile(t, input, replacement, 0o644)
-	requireMutantBites(t, f, strings.Replace(clampSource, old, replacement, 1), "swap", "--swap", old, "--with-file", input)
+	requireMutantBites(t, f, strings.Replace(probetest.ClampSource, old, replacement, 1), "swap", "--swap", old, "--with-file", input)
 }
 
 // A --with-file swap whose file bytes equal the old string refuses with the empty-mutation
@@ -31,16 +33,16 @@ func TestWithFileSwapEqualToOldRefusesEmpty(t *testing.T) {
 func TestInsertBeforePutsTextBeforeTheAnchor(t *testing.T) {
 	anchor := "return n\n"
 	t.Run("with", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		text := "n++\n\t"
-		requireMutantBites(t, f, strings.Replace(clampSource, anchor, text+anchor, 1), "insert", "--insert-before", anchor, "--with", text)
+		requireMutantBites(t, f, strings.Replace(probetest.ClampSource, anchor, text+anchor, 1), "insert", "--insert-before", anchor, "--with", text)
 	})
 	t.Run("with-file", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		text := "n++\n\tn *= 2\n\t"
 		input := filepath.Join(scratchDir(t), "insertion")
 		writeFixtureFile(t, input, text, 0o644)
-		requireMutantBites(t, f, strings.Replace(clampSource, anchor, text+anchor, 1), "insert", "--insert-before", anchor, "--with-file", input)
+		requireMutantBites(t, f, strings.Replace(probetest.ClampSource, anchor, text+anchor, 1), "insert", "--insert-before", anchor, "--with-file", input)
 	})
 	t.Run("ambiguous anchor", func(t *testing.T) {
 		f := refusalFixture(t)
@@ -53,8 +55,8 @@ func TestInsertBeforePutsTextBeforeTheAnchor(t *testing.T) {
 // refuses with the count, and a value that is not a positive decimal is a usage refusal.
 func TestOccurrenceSelectsOneMatch(t *testing.T) {
 	t.Run("second match", func(t *testing.T) {
-		f := newFixture(t)
-		want := strings.Replace(clampSource, "return n", "return - n", 1)
+		f := clampFixture(t)
+		want := strings.Replace(probetest.ClampSource, "return n", "return - n", 1)
 		requireMutantBites(t, f, want, "swap", "--swap", "return", "--with", "return -", "--occurrence", "2")
 	})
 	t.Run("out of range", func(t *testing.T) {

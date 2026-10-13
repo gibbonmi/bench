@@ -5,26 +5,33 @@
 package probe
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"testing"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
-// interruptHelperEnv carries the fixture root to the helper half of the interrupt rows.
-// The fact under test is what a signal does to the verb, so the verb has to run in a
-// process the signal may end without taking the assertions with it.
-const interruptHelperEnv = "BENCH_PROBE_INTERRUPT_ROOT"
+// interruptHelperEnv carries the fixture root, and interruptArgvEnv the JSON argv, to the
+// helper half of the interrupt rows. The fact under test is what a signal does to the verb. So
+// the verb runs in a process that the signal may end without the assertions.
+const (
+	interruptHelperEnv = "BENCH_PROBE_INTERRUPT_ROOT"
+	interruptArgvEnv   = "BENCH_PROBE_INTERRUPT_ARGV"
+)
 
 // buildFailedRun is a package the run reported as failed with no failing test, which is
 // what a package that does not compile prints.
@@ -53,12 +60,12 @@ func requireBaselineOnly(t *testing.T, f *fixture) {
 // DG7: the probe starts one Go test before the mutation and one after it. The stub copies
 // the subject on each start, so the order is proven from outside the verb's own process.
 func TestProbeRunsTheBaselineFirst(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	copies := scratchDir(t)
 	record := "cp " + sanitize.ShellQuote(f.subject) + " " + sanitize.ShellQuote(copies) + "/$n\n"
 	installStubStarts(t, f,
-		probetest.Start{Hook: record, Events: cannedPass},
-		probetest.Start{Hook: record, Events: cannedFailure("caught"), Exit: 1})
+		probetest.Start{Hook: record, Events: probetest.ClampPass.Events},
+		probetest.Start{Hook: record, Events: bite.Events, Exit: 1})
 	if out, code := runProbe(t, probeArgs()...); code != 0 {
 		t.Fatalf("exit = %d, want 0\n%s", code, out)
 	}
@@ -66,7 +73,7 @@ func TestProbeRunsTheBaselineFirst(t *testing.T) {
 		t.Fatalf("Go test starts = %d, want 2", got)
 	}
 	first, err := os.ReadFile(filepath.Join(copies, "1"))
-	if err != nil || string(first) != clampSource {
+	if err != nil || string(first) != probetest.ClampSource {
 		t.Fatalf("the first start's subject = (%q, %v), want the unmutated bytes", first, err)
 	}
 	second, err := os.ReadFile(filepath.Join(copies, "2"))
@@ -82,7 +89,7 @@ func requireBaselineRefusal(t *testing.T, f *fixture, cause string, failed int, 
 	t.Helper()
 	out, code := runProbe(t, args...)
 	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", cause, failed, first, "untouched"))
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 	requireBaselineOnly(t, f)
 	return out
@@ -91,8 +98,8 @@ func requireBaselineRefusal(t *testing.T, f *fixture, cause string, failed int, 
 // DG8, DG9, DG10: a red baseline is invalid rather than a bite, it names the tests that
 // were red before the probe ran, and it writes nothing.
 func TestProbeRefusesARedBaseline(t *testing.T) {
-	f := newFixture(t)
-	installStubStarts(t, f, probetest.Start{Events: cannedFailure("already red"), Exit: 1}, probetest.Start{Events: cannedPass})
+	f := clampFixture(t)
+	installStubStarts(t, f, alreadyRed, probetest.ClampPass)
 	out := requireBaselineRefusal(t, f, "baseline-failed", 1, "TestClampNegative", probeArgs()...)
 	if want := selectionRow(t, "package", "./", "^TestClampNegative$", "failed", 0); !strings.Contains(out, want) {
 		t.Fatalf("stdout = %q, want the selection row %q", out, want)
@@ -115,8 +122,8 @@ func TestProbeReportsABaselineWithoutAVerdict(t *testing.T) {
 		{"baseline-no-test-run", quietRun, 0, probeArgs()},
 	} {
 		t.Run(tc.cause, func(t *testing.T) {
-			f := newFixture(t)
-			installStubStarts(t, f, probetest.Start{Events: tc.events, Exit: tc.exit}, probetest.Start{Events: cannedPass})
+			f := clampFixture(t)
+			installStubStarts(t, f, probetest.Start{Events: tc.events, Exit: tc.exit}, probetest.ClampPass)
 			requireBaselineRefusal(t, f, tc.cause, 0, nil, tc.args...)
 		})
 	}
@@ -125,22 +132,22 @@ func TestProbeReportsABaselineWithoutAVerdict(t *testing.T) {
 // DG35: a baseline that prints no event at all reaches the no-packages refusal, so the
 // cause names that refusal instead of collapsing onto a red suite.
 func TestProbeReportsABaselineRefusal(t *testing.T) {
-	f := newFixture(t)
-	installStubStarts(t, f, probetest.Start{Exit: 1}, probetest.Start{Events: cannedPass})
+	f := clampFixture(t)
+	installStubStarts(t, f, probetest.Start{Exit: 1}, probetest.ClampPass)
 	requireBaselineRefusal(t, f, "baseline-refused", 0, nil, probeArgs()...)
 }
 
 // PB9, DG12: --full reaches both runs, so a long diagnostic from either one is previewed
 // without the flag and complete with it.
 func TestProbeForwardsFullToTheFocusedRun(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	long := strings.Repeat("d", bounds.PreviewRuneLimit+40)
-	red := probetest.Start{Events: cannedFailure(long), Exit: 1}
+	red := probetest.ClampFailure(long)
 	for _, tc := range []struct {
 		name              string
 		baseline, mutated probetest.Start
 	}{
-		{"mutated run", probetest.Start{Events: cannedPass}, red},
+		{"mutated run", probetest.ClampPass, red},
 		{"baseline", red, red},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -164,36 +171,142 @@ func TestProbeRestoresOnInterrupt(t *testing.T) {
 		runInterruptHelper(t, root)
 		return
 	}
-	sleeping := probetest.Start{Hook: "sleep 60\n", Events: cannedPass}
 	for _, tc := range []struct {
 		name            string
 		start           int
 		baseline        probetest.Start
 		cause, restored string
 	}{
-		{"baseline", 1, sleeping, "baseline-interrupted", "untouched"},
-		{"mutated run", 2, probetest.Start{Events: cannedPass}, "interrupted", "yes"},
+		{"baseline", 1, sleepingRun, "baseline-interrupted", "untouched"},
+		{"mutated run", 2, probetest.ClampPass, "interrupted", "yes"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFixture(t)
-			installStubStarts(t, f, tc.baseline, sleeping)
-			out := interruptedProbe(t, f, tc.start)
+			f := clampFixture(t)
+			installStubStarts(t, f, tc.baseline, sleepingRun)
+			out := interruptedProbe(t, f, probeArgs(), func() { awaitStubStart(t, f, tc.start) })
 			want := probeRow(t, "invalid", "clamp.go", "swap", tc.cause, 0, nil, tc.restored)
 			if !strings.Contains(out, want) {
 				t.Fatalf("helper stdout = %q, want the interrupted row %q", out, want)
 			}
-			requireSubjectBytes(t, f, clampSource)
+			requireSubjectBytes(t, f, probetest.ClampSource)
 			requireHomeEmpty(t, f)
 		})
 	}
 }
 
-// interruptedProbe runs the verb in a helper process, signals it once the numbered Go start
-// is in flight, and answers what the verb printed.
-func interruptedProbe(t *testing.T, f *fixture, start int) string {
+// A signal during mutant 1's run stops the set after that mutant's restore.
+func TestMutantSetStopsOnInterrupt(t *testing.T) {
+	f := clampFixture(t)
+	installSet(t, f, sleepingRun, bite)
+	out := interruptedProbe(t, f, setArgs(mutantsFile(t, guardSwap, returnSwap)), func() { awaitStubStart(t, f, 2) })
+	if want := setRows(t, interruptedRow, untouchedRow(2, "set-stopped")); !strings.HasPrefix(out, want) {
+		t.Fatalf("helper stdout = %q, want %q first", out, want)
+	}
+	requireStarts(t, f, 2)
+	requireSubjectBytes(t, f, probetest.ClampSource)
+	requireHomeEmpty(t, f)
+}
+
+// A signal during mutant 1's fresh build interrupts that run, and mutant 2 is never written.
+// The subject sits inside the run binary's closure, so the held binary no longer validates.
+func TestMutantSetStopsOnAnInterruptedBuild(t *testing.T) {
+	f := clampFixture(t)
+	main := filepath.Join(f.root, "cmd", "bench", "main.go")
+	start, err := os.ReadFile(main)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parked := parkSecondBuild(t, f)
+	installSet(t, f, bite, bite)
+	path := mutantsFile(t, []string{"--swap", "func main() {}", "--with", "func main() { _ = 1 }"}, []string{"--swap", "package main", "--with", "package main // set"})
+	out := interruptedProbe(t, f, slices.Concat([]string{"cmd/bench/main.go", "--mutants", path}, clampSelection), func() { awaitFile(t, parked) })
+	if want := setRows(t, interruptedRow, untouchedRow(2, "set-stopped")); !strings.HasPrefix(out, want) {
+		t.Fatalf("helper stdout = %q, want %q first", out, want)
+	}
+	requireStarts(t, f, 1)
+	if now, err := os.ReadFile(main); err != nil || string(now) != string(start) {
+		t.Fatalf("cmd/bench/main.go = (%q, %v), want the start bytes", now, err)
+	}
+}
+
+// A missed row keeps substring-miss through an interrupt and through a failed baseline, so
+// only the matching rows take the stop or the baseline cause.
+func TestMutantSetMissKeepsItsCause(t *testing.T) {
+	args := func(t *testing.T) []string { return setArgs(mutantsFile(t, guardSwap, missEntry, returnSwap)) }
+	t.Run("interrupt", func(t *testing.T) {
+		f := clampFixture(t)
+		installSet(t, f, sleepingRun, bite)
+		out := interruptedProbe(t, f, args(t), func() { awaitStubStart(t, f, 2) })
+		if want := setRows(t, interruptedRow, missRow(2), untouchedRow(3, "set-stopped")); !strings.HasPrefix(out, want) {
+			t.Fatalf("helper stdout = %q, want %q first", out, want)
+		}
+	})
+	t.Run("baseline", func(t *testing.T) {
+		f := clampFixture(t)
+		probetest.InstallSequence(t, f.marker, alreadyRed, bite, bite)
+		out, code := runProbe(t, args(t)...)
+		requireRow(t, out, code, 1, setRows(t, redRow(1), missRow(2), redRow(3)))
+	})
+	t.Run("restore failure", func(t *testing.T) {
+		f := clampFixture(t)
+		installSet(t, f, bite, bite)
+		router := subjectFaults()
+		router.Fail[restoreReplacement] = map[string]error{"rename": os.ErrPermission}
+		out, code := runSetWith(t, f, router.Replacer(), args(t))
+		requireRow(t, out, code, 2, setRows(t, restoreFailedRow(1), missRow(2), untouchedRow(3, "set-stopped")))
+	})
+}
+
+// A signal during mutant 1's restore, after its run completed, stops mutant 2 before its write.
+// The test's own handler keeps that signal from ending the test binary.
+func TestMutantSetStopsOnASignalDuringARestore(t *testing.T) {
+	f := clampFixture(t)
+	installSet(t, f, bite, bite)
+	caught := make(chan os.Signal, 1)
+	signal.Notify(caught, os.Interrupt)
+	defer signal.Stop(caught)
+	native := durablefile.Native()
+	replacer, renames := native, 0
+	replacer.Rename = func(oldpath, newpath string) error {
+		// The second rename of the subject is mutant 1's restore.
+		if renames++; renames == 2 {
+			if err := syscall.Kill(os.Getpid(), syscall.SIGINT); err != nil {
+				t.Fatal(err)
+			}
+			select {
+			case <-caught:
+				time.Sleep(settleDelay)
+			case <-time.After(interruptDeadline()):
+				t.Fatalf("the signal did not arrive within %s", interruptDeadline())
+			}
+		}
+		return native.Rename(oldpath, newpath)
+	}
+	out, code := runSetWith(t, f, replacer, setArgs(mutantsFile(t, guardSwap, returnSwap)))
+	requireRow(t, out, code, 1, setRows(t, biteRow(1, "swap"), untouchedRow(2, "set-stopped")))
+	requireStarts(t, f, 2)
+	requireSubjectBytes(t, f, probetest.ClampSource)
+	requireHomeEmpty(t, f)
+}
+
+// interruptedRow is the row of entry 1 whose run a signal ended after its write, and
+// sleepingRun is a mutated run that waits for that signal.
+var (
+	interruptedRow = []any{1, "invalid", "swap", "interrupted", 0, nil, 0, 1, 1, nil, "yes"}
+	sleepingRun    = probetest.Start{Hook: "sleep 60\n", Events: probetest.ClampPass.Events}
+)
+
+// interruptedProbe runs the verb over argv in a helper process, signals it once await returns,
+// and answers what the verb printed.
+func interruptedProbe(t *testing.T, f *fixture, argv []string, await func()) string {
 	t.Helper()
-	helper := exec.Command(os.Args[0], "-test.run=^TestProbeRestoresOnInterrupt$", "-test.timeout="+interruptDeadline().String())
-	helper.Env = append(os.Environ(), interruptHelperEnv+"="+f.root)
+	encoded, err := json.Marshal(argv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reentry := reentryArgv("TestProbeRestoresOnInterrupt")
+	helper := exec.Command(reentry[0], reentry[1:]...)
+	helper.Env = append(os.Environ(), interruptHelperEnv+"="+f.root, interruptArgvEnv+"="+string(encoded))
 	stdout, err := helper.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)
@@ -209,7 +322,7 @@ func interruptedProbe(t *testing.T, f *fixture, start int) string {
 		_ = helper.Wait()
 		answered <- string(body)
 	}()
-	awaitStubStart(t, f, start)
+	await()
 	if err := helper.Process.Signal(syscall.SIGINT); err != nil {
 		t.Fatal(err)
 	}
@@ -229,7 +342,11 @@ func runInterruptHelper(t *testing.T, root string) {
 	if err := os.Chdir(root); err != nil {
 		t.Fatal(err)
 	}
-	out, code := Command(probeArgs())
+	var argv []string
+	if err := json.Unmarshal([]byte(os.Getenv(interruptArgvEnv)), &argv); err != nil {
+		t.Fatal(err)
+	}
+	out, code := Command(argv)
 	fmt.Print(out)
 	fmt.Printf("exit=%d\n", code)
 }
@@ -239,14 +356,29 @@ func runInterruptHelper(t *testing.T, root string) {
 // baseline's start from the mutated run's.
 func awaitStubStart(t *testing.T, f *fixture, want int) {
 	t.Helper()
-	expiry := time.Now().Add(interruptDeadline())
-	for time.Now().Before(expiry) {
-		if startCount(t, f) >= want {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
+	if !pollUntil(func() bool { return startCount(t, f) >= want }) {
+		t.Fatalf("Go test start %d did not happen within %s", want, interruptDeadline())
 	}
-	t.Fatalf("Go test start %d did not happen within %s", want, interruptDeadline())
 }
 
 func interruptDeadline() time.Duration { return bounds.TestDeadline(runbinary.BuilderCancelGrace) }
+
+// settleDelay is the wait after an observed step, so the step that the observer awaits
+// completes too.
+const settleDelay = 50 * time.Millisecond
+
+// pollUntil polls done every 10 ms until done answers true or the interrupt deadline passes.
+// It reports whether done answered true.
+func pollUntil(done func() bool) bool {
+	for expiry := time.Now().Add(interruptDeadline()); time.Now().Before(expiry); time.Sleep(10 * time.Millisecond) {
+		if done() {
+			return true
+		}
+	}
+	return false
+}
+
+// reentryArgv runs this test binary again through the named test, under the interrupt deadline.
+func reentryArgv(test string) []string {
+	return []string{os.Args[0], "-test.run=^" + test + "$", "-test.timeout=" + interruptDeadline().String()}
+}

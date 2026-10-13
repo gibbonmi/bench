@@ -51,16 +51,17 @@ func TestOverrideAdmitsOneLandingThroughEveryWindow(t *testing.T) {
 }
 
 // TestOverrideIsConsumedAtPublish is BW74. The publication drops the override of its
-// assignment, so the override admits no later publication. The override of the build
-// assignment stays, because only its own landing consumes it.
+// assignment, so the override admits no later publication. The overrides before and after
+// it stay, because only each assignment's own landing consumes its override.
 func TestOverrideIsConsumedAtPublish(t *testing.T) {
 	t.Parallel()
 	request := "land-override-consumed"
 	build, light := windowLanding(t, request)
-	kept := grantOverride(t, build)
+	before := grantOverride(t, build)
 	grantOverride(t, light)
+	after := grantOverride(t, lightLandingOn(t, build, request+"-other"))
 	requireLanded(t, runVerb(t, verbLand, light.call(lightLandArgs(request, light)...)), "with the override")
-	requireOverrides(t, light.root, []intent.LandingOverride{kept}, "after the publication")
+	requireOverrides(t, light.root, []intent.LandingOverride{before, after}, "after the publication")
 }
 
 // TestOverrideSurvivesARefusedLanding is BW75. The overridden landing refuses red at its

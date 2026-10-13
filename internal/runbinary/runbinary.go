@@ -123,7 +123,7 @@ func (f Factory) Own(ctx context.Context, sourceRoot string) (*Selection, error)
 	if err := build(ctx, source, selection.Path); err != nil {
 		return nil, fmt.Errorf("build private Bench executable: %w", err)
 	}
-	if err := f.validate(source, selection.Path); err != nil {
+	if err := f.Validate(source, selection.Path); err != nil {
 		return nil, err
 	}
 	complete = true
@@ -142,7 +142,7 @@ func (f Factory) Inherit(sourceRoot, value string) (*Selection, error) {
 		}
 		source = canonical
 	}
-	if err := f.validate(source, value); err != nil {
+	if err := f.Validate(source, value); err != nil {
 		return nil, err
 	}
 	return &Selection{Path: value, SourceRoot: source}, nil
@@ -163,7 +163,10 @@ func (f Factory) canonicalVerify(sourceRoot, executable string) error {
 	return freshness.VerifyAt(sourceRoot, repairRoot, executable)
 }
 
-func (f Factory) validate(sourceRoot, executable string) error {
+// Validate accepts a cleaned absolute regular executable that the factory's verifier matches
+// to sourceRoot. Own and Inherit apply it once, and a holder of a selection applies it before
+// each reuse.
+func (f Factory) Validate(sourceRoot, executable string) error {
 	if executable == "" {
 		return errors.New("selected Bench executable path is empty")
 	}
@@ -191,9 +194,14 @@ func (f Factory) validate(sourceRoot, executable string) error {
 	return nil
 }
 
+// Owned reports whether the factory built this selection. An inherited selection reads false.
+func (s *Selection) Owned() bool {
+	return s != nil && s.dir != ""
+}
+
 // Close releases an owner-authored private directory after its children have returned.
 func (s *Selection) Close() error {
-	if s == nil || s.dir == "" {
+	if !s.Owned() {
 		return nil
 	}
 	s.closeOnce.Do(func() { s.closeErr = os.RemoveAll(s.dir) })

@@ -80,11 +80,14 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 	}
 	defer lock.Close()
 	if err := acquireExecutionLock(lock); err != nil {
-		fmt.Fprintln(stderr, besideDemotion("gate execution already in progress", persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
-		writeOwnerDiagnostic(stderr, gateOwnerPath(gitdir))
-		inspection := inspectAt(storageRoot, time.Now().UTC())
-		inspection.ReusableGreen = false
-		return Result{ActionExit: 1, Inspection: inspection}
+		if gocache.Contended(err) {
+			fmt.Fprintln(stderr, besideDemotion("gate execution already in progress", persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
+			writeOwnerDiagnostic(stderr, gateOwnerPath(gitdir))
+			inspection := inspectAt(storageRoot, time.Now().UTC())
+			inspection.ReusableGreen = false
+			return Result{ActionExit: 1, Inspection: inspection}
+		}
+		return operational(storageRoot, 0, stderr, besideDemotion("gate lock unavailable: "+err.Error(), persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
 	}
 	defer unlockExecutionLock(lock)
 	logGateEvent(ctx, gateLogRecord{Event: "gate.locked", Root: storageRoot, Path: gateLockPath(gitdir)})
@@ -218,14 +221,20 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, time.Now().UTC())}
 }
 
+// takeExecutionLock requests the non-blocking write lock on the gate lock file. Tests
+// replace it to return a lock error that no holder causes.
+var takeExecutionLock = func(f *os.File) error {
+	lock := gocache.RecordLock(syscall.F_WRLCK)
+	return syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock)
+}
+
 func acquireExecutionLock(f *os.File) error {
 	executionLockOwners.Lock()
 	defer executionLockOwners.Unlock()
 	if executionLockOwners.paths[f.Name()] {
 		return syscall.EAGAIN
 	}
-	lock := gocache.RecordLock(syscall.F_WRLCK)
-	if err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock); err != nil {
+	if err := takeExecutionLock(f); err != nil {
 		return err
 	}
 	executionLockOwners.paths[f.Name()] = true

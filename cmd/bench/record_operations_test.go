@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -18,8 +17,6 @@ import (
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
-	"github.com/gibbonmi/bench/internal/runbinary"
-	"github.com/gibbonmi/bench/internal/treetarget/kittest"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -125,54 +122,23 @@ func TestNativeRecordCLIJourney(t *testing.T) {
 	probeImportJourney(t, f, slug, record)
 }
 
-// The journey's Go streams and exits are authored here, apart from the probe tests. The
-// baseline passes. A biting mutated run fails one test and exits 1, so the probe command
-// exits 0 while its focused execution exits 1; a silent mutated run passes, so the command
-// exits 1 while its focused execution exits 0.
-const (
-	journeyPass = `{"Action":"run","Package":"benchkit/clamp","Test":"TestClampNegative"}
-{"Action":"pass","Package":"benchkit/clamp","Test":"TestClampNegative","Elapsed":0}
-{"Action":"pass","Package":"benchkit/clamp","Elapsed":0.01}`
-	journeyFailFormat = `{"Action":"run","Package":"benchkit/clamp","Test":"TestClampNegative"}
-{"Action":"output","Package":"benchkit/clamp","Test":"TestClampNegative","Output":"    %s\n"}
-{"Action":"fail","Package":"benchkit/clamp","Test":"TestClampNegative","Elapsed":0}
-{"Action":"fail","Package":"benchkit/clamp","Elapsed":0.01}`
-	journeySubject = "package clamp\n\n// Clamp keeps n at or above zero.\nfunc Clamp(n int) int {\n\tif n < 0 {\n\t\treturn 0\n\t}\n\treturn n\n}\n"
-)
-
 // probeImportJourney runs the real probe producer through the production dispatcher in the
 // fixture's linked Go root, then imports its selected bytes through the real record entry.
-// Each incomplete selection refuses with the record bytes unchanged.
+// Each incomplete selection refuses with the record bytes unchanged. The baseline passes. A
+// biting mutated run exits 1, so the probe command exits 0 and its focused execution exits 1.
+// A silent mutated run passes, so the command exits 1 and its focused execution exits 0.
 func probeImportJourney(t *testing.T, f *recordtest.Fixture, slug, record string) {
-	root, err := filepath.EvalSymlinks(f.Root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	kittest.WriteTree(t, root)
-	f.Write("clamp/clamp.go", journeySubject)
-	f.Write("clamp/clamp_test.go", "package clamp\n\nimport \"testing\"\n\nfunc TestClampNegative(t *testing.T) {\n\tif Clamp(-1) != 0 {\n\t\tt.Fatal(\"negative\")\n\t}\n}\n")
-	staged, executable := filepath.Join(t.TempDir(), "staged"), filepath.Join(t.TempDir(), "bench")
-	if err := os.WriteFile(staged, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := freshness.Publish(root, staged, executable, filepath.Dir(executable), "native-journey"); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv(runbinary.Env, executable)
-	t.Setenv("BENCH_KIT", root)
-	home := t.TempDir()
-	t.Setenv(benchhome.Env, home)
-	t.Chdir(root)
+	root, home := probetest.Repository(t, f.Root, freshness.Publish)
 	marker := filepath.Join(t.TempDir(), "go-started")
 	produce := func(mutated probetest.Start, full bool) (string, int) {
-		probetest.InstallStarts(t, marker, probetest.Start{Events: journeyPass}, mutated)
-		argv := []string{"probe", "clamp/clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./clamp", "--run", "^TestClampNegative$"}
+		probetest.InstallStarts(t, marker, probetest.ClampPass, mutated)
+		argv := slices.Concat([]string{"probe", probetest.ClampPath, "--swap", "n < 0", "--with", "n > 0"}, probetest.ClampSelection)
 		if full {
 			argv = append(argv, "--full")
 		}
 		var stdout, stderr bytes.Buffer
 		code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)
-		if got, _ := os.ReadFile(filepath.Join(root, "clamp", "clamp.go")); string(got) != journeySubject {
+		if got, _ := os.ReadFile(filepath.Join(root, filepath.FromSlash(probetest.ClampPath))); string(got) != probetest.ClampSource {
 			t.Fatalf("probe left the subject %q", got)
 		}
 		return stdout.String(), code
@@ -212,7 +178,7 @@ func probeImportJourney(t *testing.T, f *recordtest.Fixture, slug, record string
 	}
 
 	// A silent answer is within the bound, so stdout is complete after its tree lead.
-	ordinary, code := produce(probetest.Start{Events: journeyPass}, false)
+	ordinary, code := produce(probetest.ClampPass, false)
 	if _, spilled := responseboundtest.Find(ordinary); code != 1 || spilled || !strings.HasPrefix(ordinary, "tree[1]{target,head,dirty}:\n") {
 		t.Fatalf("silent probe = exit %d, stdout %q; want exit 1 and complete tree-prefixed stdout", code, ordinary)
 	}
@@ -220,7 +186,7 @@ func probeImportJourney(t *testing.T, f *recordtest.Fixture, slug, record string
 
 	// The --full biting answer carries a long diagnostic, so it spills; the body is read only
 	// after the production marker names it.
-	biting := probetest.Start{Events: fmt.Sprintf(journeyFailFormat, strings.Repeat("d", 2*bounds.ResponseBytes)), Exit: 1}
+	biting := probetest.ClampFailure(strings.Repeat("d", 2*bounds.ResponseBytes))
 	projected, code := produce(biting, true)
 	spill, spilled := responseboundtest.Find(projected)
 	if code != 0 || !spilled || !strings.HasPrefix(spill.Path, home) {

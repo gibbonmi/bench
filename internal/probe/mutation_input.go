@@ -22,18 +22,28 @@ type mutation struct {
 	remove     bool
 }
 
-// mutationInput resolves an argv that gradeForms accepted into the mutation of its one
-// group, and reads each mutation file through the one bounded reader. A combined mutant
-// lists each --swap edit and then each --omit edit, so its cell derives from the two flags,
-// not argv order.
-func mutationInput(parsed usage.Result) (mutation, string) {
+// refusal is one mutation refusal before it renders: the title and the detail of its error
+// line. A mutant-set entry prefixes the detail with its entry number.
+type refusal struct {
+	title, detail string
+}
+
+func (r *refusal) line() string {
+	return toon.Errorf(r.title, r.detail) + "\n"
+}
+
+// mutationInput resolves an argv whose mutation half the form matrix accepted into the
+// mutation of its one group. It reads each mutation file through the one bounded reader. A
+// combined mutant lists each --swap edit and then each --omit edit, so its cell derives from
+// the two flags, not argv order.
+func mutationInput(parsed usage.Result) (mutation, *refusal) {
 	n, _ := occurrence(parsed)
 	m := mutation{occurrence: n}
 	text, textFlag := parsed.Flags["--with"], "--with"
 	if path, ok := parsed.Flags["--with-file"]; ok {
-		read, line := readMutationFile(path)
-		if line != "" {
-			return mutation{}, line
+		read, refused := readMutationFile(path)
+		if refused != nil {
+			return mutation{}, refused
 		}
 		text, textFlag = read, "--with-file"
 	}
@@ -41,20 +51,20 @@ func mutationInput(parsed usage.Result) (mutation, string) {
 	switch group {
 	case deleteGroup:
 		m.cell, m.remove = "delete", true
-		return m, ""
+		return m, nil
 	case omitFileGroup:
-		read, line := readMutationFile(parsed.Flags["--omit-file"])
-		if line != "" {
-			return mutation{}, line
+		read, refused := readMutationFile(parsed.Flags["--omit-file"])
+		if refused != nil {
+			return mutation{}, refused
 		}
 		m.cell, m.finds = "omit", []find{{form: "omit", old: read}}
-		return m, ""
+		return m, nil
 	case unwrapGroup:
 		m.cell, m.finds = "unwrap", []find{{form: "unwrap", old: parsed.Flags["--unwrap"]}}
-		return m, ""
+		return m, nil
 	case insertGroup:
 		m.cell, m.finds = "insert", []find{{form: "insert", old: parsed.Flags["--insert-before"], text: text}}
-		return m, ""
+		return m, nil
 	}
 	withs := parsed.Repeated["--with"]
 	var forms []string
@@ -72,7 +82,7 @@ func mutationInput(parsed usage.Result) (mutation, string) {
 		forms = append(forms, "omit")
 	}
 	m.cell = strings.Join(forms, "+")
-	return m, ""
+	return m, nil
 }
 
 // occurrence answers the --occurrence value, or 0 when the argv names none. ok is false for
@@ -91,10 +101,10 @@ func occurrence(parsed usage.Result) (int, bool) {
 	return n, err == nil && n > 0
 }
 
-// readMutationFile reads one mutation file for --omit-file or --with-file. The open does not
-// follow a symlink and does not block on a FIFO, and the read is bounded, so a hostile path
-// answers its refusal instead of mutating or hanging.
-func readMutationFile(path string) (string, string) {
+// readMutationFile reads one mutation file for --omit-file, --with-file, or --mutants. The
+// open does not follow a symlink and does not block on a FIFO, and the read is bounded. So a
+// hostile path answers its refusal instead of mutating or hanging.
+func readMutationFile(path string) (string, *refusal) {
 	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_CLOEXEC|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
 	if err != nil {
 		reason := "unreadable"
@@ -131,9 +141,9 @@ func readMutationFile(path string) (string, string) {
 	if len(read.Data) == 0 {
 		return "", mutationFileUnavailable(path, "empty")
 	}
-	return string(read.Data), ""
+	return string(read.Data), nil
 }
 
-func mutationFileUnavailable(path, reason string) string {
-	return toon.Errorf("probe mutation file unavailable", path+" is "+reason) + "\n"
+func mutationFileUnavailable(path, reason string) *refusal {
+	return &refusal{title: "probe mutation file unavailable", detail: path + " is " + reason}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func TestZeroMatchMutationsAreSubstringMissesWithoutRunning(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	before, err := os.ReadFile(f.subject)
 	if err != nil {
 		t.Fatal(err)

@@ -122,7 +122,7 @@ Repair context: <fold targets and author context, each read by the coordinator b
   form, so no charge carries the copy-aside sequence.
 - A probe the verb reports as `invalid` proves nothing. Replace that probe before
   you read a verdict.
-- Before the coordinator reads a probe verdict, the coordinator confirms the `restored` cell that `bench probe` reports.
+- Before the coordinator reads a probe verdict, the coordinator confirms the `restored` cell that `bench probe` reports. A coordinator confirms the `restored` cell of each mutant row.
 - A probe of a live-tree anchor or marker runs through the gate, not through the
   conformance package alone. Only the gate's entry test grades the live tree.
   `bench test --package ./internal/conformance` is not the root conformance

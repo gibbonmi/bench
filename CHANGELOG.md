@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Probe mutant sets
+
+- Added `--mutants <path>`, repeated `--package`, and `bench record verification --probe-result <file> --mutant <n>`. `--mutants <path>` grades a mutant set of 1 to 64 independent mutants against one probe baseline and answers under `bench-probe-set-v1`. Each mutant outside the run binary's source closure reuses the baseline's run binary, and a mutant inside that closure builds its own. Repeated `--package` expressions run in one `go test` call for each run, and `--mutant <n>` imports one row of a mutant-set answer. Before, each mutant needed its own `bench probe` call, a probe took one `--package` expression, and `--probe-result` read only a single-form answer.
+
 ### Probe subjects and mutations
 
 - Added mutation forms to `bench probe`. `--with-file <path>` reads the text of a swap or an insertion from a file. `--insert-before <anchor>` puts the text before the anchor. `--delete` removes the subject for the run, and a mutation that empties the subject refuses and names `--delete`. `--occurrence <n>` selects one match of an old string that matches more than once. Before, a probe took one swap or one omission, and `--omit-file` could leave an empty subject.
