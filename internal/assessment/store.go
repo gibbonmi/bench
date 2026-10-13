@@ -9,19 +9,25 @@ import (
 	"regexp"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
-// Store keeps assessment records outside the disposable assignment pool.
+// Store keeps assessment records outside the disposable assignment pool. A nil Files
+// replaces each record through the operating-system operations.
 type Store struct {
 	Home, Root string
-	Files      FileOps
+	Files      *FileOps
 }
 
+// FileOps holds the operations of one record replacement, so a test injects a failure
+// into the shared replacement sequence.
 type FileOps struct {
-	WriteFile func(string, []byte, os.FileMode) error
-	Rename    func(string, string) error
+	CreateTemp    func(dir, pattern string) (durablefile.File, error)
+	Rename        func(oldpath, newpath string) error
+	OpenDirectory func(name string) (durablefile.Directory, error)
+	Remove        func(name string) error
 }
 
 var safeID = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
@@ -111,28 +117,12 @@ func (s Store) Record(r Run) error {
 	if int64(len(data)) > bounds.ControlRecordLimit {
 		return fmt.Errorf("record oversized")
 	}
-	return replace(s.Files, s.Dir(), path, data)
+	return replacer(s.Files).Replace(path, data, 0600)
 }
-func replace(ops FileOps, dir, path string, data []byte) error {
-	write := ops.WriteFile
-	if write == nil {
-		write = os.WriteFile
+
+func replacer(ops *FileOps) durablefile.Replacer {
+	if ops == nil {
+		return durablefile.Native()
 	}
-	rename := ops.Rename
-	if rename == nil {
-		rename = os.Rename
-	}
-	temp, err := os.CreateTemp(dir, ".assessment-*")
-	if err != nil {
-		return err
-	}
-	name := temp.Name()
-	defer os.Remove(name)
-	if err = temp.Close(); err != nil {
-		return err
-	}
-	if err = write(name, data, 0600); err != nil {
-		return err
-	}
-	return rename(name, path)
+	return durablefile.Replacer(*ops)
 }
