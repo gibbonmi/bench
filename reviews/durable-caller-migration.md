@@ -5735,6 +5735,74 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-dd-r2-spec",
+          "performer": "claude:dcm_rev_dd_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_dd_spec",
+            "digest": "sha256:dc0dcff61589d49321179c72053af433c3d7b0a9239358d75da05f06bef8c755",
+            "excerpt": "## Spec (D-D confirming, fcdaca26..79980f96) — SP1 closed (spec.md:331; prospectiveartifact reason in the repair prose); D16/D17 cite TestGateReplacement; D36 cites TestReviewReplacement; coverage map valid; no production change; 0 new findings.\n"
+          },
+          "axis": "Spec",
+          "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "tip": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-dd-r1-spec"
+          ]
+        },
+        {
+          "id": "dcm-dd-r2-standards",
+          "performer": "claude:dcm_rev_dd_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_dd_std",
+            "digest": "sha256:8aa7d314ea9a0277316e73c1c6316bfde976685bbb0718a26394c8a661ceb784",
+            "excerpt": "## Standards (D-D confirming, fcdaca26..79980f96) — S1-S5 closed; 1 new finding.\nN1 | auto-fix | 3 | internal/publication/replacement_test.go:163 | the blocker path writes \"dist\" instead of deriving it from RecordPath, which owns that layout | blocker := filepath.Dir(filepath.Dir(RecordPath(root)))\n"
+          },
+          "axis": "Standards",
+          "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "tip": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+          "finding_ids": [
+            "N1"
+          ],
+          "supersedes": [
+            "dcm-dd-r1-standards"
+          ]
+        },
+        {
+          "id": "dcm-dd-r2-coverage",
+          "performer": "claude:dcm_rev_dd_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_dd_cov",
+            "digest": "sha256:d830e5f91425af0a17b9e836148532101b06c7fb1102fa55ffce0cca9c8cc1ac",
+            "excerpt": "## Coverage (D-D confirming, fcdaca26..79980f96) — C1 closed (spec.md:336); C2 closed (spec.md:331); every absence check can fail; blocker bytes checked; gate table keeps every assertion; dcm-t14-rep1 entries graded; 0 new findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "tip": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-dd-r1-coverage"
+          ]
         }
       ]
     }
@@ -6936,3 +7004,7 @@ Commit 79980f96 closes S1: `RequireAbsent` accepts only a missing path, and `Tes
 Commit 79980f96 closes SP1 and C2: the D30 cell cites `TestDashboardWriteRefusesWhenTheReaderFails` for the dashboard family. The prospectiveartifact publish encodes a fixed record of int and string fields and owns no refusal. Its destination authority sits upstream in `Open`, so it has no D30 witness. Commit 79980f96 closes C1: the D36 cell cites `TestReviewReplacement`, the review-record evidence, beside the caller families.
 
 Chunk D-D used 1 of its 2 repair cycles.
+
+The D-D confirming round at 7a8a060f closed S1 to S5, SP1, C1, and C2. It raised one new finding.
+
+- N1, auto-fix, confidence 3: the publication witness at `internal/publication/replacement_test.go:163` writes the `dist` layout that `RecordPath` owns. Derive the blocker path from `RecordPath`. A fresh repair session takes it as repair 2.
