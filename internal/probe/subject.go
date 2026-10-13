@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -144,4 +145,27 @@ func restore(replacer durablefile.Replacer, subject subject, preserved preservat
 		return false, "the restored mode differs from the mode read at the start"
 	}
 	return true, ""
+}
+
+// mutatedRun is one mutated run's outcome, report, and normalized exit, and the restore that
+// followed it, with the reason of a failed restore.
+type mutatedRun struct {
+	outcome  testreport.Outcome
+	report   string
+	focused  int
+	restored bool
+	reason   string
+}
+
+// runRestored runs one mutated run with the subject's restore deferred around it. So an
+// interrupt or a panic inside the run still puts the subject back before the verb answers. A
+// proven restore releases the copy, and a failed one keeps it.
+func runRestored(replacer durablefile.Replacer, subject subject, preserved preservation, run func() (testreport.Outcome, string, int)) (r mutatedRun) {
+	defer func() {
+		if r.restored, r.reason = restore(replacer, subject, preserved); r.restored {
+			preserved.release()
+		}
+	}()
+	r.outcome, r.report, r.focused = run()
+	return r
 }

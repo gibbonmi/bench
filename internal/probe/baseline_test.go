@@ -5,11 +5,13 @@
 package probe
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"testing"
@@ -21,10 +23,13 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
-// interruptHelperEnv carries the fixture root to the helper half of the interrupt rows.
-// The fact under test is what a signal does to the verb, so the verb has to run in a
-// process the signal may end without taking the assertions with it.
-const interruptHelperEnv = "BENCH_PROBE_INTERRUPT_ROOT"
+// interruptHelperEnv carries the fixture root, and interruptArgvEnv the JSON argv, to the
+// helper half of the interrupt rows. The fact under test is what a signal does to the verb. So
+// the verb runs in a process that the signal may end without the assertions.
+const (
+	interruptHelperEnv = "BENCH_PROBE_INTERRUPT_ROOT"
+	interruptArgvEnv   = "BENCH_PROBE_INTERRUPT_ARGV"
+)
 
 // buildFailedRun is a package the run reported as failed with no failing test, which is
 // what a package that does not compile prints.
@@ -177,7 +182,7 @@ func TestProbeRestoresOnInterrupt(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newFixture(t)
 			installStubStarts(t, f, tc.baseline, sleeping)
-			out := interruptedProbe(t, f, tc.start)
+			out := interruptedProbe(t, f, probeArgs(), func() { awaitStubStart(t, f, tc.start) })
 			want := probeRow(t, "invalid", "clamp.go", "swap", tc.cause, 0, nil, tc.restored)
 			if !strings.Contains(out, want) {
 				t.Fatalf("helper stdout = %q, want the interrupted row %q", out, want)
@@ -188,12 +193,54 @@ func TestProbeRestoresOnInterrupt(t *testing.T) {
 	}
 }
 
-// interruptedProbe runs the verb in a helper process, signals it once the numbered Go start
-// is in flight, and answers what the verb printed.
-func interruptedProbe(t *testing.T, f *fixture, start int) string {
+// A signal during mutant 1's run stops the set after that mutant's restore.
+func TestMutantSetStopsOnInterrupt(t *testing.T) {
+	f := newFixture(t)
+	installSet(t, f, probetest.Start{Hook: "sleep 60\n", Events: cannedPass}, bite)
+	out := interruptedProbe(t, f, setArgs(mutantsFile(t, guardSwap, returnSwap)), func() { awaitStubStart(t, f, 2) })
+	if want := setRows(t, interruptedRow, untouchedRow(2, "set-stopped")); !strings.HasPrefix(out, want) {
+		t.Fatalf("helper stdout = %q, want %q first", out, want)
+	}
+	requireStarts(t, f, 2)
+	requireSubjectBytes(t, f, clampSource)
+	requireHomeEmpty(t, f)
+}
+
+// A signal during mutant 1's fresh build interrupts that run, and mutant 2 is never written.
+// The subject sits inside the run binary's closure, so the held binary no longer validates.
+func TestMutantSetStopsOnAnInterruptedBuild(t *testing.T) {
+	f := newFixture(t)
+	main := filepath.Join(f.root, "cmd", "bench", "main.go")
+	start, err := os.ReadFile(main)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parked := parkSecondBuild(t, f)
+	installSet(t, f, bite, bite)
+	path := mutantsFile(t, []string{"--swap", "func main() {}", "--with", "func main() { _ = 1 }"}, []string{"--swap", "package main", "--with", "package main // set"})
+	out := interruptedProbe(t, f, slices.Concat([]string{"cmd/bench/main.go", "--mutants", path}, clampSelection), func() { awaitFile(t, parked) })
+	if want := setRows(t, interruptedRow, untouchedRow(2, "set-stopped")); !strings.HasPrefix(out, want) {
+		t.Fatalf("helper stdout = %q, want %q first", out, want)
+	}
+	requireStarts(t, f, 1)
+	if now, err := os.ReadFile(main); err != nil || string(now) != string(start) {
+		t.Fatalf("cmd/bench/main.go = (%q, %v), want the start bytes", now, err)
+	}
+}
+
+// interruptedRow is the row of entry 1 whose run a signal ended after its write.
+var interruptedRow = []any{1, "invalid", "swap", "interrupted", 0, nil, 0, 1, 1, nil, "yes"}
+
+// interruptedProbe runs the verb over argv in a helper process, signals it once await returns,
+// and answers what the verb printed.
+func interruptedProbe(t *testing.T, f *fixture, argv []string, await func()) string {
 	t.Helper()
+	encoded, err := json.Marshal(argv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	helper := exec.Command(os.Args[0], "-test.run=^TestProbeRestoresOnInterrupt$", "-test.timeout="+interruptDeadline().String())
-	helper.Env = append(os.Environ(), interruptHelperEnv+"="+f.root)
+	helper.Env = append(os.Environ(), interruptHelperEnv+"="+f.root, interruptArgvEnv+"="+string(encoded))
 	stdout, err := helper.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)
@@ -209,7 +256,7 @@ func interruptedProbe(t *testing.T, f *fixture, start int) string {
 		_ = helper.Wait()
 		answered <- string(body)
 	}()
-	awaitStubStart(t, f, start)
+	await()
 	if err := helper.Process.Signal(syscall.SIGINT); err != nil {
 		t.Fatal(err)
 	}
@@ -229,7 +276,11 @@ func runInterruptHelper(t *testing.T, root string) {
 	if err := os.Chdir(root); err != nil {
 		t.Fatal(err)
 	}
-	out, code := Command(probeArgs())
+	var argv []string
+	if err := json.Unmarshal([]byte(os.Getenv(interruptArgvEnv)), &argv); err != nil {
+		t.Fatal(err)
+	}
+	out, code := Command(argv)
 	fmt.Print(out)
 	fmt.Printf("exit=%d\n", code)
 }

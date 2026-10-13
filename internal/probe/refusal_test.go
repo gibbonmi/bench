@@ -71,11 +71,15 @@ func TestProbeRefusesAnEmptyMutation(t *testing.T) {
 }
 
 // PB20: the gate grades the bytes it read, so a probe refuses while a gate run holds the
-// tree rather than changing the gate's subject under it. The test is also the lock holder's
-// entry: a process that startLockHolder starts holds the lock its environment names.
+// tree rather than changing the gate's subject under it. The test is also the entry of the
+// lock processes: one holds the lock its environment names, and one tries a subject lock once.
 func TestProbeRefusesUnderALiveGateRun(t *testing.T) {
 	if path := os.Getenv(lockHolderPathEnv); path != "" {
-		holdRecordLock(t, path, os.Getenv(lockHolderReleaseEnv))
+		holdRecordLock(t, path, os.Getenv(lockHolderReleaseEnv), os.Getenv(lockHolderReadyEnv))
+		return
+	}
+	if subject := os.Getenv(lockTrySubjectEnv); subject != "" {
+		tryRecordLock(subject)
 		return
 	}
 	f := refusalFixture(t)
@@ -243,7 +247,7 @@ func TestProbeHelpSpellings(t *testing.T) {
 	for _, spelling := range []string{"--help", "-h", "help"} {
 		t.Run(spelling, func(t *testing.T) {
 			out, code := Command([]string{spelling})
-			if !strings.HasPrefix(out, "usage: bench probe <file> (--swap") {
+			if !strings.HasPrefix(out, "usage: bench probe <file> ((--swap") {
 				t.Fatalf("usage line = %q", out)
 			}
 			want := grammar.Help + "\nnotes:\n  " + strings.Join(probeHelpNotes, "\n  ") + "\n"

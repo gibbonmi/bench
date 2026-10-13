@@ -1,7 +1,7 @@
-// Package probetest installs the canned `go` that probe tests run under. A probe starts two
-// `go test` children, the baseline and then the mutated run, so a test supplies one answer
-// for each start. Only tests import this package; it holds no verdict, diagnostic, row, or
-// record schema, and the caller authors every byte and exit it supplies.
+// Package probetest installs the canned `go` that probe tests run under. A probe starts one
+// baseline `go test` child and then one mutated child for each mutant, so a test supplies one
+// answer for each start. Only tests import this package; it holds no verdict, diagnostic, row,
+// or record schema, and the caller authors every byte and exit it supplies.
 package probetest
 
 import (
@@ -22,12 +22,33 @@ type Start struct {
 	Exit   int
 }
 
-// InstallStarts puts a canned `go` ahead of the real one for the rest of the test and
-// records every start in marker. Non-test calls reach the real toolchain for settings and
-// module discovery. The marker is removed first, so each install restarts the count: an
-// odd test start answers baseline and the even start after it answers mutated. Both hooks
-// read the start's ordinal in `$n`.
+// unansweredExit is the exit of a `go test` start that InstallSequence has no answer for.
+const unansweredExit = 97
+
+// InstallStarts puts a canned `go` ahead of the real one for the single form. An odd test
+// start answers baseline, and the even start after it answers mutated.
 func InstallStarts(t testing.TB, marker string, baseline, mutated Start) {
+	t.Helper()
+	install(t, marker, "if [ $((n % 2)) = 1 ]; then\n"+answer(baseline)+"fi\n"+answer(mutated))
+}
+
+// InstallSequence puts a canned `go` ahead of the real one for a mutant set. The first test
+// start answers baseline, and the k-th later start answers mutated[k-1]. A start past the list
+// prints no event and exits unansweredExit.
+func InstallSequence(t testing.TB, marker string, baseline Start, mutated ...Start) {
+	t.Helper()
+	arms := "1)\n" + answer(baseline) + ";;\n"
+	for k, start := range mutated {
+		arms += strconv.Itoa(k+2) + ")\n" + answer(start) + ";;\n"
+	}
+	install(t, marker, "case $n in\n"+arms+"esac\nexit "+strconv.Itoa(unansweredExit)+"\n")
+}
+
+// install writes the canned `go` for the rest of the test. Its prelude records every start in
+// marker and passes each non-test call to the real toolchain. It reads the test start's
+// ordinal into `$n` for body and its hooks. The marker is removed first, so each install
+// restarts the count.
+func install(t testing.TB, marker, body string) {
 	t.Helper()
 	real, err := exec.LookPath("go")
 	if err != nil {
@@ -44,8 +65,7 @@ func InstallStarts(t testing.TB, marker string, baseline, mutated Start) {
 	script := "#!/usr/bin/env bash\n" +
 		"printf '%s\\n' \"$1\" >> " + quoted + "\n" +
 		"if [ \"$1\" != test ]; then exec " + sanitize.ShellQuote(real) + " \"$@\"; fi\n" +
-		"n=$(grep -c '^test$' " + quoted + ")\n" +
-		"if [ $((n % 2)) = 1 ]; then\n" + answer(baseline) + "fi\n" + answer(mutated)
+		"n=$(grep -c '^test$' " + quoted + ")\n" + body
 	if err := os.WriteFile(filepath.Join(dir, "go"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}

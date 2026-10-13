@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/probe/probetest"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // lockUnavailableLine opens every refusal for a subject lock that cannot be set up.
@@ -111,7 +112,7 @@ func TestSubjectLockAllowsAnotherSubject(t *testing.T) {
 func TestSubjectLockReleasesOnInterrupt(t *testing.T) {
 	f := newFixture(t)
 	installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Hook: "sleep 60\n", Events: cannedPass})
-	if out, want := interruptedProbe(t, f, 2), probeRow(t, "invalid", "clamp.go", "swap", "interrupted", 0, nil, "yes"); !strings.Contains(out, want) {
+	if out, want := interruptedProbe(t, f, probeArgs(), func() { awaitStubStart(t, f, 2) }), probeRow(t, "invalid", "clamp.go", "swap", "interrupted", 0, nil, "yes"); !strings.Contains(out, want) {
 		t.Fatalf("helper stdout = %q, want the interrupted row %q", out, want)
 	}
 	requireHomeEmpty(t, f)
@@ -250,4 +251,50 @@ func TestSubjectLockKeepsItsFilesPrivate(t *testing.T) {
 	if dirMode != 0o700 || fileMode != 0o600 {
 		t.Fatalf("lock modes = (%o, %o), want (700, 600)", dirMode, fileMode)
 	}
+}
+
+// The set takes one subject lock. A held lock refuses the set, and the set's lock stays held
+// between mutants, so an attempt from another process during mutant 2 refuses.
+func TestMutantSetTakesOneSubjectLock(t *testing.T) {
+	inUse := "error: probe subject in use — another probe holds clamp.go\n"
+	t.Run("held by another probe", func(t *testing.T) {
+		f := newFixture(t)
+		installSet(t, f, bite, bite)
+		release := startSubjectHolder(t, f.subject)
+		defer release()
+		out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
+		requireLockRefusal(t, f, out, code, out == inUse)
+	})
+	t.Run("tried during mutant 2", func(t *testing.T) {
+		f := newFixture(t)
+		tried := filepath.Join(scratchDir(t), "tried")
+		installSet(t, f, bite, probetest.Start{Hook: lockTryHook(f.subject, tried), Events: bite.Events, Exit: 1})
+		out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
+		requireRow(t, out, code, 0, setRows(t, biteRow(1, "swap"), biteRow(2, "swap")))
+		answer, err := os.ReadFile(tried)
+		if err != nil || !strings.HasPrefix(string(answer), inUse) {
+			t.Fatalf("the lock attempt answered (%q, %v), want %q", answer, err, inUse)
+		}
+	})
+}
+
+// A gate run that starts during mutant 1 stops the set before mutant 2's write.
+func TestMutantSetStopsUnderAGateRun(t *testing.T) {
+	f := newFixture(t)
+	installSet(t, f, probetest.Start{Hook: lockHolderHook(t, gateLockPath(f.root)), Events: bite.Events, Exit: 1}, bite)
+	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
+	requireRow(t, out, code, 1, setRows(t, biteRow(1, "swap"), untouchedRow(2, "gate-held")))
+	requireStarts(t, f, 2)
+	requireSubjectBytes(t, f, clampSource)
+}
+
+// A gate state that the verb cannot read before mutant 2's write stops the set there.
+func TestMutantSetStopsOnAnUnreadableGate(t *testing.T) {
+	f := newFixture(t)
+	// A link to itself makes the gate lock path unopenable.
+	loop := "ln -s bench-gate.lock " + sanitize.ShellQuote(gateLockPath(f.root)) + "\n"
+	installSet(t, f, probetest.Start{Hook: loop, Events: bite.Events, Exit: 1}, bite)
+	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
+	requireRow(t, out, code, 1, setRows(t, biteRow(1, "swap"), untouchedRow(2, "gate-unavailable")))
+	requireStarts(t, f, 2)
 }
