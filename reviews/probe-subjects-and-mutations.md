@@ -1379,7 +1379,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ps-c-standards-1",
+          "performer": "claude:ps-c-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-standards",
+            "digest": "sha256:3874fbea981c6bfa36aeeb3f4db61ba307b50a0ee65093814a8407d00fe6d4c0",
+            "excerpt": "Standards axis, chunk PS-C, pair 145d5439330c..ab67d6d580a2, opus medium. Findings: 2.\nS1 internal/testreport/outcome_test.go:323: sameOutcome lists every Outcome field by hand, so a new field goes unchecked in silence (AGENTS.md one source per fact). Confidence 6.\nS2 internal/probe/verdict_test.go:134-138: the build-script fixture install repeats buildEachRun in subject_check_fixture_test.go:30-35 (a fixture harness pasted twice). Confidence 5.\nConsumers of Factory.Own and probe.ReadResult: no defect.\n"
+          },
+          "axis": "Standards",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-c-spec-1",
+          "performer": "claude:ps-c-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-spec",
+            "digest": "sha256:5ad3075f084ec110d6c5e09dfba2ea16e52ba1d9cdda9e273b1eb92cbee7150f",
+            "excerpt": "Spec axis, chunk PS-C (PS38-PS57), pair 145d5439330c..ab67d6d580a2, opus medium. Findings: 0.\nAll 20 rows hold. Ruling: a red baseline names its first failure, consistent with the spec. Factory.Own readers print unchanged bytes; TestNativeRecordCLIJourney passes the v2 envelope without an edit.\nAdvice: A1 add a sentence that a red baseline names its own first failure; A2 no row for a mutated-run build-script failure table; A3 mutant table survives a restore failure.\n"
+          },
+          "axis": "Spec",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ps-c-coverage-1",
+          "performer": "claude:ps-c-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-coverage",
+            "digest": "sha256:4618b89c55c462f0015b9782bcf721f02115ecd3e08873af929c744728dca3a1",
+            "excerpt": "Coverage axis, chunk PS-C, pair 145d5439330c..ab67d6d580a2, opus medium. Findings: 2.\nC1 internal/probe/verdict.go:45: no test runs --expect over a passing mutated run, so dropping the failed-kind guard stays green. Confidence 9.\nC2 internal/probe/verdict.go:49: no test puts a control byte in the first build line, so dropping sanitize.Preview stays green. Confidence 8.\nProbes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1509,3 +1576,27 @@ Repair targets: 4 (S1, S2, C1, and C2) for ticket 2.
 - S3 (auto-fix, confidence 5): the `CheckTakesRun` comment in `internal/testreport/selection_facts.go` names its callers and misses `Request.Run`. The `GradesProse` comment describes `prose.IsSubjectName`, which that method never consults.
 - S4 (auto-fix, confidence 7): the not-graded hint at `internal/probe/probe.go:107` states the `.md` rule that `prose.IsSubjectName` enforces. The hint must say that the subject is not a prose subject, without the rule.
 - C3 (no-op): `internal/testreport/check_test.go:151` and `:176` already pin the non-system `--run` refusal of `bench test`.
+
+## PS-C pickup
+
+Chunk PS-C has used 0 of its 2 repair cycles after its initial review.
+
+### Standards
+
+PS-C: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, ticket 3, confidence 6): `sameOutcome` in `internal/testreport/outcome_test.go` lists every `Outcome` field by hand, so a new field goes unchecked. The helper must compare the whole value.
+- S2 (auto-fix, ticket 4, confidence 5): `internal/probe/verdict_test.go:134-138` repeats the build-script install of `buildEachRun`. One fixture helper must own it.
+
+### Spec
+
+PS-C: 0 findings. The orchestrator adds the advice A1 sentence on a red baseline to the Verdict paragraph.
+
+### Coverage
+
+PS-C: 2 findings. The worst issue is C1.
+
+- C1 (auto-fix, ticket 3, confidence 9): no test runs `--expect` over a passing mutated run, so the failed-kind guard at `internal/probe/verdict.go:45` has no red-capable test.
+- C2 (auto-fix, ticket 4, confidence 8): no test puts a control byte in the first build line, so `sanitize.Preview` at `internal/probe/verdict.go:49` has no red-capable test.
+
+Repair targets: 4. Ticket 3 takes S1 and C1, and ticket 4 takes S2 and C2.
