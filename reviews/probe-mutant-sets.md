@@ -2741,9 +2741,9 @@
     {
       "id": "PM-E",
       "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
-      "tip": "74e73817b8c0cf76f27122dd6ff0f779aaae5789",
-      "plan_digest": "sha256:c784da3f828d442e9ee7a13cc077300511afd4d278ea588a61852f4b28ba7369",
-      "source_digest": "60506230c3885af7316243a5dad52035ea13fc39",
+      "tip": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+      "plan_digest": "sha256:2cc5b14e7396b7e40f1d58988e5b0a984f3acb8c5680d3e2794dfc7c84dad17e",
+      "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
       "acceptance_rows": [
         "PM61",
         "PM62",
@@ -2877,6 +2877,132 @@
             "ref": "74e73817b8c0cf76f27122dd6ff0f779aaae5789",
             "digest": "sha256:8b98d9693871163c36e0c4911e764c480c347b3b3a2310219c9d5335166c5628",
             "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,74e73817b8c0cf76f27122dd6ff0f779aaae5789,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19237,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t06-rep1-guidance",
+          "performer": "claude:pm_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+            "digest": "sha256:03e1dde93970fc6a498bb5efb68336dde6a632c9cd2560d57b545e7b98855d52",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --check docs-currency-workflow\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,e10b7d3547b6c70b61429715ec48850bb9f14e57,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4763,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t06-rep1-conformance-meta",
+          "performer": "claude:pm_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+            "digest": "sha256:a9b577dca4b95808b2ef5c41547c5f565e17ee14cc8857f78e3c1999be31eda0",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --check conformance-meta\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,e10b7d3547b6c70b61429715ec48850bb9f14e57,false\ncheck[1]{name,kind,tests_run,subjects}:\n  conformance-meta,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,30,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "conformance-meta",
+          "command": "bench test --check conformance-meta",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t06-rep1-prose",
+          "performer": "claude:pm_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+            "digest": "sha256:bf5feb80d736b73c42772a57ec0500718d16a9af9e6fe6d762d7934cdaa0b72e",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --check prose\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,e10b7d3547b6c70b61429715ec48850bb9f14e57,false\ncheck[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,538\n"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t06-rep1-anchors-package",
+          "performer": "claude:pm_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+            "digest": "sha256:156eb37ab2d53359dacd6b2a5ed9fa5fa00bdb0077da39f723e288edbe4a5fca",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,e10b7d3547b6c70b61429715ec48850bb9f14e57,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15619,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2055,179\n  github.com/gibbonmi/bench/internal/conformance,pass,54760,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "anchors-package",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t06-rep1-command-package",
+          "performer": "claude:pm_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+            "digest": "sha256:156eb37ab2d53359dacd6b2a5ed9fa5fa00bdb0077da39f723e288edbe4a5fca",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,e10b7d3547b6c70b61429715ec48850bb9f14e57,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15619,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2055,179\n  github.com/gibbonmi/bench/internal/conformance,pass,54760,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t06-rep1-conformance-package",
+          "performer": "claude:pm_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+            "digest": "sha256:156eb37ab2d53359dacd6b2a5ed9fa5fa00bdb0077da39f723e288edbe4a5fca",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,e10b7d3547b6c70b61429715ec48850bb9f14e57,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15619,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2055,179\n  github.com/gibbonmi/bench/internal/conformance,pass,54760,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t06-rep1-root-conformance",
+          "performer": "claude:pm_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+            "digest": "sha256:39525666f1d92f6e9d6f300d736e308bf577db0415d5c2673b3060a2991e5f7e",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,e10b7d3547b6c70b61429715ec48850bb9f14e57,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14792,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "root-conformance",
           "command": "bench test --check root-conformance",
