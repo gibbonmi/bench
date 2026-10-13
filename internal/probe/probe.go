@@ -137,13 +137,16 @@ func renderInvalidMutation(subject subject, mutation string, request testreport.
 }
 
 // selectionArgs spells the focused run in `bench test`'s own grammar, so the probe and
-// the verb it composes can never disagree about what a selection means.
+// the verb it composes can never disagree about what a selection means. Flags keeps only
+// the last --package value, so the package form reads Repeated.
 func selectionArgs(parsed usage.Result) []string {
 	var args []string
 	if check, ok := parsed.Flags["--check"]; ok {
 		args = append(args, "--check", check)
 	} else {
-		args = append(args, "--package", parsed.Flags["--package"])
+		for _, pkg := range parsed.Repeated["--package"] {
+			args = append(args, "--package", pkg)
+		}
 	}
 	if run, ok := parsed.Flags["--run"]; ok {
 		args = append(args, "--run", run)

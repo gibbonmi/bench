@@ -87,23 +87,17 @@ func namedCheckRunPattern() string {
 	return "^" + registry.RootConformanceTest + "$"
 }
 
-// packageValueRule states the one-expression rule of each --package value. The run passes
-// the value to Go as one typed argument, so a space-separated list fails as one missing
-// directory. The bench test help and the probe help each add the remedy their grammar takes.
-const packageValueRule = "--package <expr> takes one Go package expression as one argument, so a space-separated list is not split"
-
-// PackageExpressionNote is the bench test help's package note. Its grammar repeats --package.
-const PackageExpressionNote = packageValueRule + "; repeat --package to run several expressions in one call, or use a parent ./... pattern."
-
-// probePackageNote is the probe help's package note. Its grammar takes one --package.
-const probePackageNote = packageValueRule + "; run one call per package or use a parent ./... pattern."
+// PackageExpressionNote is the package note of the bench test help and the probe help. The
+// run passes each --package value to Go as one typed argument, so a space-separated list
+// fails as one missing directory. Both grammars repeat --package.
+const PackageExpressionNote = "--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; repeat --package to run several expressions in one call, or use a parent ./... pattern."
 
 // ProbeNotes states what each of the two selection forms takes, so a caller names a
 // focused run correctly. The probe's help prints this block, so the owner's behavior and
 // its description stay one source.
 func ProbeNotes() string {
 	return "notes:\n  " + strings.Join([]string{
-		probePackageNote,
+		PackageExpressionNote,
 		"--check <name> names a check from the bench test --help inventory.",
 	}, "\n  ")
 }

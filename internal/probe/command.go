@@ -12,12 +12,13 @@ import (
 )
 
 // Usage is the one owner of the bench probe grammar line.
-const Usage = "bench probe <file> (--swap <old> (--with <new> | --with-file <path>) [--occurrence <n>] | --omit <old> [--occurrence <n>] | --unwrap <call> [--occurrence <n>] | --insert-before <anchor> (--with <text> | --with-file <path>) [--occurrence <n>] | --omit-file <path> | --delete | (--swap <old> --with <new> | --omit <old>)...) (--package <expr> [--run <go-regex>] | --check <name> | --check system --run <go-regex>) [--expect <test>] [--full]"
+const Usage = "bench probe <file> (--swap <old> (--with <new> | --with-file <path>) [--occurrence <n>] | --omit <old> [--occurrence <n>] | --unwrap <call> [--occurrence <n>] | --insert-before <anchor> (--with <text> | --with-file <path>) [--occurrence <n>] | --omit-file <path> | --delete | (--swap <old> --with <new> | --omit <old>)...) (--package <expr> [--package <expr>]... [--run <go-regex>] | --check <name> | --check system --run <go-regex>) [--expect <test>] [--full]"
 
 // grammar declares the one argument shape the verb parses through usage.Parse. Exactly
 // one mutation group and exactly one selection form are required, because a probe that
 // defaulted either would mutate or run something the caller did not name. --swap, --with,
-// and --omit repeat, because their repetitions make one combined mutant.
+// and --omit repeat, because their repetitions make one combined mutant. --package repeats,
+// because each run passes every expression to one Go start.
 var grammar = usage.Grammar{
 	Cmd:  usage.CommandName(Usage),
 	Help: "usage: " + Usage,
@@ -31,7 +32,7 @@ var grammar = usage.Grammar{
 		{Name: "--insert-before", HasValue: true, NoEmptyValue: true},
 		{Name: "--occurrence", HasValue: true, NoEmptyValue: true},
 		{Name: "--delete"},
-		{Name: "--package", HasValue: true, NoEmptyValue: true},
+		{Name: "--package", HasValue: true, NoEmptyValue: true, Repeatable: true},
 		{Name: "--run", HasValue: true, NoEmptyValue: true},
 		{Name: "--check", HasValue: true, NoEmptyValue: true},
 		{Name: "--expect", HasValue: true, NoEmptyValue: true},

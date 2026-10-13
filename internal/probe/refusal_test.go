@@ -222,7 +222,7 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 // A dropped, reworded, or extra note reds this row rather than passing as a fresh
 // expectation.
 var probeHelpNotes = []string{
-	"--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; run one call per package or use a parent ./... pattern.",
+	"--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; repeat --package to run several expressions in one call, or use a parent ./... pattern.",
 	"--check <name> names a check from the bench test --help inventory.",
 }
 
