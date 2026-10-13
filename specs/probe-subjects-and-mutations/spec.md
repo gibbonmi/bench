@@ -269,8 +269,14 @@ The acquire protocol makes at most three attempts:
 4. Compare the held descriptor's file identity with the path's file identity through `fstat` and `lstat`. Open no second descriptor. If they differ, or if `lstat` answers ENOENT, close the descriptor and start the next attempt.
 
 A held lock refuses with `error: probe subject in use — another probe holds <subject>`.
-Four faults refuse with `error: probe subject lock unavailable — <reason>`.
-They are a directory that cannot be created, a third ENOENT at the open, any other open error, and a third identity mismatch.
+Five faults refuse with `error: probe subject lock unavailable — <reason>`:
+
+- a directory that cannot be created
+- a third ENOENT at the open
+- any other open error
+- a lock error that is not contention
+- a third identity mismatch
+
 ELOOP and EACCES are examples of another open error.
 A lock file without a live holder grants the lock, because a record lock dies with its process.
 
@@ -429,6 +435,7 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PS72 | 46 | `CHANGELOG.md` names each new form and the schema v2 change | review-owned: the reviewer reads the entry | No check reads the changelog content. |
 | PS73 | 47 | `docs/known-issues.md` holds no row that names an unused probe import or an unused probe variable | review-owned: the reviewer reads the table | No check reads the issue table. |
 | PS74 | 48 | The probe-cost row names the batch obligation as its retire condition, and `roadmap/FT168.md` keeps that obligation | review-owned: the reviewer reads both files | The current condition holds once the combined mutant ships and forces an early removal. |
+| PS78 | 43 | A lock error that the `gocache` contention rule does not read as held refuses with the lock-unavailable line, and no run child starts | `internal/probe/lock_test.go` (`TestSubjectLockReadsOnlyContentionAsInUse`) | A lock that reads every error as in use names a holder that does not exist. |
 | PS75 | 38 | A subject that the start-read hook deletes reads the absent-subject line at the re-read, and no run child starts | `internal/probe/lock_test.go` (`TestSubjectLockRereadsTheSubject`) | A re-read that compares only bytes fails on a read error with no named cause. |
 | PS77 | 17 | A `--check prose` probe of a `.go` subject refuses with the not-graded line and exit 1, and no run child starts | `internal/probe/subject_check_test.go` (`TestProbeRefusesAnUngradedProseSubject`) | A probe that grades a file that the prose walk never reads answers a false `silent`. |
 | PS76 | 14 | Each argv that names two mutation groups, `--delete` or `--insert-before` included, prints the usage line with exit 2 | `internal/probe/refusal_test.go` (`TestProbeUsageNamesOneSelectionAndOneMutation`) | A pair rule that names only the four current forms lets a new form combine in silence. |
