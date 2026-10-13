@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
@@ -58,11 +57,10 @@ func RequireFile(t testing.TB, path string, mode fs.FileMode, want string) {
 	RequireBytes(t, path, want)
 }
 
-// RequireAbsent fails t unless nothing exists at path, not even a symbolic link. A path
-// below a regular file is absent too, because a refusal test can block a parent that way.
+// RequireAbsent fails t unless nothing exists at path, not even a symbolic link.
 func RequireAbsent(t testing.TB, path string) {
 	t.Helper()
-	if _, err := os.Lstat(path); !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, syscall.ENOTDIR) {
+	if _, err := os.Lstat(path); !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("%s stat err = %v, want it absent", path, err)
 	}
 }

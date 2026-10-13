@@ -68,11 +68,12 @@ func TestCapturePreRenameFailure(t *testing.T) {
 }
 
 // D30: a manifest write whose transaction directory cannot be created refuses before the
-// replacement starts, and no manifest exists.
+// replacement starts, and the blocking file keeps its bytes.
 func TestCaptureDirectoryRefusal(t *testing.T) {
 	t.Parallel()
+	const blocked = "blocking file"
 	parent := filepath.Join(t.TempDir(), "file")
-	if err := os.WriteFile(parent, nil, 0o644); err != nil {
+	if err := os.WriteFile(parent, []byte(blocked), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	dir := filepath.Join(parent, directoryName)
@@ -81,5 +82,5 @@ func TestCaptureDirectoryRefusal(t *testing.T) {
 	err := writeManifestWith(rec.Replacer(), dir, captureManifest("sealed"))
 
 	durablefiletest.RequireRefusal(t, err, rec.Trace)
-	durablefiletest.RequireAbsent(t, filepath.Join(dir, manifestName))
+	durablefiletest.RequireBytes(t, parent, blocked)
 }

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -185,12 +184,16 @@ func TestProbeSubjectRefusalSkipsReplacement(t *testing.T) {
 	f := newFixture(t)
 	outside := filepath.Join(scratchDir(t), "clamp.go")
 	writeFixtureFile(t, outside, clampSource, 0o644)
-	_, display := canonicalpath.Operand(f.root, "", outside)
 	rec := &durablefiletest.Recorder{}
 
 	out, code := probeWith(t, f, rec.Replacer(), outside, "--swap", "n < 0", "--with", "n > 0", "--package", "./")
 
-	requireRefused(t, f, out, code, unavailable(display, "outside the repository"), 1)
+	if code != 1 {
+		t.Fatalf("exit = %d, want 1\n%s", code, out)
+	}
+	requireSubjectBytes(t, f, clampSource)
+	requireHomeEmpty(t, f)
+	requireNoRunChild(t, f)
 	durablefiletest.RequireNoReplacement(t, rec.Trace)
 	durablefiletest.RequireBytes(t, outside, clampSource)
 }

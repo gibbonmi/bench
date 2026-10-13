@@ -56,25 +56,11 @@ var (
 	}
 )
 
-// D16: the verdict writer returns the injected directory-sync failure of its replacement
-// after the rename, and the cache holds the encoded record at mode 0600.
-func TestVerdictReplacement(t *testing.T) {
+// D16, D17: each gate record writer returns the injected directory-sync failure of its
+// replacement after the rename, and its entry holds the encoded record.
+func TestGateReplacement(t *testing.T) {
 	t.Parallel()
-	dir := t.TempDir()
-	cause := errors.New("injected verdict directory-sync failure")
-	rec := &durablefiletest.Recorder{Fail: map[string]error{"directory-sync": cause}}
-
-	err := verdictWriter.write(rec.Replacer(), dir)
-
-	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)
-	durablefiletest.RequireFile(t, filepath.Join(dir, verdictWriter.entry), 0o600, verdictWriter.want)
-}
-
-// D17: the evidence writer and the lane writer return the injected directory-sync failure
-// of their shared store replacement, and each entry holds its encoded record at mode 0600.
-func TestEvidenceReplacement(t *testing.T) {
-	t.Parallel()
-	for _, tc := range []gateWriter{evidenceWriter, laneWriter} {
+	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			dir := t.TempDir()
@@ -109,20 +95,25 @@ func TestGatePreRenameFailure(t *testing.T) {
 func TestGateEvidenceDirectoryRefusal(t *testing.T) {
 	t.Parallel()
 	root := gittest.RepoOnBranch(t, "main")
-	dir := filepath.Join(root, ".git", evidenceDestination)
+	gitdir, err := benchgit.CommonDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan := subject{Tree: replacementVerdict.Tree, Oracle: replacementVerdict.Oracle}
+	entry := evidencePath(gitdir, plan)
+	dir := filepath.Dir(entry)
 	if err := os.Mkdir(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Chmod(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	plan := subject{Tree: replacementVerdict.Tree, Oracle: replacementVerdict.Oracle}
 	rec := &durablefiletest.Recorder{}
 
-	err := retainGreen(rec.Replacer(), root, plan, time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC))
+	err = retainGreen(rec.Replacer(), root, plan, time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC))
 
 	durablefiletest.RequireRefusal(t, err, rec.Trace)
-	durablefiletest.RequireAbsent(t, filepath.Join(dir, evidenceName(plan)))
+	durablefiletest.RequireAbsent(t, entry)
 }
 
 // D37: a failed pending write prints its classified cause and starts no oracle.

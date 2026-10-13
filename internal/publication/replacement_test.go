@@ -73,11 +73,13 @@ func TestPublicationPreRenameFailure(t *testing.T) {
 }
 
 // D30: a record save whose record directory cannot be created refuses before the
-// replacement starts, and no record exists.
+// replacement starts, and the blocking file keeps its bytes.
 func TestPublicationDirectoryRefusal(t *testing.T) {
 	t.Parallel()
+	const blocked = "blocking file"
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "dist"), nil, 0o644); err != nil {
+	blocker := filepath.Join(root, "dist")
+	if err := os.WriteFile(blocker, []byte(blocked), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	rec := &durablefiletest.Recorder{}
@@ -85,5 +87,5 @@ func TestPublicationDirectoryRefusal(t *testing.T) {
 	err := saveRecordWith(rec.Replacer(), root, replacementRecord("staged"))
 
 	durablefiletest.RequireRefusal(t, err, rec.Trace)
-	durablefiletest.RequireAbsent(t, RecordPath(root))
+	durablefiletest.RequireBytes(t, blocker, blocked)
 }
