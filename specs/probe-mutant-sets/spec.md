@@ -34,6 +34,7 @@ The answer prints one row for each mutant, a shared selection row with the build
 
 - D1 (2026-10-13): A mutant set shares the baseline's private run-binary build with every mutant whose subject lies outside the run binary's source closure. Each mutant inside that closure builds its own run binary, because a shared stale binary grades unmutated code and can answer a false `silent`. The answer reports the build count. This rewords the criterion `FT168-probe-batch.batch` ("one private build") by reviewer decision.
 - D2 (2026-10-13): This slice builds the mutant-set record import in `bench record verification`, although the criterion `FT168-probe-batch.record-form` names FT318 as the owner of that form. The spec-stage binding records this decision beside the criterion.
+- D3 (2026-10-13, build consultant under `--auto-approve`): A `substring-miss` row keeps its cause through a stop and a failed baseline, and a failed preservation reads `preserve-failed`. The reviewer can veto both.
 
 ## User stories
 
@@ -194,6 +195,8 @@ The set keeps the single form's refusal order for every per-call step.
 That order is usage, repository root, subject, mutants file, entries, selection, prose subject, gate lock, subject lock, and reread.
 An unmatched entry marks its row `invalid` with the cause `substring-miss` and the `restored` cell `untouched`.
 That row also reads a null focused exit and `ran` 0.
+A `substring-miss` row keeps its cause through a failed baseline and through every stop, so a stop marks only later matching rows.
+
 When every entry misses, the rows read an empty `baseline` cell and `builds` 0 at exit 1.
 That answer takes no lock and starts no run.
 
@@ -224,6 +227,9 @@ A failed mutant write gives its row `invalid` with the cause `mutation-failed`.
 An unpublished failure releases the copy and reads `restored` as `untouched`.
 A published failure restores the subject and reads `restored` as `yes`, and a failed restore keeps the copy as the single form does.
 A restore failure gives its row `restore-failed` with the `restored` cell `no`, and the `preserved` table follows the execution row.
+
+A failed preservation gives its row `invalid` with the cause `preserve-failed` and the `restored` cell `untouched`, and each later row reads `set-stopped`.
+A set answer prints no failure text, except the reason that the `preserved` table gives for a kept copy.
 After a write failure, an interrupt, or a restore failure, each later row reads `invalid` with the cause `set-stopped` and the `restored` cell `untouched`.
 
 ### Held runs
@@ -333,7 +339,7 @@ A held binary never authenticates itself: each reuse recomputes the source diges
 | PM-A / 1-repeat-the-probe-package.md | Repeated `--package` in the single form, the merged package note, and the help line | PM45-PM50 | planned package tests, existing help and notes tests | no |
 | PM-B / 2-hold-one-run-binary-across-runs.md | The held-runs seam with one caller context, reuse on a fresh verification, a per-run build when stale, an interrupted kind for a cancelled build, and a build count | PM27-PM29, PM31, PM70, PM76, PM79, PM80 | planned held-runs tests in `internal/testreport` | yes |
 | PM-C1 / 3-share-the-mutation-flag-grammar.md | The shared mutation flag list, the split form matrix, and the named cross-half rule, with no new behavior | none | existing form-matrix tests, the help inventory test | no |
-| PM-C2 / 4-grade-a-mutant-set.md | The `--mutants` grammar, file, entry refusals, the set cancel context, sequence, stop rules, envelope, repeated packages in a set, and the probe description | PM1-PM26, PM30, PM32, PM33, PM35-PM41, PM43, PM44, PM51, PM67, PM69, PM71, PM72, PM77, PM78 | planned set and set-input tests, the sequenced canned runner, the help inventory test | yes |
+| PM-C2 / 4-grade-a-mutant-set.md | The `--mutants` grammar, file, entry refusals, the set cancel context, sequence, stop rules, envelope, repeated packages in a set, and the probe description | PM1-PM26, PM30, PM32, PM33, PM35-PM41, PM43, PM44, PM51, PM67, PM69, PM71, PM72, PM77, PM78, PM81-PM86 | planned set and set-input tests, the sequenced canned runner, the help inventory test | yes |
 | PM-D / 5-import-one-mutant-row.md | `ReadMutant`, the set refusal of `ReadResult`, and `--mutant` in the verification form | PM34, PM42, PM52-PM60, PM74 | planned import and reader tests, the help inventory test | no |
 | PM-E / 6-document-the-mutant-set.md | Term, reference guide, delegate guidance, implement-spec route, known-issues row, roadmap upkeep, and changelog | PM61-PM66, PM68, PM73, PM75 | review-owned reads, the live anchors check, prose gate | no |
 
@@ -429,7 +435,7 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PM17 | 15 | A failing baseline gives every row `invalid` with the cause `baseline-failed` and `untouched`, with one Go start at exit 1 | `internal/probe/set_test.go` (`TestMutantSetBaselineEndsTheSet`) | A loop that ignores the baseline kind writes the first mutant. |
 | PM18 | 16 | A second process that holds the subject lock makes the set refuse with `probe subject in use` before any Go start | `internal/probe/lock_test.go` (`TestMutantSetTakesOneSubjectLock`) | A set that skips the lock runs beside another probe of the subject. |
 | PM19 | 16 | A lock attempt on the subject from the mutant-2 hook refuses as in use | `internal/probe/lock_test.go` (`TestMutantSetTakesOneSubjectLock`) | A lock released between mutants lets the hook's attempt succeed. |
-| PM20 | 17 | During mutant 2's run, the subject holds mutant 2's bytes and none of mutant 1's edit | `internal/probe/set_test.go` (`TestMutantSetRunsEachMutantAlone`) | A loop that skips the restore between mutants stacks the edits, and the hook refuses them. |
+| PM20 | 17 | During mutant 2's run, the subject holds mutant 2's bytes and none of mutant 1's edit | `internal/probe/set_test.go` (`TestMutantSetRunsEachMutantAlone`) | A loop that skips the restore between mutants writes mutant 2 over mutant 1's bytes, so the recorded sequence of replaced bytes is not start, m1, start, m2. |
 | PM21 | 18 | After the set, the subject holds its start bytes and start mode, and the Bench home holds no probe entry | `internal/probe/set_test.go` (`TestMutantSetRestoresAfterEachMutant`) | A loop that releases only the last copy leaves a preserved directory. |
 | PM22 | 19 | A restore that fails after mutant 1 gives row 1 `restore-failed`, row 2 `invalid` with `set-stopped`, a `preserved` table, and exit 2 with one mutated start | `internal/probe/set_test.go` (`TestMutantSetStopsOnARestoreFailure`) | A loop that continues writes mutant 2 over a damaged subject and starts a third Go child. |
 | PM23 | 20 | A gate lock taken from the mutant-1 hook gives row 2 `invalid` with `gate-held` and `untouched`, and no third Go start | `internal/probe/lock_test.go` (`TestMutantSetStopsUnderAGateRun`) | A gate check made once per call writes mutant 2 under the gate. |
@@ -485,6 +491,12 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PM76 | 21 | A caller context cancelled while the held validation of an inherited binary runs gives that run the outcome kind `interrupted`, not `refused` | `internal/testreport/held_runs_test.go` (`TestHeldRunsInterruptACancelledValidation`) | An owner that maps every failed validation through `selectionFailure` reads `refused`. |
 | PM79 | 24 | When a stale owned held binary's fresh build fails with no cancel, that run reads the outcome kind `build-failed` and starts no Go child | `internal/testreport/held_runs_test.go` (`TestHeldRunsFailAStaleRunWhoseBuildFails`) | An owner that falls back to the stale held binary runs the unmutated code and can read `passed`. |
 | PM80 | 21 | A cancel of the caller context while the first held run's build parks gives that run the outcome kind `interrupted`, removes the parked directory, and leaves the build count at 0 | `internal/testreport/held_runs_test.go` (`TestHeldRunsInterruptACancelledFirstBuild`) | An owner that applies the interrupt rule only to later runs reads `refused` for a cancelled first build. |
+| PM81 | 12 | In `[match, miss, match]`, an interrupt during mutant 1 or a failed baseline leaves row 2 `invalid` with `substring-miss`, and only matching rows take the stop or baseline cause | planned TestMutantSetMissKeepsItsCause in internal/probe/set_test.go | A stop that marks every later row overwrites the miss, so the answer depends on where the stop falls. |
+| PM82 | 22 | A failed preservation before mutant 1 gives row 1 `invalid` with `preserve-failed` and `untouched`, row 2 `set-stopped`, no Go start after the baseline, and exit 1 | planned TestMutantSetStopsOnAPreserveFailure in internal/probe/set_test.go | A row that reuses `mutation-failed` names a write that never happened. |
+| PM83 | 35 | A published write failure on mutant 1 whose restore also fails gives row 1 `restore-failed` with `no`, a `preserved` table, row 2 `set-stopped`, and exit 2 | planned TestMutantSetStopsOnAMutationFailure in internal/probe/set_test.go | A row that keeps the write-failure exit hides a damaged subject behind exit 1. |
+| PM84 | 21 | A signal during mutant 1's restore, after its run completes, gives row 2 `invalid` with `set-stopped` and `untouched`, and no second mutated start | planned TestMutantSetStopsOnASignalDuringARestore in internal/probe/set_test.go | A loop that examines the cancel context only through the run outcome writes mutant 2. |
+| PM85 | 38 | After a failed baseline and after a restore failure, the `trailing_bytes` cell equals the byte count after the execution row | planned TestMutantSetCountsTheTrailingBytes in internal/probe/set_test.go | A count that skips the `preserved` table or the baseline report passes a cut answer. |
+| PM86 | 27 | A failed baseline over an owned run binary reads `builds` 1 | planned TestMutantSetBaselineEndsTheSet in internal/probe/set_test.go | A set that sets the build count only after a passing baseline reads 0. |
 | PM77 | 20 | A gate state that the verb cannot read before mutant 2's write gives row 2 `invalid` with `gate-unavailable` and `untouched`, and no second mutated start | `internal/probe/lock_test.go` (`TestMutantSetStopsOnAnUnreadableGate`) | A loop that reads only the held answer of the gate check writes mutant 2. |
 | PM78 | 22 | A published write failure on mutant 1 whose restore succeeds gives row 1 `mutation-failed` with `restored` `yes`, and the subject holds its start bytes | `internal/probe/set_test.go` (`TestMutantSetStopsOnAMutationFailure`) | A row that copies the unpublished cell reads `untouched` after a write that reached the subject. |
 | PM72 | 2 | Under `--check prose`, an entry that holds `--expect` prints the entry-refused line for that entry and the usage line at exit 2 with no run | `internal/probe/set_input_test.go` (`TestMutantSetEntryRefusesProseExpect`) | An entry that runs only the mutation half accepts the pair and answers every bite `expect-missed`. |
