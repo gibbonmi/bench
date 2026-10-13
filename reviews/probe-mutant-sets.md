@@ -3078,6 +3078,77 @@
           "tip": "74e73817b8c0cf76f27122dd6ff0f779aaae5789",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "pm-e-standards-r2",
+          "performer": "claude:pm_e_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_e_standards_r2",
+            "digest": "sha256:39344ca6fbbae125e44620e3e64492b42bf56b8f1b8473c6aa741a3220a9c14b",
+            "excerpt": "Standards axis claude:pm_e_standards_r2 (opus/high), PM-E confirming round 2, chunk pair 2ae8d55c..ef6e240f, repair delta 74e73817..e10b7d35, evidence sha256:672f7cf9 current.\ncount: 2\nworst: S5\nS1 closed (SKILL.md:105 and BENCH-reference.md:258-259 no longer list the set as a mutation). S2 closed (the table field lists are gone; set.go:22,26 owns them). S3 closed (FT168.md:10 \"expected witness\").\nS4 | auto-fix | 6 | partly open: BENCH-reference.md:285-286 defines the state as \"an entry that matches no subject bytes\", then calls it \"When every entry misses\"; ste-prose.md:25. Needed: \"When every row reads substring-miss, the set takes no lock and starts no run.\"\nS5 | auto-fix | 9 | SKILL.md:105 \"(a swap, omission, unwrap, insertion, deletion, or combined mutant)\" drops the articles (ste-prose.md:23); with articles the sentence passes 25 words. Needed: delete the parenthesized list, so the sentence reads \"...applies one mutation, and proves the restore.\"; the next sentence already points to bench probe --help.\nNo new paragraph over six sentences; every new sentence 25 words or fewer; \"Each of these causes\" and the failed-write wording match set.go.\nAdvice: BENCH-reference.md:300 repeats the restored values; \"--mutants grades a mutant set\" could name an agent; two long physical lines at :252 and :293.\nImplementation command: a repair charge that shortens prose should say \"keep the articles; cut a clause or a list, not the function words\".\n"
+          },
+          "axis": "Standards",
+          "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
+          "tip": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+          "finding_ids": [
+            "S4",
+            "S5"
+          ],
+          "supersedes": [
+            "pm-e-standards-r1"
+          ]
+        },
+        {
+          "id": "pm-e-spec-r2",
+          "performer": "claude:pm_e_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_e_spec_r2",
+            "digest": "sha256:5776c12dc50da715b9c3a787c48ab4408451ab06ed4ae080b28119f997989e3c",
+            "excerpt": "Spec axis claude:pm_e_spec_r2 (opus/high), PM-E confirming round 2, chunk pair 2ae8d55c..ef6e240f, delta 9f1d3c44..ef6e240f, evidence sha256:672f7cf9 current.\ncount: 1\nworst: P4\nP1 closed (BENCH-reference.md:303-311 matches set.go grade, stopCause, stopFrom, recoverMutation, failRestore, spec:226-229, D3). P2 closed (:321-324 matches set.go:250-261 and spec:282-283). P3 closed (:248-251 scoped to the single form).\nP4 | auto-fix | 7 | BENCH-reference.md:258-259: the S1 repair removed \"or a mutant set\" and the list's \"or\": \"The mutation is a swap, an omission, an unwrap, an insertion, a deletion, a combined mutant, and bench probe --help holds the grammar.\" Needed: \"...a deletion, or a combined mutant, and ...\".\nRows: PM62 met; PM61, PM63-PM66, PM73, PM75 stay met; PM68 accurate.\nRecords: seven pm-t06-rep1 entries at e10b7d35, source digest d16e026c.\nAdvice: the stop and baseline sentences omit the verdict invalid; \"Each of these causes\" could read as including substring-miss; three entries cite one combined run.\nImplementation command: after removing a list item, re-read the whole sentence.\n"
+          },
+          "axis": "Spec",
+          "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
+          "tip": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+          "finding_ids": [
+            "P4"
+          ],
+          "supersedes": [
+            "pm-e-spec-r1"
+          ]
+        },
+        {
+          "id": "pm-e-coverage-r2",
+          "performer": "claude:pm_e_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d16e026c7d27407a48f341575f2747f2d47bd7b2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_e_coverage_r2",
+            "digest": "sha256:a85603426632af160a1d87e44398f4c2565fe5ecec5b8991b324751f255dc2a7",
+            "excerpt": "Coverage axis claude:pm_e_coverage_r2 (opus/high), PM-E confirming round 2, chunk pair 2ae8d55c..ef6e240f, repair delta 74e73817..e10b7d35, evidence sha256:672f7cf9 current.\ncount: 0\nworst: none\nAll 47 BENCH-reference.md anchors and all 67 SKILL.md anchors match; no needle sits in the edited lines. SKILL.md 126 lines; guidance-prose-budgets, roadmap-detail-integrity, prose, docs-currency-workflow pass. No code pins the removed text.\nOwn probe: swap the SKILL.md:106 Isolation needle (\"every restore names exact files\"), --check docs-currency-workflow: bit, TestRootConformance \"dropped worktree-local backup isolation or admitted a glob restore\", restored yes; git status empty.\nAdvice: BENCH-reference.md:258-259 lost the list's \"or\"; two long physical lines; the installed bench probe --help shows --mutants only after landing.\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
+          "tip": "e10b7d3547b6c70b61429715ec48850bb9f14e57",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-e-coverage-r1"
+          ]
         }
       ]
     }
@@ -3743,3 +3814,25 @@ Count 0. Worst issue: none. Every anchored sentence stays guarded, and each prob
 ### Advice
 
 - The `CHANGELOG.md` entry says that each package needed its own call, but a parent `./...` pattern already covered several packages.
+
+## PM-E round 2
+
+The confirming round read the delta from 9f1d3c44 to ef6e240f, with the repair commit e10b7d35.
+Repair allowance: cycle 2 of 2 starts for three one-line prose edits.
+
+### Standards
+
+Count 2. Worst issue: S5. S1, S2, and S3 are closed.
+
+- S4, auto-fix, confidence 6: one phrase still calls the miss state "every entry misses". Use "When every row reads `substring-miss`".
+- S5, auto-fix, confidence 9: the delegate skill's mutation list lost its articles. Delete the list, because the next sentence points to the probe help.
+
+### Spec
+
+Count 1. Worst issue: P4. P1, P2, and P3 are closed, and row PM62 is met.
+
+- P4, auto-fix, confidence 7: the reference guide's mutation list lost its "or" before the last item.
+
+### Coverage
+
+Count 0. Worst issue: none. Every anchor in the two guidance files still matches, and an independent probe bit.
