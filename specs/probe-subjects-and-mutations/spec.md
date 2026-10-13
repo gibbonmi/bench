@@ -16,7 +16,7 @@ The probe refuses `--check prose` and `--check system`, so a Markdown or system-
 A swap that leaves an import unused gives an `invalid` verdict, and the verdict does not name the compile failure.
 A mutant that breaks the private run-binary build reads as a refusal, not as a build failure.
 Two probes can mutate one file at the same time, and a bite by an unrelated test reads as `bit`.
-Sources: `internal/probe/probe.go:122`, `internal/probe/command.go:19`, `internal/testreport/command.go:156`, `docs/known-issues.md:13`, and the FT168 occurrences.
+Sources: `mutationForm` and `gradeCheckTarget` in `internal/probe/probe.go`, `internal/probe/command.go:19`, `internal/testreport/command.go:157`, the invalid-mutant row of `docs/known-issues.md`, and the FT168 occurrences.
 
 ## Solution
 
@@ -101,7 +101,7 @@ Harder chunks: PS-C, PS-D.
 
 45. As a reader, I want the help inventory's probe line to come from the probe grammar, so that the two lines cannot drift.
 46. As a reader, I want the reference guide, the glossary, the delegate skill, and the changelog to name the new forms.
-47. As a maintainer, I want the unused-import known-issue row removed, so that the issues table lists only open issues.
+47. As a maintainer, I want the unused-import and unused-variable known-issue row removed, so that the issues table lists only open issues.
 48. As a maintainer, I want the probe-cost row to name the batch obligation, so that the combined mutant does not retire it.
 
 ### Reviewed exclusions
@@ -121,7 +121,7 @@ The commitment order governs delivery: this staged spec waits for `bench commitm
 
 ### Owner files
 
-`internal/probe/probe.go` has 304 lines on the NRO build tip, and three chunks change it.
+`internal/probe/probe.go` has 332 lines on `main`, and three chunks change it.
 Each chunk therefore puts its new logic in its own file.
 `internal/probe/edit.go` owns the edit list and the form rules.
 `internal/probe/verdict.go` owns `first_failure`, `--expect`, and the `mutant` table.
@@ -150,9 +150,11 @@ A match count of zero gives the current substring-miss answer.
 A match count from 1 to `n - 1` refuses with `error: probe mutation occurrence out of range — the old string matches <count> times, --occurrence is <n>`.
 A zero, negative, or non-decimal value is a usage refusal with exit 2.
 
-`--delete` removes the subject for the mutated run.
+`--delete` removes the subject for the mutated run through the `Remove` operation of the injected `durablefile.Replacer`.
 The mutation cell reads `delete`.
-The restore writes the preserved copy back through the current atomic replace, and it proves the bytes and the mode.
+A failed removal can leave the subject absent, so it takes the recovery of a published replace failure.
+The copy stays until a restore proves the start bytes, and a failed restore keeps the copy at exit 2.
+The restore writes the preserved copy back through `Replacer.Replace`, as every restore does, and it proves the bytes and the mode.
 
 An omission whose result has zero bytes refuses before any write.
 The refusal is `error: probe mutation empties the subject — use --delete to remove <subject> for the run`.
@@ -309,85 +311,327 @@ PS-E comes last, because its guidance names every form.
 
 ### Completion plan
 
-This version-1 completion plan is a planning verification inventory, not a dispatch plan.
-Its commands are future obligations, not executed proof.
-Before the first dispatch, the coordinator amends it to a version-2 plan with the run and session identities.
+This version-2 completion plan carries the run identity, the author limit, and one verification set for each ticket.
+Each code ticket names one central-property probe, and its commands are future obligations, not executed proof.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "probe-subjects-build-20261012",
+    "orchestrator_session": "claude:ps-orchestrator-20261012",
+    "author_limit": 1,
+    "assignments": {
+      "1-add-probe-mutation-forms.md": [],
+      "2-probe-prose-and-system-checks.md": [],
+      "3-name-the-first-failure-and-expected-witness.md": [],
+      "4-name-a-mutant-build-failure.md": [],
+      "5-lock-the-probe-subject.md": [],
+      "6-document-the-probe-forms.md": []
+    }
+  },
   "chunks": [
     {
       "id": "PS-A",
-      "tickets": ["1-add-probe-mutation-forms.md"],
+      "tickets": [
+        "1-add-probe-mutation-forms.md"
+      ],
       "verification": [
-        {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "package-core-guard", "command": "bench test --check package-core-guard"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {
+          "id": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "ticket": "1-add-probe-mutation-forms.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "1-add-probe-mutation-forms.md"
+        },
+        {
+          "id": "package-core-guard",
+          "command": "bench test --check package-core-guard",
+          "ticket": "1-add-probe-mutation-forms.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "1-add-probe-mutation-forms.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "1-add-probe-mutation-forms.md"
+        },
+        {
+          "id": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "probe": "Apply each combined edit over the result of the earlier edit instead of over the start bytes. TestCombinedEditsMatchOnce must turn red.",
+          "ticket": "1-add-probe-mutation-forms.md"
+        }
       ]
     },
     {
       "id": "PS-B",
-      "tickets": ["2-probe-prose-and-system-checks.md"],
+      "tickets": [
+        "2-probe-prose-and-system-checks.md"
+      ],
       "verification": [
-        {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
-        {"id": "testreport", "command": "bench test --package ./internal/testreport"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {
+          "id": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "ticket": "2-probe-prose-and-system-checks.md"
+        },
+        {
+          "id": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "ticket": "2-probe-prose-and-system-checks.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "2-probe-prose-and-system-checks.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "2-probe-prose-and-system-checks.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "2-probe-prose-and-system-checks.md"
+        },
+        {
+          "id": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "probe": "Answer the substring miss before the selection parse with a hard-coded all run cell. TestSelectionPrecedesTheSubstringMiss must turn red.",
+          "ticket": "2-probe-prose-and-system-checks.md"
+        }
       ]
     },
     {
       "id": "PS-C",
-      "tickets": ["3-name-the-first-failure-and-expected-witness.md", "4-name-a-mutant-build-failure.md"],
+      "tickets": [
+        "3-name-the-first-failure-and-expected-witness.md",
+        "4-name-a-mutant-build-failure.md"
+      ],
       "verification": [
-        {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
-        {"id": "testreport", "command": "bench test --package ./internal/testreport"},
-        {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
-        {"id": "record-forms", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "gate-readers", "command": "bench test --package ./internal/gate"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {
+          "id": "t3-probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "ticket": "3-name-the-first-failure-and-expected-witness.md"
+        },
+        {
+          "id": "t3-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "ticket": "3-name-the-first-failure-and-expected-witness.md"
+        },
+        {
+          "id": "t3-runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "ticket": "3-name-the-first-failure-and-expected-witness.md"
+        },
+        {
+          "id": "t3-record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "ticket": "3-name-the-first-failure-and-expected-witness.md"
+        },
+        {
+          "id": "t3-gate-readers",
+          "command": "bench test --package ./internal/gate",
+          "ticket": "3-name-the-first-failure-and-expected-witness.md"
+        },
+        {
+          "id": "t3-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "3-name-the-first-failure-and-expected-witness.md"
+        },
+        {
+          "id": "t3-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "3-name-the-first-failure-and-expected-witness.md"
+        },
+        {
+          "id": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "3-name-the-first-failure-and-expected-witness.md"
+        },
+        {
+          "id": "t3-central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "probe": "Match --expect by exact name only and drop the parent-and-slash match. TestExpectRequiresTheNamedWitness must turn red.",
+          "ticket": "3-name-the-first-failure-and-expected-witness.md"
+        },
+        {
+          "id": "t4-probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "ticket": "4-name-a-mutant-build-failure.md"
+        },
+        {
+          "id": "t4-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "ticket": "4-name-a-mutant-build-failure.md"
+        },
+        {
+          "id": "t4-runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "ticket": "4-name-a-mutant-build-failure.md"
+        },
+        {
+          "id": "t4-record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "ticket": "4-name-a-mutant-build-failure.md"
+        },
+        {
+          "id": "t4-gate-readers",
+          "command": "bench test --package ./internal/gate",
+          "ticket": "4-name-a-mutant-build-failure.md"
+        },
+        {
+          "id": "t4-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "4-name-a-mutant-build-failure.md"
+        },
+        {
+          "id": "t4-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "4-name-a-mutant-build-failure.md"
+        },
+        {
+          "id": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "4-name-a-mutant-build-failure.md"
+        },
+        {
+          "id": "t4-central-property",
+          "command": "bench test --package ./internal/testreport",
+          "probe": "Map every builder error to build-failed instead of only a BuildError. TestOnlyAScriptFailureIsBuildFailed must turn red.",
+          "ticket": "4-name-a-mutant-build-failure.md"
+        }
       ]
     },
     {
       "id": "PS-D",
-      "tickets": ["5-lock-the-probe-subject.md"],
+      "tickets": [
+        "5-lock-the-probe-subject.md"
+      ],
       "verification": [
-        {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {
+          "id": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "ticket": "5-lock-the-probe-subject.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "5-lock-the-probe-subject.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "5-lock-the-probe-subject.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "5-lock-the-probe-subject.md"
+        },
+        {
+          "id": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "probe": "Omit the fstat and lstat identity recheck after the record lock. TestSubjectLockRechecksTheIdentity must turn red.",
+          "ticket": "5-lock-the-probe-subject.md"
+        }
       ]
     },
     {
       "id": "PS-E",
-      "tickets": ["6-document-the-probe-forms.md"],
+      "tickets": [
+        "6-document-the-probe-forms.md"
+      ],
       "verification": [
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "conformance-meta", "command": "bench test --check conformance-meta"},
-        {"id": "agent-definitions", "command": "bench test --check claude-agent-definitions"},
-        {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
-        {"id": "prose", "command": "bench test --check prose"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {
+          "id": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "ticket": "6-document-the-probe-forms.md"
+        },
+        {
+          "id": "conformance-meta",
+          "command": "bench test --check conformance-meta",
+          "ticket": "6-document-the-probe-forms.md"
+        },
+        {
+          "id": "agent-definitions",
+          "command": "bench test --check claude-agent-definitions",
+          "ticket": "6-document-the-probe-forms.md"
+        },
+        {
+          "id": "skills-index",
+          "command": "bench test --check skills-index-command-adapters",
+          "ticket": "6-document-the-probe-forms.md"
+        },
+        {
+          "id": "prose",
+          "command": "bench test --check prose",
+          "ticket": "6-document-the-probe-forms.md"
+        },
+        {
+          "id": "anchors-package",
+          "command": "bench test --package ./internal/anchors",
+          "ticket": "6-document-the-probe-forms.md"
+        },
+        {
+          "id": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "6-document-the-probe-forms.md"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "6-document-the-probe-forms.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "6-document-the-probe-forms.md"
+        }
       ]
     }
   ],
   "final_verification": [
-    {"id": "coverage", "command": "bench coverage --check specs/probe-subjects-and-mutations/spec.md"},
-    {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
-    {"id": "testreport", "command": "bench test --package ./internal/testreport"},
-    {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
-    {"id": "record-forms", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-    {"id": "gate-readers", "command": "bench test --package ./internal/gate"},
-    {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-    {"id": "system", "command": "bench test --check system"}
+    {
+      "id": "coverage",
+      "command": "bench coverage --check specs/probe-subjects-and-mutations/spec.md"
+    },
+    {
+      "id": "probe-family",
+      "command": "bench test --package ./internal/probe/..."
+    },
+    {
+      "id": "testreport",
+      "command": "bench test --package ./internal/testreport"
+    },
+    {
+      "id": "runbinary",
+      "command": "bench test --package ./internal/runbinary"
+    },
+    {
+      "id": "record-forms",
+      "command": "bench test --package ./internal/reviewrecord/recordcmd"
+    },
+    {
+      "id": "gate-readers",
+      "command": "bench test --package ./internal/gate"
+    },
+    {
+      "id": "command-package",
+      "command": "bench test --package ./cmd/bench"
+    },
+    {
+      "id": "system",
+      "command": "bench test --check system"
+    }
   ]
 }
 ```
@@ -435,7 +679,7 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PS8 | 6 | `--occurrence 0` and `--occurrence x` each print the usage line with exit 2 | planned internal/probe/edit_test.go (TestOccurrenceSelectsOneMatch) | A parser that accepts zero selects no match and reports a miss instead. |
 | PS9 | 7 | `--delete` leaves the subject absent while the mutated run runs | planned internal/probe/delete_test.go (TestDeleteRemovesTheSubjectForTheRun) | The stub hook finds the file when the form only empties it. |
 | PS10 | 8 | After `--delete`, the subject holds its start bytes and its start mode | planned internal/probe/delete_test.go (TestDeleteRemovesTheSubjectForTheRun) | A restore that recreates the file at the default mode loses an executable bit. |
-| PS11 | 8 | A failed restore after `--delete` reads `restore-failed` and names the preserved copy | planned internal/probe/delete_test.go (TestDeleteReportsARestoreFailure) | A deletion path outside the preserve owner leaves no copy to restore by hand. |
+| PS11 | 8 | A failed restore after `--delete` reads `restore-failed` and names the preserved copy, and a failed removal whose restore fails keeps the copy at exit 2 | planned internal/probe/delete_test.go (TestDeleteReportsARestoreFailure) | A deletion path outside the preserve owner leaves no copy to restore by hand. |
 | PS12 | 9 | `--omit-file` with the whole subject refuses with the empties line that names `--delete` | planned internal/probe/delete_test.go (TestOmissionThatEmptiesTheSubjectRefuses) | The FT290 omission empties the file and the red cannot occur. |
 | PS13 | 10 | Two `--swap` pairs and one `--omit` make one mutant whose bytes hold all three edits | planned internal/probe/combined_test.go (TestCombinedEditsMakeOneMutant) | A form that applies only the first edit leaves the import in use. |
 | PS14 | 11 | A combined edit whose old string matches twice refuses as ambiguous | planned internal/probe/combined_test.go (TestCombinedEditsMatchOnce) | A combined path that skips the count mutates an unnamed site. |
@@ -495,9 +739,9 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PS68 | 44 | A completed probe leaves the record surfaces unchanged | `internal/probe/outcome_test.go` (`TestProbeWritesNoRecord`) | A kept lock file or lock directory adds an entry under the Bench home. |
 | PS69 | 46 | The reference guide names each new form, the subject lock, and the `mutant` table | review-owned: the reviewer reads the probe paragraphs | The prose check grades sentences, not content. |
 | PS70 | 46 | `CONTEXT.md` defines **combined mutant** and **expected witness** with Avoid lists | review-owned: the reviewer reads the entries | The prose check grades sentences, not terms. |
-| PS71 | 46 | The delegate skill's probe sentence at line 104 names the new forms | review-owned: the reviewer reads the sentence; the anchored line 81 is gate-owned through `internal/anchors/registry_data.go:215` and `internal/conformance/fixture_bite_test.go:360` | No check reads the content of line 104. |
+| PS71 | 46 | The delegate skill's probe sentence at line 104 names the new forms | review-owned: the reviewer reads the sentence; the anchored line 81 is gate-owned through `internal/anchors/registry_data.go:214` and `internal/conformance/fixture_bite_test.go:360` | No check reads the content of line 104. |
 | PS72 | 46 | `CHANGELOG.md` names each new form and the schema v2 change | review-owned: the reviewer reads the entry | No check reads the changelog content. |
-| PS73 | 47 | `docs/known-issues.md` holds no row that names an unused probe import | review-owned: the reviewer reads the table | No check reads the issue table. |
+| PS73 | 47 | `docs/known-issues.md` holds no row that names an unused probe import or an unused probe variable | review-owned: the reviewer reads the table | No check reads the issue table. |
 | PS74 | 48 | The probe-cost row names the batch obligation as its retire condition, and `roadmap/FT168.md` keeps that obligation | review-owned: the reviewer reads both files | The current condition holds once the combined mutant ships and forces an early removal. |
 | PS75 | 38 | A subject that the start-read hook deletes reads the absent-subject line at the re-read, and no run child starts | planned internal/probe/lock_test.go (TestSubjectLockRereadsTheSubject) | A re-read that compares only bytes fails on a read error with no named cause. |
 | PS76 | 14 | Each argv that names two mutation groups, `--delete` or `--insert-before` included, prints the usage line with exit 2 | `internal/probe/refusal_test.go` (`TestProbeUsageNamesOneSelectionAndOneMutation`) | A pair rule that names only the four current forms lets a new form combine in silence. |
@@ -547,11 +791,14 @@ Every reader of that name is in the fence.
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/main.go`
+- `cmd/bench/test_command.go`
 - `docs/known-issues.md`
 - `internal/anchors/registry_calibration.go`
 - `internal/anchors/registry_calibration_test.go`
 - `internal/anchors/registry_charge_binding.go`
 - `internal/anchors/registry_charge_binding_test.go`
+- `internal/anchors/registry_chunk_chain.go`
+- `internal/anchors/registry_chunk_chain_test.go`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_debug_loop.go`
@@ -560,6 +807,8 @@ Every reader of that name is in the fence.
 - `internal/anchors/registry_ft311_preparation.go`
 - `internal/anchors/registry_ft311_review_dispatch.go`
 - `internal/anchors/registry_retained_workflow.go`
+- `internal/anchors/registry_ticket_passes.go`
+- `internal/anchors/registry_ticket_passes_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/probe/baseline.go`
@@ -579,6 +828,7 @@ Every reader of that name is in the fence.
 - `internal/probe/probe.go`
 - `internal/probe/probe_test.go`
 - `internal/probe/refusal_test.go`
+- `internal/probe/replacement_test.go`
 - `internal/probe/result.go`
 - `internal/probe/result_test.go`
 - `internal/probe/subject.go`
@@ -675,7 +925,7 @@ Every reader of that name is in the fence.
 ## Out of scope
 
 - The batch is FT168's next slice: several packages in one probe, and independent mutants that share one baseline and one private build. Estimate: 10 edits and 4 gate runs. It serves the probe-cost known-issue row and the 2026-10-09 learning "A per-expectation probe loop multiplies the per-call recompile of bench probe". It needs an FT318 decision on how a record imports several verdicts. Single-mutant probes remain the surviving caller.
-- `bench canary <fixture>` runs one canary fixture: estimated 6 edits and 3 gate runs. The form collides with the current `bench canary [root]` grammar (`cmd/bench/help_inventory_test.go:95`), so its successor decides the operand shape. `bench test --check <name>` remains the surviving caller.
+- `bench canary <fixture>` runs one canary fixture: estimated 6 edits and 3 gate runs. The form collides with the current `bench canary [root]` grammar (`cmd/bench/help_inventory_test.go:97`), so its successor decides the operand shape. `bench test --check <name>` remains the surviving caller.
 - A `--names` form that compares failing test names with a base set: estimated 5 edits and 3 gate runs. Its successor designs the base-set input and reads PS-C's `FailedNames` list. The failures table remains the surviving caller.
 - A repeatable `--package` on `bench test` (IDEAS, 2026-10-09): estimated 4 edits and 2 gate runs, with the batch successor. One call per package remains the surviving caller.
 - A probe that prints the mutated text and reruns the green after the restore (IDEAS, 2026-10-09): estimated 5 edits and 2 gate runs. It is not in the decision source. The verdict row and a `bench test` call remain the surviving callers.
@@ -687,7 +937,7 @@ Flagged additions:
 - The emptying-omission refusal reads "replaces the emptying `--omit-file`" as a refusal that names `--delete`.
 - The `mutant` table is a new block after `probe_execution`, not a new verdict-row cell.
 - The help inventory derives its probe suffix from `probe.Usage`, because the hand copy has drifted.
-- The removal of the unused-import known-issue row follows from the self-naming build failure and the combined form.
+- The removal of the unused-import and unused-variable known-issue row follows from the self-naming build failure and the combined form. The first build line names either compile error.
 - The cause values `expect-missed` and `baseline-build-failed` are new under the existing verdict `invalid`. The reviewer accepted `baseline-build-failed` on 2026-10-09, because no reader outside `internal/probe` parses the baseline cause.
 - The selection parse moves before the substring-miss answer, so an unknown check now wins over a miss.
 - The subject-changed and lock-unavailable refusals are new refusal lines.
@@ -711,7 +961,7 @@ Boundaries:
 
 Response bound: a biting answer already spills past the 10-line bound after NR-C3, and an open learning asks the reviewer for that decision. This spec adds no line to a biting or silent answer. The `mutant` table adds two lines only to a build-failed answer.
 
-Known issues: the probe-cost row is on `main` at `docs/known-issues.md:14` since 23c59775. Its retire condition is "FT168: one probe takes several mutations in one private build". That condition holds once the combined mutant ships, so PS74 rewords it to the batch obligation. The probe-exit row at `docs/known-issues.md:11` leaves with the NRO build. On the `nro-build` tip, NRO ticket 3 states the removal at lines 19 and 70, and the tip's `docs/known-issues.md` has no probe-exit row.
+Known issues: the probe-cost row is on `main` at `docs/known-issues.md:12` since 23c59775. Its retire condition is "FT168: one probe takes several mutations in one private build". That condition holds once the combined mutant ships, so PS74 rewords it to the batch obligation. The NRO build removed the probe-exit row, and `main` has no probe-exit row.
 
 Source-clause mapping:
 
@@ -740,7 +990,7 @@ The pre-review proof checklist follows.
 - Import edges: `internal/testreport` already imports `internal/runbinary`, and `internal/probe` already imports `internal/testreport`. The lock owner adds the production edge from `internal/probe` to `internal/gocache`. `go list -deps ./internal/gocache` names neither `internal/probe` nor `internal/testreport`, so the edge makes no cycle.
 - Source-row clauses and occurrences: the full FT168 body and its 24 occurrences were read, through the retros in Git history and `capture/learnings.md`. The light-path repair pass retro text was not found.
 - Promised field labels: `first_failure`, `mutant`, `first_build_line`, `FailedNames`, `BuildLine`, `BuildError`, `bench-probe-result-v2`, `expect-missed`, `baseline-build-failed`, `insert`, and `delete`.
-- Changed-function callers: `testreport.Execute` has the callers `gradeBaseline`, `probe`, and `testreport.Command`. `HandProbeRoute` has the readers `gradeCheckTarget` and `ProbeNotes`. `ProbeNotes` has the reader `probeGrammar`. `runbinary.Factory.Own` has the readers `productionRunBinaryOwner`, `internal/gate/prospective.go:19,37`, `internal/gate/lane.go:63`, and `internal/testreport/command.go:43`; PS49 keeps their error bytes.
+- Changed-function callers: `testreport.Execute` has the callers `gradeBaseline`, `probe`, and `testreport.Command`. `HandProbeRoute` has the readers `gradeCheckTarget` and `ProbeNotes`. `ProbeNotes` has the reader `probeGrammar`. `runbinary.Factory.Own` has the readers `productionRunBinaryOwner`, `internal/gate/prospective.go:37`, the `ReuseOrOwn` callers at `internal/gate/prospective.go:39` and `internal/gate/lane.go:274`, and `internal/testreport/command.go:43`; PS49 keeps their error bytes.
 - Copy survival: PS34 reds a surviving hand route or rebuild note. PS25 and PS57 red a hand-copied help suffix, and PS37 reds a hard-coded run cell.
 - Rendered-shape readers: the strings "not probe targets" and "probe focused run unsupported" occur in `internal/probe/probe.go`, `internal/probe/refusal_test.go`, `internal/testreport/selection_facts.go`, and `internal/testreport/selection_facts_test.go`. The NRO import tests read the schema token. `bench anchors .agents/skills/bench-craft-delegate/SKILL.md` at 23c59775 lists the needle "report the observed result and the mutation's kind (omission or swap)" at line 81, which `internal/anchors/registry_data.go` and `internal/conformance/fixture_bite_test.go` pin.
 - Pin operators: the rows compare exact rendered rows, exact subject bytes, exact modes, and exact error bytes.
@@ -754,7 +1004,7 @@ PS33 copies a sealed executable pair from a fixture build script. `freshness.Ver
 
 1. The bytes stay unchanged, and the seal sits at `<output>.seal` (`internal/freshness/freshness_verify.go:51-71`).
 2. The subject is outside the digest closure (`internal/freshness/freshness_buildinputs.go:50-104`). `clamp.go` qualifies, because the fixture's `cmd/bench/main.go` imports nothing. A subject inside the closure makes the seal stale, and the selection refuses.
-3. No path component is a symlink (`internal/freshness/freshness_buildinputs.go:168`).
+3. No path component is a symlink (`rejectSymlinkComponents` in `internal/freshness/freshness_buildinputs.go`).
 4. `BENCH_RUN_BINARY` is unset, not empty. `newFixture` sets it, and `ReuseOrOwn` tests its presence (`internal/runbinary/runbinary.go:71`).
 
 Sources not re-read: the light-path repair pass retro, and the learning texts behind six occurrence lines that exist only in `roadmap/FT168.md`.

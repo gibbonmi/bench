@@ -1,7 +1,7 @@
 # Probe the prose check and the system suite through the check owner
 
 Blocked by: 1-add-probe-mutation-forms.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/outcome_test.go, internal/probe/probe.go, internal/probe/refusal_test.go, internal/probe/subject_check_fixture_test.go (new), internal/probe/subject_check_test.go (new), internal/testreport/runbinary_test.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/outcome_test.go, internal/probe/probe.go, internal/probe/refusal_test.go, internal/probe/replacement_test.go, internal/probe/subject_check_fixture_test.go (new), internal/probe/subject_check_test.go (new), internal/testreport/runbinary_test.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go
 Covers: PS26, PS27, PS28, PS29, PS30, PS31, PS32, PS33, PS34, PS35, PS36, PS37
 
 ## What to build
@@ -13,7 +13,8 @@ Ticket 1 supplies the edit owner, the closed form matrix, and `probe.Usage`.
 This ticket changes the selection grammar in `command.go` and the run sequence in `probe.go` after that ticket commits.
 
 Remove `gradeCheckTarget` and its refusal from `probe.go`, and retire `testreport.HandProbeRoute`.
-`testreport.ProbeNotes` keeps the `--package` expression note and the `--check` inventory note without the not-a-target clause.
+`testreport.ProbeNotes` keeps `probePackageNote`, the probe's single-`--package` expression note, and the `--check` inventory note without the not-a-target clause.
+`PackageExpressionNote` stays the `bench test` note, because the probe grammar takes one `--package`.
 The rebuild note leaves `ProbeNotes`, because each focused run without an inherited selection builds its own run binary.
 
 `--run` becomes valid with `--package` or with `--check system`, and the usage line names both positions.
@@ -32,7 +33,7 @@ The fixture meets the four conditions in the spec's further notes, and `BENCH_RU
 `TestProbeRefusesProseAndSystemChecks` retires, because both checks become probe targets.
 `TestProbeNotesDeriveTheirTokens` expects two notes.
 The independent `probeHelpNotes` list at `refusal_test.go:291` loses the not-a-target clause, the hand route, and the rebuild note.
-The literal expected probe line at `cmd/bench/help_inventory_test.go:120` changes to name both `--run` positions.
+The literal expected probe line in `TestHelpInventoryIsComplete` (`cmd/bench/help_inventory_test.go`) changes to name both `--run` positions.
 
 Put the fixture builder of PS33 in `internal/probe/subject_check_fixture_test.go`, so `subject_check_test.go` stays at 400 lines or fewer.
 The command registry files join this `Writes:` line through the binding registry, and they change only when the help projection requires it.

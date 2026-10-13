@@ -24,7 +24,9 @@ The acquire protocol and the release protocol follow the spec's subject-lock dec
 - Each attempt takes an exclusive, non-blocking write lock through `gocache.RecordLock`.
 - Each attempt compares the held descriptor's identity with the path's identity through `fstat` and `lstat`.
 - The release removes the lock file, closes the descriptor, and then removes the empty lock directory.
-- The deferred release also runs on an interrupt and on every refusal after the lock.
+- The deferred release also runs on an interrupt, on every refusal after the lock, and on the exit-2 answer that keeps a copy.
+- The lock directory is a sibling of the preserve directory, so the release never removes a kept copy.
+- Keep the lock calls in `lock.go`, because `probe.go` has 332 lines on `main` before tickets 1 to 4.
 
 After the lock succeeds, the probe re-reads the subject through `resolveSubject`.
 A changed byte or mode refuses with the subject-changed line, and an unusable path gives its current subject line.
@@ -35,7 +37,7 @@ The start-read hook runs between the start read and the lock.
 The lock-owner hook runs between the open and the identity check.
 
 A lock row holds the lock from another process, as `TestProbeRefusesUnderALiveGateRun` holds the gate lock.
-That holder lives at `refusal_test.go:93-108` and `:116`, and `refusal_test.go` stays on this line because the subject-lock holder may generalize it.
+That holder lives at `refusal_test.go:93-106` and `:116`, and `refusal_test.go` stays on this line because the subject-lock holder may generalize it.
 Put the subject-lock holder process and its hook helpers in `internal/probe/lock_holder_test.go`, so `lock_test.go` stays at 400 lines or fewer.
 `TestProbeWritesNoRecord`, `TestProbeRefusesWhenPreservationFails`, and `TestProbePreservesTheSubjectBeforeTheRun` stay green without an edit.
 The command registry files join this `Writes:` line through the binding registry, and this ticket does not change them.
