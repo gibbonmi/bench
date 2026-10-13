@@ -49,7 +49,7 @@ Harder chunks: none.
 11. As the slicer, I want to record a gap log in the thin spec's `Further notes`, so that every map gap is visible at sign-off.
 12. As the slicer, I want each gap-log entry to carry one of four classes, so that the reviewer finds each reviewer-owned decision.
 13. As the coordinator, I want the chunk table and the completion plan after the tickets, under an interim fence, so that the proposal runs.
-14. As the coordinator, I want to run `--propose-writes` for each ticket on the complete thin spec, so that every closure file joins `Writes:`.
+14. As the coordinator, I want to run `--propose-writes` for each ticket on the committed thin spec, so that every closure file joins `Writes:`.
 15. As the coordinator, I want one ticket review on `craft-line`'s ticket review line with a cap of 2, so that one independent grade remains.
 16. As the coordinator, I want the fence, the plan-only preflight, and the approval table after the ticket review, so that build entry is unchanged.
 17. As the reviewer, I want each class (d) gap-log entry as an approval-table decision row, so that I decide each one at sign-off.
@@ -117,7 +117,7 @@ The reference states the steps in this order.
 5. The slicer records the gap log in the thin spec's `Further notes`. Each entry takes one class: (a) map discretion, (b) a seam or test choice, (c) a missing fact, or (d) a reviewer decision.
 6. After every ticket exists, the coordinator completes the chunk table and the completion plan. Until step 8, the fence holds only the review pickup.
    Then the coordinator commits the thin spec and the tickets, and runs `--propose-writes` for each ticket.
-   The proposal reads the committed thin spec (`internal/preflight/preparation.go:41`), and it accepts only a `fence-writes` red (`internal/preflight/proposal.go:14`).
+   The proposal reads the committed thin spec (`internal/preflight/preparation.go:41`), and it tolerates only the closure-check reds and the `fence-writes` red (`internal/preflight/proposal.go:14`).
 7. One ticket review runs on `craft-line`'s ticket review line, with an iteration cap of 2.
 8. After the ticket review accepts, the coordinator writes the fence section, runs the plan-only preflight, and presents the approval table.
 9. Each class (d) entry is a decision row in the approval table. These rows are not late clarification questions, so the two-question limit does not apply to them.
@@ -203,7 +203,7 @@ One chunk holds the change, because every part is guidance prose and its anchors
 | MR11 | 11 | The route reference puts the gap log in the thin spec's `Further notes` | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A gap log kept outside the spec never reaches the sign-off. |
 | MR12 | 12 | The route reference names the four gap-log classes (a) to (d) | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A log without class (d) hides the decisions that only the reviewer makes. |
 | MR13 | 13 | The route reference completes the chunk table and the completion plan after every ticket exists, under the interim fence | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A plan written before the tickets names missing files, and the completion-plan check turns red. |
-| MR14 | 14 | The route reference runs `--propose-writes` for each ticket after the thin spec is complete | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A proposal run on a partial spec refuses, and the closure files never join `Writes:`. |
+| MR14 | 14 | The route reference runs `--propose-writes` for each ticket on the committed thin spec, with its chunk table and completion plan | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A proposal run on a partial spec refuses, and the closure files never join `Writes:`. |
 | MR15 | 15 | The route reference runs one ticket review on `craft-line`'s ticket review line with an iteration cap of 2 | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A route without the review sentence ships tickets with no independent grade. |
 | MR16 | 16 | The route reference writes the fence, runs the plan-only preflight, and presents the approval table after the ticket review accepts | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A route that skips the plan-only preflight stages a ticket graph that the build entry refuses. |
 | MR17 | 17 | The route reference makes each class (d) entry a decision row of the approval table | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A route without the sentence routes those decisions through the two-question limit and drops some. |
@@ -233,7 +233,7 @@ Not covered: story 37 — a reviewed exclusion, because the spec-stage close own
 
 The canonical edge classes at the anchor seam and the route procedure:
 
-- A map with no decision ticket — story 20 stops the route, because the map has no predicate to slice.
+- A map with no decision ticket — the slicer has nothing to slice, so it stops and returns to the reviewer under story 22.
 - A map where only some decisions are exact predicates — story 20 stops the route at the first such decision.
 - A gap log with more than two class (d) entries — story 17 sends each one to the approval table, so no limit caps them.
 - A ticket review that rejects twice — the cap of 2 stops the round, and the reviewer gets the stop, as on the full route.
