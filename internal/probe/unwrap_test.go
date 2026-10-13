@@ -3,7 +3,7 @@ package probe
 import "testing"
 
 func TestProbeUnwrapBitesAndRestores(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	wrapped := `package probefixture
 
 // Clamp keeps n at or above zero.

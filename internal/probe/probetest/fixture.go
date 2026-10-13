@@ -1,7 +1,7 @@
 // Package probetest installs the canned `go` that probe tests run under. A probe starts one
 // baseline `go test` child and then one mutated child for each mutant, so a test supplies one
-// answer for each start. A test outside the probe package runs the probe over the clamp
-// repository here. Only tests import this package; it holds no verdict, row, or record schema.
+// answer for each start. Probe tests run the probe over the clamp repository here. Only tests
+// import this package; it holds no verdict, row, or record schema.
 package probetest
 
 import (
@@ -13,69 +13,99 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
-	"github.com/gibbonmi/bench/internal/treetarget/kittest"
 )
 
 // ClampPath is the subject of the clamp repository, and ClampSource is its start bytes.
 const (
-	ClampPath   = "clamp/clamp.go"
-	ClampSource = "package clamp\n\n// Clamp keeps n at or above zero.\nfunc Clamp(n int) int {\n\tif n < 0 {\n\t\treturn 0\n\t}\n\treturn n\n}\n"
+	ClampPath   = "clamp.go"
+	ClampSource = "package probefixture\n\n// Clamp keeps n at or above zero.\nfunc Clamp(n int) int {\n\tif n < 0 {\n\t\treturn 0\n\t}\n\treturn n\n}\n"
 )
 
-// ClampSelection selects TestClampNegative of the clamp repository.
-var ClampSelection = []string{"--package", "./clamp", "--run", "^TestClampNegative$"}
+const clampTestSource = `package probefixture
 
-// ClampPass is a run of the clamp package that passes TestClampNegative.
-var ClampPass = Start{Events: `{"Action":"run","Package":"benchkit/clamp","Test":"TestClampNegative"}
-{"Action":"pass","Package":"benchkit/clamp","Test":"TestClampNegative","Elapsed":0}
-{"Action":"pass","Package":"benchkit/clamp","Elapsed":0.01}`}
+import "testing"
+
+func TestClampNegative(t *testing.T) {
+	if got := Clamp(-1); got != 0 {
+		t.Fatalf("Clamp(-1) = %d, want 0", got)
+	}
+}
+
+func TestClampPositive(t *testing.T) {
+	if got := Clamp(3); got != 3 {
+		t.Fatalf("Clamp(3) = %d, want 3", got)
+	}
+}
+`
+
+// ClampSelection selects TestClampNegative of the clamp repository.
+var ClampSelection = []string{"--package", "./", "--run", "^TestClampNegative$"}
+
+// ClampPass is a run of the clamp package that passes TestClampPositive.
+var ClampPass = Start{Events: `{"Action":"run","Package":"probefixture","Test":"TestClampPositive"}
+{"Action":"pass","Package":"probefixture","Test":"TestClampPositive","Elapsed":0}
+{"Action":"pass","Package":"probefixture","Elapsed":0.01}`}
 
 // ClampFailure is a run of the clamp package that fails TestClampNegative at exit 1, with
 // diagnostic as the test's output line.
 func ClampFailure(diagnostic string) Start {
-	return Start{Events: fmt.Sprintf(`{"Action":"run","Package":"benchkit/clamp","Test":"TestClampNegative"}
-{"Action":"output","Package":"benchkit/clamp","Test":"TestClampNegative","Output":"    %s\n"}
-{"Action":"fail","Package":"benchkit/clamp","Test":"TestClampNegative","Elapsed":0}
-{"Action":"fail","Package":"benchkit/clamp","Elapsed":0.01}`, diagnostic), Exit: 1}
+	return Start{Events: fmt.Sprintf(`{"Action":"run","Package":"probefixture","Test":"TestClampNegative"}
+{"Action":"output","Package":"probefixture","Test":"TestClampNegative","Output":"    %s\n"}
+{"Action":"fail","Package":"probefixture","Test":"TestClampNegative","Elapsed":0}
+{"Action":"fail","Package":"probefixture","Elapsed":0.01}`, diagnostic), Exit: 1}
 }
 
 // Publisher is the sealed run-binary publication that a test file passes to Repository. A test
 // file supplies it, so this non-test package cannot publish a sealed run binary on its own.
 type Publisher func(root, staged, executable, manifestDir, version string) error
 
-// Repository writes a kit tree and the clamp package into the Git checkout dir and publishes a
-// sealed run binary for it with publish. For the rest of the test, it binds the kit, the run binary, a
-// private Bench home, and the working directory to that root. It answers the root with every
-// link resolved, and the home.
+// Repository writes the clamp package and a build-input closure into the Git checkout dir and
+// publishes a sealed run binary for it with publish. For the rest of the test, it binds the kit,
+// the run binary, a private Bench home, and the working directory to that root. It answers the
+// root with every link resolved, and the home.
 func Repository(t testing.TB, dir string, publish Publisher) (string, string) {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	kittest.WriteTree(t, root)
-	if err := os.MkdirAll(filepath.Join(root, "clamp"), 0o755); err != nil {
+	binDir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
 		t.Fatal(err)
 	}
-	staged, executable := filepath.Join(t.TempDir(), "staged"), filepath.Join(t.TempDir(), "bench")
+	home, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	staged, executable := filepath.Join(binDir, "staged"), filepath.Join(binDir, "bench")
 	for _, file := range []struct {
 		path, body string
 		mode       os.FileMode
 	}{
+		{filepath.Join(root, "go.mod"), "module probefixture\n\ngo 1.25\n", 0o644},
 		{filepath.Join(root, filepath.FromSlash(ClampPath)), ClampSource, 0o644},
-		{filepath.Join(root, "clamp", "clamp_test.go"), "package clamp\n\nimport \"testing\"\n\nfunc TestClampNegative(t *testing.T) {\n\tif Clamp(-1) != 0 {\n\t\tt.Fatal(\"negative\")\n\t}\n}\n", 0o644},
+		{filepath.Join(root, "clamp_test.go"), clampTestSource, 0o644},
+		{filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() {}\n", 0o644},
+		// The build-input manifest and the version file complete the digest closure the
+		// run-binary seal is graded against. Both sit outside the module's own sources, so a
+		// probe's mutation never invalidates the selected executable mid-run.
+		{filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest)), freshness.BuildInputLine("package_version", "package.json"), 0o644},
+		{filepath.Join(root, "package.json"), "{\"version\":\"0.0.0\"}\n", 0o644},
 		{staged, "#!/bin/sh\nexit 0\n", 0o755},
 	} {
+		if err := os.MkdirAll(filepath.Dir(file.path), 0o755); err != nil {
+			t.Fatal(err)
+		}
 		if err := os.WriteFile(file.path, []byte(file.body), file.mode); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if err := publish(root, staged, executable, filepath.Dir(executable), "probetest"); err != nil {
+	if err := publish(root, staged, executable, binDir, "probetest"); err != nil {
 		t.Fatal(err)
 	}
-	home := t.TempDir()
 	t.Setenv(runbinary.Env, executable)
 	t.Setenv("BENCH_KIT", root)
 	t.Setenv(benchhome.Env, home)

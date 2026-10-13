@@ -9,14 +9,15 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/probe/probetest"
 )
 
 func TestOmitFileUsesExactBytesAndReportsOmit(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	input := filepath.Join(t.TempDir(), "substring")
 	needle := "if n < 0 {\n\t\treturn 0\n\t}"
 	writeFixtureFile(t, input, needle, 0o644)
-	requireMutantBites(t, f, strings.Replace(clampSource, needle, "", 1), "omit", "--omit-file", input)
+	requireMutantBites(t, f, strings.Replace(probetest.ClampSource, needle, "", 1), "omit", "--omit-file", input)
 }
 
 // mutationFileForms is the argv of each flag that reads its text through the one mutation

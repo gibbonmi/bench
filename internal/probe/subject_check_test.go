@@ -40,7 +40,7 @@ func trackProseNote(t *testing.T, f *fixture) int {
 // PS26, PS27: a Markdown mutation under the prose check bites, and failed_tests counts
 // the prose findings over the mutant.
 func TestProbeTakesTheProseCheck(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	findings := trackProseNote(t, f)
 	out, code := runProbe(t, proseArgs...)
 	want := probeRow(t, "bit", "note.md", "swap", "failed", findings, nil, "yes") +
@@ -76,10 +76,10 @@ var systemSelection = []string{"--check", gate.SystemPhaseName, "--run", "^TestC
 // suite's argv, and over a root that is not the kit the baseline refuses.
 func TestProbeTakesTheSystemCheck(t *testing.T) {
 	t.Run("kit", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		argv := filepath.Join(scratchDir(t), "argv")
 		hook := "printf '%s\\n' \"$*\" > " + sanitize.ShellQuote(argv) + "\n"
-		installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Hook: hook, Events: cannedFailure("caught"), Exit: 1})
+		installStubStarts(t, f, probetest.ClampPass, probetest.Start{Hook: hook, Events: probetest.ClampFailure("caught").Events, Exit: 1})
 		out, code := runProbe(t, append(probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0"), systemSelection...)...)
 		want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes") +
 			selectionRow(t, "check", gate.SystemPhaseName, "^TestClampNegative$", "passed", 1)
@@ -89,7 +89,7 @@ func TestProbeTakesTheSystemCheck(t *testing.T) {
 		if wantArgv := " " + strings.Join(operands, " ") + " -run ^TestClampNegative$"; err != nil || !strings.Contains(string(started), wantArgv) {
 			t.Fatalf("mutated run argv = (%q, %v), want %q", started, err, wantArgv)
 		}
-		requireSubjectBytes(t, f, clampSource)
+		requireSubjectBytes(t, f, probetest.ClampSource)
 	})
 	t.Run("not the kit", func(t *testing.T) {
 		f := refusalFixture(t)
@@ -106,16 +106,16 @@ func TestProbeTakesTheSystemCheck(t *testing.T) {
 // PS33: without an inherited selection, the mutated run builds its run binary after the
 // mutation write, so its build script reads the mutant bytes.
 func TestProbeBuildsTheMutantRunBinary(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	records := buildEachRun(t, f, "clamp.go")
-	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "")
 	out, code := runProbe(t, append(probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0"), systemSelection...)...)
 	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes"))
-	want := []string{clampSource, strings.Replace(clampSource, "n < 0", "n > 0", 1)}
+	want := []string{probetest.ClampSource, strings.Replace(probetest.ClampSource, "n < 0", "n > 0", 1)}
 	if got := buildRecords(t, records); !reflect.DeepEqual(got, want) {
 		t.Fatalf("build script reads = %q, want the start bytes and then the mutant", got)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }
 
 // PS36, PS37: the selection parse precedes the substring miss. An unknown check answers

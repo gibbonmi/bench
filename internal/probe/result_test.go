@@ -40,12 +40,12 @@ func TestProbeReportsNormalizedExecutionExit(t *testing.T) {
 		verdict           string
 		restored          bool
 	}{
-		{"bit", probetest.Start{Events: cannedPass}, probetest.Start{Events: cannedFailure("caught"), Exit: 1}, probeArgs(), 0, &one, "bit", true},
-		{"red baseline", probetest.Start{Events: cannedFailure("red"), Exit: 1}, probetest.Start{Events: cannedPass}, probeArgs(), 1, nil, "invalid", false},
-		{"substring miss", probetest.Start{Events: cannedPass}, probetest.Start{Events: cannedPass}, probeArgs("clamp.go", "--omit", "absent", "--package", "./"), 1, nil, "invalid", false},
+		{"bit", probetest.ClampPass, probetest.ClampFailure("caught"), probeArgs(), 0, &one, "bit", true},
+		{"red baseline", probetest.ClampFailure("red"), probetest.ClampPass, probeArgs(), 1, nil, "invalid", false},
+		{"substring miss", probetest.ClampPass, probetest.ClampPass, probeArgs("clamp.go", "--omit", "absent", "--package", "./"), 1, nil, "invalid", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFixture(t)
+			f := clampFixture(t)
 			installStubStarts(t, f, tc.baseline, tc.mutated)
 			out, code := runProbe(t, tc.args...)
 			got := readAnswer(t, out)
@@ -65,8 +65,8 @@ func TestProbeReportsNormalizedExecutionExit(t *testing.T) {
 // A failed restore reports the mutated run's exit 1 beside command exit 2, and the
 // trailing count covers the preserved row and the report that follow the envelope.
 func TestProbeCountsTheRestoreFailureSuffix(t *testing.T) {
-	f := newFixture(t)
-	installStubGo(t, f, cannedFailure("caught"), 1, "chmod 0500 .\n")
+	f := clampFixture(t)
+	installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "chmod 0500 .\n")
 	t.Cleanup(func() { _ = os.Chmod(f.root, 0o755) })
 	out, code := runProbe(t, probeArgs()...)
 	got := readAnswer(t, out)
@@ -78,8 +78,8 @@ func TestProbeCountsTheRestoreFailureSuffix(t *testing.T) {
 // bitingAnswer is the complete stdout of one biting probe in a new fixture.
 func bitingAnswer(t *testing.T) string {
 	t.Helper()
-	f := newFixture(t)
-	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	f := clampFixture(t)
+	installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "")
 	out, code := runProbe(t, probeArgs()...)
 	if code != 0 {
 		t.Fatalf("probe = (%q, %d), want a bite", out, code)
@@ -176,7 +176,7 @@ func TestProbeResultEnvelopeRefusals(t *testing.T) {
 // with its expected rows.
 func setAnswer(t *testing.T) (string, [][]any) {
 	t.Helper()
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f, bite, bite)
 	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, missEntry, returnSwap))...)
 	rows := [][]any{biteRow(1, "swap"), missRow(2), biteRow(3, "swap")}
