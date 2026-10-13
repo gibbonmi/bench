@@ -2481,6 +2481,75 @@
           "supersedes": [
             "pm-d-coverage-r1"
           ]
+        },
+        {
+          "id": "pm-d-standards-r3",
+          "performer": "claude:pm_d_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_standards_r3",
+            "digest": "sha256:3140be66990892b8223741ca25e217d2a262f662f0442633f61193743d64cadd",
+            "excerpt": "Standards axis claude:pm_d_standards_r3 (opus/high), PM-D narrow confirming round 3, chunk pair 1870269d..bd7c7d80, repair delta fc4c772e..d06742ea -- internal/ cmd/, evidence sha256:872ab0b4 current. Recorded with IDs S31 and S32.\ncount: 2\nworst: S31\nItem resolved: the topology check (publication_topology_test.go:60-131, bite fixture :42-44) forbids a non-test library that can publish a sealed binary on its own; probetest no longer imports internal/freshness, every importer of probetest is a _test.go file, so the publish capability is chosen only in exempt test code. The recipe stays one source at fixture.go:75.\nS31 | auto-fix | 6 | probetest/fixture.go:46: Publisher parameter names dir, name do not match freshness.Publish(root, staged, executable, manifestDir, version string) (freshness_publish.go:42); rename to manifestDir, version.\nS32 | auto-fix | 5 | probetest/fixture.go:44-45: the comment \"The call stays in test code\" is wrong (the call runs at :75); say that a test file supplies the publication, so this non-test package cannot publish on its own.\nAdvice: the check finds only direct freshness.Publish call expressions; a function-value reference in non-test code would pass it (pre-existing gap).\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+          "finding_ids": [
+            "S31",
+            "S32"
+          ],
+          "supersedes": [
+            "pm-d-standards-r2"
+          ]
+        },
+        {
+          "id": "pm-d-spec-r3",
+          "performer": "claude:pm_d_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_spec_r3",
+            "digest": "sha256:71a463e4db37a2ec76aec6192d836da09a0d0af79c746ae864278340cbc5a56d",
+            "excerpt": "Spec axis claude:pm_d_spec_r3 (opus/high), PM-D narrow confirming round 3, chunk pair 1870269d..bd7c7d80, delta d5b3784e..bd7c7d80, evidence sha256:872ab0b4 current.\ncount: 0\nworst: none\nNo PM-D row changes meaning or loses its test: the repair adds the Publisher type and parameter (probetest/fixture.go:44-51, call at :75) and passes freshness.Publish at record_operations_test.go:131 and verification_import_test.go:152; every named test still exists.\nNo behavior beyond the spec: only test callers use probetest.Repository; the published binary, arguments, and order are unchanged; no production change.\npm-t05-rep2 entries cover all six PM-D requirements at d06742ea; central probe bit, restore pass.\nAdvice: the topology check matches only freshness.Publish call expressions; a passed-in function value passes it; honest here because the reference lives in _test.go files.\nImplementation command: no command change.\n"
+          },
+          "axis": "Spec",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-d-spec-r2"
+          ]
+        },
+        {
+          "id": "pm-d-coverage-r3",
+          "performer": "claude:pm_d_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c69269daadc4403d41a1a6e035d25efed6ced0d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_coverage_r3",
+            "digest": "sha256:c3cc1efdaf03603ed5cc60245062d219f132c1ad2bd5e0783deb29d01588dcfd",
+            "excerpt": "Coverage axis claude:pm_d_coverage_r3 (opus/high), PM-D narrow confirming round 3, chunk pair 1870269d..bd7c7d80, delta fc4c772e..d06742ea -- internal/ cmd/, evidence sha256:872ab0b4 current.\ncount: 0\nworst: none\n(1) TestFreshnessPublicationTopology passes at the tip.\n(2) The check still bites: freshness import and freshness.Publish call put back into probetest/fixture.go: bit, \"unexpected sealed-publication call internal/probe/probetest/fixture.go:Repository\", restored yes.\n(3) A publisher that only returns nil: record journey (record_operations_test.go:131) bit at :185 (focused_exit_code is null), restored yes; recordcmd (verification_import_test.go:152) bit at :183, restored yes.\nNo other caller of probetest.Repository on the old signature; other test files already call freshness.Publish directly.\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "d06742eaf734007eb38bf43c9c2d187277c9a7d4",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-d-coverage-r2"
+          ]
         }
       ]
     }
@@ -3043,3 +3112,25 @@ The PM-D checkpoint gate at d5b3784e is red in `TestFreshnessPublicationTopology
 The check rejects the sealed-publication call that commit fc4c772e moved into `internal/probe/probetest/fixture.go`.
 The check skips only `_test.go` files, so the call must return to the test callers.
 Repair allowance: cycle 2 of 2 starts for this red, and the fix changes no oracle.
+
+## PM-D round 3
+
+The narrow round read the delta from d5b3784e to bd7c7d80, with the small-fix commit d06742ea.
+The fix keeps the check's intent: only test code can hand `probetest` the publication.
+
+### Standards
+
+Count 2. Worst issue: S31.
+
+- S31, auto-fix, confidence 6: the `Publisher` parameter names do not match `freshness.Publish`.
+- S32, auto-fix, confidence 5: the `Publisher` comment says the call stays in test code, but the call runs in `probetest`.
+
+The orchestrator corrects both in one commit, because neither changes compiled behavior.
+
+### Spec
+
+Count 0. Worst issue: none.
+
+### Coverage
+
+Count 0. Worst issue: none. The topology check still bites a non-test call, and both callers fail with a publisher that does nothing.
