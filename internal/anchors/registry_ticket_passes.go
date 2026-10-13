@@ -70,7 +70,6 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The charge caps the witnesses at one for each coverage row plus one for each production branch that the ticket adds.", Diagnostic: "witness cap: the charge caps the witnesses by coverage rows and new production branches"},
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The author meets the cap with fewer independent expectations, such as one table-driven test, and skips no witness.", Diagnostic: "witness cap: the author meets the cap with fewer expectations and skips no witness"},
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The author runs the floor checks and witnesses of several packages in one `bench test` call that repeats `--package`.", Diagnostic: "witness cap: the author runs several packages in one bench test call"},
-	{Group: AfterImplementSpec, File: knownIssues, Kind: Require, Section: "", Needle: "Apply the witness cap and the batched `bench test` call that `/bench-implement-spec` states.", Diagnostic: "witness cap: the known-issues row points to implement-spec for the cap"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "Cap the witnesses in a charge", Diagnostic: "witness cap: the known-issues row kept a copy of the cap"},
 }
 
@@ -91,5 +90,5 @@ const craftLineSkill = ".agents/skills/bench-craft-line/SKILL.md"
 // mapDiscipline is the craft-spec reference that holds the reader-sweep rules.
 const mapDiscipline = ".agents/skills/bench-craft-spec/references/map-discipline.md"
 
-// knownIssues is the known-issues file whose workaround row points to implement-spec for the witness cap.
+// knownIssues is the known-issues file that never carries a second copy of the witness cap.
 const knownIssues = "docs/known-issues.md"
