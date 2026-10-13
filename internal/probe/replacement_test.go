@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -178,19 +179,20 @@ func TestProbeFailedRestore(t *testing.T) {
 	preservedCopy(t, f)
 }
 
-// D30: a symbolic-link subject refuses before preserve or any replacement starts, and
-// the link target keeps its bytes.
+// D30: a subject outside the repository refuses before preserve or any replacement
+// starts, and that subject keeps its bytes.
 func TestProbeSubjectRefusalSkipsReplacement(t *testing.T) {
 	f := newFixture(t)
-	if err := os.Symlink("clamp.go", filepath.Join(f.root, "link.go")); err != nil {
-		t.Fatal(err)
-	}
+	outside := filepath.Join(scratchDir(t), "clamp.go")
+	writeFixtureFile(t, outside, clampSource, 0o644)
+	_, display := canonicalpath.Operand(f.root, "", outside)
 	rec := &durablefiletest.Recorder{}
 
-	out, code := probeWith(t, f, rec.Replacer(), "link.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./")
+	out, code := probeWith(t, f, rec.Replacer(), outside, "--swap", "n < 0", "--with", "n > 0", "--package", "./")
 
-	requireRefused(t, f, out, code, unavailable("link.go", "a symlink"), 1)
+	requireRefused(t, f, out, code, unavailable(display, "outside the repository"), 1)
 	durablefiletest.RequireNoReplacement(t, rec.Trace)
+	durablefiletest.RequireBytes(t, outside, clampSource)
 }
 
 // D43: a mutation that fails before its rename leaves the start bytes, so the probe
