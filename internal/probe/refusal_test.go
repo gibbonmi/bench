@@ -6,6 +6,9 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // gateRefusal is the refusal a probe answers while a gate run holds the tree.
@@ -160,6 +163,14 @@ func TestProbeUsageNamesOneSelectionAndOneMutation(t *testing.T) {
 			requireRefused(t, f, out, code, grammar.Help+"\n", 2)
 		})
 	}
+}
+
+// A later --package with an empty value refuses as the empty flag value, because an empty
+// expression names no package.
+func TestProbeRefusesAnEmptyLaterPackage(t *testing.T) {
+	f := refusalFixture(t)
+	out, code := runProbe(t, probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--package", "", "--run", "^TestClampNegative$")...)
+	requireRefused(t, f, out, code, toon.Usage(grammar.Cmd, usage.EmptyFlagValue("--package"))+"\n", 2)
 }
 
 // PB23: the selection is parsed before any write, so an unknown check answers `bench

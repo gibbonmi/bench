@@ -3,6 +3,7 @@ package probe
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -16,28 +17,34 @@ const bothPackages = "./clamp ./other"
 // twoPackages is the swap of clamp.go under two package expressions in argv order.
 var twoPackages = []string{"clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./clamp", "--package", "./other", "--run", "^TestClampNegative$"}
 
-// A repeated --package reaches each Go start in argv order, and the target cell names
-// every expression in that order.
+// A repeated --package reaches each Go start as separate arguments in argv order, and the
+// target cell names every expression in that order. The stub writes one argument per line
+// to a file for each start, so a joined value reads as one line.
 func TestProbeRepeatsThePackage(t *testing.T) {
 	f := newFixture(t)
-	argv := filepath.Join(scratchDir(t), "argv")
-	record := "printf '%s\\n' \"$*\" >> " + sanitize.ShellQuote(argv) + "\n"
+	argvs := scratchDir(t)
+	record := "printf '%s\\n' \"$@\" > " + sanitize.ShellQuote(argvs) + "/$n\n"
 	installStubStarts(t, f, probetest.Start{Hook: record, Events: cannedPass}, probetest.Start{Hook: record, Events: cannedFailure("caught"), Exit: 1})
 	out, code := runProbe(t, twoPackages...)
 	want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes") +
 		selectionRow(t, "package", bothPackages, "^TestClampNegative$", "passed", 1)
 	requireRow(t, out, code, 0, want)
-	body, err := os.ReadFile(argv)
+	starts, err := os.ReadDir(argvs)
 	if err != nil {
 		t.Fatal(err)
 	}
-	starts := strings.Split(strings.TrimSuffix(string(body), "\n"), "\n")
 	if len(starts) != 2 {
-		t.Fatalf("Go test starts = %q, want the baseline and the mutated run", starts)
+		t.Fatalf("Go test starts = %d, want the baseline and the mutated run", len(starts))
 	}
+	packages := strings.Fields(bothPackages)
 	for _, start := range starts {
-		if !strings.HasSuffix(start, " "+bothPackages) {
-			t.Fatalf("go argv = %q, want ./clamp and then ./other at its end", start)
+		body, err := os.ReadFile(filepath.Join(argvs, start.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		args := strings.Split(strings.TrimSuffix(string(body), "\n"), "\n")
+		if len(args) < len(packages) || !slices.Equal(args[len(args)-len(packages):], packages) {
+			t.Fatalf("go argv = %q, want %q as its last arguments", args, packages)
 		}
 	}
 	requireSubjectBytes(t, f, clampSource)
