@@ -27,14 +27,21 @@ func buildEachRun(t *testing.T, f *fixture, rel string) string {
 		"cp \"$1\"/" + sanitize.ShellQuote(rel) + " " + sanitize.ShellQuote(records) + "/\"$n\"\n" +
 		"cp " + sanitize.ShellQuote(sealed) + " \"$2\"\n" +
 		"cp " + sanitize.ShellQuote(sealed+".seal") + " \"$2.seal\"\n"
+	installBuildScript(t, f, script)
+	t.Setenv("TMPDIR", scratchDir(t))
+	return records
+}
+
+// installBuildScript writes script as the fixture's run-binary build script and removes the
+// inherited run binary, so each run builds through the script.
+func installBuildScript(t *testing.T, f *fixture, script string) {
+	t.Helper()
 	writeFixtureFile(t, filepath.Join(f.root, "scripts", "go-build.sh"), script, 0o755)
 	// ReuseOrOwn tests the presence of the variable, so an empty value would still inherit.
 	t.Setenv(runbinary.Env, "")
 	if err := os.Unsetenv(runbinary.Env); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("TMPDIR", scratchDir(t))
-	return records
 }
 
 // buildRecords answers the subject bytes that each build read, in build order.

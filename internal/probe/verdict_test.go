@@ -1,13 +1,11 @@
 package probe
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/probe/probetest"
-	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -135,14 +133,25 @@ func TestMutantBuildFailureNamesItself(t *testing.T) {
 		}
 		requireSubjectBytes(t, f, clampSource)
 	})
+	t.Run("a control byte in the first build line", func(t *testing.T) {
+		f := newFixture(t)
+		const line = "./clamp.go:3:8: \x1b[31mbroken"
+		events := `{"Action":"build-output","ImportPath":"probefixture","Output":"./clamp.go:3:8: \u001b[31mbroken\n"}
+{"Action":"build-fail","ImportPath":"probefixture"}`
+		installStubGo(t, f, events, 1, "")
+		out, _ := runProbe(t, probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./")...)
+		mutant, err := toon.TableTyped("mutant", mutantFields, [][]any{{sanitize.Preview(line)}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(out, mutant) {
+			t.Fatalf("stdout = %q, want the mutant table %q", out, mutant)
+		}
+	})
 	t.Run("a run-binary build script failure at the baseline", func(t *testing.T) {
 		f := newFixture(t)
 		installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Events: cannedPass})
-		writeFixtureFile(t, filepath.Join(f.root, "scripts", "go-build.sh"), "#!/usr/bin/env bash\necho './cmd/bench/main.go:1:1: broken'\nexit 1\n", 0o755)
-		t.Setenv(runbinary.Env, "")
-		if err := os.Unsetenv(runbinary.Env); err != nil {
-			t.Fatal(err)
-		}
+		installBuildScript(t, f, "#!/usr/bin/env bash\necho './cmd/bench/main.go:1:1: broken'\nexit 1\n")
 		out, code := runProbe(t, probeArgs()...)
 		requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "baseline-build-failed", 0, nil, "untouched"))
 		requireSubjectBytes(t, f, clampSource)
