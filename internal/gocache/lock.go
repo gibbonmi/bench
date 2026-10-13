@@ -163,8 +163,3 @@ func localHolder(path string) bool {
 func Contended(err error) bool {
 	return errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EACCES)
 }
-
-// contended is Contended under the package's unexported name.
-func contended(err error) bool {
-	return Contended(err)
-}

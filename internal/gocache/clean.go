@@ -74,7 +74,7 @@ func lockForClean(dir string) (*os.File, string) {
 	lock := RecordLock(syscall.F_WRLCK)
 	if err := syscall.FcntlFlock(file.Fd(), syscall.F_SETLK, &lock); err != nil {
 		defer file.Close()
-		if !contended(err) {
+		if !Contended(err) {
 			return nil, toon.Errorf("cache lock unavailable", err.Error()) + "\n"
 		}
 		return nil, heldRefusal(blockingPID(file))
