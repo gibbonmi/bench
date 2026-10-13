@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/probe-subjects-and-mutations/spec.md",
-  "plan_digest": "sha256:775ef5a4cacbc59a0b169daca384bbed3edcff4eeacd530fe4c8bfdc5d91f6f2",
+  "plan_digest": "sha256:04247aac6dd024b552e7ab1cda92d7b35a1763f4ab86551574ef3da17f525d5c",
   "implementation_session": "",
   "chunks": [
     {
@@ -2267,6 +2267,24 @@
     {
       "from": "sha256:ebdb71f882c8a0ac15a0a420a59f14da87955ea92fc89926a655cb866a7dbf58",
       "to": "sha256:775ef5a4cacbc59a0b169daca384bbed3edcff4eeacd530fe4c8bfdc5d91f6f2",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ],
+        "PS-C": [
+          "PS-C"
+        ],
+        "PS-D": [
+          "PS-D"
+        ]
+      }
+    },
+    {
+      "from": "sha256:775ef5a4cacbc59a0b169daca384bbed3edcff4eeacd530fe4c8bfdc5d91f6f2",
+      "to": "sha256:04247aac6dd024b552e7ab1cda92d7b35a1763f4ab86551574ef3da17f525d5c",
       "chunk_ids": {
         "PS-A": [
           "PS-A"
