@@ -1,7 +1,7 @@
 # Lock the probe subject and re-read it before the baseline
 
 Blocked by: 1-add-probe-mutation-forms.md, 2-probe-prose-and-system-checks.md, 3-name-the-first-failure-and-expected-witness.md, 4-name-a-mutant-build-failure.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/lock.go (new), internal/probe/lock_holder_test.go (new), internal/probe/lock_test.go (new), internal/probe/probe.go, internal/probe/refusal_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/gocache/lock.go, internal/gocache/lock_test.go, internal/probe/command.go, internal/probe/lock.go (new), internal/probe/lock_holder_test.go (new), internal/probe/lock_test.go (new), internal/probe/probe.go, internal/probe/refusal_test.go
 Covers: PS58, PS59, PS60, PS61, PS62, PS63, PS64, PS65, PS66, PS67, PS68, PS75
 
 ## What to build

@@ -265,7 +265,7 @@ The acquire protocol makes at most three attempts:
 
 1. Create the directory at mode 0700 if it is absent.
 2. Open the lock file read-write with create, no-follow, and close-on-exec at mode 0600. A write lock needs a writable descriptor. If the open answers ENOENT, start the next attempt.
-3. Take an exclusive, non-blocking write lock with `gocache.RecordLock`. If another process holds it, refuse with the in-use line.
+3. Take an exclusive, non-blocking write lock with `gocache.RecordLock`. If the `gocache` contention rule reads the error as held, refuse with the in-use line. Any other lock error refuses with the lock-unavailable line.
 4. Compare the held descriptor's file identity with the path's file identity through `fstat` and `lstat`. Open no second descriptor. If they differ, or if `lstat` answers ENOENT, close the descriptor and start the next attempt.
 
 A held lock refuses with `error: probe subject in use — another probe holds <subject>`.
@@ -499,6 +499,8 @@ Every reader of that name is in the fence.
 - `internal/anchors/registry_ticket_passes_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/gocache/lock.go`
+- `internal/gocache/lock_test.go`
 - `internal/probe/baseline.go`
 - `internal/probe/baseline_test.go`
 - `internal/probe/combined_test.go`
