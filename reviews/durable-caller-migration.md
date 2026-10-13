@@ -5994,6 +5994,72 @@
           "supersedes": [
             "dcm-dd-r1-coverage"
           ]
+        },
+        {
+          "id": "dcm-dd-r3-standards",
+          "performer": "claude:dcm_rev_dd_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_dd_std",
+            "digest": "sha256:c2ad5d4a8dc5c0e66c32eeebc4f0968450d6502178dcb93d96502b42703a8a23",
+            "excerpt": "## Standards (D-D repair 2, 39836f83..5bc20b22) — N1 closed (internal/publication/replacement_test.go:81, blocker from RecordPath); S1-S5 still closed; 0 new findings.\n"
+          },
+          "axis": "Standards",
+          "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "tip": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-dd-r2-standards"
+          ]
+        },
+        {
+          "id": "dcm-dd-r3-spec",
+          "performer": "claude:dcm_rev_dd_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_dd_spec",
+            "digest": "sha256:31015022ba6e5fcdaa7c82d0f103a660dc1f809fe37f784fe358052c85d3b056",
+            "excerpt": "## Spec (D-D repair 2, 39836f83..5bc20b22) — pass; all D-D rows met; publication D30 refusal behavior holds (saveRecordWith refuses at MkdirAll); no production or coverage-cell change; 0 open findings.\n"
+          },
+          "axis": "Spec",
+          "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "tip": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-dd-r2-spec"
+          ]
+        },
+        {
+          "id": "dcm-dd-r3-coverage",
+          "performer": "claude:dcm_rev_dd_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "72f01418e7f12e9bb627458c2136c9f75169e78a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_dd_cov",
+            "digest": "sha256:c8381d4e90c2c264e55445b82d16d20c20d2383f09d533408c134a983523b640",
+            "excerpt": "## Coverage (D-D repair 2, 39836f83..5bc20b22) — pass; the publication D30 witness reaches its refusal and keeps RequireRefusal and RequireBytes; ten dcm-t14-rep2 entries graded; 0 new findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "tip": "5bc20b226cc84cca7a45edaff022f78dfff0b7a7",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-dd-r2-coverage"
+          ]
         }
       ]
     }
@@ -7246,3 +7312,5 @@ The D-D confirming round at 7a8a060f closed S1 to S5, SP1, C1, and C2. It raised
 - N1, auto-fix, confidence 3: the publication witness at `internal/publication/replacement_test.go:163` writes the `dist` layout that `RecordPath` owns. Derive the blocker path from `RecordPath`. A fresh repair session takes it as repair 2.
 
 Commit 5bc20b22 closes N1: `TestPublicationDirectoryRefusal` gets its blocker path from `RecordPath`. Chunk D-D used 2 of its 2 repair cycles.
+
+The D-D round on repair 2 at 7f619cd2 closed N1 with no new findings. All three axes confirmed their results for the pair 930225e5..5bc20b22. Chunk D-D closed with 2 of its 2 repair cycles used.
