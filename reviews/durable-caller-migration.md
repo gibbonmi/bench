@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:41514d064fe9d9a76b84f5961c7fcfff508a0ba61e4f90d43fe50c647f27f683",
+  "plan_digest": "sha256:4208fc2b6b43f9aec3f0c1df55ae3673e1c0a444f92c48548567f1a74f79498b",
   "implementation_session": "",
   "chunks": [
     {
@@ -5270,9 +5270,9 @@
     {
       "id": "D-D",
       "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
-      "tip": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
-      "plan_digest": "sha256:41514d064fe9d9a76b84f5961c7fcfff508a0ba61e4f90d43fe50c647f27f683",
-      "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+      "tip": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+      "plan_digest": "sha256:4208fc2b6b43f9aec3f0c1df55ae3673e1c0a444f92c48548567f1a74f79498b",
+      "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
       "acceptance_rows": [
         "D30",
         "D31",
@@ -5467,6 +5467,197 @@
             "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
             "digest": "sha256:5b7f2a1c9792c6b4c03091c26002c6f7c05af07a5208bd26d1a328fb6e3141e8",
             "excerpt": "requirement root-conformance: bench test --check root-conformance\npass, 1 test, failures[0]\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep1-adoption-tests",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:9b9053987f521fd622abad4233690c0e3d5dc8f7e73629aecb1d13329effdff9",
+            "excerpt": "requirement adoption-tests: bench test --package ./internal/adopt at 79980f96\npackages[1]: github.com/gibbonmi/bench/internal/adopt,pass,244 tests; failures[0] skips[0]\n"
+          },
+          "requirement": "adoption-tests",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep1-coverage",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:3a26d33b4e4b78383c918c871323198d8b73356cdad38694d4bc6bb40308ff93",
+            "excerpt": "requirement coverage: bench coverage --check durable-caller-migration at 79980f96\nok: coverage map valid - 35 row(s). D16, D17 cite TestGateReplacement; D30 adds dashboard_test.go TestDashboardWriteRefusesWhenTheReaderFails; D36 adds reviewrecord TestReviewReplacement.\n"
+          },
+          "requirement": "coverage",
+          "command": "bench coverage --check durable-caller-migration",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep1-caller-reconciliation",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:05011ad7dd1bd9c7ae088184a574829f23a511e74a427bb42d5ba6cacfe3596c",
+            "excerpt": "requirement caller-reconciliation: bench test over the 12 plan packages at 79980f96\npackages[12] all pass, failures[0], skips[0].\nRepair 1 changes tests only (derived checks, a table merge, comments); it moves no production line that a recorded red mutates, so the reds of dcm-t14-caller-reconciliation stand and are cited, not replayed.\nS1: RequireAbsent drops ENOTDIR; capturetx and publication D30 witnesses check the blocker bytes through RequireBytes beside RequireRefusal.\nS4/S5: TestGateReplacement ranges verdict, evidence, lane; TestGateEvidenceDirectoryRefusal derives its entry from evidencePath.\n"
+          },
+          "requirement": "caller-reconciliation",
+          "command": "bench test --package ./internal/assessment --package ./internal/brokermanifest --package ./internal/capturetx --package ./internal/commitment/repository --package ./internal/durablefile/durablefiletest --package ./internal/gate --package ./internal/gate/prospectiveartifact --package ./internal/handoffdoc --package ./internal/intent --package ./internal/probe --package ./internal/publication --package ./internal/repairpilot",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep1-preservation",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:e8f1fcb88e2fe93b6c96ed0d2764ca9c516f94283241a23c381466c9e3aa623e",
+            "excerpt": "requirement preservation (probe): cites dcm-t14-preservation (bench probe on ./internal/adopt at 2cae9a86, internal/adopt/transaction.go swap 'if _, err = f.Write(data); err == nil {' -> \"if _, err = f.Write(append(data, '#')); err == nil {\": bit, focused exit 1, restored yes).\nRepair 1 leaves internal/adopt unchanged, so the mutated line is unchanged at 79980f96.\nRerun at 79980f96: bench test --package ./internal/adopt pass, 244 tests, failures[0].\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Alter the surviving adoption stage bytes or its lifecycle transaction result. The existing real adoption assertion must fail, then pass after restoration. The source algorithm census remains independently review-owned.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+              "digest": "sha256:e8f1fcb88e2fe93b6c96ed0d2764ca9c516f94283241a23c381466c9e3aa623e",
+              "excerpt": "requirement preservation (probe): cites dcm-t14-preservation (bench probe on ./internal/adopt at 2cae9a86, internal/adopt/transaction.go swap 'if _, err = f.Write(data); err == nil {' -> \"if _, err = f.Write(append(data, '#')); err == nil {\": bit, focused exit 1, restored yes).\nRepair 1 leaves internal/adopt unchanged, so the mutated line is unchanged at 79980f96.\nRerun at 79980f96: bench test --package ./internal/adopt pass, 244 tests, failures[0].\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t14-rep1-cmd-bench",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:4ae737c50c29f1d5b70a6e3185cb8950c75bdff25dd0ec70df5e0a2eeda6693e",
+            "excerpt": "requirement cmd-bench: bench test --package ./cmd/bench at 79980f96\npass, 335 tests, failures[0], skips[0]\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep1-command-contract",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:89f30469e9856b63789ab768ca984d5bb561a7b839ae1ec3fcd62da72964a928",
+            "excerpt": "requirement command-contract: bench test --package ./cmd/bench --run CommandRegistry at 79980f96\npass, 5 tests, failures[0]\n"
+          },
+          "requirement": "command-contract",
+          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep1-axi-registry",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:6f79d941de5480a6783368091471c7974d8bbf6530ae6d6044561a754fbad2e0",
+            "excerpt": "requirement axi-registry: bench test --check axi-query-registry at 79980f96\npass, 1 test, failures[0]\n"
+          },
+          "requirement": "axi-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep1-routing",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:33ec585971f8cc082534e2c4f28f83eeb7abf5f4102555a7f04f4cf950794ce0",
+            "excerpt": "requirement routing: bench test --check subcommand-routing at 79980f96\npass, 1 test, failures[0]\n"
+          },
+          "requirement": "routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep1-conformance",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:4dc4e09c31983aa5cd21fd6ee517fbcb217b63837c2b000b5cd4029ce421c3f8",
+            "excerpt": "requirement conformance: bench test --package ./internal/conformance at 79980f96\npass, 1690 tests, failures[0]; skip: TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (capability: privilege)\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-rep1-root-conformance",
+          "performer": "claude:dcm_t14_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d1b7360937616e52cfc0db96fdb4f27e348ca604",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "79980f96e474ff4ac0c44882483ffd47f088daeb",
+            "digest": "sha256:7b3ab215bd0daa4da2c964d9796af14fcaf56adba15c4e64551f7f30871d8a4a",
+            "excerpt": "requirement root-conformance: bench test --check root-conformance at 79980f96\npass, 1 test, failures[0]\n"
           },
           "requirement": "root-conformance",
           "command": "bench test --check root-conformance",
@@ -6209,6 +6400,96 @@
           "D-C6"
         ]
       }
+    },
+    {
+      "from": "sha256:41514d064fe9d9a76b84f5961c7fcfff508a0ba61e4f90d43fe50c647f27f683",
+      "to": "sha256:3ddd59b4486fb8c2f424f8a20e7fb860c313d3aa61ebad5514579251fea34da5",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ],
+        "D-C3": [
+          "D-C3"
+        ],
+        "D-C4": [
+          "D-C4"
+        ],
+        "D-C5": [
+          "D-C5"
+        ],
+        "D-C6": [
+          "D-C6"
+        ],
+        "D-D": [
+          "D-D"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3ddd59b4486fb8c2f424f8a20e7fb860c313d3aa61ebad5514579251fea34da5",
+      "to": "sha256:4208fc2b6b43f9aec3f0c1df55ae3673e1c0a444f92c48548567f1a74f79498b",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ],
+        "D-C3": [
+          "D-C3"
+        ],
+        "D-C4": [
+          "D-C4"
+        ],
+        "D-C5": [
+          "D-C5"
+        ],
+        "D-C6": [
+          "D-C6"
+        ],
+        "D-D": [
+          "D-D"
+        ]
+      }
     }
   ],
   "folds": [
@@ -6649,3 +6930,9 @@ Chunk D-D has 2 findings. The worst issue is C1.
 ## Repair allowance (D-D)
 
 Chunk D-D used 0 of its 2 repair cycles before repair 1. All findings fall on ticket 14, so one combined repair session takes them.
+
+Commit 79980f96 closes S1: `RequireAbsent` accepts only a missing path, and `TestCaptureDirectoryRefusal` and `TestPublicationDirectoryRefusal` check the blocking file bytes. Commit 79980f96 closes S2: `TestProbeSubjectRefusalSkipsReplacement` checks exit 1 and leaves the refusal text to `refusal_test.go`. Commit 79980f96 closes S3: the two gate test comments no longer state the mode. Commit 79980f96 closes S4: `TestGateReplacement` is one post-rename table over the verdict, evidence, and lane writers. Commit 79980f96 closes S5: `TestGateEvidenceDirectoryRefusal` gets its entry from `evidencePath`.
+
+Commit 79980f96 closes SP1 and C2: the D30 cell cites `TestDashboardWriteRefusesWhenTheReaderFails` for the dashboard family. The prospectiveartifact publish encodes a fixed record of int and string fields and owns no refusal. Its destination authority sits upstream in `Open`, so it has no D30 witness. Commit 79980f96 closes C1: the D36 cell cites `TestReviewReplacement`, the review-record evidence, beside the caller families.
+
+Chunk D-D used 1 of its 2 repair cycles.
