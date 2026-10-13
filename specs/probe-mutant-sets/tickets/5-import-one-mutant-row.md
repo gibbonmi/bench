@@ -1,7 +1,7 @@
 # Import one mutant row into a verification entry
 
 Blocked by: 4-grade-a-mutant-set.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/record_operations_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/probe.go, internal/probe/probetest/fixture.go, internal/probe/result.go, internal/probe/result_test.go, internal/probe/set.go, internal/reviewrecord/recordcmd/command.go, internal/reviewrecord/recordcmd/verification.go, internal/reviewrecord/recordcmd/verification_import_test.go, internal/reviewrecord/recordcmd/verification_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/record_operations_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/probe.go, internal/probe/probetest/fixture.go, internal/probe/result.go, internal/probe/result_test.go, internal/probe/set.go (new), internal/reviewrecord/recordcmd/command.go, internal/reviewrecord/recordcmd/verification.go, internal/reviewrecord/recordcmd/verification_import_test.go, internal/reviewrecord/recordcmd/verification_test.go
 Covers: PM34, PM42, PM52, PM53, PM54, PM55, PM56, PM57, PM58, PM59, PM60, PM74
 
 ## What to build
