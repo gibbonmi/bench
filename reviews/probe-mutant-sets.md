@@ -1522,6 +1522,77 @@
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "pm-c2-standards-r2",
+          "performer": "claude:pm_c2_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b91858554d677c063d660c207bafdb298326a7c0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_standards_r2",
+            "digest": "sha256:83ef13515cb3b3e443584125167a9d25886c7a7b593de0b47fd00bd51414ec31",
+            "excerpt": "Standards axis claude:pm_c2_standards_r2 (opus/high), PM-C2 confirming round 2, chunk pair 6584e93e..28d4a4e4, repair delta b647725e..4b9543cf -- internal/, evidence sha256:82d4d742 current.\ncount: 1\nworst: S4\nS1 closed: resolveMutation (probe.go:112), prepareSelection (:123), holdSubject (:136) serve runWith, runSet, and resolveEntry; no step sequenced twice; holdSubject's own release on a refused reread is sound; probe.go 384 lines.\nS2 closed: baselineCells builds on untouchedCells (baseline.go:50-54).\nS3 closed: reentryArgv (baseline_test.go:375) and pollUntil serve every site; settleDelay replaces the 50 ms literal.\nRemoved OutcomeInterrupted set branch: sound; every interrupted producer requires the held context done (held_runs.go:34, command.go:283, :298), and the next matching entry's stopCause gives set-stopped.\nS4 | auto-fix | 6 | AGENTS.md one source per fact: sleepingRun (baseline_test.go:289) is still spelled out at baseline_test.go:174 and lock_test.go:114. Replace both with sleepingRun.\nAdvice: holdRecordLock keeps its own 10 ms poll interval; requireTrailingBytes check order; requirePreserved repeats older preserved-row assertions.\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "4b9543cf396f0709957f44e812eafcdb5b37775a",
+          "finding_ids": [
+            "S4"
+          ],
+          "supersedes": [
+            "pm-c2-standards-r1"
+          ]
+        },
+        {
+          "id": "pm-c2-spec-r2",
+          "performer": "claude:pm_c2_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b91858554d677c063d660c207bafdb298326a7c0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_spec_r2",
+            "digest": "sha256:e53c0914c74a020abd9dcb0af36ea47e7ca1435404983fca22f41db4e800befd",
+            "excerpt": "Spec axis claude:pm_c2_spec_r2 (opus/high), PM-C2 confirming round 2, chunk pair 6584e93e..28d4a4e4, delta dfc5b339..28d4a4e4, evidence sha256:82d4d742 current. The axis named its findings P1 and P2; the record uses P21 and P22.\ncount: 2\nworst: P21\nP21 | auto-fix | 6 | spec.md:232 \"A set answer prints no failure text, except the reason that the preserved table gives for a kept copy\" says too much: baseline reports and interrupted mutant reports print error lines (spec 206, 283; testreport/command.go:287; set.go:255-256). Code correct. Narrow the sentence to a failed preservation, a failed write, and a stop.\nP22 | no-op | 6 | PM24 why cell (spec.md:442) \"A loop that ignores the interrupted kind starts mutant 2's run\" names a mutant that is now the green code; the context check (set.go:193) catches the interrupt. Reword to the skipped context check.\nPlan expansion 06b238e6 correct and in scope: D3, the Sequence sentences, PM81-PM86, ticket 4 lines, chunk row, PM20 cell (P3 closed); seam cells name the real tests.\nP1, P2 of round 1 closed: PM81-PM86 audited against their tests.\nThe removed OutcomeInterrupted branch is sound: every interrupted outcome comes from the held context, so the next matching entry stops with set-stopped.\nrep1 entries complete at 4b9543cf, source digest b9185855.\nAdvice: D3 sits under Reviewer decisions as a consultant decision (vetoable); spec lines 231 and 233 both restate the later-row rule.\nImplementation command: no command change.\n"
+          },
+          "axis": "Spec",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "4b9543cf396f0709957f44e812eafcdb5b37775a",
+          "finding_ids": [
+            "P21",
+            "P22"
+          ],
+          "supersedes": [
+            "pm-c2-spec-r1"
+          ]
+        },
+        {
+          "id": "pm-c2-coverage-r2",
+          "performer": "claude:pm_c2_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b91858554d677c063d660c207bafdb298326a7c0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_coverage_r2",
+            "digest": "sha256:80ce8cefd6a6460875a4557ae2df7458a58db105d90d14b26df4caa3dde22a57",
+            "excerpt": "Coverage axis claude:pm_c2_coverage_r2 (opus/high), PM-C2 confirming round 2, chunk pair 6584e93e..28d4a4e4, repair delta b647725e..4b9543cf -- internal/, evidence sha256:82d4d742 current.\ncount: 0\nworst: none\nClosed: PM83/C1 (set_test.go:631, restore-failed, no, exit 2, preserved table); PM84/C2 (baseline_test.go:278); PM85/C3 (requireTrailingBytes in two tests, derived count); PM86/C4 (owned case, builds 1, set_test.go:573-581); PM82/C5 (whole-answer compare, set_test.go:657); PM81 outcome asserted on both paths.\nOwn probes (restored yes): omit s.preserved = keptCopy(...) (set.go:173): bit; swap preserveFailedCause for mutationFailedCause (set.go:162): bit; index the miss guard by j-i (set.go:210): silent over 55 ^TestMutantSet tests.\n(a) No test pins a miss row after a non-zero stop index; graded covered, because every stopFrom caller goes through the one guard and removing the guard bit in /baseline.\n(b) No interrupted outcome is possible without a cancelled set context (command.go:287, :301, held_runs.go:35 all require the held ctx; signal.NotifyContext over Background has no other canceller).\n(c) PM84's 50 ms settleDelay has a low false-red flake risk on a starved host; no deterministic wait exists without a production seam.\nAdvice: a [match, miss, match] subtest that fails mutant 1's restore would pin the guard past index 0; a test hook for the set cancel context would make PM84 deterministic (production seam, reviewer call).\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "4b9543cf396f0709957f44e812eafcdb5b37775a",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-c2-coverage-r1"
+          ]
         }
       ]
     }
@@ -1834,3 +1905,30 @@ Count 5. Worst issue: C1.
 
 - An interrupted fresh build prints a `mutant_report` for a run whose Go child never started.
 - The `row.exit == 2` break adds nothing to the maximum.
+
+## PM-C2 round 2
+
+The confirming round read the delta from dfc5b339 to 28d4a4e4, with the repair commit 4b9543cf.
+Repair allowance: cycle 2 of 2 starts for S4, P21, and P22.
+
+### Standards
+
+Count 1. Worst issue: S4. S1, S2, and S3 are closed.
+
+- S4, auto-fix, confidence 6: two older spellings of `sleepingRun` remain in `baseline_test.go` and `lock_test.go`.
+
+### Spec
+
+Count 2. Worst issue: P21. P1, P2, and P3 of round 1 are closed.
+
+- P21, auto-fix, confidence 6: the new sentence about failure text says too much, because baseline and interrupted reports print error lines. The orchestrator narrows it in a plan commit.
+- P22, no-op, confidence 6: the PM24 why cell names the removed interrupted branch. The orchestrator rewords it in the same plan commit.
+
+### Coverage
+
+Count 0. Worst issue: none. C1 to C5 and row PM81 are closed.
+
+### Advice
+
+- No test pins a missed row after a stop at a later index. The S4 repair adds that subtest to row PM81.
+- The PM84 test waits 50 ms for the cancel, so a starved host can give a false red. A deterministic wait needs a production seam, so it stays a reviewer call.
