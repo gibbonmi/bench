@@ -620,154 +620,81 @@
           ]
         },
         {
-          "id": "FT354-strict-json",
+          "id": "FT402",
           "criteria": [
             {
-              "id": "FT354-strict-json.vulnerability",
-              "text": "The vulnerability exception reader accepts exactly one JSON document with surrounding whitespace, and it refuses trailing non-JSON bytes, a second JSON value, a repeated exception key, and an unknown exception field."
+              "id": "FT402.faster",
+              "text": "The landing gate spends less time, and each changed test keeps its purpose and its failure detection."
             },
             {
-              "id": "FT354-strict-json.owner",
-              "text": "The gate verdict store, the review records, and the release evidence read strict JSON through jsonfile, and a registered conformance check refuses a strict reader that bypasses jsonfile or keeps its own recursive duplicate-key walk."
+              "id": "FT402.spread",
+              "text": "A timing gain inside the recorded run-to-run spread counts as no change, and the build records each reverted attempt."
             },
             {
-              "id": "FT354-strict-json.preserved",
-              "text": "Each migrated reader keeps its newline framing, its domain validation, and its diagnostic sentinels."
-            },
-            {
-              "id": "FT354-strict-json.open",
-              "text": "The delivery closes no roadmap row, and FT354 stays open for its other outcomes."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "strict-json-ownership",
-                "path": "specs/strict-json-ownership/spec.md",
-                "identity": "sha256:f2adb0820fd7be13bd9d3e4ce79d772450b84c289435dcf13950bf994da0563e"
-              }
-            }
-          ]
-        },
-        {
-          "id": "FT411",
-          "criteria": [
-            {
-              "id": "FT411.cut",
-              "text": "Each test that the reviewer selects from the 2026-10-09 test-efficiency review tables is cut."
-            },
-            {
-              "id": "FT411.probe",
-              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
+              "id": "FT402.remeasure",
+              "text": "The build measures its timing targets again on the tmpfs base before it starts."
             }
           ],
           "sources": [
             {
-              "id": "FT411",
-              "path": "roadmap/FT411.md",
-              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
+              "id": "FT402",
+              "path": "roadmap/FT402.md",
+              "identity": "sha256:41d65fb4d12a47bd5dad654156e372ada8934839ed262686f76a7875fe230641"
             }
+          ],
+          "dependencies": [
+            "FT409"
           ]
         },
         {
-          "id": "FT380-plan-commit",
+          "id": "FT379",
           "criteria": [
             {
-              "id": "FT380-plan-commit.preflight-build",
-              "text": "The guidance requires bench commit --preflight-build \u003cslug\u003e for each plan commit before the next dispatch."
+              "id": "FT379.record-only-cycle",
+              "text": "A record-only correction that changes a disposition consumes no repair cycle."
             },
             {
-              "id": "FT380-plan-commit.successor-delta",
-              "text": "A plan commit after a chunk freeze joins the review delta of the successor chunk."
+              "id": "FT379.evidence-confirmation",
+              "text": "The review record has an evidence-only confirmation form that a biting coordinator probe satisfies, and the chunk checkpoint accepts that form in place of three fresh axes for a test-only repair delta."
             },
             {
-              "id": "FT380-plan-commit.chunk-table",
-              "text": "The build preflight checks the chunk table against the coverage map, and a red check-floor row blocks the next charge and the review charge."
-            },
-            {
-              "id": "FT380-plan-commit.open",
-              "text": "The delivery closes no roadmap row, and the check before publication and the commit-lane floor stay open on FT380."
-            }
-          ],
-          "sources": []
-        },
-        {
-          "id": "FT414",
-          "criteria": [
-            {
-              "id": "FT414.record-status",
-              "text": "A read-only bench record status form lists the required chunk base, each stale or missing record entry, and each commit that breaks the review chain, before a gate runs."
-            },
-            {
-              "id": "FT414.record-next",
-              "text": "A bench record next form prints the next required record or plan action and its preconditions."
-            },
-            {
-              "id": "FT414.out",
-              "text": "bench probe and bench test take an --out option that writes the complete response, and bench record verification reads the probe exit code from that file."
+              "id": "FT379.test-only-skip",
+              "text": "A test-only repair whose coordinator probe bites closes through the evidence-only confirmation form and needs no confirming round."
             }
           ],
           "sources": [
             {
-              "id": "FT414",
-              "path": "roadmap/FT414.md",
-              "identity": "sha256:8e8bd51dbaeb72a31ace026a43c5e31e793fc18b4988af9df9107fc335051c89"
+              "id": "FT379",
+              "path": "roadmap/FT379.md",
+              "identity": "sha256:c0f49651f4b07a9e9abb92b79fa939b282d2ec1c6664d61631d67eb9837a15ae"
             }
           ]
         },
         {
-          "id": "FT403",
+          "id": "FT405",
           "criteria": [
             {
-              "id": "FT403.pattern-sweep",
-              "text": "After a held finding whose cause is a repeatable pattern, the review axis searches for that pattern, an in-fence hit becomes its own finding, and an out-of-fence hit goes to bench learning."
+              "id": "FT405.verb",
+              "text": "bench record ticket \u003cslug\u003e --chunk \u003cid\u003e --excerpts \u003cdir\u003e records the plan amendment when the digest moved, freezes the chunk at HEAD, and records one verification entry for each planned requirement from a folder of excerpts named by requirement id."
             },
             {
-              "id": "FT403.registries",
-              "text": "The Coverage member sets add each registry of an extended family, as a pointer to the craft-delegate charge rule that names those registries."
+              "id": "FT405.composition",
+              "text": "The bench record ticket verb composes the shipped bench record assignment and bench record verification forms."
             },
             {
-              "id": "FT403.probe-owner",
-              "text": "Each review charge names the one probing axis, and the orchestrator confirms a clean git status after each axis returns."
+              "id": "FT405.repair-session",
+              "text": "One repair session records verification for every ticket of its chunk."
+            },
+            {
+              "id": "FT405.check-current",
+              "text": "bench preflight evidence --check-current reports the dirty paths instead of a refusal."
             }
           ],
           "sources": [
             {
-              "id": "FT403",
-              "path": "roadmap/FT403.md",
-              "identity": "sha256:40cc06d5544b3934f099b6e326f85207b6da8e509c7b97cffdb003a10d028b66"
-            }
-          ]
-        },
-        {
-          "id": "FT168-probe-subjects",
-          "criteria": [
-            {
-              "id": "FT168-probe-subjects.mutations",
-              "text": "bench probe takes --with-file, --insert-before, --occurrence, --delete, and repeated --swap and --omit edits that make one combined mutant."
-            },
-            {
-              "id": "FT168-probe-subjects.subjects",
-              "text": "bench probe accepts the prose check and the system suite as targets through the registered check owner."
-            },
-            {
-              "id": "FT168-probe-subjects.verdict",
-              "text": "The verdict row names the first failing test, --expect requires a named witness, a mutant that does not compile reads build-failed with its first build line, and a second probe on the same subject refuses while the first runs."
-            },
-            {
-              "id": "FT168-probe-subjects.open",
-              "text": "The delivery closes no roadmap row, and the batch, multi-package, canary, and failing-name faces stay on FT168."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "probe-subjects-and-mutations",
-                "path": "specs/probe-subjects-and-mutations/spec.md",
-                "identity": "sha256:00a18d3eb59b4da0834f6bbbba079133350770b086903c31108b5cec2cbcd5e2"
-              }
+              "id": "FT405",
+              "path": "roadmap/FT405.md",
+              "identity": "sha256:b53533c8de03698aef67b2a7869cbc8c7058fa18c42f8af042e1c8ae09666832"
             }
           ]
         },
@@ -792,6 +719,36 @@
             }
           ],
           "sources": []
+        },
+        {
+          "id": "FT375-spec-staleness",
+          "criteria": [
+            {
+              "id": "FT375-spec-staleness.rows",
+              "text": "bench preflight build reports a drift row for each fenced path that changed from the spec's pinned commit to the source tip, a cited-symbol row, and a cited-test row."
+            },
+            {
+              "id": "FT375-spec-staleness.skip",
+              "text": "The build dispatches no staleness pass when every required supported row is green and the drift row is empty, and otherwise the manual pass audits only the drift, the red rows, and the unsupported claims."
+            },
+            {
+              "id": "FT375-spec-staleness.open",
+              "text": "The delivery closes no roadmap row, and FT375 keeps the faces that the staged spec does not name."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "preflight-spec-staleness",
+                "path": "specs/preflight-spec-staleness/spec.md",
+                "identity": "sha256:b4f7e8acedc521247a9c59162217379c4b5b4572995f93649e13cacc48ba376d"
+              }
+            }
+          ],
+          "dependencies": [
+            "FT293-ownership-closure"
+          ]
         },
         {
           "id": "FT293-ownership-closure",
@@ -837,84 +794,44 @@
           ]
         },
         {
-          "id": "FT375-spec-staleness",
+          "id": "FT380-plan-commit",
           "criteria": [
             {
-              "id": "FT375-spec-staleness.rows",
-              "text": "bench preflight build reports a drift row for each fenced path that changed from the spec's pinned commit to the source tip, a cited-symbol row, and a cited-test row."
+              "id": "FT380-plan-commit.preflight-build",
+              "text": "The guidance requires bench commit --preflight-build \u003cslug\u003e for each plan commit before the next dispatch."
             },
             {
-              "id": "FT375-spec-staleness.skip",
-              "text": "The build dispatches no staleness pass when every required supported row is green and the drift row is empty, and otherwise the manual pass audits only the drift, the red rows, and the unsupported claims."
+              "id": "FT380-plan-commit.successor-delta",
+              "text": "A plan commit after a chunk freeze joins the review delta of the successor chunk."
             },
             {
-              "id": "FT375-spec-staleness.open",
-              "text": "The delivery closes no roadmap row, and FT375 keeps the faces that the staged spec does not name."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
+              "id": "FT380-plan-commit.chunk-table",
+              "text": "The build preflight checks the chunk table against the coverage map, and a red check-floor row blocks the next charge and the review charge."
+            },
             {
-              "source": {
-                "id": "preflight-spec-staleness",
-                "path": "specs/preflight-spec-staleness/spec.md",
-                "identity": "sha256:b4f7e8acedc521247a9c59162217379c4b5b4572995f93649e13cacc48ba376d"
-              }
+              "id": "FT380-plan-commit.open",
+              "text": "The delivery closes no roadmap row, and the check before publication and the commit-lane floor stay open on FT380."
             }
           ],
-          "dependencies": [
-            "FT293-ownership-closure"
-          ]
+          "sources": []
         },
         {
-          "id": "FT405",
+          "id": "FT411",
           "criteria": [
             {
-              "id": "FT405.verb",
-              "text": "bench record ticket \u003cslug\u003e --chunk \u003cid\u003e --excerpts \u003cdir\u003e records the plan amendment when the digest moved, freezes the chunk at HEAD, and records one verification entry for each planned requirement from a folder of excerpts named by requirement id."
+              "id": "FT411.cut",
+              "text": "Each test that the reviewer selects from the 2026-10-09 test-efficiency review tables is cut."
             },
             {
-              "id": "FT405.composition",
-              "text": "The bench record ticket verb composes the shipped bench record assignment and bench record verification forms."
-            },
-            {
-              "id": "FT405.repair-session",
-              "text": "One repair session records verification for every ticket of its chunk."
-            },
-            {
-              "id": "FT405.check-current",
-              "text": "bench preflight evidence --check-current reports the dirty paths instead of a refusal."
+              "id": "FT411.probe",
+              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
             }
           ],
           "sources": [
             {
-              "id": "FT405",
-              "path": "roadmap/FT405.md",
-              "identity": "sha256:b53533c8de03698aef67b2a7869cbc8c7058fa18c42f8af042e1c8ae09666832"
-            }
-          ]
-        },
-        {
-          "id": "FT379",
-          "criteria": [
-            {
-              "id": "FT379.record-only-cycle",
-              "text": "A record-only correction that changes a disposition consumes no repair cycle."
-            },
-            {
-              "id": "FT379.evidence-confirmation",
-              "text": "The review record has an evidence-only confirmation form that a biting coordinator probe satisfies, and the chunk checkpoint accepts that form in place of three fresh axes for a test-only repair delta."
-            },
-            {
-              "id": "FT379.test-only-skip",
-              "text": "A test-only repair whose coordinator probe bites closes through the evidence-only confirmation form and needs no confirming round."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT379",
-              "path": "roadmap/FT379.md",
-              "identity": "sha256:c0f49651f4b07a9e9abb92b79fa939b282d2ec1c6664d61631d67eb9837a15ae"
+              "id": "FT411",
+              "path": "roadmap/FT411.md",
+              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
             }
           ]
         },
@@ -936,33 +853,6 @@
               "path": "roadmap/FT409.md",
               "identity": "sha256:94e9d492c4862e15271ee301fe3a03216dc218ba7c00c22f40d930f7a21c65c8"
             }
-          ]
-        },
-        {
-          "id": "FT402",
-          "criteria": [
-            {
-              "id": "FT402.faster",
-              "text": "The landing gate spends less time, and each changed test keeps its purpose and its failure detection."
-            },
-            {
-              "id": "FT402.spread",
-              "text": "A timing gain inside the recorded run-to-run spread counts as no change, and the build records each reverted attempt."
-            },
-            {
-              "id": "FT402.remeasure",
-              "text": "The build measures its timing targets again on the tmpfs base before it starts."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT402",
-              "path": "roadmap/FT402.md",
-              "identity": "sha256:41d65fb4d12a47bd5dad654156e372ada8934839ed262686f76a7875fe230641"
-            }
-          ],
-          "dependencies": [
-            "FT409"
           ]
         }
       ]
