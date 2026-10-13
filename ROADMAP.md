@@ -84,7 +84,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT413 (MEDIUM) — parallel landings compose `CHANGELOG.md` with no conflict.**
 
-**FT354 (MEDIUM) — strict JSON, atomic replace, and shell quoting each have one owner.**
+**FT354 (MEDIUM) — strict JSON and shell quoting each have one owner.**
 
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
 
@@ -109,6 +109,8 @@ and the small cuts. The rows below hold the rest.
 **FT335 (MEDIUM) — a `bench worktree merge` from the primary checkout grades the composed tree with the target's declared lane.**
 
 **FT401 (LOW, decision required) — the refusals outside the write verbs print their routes from the refusal-route registry.**
+
+**FT419 (MEDIUM, decision required) — a build that adds a persisted ledger or review-record field writes and lands through a binary that reads that field.**
 
 ## Planning, ownership, and review integrity
 
@@ -162,6 +164,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT417 (LOW) — a reworded spec sentence keeps each predicate of the old sentence unless a decision deletes it.**
 
+**FT420 (HIGH, decision required) — a spec-backed build authors independent chunks concurrently by default.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -170,7 +174,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT307 (MEDIUM, decision required) — `bench structure` grades working-tree changes and projects scoped headroom.**
 
-**FT168 (MEDIUM) — file-backed replacements and system or Markdown subjects extend the focused probe.**
+**FT168 (MEDIUM) — the focused probe runs one canary, compares failing names, and echoes its mutation.**
 
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
 
@@ -254,6 +258,12 @@ qualification requirements are met.
 **FT416 (MEDIUM, parked pending a repro) — `bench commitment plan` effects show a milestone activation.**
 
 **FT418 (LOW, parked pending a repro) — a Bench route discards an unapproved `bench commitment approve` output after a refused binding commit.**
+
+**FT421 (MEDIUM, parked pending a repro) — the coverage census of a kit-source worktree selects the kit phases, whatever `BENCH_KIT` names.**
+
+**FT422 (MEDIUM, parked pending a repro) — a commitment reorder before a landing releases a started claim, and plan and approve read one predecessor.**
+
+**FT423 (LOW, parked pending a repro) — `bench record verification` refuses a probe entry that the checkpoint would refuse.**
 
 
 ## Release and bank reassessment gate
