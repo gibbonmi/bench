@@ -5473,7 +5473,79 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-dd-r1-standards",
+          "performer": "claude:dcm_rev_dd_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_dd_std",
+            "digest": "sha256:efb11c23947c41d1f17e20b1c5e069a5861ce9b5a51ecf96a5467a73dbcf79a8",
+            "excerpt": "## Standards (D-D, 930225e5..3e4fd1d1) — 5 findings; worst S1.\nS1 | auto-fix (orchestrator vetoes the ENOTDIR widening) | 6 | internal/durablefile/durablefiletest/assert.go:65 | RequireAbsent accepts ENOTDIR only so two absence checks under a regular file pass, and those checks cannot fail | drop the ENOTDIR branch; check the blocking file with RequireBytes instead\nS2 | auto-fix | 5 | internal/probe/replacement_test.go:193 | the D30 witness re-pins the \"outside the repository\" refusal text that refusal_test.go:182 owns | leave the reason text to refusal_test.go\nS3 | auto-fix | 5 | internal/gate/durable_replacement_test.go:60,74 | comments restate the 0600 mode | drop the clause\nS4 | auto-fix | 4 | internal/gate/durable_replacement_test.go:61-71 vs 78-86 | TestVerdictReplacement repeats the TestEvidenceReplacement subtest body | one post-rename table over the three writers; re-cite D16/D17\nS5 | auto-fix | 4 | internal/gate/durable_replacement_test.go:112,125 | the test rebuilds the evidence path that evidencePath owns | call evidencePath\nVeto items: repairpilot RequireNoReplacement accepted; probe outside-repository subject accepted.\n"
+          },
+          "axis": "Standards",
+          "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "tip": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-dd-r1-spec",
+          "performer": "claude:dcm_rev_dd_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_dd_spec",
+            "digest": "sha256:091ab88d4c355254c4887cf47cf1ae8aa059d72ab683b0389f53595fa99ba3ab",
+            "excerpt": "## Spec (D-D, 930225e5..3e4fd1d1) — 1 finding; worst SP1.\nD31, D33, D35, D36 met by the reviewer's own census; D30 met in substance; every exported caller entry binds durablefile.Native(); no earlier chunk invalidated.\nSP1 | auto-fix | 6 | specs/durable-caller-migration/spec.md:331 | the D30 cell omits the dashboard family and no not-applicable reason is recorded for dashboard or prospectiveartifact | cite dashboard_test.go (TestDashboardWriteRefusesWhenTheReaderFails) in the D30 cell; record the prospectiveartifact reason in the D-D pickup\n"
+          },
+          "axis": "Spec",
+          "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "tip": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+          "finding_ids": [
+            "SP1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-dd-r1-coverage",
+          "performer": "claude:dcm_rev_dd_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_dd_cov",
+            "digest": "sha256:800c078f054a14fde5fa3203cbac20269e28c9ac7fe2106a775c548ede461422",
+            "excerpt": "## Coverage (D-D, 930225e5..3e4fd1d1) — 2 findings; worst C1.\nC1 | auto-fix | 5 | reviews/durable-caller-migration.md D-D entries; spec.md:336 | the D36 closure does not cite the prerequisite review-record evidence (internal/reviewrecord/replacement_test.go TestReviewReplacement) that ticket 14 requires | cite it beside the caller families in the D-D pickup and the D36 cell\nC2 | auto-fix (same as SP1) | 5 | spec.md:331 | dashboard and prospectiveartifact dispositions are not recorded | record both\nD30 witnesses reach their refusals; moved checks drop no assertion; gate pre-rename rows; preservation probe; ten verification entries hold.\n"
+          },
+          "axis": "Coverage",
+          "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "tip": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -6550,3 +6622,30 @@ Chunk D-C5 has 0 findings.
 Chunk D-C5 has 0 findings. The orchestrator probe that breaks the native branch of `replacer` turned `TestAssessmentCollectionPublication` red, and the file was restored.
 
 The Standards reaffirmation at 5dad19e5 closed S2 and accepted the routing of S1 to D-D. Chunk D-C5 closed with 0 of its 2 repair cycles used, and the comment-only correction used none.
+
+## Standards (D-D)
+
+Chunk D-D has 5 findings. The worst issue is S1.
+
+- S1, auto-fix, confidence 6: `RequireAbsent` at `internal/durablefile/durablefiletest/assert.go:65` accepts ENOTDIR. The two checks that need it sit under a regular file and cannot fail. Drop the branch, and check the blocking file instead.
+- S2, auto-fix, confidence 5: the probe D30 witness at `internal/probe/replacement_test.go:193` pins refusal text that `refusal_test.go:182` owns.
+- S3, auto-fix, confidence 5: two gate test comments at `internal/gate/durable_replacement_test.go:60` and `:74` restate the 0600 mode.
+- S4, auto-fix, confidence 4: the verdict and evidence post-rename subtests repeat one body. Use one table over the three writers.
+- S5, auto-fix, confidence 4: the gate test rebuilds the evidence path that `evidencePath` owns.
+
+## Spec (D-D)
+
+Chunk D-D has 1 finding. The worst issue is SP1.
+
+- SP1, auto-fix, confidence 6: the D30 cell omits the dashboard family, and no reason is recorded for dashboard or prospectiveartifact. Cite the existing dashboard refusal test, and record the prospectiveartifact reason here.
+
+## Coverage (D-D)
+
+Chunk D-D has 2 findings. The worst issue is C1.
+
+- C1, auto-fix, confidence 5: the D36 closure does not cite the prerequisite review-record evidence that ticket 14 requires. Cite `TestReviewReplacement` beside the caller families.
+- C2, auto-fix, confidence 5: this finding is the same as SP1.
+
+## Repair allowance (D-D)
+
+Chunk D-D used 0 of its 2 repair cycles before repair 1. All findings fall on ticket 14, so one combined repair session takes them.
