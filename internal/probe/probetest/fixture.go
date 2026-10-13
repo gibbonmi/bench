@@ -41,9 +41,9 @@ func ClampFailure(diagnostic string) Start {
 {"Action":"fail","Package":"benchkit/clamp","Elapsed":0.01}`, diagnostic), Exit: 1}
 }
 
-// Publisher is the sealed run-binary publication that a test file passes to Repository. The
-// call stays in test code, so the one production publication call stays the only one.
-type Publisher func(root, staged, executable, dir, name string) error
+// Publisher is the sealed run-binary publication that a test file passes to Repository. A test
+// file supplies it, so this non-test package cannot publish a sealed run binary on its own.
+type Publisher func(root, staged, executable, manifestDir, version string) error
 
 // Repository writes a kit tree and the clamp package into the Git checkout dir and publishes a
 // sealed run binary for it with publish. For the rest of the test, it binds the kit, the run binary, a
