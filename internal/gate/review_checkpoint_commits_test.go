@@ -46,7 +46,7 @@ func TestReviewCheckpointChainGapNamesTheExpectedBase(t *testing.T) {
 	if code == 0 || !strings.Contains(text, "expected base "+expected) {
 		t.Fatalf("chain-gap refusal = (%d, %q), want expected base %s", code, text, expected)
 	}
-	if !strings.Contains(text, "plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits and comment-only corrections follow a chunk tip") {
+	if !strings.Contains(text, "plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits, recorded folds, and comment-only corrections follow a chunk tip") {
 		t.Fatalf("chain-gap refusal = %q, want the chain rule", text)
 	}
 }
