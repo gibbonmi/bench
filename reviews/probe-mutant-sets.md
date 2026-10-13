@@ -1152,9 +1152,9 @@
     {
       "id": "PM-C2",
       "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
-      "tip": "ae0f9b8b96384ce2136f4b437c2004bef6296a39",
-      "plan_digest": "sha256:545f48b74b97aa58d0569865213d72c52812405f94bebcdf658ed962803cbda3",
-      "source_digest": "5e5f4291a5286ba17939b513998d18a1483e3621",
+      "tip": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+      "plan_digest": "sha256:12c94ca56db2698862ce62c097467259f0b90432a2f66febcac4f339bb145b72",
+      "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
       "acceptance_rows": [
         "PM1",
         "PM2",
@@ -1563,6 +1563,125 @@
               "ref": "ae0f9b8b96384ce2136f4b437c2004bef6296a39",
               "digest": "sha256:aa00380c3aa0b4b7564abe0de38d9569214a24de32d089bfe15848779d918dae",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetRunsEachMutantAlone,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestMutantSetRunsEachMutantAlone$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,629\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,361,1\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetRunsEachMutantAlone,\"set_test.go:149: each replacement replaced [\\\"package probefixture\\\\\\\\n\\\\\\\\n// Clamp keeps n at or above zero.\\\\\\\\nfunc Clamp(n int) int {\\\\\\\\n\\\\\\\\tif n < 0 {\\\\\\\\n\\\\\\\\t\\\\\\\\treturn 0\\\\\\\\n\\\\\\\\t}\\\\\\\\n\\\\\\\\treturn n\\\\\\\\n}\\\\\\\\n\\\" \\\"package probefixture\\\\\\\\n\\\\\\\\n// Clamp keeps n at or above zero.\\\\\\\\… (869 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "pm-t04-rep3-probe-family",
+          "performer": "claude:pm_t04_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+            "digest": "sha256:1add2e53de3001beac4bb60fdd61fb9f7888804e2fcfb11a77d7c90955303055",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,2d4436147f7d2332ace522eef0e366d2ee306355,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20345,335\n  github.com/gibbonmi/bench/internal/conformance,pass,71003,1690\n  github.com/gibbonmi/bench/internal/probe,pass,74214,312\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,74596,240\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t04-rep3-testreport",
+          "performer": "claude:pm_t04_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+            "digest": "sha256:1add2e53de3001beac4bb60fdd61fb9f7888804e2fcfb11a77d7c90955303055",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,2d4436147f7d2332ace522eef0e366d2ee306355,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20345,335\n  github.com/gibbonmi/bench/internal/conformance,pass,71003,1690\n  github.com/gibbonmi/bench/internal/probe,pass,74214,312\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,74596,240\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t04-rep3-command-package",
+          "performer": "claude:pm_t04_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+            "digest": "sha256:1add2e53de3001beac4bb60fdd61fb9f7888804e2fcfb11a77d7c90955303055",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,2d4436147f7d2332ace522eef0e366d2ee306355,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20345,335\n  github.com/gibbonmi/bench/internal/conformance,pass,71003,1690\n  github.com/gibbonmi/bench/internal/probe,pass,74214,312\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,74596,240\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t04-rep3-conformance-package",
+          "performer": "claude:pm_t04_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+            "digest": "sha256:1add2e53de3001beac4bb60fdd61fb9f7888804e2fcfb11a77d7c90955303055",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,2d4436147f7d2332ace522eef0e366d2ee306355,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20345,335\n  github.com/gibbonmi/bench/internal/conformance,pass,71003,1690\n  github.com/gibbonmi/bench/internal/probe,pass,74214,312\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,74596,240\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t04-rep3-root-conformance",
+          "performer": "claude:pm_t04_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+            "digest": "sha256:e75f913fa7b0e645da5b9881c163e5b6568cd3492fde7ce856e920d7f0ef3157",
+            "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,485fa5e295bec6471009169ba0ee9bfd140580dd,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15181,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t04-rep3-central-property",
+          "performer": "claude:pm_t04_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+            "digest": "sha256:375a4cafd6d132a62e50f533a4b571077ebccb50d1f0981de624dd457a396233",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetRunsEachMutantAlone,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestMutantSetRunsEachMutantAlone$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,629\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,370,1\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetRunsEachMutantAlone,\"set_test.go:149: each replacement replaced [\\\"package probefixture\\\\\\\\n\\\\\\\\n// Clamp keeps n at or above zero.\\\\\\\\nfunc Clamp(n int) int {\\\\\\\\n\\\\\\\\tif n < 0 {\\\\\\\\n\\\\\\\\t\\\\\\\\treturn 0\\\\\\\\n\\\\\\\\t}\\\\\\\\n\\\\\\\\treturn n\\\\\\\\n}\\\\\\\\n\\\" \\\"package probefixture\\\\\\\\n\\\\\\\\n// Clamp keeps n at or above zero.\\\\\\\\… (869 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the restore between two mutants, so the second mutant stacks on the first. TestMutantSetRunsEachMutantAlone must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+              "digest": "sha256:375a4cafd6d132a62e50f533a4b571077ebccb50d1f0981de624dd457a396233",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetRunsEachMutantAlone,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestMutantSetRunsEachMutantAlone$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,629\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,370,1\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetRunsEachMutantAlone,\"set_test.go:149: each replacement replaced [\\\"package probefixture\\\\\\\\n\\\\\\\\n// Clamp keeps n at or above zero.\\\\\\\\nfunc Clamp(n int) int {\\\\\\\\n\\\\\\\\tif n < 0 {\\\\\\\\n\\\\\\\\t\\\\\\\\treturn 0\\\\\\\\n\\\\\\\\t}\\\\\\\\n\\\\\\\\treturn n\\\\\\\\n}\\\\\\\\n\\\" \\\"package probefixture\\\\\\\\n\\\\\\\\n// Clamp keeps n at or above zero.\\\\\\\\… (869 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
