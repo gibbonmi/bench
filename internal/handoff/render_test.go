@@ -1,10 +1,12 @@
 package handoff
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
@@ -279,14 +281,22 @@ func TestCommandKeepsANonEmptyNextCommand(t *testing.T) {
 // named command is a backticked span, so an empty pair of backticks says nothing at all;
 // a rule that read them as content would leave that section routeless forever.
 func TestCommandRoutesOnlyAnEmptyNextCommand(t *testing.T) {
+	committed := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
+	written := committed.Add(time.Minute)
 	for _, tc := range []struct{ name, planted string }{
 		{"empty", ""},
 		{"whitespace only", "   "},
 		{"empty backticks", "``"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("GIT_AUTHOR_DATE", committed.Format(time.RFC3339))
+			t.Setenv("GIT_COMMITTER_DATE", committed.Format(time.RFC3339))
 			root := benchRepo(t)
-			seedSection(t, filepath.Join(root, status.HandoffFile), tc.planted, "The build is live.")
+			document := filepath.Join(root, status.HandoffFile)
+			seedSection(t, document, tc.planted, "The build is live.")
+			if err := os.Chtimes(document, written, written); err != nil {
+				t.Fatal(err)
+			}
 			runIn(t, root, nil)
 			assertNextCommand(t, root, "`bench roadmap`")
 		})
