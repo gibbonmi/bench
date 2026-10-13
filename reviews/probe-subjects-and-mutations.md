@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/probe-subjects-and-mutations/spec.md",
-  "plan_digest": "sha256:61cc4c138e8f1feee50a4ed368358a8048d738fd5c1e2e7b71fbadd2f7e4fb89",
+  "plan_digest": "sha256:eda3f737cedfbbb29511d8b04197c36b17a332d75a896cb01b29bc4bf2acf8e4",
   "implementation_session": "",
   "chunks": [
     {
@@ -1002,6 +1002,211 @@
           ]
         }
       ]
+    },
+    {
+      "id": "PS-C",
+      "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+      "tip": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+      "plan_digest": "sha256:eda3f737cedfbbb29511d8b04197c36b17a332d75a896cb01b29bc4bf2acf8e4",
+      "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+      "acceptance_rows": [
+        "PS38",
+        "PS39",
+        "PS40",
+        "PS41",
+        "PS42",
+        "PS43",
+        "PS54",
+        "PS55",
+        "PS56",
+        "PS57",
+        "PS44",
+        "PS45",
+        "PS46",
+        "PS47",
+        "PS48",
+        "PS49",
+        "PS50",
+        "PS51",
+        "PS52",
+        "PS53"
+      ],
+      "verification": [
+        {
+          "id": "ps-t04-t4-probe-family",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:0962a943faf0d62f270ffee37c7c7132d811e3093e60e2f0e3b41f014aae314d",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,pass,53000,206\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-testreport",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:8b04b375d998c89d51ab7604e87097e829acab6c29095e517edab1077a59abd8",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,63425,232\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-runbinary",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:d4bdba307b63c6fcd7630ff9b142a3250d78643890143966c57dbf97f62774b7",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/runbinary,pass,24713,29\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-record-forms",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:f6f5ba2f22b0e2947a38ec63f4d9a4a3dd4171e5ba06749661374cfef3411286",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,12959,184\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-gate-readers",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:cbb717b4dfcef150ad577bacb583b5ceb6a519337c9751c52e51774eeab432d6",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,38362,455\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-gate-readers",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-command-package",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:9ddb10da156990b4013234d9605dd676fda0243a3bfc39dcc504ec3c47e7b590",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18811,335\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-conformance-package",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:a2cefb8427d3ff6905262ff87eaf6db5bba0ae83849f65b0d558f6b193401f3d",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,60394,1690\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-root-conformance",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:fe5a928f3bd22fae4db778c13727c5db6154581fc57a839b445b57562382dc3a",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15077,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-central-property",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:8c0740bcb885dffe8e517a4ac4e666bcaa383f205965d60fd361cc002a4a99b7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/outcome.go,swap,failed,3,TestExecuteClassifiesTheOutcome/refused,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,232\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,973\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,55125,232\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestExecuteClassifiesTheOutcome/refused,\"outcome_test.go:73: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",1\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/a_cancelled_build,\"outcome_test.go:161: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/no_Go_on_PATH,\"outcome_test.go:168: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-central-property",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Map every builder error to build-failed instead of only a BuildError. TestOnlyAScriptFailureIsBuildFailed must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+              "digest": "sha256:8c0740bcb885dffe8e517a4ac4e666bcaa383f205965d60fd361cc002a4a99b7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/outcome.go,swap,failed,3,TestExecuteClassifiesTheOutcome/refused,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,232\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,973\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,55125,232\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestExecuteClassifiesTheOutcome/refused,\"outcome_test.go:73: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",1\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/a_cancelled_build,\"outcome_test.go:161: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/no_Go_on_PATH,\"outcome_test.go:168: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1045,6 +1250,18 @@
     {
       "from": "sha256:6124b1fe814c7d1d1ddd8422233ef9ffed6cec824407d7140135e64c06f02c57",
       "to": "sha256:61cc4c138e8f1feee50a4ed368358a8048d738fd5c1e2e7b71fbadd2f7e4fb89",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:61cc4c138e8f1feee50a4ed368358a8048d738fd5c1e2e7b71fbadd2f7e4fb89",
+      "to": "sha256:eda3f737cedfbbb29511d8b04197c36b17a332d75a896cb01b29bc4bf2acf8e4",
       "chunk_ids": {
         "PS-A": [
           "PS-A"
