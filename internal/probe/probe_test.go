@@ -2,23 +2,20 @@ package probe
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
-	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// fixture is one probefixture repository the verb runs over: a Go module with the Clamp
-// function under test, a cmd/bench package that gives the run-binary digest a stable
-// closure, and the Bench home the preserved copy lands in. The module's own sources are
-// outside that closure, so a probe's mutation never invalidates the selected executable.
+// fixture is one probefixture repository the verb runs over: the root and Bench home from
+// probetest.Repository, the clamp subject path, and the start marker for stubbed Go runs.
 type fixture struct {
 	root    string
 	home    string
@@ -26,60 +23,14 @@ type fixture struct {
 	marker  string
 }
 
-const clampSource = `package probefixture
-
-// Clamp keeps n at or above zero.
-func Clamp(n int) int {
-	if n < 0 {
-		return 0
-	}
-	return n
-}
-`
-
-const clampTestSource = `package probefixture
-
-import "testing"
-
-func TestClampNegative(t *testing.T) {
-	if got := Clamp(-1); got != 0 {
-		t.Fatalf("Clamp(-1) = %d, want 0", got)
-	}
-}
-
-func TestClampPositive(t *testing.T) {
-	if got := Clamp(3); got != 3 {
-		t.Fatalf("Clamp(3) = %d, want 3", got)
-	}
-}
-`
-
-// newFixture builds the repository, publishes a run binary bound to it, and makes it the
-// working directory. The environment is bound here rather than per test, so every row
-// observes one home, one selected executable, and one repository.
-func newFixture(t *testing.T) *fixture {
+// clampFixture builds the probetest clamp repository and binds a start marker to it.
+func clampFixture(t *testing.T) *fixture {
 	t.Helper()
-	root := scratchDir(t)
-	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module probefixture\n\ngo 1.25\n", 0o644)
-	writeFixtureFile(t, filepath.Join(root, "clamp.go"), clampSource, 0o644)
-	writeFixtureFile(t, filepath.Join(root, "clamp_test.go"), clampTestSource, 0o644)
-	writeFixtureFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() {}\n", 0o644)
-	// The build-input manifest and the version file complete the digest closure the
-	// run-binary seal is graded against. Both sit outside the module's own sources, so a
-	// probe's mutation never invalidates the selected executable mid-run.
-	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest)), freshness.BuildInputLine("package_version", "package.json"), 0o644)
-	writeFixtureFile(t, filepath.Join(root, "package.json"), "{\"version\":\"0.0.0\"}\n", 0o644)
-	gitInit(t, root)
-
-	home := scratchDir(t)
-	t.Setenv("BENCH_HOME", home)
-	t.Setenv("BENCH_KIT", root)
-	publishRunBinary(t, root)
-	t.Chdir(root)
+	root, home := probetest.Repository(t, gittest.Repo(t), freshness.Publish)
 	return &fixture{
 		root:    root,
 		home:    home,
-		subject: filepath.Join(root, "clamp.go"),
+		subject: filepath.Join(root, filepath.FromSlash(probetest.ClampPath)),
 		marker:  filepath.Join(scratchDir(t), "go-started"),
 	}
 }
@@ -106,31 +57,6 @@ func writeFixtureFile(t *testing.T, path, body string, mode os.FileMode) {
 	}
 }
 
-func gitInit(t *testing.T, root string) {
-	t.Helper()
-	for _, args := range [][]string{{"init"}, {"config", "user.email", "probe@example.com"}, {"config", "user.name", "probe"}} {
-		command := exec.Command("git", append([]string{"-C", root}, args...)...)
-		if out, err := command.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v\n%s", args, err, out)
-		}
-	}
-}
-
-// publishRunBinary binds a sealed executable to the fixture root, so the focused run
-// inherits a selection instead of building one. Inheriting keeps the fixture free of the
-// kit's build script while leaving production's verification path in force.
-func publishRunBinary(t *testing.T, root string) {
-	t.Helper()
-	dir := scratchDir(t)
-	staged := filepath.Join(dir, "staged")
-	writeFixtureFile(t, staged, "#!/bin/sh\nexit 0\n", 0o755)
-	executable := filepath.Join(dir, "bench")
-	if err := freshness.Publish(root, staged, executable, dir, "probe-test"); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv(runbinary.Env, executable)
-}
-
 // installStubStarts installs the shared canned `go` with the fixture's marker, so each row
 // reads the starts it caused from that one file.
 func installStubStarts(t *testing.T, f *fixture, baseline, mutated probetest.Start) {
@@ -143,21 +69,8 @@ func installStubStarts(t *testing.T, f *fixture, baseline, mutated probetest.Sta
 // run's stub runs while that run is in flight.
 func installStubGo(t *testing.T, f *fixture, events string, exit int, hook string) {
 	t.Helper()
-	installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Hook: hook, Events: events, Exit: exit})
+	installStubStarts(t, f, probetest.ClampPass, probetest.Start{Hook: hook, Events: events, Exit: exit})
 }
-
-// cannedFailure is one failing test in the fixture package. diagnostic is the first
-// output line, which is the cell the failures table carries.
-func cannedFailure(diagnostic string) string {
-	return `{"Action":"run","Package":"probefixture","Test":"TestClampNegative"}
-{"Action":"output","Package":"probefixture","Test":"TestClampNegative","Output":"    ` + diagnostic + `\n"}
-{"Action":"fail","Package":"probefixture","Test":"TestClampNegative","Elapsed":0}
-{"Action":"fail","Package":"probefixture","Elapsed":0.01}`
-}
-
-const cannedPass = `{"Action":"run","Package":"probefixture","Test":"TestClampPositive"}
-{"Action":"pass","Package":"probefixture","Test":"TestClampPositive","Elapsed":0}
-{"Action":"pass","Package":"probefixture","Elapsed":0.01}`
 
 // quietRun is a package that passed with no test event at all, which is the stream a run
 // that started nothing prints.
@@ -176,11 +89,11 @@ func mutantHook(t *testing.T, f *fixture, want string) string {
 // want bytes, and then asserts the bit row, the restored start bytes, and an empty home.
 func requireMutantBites(t *testing.T, f *fixture, want, mutation string, args ...string) {
 	t.Helper()
-	installStubGo(t, f, cannedFailure("caught"), 1, mutantHook(t, f, want))
+	installStubGo(t, f, bite.Events, 1, mutantHook(t, f, want))
 	argv := append(append([]string{"clamp.go"}, args...), "--package", "./", "--run", "^TestClampNegative$")
 	out, code := runProbe(t, argv...)
 	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", mutation, "failed", 1, "TestClampNegative", "yes"))
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 }
 
@@ -279,57 +192,57 @@ func preservedCopy(t *testing.T, f *fixture) string {
 // PB1, PB13, PB15: a mutation a focused test catches is the success case, the subject
 // comes back byte-exact, and the home keeps no copy.
 func TestProbeBitesWhenTheFocusedTestFails(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	out, code := runProbe(t, probeArgs()...)
 	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes"))
 	if !strings.Contains(out, "packages[") {
 		t.Fatalf("stdout = %q, want the focused run's tables after the row", out)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 }
 
 // PB2: --omit deletes the one match, and the shortened guard is what the test catches.
 func TestProbeOmitsTheMatchOnce(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	out, code := runProbe(t, "clamp.go", "--omit", "return 0", "--package", "./", "--run", "^TestClampNegative$")
 	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "omit", "failed", 1, "TestClampNegative", "yes"))
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }
 
 // PB3: a mutation no test observes is silent and red, because it proves nothing.
 func TestProbeIsSilentWhenTheFocusedTestPasses(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	out, code := runProbe(t, "clamp.go", "--swap", "keeps n at", "--with", "holds n at", "--package", "./", "--run", "^TestClampNegative$")
 	requireRow(t, out, code, 1, probeRow(t, "silent", "clamp.go", "swap", "passed", 0, nil, "yes"))
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }
 
 // PB4: a mutated package that does not compile never bit, so it is invalid rather than a
 // pass or a bite. The selection names no run pattern, because `bench test` attributes a
 // build failure under a run pattern to the pattern.
 func TestProbeIsInvalidWhenTheMutationDoesNotCompile(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	out, code := runProbe(t, "clamp.go", "--swap", "return n", "--with", "return", "--package", "./")
 	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "build-failed", 0, nil, "yes"))
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }
 
 // PB5: a mutated run that started no test cannot bite. The stub keeps the baseline green
 // and silences only the mutated run, because a selection pattern that matches no test is
 // refused at the baseline instead.
 func TestProbeIsInvalidWhenNoTestRuns(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installStubGo(t, f, quietRun, 0, "")
 	out, code := runProbe(t, probeArgs()...)
 	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, nil, "yes"))
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }
 
 // PB6: the evidence after the row is what `bench test` prints for the same selection.
 func TestProbeCarriesTheFocusedRunTables(t *testing.T) {
-	f := newFixture(t)
-	events := cannedFailure("clamp_test.go:6: Clamp(-1) = -1, want 0")
+	f := clampFixture(t)
+	events := probetest.ClampFailure("clamp_test.go:6: Clamp(-1) = -1, want 0").Events
 	installStubGo(t, f, events, 1, "")
 	out, code := runProbe(t, probeArgs()...)
 	if code != 0 {
@@ -360,7 +273,7 @@ const twoRuns = `{"Action":"run","Package":"probefixture","Test":"TestClampNegat
 // DG3: the ran cell counts the distinct tests that emitted a run event, so a run that
 // started no test cannot read as evidence beside its invalid verdict.
 func TestProbeCountsTheTestsThatRan(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installStubGo(t, f, twoRuns, 1, "")
 	out, code := runProbe(t, probeArgs()...)
 	if want := selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 2); code != 0 || !strings.Contains(out, want) {
@@ -376,8 +289,8 @@ func TestProbeCountsTheTestsThatRan(t *testing.T) {
 // PB10: the subject resolves against the working directory, so a probe runs from a
 // subdirectory of the repository.
 func TestProbeResolvesTheSubjectFromTheWorkingDirectory(t *testing.T) {
-	f := newFixture(t)
-	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	f := clampFixture(t)
+	installStubGo(t, f, bite.Events, 1, "")
 	t.Chdir(filepath.Join(f.root, "cmd"))
 	out, code := runProbe(t, probeArgs("../clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$")...)
 	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes"))

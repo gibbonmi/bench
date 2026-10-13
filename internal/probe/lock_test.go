@@ -29,7 +29,7 @@ func requireLockRefusal(t *testing.T, f *fixture, out string, code int, ok bool)
 	if !ok || code != 1 {
 		t.Fatalf("refusal = (%q, %d), want the lock refusal and 1", out, code)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireNoRunChild(t, f)
 }
 
@@ -65,8 +65,8 @@ func TestSubjectLockRereadsTheSubject(t *testing.T) {
 	changed := "error: probe subject changed — clamp.go changed before the subject lock; run the probe again\n"
 	t.Run("bytes", func(t *testing.T) {
 		f := refusalFixture(t)
-		writeFixtureFile(t, f.subject, strings.Replace(clampSource, "keeps n at", "holds n at", 1), 0o644)
-		setHook(t, &startReadHook, func() { writeFixtureFile(t, f.subject, clampSource, 0o644) })
+		writeFixtureFile(t, f.subject, strings.Replace(probetest.ClampSource, "keeps n at", "holds n at", 1), 0o644)
+		setHook(t, &startReadHook, func() { writeFixtureFile(t, f.subject, probetest.ClampSource, 0o644) })
 		out, code := runProbe(t, probeArgs()...)
 		requireRefused(t, f, out, code, changed, 1)
 	})
@@ -98,8 +98,8 @@ func TestSubjectLockRereadsTheSubject(t *testing.T) {
 
 // PS62: the lock names one subject, so a probe on another file runs beside a held lock.
 func TestSubjectLockAllowsAnotherSubject(t *testing.T) {
-	f := newFixture(t)
-	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	f := clampFixture(t)
+	installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "")
 	writeFixtureFile(t, filepath.Join(f.root, "other.txt"), "alpha\n", 0o644)
 	release := startSubjectHolder(t, f.subject)
 	defer release()
@@ -110,13 +110,13 @@ func TestSubjectLockAllowsAnotherSubject(t *testing.T) {
 // PS63: an interrupted probe releases its lock, so the next probe on the subject reaches its
 // verdict and the interrupted one leaves no lock entry behind.
 func TestSubjectLockReleasesOnInterrupt(t *testing.T) {
-	f := newFixture(t)
-	installStubStarts(t, f, probetest.Start{Events: cannedPass}, sleepingRun)
+	f := clampFixture(t)
+	installStubStarts(t, f, probetest.ClampPass, sleepingRun)
 	if out, want := interruptedProbe(t, f, probeArgs(), func() { awaitStubStart(t, f, 2) }), probeRow(t, "invalid", "clamp.go", "swap", "interrupted", 0, nil, "yes"); !strings.Contains(out, want) {
 		t.Fatalf("helper stdout = %q, want the interrupted row %q", out, want)
 	}
 	requireHomeEmpty(t, f)
-	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "")
 	out, code := runProbe(t, probeArgs()...)
 	requireRow(t, out, code, 0, bitRow(t))
 }
@@ -124,8 +124,8 @@ func TestSubjectLockReleasesOnInterrupt(t *testing.T) {
 // PS64: a lock file whose holder died grants the lock, because a record lock dies with its
 // process, and the probe removes that file at its end.
 func TestSubjectLockIgnoresAFileWithoutAHolder(t *testing.T) {
-	f := newFixture(t)
-	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	f := clampFixture(t)
+	installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "")
 	writeFixtureFile(t, subjectLockPath(f.subject), "left by a killed probe\n", 0o600)
 	out, code := runProbe(t, probeArgs()...)
 	requireRow(t, out, code, 0, bitRow(t))
@@ -136,8 +136,8 @@ func TestSubjectLockIgnoresAFileWithoutAHolder(t *testing.T) {
 // gives a retry, and a replacement on every attempt refuses rather than retrying forever.
 func TestSubjectLockRechecksTheIdentity(t *testing.T) {
 	t.Run("replaced once", func(t *testing.T) {
-		f := newFixture(t)
-		installStubGo(t, f, cannedFailure("caught"), 1, "")
+		f := clampFixture(t)
+		installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "")
 		calls := 0
 		setHook(t, &lockOwnerHook, func(path string) {
 			if calls++; calls == 1 {
@@ -188,8 +188,8 @@ func TestSubjectLockReadsOnlyContentionAsInUse(t *testing.T) {
 // lock directory between this attempt's create and its open. A third ENOENT refuses.
 func TestSubjectLockRetriesAnAbsentLockDirectory(t *testing.T) {
 	t.Run("removed once", func(t *testing.T) {
-		f := newFixture(t)
-		installStubGo(t, f, cannedFailure("caught"), 1, "")
+		f := clampFixture(t)
+		installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "")
 		calls := 0
 		setHook(t, &lockOpenHook, func(path string) {
 			if calls++; calls == 1 {
@@ -240,8 +240,8 @@ func TestSubjectLockRefusesALinkAtTheLockPath(t *testing.T) {
 // The lock directory and the lock file belong to their owner alone, so no other user can open
 // a subject's lock file and hold its lock.
 func TestSubjectLockKeepsItsFilesPrivate(t *testing.T) {
-	f := newFixture(t)
-	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	f := clampFixture(t)
+	installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "")
 	var dirMode, fileMode fs.FileMode
 	setHook(t, &lockOwnerHook, func(path string) {
 		dirMode, fileMode = permissions(t, filepath.Dir(path)), permissions(t, path)
@@ -258,7 +258,7 @@ func TestSubjectLockKeepsItsFilesPrivate(t *testing.T) {
 func TestMutantSetTakesOneSubjectLock(t *testing.T) {
 	inUse := "error: probe subject in use — another probe holds clamp.go\n"
 	t.Run("held by another probe", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		installSet(t, f, bite, bite)
 		release := startSubjectHolder(t, f.subject)
 		defer release()
@@ -266,7 +266,7 @@ func TestMutantSetTakesOneSubjectLock(t *testing.T) {
 		requireLockRefusal(t, f, out, code, out == inUse)
 	})
 	t.Run("tried during mutant 2", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		tried := filepath.Join(scratchDir(t), "tried")
 		installSet(t, f, bite, probetest.Start{Hook: lockTryHook(f.subject, tried), Events: bite.Events, Exit: 1})
 		out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
@@ -280,17 +280,17 @@ func TestMutantSetTakesOneSubjectLock(t *testing.T) {
 
 // A gate run that starts during mutant 1 stops the set before mutant 2's write.
 func TestMutantSetStopsUnderAGateRun(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f, probetest.Start{Hook: lockHolderHook(t, gateLockPath(f.root)), Events: bite.Events, Exit: 1}, bite)
 	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
 	requireRow(t, out, code, 1, setRows(t, biteRow(1, "swap"), untouchedRow(2, "gate-held")))
 	requireStarts(t, f, 2)
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }
 
 // A gate state that the verb cannot read before mutant 2's write stops the set there.
 func TestMutantSetStopsOnAnUnreadableGate(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	// A link to itself makes the gate lock path unopenable.
 	loop := "ln -s bench-gate.lock " + sanitize.ShellQuote(gateLockPath(f.root)) + "\n"
 	installSet(t, f, probetest.Start{Hook: loop, Events: bite.Events, Exit: 1}, bite)

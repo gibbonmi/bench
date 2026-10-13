@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -31,7 +32,7 @@ func requireRefused(t *testing.T, f *fixture, out string, code int, want string,
 	if out != want || code != wantCode {
 		t.Fatalf("refusal = (%q, %d), want (%q, %d)", out, code, want, wantCode)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 	requireNoRunChild(t, f)
 }
@@ -40,8 +41,8 @@ func requireRefused(t *testing.T, f *fixture, out string, code int, want string,
 // observable on every refusal row.
 func refusalFixture(t *testing.T) *fixture {
 	t.Helper()
-	f := newFixture(t)
-	installStubGo(t, f, cannedPass, 0, "")
+	f := clampFixture(t)
+	installStubGo(t, f, probetest.ClampPass.Events, 0, "")
 	return f
 }
 
@@ -130,7 +131,7 @@ func TestProbeRefusesAHostileSubject(t *testing.T) {
 		if !strings.HasSuffix(out, " is outside the repository\n") || code != 1 {
 			t.Fatalf("refusal = (%q, %d), want the outside-the-repository line and 1", out, code)
 		}
-		requireSubjectBytes(t, f, clampSource)
+		requireSubjectBytes(t, f, probetest.ClampSource)
 		requireHomeEmpty(t, f)
 		requireNoRunChild(t, f)
 	})
@@ -185,7 +186,7 @@ func TestProbeRefusesAnUnknownCheckBeforeAnyWrite(t *testing.T) {
 	if code != 2 || !strings.HasPrefix(out, "unknown check: no-such-check\n") || !strings.Contains(out, "checks:\n") {
 		t.Fatalf("refusal = (%q, %d), want the unknown-check inventory and 2", out, code)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 	requireNoRunChild(t, f)
 }
@@ -211,7 +212,7 @@ func TestProbeRefusesWhenPreservationFails(t *testing.T) {
 	if code != 1 || !strings.HasPrefix(out, "error: probe preservation failed — ") {
 		t.Fatalf("refusal = (%q, %d), want the preservation failure and 1", out, code)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireBaselineOnly(t, f)
 }
 
@@ -228,7 +229,7 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	if code != 1 || !strings.HasPrefix(out, "error: probe mutation failed — ") {
 		t.Fatalf("refusal = (%q, %d), want the mutation failure and 1", out, code)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 	requireBaselineOnly(t, f)
 }
