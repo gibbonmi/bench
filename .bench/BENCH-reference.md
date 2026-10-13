@@ -255,7 +255,7 @@ removes the copy. For a worktree, run
 `bench worktree exec <target> -- bench probe ...`, because the verb takes no
 target operand.
 
-The mutation is a swap, an omission, an unwrap, an insertion, a deletion, a
+The mutation is a swap, an omission, an unwrap, an insertion, a deletion, or a
 combined mutant, and `bench probe --help` holds the grammar.
 The focused run takes one or more `--package` expressions or one check from the
 `bench test --help` inventory. Repeated `--package` expressions run in one
@@ -297,7 +297,7 @@ mutant inside that closure builds a fresh run binary for its run, and a stale
 inherited `BENCH_RUN_BINARY` refuses that run.
 
 The row of an entry that matches no subject bytes reads `invalid` with the
-cause `substring-miss` and `restored` `untouched`. When every entry misses, the
+cause `substring-miss` and `restored` `untouched`. When every row reads `substring-miss`, the
 set takes no lock and starts no run. A failed baseline ends the set before any
 write and gives each matching row `baseline-<kind>` and `untouched`. Before each
 write, a cancelled context gives `set-stopped`, a held gate lock gives
