@@ -1080,6 +1080,72 @@
           "tip": "dd3cdaecb1d9d1a3a57bcd89707629380f27d177",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "pm-c1-standards-r1b",
+          "performer": "claude:pm_c1_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06e1253ebab968f10343e16bf7b195a954f3062d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c1_standards",
+            "digest": "sha256:f61c816394f77ae3ff009af7022d01a6f441ff616d08674f3b91ee968b60df54",
+            "excerpt": "Standards axis claude:pm_c1_standards (opus/high), PM-C1 narrow reaffirmation of S1 at the correction tip, delta dd3cdaec..1c524805.\ncount: 0\nworst: none\nS1 closed, confidence 9: internal/probe/command.go:186-187 now reads \"a prose run names no test, so an --expect in mutationArgs refuses under a prose selection\", which matches the body at 189-190 and spec line 164. The delta is a two-line comment rewrite with no code change and no new defect.\n"
+          },
+          "axis": "Standards",
+          "base": "32dc3858c6e91b286869293d5a86ecec7f3ece79",
+          "tip": "1c524805cea9dd907c4e306d94f1523463a97fc1",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-c1-standards-r1"
+          ]
+        },
+        {
+          "id": "pm-c1-spec-r1b",
+          "performer": "claude:pm_c1_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06e1253ebab968f10343e16bf7b195a954f3062d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c1_spec",
+            "digest": "sha256:99357e7af39387988db20c0e182a0d149f8811546279f0763644143dc8f78494",
+            "excerpt": "Spec axis claude:pm_c1_spec (opus/high), PM-C1 reaffirmation at the correction tip, delta dd3cdaec..1c524805.\ncount: 0\nworst: none\nRound 1 result holds, confidence 9: the only code change is the two-line doc comment at internal/probe/command.go:186-187; the body at 188-191 is unchanged, so the flag-list, two-half split, byte-identity, and ticket 4 seam checks still apply. The new comment resolves the round 1 advice.\n"
+          },
+          "axis": "Spec",
+          "base": "32dc3858c6e91b286869293d5a86ecec7f3ece79",
+          "tip": "1c524805cea9dd907c4e306d94f1523463a97fc1",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-c1-spec-r1"
+          ]
+        },
+        {
+          "id": "pm-c1-coverage-r1b",
+          "performer": "claude:pm_c1_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06e1253ebab968f10343e16bf7b195a954f3062d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c1_coverage",
+            "digest": "sha256:d314416f5e94d415555eb3bc17c2d2cd81c424ee72cb68bf0b916db278f16943",
+            "excerpt": "Coverage axis claude:pm_c1_coverage (opus/high), PM-C1 reaffirmation at the correction tip, delta dd3cdaec..1c524805.\ncount: 0\nworst: none\nRound 1 result holds, confidence 9: internal/probe/command.go has one hunk @@ -183,8 +183,8 @@ that changes only the doc comment at 186-187; the body at 188-190 is byte-identical; no executable line changed, so the rule-to-test mapping and the three probe verdicts still apply.\n"
+          },
+          "axis": "Coverage",
+          "base": "32dc3858c6e91b286869293d5a86ecec7f3ece79",
+          "tip": "1c524805cea9dd907c4e306d94f1523463a97fc1",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-c1-coverage-r1"
+          ]
         }
       ]
     }
@@ -1283,3 +1349,9 @@ Count 0. Worst issue: none. The existing tests pin every moved rule except two g
 - No row pins an `--insert-before` with two texts. That gap is older than this build.
 - The `withs > 0 && withFile` rule is redundant, because later rules refuse every case that it refuses.
 - Ticket 4 must pin the argument roles of `expectFitsSelection`.
+
+## PM-C1 close
+
+The orchestrator committed the comment-only correction 1c524805 and refroze PM-C1 from 32dc3858 to 1c524805.
+The ticket 3 author re-recorded its five requirements at that tip, and the central probe bit again.
+Each axis reaffirmed its result at that tip, and S1 is closed. PM-C1 used no repair cycle.
