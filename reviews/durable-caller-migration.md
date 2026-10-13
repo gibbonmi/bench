@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:d4c71037e96942188b052d852ca9e34a63dba1c9e6f071e4193042ac64df7197",
+  "plan_digest": "sha256:41514d064fe9d9a76b84f5961c7fcfff508a0ba61e4f90d43fe50c647f27f683",
   "implementation_session": "",
   "chunks": [
     {
@@ -5266,6 +5266,214 @@
           ]
         }
       ]
+    },
+    {
+      "id": "D-D",
+      "base": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+      "tip": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+      "plan_digest": "sha256:41514d064fe9d9a76b84f5961c7fcfff508a0ba61e4f90d43fe50c647f27f683",
+      "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+      "acceptance_rows": [
+        "D30",
+        "D31",
+        "D33",
+        "D35",
+        "D36"
+      ],
+      "verification": [
+        {
+          "id": "dcm-t14-adoption-tests",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:8f1d261b4da53ccfd874126e90e09e5b743489adeea4f8d3ac7dea6981aead68",
+            "excerpt": "requirement adoption-tests: bench test --package ./internal/adopt\ntree: FT354-durable-callers at 2cae9a86 plus the staged spec edit (code identical to 3e4fd1d1)\npackages[1]: github.com/gibbonmi/bench/internal/adopt,pass,23000,244\nfailures[0] skips[0]\n"
+          },
+          "requirement": "adoption-tests",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-coverage",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:d0358a5a9c3f15bd3fdfb2845b0599d037a7b5660145f1c162e4044ca2fc77e5",
+            "excerpt": "requirement coverage: bench coverage --check durable-caller-migration\nbefore the spec edit (2cae9a86): ok: coverage map valid - 35 row(s); uncited: 5 row(s) - D30, D31, D33, D35, D36\nafter the spec edit (committed 3e4fd1d1): ok: coverage map valid - 35 row(s) (no uncited line)\nD30 and D36 cite the caller witnesses; D31, D33, D35 carry the review-owned: marker.\n"
+          },
+          "requirement": "coverage",
+          "command": "bench coverage --check durable-caller-migration",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-caller-reconciliation",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:56be43efac921280f5e36aeb1a723cf1a4358d763dc39ddfb784c96e96dd9952",
+            "excerpt": "requirement caller-reconciliation: bench test over the 12 plan packages\n(assessment, brokermanifest, capturetx, commitment/repository, durablefile/durablefiletest, gate,\ngate/prospectiveartifact, handoffdoc, intent, probe, publication, repairpilot)\ntree: dfe8477b content: packages[12] all pass, failures[0], skips[0].\n2cae9a86 changed only internal/probe/replacement_test.go; bench test --package ./internal/probe there: pass,118 tests.\n\nOmission reds recorded before the charge change (kept and cited; each a bench probe at the committed tip, restored=yes):\n- gate D30 (dfe8477b): internal/gate/run_durability.go swap 'if err := ensureEvidenceDir(gitdir, dir); err != nil {' -> 'if err := ensureEvidenceDir(gitdir, dir); false && err != nil {' --run '^TestGateEvidenceDirectoryRefusal$': bit, focused exit 1, durable_replacement_test.go:124 err = <nil>, want the caller's own refusal.\n- capturetx D30 (dfe8477b): internal/capturetx/transaction.go swap 'if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {' -> '...; false && err != nil {' --run '^TestCaptureDirectoryRefusal$': bit, exit 1, replacement_test.go:83 err = replace ...: create: ... (a *durablefile.Error).\n- handoffdoc D30 (dfe8477b): internal/handoffdoc/store.go swap 'if err := mutate(doc); err != nil {' -> 'if err := mutate(doc); false && err != nil {' --run '^TestHandoffRefusalSkipsReplacement$': bit, exit 1, err = <nil>.\n- intent D30 (dfe8477b): internal/intent/intent.go swap 'data, err := json.Marshal(ledger)' -> 'data, err := json.Marshal(ledger); err = nil' --run '^TestTransactionUnclassifiedFailureCompensates$': bit, exit 1, replacement_test.go:120 err = <nil>.\n- probe D30 (2cae9a86): internal/probe/subject.go swap 'if !withinRoot(root, path) {' -> 'if false && !withinRoot(root, path) {' --run '^TestProbeSubjectRefusalSkipsReplacement$': bit, exit 1, the refusal became a full probe run on ../005/clamp.go.\n  (A first symlink witness at dfe8477b bit only through the special-file refusal, so 2cae9a86 moved the witness to the outside-subject refusal.)\n- gate D36 pre-rename (2cae9a86), whole ./internal/gate, no --run: internal/gate/engine.go swap\n  \"return replacer.Replace(filepath.Join(dir, name), append(data, '\\n'), 0o600)\" ->\n  \"err := replacer.Replace(filepath.Join(dir, name), append(data, '\\n'), 0o600); var replaceErr *durablefile.Error; if errors.As(err, &replaceErr) && !replaceErr.Published { _ = durablefile.Native().Replace(filepath.Join(dir, name), append(data, '\\n'), 0o600) }; return err\":\n  bit, 4 failed: TestGatePreRenameFailure/{verdict,evidence,lane} at durable_replacement_test.go:102 (stat err = <nil>, want it absent) and TestGatePendingRecoveryFailure:228 (inspection pending). Each new row fails only at its absence check.\n"
+          },
+          "requirement": "caller-reconciliation",
+          "command": "bench test --package ./internal/assessment --package ./internal/brokermanifest --package ./internal/capturetx --package ./internal/commitment/repository --package ./internal/durablefile/durablefiletest --package ./internal/gate --package ./internal/gate/prospectiveartifact --package ./internal/handoffdoc --package ./internal/intent --package ./internal/probe --package ./internal/publication --package ./internal/repairpilot",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-preservation",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:2e86ee62652d73483f523ed865245ac0e75304d59367362a0172e1065e2ac5a3",
+            "excerpt": "requirement preservation (probe): bench probe on ./internal/adopt at 2cae9a86, no --run\nmutation: internal/adopt/transaction.go swap 'if _, err = f.Write(data); err == nil {' -> \"if _, err = f.Write(append(data, '#')); err == nil {\"\n(alters the surviving adoption stage bytes written by stageBytes / writeSyncClose)\nprobe: bit,internal/adopt/transaction.go,swap,failed,44,yes ; baseline passed,244 ; command_exit_code 0, focused_exit_code 1\nsample failures: TestLifecycleUpgradeVersionGuards/older_check (lifecycle_preview_test.go:203), TestSetupSeedsGateInputs (setup_test.go:57), TestUnlinkRefusesAManifestRowOutsideTheRepo (link_transaction_test.go:272)\nrestored: yes; bench test --package ./internal/adopt after restoration: pass, 244 tests.\n\nD35 omission evidence: restoring the writeManifest body (temp OpenFile, Write, Close, os.Rename) would compile\nand pass every adopt test, because no production consumer calls it. A test does not reject it; the\nreview-owned definition and consumer census rejects it (rg 'writeManifest' internal/adopt finds no definition at 2cae9a86).\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Alter the surviving adoption stage bytes or its lifecycle transaction result. The existing real adoption assertion must fail, then pass after restoration. The source algorithm census remains independently review-owned.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+              "digest": "sha256:2e86ee62652d73483f523ed865245ac0e75304d59367362a0172e1065e2ac5a3",
+              "excerpt": "requirement preservation (probe): bench probe on ./internal/adopt at 2cae9a86, no --run\nmutation: internal/adopt/transaction.go swap 'if _, err = f.Write(data); err == nil {' -> \"if _, err = f.Write(append(data, '#')); err == nil {\"\n(alters the surviving adoption stage bytes written by stageBytes / writeSyncClose)\nprobe: bit,internal/adopt/transaction.go,swap,failed,44,yes ; baseline passed,244 ; command_exit_code 0, focused_exit_code 1\nsample failures: TestLifecycleUpgradeVersionGuards/older_check (lifecycle_preview_test.go:203), TestSetupSeedsGateInputs (setup_test.go:57), TestUnlinkRefusesAManifestRowOutsideTheRepo (link_transaction_test.go:272)\nrestored: yes; bench test --package ./internal/adopt after restoration: pass, 244 tests.\n\nD35 omission evidence: restoring the writeManifest body (temp OpenFile, Write, Close, os.Rename) would compile\nand pass every adopt test, because no production consumer calls it. A test does not reject it; the\nreview-owned definition and consumer census rejects it (rg 'writeManifest' internal/adopt finds no definition at 2cae9a86).\n"
+            }
+          }
+        },
+        {
+          "id": "dcm-t14-cmd-bench",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:840fdd67ce0f7878a59bf0336f35847c78c311e7fc279b6352e1e108153ad8ed",
+            "excerpt": "requirement cmd-bench: bench test --package ./cmd/bench\npass, 335 tests, failures[0], skips[0] (code identical to 3e4fd1d1)\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-command-contract",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:b4cf17db0698664d26323cd399f541e69942040bc45c44aa060ada2fc3d37a70",
+            "excerpt": "requirement command-contract: bench test --package ./cmd/bench --run 'CommandRegistry'\npass, 5 tests, failures[0]\n"
+          },
+          "requirement": "command-contract",
+          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-axi-registry",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:1ca03967791fafe7de22945bb03da9625eb128687e5d3240bca5ed69e51dadfe",
+            "excerpt": "requirement axi-registry: bench test --check axi-query-registry\npass, 1 test, failures[0]\n"
+          },
+          "requirement": "axi-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-routing",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:768147d39e53c62ef4a9a313767faefad04d9f97ba0a7eac0fa711d108a109df",
+            "excerpt": "requirement routing: bench test --check subcommand-routing\npass, 1 test, failures[0]\n"
+          },
+          "requirement": "routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-conformance",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:ab7f7dda0b1f2dc5ff8e8ed54c3e6eb87d81d3f6b832de5d320d623952bba269",
+            "excerpt": "requirement conformance: bench test --package ./internal/conformance\npass, 1690 tests, failures[0]; skip: TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (capability: privilege)\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dcm-t14-root-conformance",
+          "performer": "claude:dcm_t14",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9ff1d542c4e51e2a8aed481aeac35ae337113df1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3e4fd1d185381ccec3f7cc9a9ae959ef33c119a3",
+            "digest": "sha256:5b7f2a1c9792c6b4c03091c26002c6f7c05af07a5208bd26d1a328fb6e3141e8",
+            "excerpt": "requirement root-conformance: bench test --check root-conformance\npass, 1 test, failures[0]\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -5882,6 +6090,48 @@
         ],
         "D-C4": [
           "D-C4"
+        ],
+        "D-C6": [
+          "D-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d4c71037e96942188b052d852ca9e34a63dba1c9e6f071e4193042ac64df7197",
+      "to": "sha256:41514d064fe9d9a76b84f5961c7fcfff508a0ba61e4f90d43fe50c647f27f683",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ],
+        "D-C3": [
+          "D-C3"
+        ],
+        "D-C4": [
+          "D-C4"
+        ],
+        "D-C5": [
+          "D-C5"
         ],
         "D-C6": [
           "D-C6"
