@@ -2896,3 +2896,10 @@ Count 0. Worst issue: none. C1 is closed, and six independent probes bit with th
 
 - The probe package's own clamp harness in `probe_test.go` is a second harness, and a learning records it for a later change.
 - The spec still allows an exported renderer for record rows, but the build now uses probe runs only.
+
+## PM-D checkpoint red
+
+The PM-D checkpoint gate at d5b3784e is red in `TestFreshnessPublicationTopology`.
+The check rejects the sealed-publication call that commit fc4c772e moved into `internal/probe/probetest/fixture.go`.
+The check skips only `_test.go` files, so the call must return to the test callers.
+Repair allowance: cycle 2 of 2 starts for this red, and the fix changes no oracle.
