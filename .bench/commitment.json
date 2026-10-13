@@ -620,6 +620,59 @@
           ]
         },
         {
+          "id": "FT168-probe-subjects",
+          "criteria": [
+            {
+              "id": "FT168-probe-subjects.mutations",
+              "text": "bench probe takes --with-file, --insert-before, --occurrence, --delete, and repeated --swap and --omit edits that make one combined mutant."
+            },
+            {
+              "id": "FT168-probe-subjects.subjects",
+              "text": "bench probe accepts the prose check and the system suite as targets through the registered check owner."
+            },
+            {
+              "id": "FT168-probe-subjects.verdict",
+              "text": "The verdict row names the first failing test, --expect requires a named witness, a mutant that does not compile reads build-failed with its first build line, and a second probe on the same subject refuses while the first runs."
+            },
+            {
+              "id": "FT168-probe-subjects.open",
+              "text": "The delivery closes no roadmap row, and the batch, multi-package, canary, and failing-name faces stay on FT168."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "probe-subjects-and-mutations",
+                "path": "specs/probe-subjects-and-mutations/spec.md",
+                "identity": "sha256:00a18d3eb59b4da0834f6bbbba079133350770b086903c31108b5cec2cbcd5e2"
+              }
+            }
+          ]
+        },
+        {
+          "id": "FT168-probe-batch",
+          "criteria": [
+            {
+              "id": "FT168-probe-batch.batch",
+              "text": "One bench probe call grades several mutants against one shared baseline run and one private build."
+            },
+            {
+              "id": "FT168-probe-batch.packages",
+              "text": "One bench probe call grades several packages in one private build."
+            },
+            {
+              "id": "FT168-probe-batch.record-form",
+              "text": "The spec stage of this slice decides how bench record imports a batch probe result, and FT318 owns that record form."
+            },
+            {
+              "id": "FT168-probe-batch.open",
+              "text": "The delivery closes no roadmap row, and the canary and failing-name faces stay on FT168."
+            }
+          ],
+          "sources": []
+        },
+        {
           "id": "FT402",
           "criteria": [
             {
@@ -697,28 +750,6 @@
               "identity": "sha256:b53533c8de03698aef67b2a7869cbc8c7058fa18c42f8af042e1c8ae09666832"
             }
           ]
-        },
-        {
-          "id": "FT168-probe-batch",
-          "criteria": [
-            {
-              "id": "FT168-probe-batch.batch",
-              "text": "One bench probe call grades several mutants against one shared baseline run and one private build."
-            },
-            {
-              "id": "FT168-probe-batch.packages",
-              "text": "One bench probe call grades several packages in one private build."
-            },
-            {
-              "id": "FT168-probe-batch.record-form",
-              "text": "The spec stage of this slice decides how bench record imports a batch probe result, and FT318 owns that record form."
-            },
-            {
-              "id": "FT168-probe-batch.open",
-              "text": "The delivery closes no roadmap row, and the canary and failing-name faces stay on FT168."
-            }
-          ],
-          "sources": []
         },
         {
           "id": "FT375-spec-staleness",
