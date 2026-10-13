@@ -29,11 +29,16 @@ var selectionFields = []string{"form", "target", "run", "baseline", "ran"}
 // the row, so a reader can tell a complete answer from a cut one.
 var executionFields = []string{"schema", "command_exit_code", "focused_exit_code", "trailing_bytes"}
 
+// answerTable is one table of an answer's envelope. A table that is not several holds exactly
+// one row.
+type answerTable struct {
+	name    string
+	fields  []string
+	several bool
+}
+
 // resultTables names the envelope's three one-row tables in their printed order.
-var resultTables = []struct {
-	name   string
-	fields []string
-}{{"probe", probeFields}, {"selection", selectionFields}, {"probe_execution", executionFields}}
+var resultTables = []answerTable{{name: "probe", fields: probeFields}, {name: "selection", fields: selectionFields}, {name: "probe_execution", fields: executionFields}}
 
 // restoredCell is the restored cell of a probe whose restore was proven byte-exact.
 const restoredCell = "yes"
@@ -325,14 +330,18 @@ func (e envelope) answer(suffix string) (string, error) {
 	}
 	suffix = mutant + suffix
 	e.trailing = len(suffix)
-	head, err := e.rows()
+	head, err := e.head()
 	if err != nil {
 		return "", err
 	}
 	return head + suffix, nil
 }
 
-func (e envelope) rows() (string, error) {
+// trailingBytes is the trailing_bytes cell.
+func (e envelope) trailingBytes() int { return e.trailing }
+
+// head renders the three tables, so a reader can compare a decoded envelope to its bytes.
+func (e envelope) head() (string, error) {
 	var focused, first any
 	if e.focused != nil {
 		focused = *e.focused

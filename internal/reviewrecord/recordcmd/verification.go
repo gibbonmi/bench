@@ -1,6 +1,7 @@
 package recordcmd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gibbonmi/bench/internal/probe"
@@ -15,14 +16,18 @@ var probeFlags = []string{"--probe-outcome", "--probe-exit-code", "--probe-resto
 // probe values in place of --excerpt and probeFlags.
 const probeResult = "--probe-result"
 
+// mutantFlag names the row of a mutant-set answer that probeResult imports.
+const mutantFlag = "--mutant"
+
 var verificationForm = form{name: reviewrecord.FormVerification, description: "append one planned verification result with its computed digests; " + probeSources(),
 	flags: []flag{{"--chunk", "<id>", true, once}, {"--source", "<commit>", false, once}, {"--final", "", false, once},
 		{"--requirement", "<id>", true, once}, {"--id", "<id>", true, once}, {"--performer", "<session>", true, once},
 		{"--model", "<model>", true, once}, {"--effort", "<effort>", true, once}, {"--exit-code", "<n>", false, once},
 		{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {probeFlags[0], "<verdict>", true, once},
-		{probeFlags[1], "<n>", false, once}, {probeFlags[2], "pass|fail", false, once}, {probeResult, "<file>", false, once}},
+		{probeFlags[1], "<n>", false, once}, {probeFlags[2], "pass|fail", false, once}, {probeResult, "<file>", false, once},
+		{mutantFlag, "<n>", false, once}},
 	layout: []string{"(", "--chunk", "[", "--source", "]", "|", "--final", "--source", ")", "--requirement", "--id", "--performer",
-		"--model", "--effort", "--exit-code", "--ref", "(", "--excerpt", "[", probeFlags[0], probeFlags[1], probeFlags[2], "]", "|", probeResult, ")"},
+		"--model", "--effort", "--exit-code", "--ref", "(", "--excerpt", "[", probeFlags[0], probeFlags[1], probeFlags[2], "]", "|", probeResult, "[", mutantFlag, "]", ")"},
 	valid: verificationValid, run: verification}
 
 // probeSources is the verification form's note on where each copied probe value comes
@@ -32,7 +37,9 @@ func probeSources() string {
 		probeFlags[0] + " is bench probe " + probe.FieldSource("verdict") + ", " +
 		probeFlags[1] + " is bench probe " + probe.FieldSource("focused_exit_code") + ", the normalized focused-execution exit, " +
 		probeFlags[2] + " is bench probe " + probe.FieldSource("restored") + " through the producer owner's restoration projection, and " +
-		probeResult + " reads them from one complete bench probe answer"
+		probeResult + " reads them from one complete bench probe answer; with " + mutantFlag + ", " + probeResult +
+		" reads row n of one complete mutant-set answer, --exit-code is checked against " + probe.SetFieldSource("exit_code") +
+		", and the probe values are " + probe.SetFieldSource("verdict") + ", " + probe.SetFieldSource("focused_exit_code") + ", and " + probe.SetFieldSource("restored")
 }
 
 // verificationValid closes the value sets of the verification form. Command calls it
@@ -41,7 +48,9 @@ func verificationValid(f form, parsed usage.Result) bool {
 	_, exitCode := integer(parsed.Flags, "--exit-code")
 	_, probe := parsed.Flags[probeFlags[0]]
 	_, probeExitCode := integer(parsed.Flags, probeFlags[1])
-	return exitCode && (!probe || probeExitCode && chosen(f, parsed.Flags, probeFlags[2]))
+	_, mutant := parsed.Flags[mutantFlag]
+	row, decimal := integer(parsed.Flags, mutantFlag)
+	return exitCode && (!probe || probeExitCode && chosen(f, parsed.Flags, probeFlags[2])) && (!mutant || decimal && row > 0)
 }
 
 func verification(f form, root, spec string, parsed usage.Result) (string, int) {
@@ -64,7 +73,8 @@ func verification(f form, root, spec string, parsed usage.Result) (string, int) 
 	}
 	call.ExitCode, _ = integer(values, "--exit-code")
 	if imported {
-		if call.Probe, out = importedProbe([]byte(ref.Excerpt), call.ExitCode); out != "" {
+		mutant, _ := integer(values, mutantFlag)
+		if call.Probe, out = importedProbe([]byte(ref.Excerpt), call.ExitCode, mutant); out != "" {
 			return f.refuse(out)
 		}
 	} else if _, ok := values[probeFlags[0]]; ok {
@@ -83,24 +93,69 @@ func verification(f form, root, spec string, parsed usage.Result) (string, int) 
 		[]string{list, call.Chunk, entry.ID, entry.Requirement, entry.Role, entry.Outcome, entry.SourceDigest, entry.NativeRef.Digest})
 }
 
-// importedProbe reads the probe values from one complete probe answer through the probe
-// owner. The explicit exit must equal the answer's command exit, and an answer whose mutated
-// run never started has no focused exit to record. A silent or unrestored answer records
-// as it reads, so the checkpoint still refuses it.
-func importedProbe(data []byte, exitCode int) (*reviewrecord.Probe, string) {
-	result, err := probe.ReadResult(data)
+// importedAnswer is the probe values that one answer form binds, with the producer field of
+// each exit.
+type importedAnswer struct {
+	verdict                 string
+	restored                bool
+	exit                    int
+	focused                 *int
+	exitField, focusedField string
+}
+
+// readImported reads the probe values through the probe owner: a single-form answer when
+// mutant is 0, and row mutant of a mutant-set answer otherwise. The explicit exit binds to the
+// command exit of a single-form answer and to the row's own exit of a mutant set.
+func readImported(data []byte, mutant int) (importedAnswer, string) {
+	if mutant == 0 {
+		result, err := probe.ReadResult(data)
+		if err != nil {
+			return importedAnswer{}, importRefusal(err, mutant)
+		}
+		return importedAnswer{verdict: result.Verdict, restored: result.Restored, exit: result.CommandExit, focused: result.FocusedExit,
+			exitField: probe.FieldSource("command_exit_code"), focusedField: probe.FieldSource("focused_exit_code")}, ""
+	}
+	result, err := probe.ReadMutant(data, mutant)
 	if err != nil {
-		return nil, probeResult + " " + err.Error()
+		return importedAnswer{}, importRefusal(err, mutant)
 	}
-	if result.CommandExit != exitCode {
-		return nil, fmt.Sprintf("--exit-code %d differs from the imported %s %d", exitCode, probe.FieldSource("command_exit_code"), result.CommandExit)
+	return importedAnswer{verdict: result.Verdict, restored: result.Restored, exit: result.RowExit, focused: result.FocusedExit,
+		exitField: probe.SetFieldSource("exit_code"), focusedField: probe.SetFieldSource("focused_exit_code")}, ""
+}
+
+// importRefusal maps a probe reader's refusal to its record line. The probe owner's sentinels
+// carry no flag, so each line here names the flag that repairs the call.
+func importRefusal(err error, mutant int) string {
+	var missing *probe.RowRangeError
+	switch {
+	case errors.Is(err, probe.ErrMutantSet):
+		return probeResult + " is a mutant-set answer; name one row with " + mutantFlag + " <n>"
+	case errors.Is(err, probe.ErrSingleForm):
+		return mutantFlag + " needs a mutant-set answer; " + probeResult + " holds a " + probe.ResultSchema + " answer"
+	case errors.As(err, &missing):
+		return fmt.Sprintf("%s %d names no row; the answer holds %d rows", mutantFlag, mutant, missing.Rows)
 	}
-	if result.FocusedExit == nil {
-		return nil, fmt.Sprintf("the imported %s is null, because no mutated run started", probe.FieldSource("focused_exit_code"))
+	return probeResult + " " + err.Error()
+}
+
+// importedProbe reads the probe values from one complete probe answer, or from its row mutant
+// when mutant is not 0. The explicit exit must equal the exit that the answer binds, and an answer
+// whose mutated run never started has no focused exit to record. A silent or unrestored answer
+// records as it reads, so the checkpoint still refuses it.
+func importedProbe(data []byte, exitCode, mutant int) (*reviewrecord.Probe, string) {
+	answer, out := readImported(data, mutant)
+	if out != "" {
+		return nil, out
+	}
+	if answer.exit != exitCode {
+		return nil, fmt.Sprintf("--exit-code %d differs from the imported %s %d", exitCode, answer.exitField, answer.exit)
+	}
+	if answer.focused == nil {
+		return nil, fmt.Sprintf("the imported %s is null, because no mutated run started", answer.focusedField)
 	}
 	restore := "fail"
-	if result.Restored {
+	if answer.restored {
 		restore = "pass"
 	}
-	return &reviewrecord.Probe{Outcome: result.Verdict, ExitCode: *result.FocusedExit, Restore: restore}, ""
+	return &reviewrecord.Probe{Outcome: answer.verdict, ExitCode: *answer.focused, Restore: restore}, ""
 }

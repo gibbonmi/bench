@@ -27,10 +27,7 @@ var setExecutionFields = []string{"schema", "command_exit_code", "trailing_bytes
 
 // setTables names the three tables of a mutant-set answer in their printed order. They stay
 // apart from resultTables, so FieldSource never names a set field.
-var setTables = []struct {
-	name   string
-	fields []string
-}{{"mutants", mutantFieldsOfSet}, {"selection", setSelectionFields}, {"probe_set_execution", setExecutionFields}}
+var setTables = []answerTable{{name: "mutants", fields: mutantFieldsOfSet, several: true}, {name: "selection", fields: setSelectionFields}, {name: "probe_set_execution", fields: setExecutionFields}}
 
 // mutantReportFields is the schema of the table that heads each started mutant's report.
 var mutantReportFields = []string{"mutant"}
@@ -87,6 +84,42 @@ func (e setEnvelope) head() (string, error) {
 		out += block
 	}
 	return out, nil
+}
+
+// trailingBytes is the trailing_bytes cell.
+func (e setEnvelope) trailingBytes() int { return e.trailing }
+
+// decodeSetEnvelope reads the cells of a mutant-set answer's decoded tables. The mutant cell
+// renders as the row's position, so the canonical render checks it.
+func decodeSetEnvelope(tables [][]cellReader) (setEnvelope, error) {
+	selection, execution := &tables[1][0], &tables[2][0]
+	e := setEnvelope{form: selection.text(setSelectionFields[0]), target: selection.text(setSelectionFields[1]), run: selection.text(setSelectionFields[2]),
+		baseline: selection.text(setSelectionFields[3]), builds: selection.integer(setSelectionFields[4]),
+		command: execution.integer(setExecutionFields[1]), trailing: execution.integer(setExecutionFields[2])}
+	f := mutantFieldsOfSet
+	for i := range tables[0] {
+		row := &tables[0][i]
+		e.rows = append(e.rows, mutantRow{mutation: row.text(f[2]), focused: row.optionalInteger(f[7]), exit: row.integer(f[8]),
+			cells: verdictCells{verdict: row.text(f[1]), cause: row.text(f[3]), failed: row.integer(f[4]), first: row.optionalText(f[5]),
+				ran: row.integer(f[6]), buildLine: row.optionalText(f[9]), restored: row.text(f[10])}})
+	}
+	return e, readError(tables)
+}
+
+// RenderMutantSet renders the complete answer of a set whose rows read results, through the
+// verb's own render, with its command exit. That exit derives from the row exits, so each
+// CommandExit is ignored. The cells that MutantResult does not carry render empty. A consumer
+// test builds its set answer here rather than by hand.
+func RenderMutantSet(results []MutantResult) (string, int) {
+	s := &setRun{rows: make([]mutantRow, len(results))}
+	for i, result := range results {
+		restored := "no"
+		if result.Restored {
+			restored = restoredCell
+		}
+		s.rows[i] = mutantRow{cells: verdictCells{verdict: result.Verdict, restored: restored}, focused: result.FocusedExit, exit: result.RowExit}
+	}
+	return s.answer(setEnvelope{}, "")
 }
 
 // setRun is one mutant set in flight: the subject, the held runs, the entries and their rows

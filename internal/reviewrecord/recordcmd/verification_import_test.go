@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/probe"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
@@ -122,6 +123,88 @@ func TestVerificationImportRefusals(t *testing.T) {
 	combined["--probe-outcome"], combined["--probe-exit-code"], combined["--probe-restore"] = "bit", "1", "pass"
 	if out, code := recordcmd.Command(f.Root, verifyArgs(t, combined)); code != 2 || !strings.HasPrefix(out, "usage: bench record verification") {
 		t.Fatalf("scalar and import together = exit %d, output %q; want the usage line and exit 2", code, out)
+	}
+}
+
+// The mutant-set answers below render through the probe owner. The silent and biting rows
+// differ in verdict, row exit, and focused exit, and the biting row's exit differs from its focused exit.
+var (
+	silentRow = probe.MutantResult{Verdict: "silent", Restored: true, RowExit: 1, FocusedExit: exitOf(0)}
+	bitingRow = probe.MutantResult{Verdict: "bit", Restored: true, RowExit: 0, FocusedExit: exitOf(1)}
+	missedRow = probe.MutantResult{Verdict: "invalid", RowExit: 1}
+)
+
+func exitOf(n int) *int { return &n }
+
+// mutantSet renders rows as one complete mutant-set answer and answers it with its command exit.
+func mutantSet(rows ...probe.MutantResult) (string, int) {
+	return probe.RenderMutantSet(rows)
+}
+
+// importingRow edits a verification call to import the row named by row from the answer in data.
+func importingRow(t *testing.T, data string, exit int, row string) map[string]string {
+	t.Helper()
+	edits := importing(t, data, exit)
+	edits["--mutant"] = row
+	return edits
+}
+
+// --mutant 2 imports row 2 alone: its verdict, its focused exit, and its restore.
+func TestVerificationImportsOneMutantRow(t *testing.T) {
+	f := recorded(t, 1)
+	data, _ := mutantSet(silentRow, bitingRow)
+	verify(t, f, importingRow(t, data, bitingRow.RowExit, "2"))
+	got := onlyResult(t, f)
+	want := rr.Probe{Mutation: f.Plan.Chunks[0].Verification[0].Probe, Outcome: bitingRow.Verdict, ExitCode: *bitingRow.FocusedExit, Restore: "pass", NativeRef: got.NativeRef}
+	if got.Probe == nil || !reflect.DeepEqual(*got.Probe, want) || got.NativeRef.Excerpt != data {
+		t.Fatalf("probe = %+v with excerpt %q, want %+v and the exact answer bytes", got.Probe, got.NativeRef.Excerpt, want)
+	}
+}
+
+// The explicit exit is checked against the row's exit_code, never the set's command exit.
+func TestVerificationChecksTheRowExit(t *testing.T) {
+	f := recorded(t, 1)
+	data, command := mutantSet(silentRow, bitingRow)
+	if command != 1 {
+		t.Fatalf("command exit = %d, want 1, apart from row 2's exit", command)
+	}
+	refuseVerify(t, f, "— --exit-code 1 differs from the imported mutants.exit_code 0\n", importingRow(t, data, 1, "2"))
+}
+
+// A mutant-set answer without --mutant refuses by name and routes to --mutant.
+func TestVerificationRefusesAMutantSetWithoutARow(t *testing.T) {
+	f := recorded(t, 1)
+	data, command := mutantSet(silentRow, bitingRow)
+	refuseVerify(t, f, "— --probe-result is a mutant-set answer; name one row with --mutant <n>\n", importing(t, data, command))
+}
+
+// --mutant refuses a single-form answer, a row past the answer, and a row whose mutated run never
+// started. A bad row number, or --mutant without --probe-result, prints the form usage.
+func TestVerificationMutantRefusals(t *testing.T) {
+	f := recorded(t, 1)
+	set, _ := mutantSet(silentRow, bitingRow)
+	missed, _ := mutantSet(missedRow, bitingRow)
+	for name, tc := range map[string]struct {
+		edits map[string]string
+		want  string
+	}{
+		"single-form answer":  {importingRow(t, answer("bit", "yes", 0, "1", report), 0, "1"), "--mutant needs a mutant-set answer; --probe-result holds a bench-probe-result-v2 answer"},
+		"row past the answer": {importingRow(t, set, 1, "3"), "--mutant 3 names no row; the answer holds 2 rows"},
+		"null focused exit":   {importingRow(t, missed, missedRow.RowExit, "1"), "the imported mutants.focused_exit_code is null, because no mutated run started"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			refuseVerify(t, f, "— "+tc.want+"\n", tc.edits)
+		})
+	}
+	for name, edits := range map[string]map[string]string{
+		"zero row":           importingRow(t, set, 0, "0"),
+		"negative row":       importingRow(t, set, 0, "-1"),
+		"non-decimal row":    importingRow(t, set, 0, "x"),
+		"row with no import": {"--mutant": "1"},
+	} {
+		if out, code := recordcmd.Command(f.Root, verifyArgs(t, edits)); code != 2 || !strings.HasPrefix(out, "usage: bench record verification") {
+			t.Errorf("%s = exit %d, output %q; want the usage line and exit 2", name, code, out)
+		}
 	}
 }
 
