@@ -1550,6 +1550,179 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/outcome.go,swap,failed,3,TestExecuteClassifiesTheOutcome/refused,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,232\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,973\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,55125,232\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestExecuteClassifiesTheOutcome/refused,\"outcome_test.go:73: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",1\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/a_cancelled_build,\"outcome_test.go:161: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/no_Go_on_PATH,\"outcome_test.go:168: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "ps-t03-rep1-t3-probe-family",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-testreport",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-runbinary",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-record-forms",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-gate-readers",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-gate-readers",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-command-package",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-conformance-package",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-root-conformance",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:203aea422ebb32b99e083150b5d1ecc6d5b9a80286ce85d0860cac6ef846c722",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,8265dd363fa7a21e78ab7887e627eb0da37d442c,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15212,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-central-property",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:0a423e60a0983c3c736f6018ca43f81b0722c541f90898b2f6e4aabdbff405ba",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/verdict.go,swap,failed,1,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestExpectRequiresTheNamedWitness$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,615\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1200,6\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,\"verdict_test.go:57: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  invalid,clamp.go,swap,expect-missed,1,TestClampNegative/zero,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^Tes… (737 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Match --expect by exact name only and drop the parent-and-slash match. TestExpectRequiresTheNamedWitness must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+              "digest": "sha256:0a423e60a0983c3c736f6018ca43f81b0722c541f90898b2f6e4aabdbff405ba",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/verdict.go,swap,failed,1,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestExpectRequiresTheNamedWitness$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,615\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1200,6\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,\"verdict_test.go:57: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  invalid,clamp.go,swap,expect-missed,1,TestClampNegative/zero,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^Tes… (737 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
