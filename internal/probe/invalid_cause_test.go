@@ -23,7 +23,7 @@ func TestZeroMatchMutationsAreSubstringMissesWithoutRunning(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			out, code := runProbe(t, tc.args...)
-			if code != 1 || !strings.Contains(out, ",substring-miss,0,untouched") {
+			if code != 1 || !strings.HasPrefix(out, probeRow(t, "invalid", "clamp.go", tc.name, "substring-miss", 0, nil, "untouched")) {
 				t.Fatalf("output = (%q, %d)", out, code)
 			}
 			if _, err := os.Stat(f.marker); !os.IsNotExist(err) {

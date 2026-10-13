@@ -174,7 +174,7 @@ func TestProbeFailedRestore(t *testing.T) {
 
 	out, code := probeWith(t, f, router.Replacer())
 
-	requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "no"))
+	requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "TestClampNegative", "no"))
 	preservedCopy(t, f)
 }
 

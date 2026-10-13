@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -162,12 +163,33 @@ const cannedPass = `{"Action":"run","Package":"probefixture","Test":"TestClampPo
 // that started nothing prints.
 const quietRun = `{"Action":"pass","Package":"probefixture","Elapsed":0.01}`
 
+// mutantHook answers the stub shell that exits 99 unless the subject holds want while the
+// mutated run runs, so a row reads the mutant bytes from outside the verb.
+func mutantHook(t *testing.T, f *fixture, want string) string {
+	t.Helper()
+	path := filepath.Join(scratchDir(t), "mutant")
+	writeFixtureFile(t, path, want, 0o644)
+	return "cmp -s " + sanitize.ShellQuote(f.subject) + " " + sanitize.ShellQuote(path) + " || exit 99\n"
+}
+
+// requireMutantBites runs mutation over clamp.go with a mutated run that bites only over the
+// want bytes, and then asserts the bit row, the restored start bytes, and an empty home.
+func requireMutantBites(t *testing.T, f *fixture, want, mutation string, args ...string) {
+	t.Helper()
+	installStubGo(t, f, cannedFailure("caught"), 1, mutantHook(t, f, want))
+	argv := append(append([]string{"clamp.go"}, args...), "--package", "./", "--run", "^TestClampNegative$")
+	out, code := runProbe(t, argv...)
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", mutation, "failed", 1, "TestClampNegative", "yes"))
+	requireSubjectBytes(t, f, clampSource)
+	requireHomeEmpty(t, f)
+}
+
 // probeRow derives one expected verdict block through the encoder the verb renders with.
 // A hand-joined row would disagree with the encoder's own quoting the moment a cell
-// carries a space or looks numeric.
-func probeRow(t *testing.T, verdict, subject, mutation, cause string, failed int, restored string) string {
+// carries a space or looks numeric. first is nil for a run that named no failed test.
+func probeRow(t *testing.T, verdict, subject, mutation, cause string, failed int, first any, restored string) string {
 	t.Helper()
-	row := []any{verdict, subject, mutation, cause, failed, restored}
+	row := []any{verdict, subject, mutation, cause, failed, first, restored}
 	out, err := toon.TableTyped("probe", probeFields, [][]any{row})
 	if err != nil {
 		t.Fatal(err)
@@ -259,7 +281,7 @@ func preservedCopy(t *testing.T, f *fixture) string {
 func TestProbeBitesWhenTheFocusedTestFails(t *testing.T) {
 	f := newFixture(t)
 	out, code := runProbe(t, probeArgs()...)
-	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes"))
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes"))
 	if !strings.Contains(out, "packages[") {
 		t.Fatalf("stdout = %q, want the focused run's tables after the row", out)
 	}
@@ -271,7 +293,7 @@ func TestProbeBitesWhenTheFocusedTestFails(t *testing.T) {
 func TestProbeOmitsTheMatchOnce(t *testing.T) {
 	f := newFixture(t)
 	out, code := runProbe(t, "clamp.go", "--omit", "return 0", "--package", "./", "--run", "^TestClampNegative$")
-	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "omit", "failed", 1, "yes"))
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "omit", "failed", 1, "TestClampNegative", "yes"))
 	requireSubjectBytes(t, f, clampSource)
 }
 
@@ -279,7 +301,7 @@ func TestProbeOmitsTheMatchOnce(t *testing.T) {
 func TestProbeIsSilentWhenTheFocusedTestPasses(t *testing.T) {
 	f := newFixture(t)
 	out, code := runProbe(t, "clamp.go", "--swap", "keeps n at", "--with", "holds n at", "--package", "./", "--run", "^TestClampNegative$")
-	requireRow(t, out, code, 1, probeRow(t, "silent", "clamp.go", "swap", "passed", 0, "yes"))
+	requireRow(t, out, code, 1, probeRow(t, "silent", "clamp.go", "swap", "passed", 0, nil, "yes"))
 	requireSubjectBytes(t, f, clampSource)
 }
 
@@ -289,7 +311,7 @@ func TestProbeIsSilentWhenTheFocusedTestPasses(t *testing.T) {
 func TestProbeIsInvalidWhenTheMutationDoesNotCompile(t *testing.T) {
 	f := newFixture(t)
 	out, code := runProbe(t, "clamp.go", "--swap", "return n", "--with", "return", "--package", "./")
-	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "build-failed", 0, "yes"))
+	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "build-failed", 0, nil, "yes"))
 	requireSubjectBytes(t, f, clampSource)
 }
 
@@ -300,7 +322,7 @@ func TestProbeIsInvalidWhenNoTestRuns(t *testing.T) {
 	f := newFixture(t)
 	installStubGo(t, f, quietRun, 0, "")
 	out, code := runProbe(t, probeArgs()...)
-	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, "yes"))
+	requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, nil, "yes"))
 	requireSubjectBytes(t, f, clampSource)
 }
 
@@ -320,7 +342,7 @@ func TestProbeCarriesTheFocusedRunTables(t *testing.T) {
 	if reportCode != 1 {
 		t.Fatalf("focused run exit = %d, want 1\n%s", reportCode, report)
 	}
-	row := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes")
+	row := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes")
 	if want := row + selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 1) + executionRow(t, 0, 1, len(report)) + report; out != want {
 		t.Fatalf("stdout = %q, want %q", out, want)
 	}
@@ -346,7 +368,7 @@ func TestProbeCountsTheTestsThatRan(t *testing.T) {
 	}
 	installStubGo(t, f, quietRun, 0, "")
 	quiet, code := runProbe(t, probeArgs()...)
-	want := probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, "yes") +
+	want := probeRow(t, "invalid", "clamp.go", "swap", "no-test-run", 0, nil, "yes") +
 		selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 0)
 	requireRow(t, quiet, code, 1, want)
 }
@@ -358,5 +380,5 @@ func TestProbeResolvesTheSubjectFromTheWorkingDirectory(t *testing.T) {
 	installStubGo(t, f, cannedFailure("caught"), 1, "")
 	t.Chdir(filepath.Join(f.root, "cmd"))
 	out, code := runProbe(t, probeArgs("../clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./", "--run", "^TestClampNegative$")...)
-	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes"))
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes"))
 }

@@ -86,7 +86,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if changed && explicit {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--changed"), 2
 	}
-	if hasCheck && (explicit || changed || parsed.Flags["--run"] != "" && check != gate.SystemPhaseName) {
+	if hasCheck && (explicit || changed || parsed.Flags["--run"] != "" && !CheckTakesRun(check)) {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--check"), 2
 	}
 	if (hasBase || hasSourceTip) && !changed {
@@ -154,14 +154,14 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	if request.check == RootConformanceCheckName && !gate.RootConformanceRuns(root, testBenchSource(root)) {
 		return refusedOutcome(toon.Errorf(rootConformanceUnavailable, "root conformance grades a kit checkout that declares its entry test only")+"\n", 1)
 	}
-	if request.check == proseCheckName {
+	if request.check == ProseCheckName {
 		return runProseCheck(root, request.full)
 	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	selection, err := selectRunBinary(ctx, testBenchSource(root))
 	if err != nil {
-		return refusedOutcome(toon.Errorf("Bench executable selection failed", err.Error())+"\n", 1)
+		return selectionFailure(err)
 	}
 	defer selection.Close()
 	if request.changed {

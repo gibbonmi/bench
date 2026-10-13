@@ -81,7 +81,7 @@ func readEnvelope(body []byte) (envelope, []byte, error) {
 }
 
 // decodeEnvelope decodes the envelope through the pinned strict TOON decoder and checks
-// the table set, each field set, and each cell type. The strict decoder checks counts and
+// the table set, the schema, each field set, and each cell type. The strict decoder checks counts and
 // widths but keeps the last of two equal keys, so the caller also renders the envelope back.
 func decodeEnvelope(head []byte) (envelope, error) {
 	decoded, err := toonlib.Decode(head)
@@ -91,6 +91,9 @@ func decodeEnvelope(head []byte) (envelope, error) {
 	document, ok := decoded.(map[string]any)
 	if !ok || len(document) != len(resultTables) {
 		return envelope{}, fmt.Errorf("decodes as %T with the wrong table set", decoded)
+	}
+	if err := requireSchema(document); err != nil {
+		return envelope{}, err
 	}
 	rows := make([]cellReader, len(resultTables))
 	for i, table := range resultTables {
@@ -109,28 +112,44 @@ func decodeEnvelope(head []byte) (envelope, error) {
 	verdict, selection, execution := &rows[0], &rows[1], &rows[2]
 	e := envelope{
 		cells: verdictCells{verdict: verdict.text(probeFields[0]), cause: verdict.text(probeFields[3]), failed: verdict.integer(probeFields[4]),
-			restored: verdict.text(probeFields[5]), baseline: selection.text(selectionFields[3]), ran: selection.integer(selectionFields[4])},
+			restored: verdict.text(probeFields[6]), baseline: selection.text(selectionFields[3]), ran: selection.integer(selectionFields[4])},
 		subject: verdict.text(probeFields[1]), mutation: verdict.text(probeFields[2]),
 		form: selection.text(selectionFields[0]), target: selection.text(selectionFields[1]), run: selection.text(selectionFields[2]),
 		command: execution.integer(executionFields[1]), trailing: execution.integer(executionFields[3]),
+	}
+	if verdict.row[probeFields[5]] != nil {
+		first := verdict.text(probeFields[5])
+		e.cells.first = &first
 	}
 	if execution.row[executionFields[2]] != nil {
 		focused := execution.integer(executionFields[2])
 		e.focused = &focused
 	}
-	schema := execution.text(executionFields[0])
 	for _, reader := range rows {
 		if reader.err != nil {
 			return envelope{}, reader.err
 		}
 	}
-	if schema != resultSchema {
-		return envelope{}, fmt.Errorf("the schema %q is unsupported; the supported schema is %s", schema, resultSchema)
-	}
 	if e.trailing < 0 {
 		return envelope{}, fmt.Errorf("trailing_bytes %d is negative", e.trailing)
 	}
 	return e, nil
+}
+
+// requireSchema refuses an envelope whose schema cell is not resultSchema. It runs before
+// the field sets are checked, because another schema carries another field set, and a
+// field error would hide that the answer comes from another schema.
+func requireSchema(document map[string]any) error {
+	var schema any
+	if list, ok := document[resultTables[2].name].([]any); ok && len(list) == 1 {
+		if row, ok := list[0].(map[string]any); ok {
+			schema = row[executionFields[0]]
+		}
+	}
+	if schema != resultSchema {
+		return fmt.Errorf("the schema %q is unsupported; the supported schema is %s", fmt.Sprint(schema), resultSchema)
+	}
+	return nil
 }
 
 // FieldSource names one producer field as `table.field`, so a consumer's help names the

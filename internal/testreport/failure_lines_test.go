@@ -77,7 +77,7 @@ func TestFullFailedTestsCountsTests(t *testing.T) {
 	installCannedGo(t, cannedSet{name: t.Name(), events: threeLineFailureEvents, exit: 1})
 	installCannedSelection(t)
 	outcome := executeSelection(t, t.TempDir(), []string{"--package", "./...", "--full"})
-	if want := (Outcome{Kind: OutcomeFailed, FailedTests: 1, Ran: 1}); outcome != want {
+	if want := (Outcome{Kind: OutcomeFailed, FailedTests: 1, FailedNames: []string{"TestCanned"}, Ran: 1}); !sameOutcome(outcome, want) {
 		t.Fatalf("outcome = %+v, want %+v", outcome, want)
 	}
 }

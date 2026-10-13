@@ -246,7 +246,7 @@ envelope, so a reviewer replays the answer. The review phase runs the blast
 step before it dispatches the axes.
 
 `bench probe` proves that a focused run bites. The verb preserves the subject
-under the Bench home, applies the one mutation, and runs the focused test or
+under the Bench home, applies one mutation, and runs the focused test or
 check. The verb then restores the subject and proves the restore byte-exact.
 The verb prints one verdict: `bit` at exit 0, `silent` at exit 1, `invalid` at
 exit 1, and `restore-failed` at exit 2. A `restore-failed` run names the
@@ -254,6 +254,19 @@ preserved copy under `$BENCH_HOME/probe/<repo-key>/`; every other verdict
 removes the copy. For a worktree, run
 `bench worktree exec <target> -- bench probe ...`, because the verb takes no
 target operand.
+
+The mutation is a swap, an omission, an unwrap, an insertion, a deletion, or a
+combined mutant, and `bench probe --help` holds the grammar of each form.
+The focused run is one package or one check from the `bench test --help` inventory.
+A `--check prose` probe grades a Markdown subject, and its `failed_tests` cell counts the prose findings.
+A prose probe of a file that the prose check does not read refuses with `probe subject not graded`.
+The mutated run builds its run binary from the mutant, so a system probe needs no manual rebuild.
+
+Before the baseline, the verb takes the subject lock under the Bench home.
+While one probe holds the lock, a second probe of the same subject refuses with `probe subject in use`.
+A probe of another subject runs at the same time.
+Under the lock, the verb reads the subject again and refuses when the subject changed.
+The lock ends with the probe process, so an interrupted probe leaves no lock that blocks the next probe.
 
 Before the mutation, the verb runs the same selection once over the unmutated
 tree. A baseline that does not pass ends the probe before any write. The verdict
@@ -264,7 +277,12 @@ A `selection[1]{form,target,run,baseline,ran}` row follows the verdict row. Its
 cells name the form, the target, the `-run` pattern, the baseline outcome, and
 the count of the tests that ran. A `probe_execution` row follows with the result
 schema, the command exit, the mutated-run exit or `null`, and the byte count after it.
-The help names the `--package` and `--check` forms in a `notes:` block.
+
+The verdict row's `first_failure` cell names the first failed test, or `null` when the run names no failed test.
+`--expect <test>` names the expected witness, and a prose probe takes no `--expect`.
+A mutated run that fails without that test or one of its subtests reads `invalid` with the cause `expect-missed`.
+A mutant that does not compile reads `invalid` with the cause `build-failed`.
+A `mutant` table then follows the `probe_execution` row, and its `first_build_line` cell names the first build line.
 
 `bench gate-prose <root> --staged` grades the staged Markdown from the index and
 takes no path list. The subject bytes and the exclusion policy come from the

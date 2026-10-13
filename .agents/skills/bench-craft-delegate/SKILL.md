@@ -101,9 +101,9 @@ Thus, reviewed dependent tickets share one retained integration source, and each
 A ticket author commits its ticket on a lane pass before the next charge starts.
 
 A worktree isolates the working tree, not the repo-global stash stack a concurrent delegate shares. A charge bans `git stash` and names the substitute, because the destructive-git guard refuses only `git stash drop` and `git stash clear`.
-A probe runs through `bench probe`, which preserves the subject, applies one swap or omission, and proves the restore. The copy-aside sequence stays for a non-probe edit that must test the committed version.
-`cp` the working file aside, restore the committed version with `git show HEAD:<path> > <path>`, test, then copy it back. The copy
-lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a
+
+A probe runs through `bench probe`, which preserves the subject, applies one mutation, and proves the restore. A mutation is a swap, an omission, an unwrap, an insertion, a deletion, or a combined mutant of repeated `--swap` and `--omit` edits. `bench probe --help` holds the grammar. The copy-aside sequence stays for a non-probe edit that must test the committed version.
+`cp` the working file aside, restore the committed version with `git show HEAD:<path> > <path>`, test, then copy it back. The copy lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a
 glob.
 
 A read-only delegate that reads a tree the coordinator will grade runs in its own worktree. A read-only research charge names its subject tree in its first line, the primary checkout or a worktree label, and forbids the pool path there.

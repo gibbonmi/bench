@@ -6,7 +6,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
-	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // CheckForm and PackageForm are the two selection forms a prepared request carries. A
@@ -60,9 +59,9 @@ func (r Request) Runs() bool {
 // so it answers AllTests. The system suite passes the caller's pattern, or none.
 func (r Request) Run() string {
 	switch {
-	case r.focused.check == proseCheckName:
+	case r.focused.check == ProseCheckName:
 		return AllTests
-	case r.focused.check != "" && r.focused.check != gate.SystemPhaseName:
+	case r.focused.check != "" && !CheckTakesRun(r.focused.check):
 		return namedCheckRunPattern()
 	case r.focused.run != "":
 		return r.focused.run
@@ -70,15 +69,23 @@ func (r Request) Run() string {
 	return AllTests
 }
 
+// GradesProse answers whether the request names the prose check.
+func (r Request) GradesProse() bool {
+	return r.focused.check == ProseCheckName
+}
+
+// CheckTakesRun answers whether the named check takes a --run pattern. Only the system
+// suite does. Every other check runs a fixed pattern, so a caller's pattern there would be
+// dropped in silence.
+func CheckTakesRun(check string) bool {
+	return check == gate.SystemPhaseName
+}
+
 // namedCheckRunPattern is the one spelling of the test a named conformance check runs.
 // The Go argv and the selection facts both read it here.
 func namedCheckRunPattern() string {
 	return "^" + registry.RootConformanceTest + "$"
 }
-
-// HandProbeRoute is the route for the two checks the probe refuses. `bench test` stays the
-// caller for them after a hand mutation, so the probe's refusal and its help name this route.
-const HandProbeRoute = "copy the file aside, edit it, run bench test --check <name>, and restore the copy"
 
 // packageValueRule states the one-expression rule of each --package value. The run passes
 // the value to Go as one typed argument, so a space-separated list fails as one missing
@@ -91,17 +98,12 @@ const PackageExpressionNote = packageValueRule + "; repeat --package to run seve
 // probePackageNote is the probe help's package note. Its grammar takes one --package.
 const probePackageNote = packageValueRule + "; run one call per package or use a parent ./... pattern."
 
-// ProbeNotes states the four facts a caller needs to name a focused run correctly: what
-// each selection form takes, which two names are not probe targets, the hand route for
-// those two, and why an edited tree needs a rebuild first. The probe's help prints this
-// block, so the owner's behavior and its description stay one source.
+// ProbeNotes states what each of the two selection forms takes, so a caller names a
+// focused run correctly. The probe's help prints this block, so the owner's behavior and
+// its description stay one source.
 func ProbeNotes() string {
 	return "notes:\n  " + strings.Join([]string{
 		probePackageNote,
-		"--check <name> names a conformance check from the bench test --help inventory, and " +
-			proseCheckName + " and " + gate.SystemPhaseName + " are not probe targets.",
-		"For " + proseCheckName + " or " + gate.SystemPhaseName + ", " + HandProbeRoute + ".",
-		"A named check compiles from the run binary's source, so an edited tree needs " +
-			usage.WorktreeBuild + " first.",
+		"--check <name> names a check from the bench test --help inventory.",
 	}, "\n  ")
 }

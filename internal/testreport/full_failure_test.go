@@ -39,7 +39,7 @@ func TestFullFailureDiagnostics(t *testing.T) {
 			fragments: []string{"a,TestEmpty,", "no diagnostic emitted", "a,TestGroup/child,", "child first", "child center", "child last", "z,TestLater,", first, "middle", "last diagnostic"},
 			rows:      []string{"a,TestEmpty,no diagnostic emitted,0", "a,TestGroup/child,child first,3", "a,TestGroup/child,child center,3", "a,TestGroup/child,child last,3", `z,TestLater,"middle\\u001b[31m diagnostic",3`, "z,TestLater,last diagnostic,3"},
 			first:     first,
-			want:      Outcome{Kind: OutcomeFailed, FailedTests: 3, Ran: 4},
+			want:      Outcome{Kind: OutcomeFailed, FailedTests: 3, FailedNames: []string{"TestEmpty", "TestGroup/child", "TestLater"}, Ran: 4},
 		},
 		{
 			name: "compiler diagnostics",
@@ -51,7 +51,7 @@ func TestFullFailureDiagnostics(t *testing.T) {
 			fragments: []string{"first compiler diagnostic", "middle compiler diagnostic", "last compiler diagnostic"},
 			rows:      []string{`compiler,"",first compiler diagnostic,3`, `compiler,"",middle compiler diagnostic,3`, `compiler,"",last compiler diagnostic,3`},
 			first:     "first compiler diagnostic",
-			want:      Outcome{Kind: OutcomeBuildFailed},
+			want:      Outcome{Kind: OutcomeBuildFailed, BuildLine: "first compiler diagnostic"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestFullFailureDiagnostics(t *testing.T) {
 					t.Fatalf("Prepare = (%d,%q)", code, line)
 				}
 				outcome, output, code := Execute(t.TempDir(), request)
-				if code != 1 || outcome != tc.want {
+				if code != 1 || !sameOutcome(outcome, tc.want) {
 					t.Fatalf("full=%t outcome=%+v code=%d, want %+v and1\n%s", full, outcome, code, tc.want, output)
 				}
 				if strings.ContainsAny(output, "\x1b\t") || strings.Contains(output, "--- FAIL:") {

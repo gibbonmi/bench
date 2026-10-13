@@ -2,23 +2,14 @@ package probe
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
-	"time"
-
-	"github.com/gibbonmi/bench/internal/gocache"
 )
 
-// gateHolderRootEnv and gateHolderReleaseEnv carry the fixture and the release marker to
-// the lock-holding half of the gate row. A live gate holds its lock from another process,
-// so the refusal is only proven by another process holding it here too.
-const (
-	gateHolderRootEnv    = "BENCH_PROBE_GATE_ROOT"
-	gateHolderReleaseEnv = "BENCH_PROBE_GATE_RELEASE"
-)
+// gateRefusal is the refusal a probe answers while a gate run holds the tree.
+const gateRefusal = "error: gate execution in progress — wait for the gate run to finish before you mutate the tree\n"
 
 // probeArgs answers the accepted invocation when it is called bare, and the argv spelled
 // in full otherwise. Every refusal row reads beside the accepted call it departs from, so
@@ -54,8 +45,10 @@ func refusalFixture(t *testing.T) *fixture {
 // PB18: a mutation that matches zero or several sites refuses, because replacing the
 // first of several would mutate a site the caller never named.
 func TestProbeRefusesAnAmbiguousMutation(t *testing.T) {
+	miss := probeRow(t, "invalid", "clamp.go", "swap", "substring-miss", 0, nil, "untouched") +
+		selectionRow(t, "package", "./", "^TestClampNegative$", "", 0) + executionRow(t, 1, nil, 0)
 	for _, tc := range []struct{ name, old, want string }{
-		{"no match", "absent text", "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  invalid,clamp.go,swap,substring-miss,0,untouched\nselection[1]{form,target,run,baseline,ran}:\n  package,./,^TestClampNegative$,\"\",0\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,1,null,0\n"},
+		{"no match", "absent text", miss},
 		{"several matches", "return", "error: probe mutation ambiguous — the old string matches 2 times, want exactly 1\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -75,76 +68,24 @@ func TestProbeRefusesAnEmptyMutation(t *testing.T) {
 }
 
 // PB20: the gate grades the bytes it read, so a probe refuses while a gate run holds the
-// tree rather than changing the gate's subject under it.
+// tree rather than changing the gate's subject under it. The test is also the lock holder's
+// entry: a process that startLockHolder starts holds the lock its environment names.
 func TestProbeRefusesUnderALiveGateRun(t *testing.T) {
-	if root := os.Getenv(gateHolderRootEnv); root != "" {
-		holdGateLock(t, root, os.Getenv(gateHolderReleaseEnv))
+	if path := os.Getenv(lockHolderPathEnv); path != "" {
+		holdRecordLock(t, path, os.Getenv(lockHolderReleaseEnv))
 		return
 	}
 	f := refusalFixture(t)
-	release := startGateHolder(t, f)
+	release := startLockHolder(t, gateLockPath(f.root))
 	defer release()
 	out, code := runProbe(t, probeArgs()...)
-	want := "error: gate execution in progress — wait for the gate run to finish before you mutate the tree\n"
-	requireRefused(t, f, out, code, want, 1)
-}
-
-// startGateHolder runs the lock-holding half in its own process and answers the release.
-func startGateHolder(t *testing.T, f *fixture) func() {
-	t.Helper()
-	releaseMarker := filepath.Join(scratchDir(t), "gate-release")
-	holder := exec.Command(os.Args[0], "-test.run=^TestProbeRefusesUnderALiveGateRun$", "-test.timeout="+interruptDeadline().String())
-	holder.Env = append(os.Environ(), gateHolderRootEnv+"="+f.root, gateHolderReleaseEnv+"="+releaseMarker)
-	if err := holder.Start(); err != nil {
-		t.Fatal(err)
-	}
-	awaitFile(t, gateLockPath(f.root))
-	return func() {
-		_ = os.WriteFile(releaseMarker, nil, 0o644)
-		_ = holder.Wait()
-	}
+	requireRefused(t, f, out, code, gateRefusal, 1)
 }
 
 // gateLockPath spells the execution lock both halves of the gate row name. internal/gate
 // does not export the path, so this file owns the one spelling the test side derives.
 func gateLockPath(root string) string {
 	return filepath.Join(root, ".git", "bench-gate.lock")
-}
-
-// holdGateLock takes the execution lock the gate takes and parks until the release marker
-// appears, so the refusal under test observes a genuinely held lock.
-func holdGateLock(t *testing.T, root, releaseMarker string) {
-	t.Helper()
-	lock, err := os.OpenFile(gateLockPath(root), os.O_CREATE|os.O_RDWR, 0o600)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer lock.Close()
-	held := gocache.RecordLock(syscall.F_WRLCK)
-	if err := syscall.FcntlFlock(lock.Fd(), syscall.F_SETLK, &held); err != nil {
-		t.Fatal(err)
-	}
-	for {
-		if _, err := os.Stat(releaseMarker); err == nil {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-}
-
-// awaitFile waits for the holder's lock file to appear and then settles, because the
-// create and the lock are two steps in the holder's own process.
-func awaitFile(t *testing.T, path string) {
-	t.Helper()
-	expiry := time.Now().Add(interruptDeadline())
-	for time.Now().Before(expiry) {
-		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() {
-			time.Sleep(50 * time.Millisecond)
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	t.Fatalf("the gate lock holder did not create %s within %s", path, interruptDeadline())
 }
 
 // PB21: only a regular file inside the repository mutates, so each hostile subject names
@@ -197,8 +138,13 @@ func TestProbeUsageNamesOneSelectionAndOneMutation(t *testing.T) {
 	}{
 		{"no selection", []string{"clamp.go", "--omit", "n < 0"}},
 		{"two selections", []string{"clamp.go", "--omit", "n < 0", "--package", "./", "--check", "line-routing"}},
-		{"run without package", []string{"clamp.go", "--omit", "n < 0", "--check", "line-routing", "--run", "^X$"}},
-		{"two mutations", []string{"clamp.go", "--omit", "n < 0", "--swap", "a", "--with", "b", "--package", "./"}},
+		{"run with a check other than system", []string{"clamp.go", "--omit", "n < 0", "--check", "line-routing", "--run", "^X$"}},
+		{"delete with omit", []string{"clamp.go", "--delete", "--omit", "n < 0", "--package", "./"}},
+		{"delete with unwrap", []string{"clamp.go", "--delete", "--unwrap", "ensureNonNegative(n)", "--package", "./"}},
+		{"delete with omit-file", []string{"clamp.go", "--delete", "--omit-file", "x", "--package", "./"}},
+		{"insert-before with swap", []string{"clamp.go", "--insert-before", "a", "--with", "b", "--swap", "c", "--package", "./"}},
+		{"insert-before with omit", []string{"clamp.go", "--insert-before", "a", "--with", "b", "--omit", "n < 0", "--package", "./"}},
+		{"insert-before with delete", []string{"clamp.go", "--insert-before", "a", "--with", "b", "--delete", "--package", "./"}},
 		{"omit-file with swap", []string{"clamp.go", "--omit-file", "x", "--swap", "a", "--with", "b", "--package", "./"}},
 		{"omit-file with omit", []string{"clamp.go", "--omit-file", "x", "--omit", "n < 0", "--package", "./"}},
 		{"omit-file with unwrap", []string{"clamp.go", "--omit-file", "x", "--unwrap", "ensureNonNegative(n)", "--package", "./"}},
@@ -227,20 +173,6 @@ func TestProbeRefusesAnUnknownCheckBeforeAnyWrite(t *testing.T) {
 	requireSubjectBytes(t, f, clampSource)
 	requireHomeEmpty(t, f)
 	requireNoRunChild(t, f)
-}
-
-// PB24: the probe refuses the prose grade and the system suite, and the refusal names the
-// hand route through `bench test`, which stays the caller for both checks.
-func TestProbeRefusesProseAndSystemChecks(t *testing.T) {
-	for _, check := range []string{"prose", "system"} {
-		t.Run(check, func(t *testing.T) {
-			f := refusalFixture(t)
-			out, code := runProbe(t, probeArgs("clamp.go", "--omit", "n < 0", "--check", check)...)
-			want := "error: probe focused run unsupported — --check prose and --check system are not probe targets; " +
-				"copy the file aside, edit it, run bench test --check <name>, and restore the copy\n"
-			requireRefused(t, f, out, code, want, 1)
-		})
-	}
 }
 
 // PB26: the verb answers the shared not-in-repo error outside a repository, so it matches
@@ -286,17 +218,16 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	requireBaselineOnly(t, f)
 }
 
-// probeHelpNotes is the four facts the help owes, spelled independently of the producer.
-// A dropped or reworded note reds this row rather than passing as a fresh expectation.
+// probeHelpNotes is the two facts the help owes, spelled independently of the producer.
+// A dropped, reworded, or extra note reds this row rather than passing as a fresh
+// expectation.
 var probeHelpNotes = []string{
 	"--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; run one call per package or use a parent ./... pattern.",
-	"--check <name> names a conformance check from the bench test --help inventory, and prose and system are not probe targets.",
-	"For prose or system, copy the file aside, edit it, run bench test --check <name>, and restore the copy.",
-	"A named check compiles from the run binary's source, so an edited tree needs bench worktree build <target> first.",
+	"--check <name> names a check from the bench test --help inventory.",
 }
 
-// PB30 and DG4: every help spelling answers the usage line and then the notes block with
-// exit 0.
+// PB30, DG4, PS35: every help spelling answers the usage line and then the notes block with
+// exit 0, and the notes name no copy-aside route and no not-a-target sentence.
 func TestProbeHelpSpellings(t *testing.T) {
 	for _, spelling := range []string{"--help", "-h", "help"} {
 		t.Run(spelling, func(t *testing.T) {

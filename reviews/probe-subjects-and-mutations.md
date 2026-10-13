@@ -1,0 +1,3387 @@
+# Review outcomes
+
+```bench-review-record
+{
+  "version": 2,
+  "spec": "specs/probe-subjects-and-mutations/spec.md",
+  "plan_digest": "sha256:b3022cdaa72487559bb4f65cdc350976f569b74e98d7dc1a87f188688bac8f49",
+  "implementation_session": "",
+  "chunks": [
+    {
+      "id": "PS-A",
+      "base": "8209612990d250568855d50b2735518e31d55223",
+      "tip": "6175e732579feebb6224c2a7ade2f01992144e20",
+      "plan_digest": "sha256:1f98cd1548c8bf824e1354271e8243b50d888c06d4ff8f7d4fd2b9d1d5c43052",
+      "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+      "acceptance_rows": [
+        "PS1",
+        "PS2",
+        "PS3",
+        "PS4",
+        "PS5",
+        "PS6",
+        "PS7",
+        "PS8",
+        "PS9",
+        "PS10",
+        "PS11",
+        "PS12",
+        "PS13",
+        "PS14",
+        "PS15",
+        "PS16",
+        "PS17",
+        "PS18",
+        "PS19",
+        "PS20",
+        "PS21",
+        "PS22",
+        "PS23",
+        "PS24",
+        "PS25",
+        "PS76"
+      ],
+      "verification": [
+        {
+          "id": "ps-t01-probe-family",
+          "performer": "claude:ps_t01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+            "digest": "sha256:c6928d0e1721e8ae2518c2738f71781dc5de683dbbbe59c1b0cf4f551c531038",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-subjects-build,9de43b5280ba3648855f4401cac15e9f3dc6ecc3,false\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20769,335\n  github.com/gibbonmi/bench/internal/conformance,pass,70604,1690\n  github.com/gibbonmi/bench/internal/probe,pass,44726,175\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nexit: 0\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-command-package",
+          "performer": "claude:ps_t01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+            "digest": "sha256:c6928d0e1721e8ae2518c2738f71781dc5de683dbbbe59c1b0cf4f551c531038",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-subjects-build,9de43b5280ba3648855f4401cac15e9f3dc6ecc3,false\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20769,335\n  github.com/gibbonmi/bench/internal/conformance,pass,70604,1690\n  github.com/gibbonmi/bench/internal/probe,pass,44726,175\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nexit: 0\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-conformance-package",
+          "performer": "claude:ps_t01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+            "digest": "sha256:c6928d0e1721e8ae2518c2738f71781dc5de683dbbbe59c1b0cf4f551c531038",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-subjects-build,9de43b5280ba3648855f4401cac15e9f3dc6ecc3,false\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20769,335\n  github.com/gibbonmi/bench/internal/conformance,pass,70604,1690\n  github.com/gibbonmi/bench/internal/probe,pass,44726,175\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nexit: 0\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-package-core-guard",
+          "performer": "claude:ps_t01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+            "digest": "sha256:96dc28d65ec101c40376102f265623050679ecaef33e81c67be58816ef670f3c",
+            "excerpt": "$ bench test --check package-core-guard\ntree[1]{target,head,dirty}:\n  probe-subjects-build,9de43b5280ba3648855f4401cac15e9f3dc6ecc3,false\ncheck[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2661,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit: 0\n"
+          },
+          "requirement": "package-core-guard",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-root-conformance",
+          "performer": "claude:ps_t01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+            "digest": "sha256:2479cc07f1d14c4b8d209994dc4c3566b7fc446f10fa8de49bdd9097f144c2e6",
+            "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  probe-subjects-build,9de43b5280ba3648855f4401cac15e9f3dc6ecc3,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18363,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit: 0\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-central-property",
+          "performer": "claude:ps_t01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+            "digest": "sha256:aee4d3252f29529d26a1653795b995ffd01903b4380fb0b52fcd187d9fc6137e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/edit.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,175\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,955\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,33577,175\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestCombinedEditsMatchOnce/start_bytes,\"combined_test.go:26: stdout = (\\\"error: probe mutation ambiguous — the old string matches 2 times, want exactly 1\\\\\\\\n\\\", 1), want \\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  bit,clamp.go,swap+swap,failed,1,yes\\\\\\\\n\\\" first a… (246 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestCombinedEditsRefuseOverlap,\"combined_test.go:44: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,swap+omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execution… (425 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Apply each combined edit over the result of the earlier edit instead of over the start bytes. TestCombinedEditsMatchOnce must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+              "digest": "sha256:aee4d3252f29529d26a1653795b995ffd01903b4380fb0b52fcd187d9fc6137e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/edit.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,175\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,955\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,33577,175\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestCombinedEditsMatchOnce/start_bytes,\"combined_test.go:26: stdout = (\\\"error: probe mutation ambiguous — the old string matches 2 times, want exactly 1\\\\\\\\n\\\", 1), want \\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  bit,clamp.go,swap+swap,failed,1,yes\\\\\\\\n\\\" first a… (246 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestCombinedEditsRefuseOverlap,\"combined_test.go:44: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,swap+omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execution… (425 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ps-t01-rep1-probe-family",
+          "performer": "claude:ps_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6175e732579feebb6224c2a7ade2f01992144e20",
+            "digest": "sha256:9c730aa44fda7f1ea3eaaa777024fc29b98dae062190e2d105a39704b885978d",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-subjects-build,6175e732579feebb6224c2a7ade2f01992144e20,true\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20987,335\n  github.com/gibbonmi/bench/internal/conformance,pass,72616,1690\n  github.com/gibbonmi/bench/internal/probe,pass,46330,178\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n(dirty: only reviews/probe-subjects-and-mutations.md from bench record chunk; source bytes equal 6175e732)\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-rep1-command-package",
+          "performer": "claude:ps_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6175e732579feebb6224c2a7ade2f01992144e20",
+            "digest": "sha256:9c730aa44fda7f1ea3eaaa777024fc29b98dae062190e2d105a39704b885978d",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-subjects-build,6175e732579feebb6224c2a7ade2f01992144e20,true\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20987,335\n  github.com/gibbonmi/bench/internal/conformance,pass,72616,1690\n  github.com/gibbonmi/bench/internal/probe,pass,46330,178\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n(dirty: only reviews/probe-subjects-and-mutations.md from bench record chunk; source bytes equal 6175e732)\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-rep1-conformance-package",
+          "performer": "claude:ps_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6175e732579feebb6224c2a7ade2f01992144e20",
+            "digest": "sha256:9c730aa44fda7f1ea3eaaa777024fc29b98dae062190e2d105a39704b885978d",
+            "excerpt": "$ bench test --package ./internal/probe/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-subjects-build,6175e732579feebb6224c2a7ade2f01992144e20,true\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20987,335\n  github.com/gibbonmi/bench/internal/conformance,pass,72616,1690\n  github.com/gibbonmi/bench/internal/probe,pass,46330,178\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n(dirty: only reviews/probe-subjects-and-mutations.md from bench record chunk; source bytes equal 6175e732)\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-rep1-package-core-guard",
+          "performer": "claude:ps_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6175e732579feebb6224c2a7ade2f01992144e20",
+            "digest": "sha256:c38570e5f6072f1707365883b26482be56fbe6e59d0fd14976d756f849b300e4",
+            "excerpt": "$ bench test --check package-core-guard\ntree[1]{target,head,dirty}:\n  probe-subjects-build,6175e732579feebb6224c2a7ade2f01992144e20,true\ncheck[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2720,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "package-core-guard",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-rep1-root-conformance",
+          "performer": "claude:ps_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6175e732579feebb6224c2a7ade2f01992144e20",
+            "digest": "sha256:25556d80477eb7b30686320d503404e2396748767f4b077e1a14fa3a60f72815",
+            "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  probe-subjects-build,6175e732579feebb6224c2a7ade2f01992144e20,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19683,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t01-rep1-central-property",
+          "performer": "claude:ps_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6175e732579feebb6224c2a7ade2f01992144e20",
+            "digest": "sha256:12bcadb3597ed3521e4ab8a506b1c27e772d3d9a5fe42164b43e503813387278",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/command.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/,^TestCombinedEditsRefuseSingleForms$,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,551\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,976,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestCombinedEditsRefuseSingleForms/--with-file_without_--with,\"combined_test.go:71: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  silent,clamp.go,swap+omit,passed,0,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,all,passed,1\\\\\\\\nprobe_execution[1]{schema,co… (887 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Apply each combined edit over the result of the earlier edit instead of over the start bytes. TestCombinedEditsMatchOnce must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "6175e732579feebb6224c2a7ade2f01992144e20",
+              "digest": "sha256:12bcadb3597ed3521e4ab8a506b1c27e772d3d9a5fe42164b43e503813387278",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/command.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/,^TestCombinedEditsRefuseSingleForms$,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,551\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,976,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestCombinedEditsRefuseSingleForms/--with-file_without_--with,\"combined_test.go:71: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  silent,clamp.go,swap+omit,passed,0,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,all,passed,1\\\\\\\\nprobe_execution[1]{schema,co… (887 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ps-a-standards-1",
+          "performer": "claude:ps-a-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-standards",
+            "digest": "sha256:75edeac305c2d2c7475ea2f940ec3cb4bdbe4a8967f4d92fdb4dd8734a6c7016",
+            "excerpt": "Standards axis, chunk PS-A, pair 8209612990d2..9de43b5280ba, opus medium. Findings: 2.\nS1 internal/probe/command.go:81 vs internal/probe/mutation_input.go:39-74: gradeForms and mutationInput each derive the mutation group; two derivations of one fact (AGENTS.md one source per fact). Confidence 5.\nS2 internal/probe/edit.go:46: the empty-mutation refusal names --with equals --swap for a --with-file swap whose file bytes equal the old string; a refusal names the caller's actual input (craft-cli). Confidence 4.\nAdvice: occurrence(parsed) runs twice; placeholder <new> vs <text> for --with.\n"
+          },
+          "axis": "Standards",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-a-spec-1",
+          "performer": "claude:ps-a-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-spec",
+            "digest": "sha256:1a99e43e96f6530736e886ce44b99b0d77be128a9121e1d8b854d14fff76d640",
+            "excerpt": "Spec axis, chunk PS-A (PS1-PS25, PS76), pair 8209612990d2..9de43b5280ba, opus medium. Findings: 1.\nP1 internal/probe/combined_test.go:49-51 with internal/probe/command.go:146-147: PS18 --with-file case hits the earlier withs>0&&withFile refusal; the combined&&withFile case has no isolating test. Confidence 8.\nEvery other row matches the spec and its cited test asserts it. The --delete Replacer.Remove decision holds.\nAdvice: ambiguous-versus-miss precedence in a combined mutant is unstated; single --omit emptying not tested.\n"
+          },
+          "axis": "Spec",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-a-coverage-1",
+          "performer": "claude:ps-a-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "235b86dafbb7b9a3d8a73e4d59e99bdf353cb7a0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-coverage",
+            "digest": "sha256:25d8dd1a852363befafd42a850759425ca52791dc10cad7db819f7972422905d",
+            "excerpt": "Coverage axis, chunk PS-A, pair 8209612990d2..9de43b5280ba, opus medium. Findings: 3.\nC1 internal/probe/command.go:109: the combined && withFile refusal has no red-capable test; probe swap combined&&withFile -> false&&withFile read silent, restored yes. Confidence 9.\nC2 internal/probe/mutation_input.go:91: no test reaches the err == nil term for an overflowing --occurrence value. Confidence 8.\nC3 internal/probe/subject.go:140: the Lstat error branch of the restore mode check is unreachable without a race. Confidence 6.\nProbes: 1 (swap, command.go:109, silent, restored yes).\n"
+          },
+          "axis": "Coverage",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "9de43b5280ba3648855f4401cac15e9f3dc6ecc3",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-a-standards-2",
+          "performer": "claude:ps-a-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-standards-2",
+            "digest": "sha256:24cc922ef26e6ba870819cbb14b17b0a7dd14cd4a5d1c45a333512465699b70f",
+            "excerpt": "Standards confirming round, chunk PS-A, repair delta 9de43b5280ba..6175e732579f, opus medium.\nS1 closed (confidence 8): namedGroup with the groupFlags table is the one source that gradeForms and mutationInput call.\nS2 closed (confidence 9): find.textFlag names --with or --with-file in the empty-mutation refusal; edit_test.go asserts the --with-file wording.\nAdvice: the namedGroup comment names its callers.\n"
+          },
+          "axis": "Standards",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-a-standards-1"
+          ]
+        },
+        {
+          "id": "ps-a-spec-2",
+          "performer": "claude:ps-a-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-spec-2",
+            "digest": "sha256:d6973cbec9a78a3119405e8f84e9ae9eaa84f9ab95e63f482e38cb2cbdca5c98",
+            "excerpt": "Spec confirming round, chunk PS-A, repair delta 9de43b5280ba..6175e732579f, opus medium.\nP1 closed (confidence 9): combined_test.go:66-72 sends --swap, --with-file, and --omit with no --with; only the combined-with-file case refuses it.\nNo other drift; the namedGroup refactor keeps every refusal.\nAdvice: the spec did not name the --with-file empty-mutation text; the orchestrator added it to the spec.\n"
+          },
+          "axis": "Spec",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-a-spec-1"
+          ]
+        },
+        {
+          "id": "ps-a-coverage-2",
+          "performer": "claude:ps-a-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fe95a116179a1ce2f7b03f629e2896ad8a5721fc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-a-coverage-2",
+            "digest": "sha256:40f53235bbdd88105f0028dddd3eb4e09c08aa7302c6b9f10e8ece81d2a78a04",
+            "excerpt": "Coverage confirming round, chunk PS-A, repair delta 9de43b5280ba..6175e732579f, opus medium.\nC1 closed (confidence 9): the new subtest reaches only the combined-with-file case.\nC2 closed (confidence 9): the overflow row alone turns red when err == nil is dropped.\nC3 stays no-op. No new findings. Probes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "8209612990d250568855d50b2735518e31d55223",
+          "tip": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-a-coverage-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PS-B",
+      "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+      "tip": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+      "plan_digest": "sha256:61cc4c138e8f1feee50a4ed368358a8048d738fd5c1e2e7b71fbadd2f7e4fb89",
+      "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+      "acceptance_rows": [
+        "PS26",
+        "PS27",
+        "PS28",
+        "PS29",
+        "PS30",
+        "PS31",
+        "PS32",
+        "PS33",
+        "PS34",
+        "PS35",
+        "PS36",
+        "PS37",
+        "PS77"
+      ],
+      "verification": [
+        {
+          "id": "ps-t02-probe-family",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:4dde806d4e60720b8054c19d861f8180b412ce025f2f5103141df555078dd5fe",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,28131,335\n  github.com/gibbonmi/bench/internal/conformance,pass,86029,1690\n  github.com/gibbonmi/bench/internal/probe,pass,56144,186\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,80298,226\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-testreport",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:4dde806d4e60720b8054c19d861f8180b412ce025f2f5103141df555078dd5fe",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,28131,335\n  github.com/gibbonmi/bench/internal/conformance,pass,86029,1690\n  github.com/gibbonmi/bench/internal/probe,pass,56144,186\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,80298,226\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-command-package",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:4dde806d4e60720b8054c19d861f8180b412ce025f2f5103141df555078dd5fe",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,28131,335\n  github.com/gibbonmi/bench/internal/conformance,pass,86029,1690\n  github.com/gibbonmi/bench/internal/probe,pass,56144,186\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,80298,226\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-conformance-package",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:4dde806d4e60720b8054c19d861f8180b412ce025f2f5103141df555078dd5fe",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,28131,335\n  github.com/gibbonmi/bench/internal/conformance,pass,86029,1690\n  github.com/gibbonmi/bench/internal/probe,pass,56144,186\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testreport,pass,80298,226\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-root-conformance",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:fd3654017fc345739f1aabf59a89c09276742a7335f5ce81949a71ca981a3b31",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,0d91e20b73d3ad6cb5ec74eeab491de0e2b07589,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19252,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-central-property",
+          "performer": "claude:ps_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+            "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Answer the substring miss before the selection parse with a hard-coded all run cell. TestSelectionPrecedesTheSubstringMiss must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+              "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ps-t02-rep1-probe-family",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:d62270910b8bf94bedaa87d85e51843e80a48d91ce4d2e9a2e70f3fff0f03b79",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,pass,67894,190\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-testreport",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:bed032faf90ef3345188cabd073f1dc380ae9c6e8e06be37ac16744a3016284c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,88234,226\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-command-package",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:f21a5e2dce4818214c06d6448a258c11fc05d930e1c4f8aa8159188b6c3a80b1",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,35003,335\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-conformance-package",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:0590cb9d0338299373108d4dc37a0bdb2034b32b8a43a837f16be4329483479c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,92746,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-root-conformance",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:037b4bc3012695440262fbf727c4b6095c2f8b82c23aa20cc1c49f66293a6a30",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19494,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-central-property",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Answer the substring miss before the selection parse with a hard-coded all run cell. TestSelectionPrecedesTheSubstringMiss must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+              "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ps-t02-rep2-probe-family",
+          "performer": "claude:ps_t02_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+            "digest": "sha256:2e7f96eed4e8a082cc05b992148d858fe1e41d241d75ed38169adc2cbf64865a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,145d5439330c0a5bc7232b11d4be5aefb1dd47c5,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,pass,48136,190\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep2-testreport",
+          "performer": "claude:ps_t02_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+            "digest": "sha256:3be13badf5a2b478ee088541c6af93b8756b363befb23ba372e9965da80d5a60",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,145d5439330c0a5bc7232b11d4be5aefb1dd47c5,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,72359,226\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep2-command-package",
+          "performer": "claude:ps_t02_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+            "digest": "sha256:9a25a0804f8e95c90f1894a396ca3e0889108fa692c71cf438fa7fee6758e2de",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,145d5439330c0a5bc7232b11d4be5aefb1dd47c5,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,21897,335\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep2-conformance-package",
+          "performer": "claude:ps_t02_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+            "digest": "sha256:cb1e08f46aa9e954a7c87f319b272a344e5bed273140f33b18cf581584ff365e",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,145d5439330c0a5bc7232b11d4be5aefb1dd47c5,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,74727,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep2-root-conformance",
+          "performer": "claude:ps_t02_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+            "digest": "sha256:7a805cc1442d45cc82730a9aff717efab6aa0923be06cbd9ea639e4e31f912ea",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,145d5439330c0a5bc7232b11d4be5aefb1dd47c5,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16677,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep2-central-property",
+          "performer": "claude:ps_t02_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+            "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Answer the substring miss before the selection parse with a hard-coded all run cell. TestSelectionPrecedesTheSubstringMiss must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+              "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ps-b-standards-1",
+          "performer": "claude:ps-b-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-standards",
+            "digest": "sha256:80479e9d2c91d2a125a15eb3f6ac9c35a958105e0f7c13285db1ef9582ff804c",
+            "excerpt": "Standards axis, chunk PS-B, pair 6175e732579f..0d91e20b73d3, opus medium. Findings: 2.\nS1 internal/probe/command.go:151 repeats the only-system-takes---run rule of internal/testreport/command.go:89 (AGENTS.md one source per fact); fix with one exported testreport predicate that both call. Confidence 7.\nS2 internal/testreport/selection_facts.go:95 calls every --check name a conformance check, but prose and system are not conformance checks (craft-cli: help states current behavior). Confidence 6.\nproseCheck deletion: no-op, confidence 9.\n"
+          },
+          "axis": "Standards",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-b-spec-1",
+          "performer": "claude:ps-b-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-spec",
+            "digest": "sha256:b394a3a3501be6ba253f45b383fb856f0ae57d8cd7a27637c65bcc1eedcd7b4e",
+            "excerpt": "Spec axis, chunk PS-B (PS26-PS37), pair 6175e732579f..0d91e20b73d3, opus medium. Findings: 0.\nEvery row matches the spec, and each cited test asserts it. The doc-comment refusal order, the prose exclusion fixture, and the retired route texts are confirmed.\n"
+          },
+          "axis": "Spec",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ps-b-coverage-1",
+          "performer": "claude:ps-b-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-coverage",
+            "digest": "sha256:f9bd364ef22445de7e908d3940aca490117c44372556191f73b1258b13aa7ed0",
+            "excerpt": "Coverage axis, chunk PS-B, pair 6175e732579f..0d91e20b73d3, opus medium. Findings: 2.\nC1 internal/probe/probe.go:79-94: a --check prose probe over a subject that the prose grade never reads answers a false silent; no row covers it. Confidence 7.\nC2 internal/probe/command.go:149: no test pins that --check system without --run is accepted. Confidence 5.\nProbes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-b-standards-2",
+          "performer": "claude:ps-b-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-standards-2",
+            "digest": "sha256:35c2bbce59104d51831578cfb74cb616a11de37f03b02cc8723770a4bf29f404",
+            "excerpt": "Standards confirming round, chunk PS-B, repair delta 0d91e20b73d3..d4f03f030be1, opus medium.\nS1 closed (9): testreport.CheckTakesRun owns the --run rule for three callers.\nS2 closed (9): the inventory note no longer names a conformance class.\nS4 open (auto-fix, 7): internal/probe/probe.go:107 hint 'grades only .md files' advertises the suffix rule of internal/prose/walk.go:27 (AGENTS.md enforcement and advertisement).\nS3 new (auto-fix, 5): the CheckTakesRun comment names its callers and misses Request.Run; the GradesProse comment describes prose.IsSubjectName, which it never consults.\n"
+          },
+          "axis": "Standards",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+          "finding_ids": [
+            "S3",
+            "S4"
+          ],
+          "supersedes": [
+            "ps-b-standards-1"
+          ]
+        },
+        {
+          "id": "ps-b-spec-2",
+          "performer": "claude:ps-b-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-spec-2",
+            "digest": "sha256:191b7e517033f12d987d2de5e3c11a45413b4531debded569b731f322ff70d89",
+            "excerpt": "Spec confirming round, chunk PS-B, repair delta 0d91e20b73d3..d4f03f030be1, opus medium.\nPS77 holds (9): order, exit 1, exact text, and the cited test assert it. PS26-PS37 still hold (8).\nRuling: the refusal-order summary sentence omits the not-graded step, a non-behavioral contradiction for the orchestrator to fix in the spec.\n"
+          },
+          "axis": "Spec",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-spec-1"
+          ]
+        },
+        {
+          "id": "ps-b-coverage-2",
+          "performer": "claude:ps-b-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-coverage-2",
+            "digest": "sha256:55ecfa92eefcd5e221027b0cce8b43d6b4af7a980eb3731f26b559a8d7c9a610",
+            "excerpt": "Coverage confirming round, chunk PS-B, repair delta 0d91e20b73d3..d4f03f030be1, opus medium.\nC1 closed (8): TestProbeRefusesAnUngradedProseSubject reds without the guard in both subtests.\nC2 closed (7): the bare --check system row reds under a swap that requires --run.\nC3 (no-op): non-system --run refusal of bench test is pinned at internal/testreport/check_test.go:151 and :176 and usage_text_test.go:16. Probes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-coverage-1"
+          ]
+        },
+        {
+          "id": "ps-b-standards-3",
+          "performer": "claude:ps-b-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-standards-3",
+            "digest": "sha256:74b42820e23c4fffd2e64eca71eeb735feb4470946d7a7e81e8071cdd9b485a9",
+            "excerpt": "Standards confirming round 2, chunk PS-B, repair delta d4f03f030be1..145d5439330c, opus medium.\nS4 closed (9): the hint at internal/probe/probe.go:107 reads <subject> is not a prose subject.\nS3 closed (9): the GradesProse and CheckTakesRun comments state the code without the prose rule or a caller list. No new blocking findings.\n"
+          },
+          "axis": "Standards",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-standards-2"
+          ]
+        },
+        {
+          "id": "ps-b-spec-3",
+          "performer": "claude:ps-b-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-spec-3",
+            "digest": "sha256:ccef94fd91bb3c4d736d776c6128c929fb53973c7c551eeb875ffc44521b187b",
+            "excerpt": "Spec confirming round 2, chunk PS-B, repair delta d4f03f030be1..145d5439330c, opus medium.\nHolds (9): the code prints the spec's not-graded refusal exactly, and the test pins it. PS77 and PS26-PS37 hold, and the refusal-order sentence matches the code.\n"
+          },
+          "axis": "Spec",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-spec-2"
+          ]
+        },
+        {
+          "id": "ps-b-coverage-3",
+          "performer": "claude:ps-b-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f161a3a5e243a1a11d35a5cac635988d5c050c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-coverage-3",
+            "digest": "sha256:34ffeda9383c9b72e4fc23fe73de34956e748fa0fc663bcdae82cc717a251216",
+            "excerpt": "Coverage confirming round 2, chunk PS-B, repair delta d4f03f030be1..145d5439330c, opus medium.\nClosed: subject_check_test.go:51 pins the changed refusal text through an exact compare; the delta adds no production branch. Probes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-b-coverage-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PS-C",
+      "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+      "tip": "7a55152eebda40993195f4279847529b1dc982c0",
+      "plan_digest": "sha256:95540fdff85b79045b84441bbcf357fda6bcb980917f14f3acf6ea387f7ac7b9",
+      "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+      "acceptance_rows": [
+        "PS38",
+        "PS39",
+        "PS40",
+        "PS41",
+        "PS42",
+        "PS43",
+        "PS54",
+        "PS55",
+        "PS56",
+        "PS57",
+        "PS44",
+        "PS45",
+        "PS46",
+        "PS47",
+        "PS48",
+        "PS49",
+        "PS50",
+        "PS51",
+        "PS52",
+        "PS53"
+      ],
+      "verification": [
+        {
+          "id": "ps-t04-t4-probe-family",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:0962a943faf0d62f270ffee37c7c7132d811e3093e60e2f0e3b41f014aae314d",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,pass,53000,206\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-testreport",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:8b04b375d998c89d51ab7604e87097e829acab6c29095e517edab1077a59abd8",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,63425,232\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-runbinary",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:d4bdba307b63c6fcd7630ff9b142a3250d78643890143966c57dbf97f62774b7",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/runbinary,pass,24713,29\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-record-forms",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:f6f5ba2f22b0e2947a38ec63f4d9a4a3dd4171e5ba06749661374cfef3411286",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,12959,184\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-gate-readers",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:cbb717b4dfcef150ad577bacb583b5ceb6a519337c9751c52e51774eeab432d6",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,38362,455\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-gate-readers",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-command-package",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:9ddb10da156990b4013234d9605dd676fda0243a3bfc39dcc504ec3c47e7b590",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18811,335\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-conformance-package",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:a2cefb8427d3ff6905262ff87eaf6db5bba0ae83849f65b0d558f6b193401f3d",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f (one PS-C floor call)\npackages[N]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,60394,1690\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-root-conformance",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:fe5a928f3bd22fae4db778c13727c5db6154581fc57a839b445b57562382dc3a",
+            "excerpt": "tree: probe-subjects-build at ab67d6d580a238ccaf654ce2fcf73911ac4d381f\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15077,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-t4-central-property",
+          "performer": "claude:ps_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:8c0740bcb885dffe8e517a4ac4e666bcaa383f205965d60fd361cc002a4a99b7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/outcome.go,swap,failed,3,TestExecuteClassifiesTheOutcome/refused,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,232\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,973\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,55125,232\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestExecuteClassifiesTheOutcome/refused,\"outcome_test.go:73: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",1\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/a_cancelled_build,\"outcome_test.go:161: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/no_Go_on_PATH,\"outcome_test.go:168: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-central-property",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Map every builder error to build-failed instead of only a BuildError. TestOnlyAScriptFailureIsBuildFailed must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+              "digest": "sha256:8c0740bcb885dffe8e517a4ac4e666bcaa383f205965d60fd361cc002a4a99b7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/outcome.go,swap,failed,3,TestExecuteClassifiesTheOutcome/refused,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,232\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,973\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,55125,232\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestExecuteClassifiesTheOutcome/refused,\"outcome_test.go:73: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",1\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/a_cancelled_build,\"outcome_test.go:161: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/no_Go_on_PATH,\"outcome_test.go:168: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ps-t03-t3-probe-family",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:41465ac6920f2ee24c697123b6de1ee1532b2df4c521c8ff3a369222d3d83050",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,57e6bc12ce18e67cd531ebcd526e8fff92946832,false\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16972,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58717,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38569,455\n  github.com/gibbonmi/bench/internal/probe,pass,53751,206\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13956,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24486,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60460,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-t3-testreport",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:41465ac6920f2ee24c697123b6de1ee1532b2df4c521c8ff3a369222d3d83050",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,57e6bc12ce18e67cd531ebcd526e8fff92946832,false\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16972,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58717,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38569,455\n  github.com/gibbonmi/bench/internal/probe,pass,53751,206\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13956,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24486,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60460,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-t3-runbinary",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:41465ac6920f2ee24c697123b6de1ee1532b2df4c521c8ff3a369222d3d83050",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,57e6bc12ce18e67cd531ebcd526e8fff92946832,false\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16972,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58717,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38569,455\n  github.com/gibbonmi/bench/internal/probe,pass,53751,206\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13956,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24486,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60460,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-t3-record-forms",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:41465ac6920f2ee24c697123b6de1ee1532b2df4c521c8ff3a369222d3d83050",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,57e6bc12ce18e67cd531ebcd526e8fff92946832,false\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16972,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58717,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38569,455\n  github.com/gibbonmi/bench/internal/probe,pass,53751,206\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13956,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24486,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60460,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-t3-gate-readers",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:41465ac6920f2ee24c697123b6de1ee1532b2df4c521c8ff3a369222d3d83050",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,57e6bc12ce18e67cd531ebcd526e8fff92946832,false\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16972,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58717,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38569,455\n  github.com/gibbonmi/bench/internal/probe,pass,53751,206\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13956,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24486,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60460,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-gate-readers",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-t3-command-package",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:41465ac6920f2ee24c697123b6de1ee1532b2df4c521c8ff3a369222d3d83050",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,57e6bc12ce18e67cd531ebcd526e8fff92946832,false\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16972,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58717,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38569,455\n  github.com/gibbonmi/bench/internal/probe,pass,53751,206\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13956,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24486,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60460,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-t3-conformance-package",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:41465ac6920f2ee24c697123b6de1ee1532b2df4c521c8ff3a369222d3d83050",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,57e6bc12ce18e67cd531ebcd526e8fff92946832,false\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16972,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58717,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38569,455\n  github.com/gibbonmi/bench/internal/probe,pass,53751,206\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13956,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24486,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60460,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-t3-root-conformance",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:a531d706eb82484a1eb02210c84830efa1eae3f63272f9ef78a8ed5820fdb311",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,57e6bc12ce18e67cd531ebcd526e8fff92946832,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14897,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-t3-central-property",
+          "performer": "claude:ps_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+            "digest": "sha256:0a423e60a0983c3c736f6018ca43f81b0722c541f90898b2f6e4aabdbff405ba",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/verdict.go,swap,failed,1,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestExpectRequiresTheNamedWitness$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,615\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1200,6\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,\"verdict_test.go:57: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  invalid,clamp.go,swap,expect-missed,1,TestClampNegative/zero,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^Tes… (737 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Match --expect by exact name only and drop the parent-and-slash match. TestExpectRequiresTheNamedWitness must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+              "digest": "sha256:0a423e60a0983c3c736f6018ca43f81b0722c541f90898b2f6e4aabdbff405ba",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/verdict.go,swap,failed,1,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestExpectRequiresTheNamedWitness$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,615\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1200,6\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,\"verdict_test.go:57: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  invalid,clamp.go,swap,expect-missed,1,TestClampNegative/zero,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^Tes… (737 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ps-t04-rep1-t4-probe-family",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-testreport",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-runbinary",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-record-forms",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-gate-readers",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-gate-readers",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-command-package",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-conformance-package",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8d003a3a9f44b87bf71e4c3110eb64075af1102b95e77896d67a1ee9560a3e0a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17454,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59540,1690\n  github.com/gibbonmi/bench/internal/gate,pass,39483,455\nspilled{lines=12,bytes=821,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/e7c800827d5fd2eed7e68741a4ec1720/1791864791403580194-87ee99c06a41de15.out}\n  github.com/gibbonmi/bench/internal/runbinary,pass,25602,29\n  github.com/gibbonmi/bench/internal/testreport,pass,62356,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-root-conformance",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8beb59e2e86120562e1c4ccf9bd58a81c439b51c9b4fbe28b8fac224e68e7397",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,f6bbaada788285cbbb3f67dafab7502b5402c599,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15098,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t04-rep1-t4-central-property",
+          "performer": "claude:ps_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:8c0740bcb885dffe8e517a4ac4e666bcaa383f205965d60fd361cc002a4a99b7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/outcome.go,swap,failed,3,TestExecuteClassifiesTheOutcome/refused,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,232\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,973\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,55125,232\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestExecuteClassifiesTheOutcome/refused,\"outcome_test.go:73: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",1\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/a_cancelled_build,\"outcome_test.go:161: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/no_Go_on_PATH,\"outcome_test.go:168: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-central-property",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Map every builder error to build-failed instead of only a BuildError. TestOnlyAScriptFailureIsBuildFailed must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+              "digest": "sha256:8c0740bcb885dffe8e517a4ac4e666bcaa383f205965d60fd361cc002a4a99b7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/outcome.go,swap,failed,3,TestExecuteClassifiesTheOutcome/refused,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,232\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,973\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,55125,232\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestExecuteClassifiesTheOutcome/refused,\"outcome_test.go:73: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",1\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/a_cancelled_build,\"outcome_test.go:161: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\n  github.com/gibbonmi/bench/internal/testreport,TestOnlyAScriptFailureIsBuildFailed/no_Go_on_PATH,\"outcome_test.go:168: outcome = {Kind:build-failed FailedTests:0 FailedNames:[] Ran:0 BuildLine:}, want {Kind:refused FailedTests:0 FailedNames:[] Ran:0 BuildLine:}\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ps-t03-rep1-t3-probe-family",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-testreport",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-runbinary",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-runbinary",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-record-forms",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-gate-readers",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-gate-readers",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-command-package",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-conformance-package",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:49d44f4e336ca7e75c4b16727d22bb38248b1ee74cbe45c06a0f26bd61a49c6f",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16922,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59525,1690\n  github.com/gibbonmi/bench/internal/gate,pass,38903,455\n  github.com/gibbonmi/bench/internal/probe,pass,54219,208\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,13592,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24712,29\n  github.com/gibbonmi/bench/internal/testreport,pass,60816,232\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-root-conformance",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:203aea422ebb32b99e083150b5d1ecc6d5b9a80286ce85d0860cac6ef846c722",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,8265dd363fa7a21e78ab7887e627eb0da37d442c,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15212,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t03-rep1-t3-central-property",
+          "performer": "claude:ps_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+            "digest": "sha256:0a423e60a0983c3c736f6018ca43f81b0722c541f90898b2f6e4aabdbff405ba",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/verdict.go,swap,failed,1,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestExpectRequiresTheNamedWitness$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,615\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1200,6\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,\"verdict_test.go:57: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  invalid,clamp.go,swap,expect-missed,1,TestClampNegative/zero,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^Tes… (737 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Match --expect by exact name only and drop the parent-and-slash match. TestExpectRequiresTheNamedWitness must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "7a55152eebda40993195f4279847529b1dc982c0",
+              "digest": "sha256:0a423e60a0983c3c736f6018ca43f81b0722c541f90898b2f6e4aabdbff405ba",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/verdict.go,swap,failed,1,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestExpectRequiresTheNamedWitness$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,615\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1200,6\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestExpectRequiresTheNamedWitness/a_subtest_of_the_named_test,\"verdict_test.go:57: stdout = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  invalid,clamp.go,swap,expect-missed,1,TestClampNegative/zero,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^Tes… (737 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ps-c-standards-1",
+          "performer": "claude:ps-c-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-standards",
+            "digest": "sha256:3874fbea981c6bfa36aeeb3f4db61ba307b50a0ee65093814a8407d00fe6d4c0",
+            "excerpt": "Standards axis, chunk PS-C, pair 145d5439330c..ab67d6d580a2, opus medium. Findings: 2.\nS1 internal/testreport/outcome_test.go:323: sameOutcome lists every Outcome field by hand, so a new field goes unchecked in silence (AGENTS.md one source per fact). Confidence 6.\nS2 internal/probe/verdict_test.go:134-138: the build-script fixture install repeats buildEachRun in subject_check_fixture_test.go:30-35 (a fixture harness pasted twice). Confidence 5.\nConsumers of Factory.Own and probe.ReadResult: no defect.\n"
+          },
+          "axis": "Standards",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-c-spec-1",
+          "performer": "claude:ps-c-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-spec",
+            "digest": "sha256:5ad3075f084ec110d6c5e09dfba2ea16e52ba1d9cdda9e273b1eb92cbee7150f",
+            "excerpt": "Spec axis, chunk PS-C (PS38-PS57), pair 145d5439330c..ab67d6d580a2, opus medium. Findings: 0.\nAll 20 rows hold. Ruling: a red baseline names its first failure, consistent with the spec. Factory.Own readers print unchanged bytes; TestNativeRecordCLIJourney passes the v2 envelope without an edit.\nAdvice: A1 add a sentence that a red baseline names its own first failure; A2 no row for a mutated-run build-script failure table; A3 mutant table survives a restore failure.\n"
+          },
+          "axis": "Spec",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ps-c-coverage-1",
+          "performer": "claude:ps-c-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f38889bea0cbab80653b4b790a85a3c55552d0ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-coverage",
+            "digest": "sha256:4618b89c55c462f0015b9782bcf721f02115ecd3e08873af929c744728dca3a1",
+            "excerpt": "Coverage axis, chunk PS-C, pair 145d5439330c..ab67d6d580a2, opus medium. Findings: 2.\nC1 internal/probe/verdict.go:45: no test runs --expect over a passing mutated run, so dropping the failed-kind guard stays green. Confidence 9.\nC2 internal/probe/verdict.go:49: no test puts a control byte in the first build line, so dropping sanitize.Preview stays green. Confidence 8.\nProbes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "ab67d6d580a238ccaf654ce2fcf73911ac4d381f",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-c-standards-2",
+          "performer": "claude:ps-c-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-standards-2",
+            "digest": "sha256:d8f1969a918c8b1683884addb5ff9eef65dcf103f2954acc77fe7f3c4d0044c4",
+            "excerpt": "Standards confirming round, chunk PS-C, repair delta ab67d6d580a2..7a55152eebda, opus medium.\nS1 closed (9): sameOutcome compares the whole Outcome with reflect.DeepEqual after it normalizes an empty FailedNames.\nS2 closed (9): installBuildScript in subject_check_fixture_test.go:37 is the one fixture install, called at :30 and verdict_test.go:154. No new blocking findings.\n"
+          },
+          "axis": "Standards",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "7a55152eebda40993195f4279847529b1dc982c0",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-c-standards-1"
+          ]
+        },
+        {
+          "id": "ps-c-spec-2",
+          "performer": "claude:ps-c-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-spec-2",
+            "digest": "sha256:e594a4f4897f15b348e5ceebac38b1dc02643b142c8e1a14603a73979072b501",
+            "excerpt": "Spec confirming round, chunk PS-C, repair delta ab67d6d580a2..7a55152eebda, opus medium.\nHolds (8): the delta changes only tests, the spec, and ticket 4; the new subtests match the Verdict paragraph and the Edge inventory; the red-baseline sentence matches baseline.go:38.\nAdvice: say every other refusal at the null rule and in PS39.\n"
+          },
+          "axis": "Spec",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "7a55152eebda40993195f4279847529b1dc982c0",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-c-spec-1"
+          ]
+        },
+        {
+          "id": "ps-c-coverage-2",
+          "performer": "claude:ps-c-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-coverage-2",
+            "digest": "sha256:03c102ff648be4c6046447248457ff6be1fd8f35500300d79e1de8d96d99d027",
+            "excerpt": "Coverage confirming round, chunk PS-C, repair delta ab67d6d580a2..7a55152eebda, opus medium.\nC1 closed (8): verdict_test.go:59-65 reds without the failed-kind guard.\nC2 closed (8): verdict_test.go:136-149 reds without sanitize.Preview. S1 makes no comparison green by construction. Probes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "7a55152eebda40993195f4279847529b1dc982c0",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-c-coverage-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PS-D",
+      "base": "7a55152eebda40993195f4279847529b1dc982c0",
+      "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+      "plan_digest": "sha256:04247aac6dd024b552e7ab1cda92d7b35a1763f4ab86551574ef3da17f525d5c",
+      "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+      "acceptance_rows": [
+        "PS58",
+        "PS59",
+        "PS60",
+        "PS61",
+        "PS62",
+        "PS63",
+        "PS64",
+        "PS65",
+        "PS66",
+        "PS67",
+        "PS68",
+        "PS75",
+        "PS78"
+      ],
+      "verification": [
+        {
+          "id": "ps-t05-probe-family",
+          "performer": "claude:ps_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c446eaf576c86000c18c2d03b271d93071533919",
+            "digest": "sha256:b43a2f5098ecb2681434417153d4a0d2fb1da183d07a9ae1b293a16ef63360c8",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2dd17f457d6dda5b1b0964e2d569faea4a327c5d,true\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16975,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59116,1690\n  github.com/gibbonmi/bench/internal/probe,pass,43657,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-command-package",
+          "performer": "claude:ps_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c446eaf576c86000c18c2d03b271d93071533919",
+            "digest": "sha256:b43a2f5098ecb2681434417153d4a0d2fb1da183d07a9ae1b293a16ef63360c8",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2dd17f457d6dda5b1b0964e2d569faea4a327c5d,true\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16975,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59116,1690\n  github.com/gibbonmi/bench/internal/probe,pass,43657,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-conformance-package",
+          "performer": "claude:ps_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c446eaf576c86000c18c2d03b271d93071533919",
+            "digest": "sha256:b43a2f5098ecb2681434417153d4a0d2fb1da183d07a9ae1b293a16ef63360c8",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2dd17f457d6dda5b1b0964e2d569faea4a327c5d,true\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16975,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59116,1690\n  github.com/gibbonmi/bench/internal/probe,pass,43657,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-root-conformance",
+          "performer": "claude:ps_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c446eaf576c86000c18c2d03b271d93071533919",
+            "digest": "sha256:832902be54a49098763966d5453ca1ecb51ead51a6b594839d3d883367653a82",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2dd17f457d6dda5b1b0964e2d569faea4a327c5d,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15341,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-central-property",
+          "performer": "claude:ps_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "c446eaf576c86000c18c2d03b271d93071533919",
+            "digest": "sha256:929852008e3fb06da92bf47df394d9d2929f6e8c5cbe9fa3a77da3861385f434",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/lock.go,swap,failed,2,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,221\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,30983,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,\"lock_test.go:158: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  silent,clamp.go,swap,passed,0,null,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^TestClampNegative$,passed,1\\\\\\\\np… (534 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_once,\"lock_test.go:146: lock-owner hook calls = 1, want 2: one replaced file and one retry\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the fstat and lstat identity recheck after the record lock. TestSubjectLockRechecksTheIdentity must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "c446eaf576c86000c18c2d03b271d93071533919",
+              "digest": "sha256:929852008e3fb06da92bf47df394d9d2929f6e8c5cbe9fa3a77da3861385f434",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/lock.go,swap,failed,2,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,221\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,30983,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,\"lock_test.go:158: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  silent,clamp.go,swap,passed,0,null,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^TestClampNegative$,passed,1\\\\\\\\np… (534 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_once,\"lock_test.go:146: lock-owner hook calls = 1, want 2: one replaced file and one retry\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ps-t05-rep1-probe-family",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c957926539578ddaf884b84efc690852197b33cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "da6665921b69413563924bdbd130125ce3fe1f2c",
+            "digest": "sha256:d0315194a34c9ab3ae7339785104962d8740289877f9417857b1b770c0dd88c1",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,da6665921b69413563924bdbd130125ce3fe1f2c,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19501,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58855,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,226,42\n  github.com/gibbonmi/bench/internal/probe,pass,45136,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1-gocache",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c957926539578ddaf884b84efc690852197b33cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "da6665921b69413563924bdbd130125ce3fe1f2c",
+            "digest": "sha256:d0315194a34c9ab3ae7339785104962d8740289877f9417857b1b770c0dd88c1",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,da6665921b69413563924bdbd130125ce3fe1f2c,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19501,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58855,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,226,42\n  github.com/gibbonmi/bench/internal/probe,pass,45136,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "gocache",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1-command-package",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c957926539578ddaf884b84efc690852197b33cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "da6665921b69413563924bdbd130125ce3fe1f2c",
+            "digest": "sha256:d0315194a34c9ab3ae7339785104962d8740289877f9417857b1b770c0dd88c1",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,da6665921b69413563924bdbd130125ce3fe1f2c,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19501,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58855,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,226,42\n  github.com/gibbonmi/bench/internal/probe,pass,45136,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1-conformance-package",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c957926539578ddaf884b84efc690852197b33cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "da6665921b69413563924bdbd130125ce3fe1f2c",
+            "digest": "sha256:d0315194a34c9ab3ae7339785104962d8740289877f9417857b1b770c0dd88c1",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,da6665921b69413563924bdbd130125ce3fe1f2c,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19501,335\n  github.com/gibbonmi/bench/internal/conformance,pass,58855,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,226,42\n  github.com/gibbonmi/bench/internal/probe,pass,45136,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1-root-conformance",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c957926539578ddaf884b84efc690852197b33cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "da6665921b69413563924bdbd130125ce3fe1f2c",
+            "digest": "sha256:394df7275cda3e6540057efbe57e8e4559188be740c8846deef7dbb031df2f1a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,da6665921b69413563924bdbd130125ce3fe1f2c,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15078,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1-central-property",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c957926539578ddaf884b84efc690852197b33cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "da6665921b69413563924bdbd130125ce3fe1f2c",
+            "digest": "sha256:929852008e3fb06da92bf47df394d9d2929f6e8c5cbe9fa3a77da3861385f434",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/lock.go,swap,failed,2,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,221\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,30983,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,\"lock_test.go:158: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  silent,clamp.go,swap,passed,0,null,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^TestClampNegative$,passed,1\\\\\\\\np… (534 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_once,\"lock_test.go:146: lock-owner hook calls = 1, want 2: one replaced file and one retry\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the fstat and lstat identity recheck after the record lock. TestSubjectLockRechecksTheIdentity must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "da6665921b69413563924bdbd130125ce3fe1f2c",
+              "digest": "sha256:929852008e3fb06da92bf47df394d9d2929f6e8c5cbe9fa3a77da3861385f434",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/lock.go,swap,failed,2,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,221\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,30983,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,\"lock_test.go:158: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  silent,clamp.go,swap,passed,0,null,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^TestClampNegative$,passed,1\\\\\\\\np… (534 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_once,\"lock_test.go:146: lock-owner hook calls = 1, want 2: one replaced file and one retry\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ps-t05-rep1b-probe-family",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:9693bccb5ba04fcb3a2b93179ee6ce0dcfc9fefb453658d8264c84130aba14af",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16722,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59054,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,158,42\n  github.com/gibbonmi/bench/internal/probe,pass,44887,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-gocache",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:9693bccb5ba04fcb3a2b93179ee6ce0dcfc9fefb453658d8264c84130aba14af",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16722,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59054,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,158,42\n  github.com/gibbonmi/bench/internal/probe,pass,44887,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "gocache",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-command-package",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:9693bccb5ba04fcb3a2b93179ee6ce0dcfc9fefb453658d8264c84130aba14af",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16722,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59054,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,158,42\n  github.com/gibbonmi/bench/internal/probe,pass,44887,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-conformance-package",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:9693bccb5ba04fcb3a2b93179ee6ce0dcfc9fefb453658d8264c84130aba14af",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16722,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59054,1690\n  github.com/gibbonmi/bench/internal/gocache,pass,158,42\n  github.com/gibbonmi/bench/internal/probe,pass,44887,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-root-conformance",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:cc7305f9099847a36aa46540491bc6163040114d68a8289536e70a6876d9c094",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,e1d6f26f703a41586409c1a28256f8d5da8903f4,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14798,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t05-rep1b-central-property",
+          "performer": "claude:ps_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+            "digest": "sha256:929852008e3fb06da92bf47df394d9d2929f6e8c5cbe9fa3a77da3861385f434",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/lock.go,swap,failed,2,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,221\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,30983,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,\"lock_test.go:158: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  silent,clamp.go,swap,passed,0,null,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^TestClampNegative$,passed,1\\\\\\\\np… (534 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_once,\"lock_test.go:146: lock-owner hook calls = 1, want 2: one replaced file and one retry\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the fstat and lstat identity recheck after the record lock. TestSubjectLockRechecksTheIdentity must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+              "digest": "sha256:929852008e3fb06da92bf47df394d9d2929f6e8c5cbe9fa3a77da3861385f434",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/lock.go,swap,failed,2,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,all,passed,221\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,30983,221\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_on_every_attempt,\"lock_test.go:158: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\\\\\\\\n  silent,clamp.go,swap,passed,0,null,yes\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,./,^TestClampNegative$,passed,1\\\\\\\\np… (534 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSubjectLockRechecksTheIdentity/replaced_once,\"lock_test.go:146: lock-owner hook calls = 1, want 2: one replaced file and one retry\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ps-d-standards-1",
+          "performer": "claude:ps-d-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-standards",
+            "digest": "sha256:24f448d28d9b3d97474d0fe3f11ddb30304bfd78e7c29b3d54ff0224039babab",
+            "excerpt": "Standards axis, chunk PS-D, pair 7a55152eebda..c446eaf576c8, opus medium. Findings: 1.\nS1 internal/probe/lock.go:62-74 against internal/gocache/lock.go:102-119,162: lockSubject reports any F_SETLK error as in use, while gocache's contended() owns the contention rule (EAGAIN or EACCES); an ENOLCK prints a false in-use line (AGENTS.md one source per fact). Confidence 6.\nHolder refactor confirmed with no new process seam; adopt/transaction/lock.go is a different fact.\n"
+          },
+          "axis": "Standards",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "c446eaf576c86000c18c2d03b271d93071533919",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-d-spec-1",
+          "performer": "claude:ps-d-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-spec",
+            "digest": "sha256:3d0d12c87e8439f70512ebff6a17bcbedf30fa36f7a962c5a0df7d3f112f4385",
+            "excerpt": "Spec axis, chunk PS-D (PS58-PS68, PS75), pair 7a55152eebda..c446eaf576c8, opus medium. Findings: 0.\nAll rows hold, and the release runs on the exit-2 kept-copy answer without touching the copy.\nRuling: release() ignoring every removal error is non-behavioral and follows preservation.release.\nAdvice: A1 only EAGAIN or EACCES reads in use; A2 a non-ENOENT lstat error loses its cause; A3 no test asserts probe-locks absent after exit 2.\n"
+          },
+          "axis": "Spec",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "c446eaf576c86000c18c2d03b271d93071533919",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ps-d-coverage-1",
+          "performer": "claude:ps-d-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e693d39e852a0ee7eace6e22da5b07d9d5c5ef57",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-coverage",
+            "digest": "sha256:62a28c5e32c32258d05088574e76260a29c0ba0751f5c60a4757aef92a305250",
+            "excerpt": "Coverage axis, chunk PS-D, pair 7a55152eebda..c446eaf576c8, opus medium. Findings: 3.\nC1 internal/probe/lock.go:63-66: no test drives the open ENOENT retry or the third-ENOENT refusal. Confidence 8.\nC2 internal/probe/lock.go:62,67-69: no test drives O_NOFOLLOW or another open error (ELOOP or EACCES). Confidence 8.\nC3 internal/probe/lock.go:58,62: no test asserts directory mode 0700 or file mode 0600. Confidence 7.\nProbes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "c446eaf576c86000c18c2d03b271d93071533919",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-d-standards-2",
+          "performer": "claude:ps-d-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-standards-2",
+            "digest": "sha256:8f32f16c9ee57b31c88e693a9549855e0ba527e0d5207c3d744f822bc715d658",
+            "excerpt": "Standards confirming round, chunk PS-D, repair delta c446eaf576c8..da6665921, opus medium.\nS1 closed (9): gocache.Contended at internal/gocache/lock.go:163 is the one contention rule, used by HoldExclusive, clean.go, and lockSubject; no forwarder remains. No new blocking findings.\nAdvice: a gocache TryLock helper would collapse three lock-request spellings.\n"
+          },
+          "axis": "Standards",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-d-standards-1"
+          ]
+        },
+        {
+          "id": "ps-d-spec-2",
+          "performer": "claude:ps-d-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-spec-2",
+            "digest": "sha256:3d1133348aa1337179fc337734bd732580d6eb812db2963e7306e6dbb113e8c0",
+            "excerpt": "Spec confirming round, chunk PS-D, repair delta c446eaf576c8..da6665921, opus medium. Findings: 1.\nHolds: the code matches the changed step 3; the third-ENOENT, ELOOP, and mode tests match the spec; PS58-PS68 and PS75 hold.\nP1 (7): the spec's lock-unavailable fault list still says four faults and omits a lock error that is not contention.\nAdvice: no row names TestSubjectLockReadsOnlyContentionAsInUse.\n"
+          },
+          "axis": "Spec",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": [
+            "ps-d-spec-1"
+          ]
+        },
+        {
+          "id": "ps-d-coverage-2",
+          "performer": "claude:ps-d-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-coverage-2",
+            "digest": "sha256:314625b1b5f17e7ae3aa18d5ca45ed0e2098c04e53edcd48db0caa045b46769f",
+            "excerpt": "Coverage confirming round, chunk PS-D, repair delta c446eaf576c8..da6665921, opus medium.\nC1 closed (9), C2 closed (9), C3 closed (8); the contention split is tested on both sides. No new blocking findings. Probes: none.\nAdvice: the mode test depends on the runner's umask.\n"
+          },
+          "axis": "Coverage",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-d-coverage-1"
+          ]
+        },
+        {
+          "id": "ps-d-spec-3",
+          "performer": "claude:ps-d-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-d-spec-3",
+            "digest": "sha256:ce02a1dfc090e279509665e168c72942b390eadaaee275bb22f7c357f6967082",
+            "excerpt": "Spec reaffirmation, chunk PS-D, plan commit 15bf62a2, opus medium.\nP1 closed (9): spec.md:272-279 lists five faults that match step 3 and internal/probe/lock.go:78-83; PS78's test at lock_test.go:179-184 asserts the ENOLCK lock-unavailable line, exit 1, unchanged bytes, and no run child. No new blocking item.\n"
+          },
+          "axis": "Spec",
+          "base": "7a55152eebda40993195f4279847529b1dc982c0",
+          "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-d-spec-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PS-E",
+      "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+      "tip": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+      "plan_digest": "sha256:b3022cdaa72487559bb4f65cdc350976f569b74e98d7dc1a87f188688bac8f49",
+      "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+      "acceptance_rows": [
+        "PS69",
+        "PS70",
+        "PS71",
+        "PS72",
+        "PS73",
+        "PS74"
+      ],
+      "verification": [
+        {
+          "id": "ps-t06-guidance",
+          "performer": "claude:ps_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+            "digest": "sha256:2636d2f03647633d7f1b3ef2558193638fb4ee5a36f5fee6a64b4ae4b096760a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2643e8d1521dd55cf5187a123886dedc99476ab9,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5023,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-conformance-meta",
+          "performer": "claude:ps_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+            "digest": "sha256:8e39dcd13f1b062ae8bc6a9e9d2bf77ab8625fb684d7cbabf80d2db6553b4b5f",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2643e8d1521dd55cf5187a123886dedc99476ab9,false\ncheck[1]{name,kind,tests_run,subjects}:\n  conformance-meta,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,31,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "conformance-meta",
+          "command": "bench test --check conformance-meta",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-agent-definitions",
+          "performer": "claude:ps_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+            "digest": "sha256:9bf27b93dcf766b547fa1fe2a13b361bb90d6a988a9d2c68d27e4460aca00f01",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2643e8d1521dd55cf5187a123886dedc99476ab9,false\ncheck[1]{name,kind,tests_run,subjects}:\n  claude-agent-definitions,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "agent-definitions",
+          "command": "bench test --check claude-agent-definitions",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-skills-index",
+          "performer": "claude:ps_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+            "digest": "sha256:e0a93df45f45d9a59c38817c1323870f081fc881cb28eb57a9ae235de2fdc94c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2643e8d1521dd55cf5187a123886dedc99476ab9,false\ncheck[1]{name,kind,tests_run,subjects}:\n  skills-index-command-adapters,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "skills-index",
+          "command": "bench test --check skills-index-command-adapters",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-prose",
+          "performer": "claude:ps_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+            "digest": "sha256:1e72b7ef2bb0b1c4fa800fac8338a49922dd1064a93a2e99b5218eb01934be80",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2643e8d1521dd55cf5187a123886dedc99476ab9,false\ncheck[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,537\n"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-anchors-package",
+          "performer": "claude:ps_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+            "digest": "sha256:18000ca85f5313f3fbca24e3288a163bfa84edc70891bde96e8e06cfdee494c7",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2643e8d1521dd55cf5187a123886dedc99476ab9,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16002,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2161,179\n  github.com/gibbonmi/bench/internal/conformance,pass,55506,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "anchors-package",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-command-package",
+          "performer": "claude:ps_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+            "digest": "sha256:18000ca85f5313f3fbca24e3288a163bfa84edc70891bde96e8e06cfdee494c7",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2643e8d1521dd55cf5187a123886dedc99476ab9,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16002,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2161,179\n  github.com/gibbonmi/bench/internal/conformance,pass,55506,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-conformance-package",
+          "performer": "claude:ps_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+            "digest": "sha256:18000ca85f5313f3fbca24e3288a163bfa84edc70891bde96e8e06cfdee494c7",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2643e8d1521dd55cf5187a123886dedc99476ab9,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16002,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2161,179\n  github.com/gibbonmi/bench/internal/conformance,pass,55506,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-root-conformance",
+          "performer": "claude:ps_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+            "digest": "sha256:c20baddeeb67f9f5093e46e27ca855ea17a81bab1f2505d6160978222d3c459a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,2643e8d1521dd55cf5187a123886dedc99476ab9,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14890,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-rep1-guidance",
+          "performer": "claude:ps_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+            "digest": "sha256:8a9cac61a14d3a60a38f11037a33ba82c7e3ab4e7bc816eb009370b46da0915a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,4ed0473a6bf4b34ae9fe7a8c9f6c8a1383b0ea19,true\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4802,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-rep1-conformance-meta",
+          "performer": "claude:ps_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+            "digest": "sha256:436a8f6ba5ceefad5e905ed9629f1946daad58844c67df40d9a04a66018be8e7",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,4ed0473a6bf4b34ae9fe7a8c9f6c8a1383b0ea19,true\ncheck[1]{name,kind,tests_run,subjects}:\n  conformance-meta,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,31,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "conformance-meta",
+          "command": "bench test --check conformance-meta",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-rep1-agent-definitions",
+          "performer": "claude:ps_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+            "digest": "sha256:490aa36310c33312fac7f979d4c17de3d045f6e5948dd256588e4df4a748880d",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,4ed0473a6bf4b34ae9fe7a8c9f6c8a1383b0ea19,true\ncheck[1]{name,kind,tests_run,subjects}:\n  claude-agent-definitions,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,10,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "agent-definitions",
+          "command": "bench test --check claude-agent-definitions",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-rep1-skills-index",
+          "performer": "claude:ps_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+            "digest": "sha256:6a29952194287a5d2cb95d594a27416bb0cc04f6ba1b4f26b57cf8fb7166abb1",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,4ed0473a6bf4b34ae9fe7a8c9f6c8a1383b0ea19,true\ncheck[1]{name,kind,tests_run,subjects}:\n  skills-index-command-adapters,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "skills-index",
+          "command": "bench test --check skills-index-command-adapters",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-rep1-prose",
+          "performer": "claude:ps_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+            "digest": "sha256:bfbcfaf95aa7626b727e8e81710477a0e58e1527ad6139a333d27f01f5a6aaa4",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,4ed0473a6bf4b34ae9fe7a8c9f6c8a1383b0ea19,true\ncheck[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,537\n"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-rep1-anchors-package",
+          "performer": "claude:ps_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+            "digest": "sha256:3b64cca1dfcd16c8747ad54d8a0079251a85f0de4b38b0ad01965c46dc4e2c1c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,4ed0473a6bf4b34ae9fe7a8c9f6c8a1383b0ea19,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15863,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2218,179\n  github.com/gibbonmi/bench/internal/conformance,pass,56068,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "anchors-package",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-rep1-command-package",
+          "performer": "claude:ps_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+            "digest": "sha256:3b64cca1dfcd16c8747ad54d8a0079251a85f0de4b38b0ad01965c46dc4e2c1c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,4ed0473a6bf4b34ae9fe7a8c9f6c8a1383b0ea19,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15863,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2218,179\n  github.com/gibbonmi/bench/internal/conformance,pass,56068,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-rep1-conformance-package",
+          "performer": "claude:ps_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+            "digest": "sha256:3b64cca1dfcd16c8747ad54d8a0079251a85f0de4b38b0ad01965c46dc4e2c1c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,4ed0473a6bf4b34ae9fe7a8c9f6c8a1383b0ea19,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15863,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2218,179\n  github.com/gibbonmi/bench/internal/conformance,pass,56068,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t06-rep1-root-conformance",
+          "performer": "claude:ps_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+            "digest": "sha256:608aaaa65c6b51da9a7d3e32696653e64ff2d603f38a12af440586e9b2b3d8b0",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,4ed0473a6bf4b34ae9fe7a8c9f6c8a1383b0ea19,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14918,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "ps-e-standards-1",
+          "performer": "claude:ps-e-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-e-standards",
+            "digest": "sha256:079f22d264eac484a23be4fdcb1c4e194b48b905026687af43a1b1df17cc9a46",
+            "excerpt": "Standards axis, chunk PS-E, pair 15bf62a21f6b..2643e8d1, opus medium. Findings: 2.\nS1 .agents/skills/bench-craft-delegate/SKILL.md:105: a sentence copies a partial flag list that bench probe --help owns, already missing --run, --omit-file, and --unwrap (AGENTS.md one source per fact; craft-skills duplication). Confidence 6.\nS2 .bench/BENCH-reference.md:259-267: the probe paragraphs restate flag-level grammar and selection that bench probe --help owns. Confidence 5.\nLine 81 needle byte-identical; no history in guidance.\n"
+          },
+          "axis": "Standards",
+          "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "tip": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-e-spec-1",
+          "performer": "claude:ps-e-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-e-spec",
+            "digest": "sha256:5a7f633c3de5e24600c41f52df862dc642d9af6a4d568c8bb3104ca8ef89de3c",
+            "excerpt": "Spec axis, chunk PS-E (PS69-PS74), pair 15bf62a21f6b..2643e8d1, opus medium. Findings: 0 blocking.\nAll six review-owned rows hold against the code and bench probe --help.\nAdvice P1: the reference's --occurrence sentence could imply it works in a combined mutant. Ruling: the stale FT168 occurrence clause belongs to the landing closure of the roadmap row, not this chunk.\n"
+          },
+          "axis": "Spec",
+          "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "tip": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ps-e-coverage-1",
+          "performer": "claude:ps-e-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8fc3341ab61993feea762a05191b9e258cc5a86c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-e-coverage",
+            "digest": "sha256:93d01d087d3deed19c830d682ed90d5eecffa86a6ec75fac8201753a39f0ffdc",
+            "excerpt": "Coverage axis, chunk PS-E, pair 15bf62a21f6b..2643e8d1, opus medium. Findings: 2, none blocking.\nC1 SKILL.md:81: the anchored charge example still says omission or swap; PS71 keeps it by spec decision (no-op).\nC2 spec.md:434: PS71 cites line 104, now line 105 (orchestrator spec fix).\nguidance-prose-budgets passes at 126 of 126 lines (orchestrator run).\n"
+          },
+          "axis": "Coverage",
+          "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "tip": "2643e8d1521dd55cf5187a123886dedc99476ab9",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-e-standards-2",
+          "performer": "claude:ps-e-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-e-standards-2",
+            "digest": "sha256:2493b287003dd7d456837fe9ce4ef2c3c5924ae580b3366d53ab9e8c80fcb642",
+            "excerpt": "Standards confirming round, chunk PS-E, repair delta 2643e8d1..3cc1144a, opus medium.\nS1 closed (9): SKILL.md:105 says bench probe --help holds the grammar.\nS2 closed (9): BENCH-reference.md keeps the help pointer, form names, targets, subject lock, first_failure, --expect, and the mutant table. No new blocking item.\n"
+          },
+          "axis": "Standards",
+          "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "tip": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-e-standards-1"
+          ]
+        },
+        {
+          "id": "ps-e-spec-2",
+          "performer": "claude:ps-e-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-e-spec-2",
+            "digest": "sha256:2b77c552da9a97a11dc7a9c74f2687005451eafdbdacb776df9959c9e448a046",
+            "excerpt": "Spec confirming round, chunk PS-E, repair delta 2643e8d1..3cc1144a, opus medium.\nHolds (8): PS69 and PS71 still hold; line 81 untouched; no sentence implies --occurrence inside a combined mutant.\n"
+          },
+          "axis": "Spec",
+          "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "tip": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-e-spec-1"
+          ]
+        },
+        {
+          "id": "ps-e-coverage-2",
+          "performer": "claude:ps-e-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-e-coverage-2",
+            "digest": "sha256:e858c1b926df8feefe642fd8103b264c097e05c35abf9819bb8fcb62dd050a3f",
+            "excerpt": "Coverage confirming round, chunk PS-E, repair delta 2643e8d1..3cc1144a, opus medium.\nClosed (8): every anchor in both edited files resolves (67 and 47); no removed sentence is an anchor needle. Probes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+          "tip": "3cc1144ac7f2feec20342ca74bf1a9d207c72159",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-e-coverage-1"
+          ]
+        }
+      ]
+    }
+  ],
+  "completion": {
+    "state": "completed",
+    "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+    "performer": "claude:ps-orchestrator-20261012",
+    "reconciliation": {
+      "PS1": "covered",
+      "PS10": "covered",
+      "PS11": "covered",
+      "PS12": "covered",
+      "PS13": "covered",
+      "PS14": "covered",
+      "PS15": "covered",
+      "PS16": "covered",
+      "PS17": "covered",
+      "PS18": "covered",
+      "PS19": "covered",
+      "PS2": "covered",
+      "PS20": "covered",
+      "PS21": "covered",
+      "PS22": "covered",
+      "PS23": "covered",
+      "PS24": "covered",
+      "PS25": "covered",
+      "PS26": "covered",
+      "PS27": "covered",
+      "PS28": "covered",
+      "PS29": "covered",
+      "PS3": "covered",
+      "PS30": "covered",
+      "PS31": "covered",
+      "PS32": "covered",
+      "PS33": "covered",
+      "PS34": "covered",
+      "PS35": "covered",
+      "PS36": "covered",
+      "PS37": "covered",
+      "PS38": "covered",
+      "PS39": "covered",
+      "PS4": "covered",
+      "PS40": "covered",
+      "PS41": "covered",
+      "PS42": "covered",
+      "PS43": "covered",
+      "PS44": "covered",
+      "PS45": "covered",
+      "PS46": "covered",
+      "PS47": "covered",
+      "PS48": "covered",
+      "PS49": "covered",
+      "PS5": "covered",
+      "PS50": "covered",
+      "PS51": "covered",
+      "PS52": "covered",
+      "PS53": "covered",
+      "PS54": "covered",
+      "PS55": "covered",
+      "PS56": "covered",
+      "PS57": "covered",
+      "PS58": "covered",
+      "PS59": "covered",
+      "PS6": "covered",
+      "PS60": "covered",
+      "PS61": "covered",
+      "PS62": "covered",
+      "PS63": "covered",
+      "PS64": "covered",
+      "PS65": "covered",
+      "PS66": "covered",
+      "PS67": "covered",
+      "PS68": "covered",
+      "PS69": "covered",
+      "PS7": "covered",
+      "PS70": "covered",
+      "PS71": "covered",
+      "PS72": "covered",
+      "PS73": "covered",
+      "PS74": "covered",
+      "PS75": "covered",
+      "PS76": "covered",
+      "PS77": "covered",
+      "PS78": "covered",
+      "PS8": "covered",
+      "PS9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:ps-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "9ef5cfae1b7c4891171664fa8de3857788216c33",
+          "digest": "sha256:8e1807fc476fd90e6abaa3a7f28960b788cf964d172e952b384877d8e9d52433",
+          "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,9ef5cfae1b7c4891171664fa8de3857788216c33,false\nok: coverage map valid — 78 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/probe-subjects-and-mutations/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-probe-family",
+        "performer": "claude:ps-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "9ef5cfae1b7c4891171664fa8de3857788216c33",
+          "digest": "sha256:1975b1f07cf2a2e96cf9b7fef51fb61567df2627225ca2a45cc6043b48b66864",
+          "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,9ef5cfae1b7c4891171664fa8de3857788216c33,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16861,335\n  github.com/gibbonmi/bench/internal/gate,pass,37916,455\n  github.com/gibbonmi/bench/internal/probe,pass,56343,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,14033,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24681,29\n  github.com/gibbonmi/bench/internal/testreport,pass,57560,232\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "probe-family",
+        "command": "bench test --package ./internal/probe/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-testreport",
+        "performer": "claude:ps-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "9ef5cfae1b7c4891171664fa8de3857788216c33",
+          "digest": "sha256:1975b1f07cf2a2e96cf9b7fef51fb61567df2627225ca2a45cc6043b48b66864",
+          "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,9ef5cfae1b7c4891171664fa8de3857788216c33,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16861,335\n  github.com/gibbonmi/bench/internal/gate,pass,37916,455\n  github.com/gibbonmi/bench/internal/probe,pass,56343,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,14033,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24681,29\n  github.com/gibbonmi/bench/internal/testreport,pass,57560,232\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "testreport",
+        "command": "bench test --package ./internal/testreport",
+        "exit_code": 0
+      },
+      {
+        "id": "final-runbinary",
+        "performer": "claude:ps-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "9ef5cfae1b7c4891171664fa8de3857788216c33",
+          "digest": "sha256:1975b1f07cf2a2e96cf9b7fef51fb61567df2627225ca2a45cc6043b48b66864",
+          "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,9ef5cfae1b7c4891171664fa8de3857788216c33,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16861,335\n  github.com/gibbonmi/bench/internal/gate,pass,37916,455\n  github.com/gibbonmi/bench/internal/probe,pass,56343,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,14033,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24681,29\n  github.com/gibbonmi/bench/internal/testreport,pass,57560,232\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "runbinary",
+        "command": "bench test --package ./internal/runbinary",
+        "exit_code": 0
+      },
+      {
+        "id": "final-record-forms",
+        "performer": "claude:ps-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "9ef5cfae1b7c4891171664fa8de3857788216c33",
+          "digest": "sha256:1975b1f07cf2a2e96cf9b7fef51fb61567df2627225ca2a45cc6043b48b66864",
+          "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,9ef5cfae1b7c4891171664fa8de3857788216c33,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16861,335\n  github.com/gibbonmi/bench/internal/gate,pass,37916,455\n  github.com/gibbonmi/bench/internal/probe,pass,56343,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,14033,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24681,29\n  github.com/gibbonmi/bench/internal/testreport,pass,57560,232\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "record-forms",
+        "command": "bench test --package ./internal/reviewrecord/recordcmd",
+        "exit_code": 0
+      },
+      {
+        "id": "final-gate-readers",
+        "performer": "claude:ps-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "9ef5cfae1b7c4891171664fa8de3857788216c33",
+          "digest": "sha256:1975b1f07cf2a2e96cf9b7fef51fb61567df2627225ca2a45cc6043b48b66864",
+          "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,9ef5cfae1b7c4891171664fa8de3857788216c33,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16861,335\n  github.com/gibbonmi/bench/internal/gate,pass,37916,455\n  github.com/gibbonmi/bench/internal/probe,pass,56343,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,14033,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24681,29\n  github.com/gibbonmi/bench/internal/testreport,pass,57560,232\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "gate-readers",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-command-package",
+        "performer": "claude:ps-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "9ef5cfae1b7c4891171664fa8de3857788216c33",
+          "digest": "sha256:1975b1f07cf2a2e96cf9b7fef51fb61567df2627225ca2a45cc6043b48b66864",
+          "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,9ef5cfae1b7c4891171664fa8de3857788216c33,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16861,335\n  github.com/gibbonmi/bench/internal/gate,pass,37916,455\n  github.com/gibbonmi/bench/internal/probe,pass,56343,227\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,14033,184\n  github.com/gibbonmi/bench/internal/runbinary,pass,24681,29\n  github.com/gibbonmi/bench/internal/testreport,pass,57560,232\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "command-package",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final-system",
+        "performer": "claude:ps-orchestrator-20261012",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "890f07aca16f7cf38bf082f9480cb31d164f2f24",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "9ef5cfae1b7c4891171664fa8de3857788216c33",
+          "digest": "sha256:52712a9a31b5bd68ec43fe3ae68bd3fd0a97fcf65bb8fa2b22da7e5239724923",
+          "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,9ef5cfae1b7c4891171664fa8de3857788216c33,false\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,169,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,66876,169\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
+  },
+  "amendments": [
+    {
+      "from": "sha256:be6c53c260f9f2d5de9df46ee418c9be074fa8fa1932cdf443e747e2b1c446ce",
+      "to": "sha256:1f98cd1548c8bf824e1354271e8243b50d888c06d4ff8f7d4fd2b9d1d5c43052",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1f98cd1548c8bf824e1354271e8243b50d888c06d4ff8f7d4fd2b9d1d5c43052",
+      "to": "sha256:0ad5a6ea21f4e91ab9ccbe9d8e88aec3d43731b81fbac8a784791fcea3a05631",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0ad5a6ea21f4e91ab9ccbe9d8e88aec3d43731b81fbac8a784791fcea3a05631",
+      "to": "sha256:6124b1fe814c7d1d1ddd8422233ef9ffed6cec824407d7140135e64c06f02c57",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6124b1fe814c7d1d1ddd8422233ef9ffed6cec824407d7140135e64c06f02c57",
+      "to": "sha256:61cc4c138e8f1feee50a4ed368358a8048d738fd5c1e2e7b71fbadd2f7e4fb89",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:61cc4c138e8f1feee50a4ed368358a8048d738fd5c1e2e7b71fbadd2f7e4fb89",
+      "to": "sha256:eda3f737cedfbbb29511d8b04197c36b17a332d75a896cb01b29bc4bf2acf8e4",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:eda3f737cedfbbb29511d8b04197c36b17a332d75a896cb01b29bc4bf2acf8e4",
+      "to": "sha256:95540fdff85b79045b84441bbcf357fda6bcb980917f14f3acf6ea387f7ac7b9",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ],
+        "PS-C": [
+          "PS-C"
+        ]
+      }
+    },
+    {
+      "from": "sha256:95540fdff85b79045b84441bbcf357fda6bcb980917f14f3acf6ea387f7ac7b9",
+      "to": "sha256:ebdb71f882c8a0ac15a0a420a59f14da87955ea92fc89926a655cb866a7dbf58",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ],
+        "PS-C": [
+          "PS-C"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ebdb71f882c8a0ac15a0a420a59f14da87955ea92fc89926a655cb866a7dbf58",
+      "to": "sha256:775ef5a4cacbc59a0b169daca384bbed3edcff4eeacd530fe4c8bfdc5d91f6f2",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ],
+        "PS-C": [
+          "PS-C"
+        ],
+        "PS-D": [
+          "PS-D"
+        ]
+      }
+    },
+    {
+      "from": "sha256:775ef5a4cacbc59a0b169daca384bbed3edcff4eeacd530fe4c8bfdc5d91f6f2",
+      "to": "sha256:04247aac6dd024b552e7ab1cda92d7b35a1763f4ab86551574ef3da17f525d5c",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ],
+        "PS-C": [
+          "PS-C"
+        ],
+        "PS-D": [
+          "PS-D"
+        ]
+      }
+    },
+    {
+      "from": "sha256:04247aac6dd024b552e7ab1cda92d7b35a1763f4ab86551574ef3da17f525d5c",
+      "to": "sha256:8991eb3a2f176c7f53a89b7af19c160c44b9e940b4715249528f1a2d97ef1282",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ],
+        "PS-C": [
+          "PS-C"
+        ],
+        "PS-D": [
+          "PS-D"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8991eb3a2f176c7f53a89b7af19c160c44b9e940b4715249528f1a2d97ef1282",
+      "to": "sha256:b3022cdaa72487559bb4f65cdc350976f569b74e98d7dc1a87f188688bac8f49",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
+        ],
+        "PS-C": [
+          "PS-C"
+        ],
+        "PS-D": [
+          "PS-D"
+        ],
+        "PS-E": [
+          "PS-E"
+        ]
+      }
+    }
+  ]
+}
+```
+
+## Repair allowance
+
+Chunk PS-A has used 1 of its 2 repair cycles after its initial review. Repair 6175e732 closed S1, S2, P1, C1, and C2, and the confirming round of all three axes passed.
+
+## Standards
+
+PS-A: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 5): `internal/probe/command.go:81` and `internal/probe/mutation_input.go:39-74` derive the mutation group twice. `gradeForms` must give the one group, and `mutationInput` must read that group.
+- S2 (auto-fix, confidence 4): `internal/probe/edit.go:46` names `--with equals --swap` for a `--with-file` swap. The refusal must name the flag that the caller gave.
+
+## Spec
+
+PS-A: 1 finding. The worst issue is P1.
+
+- P1 (auto-fix, confidence 8): `internal/probe/combined_test.go:49-51` reaches the earlier `--with` and `--with-file` refusal. A PS18 subtest must send `--swap` with `--with-file` and `--omit`, and no `--with`. This finding has the same fix as C1.
+
+## Coverage
+
+PS-A: 3 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 9): `internal/probe/command.go:109` has no red-capable test, and a probe there read `silent`. The P1 subtest closes it.
+- C2 (auto-fix, confidence 8): `internal/probe/mutation_input.go:91` has no test for an overflowing `--occurrence` value. The PS8 value list must add one.
+- C3 (no-op, confidence 6): `internal/probe/subject.go:140` is reachable only through a race after the byte check.
+
+Repair targets: 4 (S1, S2, P1 with C1, and C2) for ticket 1.
+
+## Advice
+
+- PS-A Standards: the `namedGroup` comment names its callers.
+- PS-A Spec: the spec does not yet name the `--with-file equals --swap` refusal text. The orchestrator adds it in the ticket 2 plan commit.
+
+## PS-B pickup
+
+Chunk PS-B has used 2 of its 2 repair cycles after its initial review. Repair d4f03f03 closed S1, S2, C1, and C2. Repair 145d5439 closed S3 and S4, and the second confirming round of all three axes passed.
+
+### Standards
+
+PS-B: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 7): `internal/probe/command.go:151` repeats the rule of `internal/testreport/command.go:89` that only the system suite takes `--run`. One exported `testreport` predicate must own the rule, and both graders must call it.
+- S2 (auto-fix, confidence 6): `internal/testreport/selection_facts.go:95` calls each `--check` name a conformance check. The note must name a check from the `bench test --help` inventory without that class.
+
+### Spec
+
+PS-B: 0 findings.
+
+### Coverage
+
+PS-B: 2 findings. The worst issue is C1.
+
+- C1 (auto-fix after a plan expansion, confidence 7): `internal/probe/probe.go:79-94` answers `silent` for a `--check prose` probe of a subject that the prose grade never reads. The probe must refuse a subject that `prose.IsSubjectName` rejects.
+- C2 (auto-fix, confidence 5): `internal/probe/command.go:149` has no row that accepts `--check system` without `--run`.
+
+Repair targets: 4 (S1, S2, C1, and C2) for ticket 2.
+
+### PS-B confirming round
+
+- S3 (auto-fix, confidence 5): the `CheckTakesRun` comment in `internal/testreport/selection_facts.go` names its callers and misses `Request.Run`. The `GradesProse` comment describes `prose.IsSubjectName`, which that method never consults.
+- S4 (auto-fix, confidence 7): the not-graded hint at `internal/probe/probe.go:107` states the `.md` rule that `prose.IsSubjectName` enforces. The hint must say that the subject is not a prose subject, without the rule.
+- C3 (no-op): `internal/testreport/check_test.go:151` and `:176` already pin the non-system `--run` refusal of `bench test`.
+
+## PS-C pickup
+
+Chunk PS-C has used 1 of its 2 repair cycles after its initial review. Small-fix repairs 8d68d21a (ticket 3) and 7a55152e (ticket 4) closed S1, S2, C1, and C2, and the confirming round of all three axes passed.
+
+### Standards
+
+PS-C: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, ticket 3, confidence 6): `sameOutcome` in `internal/testreport/outcome_test.go` lists every `Outcome` field by hand, so a new field goes unchecked. The helper must compare the whole value.
+- S2 (auto-fix, ticket 4, confidence 5): `internal/probe/verdict_test.go:134-138` repeats the build-script install of `buildEachRun`. One fixture helper must own it.
+
+### Spec
+
+PS-C: 0 findings. The orchestrator adds the advice A1 sentence on a red baseline to the Verdict paragraph.
+
+### Coverage
+
+PS-C: 2 findings. The worst issue is C1.
+
+- C1 (auto-fix, ticket 3, confidence 9): no test runs `--expect` over a passing mutated run, so the failed-kind guard at `internal/probe/verdict.go:45` has no red-capable test.
+- C2 (auto-fix, ticket 4, confidence 8): no test puts a control byte in the first build line, so `sanitize.Preview` at `internal/probe/verdict.go:49` has no red-capable test.
+
+Repair targets: 4. Ticket 3 takes S1 and C1, and ticket 4 takes S2 and C2.
+
+## PS-D pickup
+
+Chunk PS-D has used 1 of its 2 repair cycles after its initial review. Repair 6fb92fad and da666592 closed S1, C1, C2, and C3. The plan commit 15bf62a2 closed the confirming-round Spec finding P1 and added row PS78, and PS-D is re-frozen there.
+
+### Standards
+
+PS-D: 1 finding.
+
+- S1 (auto-fix after a fence expansion, confidence 6): `internal/probe/lock.go:62-74` reads every `F_SETLK` error as in use. The contention rule of `internal/gocache/lock.go:162` (EAGAIN or EACCES) must be the one source, and any other lock error must read lock-unavailable.
+
+### Spec
+
+PS-D: 0 findings. The release that ignores every removal error follows `preservation.release`, and the orchestrator flags it for reviewer veto.
+
+### Coverage
+
+PS-D: 3 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 8): no test drives the open ENOENT retry or the third-ENOENT refusal at `internal/probe/lock.go:63-66`.
+- C2 (auto-fix, confidence 8): no test drives `O_NOFOLLOW` or another open error at `internal/probe/lock.go:62` and `:67-69`.
+- C3 (auto-fix, confidence 7): no test asserts the 0700 directory mode or the 0600 file mode that the spec states.
+
+Repair targets: 4 (S1, C1, C2, and C3) for ticket 5.
+
+## PS-E pickup
+
+Chunk PS-E has used 1 of its 2 repair cycles after its initial review. Small-fix repair 3cc1144a closed S1 and S2, and the confirming round of all three axes passed.
+
+### Standards
+
+PS-E: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, small fix, confidence 6): `.agents/skills/bench-craft-delegate/SKILL.md:105` copies a partial flag list that `bench probe --help` owns. The sentence must go, or it must only point at the help.
+- S2 (auto-fix, small fix, confidence 5): `.bench/BENCH-reference.md:259-267` restates the flag-level grammar and the selection that `bench probe --help` owns. The paragraphs keep the form names, the subject lock, and the `mutant` table, and they point at the help for the grammar.
+
+### Spec
+
+PS-E: 0 blocking findings. The advice P1 on the `--occurrence` sentence folds into the S2 repair.
+
+### Coverage
+
+PS-E: 2 findings, none blocking.
+
+- C1 (no-op): the anchored line 81 keeps "omission or swap" by the PS71 decision.
+- C2 (orchestrator spec fix): row PS71 cites line 104, and the probe sentence is now at line 105.
+
+Repair targets: 2 (S1 and S2) for ticket 6.

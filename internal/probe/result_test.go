@@ -85,6 +85,23 @@ func bitingAnswer(t *testing.T) string {
 	return out
 }
 
+// TestProbeResultSchemaVersion covers PS54 and PS55: the schema token names the verdict-row
+// field set, so ReadResult reads a v2 answer and refuses a v1 answer by its schema rather
+// than by a field error. The tokens and the v1 field set are authored apart from the producer.
+func TestProbeResultSchemaVersion(t *testing.T) {
+	out := bitingAnswer(t)
+	if !strings.Contains(out, "probe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,") {
+		t.Fatalf("stdout = %q, want the schema cell bench-probe-result-v2", out)
+	}
+	readAnswer(t, out)
+	v1 := strings.Replace(strings.Replace(out, ",first_failure", "", 1), ",TestClampNegative,yes\n", ",yes\n", 1)
+	v1 = strings.Replace(v1, "bench-probe-result-v2,", "bench-probe-result-v1,", 1)
+	want := `the schema "bench-probe-result-v1" is unsupported`
+	if _, err := ReadResult([]byte(v1)); err == nil || !strings.Contains(err.Error(), want) {
+		t.Fatalf("ReadResult(v1) = %v, want %q", err, want)
+	}
+}
+
 // declared rewrites the trailing_bytes cell of out's execution row to n.
 func declared(t *testing.T, out string, n int) string {
 	t.Helper()

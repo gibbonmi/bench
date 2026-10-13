@@ -8,20 +8,16 @@ import (
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// proseCheck names the one `bench test` check that grades sentences instead of running a
-// Go test. The probe refuses it and the system suite as targets, because `bench test`
-// stays the caller for both after a hand mutation, and the refusal names that route.
-const proseCheck = "prose"
-
 // probeFields is the verdict row's schema. failed_tests is a genuine count, so the row
 // renders through toon.TableTyped and that cell stays an integer on a round-trip.
-var probeFields = []string{"verdict", "subject", "mutation", "cause", "failed_tests", "restored"}
+var probeFields = []string{"verdict", "subject", "mutation", "cause", "failed_tests", "first_failure", "restored"}
 
 // selectionFields is the schema of the row that names what the probe ran. ran is a genuine
 // count, so the row renders through toon.TableTyped and that cell stays an integer.
@@ -42,20 +38,26 @@ var resultTables = []struct {
 // restoredCell is the restored cell of a probe whose restore was proven byte-exact.
 const restoredCell = "yes"
 
-// resultSchema is the schema cell of the execution row. A reader refuses any other value.
-const resultSchema = "bench-probe-result-v1"
+// resultSchema is the schema cell of the execution row. It names the field set of the
+// three tables, so it changes with them, and a reader refuses any other value.
+const resultSchema = "bench-probe-result-v2"
 
-// verdictCells is one probe answer's variable half: the four cells the verdict row takes
-// from a run, and the two cells the selection row takes from the baseline and the mutated
-// run. The six travel together, because they come from two different runs and one outcome
-// value cannot carry both.
+// verdictCells is one probe answer's variable half: the five cells the verdict row takes
+// from a run, the two cells the selection row takes from the baseline and the mutated run,
+// and the mutant table's cell. They travel together, because they come from two different
+// runs and one outcome value cannot carry both.
 type verdictCells struct {
-	verdict  string
-	cause    string
-	failed   int
+	verdict string
+	cause   string
+	failed  int
+	// first is the first_failure cell that firstFailure answers.
+	first    *string
 	restored string
 	baseline string
 	ran      int
+	// buildLine is the first_build_line cell of a mutated run that failed to build, and nil
+	// when the answer prints no mutant table.
+	buildLine *string
 }
 
 // run is the probe over the native file operations.
@@ -66,65 +68,72 @@ func run(root string, parsed usage.Result) (string, int) {
 // runWith applies the refusal order, grades the baseline, and then runs the probe itself,
 // with each subject replacement through replacer. Every refusal below answers before
 // preserve writes anything, which is what makes a refused probe leave the tree, the Bench
-// home, and the process table exactly as it found them. The baseline is the last of them,
+// home, and the process table exactly as it found them. The subject lock is the one entry
+// that a refusal can write under the Bench home, and its deferred release removes it on every
+// later answer, an interrupt and a kept copy included. The baseline is the last refusal,
 // because it is the only one that starts a run child.
 func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (string, int) {
 	subject, line := resolveSubject(root, parsed.Positionals[0])
 	if line != "" {
 		return line, 1
 	}
-	old, replacement, kind, line := mutationInput(parsed)
+	input, line := mutationInput(parsed)
 	if line != "" {
 		return line, 1
 	}
-	mutationResult, line := mutate(subject.start, old, replacement, kind)
+	mutant, line := mutate(subject.start, input, subject.display)
 	if line != "" {
 		return line, 1
-	}
-	if mutationResult.matches == 0 {
-		return renderInvalidMutation(subject, kind, parsed)
 	}
 	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
 	if line != "" {
 		return line, code
 	}
-	if line := gradeCheckTarget(parsed); line != "" {
+	if line := gradeProseSubject(subject, request); line != "" {
 		return line, 1
+	}
+	if mutant.miss {
+		return renderInvalidMutation(subject, input.cell, request)
 	}
 	if line := gradeGateLock(root); line != "" {
 		return line, 1
 	}
-	mutation := kind
+	held, line := lockSubject(subject)
+	if line != "" {
+		return line, 1
+	}
+	defer held.release()
+	if line := rereadSubject(root, parsed.Positionals[0], subject); line != "" {
+		return line, 1
+	}
+	mutation := input.cell
 	line, code, baseline := gradeBaseline(root, subject, mutation, request)
 	if line != "" {
 		return line, code
 	}
-	return probe(replacer, root, subject, mutationResult.mutated, mutation, request, baseline)
+	return probe(replacer, root, subject, mutant, mutation, request, baseline, parsed.Flags["--expect"])
 }
 
-func renderInvalidMutation(subject subject, mutation string, parsed usage.Result) (string, int) {
-	cells := verdictCells{verdict: "invalid", cause: "substring-miss", restored: untouchedCell}
-	form, target, run := "package", parsed.Flags["--package"], testreport.AllTests
-	if check, ok := parsed.Flags["--check"]; ok {
-		form, target = "check", check
-	} else if pattern, ok := parsed.Flags["--run"]; ok {
-		run = pattern
+// gradeProseSubject refuses a prose probe of a file that the prose grade never reads,
+// because the grade of that mutant equals the baseline and would answer a false silent.
+func gradeProseSubject(subject subject, request testreport.Request) string {
+	if !request.GradesProse() || prose.IsSubjectName(subject.display) {
+		return ""
 	}
-	out, err := envelope{cells: cells, subject: subject.display, mutation: mutation, form: form, target: target, run: run, command: 1}.answer("")
+	return toon.Errorf("probe subject not graded", subject.display+" is not a prose subject") + "\n"
+}
+
+// renderInvalidMutation answers a substring miss. Its selection cells come from the prepared
+// request, so the row names the selection that the focused run would have run.
+func renderInvalidMutation(subject subject, mutation string, request testreport.Request) (string, int) {
+	cells := verdictCells{verdict: "invalid", cause: "substring-miss", restored: untouchedCell}
+	e := selected(subject, mutation, cells, request)
+	e.command = 1
+	out, err := e.answer("")
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
 	return out, 1
-}
-
-func mutationForm(parsed usage.Result) (string, string, string) {
-	if old, omit := parsed.Flags["--omit"]; omit {
-		return old, "", "omit"
-	}
-	if call, unwrap := parsed.Flags["--unwrap"]; unwrap {
-		return call, "", "unwrap"
-	}
-	return parsed.Flags["--swap"], parsed.Flags["--with"], "swap"
 }
 
 // selectionArgs spells the focused run in `bench test`'s own grammar, so the probe and
@@ -135,23 +144,14 @@ func selectionArgs(parsed usage.Result) []string {
 		args = append(args, "--check", check)
 	} else {
 		args = append(args, "--package", parsed.Flags["--package"])
-		if run, ok := parsed.Flags["--run"]; ok {
-			args = append(args, "--run", run)
-		}
+	}
+	if run, ok := parsed.Flags["--run"]; ok {
+		args = append(args, "--run", run)
 	}
 	if _, ok := parsed.Flags["--full"]; ok {
 		args = append(args, "--full")
 	}
 	return args
-}
-
-func gradeCheckTarget(parsed usage.Result) string {
-	switch parsed.Flags["--check"] {
-	case proseCheck, gate.SystemPhaseName:
-		hint := "--check prose and --check system are not probe targets; " + testreport.HandProbeRoute
-		return toon.Errorf("probe focused run unsupported", hint) + "\n"
-	}
-	return ""
 }
 
 // gradeGateLock refuses while a gate run holds the tree. The gate grades the bytes it
@@ -172,13 +172,13 @@ func gradeGateLock(root string) string {
 // probe preserves, mutates, runs, and restores. The restore is deferred around the run,
 // so an interrupt or a panic inside the focused run still puts the subject back before
 // the verb answers, and the render runs only after the restore has been proven.
-func probe(replacer durablefile.Replacer, root string, subject subject, mutated []byte, mutation string, request testreport.Request, baseline testreport.OutcomeKind) (string, int) {
+func probe(replacer durablefile.Replacer, root string, subject subject, mutant mutationResult, mutation string, request testreport.Request, baseline testreport.OutcomeKind, expect string) (string, int) {
 	preserved, line := preserve(root, subject)
 	if line != "" {
 		return line, 1
 	}
-	if err := replacer.Replace(subject.path, mutated, subject.mode); err != nil {
-		return mutationFailure(replacer, subject, preserved, err)
+	if published, err := mutant.write(replacer, subject); err != nil {
+		return mutationFailure(replacer, subject, preserved, err, published)
 	}
 	var outcome testreport.Outcome
 	var report string
@@ -191,17 +191,30 @@ func probe(replacer durablefile.Replacer, root string, subject subject, mutated 
 	if restored {
 		preserved.release()
 	}
-	return render(subject, mutation, outcome, focused, request, report, preserved, restored, reason, baseline)
+	cells, code := mutatedCells(outcome, expect, baseline)
+	return render(subject, mutation, cells, code, focused, request, report, preserved, restored, reason)
+}
+
+// write puts the mutant in place of the subject: a removal through replacer for --delete,
+// and a replacement otherwise. With an error, published reports that the subject may no
+// longer hold its start bytes. A failed removal can leave the subject absent, so it always
+// counts as published.
+func (r mutationResult) write(replacer durablefile.Replacer, subject subject) (bool, error) {
+	if r.remove {
+		return true, replacer.Remove(subject.path)
+	}
+	err := replacer.Replace(subject.path, r.mutated, subject.mode)
+	var replaceErr *durablefile.Error
+	return errors.As(err, &replaceErr) && replaceErr.Published, err
 }
 
 // mutationFailure answers a mutation that returned an error, and no focused run starts.
-// A failure before the rename left the start bytes in place, so the copy goes at once.
-// After a completed rename the mutated bytes may be visible, so the copy stays until a
-// restore proves the start bytes back, and a failed restore keeps it at exit 2.
-func mutationFailure(replacer durablefile.Replacer, subject subject, preserved preservation, err error) (string, int) {
+// An unpublished failure left the start bytes in place, so the copy goes at once. After a
+// published failure the mutant may be visible, so the copy stays until a restore proves
+// the start bytes back, and a failed restore keeps it at exit 2.
+func mutationFailure(replacer durablefile.Replacer, subject subject, preserved preservation, err error, published bool) (string, int) {
 	line := toon.Errorf("probe mutation failed", err.Error()) + "\n"
-	var replaceErr *durablefile.Error
-	if errors.As(err, &replaceErr) && replaceErr.Published {
+	if published {
 		if restored, reason := restore(replacer, subject, preserved); !restored {
 			return line + keptCopy(preserved, err.Error()+"; restore: "+reason), 2
 		}
@@ -225,23 +238,13 @@ func keptCopy(preserved preservation, reason string) string {
 }
 
 // render prints the verdict row first, so a caller reads the answer before the evidence.
-// focused is the normalized exit of the mutated run. A subject the encoder cannot carry
-// answers with the shared render error in place of the rows and the report, and the
-// restore has already run by then, which is why an unprintable name still leaves a clean
-// tree. The restore-failed verdict overrides every other answer, so a failed restore keeps
-// the answer that names the kept copy and exit 2 even when the rows themselves refuse.
-func render(subject subject, mutation string, outcome testreport.Outcome, focused int, request testreport.Request, report string, preserved preservation, restored bool, reason string, baseline testreport.OutcomeKind) (string, int) {
-	// The baseline cell carries the kind the baseline run observed, so the row joins the two
-	// runs it reports rather than asserting the kind the refusal order implies.
-	cells := verdictCells{
-		cause:    string(outcome.Kind),
-		failed:   outcome.FailedTests,
-		restored: restoredCell,
-		baseline: string(baseline),
-		ran:      outcome.Ran,
-	}
-	var code int
-	cells.verdict, code = verdictFor(outcome.Kind)
+// cells and code are the mutated run's cells and exit, and focused is that run's
+// normalized exit. A subject the encoder cannot carry answers with the shared render
+// error in place of the rows and the report, and the restore has already run by then,
+// which is why an unprintable name still leaves a clean tree. The restore-failed verdict
+// overrides every other answer, so a failed restore keeps the answer that names the kept
+// copy and exit 2 even when the rows themselves refuse.
+func render(subject subject, mutation string, cells verdictCells, code, focused int, request testreport.Request, report string, preserved preservation, restored bool, reason string) (string, int) {
 	preservedBlock := ""
 	if !restored {
 		cells.verdict, code, cells.restored = "restore-failed", 2, "no"
@@ -278,10 +281,15 @@ func selected(subject subject, mutation string, cells verdictCells, request test
 	return envelope{cells: cells, subject: subject.display, mutation: mutation, form: request.Form(), target: request.Target(), run: request.Run()}
 }
 
-// answer renders the envelope ahead of suffix, with the execution row counting every byte
-// of suffix. The rows render in one call, so a cell the encoder cannot carry refuses all
-// of them rather than printing half an answer.
+// answer renders the envelope and then any mutant table ahead of suffix, with the execution
+// row counting every byte after it. The rows render in one call, so a cell the encoder
+// cannot carry refuses all of them rather than printing half an answer.
 func (e envelope) answer(suffix string) (string, error) {
+	mutant, err := e.cells.mutantTable()
+	if err != nil {
+		return "", err
+	}
+	suffix = mutant + suffix
 	e.trailing = len(suffix)
 	head, err := e.rows()
 	if err != nil {
@@ -291,12 +299,15 @@ func (e envelope) answer(suffix string) (string, error) {
 }
 
 func (e envelope) rows() (string, error) {
-	var focused any
+	var focused, first any
 	if e.focused != nil {
 		focused = *e.focused
 	}
+	if e.cells.first != nil {
+		first = *e.cells.first
+	}
 	cells := [][]any{
-		{e.cells.verdict, e.subject, e.mutation, e.cells.cause, e.cells.failed, e.cells.restored},
+		{e.cells.verdict, e.subject, e.mutation, e.cells.cause, e.cells.failed, first, e.cells.restored},
 		{e.form, e.target, e.run, e.cells.baseline, e.cells.ran},
 		{resultSchema, e.command, focused, e.trailing},
 	}

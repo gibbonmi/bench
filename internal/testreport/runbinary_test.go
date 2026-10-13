@@ -95,6 +95,34 @@ func TestSeparateTopLevelCommandsSelectDifferentPrivatePaths(t *testing.T) {
 	}
 }
 
+// PS32: each Execute without an inherited selection builds its own run binary, so a probe's
+// mutated run never reuses the binary that its baseline built.
+func TestEachExecuteBuildsItsOwnSelection(t *testing.T) {
+	root, _ := selectedPathTestModule(t)
+	builds := 0
+	factory := runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
+			builds++
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	}
+	installTestSelectionFactory(t, factory)
+	request, line, code := Prepare(root, nil)
+	if line != "" {
+		t.Fatalf("Prepare = (%q, %d), want an accepted selection", line, code)
+	}
+	for range 2 {
+		if outcome, out, _ := Execute(root, request); outcome.Kind != OutcomePassed {
+			t.Fatalf("Execute = %q\n%s", outcome.Kind, out)
+		}
+	}
+	if builds != 2 {
+		t.Fatalf("builds = %d, want one for each Execute", builds)
+	}
+}
+
 func installTestSelectionFactory(t *testing.T, factory runbinary.Factory) {
 	t.Helper()
 	for _, name := range []string{runbinary.Env, "BENCH_KIT"} {

@@ -15,7 +15,8 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-const proseCheckName = "prose"
+// ProseCheckName names the check that grades prose rather than running a Go test.
+const ProseCheckName = "prose"
 
 // RootConformanceCheckName names the unscoped run of the root conformance test, which
 // grades every registered dev-tier check. The build preflight reads it as the check-floor
@@ -55,7 +56,7 @@ func namedCheckInventory() string {
 }
 
 func namedChecks() []string {
-	return append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName, RootConformanceCheckName)
+	return append(registry.Names(registry.Dev), gate.SystemPhaseName, ProseCheckName, RootConformanceCheckName)
 }
 
 func isNamedCheck(check string) bool {
@@ -68,7 +69,7 @@ func namedCheckKind(check string) string {
 	switch check {
 	case gate.SystemPhaseName:
 		return "system"
-	case proseCheckName:
+	case ProseCheckName:
 		return "prose"
 	}
 	return "conformance"
@@ -114,7 +115,7 @@ func runGoBackedCheck(ctx context.Context, root string, request focusedRequest, 
 // failure, and a grade of no subject is no evidence that the check ran.
 func runProseCheck(root string, full bool) (Outcome, string, int) {
 	grade := prose.GradeTree(root)
-	row, err := checkRow(proseCheckName, 0, len(grade.Subjects))
+	row, err := checkRow(ProseCheckName, 0, len(grade.Subjects))
 	if err != nil {
 		return refusedOutcome(toon.RenderError(err)+"\n", 1)
 	}

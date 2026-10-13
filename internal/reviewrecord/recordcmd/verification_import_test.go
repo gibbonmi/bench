@@ -43,9 +43,9 @@ const treeLead = "tree[1]{target,head,dirty}:\n  alpha,none,true\n"
 // answer is one probe answer: verdict, restored cell, command exit, focused cell, and the
 // suffix after the execution row.
 func answer(verdict, restored string, command int, focused, suffix string) string {
-	return "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  " + verdict + ",clamp.go,swap,failed,1," + restored + "\n" +
+	return "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  " + verdict + ",clamp.go,swap,failed,1,TestClampNegative," + restored + "\n" +
 		"selection[1]{form,target,run,baseline,ran}:\n  package,./,^TestClampNegative$,passed,1\n" +
-		"probe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1," +
+		"probe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2," +
 		strconv.Itoa(command) + "," + focused + "," + strconv.Itoa(len(suffix)) + "\n" + suffix
 }
 
@@ -103,16 +103,16 @@ func TestVerificationImportRefusals(t *testing.T) {
 		exit       int
 	}{
 		"duplicate envelope":  {strings.Replace(bit, ","+strconv.Itoa(len(report))+"\n", ","+strconv.Itoa(len(bit))+"\n", 1) + bit, "repeats", 0},
-		"substituted schema":  {strings.Replace(bit, "bench-probe-result-v1", "bench-probe-result-v9", 1), "schema", 0},
+		"substituted schema":  {strings.Replace(bit, "bench-probe-result-v2", "bench-probe-result-v9", 1), "schema", 0},
 		"older envelope":      {strings.Join(strings.SplitAfter(bit, "\n")[:4], "") + report, "probe_execution", 0},
-		"string exit":         {strings.Replace(bit, "-v1,0,1,", "-v1,0,\"1\",", 1), "malformed", 0},
+		"string exit":         {strings.Replace(bit, "-v2,0,1,", "-v2,0,\"1\",", 1), "malformed", 0},
 		"count mismatch":      {bit + "\n", "trailing_bytes", 0},
 		"exit disagreement":   {bit, "--exit-code 1 differs", 1},
 		"no mutated run":      {answer("invalid", "untouched", 1, "null", ""), "null", 1},
 		"projected response":  {bit + "spilled{lines=20,bytes=900,omitted_lines=11,cut_lines=0,path=/outside}\n", "incomplete response", 0},
 		"malformed tree lead": {"tree[1]{target,head}:\n  alpha,none\n" + bit, "identity row", 0},
-		"reordered envelope": {strings.Replace(bit, "{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,",
-			"{schema,focused_exit_code,command_exit_code,trailing_bytes}:\n  bench-probe-result-v1,1,0,", 1), "not canonical", 0},
+		"reordered envelope": {strings.Replace(bit, "{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,",
+			"{schema,focused_exit_code,command_exit_code,trailing_bytes}:\n  bench-probe-result-v2,1,0,", 1), "not canonical", 0},
 	} {
 		t.Run(name, func(t *testing.T) {
 			refuseVerify(t, f, tc.want, importing(t, tc.data, tc.exit))

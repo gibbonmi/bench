@@ -20,7 +20,7 @@ func TestSelectionFactsNameTheRun(t *testing.T) {
 	}{
 		{"conformance check", []string{"--check", "line-routing"}, CheckForm, "line-routing", "^" + rootConformanceTestName + "$"},
 		{"system check", []string{"--check", gate.SystemPhaseName}, CheckForm, gate.SystemPhaseName, AllTests},
-		{"prose check", []string{"--check", proseCheckName}, CheckForm, proseCheckName, AllTests},
+		{"prose check", []string{"--check", ProseCheckName}, CheckForm, ProseCheckName, AllTests},
 		{"package", []string{"--package", "./internal/..."}, PackageForm, "./internal/...", AllTests},
 		{"package and run", []string{"--package", "./...", "--run", "^TestClamp$"}, PackageForm, "./...", "^TestClamp$"},
 		{"repeated package", []string{"--package", "./a", "--package", "./b/..."}, PackageForm, "./a ./b/...", AllTests},
@@ -145,19 +145,23 @@ func runEvent(test string) string {
 
 const packagePass = `{"Action":"pass","Package":"counted","Elapsed":0.01}` + "\n"
 
-// TestProbeNotesDeriveTheirTokens grades that the four notes carry the runner's own
-// constants. A hand-copied token would drift the moment the runner renamed one.
+// TestProbeNotesDeriveTheirTokens grades that the notes hold exactly the probe's package
+// note and the check-inventory note. The prose check and the system suite are probe
+// targets, and each run without an inherited selection builds its own run binary, so a
+// not-a-target clause or a rebuild note states a route that the probe does not take. The
+// inventory also names the prose check and the system suite, so a note that calls each
+// name a conformance check misstates two of them.
 func TestProbeNotesDeriveTheirTokens(t *testing.T) {
 	notes := ProbeNotes()
-	if !strings.HasPrefix(notes, "notes:\n  ") {
-		t.Fatalf("notes = %q, want the notes block header", notes)
+	if !strings.HasPrefix(notes, "notes:\n  "+probePackageNote+"\n  --check <name> ") {
+		t.Fatalf("notes = %q, want the package note and then the check-inventory note", notes)
 	}
-	if lines := strings.Count(notes, "\n  "); lines != 4 {
-		t.Fatalf("notes hold %d facts, want 4:\n%s", lines, notes)
+	if lines := strings.Count(notes, "\n  "); lines != 2 {
+		t.Fatalf("notes hold %d facts, want 2:\n%s", lines, notes)
 	}
-	for _, token := range []string{packageValueRule, proseCheckName, gate.SystemPhaseName, usage.WorktreeBuild, HandProbeRoute} {
-		if !strings.Contains(notes, token) {
-			t.Fatalf("notes = %q, want the runner's own %q", notes, token)
+	for _, retired := range []string{"not probe targets", usage.WorktreeBuild, "conformance check"} {
+		if strings.Contains(notes, retired) {
+			t.Fatalf("notes = %q, want no %q", notes, retired)
 		}
 	}
 }

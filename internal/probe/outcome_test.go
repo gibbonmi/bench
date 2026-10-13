@@ -47,7 +47,7 @@ func TestProbeReportsARestoreFailure(t *testing.T) {
 	installStubGo(t, f, cannedFailure("caught"), 1, "chmod 0500 .\n")
 	t.Cleanup(func() { _ = os.Chmod(f.root, 0o755) })
 	out, code := runProbe(t, probeArgs()...)
-	requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "no"))
+	requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "TestClampNegative", "no"))
 	kept := preservedCopy(t, f)
 	if !strings.Contains(out, "preserved[1]{path,reason}:\n  "+kept) {
 		t.Fatalf("stdout = %q, want the preserved row naming %s", out, kept)
@@ -65,7 +65,7 @@ func TestProbeReportsAReadBackMismatch(t *testing.T) {
 	hook := "find \"$BENCH_HOME/probe\" -type f -exec truncate -s 0 {} +\n"
 	installStubGo(t, f, cannedFailure("caught"), 1, hook)
 	out, code := runProbe(t, probeArgs()...)
-	requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "no"))
+	requireRow(t, out, code, 2, probeRow(t, "restore-failed", "clamp.go", "swap", "failed", 1, "TestClampNegative", "no"))
 	want := "the restored bytes differ from the bytes read at the start"
 	if !strings.Contains(out, want) {
 		t.Fatalf("stdout = %q, want the preserved row's reason %q", out, want)
@@ -138,7 +138,7 @@ func TestProbeRendersASubjectWithASpace(t *testing.T) {
 	writeFixtureFile(t, filepath.Join(f.root, "my pkg", "clamp.go"), "package spaced\n\nconst alpha = 1\n", 0o644)
 	installStubGo(t, f, cannedPass, 0, "")
 	out, code := runProbe(t, "my pkg/clamp.go", "--swap", "alpha", "--with", "beta", "--package", "./", "--run", "^TestClampPositive$")
-	requireRow(t, out, code, 1, probeRow(t, "silent", "my pkg/clamp.go", "swap", "passed", 0, "yes"))
+	requireRow(t, out, code, 1, probeRow(t, "silent", "my pkg/clamp.go", "swap", "passed", 0, nil, "yes"))
 }
 
 // PB40: a subject whose last line has no newline restores byte-exact.
@@ -148,7 +148,7 @@ func TestProbeRestoresAFileWithoutTrailingNewline(t *testing.T) {
 	writeFixtureFile(t, subject, "alpha", 0o644)
 	installStubGo(t, f, cannedPass, 0, "")
 	out, code := runProbe(t, "notrailing.txt", "--swap", "alpha", "--with", "beta", "--package", "./", "--run", "^TestClampPositive$")
-	requireRow(t, out, code, 1, probeRow(t, "silent", "notrailing.txt", "swap", "passed", 0, "yes"))
+	requireRow(t, out, code, 1, probeRow(t, "silent", "notrailing.txt", "swap", "passed", 0, nil, "yes"))
 	got, err := os.ReadFile(subject)
 	if err != nil || string(got) != "alpha" {
 		t.Fatalf("restored bytes = (%q, %v), want %q", got, err, "alpha")
@@ -191,27 +191,36 @@ func listRecordSurfaces(t *testing.T, f *fixture) string {
 	return strings.Join(lines, "\n")
 }
 
-// PB7: the check form builds the request `bench test` builds for the same check name, so
-// the two verbs cannot disagree about what a named check selects.
+// PB7, PS30: the check form builds the request `bench test` builds for the same selection,
+// a system run pattern included, so the two verbs cannot disagree about what a named check
+// selects. The system suite takes its pattern as an option, so a bare system selection is
+// accepted too.
 func TestProbeSelectsTheCheckForm(t *testing.T) {
 	f := newFixture(t)
-	parsed, line, code := usage.Parse(grammar, []string{"clamp.go", "--omit", "n < 0", "--check", "line-routing"})
-	if line != "" {
-		t.Fatalf("parse = (%q, %d), want an accepted selection", line, code)
-	}
-	if got := strings.Join(selectionArgs(parsed), " "); got != "--check line-routing" {
-		t.Fatalf("selection args = %q, want %q", got, "--check line-routing")
-	}
-	got, line, _ := testreport.Prepare(f.root, selectionArgs(parsed))
-	if line != "" {
-		t.Fatalf("prepare refused the probe's check form: %q", line)
-	}
-	want, line, _ := testreport.Prepare(f.root, []string{"--check", "line-routing"})
-	if line != "" {
-		t.Fatalf("prepare refused the reference check form: %q", line)
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("probe request = %#v, want %#v", got, want)
+	for _, selection := range [][]string{{"--check", "line-routing"}, {"--check", "system", "--run", "^X$"}, {"--check", "system"}} {
+		t.Run(strings.Join(selection, " "), func(t *testing.T) {
+			parsed, line, code := usage.Parse(grammar, append([]string{"clamp.go", "--omit", "n < 0"}, selection...))
+			if line == "" {
+				line, code = gradeForms(parsed)
+			}
+			if line != "" {
+				t.Fatalf("parse = (%q, %d), want an accepted selection", line, code)
+			}
+			if got := selectionArgs(parsed); !reflect.DeepEqual(got, selection) {
+				t.Fatalf("selection args = %q, want %q", got, selection)
+			}
+			got, line, _ := testreport.Prepare(f.root, selectionArgs(parsed))
+			if line != "" {
+				t.Fatalf("prepare refused the probe's check form: %q", line)
+			}
+			want, line, _ := testreport.Prepare(f.root, selection)
+			if line != "" {
+				t.Fatalf("prepare refused the reference check form: %q", line)
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Fatalf("probe request = %#v, want %#v", got, want)
+			}
+		})
 	}
 }
 
@@ -233,7 +242,7 @@ func TestProbeNamesThePackageSelection(t *testing.T) {
 	f := newFixture(t)
 	installStubGo(t, f, cannedFailure("caught"), 1, "")
 	out, code := runProbe(t, probeArgs()...)
-	want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes") + selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 1)
+	want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes") + selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 1)
 	requireRow(t, out, code, 0, want)
 	bare, _ := runProbe(t, "clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./")
 	if row := selectionRow(t, "package", "./", "all", "passed", 1); !strings.Contains(bare, row) {
@@ -263,11 +272,12 @@ func TestVerdictExitCodes(t *testing.T) {
 		})
 		t.Run(string(tc.kind)+" over a failed restore", func(t *testing.T) {
 			preserved := preservation{file: filepath.Join(t.TempDir(), "clamp.go")}
-			out, code := render(subject{display: "clamp.go"}, "swap", testreport.Outcome{Kind: tc.kind}, 1, testreport.Request{}, "", preserved, false, "denied", testreport.OutcomePassed)
+			cells, verdictCode := mutatedCells(testreport.Outcome{Kind: tc.kind}, "", testreport.OutcomePassed)
+			out, code := render(subject{display: "clamp.go"}, "swap", cells, verdictCode, 1, testreport.Request{}, "", preserved, false, "denied")
 			if code != 2 {
 				t.Fatalf("render(%q) over a failed restore exit = %d, want 2\n%s", tc.kind, code, out)
 			}
-			want := probeRow(t, "restore-failed", "clamp.go", "swap", string(tc.kind), 0, "no")
+			want := probeRow(t, "restore-failed", "clamp.go", "swap", string(tc.kind), 0, nil, "no")
 			if !strings.HasPrefix(out, want) {
 				t.Fatalf("stdout = %q, want %q first", out, want)
 			}

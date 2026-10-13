@@ -371,6 +371,14 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   tree before the mutation. A baseline that does not pass gives the **probe
   verdict** `invalid` with a `baseline-` cause, and the probe writes nothing.
   Not "the control run", not "the green run" — probe baseline.
+- **combined mutant** — the one mutant that `bench probe` makes from repeated
+  `--swap` and `--omit` edits. Each edit matches the start bytes of the subject,
+  and one mutated run grades all the edits together. Avoid "multi-mutation",
+  "mutation batch", "batch probe" — combined mutant.
+- **expected witness** — the test that `bench probe --expect` names. A mutated run
+  that fails without that test or one of its subtests gives the **probe verdict**
+  `invalid` with the cause `expect-missed`. Avoid "expected red", "target test",
+  "expect test" — expected witness.
 - **landing source** — a build-owned Git integration branch identified by its
   frozen base and current source tip. Serial green tickets accumulate there;
   semantic review binds to that pair and `bench worktree land` consumes it. Not

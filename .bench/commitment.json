@@ -1040,6 +1040,14 @@
       "identity": "sha256:df0321cdcd6c414a95c680d9bbf98ef72d2f2c696f73195522df75e652ef0329",
       "source": "f1f625cc328d4d93f548d0e4088b729203234c7a",
       "evidence": "69b97ecba89054d1a37cce214143746cc2169c9f"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT168-probe-subjects",
+      "binding": "probe-subjects-and-mutations",
+      "identity": "sha256:00a18d3eb59b4da0834f6bbbba079133350770b086903c31108b5cec2cbcd5e2",
+      "source": "e582e98d628cb08c7d771cede6351e5b7d84aa0f",
+      "evidence": "cb75a5b9b80b60d5acdb2cb5a7a6c35d418095c5"
     }
   ]
 }

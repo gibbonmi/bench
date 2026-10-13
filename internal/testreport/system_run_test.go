@@ -61,7 +61,7 @@ func TestSystemRunPatternNoMatchRefusalWins(t *testing.T) {
 // TestProseRefusesRunPattern grades that the prose check refuses a run pattern as usage.
 // The prose grade returns before the Go path, so only the grammar can refuse it.
 func TestProseRefusesRunPattern(t *testing.T) {
-	output, code := Command(t.TempDir(), []string{"--check", proseCheckName, "--run", "^TestX$"})
+	output, code := Command(t.TempDir(), []string{"--check", ProseCheckName, "--run", "^TestX$"})
 	if code != 2 || !strings.HasPrefix(output, "usage: bench test") {
 		t.Fatalf("Command = (%d, %q), want usage exit 2", code, output)
 	}
