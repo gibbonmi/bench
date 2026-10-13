@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/probe-mutant-sets/spec.md",
-  "plan_digest": "sha256:bb382785f355201ccac68fe63e38675f5033c694a0f62850ef28f7860ba80ee9",
+  "plan_digest": "sha256:faebeaa6ca8f219e2c4e6b61652d1e446266fd81a33e37d53f9b07e8d56f925e",
   "implementation_session": "",
   "chunks": [
     {
@@ -215,7 +215,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:bb382785f355201ccac68fe63e38675f5033c694a0f62850ef28f7860ba80ee9",
+      "to": "sha256:faebeaa6ca8f219e2c4e6b61652d1e446266fd81a33e37d53f9b07e8d56f925e",
+      "chunk_ids": {
+        "PM-A": [
+          "PM-A"
+        ]
+      }
+    }
+  ]
 }
 ```
 
