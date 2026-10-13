@@ -9,21 +9,26 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 func TestOmitFileUsesExactBytesAndReportsOmit(t *testing.T) {
-	f := refusalFixture(t)
+	f := newFixture(t)
 	input := filepath.Join(t.TempDir(), "substring")
 	needle := "if n < 0 {\n\t\treturn 0\n\t}"
 	writeFixtureFile(t, input, needle, 0o644)
-	wantMutated := filepath.Join(t.TempDir(), "mutated")
-	writeFixtureFile(t, wantMutated, strings.Replace(clampSource, needle, "", 1), 0o644)
-	installStubGo(t, f, cannedFailure("caught"), 1, "cmp -s "+sanitize.ShellQuote(f.subject)+" "+sanitize.ShellQuote(wantMutated)+" || exit 99\n")
-	out, code := runProbe(t, "clamp.go", "--omit-file", input, "--package", "./", "--run", "^TestClampNegative$")
-	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "omit", "failed", 1, "yes"))
-	requireSubjectBytes(t, f, clampSource)
-	requireHomeEmpty(t, f)
+	requireMutantBites(t, f, strings.Replace(clampSource, needle, "", 1), "omit", "--omit-file", input)
+}
+
+// mutationFileForms is the argv of each flag that reads its text through the one mutation
+// file reader, so each refusal row runs over both flags.
+var mutationFileForms = []struct {
+	flag string
+	args func(path string) []string
+}{
+	{"--omit-file", func(path string) []string { return []string{"clamp.go", "--omit-file", path, "--package", "./"} }},
+	{"--with-file", func(path string) []string {
+		return []string{"clamp.go", "--swap", "n < 0", "--with-file", path, "--package", "./"}
+	}},
 }
 
 func TestOmitFileRefusesInvalidInputsBeforeRunning(t *testing.T) {
@@ -41,30 +46,36 @@ func TestOmitFileRefusesInvalidInputsBeforeRunning(t *testing.T) {
 			return os.WriteFile(path, []byte(strings.Repeat("x", int(bounds.ControlRecordLimit)+1)), 0o644)
 		}, "oversized"},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			f := refusalFixture(t)
-			path := filepath.Join(t.TempDir(), "mutation")
-			if tc.name != "absent" {
-				if err := tc.make(path); err != nil {
-					t.Fatal(err)
+		for _, form := range mutationFileForms {
+			t.Run(form.flag+" "+tc.name, func(t *testing.T) {
+				f := refusalFixture(t)
+				path := filepath.Join(t.TempDir(), "mutation")
+				if tc.name != "absent" {
+					if err := tc.make(path); err != nil {
+						t.Fatal(err)
+					}
 				}
-			}
-			out, code := runProbe(t, "clamp.go", "--omit-file", path, "--package", "./")
-			requireRefused(t, f, out, code, "error: probe mutation file unavailable — "+path+" is "+tc.reason+"\n", 1)
-		})
+				out, code := runProbe(t, form.args(path)...)
+				requireRefused(t, f, out, code, "error: probe mutation file unavailable — "+path+" is "+tc.reason+"\n", 1)
+			})
+		}
 	}
 }
 
 func TestOmitFileRefusesAnUnreadableInputBeforeRunning(t *testing.T) {
-	f := refusalFixture(t)
-	path := filepath.Join(t.TempDir(), "mutation")
-	writeFixtureFile(t, path, "return 0", 0o000)
-	t.Cleanup(func() { _ = os.Chmod(path, 0o600) })
-	if _, err := os.ReadFile(path); err == nil {
-		capability.Capability(t, capability.Privilege, "the test process reads mode 0000 files, so an unreadable mutation file is unobservable")
+	for _, form := range mutationFileForms {
+		t.Run(form.flag, func(t *testing.T) {
+			f := refusalFixture(t)
+			path := filepath.Join(t.TempDir(), "mutation")
+			writeFixtureFile(t, path, "return 0", 0o000)
+			t.Cleanup(func() { _ = os.Chmod(path, 0o600) })
+			if _, err := os.ReadFile(path); err == nil {
+				capability.Capability(t, capability.Privilege, "the test process reads mode 0000 files, so an unreadable mutation file is unobservable")
+			}
+			out, code := runProbe(t, form.args(path)...)
+			requireRefused(t, f, out, code, "error: probe mutation file unavailable — "+path+" is unreadable\n", 1)
+		})
 	}
-	out, code := runProbe(t, "clamp.go", "--omit-file", path, "--package", "./")
-	requireRefused(t, f, out, code, "error: probe mutation file unavailable — "+path+" is unreadable\n", 1)
 }
 
 func TestOmitFileRefusesZeroAndMultipleMatchesSeparately(t *testing.T) {

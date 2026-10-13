@@ -2,7 +2,6 @@ package probe
 
 import (
 	"bytes"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -74,62 +73,6 @@ func withinRoot(root, path string) bool {
 	return relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator))
 }
 
-// mutationResult carries mutation classification and bytes together, so callers cannot
-// recount the subject to distinguish a miss from the exact-match mutation.
-type mutationResult struct {
-	mutated []byte
-	matches int
-}
-
-// mutate classifies the exact-string match once and applies the mutation only for one
-// match. Several matches refuse because replacing the first would mutate a site the
-// caller did not name.
-func mutate(start []byte, old, replacement, kind string) (mutationResult, string) {
-	if kind == "swap" && replacement == old {
-		return mutationResult{}, toon.Errorf("probe mutation empty", "--with equals --swap") + "\n"
-	}
-	count := bytes.Count(start, []byte(old))
-	switch count {
-	case 0:
-		return mutationResult{}, ""
-	case 1:
-	default:
-		hint := fmt.Sprintf("the old string matches %d times, want exactly 1", count)
-		return mutationResult{}, toon.Errorf("probe mutation ambiguous", hint) + "\n"
-	}
-	if kind == "unwrap" {
-		replacement, ok := unwrapCall(old)
-		if !ok {
-			return mutationResult{}, toon.Errorf("probe unwrap invalid", "--unwrap must name one outer call") + "\n"
-		}
-		return mutationResult{mutated: bytes.Replace(start, []byte(old), []byte(replacement), 1), matches: 1}, ""
-	}
-	return mutationResult{mutated: bytes.Replace(start, []byte(old), []byte(replacement), 1), matches: 1}, ""
-}
-
-func unwrapCall(call string) (string, bool) {
-	open := strings.IndexByte(call, '(')
-	if open <= 0 || !strings.HasSuffix(call, ")") {
-		return "", false
-	}
-	depth := 0
-	for i := open; i < len(call); i++ {
-		switch call[i] {
-		case '(':
-			depth++
-		case ')':
-			depth--
-			if depth == 0 && i != len(call)-1 {
-				return "", false
-			}
-			if depth < 0 {
-				return "", false
-			}
-		}
-	}
-	return call[open+1 : len(call)-1], depth == 0
-}
-
 // preservation is the copy a probe leaves under the Bench home for the run's span. dir
 // is removed on a proven restore and kept on a failed one, so a caller whose restore
 // failed always has a file to restore by hand. root names the verb's own subtree under
@@ -173,10 +116,11 @@ func (p preservation) release() {
 }
 
 // restore writes the preserved copy back through replacer and proves the result byte-exact
-// against the bytes read at the start. The comparison is against those start bytes, never
-// against the copy: a copy that changed under the run would otherwise certify its own
-// damage. A failure after the restore's rename fails the restore too, because the visible
-// start bytes are not yet durable, so the copy stays.
+// against the bytes read at the start, at the mode read at the start. The comparison is
+// against those start bytes, never against the copy: a copy that changed under the run
+// would otherwise certify its own damage. The mode proof matters after --delete, because
+// that restore recreates the file. A failure after the restore's rename fails the restore
+// too, because the visible start bytes are not yet durable, so the copy stays.
 func restore(replacer durablefile.Replacer, subject subject, preserved preservation) (bool, string) {
 	saved, err := os.ReadFile(preserved.file)
 	if err != nil {
@@ -191,6 +135,13 @@ func restore(replacer durablefile.Replacer, subject subject, preserved preservat
 	}
 	if !bytes.Equal(back, subject.start) {
 		return false, "the restored bytes differ from the bytes read at the start"
+	}
+	info, err := os.Lstat(subject.path)
+	if err != nil {
+		return false, err.Error()
+	}
+	if info.Mode().Perm() != subject.mode {
+		return false, "the restored mode differs from the mode read at the start"
 	}
 	return true, ""
 }

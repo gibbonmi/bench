@@ -73,16 +73,16 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 	if line != "" {
 		return line, 1
 	}
-	old, replacement, kind, line := mutationInput(parsed)
+	input, line := mutationInput(parsed)
 	if line != "" {
 		return line, 1
 	}
-	mutationResult, line := mutate(subject.start, old, replacement, kind)
+	mutant, line := mutate(subject.start, input, subject.display)
 	if line != "" {
 		return line, 1
 	}
-	if mutationResult.matches == 0 {
-		return renderInvalidMutation(subject, kind, parsed)
+	if mutant.miss {
+		return renderInvalidMutation(subject, input.cell, parsed)
 	}
 	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
 	if line != "" {
@@ -94,12 +94,12 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 	if line := gradeGateLock(root); line != "" {
 		return line, 1
 	}
-	mutation := kind
+	mutation := input.cell
 	line, code, baseline := gradeBaseline(root, subject, mutation, request)
 	if line != "" {
 		return line, code
 	}
-	return probe(replacer, root, subject, mutationResult.mutated, mutation, request, baseline)
+	return probe(replacer, root, subject, mutant, mutation, request, baseline)
 }
 
 func renderInvalidMutation(subject subject, mutation string, parsed usage.Result) (string, int) {
@@ -115,16 +115,6 @@ func renderInvalidMutation(subject subject, mutation string, parsed usage.Result
 		return toon.RenderError(err) + "\n", 1
 	}
 	return out, 1
-}
-
-func mutationForm(parsed usage.Result) (string, string, string) {
-	if old, omit := parsed.Flags["--omit"]; omit {
-		return old, "", "omit"
-	}
-	if call, unwrap := parsed.Flags["--unwrap"]; unwrap {
-		return call, "", "unwrap"
-	}
-	return parsed.Flags["--swap"], parsed.Flags["--with"], "swap"
 }
 
 // selectionArgs spells the focused run in `bench test`'s own grammar, so the probe and
@@ -172,13 +162,13 @@ func gradeGateLock(root string) string {
 // probe preserves, mutates, runs, and restores. The restore is deferred around the run,
 // so an interrupt or a panic inside the focused run still puts the subject back before
 // the verb answers, and the render runs only after the restore has been proven.
-func probe(replacer durablefile.Replacer, root string, subject subject, mutated []byte, mutation string, request testreport.Request, baseline testreport.OutcomeKind) (string, int) {
+func probe(replacer durablefile.Replacer, root string, subject subject, mutant mutationResult, mutation string, request testreport.Request, baseline testreport.OutcomeKind) (string, int) {
 	preserved, line := preserve(root, subject)
 	if line != "" {
 		return line, 1
 	}
-	if err := replacer.Replace(subject.path, mutated, subject.mode); err != nil {
-		return mutationFailure(replacer, subject, preserved, err)
+	if published, err := mutant.write(replacer, subject); err != nil {
+		return mutationFailure(replacer, subject, preserved, err, published)
 	}
 	var outcome testreport.Outcome
 	var report string
@@ -194,14 +184,26 @@ func probe(replacer durablefile.Replacer, root string, subject subject, mutated 
 	return render(subject, mutation, outcome, focused, request, report, preserved, restored, reason, baseline)
 }
 
-// mutationFailure answers a mutation that returned an error, and no focused run starts.
-// A failure before the rename left the start bytes in place, so the copy goes at once.
-// After a completed rename the mutated bytes may be visible, so the copy stays until a
-// restore proves the start bytes back, and a failed restore keeps it at exit 2.
-func mutationFailure(replacer durablefile.Replacer, subject subject, preserved preservation, err error) (string, int) {
-	line := toon.Errorf("probe mutation failed", err.Error()) + "\n"
+// write puts the mutant in place of the subject: a removal through replacer for --delete,
+// and a replacement otherwise. With an error, published reports that the subject may no
+// longer hold its start bytes. A failed removal can leave the subject absent, so it always
+// counts as published.
+func (r mutationResult) write(replacer durablefile.Replacer, subject subject) (bool, error) {
+	if r.remove {
+		return true, replacer.Remove(subject.path)
+	}
+	err := replacer.Replace(subject.path, r.mutated, subject.mode)
 	var replaceErr *durablefile.Error
-	if errors.As(err, &replaceErr) && replaceErr.Published {
+	return errors.As(err, &replaceErr) && replaceErr.Published, err
+}
+
+// mutationFailure answers a mutation that returned an error, and no focused run starts.
+// An unpublished failure left the start bytes in place, so the copy goes at once. After a
+// published failure the mutant may be visible, so the copy stays until a restore proves
+// the start bytes back, and a failed restore keeps it at exit 2.
+func mutationFailure(replacer durablefile.Replacer, subject subject, preserved preservation, err error, published bool) (string, int) {
+	line := toon.Errorf("probe mutation failed", err.Error()) + "\n"
+	if published {
 		if restored, reason := restore(replacer, subject, preserved); !restored {
 			return line + keptCopy(preserved, err.Error()+"; restore: "+reason), 2
 		}

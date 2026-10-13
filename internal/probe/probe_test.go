@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -161,6 +162,27 @@ const cannedPass = `{"Action":"run","Package":"probefixture","Test":"TestClampPo
 // quietRun is a package that passed with no test event at all, which is the stream a run
 // that started nothing prints.
 const quietRun = `{"Action":"pass","Package":"probefixture","Elapsed":0.01}`
+
+// mutantHook answers the stub shell that exits 99 unless the subject holds want while the
+// mutated run runs, so a row reads the mutant bytes from outside the verb.
+func mutantHook(t *testing.T, f *fixture, want string) string {
+	t.Helper()
+	path := filepath.Join(scratchDir(t), "mutant")
+	writeFixtureFile(t, path, want, 0o644)
+	return "cmp -s " + sanitize.ShellQuote(f.subject) + " " + sanitize.ShellQuote(path) + " || exit 99\n"
+}
+
+// requireMutantBites runs mutation over clamp.go with a mutated run that bites only over the
+// want bytes, and then asserts the bit row, the restored start bytes, and an empty home.
+func requireMutantBites(t *testing.T, f *fixture, want, mutation string, args ...string) {
+	t.Helper()
+	installStubGo(t, f, cannedFailure("caught"), 1, mutantHook(t, f, want))
+	argv := append(append([]string{"clamp.go"}, args...), "--package", "./", "--run", "^TestClampNegative$")
+	out, code := runProbe(t, argv...)
+	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", mutation, "failed", 1, "yes"))
+	requireSubjectBytes(t, f, clampSource)
+	requireHomeEmpty(t, f)
+}
 
 // probeRow derives one expected verdict block through the encoder the verb renders with.
 // A hand-joined row would disagree with the encoder's own quoting the moment a cell
