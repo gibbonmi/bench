@@ -111,7 +111,7 @@ func TestSubjectLockAllowsAnotherSubject(t *testing.T) {
 // verdict and the interrupted one leaves no lock entry behind.
 func TestSubjectLockReleasesOnInterrupt(t *testing.T) {
 	f := newFixture(t)
-	installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Hook: "sleep 60\n", Events: cannedPass})
+	installStubStarts(t, f, probetest.Start{Events: cannedPass}, sleepingRun)
 	if out, want := interruptedProbe(t, f, probeArgs(), func() { awaitStubStart(t, f, 2) }), probeRow(t, "invalid", "clamp.go", "swap", "interrupted", 0, nil, "yes"); !strings.Contains(out, want) {
 		t.Fatalf("helper stdout = %q, want the interrupted row %q", out, want)
 	}

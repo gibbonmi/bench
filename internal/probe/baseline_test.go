@@ -171,19 +171,18 @@ func TestProbeRestoresOnInterrupt(t *testing.T) {
 		runInterruptHelper(t, root)
 		return
 	}
-	sleeping := probetest.Start{Hook: "sleep 60\n", Events: cannedPass}
 	for _, tc := range []struct {
 		name            string
 		start           int
 		baseline        probetest.Start
 		cause, restored string
 	}{
-		{"baseline", 1, sleeping, "baseline-interrupted", "untouched"},
+		{"baseline", 1, sleepingRun, "baseline-interrupted", "untouched"},
 		{"mutated run", 2, probetest.Start{Events: cannedPass}, "interrupted", "yes"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newFixture(t)
-			installStubStarts(t, f, tc.baseline, sleeping)
+			installStubStarts(t, f, tc.baseline, sleepingRun)
 			out := interruptedProbe(t, f, probeArgs(), func() { awaitStubStart(t, f, tc.start) })
 			want := probeRow(t, "invalid", "clamp.go", "swap", tc.cause, 0, nil, tc.restored)
 			if !strings.Contains(out, want) {
@@ -247,6 +246,15 @@ func TestMutantSetMissKeepsItsCause(t *testing.T) {
 		probetest.InstallSequence(t, f.marker, alreadyRed, bite, bite)
 		out, code := runProbe(t, args(t)...)
 		requireRow(t, out, code, 1, setRows(t, redRow(1), missRow(2), redRow(3)))
+	})
+	t.Run("restore failure", func(t *testing.T) {
+		f := newFixture(t)
+		installSet(t, f, bite, bite)
+		router := subjectFaults()
+		router.Fail[restoreReplacement] = map[string]error{"rename": os.ErrPermission}
+		out, code := runSetWith(t, f, router.Replacer(), args(t))
+		failed := []any{1, "restore-failed", "swap", "failed", 1, "TestClampNegative", 1, 1, 2, nil, "no"}
+		requireRow(t, out, code, 2, setRows(t, failed, missRow(2), untouchedRow(3, "set-stopped")))
 	})
 }
 
