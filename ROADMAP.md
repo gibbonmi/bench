@@ -110,7 +110,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT401 (LOW, decision required) — the refusals outside the write verbs print their routes from the refusal-route registry.**
 
-**FT419 (MEDIUM, decision required) — a build that adds a persisted ledger or review-record field writes and lands through a binary that reads that field.**
+**FT419 (MEDIUM) — a build that adds a persisted ledger or review-record field writes and lands through a binary that reads that field.**
 
 ## Planning, ownership, and review integrity
 
@@ -164,7 +164,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT417 (LOW) — a reworded spec sentence keeps each predicate of the old sentence unless a decision deletes it.**
 
-**FT420 (HIGH, decision required) — a spec-backed build authors independent chunks concurrently by default.**
+**FT420 (HIGH) — a spec-backed build authors independent chunks concurrently by default.**
 
 ## Evidence, diagnostics, and maintenance
 
