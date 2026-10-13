@@ -2296,6 +2296,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "pm-d-standards-r2",
+          "performer": "claude:pm_d_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d88eb672abcf7273668e74f584b006b59838673f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_standards_r2",
+            "digest": "sha256:4200d819c51b223099a574ffee35f3879da4071de8b7ef8ee68436bbe3fd847d",
+            "excerpt": "Standards axis claude:pm_d_standards_r2 (opus/high), PM-D confirming round 2, chunk pair 1870269d..d4b2a7f1, repair delta 6b447a69..fc4c772e -- internal/ cmd/, evidence sha256:5140b0c8 current.\ncount: 0\nworst: none\nS1 closed: MutantResult has exactly Verdict, Restored, RowExit, FocusedExit (result.go:32-41); ReadMutant fills only those (:103); RenderMutantSet has no remaining reference; the remaining CommandExit is the single form's, read at verification.go:115.\nNo new defect: the probetest clamp harness is one source for the journey and recordcmd (no import cycle); probe_test.go newFixture is a second clamp harness that predates the base and stays outside ticket 5's fence; the restore-failure hook targets the preserved copy; the kept literals are CLI inputs or the PM87 oracle; comments match the code.\nAdvice: collapse newFixture onto probetest after this spec; the hook could use filepath.Base(probetest.ClampPath); ExitCode 1 could read the focused exit.\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "fc4c772eab1d55cbe6fc8e46faf6cccc6709cd1c",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-d-standards-r1"
+          ]
+        },
+        {
+          "id": "pm-d-spec-r2",
+          "performer": "claude:pm_d_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d88eb672abcf7273668e74f584b006b59838673f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_spec_r2",
+            "digest": "sha256:1949599aa0634a22171f744f45f308ad1387b35712f76ef3961d57a48f02bc09",
+            "excerpt": "Spec axis claude:pm_d_spec_r2 (opus/high), PM-D confirming round 2, chunk pair 1870269d..d4b2a7f1, delta 520f4899..d4b2a7f1, evidence sha256:5140b0c8 current.\ncount: 0\nworst: none\nPlan commit 579ceadf correct and in scope: the central probe mutates the declared RowExit and FocusedExit and bites TestVerificationChecksTheRowExit; PM87 (story 48) pins the fail side of spec.md:308; ticket 5 lines and Covers match; the chunk row adds PM87.\nP1 closed: MutantResult has exactly Verdict, Restored, RowExit, FocusedExit (result.go:32-41); RenderMutantSet removed.\nP2 closed: the missed row comes from a real probe run and asserts substring-miss and untouched (verification_import_test.go:234-236), then the null focused-exit refusal (:243).\nPM87 met by TestVerificationImportsARestoreFailedRow (:187-194); PM34, PM42, PM52-PM60, PM74 stay met.\npm-t05-rep1 entries complete for six requirements at fc4c772e, source digest d88eb672.\nAdvice: spec.md:389 and ticket 5 line 22 still allow an exported renderer; the TestVerificationChecksTheRowExit comment names only the command exit; four entries share one combined excerpt.\nImplementation command: no command change.\n"
+          },
+          "axis": "Spec",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "fc4c772eab1d55cbe6fc8e46faf6cccc6709cd1c",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-d-spec-r1"
+          ]
+        },
+        {
+          "id": "pm-d-coverage-r2",
+          "performer": "claude:pm_d_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d88eb672abcf7273668e74f584b006b59838673f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_d_coverage_r2",
+            "digest": "sha256:b84052c46a749012b441c7c6094e98c446fdd713b618dc6494e230a64ec4b8d6",
+            "excerpt": "Coverage axis claude:pm_d_coverage_r2 (opus/high), PM-D confirming round 2, chunk pair 1870269d..d4b2a7f1, repair delta 6b447a69..fc4c772e -- internal/ cmd/, evidence sha256:5140b0c8 current.\ncount: 0\nworst: none\nC1/PM87 closed: TestVerificationImportsARestoreFailedRow (verification_import_test.go:187-194) builds its answer from a real probe run and requires restore-failed, exit 1, restore fail.\nOwn probes, all bit with restored yes: (1) PM59 null mapped to 0 at verification.go:154: TestVerificationMutantRefusals/null_focused_exit; (2) ReadMutant FocusedExit to &row.exit (result.go:103): 3 failed; (3) ReadMutant row index to e.rows[0] (result.go:102): 2 failed; (4) preserved copy renamed (subject.go:96): ImportsARestoreFailedRow failed; (5) bypass replacer.Replace (subject.go:130): TestNativeRecordCLIJourney failed; (6) single-form focused bound to CommandExit (verification.go:115): journey failed.\nNo new defect: RenderMutantSet, MutantResult.CommandExit, the journey constants, and the old row fixtures have no remaining reference.\nAdvice: a precondition that row 1 reads restore-failed and no before the PM87 import would make a red plain.\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+          "tip": "fc4c772eab1d55cbe6fc8e46faf6cccc6709cd1c",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-d-coverage-r1"
+          ]
         }
       ]
     }
@@ -2808,3 +2874,25 @@ Count 1. Worst issue: C1.
 ### Advice
 
 - The reader test rows 1 and 3 project to the same result, so only the record tests catch a reversed row index.
+
+## PM-D round 2
+
+The confirming round read the delta from 520f4899 to d4b2a7f1, with the repair commit fc4c772e.
+PM-D closes with repair cycle 1 of 2 used.
+
+### Standards
+
+Count 0. Worst issue: none. S1 is closed, because `MutantResult` holds exactly the four spec fields.
+
+### Spec
+
+Count 0. Worst issue: none. P1 and P2 are closed, and row PM87 is met.
+
+### Coverage
+
+Count 0. Worst issue: none. C1 is closed, and six independent probes bit with the `restored` cell `yes`.
+
+### Advice
+
+- The probe package's own clamp harness in `probe_test.go` is a second harness, and a learning records it for a later change.
+- The spec still allows an exported renderer for record rows, but the build now uses probe runs only.
