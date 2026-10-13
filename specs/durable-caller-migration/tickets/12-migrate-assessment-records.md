@@ -23,7 +23,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 Record validated assessment input, then fail shared directory sync after rename.
 The real Record operation retains the classified cause and unchanged encoded bytes.
 
-- [ ] The assessment record caller exposes an injected directory-sync failure. (D28).
+- [x] The assessment record caller exposes an injected directory-sync failure. (D28).
 
 ## Checkpoint verification
 
