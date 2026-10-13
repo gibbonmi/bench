@@ -32,11 +32,11 @@ The source census finds no migrated temporary-write and rename algorithm outside
 The real adoption stage still uses its existing publication protocol.
 All migration checkpoints retain their accepted payload, mode, pre-rename refusal, and sentinel evidence.
 
-- [ ] Each migrated caller retains its pre-write validation and sentinel category. (D30).
-- [ ] Migrated callers contain no independent temporary-write and rename algorithm. (D31).
-- [ ] Excluded protocols retain their current assertions and operation owners. (D33).
-- [ ] The unused adopt writeManifest helper no longer defines a replacement algorithm. (D35).
-- [ ] Differential fixtures preserve each migrated caller payload, mode, and pre-rename refusal result. (D36).
+- [x] Each migrated caller retains its pre-write validation and sentinel category. (D30).
+- [x] Migrated callers contain no independent temporary-write and rename algorithm. (D31).
+- [x] Excluded protocols retain their current assertions and operation owners. (D33).
+- [x] The unused adopt writeManifest helper no longer defines a replacement algorithm. (D35).
+- [x] Differential fixtures preserve each migrated caller payload, mode, and pre-rename refusal result. (D36).
 
 ## Checkpoint verification
 
