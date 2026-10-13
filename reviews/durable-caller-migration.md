@@ -5242,6 +5242,28 @@
             "S2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dcm-c5-r2-standards",
+          "performer": "claude:dcm_rev_c5_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_c5_std",
+            "digest": "sha256:e75635adf80b07b12f37b381c42eed34120ff37bdc9a28e4ada587679dea8966",
+            "excerpt": "## Standards (D-C5 reaffirmation, 2306c4ab..5dad19e5) — S2 closed (internal/assessment/replacement_test.go:18-19, comment-only diff); S1 closed by routing to D-D (the D-D plan expansion at the D-C5 boundary adds durablefiletest/assert.go and every caller test with the refusal block to ticket 14); 0 new findings.\n"
+          },
+          "axis": "Standards",
+          "base": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+          "tip": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+          "finding_ids": [],
+          "supersedes": [
+            "dcm-c5-r1-standards"
+          ]
         }
       ]
     }
@@ -6276,3 +6298,5 @@ Chunk D-C5 has 0 findings.
 ## Coverage (D-C5)
 
 Chunk D-C5 has 0 findings. The orchestrator probe that breaks the native branch of `replacer` turned `TestAssessmentCollectionPublication` red, and the file was restored.
+
+The Standards reaffirmation at 5dad19e5 closed S2 and accepted the routing of S1 to D-D. Chunk D-C5 closed with 0 of its 2 repair cycles used, and the comment-only correction used none.
