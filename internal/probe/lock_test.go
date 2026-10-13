@@ -1,9 +1,12 @@
 package probe
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/probe/probetest"
@@ -169,4 +172,82 @@ func TestSubjectLockRefusesAnUnusableDirectory(t *testing.T) {
 	writeFixtureFile(t, filepath.Dir(subjectLockPath(f.subject)), "not a directory\n", 0o644)
 	out, code := runProbe(t, probeArgs()...)
 	requireLockRefusal(t, f, out, code, strings.HasPrefix(out, lockUnavailableLine) && strings.Count(out, "\n") == 1)
+}
+
+// Only the contention rule names another probe, so a lock error that no holder causes refuses
+// as a setup fault before the baseline.
+func TestSubjectLockReadsOnlyContentionAsInUse(t *testing.T) {
+	f := refusalFixture(t)
+	setHook(t, &takeRecordLock, func(*os.File) error { return syscall.ENOLCK })
+	out, code := runProbe(t, probeArgs()...)
+	requireLockRefusal(t, f, out, code, strings.HasPrefix(out, lockUnavailableLine) && strings.HasSuffix(out, syscall.ENOLCK.Error()+"\n"))
+}
+
+// An open that answers ENOENT starts the next attempt, because a holder's release removes the
+// lock directory between this attempt's create and its open. A third ENOENT refuses.
+func TestSubjectLockRetriesAnAbsentLockDirectory(t *testing.T) {
+	t.Run("removed once", func(t *testing.T) {
+		f := newFixture(t)
+		installStubGo(t, f, cannedFailure("caught"), 1, "")
+		calls := 0
+		setHook(t, &lockOpenHook, func(path string) {
+			if calls++; calls == 1 {
+				removeLockDir(t, path)
+			}
+		})
+		out, code := runProbe(t, probeArgs()...)
+		requireRow(t, out, code, 0, bitRow(t))
+		if calls != 2 {
+			t.Fatalf("lock-open hook calls = %d, want 2: one absent directory and one retry", calls)
+		}
+		requireHomeEmpty(t, f)
+	})
+	t.Run("removed on every attempt", func(t *testing.T) {
+		f := refusalFixture(t)
+		calls := 0
+		setHook(t, &lockOpenHook, func(path string) {
+			calls++
+			removeLockDir(t, path)
+		})
+		out, code := runProbe(t, probeArgs()...)
+		requireLockRefusal(t, f, out, code, strings.HasPrefix(out, lockUnavailableLine) && strings.HasSuffix(out, syscall.ENOENT.Error()+"\n"))
+		if calls != lockAttempts {
+			t.Fatalf("lock-open hook calls = %d, want %d", calls, lockAttempts)
+		}
+	})
+}
+
+// The open never follows a link at the lock path, so a planted link refuses before the
+// baseline and creates nothing at the link's target.
+func TestSubjectLockRefusesALinkAtTheLockPath(t *testing.T) {
+	f := refusalFixture(t)
+	path := subjectLockPath(f.subject)
+	target := filepath.Join(scratchDir(t), "target")
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, path); err != nil {
+		t.Fatal(err)
+	}
+	out, code := runProbe(t, probeArgs()...)
+	requireLockRefusal(t, f, out, code, strings.HasPrefix(out, lockUnavailableLine) && strings.HasSuffix(out, syscall.ELOOP.Error()+"\n"))
+	if _, err := os.Lstat(target); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("the link target exists after the refusal: %v", err)
+	}
+}
+
+// The lock directory and the lock file belong to their owner alone, so no other user can open
+// a subject's lock file and hold its lock.
+func TestSubjectLockKeepsItsFilesPrivate(t *testing.T) {
+	f := newFixture(t)
+	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	var dirMode, fileMode fs.FileMode
+	setHook(t, &lockOwnerHook, func(path string) {
+		dirMode, fileMode = permissions(t, filepath.Dir(path)), permissions(t, path)
+	})
+	out, code := runProbe(t, probeArgs()...)
+	requireRow(t, out, code, 0, bitRow(t))
+	if dirMode != 0o700 || fileMode != 0o600 {
+		t.Fatalf("lock modes = (%o, %o), want (700, 600)", dirMode, fileMode)
+	}
 }

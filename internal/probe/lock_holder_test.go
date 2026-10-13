@@ -98,3 +98,21 @@ func replaceLockFile(t *testing.T, path string) {
 	}
 	writeFixtureFile(t, path, "", 0o600)
 }
+
+// removeLockDir removes the empty lock directory, so the open that follows answers ENOENT.
+func removeLockDir(t *testing.T, path string) {
+	t.Helper()
+	if err := os.Remove(filepath.Dir(path)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// permissions answers the permission bits of the file at path.
+func permissions(t *testing.T, path string) os.FileMode {
+	t.Helper()
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return info.Mode().Perm()
+}

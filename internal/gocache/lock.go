@@ -112,7 +112,7 @@ func HoldExclusive(path string) (*Holder, error) {
 	lock := RecordLock(syscall.F_WRLCK)
 	if err := syscall.FcntlFlock(file.Fd(), syscall.F_SETLK, &lock); err != nil {
 		file.Close()
-		if contended(err) {
+		if Contended(err) {
 			return nil, ErrHeld
 		}
 		return nil, err
@@ -157,8 +157,14 @@ func localHolder(path string) bool {
 	return held.paths[path] != nil
 }
 
-// contended reports whether err is the kernel's "another process holds a conflicting lock"
-// answer. Linux returns EAGAIN and POSIX allows EACCES, so both spellings count.
-func contended(err error) bool {
+// Contended reports whether err is the kernel's "another process holds a conflicting lock"
+// answer to a non-blocking record lock request. Linux returns EAGAIN and POSIX allows EACCES,
+// so both spellings count. Any other error is a lock fault, not a holder.
+func Contended(err error) bool {
 	return errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EACCES)
+}
+
+// contended is Contended under the package's unexported name.
+func contended(err error) bool {
+	return Contended(err)
 }

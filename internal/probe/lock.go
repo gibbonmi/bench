@@ -15,12 +15,19 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// startReadHook runs between the start read and the subject lock, and lockOwnerHook runs
-// between the lock file's open and its identity check. Both are no-ops outside the tests,
-// which change the subject or the lock file inside those windows.
+// startReadHook runs between the start read and the subject lock, lockOpenHook runs between
+// the lock directory's create and the lock file's open, and lockOwnerHook runs between that
+// open and the identity check. All three are no-ops outside the tests, which change the
+// subject or the lock path inside those windows. takeRecordLock is the non-blocking lock
+// request, which the tests replace to answer a lock error that no holder causes.
 var (
-	startReadHook = func() {}
-	lockOwnerHook = func(path string) {}
+	startReadHook  = func() {}
+	lockOpenHook   = func(path string) {}
+	lockOwnerHook  = func(path string) {}
+	takeRecordLock = func(file *os.File) error {
+		request := gocache.RecordLock(syscall.F_WRLCK)
+		return syscall.FcntlFlock(file.Fd(), syscall.F_SETLK, &request)
+	}
 )
 
 // lockAttempts bounds the acquire, so a lock file that keeps changing refuses rather than
@@ -58,6 +65,7 @@ func lockSubject(subject subject) (subjectLock, string) {
 		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			return subjectLock{}, lockUnavailable(err)
 		}
+		lockOpenHook(path)
 		// os.OpenFile opens every descriptor close-on-exec. A record lock needs write access.
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW, 0o600)
 		if errors.Is(err, fs.ErrNotExist) {
@@ -67,10 +75,12 @@ func lockSubject(subject subject) (subjectLock, string) {
 		if err != nil {
 			return subjectLock{}, lockUnavailable(err)
 		}
-		request := gocache.RecordLock(syscall.F_WRLCK)
-		if err := syscall.FcntlFlock(file.Fd(), syscall.F_SETLK, &request); err != nil {
+		if err := takeRecordLock(file); err != nil {
 			_ = file.Close()
-			return subjectLock{}, toon.Errorf("probe subject in use", "another probe holds "+subject.display) + "\n"
+			if gocache.Contended(err) {
+				return subjectLock{}, toon.Errorf("probe subject in use", "another probe holds "+subject.display) + "\n"
+			}
+			return subjectLock{}, lockUnavailable(err)
 		}
 		lockOwnerHook(path)
 		if namesFile(path, file) {
