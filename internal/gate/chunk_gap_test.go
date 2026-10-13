@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -86,15 +87,19 @@ func TestEarlierChunkCheckpointKeepsTheGap(t *testing.T) {
 func TestUnrecordedGapExitsOne(t *testing.T) {
 	f := chunkCheckpoint(t, 2, true)
 	path := commitmenttest.LedgerPath(t, f.Root)
+	t.Cleanup(func() { _ = os.Chmod(path, 0o600) })
 	if err := os.Chmod(path, 0o200); err != nil {
 		t.Fatal(err)
 	}
 	_, cause := intent.Read(f.Root)
+	if cause == nil {
+		capability.Capability(t, capability.Privilege, "mode 0o200 ledger is still readable by this user")
+	}
 	code, out := checkpointChunk(t, f)
 	if err := os.Chmod(path, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if want := "chunk gap not recorded: " + fmt.Sprint(cause); cause == nil || code != 1 || !strings.Contains(out, want) {
+	if want := "chunk gap not recorded: " + fmt.Sprint(cause); code != 1 || !strings.Contains(out, want) {
 		t.Fatalf("checkpoint = exit %d: %s; want exit 1 and %q", code, out, want)
 	}
 	requireNoGap(t, f.Root)
