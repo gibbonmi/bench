@@ -528,7 +528,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "pm-b-standards-r1",
+          "performer": "claude:pm_b_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "731f556a019b125c5317003c4dd37772ab9090ec",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_b_standards",
+            "digest": "sha256:4a4eeed43e46b3969426e0d5161dd28747c246ced6e3f95eb9664e081328ef49",
+            "excerpt": "Standards axis claude:pm_b_standards (opus/high), PM-B round 1, frozen pair e5ca6b0c..1b8f4f66 (chunk tip 27346d11), evidence sha256:c5d89a03 current.\ncount: 1\nworst: S1\nS1 | auto-fix | 4 | AGENTS.md one source per fact (\"a fixture harness pasted N times\"). TestHeldRunsInterruptACancelledBuild (held_runs_test.go:105-118: pid file, t.Setenv(cancelGoPIDEnv), t.Setenv(cancelParkingPath), waitForPID, SIGKILL cleanup) is a third copy of the arm-and-wait wiring at cancel_test.go:100-122 and :229-251. Put the env contract and the wait in one cancel_test.go helper and call it from all three sites.\nClean: no copied runbinary or freshness rule (Factory.Validate, Selection.Owned); the command.go split keeps one owner per step; runBinaryFactory follows the laneRunBinary precedent; comments carry no tags; the interrupted line prefix is incidental text; record entries follow the PM-A precedent.\nAdvice: an interruptedSelection helper beside selectionFailure in outcome.go; the Validate doc names its callers; TestHeldRunsReuseOnAFreshVerify hardcodes that Own validates once; Run uses pointer identity for a fresh selection.\nImplementation command: the ticket line \"reuses the parking builder\" read as the builder only; name its arm-and-wait wiring too.\n"
+          },
+          "axis": "Standards",
+          "base": "e5ca6b0c50fd357d5233499495af5774ae566689",
+          "tip": "27346d1166cecef1d115a4823ec30cadf3e3d2c8",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pm-b-spec-r1",
+          "performer": "claude:pm_b_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "731f556a019b125c5317003c4dd37772ab9090ec",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_b_spec",
+            "digest": "sha256:059be10b4939b1670cf8d4f3e25db0bd6cb20c099cf1fbd5bd13894558cb58ed",
+            "excerpt": "Spec axis claude:pm_b_spec (opus/high), PM-B round 1, frozen pair e5ca6b0c..1b8f4f66 (chunk tip 27346d11), evidence sha256:c5d89a03 current.\ncount: 0\nworst: none\nPM27 met: TestHeldRunsOwnAFreshBuildWhenStale, read == [v1 v2], Builds 2.\nPM28 met: TestHeldRunsReuseOnAFreshVerify, verified == [path x3], one build.\nPM29 met: TestHeldRunsRefuseAStaleInheritedBinary, refused, no builder call, Builds 0.\nPM31 met: TestHeldRunsRemoveEachOwnedBuild, only the held directory after a stale run, none after Close.\nPM70 met: TestHeldRunsInterruptACancelledBuild.\nPM76 met: TestHeldRunsInterruptACancelledValidation, the cancel fires on the held validation.\nHeld runs and Trust chain hold: selectRunBinary first, Factory.Validate later (no copy), Selection.Owned branch, the fresh build closes on return; Validate reaches freshness.VerifyAt.\nFlags: (a) Builds counts built binaries, consistent with \"counts each binary that it builds\"; (b) the interrupt rule on the first selection is required by \"each selection, build, and Go child\"; (c) undecided by the spec and unobservable at the probe seam; (d) Execute keeps its order and mapping.\nScope creep: none.\nAdvice: Run enters runSelected when the context was cancelled after a successful validation or build; a ctx.Err check before runSelected would close it. No test cancels during the first held selection.\nImplementation command: no command change.\n"
+          },
+          "axis": "Spec",
+          "base": "e5ca6b0c50fd357d5233499495af5774ae566689",
+          "tip": "27346d1166cecef1d115a4823ec30cadf3e3d2c8",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "pm-b-coverage-r1",
+          "performer": "claude:pm_b_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "731f556a019b125c5317003c4dd37772ab9090ec",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_b_coverage",
+            "digest": "sha256:2504ff924329e43b77889b1c6c33efc015d76e51377e6a8b22e2ac62a291ac1b",
+            "excerpt": "Coverage axis claude:pm_b_coverage (opus/high), PM-B round 1, frozen pair e5ca6b0c..1b8f4f66 (chunk tip 27346d11), evidence sha256:c5d89a03 current.\ncount: 2\nworst: C2\nC2 | auto-fix | 8 | held_runs.go:78: a stale owned held binary whose fresh build fails without a cancel is unpinned. Bypass --swap \"return nil, err\" --with \"return h.held, nil\" --occurrence 3 (the run uses the stale held binary) read silent, passed, restored yes over ./internal/testreport (238 tests). Spec line 248 and story 24; the D1 false-silent hazard. Needed: a held_runs_test.go row where the second run's stub builder returns runbinary.BuildError with no cancel; assert build-failed and no Go child.\nC1 | auto-fix | 8 | held_runs.go:34: a cancel during the first run's selection or build is unpinned (spec line 234, ticket line 25). Bypass --swap \"if h.ctx.Err() != nil {\" --with \"if h.held != nil && h.ctx.Err() != nil {\" read silent, passed, restored yes over the package. Needed: a row that parks the first build, cancels, and asserts interrupted, the parked directory gone, and Builds() 0.\nBit (restored yes): selection != h.held to selection == nil (TestHeldRunsRemoveEachOwnedBuild); Execute NotifyCancel replaced by a plain WithCancel (TestCommandDrainsBuilderGroupOnCancelSignal, 3 subtests).\nAdvice: a cancel during a stale owned validation still starts the fresh build; build count 0 for prose is pinned only at the probe seam (PM32).\nImplementation command: no command change; the gaps come from the spec map and edge inventory.\n"
+          },
+          "axis": "Coverage",
+          "base": "e5ca6b0c50fd357d5233499495af5774ae566689",
+          "tip": "27346d1166cecef1d115a4823ec30cadf3e3d2c8",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -617,3 +683,30 @@ Count 0. Worst issue: none. C1 and C2 are closed, and each has an independent pr
 
 - A companion row with the empty value first would pin the other order.
 - A shared `probetest` argv recorder fits if a third hook appears.
+
+## PM-B round 1
+
+Frozen pair: e5ca6b0c to 1b8f4f66, with the chunk tip 27346d11.
+Repair allowance: cycle 1 of 2 starts for S1, C1, and C2. The plan adds rows PM79 and PM80 for C2 and C1, so the cycle is a repair, not a hardening cycle.
+
+### Standards
+
+Count 1. Worst issue: S1.
+
+- S1, auto-fix, confidence 4: `TestHeldRunsInterruptACancelledBuild` makes a third copy of the parking-builder arm-and-wait wiring of `cancel_test.go`. Put that wiring in one `cancel_test.go` helper for all three sites.
+
+### Spec
+
+Count 0. Worst issue: none. Rows PM27 to PM31, PM70, and PM76 are met.
+
+### Coverage
+
+Count 2. Worst issue: C2.
+
+- C2, auto-fix, confidence 8: no row pins a stale owned binary whose fresh build fails with no cancel. A mutant that reuses the stale binary read silent. Row PM79 pins `build-failed` with no Go child.
+- C1, auto-fix, confidence 8: no row pins a cancel during the first held selection. A mutant that applies the interrupt rule only to later runs read silent. Row PM80 pins `interrupted`, the parked directory gone, and a build count of 0.
+
+### Advice
+
+- A context check before the fresh build would avoid one builder start after a cancel.
+- A helper beside `selectionFailure` could hold the interrupted selection line.
