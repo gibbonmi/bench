@@ -16,7 +16,7 @@ func recordedOps(rec *durablefiletest.Recorder) *FileOps {
 }
 
 // D28: a record of a validated run returns the injected directory-sync failure of its
-// replacement after the rename, and the record holds the indented run at mode 0600.
+// replacement after the rename.
 func TestAssessmentReplacement(t *testing.T) {
 	t.Parallel()
 	cause := errors.New("injected assessment directory-sync failure")
