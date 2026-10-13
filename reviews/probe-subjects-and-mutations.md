@@ -560,7 +560,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ps-b-standards-1",
+          "performer": "claude:ps-b-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-standards",
+            "digest": "sha256:80479e9d2c91d2a125a15eb3f6ac9c35a958105e0f7c13285db1ef9582ff804c",
+            "excerpt": "Standards axis, chunk PS-B, pair 6175e732579f..0d91e20b73d3, opus medium. Findings: 2.\nS1 internal/probe/command.go:151 repeats the only-system-takes---run rule of internal/testreport/command.go:89 (AGENTS.md one source per fact); fix with one exported testreport predicate that both call. Confidence 7.\nS2 internal/testreport/selection_facts.go:95 calls every --check name a conformance check, but prose and system are not conformance checks (craft-cli: help states current behavior). Confidence 6.\nproseCheck deletion: no-op, confidence 9.\n"
+          },
+          "axis": "Standards",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ps-b-spec-1",
+          "performer": "claude:ps-b-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-spec",
+            "digest": "sha256:b394a3a3501be6ba253f45b383fb856f0ae57d8cd7a27637c65bcc1eedcd7b4e",
+            "excerpt": "Spec axis, chunk PS-B (PS26-PS37), pair 6175e732579f..0d91e20b73d3, opus medium. Findings: 0.\nEvery row matches the spec, and each cited test asserts it. The doc-comment refusal order, the prose exclusion fixture, and the retired route texts are confirmed.\n"
+          },
+          "axis": "Spec",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ps-b-coverage-1",
+          "performer": "claude:ps-b-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ps-b-coverage",
+            "digest": "sha256:f9bd364ef22445de7e908d3940aca490117c44372556191f73b1258b13aa7ed0",
+            "excerpt": "Coverage axis, chunk PS-B, pair 6175e732579f..0d91e20b73d3, opus medium. Findings: 2.\nC1 internal/probe/probe.go:79-94: a --check prose probe over a subject that the prose grade never reads answers a false silent; no row covers it. Confidence 7.\nC2 internal/probe/command.go:149: no test pins that --check system without --run is accepted. Confidence 5.\nProbes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "6175e732579feebb6224c2a7ade2f01992144e20",
+          "tip": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -624,3 +691,27 @@ Repair targets: 4 (S1, S2, P1 with C1, and C2) for ticket 1.
 
 - PS-A Standards: the `namedGroup` comment names its callers.
 - PS-A Spec: the spec does not yet name the `--with-file equals --swap` refusal text. The orchestrator adds it in the ticket 2 plan commit.
+
+## PS-B pickup
+
+Chunk PS-B has used 0 of its 2 repair cycles after its initial review.
+
+### Standards
+
+PS-B: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 7): `internal/probe/command.go:151` repeats the rule of `internal/testreport/command.go:89` that only the system suite takes `--run`. One exported `testreport` predicate must own the rule, and both graders must call it.
+- S2 (auto-fix, confidence 6): `internal/testreport/selection_facts.go:95` calls each `--check` name a conformance check. The note must name a check from the `bench test --help` inventory without that class.
+
+### Spec
+
+PS-B: 0 findings.
+
+### Coverage
+
+PS-B: 2 findings. The worst issue is C1.
+
+- C1 (auto-fix after a plan expansion, confidence 7): `internal/probe/probe.go:79-94` answers `silent` for a `--check prose` probe of a subject that the prose grade never reads. The probe must refuse a subject that `prose.IsSubjectName` rejects.
+- C2 (auto-fix, confidence 5): `internal/probe/command.go:149` has no row that accepts `--check system` without `--run`.
+
+Repair targets: 4 (S1, S2, C1, and C2) for ticket 2.
