@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/durable-caller-migration/spec.md",
-  "plan_digest": "sha256:2f11fea432ed007be9b4a2d448773d4d89fd641c6d5d71a3dc35049f992a7f5f",
+  "plan_digest": "sha256:d4c71037e96942188b052d852ca9e34a63dba1c9e6f071e4193042ac64df7197",
   "implementation_session": "",
   "chunks": [
     {
@@ -4965,6 +4965,221 @@
           ]
         }
       ]
+    },
+    {
+      "id": "D-C5",
+      "base": "fee3f738b47405a330c80db698ae6c42bd3f0526",
+      "tip": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+      "plan_digest": "sha256:d4c71037e96942188b052d852ca9e34a63dba1c9e6f071e4193042ac64df7197",
+      "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+      "acceptance_rows": [
+        "D28"
+      ],
+      "verification": [
+        {
+          "id": "dc5-t12-caller-tests",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:debfb112770747c1b109414a2b581035f7f7db41be82c63e2b64fe04c7ae733b",
+            "excerpt": "bench test --package ./internal/assessment at FT354-durable-callers 930225e5ff30172a0ca8e0da7d92691a2db9a81b (clean tree)\npackages: github.com/gibbonmi/bench/internal/assessment,pass,816,199\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "caller-tests",
+          "command": "bench test --package ./internal/assessment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc5-t12-port-registry",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:424a285bd49cfd7cbb026f9ae3bee6bfe31e013f8f11d1eec68bbd961e2b6c08",
+            "excerpt": "bench test --check injected-port-registry at FT354-durable-callers 930225e5ff30172a0ca8e0da7d92691a2db9a81b (clean tree)\ncheck: injected-port-registry,conformance,1 test\npackages: github.com/gibbonmi/bench/internal/conformance,pass,27,1\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "port-registry",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "dc5-t12-command-contract",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:206b0b89c30c4d3df62938321af9e9af99efc426cebdbe5e0814166c57e41442",
+            "excerpt": "bench test --package ./cmd/bench --run 'CommandRegistry' at FT354-durable-callers 930225e5ff30172a0ca8e0da7d92691a2db9a81b (clean tree)\npackages: github.com/gibbonmi/bench/cmd/bench,pass,5,5\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "command-contract",
+          "command": "bench test --package ./cmd/bench --run 'CommandRegistry'",
+          "exit_code": 0
+        },
+        {
+          "id": "dc5-t12-axi-registry",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:e4e7bc3f8c34f666aef3ad5d0c971c22f647a7057a1ceb6cdc4ab737a3721905",
+            "excerpt": "bench test --check axi-query-registry at FT354-durable-callers 930225e5ff30172a0ca8e0da7d92691a2db9a81b (clean tree)\ncheck: axi-query-registry,conformance,1 test\npackages: github.com/gibbonmi/bench/internal/conformance,pass,12,1\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "axi-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "dc5-t12-routing",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:39ca2d51f00041eb380ae8d8f1b8affd50008bb837850d715315e5dbf542fbc8",
+            "excerpt": "bench test --check subcommand-routing at FT354-durable-callers 930225e5ff30172a0ca8e0da7d92691a2db9a81b (clean tree)\ncheck: subcommand-routing,conformance,1 test\npackages: github.com/gibbonmi/bench/internal/conformance,pass,27,1\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc5-t12-cmd-bench",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:eee083c94d7914d5583e8c1f998bcaa3e8ac33d617b23ea7a419758a21c56ab9",
+            "excerpt": "bench test --package ./cmd/bench --package ./internal/conformance at FT354-durable-callers 930225e5ff30172a0ca8e0da7d92691a2db9a81b (clean tree)\npackages: github.com/gibbonmi/bench/cmd/bench,pass,20133,335\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc5-t12-conformance",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:d05492ba1c5789931349afa7421a786b51f33e2885b8605647a0151068a63b41",
+            "excerpt": "bench test --package ./cmd/bench --package ./internal/conformance at FT354-durable-callers 930225e5ff30172a0ca8e0da7d92691a2db9a81b (clean tree)\npackages: github.com/gibbonmi/bench/internal/conformance,pass,66664,1690\nfailures: 0\nskips: 1 (TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device: capability: privilege: cannot create a character device: operation not permitted)\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc5-t12-root-conformance",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:0ad896685c99702a4e25f8c7433d94bb11c5dc11a3c7954c8f5f70ed464a57d1",
+            "excerpt": "bench test --check root-conformance at FT354-durable-callers 930225e5ff30172a0ca8e0da7d92691a2db9a81b (clean tree)\ncheck: root-conformance,conformance,1 test\npackages: github.com/gibbonmi/bench/internal/conformance,pass,17077,1\nfailures: 0, skips: 0\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc5-t12-omission-proof",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:7d505c7b44da1cdc0554cb9fe0e0aadf353d5e7b67a7ab7dc0ebd5951466d2c6",
+            "excerpt": "omission-proof, ticket 12 (D28), run in FT354-durable-callers at 930225e5ff30172a0ca8e0da7d92691a2db9a81b\ncommand: bench probe internal/assessment/store.go --swap <old> --with <new> --package ./internal/assessment --run '^TestAssessmentReplacement$'\nold: return replacer(s.Files).Replace(path, data, 0600)\nnew: return durablefile.Native().Replace(path, data, 0600)\nverdict: bit, failed_tests 1, restored yes; mutated package exit 1\nfailing assertion: TestAssessmentReplacement replacement_test.go:28: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected assessment directory-sync failure\nrestored source: store.go back to the committed text; bench test --package ./internal/assessment pass, 199 tests, at 930225e5.\n"
+          },
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/assessment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Retain the FileOps local replacement copy or bypass shared sync. The Record failure-composition witness must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+              "digest": "sha256:7d505c7b44da1cdc0554cb9fe0e0aadf353d5e7b67a7ab7dc0ebd5951466d2c6",
+              "excerpt": "omission-proof, ticket 12 (D28), run in FT354-durable-callers at 930225e5ff30172a0ca8e0da7d92691a2db9a81b\ncommand: bench probe internal/assessment/store.go --swap <old> --with <new> --package ./internal/assessment --run '^TestAssessmentReplacement$'\nold: return replacer(s.Files).Replace(path, data, 0600)\nnew: return durablefile.Native().Replace(path, data, 0600)\nverdict: bit, failed_tests 1, restored yes; mutated package exit 1\nfailing assertion: TestAssessmentReplacement replacement_test.go:28: err = <nil>, want a *durablefile.Error at stage directory-sync with Published=true that wraps injected assessment directory-sync failure\nrestored source: store.go back to the committed text; bench test --package ./internal/assessment pass, 199 tests, at 930225e5.\n"
+            }
+          }
+        },
+        {
+          "id": "dc5-t12-preservation",
+          "performer": "claude:dcm_t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "94152e6747845bc7cba7261b6ab5ebc43a3a24b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+            "digest": "sha256:cab3a9d813376c005aad320d59c180fcc85c8879c89bf3c0628e1e5dbab18000",
+            "excerpt": "preservation, ticket 12, run in FT354-durable-callers at 930225e5ff30172a0ca8e0da7d92691a2db9a81b; subject internal/assessment/store.go; each verdict bit, restored yes, mutated package exit 1.\nAfter each restore, bench test --package ./internal/assessment passes (199 tests).\n\npayload literal (necessity red, whole package, no --run): 1 of 199 failed\n  old: json.MarshalIndent(r, \"\", \"  \")\n  new: json.MarshalIndent(r, \"\", \"\\t\")\n  red: TestAssessmentReplacement replacement_test.go:33 RequireFile bytes mismatch (tab-indented record)\n\nmode literal (necessity red, whole package, no --run): 1 of 199 failed; no existing assessment test pins 0600, so the post-rename row keeps RequireFile\n  old: Replace(path, data, 0600)\n  new: Replace(path, data, 0640)\n  red: TestAssessmentReplacement replacement_test.go:33 mode = -rw-r-----, want a regular file at -rw-------\n\nrefusal (D30 validation omission, --run '^TestAssessmentRefusalSkipsReplacement$')\n  old: if err := Validate(r); err != nil {\n  new: if err := Validate(r); false && err != nil {\n  red: TestAssessmentRefusalSkipsReplacement/validation replacement_test.go:85 err = <nil>, want the caller's own refusal, not a replacement failure\n\nauthority (D30 foreign repository omission, --run '^TestAssessmentRefusalSkipsReplacement$')\n  old: if r.RepoKey != poolkey.Key(s.Root) {\n  new: if false && r.RepoKey != poolkey.Key(s.Root) {\n  red: TestAssessmentRefusalSkipsReplacement/authority replacement_test.go:85 err = <nil>, want the caller's own refusal, not a replacement failure\n"
+          },
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/assessment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "930225e5ff30172a0ca8e0da7d92691a2db9a81b",
+              "digest": "sha256:cab3a9d813376c005aad320d59c180fcc85c8879c89bf3c0628e1e5dbab18000",
+              "excerpt": "preservation, ticket 12, run in FT354-durable-callers at 930225e5ff30172a0ca8e0da7d92691a2db9a81b; subject internal/assessment/store.go; each verdict bit, restored yes, mutated package exit 1.\nAfter each restore, bench test --package ./internal/assessment passes (199 tests).\n\npayload literal (necessity red, whole package, no --run): 1 of 199 failed\n  old: json.MarshalIndent(r, \"\", \"  \")\n  new: json.MarshalIndent(r, \"\", \"\\t\")\n  red: TestAssessmentReplacement replacement_test.go:33 RequireFile bytes mismatch (tab-indented record)\n\nmode literal (necessity red, whole package, no --run): 1 of 199 failed; no existing assessment test pins 0600, so the post-rename row keeps RequireFile\n  old: Replace(path, data, 0600)\n  new: Replace(path, data, 0640)\n  red: TestAssessmentReplacement replacement_test.go:33 mode = -rw-r-----, want a regular file at -rw-------\n\nrefusal (D30 validation omission, --run '^TestAssessmentRefusalSkipsReplacement$')\n  old: if err := Validate(r); err != nil {\n  new: if err := Validate(r); false && err != nil {\n  red: TestAssessmentRefusalSkipsReplacement/validation replacement_test.go:85 err = <nil>, want the caller's own refusal, not a replacement failure\n\nauthority (D30 foreign repository omission, --run '^TestAssessmentRefusalSkipsReplacement$')\n  old: if r.RepoKey != poolkey.Key(s.Root) {\n  new: if false && r.RepoKey != poolkey.Key(s.Root) {\n  red: TestAssessmentRefusalSkipsReplacement/authority replacement_test.go:85 err = <nil>, want the caller's own refusal, not a replacement failure\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -5512,6 +5727,45 @@
     {
       "from": "sha256:0a9c82011a15380bda3c64cc4ee87594038caa6080e5ec3d4f7ff5bef371daf6",
       "to": "sha256:2f11fea432ed007be9b4a2d448773d4d89fd641c6d5d71a3dc35049f992a7f5f",
+      "chunk_ids": {
+        "D-B1": [
+          "D-B1"
+        ],
+        "D-B2": [
+          "D-B2"
+        ],
+        "D-B3": [
+          "D-B3"
+        ],
+        "D-B4": [
+          "D-B4"
+        ],
+        "D-B5": [
+          "D-B5"
+        ],
+        "D-B6": [
+          "D-B6"
+        ],
+        "D-C1": [
+          "D-C1"
+        ],
+        "D-C2": [
+          "D-C2"
+        ],
+        "D-C3": [
+          "D-C3"
+        ],
+        "D-C4": [
+          "D-C4"
+        ],
+        "D-C6": [
+          "D-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2f11fea432ed007be9b4a2d448773d4d89fd641c6d5d71a3dc35049f992a7f5f",
+      "to": "sha256:d4c71037e96942188b052d852ca9e34a63dba1c9e6f071e4193042ac64df7197",
       "chunk_ids": {
         "D-B1": [
           "D-B1"
