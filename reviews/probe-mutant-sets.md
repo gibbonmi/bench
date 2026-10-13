@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/probe-mutant-sets/spec.md",
-  "plan_digest": "sha256:2347e1808b88930f9c4ed566a14dac1375ecac2014ec2348e85fa3ba1e294de0",
+  "plan_digest": "sha256:ecee5ab8c00cd885f6d3bc8c0be2f1e014eff67d3b48b412d894647d12e5d6a4",
   "implementation_session": "",
   "chunks": [
     {
@@ -1967,6 +1967,149 @@
           ]
         }
       ]
+    },
+    {
+      "id": "PM-D",
+      "base": "1870269dc00a43134d20f02af0a7afef77f08eec",
+      "tip": "6b447a69eabfae707aa27b72f08034495070386e",
+      "plan_digest": "sha256:ecee5ab8c00cd885f6d3bc8c0be2f1e014eff67d3b48b412d894647d12e5d6a4",
+      "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+      "acceptance_rows": [
+        "PM34",
+        "PM42",
+        "PM52",
+        "PM53",
+        "PM54",
+        "PM55",
+        "PM56",
+        "PM57",
+        "PM58",
+        "PM59",
+        "PM60",
+        "PM74"
+      ],
+      "verification": [
+        {
+          "id": "pm-t05-probe-family",
+          "performer": "claude:pm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6b447a69eabfae707aa27b72f08034495070386e",
+            "digest": "sha256:94b7490f5527ad3b26f849a3dc1fda52ccd3b35dbb11fc7a9d3cb1f29eb8cda8",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/probe/... --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,6b447a69eabfae707aa27b72f08034495070386e,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17856,335\n  github.com/gibbonmi/bench/internal/conformance,pass,63081,1690\n  github.com/gibbonmi/bench/internal/probe,pass,67606,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3066,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,11566,191\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n(exit 0; wall 73.8 s)\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-record-forms",
+          "performer": "claude:pm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6b447a69eabfae707aa27b72f08034495070386e",
+            "digest": "sha256:94b7490f5527ad3b26f849a3dc1fda52ccd3b35dbb11fc7a9d3cb1f29eb8cda8",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/probe/... --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,6b447a69eabfae707aa27b72f08034495070386e,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17856,335\n  github.com/gibbonmi/bench/internal/conformance,pass,63081,1690\n  github.com/gibbonmi/bench/internal/probe,pass,67606,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3066,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,11566,191\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n(exit 0; wall 73.8 s)\n"
+          },
+          "requirement": "record-forms",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-command-package",
+          "performer": "claude:pm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6b447a69eabfae707aa27b72f08034495070386e",
+            "digest": "sha256:94b7490f5527ad3b26f849a3dc1fda52ccd3b35dbb11fc7a9d3cb1f29eb8cda8",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/probe/... --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,6b447a69eabfae707aa27b72f08034495070386e,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17856,335\n  github.com/gibbonmi/bench/internal/conformance,pass,63081,1690\n  github.com/gibbonmi/bench/internal/probe,pass,67606,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3066,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,11566,191\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n(exit 0; wall 73.8 s)\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-conformance-package",
+          "performer": "claude:pm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6b447a69eabfae707aa27b72f08034495070386e",
+            "digest": "sha256:94b7490f5527ad3b26f849a3dc1fda52ccd3b35dbb11fc7a9d3cb1f29eb8cda8",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --package ./internal/probe/... --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,6b447a69eabfae707aa27b72f08034495070386e,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17856,335\n  github.com/gibbonmi/bench/internal/conformance,pass,63081,1690\n  github.com/gibbonmi/bench/internal/probe,pass,67606,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3066,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,11566,191\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n(exit 0; wall 73.8 s)\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-root-conformance",
+          "performer": "claude:pm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6b447a69eabfae707aa27b72f08034495070386e",
+            "digest": "sha256:c1624ea32bb34f36986fd73170c370cc8833935592e000c3158fdc52bc5cf5a0",
+            "excerpt": "$ bench worktree exec probe-mutant-sets-build -- bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,6b447a69eabfae707aa27b72f08034495070386e,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16253,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n(exit 0; wall about 23.854166800 s including date)\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "pm-t05-central-property",
+          "performer": "claude:pm_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77e3cd4b4bb3e9ac327168404ef131ad7a0fb3ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "6b447a69eabfae707aa27b72f08034495070386e",
+            "digest": "sha256:ea686e2890afdb62daab4bc294533b3ca1f561cc58db6f651f8f13c564252654",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/verification.go,swap,failed,1,TestVerificationChecksTheRowExit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,^TestVerificationChecksTheRowExit$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,554\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,52,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationChecksTheRowExit,\"verification_import_test.go:171: verification = exit 0, output \\\"verification[1]{list,chunk,id,requirement,role,outcome,source_digest,excerpt_digest}:\\\\\\\\n  chunk,\\\\\\\\\\\"1\\\\\\\\\\\",tests-1,tests,author-verification,fail,bdf67c11e413902be858a01300e96d4553d6… (411 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Check --exit-code against the command exit instead of the selected row's exit. TestVerificationChecksTheRowExit must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "6b447a69eabfae707aa27b72f08034495070386e",
+              "digest": "sha256:ea686e2890afdb62daab4bc294533b3ca1f561cc58db6f651f8f13c564252654",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/verification.go,swap,failed,1,TestVerificationChecksTheRowExit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,^TestVerificationChecksTheRowExit$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,554\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,52,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestVerificationChecksTheRowExit,\"verification_import_test.go:171: verification = exit 0, output \\\"verification[1]{list,chunk,id,requirement,role,outcome,source_digest,excerpt_digest}:\\\\\\\\n  chunk,\\\\\\\\\\\"1\\\\\\\\\\\",tests-1,tests,author-verification,fail,bdf67c11e413902be858a01300e96d4553d6… (411 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2145,6 +2288,24 @@
     {
       "from": "sha256:12c94ca56db2698862ce62c097467259f0b90432a2f66febcac4f339bb145b72",
       "to": "sha256:2347e1808b88930f9c4ed566a14dac1375ecac2014ec2348e85fa3ba1e294de0",
+      "chunk_ids": {
+        "PM-A": [
+          "PM-A"
+        ],
+        "PM-B": [
+          "PM-B"
+        ],
+        "PM-C1": [
+          "PM-C1"
+        ],
+        "PM-C2": [
+          "PM-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2347e1808b88930f9c4ed566a14dac1375ecac2014ec2348e85fa3ba1e294de0",
+      "to": "sha256:ecee5ab8c00cd885f6d3bc8c0be2f1e014eff67d3b48b412d894647d12e5d6a4",
       "chunk_ids": {
         "PM-A": [
           "PM-A"
