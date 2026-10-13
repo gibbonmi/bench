@@ -14,7 +14,7 @@ This ticket states that delivered behavior, so it starts after all of them commi
 
 The reference guide's probe paragraphs name each new form, the subject lock, and the `mutant` table.
 `CONTEXT.md` defines **combined mutant** and **expected witness**, each with an Avoid list.
-The delegate skill's probe sentence at line 104 names the new forms.
+The delegate skill's probe sentence in its Isolation section names the new forms.
 The anchored needle at line 81 of the delegate skill stays byte-identical, because a self-probe still reports one omission or one swap.
 `CHANGELOG.md` names each new form and the schema v2 change.
 
