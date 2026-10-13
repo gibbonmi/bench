@@ -61,12 +61,25 @@ func (r Request) Run() string {
 	switch {
 	case r.focused.check == proseCheckName:
 		return AllTests
-	case r.focused.check != "" && r.focused.check != gate.SystemPhaseName:
+	case r.focused.check != "" && !CheckTakesRun(r.focused.check):
 		return namedCheckRunPattern()
 	case r.focused.run != "":
 		return r.focused.run
 	}
 	return AllTests
+}
+
+// GradesProse answers whether the request runs the prose grade, which reads only the
+// subjects that prose.IsSubjectName accepts.
+func (r Request) GradesProse() bool {
+	return r.focused.check == proseCheckName
+}
+
+// CheckTakesRun answers whether the named check takes a --run pattern. Only the system
+// suite does. Every other check runs a fixed pattern, so a caller's pattern there would be
+// dropped in silence. The bench test grammar and the probe grammar both refuse by it.
+func CheckTakesRun(check string) bool {
+	return check == gate.SystemPhaseName
 }
 
 // namedCheckRunPattern is the one spelling of the test a named conformance check runs.
@@ -92,6 +105,6 @@ const probePackageNote = packageValueRule + "; run one call per package or use a
 func ProbeNotes() string {
 	return "notes:\n  " + strings.Join([]string{
 		probePackageNote,
-		"--check <name> names a conformance check from the bench test --help inventory.",
+		"--check <name> names a check from the bench test --help inventory.",
 	}, "\n  ")
 }

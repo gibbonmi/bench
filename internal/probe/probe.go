@@ -8,6 +8,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -80,6 +81,9 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 	if line != "" {
 		return line, code
 	}
+	if line := gradeProseSubject(subject, request); line != "" {
+		return line, 1
+	}
 	if mutant.miss {
 		return renderInvalidMutation(subject, input.cell, request)
 	}
@@ -92,6 +96,16 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 		return line, code
 	}
 	return probe(replacer, root, subject, mutant, mutation, request, baseline)
+}
+
+// gradeProseSubject refuses a prose probe of a file that the prose grade never reads,
+// because the grade of that mutant equals the baseline and would answer a false silent.
+func gradeProseSubject(subject subject, request testreport.Request) string {
+	if !request.GradesProse() || prose.IsSubjectName(subject.display) {
+		return ""
+	}
+	hint := "--check " + request.Target() + " grades only .md files, and " + subject.display + " is not one"
+	return toon.Errorf("probe subject not graded", hint) + "\n"
 }
 
 // renderInvalidMutation answers a substring miss. Its selection cells come from the prepared

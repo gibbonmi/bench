@@ -282,7 +282,7 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 // expectation.
 var probeHelpNotes = []string{
 	"--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; run one call per package or use a parent ./... pattern.",
-	"--check <name> names a conformance check from the bench test --help inventory.",
+	"--check <name> names a check from the bench test --help inventory.",
 }
 
 // PB30, DG4, PS35: every help spelling answers the usage line and then the notes block with

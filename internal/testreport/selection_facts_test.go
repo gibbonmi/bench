@@ -148,7 +148,9 @@ const packagePass = `{"Action":"pass","Package":"counted","Elapsed":0.01}` + "\n
 // TestProbeNotesDeriveTheirTokens grades that the notes hold exactly the probe's package
 // note and the check-inventory note. The prose check and the system suite are probe
 // targets, and each run without an inherited selection builds its own run binary, so a
-// not-a-target clause or a rebuild note states a route that the probe does not take.
+// not-a-target clause or a rebuild note states a route that the probe does not take. The
+// inventory also names the prose check and the system suite, so a note that calls each
+// name a conformance check misstates two of them.
 func TestProbeNotesDeriveTheirTokens(t *testing.T) {
 	notes := ProbeNotes()
 	if !strings.HasPrefix(notes, "notes:\n  "+probePackageNote+"\n  --check <name> ") {
@@ -157,7 +159,7 @@ func TestProbeNotesDeriveTheirTokens(t *testing.T) {
 	if lines := strings.Count(notes, "\n  "); lines != 2 {
 		t.Fatalf("notes hold %d facts, want 2:\n%s", lines, notes)
 	}
-	for _, retired := range []string{"not probe targets", usage.WorktreeBuild} {
+	for _, retired := range []string{"not probe targets", usage.WorktreeBuild, "conformance check"} {
 		if strings.Contains(notes, retired) {
 			t.Fatalf("notes = %q, want no %q", notes, retired)
 		}

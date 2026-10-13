@@ -86,7 +86,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if changed && explicit {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--changed"), 2
 	}
-	if hasCheck && (explicit || changed || parsed.Flags["--run"] != "" && check != gate.SystemPhaseName) {
+	if hasCheck && (explicit || changed || parsed.Flags["--run"] != "" && !CheckTakesRun(check)) {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--check"), 2
 	}
 	if (hasBase || hasSourceTip) && !changed {

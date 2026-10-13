@@ -5,7 +5,6 @@
 package probe
 
 import (
-	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -43,7 +42,8 @@ var grammar = usage.Grammar{
 
 // Command parses one probe invocation, resolves the repository root, and runs the probe.
 // The refusal order is fixed: usage, not in a repository, the subject, the mutation input,
-// the mutation match, the selection, the substring miss, the gate lock, then the baseline.
+// the mutation match, the selection, a subject the selected grade never reads, the
+// substring miss, the gate lock, then the baseline.
 // Every one of those runs before the preserved copy is written, and only the baseline
 // starts a run child.
 func Command(args []string) (string, int) {
@@ -146,9 +146,8 @@ func gradeForms(parsed usage.Result) (string, int) {
 		return usageLine()
 	case pkg == check:
 		return usageLine()
-	// A run pattern selects within a package expression or the system suite. Every other
-	// check runs a fixed pattern, so a pattern there would be dropped in silence.
-	case run && !pkg && parsed.Flags["--check"] != gate.SystemPhaseName:
+	// A run pattern selects within a package expression or a check that takes one.
+	case run && !pkg && !testreport.CheckTakesRun(parsed.Flags["--check"]):
 		return usageLine()
 	}
 	return "", 0

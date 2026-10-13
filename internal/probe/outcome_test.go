@@ -193,12 +193,16 @@ func listRecordSurfaces(t *testing.T, f *fixture) string {
 
 // PB7, PS30: the check form builds the request `bench test` builds for the same selection,
 // a system run pattern included, so the two verbs cannot disagree about what a named check
-// selects.
+// selects. The system suite takes its pattern as an option, so a bare system selection is
+// accepted too.
 func TestProbeSelectsTheCheckForm(t *testing.T) {
 	f := newFixture(t)
-	for _, selection := range [][]string{{"--check", "line-routing"}, {"--check", "system", "--run", "^X$"}} {
+	for _, selection := range [][]string{{"--check", "line-routing"}, {"--check", "system", "--run", "^X$"}, {"--check", "system"}} {
 		t.Run(strings.Join(selection, " "), func(t *testing.T) {
 			parsed, line, code := usage.Parse(grammar, append([]string{"clamp.go", "--omit", "n < 0"}, selection...))
+			if line == "" {
+				line, code = gradeForms(parsed)
+			}
 			if line != "" {
 				t.Fatalf("parse = (%q, %d), want an accepted selection", line, code)
 			}
