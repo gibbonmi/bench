@@ -324,6 +324,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "pm-a-standards-r2",
+          "performer": "claude:pm_a_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_a_standards_r2",
+            "digest": "sha256:a9872d0749047d9a3be98fa89fffa7e42a347ae63a43e46b3459249a78cefbb9",
+            "excerpt": "Standards axis claude:pm_a_standards_r2 (opus/high), PM-A confirming round 2, chunk pair a6739258..57336246, repair delta 14bec38c..cc2abf92 -- internal/, evidence sha256:da630e2d current.\ncount: 0\nworst: none\nC1 repair (package_test.go:20-49): the per-argument expectation strings.Fields(bothPackages) shares its source with the target cell; the hook uses the documented probetest $n contract; comments are timeless, tag-free, under 25 words.\nC2 repair (refusal_test.go:168-174): the expectation derives from usage.EmptyFlagValue and toon.Usage, as tree precedents do; requireRefused asserts exit 2, subject unchanged, empty home, no run child; both paths are on ticket 1 Writes.\nS1 stays closed as no-op: the delta does not touch probeHelpNotes, and ticket 1 line 20 directs the copy.\nAdvice: two hand-built argv hooks now exist (package_test.go:26, subject_check_test.go:81); a probetest helper fits if a third appears.\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "a6739258f810d1dcdd1efc2a028a0fe9726d8083",
+          "tip": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-a-standards-r1"
+          ]
+        },
+        {
+          "id": "pm-a-spec-r2",
+          "performer": "claude:pm_a_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_a_spec_r2",
+            "digest": "sha256:a8abc1bcdee8a807ed5d33607921335806d3276bed0e272a98b67c9aef6e42f6",
+            "excerpt": "Spec axis claude:pm_a_spec_r2 (opus/high), PM-A confirming round 2, chunk pair a6739258..57336246, repair delta 14bec38c..57336246 (repair cc2abf92), evidence sha256:da630e2d current.\ncount: 0\nworst: none\nPM45 met: one argument per line per start (package_test.go:26), exactly 2 starts (:36), last two arguments equal [\"./clamp\",\"./other\"] (:39-48); C1 closed from the Spec side.\nPM47 met: selectionRow with bothPackages \"./clamp ./other\" (package_test.go:15, 30-31).\nC2 adds no behavior: TestProbeRefusesAnEmptyLaterPackage (refusal_test.go:168-174) pins the existing NoEmptyValue refusal (command.go:35, usage/parse.go:179-180) through usage.EmptyFlagValue.\nRecords: pm-t01-rep1-{probe-family,testreport,command-package,conformance-package,root-conformance,central-property} at cc2abf92, source digest da6caedf equals the chunk digest.\nAdvice: the central probe red shows the target cell, not the argument-boundary assertion; four floor entries share one excerpt.\nImplementation command: no command change.\n"
+          },
+          "axis": "Spec",
+          "base": "a6739258f810d1dcdd1efc2a028a0fe9726d8083",
+          "tip": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-a-spec-r1"
+          ]
+        },
+        {
+          "id": "pm-a-coverage-r2",
+          "performer": "claude:pm_a_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "da6caedf244c2a6605118277ac7c11b57402a419",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_a_coverage_r2",
+            "digest": "sha256:04bbbc81f5aee4b00478d63515104405a080db358da13cf4354e68c335c17b80",
+            "excerpt": "Coverage axis claude:pm_a_coverage_r2 (opus/high), PM-A confirming round 2, chunk pair a6739258..57336246, repair delta 14bec38c..cc2abf92 -- internal/, evidence sha256:da630e2d current.\ncount: 0\nworst: none\nC1 closed: own probe at internal/testreport/command.go:195, operands append strings.Join(request.packageExprs, \" \"); the target cell is unchanged, so only the argv record can catch it. bench probe: bit, failed 1, TestProbeRepeatsThePackage at package_test.go:47, restored yes.\nC2 closed and red-capable: (1) drop NoEmptyValue on --package at internal/probe/command.go:35: bit at refusal_test.go:173, restored yes; (2) limit the empty-value check at internal/usage/parse.go:179 to the first occurrence: bit, restored yes.\nNo new defect: per-start files keyed by $n; the len guard prevents a slice panic; new imports are used.\nAdvice: a companion row with the empty value first would pin the other order; optional.\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "a6739258f810d1dcdd1efc2a028a0fe9726d8083",
+          "tip": "cc2abf92b66b5430ed598624ba3c86aaa7f19d90",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-a-coverage-r1"
+          ]
         }
       ]
     }
@@ -374,3 +440,25 @@ Count 2. Worst issue: C1.
 
 - Four floor rows share one combined excerpt, and each row names one package.
 - A duplicate `--package` value has no decided behavior.
+
+## PM-A round 2
+
+The confirming round read the repair delta from 14bec38c to 57336246, with the repair commit cc2abf92.
+PM-A closes with repair cycle 1 of 2 used, and that cycle was also the hardening cycle.
+
+### Standards
+
+Count 0. Worst issue: none. S1 stays closed as no-op.
+
+### Spec
+
+Count 0. Worst issue: none. PM45 and PM47 stay met, and C2 adds no behavior.
+
+### Coverage
+
+Count 0. Worst issue: none. C1 and C2 are closed, and each has an independent probe that bit.
+
+### Advice
+
+- A companion row with the empty value first would pin the other order.
+- A shared `probetest` argv recorder fits if a third hook appears.
