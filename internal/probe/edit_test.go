@@ -16,6 +16,16 @@ func TestWithFileSwapsMultilineBytes(t *testing.T) {
 	requireMutantBites(t, f, strings.Replace(clampSource, old, replacement, 1), "swap", "--swap", old, "--with-file", input)
 }
 
+// A --with-file swap whose file bytes equal the old string refuses with the empty-mutation
+// line that names the flag the caller gave.
+func TestWithFileSwapEqualToOldRefusesEmpty(t *testing.T) {
+	f := refusalFixture(t)
+	input := filepath.Join(scratchDir(t), "replacement")
+	writeFixtureFile(t, input, "n < 0", 0o644)
+	out, code := runProbe(t, "clamp.go", "--swap", "n < 0", "--with-file", input, "--package", "./")
+	requireRefused(t, f, out, code, "error: probe mutation empty — --with-file equals --swap\n", 1)
+}
+
 // PS3, PS4, PS5: the insertion text goes immediately before the one anchor match, from
 // --with or from --with-file, and an anchor that matches twice refuses as ambiguous.
 func TestInsertBeforePutsTextBeforeTheAnchor(t *testing.T) {
@@ -53,7 +63,7 @@ func TestOccurrenceSelectsOneMatch(t *testing.T) {
 		want := "error: probe mutation occurrence out of range — the old string matches 2 times, --occurrence is 3\n"
 		requireRefused(t, f, out, code, want, 1)
 	})
-	for _, value := range []string{"0", "x", "-1"} {
+	for _, value := range []string{"0", "x", "-1", "99999999999999999999"} {
 		t.Run("usage "+value, func(t *testing.T) {
 			f := refusalFixture(t)
 			out, code := runProbe(t, "clamp.go", "--swap", "return", "--with", "x", "--occurrence", value, "--package", "./")

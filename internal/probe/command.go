@@ -69,21 +69,53 @@ func probeGrammar() usage.Grammar {
 	return withNotes
 }
 
+// mutationGroup is one mutation group of the closed form matrix.
+type mutationGroup int
+
+const (
+	// editGroup is --swap and --omit: one edit, or several that make one combined mutant.
+	editGroup mutationGroup = iota
+	unwrapGroup
+	omitFileGroup
+	insertGroup
+	deleteGroup
+)
+
+// groupFlags names the flags that select each mutation group.
+var groupFlags = [...][]string{
+	editGroup:     {"--swap", "--omit"},
+	unwrapGroup:   {"--unwrap"},
+	omitFileGroup: {"--omit-file"},
+	insertGroup:   {"--insert-before"},
+	deleteGroup:   {"--delete"},
+}
+
+// namedGroup answers the mutation group that the argv names, and ok is false when the argv
+// names no group or several. gradeForms and mutationInput both read the group here, so the
+// form that the grader accepts is the form that the input builds.
+func namedGroup(parsed usage.Result) (mutationGroup, bool) {
+	group, count := editGroup, 0
+	for g, flags := range groupFlags {
+		for _, flag := range flags {
+			if _, ok := parsed.Flags[flag]; ok {
+				group, count = mutationGroup(g), count+1
+				break
+			}
+		}
+	}
+	return group, count == 1
+}
+
 // gradeForms grades the closed form matrix: an argv names exactly one mutation group and
 // exactly one selection form, and each form takes only its partner flags. The shared parser
 // grades one flag at a time, so the rules between flags are graded here, and each answers
 // with the grammar's own usage line.
 func gradeForms(parsed usage.Result) (string, int) {
 	has := func(flag string) bool { _, ok := parsed.Flags[flag]; return ok }
+	group, oneGroup := namedGroup(parsed)
 	swaps, withs, omits := len(parsed.Repeated["--swap"]), len(parsed.Repeated["--with"]), len(parsed.Repeated["--omit"])
-	withFile, insert, omitFile, deletion := has("--with-file"), has("--insert-before"), has("--omit-file"), has("--delete")
+	withFile, insert := has("--with-file"), group == insertGroup
 	combined := swaps+omits > 1
-	groups := 0
-	for _, named := range []bool{swaps+omits > 0, has("--unwrap"), omitFile, insert, deletion} {
-		if named {
-			groups++
-		}
-	}
 	texts := withs
 	if withFile {
 		texts++
@@ -93,7 +125,7 @@ func gradeForms(parsed usage.Result) (string, int) {
 	_, run := parsed.Flags["--run"]
 	_, check := parsed.Flags["--check"]
 	switch {
-	case groups != 1:
+	case !oneGroup:
 		return usageLine()
 	// --with and --with-file are two spellings of one text.
 	case withs > 0 && withFile:
@@ -108,7 +140,7 @@ func gradeForms(parsed usage.Result) (string, int) {
 	// A combined mutant takes scalar texts only.
 	case combined && withFile:
 		return usageLine()
-	case has("--occurrence") && (!validOccurrence || omitFile || deletion || combined):
+	case has("--occurrence") && (!validOccurrence || group == omitFileGroup || group == deleteGroup || combined):
 		return usageLine()
 	case pkg == check:
 		return usageLine()

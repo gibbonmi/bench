@@ -1,6 +1,7 @@
 package probe
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -61,4 +62,12 @@ func TestCombinedEditsRefuseSingleForms(t *testing.T) {
 			requireRefused(t, f, out, code, grammar.Help+"\n", 2)
 		})
 	}
+	// The one swap takes its text from the file, so no other partner rule refuses this argv.
+	t.Run("--with-file without --with", func(t *testing.T) {
+		f := refusalFixture(t)
+		input := filepath.Join(scratchDir(t), "replacement")
+		writeFixtureFile(t, input, "n > 0", 0o644)
+		out, code := runProbe(t, "clamp.go", "--swap", "n < 0", "--with-file", input, "--omit", "return 0", "--package", "./")
+		requireRefused(t, f, out, code, grammar.Help+"\n", 2)
+	})
 }

@@ -22,38 +22,38 @@ type mutation struct {
 	remove     bool
 }
 
-// mutationInput resolves an argv that gradeForms accepted into its mutation, and reads each
-// mutation file through the one bounded reader. A combined mutant lists each --swap edit
-// and then each --omit edit, so its cell derives from the two flag groups, not argv order.
+// mutationInput resolves an argv that gradeForms accepted into the mutation of its one
+// group, and reads each mutation file through the one bounded reader. A combined mutant
+// lists each --swap edit and then each --omit edit, so its cell derives from the two flags,
+// not argv order.
 func mutationInput(parsed usage.Result) (mutation, string) {
 	n, _ := occurrence(parsed)
 	m := mutation{occurrence: n}
-	text := parsed.Flags["--with"]
+	text, textFlag := parsed.Flags["--with"], "--with"
 	if path, ok := parsed.Flags["--with-file"]; ok {
 		read, line := readMutationFile(path)
 		if line != "" {
 			return mutation{}, line
 		}
-		text = read
+		text, textFlag = read, "--with-file"
 	}
-	if _, ok := parsed.Flags["--delete"]; ok {
+	group, _ := namedGroup(parsed)
+	switch group {
+	case deleteGroup:
 		m.cell, m.remove = "delete", true
 		return m, ""
-	}
-	if path, ok := parsed.Flags["--omit-file"]; ok {
-		read, line := readMutationFile(path)
+	case omitFileGroup:
+		read, line := readMutationFile(parsed.Flags["--omit-file"])
 		if line != "" {
 			return mutation{}, line
 		}
 		m.cell, m.finds = "omit", []find{{form: "omit", old: read}}
 		return m, ""
-	}
-	if call, ok := parsed.Flags["--unwrap"]; ok {
-		m.cell, m.finds = "unwrap", []find{{form: "unwrap", old: call}}
+	case unwrapGroup:
+		m.cell, m.finds = "unwrap", []find{{form: "unwrap", old: parsed.Flags["--unwrap"]}}
 		return m, ""
-	}
-	if anchor, ok := parsed.Flags["--insert-before"]; ok {
-		m.cell, m.finds = "insert", []find{{form: "insert", old: anchor, text: text}}
+	case insertGroup:
+		m.cell, m.finds = "insert", []find{{form: "insert", old: parsed.Flags["--insert-before"], text: text}}
 		return m, ""
 	}
 	withs := parsed.Repeated["--with"]
@@ -64,7 +64,7 @@ func mutationInput(parsed usage.Result) (mutation, string) {
 		if i < len(withs) {
 			text = withs[i]
 		}
-		m.finds = append(m.finds, find{form: "swap", old: old, text: text})
+		m.finds = append(m.finds, find{form: "swap", old: old, text: text, textFlag: textFlag})
 		forms = append(forms, "swap")
 	}
 	for _, old := range parsed.Repeated["--omit"] {

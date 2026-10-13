@@ -9,12 +9,14 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// find is one requested edit before it matches: the form, the old string it selects, and
-// the text a swap or an insertion puts in. An insertion's old string is its anchor.
+// find is one requested edit before it matches: the form, the old string it selects, the
+// text a swap or an insertion puts in, and the flag that gave a swap its text. An
+// insertion's old string is its anchor.
 type find struct {
-	form string
-	old  string
-	text string
+	form     string
+	old      string
+	text     string
+	textFlag string
 }
 
 // edit is one change to the start bytes: the byte range [start, end) and the bytes that take
@@ -43,7 +45,7 @@ func mutate(start []byte, m mutation, display string) (mutationResult, string) {
 	}
 	for _, f := range m.finds {
 		if f.form == "swap" && f.text == f.old {
-			return mutationResult{}, toon.Errorf("probe mutation empty", "--with equals --swap") + "\n"
+			return mutationResult{}, toon.Errorf("probe mutation empty", f.textFlag+" equals --swap") + "\n"
 		}
 	}
 	edits := make([]edit, 0, len(m.finds))
