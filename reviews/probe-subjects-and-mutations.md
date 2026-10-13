@@ -1791,6 +1791,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ps-c-standards-2",
+          "performer": "claude:ps-c-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-standards-2",
+            "digest": "sha256:d8f1969a918c8b1683884addb5ff9eef65dcf103f2954acc77fe7f3c4d0044c4",
+            "excerpt": "Standards confirming round, chunk PS-C, repair delta ab67d6d580a2..7a55152eebda, opus medium.\nS1 closed (9): sameOutcome compares the whole Outcome with reflect.DeepEqual after it normalizes an empty FailedNames.\nS2 closed (9): installBuildScript in subject_check_fixture_test.go:37 is the one fixture install, called at :30 and verdict_test.go:154. No new blocking findings.\n"
+          },
+          "axis": "Standards",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "7a55152eebda40993195f4279847529b1dc982c0",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-c-standards-1"
+          ]
+        },
+        {
+          "id": "ps-c-spec-2",
+          "performer": "claude:ps-c-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-spec-2",
+            "digest": "sha256:e594a4f4897f15b348e5ceebac38b1dc02643b142c8e1a14603a73979072b501",
+            "excerpt": "Spec confirming round, chunk PS-C, repair delta ab67d6d580a2..7a55152eebda, opus medium.\nHolds (8): the delta changes only tests, the spec, and ticket 4; the new subtests match the Verdict paragraph and the Edge inventory; the red-baseline sentence matches baseline.go:38.\nAdvice: say every other refusal at the null rule and in PS39.\n"
+          },
+          "axis": "Spec",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "7a55152eebda40993195f4279847529b1dc982c0",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-c-spec-1"
+          ]
+        },
+        {
+          "id": "ps-c-coverage-2",
+          "performer": "claude:ps-c-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "330ba04d2a41cf4c5c2663d5656760ea5a0d2c8c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ps-c-coverage-2",
+            "digest": "sha256:03c102ff648be4c6046447248457ff6be1fd8f35500300d79e1de8d96d99d027",
+            "excerpt": "Coverage confirming round, chunk PS-C, repair delta ab67d6d580a2..7a55152eebda, opus medium.\nC1 closed (8): verdict_test.go:59-65 reds without the failed-kind guard.\nC2 closed (8): verdict_test.go:136-149 reds without sanitize.Preview. S1 makes no comparison green by construction. Probes: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "145d5439330c0a5bc7232b11d4be5aefb1dd47c5",
+          "tip": "7a55152eebda40993195f4279847529b1dc982c0",
+          "finding_ids": [],
+          "supersedes": [
+            "ps-c-coverage-1"
+          ]
         }
       ]
     }
@@ -1940,7 +2006,7 @@ Repair targets: 4 (S1, S2, C1, and C2) for ticket 2.
 
 ## PS-C pickup
 
-Chunk PS-C has used 0 of its 2 repair cycles after its initial review.
+Chunk PS-C has used 1 of its 2 repair cycles after its initial review. Small-fix repairs 8d68d21a (ticket 3) and 7a55152e (ticket 4) closed S1, S2, C1, and C2, and the confirming round of all three axes passed.
 
 ### Standards
 
