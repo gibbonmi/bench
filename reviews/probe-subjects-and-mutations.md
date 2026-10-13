@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/probe-subjects-and-mutations/spec.md",
-  "plan_digest": "sha256:0ad5a6ea21f4e91ab9ccbe9d8e88aec3d43731b81fbac8a784791fcea3a05631",
+  "plan_digest": "sha256:6124b1fe814c7d1d1ddd8422233ef9ffed6cec824407d7140135e64c06f02c57",
   "implementation_session": "",
   "chunks": [
     {
@@ -422,9 +422,9 @@
     {
       "id": "PS-B",
       "base": "6175e732579feebb6224c2a7ade2f01992144e20",
-      "tip": "0d91e20b73d3ad6cb5ec74eeab491de0e2b07589",
-      "plan_digest": "sha256:0ad5a6ea21f4e91ab9ccbe9d8e88aec3d43731b81fbac8a784791fcea3a05631",
-      "source_digest": "a5459a6cad4efb4174d9c2ae5e312217c40551b9",
+      "tip": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+      "plan_digest": "sha256:6124b1fe814c7d1d1ddd8422233ef9ffed6cec824407d7140135e64c06f02c57",
+      "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
       "acceptance_rows": [
         "PS26",
         "PS27",
@@ -437,7 +437,8 @@
         "PS34",
         "PS35",
         "PS36",
-        "PS37"
+        "PS37",
+        "PS77"
       ],
       "verification": [
         {
@@ -558,6 +559,125 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "ps-t02-rep1-probe-family",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:d62270910b8bf94bedaa87d85e51843e80a48d91ce4d2e9a2e70f3fff0f03b79",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,pass,67894,190\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-testreport",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:bed032faf90ef3345188cabd073f1dc380ae9c6e8e06be37ac16744a3016284c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,88234,226\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-command-package",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:f21a5e2dce4818214c06d6448a258c11fc05d930e1c4f8aa8159188b6c3a80b1",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,35003,335\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-conformance-package",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:0590cb9d0338299373108d4dc37a0bdb2034b32b8a43a837f16be4329483479c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,92746,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-root-conformance",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:037b4bc3012695440262fbf727c4b6095c2f8b82c23aa20cc1c49f66293a6a30",
+            "excerpt": "tree[1]{target,head,dirty}:\n  probe-subjects-build,d4f03f030be17feb46f5e64e709663f9d8979abb,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19494,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ps-t02-rep1-central-property",
+          "performer": "claude:ps_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a71101bcf99eeb2dfb29654c0a18b6ad3c774006",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+            "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Answer the substring miss before the selection parse with a hard-coded all run cell. TestSelectionPrecedesTheSubstringMiss must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "d4f03f030be17feb46f5e64e709663f9d8979abb",
+              "digest": "sha256:b833fac31b8a7951b2b16a6d5ec7c0d4c327cb421f6bbbe495023dbc4f27a47e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe/...,^TestSelectionPrecedesTheSubstringMiss$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1426\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,322,4\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_line-routing,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (688 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/--check_system_--run_^TestClampNegative$,\"subject_check_test.go:120: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (680 bytes)\",1\n  github.com/gibbonmi/bench/internal/probe,TestSelectionPrecedesTheSubstringMiss/unknown_check,\"subject_check_test.go:105: refusal = (\\\"probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  invalid,clamp.go,omit,substring-miss,0,untouched\\\\\\\\nselection[1]{form,target,run,baseline,ran}:\\\\\\\\n  package,\\\\\\\\\\\"\\\\\\\\\\\",all,\\\\\\\\\\\"\\\\\\\\\\\",0\\\\\\\\nprobe_execut… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -653,6 +773,18 @@
       "chunk_ids": {
         "PS-A": [
           "PS-A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0ad5a6ea21f4e91ab9ccbe9d8e88aec3d43731b81fbac8a784791fcea3a05631",
+      "to": "sha256:6124b1fe814c7d1d1ddd8422233ef9ffed6cec824407d7140135e64c06f02c57",
+      "chunk_ids": {
+        "PS-A": [
+          "PS-A"
+        ],
+        "PS-B": [
+          "PS-B"
         ]
       }
     }
