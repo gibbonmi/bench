@@ -1899,6 +1899,72 @@
           "supersedes": [
             "pm-c2-coverage-r2"
           ]
+        },
+        {
+          "id": "pm-c2-standards-r3b",
+          "performer": "claude:pm_c2_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_standards_r2",
+            "digest": "sha256:bedd6b44399df4ccbf747d2a7ac3df04e836b64b06603b94357ca461f59cc9ac",
+            "excerpt": "Standards axis claude:pm_c2_standards_r2 (opus/high), PM-C2 reaffirmation of S5 at the cycle 3 tip, delta ae0f9b8b..485fa5e2 -- internal/.\ncount: 0\nworst: none\nS5 closed, confidence 9: restoreFailedRow(n) (set_input_test.go:105-108) is the one source of the restore-failed row; baseline_test.go:256, set_test.go:177, and set_test.go:317 call it; rg for \"restore-failed\", \"swap\" finds only the helper. No new defect.\n"
+          },
+          "axis": "Standards",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-c2-standards-r3"
+          ]
+        },
+        {
+          "id": "pm-c2-spec-r3b",
+          "performer": "claude:pm_c2_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_spec_r2",
+            "digest": "sha256:a78c922c0b29988657403d45352b231b88fced43dae877f911e466208f5ed59a",
+            "excerpt": "Spec axis claude:pm_c2_spec_r2 (opus/high), PM-C2 reaffirmation at the cycle 3 tip, delta ae0f9b8b..485fa5e2 -- internal/.\ncount: 0\nworst: none\nRound 3 result holds, confidence 9: set_input_test.go:105-108 adds restoreFailedRow(n) returning the row that baseline_test.go:256 (n = 1), set_test.go:177 (n = 1), and set_test.go:317 (n = 2) spelled inline; no expectation changed; test files only; P21 and P22 stay closed and PM81 stays met.\n"
+          },
+          "axis": "Spec",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-c2-spec-r3"
+          ]
+        },
+        {
+          "id": "pm-c2-coverage-r3b",
+          "performer": "claude:pm_c2_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "edfc7908b69827412682c80dba49c276d8e5c3cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_c2_coverage_r2",
+            "digest": "sha256:36325dae601ed480b17adaf028a94e7d139a1295a99cc251e20c73651fde1ee3",
+            "excerpt": "Coverage axis claude:pm_c2_coverage_r2 (opus/high), PM-C2 reaffirmation at the cycle 3 tip, delta ae0f9b8b..485fa5e2 -- internal/.\ncount: 0\nworst: none\nRound 3 result holds, confidence 9: restoreFailedRow(n) (set_input_test.go:106-108) matches the three replaced rows cell for cell with the same entry numbers (1, 1, 2); assertions, faults, and exits are unchanged, so the earlier bites still apply. No probe needed.\n"
+          },
+          "axis": "Coverage",
+          "base": "6584e93e6df7826a38d93d05bcfe0094afe82971",
+          "tip": "485fa5e295bec6471009169ba0ee9bfd140580dd",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-c2-coverage-r3"
+          ]
         }
       ]
     }
@@ -2293,3 +2359,14 @@ Count 0. Worst issue: none. P21 and P22 are closed, and the new subtest meets ro
 ### Coverage
 
 Count 0. Worst issue: none. A miss row after a later stop is now pinned, and the `sleepingRun` tests stay red-capable.
+
+## PM-C2 close
+
+The cycle 3 small fix 485fa5e2 adds one `restoreFailedRow` helper, and PM-C2 is refrozen from 6584e93e to 485fa5e2.
+Each axis reaffirmed its result at that tip, and S5 is closed.
+PM-C2 used three repair cycles, and the third cycle used the reviewer's `--auto-approve` extension.
+
+### Advice for the reviewer
+
+- Decision D3 came from the build consultant, so the reviewer can veto it.
+- The PM84 test waits 50 ms for the cancel. A deterministic wait needs a production test seam for the set cancel context.
