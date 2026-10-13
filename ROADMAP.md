@@ -190,7 +190,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
 
-**FT402 (MEDIUM, decision required) — the landing gate costs less time and keeps its failure detection.**
+**FT402 (MEDIUM) — the landing gate costs less time and keeps its failure detection.**
 
 **FT409 (MEDIUM) — `bench test` reports the slowest tests and warns when a package nears the go test timeout.**
 
@@ -329,11 +329,12 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT402
+1. map-only-route
 2. FT379
 3. FT405
-4. FT375-spec-staleness
-5. FT293-ownership-closure
+4. FT293-ownership-closure
+5. FT375-spec-staleness
 6. FT380-plan-commit
-7. FT411
-8. FT409
+7. FT409
+8. FT402
+9. FT411
