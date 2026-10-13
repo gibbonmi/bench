@@ -163,6 +163,7 @@ The rule applies to `--omit`, `--omit-file`, and a combined mutant.
 A combined mutant takes two or more edits from repeated `--swap` and `--omit` flags.
 The i-th `--swap` pairs with the i-th `--with`, and the two counts must agree.
 Each pair whose `--with` equals its `--swap` refuses with the current `error: probe mutation empty — --with equals --swap`.
+A `--with-file` swap whose file bytes equal its `--swap` refuses with `error: probe mutation empty — --with-file equals --swap`.
 Each old string must match exactly once in the start bytes.
 Two edits whose byte ranges overlap refuse with `error: probe mutations overlap — two edits touch the same bytes`.
 
