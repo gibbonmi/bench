@@ -670,7 +670,16 @@
               "text": "The delivery closes no roadmap row, and the canary and failing-name faces stay on FT168."
             }
           ],
-          "sources": []
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "probe-mutant-sets",
+                "path": "specs/probe-mutant-sets/spec.md",
+                "identity": "sha256:c907642fa7b944932fc5b3cdfd8e37301cdd448c971c72124c09415727f6b869"
+              }
+            }
+          ]
         },
         {
           "id": "FT402",
