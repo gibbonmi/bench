@@ -11,7 +11,7 @@ Verification log: pending — the spec review and the ticket review write it at 
 
 ## Problem
 
-A spec stage on the full route costs about 3.5M to 6.6M subagent tokens before the build starts.
+On the `guidance-weight` map, the full spec route cost about 6.6M subagent tokens before the build started.
 On the `guidance-weight` map, one map-only slicer matched the full route's tickets at about one twelfth of the tokens.
 It also used about one quarter of the wall time.
 That slicer also found one build defect that the full route missed.
@@ -48,7 +48,7 @@ Harder chunks: none.
 10. As the slicer, I want to do my own tree research under the slicing checks' `Fence-expansion evidence` classes, so that each `Writes:` line keeps its closure.
 11. As the slicer, I want to record a gap log in the thin spec's `Further notes`, so that every map gap is visible at sign-off.
 12. As the slicer, I want each gap-log entry to carry one of four classes, so that the reviewer finds each reviewer-owned decision.
-13. As the coordinator, I want to complete the chunk table, the completion plan, and the fence after the tickets, so that the proposal can run.
+13. As the coordinator, I want the chunk table and the completion plan after the tickets, under an interim fence, so that the proposal runs.
 14. As the coordinator, I want to run `--propose-writes` for each ticket on the complete thin spec, so that every closure file joins `Writes:`.
 15. As the coordinator, I want one ticket review on `craft-line`'s ticket review line with a cap of 2, so that one independent grade remains.
 16. As the coordinator, I want the fence, the plan-only preflight, and the approval table after the ticket review, so that build entry is unchanged.
@@ -115,7 +115,9 @@ The reference states the steps in this order.
 3. The slicer writes the thin spec's stories and coverage rows from the decision predicates first, so the row IDs exist before the tickets (`internal/preflight/ticket_rows.go:41-74`).
 4. The slicer cuts the tickets under `craft-tickets` and the slicing checks, and each `Covers:` line names declared rows.
 5. The slicer records the gap log in the thin spec's `Further notes`. Each entry takes one class: (a) map discretion, (b) a seam or test choice, (c) a missing fact, or (d) a reviewer decision.
-6. After every ticket exists, the coordinator completes the chunk table, the completion plan, and the fence. Then the coordinator runs `--propose-writes` for each ticket, because the proposal reads the whole thin spec (`internal/preflight/preparation.go:41`).
+6. After every ticket exists, the coordinator completes the chunk table and the completion plan. Until step 8, the fence holds only the review pickup.
+   Then the coordinator commits the thin spec and the tickets, and runs `--propose-writes` for each ticket.
+   The proposal reads the committed thin spec (`internal/preflight/preparation.go:41`), and it accepts only a `fence-writes` red (`internal/preflight/proposal.go:14`).
 7. One ticket review runs on `craft-line`'s ticket review line, with an iteration cap of 2.
 8. After the ticket review accepts, the coordinator writes the fence section, runs the plan-only preflight, and presents the approval table.
 9. Each class (d) entry is a decision row in the approval table. These rows are not late clarification questions, so the two-question limit does not apply to them.
@@ -165,7 +167,7 @@ One chunk holds the change, because every part is guidance prose and its anchors
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"MR-A","tickets":["1-add-the-map-only-route.md"],"verification":[{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"prose","command":"bench test --check prose"},{"id":"anchors-package","command":"bench test --package ./internal/anchors"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"central-property","command":"bench test --package ./internal/anchors","probe":"Delete the stop-and-return sentence from the route reference. TestWriteSpecMapOnlyRoute must turn red."}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/map-only-route/spec.md"},{"id":"anchors-package","command":"bench test --package ./internal/anchors"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"system","command":"bench test --check system"}]}
+{"version":1,"chunks":[{"id":"MR-A","tickets":["1-add-the-map-only-route.md"],"verification":[{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"prose","command":"bench test --check prose"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"anchors-package","command":"bench test --package ./internal/anchors"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"central-property","command":"bench test --package ./internal/anchors","probe":"Delete the stop-and-return anchor from internal/anchors/registry_ticket_passes.go. TestWriteSpecMapOnlyRoute must turn red."}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/map-only-route/spec.md"},{"id":"anchors-package","command":"bench test --package ./internal/anchors"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ## Testing decisions
@@ -200,7 +202,7 @@ One chunk holds the change, because every part is guidance prose and its anchors
 | MR10 | 10 | The route reference sends the slicer's tree research to the slicing checks' `Fence-expansion evidence` classes | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A slicer without the classes misses fixture and anchor closure files. |
 | MR11 | 11 | The route reference puts the gap log in the thin spec's `Further notes` | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A gap log kept outside the spec never reaches the sign-off. |
 | MR12 | 12 | The route reference names the four gap-log classes (a) to (d) | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A log without class (d) hides the decisions that only the reviewer makes. |
-| MR13 | 13 | The route reference completes the chunk table, the completion plan, and the fence after every ticket exists | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A plan written before the tickets names missing files, and the completion-plan check turns red. |
+| MR13 | 13 | The route reference completes the chunk table and the completion plan after every ticket exists, under the interim fence | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A plan written before the tickets names missing files, and the completion-plan check turns red. |
 | MR14 | 14 | The route reference runs `--propose-writes` for each ticket after the thin spec is complete | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A proposal run on a partial spec refuses, and the closure files never join `Writes:`. |
 | MR15 | 15 | The route reference runs one ticket review on `craft-line`'s ticket review line with an iteration cap of 2 | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A route without the review sentence ships tickets with no independent grade. |
 | MR16 | 16 | The route reference writes the fence, runs the plan-only preflight, and presents the approval table after the ticket review accepts | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A route that skips the plan-only preflight stages a ticket graph that the build entry refuses. |
@@ -213,9 +215,9 @@ One chunk holds the change, because every part is guidance prose and its anchors
 | MR23 | 23 | The route reference lists the thin-spec parts that the coverage check and the build preflight read | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A thin spec without the fence or the plan fails the build preflight bootstrap. |
 | MR24 | 24 | The route reference requires the thin spec's `Decision source:` line to name the compiled map | review-owned | A thin spec that names the conversation hides the map from the ticket author. |
 | MR25 | 25 | `/bench-write-spec` holds the pointer sentence to `references/map-only-route.md` under `Who runs this phase` | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A route reference with no pointer is unreachable from the phase. |
-| MR26 | 26 | `/bench-write-spec` holds 87 lines | `bench test --check prose` (the `guidance-prose-budgets` check) | A pointer on a new line breaks the 87-line budget. |
+| MR26 | 26 | `/bench-write-spec` holds 87 lines | `bench test --check guidance-prose-budgets` | A pointer on a new line breaks the 87-line budget. |
 | MR27 | 27 | Every existing write-spec anchor and canary stays green | `bench test --check docs-currency-workflow` (the live anchors over `/bench-write-spec`) | A reworded full-route sentence or a moved line wrap reds its anchor or its canary. |
-| MR28 | 28 | The registry holds one `RequireInSection` anchor for each route sentence of rows MR1-MR4, MR6-MR8, MR10-MR18, MR20-MR23, and MR25 | `bench test --check docs-currency-workflow` (the live anchors over the route reference) | A sentence with no anchor can leave the reference with no red. |
+| MR28 | 28 | The registry holds one `RequireInSection` anchor for each route sentence of rows MR1-MR4, MR6-MR8, MR10-MR18, MR20-MR23, and MR25 | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A sentence with no anchor can leave the reference with no red. |
 | MR29 | 29 | `TestWriteSpecMapOnlyRoute` states each needle and diagnostic as its own literal | review-owned | A test that reads the registry entries passes when a rule drops out of both. |
 | MR30 | 30 | The spec-authoring entry of `projects/benchkit.md` names the map-only route | review-owned | A routing entry that names only the fork misstates the reviewer-selected route. |
 | MR31 | 31 | Both write-spec passages of `docs/field-guide.html` name the map-only route | review-owned | A guide that names only the fan-out misstates the phase. |
@@ -231,7 +233,7 @@ Not covered: story 37 — a reviewed exclusion, because the spec-stage close own
 
 The canonical edge classes at the anchor seam and the route procedure:
 
-- A map with no decision ticket — `bench maps` does not report such a map as ready, so story 3 refuses it.
+- A map with no decision ticket — story 20 stops the route, because the map has no predicate to slice.
 - A map where only some decisions are exact predicates — story 20 stops the route at the first such decision.
 - A gap log with more than two class (d) entries — story 17 sends each one to the approval table, so no limit caps them.
 - A ticket review that rejects twice — the cap of 2 stops the round, and the reviewer gets the stop, as on the full route.
@@ -260,11 +262,14 @@ Ticket slicing writes the fence. Until then, the fence holds only the review pic
 - D1 eligibility: the reviewer selects the route for a ready compiled map with exact-predicate decisions, and no check grades that judgment.
 - D2 placement: the procedure lives in a new `craft-spec` reference, and `/bench-write-spec` gains one pointer sentence on an existing line, so no budget changes.
 - D3 route order: the slicer writes rows before tickets, and the coordinator completes the thin spec before `--propose-writes`.
-- D3 class (d) entries: they are approval-table decision rows, not late clarification questions.
-- D4 stop and return: a non-predicate decision or an open code seam stops the route with a recommendation for the full route.
-- D5 thin spec: it holds only the parts that the coverage check and the build preflight read, plus the gap log.
-- D6 enforcement: the route's anchors join the write-spec slicing family with a new independent test function.
-- D7 readers: `README.md` and ADR 0022 stay unedited as statements of the default.
+  This order reverses the experiment's tickets-first order, because rows-owned needs declared rows.
+- D4 gap log: the four gap-log classes come from the experiment, and each class (d) entry is an approval-table decision row.
+  A class (d) entry is not a late clarification question.
+- D5 stop and return: a non-predicate decision or an open code seam stops the route with a recommendation for the full route.
+- D6 thin spec: it holds only the parts that the coverage check and the build preflight read, plus the gap log.
+  Its verification log counts only the ticket round, because no spec round runs.
+- D7 enforcement: the route's anchors join the write-spec slicing family with a new independent test function.
+- D8 readers: `README.md` and ADR 0022 stay unedited as statements of the default.
 
 ### Known overlap
 
