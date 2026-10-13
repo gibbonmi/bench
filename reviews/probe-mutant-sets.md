@@ -714,6 +714,96 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "pm-b-standards-r2",
+          "performer": "claude:pm_b_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d054203893828c026c8c0357a76eea9b48f31919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_b_standards_r2",
+            "digest": "sha256:d042be7875726b5dc942e6465c956e96f22741f8da85e57692d8974919442dbc",
+            "excerpt": "Standards axis claude:pm_b_standards_r2 (opus/high), PM-B confirming round 2, chunk pair e5ca6b0c..c20478f5, repair delta 1b8f4f66..78584bde -- internal/, evidence sha256:086431d9 current.\ncount: 0\nworst: none\nS1 confirmed fixed: armParking (cancel_test.go:102-105) owns the pid file; parking.env (:108-110) is the one pairing of cancelGoPIDEnv and cancelParkingPath; parking.descendant (:122-127) the one pairing of waitForPID and the SIGKILL cleanup; signalGoHopCancelHelper, signalCancelHelper, and parkedBuild.interrupt all call it; an rg sweep over internal/ finds no other parent-side copy.\nNew helpers: replaceAfter (held_runs_test.go:231-239) and park/parkedBuild/interrupt (:242-284) each hold one fact; the two new tests reuse them; TestHeldRunsFailAStaleRunWhoseBuildFails uses the production runbinary.BuildError type. Comments are timeless and tag-free.\nAdvice: parking.setenv round-trips env() through strings.Cut; \"sealed\" names both a count and a tree state in two doc comments.\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "e5ca6b0c50fd357d5233499495af5774ae566689",
+          "tip": "78584bdee070d6eff1aaf9ff8fe9da81961e0e66",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-b-standards-r1"
+          ]
+        },
+        {
+          "id": "pm-b-spec-r2",
+          "performer": "claude:pm_b_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d054203893828c026c8c0357a76eea9b48f31919",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_b_spec_r2",
+            "digest": "sha256:9e77dc48e58874b26439f7eefb79ad218eda353ea98a278d68292df0ae1bc11a",
+            "excerpt": "Spec axis claude:pm_b_spec_r2 (opus/high), PM-B confirming round 2, chunk pair e5ca6b0c..c20478f5, delta 1b8f4f66..c20478f5, evidence sha256:086431d9 current.\ncount: 1\nworst: P1\nP1 | auto-fix | 6 | .bench/BENCH.md:124 \"Before dispatch, record every plan or gate expansion with bench learning\". No learning exists for plan expansion 2c88de8f (PM79, PM80, ticket 2 Covers, PM-B chunk row). Needed: the orchestrator runs bench learning with what changed, why, and verification.\nPlan expansion graded correct and in scope: PM79 follows spec.md:248 and D1, maps build-failed as Execute does, and does not duplicate PM44; PM80 follows spec.md:232/:234 and is a separate branch from PM70; Builds 0 matches spec.md:252.\nPM79 met by TestHeldRunsFailAStaleRunWhoseBuildFails (held_runs_test.go:118-134). PM80 met by TestHeldRunsInterruptACancelledFirstBuild (:105-116, Builds 0 at :113).\npm-t02-rep1 entries: all six PM-B requirements at 78584bde, source digest d0542038, pass; the central probe bit, restored yes.\nAdvice: five non-probe entries share one combined excerpt.\nImplementation command: P1 is the orchestrator's omission; the plan-expansion step should run bench learning with the plan commit, before the dispatch.\n"
+          },
+          "axis": "Spec",
+          "base": "e5ca6b0c50fd357d5233499495af5774ae566689",
+          "tip": "78584bdee070d6eff1aaf9ff8fe9da81961e0e66",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": [
+            "pm-b-spec-r1"
+          ]
+        },
+        {
+          "id": "pm-b-coverage-r2",
+          "performer": "claude:pm_b_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d054203893828c026c8c0357a76eea9b48f31919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_b_coverage_r2",
+            "digest": "sha256:8377cf917972a8d69b8ab0839178a0423d361578aa8d4b306f1061880169cb91",
+            "excerpt": "Coverage axis claude:pm_b_coverage_r2 (opus/high), PM-B confirming round 2, chunk pair e5ca6b0c..c20478f5, repair delta 1b8f4f66..78584bde -- internal/ (test files only), evidence sha256:086431d9 current.\ncount: 0\nworst: none\nC2/PM79 closed: held_runs.go:37 swap runs runSelected on the stale binary before selectionFailure: bit at held_runs_test.go:132 \"Go child marker after the failed build\", restored yes.\nC1/PM80 closed: held_runs.go:59 h.builds++ before selectRunBinary: bit at held_runs_test.go:114 \"Builds() = 1, want 0\", restored yes.\nS1 red-capable: command.go:337 omit drainGoProcessGroup: bit (TestFocusedGoTestDrainsGroupOnCancelSignal); runbinary.go:309/:311 pid-only kill and no drain: bit on all 3 signal subtests. All restored yes.\nTwo own probe attempts read invalid (a removed brace; a tab mismatch) and were retried in a valid form.\nAdvice: omitting drainBuilderGroup alone at runbinary.go:307 or :311 leaves the cancel test green; older code outside the delta.\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "e5ca6b0c50fd357d5233499495af5774ae566689",
+          "tip": "78584bdee070d6eff1aaf9ff8fe9da81961e0e66",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-b-coverage-r1"
+          ]
+        },
+        {
+          "id": "pm-b-spec-r2b",
+          "performer": "claude:pm_b_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d054203893828c026c8c0357a76eea9b48f31919",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_b_spec_r2",
+            "digest": "sha256:e857acd1b45d3f867dc3acb89b24d04eb41f223ffa20834b46fd0a2ff242d976",
+            "excerpt": "Spec axis claude:pm_b_spec_r2 (opus/high), PM-B round 2 narrow reaffirmation of P1, chunk pair e5ca6b0c..c20478f5.\ncount: 0\nworst: none\nP1 closed, confidence 8: capture/learnings.md:272-275 \"2026-10-13 — Plan expansion for the PM-B repair of probe-mutant-sets [open]\" states what changed (plan 2c88de8f: PM79, PM80, ticket 2 lines, chunk row, edge sentence), why (two Held runs behaviors with no row), and verification (repair 78584bde, each bypass probe bit). The entry records its own lateness and proposes the process fix. No repository source changed.\n"
+          },
+          "axis": "Spec",
+          "base": "e5ca6b0c50fd357d5233499495af5774ae566689",
+          "tip": "78584bdee070d6eff1aaf9ff8fe9da81961e0e66",
+          "finding_ids": [],
+          "supersedes": [
+            "pm-b-spec-r2"
+          ]
         }
       ]
     }
@@ -855,3 +945,28 @@ Count 2. Worst issue: C2.
 
 - A context check before the fresh build would avoid one builder start after a cancel.
 - A helper beside `selectionFailure` could hold the interrupted selection line.
+
+## PM-B round 2
+
+The confirming round read the delta from 1b8f4f66 to c20478f5, with the repair commit 78584bde.
+PM-B closes with repair cycle 1 of 2 used.
+
+### Standards
+
+Count 0. Worst issue: none. S1 is closed, because one `parking` helper in `cancel_test.go` serves all three sites.
+
+### Spec
+
+Count 1. Worst issue: P1.
+
+- P1, auto-fix, confidence 6: the plan expansion 2c88de8f had no `bench learning` entry before the dispatch. The orchestrator captured the entry, and the Spec session reaffirmed P1 closed in entry pm-b-spec-r2b. This correction is evidence-only and uses no repair cycle.
+
+The plan expansion is correct and in scope, and rows PM79 and PM80 are met.
+
+### Coverage
+
+Count 0. Worst issue: none. C1 and C2 are closed, and the `cancel_test.go` refactor keeps the cancel tests red-capable.
+
+### Advice
+
+- An omission of one `drainBuilderGroup` call in `runbinary.go` leaves the cancel test green. That code is older than this build.
