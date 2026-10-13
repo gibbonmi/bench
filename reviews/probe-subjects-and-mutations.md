@@ -1863,9 +1863,9 @@
     {
       "id": "PS-D",
       "base": "7a55152eebda40993195f4279847529b1dc982c0",
-      "tip": "da6665921b69413563924bdbd130125ce3fe1f2c",
-      "plan_digest": "sha256:775ef5a4cacbc59a0b169daca384bbed3edcff4eeacd530fe4c8bfdc5d91f6f2",
-      "source_digest": "c957926539578ddaf884b84efc690852197b33cc",
+      "tip": "15bf62a21f6b4eb444e5ad3c90a099fff67530e2",
+      "plan_digest": "sha256:04247aac6dd024b552e7ab1cda92d7b35a1763f4ab86551574ef3da17f525d5c",
+      "source_digest": "0286582908956b9c6010d9176b8e5ee051b5976c",
       "acceptance_rows": [
         "PS58",
         "PS59",
@@ -1878,7 +1878,8 @@
         "PS66",
         "PS67",
         "PS68",
-        "PS75"
+        "PS75",
+        "PS78"
       ],
       "verification": [
         {
