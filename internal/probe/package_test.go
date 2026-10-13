@@ -21,10 +21,10 @@ var twoPackages = []string{"clamp.go", "--swap", "n < 0", "--with", "n > 0", "--
 // target cell names every expression in that order. The stub writes one argument per line
 // to a file for each start, so a joined value reads as one line.
 func TestProbeRepeatsThePackage(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	argvs := scratchDir(t)
 	record := "printf '%s\\n' \"$@\" > " + sanitize.ShellQuote(argvs) + "/$n\n"
-	installStubStarts(t, f, probetest.Start{Hook: record, Events: cannedPass}, probetest.Start{Hook: record, Events: cannedFailure("caught"), Exit: 1})
+	installStubStarts(t, f, probetest.Start{Hook: record, Events: probetest.ClampPass.Events}, probetest.Start{Hook: record, Events: probetest.ClampFailure("caught").Events, Exit: 1})
 	out, code := runProbe(t, twoPackages...)
 	want := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes") +
 		selectionRow(t, "package", bothPackages, "^TestClampNegative$", "passed", 1)
@@ -47,14 +47,14 @@ func TestProbeRepeatsThePackage(t *testing.T) {
 			t.Fatalf("go argv = %q, want %q as its last arguments", args, packages)
 		}
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }
 
 // Every package expression shares one Go start for each run, and each run owns one build.
 func TestProbePackagesShareOneBuildPerRun(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	records := buildEachRun(t, f, "clamp.go")
-	installStubGo(t, f, cannedFailure("caught"), 1, "")
+	installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "")
 	out, code := runProbe(t, twoPackages...)
 	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "TestClampNegative", "yes"))
 	if got := startCount(t, f); got != 2 {
@@ -63,5 +63,5 @@ func TestProbePackagesShareOneBuildPerRun(t *testing.T) {
 	if got := len(buildRecords(t, records)); got != 2 {
 		t.Fatalf("builds = %d, want 2", got)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }

@@ -22,17 +22,17 @@ import (
 var (
 	guardSwap    = []string{"--swap", "n < 0", "--with", "n > 0"}
 	returnSwap   = []string{"--swap", "return n", "--with", "return -n"}
-	guardMutant  = strings.Replace(clampSource, "n < 0", "n > 0", 1)
-	returnMutant = strings.Replace(clampSource, "return n", "return -n", 1)
+	guardMutant  = strings.Replace(probetest.ClampSource, "n < 0", "n > 0", 1)
+	returnMutant = strings.Replace(probetest.ClampSource, "return n", "return -n", 1)
 	missEntry    = []string{"--omit", "absent"}
 )
 
 // bite and pass are the canned mutated runs: one fails TestClampNegative, and one passes.
 // alreadyRed is a baseline that fails TestClampNegative before any write.
 var (
-	bite       = probetest.Start{Events: cannedFailure("caught"), Exit: 1}
-	pass       = probetest.Start{Events: cannedPass}
-	alreadyRed = probetest.Start{Events: cannedFailure("already red"), Exit: 1}
+	bite       = probetest.ClampFailure("caught")
+	pass       = probetest.ClampPass
+	alreadyRed = probetest.ClampFailure("already red")
 )
 
 // runBinaryCases are the two run-binary sources of a set: an inherited binary builds nothing,
@@ -44,7 +44,7 @@ var runBinaryCases = []struct {
 }{{"inherited", false, 0}, {"owned", true, 1}}
 
 // clampSelection is the selection that most set rows run.
-var clampSelection = []string{"--package", "./", "--run", "^TestClampNegative$"}
+var clampSelection = probetest.ClampSelection
 
 // mutantsFile writes entries as one mutants file and answers its path.
 func mutantsFile(t *testing.T, entries ...[]string) string {
@@ -63,7 +63,7 @@ func setArgs(path string, selection ...string) []string {
 	if len(selection) == 0 {
 		selection = clampSelection
 	}
-	return slices.Concat([]string{"clamp.go", "--mutants", path}, selection)
+	return slices.Concat([]string{probetest.ClampPath, "--mutants", path}, selection)
 }
 
 // installSet installs the sequenced canned `go`: a passing baseline, then mutated in order.
@@ -130,7 +130,7 @@ func requirePreserved(t *testing.T, f *fixture, out string) {
 	if !strings.Contains(out, "preserved[1]{path,reason}:\n  "+kept) {
 		t.Fatalf("stdout = %q, want the preserved row naming %s", out, kept)
 	}
-	durablefiletest.RequireBytes(t, kept, clampSource)
+	durablefiletest.RequireBytes(t, kept, probetest.ClampSource)
 }
 
 // setSelection derives the expected selection table of clampSelection.

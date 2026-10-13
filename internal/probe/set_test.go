@@ -18,17 +18,17 @@ import (
 
 // Each entry of a set prints its own row, and two biting entries take three Go starts.
 func TestMutantSetGradesEachEntry(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f, bite, bite)
 	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
 	requireRow(t, out, code, 0, setRows(t, biteRow(1, "swap"), biteRow(2, "swap")))
 	requireStarts(t, f, 3)
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }
 
 // An entry means what the same argv means alone: the set's run sees the single form's bytes.
 func TestMutantSetEntryMatchesTheSingleForm(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	replacement := filepath.Join(scratchDir(t), "replacement")
 	writeFixtureFile(t, replacement, "n >= 0", 0o644)
 	entries := [][]string{
@@ -44,7 +44,7 @@ func TestMutantSetEntryMatchesTheSingleForm(t *testing.T) {
 			t.Fatalf("single form of entry %d = (%q, %d), want a bite", k+1, out, code)
 		}
 		single, err := os.ReadFile(copied)
-		if err != nil || string(single) == clampSource {
+		if err != nil || string(single) == probetest.ClampSource {
 			t.Fatalf("single form of entry %d wrote (%q, %v), want a mutant", k+1, single, err)
 		}
 		hooks[k] = probetest.Start{Hook: mutantHook(t, f, string(single)), Events: bite.Events, Exit: 1}
@@ -56,7 +56,7 @@ func TestMutantSetEntryMatchesTheSingleForm(t *testing.T) {
 
 // Each entry grades its own --expect, so one missed witness changes only its own row.
 func TestMutantSetExpectIsPerEntry(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f, bite, bite)
 	path := mutantsFile(t, append(slices.Clone(guardSwap), "--expect", "TestClampPositive"), append(slices.Clone(returnSwap), "--expect", "TestClampNegative"))
 	out, code := runProbe(t, setArgs(path)...)
@@ -66,7 +66,7 @@ func TestMutantSetExpectIsPerEntry(t *testing.T) {
 
 // An entry's repeated swaps make one combined mutant, as the same argv does alone.
 func TestMutantSetEntryTakesACombinedMutant(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	both := strings.Replace(guardMutant, "return n", "return -n", 1)
 	installSet(t, f, probetest.Start{Hook: mutantHook(t, f, both), Events: bite.Events, Exit: 1})
 	out, code := runProbe(t, setArgs(mutantsFile(t, slices.Concat(guardSwap, returnSwap)))...)
@@ -75,7 +75,7 @@ func TestMutantSetEntryTakesACombinedMutant(t *testing.T) {
 
 // An unmatched entry reads substring-miss while the other entries run.
 func TestMutantSetMissIsPerEntry(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f, bite)
 	out, code := runProbe(t, setArgs(mutantsFile(t, missEntry, guardSwap))...)
 	requireRow(t, out, code, 1, setRows(t, missRow(1), biteRow(2, "swap")))
@@ -84,7 +84,7 @@ func TestMutantSetMissIsPerEntry(t *testing.T) {
 
 // A set whose every entry misses answers before the gate lock: no lock, no run, no build.
 func TestMutantSetOfMissesStartsNoRun(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f)
 	out, code := runProbe(t, setArgs(mutantsFile(t, missEntry, missEntry))...)
 	want := setRows(t, missRow(1), missRow(2)) + setSelection(t, "", 0) + setExecution(t, 1, 0)
@@ -93,7 +93,7 @@ func TestMutantSetOfMissesStartsNoRun(t *testing.T) {
 
 // One baseline serves the whole set, so three entries take four Go starts.
 func TestMutantSetSharesOneBaseline(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f, bite, bite, bite)
 	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap, []string{"--omit", "return 0"}))...)
 	if code != 0 {
@@ -107,7 +107,7 @@ func TestMutantSetSharesOneBaseline(t *testing.T) {
 func TestMutantSetBaselineEndsTheSet(t *testing.T) {
 	for _, tc := range runBinaryCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFixture(t)
+			f := clampFixture(t)
 			if tc.owned {
 				buildEachRun(t, f, "clamp.go")
 			}
@@ -119,7 +119,7 @@ func TestMutantSetBaselineEndsTheSet(t *testing.T) {
 			}
 			requireTrailingBytes(t, out, 1)
 			requireStarts(t, f, 1)
-			requireSubjectBytes(t, f, clampSource)
+			requireSubjectBytes(t, f, probetest.ClampSource)
 			requireHomeEmpty(t, f)
 		})
 	}
@@ -128,7 +128,7 @@ func TestMutantSetBaselineEndsTheSet(t *testing.T) {
 // Each mutant runs alone: its write replaces the start bytes, never an earlier mutant, and its
 // run sees only its own bytes.
 func TestMutantSetRunsEachMutantAlone(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f,
 		probetest.Start{Hook: mutantHook(t, f, guardMutant), Events: bite.Events, Exit: 1},
 		probetest.Start{Hook: mutantHook(t, f, returnMutant), Events: bite.Events, Exit: 1})
@@ -145,14 +145,14 @@ func TestMutantSetRunsEachMutantAlone(t *testing.T) {
 	}
 	out, code := runSetWith(t, f, replacer, setArgs(mutantsFile(t, guardSwap, returnSwap)))
 	requireRow(t, out, code, 0, setRows(t, biteRow(1, "swap"), biteRow(2, "swap")))
-	if want := []string{clampSource, guardMutant, clampSource, returnMutant}; !slices.Equal(replaced, want) {
+	if want := []string{probetest.ClampSource, guardMutant, probetest.ClampSource, returnMutant}; !slices.Equal(replaced, want) {
 		t.Fatalf("each replacement replaced %q, want %q", replaced, want)
 	}
 }
 
 // The subject keeps its start bytes and mode after the set, and no copy stays in the home.
 func TestMutantSetRestoresAfterEachMutant(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	if err := os.Chmod(f.subject, 0o640); err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func TestMutantSetRestoresAfterEachMutant(t *testing.T) {
 	if out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...); code != 0 {
 		t.Fatalf("exit = %d, want 0\n%s", code, out)
 	}
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 	if got := permissions(t, f.subject); got != 0o640 {
 		t.Fatalf("subject mode = %o, want 640", got)
 	}
@@ -169,7 +169,7 @@ func TestMutantSetRestoresAfterEachMutant(t *testing.T) {
 
 // A failed restore after mutant 1 keeps the copy and stops the set at exit 2.
 func TestMutantSetStopsOnARestoreFailure(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f, bite, bite)
 	router := subjectFaults()
 	router.Fail[restoreReplacement] = map[string]error{"rename": os.ErrPermission}
@@ -199,7 +199,7 @@ func TestMutantSetStopsOnAMutationFailure(t *testing.T) {
 		{"failed restore", map[durablefiletest.Fault]map[string]error{mutationReplacement: published, restoreReplacement: {"rename": os.ErrPermission}}, failed("restore-failed", 2, "no"), 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFixture(t)
+			f := clampFixture(t)
 			installSet(t, f, bite, bite)
 			router := subjectFaults()
 			router.Fail = tc.fail
@@ -210,7 +210,7 @@ func TestMutantSetStopsOnAMutationFailure(t *testing.T) {
 				requirePreserved(t, f, out)
 				return
 			}
-			requireSubjectBytes(t, f, clampSource)
+			requireSubjectBytes(t, f, probetest.ClampSource)
 			requireHomeEmpty(t, f)
 		})
 	}
@@ -219,7 +219,7 @@ func TestMutantSetStopsOnAMutationFailure(t *testing.T) {
 // A failed preservation stops the set before mutant 1's write, and the answer prints no
 // failure text.
 func TestMutantSetStopsOnAPreserveFailure(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	writeFixtureFile(t, filepath.Join(f.home, "probe"), "not a directory\n", 0o644)
 	installSet(t, f, bite, bite)
 	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
@@ -228,17 +228,17 @@ func TestMutantSetStopsOnAPreserveFailure(t *testing.T) {
 		t.Fatalf("stdout = (%q, %d), want (%q, 1)", out, code, want)
 	}
 	requireStarts(t, f, 1)
-	requireSubjectBytes(t, f, clampSource)
+	requireSubjectBytes(t, f, probetest.ClampSource)
 }
 
 // A mutant outside the run binary's closure reuses the baseline's build.
 func TestMutantSetReusesTheBuildOutsideTheClosure(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	records := buildEachRun(t, f, "clamp.go")
 	installSet(t, f, bite, bite)
 	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
 	requireRow(t, out, code, 0, setRows(t, biteRow(1, "swap"), biteRow(2, "swap")))
-	if got := buildRecords(t, records); !slices.Equal(got, []string{clampSource}) {
+	if got := buildRecords(t, records); !slices.Equal(got, []string{probetest.ClampSource}) {
 		t.Fatalf("build script reads = %q, want one build over the start bytes", got)
 	}
 }
@@ -247,7 +247,7 @@ func TestMutantSetReusesTheBuildOutsideTheClosure(t *testing.T) {
 func TestMutantSetReportsTheBuildCount(t *testing.T) {
 	for _, tc := range runBinaryCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFixture(t)
+			f := clampFixture(t)
 			if tc.owned {
 				buildEachRun(t, f, "clamp.go")
 			}
@@ -262,7 +262,7 @@ func TestMutantSetReportsTheBuildCount(t *testing.T) {
 
 // A prose set selects no run binary, so it builds nothing.
 func TestMutantSetOfProseBuildsNothing(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	trackProseNote(t, f)
 	records := buildEachRun(t, f, "note.md")
 	path := mutantsFile(t, []string{"--swap", shortLine, "--with", longSentence}, []string{"--swap", "# Note", "--with", "# A note"})
@@ -281,7 +281,7 @@ func TestMutantSetOfProseBuildsNothing(t *testing.T) {
 
 // The answer opens with the designed mutants header, and one selection row follows the rows.
 func TestMutantSetRowsKeepTheirSchema(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f, bite, bite)
 	out, _ := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap))...)
 	lines := strings.Split(out, "\n")
@@ -317,7 +317,7 @@ func TestMutantSetCommandExit(t *testing.T) {
 		{"bit and restore-failed", bite, map[durablefiletest.Fault]map[string]error{{Destination: "subject", Ordinal: 4}: {"rename": os.ErrPermission}}, restoreFailedRow(2), 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFixture(t)
+			f := clampFixture(t)
 			installSet(t, f, bite, tc.second)
 			router := subjectFaults()
 			if tc.fault != nil {
@@ -332,8 +332,8 @@ func TestMutantSetCommandExit(t *testing.T) {
 // Each started mutant's report follows the execution row under its mutant number, in entry
 // order, and a missed entry prints none, the last entry included. trailing_bytes counts every byte after that row.
 func TestMutantSetPrintsEachReport(t *testing.T) {
-	f := newFixture(t)
-	first, third := cannedFailure("first caught"), cannedFailure("third caught")
+	f := clampFixture(t)
+	first, third := probetest.ClampFailure("first caught").Events, probetest.ClampFailure("third caught").Events
 	installSet(t, f, probetest.Start{Events: first, Exit: 1}, probetest.Start{Events: third, Exit: 1})
 	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, missEntry, returnSwap, missEntry))...)
 	reports := map[string]string{}
@@ -354,7 +354,7 @@ const unusedOs = `{"Action":"build-output","ImportPath":"probefixture","Output":
 
 // A mutant that fails to build names its first build line in its own row only.
 func TestMutantSetNamesABuildFailure(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	installSet(t, f, probetest.Start{Events: unusedOs, Exit: 1}, bite)
 	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap), "--package", "./")...)
 	broken := []any{1, "invalid", "swap", "build-failed", 0, nil, 0, 1, 1, `clamp.go:3:2: "os" imported and not used`, "yes"}
@@ -363,10 +363,10 @@ func TestMutantSetNamesABuildFailure(t *testing.T) {
 
 // A set passes every repeated --package value, in argv order, to each of its Go starts.
 func TestMutantSetTakesRepeatedPackages(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	argvs := scratchDir(t)
 	record := "printf '%s\\n' \"$@\" > " + sanitize.ShellQuote(argvs) + "/$n\n"
-	probetest.InstallSequence(t, f.marker, probetest.Start{Hook: record, Events: cannedPass},
+	probetest.InstallSequence(t, f.marker, probetest.Start{Hook: record, Events: probetest.ClampPass.Events},
 		probetest.Start{Hook: record, Events: bite.Events, Exit: 1}, probetest.Start{Hook: record, Events: bite.Events, Exit: 1})
 	selection := []string{"--package", "./clamp", "--package", "./other", "--run", "^TestClampNegative$"}
 	out, code := runProbe(t, setArgs(mutantsFile(t, guardSwap, returnSwap), selection...)...)

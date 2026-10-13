@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
+	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
@@ -32,12 +33,12 @@ func executableSubject(t *testing.T, f *fixture) {
 // PS9, PS10: the subject is absent while the mutated run runs, and the restore brings back
 // its start bytes and its start mode.
 func TestDeleteRemovesTheSubjectForTheRun(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	executableSubject(t, f)
-	installStubGo(t, f, cannedFailure("caught"), 1, "[ ! -e "+sanitize.ShellQuote(f.subject)+" ] || exit 99\n")
+	installStubGo(t, f, probetest.ClampFailure("caught").Events, 1, "[ ! -e "+sanitize.ShellQuote(f.subject)+" ] || exit 99\n")
 	out, code := runProbe(t, deleteArgs...)
 	requireRow(t, out, code, 0, probeRow(t, "bit", "clamp.go", "delete", "failed", 1, "TestClampNegative", "yes"))
-	durablefiletest.RequireFile(t, f.subject, 0o750, clampSource)
+	durablefiletest.RequireFile(t, f.subject, 0o750, probetest.ClampSource)
 	requireHomeEmpty(t, f)
 }
 
@@ -67,7 +68,7 @@ func failRemoval(f *fixture, replacer durablefile.Replacer, cause error) durable
 func TestDeleteReportsARestoreFailure(t *testing.T) {
 	removalCause := errors.New("injected removal failure")
 	t.Run("restore proves the mode", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		executableSubject(t, f)
 		replacer := durablefile.Native()
 		create := replacer.CreateTemp
@@ -85,7 +86,7 @@ func TestDeleteReportsARestoreFailure(t *testing.T) {
 		}
 	})
 	t.Run("failed removal and restore", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		router := subjectFaults()
 		restoreCause := errors.New("injected restore rename failure")
 		router.Fail[deletionRestore] = map[string]error{"rename": restoreCause}
@@ -99,17 +100,17 @@ func TestDeleteReportsARestoreFailure(t *testing.T) {
 				t.Fatalf("stdout = %q, want it to name %q", out, want)
 			}
 		}
-		durablefiletest.RequireBytes(t, kept, clampSource)
+		durablefiletest.RequireBytes(t, kept, probetest.ClampSource)
 		requireBaselineOnly(t, f)
 	})
 	t.Run("failed removal restored", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		executableSubject(t, f)
 		out, code := probeWith(t, f, failRemoval(f, durablefile.Native(), removalCause), deleteArgs...)
 		if want := "error: probe mutation failed — " + removalCause.Error() + "\n"; out != want || code != 1 {
 			t.Fatalf("probe = (%q, %d), want (%q, 1)", out, code, want)
 		}
-		durablefiletest.RequireFile(t, f.subject, 0o750, clampSource)
+		durablefiletest.RequireFile(t, f.subject, 0o750, probetest.ClampSource)
 		requireHomeEmpty(t, f)
 		requireBaselineOnly(t, f)
 	})
@@ -118,14 +119,14 @@ func TestDeleteReportsARestoreFailure(t *testing.T) {
 // PS12: an omission whose result has zero bytes refuses with the line that names --delete,
 // for --omit-file and for a combined mutant alike.
 func TestOmissionThatEmptiesTheSubjectRefuses(t *testing.T) {
-	head, tail, _ := strings.Cut(clampSource, "func ")
+	head, tail, _ := strings.Cut(probetest.ClampSource, "func ")
 	for _, tc := range []struct {
 		name string
 		args func(t *testing.T) []string
 	}{
 		{"omit-file", func(t *testing.T) []string {
 			path := filepath.Join(scratchDir(t), "whole")
-			writeFixtureFile(t, path, clampSource, 0o644)
+			writeFixtureFile(t, path, probetest.ClampSource, 0o644)
 			return []string{"--omit-file", path}
 		}},
 		{"combined", func(*testing.T) []string { return []string{"--omit", head, "--omit", "func " + tail} }},

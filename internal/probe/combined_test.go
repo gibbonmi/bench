@@ -4,14 +4,16 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/probe/probetest"
 )
 
 // PS13, PS17: two --swap pairs and one --omit make one mutant that holds all three edits,
 // and the cell lists the swaps first even when the argv leads with the omission.
 func TestCombinedEditsMakeOneMutant(t *testing.T) {
-	f := newFixture(t)
+	f := clampFixture(t)
 	comment := "// Clamp keeps n at or above zero.\n"
-	want := strings.NewReplacer(comment, "", "n < 0", "n > 0", "return n", "return -n").Replace(clampSource)
+	want := strings.NewReplacer(comment, "", "n < 0", "n > 0", "return n", "return -n").Replace(probetest.ClampSource)
 	requireMutantBites(t, f, want, "swap+swap+omit",
 		"--omit", comment, "--swap", "n < 0", "--with", "n > 0", "--swap", "return n", "--with", "return -n")
 }
@@ -20,10 +22,10 @@ func TestCombinedEditsMakeOneMutant(t *testing.T) {
 // in the result of an earlier edit, and every pair whose --with equals its --swap refuses.
 func TestCombinedEditsMatchOnce(t *testing.T) {
 	t.Run("start bytes", func(t *testing.T) {
-		f := newFixture(t)
+		f := clampFixture(t)
 		// The first edit adds a second "return n", so only a match over the start bytes
 		// finds the second old string exactly once.
-		want := strings.NewReplacer("return 0", "return n", "return n", "return 1").Replace(clampSource)
+		want := strings.NewReplacer("return 0", "return n", "return n", "return 1").Replace(probetest.ClampSource)
 		requireMutantBites(t, f, want, "swap+swap", "--swap", "return 0", "--with", "return n", "--swap", "return n", "--with", "return 1")
 	})
 	t.Run("ambiguous", func(t *testing.T) {
