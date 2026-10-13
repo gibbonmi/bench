@@ -229,7 +229,7 @@ A published failure restores the subject and reads `restored` as `yes`, and a fa
 A restore failure gives its row `restore-failed` with the `restored` cell `no`, and the `preserved` table follows the execution row.
 
 A failed preservation gives its row `invalid` with the cause `preserve-failed` and the `restored` cell `untouched`, and each later row reads `set-stopped`.
-A set answer prints no failure text, except the reason that the `preserved` table gives for a kept copy.
+A failed preservation, a failed write, and a stop print no error line, and a kept copy's reason prints only in the `preserved` table.
 After a write failure, an interrupt, or a restore failure, each later row reads `invalid` with the cause `set-stopped` and the `restored` cell `untouched`.
 
 ### Held runs
@@ -439,7 +439,7 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PM21 | 18 | After the set, the subject holds its start bytes and start mode, and the Bench home holds no probe entry | `internal/probe/set_test.go` (`TestMutantSetRestoresAfterEachMutant`) | A loop that releases only the last copy leaves a preserved directory. |
 | PM22 | 19 | A restore that fails after mutant 1 gives row 1 `restore-failed`, row 2 `invalid` with `set-stopped`, a `preserved` table, and exit 2 with one mutated start | `internal/probe/set_test.go` (`TestMutantSetStopsOnARestoreFailure`) | A loop that continues writes mutant 2 over a damaged subject and starts a third Go child. |
 | PM23 | 20 | A gate lock taken from the mutant-1 hook gives row 2 `invalid` with `gate-held` and `untouched`, and no third Go start | `internal/probe/lock_test.go` (`TestMutantSetStopsUnderAGateRun`) | A gate check made once per call writes mutant 2 under the gate. |
-| PM24 | 21 | An interrupt during mutant 1's run gives row 1 `invalid` with `interrupted` and `yes`, row 2 `set-stopped`, and the start bytes | `internal/probe/baseline_test.go` (`TestMutantSetStopsOnInterrupt`) | A loop that ignores the interrupted kind starts mutant 2's run. |
+| PM24 | 21 | An interrupt during mutant 1's run gives row 1 `invalid` with `interrupted` and `yes`, row 2 `set-stopped`, and the start bytes | `internal/probe/baseline_test.go` (`TestMutantSetStopsOnInterrupt`) | A loop that skips the context check before the next write starts mutant 2's run. |
 | PM25 | 22 | An unpublished write failure on mutant 1 gives row 1 `invalid` with `mutation-failed` and `untouched`, row 2 `set-stopped`, and exit 1 | `internal/probe/set_test.go` (`TestMutantSetStopsOnAMutationFailure`) | A loop that drops the failure runs the unmutated subject and reads `silent`. |
 | PM26 | 23 | With an owned run binary, a two-entry set over `clamp.go` records exactly one build | `internal/probe/set_test.go` (`TestMutantSetReusesTheBuildOutsideTheClosure`) | A set over two `Execute` calls for each mutant records three builds. |
 | PM27 | 24 | After the verifier refuses the held binary, the next held run builds one fresh run binary whose builder reads the changed tree | `internal/testreport/held_runs_test.go` (`TestHeldRunsOwnAFreshBuildWhenStale`) | An owner that reuses the held binary without validation records one build. |
