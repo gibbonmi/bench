@@ -24,6 +24,10 @@ The `probe-subjects-and-mutations` build ran five chunks and six tickets on Clau
 
 Provider usage and charges remain unknown. Authors ran 13 probes in total, and every extra probe named a witness that a test-first red could not show.
 
+The `probe-mutant-sets` spec stage ran on Claude Code for FT168-probe-batch. An Opus coordinator ran paired Sonnet/medium and Haiku/high readers for four research slices and five slicing chunks, and it sliced the six tickets itself. An Opus fork wrote the spec. By reviewer direction, Opus/xhigh ran the spec review and the ticket review, and each took 2 iterations. The spec round found an interrupt that read `refused` and a lost cross-half rule. The ticket round found a shared seam chunk, a missing helper file, and the missing commitment file.
+
+Provider usage and charges remain unknown. The harness reported about 1.02M tokens for the research readers and 303k for the spec fork. It reported about 1.18M for the slicing readers, 268k for the spec review, and 214k for the ticket review.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use | calibration |
@@ -72,6 +76,7 @@ Provider usage and charges remain unknown. Authors ran 13 probes in total, and e
 - During slicing, check each ticket's closure with a probe that mirrors `internal/preflight/closure.go`, and run `--propose-writes` after the last chunk.
 - When a spec stage compiles a map, run the plan-only preflight from the merge commit of `main`. The map move then stays outside the graded range.
 - Name the binding registry and the canary pins of each path in a slicing research charge, because six readers on `commit-merge-parent` missed those closure files.
+- Before the ticket review, give each ticket that creates a seam for a sibling its own review chunk. Name each test helper that the spec reuses in its consumer's `Writes:` line. Both misses on `probe-mutant-sets` cost a second ticket-review iteration.
 - Name the existing owners, seams, fixture helpers, and the recurring review lessons in each author charge, including the comment sentence bound and the one-source rule.
 - Name the exact mutation kind, site, and red test of the plan probe in each author charge. Keep every variable and import in use in a probe text.
 - Before dispatch, put every symbol-move file and every package test-count pin on the ticket `Writes:` line.

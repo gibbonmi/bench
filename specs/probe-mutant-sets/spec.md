@@ -6,7 +6,7 @@ Related roadmap: FT168, partial. This spec settles the mutant-set, multi-package
 
 Decision source: named reviewed artifact — the approved commitment outcome FT168-probe-batch in .bench/commitment.json with roadmap/FT168.md at 1b1d3c62b, and the reviewer decisions D1 and D2 of 2026-10-13.
 
-Verification log: pending
+Verification log: 4 iteration(s) to accept — the spec review and the ticket review each took 2 iterations on opus / xhigh. The spec round found an interrupt that read `refused` and a lost prose `--expect` rule. The ticket round found a shared seam chunk, a missing helper file, and the missing commitment file.
 
 ## Problem
 
