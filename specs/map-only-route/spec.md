@@ -7,7 +7,8 @@ Decision source: reviewer-confirmed conversation, 2026-10-13.
 Closed decisions: the reviewer chose an opt-in map-only route and kept the full route as the default.
 The reviewer reopened the scorecard condition "repeat on a code-seam map first", and queued this spec after FT168-probe-batch.
 
-Verification log: pending — the spec review and the ticket review write it at close.
+Verification log: 3 iteration(s) to accept — the spec review took 2 iterations, because iteration 1 found two fence orders.
+The ticket review accepted in 1 iteration. The existing rows-owned and rows-membership preflight checks enforce MR9.
 
 ## Problem
 
@@ -244,9 +245,35 @@ The canonical edge classes at the anchor seam and the route procedure:
 
 ## Ownership fences
 
-Ticket slicing writes the fence. Until then, the fence holds only the review pickup.
+Ticket slicing wrote this fence. It equals the ticket `Writes:` union plus the review pickup.
 
+- `.agents/commands/bench-write-spec.md`
+- `.agents/skills/bench-craft-spec/references/map-only-route.md`
+- `CHANGELOG.md`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `docs/field-guide.html`
+- `internal/anchors/registry_craft_research.go`
+- `internal/anchors/registry_craft_research_test.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_decision_maps.go`
+- `internal/anchors/registry_decision_maps_test.go`
+- `internal/anchors/registry_ft311_preparation.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/anchors/registry_ticket_passes.go`
+- `internal/anchors/registry_ticket_passes_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `projects/benchkit.md`
 - `reviews/map-only-route.md`
+- `tests/canary/guidance-prose-budgets/over-budget-skill/`
+- `tests/canary/line-routing/line-binding-prose-drift/`
+- `tests/canary/skill-description-budgets/`
+- `tests/canary/skills-index-command-adapters/`
+- `tests/canary/workflow-guidance-anchors/`
 
 ## Out of scope
 

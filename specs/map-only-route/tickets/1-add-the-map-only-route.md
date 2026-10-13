@@ -10,7 +10,7 @@ The spec phase gains an opt-in map-only route that the reviewer selects. The ful
 
 - `.agents/skills/bench-craft-spec/references/map-only-route.md` is new. It states the eligibility, the ten route steps, the stop and return, and the thin-spec parts in the spec's `Implementation decisions` order.
   It sends the map compile and move to the Entry contract of `/bench-write-spec`, and it sends the close to that file's `Exit handoff`. It copies neither procedure.
-- `.agents/commands/bench-write-spec.md` gains the pointer sentence of the spec's `Placement` decision at the end of physical line 49, under `Who runs this phase`. The file stays at 87 lines.
+- `.agents/commands/bench-write-spec.md` gains the pointer sentence of the spec's `Placement` decision, verbatim, at the end of physical line 49, under `Who runs this phase`. The file stays at 87 lines.
 - `internal/anchors/registry_ticket_passes.go` gains one `RequireInSection` anchor for each route sentence of rows MR1-MR4, MR6-MR8, MR10-MR18, MR20-MR23, and the pointer of MR25.
 - `internal/anchors/registry_ticket_passes_test.go` gains `TestWriteSpecMapOnlyRoute`. It states each needle and diagnostic as its own literal, as `TestWriteSpecChunkedSlicing` does.
 - `projects/benchkit.md` gains one sentence in the spec-authoring entry that names the route.
@@ -20,7 +20,7 @@ The spec phase gains an opt-in map-only route that the reviewer selects. The ful
 Every anchored full-route sentence of `/bench-write-spec` and its line wraps stay byte-identical.
 The phrase `**Spec authoring** → **a fork of the current conversation**` in `projects/benchkit.md` stays byte-identical.
 `README.md` and ADR 0022 get no edit.
-The `Writes:` line above holds the closure that the slicing research found. Add each file that the build preflight's closure list names.
+The `Writes:` line above holds the closure that the slicing research found. `--propose-writes` returned no addition at e7ab8320.
 
 ## Acceptance
 
@@ -30,3 +30,7 @@ The `Writes:` line above holds the closure that the slicing research found. Add 
 - [ ] `bench test --check docs-currency-workflow` passes, so every existing write-spec anchor and canary stays green.
 - [ ] `projects/benchkit.md`, both field-guide passages, and `CHANGELOG.md` name the route.
 - [ ] `README.md` and ADR 0022 have no change in the diff.
+- [ ] The route reference sends the map compile and move to the Entry contract and the close to the `Exit handoff`, and it copies neither procedure.
+- [ ] The route reference requires the thin spec's `Decision source:` line to name the compiled map.
+- [ ] The route reference states that each ticket's `Covers:` line names declared rows of the thin spec.
+- [ ] `TestWriteSpecMapOnlyRoute` states each needle and diagnostic as its own literal and does not read the registry.
