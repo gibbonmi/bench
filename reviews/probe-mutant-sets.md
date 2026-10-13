@@ -3346,11 +3346,244 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+    "performer": "claude:pm-orchestrator-20261013",
+    "reconciliation": {
+      "PM1": "covered",
+      "PM10": "covered",
+      "PM11": "covered",
+      "PM12": "covered",
+      "PM13": "covered",
+      "PM14": "covered",
+      "PM15": "covered",
+      "PM16": "covered",
+      "PM17": "covered",
+      "PM18": "covered",
+      "PM19": "covered",
+      "PM2": "covered",
+      "PM20": "covered",
+      "PM21": "covered",
+      "PM22": "covered",
+      "PM23": "covered",
+      "PM24": "covered",
+      "PM25": "covered",
+      "PM26": "covered",
+      "PM27": "covered",
+      "PM28": "covered",
+      "PM29": "covered",
+      "PM3": "covered",
+      "PM30": "covered",
+      "PM31": "covered",
+      "PM32": "covered",
+      "PM33": "covered",
+      "PM34": "covered",
+      "PM35": "covered",
+      "PM36": "covered",
+      "PM37": "covered",
+      "PM38": "covered",
+      "PM39": "covered",
+      "PM4": "covered",
+      "PM40": "covered",
+      "PM41": "covered",
+      "PM42": "covered",
+      "PM43": "covered",
+      "PM44": "covered",
+      "PM45": "covered",
+      "PM46": "covered",
+      "PM47": "covered",
+      "PM48": "covered",
+      "PM49": "covered",
+      "PM5": "covered",
+      "PM50": "covered",
+      "PM51": "covered",
+      "PM52": "covered",
+      "PM53": "covered",
+      "PM54": "covered",
+      "PM55": "covered",
+      "PM56": "covered",
+      "PM57": "covered",
+      "PM58": "covered",
+      "PM59": "covered",
+      "PM6": "covered",
+      "PM60": "covered",
+      "PM61": "covered",
+      "PM62": "covered",
+      "PM63": "covered",
+      "PM64": "covered",
+      "PM65": "covered",
+      "PM66": "covered",
+      "PM67": "covered",
+      "PM68": "covered",
+      "PM69": "covered",
+      "PM7": "covered",
+      "PM70": "covered",
+      "PM71": "covered",
+      "PM72": "covered",
+      "PM73": "covered",
+      "PM74": "covered",
+      "PM75": "covered",
+      "PM76": "covered",
+      "PM77": "covered",
+      "PM78": "covered",
+      "PM79": "covered",
+      "PM8": "covered",
+      "PM80": "covered",
+      "PM81": "covered",
+      "PM82": "covered",
+      "PM83": "covered",
+      "PM84": "covered",
+      "PM85": "covered",
+      "PM86": "covered",
+      "PM87": "covered",
+      "PM9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:pm-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "4e460d3d9b268731cef5d86d1f39cb29889d5797",
+          "digest": "sha256:6cffc1a71901f2f0127370412909c583167f833f0218e507aeb174b252165b83",
+          "excerpt": "$ bench coverage --check specs/probe-mutant-sets/spec.md\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,4e460d3d9b268731cef5d86d1f39cb29889d5797,false\nok: coverage map valid — 87 row(s)\nuncited: 9 row(s) with no seam-cell citation — PM61, PM62, PM63, PM64, PM65, PM66, PM73, PM68, PM75\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/probe-mutant-sets/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-probe-family",
+        "performer": "claude:pm-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "4e460d3d9b268731cef5d86d1f39cb29889d5797",
+          "digest": "sha256:4af9d4d0042da9d395d56153a3909fe14f073fcd0a7c3a22f5145c1cf4a3b2af",
+          "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./internal/runbinary --package ./internal/reviewrecord/... --package ./internal/anchors --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,4e460d3d9b268731cef5d86d1f39cb29889d5797,false\npackages[9]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15416,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2234,179\n  github.com/gibbonmi/bench/internal/probe,pass,79501,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4121,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17336,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/runbinary,pass,24662,29\n  github.com/gibbonmi/bench/internal/testreport,pass,66934,240\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "probe-family",
+        "command": "bench test --package ./internal/probe/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-testreport",
+        "performer": "claude:pm-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "4e460d3d9b268731cef5d86d1f39cb29889d5797",
+          "digest": "sha256:4af9d4d0042da9d395d56153a3909fe14f073fcd0a7c3a22f5145c1cf4a3b2af",
+          "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./internal/runbinary --package ./internal/reviewrecord/... --package ./internal/anchors --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,4e460d3d9b268731cef5d86d1f39cb29889d5797,false\npackages[9]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15416,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2234,179\n  github.com/gibbonmi/bench/internal/probe,pass,79501,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4121,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17336,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/runbinary,pass,24662,29\n  github.com/gibbonmi/bench/internal/testreport,pass,66934,240\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "testreport",
+        "command": "bench test --package ./internal/testreport",
+        "exit_code": 0
+      },
+      {
+        "id": "final-runbinary",
+        "performer": "claude:pm-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "4e460d3d9b268731cef5d86d1f39cb29889d5797",
+          "digest": "sha256:4af9d4d0042da9d395d56153a3909fe14f073fcd0a7c3a22f5145c1cf4a3b2af",
+          "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./internal/runbinary --package ./internal/reviewrecord/... --package ./internal/anchors --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,4e460d3d9b268731cef5d86d1f39cb29889d5797,false\npackages[9]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15416,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2234,179\n  github.com/gibbonmi/bench/internal/probe,pass,79501,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4121,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17336,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/runbinary,pass,24662,29\n  github.com/gibbonmi/bench/internal/testreport,pass,66934,240\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "runbinary",
+        "command": "bench test --package ./internal/runbinary",
+        "exit_code": 0
+      },
+      {
+        "id": "final-record-forms",
+        "performer": "claude:pm-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "4e460d3d9b268731cef5d86d1f39cb29889d5797",
+          "digest": "sha256:4af9d4d0042da9d395d56153a3909fe14f073fcd0a7c3a22f5145c1cf4a3b2af",
+          "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./internal/runbinary --package ./internal/reviewrecord/... --package ./internal/anchors --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,4e460d3d9b268731cef5d86d1f39cb29889d5797,false\npackages[9]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15416,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2234,179\n  github.com/gibbonmi/bench/internal/probe,pass,79501,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4121,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17336,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/runbinary,pass,24662,29\n  github.com/gibbonmi/bench/internal/testreport,pass,66934,240\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "record-forms",
+        "command": "bench test --package ./internal/reviewrecord/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-anchors-package",
+        "performer": "claude:pm-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "4e460d3d9b268731cef5d86d1f39cb29889d5797",
+          "digest": "sha256:4af9d4d0042da9d395d56153a3909fe14f073fcd0a7c3a22f5145c1cf4a3b2af",
+          "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./internal/runbinary --package ./internal/reviewrecord/... --package ./internal/anchors --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,4e460d3d9b268731cef5d86d1f39cb29889d5797,false\npackages[9]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15416,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2234,179\n  github.com/gibbonmi/bench/internal/probe,pass,79501,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4121,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17336,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/runbinary,pass,24662,29\n  github.com/gibbonmi/bench/internal/testreport,pass,66934,240\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "anchors-package",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "final-command-package",
+        "performer": "claude:pm-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "4e460d3d9b268731cef5d86d1f39cb29889d5797",
+          "digest": "sha256:4af9d4d0042da9d395d56153a3909fe14f073fcd0a7c3a22f5145c1cf4a3b2af",
+          "excerpt": "$ bench test --package ./internal/probe/... --package ./internal/testreport --package ./internal/runbinary --package ./internal/reviewrecord/... --package ./internal/anchors --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,4e460d3d9b268731cef5d86d1f39cb29889d5797,false\npackages[9]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15416,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2234,179\n  github.com/gibbonmi/bench/internal/probe,pass,79501,315\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4121,99\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17336,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/runbinary,pass,24662,29\n  github.com/gibbonmi/bench/internal/testreport,pass,66934,240\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "command-package",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final-system",
+        "performer": "claude:pm-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "6325249b65c0598341c1842cd7bbbc1c04e34875",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "4e460d3d9b268731cef5d86d1f39cb29889d5797",
+          "digest": "sha256:cddbd833287d7ea31a1bfc19e491d28f8413cedc20b3b2e6defb19953380ad68",
+          "excerpt": "$ bench test --check system\ntree[1]{target,head,dirty}:\n  probe-mutant-sets-build,4e460d3d9b268731cef5d86d1f39cb29889d5797,false\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,169,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,66764,169\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -4069,3 +4302,16 @@ Count 0. Worst issue: none. P4 is closed, and rows PM62 and PM63 stay met.
 ### Coverage
 
 Count 0. Worst issue: none. Every anchor in the two guidance files still holds, and the delegate skill stays at its line budget.
+
+## Final reconciliation
+
+The orchestrator reconciled all 87 acceptance rows at the final source 4e460d3d.
+The coverage map is valid. Its nine uncited rows are the guidance rows that the PM-E review owns, together with PM66, which the live anchors check grades.
+The final package run passes in nine packages, and the system suite passes 169 tests.
+The completion entry records 87 rows and 8 final verifications.
+
+### Advice for the reviewer
+
+- Decision D3 came from the build consultant, so the reviewer can veto it.
+- The PM84 test waits 50 ms for a cancel, and a deterministic wait needs a production test seam.
+- The topology check matches only direct publication calls, so a passed-in function value in non-test code would pass it.
