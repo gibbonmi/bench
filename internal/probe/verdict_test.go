@@ -1,9 +1,14 @@
 package probe
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/probe/probetest"
+	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // unorderedFailures fails three tests in an event order that is neither the package order
@@ -92,5 +97,48 @@ func TestFirstFailureNamesTheFirstFailedTest(t *testing.T) {
 		findings := trackProseNote(t, f)
 		out, code := runProbe(t, proseArgs...)
 		requireRow(t, out, code, 0, probeRow(t, "bit", "note.md", "swap", "failed", findings, nil, "yes"))
+	})
+}
+
+// unusedImport is a mutated package that does not compile because of an unused import. The
+// package heading is go test's own line, so the compiler line is the first diagnostic.
+const unusedImport = `{"Action":"build-output","ImportPath":"probefixture","Output":"# probefixture\n"}
+{"Action":"build-output","ImportPath":"probefixture","Output":"./clamp.go:3:8: \"fmt\" imported and not used\n"}
+{"Action":"build-fail","ImportPath":"probefixture"}`
+
+// PS50, PS53: a mutated run that fails to build prints the mutant table with its first
+// build line inside the counted suffix, and a baseline whose run-binary build script fails
+// reads the cause baseline-build-failed.
+func TestMutantBuildFailureNamesItself(t *testing.T) {
+	t.Run("an unused import", func(t *testing.T) {
+		f := newFixture(t)
+		installStubGo(t, f, unusedImport, 1, "")
+		out, code := runProbe(t, probeArgs("clamp.go", "--swap", "n < 0", "--with", "n > 0", "--package", "./")...)
+		mutant, err := toon.TableTyped("mutant", mutantFields, [][]any{{`./clamp.go:3:8: "fmt" imported and not used`}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		at := strings.Index(out, mutant)
+		if at < 0 {
+			t.Fatalf("stdout = %q, want the mutant table %q", out, mutant)
+		}
+		head := probeRow(t, "invalid", "clamp.go", "swap", "build-failed", 0, nil, "yes") + selectionRow(t, "package", "./", "all", "passed", 0) + executionRow(t, 1, 1, len(out)-at)
+		if code != 1 || out[:at] != head {
+			t.Fatalf("stdout = (%q, %d), want %q then the mutant table and 1", out, code, head)
+		}
+		requireSubjectBytes(t, f, clampSource)
+	})
+	t.Run("a run-binary build script failure at the baseline", func(t *testing.T) {
+		f := newFixture(t)
+		installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Events: cannedPass})
+		writeFixtureFile(t, filepath.Join(f.root, "scripts", "go-build.sh"), "#!/usr/bin/env bash\necho './cmd/bench/main.go:1:1: broken'\nexit 1\n", 0o755)
+		t.Setenv(runbinary.Env, "")
+		if err := os.Unsetenv(runbinary.Env); err != nil {
+			t.Fatal(err)
+		}
+		out, code := runProbe(t, probeArgs()...)
+		requireRow(t, out, code, 1, probeRow(t, "invalid", "clamp.go", "swap", "baseline-build-failed", 0, nil, "untouched"))
+		requireSubjectBytes(t, f, clampSource)
+		requireHomeEmpty(t, f)
 	})
 }

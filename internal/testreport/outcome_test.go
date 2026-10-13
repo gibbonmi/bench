@@ -12,101 +12,8 @@ import (
 
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/toon"
 )
-
-// cannedSet is one recorded `go test -json` stream and the exit its `go` gives.
-// The four sets are the outcome kinds a completed child can reach: a failing test,
-// a passing test, a package that fails to build, and a package with no test.
-type cannedSet struct {
-	name   string
-	events []string
-	exit   int
-}
-
-func cannedSets() []cannedSet {
-	return []cannedSet{
-		{
-			name: "failing",
-			events: []string{
-				`{"Action":"run","Package":"canned","Test":"TestCanned"}`,
-				`{"Action":"output","Package":"canned","Test":"TestCanned","Output":"    canned_test.go:9: boom\n"}`,
-				`{"Action":"fail","Package":"canned","Test":"TestCanned","Elapsed":0.01}`,
-				`{"Action":"fail","Package":"canned","Elapsed":0.5}`,
-			},
-			exit: 1,
-		},
-		{
-			name: "passing",
-			events: []string{
-				`{"Action":"run","Package":"canned","Test":"TestCanned"}`,
-				`{"Action":"pass","Package":"canned","Test":"TestCanned","Elapsed":0.01}`,
-				`{"Action":"pass","Package":"canned","Elapsed":0.25}`,
-			},
-			exit: 0,
-		},
-		{
-			name: "build-fail",
-			events: []string{
-				`{"Action":"build-output","ImportPath":"canned","Output":"./canned.go:3:1: syntax error: unexpected }\n"}`,
-				`{"Action":"build-fail","ImportPath":"canned"}`,
-			},
-			exit: 1,
-		},
-		{
-			name: "no-run",
-			events: []string{
-				`{"Action":"output","Package":"canned","Output":"?   \tcanned\t[no test files]\n"}`,
-				`{"Action":"skip","Package":"canned","Elapsed":0}`,
-			},
-			exit: 0,
-		},
-	}
-}
-
-// installCannedGo puts a stub `go` on PATH that replays one canned stream and exits with
-// the set's own code. The build-fail and failing sets are only complete with the nonzero
-// exit, which is why this stub carries a code where writeCheckGo does not.
-func installCannedGo(t *testing.T, set cannedSet) {
-	t.Helper()
-	dir := t.TempDir()
-	body := "#!/usr/bin/env bash\n"
-	for _, event := range set.events {
-		body += "printf '%s\\n' " + sanitize.ShellQuote(event) + "\n"
-	}
-	body += "exit " + strconv.Itoa(set.exit) + "\n"
-	writeGoStub(t, filepath.Join(dir, "go"), body)
-	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
-}
-
-// installCannedSelection installs a factory whose build writes a canned run binary. The
-// answered flag turns true once a run selects that binary.
-func installCannedSelection(t *testing.T) *bool {
-	t.Helper()
-	selected := new(bool)
-	installTestSelectionFactory(t, runbinary.Factory{
-		TempRoot: t.TempDir(),
-		Build: func(_ context.Context, _, output string) error {
-			*selected = true
-			return os.WriteFile(output, []byte("selected"), 0o755)
-		},
-		Verify: func(string, string) error { return nil },
-	})
-	return selected
-}
-
-// cannedSelections are the two selection forms the goldens cover.
-func cannedSelections() []struct {
-	name string
-	args []string
-} {
-	return []struct {
-		name string
-		args []string
-	}{
-		{"package", []string{"--package", "./..."}},
-		{"run", []string{"--package", "./...", "--run", "^TestCanned$"}},
-	}
-}
 
 // TestExecuteClassifiesTheOutcome grades the six kinds a focused run can reach. The
 // four completed kinds run through the canned streams, `refused` runs through a
@@ -120,7 +27,7 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 	}{
 		{set: "failing", want: Outcome{Kind: OutcomeFailed, FailedTests: 1, FailedNames: []string{"TestCanned"}, Ran: 1}},
 		{set: "passing", want: Outcome{Kind: OutcomePassed, Ran: 1}},
-		{set: "build-fail", want: Outcome{Kind: OutcomeBuildFailed}},
+		{set: "build-fail", want: Outcome{Kind: OutcomeBuildFailed, BuildLine: "./canned.go:3:1: syntax error: unexpected }"}},
 		{set: "no-run", want: Outcome{Kind: OutcomeNoTestRun}},
 	} {
 		t.Run(tc.set, func(t *testing.T) {
@@ -138,7 +45,7 @@ func TestExecuteClassifiesTheOutcome(t *testing.T) {
 		installCannedGo(t, cannedSetNamed(t, "build-fail"))
 		installCannedSelection(t)
 		outcome := executeSelection(t, t.TempDir(), []string{"--package", "./...", "--run", "^TestCanned$"})
-		if want := (Outcome{Kind: OutcomeBuildFailed}); !sameOutcome(outcome, want) {
+		if want := (Outcome{Kind: OutcomeBuildFailed, BuildLine: "./canned.go:3:1: syntax error: unexpected }"}); !sameOutcome(outcome, want) {
 			t.Fatalf("outcome = %+v, want %+v", outcome, want)
 		}
 	})
@@ -215,7 +122,72 @@ func executeSelection(t *testing.T, root string, args []string) Outcome {
 // sameOutcome compares two outcomes field by field, because the FailedNames slice makes
 // Outcome incomparable with ==.
 func sameOutcome(got, want Outcome) bool {
-	return got.Kind == want.Kind && got.FailedTests == want.FailedTests && got.Ran == want.Ran && slices.Equal(got.FailedNames, want.FailedNames)
+	return got.Kind == want.Kind && got.FailedTests == want.FailedTests && got.Ran == want.Ran && slices.Equal(got.FailedNames, want.FailedNames) && got.BuildLine == want.BuildLine
+}
+
+// TestOnlyAScriptFailureIsBuildFailed covers PS45, PS46, PS47, PS51, and PS52. A run-binary
+// build script that exits 1 reads build-failed with the refusal bytes and exit that `bench
+// test` prints, and BuildLine names the first output line with a Go position, or else the
+// first non-empty line. A cancelled build and a build with no Go on PATH stay refused.
+func TestOnlyAScriptFailureIsBuildFailed(t *testing.T) {
+	failing := func(output string) string {
+		return "printf '%s' " + sanitize.ShellQuote(output) + "\nexit 1\n"
+	}
+	for _, tc := range []struct {
+		name, output, message, line string
+	}{
+		{"a header before a .go: line", "# fixture\n./broken.go:3:1: syntax error\n", "# fixture\n./broken.go:3:1: syntax error", "./broken.go:3:1: syntax error"},
+		{"no .go: line", "\n  go-build.sh: no toolchain\nsecond line\n", "go-build.sh: no toolchain\nsecond line", "go-build.sh: no toolchain"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			outcome, out, code := executeOverBuildScript(t, failing(tc.output), nil)
+			want := toon.Errorf("Bench executable selection failed", "build private Bench executable: exit status 1: "+tc.message) + "\n"
+			if out != want || code != 1 {
+				t.Fatalf("Execute = (%d, %q), want the selection refusal (1, %q)", code, out, want)
+			}
+			if want := (Outcome{Kind: OutcomeBuildFailed, BuildLine: tc.line}); !sameOutcome(outcome, want) {
+				t.Fatalf("outcome = %+v, want %+v", outcome, want)
+			}
+		})
+	}
+	t.Run("a cancelled build", func(t *testing.T) {
+		cancelled := func(ctx context.Context, source, output string) error {
+			ctx, cancel := context.WithCancel(ctx)
+			cancel()
+			return runbinary.Build(ctx, source, output)
+		}
+		outcome, out, _ := executeOverBuildScript(t, "exec sleep 30\n", cancelled)
+		if want := (Outcome{Kind: OutcomeRefused}); !sameOutcome(outcome, want) {
+			t.Fatalf("outcome = %+v, want %+v\n%s", outcome, want, out)
+		}
+	})
+	t.Run("no Go on PATH", func(t *testing.T) {
+		t.Setenv("PATH", t.TempDir())
+		outcome, out, _ := executeOverBuildScript(t, failing("./broken.go:3:1: syntax error\n"), nil)
+		if want := (Outcome{Kind: OutcomeRefused}); !sameOutcome(outcome, want) {
+			t.Fatalf("outcome = %+v, want %+v\n%s", outcome, want, out)
+		}
+	})
+}
+
+// executeOverBuildScript runs one package selection whose run binary builds through a
+// fixture scripts/go-build.sh with the body script. A nil build selects the canonical
+// builder.
+func executeOverBuildScript(t *testing.T, script string, build runbinary.Builder) (Outcome, string, int) {
+	t.Helper()
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "scripts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/usr/bin/env bash\n"+script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: build, Verify: func(string, string) error { return nil }})
+	request, line, code := Prepare(root, []string{"--package", "./..."})
+	if line != "" {
+		t.Fatalf("Prepare refused the selection: (%d, %q)", code, line)
+	}
+	return Execute(root, request)
 }
 
 // TestOutcomeNamesTheFailedTests covers PS56: FailedNames lists the failed tests in the

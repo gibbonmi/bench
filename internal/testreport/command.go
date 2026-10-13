@@ -161,7 +161,7 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	defer stop()
 	selection, err := selectRunBinary(ctx, testBenchSource(root))
 	if err != nil {
-		return refusedOutcome(toon.Errorf("Bench executable selection failed", err.Error())+"\n", 1)
+		return selectionFailure(err)
 	}
 	defer selection.Close()
 	if request.changed {

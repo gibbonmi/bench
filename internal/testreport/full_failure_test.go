@@ -51,7 +51,7 @@ func TestFullFailureDiagnostics(t *testing.T) {
 			fragments: []string{"first compiler diagnostic", "middle compiler diagnostic", "last compiler diagnostic"},
 			rows:      []string{`compiler,"",first compiler diagnostic,3`, `compiler,"",middle compiler diagnostic,3`, `compiler,"",last compiler diagnostic,3`},
 			first:     "first compiler diagnostic",
-			want:      Outcome{Kind: OutcomeBuildFailed},
+			want:      Outcome{Kind: OutcomeBuildFailed, BuildLine: "first compiler diagnostic"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

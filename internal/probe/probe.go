@@ -43,9 +43,9 @@ const restoredCell = "yes"
 const resultSchema = "bench-probe-result-v2"
 
 // verdictCells is one probe answer's variable half: the five cells the verdict row takes
-// from a run, and the two cells the selection row takes from the baseline and the mutated
-// run. The seven travel together, because they come from two different runs and one
-// outcome value cannot carry both.
+// from a run, the two cells the selection row takes from the baseline and the mutated run,
+// and the mutant table's cell. They travel together, because they come from two different
+// runs and one outcome value cannot carry both.
 type verdictCells struct {
 	verdict string
 	cause   string
@@ -55,6 +55,9 @@ type verdictCells struct {
 	restored string
 	baseline string
 	ran      int
+	// buildLine is the first_build_line cell of a mutated run that failed to build, and nil
+	// when the answer prints no mutant table.
+	buildLine *string
 }
 
 // run is the probe over the native file operations.
@@ -268,10 +271,15 @@ func selected(subject subject, mutation string, cells verdictCells, request test
 	return envelope{cells: cells, subject: subject.display, mutation: mutation, form: request.Form(), target: request.Target(), run: request.Run()}
 }
 
-// answer renders the envelope ahead of suffix, with the execution row counting every byte
-// of suffix. The rows render in one call, so a cell the encoder cannot carry refuses all
-// of them rather than printing half an answer.
+// answer renders the envelope and then any mutant table ahead of suffix, with the execution
+// row counting every byte after it. The rows render in one call, so a cell the encoder
+// cannot carry refuses all of them rather than printing half an answer.
 func (e envelope) answer(suffix string) (string, error) {
+	mutant, err := e.cells.mutantTable()
+	if err != nil {
+		return "", err
+	}
+	suffix = mutant + suffix
 	e.trailing = len(suffix)
 	head, err := e.rows()
 	if err != nil {

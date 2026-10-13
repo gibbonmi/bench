@@ -245,6 +245,20 @@ func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
 	return runBuildScript(ctx, sourceRoot, output, filepath.Dir(output))
 }
 
+// BuildError is a build script that ran and exited with a failure. A cancelled build and an
+// absent Go are other errors. Output is everything the script printed, so a reader can name
+// the compile error.
+type BuildError struct {
+	Err    error
+	Output string
+}
+
+func (e BuildError) Error() string {
+	return fmt.Sprintf("%v: %s", e.Err, strings.TrimSpace(e.Output))
+}
+
+func (e BuildError) Unwrap() error { return e.Err }
+
 // runBuildScript runs the sanctioned build script once. An empty manifestDir passes no
 // manifest-directory flag, which leaves the script its own default; a named one overrides
 // it. The two callers differ only in that operand, so they share this one exec.
@@ -275,7 +289,7 @@ func runBuildScript(ctx context.Context, sourceRoot, output, manifestDir string)
 	case err := <-done:
 		drainBuilderGroup(cmd.Process.Pid)
 		if err != nil {
-			return fmt.Errorf("%w: %s", err, strings.TrimSpace(outputBytes.String()))
+			return BuildError{Err: err, Output: outputBytes.String()}
 		}
 		return nil
 	case <-ctx.Done():
