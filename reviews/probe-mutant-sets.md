@@ -2883,7 +2883,77 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "pm-e-standards-r1",
+          "performer": "claude:pm_e_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "60506230c3885af7316243a5dad52035ea13fc39",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_e_standards",
+            "digest": "sha256:74cedd65eb643b58340ce0d868859f7b622d1db225890db5cb7830292aa11b22",
+            "excerpt": "Standards axis claude:pm_e_standards (opus/high), PM-E round 1, frozen pair 2ae8d55c..9f1d3c44 (chunk tip 74e73817), evidence sha256:4a0f4b4f current. Author agy:pm_t06 on gemini-4-argon-high.\ncount: 4\nworst: S1\nS1 | auto-fix | 8 | CONTEXT.md:378-381 defines mutant set as \"the list of independent mutants\"; SKILL.md:105 says \"A mutation is a swap, ... a combined mutant, or a mutant set\" after \"applies one mutation or a mutant set\"; BENCH-reference.md:258-259 repeats it; spec.md:321 asks to name the set beside the mutation forms. Take \"or a mutant set\" out of both lists and give the set its own clause; check BENCH-reference.md:249.\nS2 | auto-fix | 6 | AGENTS.md one source per fact: BENCH-reference.md:316-318, 323 spells every field of the set tables, which set.go owns (setTables, mutantFieldsOfSet, setSelectionFields, setExecutionFields); no check ties the copy. Name the tables and the cells a reader acts on; leave the field order to the answer.\nS3 | auto-fix | 5 | roadmap/FT168.md:10, a rewritten line, keeps \"expected red\", which CONTEXT.md:384-385 avoids (term: expected witness).\nS4 | auto-fix | 5 | ste-prose.md:25 one word for one thing: BENCH-reference.md:299-312 names one state \"unmatched entry\", \"matching entry/row\", and \"missed row\", and gives a verdict to an input (\"An unmatched entry reads invalid\"). Use entry for input, row for output, one word for the miss.\nClean: CONTEXT.md entry shape and Avoid list; combined mutant byte-identical; budgets hold (SKILL.md 126/126, bench-implement-spec.md 93/93); anchored needles whole; registry and test drop the Require row together; no history text outside CHANGELOG.\nAdvice: \"held gate lock\" vs the CONTEXT landing-lease Avoid list (spec uses the phrase); the mutation-form list is written in two files (pre-existing); delegation-discipline.md:125 repeats \"coordinator confirms\"; the Forbid diagnostic still says \"the known-issues row kept a copy\"; FT168.md:20-22, 35-36 list faces that look shipped.\nImplementation command: the ticket wording \"beside the mutation forms\" and \"states the rows, the exits\" invited S1 and S2.\n"
+          },
+          "axis": "Standards",
+          "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
+          "tip": "74e73817b8c0cf76f27122dd6ff0f779aaae5789",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pm-e-spec-r1",
+          "performer": "claude:pm_e_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "60506230c3885af7316243a5dad52035ea13fc39",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:pm_e_spec",
+            "digest": "sha256:b8ce8ef2f88f761f739f425e45bc32ecaf0bba5ad08f8e996aa835a8924cc129",
+            "excerpt": "Spec axis claude:pm_e_spec (opus/high), PM-E round 1, frozen pair 2ae8d55c..9f1d3c44 (chunk tip 74e73817), evidence sha256:4a0f4b4f current. Author agy:pm_t06 on gemini-4-argon-high.\ncount: 3\nworst: P2\nRows: PM61 met (CONTEXT.md:378-381; combined mutant byte-identical); PM62 partial (P1-P3); PM63 met (SKILL.md:105); PM64 met (delegation-discipline.md:125; needles at registry_data.go:452 and registry_retained_workflow.go:290 still match); PM65 met (bench-implement-spec.md:27); PM66 check-owned (Require anchor and test row removed; Forbid stays); PM68 met (CHANGELOG.md:9-11); PM73 met; PM75 met (roadmap/FT168.md keeps canary and failing-name faces, Next: spec).\nFacts checked against code: 1-64 cap, entry grammar, one lock/baseline/context, stop-cause order, miss preservation, preserve-failed/mutation-failed/restore-failed, table headers, command exit map, --mutant import.\nP1 | auto-fix | 6 | BENCH-reference.md:302-308 vs spec:216, 227-228: the guide does not say that gate-held and gate-unavailable mark the current row and every later matching row with that cause, and gives no restored cell for mutation-failed (untouched unpublished, yes published).\nP2 | auto-fix | 7 | BENCH-reference.md:321-323 reads as one of three suffixes; spec:282-283 and set.go:261 print the preserved table when a restore failed, then the failed baseline report or each started mutant's report.\nP3 | auto-fix | 5 | BENCH-reference.md:248-252 still says the verb \"applies one mutation\" and \"prints one verdict\", false for a set (story 56).\nScope creep: none.\nAdvice: SKILL.md:105 contradicts itself (\"one mutation or a mutant set\" then \"A mutation is ... or a mutant set\"); CHANGELOG.md:10 \"each package needed its own call\" ignores a parent ./... pattern.\nImplementation command: P3, the author reach list covers callers, tests, fixtures, exports but not prose; add \"every guidance sentence that the change makes false\".\n"
+          },
+          "axis": "Spec",
+          "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
+          "tip": "74e73817b8c0cf76f27122dd6ff0f779aaae5789",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pm-e-coverage-r1",
+          "performer": "claude:pm_e_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "60506230c3885af7316243a5dad52035ea13fc39",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:pm_e_coverage",
+            "digest": "sha256:73f0a94deca7f8d69dd68d445972a5a8141813ac88678621b607cb03dfa1d849",
+            "excerpt": "Coverage axis claude:pm_e_coverage (opus/high), PM-E round 1, frozen pair 2ae8d55c..9f1d3c44 (chunk tip 74e73817), evidence sha256:4a0f4b4f current. Author agy:pm_t06 on gemini-4-argon-high.\ncount: 0\nworst: none\n(1) Anchored sentences hold: delegation-discipline.md:125 needle (registry_data.go:452) and :170 (registry_retained_workflow.go:290); bench-implement-spec.md:27 keeps the three witness-cap needles (registry_ticket_passes.go:70-72). Own probe folding the new sentence into the cap sentence: bit, restored yes.\n(2) The Require row and its test row are gone; no \"Apply the witness cap\" text remains; bench anchors docs/known-issues.md lists only the Forbid.\n(3) The author's PM66 red is real: reinserting the Require row: bit at gate_entry_test.go:29, restored yes.\n(4) delegate-probe-mutated-bytes canary passes; TestWriteSpecChunkedSlicing and TestTicketSlicingPasses pass and are red-capable (omit a registry row: bit, restored yes).\n(5) Budget and prose checks still bite: bench-implement-spec.md 93/93 and SKILL.md 126/126; a split line: bit (94 lines); merged BENCH-reference.md sentences: bit (28 words); merged CONTEXT.md sentences: bit (34 words). root-conformance green; git status empty after probes.\nAdvice: the line-125 anchor matches a prefix only, so the rest of that bullet and the new per-row sentence are review-held (PM64 is review-owned); PM65, PM62, PM75 text is review-held by design; no canary covers the witness-cap anchors (pre-existing).\nImplementation command: no command change.\n"
+          },
+          "axis": "Coverage",
+          "base": "2ae8d55caeb92f6c3b3ba8f65a6f2c8c499b11f9",
+          "tip": "74e73817b8c0cf76f27122dd6ff0f779aaae5789",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3493,3 +3563,33 @@ Count 0. Worst issue: none. The topology check still bites a non-test call, and 
 The orchestrator corrected S31 and S32 at bf1a69d4 and refroze PM-D from 1870269d to bf1a69d4.
 The ticket 5 small-fix author re-recorded its six requirements at that tip, and the central probe bit again.
 Each axis reaffirmed its result at that tip. PM-D used two repair cycles.
+
+## PM-E round 1
+
+Frozen pair: 2ae8d55c to 9f1d3c44, with the chunk tip 74e73817. The author was agy:pm_t06 on gemini-4-argon-high.
+Repair allowance: cycle 1 of 2 starts for S1 to S4 and P1 to P3. Each is a prose fix, so the repair runs on opus at low effort.
+
+### Standards
+
+Count 4. Worst issue: S1.
+
+- S1, auto-fix, confidence 8: the delegate skill and the reference guide call a mutant set a mutation, against the `CONTEXT.md` term.
+- S2, auto-fix, confidence 6: the reference guide spells every field of the set tables, which the code owns.
+- S3, auto-fix, confidence 5: a rewritten `roadmap/FT168.md` line keeps the avoided term "expected red".
+- S4, auto-fix, confidence 5: the reference guide gives one state three names and gives a verdict to an input entry.
+
+### Spec
+
+Count 3. Worst issue: P2. Rows PM61, PM63 to PM65, PM68, PM73, and PM75 are met, and PM62 is partial.
+
+- P1, auto-fix, confidence 6: the guide does not say which rows a gate stop marks, and gives no `restored` cell for `mutation-failed`.
+- P2, auto-fix, confidence 7: the guide reads the text after the execution row as one of three parts. The code prints the `preserved` table when a restore failed, then the reports.
+- P3, auto-fix, confidence 5: an older paragraph of the guide still says the verb applies one mutation and prints one verdict.
+
+### Coverage
+
+Count 0. Worst issue: none. Every anchored sentence stays guarded, and each probe bit with the `restored` cell `yes`.
+
+### Advice
+
+- The `CHANGELOG.md` entry says that each package needed its own call, but a parent `./...` pattern already covered several packages.
