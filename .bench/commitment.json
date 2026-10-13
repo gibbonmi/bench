@@ -682,30 +682,30 @@
           ]
         },
         {
-          "id": "FT402",
+          "id": "map-only-route",
           "criteria": [
             {
-              "id": "FT402.faster",
-              "text": "The landing gate spends less time, and each changed test keeps its purpose and its failure detection."
+              "id": "map-only-route.select",
+              "text": "The reviewer can select a map-only route for a ready compiled map, and the full route stays the default."
             },
             {
-              "id": "FT402.spread",
-              "text": "A timing gain inside the recorded run-to-run spread counts as no change, and the build records each reverted attempt."
+              "id": "map-only-route.eligibility",
+              "text": "The route accepts only a ready compiled map with no bench maps diagnostic, and it returns to the reviewer when the map is not spec-grade."
             },
             {
-              "id": "FT402.remeasure",
-              "text": "The build measures its timing targets again on the tmpfs base before it starts."
+              "id": "map-only-route.thin-spec",
+              "text": "One fresh slicer writes the stories, coverage rows, tickets, and gap log, and the coordinator completes a thin spec that /bench-implement-spec accepts."
             }
           ],
-          "sources": [
+          "sources": [],
+          "deliverables": [
             {
-              "id": "FT402",
-              "path": "roadmap/FT402.md",
-              "identity": "sha256:41d65fb4d12a47bd5dad654156e372ada8934839ed262686f76a7875fe230641"
+              "source": {
+                "id": "map-only-route",
+                "path": "specs/map-only-route/spec.md",
+                "identity": "sha256:5554780a1f55e1060eea6ab78f1d1841eaf50f6dcad27f46afbc855c04b437f4"
+              }
             }
-          ],
-          "dependencies": [
-            "FT409"
           ]
         },
         {
@@ -761,36 +761,6 @@
           ]
         },
         {
-          "id": "FT375-spec-staleness",
-          "criteria": [
-            {
-              "id": "FT375-spec-staleness.rows",
-              "text": "bench preflight build reports a drift row for each fenced path that changed from the spec's pinned commit to the source tip, a cited-symbol row, and a cited-test row."
-            },
-            {
-              "id": "FT375-spec-staleness.skip",
-              "text": "The build dispatches no staleness pass when every required supported row is green and the drift row is empty, and otherwise the manual pass audits only the drift, the red rows, and the unsupported claims."
-            },
-            {
-              "id": "FT375-spec-staleness.open",
-              "text": "The delivery closes no roadmap row, and FT375 keeps the faces that the staged spec does not name."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "preflight-spec-staleness",
-                "path": "specs/preflight-spec-staleness/spec.md",
-                "identity": "sha256:b4f7e8acedc521247a9c59162217379c4b5b4572995f93649e13cacc48ba376d"
-              }
-            }
-          ],
-          "dependencies": [
-            "FT293-ownership-closure"
-          ]
-        },
-        {
           "id": "FT293-ownership-closure",
           "criteria": [
             {
@@ -834,6 +804,36 @@
           ]
         },
         {
+          "id": "FT375-spec-staleness",
+          "criteria": [
+            {
+              "id": "FT375-spec-staleness.rows",
+              "text": "bench preflight build reports a drift row for each fenced path that changed from the spec's pinned commit to the source tip, a cited-symbol row, and a cited-test row."
+            },
+            {
+              "id": "FT375-spec-staleness.skip",
+              "text": "The build dispatches no staleness pass when every required supported row is green and the drift row is empty, and otherwise the manual pass audits only the drift, the red rows, and the unsupported claims."
+            },
+            {
+              "id": "FT375-spec-staleness.open",
+              "text": "The delivery closes no roadmap row, and FT375 keeps the faces that the staged spec does not name."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "preflight-spec-staleness",
+                "path": "specs/preflight-spec-staleness/spec.md",
+                "identity": "sha256:b4f7e8acedc521247a9c59162217379c4b5b4572995f93649e13cacc48ba376d"
+              }
+            }
+          ],
+          "dependencies": [
+            "FT293-ownership-closure"
+          ]
+        },
+        {
           "id": "FT380-plan-commit",
           "criteria": [
             {
@@ -856,26 +856,6 @@
           "sources": []
         },
         {
-          "id": "FT411",
-          "criteria": [
-            {
-              "id": "FT411.cut",
-              "text": "Each test that the reviewer selects from the 2026-10-09 test-efficiency review tables is cut."
-            },
-            {
-              "id": "FT411.probe",
-              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT411",
-              "path": "roadmap/FT411.md",
-              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
-            }
-          ]
-        },
-        {
           "id": "FT409",
           "criteria": [
             {
@@ -892,6 +872,60 @@
               "id": "FT409",
               "path": "roadmap/FT409.md",
               "identity": "sha256:94e9d492c4862e15271ee301fe3a03216dc218ba7c00c22f40d930f7a21c65c8"
+            }
+          ]
+        },
+        {
+          "id": "FT402",
+          "criteria": [
+            {
+              "id": "FT402.faster",
+              "text": "The landing gate spends less time, and each changed test keeps its purpose and its failure detection."
+            },
+            {
+              "id": "FT402.spread",
+              "text": "A timing gain inside the recorded run-to-run spread counts as no change, and the build records each reverted attempt."
+            },
+            {
+              "id": "FT402.remeasure",
+              "text": "The build measures its timing targets again on the tmpfs base before it starts."
+            },
+            {
+              "id": "FT402.open",
+              "text": "The delivery closes no roadmap row, and FT402 keeps the shard, git-query cache, and serial-test faces that the staged spec does not name."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "landing-test-efficiency",
+                "path": "specs/landing-test-efficiency/spec.md",
+                "identity": "sha256:5afc43cc54436ff8c7dabc57517d02172eb4ba72951a3a8e8837f20f3b0f0ca6"
+              }
+            }
+          ],
+          "dependencies": [
+            "FT409"
+          ]
+        },
+        {
+          "id": "FT411",
+          "criteria": [
+            {
+              "id": "FT411.cut",
+              "text": "Each test that the reviewer selects from the 2026-10-09 test-efficiency review tables is cut."
+            },
+            {
+              "id": "FT411.probe",
+              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT411",
+              "path": "roadmap/FT411.md",
+              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
             }
           ]
         }
