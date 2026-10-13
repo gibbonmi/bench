@@ -245,10 +245,10 @@ tip. Each success response ends with one citation row before the help
 envelope, so a reviewer replays the answer. The review phase runs the blast
 step before it dispatches the axes.
 
-`bench probe` proves that a focused run bites. The verb preserves the subject
-under the Bench home, applies one mutation, and runs the focused test or
-check. The verb then restores the subject and proves the restore byte-exact.
-The verb prints one verdict: `bit` at exit 0, `silent` at exit 1, `invalid` at
+`bench probe` proves that a focused run bites. In the single form, the verb
+preserves the subject under the Bench home, applies one mutation, and runs the
+focused test or check. The verb then restores the subject and proves the
+restore byte-exact. The single form prints one verdict: `bit` at exit 0, `silent` at exit 1, `invalid` at
 exit 1, and `restore-failed` at exit 2. A `restore-failed` run names the
 preserved copy under `$BENCH_HOME/probe/<repo-key>/`; every other verdict
 removes the copy. For a worktree, run
@@ -256,7 +256,7 @@ removes the copy. For a worktree, run
 target operand.
 
 The mutation is a swap, an omission, an unwrap, an insertion, a deletion, a
-combined mutant, or a mutant set, and `bench probe --help` holds the grammar.
+combined mutant, and `bench probe --help` holds the grammar.
 The focused run takes one or more `--package` expressions or one check from the
 `bench test --help` inventory. Repeated `--package` expressions run in one
 `go test` call for each run. A `--check prose` probe grades a Markdown subject,
@@ -296,31 +296,33 @@ source closure reuses the baseline's run binary after a freshness check. A
 mutant inside that closure builds a fresh run binary for its run, and a stale
 inherited `BENCH_RUN_BINARY` refuses that run.
 
-An unmatched entry reads `invalid` with the cause `substring-miss` and
-`restored` `untouched`. When every entry misses, the set takes no lock and
-starts no run. A failed baseline ends the set before any write and gives each
-matching row `baseline-<kind>` and `untouched`. Before each write, a cancelled
-context gives `set-stopped`, a held gate lock gives `gate-held`, and an
-unreadable gate gives `gate-unavailable`.
+The row of an entry that matches no subject bytes reads `invalid` with the
+cause `substring-miss` and `restored` `untouched`. When every entry misses, the
+set takes no lock and starts no run. A failed baseline ends the set before any
+write and gives each matching row `baseline-<kind>` and `untouched`. Before each
+write, a cancelled context gives `set-stopped`, a held gate lock gives
+`gate-held`, and an unreadable gate gives `gate-unavailable`. Each of these
+causes marks the current row and each later matching row with that cause and
+`untouched`.
 
 A failed preservation gives its row `preserve-failed` and `untouched`. A failed
-write gives its row `mutation-failed`, or `restore-failed` with `no` when its
-restore also fails. A signal during a run or a fresh build gives that row
-`interrupted` after its restore. After a failed preservation, a failed write, an
-interrupt, or a failed restore, each later matching row reads `set-stopped` and
-`untouched`. A missed row keeps `substring-miss` through a failed baseline and
-through every stop.
+write gives its row `mutation-failed` with `restored` `untouched` when the
+write was not published. After a published write, `restored` reads `yes` when
+the restore succeeds, and the row reads `restore-failed` with `no` when it fails. A signal during a run or a fresh build gives that row `interrupted` after
+its restore. After a failed preservation, a failed write, an interrupt, or a
+failed restore, each later matching row reads `set-stopped` and `untouched`. A
+`substring-miss` row keeps its cause through a failed baseline and every stop.
 
 A mutant-set answer uses the schema `bench-probe-set-v1` and prints three
-tables:
-`mutants[<n>]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}`,
-`selection[1]{form,target,run,baseline,builds}`, and
-`probe_set_execution[1]{schema,command_exit_code,trailing_bytes}`. Each row's
-`exit_code` uses the single form's verdict-to-exit map, and `first_build_line`
-is `null` unless that mutant failed to build. `command_exit_code` is 2 when a
-row reads `restore-failed`, 0 when every row reads `bit`, and 1 otherwise. After
-the execution row, the answer prints the `preserved` table, the failed baseline
-report, or each started mutant's `mutant_report[1]{mutant}` and report.
+tables, `mutants`, `selection`, and `probe_set_execution`, and names their
+fields. Each row's `exit_code` uses the single form's verdict-to-exit map,
+and `restored` reads `yes`, `no`, or `untouched`. The `selection` row's
+`builds` cell counts the run-binary builds. `command_exit_code` is 2 when a row
+reads `restore-failed`, 0 when every row reads `bit`, and 1 otherwise. After the
+execution row, the answer prints the `preserved` table when a restore failed.
+Then it prints the failed baseline report, or each started mutant's
+`mutant_report[1]{mutant}` and report.
+
 `bench record verification --probe-result <file> --mutant <n>` imports row `<n>`
 of a mutant-set answer.
 

@@ -8,7 +8,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Probe mutant sets
 
-- Added `--mutants <path>`, repeated `--package`, and `bench record verification --probe-result <file> --mutant <n>`. `--mutants <path>` grades a mutant set of 1 to 64 independent mutants against one probe baseline and answers under `bench-probe-set-v1`. Each mutant outside the run binary's source closure reuses the baseline's run binary, and a mutant inside that closure builds its own. Repeated `--package` expressions run in one `go test` call for each run, and `--mutant <n>` imports one row of a mutant-set answer. Before, each mutant and each package needed its own `bench probe` call, and `--probe-result` read only a single-form answer.
+- Added `--mutants <path>`, repeated `--package`, and `bench record verification --probe-result <file> --mutant <n>`. `--mutants <path>` grades a mutant set of 1 to 64 independent mutants against one probe baseline and answers under `bench-probe-set-v1`. Each mutant outside the run binary's source closure reuses the baseline's run binary, and a mutant inside that closure builds its own. Repeated `--package` expressions run in one `go test` call for each run, and `--mutant <n>` imports one row of a mutant-set answer. Before, each mutant needed its own `bench probe` call, a probe took one `--package` expression, and `--probe-result` read only a single-form answer.
 
 ### Probe subjects and mutations
 
