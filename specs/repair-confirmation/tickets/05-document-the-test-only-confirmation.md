@@ -19,6 +19,7 @@ Put the new anchor rows in `internal/anchors/registry_chunk_chain.go`, because t
 A policy row keeps the `implementation continuation: ` prefix, so its twin in `wantPredicates` still selects it.
 A review-phase row takes its twin in the chunk-chain anchor test.
 Record a demonstrated red for each twin.
+The closure-only files over or at their structure budget must not grow.
 
 ## Acceptance
 

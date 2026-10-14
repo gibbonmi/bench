@@ -321,6 +321,7 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
         {"id": "writer-and-route", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench"},
         {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
         {"id": "route-precedence", "command": "bench test --package ./internal/gate", "probe": "let the outcome refusal fire before the confirmation route"},
+        {"id": "guidance-prose", "command": "bench test --check prose-mechanics"},
         {"id": "write-root-conformance", "command": "bench test --check root-conformance"}
       ]
     }

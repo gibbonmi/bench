@@ -30,6 +30,11 @@ The confirmation lists the union of the open finding IDs of the three carried re
 A mixed state refuses through the review form before the strict per-axis refusals, with a reason that names the mixed pairs.
 Each confirmation refusal names the chunk and the failed condition.
 Fold reviews and the exported `CheckReviews` keep the strict rule.
+Until ticket 04 adds the confirmation form, a confirmation-validity refusal routes through the review form.
+
+One function in `internal/reviewrecord` finds the reviewed pair of a chunk from its three current axis results.
+It refuses a mixed state, runs `testgap.Prove` from the reviewed tip's tree to the chunk digest, and returns the union of the open finding IDs.
+The carry rule calls it, and ticket 04's writer and route call the same function.
 
 Move the bite and restore conditions of the planned-probe check into one predicate that both checks call.
 The planned-probe check keeps its mutation-name comparison and its two refusal texts.
@@ -50,4 +55,6 @@ The writer and the confirmation route come in the next ticket.
 - [ ] RC35 and RC36: the verification at the repaired digest and the distinct-session rule stay graded.
 - [ ] RC37: the planned-probe check and the confirmation check call one probe-bite predicate.
 - [ ] RC54: a mix of a fresh Coverage result and carried Standards and Spec results refuses through the review form.
+- [ ] The carry rule gets the reviewed pair, the prover result, and the finding union from the one reviewed-pair function.
 - [ ] The central-property mutation, which skips the prover in the carry branch, reds RC12, RC30, and RC31.
+- [ ] A mutation that keeps the pass-and-no-findings condition on a carried result reds RC9 and RC10.
