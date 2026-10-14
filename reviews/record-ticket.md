@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-ticket/spec.md",
-  "plan_digest": "sha256:ec6c05c556dbc8f4b29c74e893f9698d108b8cab58f9062abda802e26a1ad5c1",
+  "plan_digest": "sha256:18ca06ebcf3ec58b338df8d8552ecec32801d67f68f66560e9196e8e4864d964",
   "implementation_session": "",
   "chunks": [
     {
@@ -483,9 +483,9 @@
     {
       "id": "RT-EXCERPT",
       "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
-      "tip": "fcc8fc2f7b85d97b64e36e73c21cec956771abf1",
-      "plan_digest": "sha256:ec6c05c556dbc8f4b29c74e893f9698d108b8cab58f9062abda802e26a1ad5c1",
-      "source_digest": "5e12b49b8485b6f6198f5cf7344e71afc795fc3c",
+      "tip": "52653322c4381d8b8927b9e9b18020b50683969e",
+      "plan_digest": "sha256:18ca06ebcf3ec58b338df8d8552ecec32801d67f68f66560e9196e8e4864d964",
+      "source_digest": "c761cb295426432ad42e9fc8d2ec9a060a243ec9",
       "acceptance_rows": [
         "RT9",
         "RT10",
@@ -693,6 +693,71 @@
               "ref": "claude-agent:ft405_t02_rep2",
               "digest": "sha256:8b37ae17f02bb6350fb166d6537d9b9cb9c0bda883d2fee6fa6474e4fd35f8f1",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/stage.go,swap,failed,1,TestExcerptRefusals/differing_arguments,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,227\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,587\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,13359,227\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestExcerptRefusals/differing_arguments,\"stage_test.go:134: excerpt = exit 0, output \\\"excerpt[1]{chunk,requirement,verb,exit,head,bytes}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",quoted,test,\\\\\\\\\\\"0\\\\\\\\\\\",a401e5b3f24ba5326d8205348da4385843a63f7d,\\\\\\\\\\\"3\\\\\\\\\\\"\\\\\\\\n\\\"; want exit 1 naming \\\"the retained call bench test --run TestA diff… (300 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft405_t02_rep3-excerpt-stage",
+          "performer": "claude:ft405_t02_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c761cb295426432ad42e9fc8d2ec9a060a243ec9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t02_rep3",
+            "digest": "sha256:c14513eae5812f0f22a4b41fa149ad82a8afa94549acd6970e6d9e41880e1ff0",
+            "excerpt": "packages[9]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18977,346\n  github.com/gibbonmi/bench/internal/conformance,pass,60881,1694\n  github.com/gibbonmi/bench/internal/probe,pass,62249,315\n  github.com/gibbonmi/bench/internal/responsebound,pass,430,76\n  github.com/gibbonmi/bench/internal/responsebound/responseboundtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3332,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,18765,227\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/shellcommand,pass,2,21\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "excerpt-stage",
+          "command": "bench test --package ./internal/reviewrecord/... --package ./internal/responsebound/... --package ./internal/shellcommand --package ./cmd/bench --package ./internal/conformance --package ./internal/probe",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t02_rep3-excerpt-root",
+          "performer": "claude:ft405_t02_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c761cb295426432ad42e9fc8d2ec9a060a243ec9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t02_rep3",
+            "digest": "sha256:c990d829b1765389162fd4864f5a8c29894623c2514d5325dfe09796487cc567",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft405-build,52653322c4381d8b8927b9e9b18020b50683969e,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14897,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "excerpt-root",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t02_rep3-command-match",
+          "performer": "claude:ft405_t02_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c761cb295426432ad42e9fc8d2ec9a060a243ec9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t02_rep3",
+            "digest": "sha256:83b9e2a2982edaff80d40679cf56de2e20ae4c490bbdfcbd789343f5ad052d66",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/stage.go,swap,failed,1,TestExcerptRefusals/differing_arguments,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,227\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,587\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,13199,227\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestExcerptRefusals/differing_arguments,\"stage_test.go:134: excerpt = exit 0, output \\\"excerpt[1]{chunk,requirement,verb,exit,head,bytes}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",quoted,test,\\\\\\\\\\\"0\\\\\\\\\\\",a48314fa9dc079980b2ce0c6885794d4365440d2,\\\\\\\\\\\"3\\\\\\\\\\\"\\\\\\\\n\\\"; want exit 1 naming \\\"the retained call bench test --run TestA diff… (300 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "command-match",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "compare only the first planned word with the retained call",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft405_t02_rep3",
+              "digest": "sha256:83b9e2a2982edaff80d40679cf56de2e20ae4c490bbdfcbd789343f5ad052d66",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/stage.go,swap,failed,1,TestExcerptRefusals/differing_arguments,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,227\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,587\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,13199,227\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestExcerptRefusals/differing_arguments,\"stage_test.go:134: excerpt = exit 0, output \\\"excerpt[1]{chunk,requirement,verb,exit,head,bytes}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",quoted,test,\\\\\\\\\\\"0\\\\\\\\\\\",a48314fa9dc079980b2ce0c6885794d4365440d2,\\\\\\\\\\\"3\\\\\\\\\\\"\\\\\\\\n\\\"; want exit 1 naming \\\"the retained call bench test --run TestA diff… (300 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -966,6 +1031,18 @@
           "RT-RETAIN"
         ]
       }
+    },
+    {
+      "from": "sha256:ec6c05c556dbc8f4b29c74e893f9698d108b8cab58f9062abda802e26a1ad5c1",
+      "to": "sha256:18ca06ebcf3ec58b338df8d8552ecec32801d67f68f66560e9196e8e4864d964",
+      "chunk_ids": {
+        "RT-EXCERPT": [
+          "RT-EXCERPT"
+        ],
+        "RT-RETAIN": [
+          "RT-RETAIN"
+        ]
+      }
     }
   ]
 }
@@ -982,6 +1059,8 @@ RT-EXCERPT: repair cycle 2 of 2 is complete for ticket 02 to close C4. It is a t
 
 RT-EXCERPT: the coordinator confirmation for C4 refused, because the delta held the repair-assignment plan commit. Confirming round 2 ran instead.
 RT-EXCERPT: the reviewer's auto-approve direction extends the allowance by one test-only repair cycle, cycle 3, to close S7. It permits that one cycle only.
+
+RT-EXCERPT: repair cycle 3 is complete for ticket 02 to close S7. The test takes each store level from the written store. The repair commit is 52653322c4381d8b8927b9e9b18020b50683969e.
 
 ## Standards
 
