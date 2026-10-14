@@ -827,6 +827,74 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "rc-carry-standards-2",
+          "performer": "claude:rc-carry-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f9de3ed0d99883a2ab641124e1773875432ac197",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-carry-standards-2",
+            "digest": "sha256:822e64320b7b9b98d56ee3486ac381ff02a4af74ad8be5b7c2aac2e923f5bace",
+            "excerpt": "Standards axis, RC-CARRY confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip 33c3caf6; repair delta e15f692f..4d026a78; named findings S1 to S4.\nS1 closed: RecordReview calls currentReview (internal/reviewrecord/write.go:299; record.go:166-176).\nS2 closed: RecordChunk (recordtest/fixture.go:332) and Refreeze (recordtest/confirmation.go:18-20) both call freeze (fixture.go:173-182).\nS3 closed: FindReviewedPair (confirmation.go:75) and confirms (confirmation.go:158) read chunk.reviewed().scope (record.go:124).\nS4 closed: the unclaimed comment (write.go:333-334) defers to evidenceIDs, which walks confirmations (parse.go:168-182).\nThe new P1 guard comment, the FindReviewedPair doc, the C1 message, and the new test comments add no new knowledge source and keep the timeless register.\nAdvice (no ID): the RC37 red cell overstates TestProbeChecksAgree, which grades only agreement; an unnamed i == 0 marker in TestProbeChecksAgree; the RC56 case reuses a placeholder performer.\n"
+          },
+          "axis": "Standards",
+          "base": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "tip": "4d026a7861a63957f6aa1c5657dfca3e85a9b8cb",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-carry-standards-1"
+          ]
+        },
+        {
+          "id": "rc-carry-spec-2",
+          "performer": "claude:rc-carry-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f9de3ed0d99883a2ab641124e1773875432ac197",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:rc-carry-spec-2",
+            "digest": "sha256:cd6001df07e0f71dddce72482857bd24aec912a86abdf5de3482a3522dee3e24",
+            "excerpt": "Spec axis, RC-CARRY confirming round: fail. Count: 1 finding. Worst issue: P2.\nEvidence bound current=true at source tip 33c3caf6; repair delta 20d3ac26..4d026a78; named findings P1, C1, C2.\nPlan expansion: pass; story 57, strict descent at spec.md:162, chunk row RC54-RC57, ticket 03 Covers RC55-RC57; the plan JSON adds only the t03_rep1 assignment.\nP1 and C2 closed: the refusal at confirmation.go:96-98 names the empty reviewed pair; the RC55 case (review_checkpoint_confirmation_test.go:183-190) keeps the delta test-only and reaches the guard.\nC1 performer half closed: record.go:74 names the performer; the RC56 case (test:191-194) reaches checkReviews through the carry branch.\nP2 (auto-fix, confidence 7): the RC57 row says the checkpoint refuses a carried wrong-role result with a reason that names the role, but parse.go:109-110 refuses first with \"invalid independent review axis or performer\". The cited TestCarriedReviewKeepsTheRoleCondition (record_test.go:89-102) calls checkReviews directly. Fix: amend the RC57 row to name the checkReviews carried-pair seam and note that the parser refuses first.\nCoverage cells for RC37 and RC55-RC57 cite real tests.\nAdvice (no ID): the RC37 why-it-catches cell should say that TestProbeChecksAgree catches a verdict drift on its four probes.\n"
+          },
+          "axis": "Spec",
+          "base": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "tip": "4d026a7861a63957f6aa1c5657dfca3e85a9b8cb",
+          "finding_ids": [
+            "P2"
+          ],
+          "supersedes": [
+            "rc-carry-spec-1"
+          ]
+        },
+        {
+          "id": "rc-carry-coverage-2",
+          "performer": "claude:rc-carry-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f9de3ed0d99883a2ab641124e1773875432ac197",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-carry-coverage-2",
+            "digest": "sha256:a12b0e506fff66b6741ccbe687707098bf7376b246d672ffd0e0c9dab0c2be6e",
+            "excerpt": "Coverage axis, RC-CARRY confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip 33c3caf6; repair delta e15f692f..4d026a78; named findings C1 and C2.\nProbes, all against ./internal/gate and ./internal/reviewrecord/..., all restored=yes:\nC1 performer exclusion only when not carried (record.go:146), bit (author_carried_result).\nC1 role check only when not carried (record.go:146), bit (TestCarriedReviewKeepsTheRoleCondition).\nC2 strict-descent guard disabled (confirmation.go:96), bit (empty_reviewed_pair).\nParser role guard disabled (parse.go:109), bit (TestReviewRecordTerminal/verification_as_review).\nThe RC55 case moves the chunk base to the reviewed tip, so the delta is test-only and the new refusal is reached. A carried result with a wrong role cannot reach the checkpoint, because Parse (files.go:103; parse.go:109) refuses it first.\nAdvice (no ID): reword the RC57 row so the parser closes the checkpoint path and the unit test covers the carried branch.\n"
+          },
+          "axis": "Coverage",
+          "base": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "tip": "4d026a7861a63957f6aa1c5657dfca3e85a9b8cb",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-carry-coverage-1"
+          ]
         }
       ]
     }
@@ -923,7 +991,7 @@ RC-PROVE: 2 findings in the first round. Worst issue: S1. The confirming round c
 - S1 (auto-fix, confidence 6): `internal/testgap/testgap.go` line 57 derives the testdata path fact again. The fixture predicate in `internal/outline/read.go` lines 12-19 already owns it.
 - S3 (auto-fix, confidence 4): `internal/testgap/testgap_test.go` lines 64-70 repeat the refusal assertion of `internal/commentgap/trees_test.go` lines 76-82. One exported helper in `internal/gittest/trees.go` takes its place, and it imports no prover sentinel.
 
-RC-CARRY: 4 findings. Worst issue: S1.
+RC-CARRY: 4 findings in the first round. Worst issue: S1. The confirming round closed S1 to S4.
 
 - S1 (auto-fix, confidence 6): `RecordReview` in `internal/reviewrecord/write.go` keeps its own current-result loop, which `currentReview` now owns.
 - S2 (auto-fix, confidence 4): `Refreeze` in `recordtest/confirmation.go` repeats the freeze steps of `RecordChunk` in `recordtest/fixture.go`.
@@ -936,9 +1004,10 @@ RC-CYCLE: 0 findings in both rounds. Worst issue: none.
 
 RC-PROVE: 0 findings in both rounds. Worst issue: none.
 
-RC-CARRY: 1 finding. Worst issue: P1.
+RC-CARRY: 1 finding in the first round. Worst issue: P1. The confirming round closed P1 and found P2.
 
 - P1 (auto-fix, confidence 4): a reviewed tip equal to the chunk base passes, so a test-only chunk can close with no review. The axis reaffirmed auto-fix through a strict-descent spec expansion (RC55), which is flagged for reviewer veto.
+- P2 (auto-fix, confidence 7): the RC57 row says the checkpoint refuses a carried wrong-role result with a reason that names the role. The parser refuses first, so the row's seam is the carried branch of `checkReviews`. A coverage-map amendment fixes the row.
 
 ## Coverage
 
@@ -952,7 +1021,7 @@ RC-PROVE: 5 findings. Worst issue: C1. The chunk uses its one hardening cycle fo
 - C4 (auto-fix, confidence 6): no case accepts an executable test file.
 - C5 (auto-fix, confidence 6): no case accepts a path that holds `testdata` only inside a name.
 
-RC-CARRY: 2 findings. Worst issue: C1.
+RC-CARRY: 2 findings in the first round. Worst issue: C1. The confirming round closed C1 and C2.
 
 - C1 (auto-fix, confidence 9): a carried result skips the role and performer-exclusion checks, and two probes are silent. Rows RC56 and RC57 cover them.
 - C2 (auto-fix, confidence 6): the same empty reviewed pair as P1. The two findings share one repair target.
@@ -972,6 +1041,7 @@ RC-CARRY: 2 findings. Worst issue: C1.
 
 - RC-CARRY Standards: `checkChunkReviews` builds its review-form repair by hand, and two ancestry refusals end with no route clause.
 - RC-CARRY Spec: the RC-CARRY tests cell of the chunk table names planned tests, and the carry reads the reconciler from the frozen plan.
+- RC-CARRY confirming round: the RC37 cell should say that `TestProbeChecksAgree` catches a verdict drift on its four probes. Two test literals use a placeholder.
 - RC-CARRY Coverage: fold strictness is not red-capable, and the RC55 test needs a chunk of test files only.
 
 ## Repair state
@@ -980,4 +1050,4 @@ RC-CYCLE: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t01_re
 
 RC-PROVE: 1 of 2 repair cycles and its one hardening cycle consumed. The repair session `claude:ft379_t02_rep1` closed S1, S3, and C1 to C5 at `b14ecb28`. The chunk froze at `78f71b6c`, and the confirming round of all three axes passed.
 
-RC-CARRY: 0 of 2 repair cycles consumed before this repair. S1 to S4, P1, C1, and C2 go to one fresh repair session for ticket 03.
+RC-CARRY: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t03_rep1` closed S1 to S4, P1, C1, and C2 at `4d026a78`. P2 is a coverage-map amendment with no code change.
