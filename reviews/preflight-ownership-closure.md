@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/preflight-ownership-closure/spec.md",
-  "plan_digest": "sha256:9a5a573300d6ec1ac2977c518eb468f936fdbcf261e48fa72be1b495dcf98b66",
+  "plan_digest": "sha256:9e4941f4243f14167ae9a17c2f09edf8d5b4ae67633d4f0d597fa7017edfb0cb",
   "implementation_session": "",
   "chunks": [
     {
       "id": "OC-C1",
       "base": "1a8fece7d1173873ce9a32955b4b1d9a25600a4d",
-      "tip": "a54b85b3cadc7c89241c5a950a90ae69765ad177",
-      "plan_digest": "sha256:9a5a573300d6ec1ac2977c518eb468f936fdbcf261e48fa72be1b495dcf98b66",
-      "source_digest": "69a2ca4dcac7f1c908a79f785d4b288fc32b4d48",
+      "tip": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+      "plan_digest": "sha256:9e4941f4243f14167ae9a17c2f09edf8d5b4ae67633d4f0d597fa7017edfb0cb",
+      "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
       "acceptance_rows": [
         "OC1",
         "OC2",
@@ -350,6 +350,305 @@
           "requirement": "oc-01-check-15",
           "command": "bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample",
           "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-focused",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:c12436754acc3030bb4bbf1ec5345d1646105b754426e84c631e6a6c66da350b",
+            "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,4,TestProposalFixedPoint/OC3_second-hop_pin,36,1,0,null,yes\n  2,bit,swap,failed,1,TestProposalProvenance/OC5_two_reasons,36,1,0,null,yes\n  3,bit,swap,failed,1,TestProposalProvenance/OC8_registry_owner,36,1,0,null,yes\n  4,bit,swap,failed,7,TestProposalFixedPoint/OC1_missing_pin,36,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestProposalFixedPoint|TestProposalProvenance|TestMetadataGrammar,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,5255\nmutant_report[1]{mutant}:\n  1\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,6,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,2192,36\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC3_second-hop_pin,\"proposal_test.go:110: writes_proposal rows matching map[path:tests/canary/fam/registry-fixture] = 0, want 1:\",26\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC4_cycle,\"proposal_test.go:115: writes_proposal rows matching map[path:internal/anchors/cycle.go] = 0, want 1:\",26\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC5_two_reasons,\"proposal_test.go:149: closure_evidence rows matching map[kind:fixture line:2 path:tests/canary/fam/cycle-fixture] = 0, want 1:\",26\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC6_anchor_holder_line,\"proposal_test.go:156: closure_evidence rows matching map[kind:anchor path:internal/anchors/cycle.go] = 0, want 1:\",26\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,8,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,2189,36\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC5_two_reasons,\"proposal_test.go:149: closure_evidence rows matching map[kind:fixture line:2 path:tests/canary/fam/cycle-fixture] = 0, want 1:\",47\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,8,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,2206,36\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC8_registry_owner,\"proposal_test.go:172: registry reason = map[kind:registry line:68 path:internal/toon/toon_test.go reason:binding internal/toon requires internal/toon/toon_test.go beside internal/toon/toon.go at kit source 8cd3e918cfedae2f74e5f387587b2ca2d4… (374 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,8,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,2194,36\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC1_missing_pin,\"proposal_test.go:107: writes_proposal rows matching map[path:tests/canary/fam/pin-fixture] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC1_path_with_a_space,\"proposal_test.go:137: writes_proposal rows matching map[path:tests/canary/fam/space fixture] = 0, want 1:\",9\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC3_second-hop_pin,\"proposal_test.go:110: writes_proposal rows matching map[path:tests/canary/fam/registry-fixture] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC4_cycle,\"proposal_test.go:115: writes_proposal rows matching map[path:tests/canary/fam/cycle-fixture] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC5_two_reasons,\"proposal_test.go:149: closure_evidence rows matching map[kind:fixture line:2 path:tests/canary/fam/cycle-fixture] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC6_anchor_holder_line,\"proposal_test.go:156: closure_evidence rows matching map[kind:anchor path:internal/anchors/cycle.go] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC7_included_BASE_source,\"proposal_test.go:162: closure_evidence rows matching map[kind:fixture path:tests/canary/fam/include-fixture] = 0, want 1:\",18\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-focused",
+          "command": "bench test --package ./internal/preflight/... --run 'TestProposalFixedPoint|TestProposalProvenance|TestMetadataGrammar'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "oc-01-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t01_rep1",
+              "digest": "sha256:c12436754acc3030bb4bbf1ec5345d1646105b754426e84c631e6a6c66da350b",
+              "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,4,TestProposalFixedPoint/OC3_second-hop_pin,36,1,0,null,yes\n  2,bit,swap,failed,1,TestProposalProvenance/OC5_two_reasons,36,1,0,null,yes\n  3,bit,swap,failed,1,TestProposalProvenance/OC8_registry_owner,36,1,0,null,yes\n  4,bit,swap,failed,7,TestProposalFixedPoint/OC1_missing_pin,36,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestProposalFixedPoint|TestProposalProvenance|TestMetadataGrammar,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,5255\nmutant_report[1]{mutant}:\n  1\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,6,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,2192,36\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC3_second-hop_pin,\"proposal_test.go:110: writes_proposal rows matching map[path:tests/canary/fam/registry-fixture] = 0, want 1:\",26\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC4_cycle,\"proposal_test.go:115: writes_proposal rows matching map[path:internal/anchors/cycle.go] = 0, want 1:\",26\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC5_two_reasons,\"proposal_test.go:149: closure_evidence rows matching map[kind:fixture line:2 path:tests/canary/fam/cycle-fixture] = 0, want 1:\",26\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC6_anchor_holder_line,\"proposal_test.go:156: closure_evidence rows matching map[kind:anchor path:internal/anchors/cycle.go] = 0, want 1:\",26\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,8,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,2189,36\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC5_two_reasons,\"proposal_test.go:149: closure_evidence rows matching map[kind:fixture line:2 path:tests/canary/fam/cycle-fixture] = 0, want 1:\",47\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,8,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,2206,36\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC8_registry_owner,\"proposal_test.go:172: registry reason = map[kind:registry line:68 path:internal/toon/toon_test.go reason:binding internal/toon requires internal/toon/toon_test.go beside internal/toon/toon.go at kit source 8cd3e918cfedae2f74e5f387587b2ca2d4… (374 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,8,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,2194,36\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC1_missing_pin,\"proposal_test.go:107: writes_proposal rows matching map[path:tests/canary/fam/pin-fixture] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC1_path_with_a_space,\"proposal_test.go:137: writes_proposal rows matching map[path:tests/canary/fam/space fixture] = 0, want 1:\",9\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC3_second-hop_pin,\"proposal_test.go:110: writes_proposal rows matching map[path:tests/canary/fam/registry-fixture] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalFixedPoint/OC4_cycle,\"proposal_test.go:115: writes_proposal rows matching map[path:tests/canary/fam/cycle-fixture] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC5_two_reasons,\"proposal_test.go:149: closure_evidence rows matching map[kind:fixture line:2 path:tests/canary/fam/cycle-fixture] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC6_anchor_holder_line,\"proposal_test.go:156: closure_evidence rows matching map[kind:anchor path:internal/anchors/cycle.go] = 0, want 1:\",18\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestProposalProvenance/OC7_included_BASE_source,\"proposal_test.go:162: closure_evidence rows matching map[kind:fixture path:tests/canary/fam/include-fixture] = 0, want 1:\",18\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-1",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:57407454c6f84b6dc6348a8127ddb6d84f0287a6b1c4cd481d64552e745016f1",
+            "excerpt": "packages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,35960,408\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,23109,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4257,64\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-2",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:7c606975adfc4f0e661f6fb0871829141b0fb394e2b80d97172f9da7dd057582",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,2335,181\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-2",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-3",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:57663b4d057e8bf1d36191dab341a70394ebc1db11803e03784b629a45794331",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/canary,pass,9,32\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-3",
+          "command": "bench test --package ./internal/canary",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-4",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:1b785647227ec534c5b9721350755f53026ef4ffc2db3ba66543ffa642a54626",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,pass,2648,145\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-4",
+          "command": "bench test --package ./internal/coverage",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-5",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:4e9b84fa055982a66e9f2f9ab0c1fe695e1f57ac27db895aca1a877fde591b23",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/maps,pass,118,97\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-5",
+          "command": "bench test --package ./internal/maps",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-6",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:e72756f233057d117d1155bcf556399fb6e5db2ef504f808292a61f8f10fae6c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/bounds,pass,684,61\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-6",
+          "command": "bench test --package ./internal/bounds",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-7",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:16564278e5eac2733a2d44d7d36ea97b74cc485e5cdc70af39bfbe507adfbc72",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,pass,1223,111\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-7",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-8",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:5203d455b3fdb4a061354ccd4af581c67c80986f2d286fb730d2980836b7ef92",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/tickets,pass,5,48\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-8",
+          "command": "bench test --package ./internal/tickets",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-9",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:7d1db1e1043ca1e7f1f1e46fee731d72565d42ef51a5bf96c63bfb7afc7fc7dc",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18520,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-9",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-10",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:158c43efd354b3459fa44247ac15ac1ea07c02e4c52a5de3696fc800e9577ff9",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  ticket-grammar,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5428,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-10",
+          "command": "bench test --check ticket-grammar",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-11",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:bcc05a4e56110697d12405140eb090d1ff979d23bbfe7b8733f5c3237c72a5c3",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18762,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-11",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-12",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:48d61003d94f0344f6d50db4a55ef5211697a9eac67749d7da05b88b046521fd",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,67061,1694\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "oc-01-check-12",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-13",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:c9eb8ae6de1c44a7dea8bf2e89c1df75f6274721739ba23191590976376f6f3e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-13",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-14",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:0570173198b71d68ffdbfaa4facbe957045d752e3f35aaf27496ec6af277bf05",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-14",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t01_rep1-oc-01-check-15",
+          "performer": "claude:ft293_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t01_rep1",
+            "digest": "sha256:0aaabee70dfcea4b354fdc4790e3db36125abe22a576723f2b6660764c8834f7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-01-check-15",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -433,7 +732,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:9a5a573300d6ec1ac2977c518eb468f936fdbcf261e48fa72be1b495dcf98b66",
+      "to": "sha256:9e4941f4243f14167ae9a17c2f09edf8d5b4ae67633d4f0d597fa7017edfb0cb",
+      "chunk_ids": {
+        "OC-C1": [
+          "OC-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
