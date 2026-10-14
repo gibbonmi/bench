@@ -32,6 +32,10 @@ The `probe-mutant-sets` spec stage ran on Claude Code for FT168-probe-batch. An 
 
 Provider usage and charges remain unknown. The harness reported about 1.02M tokens for the research readers and 303k for the spec fork. It reported about 1.18M for the slicing readers, 268k for the spec review, and 214k for the ticket review.
 
+The `repair-confirmation` spec stage ran on Claude Code for FT379. An Opus coordinator ran paired Opus/high readers for four research slices and two slicing chunks, and it sliced the five tickets itself. Fable/high answered two consults: the design forks F1–F9 and the exhausted spec review cap. An Opus fork wrote the spec. Opus/medium ran the spec review in 3 iterations, the third a consultant-granted extension, and the ticket review in 2. The spec round found an outcome refusal that hid the stale refusal and two derivations of the open finding set.
+
+Provider usage and charges remain unknown.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use | calibration |
