@@ -1955,6 +1955,74 @@
           "supersedes": [
             "ft293-oc-c2-coverage-r1"
           ]
+        },
+        {
+          "id": "ft293-oc-c2-standards-r3",
+          "performer": "claude:ft293_oc-c2_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "663abbaceab1f130ecb229fafd94eaf72bffd69b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_standards_r3",
+            "digest": "sha256:66b15cbbb55df581c2d812af261dbb8dbd3370ef3ff28b92799aa7f54bbcfb58",
+            "excerpt": "## Result\n\nS6 is closed. I found no new blocking Standards defect in the cycle 2 delta. The evidence check bound: `current=true`, `dirty_record=false`, tip `6fcce6a2`.\n\n## S6: closed\n\n- The tree no longer contains `producerRead`. An `rg` of `internal/preflight/ownership` and `internal/consumers` found no match.\n- `effects.go:22`, `:54`, `:163` and `:173` all use `revRead[producers]`, the one generic shape at `imports.go:56-60`.\n- The local is now named `read` (`effects.go:169-171`).\n- Every call site reads `.value`. No stale comment mentions the removed type.\n\n## New findings\n\nNone. `consumers.UnkeyedWrites` (`internal/consumers/rows.go:77-110`) reuses `declKey`, `relPath` and `sortRows`, and duplicates no other walker. The `unnamed` reader on `memberShape` (`members.go:42`, `:137-140`, `:271`) is set only for printed-field.\n\n## Advice\n\n- Three comments say roughly the same thing about the unkeyed-literal rule.\n- `UnkeyedWrites` calls `pkg.Info.TypeOf(lit)` twice (`rows.go:90`, `:96`).\n"
+          },
+          "axis": "Standards",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "e2981232cd2cee9da7fe77c1d0ea63332bda0355",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-standards-r2"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-spec-r3",
+          "performer": "claude:ft293_oc-c2_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "663abbaceab1f130ecb229fafd94eaf72bffd69b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_spec_r3",
+            "digest": "sha256:73e7f1a7e5078e2980e811cc9233796dbec2964a566faef06f41292374164acd",
+            "excerpt": "## Result\nP8 is mostly closed, but one case is still open: a literal whose `&T` is elided. I found no other new Spec defect. The evidence bound: `--check-current` returned current=true, dirty_record=false, tip 6fcce6a2.\n\nP8: closed for explicit and value-elided literals, open for pointer-elided ones. Spec 271, 371 and 481 apply.\n- Fixed: `memberCensuses[\"printed-field\"]` now has `unnamed: consumers.UnkeyedWrites` (internal/preflight/ownership/members.go:271). `members` returns the diagnostic before it counts rows (members.go:137-141), and the test checks for `unknown` and the reason (effects_test.go:364-372).\n- Still open: internal/consumers/rows.go:96 only counts a literal whose recorded type's `Underlying()` is `*types.Struct`. When the `&T` is elided, as in `[]*row{{\"c\"}}` or `map[string]*row{\"k\": {\"c\"}}`, go/types records the hint type `*row`, not `row` (GOROOT src/go/types/literals.go:131-139 and :347). So that literal is skipped, the unkeyed write is not reported, and the premise can still read green. Disposition: repair. Dereference a `*types.Pointer` before the struct assertion, and add a fixture for the elided-pointer case. Confidence 7; reasoned from the go/types source, no probe.\n\nOC28-OC31 still hold at their seams by reading.\n\n## Advice\n- The `producerRead` to `revRead[producers]` change folds two copies of one type and changes no behavior.\n- The new cross-package called producer case adds coverage and conflicts with nothing in the spec.\n"
+          },
+          "axis": "Spec",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "e2981232cd2cee9da7fe77c1d0ea63332bda0355",
+          "finding_ids": [
+            "P8"
+          ],
+          "supersedes": [
+            "ft293-oc-c2-spec-r2"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-coverage-r3",
+          "performer": "claude:ft293_oc-c2_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "663abbaceab1f130ecb229fafd94eaf72bffd69b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_coverage_r3",
+            "digest": "sha256:1c276882995b645283159cf99e89946d8148397e1c781822d604ce7b68a28c51",
+            "excerpt": "## Coverage, round 3, OC-C2: C6 is closed and I found no new IDs\n\nEvidence binds. `--check-current` returned `current=true` and `dirty_record=false`, with tip `6fcce6a2fd894930675d8096f311a9cb03296307` clean.\n\nC6: closed. The text `called: called[n]` appears once, at `internal/preflight/ownership/producers.go:361`. The new case at `internal/preflight/ownership/effects_test.go:166-171` is the first failure in a recorded probe.\n\n| verdict | subject | mutation | failed_tests | first_failure | restored |\n|---|---|---|---|---|---|\n| bit | internal/preflight/ownership/producers.go | swap `called: called[n]` -> `called: false` | 1 | TestGrammarEffects/cross-package_called_producer_requires_its_root_and_the_shared_inventories (`effects_test.go:120: closure requires internal/harnesses/called.go = false, want true`) | yes |\n\nP8 case (read only): it bites. The case at `effects_test.go:364-372` adds an unkeyed `row{\"c\"}` to a producer set that the `complete-field` row grades green. Removing the `shape.unnamed` call, setting `unnamed` to nil for printed-field, or making `UnkeyedWrites` return nothing would each fail it. The case checks the exact file, line and wording of the reason.\n\nNew findings: none.\n\n## Advice\n- The field-match comparison at `internal/consumers/rows.go:30` is not tested; no binding requirement covers this precision.\n\n## git status --short\n(empty)\n"
+          },
+          "axis": "Coverage",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "e2981232cd2cee9da7fe77c1d0ea63332bda0355",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-coverage-r2"
+          ]
         }
       ]
     }
@@ -2064,7 +2132,9 @@ skips[0]{package,test,reason}:
 ## OC-C2 repair state
 
 OC-C2: repair cycle 1 of 2 is complete (ticket 02 at 4268cb7c, ticket 03 at 76cbf471). Its confirming round closed every first-round finding and found S6, P8, and C6.
-OC-C2: repair cycle 2 of 2 opens. One ticket 03 repair session takes S6, P8, and C6, because ticket 03's `Writes:` line holds every cited path. No reviewer extension exists.
+OC-C2: repair cycle 2 of 2 is complete at 7cf83f37. Its confirming round closed S6 and C6, and P8 stays open for a pointer-elided literal.
+
+OC-C2: the reviewer's auto-approve direction extends the allowance by one cycle. Repair cycle 3 opens for P8 only, in one ticket 03 repair session.
 An Opus/high consultant decided each ask-user finding under the auto-approve direction; each decision is open to reviewer veto.
 
 ## OC-C2 Standards
@@ -2104,3 +2174,7 @@ OC-C2: 5 findings. The worst issue is C1.
 - S6 (auto-fix, confidence 4): `ownership/effects.go:30-31` `producerRead` repeats the shape of the new `revRead[T]` at `ownership/imports.go:56-60`.
 - P8 (auto-fix, confidence 5): `internal/consumers/rows.go:294-305` misses an unkeyed struct literal write, so a printed-field premise can read green without complete proof.
 - C6 (auto-fix, confidence 5): no test reaches the cross-package call edge at `producers.go:361`, so a mutant `called: false` would stay silent.
+
+## OC-C2 second confirming round
+
+- P8 (auto-fix, confidence 7): `internal/consumers/rows.go:96` asserts a struct type before it removes a pointer, so a pointer-elided literal such as `[]*row{{"c"}}` escapes the unkeyed-write diagnostic.
