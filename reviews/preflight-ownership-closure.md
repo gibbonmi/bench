@@ -2351,6 +2351,75 @@
           "supersedes": [
             "ft293-oc-c2-coverage-r2"
           ]
+        },
+        {
+          "id": "ft293-oc-c2-standards-r4",
+          "performer": "claude:ft293_oc-c2_standards_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1f8bd0b3c8506232401552a27f867390695082c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_standards_r4",
+            "digest": "sha256:fd4f56427f3915d54ab7f158bddc802e92a999a4aa33f0b602149546e5a7e585",
+            "excerpt": "## Result\nI found nothing for chunk OC-C2, cycle 3 delta (`7cf83f37..81a33375 -- internal`, commits bbbc45e4 and 81a33375). The evidence bound: `--check-current` returned `current=true` and `dirty_record=false` at tip `ca7eac2b`.\n\n## Details\n- One source per fact: `literalStructs` (`internal/consumers/resolve.go:260-289`) is the only code that works out which struct a literal writes. The old struct type assertion was replaced, not left alongside. A union whose terms share one underlying struct appends the same row twice; `sortRows` removes it with `dedupe` (`rows.go:150`).\n- Hand-rolled stdlib: none. Go 1.25 `go/types` exports no core-type API. Confidence 8.\n- Comments: they state the reason, in the present tense, with no provenance.\n- Test table (`internal/preflight/ownership/effects_test.go:382-406`): one harness and one expectation string inside a single loop.\n\n## Advice\n- The test comment at `effects_test.go:382-384` repeats the \"elided element literal records its hint type\" fact from the `literalStructs` doc comment. Optional.\n"
+          },
+          "axis": "Standards",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "b5a07c8078e734e739a718f9fbe83ed9216d62be",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-standards-r3"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-spec-r4",
+          "performer": "claude:ft293_oc-c2_spec_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1f8bd0b3c8506232401552a27f867390695082c7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_spec_r4",
+            "digest": "sha256:c4bd3986bd6e58cddfb4f89095bc52f5259f9b4ae0cef8960363ccac92a38081",
+            "excerpt": "P8 is still open for one form. Confidence 7. The evidence bound: `--check-current` returned current=true, dirty_record=false.\n\nOpen form: a type-parameter literal whose constraint is a tilde term over an anonymous struct with the same layout as the field's struct. Example: `func renderC[T interface{ ~struct{ Reason string } }]() T { return T{\"c\"} }` with a caller `renderC[row]()`. The fixture declares `type row struct{ Reason string }` (`internal/preflight/ownership/merge_fixture_test.go:55`), so `row` is in T's type set and the literal writes `row.Reason` by position.\n- `literalStructs` (`internal/consumers/resolve.go`) visits the union term and returns the anonymous `*types.Struct`, whose fields have their own declaration positions.\n- `declKey` (`resolve.go:229-240`) builds its key from the position, so the check at `internal/consumers/rows.go:96-98` never matches. The premise then reads green, which breaks spec 264, 371 and 481.\n- The keyed form `T{Reason: \"c\"}` is missed the same way.\n- Every other listed form is caught, each with a case in `effects_test.go:368-378`.\n\nP9: converting from an identical struct type writes the field. Examples: `row(struct{ Reason string }{\"c\"})`, or `row(other{\"c\"})`. UnkeyedWrites and WriteRows both miss this, keyed or unkeyed. Under spec 481 this is binding if a conversion counts as a write form. Confidence 5.\n\nOC28-OC31 hold on reading.\n\nAdvice: a fix could compare struct identity (`types.Identical` against the target struct's underlying type) instead of only declaration position.\n"
+          },
+          "axis": "Spec",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "b5a07c8078e734e739a718f9fbe83ed9216d62be",
+          "finding_ids": [
+            "P8",
+            "P9"
+          ],
+          "supersedes": [
+            "ft293-oc-c2-spec-r3"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-coverage-r4",
+          "performer": "claude:ft293_oc-c2_coverage_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1f8bd0b3c8506232401552a27f867390695082c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_coverage_r4",
+            "digest": "sha256:583d43970a4d722849cc7ae03b075c6ab0d4f9703fc0279961a6ae8b7db18dfa",
+            "excerpt": "## Result\nCoverage, round 4, chunk OC-C2: no finding. The evidence `sha256:73e5cd74…` binds (`current=true`, `dirty_record=false`, tip `ca7eac2b`).\n\n| file | mutation | verdict | failed_tests | first_failure | restored |\n|---|---|---|---|---|---|\n| internal/consumers/resolve.go | omit the `case *types.Pointer: if deref { visit(u.Elem(), false) }` branch (lines 273-276) | bit | 5 | TestOwnerPremises/a_pointer-elided_map_element | yes |\n\nThe other four red subtests were the pointer-elided slice element, the named-pointer element, the pointer-elided type-parameter element, and the pointer-cored type-parameter element.\n\nCase table bite by reading (`internal/preflight/ownership/effects_test.go:367-388`): the struct, interface, and union branches of `literalStructs` are each covered.\n\n## Advice\n- A `deref=true` mutant at `resolve.go:275` only widens the answer; no test needed.\n- A pointer to a type parameter whose own constraint is a type parameter is handled but not tested. Optional.\n\n## git status --short\n(empty)\n"
+          },
+          "axis": "Coverage",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "b5a07c8078e734e739a718f9fbe83ed9216d62be",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-coverage-r3"
+          ]
         }
       ]
     }
@@ -2518,3 +2587,12 @@ OC-C2: 5 findings. The worst issue is C1.
 ## OC-C2 second confirming round
 
 - P8 (auto-fix, confidence 7): `internal/consumers/rows.go:96` asserts a struct type before it removes a pointer, so a pointer-elided literal such as `[]*row{{"c"}}` escapes the unkeyed-write diagnostic.
+
+## OC-C2 third confirming round
+
+Repair cycle 3 closed every P8 form that it listed. The round found two more: an identical-layout struct constraint (P8) and a conversion from an identical struct type (P9).
+The reviewer chose the fail-closed route in this session. Repair cycle 4 matches fields by struct identity and makes any other path to the struct diagnostic.
+The spec gains one rule in the helper and owner closure section that defines the static write forms.
+
+- P8 (auto-fix, confidence 7): `internal/consumers/rows.go:96-98` matches by declaration position, so an anonymous identical-layout struct escapes.
+- P9 (auto-fix, confidence 5): a conversion such as `row(other{"c"})` writes the field with no census match.
