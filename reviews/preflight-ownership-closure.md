@@ -1555,6 +1555,78 @@
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft293-oc-c2-standards-r2",
+          "performer": "claude:ft293_oc-c2_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8f0b6c72029965212a1c0721e3fa7e177faa971a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_standards_r2",
+            "digest": "sha256:155599f78ec082bb70156ca08d959c5e3211a6c99fa25b52d40fb68ca115600e",
+            "excerpt": "## Result\nAll five first-round findings (S1-S5) are closed. I found one new low-confidence finding (S6). The evidence binds: `bench preflight evidence ... --check-current` returned `current=true`, `dirty_record=false`, head `6f42627e`, and the tree is clean.\n\n## Findings\n- S1 closed. `internal/consumers/resolve.go:269` holds `declNames`, and `DeclNames` at line 296 wraps it. `receiverName` at line 302 is the only remaining definition in `internal`. `internal/preflight/ownership/producers.go:99` and `:106` call `consumers.DeclNames`.\n- S2 closed. `consumers.ImportName` is defined at `internal/consumers/rows.go:301`; its callers are `rows.go` `firstUse`, `producers.go:92` and `producers.go:145`. `PathHasSuffix` at `resolve.go:183` backs `pkgSuffixMatches` and `producers.go:145`. `ownership/imports.go` adds no new import-name or suffix derivation.\n- S3 closed. `readings` (`resolve.go:79`) is shared by `Resolve` and `LocalName` (line 95). `ownership/helpers.go:161-162` calls `consumers.LocalName`. `ownership/metadata.go:140` `identity` refuses a symbol with no declaration spelling.\n- S4 closed. `ownership/members.go:48-52` `memberCensuses` is the one table.\n- S5 closed. `internal/preflight/closure.go:23` `closureFamily` carries a `source` func for each kind; `proposalSource` is deleted.\n- `consumers.WriteRows` complies with the one-source rule: `rows.go:73` composes the one walker, the shared `sortRows`, and one write derivation (`markWrites`, `rows.go:188`).\n\n### S6: two shapes for \"a read at one revision, or its fault\"\n- `ownership/imports.go:56-60` adds the generic `revRead[T]`. Beside it, `ownership/effects.go:30-31` keeps `producerRead`, which has the same shape and an almost identical doc comment. `producerRead` could be `revRead[producers]`.\n- AGENTS.md, one source per fact. Ticket 02 (repair 05639910/4268cb7c). Disposition auto-fix. Confidence 4/10.\n\n## Advice\n- `ownership/members.go:89-94` and `:114-121` branch on literal kind strings beside the `memberShape` table.\n- The comment at `ownership/manifest.go:141` says the writer probe \"also\" takes `reusedTestKeys`; nothing else reads that list.\n- `internal/conformance/registry/packages.go:36` keeps its own import-suffix match (pre-existing, outside the chunk).\n"
+          },
+          "axis": "Standards",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "f5a06b8d024eeb0ada0e7ff7617e53228c5b9723",
+          "finding_ids": [
+            "S6"
+          ],
+          "supersedes": [
+            "ft293-oc-c2-standards-r1"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-spec-r2",
+          "performer": "claude:ft293_oc-c2_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8f0b6c72029965212a1c0721e3fa7e177faa971a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_spec_r2",
+            "digest": "sha256:b4166aea9913c766de0c6ce927dcce70927a7b813e558397ee3325e1f58bb18e",
+            "excerpt": "## Result\nThe evidence binds: `--check-current` returned `current=true`, `dirty_record=false` at tip `6f42627e`. P1, P2, P3, P4, P5 and P7 are closed. I found one new finding, P8.\n\n## Closures\n- P1/C4 closed. Per-file import table `producers.go:297`; selector-argument roots `producers.go:203-209`; in-module edges only `producers.go:521-529`; no FuncLit walk `producers.go:507-508`; dot import diagnostic `producers.go:498-500`; undeclared or ambiguous target diagnostic `imports.go:134-143`; referrers by transitive importers `imports.go:163-196`; a referrer contributes only resolved roots `imports.go:104-116`; base and tip read `effects.go:101-110`, `171-178`; test `effects_test.go:174`.\n- P2 closed. `grammarScope` filter removed (`effects.go:79-87`); unbound grammar change adds `tickets.GrammarFiles()` (`closure.go:230-237`); test `effects_test.go:181`.\n- P3 closed. Exact key sets `members.go:49-51`; `writer_probe` decoded with `reusedTestKeys` (`members.go:93`, `manifest.go:133`); subject and expected lists one set (`members.go:98-106`).\n- P4 closed. `consumers.WriteRows` keeps only static writes (`rows.go:207-209`, `markWrites` `rows.go:272-307`); census uses it at `members.go:51`.\n- P5 closed. Owner requirement uses `Entry: entry` for each write (`ownership/closure.go:73-75`); OC28 checks the write path at `effects_test.go:330`.\n- P7 closed. `census.liveness` grades an existing liveness change against the retirement members (`members.go:18-33`), wired at `ownership/closure.go:62`; actions enum `metadata.go:130`; exact-one count `members.go:199-227`; test `effects_test.go:254-257`.\n\n## New finding\n- P8. Spec 264, 371, 481. `internal/consumers/rows.go:294-305` (ticket 03). `markWrites` counts a field only through a `KeyValueExpr` key. An unkeyed struct literal such as `row{\"a\", reason}` writes the field without naming it, so neither `WriteRows` nor `Rows` sees that producer. A printed-field premise that leaves out such a producer still grades green, but spec 481 allows green only for complete proof. Disposition auto-fix: make an unkeyed literal of the field's struct type a census diagnostic (spec 271), or count it as a write. Confidence 5/10.\n\n## Advice\n- A grammar root that calls a method on an in-module external value records an edge to the value but never walks the method body.\n- A parser argument `otherpkg.Fn()` stays diagnostic through `resolvedCall`.\n- The census does not treat an address taken from a field as a write.\n- An unresolved producer in an unchanged referrer never fires its diagnostic.\n\n## Row status\nOC14-OC31 and OC82 hold at their cited seams.\n"
+          },
+          "axis": "Spec",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "f5a06b8d024eeb0ada0e7ff7617e53228c5b9723",
+          "finding_ids": [
+            "P8"
+          ],
+          "supersedes": [
+            "ft293-oc-c2-spec-r1"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-coverage-r2",
+          "performer": "claude:ft293_oc-c2_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8f0b6c72029965212a1c0721e3fa7e177faa971a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_coverage_r2",
+            "digest": "sha256:d81c2b0b6db688f5686c3ebd4c0475bdf952e13974f906f2b704049f06f9eb3a",
+            "excerpt": "## Coverage confirming axis, OC-C2\n\nThe evidence binds. `--check-current` returned `current=true`, `dirty_record=false` at tip 6f42627. My one probe bit, and `restored=yes`.\n\n- C1: closed. `internal/commitment/repository/light_path_test.go:89` adds the `deleted-marker` case. `light_path.go:165` reads the entry through `tickets.WritesPath`, which strips both markers (`internal/tickets/writes.go:66-71`).\n- C2: closed. `internal/preflight/fence_writes_test.go:66` adds `internal/x/gone.go (deleted)` against an exact fence file. `unionSide` (`fence_writes.go:47`) and `paths_authorized.go:65` take the same split.\n- C3: closed. The ambiguous case reason comes from `ambiguity()` (`imports.go:52`). I probed the two malformed-Go cases: the mutant swapped `return producers{}, err` for `continue` after `parser.ParseFile` (`producers.go:68-71`). Verdict `bit`, failed_tests 2, first_failure `TestGrammarEffects/malformed_base_source_stays_diagnostic`, restored `yes`.\n- C5: closed. The case \"a present method's former caller stays diagnostic\" expects \"merge.T.Merge is a method…\". The repair removed the `obj == nil &&` guard in `helpers.go`.\n- P1/C4, P2, P3, P4, P5, P7: unknown (not matched to cases).\n\n## New finding\n- C6. `producers.go:361` sets `edge{..., called: called[n]}`, and `imports.go:138` uses it to reach the target function's body. The only cross-package call in the fixtures (`names.Count()`) sits inside a handler `FuncLit`, which returns before the edge is recorded; the other cross-package references are a const and a var. A mutant `called: false` should survive every case. Missing test: a case like `Help: names.Help()` where the tip edits the body of `names.Help` and the test expects the external file to be required; also a reach through two packages (`follow`). Disposition auto-fix. Confidence 5/10.\n\n## Advice\nThe multi-hop external walk in `follow` could get a fixture where package A's grammar reads B and B reads C.\n\n`bench worktree exec ft293-build -- git status --short` printed nothing.\n"
+          },
+          "axis": "Coverage",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "f5a06b8d024eeb0ada0e7ff7617e53228c5b9723",
+          "finding_ids": [
+            "C6"
+          ],
+          "supersedes": [
+            "ft293-oc-c2-coverage-r1"
+          ]
         }
       ]
     }
@@ -1651,7 +1723,8 @@ skips[0]{package,test,reason}:
 
 ## OC-C2 repair state
 
-OC-C2: repair cycle 1 of 2 opens. Ticket 02 repairs first, then ticket 03. No reviewer extension exists.
+OC-C2: repair cycle 1 of 2 is complete (ticket 02 at 4268cb7c, ticket 03 at 76cbf471). Its confirming round closed every first-round finding and found S6, P8, and C6.
+OC-C2: repair cycle 2 of 2 opens. One ticket 03 repair session takes S6, P8, and C6, because ticket 03's `Writes:` line holds every cited path. No reviewer extension exists.
 An Opus/high consultant decided each ask-user finding under the auto-approve direction; each decision is open to reviewer veto.
 
 ## OC-C2 Standards
@@ -1685,3 +1758,9 @@ OC-C2: 5 findings. The worst issue is C1.
 - C3 (auto-fix, confidence 8, ticket 02): no test reaches the ambiguous-declaration diagnostic or malformed Go; a probe mutant at `producers.go` stayed silent.
 - C4 (merged into P1, ticket 02): a cross-package grammar dependency adds no edge and no diagnostic.
 - C5 (auto-fix, confidence 6, ticket 03): no test changes a method symbol whose former caller stops using it.
+
+## OC-C2 confirming round
+
+- S6 (auto-fix, confidence 4): `ownership/effects.go:30-31` `producerRead` repeats the shape of the new `revRead[T]` at `ownership/imports.go:56-60`.
+- P8 (auto-fix, confidence 5): `internal/consumers/rows.go:294-305` misses an unkeyed struct literal write, so a printed-field premise can read green without complete proof.
+- C6 (auto-fix, confidence 5): no test reaches the cross-package call edge at `producers.go:361`, so a mutant `called: false` would stay silent.
