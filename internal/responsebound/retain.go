@@ -136,6 +136,23 @@ func ReadStaged(home, root, slug, chunk, requirement string) (Staged, error) {
 	return staged, nil
 }
 
+// Unstage removes the staged excerpt of one requirement in the assignment worktree at root.
+// Each store level must be a real directory. An absent stage, and a root outside any
+// assignment worktree, remove nothing.
+func Unstage(home, root, slug, chunk, requirement string) error {
+	dir, path, ok, err := scopedPath(home, root, stageName(slug, chunk, requirement))
+	if err == nil && ok {
+		err = dir.realLevels("remove", nil)
+	}
+	if err == nil && ok {
+		err = os.Remove(path)
+	}
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("remove staged excerpt: %w", err)
+	}
+	return nil
+}
+
 // errNoAssignment matches fs.ErrNotExist, because a root outside any assignment worktree
 // holds no retained response and no stage.
 var errNoAssignment = fmt.Errorf("no assignment worktree: %w", fs.ErrNotExist)

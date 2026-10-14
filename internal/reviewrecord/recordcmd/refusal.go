@@ -35,9 +35,12 @@ func known(spec string, repair reviewrecord.Repair) map[string]string {
 
 // completionOrder is the completion form's note on the order of the record writes that
 // the completion needs, read from the repair owner.
-func completionOrder() string {
+func completionOrder() string { return writeOrder(reviewrecord.CompletionOrder()) }
+
+// writeOrder is a form's note on the order of the record writes in order.
+func writeOrder(order []reviewrecord.Step) string {
 	steps := []string{}
-	for _, step := range reviewrecord.CompletionOrder() {
+	for _, step := range order {
 		if step.Final {
 			step.Form = "final " + step.Form
 		}

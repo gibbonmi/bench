@@ -79,9 +79,9 @@ func changeChunk(record *Record, plan Plan, digest, id, base, tip string) (strin
 	if err := currentPlan(*record, plan, tip); err != nil {
 		return "", Chunk{}, err
 	}
-	planned := findChunk(plan, id)
-	if planned == nil {
-		return "", Chunk{}, fmt.Errorf("chunk %s is not a chunk of the plan at %s", id, tip)
+	planned, err := plannedChunk(plan, tip, id)
+	if err != nil {
+		return "", Chunk{}, err
 	}
 	action, index := "added", len(record.Chunks)
 	for i := range record.Chunks {

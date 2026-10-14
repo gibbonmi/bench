@@ -152,6 +152,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench record [--in <label|primary>] completion <slug> --source <commit>  validate and write final completion evidence for a source commit; write in the order amendment, chunk, verification, review, confirmation, fold, final verification, completion
   bench record [--in <label|primary>] amendment <slug> --source <commit> [--map <old>=<new>[,<new>...]]...  record the plan-digest change at a source commit
   bench record [--in <label|primary>] excerpt <slug> --chunk <id> --requirement <id> [--mutant <n>]  stage the retained response of this worktree as the excerpt of one requirement of the chunk plan at HEAD
+  bench record [--in <label|primary>] ticket <slug> --chunk <id> --ticket <basename> --id-prefix <prefix> --performer <session> --model <model> --effort <effort> --ref <ref> [--base <commit>] [--tip <commit>]  write the entries that one ticket owes from its staged excerpts in one record write; write in the order amendment, chunk, verification
   bench spec [--in <label|primary>] retire <slug>  delete a merged spec + its review pickup (validated)
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands

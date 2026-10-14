@@ -68,6 +68,7 @@ func init() {
 		completionForm,
 		amendmentForm,
 		excerptForm,
+		ticketForm,
 	}
 }
 
@@ -319,7 +320,12 @@ func native(values map[string]string, flag string) (reviewrecord.NativeRef, stri
 	if c.State != bounds.StateParsed {
 		return reviewrecord.NativeRef{}, toon.RecordError(path, c.State, c.Reason) + "\n", 1
 	}
-	return reviewrecord.NativeRef{Ref: values["--ref"], Excerpt: string(c.Data), Digest: reviewrecord.Digest(c.Data)}, "", 0
+	return nativeOf(values["--ref"], c.Data), "", 0
+}
+
+// nativeOf pairs the exact excerpt bytes data with ref and their digest.
+func nativeOf(ref string, data []byte) reviewrecord.NativeRef {
+	return reviewrecord.NativeRef{Ref: ref, Excerpt: string(data), Digest: reviewrecord.Digest(data)}
 }
 
 // reviewValid closes the --axis value set.
