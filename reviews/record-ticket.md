@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-ticket/spec.md",
-  "plan_digest": "sha256:0594fd2165ed1e3f80bc65c2d1e0bcc2cacd92d2ba233280cba8fe2ae565e6d9",
+  "plan_digest": "sha256:743fef1ac7fc5dc4cf4ba5e0c9334c0a2f77b46c3a66833e51dadcad10df2903",
   "implementation_session": "",
   "chunks": [
     {
@@ -1317,6 +1317,110 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "RT-TICKET",
+      "base": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+      "tip": "396576d49660eb0e369d71317d0d33514ff5b39a",
+      "plan_digest": "sha256:743fef1ac7fc5dc4cf4ba5e0c9334c0a2f77b46c3a66833e51dadcad10df2903",
+      "source_digest": "d384e7dfca9b921b0dd9a0412e3a51d2fcd4e256",
+      "acceptance_rows": [
+        "RT18",
+        "RT19",
+        "RT20",
+        "RT21",
+        "RT22",
+        "RT23",
+        "RT24",
+        "RT25",
+        "RT26",
+        "RT27",
+        "RT28",
+        "RT29",
+        "RT30",
+        "RT31",
+        "RT32",
+        "RT33",
+        "RT34",
+        "RT35",
+        "RT36",
+        "RT37",
+        "RT38",
+        "RT55",
+        "RT56",
+        "RT60",
+        "RT61",
+        "RT62",
+        "RT63"
+      ],
+      "verification": [
+        {
+          "id": "ft405_t05-record-writers",
+          "performer": "claude:ft405_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d384e7dfca9b921b0dd9a0412e3a51d2fcd4e256",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t05",
+            "digest": "sha256:5cca26e6619840fcd667f34fdc331a0837213ec13ecddd2141ee70de0effdc12",
+            "excerpt": "packages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22774,346\n  github.com/gibbonmi/bench/internal/conformance,pass,60333,1694\n  github.com/gibbonmi/bench/internal/responsebound,pass,418,76\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3379,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,22540,249\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "record-writers",
+          "command": "bench test --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/responsebound --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t05-record-root",
+          "performer": "claude:ft405_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d384e7dfca9b921b0dd9a0412e3a51d2fcd4e256",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t05",
+            "digest": "sha256:00c1ba2a441de674fa0080c5d791caa6cb1a4420585e042e789854ff7a7d54fe",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15499,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-root",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t05-one-write",
+          "performer": "claude:ft405_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d384e7dfca9b921b0dd9a0412e3a51d2fcd4e256",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t05",
+            "digest": "sha256:0c8d6f6f3f20da5e2b7f8629041f03ed6a2416e643a8a17012df2263139ff234",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/ticket.go,swap,failed,3,TestTicketRefusals/chunk_step_after_a_moved_plan_digest,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/...,all,passed,359\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,844\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3071,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,16557,249\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRefusals/chunk_step_after_a_moved_plan_digest,\"ticket_test.go:184: the refusal changed the record bytes:\",89\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRefusals/first_chunk_with_no_base,\"ticket_test.go:184: the refusal changed the record bytes:\",17\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRefusals/last_owed_verification,\"ticket_test.go:184: the refusal changed the record bytes:\",101\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "one-write",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "run the ticket form as three separate writes",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft405_t05",
+              "digest": "sha256:0c8d6f6f3f20da5e2b7f8629041f03ed6a2416e643a8a17012df2263139ff234",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/ticket.go,swap,failed,3,TestTicketRefusals/chunk_step_after_a_moved_plan_digest,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/...,all,passed,359\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,844\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3071,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,16557,249\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRefusals/chunk_step_after_a_moved_plan_digest,\"ticket_test.go:184: the refusal changed the record bytes:\",89\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRefusals/first_chunk_with_no_base,\"ticket_test.go:184: the refusal changed the record bytes:\",17\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRefusals/last_owed_verification,\"ticket_test.go:184: the refusal changed the record bytes:\",101\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1411,6 +1515,24 @@
         ],
         "RT-EXCERPT": [
           "RT-EXCERPT"
+        ],
+        "RT-RETAIN": [
+          "RT-RETAIN"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0594fd2165ed1e3f80bc65c2d1e0bcc2cacd92d2ba233280cba8fe2ae565e6d9",
+      "to": "sha256:743fef1ac7fc5dc4cf4ba5e0c9334c0a2f77b46c3a66833e51dadcad10df2903",
+      "chunk_ids": {
+        "RT-CURRENT": [
+          "RT-CURRENT"
+        ],
+        "RT-EXCERPT": [
+          "RT-EXCERPT"
+        ],
+        "RT-EXTRACT": [
+          "RT-EXTRACT"
         ],
         "RT-RETAIN": [
           "RT-RETAIN"
