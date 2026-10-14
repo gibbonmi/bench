@@ -469,6 +469,7 @@ The list is the union of the ticket `Writes:` lines plus the review pickup.
 - `internal/testgap/testgap_test.go`
 - `projects/benchkit.md`
 - `reviews/repair-confirmation.md`
+- `specs/repair-confirmation/spec.md`
 - `tests/canary/docs-currency-token-diet/benchref-imported`
 - `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
 - `tests/canary/docs-currency-token-diet/benchref-section-duplicated`
