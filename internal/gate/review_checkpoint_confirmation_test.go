@@ -38,11 +38,10 @@ func addPlanFile(f *recordtest.Fixture) {
 	f.Write("specs/example/notes.md", "# Notes\n")
 }
 
-// confirmedFixture is one delegated chunk whose Standards result fails with F-1 and whose Spec
-// and Coverage results pass at the reviewed pair. repair changes the chunk, the chunk refreezes
-// at the repair, and a confirmation that closes F-1 covers it. It answers the fixture and the
-// reviewed tip.
-func confirmedFixture(t *testing.T, repair func(*recordtest.Fixture)) (*recordtest.Fixture, string) {
+// repairedFixture is one delegated chunk whose Standards result fails with F-1 and whose Spec
+// and Coverage results pass at the reviewed pair. repair changes the chunk, and the chunk
+// refreezes at the repair with no confirmation. It answers the fixture and the reviewed tip.
+func repairedFixture(t *testing.T, repair func(*recordtest.Fixture)) (*recordtest.Fixture, string) {
 	t.Helper()
 	f := attachedCheckpointFixture(t, recordtest.AttachDelegated, seedRepair)
 	reviewed := f.Record.Chunks[0].Tip
@@ -51,10 +50,38 @@ func confirmedFixture(t *testing.T, repair func(*recordtest.Fixture)) (*recordte
 	repair(f)
 	f.Commit("repair the chunk")
 	f.Refreeze()
+	f.Save()
+	f.Commit("retain the refrozen chunk")
+	return f, reviewed
+}
+
+// confirmedFixture is the repaired fixture with a confirmation that closes F-1.
+func confirmedFixture(t *testing.T, repair func(*recordtest.Fixture)) (*recordtest.Fixture, string) {
+	t.Helper()
+	f, reviewed := repairedFixture(t, repair)
 	f.Confirm("confirm-1", reviewed, "F-1")
 	f.Save()
 	f.Commit("retain the confirmation")
 	return f, reviewed
+}
+
+// TestReviewCheckpointPassesAWrittenConfirmation grades the confirmation that the record
+// writer derives for the repaired fixture: the chunk checkpoint passes with it.
+func TestReviewCheckpointPassesAWrittenConfirmation(t *testing.T) {
+	f, _ := repairedFixture(t, modifyTest)
+	call := rr.ConfirmationCall{Chunk: "1", Findings: []string{"F-1"},
+		Evidence: rr.Evidence{ID: "confirm-1", Performer: recordtest.Orchestrator, Model: "unknown", Effort: "unknown", NativeRef: recordtest.Native("mutation failed; restore passed")},
+		Probe:    rr.Probe{Mutation: "omit the repaired assertion", Outcome: "bit", ExitCode: 1, Restore: "pass"}}
+	if _, _, err := rr.RecordConfirmation(f.Root, recordtest.Spec, call); err != nil {
+		t.Fatal(err)
+	}
+	f.Commit("retain the written confirmation")
+	if code, out := runCheckpoint(t, f); code != 0 {
+		t.Fatalf("checkpoint with the written confirmation = %d %s", code, out)
+	}
+	if got := outcomeRuns(t, f.Root); got != 1 {
+		t.Fatalf("oracle runs = %d, want 1", got)
+	}
 }
 
 // repairAgain commits a second test-only repair and refreezes the chunk at it, with no new
@@ -150,27 +177,27 @@ func TestReviewCheckpointConfirmationRefusals(t *testing.T) {
 			f.Confirm("confirm-2", reviewed, "F-1")
 			return ""
 		}},
-		{"silent probe", "chunk 1: confirmation confirm-1 probe did not bite: outcome silent", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+		{"silent probe", "chunk 1: confirmation confirm-1 probe did not bite: outcome silent", "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			latest(f).Probe.Outcome = "silent"
 			return ""
 		}},
-		{"failed restore", "chunk 1: confirmation confirm-1 probe restore fail", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+		{"failed restore", "chunk 1: confirmation confirm-1 probe restore fail", "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			latest(f).Probe.Restore = "fail"
 			return ""
 		}},
-		{"zero focused exit", "chunk 1: confirmation confirm-1 probe did not bite: outcome bit, focused exit 0", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+		{"zero focused exit", "chunk 1: confirmation confirm-1 probe did not bite: outcome bit, focused exit 0", "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			latest(f).Probe.ExitCode = 0
 			return ""
 		}},
-		{"author performer", "chunk 1: confirmation confirm-1 performer <moved> is not the completion reconciler " + recordtest.Orchestrator, "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+		{"author performer", "chunk 1: confirmation confirm-1 performer <moved> is not the completion reconciler " + recordtest.Orchestrator, "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			latest(f).Performer = recordtest.Author(f.Plan.Chunks[0].Tickets[0])
 			return latest(f).Performer
 		}},
-		{"omitted finding", "chunk 1: confirmation confirm-1 closes the findings [], and the open findings at the reviewed pair are [F-1]", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+		{"omitted finding", "chunk 1: confirmation confirm-1 closes the findings [], and the open findings at the reviewed pair are [F-1]", "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			latest(f).FindingIDs = []string{}
 			return ""
 		}},
-		{"extra finding", "chunk 1: confirmation confirm-1 closes the findings [F-1 F-2], and the open findings at the reviewed pair are [F-1]", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+		{"extra finding", "chunk 1: confirmation confirm-1 closes the findings [F-1 F-2], and the open findings at the reviewed pair are [F-1]", "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			latest(f).FindingIDs = []string{"F-1", "F-2"}
 			return ""
 		}},
@@ -196,12 +223,12 @@ func TestReviewCheckpointConfirmationRefusals(t *testing.T) {
 			f.Record.Chunks[0].Reviews[1].SourceDigest = f.Record.Chunks[0].SourceDigest
 			return ""
 		}},
-		{"stale repaired tip", "chunk 1: confirmation confirm-1 covers the stale pair <base>..<moved>", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+		{"stale repaired tip", "chunk 1: confirmation confirm-1 covers the stale pair <base>..<moved>", "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			repaired := f.Record.Chunks[0].Tip
 			repairAgain(f)
 			return repaired
 		}},
-		{"other base", "chunk 1: confirmation confirm-1 covers the stale pair <reviewed>..<moved>; confirm the chunk pair <base>..<moved>", "review", modifyTest, func(f *recordtest.Fixture, reviewed string) string {
+		{"other base", "chunk 1: confirmation confirm-1 covers the stale pair <reviewed>..<moved>; confirm the chunk pair <base>..<moved>", "confirmation", modifyTest, func(f *recordtest.Fixture, reviewed string) string {
 			latest(f).Base = reviewed
 			return f.Record.Chunks[0].Tip
 		}},
@@ -209,7 +236,7 @@ func TestReviewCheckpointConfirmationRefusals(t *testing.T) {
 			f.Record.Chunks[0].Reviews[0].State = "failed"
 			return ""
 		}},
-		{"pending confirmation", "chunk 1: confirmation confirm-1 state is pending", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+		{"pending confirmation", "chunk 1: confirmation confirm-1 state is pending", "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			latest(f).State = "pending"
 			return ""
 		}},
@@ -221,7 +248,7 @@ func TestReviewCheckpointConfirmationRefusals(t *testing.T) {
 			f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
 			return ""
 		}},
-		{"other reviewed tip", "chunk 1: confirmation confirm-1 names the reviewed tip <base>, and the axis results sit at <reviewed>", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+		{"other reviewed tip", "chunk 1: confirmation confirm-1 names the reviewed tip <base>, and the axis results sit at <reviewed>", "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			latest(f).ReviewedTip = f.Record.Chunks[0].Base
 			return ""
 		}},

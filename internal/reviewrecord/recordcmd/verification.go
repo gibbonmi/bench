@@ -45,12 +45,18 @@ func probeSources() string {
 // verificationValid closes the value sets of the verification form. Command calls it
 // only for a set of flags that the layout admits.
 func verificationValid(f form, parsed usage.Result) bool {
-	_, exitCode := integer(parsed.Flags, "--exit-code")
 	_, probe := parsed.Flags[probeFlags[0]]
 	_, probeExitCode := integer(parsed.Flags, probeFlags[1])
+	return exitsValid(parsed) && (!probe || probeExitCode && chosen(f, parsed.Flags, probeFlags[2]))
+}
+
+// exitsValid closes the values that a probe import reads: an integer --exit-code, and a
+// positive decimal row when the call names mutantFlag.
+func exitsValid(parsed usage.Result) bool {
+	_, exitCode := integer(parsed.Flags, "--exit-code")
 	_, mutant := parsed.Flags[mutantFlag]
 	row, decimal := integer(parsed.Flags, mutantFlag)
-	return exitCode && (!probe || probeExitCode && chosen(f, parsed.Flags, probeFlags[2])) && (!mutant || decimal && row > 0)
+	return exitCode && (!mutant || decimal && row > 0)
 }
 
 func verification(f form, root, spec string, parsed usage.Result) (string, int) {

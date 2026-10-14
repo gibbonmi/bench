@@ -125,26 +125,31 @@ func FindReviewedPair(root, spec string, chunk Chunk) (ReviewedPair, error) {
 	return ReviewedPair{Tip: tip, Digest: digest, Findings: slices.Compact(findings)}, nil
 }
 
-// checkChunkReviews grades the reviews of chunk. With no confirmation, or with the three
-// current axis results at the chunk pair, the strict rule applies. Otherwise the latest
-// confirmation must hold, and the results carry from the reviewed pair. A refusal before the
-// carry repairs through the review form. plan is the frozen plan of chunk.
+// checkChunkReviews grades the reviews of chunk. With the three current axis results at the
+// chunk pair, or with no reviewed pair and no confirmation, the strict rule applies. A
+// reviewed pair with no confirmation refuses through the confirmation form, before the strict
+// rule grades an outcome. Otherwise the latest confirmation must hold, and the results carry
+// from the reviewed pair. A refusal of the reviewed pair repairs through the review form, and a
+// refusal of the confirmation through the confirmation form. plan is the frozen plan of chunk.
 func checkChunkReviews(root string, record Record, plan Plan, chunk *Chunk, excluded []string, reviewerCount int) error {
 	pair := chunk.reviewed()
-	if len(chunk.Confirmations) == 0 {
-		return checkReviews(pair, excluded, reviewerCount)
-	}
 	reviewed, err := FindReviewedPair(root, record.Spec, *chunk)
-	if errors.Is(err, errAtChunkPair) {
+	if errors.Is(err, errAtChunkPair) || err != nil && len(chunk.Confirmations) == 0 {
 		return checkReviews(pair, excluded, reviewerCount)
 	}
-	if err == nil {
-		err = confirms(*chunk, reviewed, completionReconciler(record, plan))
+	refused := func(form string, err error) error {
+		repair := pair.at
+		repair.Form, repair.Err = form, err
+		return repair
 	}
 	if err != nil {
-		repair := pair.at
-		repair.Form, repair.Err = FormReview, err
-		return repair
+		return refused(FormReview, err)
+	}
+	if len(chunk.Confirmations) == 0 {
+		return refused(FormConfirmation, fmt.Errorf("%s: stale %s at the reviewed tip %s; the delta to the chunk tip is test-only, so confirm the repair or review the three axes at the chunk pair", pair.scope, strings.Join(Axes(), ", "), reviewed.Tip))
+	}
+	if err := confirms(*chunk, reviewed, completionReconciler(record, plan)); err != nil {
+		return refused(FormConfirmation, err)
 	}
 	pair.tip, pair.digest, pair.carried = reviewed.Tip, reviewed.Digest, true
 	return checkReviews(pair, excluded, reviewerCount)
@@ -170,8 +175,15 @@ func confirms(chunk Chunk, reviewed ReviewedPair, reconciler string) error {
 		return fmt.Errorf("%s probe restore %s; restore and verify the source", scope, latest.Probe.Restore)
 	case latest.ReviewedTip != reviewed.Tip:
 		return fmt.Errorf("%s names the reviewed tip %s, and the axis results sit at %s", scope, latest.ReviewedTip, reviewed.Tip)
-	case !sameSet(latest.FindingIDs, reviewed.Findings):
-		return fmt.Errorf("%s closes the findings [%s], and the open findings at the reviewed pair are [%s]; list each open finding", scope, strings.Join(latest.FindingIDs, " "), strings.Join(reviewed.Findings, " "))
 	}
-	return nil
+	return closesOpen(scope, latest.FindingIDs, reviewed)
+}
+
+// closesOpen refuses findings that differ from the open findings at reviewed. scope names the
+// confirmation that closes them.
+func closesOpen(scope string, findings []string, reviewed ReviewedPair) error {
+	if sameSet(findings, reviewed.Findings) {
+		return nil
+	}
+	return fmt.Errorf("%s closes the findings [%s], and the open findings at the reviewed pair are [%s]; list each open finding", scope, strings.Join(findings, " "), strings.Join(reviewed.Findings, " "))
 }

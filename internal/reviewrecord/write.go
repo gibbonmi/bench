@@ -312,6 +312,53 @@ func RecordReview(root, spec string, call ReviewCall) (Review, error) {
 	return entry, err
 }
 
+// ConfirmationCall is the caller's part of one coordinator confirmation. Chunk names the
+// recorded chunk, and Findings holds the finding IDs that the repair closes. Evidence supplies
+// the ID, the performer, the model, the effort, and the native result. Probe supplies the
+// caller's mutation text and the outcome, the exit code, and the restore of the probe.
+type ConfirmationCall struct {
+	Chunk    string
+	Findings []string
+	Evidence Evidence
+	Probe    Probe
+}
+
+// RecordConfirmation appends one completed coordinator confirmation to a recorded chunk.
+// FindReviewedPair supplies the reviewed pair, the chunk entry supplies the base, the repaired
+// tip, and the source digest, and the entry supersedes the prior confirmation of the chunk.
+// It refuses findings other than the open findings at the reviewed pair. The answer is the
+// entry as written and the reviewed pair.
+func RecordConfirmation(root, spec string, call ConfirmationCall) (Confirmation, ReviewedPair, error) {
+	var entry Confirmation
+	var reviewed ReviewedPair
+	err := write(root, spec, absent(call.Chunk), func(record *Record) error {
+		chunk, err := entryOf(record, call.Chunk)
+		if err != nil {
+			return err
+		}
+		if reviewed, err = FindReviewedPair(root, spec, *chunk); err != nil {
+			return err
+		}
+		if err := closesOpen(chunk.reviewed().scope+": confirmation "+call.Evidence.ID, call.Findings, reviewed); err != nil {
+			return err
+		}
+		if err := unclaimed(*record, call.Evidence.ID); err != nil {
+			return err
+		}
+		supersedes := []string{}
+		if prior := len(chunk.Confirmations); prior != 0 {
+			supersedes = []string{chunk.Confirmations[prior-1].ID}
+		}
+		probe := call.Probe
+		probe.NativeRef = call.Evidence.NativeRef
+		entry = Confirmation{Evidence: call.Evidence, Base: chunk.Base, ReviewedTip: reviewed.Tip, RepairedTip: chunk.Tip, FindingIDs: append([]string{}, call.Findings...), Supersedes: supersedes, Probe: probe}
+		entry.Role, entry.SourceDigest, entry.State, entry.Outcome = ConfirmationRole, chunk.SourceDigest, "completed", "pass"
+		chunk.Confirmations = append(chunk.Confirmations, entry)
+		return nil
+	})
+	return entry, reviewed, err
+}
+
 // reviewTarget is the frozen pair of the recorded chunk or fold that call names. A fold
 // without an entry needs the fold form first.
 func reviewTarget(record *Record, call ReviewCall) (reviewed, error) {
