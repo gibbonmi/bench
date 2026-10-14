@@ -513,6 +513,72 @@
             "S3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "rc-prove-standards-2",
+          "performer": "claude:rc-prove-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4c9845f5b2108637da6097f24b3e007d0d1ce7e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-prove-standards-2",
+            "digest": "sha256:25bd84ea9258831679115d1f55d9283d42f6f7839d78b263d216d7a5223535cd",
+            "excerpt": "Standards axis, RC-PROVE confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip a811cee2; repair delta b8e4e015..78f71b6c; named findings S1 and S3.\nS1 closed: internal/outline/read.go:18 exports IsFixture; its caller outline.go:228 and testgap.go:55 use it; no isFixture or second testdata segment check remains in internal or cmd.\nS3 closed: internal/gittest/trees.go:75 defines RequireVerdict(t, got, want, path) with no prover sentinel import; commentgap/trees_test.go:75 and testgap/testgap_test.go:79 call it.\nNo new defect: comments state a contract in present tense; no second source.\nAdvice (no ID): the IsFixture doc comment opens with a sentence about its own status and describes only the outline use; final_verification prover-and-guidance omits ./internal/outline and ./internal/gittest.\n"
+          },
+          "axis": "Standards",
+          "base": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+          "tip": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-prove-standards-1"
+          ]
+        },
+        {
+          "id": "rc-prove-spec-2",
+          "performer": "claude:rc-prove-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4c9845f5b2108637da6097f24b3e007d0d1ce7e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-prove-spec-2",
+            "digest": "sha256:b1350cf83727534ee07a7e507ac7d3eafaf78c492997978b41cb62f3c32e5fe8",
+            "excerpt": "Spec axis, RC-PROVE confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip a811cee2; named findings S1, S3, and C1 to C5.\nThe plan expansions keep Covers RC13-RC19, RC52, RC53; Writes and the fence gain only internal/outline/read.go and outline.go (fence lines 441-442); the prover check gains ./internal/outline; no check, probe, dependency, or pass criterion is removed.\nproveFile calls outline.IsFixture after IsGoTestFile (testgap.go:50-56), so for a _test.go path the predicate refuses exactly the paths with a testdata element (read.go:18-19); the new cases cover root testdata/ and testdata_x (testgap_test.go:26-30).\nRepair b14ecb28 touches six files, all inside the widened Writes.\nAdvice (no ID): the prover-and-guidance final check omits ./internal/outline.\n"
+          },
+          "axis": "Spec",
+          "base": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+          "tip": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-prove-spec-1"
+          ]
+        },
+        {
+          "id": "rc-prove-coverage-2",
+          "performer": "claude:rc-prove-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4c9845f5b2108637da6097f24b3e007d0d1ce7e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-prove-coverage-2",
+            "digest": "sha256:afa921614f85a41626842c35a98083be231a308daed65c3faf7c5e82636e3913",
+            "excerpt": "Coverage axis, RC-PROVE confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip a811cee2; repair delta b8e4e015..78f71b6c; named findings C1 to C5.\nProbes, all against ./internal/testgap, all restored=yes, each failing on the assertion at testgap_test.go:79:\nC1 TreeChanges swap at testgap.go:28, bit (RC52_mixed_hidden_gitlink).\nC2 range changes[:1] at testgap.go:35, bit (RC17_later_production_file, RC52_mixed_hidden_gitlink).\nC3 drop the root HasPrefix branch at read.go:94, bit (RC13_root_testdata).\nC4 DstMode != 100644 at testgap.go:47, bit (executable_test).\nC5 substring testdata check at testgap.go:55, bit (RC13_testdata_in_a_name).\nExtra: range changes[len(changes)-1:] at testgap.go:35, bit (RC53_renamed), so both change orders are tested.\nTestProveTreeGap and TestProveTestGap pass through gittest.RequireVerdict.\n"
+          },
+          "axis": "Coverage",
+          "base": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+          "tip": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-prove-coverage-1"
+          ]
         }
       ]
     }
@@ -577,7 +643,7 @@ RC-CYCLE: 1 finding in the first round. Worst issue: S1. The confirming round cl
 
 - S1 (auto-fix, confidence 8): the two new twins in `internal/conformance/implementation_continuation_test.go` lines 234-241 and their anchors in `internal/anchors/registry_retained_workflow.go` lines 380-381 have no recorded red. `AGENTS.md` requires a recorded red, and `craft-comments` makes the commit or the spec the owner of that record.
 
-RC-PROVE: 2 findings. Worst issue: S1.
+RC-PROVE: 2 findings in the first round. Worst issue: S1. The confirming round closed S1 and S3.
 
 - S1 (auto-fix, confidence 6): `internal/testgap/testgap.go` line 57 derives the testdata path fact again. The fixture predicate in `internal/outline/read.go` lines 12-19 already owns it.
 - S3 (auto-fix, confidence 4): `internal/testgap/testgap_test.go` lines 64-70 repeat the refusal assertion of `internal/commentgap/trees_test.go` lines 76-82. One exported helper in `internal/gittest/trees.go` takes its place, and it imports no prover sentinel.
@@ -586,13 +652,13 @@ RC-PROVE: 2 findings. Worst issue: S1.
 
 RC-CYCLE: 0 findings in both rounds. Worst issue: none.
 
-RC-PROVE: 0 findings. Worst issue: none.
+RC-PROVE: 0 findings in both rounds. Worst issue: none.
 
 ## Coverage
 
 RC-CYCLE: 0 findings. Worst issue: none. The first return listed C1, and the axis reaffirmed it as advice after a consultation. The confirming round passed.
 
-RC-PROVE: 5 findings. Worst issue: C1. The chunk uses its one hardening cycle for C1 to C5.
+RC-PROVE: 5 findings. Worst issue: C1. The chunk uses its one hardening cycle for C1 to C5. The confirming round closed all five.
 
 - C1 (auto-fix, confidence 9): no case hides a gitlink, so a swap to `TreeChanges` at `internal/testgap/testgap.go` line 30 is silent.
 - C2 (auto-fix, confidence 9): no mixed delta puts the bad change last, so a check of only the first change is silent.
@@ -610,9 +676,10 @@ RC-PROVE: 5 findings. Worst issue: C1. The chunk uses its one hardening cycle fo
 
 - RC-PROVE Standards (S2, flagged for reviewer veto): the prover frame mirrors `commentgap.Prove`, as the ticket directs. The consultation and the issuing axis class the repetition as incidental.
 - RC-PROVE Standards: the RC53 red record reuses the RC14 mutation, and `internal/gittest/gittest_test.go` has one unkeyed literal.
+- RC-PROVE confirming round: the `IsFixture` doc comment opens with a sentence about its own status. The final check `prover-and-guidance` omits `./internal/outline` and `./internal/gittest`.
 - RC-PROVE Spec: the RC-PROVE tests cell of the chunk table still names the planned prover tests.
 
 ## Repair state
 
 RC-CYCLE: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t01_rep1` closed S1 at `8907784b`, and the confirming round of all three axes passed.
-RC-PROVE: 0 of 2 repair cycles consumed before this repair. S1, S3, and C1 to C5 go to one fresh repair session for ticket 02.
+RC-PROVE: 1 of 2 repair cycles and its one hardening cycle consumed. The repair session `claude:ft379_t02_rep1` closed S1, S3, and C1 to C5 at `b14ecb28`. The chunk froze at `78f71b6c`, and the confirming round of all three axes passed.
