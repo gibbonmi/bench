@@ -749,19 +749,19 @@
           "criteria": [
             {
               "id": "FT405.verb",
-              "text": "bench record ticket \u003cslug\u003e --chunk \u003cid\u003e --excerpts \u003cdir\u003e records the plan amendment when the digest moved, freezes the chunk at HEAD, and records one verification entry for each planned requirement from a folder of excerpts named by requirement id."
+              "text": "bench record ticket \u003cslug\u003e --chunk \u003cid\u003e --ticket \u003cbasename\u003e writes the plan amendment when the digest moved, the chunk freeze for the last ticket, and one verification entry for each owed requirement in one record write."
+            },
+            {
+              "id": "FT405.excerpt",
+              "text": "bench record excerpt stages the retained last response of the worktree as the excerpt of one planned requirement."
             },
             {
               "id": "FT405.composition",
-              "text": "The bench record ticket verb composes the shipped bench record assignment and bench record verification forms."
-            },
-            {
-              "id": "FT405.repair-session",
-              "text": "One repair session records verification for every ticket of its chunk."
+              "text": "The ticket form composes the shipped amendment, chunk, and verification writer rules with no second copy of a rule."
             },
             {
               "id": "FT405.check-current",
-              "text": "bench preflight evidence --check-current reports the dirty paths instead of a refusal."
+              "text": "bench preflight evidence --check-current binds beside a dirty review record of its spec and reports dirty_record."
             }
           ],
           "sources": [
@@ -769,6 +769,18 @@
               "id": "FT405",
               "path": "roadmap/FT405.md",
               "identity": "sha256:b53533c8de03698aef67b2a7869cbc8c7058fa18c42f8af042e1c8ae09666832"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "record-ticket",
+                "path": "specs/record-ticket/spec.md",
+                "identity": "sha256:1ccb5fb0742b5d23fe68057f21952f024362138447bc33c68548cdf0680bed83"
+              },
+              "obligations": [
+                "FT405"
+              ]
             }
           ]
         },
