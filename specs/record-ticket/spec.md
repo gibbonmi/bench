@@ -145,7 +145,12 @@ The repair session that records for every ticket of its chunk stays out of scope
 `runBounded` is the one owner of a bounded response, so it owns retention.
 After `Finish`, it writes the retained response of the assignment scope that `AssignmentScope` answers.
 The retained response holds the complete response bytes in arrival order, the exit code, the typed verb word, and its arguments.
-It also holds the `HEAD` commit of the worktree and its dirty paths, read through `git.AllFilesStatus` after the verb returns.
+It also holds the `HEAD` commit of the worktree and its dirty paths, read after the verb returns.
+The dirty paths come from one shared porcelain reader: `git status --porcelain=v1 -z --no-renames` and `ParsePorcelainZ`.
+`LandedState` already runs that read, so the read moves into one `internal/git` function that `LandedState` and retention both call.
+
+The commit comes from `rev-parse HEAD`.
+Both reads run only when retention writes, so the skipped calls below and the primary checkout pay no Git read.
 
 The owner stays the one source of the bytes: `responsebound` gains an accessor that answers the complete bytes of a finished response.
 That accessor answers the retained writes of a response within the bound and the spill file bytes of a spilled response.
@@ -170,7 +175,7 @@ Its file names do not match the spill name pattern, so the primary prune never r
 It refuses with no retained response, with an unplanned requirement, and with bytes over the record excerpt limit.
 
 `shellcommand.Parse` is the one splitter of a planned command, so a quoted operand folds as the shell folds it.
-The stage refuses a planned command whose first word is not `bench`.
+The stage refuses a planned command unless the parse is lexed, holds only word tokens, and starts with the word `bench`.
 For a requirement with no probe, the typed verb word and its arguments must equal the planned words after `bench`.
 The comparison uses the typed verb word, so a planned alias matches only a run that typed the same alias.
 For a requirement with a probe, the retained call must be `bench probe`, and the bytes must import through the probe reader.
@@ -280,6 +285,7 @@ The repair-session criterion leaves the binding and returns to intake as a Won't
 | RT-GUIDE / (sliced at slicing) | The guidance names the last ticket's author as the freezer and the ticket form as the record call. | RT47–RT54, RT64 | `TestChunkChainAnchors` with `registry_chunk_chain.go` and its twin, and `TestRetainedWorkflow` with the `.bench/BENCH.md` needle in `registry_ft311_review_dispatch.go` | no |
 
 RT-RETAIN creates the stage that RT-TICKET reads, so it is its own review chunk.
+RT-RETAIN also owns the shared porcelain reader in `internal/git/status.go` and the `LandedState` call site there.
 RT-CURRENT touches disjoint packages and has no prerequisite.
 RT-GUIDE comes last, because its sentences name the forms that RT-TICKET ships.
 
@@ -345,7 +351,7 @@ The slicing writes this plan's tickets and its verification commands.
 | RT24 | 23 | A call for an earlier ticket with no chunk entry refuses and names the last ticket of the chunk. | planned | A form that freezes for any ticket writes the entry and the row reds. |
 | RT25 | 24 | A call for an earlier ticket with a chunk entry leaves the chunk tip and base unchanged. | planned | A form that refreezes for every ticket moves the tip to the call's tip and the row reds. |
 | RT26 | 25 | A refreeze for the last ticket keeps the base of the existing chunk entry. | planned | A form that derives the base from the predecessor moves the base and the row reds. |
-| RT27 | 26 | A new entry for a later chunk takes the predecessor chunk entry's tip as its base. | planned | A form that takes the plan base or `HEAD^` writes another base and the row reds. |
+| RT27 | 26 | A new entry for a later chunk takes the predecessor chunk entry's tip as its base when no recorded fold follows that entry. | planned | A form that takes the plan base or `HEAD^` writes another base and the row reds. |
 | RT28 | 27 | A call for the first chunk with no `--base` and no chunk entry refuses and asks for `--base`. | planned | A form that guesses a base writes an entry and the row reds. |
 | RT29 | 28 | A plan change that removes a recorded chunk refuses, and the refusal names `bench record amendment`. | planned | A form that maps the chunk itself writes an amendment and the row reds. |
 | RT30 | 29 | The form refuses a planned seam cell at the tip for the last ticket and names the rows. | planned | A form without the planned-cell check freezes the chunk and the row reds. |
@@ -376,7 +382,7 @@ The slicing writes this plan's tickets and its verification commands.
 | RT55 | 55 | For a later chunk whose predecessor entry has one recorded fold after it, the ticket form freezes with that fold's commit as base. | planned | A form that takes the predecessor tip writes a base that the checkpoint refuses as a chain gap and the row reds. |
 | RT56 | 56 | For the last ticket of the first chunk with an absent record and `--base`, the ticket form creates the record with the chunk entry and the verifications. | planned | A form that passes the absent-record refusal as its create function refuses and the row reds. |
 | RT57 | 57 | `bench record excerpt` stages a run whose arguments equal a planned command with a single-quoted operand. | planned | A stage that splits on spaces keeps the quotes and refuses the match and the row reds. |
-| RT58 | 13 | `bench record excerpt` refuses a planned command whose first word is not `bench`. | planned | A stage that drops the first word compares a foreign command and the row reds. |
+| RT58 | 13 | `bench record excerpt` refuses a planned command whose first word is not `bench`, and a planned command that holds a pipe operator. | planned | A stage that drops the first word compares a foreign command and the row reds. |
 | RT59 | 58 | A requirement ID of `../x` stages a file inside the assignment scope and nowhere else. | planned | A stage that joins the ID into the path writes outside the scope and the row reds. |
 | RT60 | 53 | The ticket form refuses a stage whose run commit is not the chunk source and names the requirement. | planned | A form that ignores the run commit records an excerpt from an earlier tip and the row reds. |
 | RT61 | 54 | The ticket form refuses a stage whose run had a dirty Go file and names the requirement. | planned | A form that ignores the dirty paths records an uncommitted run and the row reds. |
@@ -432,7 +438,8 @@ The slicing writes the ticket entries of this section, and the review pickup is 
 - The form removes its used stages after a write (RT35). A refreeze otherwise reuses an excerpt from an earlier tip.
 - The base derives from the record (RT26, RT27, RT28). The FT379 build passed a wrong base once.
 - The stage binds to its run commit and refuses a dirty run (RT60, RT61, RT62). The orchestrator decided this on 2026-10-14, and it stays open to reviewer veto.
-- The retained response holds `HEAD` and the dirty paths, so each bounded call in a worktree runs one more Git status read.
+- The retained response holds `HEAD` and the dirty paths, so each retained call runs one porcelain status read and one `rev-parse`.
+- The deliverable binding drops the FT405 repair-session criterion, which narrows the commitment. The reviewer's 2026-10-14 scope choice deferred that change, and the drop stays open to reviewer veto.
 - A spill-failed response clears the retained response (RT7). The incomplete bytes otherwise stage as evidence.
 
 ### Source sentence to row
@@ -452,7 +459,7 @@ The excerpts come from staged retained responses in place of a folder in the wor
 
 ### Pre-review proof checklist
 
-- `Cited symbols`: `coveredAfter`, `shellcommand.Parse`, `git.AllFilesStatus`, `write`, `replace`, `RecordAmendment`, `RecordChunk`, `RecordVerification`, `currentPlan`, `CompletionOrder`, `refusePlanned`, `importedProbe`, `runBounded`, `AssignmentScope`, `Drop`, `preparationCheckoutRefusal`, `currentEvidenceCommand`, `chargeevidence.Current`, and `ResponseBlocks` resolve in the tree.
+- `Cited symbols`: `coveredAfter`, `shellcommand.Parse`, `LandedState`, and `ParsePorcelainZ` resolve in the tree. So do `write`, `replace`, `RecordAmendment`, `RecordChunk`, `RecordVerification`, `currentPlan`, `CompletionOrder`, `refusePlanned`, `importedProbe`, `runBounded`, `AssignmentScope`, `Drop`, `preparationCheckoutRefusal`, `currentEvidenceCommand`, `chargeevidence.Current`, and `ResponseBlocks` resolve in the tree.
 - `Import edges`: `cmd/bench` already imports `internal/responsebound`; `recordcmd` imports `internal/responsebound` for the stage. The slicing runs `go list` before it locks the edge.
 - `Source-row clauses and occurrences`: the source-sentence table quotes each clause; the occurrences are FT349, NRO, FT217, and the FT379 freeze retries.
 - `Promised field labels`: forms `ticket` and `excerpt`; flags `--ticket`, `--id-prefix`, `--requirement`, `--mutant`, `--base`, and `--tip`; response field `dirty_record`.
@@ -479,4 +486,3 @@ This spec keeps that behavior and adds no implicit entry.
 - The exact prose budget of the implementation phase file after the two in-place sentence changes.
 - Whether any other reader parses the `current` block by column count, beyond the header needle in `evidence_modes_test.go`.
 - The test name of the known-issues row check; RT53 stays planned until the slicing names it.
-- The time cost of one Git status read after each bounded call in a worktree.
