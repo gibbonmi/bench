@@ -1183,6 +1183,28 @@
           "tip": "4829baa3d41336f86c0d2256c70faa436226c775",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "ft405_rv_current_r-standards",
+          "performer": "claude:ft405_rv_current_r_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffcaea219e9c7eb897af616c15cfdd860622edd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_current_r_standards",
+            "digest": "sha256:26ac71128a86b4eda28299b15b700e0e6ba7e8ef680ceca617348163c3562ad8",
+            "excerpt": "## Standards\n\nReaffirmation of the RT-CURRENT Standards findings. Preflight current=true, dirty_record=false.\n\n- S1: closed for RT-CURRENT by reassignment. At a3fe2426, `specs/record-ticket/tickets/06-name-the-ticket-author-as-the-freezer.md:15` names the nested-exec spill row, the 22-word sentence at `docs/known-issues.md:13`, and the new checkbox at line 32 requires the fix. Ticket 06 is the only ticket whose `Writes:` line holds that path (line 4).\n- S2: closed. `internal/preflight/charge_pack.go:98-100` reads \"The binding accepts a dirty review record of the selected spec and reports it.\", which is active voice, names the right agent, and meets craft-comments.\n\nNo blocking finding.\n"
+          },
+          "axis": "Standards",
+          "base": "52653322c4381d8b8927b9e9b18020b50683969e",
+          "tip": "4829baa3d41336f86c0d2256c70faa436226c775",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_current-standards"
+          ]
         }
       ]
     }
@@ -1328,6 +1350,8 @@ RT-CURRENT: 2 findings. The worst issue is S2.
 
 - S1 (auto-fix in ticket 06, confidence 6): the workaround sentence of the evidence-preflight row in `docs/known-issues.md` has 22 words, over the 20-word procedural bound.
 - S2 (auto-fix, comment-only, confidence 6): the doc comment at `internal/preflight/charge_pack.go:98-100` uses the passive voice and names the record as the agent that binds.
+
+RT-CURRENT reaffirmation: S1 is closed for this chunk by its reassignment to ticket 06, and S2 is closed by the comment-only correction.
 
 ## Spec
 
