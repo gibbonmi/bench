@@ -1355,6 +1355,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "rc-write-standards-2",
+          "performer": "claude:rc-write-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-write-standards-2",
+            "digest": "sha256:7dbe951f518da1abfa038c1552a103eaae6fbf9de42e87b15b33ea8db672d12f",
+            "excerpt": "Standards axis, RC-WRITE confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence current at c9a760f8; repair delta d571c96c..1e4d31fb; named findings S1 and S2.\nS1 closed: \": confirmation \" appears once, in Chunk.confirmationScope (internal/reviewrecord/confirmation.go:183), with callers confirms (confirmation.go:163) and RecordConfirmation (write.go:342).\nS2 closed: recordtest.ConfirmationProbe() (recordtest/confirmation.go:13) wraps bitProbe; Confirm and the gate test (review_checkpoint_confirmation_test.go:74) call it.\nprobeHolds (confirmation.go:188-197) takes its result from probeBites (check.go:76) and adds only the refusal text. The importedProbe comment (recordcmd/verification.go:150) is accurate and timeless.\nAdvice (no ID): the probeBites doc could name the writer; one expected probe literal in recordcmd/confirmation_test.go:127 copies line 73; the confirmationScope doc could read more directly.\n"
+          },
+          "axis": "Standards",
+          "base": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+          "tip": "1e4d31fb5cc3d773169ad0bb5c90f7a7c7060e3e",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-write-standards-1"
+          ]
+        },
+        {
+          "id": "rc-write-spec-2",
+          "performer": "claude:rc-write-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-write-spec-2",
+            "digest": "sha256:fa20f455fcb6b5249e306887ef387eff57e34741c782dd35608e8bcd26399b37",
+            "excerpt": "Spec axis, RC-WRITE confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence current at c9a760f8; repair delta b2ae2671..1e4d31fb; named findings C1 to C3, S1, S2.\nThe plan expansion (e39b9e49) only adds story 58, row RC58, RC58 on the flagged-additions line, ticket 04 Covers and acceptance, and the chunk row; checks, probes, and final verification are unchanged; the plan JSON adds only the t04_rep1 assignment.\nRC58 holds: probeHolds (confirmation.go:188) calls probeBites (check.go:76); the writer calls it before any write (write.go:346) and the checkpoint at confirmation.go:172; the refusal names the condition, and the record bytes stay unchanged. The seam cell cites TestRecordConfirmationRefusesAProbeThatFails (recordcmd/confirmation_test.go:135).\nThe repair touches six Go files on ticket 04's Writes line plus the RC58 seam cell.\nC1, C2, C3, S1, and S2 are closed.\nCoverage: bench coverage reports 58 mapped rows with no planned cell; acceptance looks complete.\nAdvice (no ID): the restore-failed case refuses as did not bite, and the message does not name the restore.\n"
+          },
+          "axis": "Spec",
+          "base": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+          "tip": "1e4d31fb5cc3d773169ad0bb5c90f7a7c7060e3e",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-write-spec-1"
+          ]
+        },
+        {
+          "id": "rc-write-coverage-2",
+          "performer": "claude:rc-write-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-write-coverage-2",
+            "digest": "sha256:f9c7db1d251b4a57f7756c8c826ab087b89b5af293521090795b4927419cd12b",
+            "excerpt": "Coverage axis, RC-WRITE confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence current at c9a760f8 on a clean tree; repair delta d571c96c..1e4d31fb; named findings C1 to C3.\nProbes against ./internal/reviewrecord/..., all restored=yes:\nC1 mutant := 0 (recordcmd/confirmation.go:25), bit (TestRecordConfirmationImportsOneMutantRow).\nC2 exitsValid to true (recordcmd/confirmation.go:16), bit (TestRecordConfirmationUsage).\nC3a writer ignores restored (write.go:346), bit (TestRecordConfirmationRefusesAProbeThatFails/unrestored_bite).\nC3b writer ignores bit (write.go:346), bit (silent and restore_failed).\nAdvice (no ID): cutting the exit-code term of probeBites bites only through the gate test zero_focused_exit; no writer-level case covers an outcome bit with focused exit 0, which importedProbe may not admit.\n"
+          },
+          "axis": "Coverage",
+          "base": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+          "tip": "1e4d31fb5cc3d773169ad0bb5c90f7a7c7060e3e",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-write-coverage-1"
+          ]
         }
       ]
     }
@@ -1506,7 +1572,7 @@ RC-CARRY: 4 findings in the first round. Worst issue: S1. The confirming round c
 - S3 (auto-fix, confidence 4): the refusal scope of a chunk is built again in `confirmation.go`, and `Chunk.reviewed().scope` owns it.
 - S4 (auto-fix, confidence 5): the comment on `unclaimed` in `write.go` does not name confirmation IDs.
 
-RC-WRITE: 2 findings. Worst issue: S1.
+RC-WRITE: 2 findings in the first round. Worst issue: S1. The confirming round closed S1 and S2.
 
 - S1 (auto-fix, confidence 5): the confirmation refusal scope is built in `internal/reviewrecord/write.go` and again in `confirmation.go`. One helper gives it one source.
 - S2 (auto-fix, confidence 4): `TestReviewCheckpointPassesAWrittenConfirmation` restates the biting-probe values that `bitProbe` in `recordtest/confirmation.go` owns.
@@ -1522,7 +1588,7 @@ RC-CARRY: 1 finding in the first round. Worst issue: P1. The confirming round cl
 - P1 (auto-fix, confidence 4): a reviewed tip equal to the chunk base passes, so a test-only chunk can close with no review. The axis reaffirmed auto-fix through a strict-descent spec expansion (RC55), which is flagged for reviewer veto.
 - P2 (auto-fix, confidence 7): the RC57 row says the checkpoint refuses a carried wrong-role result with a reason that names the role. The parser refuses first, so the row's seam is the carried branch of `checkReviews`. A coverage-map amendment fixed the row at `d591e0ab`, and a narrow round of all three axes passed.
 
-RC-WRITE: 0 findings. Worst issue: none.
+RC-WRITE: 0 findings in both rounds. Worst issue: none.
 
 ## Coverage
 
@@ -1541,7 +1607,7 @@ RC-CARRY: 2 findings in the first round. Worst issue: C1. The confirming round c
 - C1 (auto-fix, confidence 9): a carried result skips the role and performer-exclusion checks, and two probes are silent. Rows RC56 and RC57 cover them.
 - C2 (auto-fix, confidence 6): the same empty reviewed pair as P1. The two findings share one repair target.
 
-RC-WRITE: 3 findings. Worst issue: C1.
+RC-WRITE: 3 findings in the first round. Worst issue: C1. The confirming round closed C1 to C3.
 
 - C1 (auto-fix, confidence 8): no case imports a mutant-set answer with `--mutant` for the confirmation form.
 - C2 (auto-fix, confidence 6): no malformed-value refusal test for the confirmation form.
@@ -1568,6 +1634,7 @@ RC-WRITE: 3 findings. Worst issue: C1.
 
 - RC-WRITE Standards: four files state the test-only exception, as ticket 05 asks. The anchors package mixes a path constant and literal paths.
 - RC-WRITE Spec: the written-confirmation test calls the core writer, not the verb, and the RC46 and RC47 reds live only in a commit body.
+- RC-WRITE confirming round: no writer-level case covers an outcome `bit` with a focused exit of 0; the gate test covers it. The restore-failed refusal does not name the restore.
 - RC-WRITE Coverage: a duplicate `--finding` refuses with no pinning test, and some writer edges are covered only through the checkpoint.
 
 ## Repair state
@@ -1578,4 +1645,4 @@ RC-PROVE: 1 of 2 repair cycles and its one hardening cycle consumed. The repair 
 
 RC-CARRY: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t03_rep1` closed S1 to S4, P1, C1, and C2 at `4d026a78`. P2 closed through a coverage-map amendment with no code change. The chunk froze at `d591e0ab`.
 
-RC-WRITE: 0 of 2 repair cycles consumed before this repair. S1, S2, and C1 to C3 go to one fresh repair session for ticket 04.
+RC-WRITE: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t04_rep1` closed S1, S2, and C1 to C3 at `1e4d31fb`. The chunk froze there, and the confirming round of all three axes passed.
