@@ -1553,6 +1553,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft405_rv_ticket_c-standards",
+          "performer": "claude:ft405_rv_ticket_c_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "12e8f42fced3bc618e267207462c451867a750b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_ticket_c_standards",
+            "digest": "sha256:92d0f9e57214f4974517cc499b5a166de5b7eae751745086e6a921a40833d1d2",
+            "excerpt": "## Standards\n\nPreflight passed (evidence sha256:97a5a5fc, base e599c2cf). HEAD 6aa97e76 is one commit past tip 79bcc997, and that commit touches only `reviews/record-ticket.md`.\n\n- S1 closed. `internal/reviewrecord/recordcmd/ticket.go:23-27` now points to what `TicketRequirements` refuses (`internal/reviewrecord/ticket.go:36-58`), then the seam-cell refusal (line 52), then the missing-stage refusal (lines 105-106). The old claim about a ticket that owes no requirement is gone.\n- S2 closed. `ticket_test.go:371` reads `rr.TicketSteps()`; the cut rule lives only in `reviewrecord/ticket.go:11-14`.\n\nNo blocking finding.\n\n## Advice\n- \"in order\" at `ticket.go:24-25` leaves out the earlier `--tip`/`--base` and spec-read refusals (lines 36-47).\n"
+          },
+          "axis": "Standards",
+          "base": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+          "tip": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_ticket-standards"
+          ]
+        },
+        {
+          "id": "ft405_rv_ticket_c-spec",
+          "performer": "claude:ft405_rv_ticket_c_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "12e8f42fced3bc618e267207462c451867a750b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_ticket_c_spec",
+            "digest": "sha256:1f215754e811a420c69f467de7238dca89240060d101b6bebd4189ce5fa3d676",
+            "excerpt": "## Spec\n\nPass. No blocking findings.\n\n- Production behavior: the only production change is the doc comment at `internal/reviewrecord/recordcmd/ticket.go:23-27`, which now matches the code (`TicketRequirements` at :48, the planned-seam refusal at :52-56, the stage refusal at :63).\n- Other changes: tests, the review record, and one plan assignment (`ft405_t05_rep1`) in `specs/record-ticket/spec.md`. No row prose changed, so the RT-TICKET rows are still met.\n- Seam citations: no test was renamed; every cited test exists (for example `TestTicketRefreezeKeepsTheBase` at `ticket_test.go:301`, `TestTicketHelpFollowsCompletionOrder` at :369).\n\n## Advice\n- The preflight reports source_tip 6aa97e76 (the record commit), not the frozen tip 79bcc997.\n"
+          },
+          "axis": "Spec",
+          "base": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+          "tip": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_ticket-spec"
+          ]
+        },
+        {
+          "id": "ft405_rv_ticket_c-coverage",
+          "performer": "claude:ft405_rv_ticket_c_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "12e8f42fced3bc618e267207462c451867a750b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_ticket_c_coverage",
+            "digest": "sha256:13c9d4d12129787b590f4a4b75c296d674b4f99ba950c08e172420620f7e5318",
+            "excerpt": "## Coverage\n\nAll four items are closed; every mutant bit and every file was restored. The probes ran at HEAD 6aa97e76, one commit past tip 79bcc997, and that commit changes only `reviews/record-ticket.md`, so `internal` matches the tip. Preflight current=true. All four failing tests are in `internal/reviewrecord/recordcmd/ticket_test.go`.\n\n| Item | Mutation | Verdict, killed by | Restored |\n|---|---|---|---|\n| C1 | recordcmd/ticket.go:130 checks the head only when `i == 0` | bit, TestTicketRefusals/later_stage_from_another_commit | yes |\n| C2 | :135 refuses only when `Dirty[0]` is not the record path | bit, TestTicketRefusals/stage_with_the_record_path_and_a_dirty_Go_file | yes |\n| C3 | :30 always sets `--tip` to HEAD | bit, TestTicketFreezesALaterChunk/tip_before_HEAD | yes |\n| C4 | reviewrecord/ticket.go:177 checks the existing entry before `--base` | bit, TestTicketRefreezeKeepsTheBase/--base_given | yes |\n\n`git status` is clean. Blocking findings: none. Advice: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+          "tip": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_ticket-coverage"
+          ]
         }
       ]
     }
@@ -1766,6 +1832,8 @@ RT-TICKET: 2 findings, and RT37 is met. The worst issue is S2.
 - S1 (auto-fix, confidence 6): the doc comment at `internal/reviewrecord/recordcmd/ticket.go:24-26` misstates a refusal. The form refuses a ticket that the chunk does not list.
 - S2 (auto-fix, confidence 5): `recordcmd/ticket_test.go:323-329` copies the step-cut rule of `TicketSteps`, and the copy is not needed for the RT63 mutation to turn red.
 
+RT-TICKET confirming round: S1 and S2 are closed, with no blocking findings.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -1790,6 +1858,8 @@ RT-CURRENT: pass, with no findings.
 RT-EXTRACT: pass, with no findings. RT37 gets its second half at RT-TICKET.
 
 RT-TICKET: pass, with no findings. The refusal-order deviation that the author flagged is non-behavioral.
+
+RT-TICKET confirming round: pass, with no findings.
 
 ## Coverage
 
@@ -1826,3 +1896,5 @@ RT-TICKET: 4 findings. The worst issue is C1.
 - C2 (auto-fix, confidence 8): no test gives a run a dirty list that holds the record path and a Go file (RT61).
 - C3 (auto-fix, confidence 7): no test gives `--base` on a refreeze when the chunk entry exists.
 - C4 (auto-fix, confidence 7): no test passes `--tip` with a commit other than `HEAD`.
+
+RT-TICKET confirming round: C1 to C4 are closed, with no blocking findings.
