@@ -1101,6 +1101,71 @@
           "requirement": "guidance-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "rc-write-t04-writer-and-route",
+          "performer": "claude:ft379_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t04:writer-and-route",
+            "digest": "sha256:d5242c57f302514e4c8ea48e6fc4d67c2d7cb1e484752c24c1d49e2312b0ce05",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft379-build,4feb26a55f0d4b9bb1eb3011f9ec2572e02be868,false\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17972,335\n  github.com/gibbonmi/bench/internal/conformance,pass,60136,1694\n  github.com/gibbonmi/bench/internal/gate,pass,42261,489\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3193,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,16130,200\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "writer-and-route",
+          "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-write-t04-route-precedence",
+          "performer": "claude:ft379_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t04:route-precedence",
+            "digest": "sha256:ad2cf31375d428c33f6565b19224de1a4fa323f73ad3f01af22c4575b347d181",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,insert,failed,2,TestCheckpointEntryRepairForms/test-only_repair,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,489\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,795\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35729,489\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointEntryRepairForms/test-only_repair,\"record_repair_test.go:81: checkpoint = exit 1, stderr \\\"gate subject unavailable: completion evidence: chunk 1: completed Standards; resolve findings and obtain a completed result\\\\\\\\nnext=bench record 'review' --help\\\\\\\\n\\\"; want a refusal whose r… (291 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointKeepsStrictEvidence/moved_chunk,\"review_checkpoint_commits_test.go:188: strict evidence = 1 gate subject unavailable: completion evidence: chunk 1: stale Standards; review the current frozen pair\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "route-precedence",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "let the outcome refusal fire before the confirmation route",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft379_t04:route-precedence",
+              "digest": "sha256:ad2cf31375d428c33f6565b19224de1a4fa323f73ad3f01af22c4575b347d181",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,insert,failed,2,TestCheckpointEntryRepairForms/test-only_repair,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,489\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,795\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35729,489\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointEntryRepairForms/test-only_repair,\"record_repair_test.go:81: checkpoint = exit 1, stderr \\\"gate subject unavailable: completion evidence: chunk 1: completed Standards; resolve findings and obtain a completed result\\\\\\\\nnext=bench record 'review' --help\\\\\\\\n\\\"; want a refusal whose r… (291 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointKeepsStrictEvidence/moved_chunk,\"review_checkpoint_commits_test.go:188: strict evidence = 1 gate subject unavailable: completion evidence: chunk 1: stale Standards; review the current frozen pair\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "rc-write-t04-write-root-conformance",
+          "performer": "claude:ft379_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t04:write-root-conformance",
+            "digest": "sha256:70ea8804c429c0b37c6f05e48f45f919dc47bb04bc21965737d4c7dde896389c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft379-build,4feb26a55f0d4b9bb1eb3011f9ec2572e02be868,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15172,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "write-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": []
