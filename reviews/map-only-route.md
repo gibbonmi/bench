@@ -434,6 +434,80 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "mr-a-standards-r2",
+          "performer": "claude:mr_a_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:mr_a_standards_r2",
+            "digest": "sha256:e9f131eb84f15ed20021d0f7eb36af1c666cb479da8c2e5ccfd1dad3a84ce01a",
+            "excerpt": "## Standards (claude:mr_a_standards_r2, opus/high, confirming round 2, pair b10edf16c..306f1eb9, chunk tip 3327a8e3, evidence sha256:b9db3f727f1778b7625cd781458f2bbd858127493840f473f5db80c5791d4483 current=true)\n\n- S1 closed: map-only-route.md:42-43 lists only the check-read parts, and line 43 says no check reads the gap log (true: gather.go:48-70 reads status, fence, coverage map). Anchor registry_ticket_passes.go:91 and test literal registry_ticket_passes_test.go:121 changed together; no canary pins the old bytes.\n- S2 closed: field-guide.html:1086-1089 and 1329-1331 put the map-only route before the fan-out; sentences 17/18 and 12/21 words; <p> markup unchanged.\n- S4 closed: benchkit.md:590-591 is its own one-sentence paragraph; the first paragraph (581-588) has 6 sentences.\n- S5 closed: const route at test line 100; the test does not use the registry's mapOnlyRoute; all 20 reference rows use route; the pointer row names its own file.\n- S6 closed: the doc comment at test lines 96-98 is active voice.\n- S3/S7: spec line 121 and the Closed-decisions lines untouched.\n- S8 (new, one source per fact): map-only-route.md:37 \"The slicer also stops when the map holds no decision ticket.\" internal/maps/validation.go:21-22 already gives the diagnostic \"missing decision ticket\" for that map, and Eligibility (line 7) refuses any map with a bench maps diagnostic, so the new stop restates the rule and can never fire. MR34's reason at spec.md:228 (\"no check turns red\") is false. Disposition: auto-fix. Confidence 8.\n- S9 (new, drift): D5 at spec.md:297 names two stop conditions while spec.md:131-132 has three. Disposition: auto-fix. Confidence 7.\n\nOpen: 2. Worst: S8.\n\n### Advice\n- Fix S8 by dropping MR34 with its anchor and test row, or by pointing the edge-inventory line (spec.md:239) at Eligibility; if MR34 stays, its reason must cite the bench maps diagnostic.\n- The new ticket acceptance item says \"The Thin spec sentence\" while the reference has two sentences. MR23 claims its test covers \"names the gap log apart\", but no anchor pins line 43.\n\n### Examined\n--check-current inside the worktree (the primary checkout refused with \"assignment required\"); the full diff 0fc73c29..306f1eb9; map-only-route.md; spec.md; field-guide.html 1078-1091 and 1324-1335; benchkit.md 575-599; gather.go 40-79; validation.go 1-45; ste-prose.md; finding-discipline.md; searches over Further notes and gap-log readers, canary pins, and \"decision ticket\".\n"
+          },
+          "axis": "Standards",
+          "base": "b10edf16c05da80525b0bb0b6ca8341c37a912f3",
+          "tip": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+          "finding_ids": [
+            "S8",
+            "S9"
+          ],
+          "supersedes": [
+            "mr-a-standards-r1"
+          ]
+        },
+        {
+          "id": "mr-a-spec-r2",
+          "performer": "claude:mr_a_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:mr_a_spec_r2",
+            "digest": "sha256:db236fa207bdf27c40479b740e72bcb83b9efe7085e41c2c6af9e921306e8087",
+            "excerpt": "## Spec (claude:mr_a_spec_r2, opus/high, confirming round 2, pair b10edf16c..306f1eb9, chunk tip 3327a8e3, evidence sha256:b9db3f727f1778b7625cd781458f2bbd858127493840f473f5db80c5791d4483 current=true)\n\n- P1 closed: story 31 \"both write-spec passages name the route, so that the guide stays true\"; field-guide.html:1086-1089 and 1329-1331 now put the map-only route first and the fan-out after \"Otherwise\".\n- P2 closed: the reference limits the read list to six parts at map-only-route.md:42, and line 43 adds the gap log for the sign-off with no check reading it; spec.md:137 says the same.\n- Expansion accepted: the edge inventory promised the stop under story 22 (spec.md:239); the new stop is one sentence in spec.md:132, map-only-route.md:37, the registry, and the test; MR34 seam cell (spec.md:228) in the citation form; MR28, the chunk row, ticket Covers, anchor list, and acceptance extended; learning at capture/learnings.md:27.\n- P3 (new): MR23 now says \"it names the gap log apart from them\" with TestWriteSpecMapOnlyRoute as its seam, and MR28 needs one anchor per MR23 route sentence; map-only-route.md:43 has no anchor and no test row, so deleting it stays green. Disposition: auto-fix. Confidence 6.\n- P4 (new): D5 at spec.md:297 still names two stop triggers; the veto list leaves out the empty-map stop. Disposition: auto-fix. Confidence 5.\n\nRow audit: MR23 partial (P3), MR31 met, MR34 met.\nScope: the diff touches only the reference, the registry, the test, the field guide, benchkit.md, the spec, ticket 1, and reviews/map-only-route.md. The benchkit.md:590-593 paragraph split traces to no Spec finding (it is Standards S4); inside the fence, no behavior change.\nOpen: 2. Worst: P3.\n\n### Advice\nAdd a RequireInSection anchor for the gap-log sentence with its own independent test literal. Add the empty-map stop to the D5 veto line.\n\n### Examined\nThe diff 0fc73c29..306f1eb9; spec.md 129-147, 193-245, 287-301; ticket 1; map-only-route.md in full; field-guide.html 1076-1091 and 1322-1333; benchkit.md 580-593; capture/learnings.md:27-30; bench coverage (34 rows); rg for gap-log readers and anchors.\n"
+          },
+          "axis": "Spec",
+          "base": "b10edf16c05da80525b0bb0b6ca8341c37a912f3",
+          "tip": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+          "finding_ids": [
+            "P3",
+            "P4"
+          ],
+          "supersedes": [
+            "mr-a-spec-r1"
+          ]
+        },
+        {
+          "id": "mr-a-coverage-r2",
+          "performer": "claude:mr_a_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:mr_a_coverage_r2",
+            "digest": "sha256:8973cb26746edea0c2eaa0018a42330507bfcf947c49e752dbb389d05b637308",
+            "excerpt": "## Coverage (claude:mr_a_coverage_r2, opus/high, confirming round 2, pair b10edf16c..306f1eb9, chunk tip 3327a8e3, evidence sha256:b9db3f727f1778b7625cd781458f2bbd858127493840f473f5db80c5791d4483 current=true)\n\n- C1 closed: the third stop sentence at map-only-route.md:37 under ## Stop and return, one registry anchor at registry_ticket_passes.go:92, one independent test row at registry_ticket_passes_test.go:119. Registry lines 74-95 hold 22 anchors (4 Eligibility, 12 Route steps, 4 Stop and return, 1 Thin spec, 1 pointer); the test holds 22 rows; one-to-one with MR1-4, MR6-8, MR10-18, MR20-23, MR25, MR34. The S5 const route holds only the file path; every needle and want stays an inline literal; the test reads no registry symbol.\n- MR23 split confirmed: the anchored first sentence is one physical line at reference line 42 under ## Thin spec; registry needle (line 94) and test literal match byte for byte.\n- C2 (new): the second Thin spec sentence at reference line 43 has no anchor. Input: delete line 43. Expected break: the MR23 clause \"names the gap log apart from them\" disappears and nothing turns red (probe 3 silent); MR28 partly unmet. Should exist: a second Thin spec RequireInSection anchor and a matching test row, or a narrowed MR23 behavior cell. Disposition: ask-user. Confidence 6.\n\n| command | verdict | first_failure | restored |\n|---|---|---|---|\n| swap the MR34 registry Diagnostic, --package ./internal/anchors --run TestWriteSpecMapOnlyRoute | bit | TestWriteSpecMapOnlyRoute | yes |\n| swap the MR23 sentence to drop \"ownership fences\", --check docs-currency-workflow | bit | TestRootConformance | yes |\n| omit reference line 43, --check docs-currency-workflow | silent | null | yes |\n\nbench coverage --check: valid, 34 rows. docs-currency-workflow: pass.\nOpen: 1. Worst: C2.\n\n### Advice\nThe MR34 story cell reads 22, the same story as MR22; the Spec axis should confirm that story 22 owns the empty-map stop.\n\n### Examined\nThe repair diff 0fc73c29..306f1eb9; map-only-route.md 1-53; registry_ticket_passes.go 60-96; anchor_harness_test.go 155-224; rg over internal/anchors for registry symbols; the two skill files. Final git status --short: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "b10edf16c05da80525b0bb0b6ca8341c37a912f3",
+          "tip": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+          "finding_ids": [
+            "C2"
+          ],
+          "supersedes": [
+            "mr-a-coverage-r1"
+          ]
         }
       ]
     }
