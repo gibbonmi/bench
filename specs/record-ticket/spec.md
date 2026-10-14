@@ -303,61 +303,62 @@ RT21 and RT22 turn red under that mutation.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {"mode": "delegate", "run_id": "ft405-build-20261014", "orchestrator_session": "claude:ft405-orchestrator-20261014", "author_limit": 1, "assignments": {"01-retain-the-last-bounded-response.md": [], "02-stage-an-excerpt-for-a-requirement.md": [], "03-report-a-dirty-record-in-the-current-binding.md": [], "04-extract-the-record-change-functions.md": [], "05-record-one-ticket-in-one-write.md": [], "06-name-the-ticket-author-as-the-freezer.md": []}},
   "chunks": [
     {
       "id": "RT-RETAIN",
       "tickets": ["01-retain-the-last-bounded-response.md"],
       "verification": [
-        {"id": "retention", "command": "bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git --package ./internal/gate --package ./internal/handoff --package ./internal/roadmap --package ./internal/shift --package ./internal/status --package ./internal/worktree --package ./internal/conformance"},
-        {"id": "retain-root", "command": "bench test --check root-conformance"},
-        {"id": "nested-exec", "command": "bench test --check system --run TestExecNested"},
-        {"id": "record-skip", "command": "bench test --package ./cmd/bench", "probe": "drop the record-family skip from retention"}
+        {"id": "retention", "command": "bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git --package ./internal/gate --package ./internal/handoff --package ./internal/roadmap --package ./internal/shift --package ./internal/status --package ./internal/worktree --package ./internal/conformance", "ticket": "01-retain-the-last-bounded-response.md"},
+        {"id": "retain-root", "command": "bench test --check root-conformance", "ticket": "01-retain-the-last-bounded-response.md"},
+        {"id": "nested-exec", "command": "bench test --check system --run TestExecNested", "ticket": "01-retain-the-last-bounded-response.md"},
+        {"id": "record-skip", "command": "bench test --package ./cmd/bench", "probe": "drop the record-family skip from retention", "ticket": "01-retain-the-last-bounded-response.md"}
       ]
     },
     {
       "id": "RT-EXCERPT",
       "tickets": ["02-stage-an-excerpt-for-a-requirement.md"],
       "verification": [
-        {"id": "excerpt-stage", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/responsebound/... --package ./internal/shellcommand --package ./cmd/bench --package ./internal/conformance"},
-        {"id": "excerpt-root", "command": "bench test --check root-conformance"},
-        {"id": "command-match", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "compare only the first planned word with the retained call"}
+        {"id": "excerpt-stage", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/responsebound/... --package ./internal/shellcommand --package ./cmd/bench --package ./internal/conformance", "ticket": "02-stage-an-excerpt-for-a-requirement.md"},
+        {"id": "excerpt-root", "command": "bench test --check root-conformance", "ticket": "02-stage-an-excerpt-for-a-requirement.md"},
+        {"id": "command-match", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "compare only the first planned word with the retained call", "ticket": "02-stage-an-excerpt-for-a-requirement.md"}
       ]
     },
     {
       "id": "RT-CURRENT",
       "tickets": ["03-report-a-dirty-record-in-the-current-binding.md"],
       "verification": [
-        {"id": "binding", "command": "bench test --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance"},
-        {"id": "binding-root", "command": "bench test --check root-conformance"},
-        {"id": "strict-charge", "command": "bench test --package ./internal/preflight/...", "probe": "skip the record path for every preparation action"}
+        {"id": "binding", "command": "bench test --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance", "ticket": "03-report-a-dirty-record-in-the-current-binding.md"},
+        {"id": "binding-root", "command": "bench test --check root-conformance", "ticket": "03-report-a-dirty-record-in-the-current-binding.md"},
+        {"id": "strict-charge", "command": "bench test --package ./internal/preflight/...", "probe": "skip the record path for every preparation action", "ticket": "03-report-a-dirty-record-in-the-current-binding.md"}
       ]
     },
     {
       "id": "RT-EXTRACT",
       "tickets": ["04-extract-the-record-change-functions.md"],
       "verification": [
-        {"id": "extract-writers", "command": "bench test --package ./internal/reviewrecord/..."},
-        {"id": "extract-root", "command": "bench test --check root-conformance"}
+        {"id": "extract-writers", "command": "bench test --package ./internal/reviewrecord/...", "ticket": "04-extract-the-record-change-functions.md"},
+        {"id": "extract-root", "command": "bench test --check root-conformance", "ticket": "04-extract-the-record-change-functions.md"}
       ]
     },
     {
       "id": "RT-TICKET",
       "tickets": ["05-record-one-ticket-in-one-write.md"],
       "verification": [
-        {"id": "record-writers", "command": "bench test --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/responsebound --package ./internal/conformance"},
-        {"id": "record-root", "command": "bench test --check root-conformance"},
-        {"id": "one-write", "command": "bench test --package ./internal/reviewrecord/...", "probe": "run the ticket form as three separate writes"}
+        {"id": "record-writers", "command": "bench test --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/responsebound --package ./internal/conformance", "ticket": "05-record-one-ticket-in-one-write.md"},
+        {"id": "record-root", "command": "bench test --check root-conformance", "ticket": "05-record-one-ticket-in-one-write.md"},
+        {"id": "one-write", "command": "bench test --package ./internal/reviewrecord/...", "probe": "run the ticket form as three separate writes", "ticket": "05-record-one-ticket-in-one-write.md"}
       ]
     },
     {
       "id": "RT-GUIDE",
       "tickets": ["06-name-the-ticket-author-as-the-freezer.md"],
       "verification": [
-        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench"},
-        {"id": "guidance-root", "command": "bench test --check root-conformance"},
-        {"id": "guidance-prose", "command": "bench test --check prose-mechanics"},
-        {"id": "guidance-budgets", "command": "bench test --check guidance-prose-budgets"}
+        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench", "ticket": "06-name-the-ticket-author-as-the-freezer.md"},
+        {"id": "guidance-root", "command": "bench test --check root-conformance", "ticket": "06-name-the-ticket-author-as-the-freezer.md"},
+        {"id": "guidance-prose", "command": "bench test --check prose-mechanics", "ticket": "06-name-the-ticket-author-as-the-freezer.md"},
+        {"id": "guidance-budgets", "command": "bench test --check guidance-prose-budgets", "ticket": "06-name-the-ticket-author-as-the-freezer.md"}
       ]
     }
   ],
