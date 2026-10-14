@@ -279,14 +279,20 @@ The repair-session criterion leaves the binding and returns to intake as a Won't
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| RT-RETAIN / 01-retain-the-last-bounded-response.md, 02-stage-an-excerpt-for-a-requirement.md | Bench keeps the last response of each assignment worktree, and `bench record excerpt` stages it for one requirement. | RT1–RT17, RT57–RT59, RT65 | the planned retention and excerpt tests, the system suite's nested exec test, `TestHelpInventoryIsComplete` | no |
+| RT-RETAIN / 01-retain-the-last-bounded-response.md | Bench keeps the last response of each assignment worktree. | RT1–RT8, RT65 | the planned retention tests and the system suite's nested exec test | no |
+| RT-EXCERPT / 02-stage-an-excerpt-for-a-requirement.md | `bench record excerpt` stages the retained response for one requirement, and a release removes the stages. | RT9–RT17, RT57–RT59 | the planned excerpt tests and `TestHelpInventoryIsComplete` | no |
 | RT-CURRENT / 03-report-a-dirty-record-in-the-current-binding.md | `--check-current` binds beside a dirty review record of its spec and reports it. | RT40–RT46 | `TestEvidenceCurrentBinding`, `TestEvidenceSchemaRegistry`, and the planned binding tests | no |
-| RT-TICKET / 04-extract-the-record-change-functions.md, 05-record-one-ticket-in-one-write.md | `bench record ticket` writes the amendment, the freeze, and the owed verifications in one transaction. | RT18–RT39, RT55, RT56, RT60–RT63 | `TestChunkNeedsCurrentAmendment`, `TestCompletionHelpOrdering`, `TestHelpInventoryIsComplete`, and the planned ticket tests | yes |
+| RT-EXTRACT / 04-extract-the-record-change-functions.md | Each record writer calls one shared change function, with no change in behavior. | RT39 | `TestChunkNeedsCurrentAmendment` and the existing writer tests | no |
+| RT-TICKET / 05-record-one-ticket-in-one-write.md | `bench record ticket` writes the amendment, the freeze, and the owed verifications in one transaction. | RT18–RT38, RT55, RT56, RT60–RT63 | `TestCompletionHelpOrdering`, `TestHelpInventoryIsComplete`, and the planned ticket tests | yes |
 | RT-GUIDE / 06-name-the-ticket-author-as-the-freezer.md | The guidance names the last ticket's author as the freezer and the ticket form as the record call. | RT47–RT54, RT64 | `TestChunkChainAnchors` with `registry_chunk_chain.go` and its twin, and `TestRetainedWorkflow` with the `.bench/BENCH.md` needle in `registry_ft311_review_dispatch.go` | no |
 
-RT-RETAIN creates the stage that RT-TICKET reads, so it is its own review chunk.
+Each ticket that creates a seam for a later ticket is its own review chunk.
+RT-RETAIN creates the retained response, RT-EXCERPT creates the stage, and RT-EXTRACT creates the change functions.
+The slicing split the earlier RT-RETAIN chunk into RT-RETAIN and RT-EXCERPT, and the earlier RT-TICKET chunk into RT-EXTRACT and RT-TICKET.
+
 RT-RETAIN also owns the shared porcelain reader in `internal/git/status.go` and the `LandedState` call site there.
-RT-CURRENT shares the command registry files with RT-RETAIN and RT-TICKET, so the graph runs serially in chunk order.
+RT-CURRENT shares the command registry files with RT-EXCERPT and RT-TICKET, so it runs between them.
+RT-TICKET stays one ticket, because the earlier-ticket route and the base rule run inside the same transaction as the last-ticket route.
 RT-GUIDE comes last, because its sentences name the forms that RT-TICKET ships.
 
 The central-property mutation of RT-TICKET makes the ticket form run three separate writes.
@@ -300,13 +306,21 @@ RT21 and RT22 turn red under that mutation.
   "chunks": [
     {
       "id": "RT-RETAIN",
-      "tickets": ["01-retain-the-last-bounded-response.md", "02-stage-an-excerpt-for-a-requirement.md"],
+      "tickets": ["01-retain-the-last-bounded-response.md"],
       "verification": [
-        {"id": "retention", "command": "bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git --package ./internal/gate --package ./internal/handoff --package ./internal/roadmap --package ./internal/shift --package ./internal/status --package ./internal/worktree --package ./internal/shellcommand --package ./internal/conformance"},
+        {"id": "retention", "command": "bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git --package ./internal/gate --package ./internal/handoff --package ./internal/roadmap --package ./internal/shift --package ./internal/status --package ./internal/worktree --package ./internal/conformance"},
         {"id": "retain-root", "command": "bench test --check root-conformance"},
-        {"id": "excerpt-stage", "command": "bench test --package ./internal/reviewrecord/..."},
         {"id": "nested-exec", "command": "bench test --check system --run TestExecNested"},
         {"id": "record-skip", "command": "bench test --package ./cmd/bench", "probe": "drop the record-family skip from retention"}
+      ]
+    },
+    {
+      "id": "RT-EXCERPT",
+      "tickets": ["02-stage-an-excerpt-for-a-requirement.md"],
+      "verification": [
+        {"id": "excerpt-stage", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/responsebound/... --package ./internal/shellcommand --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "excerpt-root", "command": "bench test --check root-conformance"},
+        {"id": "command-match", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "compare only the first planned word with the retained call"}
       ]
     },
     {
@@ -319,12 +333,20 @@ RT21 and RT22 turn red under that mutation.
       ]
     },
     {
+      "id": "RT-EXTRACT",
+      "tickets": ["04-extract-the-record-change-functions.md"],
+      "verification": [
+        {"id": "extract-writers", "command": "bench test --package ./internal/reviewrecord/..."},
+        {"id": "extract-root", "command": "bench test --check root-conformance"}
+      ]
+    },
+    {
       "id": "RT-TICKET",
-      "tickets": ["04-extract-the-record-change-functions.md", "05-record-one-ticket-in-one-write.md"],
+      "tickets": ["05-record-one-ticket-in-one-write.md"],
       "verification": [
         {"id": "record-writers", "command": "bench test --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/responsebound --package ./internal/conformance"},
         {"id": "record-root", "command": "bench test --check root-conformance"},
-        {"id": "one-write", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "run the ticket form as three separate writes"}
+        {"id": "one-write", "command": "bench test --package ./internal/reviewrecord/...", "probe": "run the ticket form as three separate writes"}
       ]
     },
     {

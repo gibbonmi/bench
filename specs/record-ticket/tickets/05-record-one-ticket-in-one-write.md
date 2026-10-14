@@ -1,8 +1,8 @@
 # Record one ticket in one write
 
-Blocked by: 04-extract-the-record-change-functions.md
+Blocked by: 03-report-a-dirty-record-in-the-current-binding.md, 04-extract-the-record-change-functions.md
 Writes: internal/reviewrecord/ticket.go (new), internal/reviewrecord/ticket_test.go (new), internal/reviewrecord/change.go (new), internal/reviewrecord/repair.go, internal/reviewrecord/repair_test.go, internal/reviewrecord/fold.go, internal/reviewrecord/fold_test.go, internal/reviewrecord/export_test.go, internal/reviewrecord/recordcmd/ticket.go (new), internal/reviewrecord/recordcmd/ticket_test.go (new), internal/reviewrecord/recordcmd/command.go, internal/reviewrecord/recordcmd/command_test.go, internal/reviewrecord/recordcmd/refusal.go, internal/reviewrecord/recordcmd/planned_cell.go, internal/reviewrecord/recordcmd/verification.go, internal/reviewrecord/recordcmd/stage.go (new), internal/reviewrecord/recordcmd/ordering_test.go, internal/reviewrecord/recordtest/fixture.go, internal/reviewrecord/recordtest/stage.go (new), internal/responsebound/retain.go (new), cmd/bench/record_operations_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: RT18, RT19, RT20, RT21, RT22, RT23, RT24, RT25, RT26, RT27, RT28, RT29, RT30, RT31, RT32, RT33, RT34, RT35, RT36, RT38, RT55, RT56, RT60, RT61, RT62, RT63
+Covers: RT18, RT19, RT20, RT21, RT22, RT23, RT24, RT25, RT26, RT27, RT28, RT29, RT30, RT31, RT32, RT33, RT34, RT35, RT36, RT37, RT38, RT55, RT56, RT60, RT61, RT62, RT63
 
 ## What to build
 
@@ -49,10 +49,11 @@ The ticket form's help derives its step list from `CompletionOrder`: the steps b
 - [ ] A call for the first chunk with no base refuses and asks for `--base`.
 - [ ] A plan change that removes a recorded chunk refuses and names `bench record amendment`.
 - [ ] The form refuses a planned seam cell, a ticket outside the chunk, and a plan whose requirements name no ticket.
-- [ ] A probe requirement records the probe values of the staged answer.
+- [ ] A probe requirement records the probe outcome, the focused exit, and the restore of the staged answer.
 - [ ] Used stages are absent after a written call and present after a refused call.
 - [ ] The form refuses a stage from another commit or from a run with a dirty Go file.
 - [ ] The form accepts a stage from a run with only the record path dirty.
 - [ ] The first chunk's last ticket creates an absent record with `--base`.
 - [ ] `bench record` help lists the ticket and excerpt forms, and the ticket form's step list follows `CompletionOrder`.
+- [ ] The ticket form calls the four shared functions of ticket 04 and copies none of their bodies.
 - [ ] The probe mutation that runs the three steps as three writes turns RT21 and RT22 red.

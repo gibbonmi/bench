@@ -1,8 +1,8 @@
 # Extract the record change functions
 
-Blocked by: 03-report-a-dirty-record-in-the-current-binding.md
+Blocked by: 02-stage-an-excerpt-for-a-requirement.md
 Writes: internal/reviewrecord/write.go, internal/reviewrecord/coverage.go, internal/reviewrecord/change.go (new), internal/reviewrecord/completion.go, internal/reviewrecord/export_test.go, internal/reviewrecord/replacement_test.go, internal/reviewrecord/fold_test.go, internal/reviewrecord/repair_test.go, internal/reviewrecord/recordcmd/amendment.go, internal/reviewrecord/recordcmd/chunk.go, internal/reviewrecord/recordcmd/verification.go, internal/reviewrecord/recordcmd/ordering_test.go
-Covers: RT37, RT39
+Covers: RT39
 
 ## What to build
 

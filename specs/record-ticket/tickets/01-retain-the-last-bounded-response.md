@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: cmd/bench/census_output.go, cmd/bench/census_output_test.go, cmd/bench/retain.go (new), cmd/bench/retain_test.go (new), cmd/bench/response_bound_test.go, cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand/, internal/responsebound/owner.go, internal/responsebound/owner_test.go, internal/responsebound/store.go, internal/responsebound/retain.go (new), internal/responsebound/retain_test.go (new), internal/responsebound/retire_test.go, internal/responsebound/responseboundtest/checkout.go, internal/git/status.go, internal/git/facts_test.go, internal/handoff/facts.go, internal/status/status.go, tests/canary/docs-currency-token-diet/, internal/roadmap/context_parse.go, internal/shift/shift.go, internal/worktree/land_identity.go, internal/worktree/response_spill_test.go, internal/gate/gate_go.go, internal/systemtest/exec_nested_bound_test.go
-Covers: RT1, RT2, RT3, RT4, RT5, RT6, RT7, RT8, RT9, RT65
+Covers: RT1, RT2, RT3, RT4, RT5, RT6, RT7, RT8, RT65
 
 ## What to build
 
@@ -52,5 +52,4 @@ A name comparison in a new `cmd/bench` file adds no line to either file.
 - [ ] A bounded call in the primary checkout writes no retained response.
 - [ ] A spill-failed response and a `passing` response each clear the earlier retained response.
 - [ ] A failed retention write leaves the printed response and the exit code unchanged.
-- [ ] A worktree release removes the retained response.
 - [ ] `LandedState` and `Facts` call the shared porcelain reader, and their existing tests stay green.
