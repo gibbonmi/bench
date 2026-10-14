@@ -4,14 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"go/build/constraint"
-	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/bounds"
-	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
@@ -98,10 +94,16 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		return Facts{}, defaultTipFailure
 	}
 	sealPresent, sealRefusal := binarySealFacts(root)
+	specPath := filepath.ToSlash(specref.RelTo(root, resolved))
+	collected := ownershipSource(root, specPath, resolvedSource, changedPaths, sealPresent, sealRefusal == nil)
+	snapshot, ownershipFailure := collectOwnership(root, content, collected, ticketFacts.parsed)
+	if ownershipFailure != nil {
+		return Facts{}, ownershipFailure
+	}
 
 	return withFoldResolution(root, withCompletionPlan(root, Facts{
 		Mode:                  mode,
-		SpecPath:              filepath.ToSlash(specref.RelTo(root, resolved)),
+		SpecPath:              specPath,
 		DefaultBranch:         defaultBranch,
 		DefaultBranchResolved: defaultBranchResolved,
 		DefaultBranchCurrent:  defaultBranchCurrent,
@@ -122,9 +124,8 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		TicketDiagnostics:     ticketFacts.diagnostics,
 		BlockerCycles:         ticketFacts.cycles,
 		WritesPathExists:      ticketFacts.writes,
-		WritesFixturePins:     ticketFacts.pins,
-		WritesBoundFiles:      ticketFacts.bound,
-		WritesAnchorFiles:     ticketFacts.anchors,
+		Ownership:             snapshot,
+		KitObligations:        kitObligations(root, snapshot),
 		WritesSystemTagged:    ticketFacts.systemTag,
 		TicketPinsKit:         ticketFacts.kitPinned,
 		TicketsDirExists:      ticketFacts.dirExists,
@@ -231,9 +232,6 @@ type ticketFacts struct {
 	diagnostics []string
 	cycles      []string
 	writes      map[string]bool
-	pins        map[string][]string
-	bound       map[string][]string
-	anchors     map[string][]string
 	systemTag   map[string]bool
 	kitPinned   map[string]bool
 	dirExists   bool
@@ -294,24 +292,11 @@ func gatherTicketsWithPolicy(root, dir, mode, tag string, noFollow bool) (ticket
 
 // gradeTickets parses each enumerated ticket against its siblings and the
 // spec tag, and probes the tree for every declared `Writes:` entry. The
-// anchor registry scan reads the graded tree once, so a branch that adds an
-// anchor is graded by its own registry. The duplicate-identity
-// diagnostics the enumeration reports open the diagnostic list, so a duplicate
-// basename is named before the grammar faults below it.
+// duplicate-identity diagnostics the enumeration reports open the diagnostic
+// list, so a duplicate basename is named before the grammar faults below it.
 func gradeTickets(root string, files []tickets.Entry, duplicates []string, tag string) (ticketFacts, *BootstrapFailure) {
-	pins, pinErr := canary.FixturePins(root)
-	if pinErr != nil {
-		return ticketFacts{}, &BootstrapFailure{"fixture inventory not readable", pinErr.Error()}
-	}
-	refs, refErr := anchors.ReferencingFiles(root)
-	if refErr != nil {
-		return ticketFacts{}, &BootstrapFailure{"anchor registry not readable", refErr.Error()}
-	}
 	facts := ticketFacts{
 		writes:    map[string]bool{},
-		pins:      map[string][]string{},
-		bound:     map[string][]string{},
-		anchors:   map[string][]string{},
 		systemTag: map[string]bool{},
 		kitPinned: map[string]bool{},
 	}
@@ -333,59 +318,11 @@ func gradeTickets(root string, files []tickets.Entry, duplicates []string, tag s
 		facts.parsed = append(facts.parsed, parsed)
 		facts.kitPinned[file.Name] = bytes.Contains(file.Data, []byte(kitEnvMarker))
 		for _, entry := range parsed.Writes {
-			facts.probe(root, entry, pins, refs)
+			facts.probe(root, entry)
 		}
 	}
 	facts.cycles = tickets.Cycles(facts.parsed)
 	return facts, nil
-}
-
-// kitEnvMarker is the literal a ticket states to pin the kit a system-tagged
-// fixture reads. An ambient value flips such a fixture under composition, so the
-// ticket names the variable rather than inheriting whatever the session holds.
-const kitEnvMarker = "BENCH_KIT"
-
-// systemTagged reports whether one `Writes:` path names a Go test file whose
-// //go:build expression carries the system tag. The constraint parse is the same
-// one the coverage citations grade with, so the two never disagree about which
-// file is system-tagged. A path that is no test file, that does not read, or that
-// carries no constraint answers no.
-func systemTagged(root, path string) bool {
-	if !strings.HasSuffix(path, "_test.go") {
-		return false
-	}
-	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
-	if err != nil {
-		return false
-	}
-	for _, line := range strings.Split(string(data), "\n") {
-		trimmed := strings.TrimSpace(line)
-		if trimmed != "" && !strings.HasPrefix(trimmed, "//") {
-			return false
-		}
-		if !constraint.IsGoBuild(trimmed) {
-			continue
-		}
-		expr, parseErr := constraint.Parse(trimmed)
-		return parseErr == nil && exprHoldsTag(expr, "system")
-	}
-	return false
-}
-
-// exprHoldsTag reports whether a build expression mentions tag anywhere. A
-// negated mention still counts: the file's verdict depends on the tag either way.
-func exprHoldsTag(expr constraint.Expr, tag string) bool {
-	switch typed := expr.(type) {
-	case *constraint.TagExpr:
-		return typed.Tag == tag
-	case *constraint.NotExpr:
-		return exprHoldsTag(typed.X, tag)
-	case *constraint.AndExpr:
-		return exprHoldsTag(typed.X, tag) || exprHoldsTag(typed.Y, tag)
-	case *constraint.OrExpr:
-		return exprHoldsTag(typed.X, tag) || exprHoldsTag(typed.Y, tag)
-	}
-	return false
 }
 
 // assignmentTarget is the id of the active assignment that owns this preflight

@@ -1,9 +1,13 @@
 package tickets
 
 import (
+	"os"
+	"path"
 	"reflect"
 	"slices"
 	"sort"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -89,6 +93,52 @@ func TestCommandRowsBindTheHelpProjectionAndEnvelopeCases(t *testing.T) {
 	for _, file := range []string{"cmd/bench/command_registry.go", "cmd/bench/command_registry_test.go"} {
 		if !slices.Contains(BoundFiles("internal/harnesses/harnesses.go"), file) {
 			t.Errorf("BoundFiles for a command package omits %q", file)
+		}
+	}
+}
+
+// TestBindingLinesLocateEveryRow reads this registry's own source. BindingRegistry must
+// name that file, and BindingLines must place each compiled row on the line that spells
+// its prefix, so a closure reason cites the row it applied.
+func TestBindingLinesLocateEveryRow(t *testing.T) {
+	src, err := os.ReadFile(path.Base(BindingRegistry))
+	if err != nil {
+		t.Fatalf("BindingRegistry %s is not this package's file: %v", BindingRegistry, err)
+	}
+	lines, err := BindingLines(src)
+	if err != nil {
+		t.Fatalf("BindingLines: %v", err)
+	}
+	physical := strings.Split(string(src), "\n")
+	for _, row := range Bindings() {
+		line := lines[row.Prefix]
+		if line < 1 || !strings.Contains(physical[line-1], "Prefix: "+strconv.Quote(row.Prefix)) {
+			t.Errorf("BindingLines()[%q] = %d, want the line that declares the row", row.Prefix, line)
+		}
+	}
+	if _, err := BindingLines([]byte("package tickets\n")); err == nil {
+		t.Error("BindingLines over source without a bindings table succeeded, want an error")
+	}
+}
+
+// TestBindingRulesProjectBoundFiles keeps the typed rules and the legacy projection on one
+// table: every rule's prefix covers the path, no rule requires the path itself, and the
+// projection is the rules' sorted file set.
+func TestBindingRulesProjectBoundFiles(t *testing.T) {
+	for _, row := range Bindings() {
+		path := row.Prefix + "/probe.go"
+		var files []string
+		for _, rule := range BindingRules(path) {
+			if !Covers(rule.Prefix, path) || rule.File == path {
+				t.Errorf("BindingRules(%s) holds %v", path, rule)
+			}
+			if !slices.Contains(files, rule.File) {
+				files = append(files, rule.File)
+			}
+		}
+		sort.Strings(files)
+		if got := BoundFiles(path); len(files) == 0 || !reflect.DeepEqual(got, files) {
+			t.Errorf("BoundFiles(%s) = %v, want the rules' files %v", path, got, files)
 		}
 	}
 }

@@ -16,12 +16,37 @@ type FieldSpec struct {
 	Scoped bool
 }
 
+// FenceRole is the place of one scanned line in the code-fence state: an opening marker,
+// a closing marker, or neither. A line inside a fence is FenceNone, so only a marker line
+// carries a role.
+type FenceRole uint8
+
+const (
+	FenceNone FenceRole = iota
+	FenceOpen
+	FenceClose
+)
+
+// fenceRole is the role of the marker that the fence state meets: a marker opens a fence
+// when none is open, and closes the open one otherwise.
+func fenceRole(open bool) FenceRole {
+	if open {
+		return FenceClose
+	}
+	return FenceOpen
+}
+
 // FieldLine is one source line resolved against a field table.
 type FieldLine struct {
 	// Text is the line without its newline and with CRLF already normalized.
 	Text string
 	// Fenced marks a code-fence marker or a line inside a fence. Such a line matches no field.
 	Fenced bool
+	// FenceRole marks an opening or a closing fence marker. FenceLabel is that marker's
+	// exact text after its backticks. A schema owner that reads one fenced block keys on
+	// the open role and its label, so a label inside another fence opens nothing.
+	FenceRole  FenceRole
+	FenceLabel string
 	// Field names the matched field, and stays empty when the line matches none.
 	Field string
 	Value string
@@ -55,9 +80,9 @@ func (s FieldScan) Scan(content []byte) ([]FieldLine, []string) {
 	scopes := 0
 	inFence := false
 	for _, line := range lines {
-		if strings.HasPrefix(line, "```") {
+		if label, marker := strings.CutPrefix(line, "```"); marker {
+			scanned = append(scanned, FieldLine{Text: line, Fenced: true, FenceRole: fenceRole(inFence), FenceLabel: label})
 			inFence = !inFence
-			scanned = append(scanned, FieldLine{Text: line, Fenced: true})
 			continue
 		}
 		if inFence {

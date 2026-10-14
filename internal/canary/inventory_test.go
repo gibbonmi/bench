@@ -139,6 +139,61 @@ func TestFixturePinsAnswersEmptyForAnInventorylessRoot(t *testing.T) {
 	}
 }
 
+// TestPinsNameEachProducerLocation grades the typed pins under FixturePins: each producer
+// names the file and line that pin its path, and an included list names itself rather
+// than the BASE file that includes it.
+func TestPinsNameEachProducerLocation(t *testing.T) {
+	root := t.TempDir()
+	fixture := filepath.Join(root, "tests", "canary", "example-family", "planted")
+	writeFixtureFile(t, filepath.Join(fixture, "EXPECT"), "planted diagnostic\n")
+	writeFixtureFile(t, filepath.Join(fixture, "BASE"), "internal/example/base.go\n@base-include.list\n")
+	writeFixtureFile(t, filepath.Join(root, "base-include.list"), "internal/example/first.go\ninternal/example/included.go\n")
+	writeFixtureFile(t, filepath.Join(fixture, "files", "internal", "example", "overlay.go"), "package example\n")
+	writeFixtureFile(t, filepath.Join(fixture, "MUTATE.json"), "[\n  {\"path\":\"internal/example/base.go\",\"old\":\"a\",\"new\":\"b\"},\n  {\"path\":\"internal/example/mutated.go\",\"old\":\"a\",\"new\":\"b\"}\n]\n")
+	pins, err := Pins(root)
+	if err != nil {
+		t.Fatalf("Pins: %v", err)
+	}
+	const dir = "tests/canary/example-family/planted"
+	want := []Pin{
+		{"internal/example/base.go", dir, dir + "/BASE", 1, PinBase},
+		{"internal/example/first.go", dir, "base-include.list", 1, PinInclude},
+		{"internal/example/included.go", dir, "base-include.list", 2, PinInclude},
+		{"internal/example/overlay.go", dir, dir + "/files/internal/example/overlay.go", 0, PinOverlay},
+		{"internal/example/base.go", dir, dir + "/MUTATE.json", 2, PinMutation},
+		{"internal/example/mutated.go", dir, dir + "/MUTATE.json", 3, PinMutation},
+	}
+	if !slices.Equal(pins, want) {
+		t.Fatalf("Pins = %v, want %v", pins, want)
+	}
+}
+
+// TestPinsRefuseASpecialInventory keeps a present inventory that is no readable directory
+// a fault. Only absence answers empty, so a link or a file at tests/canary cannot read as
+// a repository with nothing pinned.
+func TestPinsRefuseASpecialInventory(t *testing.T) {
+	for name, place := range map[string]func(t *testing.T, root string){
+		"file": func(t *testing.T, root string) { writeFixtureFile(t, Dir(root), "not a directory\n") },
+		"link": func(t *testing.T, root string) {
+			writeFixtureFile(t, filepath.Join(root, "elsewhere", "family", "fixture", "BASE"), "internal/example/base.go\n")
+			if err := os.MkdirAll(filepath.Dir(Dir(root)), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(filepath.Join(root, "elsewhere"), Dir(root)); err != nil {
+				t.Fatal(err)
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			root := t.TempDir()
+			place(t, root)
+			if pins, err := FixturePins(root); err == nil || !strings.Contains(err.Error(), "canary fixture inventory") {
+				t.Fatalf("FixturePins(%s) = %v, %v; want the inventory refusal", name, pins, err)
+			}
+		})
+	}
+}
+
 // TestFixturePinsReturnsAnInventoryError keeps a malformed inventory a fault: only
 // an absent inventory answers empty.
 func TestFixturePinsReturnsAnInventoryError(t *testing.T) {

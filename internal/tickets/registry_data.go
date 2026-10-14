@@ -1,8 +1,13 @@
 package tickets
 
 import (
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"slices"
 	"sort"
+	"strconv"
 )
 
 // BindingRow binds one package prefix to the files a ticket must co-name when
@@ -82,20 +87,96 @@ func CommandPackage(path string) bool {
 	return false
 }
 
-// BoundFiles returns every file bound to a row whose prefix covers path, sorted
-// and deduplicated. A path under no bound package answers none.
-func BoundFiles(path string) []string {
-	var files []string
+// BindingRegistry is the repository path of this registry's source. A closure reason cites
+// it as the rule owner, so no consumer spells the location a second time.
+const BindingRegistry = "internal/tickets/registry_data.go"
+
+// BindingRule is one binding that path falls under: the bound prefix and one file the
+// prefix requires beside the path.
+type BindingRule struct {
+	Prefix, File string
+}
+
+// BindingRules returns every rule whose prefix covers path, in registry order. A row never
+// requires path itself.
+func BindingRules(path string) []BindingRule {
+	var rules []BindingRule
 	for _, row := range bindings {
 		if !Covers(row.Prefix, path) {
 			continue
 		}
 		for _, file := range row.Files {
-			if file != path && !slices.Contains(files, file) {
-				files = append(files, file)
+			if file != path {
+				rules = append(rules, BindingRule{Prefix: row.Prefix, File: file})
 			}
+		}
+	}
+	return rules
+}
+
+// BoundFiles returns every file bound to a row whose prefix covers path, sorted
+// and deduplicated. A path under no bound package answers none. It projects
+// BindingRules, so the closure and this answer read one table.
+func BoundFiles(path string) []string {
+	var files []string
+	for _, rule := range BindingRules(path) {
+		if !slices.Contains(files, rule.File) {
+			files = append(files, rule.File)
 		}
 	}
 	sort.Strings(files)
 	return files
+}
+
+// BindingLines maps each binding row's prefix to its line in src, the source bytes of
+// this registry. A caller that holds verified kit source names the row's actual location
+// this way. Source that does not parse, or that declares no bindings table, is an error.
+func BindingLines(src []byte) (map[string]int, error) {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, BindingRegistry, src, parser.SkipObjectResolution)
+	if err != nil {
+		return nil, err
+	}
+	lines := map[string]int{}
+	found := false
+	ast.Inspect(file, func(node ast.Node) bool {
+		spec, ok := node.(*ast.ValueSpec)
+		if !ok || len(spec.Names) != 1 || spec.Names[0].Name != "bindings" || len(spec.Values) != 1 {
+			return true
+		}
+		table, ok := spec.Values[0].(*ast.CompositeLit)
+		if !ok {
+			return true
+		}
+		found = true
+		for _, element := range table.Elts {
+			if row, ok := element.(*ast.CompositeLit); ok {
+				if prefix, ok := rowPrefix(row); ok {
+					lines[prefix] = fset.Position(row.Pos()).Line
+				}
+			}
+		}
+		return false
+	})
+	if !found {
+		return nil, fmt.Errorf("%s declares no bindings table", BindingRegistry)
+	}
+	return lines, nil
+}
+
+// rowPrefix is the Prefix string literal of one binding row literal.
+func rowPrefix(row *ast.CompositeLit) (string, bool) {
+	for _, element := range row.Elts {
+		field, ok := element.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+		key, keyOK := field.Key.(*ast.Ident)
+		value, valueOK := field.Value.(*ast.BasicLit)
+		if keyOK && valueOK && key.Name == "Prefix" && value.Kind == token.STRING {
+			prefix, err := strconv.Unquote(value.Value)
+			return prefix, err == nil
+		}
+	}
+	return "", false
 }

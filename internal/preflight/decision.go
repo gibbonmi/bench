@@ -10,10 +10,10 @@
 package preflight
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -105,18 +105,14 @@ type Facts struct {
 	// probe; whether an absent path is a fault is Decide's.
 	WritesPathExists map[string]bool
 
-	// WritesFixturePins reports, for each `Writes:` entry, the canary fixture
-	// directories that pin the path it names. The gatherer enumerates the live
-	// inventory; whether an unnamed fixture is a fault is Decide's.
-	WritesFixturePins map[string][]string
+	// Ownership is the canonical closure snapshot of the parsed tickets: every path each
+	// write requires, with every source reason, and the premise inventory with its
+	// diagnostics. The gatherer collects it; the closure rows grade its requirements.
+	Ownership ownership.Snapshot
 
-	// WritesBoundFiles reports, for each `Writes:` entry, the files the binding
-	// registry binds to the package the entry writes into.
-	WritesBoundFiles map[string][]string
-
-	// WritesAnchorFiles reports, for each `Writes:` entry, the anchor registry files
-	// whose string literal names the entry path or a path under it.
-	WritesAnchorFiles map[string][]string
+	// KitObligations is every required closure path that is a system-tagged test, with the
+	// file and line that carry the tag. The proposal reports each as a BENCH_KIT obligation.
+	KitObligations []KitObligation
 
 	// WritesSystemTagged reports, for each `Writes:` entry, whether it names a Go
 	// test file whose build constraint carries the system tag.
@@ -326,29 +322,6 @@ func blockersResolveCheck(f Facts) CheckResult {
 		return red("blockers-resolve", "blocker cycle(s): "+strings.Join(f.BlockerCycles, "; "))
 	}
 	return green("blockers-resolve")
-}
-
-func writesResolveCheck(f Facts) CheckResult {
-	var unresolved []string
-	seen := map[string]bool{}
-	for _, ticket := range f.Tickets {
-		for _, entry := range ticket.Writes {
-			path, isNew := tickets.WritesPath(entry)
-			if isNew {
-				continue
-			}
-			named := ticket.Name + ": " + entry
-			if seen[named] || f.WritesPathExists[entry] || slices.Contains(f.DeletedPaths, path) {
-				continue
-			}
-			seen[named] = true
-			unresolved = append(unresolved, named)
-		}
-	}
-	if len(unresolved) > 0 {
-		return red("writes-resolve", "Writes: entry names no tree path and carries no (new) marker: "+strings.Join(unresolved, ", "))
-	}
-	return green("writes-resolve")
 }
 
 func diffNonemptyCheck(f Facts) CheckResult {

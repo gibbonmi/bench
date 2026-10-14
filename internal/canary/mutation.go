@@ -179,33 +179,46 @@ func restoredFixturePath(rel string) string {
 	return filepath.Join(parts...)
 }
 
-func basePaths(root, basePath string) ([]string, error) {
+// baseEntry is one path a BASE list names: the list file that names it, the line it sits
+// on, and whether the list is an @ include rather than the fixture's own BASE file.
+type baseEntry struct {
+	path, list string
+	line       int
+	included   bool
+}
+
+// baseEntries reads one BASE list and every @ include it names, in list order. list is the
+// repository-relative spelling of the BASE file, which each of its direct entries reports
+// as its owner; an included entry reports its include path.
+func baseEntries(root, basePath, list string) ([]baseEntry, error) {
 	seenIncludes := map[string]bool{}
-	paths := []string{}
-	var walk func([]byte) error
-	walk = func(data []byte) error {
-		for _, rel := range strings.Fields(string(data)) {
-			if include, ok := strings.CutPrefix(rel, "@"); ok {
-				if !safeBasePath(include) {
-					return fmt.Errorf("invalid BASE include %q", include)
+	var entries []baseEntry
+	var walk func(data []byte, list string, included bool) error
+	walk = func(data []byte, list string, included bool) error {
+		for number, line := range strings.Split(string(data), "\n") {
+			for _, rel := range strings.Fields(line) {
+				if include, ok := strings.CutPrefix(rel, "@"); ok {
+					if !safeBasePath(include) {
+						return fmt.Errorf("invalid BASE include %q", include)
+					}
+					if seenIncludes[include] {
+						return fmt.Errorf("recursive BASE include %q", include)
+					}
+					seenIncludes[include] = true
+					data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(include)))
+					if err != nil {
+						return err
+					}
+					if err := walk(data, include, true); err != nil {
+						return err
+					}
+					continue
 				}
-				if seenIncludes[include] {
-					return fmt.Errorf("recursive BASE include %q", include)
+				if !safeBasePath(rel) {
+					return fmt.Errorf("invalid BASE path %q", rel)
 				}
-				seenIncludes[include] = true
-				included, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(include)))
-				if err != nil {
-					return err
-				}
-				if err := walk(included); err != nil {
-					return err
-				}
-				continue
+				entries = append(entries, baseEntry{path: rel, list: list, line: number + 1, included: included})
 			}
-			if !safeBasePath(rel) {
-				return fmt.Errorf("invalid BASE path %q", rel)
-			}
-			paths = append(paths, rel)
 		}
 		return nil
 	}
@@ -213,8 +226,23 @@ func basePaths(root, basePath string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := walk(data); err != nil {
+	if err := walk(data, list, false); err != nil {
 		return nil, err
+	}
+	return entries, nil
+}
+
+// basePaths is every path one BASE list and its includes name, in list order. The
+// materializer and the pin enumeration both read baseEntries, so the copied set and the
+// pinned set cannot disagree.
+func basePaths(root, basePath string) ([]string, error) {
+	entries, err := baseEntries(root, basePath, "")
+	if err != nil {
+		return nil, err
+	}
+	paths := make([]string, len(entries))
+	for i, entry := range entries {
+		paths[i] = entry.path
 	}
 	return paths, nil
 }

@@ -1,6 +1,7 @@
 package preflight
 
 import (
+	"slices"
 	"sort"
 	"strings"
 
@@ -74,4 +75,30 @@ func implicitEntries(f Facts) []string {
 		entries = append(entries, folder)
 	}
 	return entries
+}
+
+// writesResolveCheck grades each `Writes:` entry against the tree. An entry without the
+// (new) marker must name a path the tree holds, or an exact committed deletion of the
+// explicit source range.
+func writesResolveCheck(f Facts) CheckResult {
+	var unresolved []string
+	seen := map[string]bool{}
+	for _, ticket := range f.Tickets {
+		for _, entry := range ticket.Writes {
+			path, isNew := tickets.WritesPath(entry)
+			if isNew {
+				continue
+			}
+			named := ticket.Name + ": " + entry
+			if seen[named] || f.WritesPathExists[entry] || slices.Contains(f.DeletedPaths, path) {
+				continue
+			}
+			seen[named] = true
+			unresolved = append(unresolved, named)
+		}
+	}
+	if len(unresolved) > 0 {
+		return red("writes-resolve", "Writes: entry names no tree path and carries no (new) marker: "+strings.Join(unresolved, ", "))
+	}
+	return green("writes-resolve")
 }
