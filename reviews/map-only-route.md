@@ -668,6 +668,35 @@
               "excerpt": "bench worktree exec map-only-route-build -- bench probe internal/anchors/registry_ticket_passes.go --omit \"\t{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: \\\"Stop and return\\\", Needle: \\\"The slicer stops when a map decision is not an exact predicate.\\\", Diagnostic: \\\"map-only route: Stop and return must stop the slicer when a map decision is not an exact predicate\\\"},\" --package ./internal/anchors --run TestWriteSpecMapOnlyRoute --expect TestWriteSpecMapOnlyRoute\ntree[1]{target,head,dirty}:\n  map-only-route-build,97aca4e90bcb419ba27c6010ff2faf4bbde94a30,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_ticket_passes.go,omit,failed,1,TestWriteSpecMapOnlyRoute,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestWriteSpecMapOnlyRoute,passed,1\nspilled{lines=11,bytes=898,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/61be98876f5fd0ae0c1ba1b9ca95c354/1791938723134518952-aa71883b49d9c1f7.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,55,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestWriteSpecMapOnlyRoute,\"registry_ticket_passes_test.go:124: tree broken at \\\"The slicer stops when a map decision is not an exact predicate.\\\" in .agents/skills/bench-craft-spec/references/map-only-route.md = [], want \\\"map-only route: Stop and return must stop the s… (292 bytes)\",1\nskips[0]{package,test,reason}:\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_ticket_passes.go,omit,failed,1,TestWriteSpecMapOnlyRoute,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestWriteSpecMapOnlyRoute,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,508\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,55,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestWriteSpecMapOnlyRoute,\"registry_ticket_passes_test.go:124: tree broken at \\\"The slicer stops when a map decision is not an exact predicate.\\\" in .agents/skills/bench-craft-spec/references/map-only-route.md = [], want \\\"map-only route: Stop and return must stop the s… (292 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "mr-t01-rep2c-central-property",
+          "performer": "claude:mr_t01_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "40d64a917901a56a853a5b45d1213d5890abc577",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e971a5e76146d2f0db342844ff8a0bb6e0b4fb2a",
+            "digest": "sha256:9c616a583e9f236c3db3b10a53359767fb1644ccdbc2a840723bb73b79f7e621",
+            "excerpt": "bench worktree exec map-only-route-build -- bench probe internal/anchors/registry_ticket_passes.go --omit \"\t{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: \\\"Stop and return\\\", Needle: \\\"The slicer stops when a map decision is not an exact predicate.\\\", Diagnostic: \\\"map-only route: Stop and return must stop the slicer when a map decision is not an exact predicate\\\"},\" --package ./internal/anchors --run TestWriteSpecMapOnlyRoute --expect TestWriteSpecMapOnlyRoute\ntree[1]{target,head,dirty}:\n  map-only-route-build,97aca4e90bcb419ba27c6010ff2faf4bbde94a30,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_ticket_passes.go,omit,failed,1,TestWriteSpecMapOnlyRoute,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestWriteSpecMapOnlyRoute,passed,1\nspilled{lines=11,bytes=898,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/61be98876f5fd0ae0c1ba1b9ca95c354/1791938723134518952-aa71883b49d9c1f7.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,55,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestWriteSpecMapOnlyRoute,\"registry_ticket_passes_test.go:124: tree broken at \\\"The slicer stops when a map decision is not an exact predicate.\\\" in .agents/skills/bench-craft-spec/references/map-only-route.md = [], want \\\"map-only route: Stop and return must stop the s… (292 bytes)\",1\nskips[0]{package,test,reason}:\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_ticket_passes.go,omit,failed,1,TestWriteSpecMapOnlyRoute,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestWriteSpecMapOnlyRoute,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,508\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,55,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestWriteSpecMapOnlyRoute,\"registry_ticket_passes_test.go:124: tree broken at \\\"The slicer stops when a map decision is not an exact predicate.\\\" in .agents/skills/bench-craft-spec/references/map-only-route.md = [], want \\\"map-only route: Stop and return must stop the s… (292 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Delete the stop-and-return anchor from internal/anchors/registry_ticket_passes.go. TestWriteSpecMapOnlyRoute must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "e971a5e76146d2f0db342844ff8a0bb6e0b4fb2a",
+              "digest": "sha256:9c616a583e9f236c3db3b10a53359767fb1644ccdbc2a840723bb73b79f7e621",
+              "excerpt": "bench worktree exec map-only-route-build -- bench probe internal/anchors/registry_ticket_passes.go --omit \"\t{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: \\\"Stop and return\\\", Needle: \\\"The slicer stops when a map decision is not an exact predicate.\\\", Diagnostic: \\\"map-only route: Stop and return must stop the slicer when a map decision is not an exact predicate\\\"},\" --package ./internal/anchors --run TestWriteSpecMapOnlyRoute --expect TestWriteSpecMapOnlyRoute\ntree[1]{target,head,dirty}:\n  map-only-route-build,97aca4e90bcb419ba27c6010ff2faf4bbde94a30,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_ticket_passes.go,omit,failed,1,TestWriteSpecMapOnlyRoute,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestWriteSpecMapOnlyRoute,passed,1\nspilled{lines=11,bytes=898,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/61be98876f5fd0ae0c1ba1b9ca95c354/1791938723134518952-aa71883b49d9c1f7.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,55,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestWriteSpecMapOnlyRoute,\"registry_ticket_passes_test.go:124: tree broken at \\\"The slicer stops when a map decision is not an exact predicate.\\\" in .agents/skills/bench-craft-spec/references/map-only-route.md = [], want \\\"map-only route: Stop and return must stop the s… (292 bytes)\",1\nskips[0]{package,test,reason}:\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_ticket_passes.go,omit,failed,1,TestWriteSpecMapOnlyRoute,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestWriteSpecMapOnlyRoute,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,508\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,55,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestWriteSpecMapOnlyRoute,\"registry_ticket_passes_test.go:124: tree broken at \\\"The slicer stops when a map decision is not an exact predicate.\\\" in .agents/skills/bench-craft-spec/references/map-only-route.md = [], want \\\"map-only route: Stop and return must stop the s… (292 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -888,11 +917,118 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "40d64a917901a56a853a5b45d1213d5890abc577",
+    "performer": "claude:mr-orchestrator-20261013",
+    "reconciliation": {
+      "MR1": "covered",
+      "MR10": "covered",
+      "MR11": "covered",
+      "MR12": "covered",
+      "MR13": "covered",
+      "MR14": "covered",
+      "MR15": "covered",
+      "MR16": "covered",
+      "MR17": "covered",
+      "MR18": "covered",
+      "MR19": "covered",
+      "MR2": "covered",
+      "MR20": "covered",
+      "MR21": "covered",
+      "MR22": "covered",
+      "MR23": "covered",
+      "MR24": "covered",
+      "MR25": "covered",
+      "MR26": "covered",
+      "MR27": "covered",
+      "MR28": "covered",
+      "MR29": "covered",
+      "MR3": "covered",
+      "MR30": "covered",
+      "MR31": "covered",
+      "MR32": "covered",
+      "MR33": "covered",
+      "MR4": "covered",
+      "MR5": "covered",
+      "MR6": "covered",
+      "MR7": "covered",
+      "MR8": "covered",
+      "MR9": "covered"
+    },
+    "verification": [
+      {
+        "id": "mr-final-coverage",
+        "performer": "claude:mr-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "40d64a917901a56a853a5b45d1213d5890abc577",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bbdd3ef2e1a16c86583fbad7dc5f36b34f45c352",
+          "digest": "sha256:8e2faed874e69b0b3a12f43e505971b05865628e595429e5578ca1250db61066",
+          "excerpt": "$ bench worktree exec map-only-route-build -- bench coverage --check specs/map-only-route/spec.md\ntree[1]{target,head,dirty}:\n  map-only-route-build,bbdd3ef2e1a16c86583fbad7dc5f36b34f45c352,false\nok: coverage map valid — 33 row(s)\nuncited: 11 row(s) with no seam-cell citation — MR5, MR9, MR19, MR24, MR26, MR27, MR29, MR30, MR31, MR32, MR33\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/map-only-route/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "mr-final-anchors-package",
+        "performer": "claude:mr-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "40d64a917901a56a853a5b45d1213d5890abc577",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bbdd3ef2e1a16c86583fbad7dc5f36b34f45c352",
+          "digest": "sha256:427c00451d11fa7f73e1d83834ea9e0c312dbd5c770373f0a5fddeb616799f1b",
+          "excerpt": "$ bench worktree exec map-only-route-build -- bench test --package ./internal/anchors --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  map-only-route-build,bbdd3ef2e1a16c86583fbad7dc5f36b34f45c352,false\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13796,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2034,180\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "anchors-package",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "mr-final-command-package",
+        "performer": "claude:mr-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "40d64a917901a56a853a5b45d1213d5890abc577",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bbdd3ef2e1a16c86583fbad7dc5f36b34f45c352",
+          "digest": "sha256:427c00451d11fa7f73e1d83834ea9e0c312dbd5c770373f0a5fddeb616799f1b",
+          "excerpt": "$ bench worktree exec map-only-route-build -- bench test --package ./internal/anchors --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  map-only-route-build,bbdd3ef2e1a16c86583fbad7dc5f36b34f45c352,false\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13796,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2034,180\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "command-package",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "mr-final-system",
+        "performer": "claude:mr-orchestrator-20261013",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "40d64a917901a56a853a5b45d1213d5890abc577",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bbdd3ef2e1a16c86583fbad7dc5f36b34f45c352",
+          "digest": "sha256:9cce56cd2b728ba8ce39654170a01b00fa59d5a78cc0e2719d149675c43c2d02",
+          "excerpt": "$ bench worktree exec map-only-route-build -- bench test --check system\ntree[1]{target,head,dirty}:\n  map-only-route-build,bbdd3ef2e1a16c86583fbad7dc5f36b34f45c352,false\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,169,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,69216,169\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
