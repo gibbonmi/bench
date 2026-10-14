@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-ticket/spec.md",
-  "plan_digest": "sha256:6febb6148ff4363a2d5dcf90bf873a539f0d16f2648aa80ef885f99b874f2228",
+  "plan_digest": "sha256:30db4245a71592355ddf5291df0f2514b7fb4d7c62e05ee3e6ac2fd7f9d97052",
   "implementation_session": "",
   "chunks": [
     {
@@ -1284,6 +1284,21 @@
       "from": "sha256:18ca06ebcf3ec58b338df8d8552ecec32801d67f68f66560e9196e8e4864d964",
       "to": "sha256:6febb6148ff4363a2d5dcf90bf873a539f0d16f2648aa80ef885f99b874f2228",
       "chunk_ids": {
+        "RT-EXCERPT": [
+          "RT-EXCERPT"
+        ],
+        "RT-RETAIN": [
+          "RT-RETAIN"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6febb6148ff4363a2d5dcf90bf873a539f0d16f2648aa80ef885f99b874f2228",
+      "to": "sha256:30db4245a71592355ddf5291df0f2514b7fb4d7c62e05ee3e6ac2fd7f9d97052",
+      "chunk_ids": {
+        "RT-CURRENT": [
+          "RT-CURRENT"
+        ],
         "RT-EXCERPT": [
           "RT-EXCERPT"
         ],
