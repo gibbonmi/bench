@@ -98,22 +98,32 @@ func TestCommitChainSkipsAfterRefusal(t *testing.T) {
 	}
 }
 
-// BO53: a red build returns its own exit, calls no preflight, and still names the commit.
+// wantPublishedStepRedExit is the public spelling of the chain's exit for a commit that
+// published and a later step that failed, written apart from the constant the chain reads,
+// so a changed code reds every row that pins it.
+const wantPublishedStepRedExit = 4
+
+// BO53: a red build after a published commit exits with the published-step-red code, not
+// the build's own exit, calls no preflight, and still names the commit.
 func TestCommitChainStopsAtRedBuild(t *testing.T) {
 	stdout, code, calls := runCommitChain(t, chainSlug, chainPublished, 0, 130, 0)
-	if want := wantChainLine(chainPublished, "red", "skipped"); code != 130 || lastLine(stdout) != want {
-		t.Fatalf("chain = (%d, %q), want exit 130 ending in %q", code, stdout, want)
+	if want := wantChainLine(chainPublished, "red", "skipped"); code != wantPublishedStepRedExit || lastLine(stdout) != want {
+		t.Fatalf("chain = (%d, %q), want exit %d ending in %q", code, stdout, wantPublishedStepRedExit, want)
 	}
 	if len(calls.preflights) != 0 {
 		t.Fatalf("a red build ran preflights %q", calls.preflights)
 	}
 }
 
-// BO54: a red preflight after a green build is the chain's exit.
+// BO54: a red preflight after a published commit and a green build exits with the
+// published-step-red code and never 1, which means that nothing was committed. The chain
+// line names the published commit.
 func TestCommitChainReportsRedPreflight(t *testing.T) {
-	stdout, code, _ := runCommitChain(t, chainSlug, chainPublished, 0, 0, 1)
-	if want := wantChainLine(chainPublished, "green", "red"); code != 1 || lastLine(stdout) != want {
-		t.Fatalf("chain = (%d, %q), want exit 1 ending in %q", code, stdout, want)
+	for _, preflightExit := range []int{1, 2, 3} {
+		stdout, code, _ := runCommitChain(t, chainSlug, chainPublished, 0, 0, preflightExit)
+		if want := wantChainLine(chainPublished, "green", "red"); code != wantPublishedStepRedExit || lastLine(stdout) != want {
+			t.Fatalf("preflight exit %d: chain = (%d, %q), want exit %d ending in %q", preflightExit, code, stdout, wantPublishedStepRedExit, want)
+		}
 	}
 }
 
@@ -149,5 +159,8 @@ func TestCommitHelpEndsWithChainHelp(t *testing.T) {
 	code := Command{Stdout: &out, Stderr: &errOut, Executable: "bench"}.Run([]string{"commit", "--help"})
 	if code != 0 || !strings.HasPrefix(out.String(), "usage: bench commit") || !strings.HasSuffix(out.String(), "\n"+chainHelp+"\n") {
 		t.Fatalf("help = (%d, %q), want the commit help ending in the chain help line", code, out.String())
+	}
+	if want := fmt.Sprintf("exit %d: published; a later step failed", wantPublishedStepRedExit); !strings.Contains(chainHelp, want) {
+		t.Fatalf("chain help = %q, want it to state %q", chainHelp, want)
 	}
 }

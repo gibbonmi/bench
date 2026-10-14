@@ -43,10 +43,12 @@ var commitmentFaces = []Face{
 		Route:     []Step{Command(Text("bench commitment plan --input"), Operator("file"))},
 	},
 	{
-		// The assignment holds no current delivery binding, so the agent binds its own
-		// assignment to the eligible outcome.
+		// The assignment holds no current delivery binding. The agent binds its own
+		// assignment to the eligible outcome, or the change leaves the production paths out,
+		// or a one-ticket light-path folder covers them.
 		Verb:      Commitment,
 		Name:      CommitmentUnbound,
+		Preface:   "bind the outcome with the command that follows, remove the production paths from the change, or cover them with a one-ticket light-path folder",
 		Authority: Agent,
 		Route:     []Step{Command(Text("bench commitment start --outcome"), Operator("id"), Text("--request"), Operator("request"), Text("--deliverable"), Operator("path"))},
 	},

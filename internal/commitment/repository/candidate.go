@@ -113,10 +113,38 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 	if !errors.Is(err, errUnbound) {
 		return err
 	}
+	err = unboundNaming(err, production)
 	if publication {
 		return store.lightPathPublication(tree, current, production, delivery, err)
 	}
 	return store.lightPath(tree, current, production, err)
+}
+
+// unboundNamedPaths bounds the production paths that the unbound refusal names. Past it the
+// refusal names this many and states the total.
+const unboundNamedPaths = 5
+
+// unboundNaming is the unbound refusal over the production paths that need a binding: the
+// same face, with a sentence that names those paths.
+func unboundNaming(unbound error, production []string) error {
+	named := make([]string, 0, unboundNamedPaths+1)
+	for _, p := range production[:min(len(production), unboundNamedPaths)] {
+		named = append(named, fmt.Sprintf("%q", p))
+	}
+	if len(production) > unboundNamedPaths {
+		named = append(named, fmt.Sprintf("and %d more (%d total)", len(production)-unboundNamedPaths, len(production)))
+	}
+	noun := "path"
+	if len(production) > 1 {
+		noun = "paths"
+	}
+	suffix := " for production " + noun + " " + strings.Join(named, ", ")
+	var raised refusalroute.Raised
+	if errors.As(unbound, &raised) {
+		raised.Err = fmt.Errorf("%w%s", raised.Err, suffix)
+		return raised
+	}
+	return fmt.Errorf("%w%s", unbound, suffix)
 }
 
 // branchReference names the commit that a commit candidate's own change is read from. The

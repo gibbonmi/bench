@@ -131,7 +131,11 @@ func Steps(t testing.TB, face refusalroute.Face, next, preface string, names []s
 			t.Fatalf("%s next = %q, want it to name %q", face.Name, next, name)
 		}
 	}
-	steps := refusalroute.Steps(strings.TrimPrefix(route, preface+"; "))
+	route = strings.TrimPrefix(route, preface+"; ")
+	if face.Preface != "" {
+		route = strings.TrimPrefix(route, face.Preface+"; ")
+	}
+	steps := refusalroute.Steps(route)
 	if len(steps) != len(face.Route) {
 		t.Fatalf("%s next = %q prints %d steps, want the %d the face declares", face.Name, next, len(steps), len(face.Route))
 	}
