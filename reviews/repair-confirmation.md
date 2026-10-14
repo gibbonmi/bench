@@ -298,9 +298,9 @@
     {
       "id": "RC-PROVE",
       "base": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
-      "tip": "3db8f92bbfb8a7d3d9c491d5b8a2519c375522f4",
-      "plan_digest": "sha256:916b0a0f5a2d90347ebcefb5f5ef436ff33df27695c9098c9706ddc955d03128",
-      "source_digest": "be120416457f52be935c0fb87148cc0618e013d6",
+      "tip": "78f71b6c954779f0cee672faa34a471eff10b111",
+      "plan_digest": "sha256:109b21bb4cd44982fff1000ff628c3d5010f317ac1224596dd82c139ceb2a5ba",
+      "source_digest": "4c9845f5b2108637da6097f24b3e007d0d1ce7e4",
       "acceptance_rows": [
         "RC13",
         "RC14",
@@ -373,6 +373,71 @@
             "ref": "claude-agent:ft379_t02/prove-root-conformance",
             "digest": "sha256:380fd72a281cb1da5332195010866bc9b3c82b38c4af3106a6d21548129500b0",
             "excerpt": "$ bench test --check root-conformance\ntree: ft379-build, head a8b2f6531e4e949ccc39899edc355fb9ab1dc7dc\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14752,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0\n"
+          },
+          "requirement": "prove-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-prove-prover-t02-rep1",
+          "performer": "claude:ft379_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4c9845f5b2108637da6097f24b3e007d0d1ce7e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t02_rep1/prover",
+            "digest": "sha256:c20f228defe448896ec5f9b12ee29edd7a61ff991ec5922d9aca8ff31e3190a3",
+            "excerpt": "$ bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/gittest --package ./internal/outline\ntree: ft379-build, head adfaae5205d4d04d3e92eb6f8fafa6fbed638448\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commentgap,pass,260,42\n  github.com/gibbonmi/bench/internal/gittest,pass,29,2\n  github.com/gibbonmi/bench/internal/outline,pass,116,27\n  github.com/gibbonmi/bench/internal/testgap,pass,228,20\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0\n"
+          },
+          "requirement": "prover",
+          "command": "bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/gittest --package ./internal/outline",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-prove-prover-status-t02-rep1",
+          "performer": "claude:ft379_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4c9845f5b2108637da6097f24b3e007d0d1ce7e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t02_rep1/prover-status",
+            "digest": "sha256:1217ce51f8c483f459ff3c005b9baf7c171293c025a52657923a56ea8b1c6e83",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testgap/testgap.go,swap,failed,2,TestProveTestGap/RC14_deleted,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testgap,all,passed,20\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,588\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testgap,fail,219,20\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testgap,TestProveTestGap/RC14_deleted,\"testgap_test.go:79: prover verdict = a_test.go: file mode is changed or nonregular, want path is not an added or modified file\",1\n  github.com/gibbonmi/bench/internal/testgap,TestProveTestGap/RC53_renamed,\"testgap_test.go:79: prover verdict = a_test.go: file mode is changed or nonregular, want path is not an added or modified file\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "prover-status",
+          "command": "bench test --package ./internal/testgap",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "accept status D in the prover",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft379_t02_rep1/prover-status",
+              "digest": "sha256:1217ce51f8c483f459ff3c005b9baf7c171293c025a52657923a56ea8b1c6e83",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testgap/testgap.go,swap,failed,2,TestProveTestGap/RC14_deleted,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testgap,all,passed,20\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,588\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testgap,fail,219,20\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testgap,TestProveTestGap/RC14_deleted,\"testgap_test.go:79: prover verdict = a_test.go: file mode is changed or nonregular, want path is not an added or modified file\",1\n  github.com/gibbonmi/bench/internal/testgap,TestProveTestGap/RC53_renamed,\"testgap_test.go:79: prover verdict = a_test.go: file mode is changed or nonregular, want path is not an added or modified file\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "rc-prove-root-conformance-t02-rep1",
+          "performer": "claude:ft379_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4c9845f5b2108637da6097f24b3e007d0d1ce7e4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t02_rep1/prove-root-conformance",
+            "digest": "sha256:a0132cb0c48101dc244f9c26c15c6d7ca2a630088bf6227e95925a081af1697d",
+            "excerpt": "$ bench test --check root-conformance\ntree: ft379-build, head adfaae5205d4d04d3e92eb6f8fafa6fbed638448\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14953,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0\n"
           },
           "requirement": "prove-root-conformance",
           "command": "bench test --check root-conformance",
