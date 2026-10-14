@@ -83,11 +83,16 @@ version="$(node -e '
 cd "$modroot"
 export CGO_ENABLED=0
 if [[ "$out" != /* ]]; then out="./$out"; fi
-go_build_flags=()
-while IFS= read -r arg; do go_build_flags+=("$arg"); done < <(node -e '
+# A command substitution carries the read's exit status, which a process substitution
+# drops. A failed or empty read stops the build, because go build without these flags
+# still succeeds and publishes an unreproducible, unstamped binary.
+flags_text="$(node -e '
   const registry = require(process.argv[1]);
   for (const arg of registry.toolchains.find(tool => tool.name === "go").operations.build) console.log(arg);
-' "$modroot/$go_requirements")
+' "$modroot/$go_requirements")" || { printf 'cannot read Go build flags from %s\n' "$go_requirements" >&2; exit 1; }
+[[ -n "$flags_text" ]] || { printf 'Go build input names no build flags: %s\n' "$go_requirements" >&2; exit 1; }
+go_build_flags=()
+while IFS= read -r arg; do go_build_flags+=("$arg"); done <<< "$flags_text"
 for index in "${!go_build_flags[@]}"; do
   go_build_flags[$index]="${go_build_flags[$index]//<package-version>/$version}"
 done
