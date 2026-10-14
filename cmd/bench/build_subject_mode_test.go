@@ -129,21 +129,7 @@ func subjectManifestPath(root string) string {
 // exists to catch, not an expectation to mirror.
 func stampedPackageVersion(t *testing.T, root string) string {
 	t.Helper()
-	inputs, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	// The line owner renders the key and its separator; an empty path leaves that prefix.
-	prefix := strings.TrimSuffix(freshness.BuildInputLine("package_version", ""), "\n")
-	source := ""
-	for _, line := range strings.Split(string(inputs), "\n") {
-		if value, ok := strings.CutPrefix(line, prefix); ok {
-			source = value
-		}
-	}
-	if source == "" {
-		t.Fatalf("%s names no package_version input", freshness.BuildInputsManifest)
-	}
+	source := buildInput(t, root, "package_version")
 	body, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(source)))
 	if err != nil {
 		t.Fatal(err)
@@ -158,4 +144,26 @@ func stampedPackageVersion(t *testing.T, root string) string {
 		t.Fatalf("%s carries no stamped version: %q", source, pkg.Version)
 	}
 	return pkg.Version
+}
+
+// buildInput returns the root-relative path that the build owner manifest names for key.
+// The builder reads the same manifest, so a test that reads it names the builder's own input.
+func buildInput(t *testing.T, root, key string) string {
+	t.Helper()
+	inputs, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The line owner renders the key and its separator; an empty path leaves that prefix.
+	prefix := strings.TrimSuffix(freshness.BuildInputLine(key, ""), "\n")
+	source := ""
+	for _, line := range strings.Split(string(inputs), "\n") {
+		if value, ok := strings.CutPrefix(line, prefix); ok {
+			source = value
+		}
+	}
+	if source == "" {
+		t.Fatalf("%s names no %s input", freshness.BuildInputsManifest, key)
+	}
+	return source
 }
