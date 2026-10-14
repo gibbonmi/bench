@@ -514,6 +514,7 @@ The fence holds the review pickup and the union of the ticket `Writes:` paths.
 - `internal/responsebound/retain.go`
 - `internal/responsebound/retain_test.go`
 - `internal/responsebound/retire_test.go`
+- `internal/responsebound/size.go`
 - `internal/responsebound/store.go`
 - `internal/reviewrecord/change.go`
 - `internal/reviewrecord/completion.go`
