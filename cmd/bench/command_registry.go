@@ -331,7 +331,7 @@ func (c Command) Run(args []string) int {
 	if !definition.bound(args[1:]).bounded {
 		return c.finishExempt(row, definition.run(c, args[1:]))
 	}
-	return c.runBounded(definition, args[1:], row)
+	return c.runBounded(definition, args[0], args[1:], row)
 }
 
 func commandImplementationID(definition commandDefinition) string {

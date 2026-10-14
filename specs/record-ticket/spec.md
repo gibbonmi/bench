@@ -334,14 +334,14 @@ RT21 and RT22 turn red under that mutation.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| RT1 | 1, 2 | A `bench test` call within the bound in an assignment worktree leaves a retained response with its exact bytes. | planned | A retention that runs only on a spill leaves no retained response and the row reds. |
-| RT2 | 3 | A spilled `bench test` response leaves a retained response that equals the spill file bytes and holds no `spilled{` frame. | planned | A retention that keeps the printed projection holds the frame and the row reds. |
-| RT3 | 4 | The retained response holds the verb's exit code and its argument list after `bench`. | planned | A retention that drops the exit code reads as zero for a failing call and the row reds. |
-| RT4 | 5 | A `bench record` call after a `bench test` call leaves the `bench test` response retained. | planned | A retention without the record-family skip replaces the response and the row reds. |
-| RT5 | 6 | A `bench worktree exec` call in the worktree leaves its child's `bench test` response retained. | planned | A retention without the worktree-family skip replaces the child's response and the row reds. The test needs a real child process, so it sits in the system suite that `bench test --check system` and the gate's system phase run. |
-| RT6 | 7 | A bounded call in the primary checkout writes no retained response. | planned | A retention that writes the primary scope leaves a file there and the row reds. |
-| RT7 | 8 | A response in the spill-failed state removes the earlier retained response. | planned | A retention that skips a failed response leaves the earlier response and the row reds. |
-| RT8 | 9 | A retention write that fails leaves the printed response and the exit code unchanged. | planned | A dispatcher that returns the retention error changes the exit code and the row reds. |
+| RT1 | 1, 2 | A `bench test` call within the bound in an assignment worktree leaves a retained response with its exact bytes. | `cmd/bench/retain_test.go` (`TestRetainKeepsTheCompleteResponse`) | A retention that runs only on a spill leaves no retained response and the row reds. |
+| RT2 | 3 | A spilled `bench test` response leaves a retained response that equals the spill file bytes and holds no `spilled{` frame. | `cmd/bench/retain_test.go` (`TestRetainKeepsTheCompleteResponse`) | A retention that keeps the printed projection holds the frame and the row reds. |
+| RT3 | 4 | The retained response holds the verb's exit code and its argument list after `bench`. | `cmd/bench/retain_test.go` (`TestRetainKeepsTheCompleteResponse`) | A retention that drops the exit code reads as zero for a failing call and the row reds. |
+| RT4 | 5 | A `bench record` call after a `bench test` call leaves the `bench test` response retained. | `cmd/bench/retain_test.go` (`TestRetainSkipsRecordWorktreeAndRetiringCalls`) | A retention without the record-family skip replaces the response and the row reds. |
+| RT5 | 6 | A `bench worktree exec` call in the worktree leaves its child's `bench test` response retained. | `internal/systemtest/exec_nested_bound_test.go` (`TestExecNestedBenchKeepsChildRetained`) | A retention without the worktree-family skip replaces the child's response and the row reds. The test needs a real child process, so it sits in the system suite that `bench test --check system` and the gate's system phase run. |
+| RT6 | 7 | A bounded call in the primary checkout writes no retained response. | `cmd/bench/retain_test.go` (`TestRetainSkipsThePrimaryCheckout`) | A retention that writes the primary scope leaves a file there and the row reds. |
+| RT7 | 8 | A response in the spill-failed state removes the earlier retained response. | `internal/responsebound/retain_test.go` (`TestRetainClearsAnIncompleteResponse`) | A retention that skips a failed response leaves the earlier response and the row reds. |
+| RT8 | 9 | A retention write that fails leaves the printed response and the exit code unchanged. | `cmd/bench/retain_test.go` (`TestRetainFailureKeepsTheResponse`) | A dispatcher that returns the retention error changes the exit code and the row reds. |
 | RT9 | 10 | The release of a worktree removes its retained response and its staged excerpts. | planned | A retention outside the assignment scope survives the drop and the row reds. |
 | RT10 | 11 | `bench record excerpt` stages the retained `bench test` response for a planned requirement whose command matches. | planned | A stage that copies nothing leaves no staged excerpt and the row reds. |
 | RT11 | 12 | `bench record excerpt` refuses with no retained response. | planned | A stage that stages an empty excerpt passes and the row reds. |
@@ -398,7 +398,7 @@ RT21 and RT22 turn red under that mutation.
 | RT62 | 54 | The ticket form accepts a stage whose run had only the spec's record path dirty. | planned | A form that refuses every dirty path refuses a run after a record write and the row reds. |
 | RT63 | 37 | The ticket form's help lists the amendment, chunk, and verification steps in the order of `CompletionOrder`. | planned | A help text that types its own step list keeps the old order when the completion order changes, and the row's comparison with `CompletionOrder` reds. |
 | RT64 | 47 | The review phase's step 6 states that `bench record excerpt` stages an excerpt and `bench record ticket` writes one ticket's entries. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
-| RT65 | 8 | A response that takes the create-failure route clears the retained response. | planned | A retention that treats the passing state as complete keeps the earlier response and the row reds. |
+| RT65 | 8 | A response that takes the create-failure route clears the retained response. | `internal/responsebound/retain_test.go` (`TestRetainClearsAnIncompleteResponse`) | A retention that treats the passing state as complete keeps the earlier response and the row reds. |
 
 Not covered: story 50 — the changelog entry is review-owned.
 Not covered: story 51 — the one-session-one-ticket rule stays unchanged, and `TestDelegatedDistinctTicketAuthors` keeps grading it.

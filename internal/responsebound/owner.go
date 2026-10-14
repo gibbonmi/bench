@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"sync"
 
@@ -74,6 +75,10 @@ type Owner struct {
 	reason     string
 	// lead is the block that Finish prints first on stdout, outside the bound.
 	lead string
+	// whole reports a finished response that one copy holds complete: replayed within the
+	// bound, or the spill file at path.
+	whole    bool
+	replayed []byte
 }
 
 // New returns the owner of one response whose original streams are stdout and stderr.
@@ -207,9 +212,11 @@ func (o *Owner) Finish() {
 	case retaining:
 		for _, w := range o.retained {
 			_, _ = w.stream.Write(w.data)
+			o.replayed = append(o.replayed, w.data...)
 		}
-		o.retained = nil
+		o.retained, o.whole = nil, true
 	case spilling:
+		o.whole = true
 		_ = o.file.Close()
 		o.printProjection(fmt.Sprintf("%s{lines=%d,bytes=%d,omitted_lines=%d,cut_lines=%d,"+pathField+"%s}\n",
 			Spilled, o.lines.count, o.bytes, o.lines.omitted(), o.lines.cutLines(), o.path), o.lines.tailBytes())
@@ -227,6 +234,22 @@ func (o *Owner) Finish() {
 		_, _ = fmt.Fprintf(o.stdout, "%s%s{"+reasonField+"%s}\n", separator, SpillFailed, o.reason)
 	}
 	o.phase = finished
+}
+
+// completeOutput answers the complete bytes of a finished response in arrival order, without
+// the lead. A response whose spill failed, at the create or midway, answers false, because no
+// one copy holds every byte.
+func (o *Owner) completeOutput() ([]byte, bool) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	switch {
+	case !o.whole:
+		return nil, false
+	case o.path == "":
+		return o.replayed, true
+	}
+	data, err := os.ReadFile(o.path)
+	return data, err == nil
 }
 
 func (o *Owner) printProjection(line string, rest []byte) {
