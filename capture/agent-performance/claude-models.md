@@ -32,6 +32,10 @@ The `repair-confirmation` spec stage ran on Claude Code for FT379. An Opus coord
 
 Provider usage and charges remain unknown.
 
+The `record-ticket` spec stage ran on Claude Code for FT405. An Opus coordinator ran paired Opus/high readers for the research slices and for four slicing chunks, and it sliced the six tickets itself. An Opus fork wrote the spec. Opus/medium ran the spec review in 3 iterations and the ticket review in 2. A load test killed the first coordinator after the spec review, and a fresh Opus session resumed the slicing from the worktree.
+
+Provider usage and charges remain unknown. The harness reported about 990k tokens for the eight slicing readers and 140k for the ticket review.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use | calibration |

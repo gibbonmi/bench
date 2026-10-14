@@ -6,7 +6,7 @@ Roadmap: FT405
 
 Decision source: reviewer-confirmed conversation, 2026-10-14
 
-Verification log: 0 iteration(s) to accept — pending review.
+Verification log: 5 iteration(s) to accept — the spec review took 3 iterations on opus / medium, and the ticket review took 2. The spec round found unresearched seams that the fork added, a dropped anchor registry, and a loose planned-command parse. The ticket round found seam tickets that shared a chunk with their consumers and two combined rows on producer tickets.
 
 ## Problem
 
