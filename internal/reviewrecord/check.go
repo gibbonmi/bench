@@ -55,16 +55,26 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 			return refused("verification %s is incomplete, failed, or stale; execute and retain %s", requirement.ID, requirement.Command)
 		}
 		if requirement.Probe != "" {
-			probe := current.Probe
-			if probe == nil || probe.Mutation != requirement.Probe || probe.Outcome != "bit" || probe.ExitCode == 0 {
+			bit, restored := false, false
+			if probe := current.Probe; probe != nil && probe.Mutation == requirement.Probe {
+				bit, restored = probeBites(*probe)
+			}
+			if !bit {
 				return refused("verification %s requires a successful diagnostic probe %s; run and retain it", requirement.ID, requirement.Probe)
 			}
-			if probe.Restore != "pass" {
+			if !restored {
 				return refused("verification %s probe restore failed; restore and verify the source", requirement.ID)
 			}
 		}
 	}
 	return nil
+}
+
+// probeBites is the one probe-bite predicate of the planned-probe check and the confirmation
+// check. A probe bit when its outcome is bit and its focused exit is not zero, and it
+// restored when its restore passed.
+func probeBites(probe Probe) (bit, restored bool) {
+	return probe.Outcome == "bit" && probe.ExitCode != 0, probe.Restore == "pass"
 }
 
 // checkCompletion grades the completion entry and the final verification against the

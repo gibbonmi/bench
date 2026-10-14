@@ -309,7 +309,8 @@ func (f *Fixture) Verification(prefix, source string, requirements []rr.Requirem
 		performer, role := f.owes(requirement)
 		item := rr.Verification{Evidence: f.EvidenceAs(prefix+"-"+requirement.ID, source, role, performer), Requirement: requirement.ID, Command: requirement.Command, ExitCode: &zero}
 		if requirement.Probe != "" {
-			item.Probe = &rr.Probe{Mutation: requirement.Probe, Outcome: "bit", ExitCode: 1, Restore: "pass", NativeRef: Native("mutation failed at the required assertion; restore passed")}
+			probe := bitProbe(requirement.Probe)
+			item.Probe = &probe
 		}
 		result = append(result, item)
 	}
