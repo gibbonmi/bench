@@ -722,6 +722,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft293-oc-c1-standards-r2",
+          "performer": "claude:ft293_oc-c1_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c1_standards_r2",
+            "digest": "sha256:bac4220f3abaf3922ccf5f251b0ba629d708b8f758fd62f28eae8e06b9de22ee",
+            "excerpt": "## Result\n\nThe evidence check bound: `current=true`, `dirty_record=false`, head `ad54e4f1`, not dirty. S1 and S3 are closed. S2 is closed in the code, but its record is open. I found no new Standards finding in the repair delta.\n\n## S1-S3\n\n- S1: closed. `duplicateKey` is gone from the package. `rg` finds no `duplicateKey`, `json.NewDecoder` or `Token()` walker under `internal/preflight/ownership`. `internal/preflight/ownership/manifest.go:151` now calls `jsonfile.DecodeDocument`. The `scanValue` function at `internal/jsonfile/decode.go:69-80` rejects a repeated key at every nesting level.\n- S2: closed in code, record open. `internal/tickets/registry_data_test.go:128-146` no longer runs `BoundFiles`' dedupe-and-sort a second time. It now checks against fixed rows. The refreeze probe in the review record is still the four `oc-01-omission` mutants; none targets this test. AGENTS.md accepts such an independent expectation only when its red is recorded and demonstrated. Fix: record a red for this test. Disposition `auto-fix` (record only), confidence 6.\n- S3: closed. `internal/preflight/ownership/proposal_test.go:200-205` takes the line from `tickets.BindingLines` (`registry_data.go:134`). The byte search and the `bytes` import are gone. Refreeze mutant 3 (`OC8_registry_owner`) still goes red.\n\n## New findings\n\nNone.\n\n## Advice\n\n- The S2 fixed rows do not show that `BoundFiles` sorts or dedupes.\n- `inventory_test.go:26` and the proposal \"unreadable directory\" case skip on `os.Geteuid() == 0`; the existing pattern at `internal/bounds/classify_test.go:294-299` checks readability after the chmod instead.\n- `manifest.go:152` wraps a message that `decode.go:53` already prefixes with \"decode persisted JSON\".\n\n## Reaffirmation after the evidence-only correction\n\nS2 is now closed in both the code and the record, with one condition: the record section is not committed yet. In the working copy of `reviews/preflight-ownership-closure.md`, lines 779-796 (\"## Independent expectation reds\") record the probe at `ad54e4f1`. The verdict is `bit` and `first_failure` is `TestBindingRulesProjectBoundFiles`. The test failed on its fixed-row check at `registry_data_test.go:139`, and the file was restored. That red shows what AGENTS.md requires: the fixed rows catch a swapped file in the toon row. The record counts as evidence only once it lands with the chunk. Nothing else in my round changes.\n"
+          },
+          "axis": "Standards",
+          "base": "1a8fece7d1173873ce9a32955b4b1d9a25600a4d",
+          "tip": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c1-standards-r1"
+          ]
+        },
+        {
+          "id": "ft293-oc-c1-spec-r2",
+          "performer": "claude:ft293_oc-c1_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c1_spec_r2",
+            "digest": "sha256:0a23366869afc18b59301a94c103e104e3141a9f88d683299e8974bc60f3b6f2",
+            "excerpt": "## Result\nSpec axis, OC-C1 repair delta `a54b85b3..10c458e5`: P1 is closed and P2 is closed. I found no new Spec finding. The evidence `sha256:c363d8bf…` bound: head `ad54e4f1`, current true, not dirty.\n\n## P1: closed\n- `internal/preflight/ownership/ownership.go:165` now reads `snapshot.Complete = manifest.Present && manifest.Completeness == completenessDeclared && len(snapshot.Diagnostics) == 0`. The constant is defined at `manifest.go:134`. This matches spec lines 85-86 and 121-122.\n- The Snapshot doc comment at `ownership.go:146-150` now names \"a partial inventory or any manual claim\".\n- The test is the new `Complete …` subtests in `premises_test.go` (TestMetadataGrammar). They call `ownership.Collect` directly and cover three cases: declared-complete gives true, partial gives false, and a manual claim gives false.\n\n## P2: closed\nI parsed the facts line (spec:1008) with a script.\n- Needles: all 159 spec-sourced locations hold their needle at the declared line. Each needle occurs exactly once in the spec outside the facts line itself.\n- Seams: 13 seams are `existing`. Each has exactly one `func <name>(` in its cited file, and each row that names a seam cites that path and function.\n- OC77: it is under `TestSourceSafety` (`source_test.go`).\n- OC92: it has three seams, all of which exist: `TestMetadataGrammarFenceRoles`, plus `TestLiftedFieldScanReportsDuplicateField` and `TestLiftedFieldScanSkipsFencedLines` in `internal/maps/maps_parse_test.go`. This matches row spec:716.\n\n## C2 / OC83: holds\n- Row spec:707 cites `TestProposalUnknown` through the actual command. `proposal_test.go:362-374` shows that an unreadable `tests/canary` refuses through the real proposal (the checkout walk) and never gives an empty proposal.\n- The collector's own refusal is tested at `internal/canary/inventory_test.go:179-188` through `FixturePins`, which projects `Pins` (`pins.go:81-83`); `Pins` refuses any state other than absent, empty, or parsed (`pins.go:48-55`).\n\n## C4: satisfies the Edge inventory (spec:729)\n- Spaces: the subtest `OC1 path with a space` (`proposal_test.go:267-279`) uses a spaced fixture directory and a spaced Writes path.\n- CRLF: the case `CRLF fence section` (`premises_test.go:210`) runs a full CRLF section through to the manual-claim row.\n\n## Advice\n- The space case asserts nothing about `internal/example/with space.go` itself.\n- Row OC83 could also cite `TestPinsRefuseASpecialInventory`.\n- `TestBindingRulesProjectBoundFiles` now hand-writes the `internal/toon` rules; it grades a hardening-cycle check, so it is advice only.\n- The switch to `jsonfile.DecodeDocument` keeps OC56 intact.\n\nCount: 0 new findings; P1 and P2 closed.\n"
+          },
+          "axis": "Spec",
+          "base": "1a8fece7d1173873ce9a32955b4b1d9a25600a4d",
+          "tip": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c1-spec-r1"
+          ]
+        },
+        {
+          "id": "ft293-oc-c1-coverage-r2",
+          "performer": "claude:ft293_oc-c1_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ff2d86d94d6e271723b57a02a2d85a3df083996",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c1_coverage_r2",
+            "digest": "sha256:4fa8571708b2b88f61d958c60b18b2c749c1210194d3919705c498b9558ba9ed",
+            "excerpt": "## Result\nThe Coverage confirming axis for OC-C1 is clean. C1 through C4 are closed, P1 bites, and the repair delta has no new coverage finding. Evidence `sha256:c363d8bf…` bound: `current=true`, `dirty_record=false`, head `ad54e4f1b`.\n\n## Findings\n- C1 (OC56): closed. `premises_test.go:199` puts a nested `\"expected\":{\"count\":1,\"count\":2}` in `OC56 nested duplicate key`. The case expects `duplicate object field \"count\"`, and the top-level-only mutant (probe 2) bites it.\n- C2 (OC83): closed. `internal/canary/inventory_test.go:25-34` adds `unreadable` (mode 000, with a capability skip under root). Probe 1 bites it. `proposal_test.go:316-328` asserts the checkout-walk refusal `tests/canary: permission denied`.\n- C3 (OC58): closed. `premises_test.go:202` adds a `scope` item and a `premises` item that both carry ID `p1`, and expects `duplicate item id \"p1\"`. `manifest.go:191-192` keeps item IDs across every array. Read, not probed.\n- C4 (edge inventory): closed. `proposal_test.go:267-279` uses a space in both the fixture directory and a written path, and asserts the `writes_proposal` and `closure` rows. `premises_test.go:210` turns the whole fenced section to CRLF and expects the same `semantic`/`manual` result as the LF case. Read, not probed.\n- P1 Complete cases: bite. `premises_test.go:218-232`, probe 3.\n- New findings: none.\n\n## Advice\n- `manifest.go:154` (`if top == nil`) has no case behind it, and probe 4 survives it. This is a near-equivalent mutant on behavior that existed before the repair. It is not a finding.\n\n## Probes (all restored=yes)\n1. `pins.go:50`: add `bounds.StateUnreadable` to the absent/empty case; canary + preflight, `TestPins|TestProposal`; bit; `TestPinsRefuseASpecialInventory/unreadable`.\n2. `decode.go:87`: swap `if err := scanValue(decoder, child); err != nil {` with `_ = child; var raw json.RawMessage; if err := decoder.Decode(&raw); err != nil {`; preflight, `TestMetadataGrammar`; bit; `TestMetadataGrammar/OC56_nested_duplicate_key`.\n3. `ownership.go:159`: omit ` && manifest.Completeness == completenessDeclared`; preflight, `TestMetadataGrammar`; bit; `TestMetadataGrammar/Complete_partial_inventory`.\n4. `manifest.go:154`: swap `if top == nil {` with `if false {`; preflight, `TestMetadataGrammar|TestProposal`; silent; null.\n\n## git status --short\n(empty)\n"
+          },
+          "axis": "Coverage",
+          "base": "1a8fece7d1173873ce9a32955b4b1d9a25600a4d",
+          "tip": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c1-coverage-r1"
+          ]
         }
       ]
     }
@@ -750,7 +816,7 @@
 
 ## Repair state
 
-OC-C1: repair cycle 1 of 2 is in progress for ticket 01. No reviewer extension exists.
+OC-C1: repair cycle 1 of 2 is complete at 10c458e5 (claude:ft293_t01_rep1, opus, high). No reviewer extension exists.
 
 ## Standards
 
@@ -775,3 +841,22 @@ OC-C1: 4 findings. The worst issue is C1.
 - C2 (auto-fix, confidence 6): no OC83 case reads a present but unreadable `tests/canary` directory; a mutant that treats it as empty stays silent.
 - C3 (auto-fix, confidence 6): no OC58 case repeats one item ID across two arrays.
 - C4 (auto-fix, confidence 4): no case covers a path with a space or a CRLF spec with the planning-facts fence. The orchestrator assigns both edges to ticket 01 under the auto-approve direction.
+
+## Independent expectation reds
+
+S2: the fixed rows of TestBindingRulesProjectBoundFiles are an independent expectation. The orchestrator demonstrated their red at ad54e4f1 with this probe.
+
+```text
+bench worktree exec ft293-build -- bench probe internal/tickets/registry_data.go --swap '"internal/toon/toon_test.go",' --with '"internal/toon/toon_fixture_test.go",' --expect TestBindingRulesProjectBoundFiles --package ./internal/tickets --run TestBindingRulesProjectBoundFiles
+probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:
+  bit,internal/tickets/registry_data.go,swap,failed,1,TestBindingRulesProjectBoundFiles,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/tickets,TestBindingRulesProjectBoundFiles,passed,1
+probe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:
+  bench-probe-result-v2,0,1,512
+packages[1]{package,status,elapsed_ms,tests_run}:
+  github.com/gibbonmi/bench/internal/tickets,fail,2,1
+failures[1]{package,test,line,lines}:
+  github.com/gibbonmi/bench/internal/tickets,TestBindingRulesProjectBoundFiles,"registry_data_test.go:139: BindingRules(internal/toon/toon.go) = [{internal/toon internal/conformance/data_handling_test.go} {internal/toon internal/toon/toon_fixture_test.go}] and BoundFiles = [internal/conformance/data_handling_test.go in… (389 bytes)",2
+skips[0]{package,test,reason}:
+```
