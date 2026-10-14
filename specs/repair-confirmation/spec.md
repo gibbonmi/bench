@@ -327,13 +327,13 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
 | RC10 | 14 | The complete checkpoint passes for the RC9 chunk with the same confirmation. | planned | A carry branch wired only into the chunk path reds the complete run. |
 | RC11 | 15 | The checkpoint accepts a delta that adds a new `_test.go` file. | planned | A prover that accepts only status `M` refuses the addition and the row reds. |
 | RC12 | 15, 19 | The checkpoint refuses a confirmation whose delta changes a non-test Go file. | planned | A carry branch without the prover accepts the delta and the row reds. |
-| RC13 | 16 | The prover refuses a `_test.go` path with a `testdata` element with `ErrTestdata`. | planned | A prover that tests only the suffix accepts the path and the row reds. |
-| RC14 | 17 | The prover refuses a deleted `_test.go` file with `ErrStatus`. | planned | A prover that accepts status `D` passes the deletion and the row reds. |
-| RC15 | 18 | The prover refuses a `_test.go` path whose destination mode is a symbolic link with `ErrMode`. | planned | A prover that skips the mode check accepts the link and the row reds. |
-| RC16 | 18 | The prover refuses a modified `_test.go` file whose mode changes with `ErrMode`. | planned | A prover that compares only the destination mode accepts the change and the row reds. |
-| RC17 | 19 | The prover refuses a non-Go path with `ErrNotTest`. | planned | A prover that accepts any path under a test directory passes the file and the row reds. |
-| RC18 | 19 | The prover refuses an empty change list between different trees with `ErrEmptyChanges`. | planned | A prover that returns nil on no changes passes the case and the row reds. |
-| RC19 | 15 | The prover accepts a test path that contains a space. | planned | A prover that splits paths on spaces refuses the path and the row reds. |
+| RC13 | 16 | The prover refuses a `_test.go` path with a `testdata` element with `ErrTestdata`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that tests only the suffix accepts the path and the row reds. |
+| RC14 | 17 | The prover refuses a deleted `_test.go` file with `ErrStatus`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that accepts status `D` passes the deletion and the row reds. |
+| RC15 | 18 | The prover refuses a `_test.go` path whose destination mode is a symbolic link with `ErrMode`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that skips the mode check accepts the link and the row reds. |
+| RC16 | 18 | The prover refuses a modified `_test.go` file whose mode changes with `ErrMode`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that compares only the destination mode accepts the change and the row reds. |
+| RC17 | 19 | The prover refuses a non-Go path with `ErrNotTest`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that accepts any path under a test directory passes the file and the row reds. |
+| RC18 | 19 | The prover refuses an empty change list between different trees with `ErrEmptyChanges`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that returns nil on no changes passes the case and the row reds. |
+| RC19 | 15 | The prover accepts a test path that contains a space. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that splits paths on spaces refuses the path and the row reds. |
 | RC20 | 20 | The checkpoint refuses a confirmation whose probe outcome is `silent`. | planned | A carry branch that skips the bite predicate accepts the entry and the row reds. |
 | RC21 | 21 | The checkpoint refuses a confirmation whose probe restore is `fail`. | planned | A bite predicate without the restore check accepts the entry and the row reds. |
 | RC22 | 22 | The checkpoint refuses a confirmation whose probe focused exit is zero. | planned | A bite predicate without the exit check accepts the entry and the row reds. |
@@ -366,8 +366,8 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
 | RC49 | 53 | The checkpoint refuses a confirmation whose state is `pending`, with a reason that names the confirmation state. | planned | A validity check without the state condition accepts the entry and the row reds. |
 | RC50 | 54 | The checkpoint refuses a confirmation whose reviewed tip does not descend from the chunk base, with a reason that names the reviewed tip. | planned | A one-sided ancestry check against the chunk tip accepts the entry and the row reds. |
 | RC51 | 55 | The checkpoint refuses a confirmation whose base differs from the chunk base, with a reason that names the confirmation pair. | planned | A pair match that compares only the repaired tip accepts the entry and the row reds. |
-| RC52 | 18 | The prover refuses a `_test.go` gitlink with mode `160000` with `ErrMode`. | planned | A prover that grades only symbolic links accepts the gitlink and the row reds. |
-| RC53 | 17 | The prover refuses a renamed `_test.go` file with `ErrStatus`, because the rename arrives as a deletion. | planned | A prover that drops `--no-renames` or accepts status `R` passes the rename and the row reds. |
+| RC52 | 18 | The prover refuses a `_test.go` gitlink with mode `160000` with `ErrMode`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that grades only symbolic links accepts the gitlink and the row reds. |
+| RC53 | 17 | The prover refuses a renamed `_test.go` file with `ErrStatus`, because the rename arrives as a deletion. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that drops `--no-renames` or accepts status `R` passes the rename and the row reds. |
 | RC54 | 56 | The checkpoint refuses when Coverage has a fresh pass at the chunk pair and Standards and Spec sit at the reviewed pair under a valid confirmation, with a reason that names the mixed pairs, and routes to `bench record 'review' --help`. | planned | A carry rule that grades each axis alone accepts the mixed state and the row reds. |
 
 Not covered: story 6 — the build-directions outcome delivered the confirming-round scope, and its pins stay unchanged.
