@@ -59,8 +59,8 @@ Provider usage and charges remain unknown. The harness reported about 990k token
 
 - Read this scorecard before each line declaration, because its decisions carry the orchestration rules that a build repeats.
 - Declare the expected repair rounds for each chunk with a confidence, and add them for the build, so the orchestrator claim gets a label. Expect one to two repair cycles per chunk: 6 chunks on `record-ticket` used 9 cycles against a whole-build claim of 3.
-- Route each small-fix delegate to Opus/low, by reviewer direction on 2026-10-12. A small fix changes a comment, a text, or a few lines with no new branch.
-- Route each code author to Opus/medium, or to Opus/high for a large ticket, by reviewer direction on `record-ticket`. Four Opus/medium authors held every claimed row there.
+- Route every coding delegate to Opus/high and every small-fix delegate to Opus/low, by reviewer direction on 2026-10-12. A small fix changes a comment, a text, or a few lines with no new branch.
+- On `record-ticket` the reviewer named Opus/medium for each author, and Opus/high for a large ticket, for that run only. Four Opus/medium authors held every claimed row there.
 - Do not route a ticket author to Opus/max, because three max shadows on `commit-merge-parent` gave the xhigh design at 1.4 times the tokens.
 - Change other routing only after two comparable runs, one controlled comparison, or explicit user direction.
 - Run review axes on the line that the reviewer directs, and let only the Coverage axis run `bench probe` on the shared tree with focused selections.
