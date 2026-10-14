@@ -205,7 +205,7 @@ func reviewSourcePolicy() []reviewSourceDescriptor {
 // the validated in-memory pack, or the refusal that stopped it. The collectors run last, so
 // a dirty checkout, a red verdict, or a missing source refuses before any collector starts.
 func reviewChargePack(root, version string, facts Facts, verdict Verdict) (*chargeevidence.Pack, string) {
-	if refusal := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
+	if refusal, _ := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
 		return nil, refusal
 	}
 	if verdict.Red {

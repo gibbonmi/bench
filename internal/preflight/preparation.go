@@ -7,6 +7,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -59,16 +60,29 @@ func preparedAttempts(root, mode, slug, base, sourceTip, action string, args []s
 	return out, code
 }
 
-func preparationCheckoutRefusal(root string, facts Facts, action string) string {
+// preparationCheckoutRefusal refuses a missing assignment or a dirty checkout, and it reports
+// whether the selected spec's review record is dirty. Only the check action tolerates that
+// record, because the current binding reads every bound byte from the source tip.
+func preparationCheckoutRefusal(root string, facts Facts, action string) (string, bool) {
 	if facts.AssignmentTarget == "" {
-		return chargeRefusal("assignment", "active assignment is required", "run from the assigned worktree")
+		return chargeRefusal("assignment", "active assignment is required", "run from the assigned worktree"), false
 	}
-	if _, dirty, err := git.AllFilesStatus(root); err != nil {
-		return chargeRefusal("checkout", err.Error(), "repair the checkout and rerun the exact "+action)
-	} else if len(dirty) != 0 {
-		return chargeRefusal("checkout", "source checkout is dirty", "commit or remove local changes and rerun the exact "+action)
+	_, dirty, err := git.AllFilesStatus(root)
+	if err != nil {
+		return chargeRefusal("checkout", err.Error(), "repair the checkout and rerun the exact "+action), false
 	}
-	return ""
+	record := ""
+	if action == "check" {
+		if record, err = reviewrecord.RecordPath(facts.SpecPath); err != nil {
+			return chargeRefusal("checkout", err.Error(), "repair the selected spec and rerun the exact "+action), false
+		}
+	}
+	for _, change := range dirty {
+		if change.Path != record {
+			return chargeRefusal("checkout", "source checkout is dirty", "commit or remove local changes and rerun the exact "+action), false
+		}
+	}
+	return "", len(dirty) != 0
 }
 
 func preparationTicket(root string, facts Facts, name string) (*tickets.Entry, *tickets.Ticket, string, string) {

@@ -128,6 +128,11 @@ func preparationRefusals(t *testing.T) {
 		{"CE49 dirty checkout", func(t *testing.T, root, slug string) []string {
 			return mutationNamed(t, "dirty checkout")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
 		}, "error: checkout required: source checkout is dirty — commit or remove local changes and rerun the exact charge\n"},
+		{"RT45 dirty record of the selected spec", func(t *testing.T, root, slug string) []string {
+			args := preflighttest.ChargeArgs(t, root, slug)
+			preflighttest.MustWriteFile(t, "reviews/"+slug+".md", "# Review\n")
+			return args
+		}, "error: checkout required: source checkout is dirty — commit or remove local changes and rerun the exact charge\n"},
 		{"CE50 missing ticket", func(t *testing.T, root, slug string) []string {
 			return mutationNamed(t, "missing ticket")(t, root, slug, preflighttest.ChargeArgs(t, root, slug))
 		}, "error: ticket required: selected ticket \"missing.md\" was not found — pass a ticket basename from the spec tickets directory\n"},
