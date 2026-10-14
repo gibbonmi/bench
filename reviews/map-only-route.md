@@ -817,6 +817,72 @@
           "supersedes": [
             "mr-a-coverage-r1"
           ]
+        },
+        {
+          "id": "mr-a-standards-r3",
+          "performer": "claude:mr_a_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "40d64a917901a56a853a5b45d1213d5890abc577",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:mr_a_standards_r3",
+            "digest": "sha256:d476dacd7ea8dfdd26b9840e5f1f85ce584b0d605715f339276db7efebd20138",
+            "excerpt": "## Standards (claude:mr_a_standards_r3, opus/high, narrow round 3, pair b10edf16c..f50ace9c, chunk tip e971a5e7, evidence sha256:baa65d6d12361ecbc7bb33761df67330db9110ff1cf681e3861ff52aeae4a1b7 current=true)\n\n- S8 closed: the sentence is gone from the reference (map-only-route.md:35-37), the registry (registry_ticket_passes.go:91-92), and the test (registry_ticket_passes_test.go:118-120); the spec stop (spec.md:131) and row MR34 are gone; rg finds no other copy. The edge line at spec.md:236 is true: validation.go:21-22 adds missing decision ticket whenever len(tickets) == 0, whatever compiled is; story 3 (spec.md:39) and the reference (map-only-route.md:7) refuse any map with a diagnostic.\n- S9 closed: D5 (spec.md:294), the spec stop (spec.md:131), and the reference (map-only-route.md:35-36) name the same two triggers.\n- Gap-log anchor accepted: the needle at registry_ticket_passes.go:94 matches map-only-route.md:42 word for word; the test row at test.go:122 is a separate literal (MR29); the one-anchor omission probe covers this literal pattern; gather.go:48-70 reads no Further notes.\n- Contraction 39686ad6 accepted: MR28 (spec.md:221) and the ticket line 14 agree; both read as STE.\n- Record accepted: bench-review-implementation.md:236 makes the record append-only; the rep2-* excerpts were hand-written summaries with a placeholder probe command (against lines 224 and 227); the rep2b-* entries supersede them with native output at record commit 97aca4e9, which only adds records on top of e971a5e7; retaining the summaries is acceptable history. Confidence 7.\n\nOpen: 0. Worst: none.\n\n### Advice\n- The diagnostic \"which no check reads\" can read as if \"which\" points to \"the sign-off\"; \"the gap log, and no check reads it\" is clearer.\n- Ticket line 38 says \"Both Thin spec sentences\" while the section has more sentences; \"Both sentences of MR23\" is exact.\n- The record does not mark the rep2-* entries as superseded.\n- Removing MR34 is an acceptance change; the Spec axis confirms whether it needs a reviewer decision.\n\n### Examined\nThe diff c9bc0053..f50ace9c; map-only-route.md:1-52; validation.go:10-29; spec.md:39, 60-68, 129-145, 196-239, 292-295; gather.go:45-72; bench-review-implementation.md:205-244; finding-discipline.md; rg sweeps over specs/map-only-route, .agents, internal/anchors, internal/maps; the git log of the delta.\n"
+          },
+          "axis": "Standards",
+          "base": "b10edf16c05da80525b0bb0b6ca8341c37a912f3",
+          "tip": "e971a5e76146d2f0db342844ff8a0bb6e0b4fb2a",
+          "finding_ids": [],
+          "supersedes": [
+            "mr-a-standards-r2"
+          ]
+        },
+        {
+          "id": "mr-a-spec-r3",
+          "performer": "claude:mr_a_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "40d64a917901a56a853a5b45d1213d5890abc577",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:mr_a_spec_r3",
+            "digest": "sha256:b76487c16e692b195045667ba5b57ffa8e85508d2d7d4fe68d441529070e2977",
+            "excerpt": "## Spec (claude:mr_a_spec_r3, opus/high, narrow round 3, pair b10edf16c..f50ace9c, chunk tip e971a5e7, evidence sha256:baa65d6d12361ecbc7bb33761df67330db9110ff1cf681e3861ff52aeae4a1b7 current=true; bench coverage rows[33])\n\n- P3 closed: two Thin spec sentences at map-only-route.md:41-42; the second (\"The thin spec also holds the gap log for the sign-off, and no check reads it.\") has its own anchor (registry_ticket_passes.go:94) and literal test row (registry_ticket_passes_test.go:122); MR23 (spec:216) fully anchored; MR28 (spec:221) says two anchors for MR23; 4+3+9+5+1 = 22 anchors, registry lines 74-95 and test lines 102-123 hold 22 each. MR23 and MR28 met.\n- P4 closed: the stop decision (spec:131), D5 (spec:294), and reference lines 35-36 name the same two triggers.\n- Plan contraction accepted: in scope (the plan returns to the approved MR1-MR33 set and changes no other behavior); true (validation.go:21-22 adds missing decision ticket with no compiled condition, reached from maps.go:101 and tree_validation.go:114); matches the reference (Eligibility line 7 refuses any map with a diagnostic), so the edge line at spec:236 holds; the chunk row (spec:164), ticket Covers, the anchor line, and both acceptance items agree; learning at capture/learnings.md:32.\n- Scope closed: the delta touches only the reference, the registry, the test, reviews/map-only-route.md, the spec, and the ticket.\n- New findings: none.\n\nRow audit MR1-MR33: all 33 met. Anchored rows checked against reference lines 5-42; MR5, MR19, MR24 met at reference lines 13, 31, 44; MR29 met (every needle and diagnostic a literal); MR9, MR26, MR27 owned by the preflight or the gate, with passing guidance-prose-budgets and docs-currency-workflow runs at e971a5e7 in the record; MR30-MR33 carried from earlier rounds (the round-3 delta touches none of those files).\nOpen: 0. Worst: none.\n\n### Advice\n- The rep2b excerpts show head 97aca4e9 while their native_ref says e971a5e7; 97aca4e9 changes only records.\n- The central-property probe text says \"the stop-and-return anchor\" while three such anchors exist; naming MR20 would be unambiguous.\n\n### Examined\nThe round-3 diff c9bc0053..f50ace9c and the commit log; bench coverage; craft-review SKILL.md and finding-discipline.md; spec.md whole; map-only-route.md; registry_ticket_passes.go:74-95; registry_ticket_passes_test.go:95-125; validation.go:15-23 and the two callers of ValidateDecisionMap; rg for Further notes and gap log in non-test files; capture/learnings.md:32-35.\n"
+          },
+          "axis": "Spec",
+          "base": "b10edf16c05da80525b0bb0b6ca8341c37a912f3",
+          "tip": "e971a5e76146d2f0db342844ff8a0bb6e0b4fb2a",
+          "finding_ids": [],
+          "supersedes": [
+            "mr-a-spec-r2"
+          ]
+        },
+        {
+          "id": "mr-a-coverage-r3",
+          "performer": "claude:mr_a_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "40d64a917901a56a853a5b45d1213d5890abc577",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:mr_a_coverage_r3",
+            "digest": "sha256:7e1909dad977527cd7fa91b67487b4e219d677d7dccc21bb5a02b0498ae3b5e6",
+            "excerpt": "## Coverage (claude:mr_a_coverage_r3, opus/high, narrow round 3, pair b10edf16c..f50ace9c, chunk tip e971a5e7, evidence sha256:baa65d6d12361ecbc7bb33761df67330db9110ff1cf681e3861ff52aeae4a1b7 current=true)\n\n- C2 closed: the second Thin spec sentence at map-only-route.md:42 has one anchor at registry_ticket_passes.go:94 and one independent row at registry_ticket_passes_test.go:122. 22 anchors (registry 74-95) and 22 test rows (test 102-123) map to MR1-4, MR6-8, MR10-18, MR20-22, MR23 twice (121-122), MR25. Every needle and want is a literal; the only constant is route; rg finds no ticketSlicingAnchors symbol in the test.\n- S8 removal confirmed: the stop sentence, its anchor, its test row, and row MR34 are gone; ticket Covers, the chunk table (MR1-MR33), and the record's acceptance_rows agree; rg for \"no decision ticket\" and \"MR34\" finds only old review excerpts, the ticket box (ticket:37), and the edge line (spec:236).\n- The edge claim holds: validation.go:21-22 adds missing decision ticket whenever there are no tickets; maps.go:101-104 marks the map invalid and tree_validation.go:114-116 adds it to the diagnostics; Eligibility (map-only-route.md:7) needs a map with no diagnostic; tickets_test.go:225 and three decision-map-integrity canaries pin the diagnostic.\n- No new finding.\n\n| command | verdict | first_failure | restored |\n|---|---|---|---|\n| probe registry_ticket_passes.go --swap the gap-log Diagnostic to \"...must hold the gap log\", --package ./internal/anchors --run TestWriteSpecMapOnlyRoute | bit | TestWriteSpecMapOnlyRoute (test:124) | yes |\n| probe map-only-route.md --insert-before the gap-log sentence --with \"## Gap log\\n\\n\", --check docs-currency-workflow | bit | TestRootConformance: \"map-only route: Thin spec must hold the gap log for the sign-off, which no check reads\" | yes |\n| bench coverage --check specs/map-only-route/spec.md | 33 rows valid (11 uncited, review-owned or other seams) | - | - |\n| bench test --check docs-currency-workflow | pass | - | - |\n\nOpen: 0. Worst: none.\n\n### Advice\nThree route sentences stay unanchored: step 6 at :22 and :24, and step 9 at :28; no row requires them.\n\n### Examined\nThe round-3 diff; craft-review SKILL and finding-discipline; map-only-route.md:1-51; registry 60-99; test 1-125; spec rows MR1-MR25; validation.go:14-36; maps.go:85-109; tree_validation.go:95-119. Final git status --short: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "b10edf16c05da80525b0bb0b6ca8341c37a912f3",
+          "tip": "e971a5e76146d2f0db342844ff8a0bb6e0b4fb2a",
+          "finding_ids": [],
+          "supersedes": [
+            "mr-a-coverage-r2"
+          ]
         }
       ]
     }
