@@ -292,6 +292,7 @@ The slicing split the earlier RT-RETAIN chunk into RT-RETAIN and RT-EXCERPT, and
 
 RT-RETAIN also owns the shared porcelain reader in `internal/git/status.go` and the `LandedState` call site there.
 RT-CURRENT shares the command registry files with RT-EXCERPT and RT-TICKET, so it runs between them.
+The chunks run in plan order, so each chunk base has a recorded predecessor entry.
 RT-TICKET stays one ticket, because the earlier-ticket route and the base rule run inside the same transaction as the last-ticket route.
 RT-GUIDE comes last, because its sentences name the forms that RT-TICKET ships.
 
@@ -491,9 +492,138 @@ The audience is every repository that links the kit, because the forms and the r
 
 ## Ownership fences
 
-The slicing writes the ticket entries of this section, and the review pickup is the one entry before the slicing.
+The fence holds the review pickup and the union of the ticket `Writes:` paths.
 
+- `.agents/commands/bench-implement-spec.md`
+- `.agents/commands/bench-review-implementation.md`
+- `.agents/skills/bench-craft-delegate/references/charge-evidence-format.md`
+- `.agents/skills/bench-craft-tickets/SKILL.md`
+- `.bench/BENCH-reference.md`
+- `.bench/BENCH.md`
+- `.bench/commitment.json`
+- `CHANGELOG.md`
+- `cmd/bench/census_output.go`
+- `cmd/bench/census_output_test.go`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/commitment_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `cmd/bench/main.go`
+- `cmd/bench/record_operations_test.go`
+- `cmd/bench/response_bound_test.go`
+- `cmd/bench/retain.go`
+- `cmd/bench/retain_test.go`
+- `docs/known-issues.md`
+- `internal/anchors/anchor_harness_diagnostics_test.go`
+- `internal/anchors/registry_calibration.go`
+- `internal/anchors/registry_calibration_test.go`
+- `internal/anchors/registry_charge_binding.go`
+- `internal/anchors/registry_charge_binding_test.go`
+- `internal/anchors/registry_check_floor.go`
+- `internal/anchors/registry_check_floor_test.go`
+- `internal/anchors/registry_chunk_chain.go`
+- `internal/anchors/registry_chunk_chain_test.go`
+- `internal/anchors/registry_commitment.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry_ft311_preparation.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/anchors/registry_ticket_passes.go`
+- `internal/anchors/registry_ticket_passes_test.go`
+- `internal/chargeevidence/format_test.go`
+- `internal/chargeevidence/read.go`
+- `internal/chargeevidence/reference.go`
+- `internal/chargeevidence/schema.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/checks_test.go`
+- `internal/conformance/commitment_guidance_test.go`
+- `internal/conformance/docs_workflow_checks_test.go`
+- `internal/conformance/docs_workflow_helpers_test.go`
+- `internal/conformance/fixture_bite_test.go`
+- `internal/conformance/help_inventory_single_source_test.go`
+- `internal/conformance/implementation_continuation_test.go`
+- `internal/conformance/package_shipped_surface_test.go`
+- `internal/conformance/prose_budget_test.go`
+- `internal/conformance/prose_mechanics_test.go`
+- `internal/conformance/recurrence_maintenance_contract_test.go`
+- `internal/conformance/retained_workflow_test.go`
+- `internal/conformance/skills_index_checks_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/validity_checks_test.go`
+- `internal/gate/gate_go.go`
+- `internal/git/facts_test.go`
+- `internal/git/status.go`
+- `internal/handoff/facts.go`
+- `internal/preflight/charge.go`
+- `internal/preflight/charge_evidence_test.go`
+- `internal/preflight/charge_legacy_pack_test.go`
+- `internal/preflight/charge_pack.go`
+- `internal/preflight/command.go`
+- `internal/preflight/evidencecmd/evidence_budget_test.go`
+- `internal/preflight/evidencecmd/evidence_grammar_test.go`
+- `internal/preflight/evidencecmd/evidence_modes_test.go`
+- `internal/preflight/evidencecmd/evidence_record_order_test.go`
+- `internal/preflight/evidencecmd/operations.go`
+- `internal/preflight/preflighttest/fixture.go`
+- `internal/preflight/preparation.go`
+- `internal/preflight/proposal.go`
+- `internal/preflight/proposal_command_test.go`
+- `internal/preflight/review.go`
+- `internal/preflight/review_charge_test.go`
+- `internal/preflight/testdata/legacy-charge`
+- `internal/responsebound/owner.go`
+- `internal/responsebound/owner_test.go`
+- `internal/responsebound/responseboundtest/checkout.go`
+- `internal/responsebound/retain.go`
+- `internal/responsebound/retain_test.go`
+- `internal/responsebound/retire_test.go`
+- `internal/responsebound/store.go`
+- `internal/reviewrecord/change.go`
+- `internal/reviewrecord/completion.go`
+- `internal/reviewrecord/coverage.go`
+- `internal/reviewrecord/export_test.go`
+- `internal/reviewrecord/fold.go`
+- `internal/reviewrecord/fold_test.go`
+- `internal/reviewrecord/recordcmd/amendment.go`
+- `internal/reviewrecord/recordcmd/chunk.go`
+- `internal/reviewrecord/recordcmd/command.go`
+- `internal/reviewrecord/recordcmd/command_test.go`
+- `internal/reviewrecord/recordcmd/ordering_test.go`
+- `internal/reviewrecord/recordcmd/planned_cell.go`
+- `internal/reviewrecord/recordcmd/refusal.go`
+- `internal/reviewrecord/recordcmd/stage.go`
+- `internal/reviewrecord/recordcmd/stage_test.go`
+- `internal/reviewrecord/recordcmd/ticket.go`
+- `internal/reviewrecord/recordcmd/ticket_test.go`
+- `internal/reviewrecord/recordcmd/verification.go`
+- `internal/reviewrecord/recordtest/fixture.go`
+- `internal/reviewrecord/recordtest/stage.go`
+- `internal/reviewrecord/repair.go`
+- `internal/reviewrecord/repair_test.go`
+- `internal/reviewrecord/replacement_test.go`
+- `internal/reviewrecord/ticket.go`
+- `internal/reviewrecord/ticket_test.go`
+- `internal/reviewrecord/write.go`
+- `internal/roadmap/context_parse.go`
+- `internal/shellcommand/shellcommand.go`
+- `internal/shift/shift.go`
+- `internal/status/status.go`
+- `internal/systemtest/exec_nested_bound_test.go`
+- `internal/worktree/land_identity.go`
+- `internal/worktree/response_spill_test.go`
+- `projects/benchkit.md`
 - `reviews/record-ticket.md`
+- `tests/canary/cancel-signal-registrations/own-signal-set`
+- `tests/canary/docs-currency-token-diet`
+- `tests/canary/guidance-prose-budgets`
+- `tests/canary/line-routing/line-binding-prose-drift`
+- `tests/canary/load-validity-metadata`
+- `tests/canary/package-core-guard/unrouted-subcommand`
+- `tests/canary/skill-description-budgets`
+- `tests/canary/skills-index-command-adapters`
+- `tests/canary/workflow-guidance-anchors`
 
 ## Out of scope
 
