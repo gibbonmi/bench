@@ -291,7 +291,9 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
       "tickets": ["01-state-record-only-repair-cycle-rule.md"],
       "verification": [
         {"id": "policy-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
-        {"id": "policy-prose", "command": "bench test --check prose-mechanics"}
+        {"id": "policy-prose", "command": "bench test --check prose-mechanics"},
+        {"id": "command-registries", "command": "bench test --package ./cmd/bench"},
+        {"id": "cycle-root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
     {
@@ -299,7 +301,8 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
       "tickets": ["02-prove-test-only-tree-deltas.md"],
       "verification": [
         {"id": "prover", "command": "bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/gittest"},
-        {"id": "prover-status", "command": "bench test --package ./internal/testgap", "probe": "accept status D in the prover"}
+        {"id": "prover-status", "command": "bench test --package ./internal/testgap", "probe": "accept status D in the prover"},
+        {"id": "prove-root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
     {
@@ -307,7 +310,8 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
       "tickets": ["03-carry-confirmed-axis-results.md"],
       "verification": [
         {"id": "record-and-checkpoint", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate"},
-        {"id": "carry-prover", "command": "bench test --package ./internal/gate", "probe": "skip the test-only prover in the carry branch"}
+        {"id": "carry-prover", "command": "bench test --package ./internal/gate", "probe": "skip the test-only prover in the carry branch"},
+        {"id": "carry-root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
     {
@@ -316,7 +320,8 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
       "verification": [
         {"id": "writer-and-route", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench"},
         {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
-        {"id": "route-precedence", "command": "bench test --package ./internal/gate", "probe": "let the outcome refusal fire before the confirmation route"}
+        {"id": "route-precedence", "command": "bench test --package ./internal/gate", "probe": "let the outcome refusal fire before the confirmation route"},
+        {"id": "write-root-conformance", "command": "bench test --check root-conformance"}
       ]
     }
   ],
