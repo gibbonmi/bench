@@ -260,6 +260,74 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft405_rv_retain_c-standards",
+          "performer": "claude:ft405_rv_retain_c_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cab8f539483d4defec944d2a5f6804f75ea64e06",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_retain_c_standards",
+            "digest": "sha256:2afc8340f729129df62c64e10804f1564da48ead837585810848c0d3d7de3137",
+            "excerpt": "## Standards\n\nThe repair delta closes all four findings. It adds one new judgment finding (S5).\n\n- S1 closed. `openSpill` (`internal/responsebound/store.go:43-51`) and `retainedPath` (`internal/responsebound/retain.go:32-36`) both build the path through `storeScope`, `scopeDir.file`, and `scopeDir.create` (`store.go:75-98`). The retained path now also gets the `filepath.Abs` and `LineSafe` steps.\n- S2 closed. `dirtyPaths` calls `git.PorcelainStatus` at `internal/shift/shift.go:58` and still ignores the error under its audit #11 comment. `parseDirtyPaths` (`shift.go:35`) now has callers only in `shift_test.go:37-51`; not filed, because removing it edits a test file outside the fence.\n- S3 closed. `whole`, `replayed`, and the `finished` phase constant are gone. `completeOutput` builds the bytes from `phase` plus `retained` or the spill file (`owner.go:240-257`). A `finished` bool keeps the phase set after `Finish`, and a second `Finish` call still does nothing.\n- S4 closed. The `Retain` comment (`retain.go:40-44`) reads clearly and matches lines 56-63.\n- Ticket line 16 matches the code (`owner.go:213-235`).\n\nS5 (judgment). `internal/responsebound/retain.go:33` restates the \"assignment scope means not `primaryScope`\" check that `AssignmentScope` owns at `size.go:27`. The two can disagree: `AssignmentScope` calls `location` with the raw home, but `storeScope` makes it absolute first, which affects the census record (`cmd/bench/census_output.go:65`) against retention. Ticket line 9 still says the scope comes from `AssignmentScope`. Rule: AGENTS.md one source per fact. Disposition: auto-fix; `size.go` is outside the fence, so it needs a plan commit to expand the fence. Confidence 5.\n\n## Advice\n- The `storeScope` doc's \"or the empty string outside a repository\" describes `root`, the same way the `location` and `New` docs do.\n\n## Examined\nPreflight current=true at ce421169; the repair delta 9d989e12..9dba46b7; `owner.go`, `retain.go`, `store.go`, `size.go`, `shift.go`, `PorcelainStatus`, and the ticket's Writes line and lines 9 and 16; callers of the scope and parser helpers; craft-comments. No files written; no tests or probes run.\n"
+          },
+          "axis": "Standards",
+          "base": "53e60dc58f0432fdadf2b31b78d4e7a25f85570d",
+          "tip": "9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b",
+          "finding_ids": [
+            "S5"
+          ],
+          "supersedes": [
+            "ft405_rv_retain-standards"
+          ]
+        },
+        {
+          "id": "ft405_rv_retain_c-spec",
+          "performer": "claude:ft405_rv_retain_c_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cab8f539483d4defec944d2a5f6804f75ea64e06",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_retain_c_spec",
+            "digest": "sha256:e974a46352801b0a4a1fff2880762cb561ff91f90284b6f2ae8fbc3863d7d1e0",
+            "excerpt": "## Spec\n\nPass. The repair keeps RT1–RT8 and RT65 met. No findings.\n\n- Complete bytes (RT7, RT65). Spec line 157: \"It answers no bytes for the spill-failed state and for the `passing` state\". `completeOutput` (`internal/responsebound/owner.go:240-257`) answers bytes only for `retaining` and `spilling`; `unspilled` and `passing` fall through to false, so `Retain` clears the response (`internal/responsebound/retain.go:56-59`).\n- Arrival order, both streams. Spec line 147: \"complete response bytes in arrival order\". The `retaining` phase concatenates `o.retained`, which holds writes from both streams in order (`owner.go:135`, `owner.go:248-250`); the `spilling` phase reads the spill file. The \"alternating streams\" row checks exact `Output` equality (`cmd/bench/retain_test.go:86`, `:103-109`).\n- Replacement. Each row first retains an exit-5 call, then requires the later call's exit and output (`cmd/bench/retain_test.go:90-94`). `durablefile.Replace` still does the write (`retain.go:69`).\n- Shift. `dirtyPaths` calls `git.PorcelainStatus` and keeps its ignored error and scratch policy (`internal/shift/shift.go:55-60`, `:366-373`).\n- Ticket line 16. The edit changes only the mechanism; the approved behavior (spec lines 155-157) is unchanged.\n- Seams. Every cited test exists: `TestRetainKeepsTheCompleteResponse`, `TestRetainSkipsRecordWorktreeAndRetiringCalls`, `TestRetainSkipsThePrimaryCheckout`, `TestRetainFailureKeepsTheResponse` (`cmd/bench/retain_test.go`), `TestRetainClearsAnIncompleteResponse` (`internal/responsebound/retain_test.go:20`), and `TestExecNestedBenchKeepsChildRetained` (`internal/systemtest/exec_nested_bound_test.go:50`).\n- Scope. `retainedPath` uses `storeScope` and checks for `primaryScope`, the same test `AssignmentScope` makes (`size.go:25-28`), so RT6 and the outside-a-repository case hold.\n\n### Advice\n- `retainedPath` now refuses a home path that is not line-safe (`store.go:332-337`); the dispatcher discards that error, so the response is unchanged.\n- On a failed read, `PorcelainStatus` returns nil; shift tolerates this.\n\n### Examined\nThe repair delta 9d989e12..9dba46b7; `bench coverage` and spec lines 143-170, 337-344, and 401; `owner.go`, `retain.go`, both retain tests, `PorcelainStatus`, `location`, and `AssignmentScope`. Preflight current=true through `bench worktree exec`. No files written; no tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "53e60dc58f0432fdadf2b31b78d4e7a25f85570d",
+          "tip": "9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_retain-spec"
+          ]
+        },
+        {
+          "id": "ft405_rv_retain_c-coverage",
+          "performer": "claude:ft405_rv_retain_c_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cab8f539483d4defec944d2a5f6804f75ea64e06",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_retain_c_coverage",
+            "digest": "sha256:a794e1caba6ea26dba4736cbdd2fb9341d7c1c6e5bbda57d12632e00eaac4ae7",
+            "excerpt": "## Coverage\n\nC1 and C2 are both closed. The S3 rework still covers RT7 and RT65. The repair delta adds no new uncovered state. Findings: 0.\n\n- C1 closed. The write-once mutant bites 3 subtests of `TestRetainKeepsTheCompleteResponse` (`within_the_bound`, `alternating_streams`, `spilled`), which still hold the earlier exit-5 response (`cmd/bench/retain_test.go:109`).\n- C2 closed. The stdout-only mutant bites `TestRetainKeepsTheCompleteResponse/alternating_streams`; the retained Output held only lines 01 and 03.\n- RT7/RT65 after S3: both independent mutants bite `TestRetainClearsAnIncompleteResponse` (`internal/responsebound/retain_test.go:57`).\n\nProbes, all through `bench probe` on `./cmd/bench` and `./internal/responsebound/...`:\n\n| # | Mutation | Verdict | Restored |\n|---|---|---|---|\n| 1 | `retain.go`: insert `if _, e := os.Stat(path); e == nil { return nil };` before `return durablefile.Replace(` | bit (3 failed) | yes |\n| 2 | `owner.go` `completeOutput`: wrap the append in `if w.stream == o.stdout` | bit (1 failed) | yes |\n| 3 | `owner.go`: `case o.phase == spilling || o.phase == unspilled:` | bit, `/spill-failed` | yes |\n| 4 | `owner.go`: `case o.phase == retaining || o.phase == passing:` | bit, `/create_failure` | yes |\n| 5 | `owner.go` `Finish`: remove the `if o.finished { return }` guard (also ran `./internal/worktree`) | silent | yes |\n\n`git status --porcelain` was empty at the end.\n\n## Advice\n- Probe 5 is silent: no test covers a second `Finish`. Production has one `Finish` caller (`cmd/bench/census_output.go:27`), so the gap is unreachable today.\n- The retained writes live until the Owner is collected; the response bound caps that memory (`internal/responsebound/owner.go:156-157`).\n\n## Examined\nPreflight current=true through `bench worktree exec`; the repair delta 9d989e12..9dba46b7; `owner.go`, `retain.go`, `cmd/bench/retain_test.go`, `internal/responsebound/retain_test.go`, and the `Finish` callers.\n"
+          },
+          "axis": "Coverage",
+          "base": "53e60dc58f0432fdadf2b31b78d4e7a25f85570d",
+          "tip": "9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_retain-coverage"
+          ]
         }
       ]
     }
@@ -288,6 +356,7 @@
 ## Repair state
 
 RT-RETAIN: repair cycle 1 of 2 is complete for ticket 01. The repair commit is 9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b. No reviewer extension exists.
+RT-RETAIN: repair cycle 2 of 2 is in progress for ticket 01 to close S5, with a fence expansion to `internal/responsebound/size.go` under the auto-approve direction.
 
 ## Standards
 
@@ -298,6 +367,10 @@ RT-RETAIN: 4 findings. The worst issue is S1.
 - S3 (auto-fix, confidence 4): `internal/responsebound/owner.go:78-81` and `owner.go:215-217` add the `whole` and `replayed` fields, which store again what the phase and the retained writes hold.
 - S4 (auto-fix, confidence 5): the doc comment at `internal/responsebound/retain.go:389-390` repeats the word "call" ambiguously.
 
+Confirming round: S1 to S4 are closed. 1 new finding.
+
+- S5 (auto-fix, confidence 5): `internal/responsebound/retain.go:33` restates the assignment-scope check that `AssignmentScope` owns at `internal/responsebound/size.go:27`, and the two paths treat the home path differently.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -305,9 +378,13 @@ RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
 - P1 (no-op, confidence 7): RT7 and RT65 run at the `Owner.Retain` seam, not through the dispatcher. The behavior holds, and the deviation stays open to reviewer veto.
 - P2 (no-op, confidence 5): a failed `HEAD` or porcelain read also clears the retained response.
 
+Confirming round: pass, with no findings.
+
 ## Coverage
 
 RT-RETAIN: 2 findings. The worst issue is C1.
 
 - C1 (auto-fix, confidence 8): no test runs two complete retaining calls in sequence, so a write-once mutant stays silent.
 - C2 (auto-fix, confidence 7): no test interleaves stdout and stderr in a response within the bound, so a stdout-only mutant stays silent.
+
+Confirming round: C1 and C2 are closed, with no new findings.
