@@ -703,6 +703,74 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft405_rv_excerpt_c-standards",
+          "performer": "claude:ft405_rv_excerpt_c_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "74827614db2ef7a698ec2486cf5a6314f617b651",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_c_standards",
+            "digest": "sha256:9a1cc57d243304c0199f998afee4de597f9d392f5a4ec7dc1ea16a0bb01c3bbb",
+            "excerpt": "## Standards\n\nAll six findings are closed. No new defect: 0 new findings, no worst issue.\n\n- S1 closed. `internal/responsebound/store.go:220-241` holds the only per-level walk, `realLevels(op, prepare)`, with three callers and their own refusal operations: `create` uses `\"mkdir\"` (store.go:212), `readScoped` uses `\"read\"` (retain.go:146), and `Drop` uses `\"remove\"` (retire.go:174). The delta deletes `realDir` and `privateDirs`; a `git grep` at the tip finds no other walk.\n- S2 closed. `stage.go:66-67` replaces both `\"probe\"` literals with `probe.Verb`, which is `strings.Fields(Usage)[1]` (probe.go:19). `cmd/bench/main.go` is not in the delta, and the delta adds no new copy of the verb name.\n- S3 closed. The RT59 test (stage_test.go:407-411) checks only that one new file appears beside the retained response and that no ID character forms its name; it no longer computes `sha256`.\n- S4 closed. The `setAnswer` doc comment (stage_test.go:333-334) is two sentences and states a constraint.\n- S5 closed. `setAnswer` builds its answer from `setProducer(t, linked(t, 1))` with `bitingEntry` and `bite` (stage_test.go:337-338).\n- S6 closed. `write.go:216-220` uses if/else for the chunk and final lookups.\n\n## Advice\n- `write.go:197` sets `requirement` to `Requirement{}` up front so both branches can assign it; a `var requirement Requirement` would read more plainly.\n- `probe.Verb` is an exported package `var` (Global Data smell); low confidence that it matters.\n\n## Examined\nPreflight current=true through `bench worktree exec` (source tip 2795126190); the full delta c1268bd0..1c11dbc5; one `git grep` at 1c11dbc5; verification_import_test.go:125-184, write.go:192-231; craft-comments and craft-review. No tests or probes run; no file written.\n"
+          },
+          "axis": "Standards",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "1c11dbc55ac614689d1b20bb8088cee7725c8206",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_excerpt-standards"
+          ]
+        },
+        {
+          "id": "ft405_rv_excerpt_c-spec",
+          "performer": "claude:ft405_rv_excerpt_c_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "74827614db2ef7a698ec2486cf5a6314f617b651",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_c_spec",
+            "digest": "sha256:3a79a9d0e5422007cc5e78b8e1b05569ea9cb49620a2f44fba0063b0f98fdb5c",
+            "excerpt": "## Spec\n\nPass: 0 findings, no worst issue. The repair delta c1268bd0..1c11dbc5 keeps RT9–RT17 and RT57–RT59 met.\n\n- RT9 (\"The release of a worktree removes its retained response and its staged excerpts.\"): `Drop` (`internal/responsebound/retire.go:27-33`) walks the same two levels through `realLevels(\"remove\", nil)`; a missing level still returns nil, and the removed path is still the assignment directory. `TestDropRemovesTheRetainedResponseAndStages` is at `retain_test.go:67`.\n- Symlink refusals (spec:414): `create` (`store.go:116`) and `readScoped` (`retain.go:154`) both use `realLevels`, which does an `Lstat` and an `IsDir` check on each level; the regular-file check is at `retain.go:161`. `TestStageRefusesASymlinkedScope` (`retain_test.go:92`) is unchanged; `TestReadRefusesAScopedFileThatIsNotRegular` (`:128`) adds symlink and FIFO cases at the file level.\n- RT59 (\"stages a file inside the assignment scope and nowhere else\"): `stage_test.go:168-183` requires exactly one new file in the retained response's directory; `StoreFiles` walks all of home, and `requireNoWorktreeWrite` covers the worktree.\n- `--mutant` (\"valid only for a probe requirement\", spec:182): the refusal at `stage.go:49-50` is unchanged; `TestExcerptRefusesAnInvalidMutantRow` (`stage_test.go:187`) adds usage refusals for `x` and `0`.\n- `probe.Verb`: `strings.Fields(Usage)[1]` evaluates to `probe` (`internal/probe/command.go:18`); the RT13 refusal text is unchanged.\n- `write.go:216-220`: same `ChunkRequirement` call for a chunk call, same final-list call otherwise.\n- RT1–RT8: `ReadRetained` (`retain.go:84-86`) still goes through `readScoped`; a missing level still matches `fs.ErrNotExist`.\n- Seam citations: all six cited test functions exist at the tip.\n\n## Advice\n- No test now checks the digest naming in spec:185 or that different keys get different stage files.\n\n## Examined\nPreflight current=true at 2795126; the repair diff and the `bench coverage` rows; spec lines 172-189, 340-351, 395, 414; `retain.go`, `retain_test.go`, `stage.go`, `write.go`, `StoreFiles`, and the probe `Usage`. No tests or probes run.\n"
+          },
+          "axis": "Spec",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "1c11dbc55ac614689d1b20bb8088cee7725c8206",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_excerpt-spec"
+          ]
+        },
+        {
+          "id": "ft405_rv_excerpt_c-coverage",
+          "performer": "claude:ft405_rv_excerpt_c_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "74827614db2ef7a698ec2486cf5a6314f617b651",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_c_coverage",
+            "digest": "sha256:77242b7e8075955ae1918605b21bfacc7870101991364889bbcbfd05436a28d9",
+            "excerpt": "## Coverage\n\nThe three charged findings are closed. One new gap survived, C4. It was already present at c1268bd0, and the S1 refactor left it uncovered.\n\n- C1 closed. The probe bit: `TestExcerptRefusals/empty` and `/invalid_UTF-8` failed with exit 0 where a refusal was expected (`stage_test.go:134`).\n- C2 closed. The probe bit: all four subtests of `TestReadRefusesAScopedFileThatIsNotRegular` failed (`retain_test.go:180`).\n- C3 closed. The probe bit: `TestExcerptRefusesAnInvalidMutantRow` failed (`stage_test.go:192`).\n- C4 (new). State: a stored excerpt is read while `responses/` or the repository-key level below it is a symlink to a directory that holds a valid stage. Break: `readScoped` calls `realLevels(\"read\", nil)` (`internal/responsebound/retain.go:154`), so a read check that skips those two levels lets `ReadStaged` and `ReadRetained` follow the link, against spec line 414 (\"never follows a symbolic link at a store level\"). `TestStageRefusesASymlinkedScope` (`retain_test.go:92-123`) links only the last level. Test that should exist: a per-level read-refusal row for `responses/`, the repository key, and the scope. Disposition: auto-fix. Confidence 7.\n\n## Probes (all through `bench probe`, all restored=yes)\n\n| Mutation | Verdict |\n|---|---|\n| `stage.go`: `graded.State != bounds.StateParsed` → `== bounds.StateUnreadable` | bit, 2 failed |\n| `retain.go`: `if !info.Mode().IsRegular() {` → `if info == nil {` | bit, 4 failed |\n| `stage.go`: the `valid` hook returns `true` | bit, 1 failed |\n| `store.go:140`: `if !info.IsDir() {` → `if !info.IsDir() && (op != \"read\" \\|\\| dir == d.dir()) {` (responsebound, reviewrecord/..., cmd/bench) | silent |\n\n## Advice\n`TestStageRefusesASymlinkedScope` could reuse the per-level helper `atEachStoreLevel` (`store_test.go:74`) for its read refusal.\n\n## Examined\nPreflight current=true; the repair delta c1268bd0..1c11dbc5; `retain.go:95-172`, `store.go:55-150`; the symlink tests in `retain_test.go`, `retire_test.go:82`, `store_test.go:73`; spec line 414. `git status --porcelain` clean afterwards.\n"
+          },
+          "axis": "Coverage",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "1c11dbc55ac614689d1b20bb8088cee7725c8206",
+          "finding_ids": [
+            "C4"
+          ],
+          "supersedes": [
+            "ft405_rv_excerpt-coverage"
+          ]
         }
       ]
     }
@@ -765,6 +833,8 @@ RT-RETAIN: repair cycle 2 of 2 is complete for ticket 01 to close S5, with a fen
 
 RT-EXCERPT: repair cycle 1 of 2 is complete for ticket 02. The fence expands with `internal/responsebound/store.go`, `internal/responsebound/retire.go`, `internal/probe/probe.go`, and `cmd/bench/main.go` under the auto-approve direction. The repair commit is 1c11dbc55ac614689d1b20bb8088cee7725c8206. For S2, the registry entry keeps its literal verb name, because the registry parser of the conformance checks accepts only a string literal there.
 
+RT-EXCERPT: repair cycle 2 of 2 is in progress for ticket 02 to close C4. It is a test-only repair, so a coordinator confirmation can close it.
+
 ## Standards
 
 RT-RETAIN: 4 findings. The worst issue is S1.
@@ -789,6 +859,8 @@ RT-EXCERPT: 6 findings. The worst issue is S1.
 - S5 (auto-fix, confidence 4): `stage_test.go:43-46` hand-writes the mutant-set envelope that `setProducer` already produces.
 - S6 (auto-fix, confidence 5): `internal/reviewrecord/write.go:216-219` runs the final-list lookup and then overwrites it for a chunk call.
 
+RT-EXCERPT confirming round: S1 to S6 are closed, with no new findings. S2 is closed for the build delta. The registry literal for the probe verb predates the build, and a learning holds it.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -801,6 +873,8 @@ Confirming round: pass, with no findings.
 Confirming round 2: pass, with no findings.
 
 RT-EXCERPT: pass, with no findings.
+
+RT-EXCERPT confirming round: pass, with no findings.
 
 ## Coverage
 
@@ -818,3 +892,7 @@ RT-EXCERPT: 3 findings. The worst issue is C1.
 - C1 (auto-fix, confidence 8): no test stages an empty or invalid UTF-8 retained response.
 - C2 (auto-fix, confidence 7): no test reads a stage or retained file that is a symbolic link or a FIFO under real store levels.
 - C3 (auto-fix, confidence 5): no test refuses `--mutant x` or `--mutant 0` on the excerpt form.
+
+RT-EXCERPT confirming round: C1 to C3 are closed. 1 new finding.
+
+- C4 (auto-fix, confidence 7): no test reads a stage or retained file while the `responses` level or the repository-key level is a symbolic link.
