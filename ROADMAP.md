@@ -112,6 +112,10 @@ and the small cuts. The rows below hold the rest.
 
 **FT419 (MEDIUM) — a build that adds a persisted ledger or review-record field writes and lands through a binary that reads that field.**
 
+**FT424 (MEDIUM) — a chunk gap lands the prepared work of waiting committed outcomes.**
+
+**FT425 (LOW) — a Bench write verb prints the tree state after it runs.**
+
 ## Planning, ownership, and review integrity
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
@@ -127,6 +131,10 @@ and the small cuts. The rows below hold the rest.
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
 **FT89 (LOW) — resolve the remaining guidance contradictions.**
+
+**FT427 (LOW) — the guidance names the worktree build after create, and says that the commit lane grades prose.**
+
+**FT428 (LOW, decision required) — the phase-close guidance gives the full `bench handoff` grammar from one owner.**
 
 **FT106 (LOW) — doc claims re-verified against the tree.**
 
@@ -262,6 +270,8 @@ qualification requirements are met.
 **FT422 (MEDIUM, parked pending a repro) — a commitment reorder before a landing releases a started claim, and plan and approve read one predecessor.**
 
 **FT423 (LOW, parked pending a repro) — `bench record verification` refuses a probe entry that the checkpoint would refuse.**
+
+**FT426 (MEDIUM, parked pending a repro) — `bench commitment plan` refuses a dependency that the order puts after its dependent.**
 
 
 ## Release and bank reassessment gate
