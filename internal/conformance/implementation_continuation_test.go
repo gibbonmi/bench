@@ -231,6 +231,14 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
 			needle: "Evidence-only corrections consume no repair cycle. Batch all cited corrections before verification.",
 		},
+		"implementation continuation: bounded repair counted a record-only correction": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A correction that changes only the review record consumes no repair cycle, even when it changes a disposition.",
+		},
+		"implementation continuation: bounded repair dropped the changed-disposition reaffirmation": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "The issuing axis reaffirms a changed disposition.",
+		},
 		"implementation continuation: bounded repair widened prose reaffirmation": {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
 			needle: "Only the issuing axis reaffirms an evidence-only correction unless it invalidates another axis's evidence.",
