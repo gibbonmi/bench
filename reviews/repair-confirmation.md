@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-confirmation/spec.md",
-  "plan_digest": "sha256:eab3b60e5cb3c04cf82d4d73625aa2467c22b46a6bf093eceb7cf610de18cb6a",
+  "plan_digest": "sha256:b7a167dcf9a20ca5be35896338dd76ffb1bf2c5d31b9c4b7888df144fe39dd8f",
   "implementation_session": "",
   "chunks": [
     {
@@ -585,9 +585,9 @@
     {
       "id": "RC-CARRY",
       "base": "78f71b6c954779f0cee672faa34a471eff10b111",
-      "tip": "4d026a7861a63957f6aa1c5657dfca3e85a9b8cb",
-      "plan_digest": "sha256:eab3b60e5cb3c04cf82d4d73625aa2467c22b46a6bf093eceb7cf610de18cb6a",
-      "source_digest": "f9de3ed0d99883a2ab641124e1773875432ac197",
+      "tip": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+      "plan_digest": "sha256:b7a167dcf9a20ca5be35896338dd76ffb1bf2c5d31b9c4b7888df144fe39dd8f",
+      "source_digest": "29aa0289855b6a4ba3b6baa3f4b30e579bdb92eb",
       "acceptance_rows": [
         "RC4",
         "RC5",
@@ -751,6 +751,71 @@
             "ref": "claude-agent:ft379_t03_rep1/carry-root-conformance",
             "digest": "sha256:1958ee3eac2d4ac8b080c3e090fc7ede66c4f92a1ab9efbb5a89d5a79afcc538",
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15290,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "carry-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-carry-rep1-record-and-checkpoint-2",
+          "performer": "claude:ft379_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "29aa0289855b6a4ba3b6baa3f4b30e579bdb92eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t03_rep1/record-and-checkpoint-2",
+            "digest": "sha256:f2156e869bdb36873133e65638f572bc8367d6cf258901acd6d73a50803c5af3",
+            "excerpt": "packages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,37939,486\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2936,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,12017,192\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-and-checkpoint",
+          "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-carry-rep1-carry-prover-2",
+          "performer": "claude:ft379_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "29aa0289855b6a4ba3b6baa3f4b30e579bdb92eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t03_rep1/carry-prover-2",
+            "digest": "sha256:c0f9ab28e5e992d4a8ef55896d956a284f9356b330ebc38cc48838473364e745",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,3,TestReviewCheckpointConfirmationRefusals/later_production_repair,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,486\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1221\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,37568,486\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointConfirmationRefusals/later_production_repair,\"review_checkpoint_confirmation_test.go:252: confirmation refusal = 0 ; want the reason \\\"the delta to the chunk tip is not test-only: source.txt: path is not a Go test file\\\" and the route \\\"next=bench record 'review' --help\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointConfirmationRefusals/non-test_Go_file,\"review_checkpoint_confirmation_test.go:252: confirmation refusal = 0 ; want the reason \\\"chunk 1: stale axis results at the reviewed tip bfd6bd31613604494e135f5ab473ed1d7d0207dd: the delta to the chunk tip is not test-only: repair.go: path i… (313 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointConfirmationRefusals/plan_file,\"review_checkpoint_confirmation_test.go:252: confirmation refusal = 0 ; want the reason \\\"the delta to the chunk tip is not test-only: specs/example/notes.md: path is not a Go test file\\\" and the route \\\"next=bench record 'review' --help\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "carry-prover",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip the test-only prover in the carry branch",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft379_t03_rep1/carry-prover-2",
+              "digest": "sha256:c0f9ab28e5e992d4a8ef55896d956a284f9356b330ebc38cc48838473364e745",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,3,TestReviewCheckpointConfirmationRefusals/later_production_repair,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,486\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1221\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,37568,486\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointConfirmationRefusals/later_production_repair,\"review_checkpoint_confirmation_test.go:252: confirmation refusal = 0 ; want the reason \\\"the delta to the chunk tip is not test-only: source.txt: path is not a Go test file\\\" and the route \\\"next=bench record 'review' --help\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointConfirmationRefusals/non-test_Go_file,\"review_checkpoint_confirmation_test.go:252: confirmation refusal = 0 ; want the reason \\\"chunk 1: stale axis results at the reviewed tip bfd6bd31613604494e135f5ab473ed1d7d0207dd: the delta to the chunk tip is not test-only: repair.go: path i… (313 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointConfirmationRefusals/plan_file,\"review_checkpoint_confirmation_test.go:252: confirmation refusal = 0 ; want the reason \\\"the delta to the chunk tip is not test-only: specs/example/notes.md: path is not a Go test file\\\" and the route \\\"next=bench record 'review' --help\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "rc-carry-rep1-root-conformance-2",
+          "performer": "claude:ft379_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "29aa0289855b6a4ba3b6baa3f4b30e579bdb92eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t03_rep1/carry-root-conformance-2",
+            "digest": "sha256:8cb2ccb59e6ebc00aabfe7ae3ae1c8c180b6f11dd441556131dd984816b04b8d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14942,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "carry-root-conformance",
           "command": "bench test --check root-conformance",
@@ -964,6 +1029,21 @@
     {
       "from": "sha256:e83e97f594c8e057b7ac47b13d463a36397935a230f91a09271bea3e9a3ae975",
       "to": "sha256:eab3b60e5cb3c04cf82d4d73625aa2467c22b46a6bf093eceb7cf610de18cb6a",
+      "chunk_ids": {
+        "RC-CARRY": [
+          "RC-CARRY"
+        ],
+        "RC-CYCLE": [
+          "RC-CYCLE"
+        ],
+        "RC-PROVE": [
+          "RC-PROVE"
+        ]
+      }
+    },
+    {
+      "from": "sha256:eab3b60e5cb3c04cf82d4d73625aa2467c22b46a6bf093eceb7cf610de18cb6a",
+      "to": "sha256:b7a167dcf9a20ca5be35896338dd76ffb1bf2c5d31b9c4b7888df144fe39dd8f",
       "chunk_ids": {
         "RC-CARRY": [
           "RC-CARRY"
