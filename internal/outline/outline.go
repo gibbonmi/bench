@@ -225,7 +225,7 @@ func listFiles(root, path string, havePath bool) ([]string, error) {
 // still listed; only the stat policy can skip it. Every other file passes the whole read
 // policy and goes through the language table.
 func walkSymbols(rel, abs string) ([]Symbol, string, bool) {
-	if isFixture(rel) {
+	if IsFixture(rel) {
 		if reason, ok := statPolicy(abs); !ok {
 			return nil, reason, false
 		}

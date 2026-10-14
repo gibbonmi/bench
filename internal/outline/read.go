@@ -11,10 +11,11 @@ import (
 // fixtureDir is the path segment that marks prior-art fixture data.
 const fixtureDir = "testdata"
 
-// isFixture reports whether git's slash-separated path sits under a fixtureDir segment.
-// Such a file reports one fixture row and is never scanned, because it carries no scanned
-// extension and the extension dispatch would drop it silently.
-func isFixture(rel string) bool {
+// IsFixture is the one fixture-path predicate. It reports whether git's slash-separated
+// path sits under a fixtureDir segment. The outline reports such a file as one fixture row
+// and never scans it, because it carries no scanned extension and the extension dispatch
+// would drop it silently.
+func IsFixture(rel string) bool {
 	return strings.HasPrefix(rel, fixtureDir+"/") || strings.Contains(rel, "/"+fixtureDir+"/")
 }
 

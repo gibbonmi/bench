@@ -1,7 +1,6 @@
 package commentgap
 
 import (
-	"errors"
 	"maps"
 	"strings"
 	"testing"
@@ -73,13 +72,7 @@ func TestProveTreeGap(t *testing.T) {
 			if name == "invalid tree" {
 				left, want, path = strings.Repeat("0", 40), ErrUnreadable, ""
 			}
-			got := Prove(f.Root, left, right)
-			if !errors.Is(got, want) {
-				t.Fatalf("tree gap = %v, want %v", got, want)
-			}
-			if want != nil && path != "" && !strings.Contains(got.Error(), path) {
-				t.Fatalf("refusal lost path %q: %v", path, got)
-			}
+			gittest.RequireVerdict(t, Prove(f.Root, left, right), want, path)
 		})
 	}
 }

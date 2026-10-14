@@ -4,8 +4,6 @@ package testgap
 import (
 	"errors"
 	"fmt"
-	"slices"
-	"strings"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/outline"
@@ -54,7 +52,7 @@ func proveFile(change benchgit.TreeChange) error {
 	}
 	// Go ignores a testdata directory, so a test file there is fixture data that a
 	// production file can embed.
-	if slices.Contains(strings.Split(change.Path, "/"), "testdata") {
+	if outline.IsFixture(change.Path) {
 		return ErrTestdata
 	}
 	return nil

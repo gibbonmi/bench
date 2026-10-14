@@ -2,9 +2,11 @@ package gittest
 
 import (
 	"encoding/hex"
+	"errors"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -65,6 +67,19 @@ func (f Trees) EmptyDirectoryTree() string {
 		f.t.Fatal(err)
 	}
 	return f.object("tree", append([]byte("40000 empty\x00"), object...))
+}
+
+// RequireVerdict fails t unless a tree prover's result got matches want under errors.Is.
+// A refusal with a nonempty path must name that path, so the caller can find the change
+// that failed.
+func RequireVerdict(t testing.TB, got, want error, path string) {
+	t.Helper()
+	if !errors.Is(got, want) {
+		t.Fatalf("prover verdict = %v, want %v", got, want)
+	}
+	if want != nil && path != "" && !strings.Contains(got.Error(), path) {
+		t.Fatalf("refusal lost path %q: %v", path, got)
+	}
 }
 
 func (f Trees) object(kind string, body []byte) string {
