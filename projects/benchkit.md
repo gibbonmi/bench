@@ -588,8 +588,9 @@ escalation.
   The fork inherits the invoking session's line, with no model override.
 
   For a ready compiled map, the reviewer may select the map-only route in
-  `craft-spec`'s `references/map-only-route.md`. Top +
-  high remains a reviewer-approved escalation before the fork. After ticket approval, an
+  `craft-spec`'s `references/map-only-route.md`.
+
+  Top + high remains a reviewer-approved escalation before the fork. After ticket approval, an
   orchestrator runs the build, and each ticket gets a fresh author session on the approved
   implementation line. Distinct from the doc-authoring leverage
   override above: that spends high effort on the kit's guidance prose.

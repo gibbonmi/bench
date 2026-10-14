@@ -225,7 +225,7 @@ One chunk holds the change, because every part is guidance prose and its anchors
 | MR31 | 31 | Both write-spec passages of `docs/field-guide.html` name the map-only route | review-owned | A guide that names only the fan-out misstates the phase. |
 | MR32 | 32 | `CHANGELOG.md` holds an Unreleased entry for the map-only route | review-owned | A missing entry hides the change from a release note. |
 | MR33 | 33 | `README.md` and ADR 0022 hold no edit in the build diff | review-owned | An edit there restates the route in a second place. |
-| MR34 | 22 | The route reference stops the slicer when the map holds no decision ticket | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A slicer on an empty map writes a thin spec with zero stories, and no check turns red. |
+| MR34 | 22 | The route reference stops the slicer when the map holds no decision ticket | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecMapOnlyRoute`) | A slicer on an empty map writes a thin spec with zero stories, and no check turns red. |
 
 Not covered: story 34 — a reviewed exclusion whose cost the Out of scope section prices.
 Not covered: story 35 — a reviewed exclusion whose cost the Out of scope section prices.

@@ -34,11 +34,13 @@ The spec-stage close in the `Exit handoff` section of [`/bench-write-spec`](../.
 
 The slicer stops when a map decision is not an exact predicate.
 The slicer also stops when the map leaves a code seam open.
+The slicer also stops when the map holds no decision ticket.
 The stop returns to the reviewer with a recommendation for the full route, and the slicer writes no further ticket.
 
 ## Thin spec
 
-The coverage check and the build preflight read the thin spec's header fields, stories, coverage map, chunk table, `bench-completion-plan` fence, ownership fences, and gap log.
+The coverage check and the build preflight read the thin spec's header fields, stories, coverage map, chunk table, `bench-completion-plan` fence, and ownership fences.
+The thin spec also holds the gap log for the sign-off, and no check reads it.
 
 - The header holds `Status: staged`, one `Decision source:` line that names the compiled map, a `Verification log:` line, and the `Line:` fields.
 - `## User stories` holds at least one story for each map decision.
