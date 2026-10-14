@@ -508,11 +508,13 @@ The fence holds the review pickup and the union of the ticket `Writes:` paths.
 - `internal/preflight/review.go`
 - `internal/preflight/review_charge_test.go`
 - `internal/preflight/testdata/legacy-charge`
+- `internal/probe/probe.go`
 - `internal/responsebound/owner.go`
 - `internal/responsebound/owner_test.go`
 - `internal/responsebound/responseboundtest/checkout.go`
 - `internal/responsebound/retain.go`
 - `internal/responsebound/retain_test.go`
+- `internal/responsebound/retire.go`
 - `internal/responsebound/retire_test.go`
 - `internal/responsebound/size.go`
 - `internal/responsebound/store.go`
