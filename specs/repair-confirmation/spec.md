@@ -36,14 +36,14 @@ Any other delta still takes the confirming round of all three axes.
 
 Line: opus / high.
 
-Implementation-line reason: The hardest material chunk is RC-CONFIRM, which changes the oracle at the chunk checkpoint seam.
+Implementation-line reason: The hardest material chunk is RC-CARRY, which changes the oracle at the chunk checkpoint seam.
 Its wrong answer weakens every later chunk review, so the leverage override applies.
 The spec is precise: F1–F9 close the shape, and the comment-only gap is a direct precedent.
 Seam uncertainty is low, because `checkSource` and `checkReviews` are the one owner of axis currency.
 The gate tests are strong: the checkpoint tests drive real Git trees through `RunCommand`.
 RC-CYCLE is a prose and anchor edit with exact twin pins.
 
-Harder chunks: RC-CONFIRM.
+Harder chunks: RC-CARRY, RC-WRITE.
 
 ### Record-only correction
 
@@ -185,7 +185,7 @@ A later non-test repair takes three fresh axis results at the new pair, so the o
 
 ### Test-only prover (F2)
 
-A new package beside `internal/commentgap` proves a test-only tree delta.
+A new package `internal/testgap` beside `internal/commentgap` proves a test-only tree delta.
 It uses `TreeChangesIncludingSubmodules`, which runs with `--no-renames`, so a rename arrives as a deletion and an addition.
 It accepts a change only when every condition holds:
 
@@ -267,20 +267,66 @@ This spec follows the invoked `/bench-write-spec` and flags the route for review
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| RC-CYCLE / pending slicing | The policy states that a record-only correction consumes no repair cycle, with its twin pins. | RC1, RC2, RC3 | `TestImplementationContinuation` | no |
-| RC-CONFIRM / pending slicing | The record, the prover, the checkpoint, the writer, the route, and the guidance accept a confirmed test-only repair. | RC4–RC54 | `TestReviewCheckpointKeepsStrictEvidence`, `TestReviewCheckpointCommentOnlyGap`, `TestCheckpointEntryRepairForms`, `TestCompletionHelpOrdering`, `TestImplementationContinuation`, `TestChunkChainAnchors`, and the planned prover, record, checkpoint, and writer tests | yes |
+| RC-CYCLE / 01-state-record-only-repair-cycle-rule.md | The policy states that a record-only correction consumes no repair cycle, with its twin pins. | RC1, RC2, RC3 | `TestImplementationContinuation` | no |
+| RC-PROVE / 02-prove-test-only-tree-deltas.md | A new prover accepts only an added or modified regular Go test file outside `testdata`, and both prover suites share one tree fixture builder. | RC13, RC14, RC15, RC16, RC17, RC18, RC19, RC52, RC53 | the planned prover tests and `TestProveTreeGap` | no |
+| RC-CARRY / 03-carry-confirmed-axis-results.md | The record holds coordinator confirmations, and the chunk and complete checkpoints carry the reviewed axis results under a valid confirmation. | RC4–RC12, RC20–RC37, RC48–RC51, RC54 | `TestReviewCheckpointKeepsStrictEvidence`, `TestReviewCheckpointCommentOnlyGap`, and the planned record and checkpoint tests | yes |
+| RC-WRITE / 04-write-confirmations-with-bench-record.md, 05-document-the-test-only-confirmation.md | `bench record confirmation` writes the entry, the refusal routes to it, and the guidance states the exception. | RC38–RC47 | `TestCheckpointEntryRepairForms`, `TestCompletionHelpOrdering`, `TestImplementationContinuation`, `TestChunkChainAnchors`, and the planned writer tests | yes |
 
-RC-CYCLE and RC-CONFIRM touch disjoint sentences of the policy file.
-RC-CONFIRM comes second, because it adds policy sentences beside the RC-CYCLE sentences.
-The slicer may split RC-CONFIRM into tickets for the prover, the record and checkpoint, and the writer with its guidance.
+The slicing split the reviewed chunk RC-CONFIRM into RC-PROVE, RC-CARRY, and RC-WRITE.
+RC-PROVE and RC-CARRY each create a seam that a later ticket consumes, so each is its own review chunk.
+RC-CYCLE and RC-WRITE touch disjoint sentences of the policy file, and RC-WRITE comes last.
 
-The central-property mutation of RC-CONFIRM makes the carry branch skip the test-only prover.
+The central-property mutation of RC-CARRY makes the carry branch skip the test-only prover.
 RC12, RC30, and RC31 turn red under that mutation.
 A second mutation keeps the pass-and-no-findings condition on a carried result, and RC9 and RC10 turn red under it.
 
 ### Completion plan
 
-The slicer writes the `bench-completion-plan` fence after the ticket review accepts, because the fence names ticket basenames.
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "RC-CYCLE",
+      "tickets": ["01-state-record-only-repair-cycle-rule.md"],
+      "verification": [
+        {"id": "policy-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
+        {"id": "policy-prose", "command": "bench test --check prose-mechanics"}
+      ]
+    },
+    {
+      "id": "RC-PROVE",
+      "tickets": ["02-prove-test-only-tree-deltas.md"],
+      "verification": [
+        {"id": "prover", "command": "bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/gittest"},
+        {"id": "prover-status", "command": "bench test --package ./internal/testgap", "probe": "accept status D in the prover"}
+      ]
+    },
+    {
+      "id": "RC-CARRY",
+      "tickets": ["03-carry-confirmed-axis-results.md"],
+      "verification": [
+        {"id": "record-and-checkpoint", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate"},
+        {"id": "carry-prover", "command": "bench test --package ./internal/gate", "probe": "skip the test-only prover in the carry branch"}
+      ]
+    },
+    {
+      "id": "RC-WRITE",
+      "tickets": ["04-write-confirmations-with-bench-record.md", "05-document-the-test-only-confirmation.md"],
+      "verification": [
+        {"id": "writer-and-route", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench"},
+        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
+        {"id": "route-precedence", "command": "bench test --package ./internal/gate", "probe": "let the outcome refusal fire before the confirmation route"}
+      ]
+    }
+  ],
+  "final_verification": [
+    {"id": "coverage", "command": "bench coverage --check specs/repair-confirmation/spec.md"},
+    {"id": "record-checkpoint-writer", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench"},
+    {"id": "prover-and-guidance", "command": "bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/conformance --package ./internal/anchors"}
+  ]
+}
+```
 
 ## Testing decisions
 
