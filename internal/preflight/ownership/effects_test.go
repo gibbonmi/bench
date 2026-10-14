@@ -361,13 +361,19 @@ func TestOwnerPremises(t *testing.T) {
 			}
 		})
 	}
-	t.Run("an unkeyed literal write keeps the field census diagnostic", func(t *testing.T) {
-		files := merged(helperBase, map[string]string{"internal/policy/positional.go": "package policy\n\nfunc renderC() row { return row{\"c\"} }\n"})
-		out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: files, Fence: helperFence,
-			Tail: withItems("premises", premiseItem("positional-field", "printed-field", field(renderers), `{"producers":`+renderers+`}`))}.Seed(t))
-		row := one(t, out, "premises", map[string]string{"id": "positional-field"})
-		if cell(row, "state") != "unknown" || !strings.Contains(cell(row, "reason"), "internal/policy/positional.go line 3 writes policy.row.Reason through an unkeyed literal") {
-			t.Fatalf("premise positional-field = %v, want unknown and a reason naming the unkeyed literal", row)
-		}
-	})
+	// The pointer-elided element literal carries the hint type *row, not row.
+	for name, source := range map[string]string{
+		"an unkeyed literal write keeps the field census diagnostic":               "func renderC() row { return row{\"c\"} }\n",
+		"a pointer-elided unkeyed literal write keeps the field census diagnostic": "func renderC() []*row { return []*row{{\"c\"}} }\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			files := merged(helperBase, map[string]string{"internal/policy/positional.go": "package policy\n\n" + source})
+			out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: files, Fence: helperFence,
+				Tail: withItems("premises", premiseItem("positional-field", "printed-field", field(renderers), `{"producers":`+renderers+`}`))}.Seed(t))
+			row := one(t, out, "premises", map[string]string{"id": "positional-field"})
+			if cell(row, "state") != "unknown" || !strings.Contains(cell(row, "reason"), "internal/policy/positional.go line 3 writes policy.row.Reason through an unkeyed literal") {
+				t.Fatalf("premise positional-field = %v, want unknown and a reason naming the unkeyed literal", row)
+			}
+		})
+	}
 }
