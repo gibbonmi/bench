@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/preflight"
@@ -22,13 +23,22 @@ type chainSteps struct {
 // commitChain binds each step to its owner.
 var commitChain = chainSteps{Commit: commit.Run, Build: worktree.BuildCommand, Preflight: preflight.CommandWithVersion(version)}
 
+// publishedStepRedExit is the chain's exit when the commit published and the build or the
+// build preflight then failed. No exit of the commit step means this, so a caller that reads
+// the commit's exit 1 as "nothing was committed" stays right. The exit and the help line
+// read this one value.
+const publishedStepRedExit = 4
+
 // chainHelp is the help line for the chain that commitChainCommand runs.
-const chainHelp = commit.PreflightBuildFlag + " <slug>: after a commit that publishes, run bench worktree build on this worktree, then bench preflight build <slug> at the published commit; end with commit-chain{commit,build,preflight} and exit with the first non-zero step exit"
+var chainHelp = commit.PreflightBuildFlag + " <slug>: after a commit that publishes, run bench worktree build on this worktree, then bench preflight build <slug> at the published commit; end with commit-chain{commit,build,preflight}; " +
+	"exit " + strconv.Itoa(publishedStepRedExit) + ": published; a later step failed, so the commit exists and the commit-chain line names it; the commit's own exits keep their meaning"
 
 // commitChainCommand runs the commit and, when --preflight-build names a slug, the worktree
 // build and the build preflight at the published commit. Each step prints its own
-// response, then one commit-chain line states every step. The exit is the first non-zero
-// step exit. A help answer gets the chain's help line after the commit's help.
+// response, then one commit-chain line states every step. A commit exit that is not 0 is
+// the chain's exit. A build or preflight failure after a published commit exits
+// publishedStepRedExit, whatever the failed step's own exit. A help answer gets the
+// chain's help line after the commit's help.
 func commitChainCommand(c Command, args []string) int {
 	steps := commitChain
 	outcome, exit := steps.Commit(args, c.Stdout, c.Stderr)
@@ -48,6 +58,9 @@ func commitChainCommand(c Command, args []string) int {
 			out, code := steps.Preflight([]string{evidencecmd.ModeBuild, outcome.PreflightBuild, evidencecmd.FlagTip, outcome.Published})
 			fmt.Fprint(c.Stdout, out)
 			exit, preflight = code, stepState[code == 0]
+		}
+		if exit != 0 {
+			exit = publishedStepRedExit
 		}
 	}
 	fmt.Fprintf(c.Stdout, "commit-chain{commit=%s,build=%s,preflight=%s}\n", cmp.Or(outcome.Published, "none"), build, preflight)

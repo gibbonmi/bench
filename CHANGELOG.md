@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Commit chain exit
+
+- Changed the exit of `bench commit --preflight-build <slug>` when the commit publishes and the build or the build preflight then fails. The chain now exits 4, and its help line states that exit 4 means the commit is published and a later step failed. The `commit-chain` line still names the published commit. Before, the chain exited with the failed step's own exit, which was often 1, and exit 1 of `bench commit` means that nothing was committed.
+
 ### Map-only route
 
 - Added the reviewer-selected map-only route for `/bench-write-spec` in `.agents/skills/bench-craft-spec/references/map-only-route.md`, with a pointer in `/bench-write-spec` and anchors in `internal/anchors`. For a ready compiled map with exact-predicate decisions, one fresh slicer writes the thin spec's stories, coverage rows, tickets, and gap log. The coordinator then completes the chunk table and completion plan, runs `--propose-writes` and one ticket review, and presents the approval table. When a decision is not an exact predicate or a code seam stays open, the slicer stops and recommends the full route. Before, every ready compiled map ran the full route's research fan-out, spec fork, spec review, and paired slicing readers.
