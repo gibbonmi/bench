@@ -1852,6 +1852,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft405_rv_guide_c-standards",
+          "performer": "claude:ft405_rv_guide_c_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c6a45cf07b9247d8d6bfa7366401a4cb62090221",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_guide_c_standards",
+            "digest": "sha256:6f7233be6a66dd1056fc5ed3ec10eb52024e96fe86b050f70879d77df336e458",
+            "excerpt": "## Standards\n\nPreflight current=true, dirty_record=false. No blocking findings.\n\n- S1 closed. `.agents/commands/bench-implement-spec.md:52` (Build) names `bench record ticket`. The needle (`internal/anchors/registry_check_floor.go:8`), its twin (`registry_check_floor_test.go:14`), and the canary (`tests/canary/workflow-guidance-anchors/implement-spec-planned-cell-rewrite/MUTATE.json:4`) match. The claim holds: `internal/reviewrecord/recordcmd/ticket.go:52-56` runs `refusePlanned` for the last ticket.\n- S2 closed. `.bench/BENCH-reference.md:339` reads \"Each accepted finding of the chunk review goes…\", and the paragraph still has 6 sentences.\n- Word limits: every changed sentence is within the limit; code spans count as one word (`internal/prose/parse.go:59`), so `bench-review-implementation.md:230` has 20 words.\n\n## Advice\n- The comment at `registry_chunk_chain.go:16` says \"in any case\", which reads as \"anyway\"; \"in either letter case\" is clearer.\n- `reviews/record-ticket.md` records P1 as auto-fix, while its native excerpt says ask-user; the orchestrator accepted it under the auto-approve direction.\n"
+          },
+          "axis": "Standards",
+          "base": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+          "tip": "f0326963a4f736053eb976669a0e605ee2f836fd",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_guide-standards"
+          ]
+        },
+        {
+          "id": "ft405_rv_guide_c-spec",
+          "performer": "claude:ft405_rv_guide_c_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c6a45cf07b9247d8d6bfa7366401a4cb62090221",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_guide_c_spec",
+            "digest": "sha256:3662524f2db5463019a852da9255767715d6e1b4bc30c6629cb8570b92c51bf4",
+            "excerpt": "## Spec\n\nP1 is closed. At the tip, `.agents/commands/bench-review-implementation.md:230` reads \"`bench record chunk` writes one chunk entry, `bench record excerpt` stages ... and `bench record ticket` writes one ticket's entries.\" That line falls inside step 6 (lines 203–246). Line 215 is unchanged byte for byte. RT47–RT54 and RT64 are still met. The cited tests exist at `registry_chunk_chain_test.go:6`, `retained_workflow_test.go:14`, and `registry_ticket_passes_test.go:53`. No blocking findings.\n\n## Advice\n- During this read, the worktree held an uncommitted probe edit in `.agents/skills/bench-craft-tickets/SKILL.md:97` from the Coverage axis; the committed tip f0326963 holds no \"review freezes\" text.\n"
+          },
+          "axis": "Spec",
+          "base": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+          "tip": "f0326963a4f736053eb976669a0e605ee2f836fd",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_guide-spec"
+          ]
+        },
+        {
+          "id": "ft405_rv_guide_c-coverage",
+          "performer": "claude:ft405_rv_guide_c_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c6a45cf07b9247d8d6bfa7366401a4cb62090221",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_guide_c_coverage",
+            "digest": "sha256:4fdc7263463b479dbb33ab9d6aa2398245d2821e7c47e28f9024489e57dad301",
+            "excerpt": "## Coverage\n\nC1 is closed. Preflight current at e0b05303, which differs from f0326963 only in `reviews/record-ticket.md`.\n\n- Probe: `bench probe .agents/skills/bench-craft-tickets/SKILL.md --insert-before \"<anchor>\" --with \"<anchor> Review freezes the chunk base again before the axes run.\" --check root-conformance`.\n- Result: verdict bit, 1 failure in TestRootConformance: \"chunk chain: craft-tickets restored the review as the chunk freezer\", from the `ForbidCaseFoldedEmphasis` row at `internal/anchors/registry_chunk_chain.go:93`.\n- Restore: restored=yes; `git status` clean.\n\nNo blocking finding.\n\n## Advice\n- `bench probe` has no output-path option, so the answer stays in the response store.\n"
+          },
+          "axis": "Coverage",
+          "base": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+          "tip": "f0326963a4f736053eb976669a0e605ee2f836fd",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_guide-coverage"
+          ]
         }
       ]
     }
@@ -2119,6 +2185,8 @@ RT-GUIDE: 2 findings. The worst issue is S1.
 - S1 (auto-fix, confidence 7): the Build section of the implementation phase still names `bench record chunk` as the call that accepts the chunk.
 - S2 (auto-fix, confidence 7): a sentence in `.bench/BENCH-reference.md` lost its antecedent when the freeze sentence changed.
 
+RT-GUIDE confirming round: S1 and S2 are closed, with no blocking findings.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -2149,6 +2217,8 @@ RT-TICKET confirming round: pass, with no findings.
 RT-GUIDE: 1 finding.
 
 - P1 (auto-fix, confidence 4): step 6 of the review phase no longer names `bench record chunk` in its form list.
+
+RT-GUIDE confirming round: P1 is closed, with no blocking findings. The orchestrator accepted P1 under the auto-approve direction.
 
 ## Coverage
 
@@ -2191,3 +2261,5 @@ RT-TICKET confirming round: C1 to C4 are closed, with no blocking findings.
 RT-GUIDE: 1 finding.
 
 - C1 (auto-fix, confidence 6): the RT52 Forbid rows match only lowercase text, so a capitalized `Review freezes` sentence passes.
+
+RT-GUIDE confirming round: C1 is closed, with no blocking findings.
