@@ -285,7 +285,7 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
 ```bench-completion-plan
 {
   "version": 2,
-  "execution": {"mode": "delegate", "run_id": "ft379-build-20261014", "orchestrator_session": "claude:ft379-orchestrator-20261014", "author_limit": 1, "assignments": {}},
+  "execution": {"mode": "delegate", "run_id": "ft379-build-20261014", "orchestrator_session": "claude:ft379-orchestrator-20261014", "author_limit": 1, "assignments": {"01-state-record-only-repair-cycle-rule.md": [], "02-prove-test-only-tree-deltas.md": [], "03-carry-confirmed-axis-results.md": [], "04-write-confirmations-with-bench-record.md": [], "05-document-the-test-only-confirmation.md": []}},
   "chunks": [
     {
       "id": "RC-CYCLE",
