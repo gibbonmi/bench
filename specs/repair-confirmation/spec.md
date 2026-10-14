@@ -593,3 +593,16 @@ The list is the union of the ticket `Writes:` lines plus the review pickup.
 
 - The exact line counts of the new test files against any structure budget.
 - The slicing research settled one item: `TestHelpInventoryIsComplete` asserts each form's usage row, so ticket 04 writes `cmd/bench/help_inventory_test.go`.
+
+### Red record
+
+Each RC1 and RC2 pin has an anchor and an independent twin, and each one turned red under a `bench probe` omit mutation. Every probe reported `restored=yes`.
+The anchor reds ran `bench probe` with `--check docs-currency-workflow`.
+The twin reds ran `bench probe` with `--package ./internal/conformance --run TestImplementationContinuation`.
+
+| row | red | mutation site | failing test | observed diagnostic |
+|---|---|---|---|---|
+| RC1 | anchor | the RC1 sentence in the bounded repair policy | `TestRootConformance` | `gate: implementation continuation: bounded repair counted a record-only correction` |
+| RC1 | twin | the RC1 row of `implementationContinuationAnchors` in the retained-workflow registry | `TestImplementationContinuation` | `implementation-continuation anchor is absent: implementation continuation: bounded repair counted a record-only correction` |
+| RC2 | anchor | the RC2 sentence in the bounded repair policy | `TestRootConformance` | `gate: implementation continuation: bounded repair dropped the changed-disposition reaffirmation` |
+| RC2 | twin | the RC2 row of `implementationContinuationAnchors` in the retained-workflow registry | `TestImplementationContinuation` | `implementation-continuation anchor is absent: implementation continuation: bounded repair dropped the changed-disposition reaffirmation` |
