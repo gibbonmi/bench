@@ -352,7 +352,79 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft293-oc-c1-standards-r1",
+          "performer": "claude:ft293_oc-c1_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "69a2ca4dcac7f1c908a79f785d4b288fc32b4d48",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c1_standards",
+            "digest": "sha256:24dd6a4e20da29772eac17fe07fd14ae9d5abb1c704ec2851fe75fe994623e6f",
+            "excerpt": "## Standards axis: OC-C1 (base 1a8fece7d, chunk tip a54b85b3c)\n\nThe evidence check bound: `current=true`, `dirty_record=false`, tree head `8d4c023c`, not dirty.\n\n## Findings\n\n- **S1:** `internal/preflight/ownership/metadata.go:84-127` (`duplicateKey`, called at `manifest.go:147`) adds a new token walker that rejects duplicate JSON keys. The repo already has a strict decoder that owns this fact: `internal/jsonfile/decode.go:24` (`DecodeDocument`), whose `scanValue` at `:69-80` rejects duplicate keys recursively and also rejects trailing values. This breaks the AGENTS.md rule \"one source per fact\": the diff adds another derivation of strict JSON decoding instead of composing the existing owner. Older copies already exist (`reviewrecord/parse.go:242`, `releaseevidence/json_validation.go`), but this diff adds a fresh one. The per-key-set `fields()` check can stay, because the manual-claim key set depends on applicability. Disposition `auto-fix` (decode `top` through `jsonfile.DecodeDocument`; the OC56 reason text changes with it). Confidence 6.\n- **S2:** `internal/tickets/registry_data_test.go:127-139` (`TestBindingRulesProjectBoundFiles`) re-implements `BoundFiles`' dedupe-and-sort over `BindingRules` (`registry_data.go:120-127`) step for step, then compares the two results. This breaks the AGENTS.md rule on independent test expectations. Its independence is not needed to turn a named mutation red, and no red is recorded: `oc-01-omission` names only the second-hop pin, one independent reason, and the fence role. Disposition `auto-fix` (assert the projection's properties, or check it against fixed rows). Confidence 5.\n- **S3:** `internal/preflight/ownership/proposal_test.go:185-189` (`sealedKit`) finds the expected registry line by searching the bytes for `{Prefix: \"internal/toon\",`. That is a second test-side locator of the registry row: the owner test `registry_data_test.go:115` already pins `BindingLines` to the physical line by its own text search. The OC8 case could take `tickets.BindingLines` as its oracle. This is the same AGENTS.md rule as S2, and no red is recorded for this independence. Disposition `ask-user` (the reviewer decides whether to keep the independent locator and record its red, or derive the line from the owner). Confidence 4.\n\n## Author-flagged judgment calls\n\n1. **The `ownershiptest` subpackage:** not a finding. `ownershiptest/repo.go` imports only `preflighttest` and `chargesource`, and `preflight/proposal_test.go:26-49` now delegates to it, so the proposal seeder exists once.\n2. **The `..`/escape refusal in every mode:** not a Standards finding. The check is a single source in the shared collector (`ownership/closure.go:44-50, 68-70`). Whether its reach beyond the proposal is correct is a Spec-axis question against OC76.\n3. **The `… refused` bootstrap kinds:** not a finding. I searched the whole tree (`rg --hidden`) and found no doc, test, or registry that spells the old `fixture inventory not readable` or `anchor registry not readable` kinds. Bootstrap kinds have no single enforced convention.\n\n## Advice (not findings)\n\n- `ownership/closure.go:68` `repositoryPath` and `canary/mutation.go:250` `safeBasePath` both define a clean, local, repository-relative spelling, with different edge rules. The Writes-entry rule may belong in `tickets` beside `WritesPath`, before ticket 3 adds `ParseWrite`.\n- `preflight/closure.go:105-107`: the `\"ownership not readable\"` branch can never run, because `Collect` returns only `*ownership.Error`.\n- `preflight/proposal.go:100`: the `kit-pin` evidence kind is a bare literal outside the `ownership.Kind` vocabulary.\n- `preflight/gather.go:98`: `collected` holds a `Source`, not a collection (unclear name).\n- `ownershiptest/repo.go:61-72` repeats the c0/feature/c1 seeding of `preflighttest/fixture.go:195-204`. The same repetition was in the base `proposal_test.go`; the diff moved it and did not add it.\n- For the Spec axis: the inventory refusal now comes after the changed-files and default-tip refusals (`gather.go:96-102`). Before, it came inside the ticket gather at line 68. It also no longer runs when no ticket has Writes (`ownership/closure.go:41`).\n\n## Count\n\n3 findings. The worst is S1: a fresh strict-JSON duplicate-key walker beside `internal/jsonfile`.\n"
+          },
+          "axis": "Standards",
+          "base": "1a8fece7d1173873ce9a32955b4b1d9a25600a4d",
+          "tip": "a54b85b3cadc7c89241c5a950a90ae69765ad177",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft293-oc-c1-spec-r1",
+          "performer": "claude:ft293_oc-c1_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "69a2ca4dcac7f1c908a79f785d4b288fc32b4d48",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c1_spec",
+            "digest": "sha256:396341a675c88c0e5c8432f9f40ebc7ec51f054e2f7a1f348f236e19837421fd",
+            "excerpt": "**Spec axis: OC-C1 (ft293-build, pair 1a8fece7..a54b85b3)**\n\nThe evidence handle bound: `current=true`, `dirty_record=false`, head 8d4c023c.\n\nI found 2 issues. Of the 36 rows, 35 held and 1 is unverified. Neither issue blocks a row. The worst one is P1.\n\n## Findings\n\n- **P1.** Spec lines 85 and 121-122 say \"Complete means full supported premise certification\" and \"Completeness states what that author declared\". The defect is at `internal/preflight/ownership/ownership.go:165`. That line sets `snapshot.Complete = manifest.Present && len(snapshot.Diagnostics) == 0` and never reads `manifest.Completeness`.\n  - Traced case: a manifest that declares `\"completeness\":\"partial\"` with empty arrays and no diagnostics gives `Complete=true`. A partial declaration cannot be full certification. By the spec's own rule at line 141, a missing fence is incomplete, so a partial one must be too.\n  - Nothing reads `Snapshot.Complete` in this checkpoint (I grepped `internal/preflight`), so no output changes yet. The value contract is still wrong.\n  - Disposition: `auto-fix`. Confidence 6.\n- **P2.** Spec lines 219-220 say \"The needle must occur exactly once at the declared line. Moved or ambiguous needles are diagnostics.\" Line 564 schedules a refresh \"before OC-C3 activates\".\n  - The ticket commit (`a54b85b3`, 36 changed lines, all in the coverage map) rewrote rows OC1-OC13, OC55-OC60, OC71-OC81, OC83-OC85 and OC90-OC92 from `planned …` to backticked citations. The spec's `bench-planning-facts` seams still quote the old `| planned internal/… |` text as their needles, so those needles no longer match.\n  - The manifest also still maps OC77 to `TestExplicitAuthority` (planned, rows OC69, OC70, OC77, OC86). Its `TestSourceSafety` rows are only OC71-OC76, but the map now cites OC77 at `source_test.go`.\n  - When ticket 05 turns on the OC88 cross-check, this stale inventory will refuse.\n  - Disposition: `no-op` for this checkpoint. The refresh is owed through the enabling-plan authority before OC-C3 starts. Confidence 6.\n\n## Advice\n\n- Author call 1 (OC77 moved to `source_test.go`): acceptable. Ticket 01 Covers OC77, and the planned file belongs to ticket 08. Pair the move with the P2 refresh.\n- Author call 2 (a `..` or escaping Writes entry refuses gather in every mode): consistent with spec line 730, \"Paths escaping the repository are refused\".\n- Author call 3 (`ownershiptest` subpackage): inside the `internal/preflight/ownership` fence and Writes entry. Acceptable.\n- Refusal order: the fixture and anchor inventory refusals moved from `gradeTickets` to after the changed-paths and default-tip refusals (`gather.go:86-101`). Neither refusal is on the line-207 list, but the precedence did change.\n- `InventoryComplete` and `CurrentComplete` come out true for an empty declared-complete inventory, without the manual-location or seam-citation cross-checks that spec lines 146 and 189 describe. Nothing consumes them, so successors must not read them before those checks land.\n- OC78 builds `responsebound.New` by hand rather than going through the CLI wrapper (`cmd/bench/census_output.go:22`).\n- OC85's system test is required at the first hop, not the second, despite the row's \"second-hop\" wording.\n\n## Rows\n\nOC1-OC13 held; OC55-OC60 held; OC71-OC77 held; OC78 unverified (hand-built bound owner, not the CLI route); OC79-OC81 held; OC83 held; OC84 held; OC85 held (weak second-hop witness); OC90-OC92 held.\n\nCount: 2 findings (P1 auto-fix, P2 no-op). Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "1a8fece7d1173873ce9a32955b4b1d9a25600a4d",
+          "tip": "a54b85b3cadc7c89241c5a950a90ae69765ad177",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft293-oc-c1-coverage-r1",
+          "performer": "claude:ft293_oc-c1_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "69a2ca4dcac7f1c908a79f785d4b288fc32b4d48",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c1_coverage",
+            "digest": "sha256:ac9a1e02c20ae77fd50861c8f9398976d5adebbd6b0e2cd3548b7790ffd68783",
+            "excerpt": "## Coverage axis: OC-C1 (ft293-build, pair 1a8fece7d..a54b85b3c, HEAD 8d4c023c)\n\nThe evidence bound: `--check-current` returned current=true and dirty_record=false.\n\n### Findings\n- **C1.** `internal/preflight/ownership/premises_test.go:36`, row OC56 (\"Last-key-wins decoding cannot pass\"). The only duplicate-key case is the top-level `\"version\"` key. The check walks the whole payload (`internal/preflight/ownership/metadata.go:115-117`), but no test has a duplicate key inside a nested object (location, subject, expected, owner). For nested objects, `fields()` at `metadata.go:132` decodes into a map, so the last key wins silently. My probe 1 limited the duplicate check to the top-level object, and it went silent. Needed test: a TestMetadataGrammar case with a nested duplicate key, for example `\"expected\":{\"count\":1,\"count\":2}`. Disposition: auto-fix. Confidence 8.\n- **C2.** `internal/preflight/ownership/proposal_test.go:318-343` and `internal/canary/inventory_test.go:297-318`, row OC83 and the edge \"present-unreadable inventory\". Both witnesses only exercise the wrong-type states: a regular file and a symlink at `tests/canary`. Neither exercises a `tests/canary` directory that exists but cannot be read, which `bounds.classifyDir` returns as `StateUnreadable` (`internal/bounds/classify.go:94-96`). My probe 2 made `Pins` treat `StateUnreadable` as empty, and it went silent. Needed test: a chmod-000 `tests/canary` subcase that skips under root. Disposition: auto-fix. Confidence 6.\n- **C3.** `internal/preflight/ownership/premises_test.go:38`, row OC58. Spec line 127 says \"Each item has a unique id\". The decoder collects IDs across all arrays (`internal/preflight/ownership/manifest.go:211,221`), but the only test duplicates an ID inside `premises`. A per-array ID set would therefore pass. Needed test: a cross-array duplicate-ID case. Disposition: auto-fix. Confidence 6.\n- **C4.** Spec line 729 names spaces and CRLF documents as path cases. No ticket-01 test puts a space in a fixture, anchor, or Writes path, and none uses a CRLF spec carrying the planning-facts fence. No row maps either edge. Disposition: ask-user. Confidence 4.\n\n### Advice\n- OC72 (`source_test.go:128`) checks only the substring `\"spec\"`, while OC71, OC73 and OC74 check `\"spec not readable\"` or `\"spec not found\"`.\n- The 2 MiB payload bound at `metadata.go:77` cannot be reached through the command, because the spec reader applies the same `ControlRecordLimit` first.\n- `canary.FixturePins` and `anchors.ReferencingFiles` now have no production callers, only tests.\n\n### Probes\n1. `internal/preflight/ownership/metadata.go`: swapped `if stack[top].keys[value] {` for `if top == 0 && stack[top].keys[value] {`. Ran `--package ./internal/preflight/... --run \"TestMetadataGrammar|TestProposal|TestSource\"` (69 tests). Verdict silent, first_failure null, restored yes.\n2. `internal/canary/pins.go`: swapped `case bounds.StateAbsent, bounds.StateEmpty:` for `case bounds.StateAbsent, bounds.StateEmpty, bounds.StateUnreadable:`. Ran `--package ./internal/preflight/... --package ./internal/canary/... --run \"TestProposal|TestSource|TestPins|TestFixturePins\"` (58 tests). Verdict silent, first_failure null, restored yes.\n\n### Summary\n4 findings (C1-C4). The worst is C1. `git status --short` printed nothing.\n"
+          },
+          "axis": "Coverage",
+          "base": "1a8fece7d1173873ce9a32955b4b1d9a25600a4d",
+          "tip": "a54b85b3cadc7c89241c5a950a90ae69765ad177",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -364,3 +436,32 @@
   }
 }
 ```
+
+
+## Repair state
+
+OC-C1: repair cycle 1 of 2 is in progress for ticket 01. No reviewer extension exists.
+
+## Standards
+
+OC-C1: 3 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 6): `internal/preflight/ownership/metadata.go:84-127` adds a duplicate-key token walker beside the strict decoder `internal/jsonfile/decode.go:24`, which owns that fact.
+- S2 (auto-fix, confidence 5): `internal/tickets/registry_data_test.go:127-139` derives the `BoundFiles` projection again in the test, with no recorded red for that independence.
+- S3 (auto-fix, confidence 4): `internal/preflight/ownership/proposal_test.go:185-189` locates the registry line a second time; the orchestrator takes `tickets.BindingLines` as the one source under the auto-approve direction.
+
+## Spec
+
+OC-C1: 1 actionable finding. The worst issue is P1.
+
+- P1 (auto-fix, confidence 6): `internal/preflight/ownership/ownership.go:165` sets `Complete` without a read of the declared completeness, so a partial manifest reads complete.
+- P2 (no-op, confidence 6): the planning-facts needles quote the planned row text. The orchestrator refreshes them in the enabling plan commit of this repair.
+
+## Coverage
+
+OC-C1: 4 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 8): no OC56 case puts a duplicate key in a nested object; a top-level-only mutant stays silent.
+- C2 (auto-fix, confidence 6): no OC83 case reads a present but unreadable `tests/canary` directory; a mutant that treats it as empty stays silent.
+- C3 (auto-fix, confidence 6): no OC58 case repeats one item ID across two arrays.
+- C4 (auto-fix, confidence 4): no case covers a path with a space or a CRLF spec with the planning-facts fence. The orchestrator assigns both edges to ticket 01 under the auto-approve direction.
