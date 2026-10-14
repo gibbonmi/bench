@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-confirmation/spec.md",
-  "plan_digest": "sha256:b7a167dcf9a20ca5be35896338dd76ffb1bf2c5d31b9c4b7888df144fe39dd8f",
+  "plan_digest": "sha256:8183e6e25b90535106876889594989901d687b1bf04edf0782413b202d5df491",
   "implementation_session": "",
   "chunks": [
     {
@@ -1028,6 +1028,82 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RC-WRITE",
+      "base": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+      "tip": "b2ae2671830831521cb2e96635df46598dc6f1f7",
+      "plan_digest": "sha256:8183e6e25b90535106876889594989901d687b1bf04edf0782413b202d5df491",
+      "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+      "acceptance_rows": [
+        "RC38",
+        "RC39",
+        "RC40",
+        "RC41",
+        "RC42",
+        "RC43",
+        "RC44",
+        "RC45",
+        "RC46",
+        "RC47"
+      ],
+      "verification": [
+        {
+          "id": "rc-write-guidance-anchors-t05",
+          "performer": "claude:ft379_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t05/guidance-anchors",
+            "digest": "sha256:6cbbf43434628c49ea59a92b9790cf65c50e4df1a17ad7d43b8361266782d0f8",
+            "excerpt": "$ bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15759,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2316,180\n  github.com/gibbonmi/bench/internal/conformance,pass,56516,1694\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "guidance-anchors",
+          "command": "bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-write-guidance-prose-t05",
+          "performer": "claude:ft379_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t05/guidance-prose",
+            "digest": "sha256:f0e174cb611968e72518099f1afea7430d43c5de0cedf7e3cb5d1b1ead0f220e",
+            "excerpt": "$ bench test --check prose-mechanics\ncheck[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,281,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-write-guidance-root-conformance-t05",
+          "performer": "claude:ft379_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t05/guidance-root-conformance",
+            "digest": "sha256:f9dbb555e1aa35daedeaa40a7c27593d147c86ef78718b23d701e7d06305b5a9",
+            "excerpt": "$ bench test --check root-conformance\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15181,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1110,6 +1186,21 @@
     {
       "from": "sha256:eab3b60e5cb3c04cf82d4d73625aa2467c22b46a6bf093eceb7cf610de18cb6a",
       "to": "sha256:b7a167dcf9a20ca5be35896338dd76ffb1bf2c5d31b9c4b7888df144fe39dd8f",
+      "chunk_ids": {
+        "RC-CARRY": [
+          "RC-CARRY"
+        ],
+        "RC-CYCLE": [
+          "RC-CYCLE"
+        ],
+        "RC-PROVE": [
+          "RC-PROVE"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b7a167dcf9a20ca5be35896338dd76ffb1bf2c5d31b9c4b7888df144fe39dd8f",
+      "to": "sha256:8183e6e25b90535106876889594989901d687b1bf04edf0782413b202d5df491",
       "chunk_ids": {
         "RC-CARRY": [
           "RC-CARRY"
