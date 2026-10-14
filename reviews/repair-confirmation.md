@@ -10,9 +10,9 @@
     {
       "id": "RC-CYCLE",
       "base": "2ca4b1419c8f3aefe621f5928dc41f5dd73a4ae0",
-      "tip": "6dc1bb38ec18b0cdaecefb060de116b51b4a62c7",
-      "plan_digest": "sha256:59611926b48fca458ad84ef01e1784c403ab1d239585da0dce36acde74c12593",
-      "source_digest": "97f85eedd3b184a322dd9a4ce9ab17734e7c3aa5",
+      "tip": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+      "plan_digest": "sha256:e13b727a079ae5e4ec2466ff214079d7f6fa72745cf6eca8228750e92d87c2a7",
+      "source_digest": "2d5bd593a80eeb67b33b05b675e1b94b80c50111",
       "acceptance_rows": [
         "RC1",
         "RC2",
@@ -86,6 +86,78 @@
             "ref": "claude-agent:ft379_t01/cycle-root-conformance",
             "digest": "sha256:c4457fb4bc6737b45b174799a54344c873e9bfb7ff70e47ba2918e47f49166bb",
             "excerpt": "$ bench test --check root-conformance\ntree: ft379-build, head 6dc1bb38ec18b0cdaecefb060de116b51b4a62c7\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14678,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0\n"
+          },
+          "requirement": "cycle-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-cycle-policy-anchors-t01-rep1",
+          "performer": "claude:ft379_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d5bd593a80eeb67b33b05b675e1b94b80c50111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t01_rep1/policy-anchors",
+            "digest": "sha256:eed4a824640021b62f290145ae0b2e386562da34df53357054c7e4dd4a32146a",
+            "excerpt": "$ bench test --package ./internal/conformance --package ./internal/anchors\ntree: ft379-build, head 95eb71861e97ae3ac3d5f45c5bd6d19ba51b4cc4 (source 8907784b1c8bce7eaef2c48c115e22cf6b8132fc; dirty only by the uncommitted review record)\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,2018,180\n  github.com/gibbonmi/bench/internal/conformance,pass,56013,1692\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nexit 0\n"
+          },
+          "requirement": "policy-anchors",
+          "command": "bench test --package ./internal/conformance --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-cycle-policy-prose-t01-rep1",
+          "performer": "claude:ft379_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d5bd593a80eeb67b33b05b675e1b94b80c50111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t01_rep1/policy-prose",
+            "digest": "sha256:c979caa205dc4651a14774b7ba395078dd3e4e43e395e874bd6c168573dfc1ca",
+            "excerpt": "$ bench test --check prose-mechanics\ntree: ft379-build, head 95eb71861e97ae3ac3d5f45c5bd6d19ba51b4cc4 (source 8907784b1c8bce7eaef2c48c115e22cf6b8132fc; dirty only by the uncommitted review record)\ncheck[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,292,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0\n"
+          },
+          "requirement": "policy-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-cycle-command-registries-t01-rep1",
+          "performer": "claude:ft379_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d5bd593a80eeb67b33b05b675e1b94b80c50111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t01_rep1/command-registries",
+            "digest": "sha256:ee9c7a4de6cf49b8639368d40a98518f9750a5b787ab8adb3bae17eaffcba0af",
+            "excerpt": "$ bench test --package ./cmd/bench\ntree: ft379-build, head 95eb71861e97ae3ac3d5f45c5bd6d19ba51b4cc4 (source 8907784b1c8bce7eaef2c48c115e22cf6b8132fc; dirty only by the uncommitted review record)\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,12973,335\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0\n"
+          },
+          "requirement": "command-registries",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-cycle-cycle-root-conformance-t01-rep1",
+          "performer": "claude:ft379_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d5bd593a80eeb67b33b05b675e1b94b80c50111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t01_rep1/cycle-root-conformance",
+            "digest": "sha256:1a0eaf6db7a6ade5a2071a446e93182c9bf8f3f977bd135d52c22a46a9993325",
+            "excerpt": "$ bench test --check root-conformance\ntree: ft379-build, head 95eb71861e97ae3ac3d5f45c5bd6d19ba51b4cc4 (source 8907784b1c8bce7eaef2c48c115e22cf6b8132fc; dirty only by the uncommitted review record)\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15295,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0\n"
           },
           "requirement": "cycle-root-conformance",
           "command": "bench test --check root-conformance",
