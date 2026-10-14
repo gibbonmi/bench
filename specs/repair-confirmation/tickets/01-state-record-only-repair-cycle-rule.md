@@ -1,7 +1,7 @@
 # State the record-only repair cycle rule
 
 Blocked by: none
-Writes: .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .bench/commitment.json, CHANGELOG.md, internal/anchors/registry_retained_workflow.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_debug_loop.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/conformance/implementation_continuation_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns/, tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary/
+Writes: .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .bench/commitment.json, CHANGELOG.md, internal/anchors/registry_retained_workflow.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_debug_loop.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/conformance/implementation_continuation_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns/, tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary/, specs/repair-confirmation/spec.md
 Covers: RC1, RC2, RC3
 
 ## What to build
@@ -24,6 +24,7 @@ The retained-workflow registry is at 396 of 400 lines, so add exactly two rows t
 The closure-only files over their structure budget must not grow.
 
 This ticket names `.bench/commitment.json` for the spec-stage binding only, and it does not edit that file during the build.
+This ticket names `specs/repair-confirmation/spec.md` for the red record of its two twins only, under `Further notes`.
 
 ## Acceptance
 

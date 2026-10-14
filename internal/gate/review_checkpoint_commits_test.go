@@ -126,14 +126,17 @@ func TestReviewCheckpointCommentOnlyGap(t *testing.T) {
 	}
 }
 
+// TestReviewCheckpointKeepsStrictEvidence refuses each case with its reason. The moved chunk
+// holds its axis results at the earlier pair across a test-only delta, so it also routes to
+// the confirmation form.
 func TestReviewCheckpointKeepsStrictEvidence(t *testing.T) {
-	for _, tc := range []struct{ name, reason string }{
-		{"statement", "chunk 1: stale reviewed source: no chunk review covers"},
-		{"dirty statement", "chunk 1: stale reviewed source"},
-		{"forged digest", "chunk 1: stale source digest"},
-		{"stale completion", "completion is incomplete or stale"},
-		{"chain base", "expected base"},
-		{"moved chunk", "chunk 1: stale Standards"},
+	for _, tc := range []struct{ name, reason, next string }{
+		{"statement", "chunk 1: stale reviewed source: no chunk review covers", ""},
+		{"dirty statement", "chunk 1: stale reviewed source", ""},
+		{"forged digest", "chunk 1: stale source digest", ""},
+		{"stale completion", "completion is incomplete or stale", ""},
+		{"chain base", "expected base", ""},
+		{"moved chunk", "chunk 1: stale Standards", "next=bench record 'confirmation' --help\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var f *recordtest.Fixture
@@ -181,8 +184,8 @@ func TestReviewCheckpointKeepsStrictEvidence(t *testing.T) {
 			var out, diagnostic bytes.Buffer
 			code := RunCommand(args, &out, &diagnostic)
 			text := out.String() + diagnostic.String()
-			if code == 0 || !strings.Contains(text, tc.reason) {
-				t.Fatalf("strict evidence = %d %s, want %s", code, text, tc.reason)
+			if code == 0 || !strings.Contains(text, tc.reason) || !strings.Contains(text, tc.next) {
+				t.Fatalf("strict evidence = %d %s, want %s and the route %q", code, text, tc.reason, tc.next)
 			}
 			if _, err := os.Stat(runCountWitness.path(t, f.Root)); !os.IsNotExist(err) {
 				t.Fatalf("oracle ran before evidence refusal: %v", err)

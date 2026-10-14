@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Repair confirmation
+
+- Added `bench record confirmation`, which writes a coordinator confirmation to a chunk of the review record. After a test-only repair whose coordinator probe bites, the coordinator writes one confirmation from one complete `bench probe` answer. The chunk checkpoint and the complete checkpoint then accept the axis results of the reviewed tip, so the repair takes no confirming round. A repair that is not test-only still takes a confirming round of all three axes. An older Bench binary refuses a review record that holds a confirmation. Before, every repair took a confirming round of all three axes.
+
 ### Map-only route
 
 - Added the reviewer-selected map-only route for `/bench-write-spec` in `.agents/skills/bench-craft-spec/references/map-only-route.md`, with a pointer in `/bench-write-spec` and anchors in `internal/anchors`. For a ready compiled map with exact-predicate decisions, one fresh slicer writes the thin spec's stories, coverage rows, tickets, and gap log. The coordinator then completes the chunk table and completion plan, runs `--propose-writes` and one ticket review, and presents the approval table. When a decision is not an exact predicate or a code seam stays open, the slicer stops and recommends the full route. Before, every ready compiled map ran the full route's research fan-out, spec fork, spec review, and paired slicing readers.

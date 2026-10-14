@@ -112,7 +112,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			return err
 		}
 		excluded := reviewExclusions(current, record)
-		if err := checkReviews(chunk.reviewed(), excluded, reviewerCount); err != nil {
+		if err := checkChunkReviews(root, record, plan, chunk, excluded, reviewerCount); err != nil {
 			return err
 		}
 		// A fold after the chunk whose resolution is not empty takes the review rule of a chunk.

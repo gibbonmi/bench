@@ -75,6 +75,9 @@ func Parse(data []byte) (Record, error) {
 		if err := validateReviews(chunk.Reviews, record); err != nil {
 			return record, err
 		}
+		if err := validateConfirmations(chunk.Confirmations); err != nil {
+			return record, err
+		}
 	}
 	for i, fold := range record.Folds {
 		if fold.ID != foldID(i+1) || !chunks[fold.After] || !objectID.MatchString(fold.From) || !objectID.MatchString(fold.Commit) || !objectID.MatchString(fold.Incoming) || !objectID.MatchString(fold.SourceDigest) {
@@ -109,8 +112,7 @@ func validateReviews(reviews []Review, record Record) error {
 		if !objectID.MatchString(review.Base) || !objectID.MatchString(review.Tip) {
 			return fmt.Errorf("%s: invalid review pair", review.ID)
 		}
-		prior := previous[review.Axis]
-		if (prior == "" && len(review.Supersedes) != 0) || (prior != "" && (len(review.Supersedes) != 1 || review.Supersedes[0] != prior)) {
+		if !supersedes(previous[review.Axis], review.Supersedes) {
 			return fmt.Errorf("%s: invalid supersession; retain and name the preceding axis occurrence", review.ID)
 		}
 		previous[review.Axis] = review.ID
@@ -135,20 +137,37 @@ func validateVerification(items []Verification) error {
 			return fmt.Errorf("%s: missing verification exit code", item.ID)
 		}
 		if item.Probe != nil {
-			if item.Probe.Mutation == "" {
-				return fmt.Errorf("%s: missing probe mutation", item.ID)
-			}
-			if err := validateNative(item.Probe.NativeRef); err != nil {
-				return fmt.Errorf("%s probe: %w", item.ID, err)
+			if err := validateProbe(item.ID, *item.Probe); err != nil {
+				return err
 			}
 		}
 	}
 	return nil
 }
 
-// evidenceIDs returns the evidence ID of each verification and review result of record. It
-// reads the lists of each chunk, the review list of each fold, and the completion list, in
-// that order. It is the one walk of the evidence lists for the ID rule.
+// supersedes reports whether links is a valid supersession link of an entry whose preceding
+// entry is prior: no link when prior is empty, and exactly prior otherwise.
+func supersedes(prior string, links []string) bool {
+	if prior == "" {
+		return len(links) == 0
+	}
+	return len(links) == 1 && links[0] == prior
+}
+
+// validateProbe grades the probe of the evidence entry id.
+func validateProbe(id string, probe Probe) error {
+	if probe.Mutation == "" {
+		return fmt.Errorf("%s: missing probe mutation", id)
+	}
+	if err := validateNative(probe.NativeRef); err != nil {
+		return fmt.Errorf("%s probe: %w", id, err)
+	}
+	return nil
+}
+
+// evidenceIDs returns the evidence ID of each verification, review, and confirmation result
+// of record. It reads the lists of each chunk, the review list of each fold, and the
+// completion list, in that order. It is the one walk of the evidence lists for the ID rule.
 func evidenceIDs(record Record) []string {
 	ids := []string{}
 	for _, chunk := range record.Chunks {
@@ -157,6 +176,9 @@ func evidenceIDs(record Record) []string {
 		}
 		for _, review := range chunk.Reviews {
 			ids = append(ids, review.ID)
+		}
+		for _, confirmation := range chunk.Confirmations {
+			ids = append(ids, confirmation.ID)
 		}
 	}
 	for _, fold := range record.Folds {

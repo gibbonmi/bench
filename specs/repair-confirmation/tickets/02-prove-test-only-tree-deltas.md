@@ -1,7 +1,7 @@
 # Prove test-only tree deltas
 
 Blocked by: none
-Writes: internal/testgap/testgap.go (new), internal/testgap/testgap_test.go (new), internal/gittest/gittest.go, internal/gittest/trees.go (new), internal/gittest/gittest_test.go, internal/commentgap/trees_test.go, internal/commentgap/commentgap_test.go
+Writes: internal/testgap/testgap.go (new), internal/testgap/testgap_test.go (new), internal/gittest/gittest.go, internal/gittest/trees.go (new), internal/gittest/gittest_test.go, internal/commentgap/trees_test.go, internal/commentgap/commentgap_test.go, internal/outline/read.go, internal/outline/outline.go
 Covers: RC13, RC14, RC15, RC16, RC17, RC18, RC19, RC52, RC53
 
 ## What to build
@@ -18,6 +18,7 @@ It reads the delta through `TreeChangesIncludingSubmodules`, which runs with `--
 Each refusal returns one named sentinel: `ErrUnreadable`, `ErrEmptyChanges`, `ErrStatus`, `ErrMode`, `ErrNotTest`, or `ErrTestdata`.
 The error names the path that failed.
 Mirror the shape of `commentgap.Prove`.
+The testdata check reuses the fixture predicate of `internal/outline`, exported, so that the rule has one source.
 
 Move the tree fixture builder out of the comment-only prover tests into `internal/gittest` as an exported helper.
 The comment-only prover tests and the test-only prover tests both call that helper, and the old unexported helpers go away.

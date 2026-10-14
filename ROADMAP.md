@@ -144,8 +144,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT241 (LOW, decision required) — versioned acceptance promises with retained evidence.**
 
-**FT379 (MEDIUM) — a record-only correction consumes no repair cycle, and its confirming round checks only the named findings.**
-
 **FT380 (MEDIUM) — every plan commit passes the coverage parser and build preflight before dispatch.**
 
 **FT381 (MEDIUM, decision required) — a delegated full run has decided risk classes, repair routing, and author-replacement records.**
@@ -329,11 +327,10 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT379
-2. FT405
-3. FT293-ownership-closure
-4. FT375-spec-staleness
-5. FT380-plan-commit
-6. FT409
-7. FT402
-8. FT411
+1. FT405
+2. FT293-ownership-closure
+3. FT375-spec-staleness
+4. FT380-plan-commit
+5. FT409
+6. FT402
+7. FT411

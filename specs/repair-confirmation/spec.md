@@ -1,6 +1,6 @@
 # Repair confirmation
 
-Status: staged
+Status: implemented
 
 Roadmap: FT379
 
@@ -118,6 +118,8 @@ Harder chunks: RC-CARRY, RC-WRITE.
 54. As a reviewer, I want a reviewed tip outside the chunk base's line refused, so that a whole chunk never closes with no review.
 55. As a reviewer, I want a confirmation whose base differs from the chunk base refused, so that the confirmation binds to its own chunk.
 56. As a reviewer, I want a mix of fresh and carried axis results refused, so that the writer and the checkpoint compute one finding set.
+57. As a reviewer, I want a carried axis result to keep its role and performer-exclusion conditions, so that only an independent review carries forward.
+58. As a reviewer, I want the writer to refuse a silent or unrestored probe, so that no record calls it a pass.
 
 ## Implementation decisions
 
@@ -158,7 +160,7 @@ That confirmation is valid only when all of these conditions hold:
 - Its base, repaired tip, and source digest equal the chunk pair.
 - Its performer equals `completionReconciler`, and its state is completed.
 - Its probe bites, under the one probe-bite predicate.
-- Its reviewed tip descends from the chunk base and is an ancestor of the chunk tip.
+- Its reviewed tip strictly descends from the chunk base, so it differs from that base, and it is an ancestor of the chunk tip.
 - The test-only prover accepts the delta from the reviewed tip's digest to the chunk digest.
 
 The checkpoint derives the reviewed digest from the reviewed tip's tree.
@@ -269,8 +271,8 @@ This spec follows the invoked `/bench-write-spec` and flags the route for review
 | --- | --- | --- | --- | --- |
 | RC-CYCLE / 01-state-record-only-repair-cycle-rule.md | The policy states that a record-only correction consumes no repair cycle, with its twin pins. | RC1, RC2, RC3 | `TestImplementationContinuation` | no |
 | RC-PROVE / 02-prove-test-only-tree-deltas.md | A new prover accepts only an added or modified regular Go test file outside `testdata`, and both prover suites share one tree fixture builder. | RC13, RC14, RC15, RC16, RC17, RC18, RC19, RC52, RC53 | the planned prover tests and `TestProveTreeGap` | no |
-| RC-CARRY / 03-carry-confirmed-axis-results.md | The record holds coordinator confirmations, and the chunk and complete checkpoints carry the reviewed axis results under a valid confirmation. | RC4–RC12, RC20–RC37, RC48–RC51, RC54 | `TestReviewCheckpointKeepsStrictEvidence`, `TestReviewCheckpointCommentOnlyGap`, and the planned record and checkpoint tests | yes |
-| RC-WRITE / 04-write-confirmations-with-bench-record.md, 05-document-the-test-only-confirmation.md | `bench record confirmation` writes the entry, the refusal routes to it, and the guidance states the exception. | RC38–RC47 | `TestCheckpointEntryRepairForms`, `TestCompletionHelpOrdering`, `TestImplementationContinuation`, `TestChunkChainAnchors`, and the planned writer tests | yes |
+| RC-CARRY / 03-carry-confirmed-axis-results.md | The record holds coordinator confirmations, and the chunk and complete checkpoints carry the reviewed axis results under a valid confirmation. | RC4–RC12, RC20–RC37, RC48–RC51, RC54–RC57 | `TestReviewCheckpointKeepsStrictEvidence`, `TestReviewCheckpointCommentOnlyGap`, and the planned record and checkpoint tests | yes |
+| RC-WRITE / 04-write-confirmations-with-bench-record.md, 05-document-the-test-only-confirmation.md | `bench record confirmation` writes the entry, the refusal routes to it, and the guidance states the exception. | RC38–RC47, RC58 | `TestCheckpointEntryRepairForms`, `TestCompletionHelpOrdering`, `TestImplementationContinuation`, `TestChunkChainAnchors`, and the planned writer tests | yes |
 
 The slicing split the reviewed chunk RC-CONFIRM into RC-PROVE, RC-CARRY, and RC-WRITE.
 RC-PROVE and RC-CARRY each create a seam that a later ticket consumes, so each is its own review chunk.
@@ -283,55 +285,7 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "RC-CYCLE",
-      "tickets": ["01-state-record-only-repair-cycle-rule.md"],
-      "verification": [
-        {"id": "policy-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
-        {"id": "policy-prose", "command": "bench test --check prose-mechanics"},
-        {"id": "command-registries", "command": "bench test --package ./cmd/bench"},
-        {"id": "cycle-root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "RC-PROVE",
-      "tickets": ["02-prove-test-only-tree-deltas.md"],
-      "verification": [
-        {"id": "prover", "command": "bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/gittest"},
-        {"id": "prover-status", "command": "bench test --package ./internal/testgap", "probe": "accept status D in the prover"},
-        {"id": "prove-root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "RC-CARRY",
-      "tickets": ["03-carry-confirmed-axis-results.md"],
-      "verification": [
-        {"id": "record-and-checkpoint", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate"},
-        {"id": "carry-prover", "command": "bench test --package ./internal/gate", "probe": "skip the test-only prover in the carry branch"},
-        {"id": "carry-root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "RC-WRITE",
-      "tickets": ["04-write-confirmations-with-bench-record.md", "05-document-the-test-only-confirmation.md"],
-      "verification": [
-        {"id": "writer-and-route", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench"},
-        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
-        {"id": "route-precedence", "command": "bench test --package ./internal/gate", "probe": "let the outcome refusal fire before the confirmation route"},
-        {"id": "guidance-prose", "command": "bench test --check prose-mechanics"},
-        {"id": "write-root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "coverage", "command": "bench coverage --check specs/repair-confirmation/spec.md"},
-    {"id": "record-checkpoint-writer", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench"},
-    {"id": "prover-and-guidance", "command": "bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/conformance --package ./internal/anchors"}
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft379-build-20261014","orchestrator_session":"claude:ft379-orchestrator-20261014","author_limit":1,"assignments":{"01-state-record-only-repair-cycle-rule.md":[{"session":"claude:ft379_t01","assignment":"d835a91fcc200941c50e06f300cb4839","model":"opus","effort":"high","source":"db03cfdff60a7932788569151d2a598e361afd08","native_ref":"claude-agent:ft379_t01"},{"session":"claude:ft379_t01_rep1","assignment":"d835a91fcc200941c50e06f300cb4839","model":"opus","effort":"high","source":"63b6661e49b589f5e5e091b8fde55b6b4dfbd842","native_ref":"claude-agent:ft379_t01_rep1","predecessor":"claude:ft379_t01","trigger":"user-directed","stopped":"claude-agent:ft379_t01","preserved":"6dc1bb38ec18b0cdaecefb060de116b51b4a62c7"}],"02-prove-test-only-tree-deltas.md":[{"session":"claude:ft379_t02","assignment":"d835a91fcc200941c50e06f300cb4839","model":"opus","effort":"high","source":"8572ad2c0b866950069878d536d855c3e113406b","native_ref":"claude-agent:ft379_t02"},{"session":"claude:ft379_t02_rep1","assignment":"d835a91fcc200941c50e06f300cb4839","model":"opus","effort":"high","source":"bbfed9349689626642143c149d5b8aa17da49c1a","native_ref":"claude-agent:ft379_t02_rep1","predecessor":"claude:ft379_t02","trigger":"user-directed","stopped":"claude-agent:ft379_t02","preserved":"3db8f92bbfb8a7d3d9c491d5b8a2519c375522f4"}],"03-carry-confirmed-axis-results.md":[{"session":"claude:ft379_t03","assignment":"d835a91fcc200941c50e06f300cb4839","model":"opus","effort":"high","source":"2c980563f8c753095abe25e8826a12e9942270c3","native_ref":"claude-agent:ft379_t03"},{"session":"claude:ft379_t03_rep1","assignment":"d835a91fcc200941c50e06f300cb4839","model":"opus","effort":"high","source":"009a1586956bd276a371d9cf5646ec88817d1d17","native_ref":"claude-agent:ft379_t03_rep1","predecessor":"claude:ft379_t03","trigger":"user-directed","stopped":"claude-agent:ft379_t03","preserved":"20d3ac26b599e960d05d75c3088b6364af8762f5"}],"04-write-confirmations-with-bench-record.md":[{"session":"claude:ft379_t04","assignment":"d835a91fcc200941c50e06f300cb4839","model":"opus","effort":"high","source":"09bc54546f3862f643588e49eaffe572aa8cfb41","native_ref":"claude-agent:ft379_t04"},{"session":"claude:ft379_t04_rep1","assignment":"d835a91fcc200941c50e06f300cb4839","model":"opus","effort":"high","source":"e39b9e49120a9afc251ace0f6a31db100e48bca4","native_ref":"claude-agent:ft379_t04_rep1","predecessor":"claude:ft379_t04","trigger":"user-directed","stopped":"claude-agent:ft379_t04","preserved":"e16a087b40407485584a9af4e57f5f3bd7082e03"}],"05-document-the-test-only-confirmation.md":[{"session":"claude:ft379_t05","assignment":"d835a91fcc200941c50e06f300cb4839","model":"opus","effort":"high","source":"e16a087b40407485584a9af4e57f5f3bd7082e03","native_ref":"claude-agent:ft379_t05"}]}},"chunks":[{"id":"RC-CYCLE","tickets":["01-state-record-only-repair-cycle-rule.md"],"verification":[{"id":"policy-anchors","command":"bench test --package ./internal/conformance --package ./internal/anchors","ticket":"01-state-record-only-repair-cycle-rule.md"},{"id":"policy-prose","command":"bench test --check prose-mechanics","ticket":"01-state-record-only-repair-cycle-rule.md"},{"id":"command-registries","command":"bench test --package ./cmd/bench","ticket":"01-state-record-only-repair-cycle-rule.md"},{"id":"cycle-root-conformance","command":"bench test --check root-conformance","ticket":"01-state-record-only-repair-cycle-rule.md"}]},{"id":"RC-PROVE","tickets":["02-prove-test-only-tree-deltas.md"],"verification":[{"id":"prover","command":"bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/gittest --package ./internal/outline","ticket":"02-prove-test-only-tree-deltas.md"},{"id":"prover-status","command":"bench test --package ./internal/testgap","probe":"accept status D in the prover","ticket":"02-prove-test-only-tree-deltas.md"},{"id":"prove-root-conformance","command":"bench test --check root-conformance","ticket":"02-prove-test-only-tree-deltas.md"}]},{"id":"RC-CARRY","tickets":["03-carry-confirmed-axis-results.md"],"verification":[{"id":"record-and-checkpoint","command":"bench test --package ./internal/reviewrecord/... --package ./internal/gate","ticket":"03-carry-confirmed-axis-results.md"},{"id":"carry-prover","command":"bench test --package ./internal/gate","probe":"skip the test-only prover in the carry branch","ticket":"03-carry-confirmed-axis-results.md"},{"id":"carry-root-conformance","command":"bench test --check root-conformance","ticket":"03-carry-confirmed-axis-results.md"}]},{"id":"RC-WRITE","tickets":["04-write-confirmations-with-bench-record.md","05-document-the-test-only-confirmation.md"],"verification":[{"id":"writer-and-route","command":"bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench --package ./internal/conformance","ticket":"04-write-confirmations-with-bench-record.md"},{"id":"guidance-anchors","command":"bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench","ticket":"05-document-the-test-only-confirmation.md"},{"id":"route-precedence","command":"bench test --package ./internal/gate","probe":"let the outcome refusal fire before the confirmation route","ticket":"04-write-confirmations-with-bench-record.md"},{"id":"guidance-prose","command":"bench test --check prose-mechanics","ticket":"05-document-the-test-only-confirmation.md"},{"id":"write-root-conformance","command":"bench test --check root-conformance","ticket":"04-write-confirmations-with-bench-record.md"},{"id":"guidance-root-conformance","command":"bench test --check root-conformance","ticket":"05-document-the-test-only-confirmation.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/repair-confirmation/spec.md"},{"id":"record-checkpoint-writer","command":"bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench"},{"id":"prover-and-guidance","command":"bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/conformance --package ./internal/anchors --package ./internal/outline --package ./internal/gittest"}]}
 ```
 
 ## Testing decisions
@@ -366,57 +320,61 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
 | RC1 | 1, 2 | The policy states that a correction that changes only the review record consumes no repair cycle, even when it changes a disposition. | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`) | The registry anchor and its independent twin red when the sentence is absent. |
 | RC2 | 3 | The policy states that the issuing axis reaffirms a changed disposition. | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`) | The registry anchor and its independent twin red when the sentence is absent. |
 | RC3 | 4, 5 | The evidence-only definition keeps its exact needle, including the word disposition. | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`) | The existing exact needle reds a widened definition. |
-| RC4 | 7, 8 | The parser accepts a chunk confirmation with role `coordinator-confirmation`, a valid pair, finding IDs, and a valid probe excerpt. | planned | A parser that refuses the new list reds the round trip. |
-| RC5 | 9 | The parser refuses a confirmation whose role is not `coordinator-confirmation`. | planned | A parser that skips the role check accepts the entry and the row reds. |
-| RC6 | 9 | The parser refuses a confirmation whose native excerpt digest differs from its excerpt. | planned | A parser that skips native validation accepts the entry and the row reds. |
-| RC7 | 10 | The parser refuses a confirmation ID that equals a review ID. | planned | An evidence-ID walk that omits confirmations accepts the duplicate and the row reds. |
-| RC8 | 11 | A record without confirmations renders with no `confirmations` key. | planned | A field without `omitempty` adds the key and the byte comparison reds. |
-| RC9 | 13 | The chunk checkpoint passes when a valid confirmation lists exactly F-1 for a refrozen test-only repair, with Standards `fail` with finding F-1 and Spec and Coverage `pass` at the reviewed pair. | planned | A carry branch that keeps the pass-and-no-findings condition refuses the carried `fail` result and the row reds. |
-| RC10 | 14 | The complete checkpoint passes for the RC9 chunk with the same confirmation. | planned | A carry branch wired only into the chunk path reds the complete run. |
-| RC11 | 15 | The checkpoint accepts a delta that adds a new `_test.go` file. | planned | A prover that accepts only status `M` refuses the addition and the row reds. |
-| RC12 | 15, 19 | The checkpoint refuses a confirmation whose delta changes a non-test Go file. | planned | A carry branch without the prover accepts the delta and the row reds. |
-| RC13 | 16 | The prover refuses a `_test.go` path with a `testdata` element with `ErrTestdata`. | planned | A prover that tests only the suffix accepts the path and the row reds. |
-| RC14 | 17 | The prover refuses a deleted `_test.go` file with `ErrStatus`. | planned | A prover that accepts status `D` passes the deletion and the row reds. |
-| RC15 | 18 | The prover refuses a `_test.go` path whose destination mode is a symbolic link with `ErrMode`. | planned | A prover that skips the mode check accepts the link and the row reds. |
-| RC16 | 18 | The prover refuses a modified `_test.go` file whose mode changes with `ErrMode`. | planned | A prover that compares only the destination mode accepts the change and the row reds. |
-| RC17 | 19 | The prover refuses a non-Go path with `ErrNotTest`. | planned | A prover that accepts any path under a test directory passes the file and the row reds. |
-| RC18 | 19 | The prover refuses an empty change list between different trees with `ErrEmptyChanges`. | planned | A prover that returns nil on no changes passes the case and the row reds. |
-| RC19 | 15 | The prover accepts a test path that contains a space. | planned | A prover that splits paths on spaces refuses the path and the row reds. |
-| RC20 | 20 | The checkpoint refuses a confirmation whose probe outcome is `silent`. | planned | A carry branch that skips the bite predicate accepts the entry and the row reds. |
-| RC21 | 21 | The checkpoint refuses a confirmation whose probe restore is `fail`. | planned | A bite predicate without the restore check accepts the entry and the row reds. |
-| RC22 | 22 | The checkpoint refuses a confirmation whose probe focused exit is zero. | planned | A bite predicate without the exit check accepts the entry and the row reds. |
-| RC23 | 23 | The checkpoint refuses a confirmation whose performer is not the completion reconciler. | planned | A carry branch without the performer check accepts an author's entry and the row reds. |
-| RC24 | 24 | The checkpoint refuses a confirmation that omits one open finding ID. | planned | A subset comparison accepts the entry and the row reds. |
-| RC25 | 24 | The checkpoint refuses a confirmation that lists a finding ID that no carried axis result holds. | planned | A superset comparison accepts the entry and the row reds. |
-| RC26 | 25 | The checkpoint refuses a confirmation whose reviewed tip is not an ancestor of the chunk tip. | planned | A carry branch without the ancestry check accepts the entry and the row reds. |
-| RC27 | 26 | The checkpoint refuses a carried axis result whose source digest differs from the reviewed tip's tree digest, and routes to `bench record 'review' --help`. | planned | A carry branch that trusts the recorded digest accepts the edit and the row reds. |
-| RC28 | 27 | The checkpoint refuses a confirmation whose repaired tip differs from a later refrozen chunk tip. | planned | A carry branch that skips the pair match accepts a stale confirmation and the row reds. |
-| RC29 | 28 | The checkpoint passes after a second test-only repair with a fresh confirmation that supersedes the first. | planned | A carry branch that reads the first confirmation refuses the new pair and the row reds. |
-| RC30 | 29 | The checkpoint refuses a stale axis after a later non-test repair, even with an earlier confirmation. | planned | A carry branch that ignores the delta class accepts the production change and the row reds. |
-| RC31 | 30 | The checkpoint refuses a confirmation whose delta adds a file under `specs/`. | planned | A prover widened to plan paths accepts the delta and the row reds. |
+| RC4 | 7, 8 | The parser accepts a chunk confirmation with role `coordinator-confirmation`, a valid pair, finding IDs, and a valid probe excerpt. | `internal/reviewrecord/confirmation_test.go` (`TestConfirmationParse`) | A parser that refuses the new list reds the round trip. |
+| RC5 | 9 | The parser refuses a confirmation whose role is not `coordinator-confirmation`. | `internal/reviewrecord/confirmation_test.go` (`TestConfirmationParse`) | A parser that skips the role check accepts the entry and the row reds. |
+| RC6 | 9 | The parser refuses a confirmation whose native excerpt digest differs from its excerpt. | `internal/reviewrecord/confirmation_test.go` (`TestConfirmationParse`) | A parser that skips native validation accepts the entry and the row reds. |
+| RC7 | 10 | The parser refuses a confirmation ID that equals a review ID. | `internal/reviewrecord/confirmation_test.go` (`TestConfirmationParse`) | An evidence-ID walk that omits confirmations accepts the duplicate and the row reds. |
+| RC8 | 11 | A record without confirmations renders with no `confirmations` key. | `internal/reviewrecord/confirmation_test.go` (`TestConfirmationAbsentKey`) | A field without `omitempty` adds the key and the byte comparison reds. |
+| RC9 | 13 | The chunk checkpoint passes when a valid confirmation lists exactly F-1 for a refrozen test-only repair, with Standards `fail` with finding F-1 and Spec and Coverage `pass` at the reviewed pair. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointCarriesConfirmedResults`) | A carry branch that keeps the pass-and-no-findings condition refuses the carried `fail` result and the row reds. |
+| RC10 | 14 | The complete checkpoint passes for the RC9 chunk with the same confirmation. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointCarriesConfirmedResults`) | A carry branch wired only into the chunk path reds the complete run. |
+| RC11 | 15 | The checkpoint accepts a delta that adds a new `_test.go` file. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointCarriesConfirmedResults`) | A prover that accepts only status `M` refuses the addition and the row reds. |
+| RC12 | 15, 19 | The checkpoint refuses a confirmation whose delta changes a non-test Go file. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch without the prover accepts the delta and the row reds. |
+| RC13 | 16 | The prover refuses a `_test.go` path with a `testdata` element with `ErrTestdata`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that tests only the suffix accepts the path and the row reds. |
+| RC14 | 17 | The prover refuses a deleted `_test.go` file with `ErrStatus`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that accepts status `D` passes the deletion and the row reds. |
+| RC15 | 18 | The prover refuses a `_test.go` path whose destination mode is a symbolic link with `ErrMode`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that skips the mode check accepts the link and the row reds. |
+| RC16 | 18 | The prover refuses a modified `_test.go` file whose mode changes with `ErrMode`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that compares only the destination mode accepts the change and the row reds. |
+| RC17 | 19 | The prover refuses a non-Go path with `ErrNotTest`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that accepts any path under a test directory passes the file and the row reds. |
+| RC18 | 19 | The prover refuses an empty change list between different trees with `ErrEmptyChanges`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that returns nil on no changes passes the case and the row reds. |
+| RC19 | 15 | The prover accepts a test path that contains a space. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that splits paths on spaces refuses the path and the row reds. |
+| RC20 | 20 | The checkpoint refuses a confirmation whose probe outcome is `silent`. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch that skips the bite predicate accepts the entry and the row reds. |
+| RC21 | 21 | The checkpoint refuses a confirmation whose probe restore is `fail`. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A bite predicate without the restore check accepts the entry and the row reds. |
+| RC22 | 22 | The checkpoint refuses a confirmation whose probe focused exit is zero. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A bite predicate without the exit check accepts the entry and the row reds. |
+| RC23 | 23 | The checkpoint refuses a confirmation whose performer is not the completion reconciler. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch without the performer check accepts an author's entry and the row reds. |
+| RC24 | 24 | The checkpoint refuses a confirmation that omits one open finding ID. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A subset comparison accepts the entry and the row reds. |
+| RC25 | 24 | The checkpoint refuses a confirmation that lists a finding ID that no carried axis result holds. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A superset comparison accepts the entry and the row reds. |
+| RC26 | 25 | The checkpoint refuses a confirmation whose reviewed tip is not an ancestor of the chunk tip. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch without the ancestry check accepts the entry and the row reds. |
+| RC27 | 26 | The checkpoint refuses a carried axis result whose source digest differs from the reviewed tip's tree digest, and routes to `bench record 'review' --help`. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch that trusts the recorded digest accepts the edit and the row reds. |
+| RC28 | 27 | The checkpoint refuses a confirmation whose repaired tip differs from a later refrozen chunk tip. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch that skips the pair match accepts a stale confirmation and the row reds. |
+| RC29 | 28 | The checkpoint passes after a second test-only repair with a fresh confirmation that supersedes the first. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointCarriesConfirmedResults`) | A carry branch that reads the first confirmation refuses the new pair and the row reds. |
+| RC30 | 29 | The checkpoint refuses a stale axis after a later non-test repair, even with an earlier confirmation. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch that ignores the delta class accepts the production change and the row reds. |
+| RC31 | 30 | The checkpoint refuses a confirmation whose delta adds a file under `specs/`. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A prover widened to plan paths accepts the delta and the row reds. |
 | RC32 | 31 | The strict-evidence statement case still refuses with stale reviewed source. | `internal/gate/review_checkpoint_commits_test.go` (`TestReviewCheckpointKeepsStrictEvidence`) | A carry branch that widens the uncovered-delta gap passes the statement case and the row reds. |
 | RC33 | 31 | The strict-evidence moved-chunk case still refuses with stale Standards when no confirmation exists. | `internal/gate/review_checkpoint_commits_test.go` (`TestReviewCheckpointKeepsStrictEvidence`) | A carry branch that needs no confirmation passes the moved chunk and the row reds. |
 | RC34 | 31 | The comment-only gap still passes its chunk, complete, and reaffirm cases. | `internal/gate/review_checkpoint_commits_test.go` (`TestReviewCheckpointCommentOnlyGap`) | A change that breaks the comment-only path reds the existing cases. |
-| RC35 | 32 | The checkpoint refuses a confirmed chunk whose verification sits at the reviewed digest. | planned | A confirmation that also waives verification passes the stale verification and the row reds. |
-| RC36 | 33 | The checkpoint refuses a confirmed chunk whose carried axis results share one session in a three-reviewer plan. | planned | A carry branch that skips the cardinality count passes and the row reds. |
-| RC37 | 35 | The planned-probe check and the confirmation check call one probe-bite predicate. | review-owned | Review compares the two call sites, because a duplicated predicate passes every behavior test. |
-| RC38 | 36 | `bench record confirmation` writes a confirmation from a complete `bench probe` answer with the derived pair and digests. | planned | A writer that records the chunk pair as the reviewed pair, or a digest other than the reviewed tip's tree digest, reds the field comparison. |
-| RC39 | 37, 38 | The writer refuses when the current axis results sit at different pairs. | planned | A writer that reads only one axis writes the entry and the row reds. |
-| RC40 | 39 | The writer refuses a delta that the prover refuses. | planned | A writer without the prover writes the entry and the row reds. |
-| RC41 | 40 | The writer refuses a finding set that differs from the open set. | planned | A writer without the set comparison writes the entry and the row reds. |
-| RC42 | 41 | A second confirmation names the first in its supersession link. | planned | A writer that omits the link writes an empty link, and the row's assertion of the first confirmation ID reds. |
+| RC35 | 32 | The checkpoint refuses a confirmed chunk whose verification sits at the reviewed digest. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A confirmation that also waives verification passes the stale verification and the row reds. |
+| RC36 | 33 | The checkpoint refuses a confirmed chunk whose carried axis results share one session in a three-reviewer plan. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch that skips the cardinality count passes and the row reds. |
+| RC37 | 35 | The planned-probe check and the confirmation check call one probe-bite predicate. | `internal/reviewrecord/record_test.go` (`TestProbeChecksAgree`) | A confirmation check that drifts from the shared predicate gives another verdict on one of the four probes, and the row reds. |
+| RC38 | 36 | `bench record confirmation` writes a confirmation from a complete `bench probe` answer with the derived pair and digests. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationWritesTheDerivedPair`) | A writer that records the chunk pair as the reviewed pair, or a digest other than the reviewed tip's tree digest, reds the field comparison. |
+| RC39 | 37, 38 | The writer refuses when the current axis results sit at different pairs. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationRefusals`) | A writer that reads only one axis writes the entry and the row reds. |
+| RC40 | 39 | The writer refuses a delta that the prover refuses. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationRefusals`) | A writer without the prover writes the entry and the row reds. |
+| RC41 | 40 | The writer refuses a finding set that differs from the open set. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationRefusals`) | A writer without the set comparison writes the entry and the row reds. |
+| RC42 | 41 | A second confirmation names the first in its supersession link. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationSupersedesThePrior`) | A writer that omits the link writes an empty link, and the row's assertion of the first confirmation ID reds. |
 | RC43 | 42 | With Standards `fail` and Spec and Coverage `pass` at the reviewed pair and a test-only delta, the checkpoint refusal routes to `bench record 'confirmation' --help`. | `internal/gate/record_repair_test.go` (`TestCheckpointEntryRepairForms`) | A route that lets the outcome refusal fire first names the review form and the new case reds. |
 | RC44 | 42 | With Standards at the reviewed pair and a delta that changes a non-test Go file, the refusal routes to `bench record 'review' --help`. | `internal/gate/record_repair_test.go` (`TestCheckpointEntryRepairForms`) | A route that names the confirmation form for every earlier-pair axis reds the new non-test case. |
 | RC45 | 43 | `bench record` help lists the confirmation form and the completion order with confirmation after review. | `internal/reviewrecord/recordcmd/ordering_test.go` (`TestCompletionHelpOrdering`) | The independent order list reds when the form or its position is absent. |
 | RC46 | 45, 46 | The policy states the test-only exception and names the confirmation's finding list as the coordinator's disposition. | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`) | The new anchors and their independent twins red when either sentence is absent. |
 | RC47 | 47 | The review phase states that a test-only repair whose coordinator probe bites closes through `bench record confirmation` and takes no confirming round. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | The new anchor and its independent twin red when the sentence is absent. |
-| RC48 | 52 | The checkpoint refuses a carried Standards result whose state is `failed`, with a reason that names the Standards state, and routes to `bench record 'review' --help`. | planned | A carry branch that drops the `completed` state condition accepts the result and the row reds. |
-| RC49 | 53 | The checkpoint refuses a confirmation whose state is `pending`, with a reason that names the confirmation state. | planned | A validity check without the state condition accepts the entry and the row reds. |
-| RC50 | 54 | The checkpoint refuses a confirmation whose reviewed tip does not descend from the chunk base, with a reason that names the reviewed tip. | planned | A one-sided ancestry check against the chunk tip accepts the entry and the row reds. |
-| RC51 | 55 | The checkpoint refuses a confirmation whose base differs from the chunk base, with a reason that names the confirmation pair. | planned | A pair match that compares only the repaired tip accepts the entry and the row reds. |
-| RC52 | 18 | The prover refuses a `_test.go` gitlink with mode `160000` with `ErrMode`. | planned | A prover that grades only symbolic links accepts the gitlink and the row reds. |
-| RC53 | 17 | The prover refuses a renamed `_test.go` file with `ErrStatus`, because the rename arrives as a deletion. | planned | A prover that drops `--no-renames` or accepts status `R` passes the rename and the row reds. |
-| RC54 | 56 | The checkpoint refuses when Coverage has a fresh pass at the chunk pair and Standards and Spec sit at the reviewed pair under a valid confirmation, with a reason that names the mixed pairs, and routes to `bench record 'review' --help`. | planned | A carry rule that grades each axis alone accepts the mixed state and the row reds. |
+| RC48 | 52 | The checkpoint refuses a carried Standards result whose state is `failed`, with a reason that names the Standards state, and routes to `bench record 'review' --help`. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch that drops the `completed` state condition accepts the result and the row reds. |
+| RC49 | 53 | The checkpoint refuses a confirmation whose state is `pending`, with a reason that names the confirmation state. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A validity check without the state condition accepts the entry and the row reds. |
+| RC50 | 54 | The checkpoint refuses a confirmation whose reviewed tip does not descend from the chunk base, with a reason that names the reviewed tip. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A one-sided ancestry check against the chunk tip accepts the entry and the row reds. |
+| RC51 | 55 | The checkpoint refuses a confirmation whose base differs from the chunk base, with a reason that names the confirmation pair. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A pair match that compares only the repaired tip accepts the entry and the row reds. |
+| RC52 | 18 | The prover refuses a `_test.go` gitlink with mode `160000` with `ErrMode`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that grades only symbolic links accepts the gitlink and the row reds. |
+| RC53 | 17 | The prover refuses a renamed `_test.go` file with `ErrStatus`, because the rename arrives as a deletion. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that drops `--no-renames` or accepts status `R` passes the rename and the row reds. |
+| RC54 | 56 | The checkpoint refuses when Coverage has a fresh pass at the chunk pair and Standards and Spec sit at the reviewed pair under a valid confirmation, with a reason that names the mixed pairs, and routes to `bench record 'review' --help`. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry rule that grades each axis alone accepts the mixed state and the row reds. |
+| RC55 | 54 | The checkpoint refuses a confirmation whose three axis results sit at the chunk base as both base and tip, with a reason that names the empty reviewed pair. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A reflexive ancestry check accepts the empty reviewed pair and the row reds. |
+| RC56 | 57 | The checkpoint refuses a carried Standards result whose performer is an author of the run, with a reason that names the performer. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch that drops the performer-exclusion condition accepts the result and the row reds. |
+| RC57 | 57 | The carried branch of `checkReviews` refuses a Standards result whose role is not the independent review role, with a reason that names the role. The parser refuses such a record before the checkpoint reaches the carry. | `internal/reviewrecord/record_test.go` (`TestCarriedReviewKeepsTheRoleCondition`) | A carry branch that drops the role condition accepts the result and the row reds. |
+| RC58 | 58 | `bench record confirmation` refuses a probe answer that did not bite or did not restore, through the one probe-bite predicate, and writes no entry. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationRefusesAProbeThatFails`) | A writer that skips the bite predicate records a silent probe as a pass and the row reds. |
 
 Not covered: story 6 — the build-directions outcome delivered the confirming-round scope, and its pins stay unchanged.
 Not covered: story 12 — the compatibility consequence is a stated limit with no new behavior; the Won't handle line holds it.
@@ -486,6 +444,8 @@ The list is the union of the ticket `Writes:` lines plus the review pickup.
 - `internal/gittest/gittest.go`
 - `internal/gittest/gittest_test.go`
 - `internal/gittest/trees.go`
+- `internal/outline/outline.go`
+- `internal/outline/read.go`
 - `internal/reviewrecord/check.go`
 - `internal/reviewrecord/completion.go`
 - `internal/reviewrecord/confirmation.go`
@@ -517,6 +477,7 @@ The list is the union of the ticket `Writes:` lines plus the review pickup.
 - `internal/testgap/testgap_test.go`
 - `projects/benchkit.md`
 - `reviews/repair-confirmation.md`
+- `specs/repair-confirmation/spec.md`
 - `tests/canary/docs-currency-token-diet/benchref-imported`
 - `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
 - `tests/canary/docs-currency-token-diet/benchref-section-duplicated`
@@ -595,7 +556,7 @@ The list is the union of the ticket `Writes:` lines plus the review pickup.
 - The parser refuses a confirmation with a wrong role or an invalid excerpt (RC5, RC6). The criterion needs a well-formed form.
 - The checkpoint derives the reviewed digest from the reviewed tip's tree (RC27). A hand-editable record otherwise passes a forged digest.
 - The checkpoint requires an ancestry chain for the reviewed tip (RC26). This closes the borrowed-review hole.
-- The writer refuses before the checkpoint does (RC39, RC40, RC41). It composes the same prover and set comparison, so no second fact source appears.
+- The writer refuses before the checkpoint does (RC39, RC40, RC41, RC58). It composes the same prover and set comparison, so no second fact source appears.
 - One probe-bite predicate serves both graders (RC37). The one-source-per-fact rule requires it.
 - The policy names the confirmation's finding list as the coordinator's disposition (RC46). The consultant raised this risk beside the no-op rule.
 - The issuing axis reaffirms a changed disposition (RC2). Fork F8 closed it, so that each disposition change keeps an independent owner.
@@ -640,3 +601,16 @@ The list is the union of the ticket `Writes:` lines plus the review pickup.
 
 - The exact line counts of the new test files against any structure budget.
 - The slicing research settled one item: `TestHelpInventoryIsComplete` asserts each form's usage row, so ticket 04 writes `cmd/bench/help_inventory_test.go`.
+
+### Red record
+
+Each RC1 and RC2 pin has an anchor and an independent twin, and each one turned red under a `bench probe` omit mutation. Every probe reported `restored=yes`.
+The anchor reds ran `bench probe` with `--check docs-currency-workflow`.
+The twin reds ran `bench probe` with `--package ./internal/conformance --run TestImplementationContinuation`.
+
+| row | red | mutation site | failing test | observed diagnostic |
+|---|---|---|---|---|
+| RC1 | anchor | the RC1 sentence in the bounded repair policy | `TestRootConformance` | `gate: implementation continuation: bounded repair counted a record-only correction` |
+| RC1 | twin | the RC1 row of `implementationContinuationAnchors` in the retained-workflow registry | `TestImplementationContinuation` | `implementation-continuation anchor is absent: implementation continuation: bounded repair counted a record-only correction` |
+| RC2 | anchor | the RC2 sentence in the bounded repair policy | `TestRootConformance` | `gate: implementation continuation: bounded repair dropped the changed-disposition reaffirmation` |
+| RC2 | twin | the RC2 row of `implementationContinuationAnchors` in the retained-workflow registry | `TestImplementationContinuation` | `implementation-continuation anchor is absent: implementation continuation: bounded repair dropped the changed-disposition reaffirmation` |

@@ -22,6 +22,9 @@ package anchors
 // The `bench record` rows route each completed review-record entry to the verb and forbid the retired hand-recording sentences.
 // The review-round rows pin the parallel axis dispatch, the combined repair charge, and the
 // named-findings scope of a confirming round. They also forbid the two retired sentences that widen that scope.
+// The confirmation rows pin the bounded repair policy's test-only exception and its finding-list
+// disposition, and the review phase's matching exception to the confirming round. The policy rows
+// keep the implementation-continuation prefix, so that family's twins select them.
 var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Require, Needle: "If every red row is a `*-closure` row, `fence-writes`, `completion-plan`, or `check-floor`, the staleness pass below takes the red. Any other red stops the phase.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped or widened the staleness route for a red build preflight"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Declare the line, validate the tickets, route the venue", Needle: "charge the staleness pass that `" + stalenessPass + "` states.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped the staleness-pass charge pointer to its reference"},
@@ -83,16 +86,21 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Preflight supplies the source and plan digests.", Diagnostic: "chunk chain: the review phase restored the preflight digest sentence"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Record the performer, role, model, effort, frozen base and tip, source, state, and native result.", Diagnostic: "chunk chain: the review phase restored the hand-recording field sentence"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Embed the minimal native excerpt and its SHA-256 digest; local logs are supplemental evidence.", Diagnostic: "chunk chain: the review phase restored the hand-embedded excerpt sentence"},
-	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", Kind: RequireInSection, Section: "Classification and completion", Needle: "After the acceptance rows of a chunk prove, the chunk permits at most one hardening cycle.", Diagnostic: "chunk chain: the hardening cap is one cycle"},
+	{Group: AfterImplementSpec, File: boundedRepairPolicy, Kind: RequireInSection, Section: "Classification and completion", Needle: "After the acceptance rows of a chunk prove, the chunk permits at most one hardening cycle.", Diagnostic: "chunk chain: the hardening cap is one cycle"},
+	{Group: AfterImplementSpec, File: boundedRepairPolicy, Kind: RequireInSection, Section: "Classification and completion", Needle: "A test-only repair whose coordinator probe bites takes no new axis results; the coordinator writes a confirmation with `bench record confirmation` instead.", Diagnostic: "implementation continuation: bounded repair dropped the test-only confirmation exception"},
+	{Group: AfterImplementSpec, File: boundedRepairPolicy, Kind: RequireInSection, Section: "Classification and completion", Needle: "The confirmation's finding list is the coordinator's disposition of the findings that the repair closes.", Diagnostic: "implementation continuation: bounded repair dropped the confirmation's finding-list disposition"},
+	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInSection, Section: "Review modes", Needle: "A test-only repair whose coordinator probe bites closes through `bench record confirmation` and takes no confirming round.", Diagnostic: "chunk chain: a test-only repair with a biting coordinator probe took a confirming round"},
 }
 
 // implementPhase and reviewPhase are the phase files that state the chunk chain.
 // stalenessPass is the reference that owns the build-entry staleness charge.
 // freshAuthorADR is the decision record that states the build's light-path hold and the
-// orchestrator's handoff refresh.
+// orchestrator's handoff refresh. boundedRepairPolicy is the reference that owns the
+// repair allowance, the hardening cap, and the test-only exception.
 const (
-	implementPhase = ".agents/commands/bench-implement-spec.md"
-	reviewPhase    = ".agents/commands/bench-review-implementation.md"
-	stalenessPass  = ".agents/skills/bench-implement-spec/references/staleness-pass.md"
-	freshAuthorADR = "docs/adr/0023-each-ticket-gets-a-fresh-author.md"
+	implementPhase      = ".agents/commands/bench-implement-spec.md"
+	reviewPhase         = ".agents/commands/bench-review-implementation.md"
+	stalenessPass       = ".agents/skills/bench-implement-spec/references/staleness-pass.md"
+	freshAuthorADR      = "docs/adr/0023-each-ticket-gets-a-fresh-author.md"
+	boundedRepairPolicy = ".agents/skills/bench-craft-line/references/bounded-repair-policy.md"
 )
