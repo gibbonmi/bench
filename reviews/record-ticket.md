@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-ticket/spec.md",
-  "plan_digest": "sha256:6febb6148ff4363a2d5dcf90bf873a539f0d16f2648aa80ef885f99b874f2228",
+  "plan_digest": "sha256:0594fd2165ed1e3f80bc65c2d1e0bcc2cacd92d2ba233280cba8fe2ae565e6d9",
   "implementation_session": "",
   "chunks": [
     {
@@ -1207,6 +1207,55 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RT-EXTRACT",
+      "base": "4829baa3d41336f86c0d2256c70faa436226c775",
+      "tip": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+      "plan_digest": "sha256:0594fd2165ed1e3f80bc65c2d1e0bcc2cacd92d2ba233280cba8fe2ae565e6d9",
+      "source_digest": "22eadc65881080907340bf386c13b78c47daba4d",
+      "acceptance_rows": [
+        "RT39"
+      ],
+      "verification": [
+        {
+          "id": "ft405_t04-extract-writers",
+          "performer": "claude:ft405_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "22eadc65881080907340bf386c13b78c47daba4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t04",
+            "digest": "sha256:4acb9c97821c9a82c810709e8dd01511498b4e25c2951af52053183a349963f7",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft405-build,e599c2cf0745cefdb0999ec388678cbab616e57d,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2788,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,14168,227\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "extract-writers",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t04-extract-root",
+          "performer": "claude:ft405_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "22eadc65881080907340bf386c13b78c47daba4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t04",
+            "digest": "sha256:d2c12387d8609191de24d0de3f14071a99a588167cbedb79f2ca6b7cfabad136",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft405-build,e599c2cf0745cefdb0999ec388678cbab616e57d,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16540,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "extract-root",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1284,6 +1333,21 @@
       "from": "sha256:18ca06ebcf3ec58b338df8d8552ecec32801d67f68f66560e9196e8e4864d964",
       "to": "sha256:6febb6148ff4363a2d5dcf90bf873a539f0d16f2648aa80ef885f99b874f2228",
       "chunk_ids": {
+        "RT-EXCERPT": [
+          "RT-EXCERPT"
+        ],
+        "RT-RETAIN": [
+          "RT-RETAIN"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6febb6148ff4363a2d5dcf90bf873a539f0d16f2648aa80ef885f99b874f2228",
+      "to": "sha256:0594fd2165ed1e3f80bc65c2d1e0bcc2cacd92d2ba233280cba8fe2ae565e6d9",
+      "chunk_ids": {
+        "RT-CURRENT": [
+          "RT-CURRENT"
+        ],
         "RT-EXCERPT": [
           "RT-EXCERPT"
         ],
