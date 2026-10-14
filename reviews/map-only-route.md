@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/map-only-route/spec.md",
-  "plan_digest": "sha256:c1c0aa81ad757b6ca289c99ba2d3700ba0fb76f4d3b9e49c12df4aef0a0db983",
+  "plan_digest": "sha256:5f596423575e8a3108be9ac5d57b0140ee4d6f78d5fecdb55a0b2b048e8bc03b",
   "implementation_session": "",
   "chunks": [
     {
@@ -288,6 +288,17 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:c1c0aa81ad757b6ca289c99ba2d3700ba0fb76f4d3b9e49c12df4aef0a0db983",
+      "to": "sha256:5f596423575e8a3108be9ac5d57b0140ee4d6f78d5fecdb55a0b2b048e8bc03b",
+      "chunk_ids": {
+        "MR-A": [
+          "MR-A"
+        ]
+      }
+    }
+  ]
 }
 ```
