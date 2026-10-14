@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/map-only-route/spec.md",
-  "plan_digest": "sha256:ca1148ab368111df094e860c4d985c2a720ff0921efcfeec3f0fb926a3c8f927",
+  "plan_digest": "sha256:9a4314eef28fe52d8f9e8b7a0d9b3516e1078a10b294009e817c0c9731fe221e",
   "implementation_session": "",
   "chunks": [
     {
       "id": "MR-A",
       "base": "b10edf16c05da80525b0bb0b6ca8341c37a912f3",
-      "tip": "6d0989b8dc4a608a1b8b5721194f03d5846af07b",
-      "plan_digest": "sha256:c1c0aa81ad757b6ca289c99ba2d3700ba0fb76f4d3b9e49c12df4aef0a0db983",
-      "source_digest": "f9cec8c8aab62669336c04997d913ec15c9ca761",
+      "tip": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+      "plan_digest": "sha256:9a4314eef28fe52d8f9e8b7a0d9b3516e1078a10b294009e817c0c9731fe221e",
+      "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
       "acceptance_rows": [
         "MR1",
         "MR2",
@@ -46,7 +46,8 @@
         "MR30",
         "MR31",
         "MR32",
-        "MR33"
+        "MR33",
+        "MR34"
       ],
       "verification": [
         {
@@ -203,6 +204,161 @@
               "excerpt": "bench probe internal/anchors/registry_ticket_passes.go --omit '\t{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: \"Stop and return\", Needle: \"The slicer stops when a map decision is not an exact predicate.\", Diagnostic: \"map-only route: Stop and return must stop the slicer when a map decision is not an exact predicate\"},' --package ./internal/anchors --run TestWriteSpecMapOnlyRoute --expect TestWriteSpecMapOnlyRoute\ntree[1]{target,head,dirty}:\n  map-only-route-build,6d0989b8dc4a608a1b8b5721194f03d5846af07b,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_ticket_passes.go,omit,failed,1,TestWriteSpecMapOnlyRoute,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestWriteSpecMapOnlyRoute,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,508\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,59,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestWriteSpecMapOnlyRoute,\"registry_ticket_passes_test.go:122: tree broken at \\\"The slicer stops when a map decision is not an exact predicate.\\\" in .agents/skills/bench-craft-spec/references/map-only-route.md = [], want \\\"map-only route: Stop and return must stop the s… (292 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "mr-t01-rep1-guidance",
+          "performer": "claude:mr_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+            "digest": "sha256:f954b594bd0e783839745ece25d4ee7f6713a434fcbb97522b6d0512e8eced57",
+            "excerpt": "bench test --check docs-currency-workflow\ntree[1]{target,head,dirty}:\n  map-only-route-build,3327a8e356a2b5bb9f444b4e6dac75503c53b01c,true\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5011,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "mr-t01-rep1-prose",
+          "performer": "claude:mr_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+            "digest": "sha256:ab896b680fae4b23a2e0e0bb78f28bc9988804c335ea41eb075084ef46afd0df",
+            "excerpt": "bench test --check prose\ntree[1]{target,head,dirty}:\n  map-only-route-build,3327a8e356a2b5bb9f444b4e6dac75503c53b01c,true\ncheck[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,536\n"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "mr-t01-rep1-budgets",
+          "performer": "claude:mr_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+            "digest": "sha256:0b24779b59384f086999bfb05a949b46d5c9e6e6b807db075841d4bfa8ddfb7a",
+            "excerpt": "bench test --check guidance-prose-budgets\ntree[1]{target,head,dirty}:\n  map-only-route-build,3327a8e356a2b5bb9f444b4e6dac75503c53b01c,true\ncheck[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "mr-t01-rep1-anchors-package",
+          "performer": "claude:mr_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+            "digest": "sha256:48ff8cf366a9d4683c11b4bce36050e737fe728d72d2a8e7c615f126811fed7d",
+            "excerpt": "bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  map-only-route-build,3327a8e356a2b5bb9f444b4e6dac75503c53b01c,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17519,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2415,180\n  github.com/gibbonmi/bench/internal/conformance,pass,61132,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "anchors-package",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "mr-t01-rep1-command-package",
+          "performer": "claude:mr_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+            "digest": "sha256:48ff8cf366a9d4683c11b4bce36050e737fe728d72d2a8e7c615f126811fed7d",
+            "excerpt": "bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  map-only-route-build,3327a8e356a2b5bb9f444b4e6dac75503c53b01c,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17519,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2415,180\n  github.com/gibbonmi/bench/internal/conformance,pass,61132,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "mr-t01-rep1-conformance-package",
+          "performer": "claude:mr_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+            "digest": "sha256:48ff8cf366a9d4683c11b4bce36050e737fe728d72d2a8e7c615f126811fed7d",
+            "excerpt": "bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  map-only-route-build,3327a8e356a2b5bb9f444b4e6dac75503c53b01c,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17519,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2415,180\n  github.com/gibbonmi/bench/internal/conformance,pass,61132,1690\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "mr-t01-rep1-root-conformance",
+          "performer": "claude:mr_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+            "digest": "sha256:301a5a2b9723d9cac3a3b949800fcd9fe9acca9a8437e4ac005c7c1344a9889c",
+            "excerpt": "bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  map-only-route-build,3327a8e356a2b5bb9f444b4e6dac75503c53b01c,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16063,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "mr-t01-rep1-central-property",
+          "performer": "claude:mr_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "low",
+          "source_digest": "26450ed87e87af8771862cc4cf253ee1669672ab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+            "digest": "sha256:756b082f1e29bbe04e62056b93a0e2bd6a0b1e2971cc4bbdb3f9cd247d91d4db",
+            "excerpt": "bench probe internal/anchors/registry_ticket_passes.go --omit '\t{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: \"Stop and return\", Needle: \"The slicer stops when a map decision is not an exact predicate.\", Diagnostic: \"map-only route: Stop and return must stop the slicer when a map decision is not an exact predicate\"},' --package ./internal/anchors --run TestWriteSpecMapOnlyRoute --expect TestWriteSpecMapOnlyRoute\ntree[1]{target,head,dirty}:\n  map-only-route-build,3327a8e356a2b5bb9f444b4e6dac75503c53b01c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_ticket_passes.go,omit,failed,1,TestWriteSpecMapOnlyRoute,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestWriteSpecMapOnlyRoute,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,508\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,57,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestWriteSpecMapOnlyRoute,\"registry_ticket_passes_test.go:124: tree broken at \\\"The slicer stops when a map decision is not an exact predicate.\\\" in .agents/skills/bench-craft-spec/references/map-only-route.md = [], want \\\"map-only route: Stop and return must stop the s… (292 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "central-property",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Delete the stop-and-return anchor from internal/anchors/registry_ticket_passes.go. TestWriteSpecMapOnlyRoute must turn red.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "3327a8e356a2b5bb9f444b4e6dac75503c53b01c",
+              "digest": "sha256:756b082f1e29bbe04e62056b93a0e2bd6a0b1e2971cc4bbdb3f9cd247d91d4db",
+              "excerpt": "bench probe internal/anchors/registry_ticket_passes.go --omit '\t{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: \"Stop and return\", Needle: \"The slicer stops when a map decision is not an exact predicate.\", Diagnostic: \"map-only route: Stop and return must stop the slicer when a map decision is not an exact predicate\"},' --package ./internal/anchors --run TestWriteSpecMapOnlyRoute --expect TestWriteSpecMapOnlyRoute\ntree[1]{target,head,dirty}:\n  map-only-route-build,3327a8e356a2b5bb9f444b4e6dac75503c53b01c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_ticket_passes.go,omit,failed,1,TestWriteSpecMapOnlyRoute,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,TestWriteSpecMapOnlyRoute,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,508\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,57,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestWriteSpecMapOnlyRoute,\"registry_ticket_passes_test.go:124: tree broken at \\\"The slicer stops when a map decision is not an exact predicate.\\\" in .agents/skills/bench-craft-spec/references/map-only-route.md = [], want \\\"map-only route: Stop and return must stop the s… (292 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -302,6 +458,15 @@
     {
       "from": "sha256:5f596423575e8a3108be9ac5d57b0140ee4d6f78d5fecdb55a0b2b048e8bc03b",
       "to": "sha256:ca1148ab368111df094e860c4d985c2a720ff0921efcfeec3f0fb926a3c8f927",
+      "chunk_ids": {
+        "MR-A": [
+          "MR-A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ca1148ab368111df094e860c4d985c2a720ff0921efcfeec3f0fb926a3c8f927",
+      "to": "sha256:9a4314eef28fe52d8f9e8b7a0d9b3516e1078a10b294009e817c0c9731fe221e",
       "chunk_ids": {
         "MR-A": [
           "MR-A"
