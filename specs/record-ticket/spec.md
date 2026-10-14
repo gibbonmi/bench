@@ -121,6 +121,15 @@ Harder chunks: RT-TICKET.
 51. As a reviewer, I want one repair session to keep one ticket, so that the one-session-one-ticket rule stays unchanged.
 52. As a maintainer, I want `bench record verification` to keep its file excerpt, so that the orchestrator's final records keep their form.
 
+### Run binding and hostile input
+
+53. As a reviewer, I want a stage bound to its run commit, so that an earlier tip's excerpt never records at the chunk source.
+54. As a reviewer, I want a stage from a dirty checkout refused, so that an excerpt never comes from uncommitted bytes.
+55. As the last ticket's author, I want a base after a fold to be that fold's commit, so that the base obeys the fold chain.
+56. As the first chunk's author, I want the ticket form to create an absent record, so that the first freeze needs no other form.
+57. As a ticket author, I want a planned command with shell quotes to match my run, so that a quoted operand stages.
+58. As a reviewer, I want a hostile requirement ID to stay inside the assignment scope, so that a stage never writes outside its folder.
+
 ## Implementation decisions
 
 ### Decision record
@@ -135,8 +144,12 @@ The repair session that records for every ticket of its chunk stays out of scope
 
 `runBounded` is the one owner of a bounded response, so it owns retention.
 After `Finish`, it writes the retained response of the assignment scope that `AssignmentScope` answers.
-The retained response holds the complete response bytes in arrival order, the exit code, and the argument list after `bench`.
-A response within the bound supplies its retained writes, and a spilled response supplies its spill file bytes.
+The retained response holds the complete response bytes in arrival order, the exit code, the typed verb word, and its arguments.
+It also holds the `HEAD` commit of the worktree and its dirty paths, read through `git.AllFilesStatus` after the verb returns.
+
+The owner stays the one source of the bytes: `responsebound` gains an accessor that answers the complete bytes of a finished response.
+That accessor answers the retained writes of a response within the bound and the spill file bytes of a spilled response.
+It answers no bytes for the spill-failed state and for the `passing` state, which is the create-failure route.
 The lead identity row is outside the bound and is not part of the retained bytes.
 
 These calls leave the retained response unchanged:
@@ -146,7 +159,7 @@ These calls leave the retained response unchanged:
 - a call of the `worktree` family
 - a call that a retiring leaf runs
 
-A response in the spill-failed state clears the retained response.
+A response with no complete bytes clears the retained response.
 Retention writes through one durable replacement, and its error changes neither the response nor the exit code.
 The retained response lives under the assignment scope of the response store, so `Drop` removes it at release.
 Its file names do not match the spill name pattern, so the primary prune never reads them.
@@ -155,11 +168,18 @@ Its file names do not match the spill name pattern, so the primary prune never r
 
 `bench record excerpt <slug> --chunk <id> --requirement <id> [--mutant <n>]` stages the retained response for one requirement of the chunk plan at the worktree's `HEAD`.
 It refuses with no retained response, with an unplanned requirement, and with bytes over the record excerpt limit.
-For a requirement with no probe, the retained argument list must equal the fields of the planned command after `bench`.
+
+`shellcommand.Parse` is the one splitter of a planned command, so a quoted operand folds as the shell folds it.
+The stage refuses a planned command whose first word is not `bench`.
+For a requirement with no probe, the typed verb word and its arguments must equal the planned words after `bench`.
+The comparison uses the typed verb word, so a planned alias matches only a run that typed the same alias.
 For a requirement with a probe, the retained call must be `bench probe`, and the bytes must import through the probe reader.
 `--mutant` is valid only for a probe requirement, and the stage keeps it for the import.
 
-The stage lives under the assignment scope, keyed by the spec slug, the chunk, and the requirement.
+The stage lives under the assignment scope in one file per key.
+The file name is the hex SHA-256 digest of the spec slug, the chunk ID, and the requirement ID, joined by NUL bytes.
+No plan string forms a path component, so a `/` or `..` in an ID cannot leave the scope.
+The stage copies the retained commit and dirty paths with the bytes.
 A second stage of one requirement replaces the first.
 The excerpt form writes no review record and no worktree file.
 
@@ -175,6 +195,8 @@ Before the write, the form refuses in this order:
 2. a plan whose chunk requirements name no ticket
 3. a planned seam cell at the tip, when the ticket is the last ticket of the chunk
 4. an owed requirement with no staged excerpt, naming every missing requirement
+5. a stage whose run commit is not the chunk source, naming the requirement
+6. a stage whose run had a dirty path other than the record path of the spec, naming the requirement
 
 Inside one `write` transaction, the form applies these steps in the completion order:
 
@@ -182,8 +204,17 @@ Inside one `write` transaction, the form applies these steps in the completion o
 2. When the ticket is the last ticket of the chunk, it freezes the chunk at the base and the tip.
 3. It appends one verification entry for each owed requirement at the chunk source.
 
-The amendment step refuses a plan change that needs a chunk map, and the refusal names `bench record amendment`.
-The base is `--base` when given, then the base of the existing chunk entry, then the tip of the predecessor chunk's entry in plan order.
+The chunk source is the freeze tip for the last ticket and the chunk entry's tip for an earlier ticket.
+An earlier ticket's author therefore reruns its checks at the chunk tip before it stages.
+
+The amendment step refuses a plan change that needs a chunk map with the amendment change function's own error.
+The ticket form wraps that error as a repair that names `bench record amendment`.
+The change function returns the same error as today, so the amendment form's own refusal text stays unchanged.
+
+The base is `--base` when given, then the base of the existing chunk entry.
+Otherwise it is the commit that `coveredAfter` answers for the predecessor chunk's entry in plan order.
+`coveredAfter` answers the last recorded fold after that chunk, or the chunk tip when no fold follows it.
+This rule matches the chunk base rule of the review phase's step 1, and the checkpoint's fold chain reads the same function.
 With none of them, the form refuses and asks for `--base`.
 A call for an earlier ticket needs an existing chunk entry, and it never changes that entry.
 
@@ -192,7 +223,10 @@ The exit code comes from the stage, and a probe requirement imports its staged a
 After the write succeeds, the form removes the staged excerpts that it used.
 
 The exported amendment, chunk, and verification writers each keep one change function over the record.
-Each exported writer calls `write` with its own function, and the ticket form calls `write` once with the three functions in sequence.
+The chunk writer's create function, which owns the version 2 refusal for a new record, becomes one shared function too.
+Each exported writer calls `write` with its own functions.
+The ticket form calls `write` once, with the chunk create function and the three change functions in sequence.
+An earlier ticket's call passes the absent-record refusal as its create function, as the verification writer does.
 No refusal text or rule moves into the ticket form.
 
 | site | old rule | new rule |
@@ -200,9 +234,11 @@ No refusal text or rule moves into the ticket form.
 | amendment writer | The change body sits inside `RecordAmendment`. | One change function owns the body, and `RecordAmendment` and the ticket form call it. |
 | chunk writer | The change body sits inside `RecordChunk`. | One change function owns the body, and `RecordChunk` and the ticket form call it. |
 | verification writer | The change body sits inside `RecordVerification`. | One change function owns the body, and `RecordVerification` and the ticket form call it. |
+| chunk create | The create closure sits inside `RecordChunk`. | One create function owns the version 2 refusal, and `RecordChunk` and the ticket form call it. |
 
 `FormTicket` and `FormExcerpt` join the form constants, and the record command registers both forms.
-The completion order stays unchanged, and the ticket form's help states that it writes the first three steps of that order.
+The completion order stays unchanged.
+The ticket form's help derives its step list from `CompletionOrder`: the steps before the first review step.
 
 ### Current binding
 
@@ -210,26 +246,38 @@ The current binding passes its action to the checkout refusal.
 For the check action only, the refusal skips one dirty path: the record path of the selected spec.
 The `current` response block gains a `dirty_record` flag field after `current`, true when that path is dirty.
 The charge, the review charge, and the proposal keep the strict refusal.
+
 The record path still reaches the changed paths, so `paths-authorized` grades it against the fence, as it does today.
-The source digest excludes the record path, so the bound source stays exact.
+The record's source digest excludes the record path (`SourceDigest`).
+The binding compares the source tip and reads each required source from the tip's tree, so a dirty record changes no bound byte.
 
 ### Guidance
 
 The implementation phase changes two sentences in place, so its sentence count stays the same.
 The freeze sentence and the verification sentence name `bench record ticket`.
 The operating guide's chunk sentence names the last ticket's author as the freezer.
-The review phase's record step names the last ticket's author as the writer of the frozen pair, and it lists the excerpt and ticket forms.
+
+The review phase's record step names the last ticket's author as the writer of the frozen pair.
+A new sentence in that step lists the excerpt and ticket forms.
+The step 6 sentence "Write each completed chunk, verification, review, and amendment entry with `bench record`, not with hand-built JSON." stays byte for byte.
+
 The ticket craft and the reference name the last ticket's author as the freezer.
 The known-issues row on file excerpts goes, and the changelog gains one entry.
+
+### Commitment binding
+
+The commitment criteria of FT405 still name `--excerpts <dir>`, a composition of the assignment and verification forms, and the repair-session criterion.
+The spec-stage close binds this spec through `bench commitment plan`, and that deliverable binding restates the criteria from this spec.
+The repair-session criterion leaves the binding and returns to intake as a Won't handle line.
 
 ## Implementation chunks
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| RT-RETAIN / (sliced at slicing) | Bench keeps the last response of each assignment worktree, and `bench record excerpt` stages it for one requirement. | RT1–RT17 | the planned retention and excerpt tests, `TestHelpInventoryIsComplete` | no |
+| RT-RETAIN / (sliced at slicing) | Bench keeps the last response of each assignment worktree, and `bench record excerpt` stages it for one requirement. | RT1–RT17, RT57–RT59, RT65 | the planned retention and excerpt tests, the system suite's nested exec test, `TestHelpInventoryIsComplete` | no |
 | RT-CURRENT / (sliced at slicing) | `--check-current` binds beside a dirty review record of its spec and reports it. | RT40–RT46 | `TestEvidenceCurrentBinding`, `TestEvidenceSchemaRegistry`, and the planned binding tests | no |
-| RT-TICKET / (sliced at slicing) | `bench record ticket` writes the amendment, the freeze, and the owed verifications in one transaction. | RT18–RT39 | `TestChunkNeedsCurrentAmendment`, `TestCompletionHelpOrdering`, `TestHelpInventoryIsComplete`, and the planned ticket tests | yes |
-| RT-GUIDE / (sliced at slicing) | The guidance names the last ticket's author as the freezer and the ticket form as the record call. | RT47–RT54 | `TestChunkChainAnchors`, `TestRetainedWorkflow` | no |
+| RT-TICKET / (sliced at slicing) | `bench record ticket` writes the amendment, the freeze, and the owed verifications in one transaction. | RT18–RT39, RT55, RT56, RT60–RT63 | `TestChunkNeedsCurrentAmendment`, `TestCompletionHelpOrdering`, `TestHelpInventoryIsComplete`, and the planned ticket tests | yes |
+| RT-GUIDE / (sliced at slicing) | The guidance names the last ticket's author as the freezer and the ticket form as the record call. | RT47–RT54, RT64 | `TestChunkChainAnchors` with `registry_chunk_chain.go` and its twin, and `TestRetainedWorkflow` with the `.bench/BENCH.md` needle in `registry_ft311_review_dispatch.go` | no |
 
 RT-RETAIN creates the stage that RT-TICKET reads, so it is its own review chunk.
 RT-CURRENT touches disjoint packages and has no prerequisite.
@@ -250,7 +298,7 @@ The slicing writes this plan's tickets and its verification commands.
 - The ticket tests stage excerpts, run the ticket form, and compare the record bytes before and after each refusal.
 - The binding tests reuse the `TestEvidenceCurrentBinding` fixture and dirty one path for each case.
 - The guidance rows use the anchor registry and its independent twin.
-- The prior art is `TestChunkNeedsCurrentAmendment` for the record order and `exec_nested_bound_test.go` for a nested bounded call.
+- The prior art is `TestChunkNeedsCurrentAmendment` for the record order. The nested exec test of the system suite is the prior art for RT5, which needs a real child process.
 - The gate observes the feature through the `test` phase and the anchor checks.
 
 ### Seam diagram
@@ -275,7 +323,7 @@ The slicing writes this plan's tickets and its verification commands.
 | RT2 | 3 | A spilled `bench test` response leaves a retained response that equals the spill file bytes and holds no `spilled{` frame. | planned | A retention that keeps the printed projection holds the frame and the row reds. |
 | RT3 | 4 | The retained response holds the verb's exit code and its argument list after `bench`. | planned | A retention that drops the exit code reads as zero for a failing call and the row reds. |
 | RT4 | 5 | A `bench record` call after a `bench test` call leaves the `bench test` response retained. | planned | A retention without the record-family skip replaces the response and the row reds. |
-| RT5 | 6 | A `bench worktree exec` call in the worktree leaves its child's `bench test` response retained. | planned | A retention without the worktree-family skip replaces the child's response and the row reds. |
+| RT5 | 6 | A `bench worktree exec` call in the worktree leaves its child's `bench test` response retained. | planned | A retention without the worktree-family skip replaces the child's response and the row reds. The test needs a real child process, so it sits in the system suite that `bench test --check system` and the gate's system phase run. |
 | RT6 | 7 | A bounded call in the primary checkout writes no retained response. | planned | A retention that writes the primary scope leaves a file there and the row reds. |
 | RT7 | 8 | A response in the spill-failed state removes the earlier retained response. | planned | A retention that skips a failed response leaves the earlier response and the row reds. |
 | RT8 | 9 | A retention write that fails leaves the printed response and the exit code unchanged. | planned | A dispatcher that returns the retention error changes the exit code and the row reds. |
@@ -323,10 +371,20 @@ The slicing writes this plan's tickets and its verification commands.
 | RT50 | 46 | The review phase's step 6 states that the last ticket's author writes the frozen pair with `bench record ticket`. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
 | RT51 | 48 | The ticket craft states that the last ticket's author freezes the chunk base and the current tip. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
 | RT52 | 48 | The ticket craft and the reference hold no `review freezes` text. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A Forbid anchor on `review freezes` in each file reds a restored sentence. |
-| RT54 | 48 | The reference states that the last ticket's author freezes each chunk's base and current tip. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
 | RT53 | 49 | The known-issues file holds no row that names FT405. | planned | A row that survives the change names FT405 and the row reds. |
+| RT54 | 48 | The reference states that the last ticket's author freezes each chunk's base and current tip. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
+| RT55 | 55 | For a later chunk whose predecessor entry has one recorded fold after it, the ticket form freezes with that fold's commit as base. | planned | A form that takes the predecessor tip writes a base that the checkpoint refuses as a chain gap and the row reds. |
+| RT56 | 56 | For the last ticket of the first chunk with an absent record and `--base`, the ticket form creates the record with the chunk entry and the verifications. | planned | A form that passes the absent-record refusal as its create function refuses and the row reds. |
+| RT57 | 57 | `bench record excerpt` stages a run whose arguments equal a planned command with a single-quoted operand. | planned | A stage that splits on spaces keeps the quotes and refuses the match and the row reds. |
+| RT58 | 13 | `bench record excerpt` refuses a planned command whose first word is not `bench`. | planned | A stage that drops the first word compares a foreign command and the row reds. |
+| RT59 | 58 | A requirement ID of `../x` stages a file inside the assignment scope and nowhere else. | planned | A stage that joins the ID into the path writes outside the scope and the row reds. |
+| RT60 | 53 | The ticket form refuses a stage whose run commit is not the chunk source and names the requirement. | planned | A form that ignores the run commit records an excerpt from an earlier tip and the row reds. |
+| RT61 | 54 | The ticket form refuses a stage whose run had a dirty Go file and names the requirement. | planned | A form that ignores the dirty paths records an uncommitted run and the row reds. |
+| RT62 | 54 | The ticket form accepts a stage whose run had only the spec's record path dirty. | planned | A form that refuses every dirty path refuses a run after a record write and the row reds. |
+| RT63 | 37 | The ticket form's help lists the amendment, chunk, and verification steps in the order of `CompletionOrder`. | planned | A help text that types its own step list keeps the old order when the completion order changes, and the row's comparison with `CompletionOrder` reds. |
+| RT64 | 47 | The review phase's step 6 states that `bench record excerpt` stages an excerpt and `bench record ticket` writes one ticket's entries. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
+| RT65 | 8 | A response that takes the create-failure route clears the retained response. | planned | A retention that treats the passing state as complete keeps the earlier response and the row reds. |
 
-Not covered: story 47 — the record-step form list is review-owned prose with no anchor family.
 Not covered: story 50 — the changelog entry is review-owned.
 Not covered: story 51 — the one-session-one-ticket rule stays unchanged, and `TestDelegatedDistinctTicketAuthors` keeps grading it.
 Not covered: story 52 — the verification form stays unchanged, and its existing tests keep grading it.
@@ -349,6 +407,7 @@ The audience is every repository that links the kit, because the forms and the r
 **Won't handle** a retained-response read in `bench record verification` — the ticket form covers the author route, and final records keep their file form.
 **Won't handle** retention of a tree-target or exempt call — neither runs through `runBounded`, and the author's checks are bounded calls.
 **Won't handle** retention of more than one response — the stage copies each response before the next run, and the ticket form reads only the stages.
+**Won't handle** a run binding on `bench record verification --excerpt <file>` — that form stays unchanged and keeps its file trust.
 **Won't handle** a ticket form for final verification — the final list names no ticket, and the orchestrator keeps `bench record verification --final`.
 
 ## Ownership fences
@@ -372,6 +431,8 @@ The slicing writes the ticket entries of this section, and the review pickup is 
 - The form names every missing requirement in one refusal (RT23). The FT379 retries came from one gap at a time.
 - The form removes its used stages after a write (RT35). A refreeze otherwise reuses an excerpt from an earlier tip.
 - The base derives from the record (RT26, RT27, RT28). The FT379 build passed a wrong base once.
+- The stage binds to its run commit and refuses a dirty run (RT60, RT61, RT62). The orchestrator decided this on 2026-10-14, and it stays open to reviewer veto.
+- The retained response holds `HEAD` and the dirty paths, so each bounded call in a worktree runs one more Git status read.
 - A spill-failed response clears the retained response (RT7). The incomplete bytes otherwise stage as evidence.
 
 ### Source sentence to row
@@ -391,7 +452,7 @@ The excerpts come from staged retained responses in place of a folder in the wor
 
 ### Pre-review proof checklist
 
-- `Cited symbols`: `write`, `replace`, `RecordAmendment`, `RecordChunk`, `RecordVerification`, `currentPlan`, `CompletionOrder`, `refusePlanned`, `importedProbe`, `runBounded`, `AssignmentScope`, `Drop`, `preparationCheckoutRefusal`, `currentEvidenceCommand`, `chargeevidence.Current`, and `ResponseBlocks` resolve in the tree.
+- `Cited symbols`: `coveredAfter`, `shellcommand.Parse`, `git.AllFilesStatus`, `write`, `replace`, `RecordAmendment`, `RecordChunk`, `RecordVerification`, `currentPlan`, `CompletionOrder`, `refusePlanned`, `importedProbe`, `runBounded`, `AssignmentScope`, `Drop`, `preparationCheckoutRefusal`, `currentEvidenceCommand`, `chargeevidence.Current`, and `ResponseBlocks` resolve in the tree.
 - `Import edges`: `cmd/bench` already imports `internal/responsebound`; `recordcmd` imports `internal/responsebound` for the stage. The slicing runs `go list` before it locks the edge.
 - `Source-row clauses and occurrences`: the source-sentence table quotes each clause; the occurrences are FT349, NRO, FT217, and the FT379 freeze retries.
 - `Promised field labels`: forms `ticket` and `excerpt`; flags `--ticket`, `--id-prefix`, `--requirement`, `--mutant`, `--base`, and `--tip`; response field `dirty_record`.
@@ -418,3 +479,4 @@ This spec keeps that behavior and adds no implicit entry.
 - The exact prose budget of the implementation phase file after the two in-place sentence changes.
 - Whether any other reader parses the `current` block by column count, beyond the header needle in `evidence_modes_test.go`.
 - The test name of the known-issues row check; RT53 stays planned until the slicing names it.
+- The time cost of one Git status read after each bounded call in a worktree.
