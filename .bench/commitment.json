@@ -1099,6 +1099,14 @@
       "identity": "sha256:c907642fa7b944932fc5b3cdfd8e37301cdd448c971c72124c09415727f6b869",
       "source": "239400fcc5a5d253103eff590c8f98f91e47ad46",
       "evidence": "91965a4ee32a8a9fa5f8bf6b0e4817314535e374"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "map-only-route",
+      "binding": "map-only-route",
+      "identity": "sha256:5554780a1f55e1060eea6ab78f1d1841eaf50f6dcad27f46afbc855c04b437f4",
+      "source": "e61ee7041fe7f197e864bb79e719555dba78f29e",
+      "evidence": "963269ff9d55eb80590bbb244e28566b4e352916"
     }
   ]
 }

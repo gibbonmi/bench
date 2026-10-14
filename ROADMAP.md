@@ -329,12 +329,11 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. map-only-route
-2. FT379
-3. FT405
-4. FT293-ownership-closure
-5. FT375-spec-staleness
-6. FT380-plan-commit
-7. FT409
-8. FT402
-9. FT411
+1. FT379
+2. FT405
+3. FT293-ownership-closure
+4. FT375-spec-staleness
+5. FT380-plan-commit
+6. FT409
+7. FT402
+8. FT411

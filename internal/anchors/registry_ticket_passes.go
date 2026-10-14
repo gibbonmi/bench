@@ -71,13 +71,36 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The author meets the cap with fewer independent expectations, such as one table-driven test, and skips no witness.", Diagnostic: "witness cap: the author meets the cap with fewer expectations and skips no witness"},
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The author runs the floor checks and witnesses of several packages in one `bench test` call that repeats `--package`.", Diagnostic: "witness cap: the author runs several packages in one bench test call"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "Cap the witnesses in a charge", Diagnostic: "witness cap: the known-issues row kept a copy of the cap"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Eligibility", Needle: "The reviewer selects the map-only route for a ready compiled map.", Diagnostic: "map-only route: Eligibility must state that the reviewer selects the route for a ready compiled map"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Eligibility", Needle: "The full route of `/bench-write-spec` stays the default.", Diagnostic: "map-only route: Eligibility must state that the full route stays the default"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Eligibility", Needle: "The route accepts only a ready compiled map that `bench maps` reports with no diagnostic.", Diagnostic: "map-only route: Eligibility must require a ready compiled map that bench maps reports with no diagnostic"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Eligibility", Needle: "The reviewer judges that each decision is an exact predicate, and no check grades predicate quality.", Diagnostic: "map-only route: Eligibility must state that the reviewer judges predicate quality and no check grades it"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "Charge one fresh slicer on `craft-line`'s ticket slicing line.", Diagnostic: "map-only route: Route steps must charge one fresh slicer on craft-line's ticket slicing line"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "The route has no research fan-out, no spec fork, no spec review, and no paired slicing readers.", Diagnostic: "map-only route: Route steps must omit the research fan-out, the spec fork, the spec review, and the paired slicing readers"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "The slicer writes the thin spec's stories and coverage rows from the decision predicates first, so the row IDs exist before the tickets.", Diagnostic: "map-only route: Route steps must order the stories and coverage rows before the tickets"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "The slicer does its own tree research under the slicing checks' `Fence-expansion evidence` classes.", Diagnostic: "map-only route: Route steps must send the slicer's tree research to the Fence-expansion evidence classes"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "The slicer records the gap log in the thin spec's `Further notes`.", Diagnostic: "map-only route: Route steps must put the gap log in the thin spec's Further notes"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "Each entry takes one class: (a) map discretion, (b) a seam or test choice, (c) a missing fact, or (d) a reviewer decision.", Diagnostic: "map-only route: Route steps must name the four gap-log classes (a) to (d)"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "After every ticket exists, the coordinator completes the chunk table and the completion plan under an interim fence that holds only the review pickup.", Diagnostic: "map-only route: Route steps must complete the chunk table and completion plan after the tickets under the interim fence"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "The coordinator runs `--propose-writes` for each ticket on the committed thin spec, with its chunk table and completion plan.", Diagnostic: "map-only route: Route steps must run --propose-writes for each ticket on the committed thin spec"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "One ticket review runs on `craft-line`'s ticket review line, with an iteration cap of 2.", Diagnostic: "map-only route: Route steps must run one ticket review on craft-line's ticket review line with a cap of 2"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "After the ticket review accepts, the coordinator writes the fence section, runs the plan-only preflight, and presents the approval table.", Diagnostic: "map-only route: Route steps must write the fence, run the plan-only preflight, and present the approval table after ticket review"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "Each class (d) entry is a decision row in the approval table.", Diagnostic: "map-only route: Route steps must make each class (d) entry a decision row in the approval table"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Route steps", Needle: "The verification log counts only the ticket round, and its note names the map-only route.", Diagnostic: "map-only route: Route steps must make the verification log count only the ticket round and name the route"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Stop and return", Needle: "The slicer stops when a map decision is not an exact predicate.", Diagnostic: "map-only route: Stop and return must stop the slicer when a map decision is not an exact predicate"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Stop and return", Needle: "The slicer also stops when the map leaves a code seam open.", Diagnostic: "map-only route: Stop and return must stop the slicer when the map leaves a code seam open"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Stop and return", Needle: "The stop returns to the reviewer with a recommendation for the full route, and the slicer writes no further ticket.", Diagnostic: "map-only route: Stop and return must return the stop to the reviewer with a recommendation for the full route"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Thin spec", Needle: "The coverage check and the build preflight read the thin spec's header fields, stories, coverage map, chunk table, `bench-completion-plan` fence, and ownership fences.", Diagnostic: "map-only route: Thin spec must list the parts that the coverage check and the build preflight read"},
+	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Thin spec", Needle: "The thin spec also holds the gap log for the sign-off, and no check reads it.", Diagnostic: "map-only route: Thin spec must hold the gap log for the sign-off, which no check reads"},
+	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Section: "Who runs this phase", Needle: "On a reviewer-selected map-only route, `craft-spec`'s `references/map-only-route.md` replaces the research, the fork, the spec review, and the slicing research.", Diagnostic: "map-only route: /bench-write-spec Who runs this phase must point to references/map-only-route.md"},
 }
 
 // slicingChecks is the craft-tickets reference that states the enforced Writes: rules,
 // the slicing rules no check enforces, the fence-expansion evidence classes, and the keep rule.
 const slicingChecks = ".agents/skills/bench-craft-tickets/references/slicing-checks.md"
 
-// writeSpecCommand is the phase command that reviews the spec and slices its tickets by chunk.
+// writeSpecCommand is the phase command that reviews the spec, slices its tickets by chunk,
+// and points to the reviewer-selected map-only route.
 const writeSpecCommand = ".agents/commands/bench-write-spec.md"
 
 // implementSpecCommand is the phase command whose author and review charges read Writes: as an upper bound.
@@ -89,6 +112,9 @@ const craftLineSkill = ".agents/skills/bench-craft-line/SKILL.md"
 
 // mapDiscipline is the craft-spec reference that holds the reader-sweep rules.
 const mapDiscipline = ".agents/skills/bench-craft-spec/references/map-discipline.md"
+
+// mapOnlyRoute is the craft-spec reference that states the reviewer-selected map-only route.
+const mapOnlyRoute = ".agents/skills/bench-craft-spec/references/map-only-route.md"
 
 // knownIssues is the known-issues file that never carries a second copy of the witness cap.
 const knownIssues = "docs/known-issues.md"

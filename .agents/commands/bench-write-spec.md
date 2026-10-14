@@ -46,7 +46,7 @@ The invoking session first fans out read-only research delegates over the one de
 - `craft-spec`'s reader sweep;
 - the code sites, tests, fixtures, and anchors of each decision-source item.
 
-Each delegate returns its findings and its not-verified list under `craft-research`. The research delegates write nothing. The spec is the durable output of the research run, and its rows cite the findings.
+Each delegate returns its findings and its not-verified list under `craft-research`. The research delegates write nothing. The spec is the durable output of the research run, and its rows cite the findings. On a reviewer-selected map-only route, `craft-spec`'s `references/map-only-route.md` replaces the research, the fork, the spec review, and the slicing research.
 
 After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and its chunk table only. The charge gives the fork the findings as compressed inputs, and the fork does not repeat their reads. The fork inherits the invoking session's line. Omit a model override. Keep all spec-and-ticket writes in the phase worktree. The invoking session coordinates the phase, slices the tickets, and presents the completed approval table to the reviewer.
 

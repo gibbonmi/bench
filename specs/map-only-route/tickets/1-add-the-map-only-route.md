@@ -11,7 +11,7 @@ The spec phase gains an opt-in map-only route that the reviewer selects. The ful
 - `.agents/skills/bench-craft-spec/references/map-only-route.md` is new. It states the eligibility, the ten route steps, the stop and return, and the thin-spec parts in the spec's `Implementation decisions` order.
   It sends the map compile and move to the Entry contract of `/bench-write-spec`, and it sends the close to that file's `Exit handoff`. It copies neither procedure.
 - `.agents/commands/bench-write-spec.md` gains the pointer sentence of the spec's `Placement` decision, verbatim, at the end of physical line 49, under `Who runs this phase`. The file stays at 87 lines.
-- `internal/anchors/registry_ticket_passes.go` gains one `RequireInSection` anchor for each route sentence of rows MR1-MR4, MR6-MR8, MR10-MR18, MR20-MR23, and the pointer of MR25.
+- `internal/anchors/registry_ticket_passes.go` gains one `RequireInSection` anchor for each route sentence of rows MR1-MR4, MR6-MR8, MR10-MR18, MR20-MR23, and the pointer of MR25. MR23 has two sentences, so it gets two anchors.
 - `internal/anchors/registry_ticket_passes_test.go` gains `TestWriteSpecMapOnlyRoute`. It states each needle and diagnostic as its own literal, as `TestWriteSpecChunkedSlicing` does.
 - `projects/benchkit.md` gains one sentence in the spec-authoring entry that names the route.
 - `docs/field-guide.html` gains one clause in each of its two write-spec passages.
@@ -34,3 +34,5 @@ The `Writes:` line above holds the closure that the slicing research found. `--p
 - [ ] The route reference requires the thin spec's `Decision source:` line to name the compiled map.
 - [ ] The route reference states that each ticket's `Covers:` line names declared rows of the thin spec.
 - [ ] `TestWriteSpecMapOnlyRoute` states each needle and diagnostic as its own literal and does not read the registry.
+- [ ] The route reference states no stop for a map with no decision ticket, because `bench maps` already refuses it.
+- [ ] Both Thin spec sentences of the route reference are anchored, and the second names the gap log apart from the parts that the checks read.
