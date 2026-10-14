@@ -1168,7 +1168,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-write-spec-1",
+          "performer": "claude:rc-write-spec-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-write-spec-1",
+            "digest": "sha256:07a927085e60637409c2e1475c7c149783d91fad9d26abc1369b953abddda2ec",
+            "excerpt": "Spec axis, RC-WRITE: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip 6e51c24e; frozen pair d591e0ab..b2ae2671.\nRC38-RC42: the help row matches ticket 04; RecordConfirmation (write.go:302-330) reuses FindReviewedPair and closesOpen; mutation text is unverified caller text (recordcmd/confirmation.go:465); tests at recordcmd/confirmation_test.go:543-608.\nRoute precedence (spec 238-242): checkChunkReviews (confirmation.go:134-156) routes a test-only reviewed pair with no confirmation to the confirmation form before the outcome check, a failed reviewed pair to the review form, and a failed confirms to the confirmation form; RC43 and RC44 at record_repair_test.go:69-70.\nStrict descent (spec 162) refuses at confirmation.go:96. Ticket 04's extra bullets: TestReviewCheckpointPassesAWrittenConfirmation and the silent-probe route.\nRC45: FormConfirmation follows FormReview in CompletionOrder (repair.go:47). RC46 and RC47: policy and review-phase sentences with anchors in registry_chunk_chain.go and twins.\nThe pinned step 6 sentence and bench-implement-spec.md are unchanged; the reference, profile, and changelog agree with the spec.\nWhole spec: the coverage projection shows 57 rows, each with a test seam and no planned cell.\nAdvice (no ID): the written-confirmation test calls rr.RecordConfirmation, not the verb; the RC46 and RC47 reds live only in the b2ae2671 commit body; RC33's reason now matches as a prefix.\n"
+          },
+          "axis": "Spec",
+          "base": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+          "tip": "b2ae2671830831521cb2e96635df46598dc6f1f7",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-write-standards-1",
+          "performer": "claude:rc-write-standards-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:rc-write-standards-1",
+            "digest": "sha256:84c45de77ef63a3c6b96fc7eb7b366c7510211a848ab4f406b24f789369af4c0",
+            "excerpt": "Standards axis, RC-WRITE: fail. Count: 2 findings. Worst issue: S1.\nEvidence bound current=true; frozen pair d591e0ab..b2ae2671.\nS1 (auto-fix, confidence 5): the confirmation refusal scope is built twice, at internal/reviewrecord/write.go:342 and confirmation.go:163; both feed closesOpen, and tests in both layers assert the rendered prefix. One helper gives it one source.\nS2 (auto-fix, confidence 4): TestReviewCheckpointPassesAWrittenConfirmation restates the biting-probe values at internal/gate/review_checkpoint_confirmation_test.go:74, which the unexported bitProbe owns at internal/reviewrecord/recordtest/confirmation.go:8-9; export it inside the fence.\nClean: the writer and the route each call FindReviewedPair once and share closesOpen and importedProbe; FormConfirmation appears once in each registry; the help row and completion order derive from the form; ticket 05's reds are in its commit body; no FT tags in comments; touched Go files are under 400 lines.\nAdvice (no ID): four files state the test-only exception as ticket 05 asks; mixed use of the boundedRepairPolicy constant and literal paths in internal/anchors; a semicolon in the policy sentence.\n"
+          },
+          "axis": "Standards",
+          "base": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+          "tip": "b2ae2671830831521cb2e96635df46598dc6f1f7",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-write-coverage-1",
+          "performer": "claude:rc-write-coverage-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:rc-write-coverage-1",
+            "digest": "sha256:c7b5161bbf66e363c9554133a3a91a5a6c2fb436bd1b4fcfe1fe2f851f010546",
+            "excerpt": "Coverage axis, RC-WRITE: fail. Count: 3 findings. Worst issue: C1.\nEvidence bound current=true at source tip 6e51c24e; frozen pair d591e0ab..b2ae2671.\nC1 (auto-fix, confidence 8): dropping the --mutant read at internal/reviewrecord/recordcmd/confirmation.go:399 is silent (P1); no RC38 case imports a mutant-set answer with --mutant.\nC2 (auto-fix, confidence 6): swapping exitsValid(parsed) for true at recordcmd/confirmation.go:390 is silent (P2); no malformed-value refusal test for this form.\nC3 (auto-fix, confidence 6): RecordConfirmation (write.go:641-670) never applies the bite predicate and writes outcome pass for a silent probe; the checkpoint still refuses it (RC20-RC22). The first return said ask-user; this axis reaffirmed auto-fix through row RC58, where the writer reuses probeBites.\nProbes, all restored=yes: P1 silent; P2 silent; P3 RC44 route swaps bit; P4 writer closesOpen nil bit; P5a RC46 negation silent in TestImplementationContinuation by design; P5b the same negation bit in TestRootConformance; P6 empty probe mutation bit.\nAdvice (no ID): a duplicate --finding is refused through sameSet with no pinning test; a Require anchor passes a contradicting sentence beside its needle; some writer edges are covered only through the checkpoint.\n"
+          },
+          "axis": "Coverage",
+          "base": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+          "tip": "b2ae2671830831521cb2e96635df46598dc6f1f7",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1300,6 +1368,11 @@ RC-CARRY: 4 findings in the first round. Worst issue: S1. The confirming round c
 - S3 (auto-fix, confidence 4): the refusal scope of a chunk is built again in `confirmation.go`, and `Chunk.reviewed().scope` owns it.
 - S4 (auto-fix, confidence 5): the comment on `unclaimed` in `write.go` does not name confirmation IDs.
 
+RC-WRITE: 2 findings. Worst issue: S1.
+
+- S1 (auto-fix, confidence 5): the confirmation refusal scope is built in `internal/reviewrecord/write.go` and again in `confirmation.go`. One helper gives it one source.
+- S2 (auto-fix, confidence 4): `TestReviewCheckpointPassesAWrittenConfirmation` restates the biting-probe values that `bitProbe` in `recordtest/confirmation.go` owns.
+
 ## Spec
 
 RC-CYCLE: 0 findings in both rounds. Worst issue: none.
@@ -1310,6 +1383,8 @@ RC-CARRY: 1 finding in the first round. Worst issue: P1. The confirming round cl
 
 - P1 (auto-fix, confidence 4): a reviewed tip equal to the chunk base passes, so a test-only chunk can close with no review. The axis reaffirmed auto-fix through a strict-descent spec expansion (RC55), which is flagged for reviewer veto.
 - P2 (auto-fix, confidence 7): the RC57 row says the checkpoint refuses a carried wrong-role result with a reason that names the role. The parser refuses first, so the row's seam is the carried branch of `checkReviews`. A coverage-map amendment fixed the row at `d591e0ab`, and a narrow round of all three axes passed.
+
+RC-WRITE: 0 findings. Worst issue: none.
 
 ## Coverage
 
@@ -1327,6 +1402,12 @@ RC-CARRY: 2 findings in the first round. Worst issue: C1. The confirming round c
 
 - C1 (auto-fix, confidence 9): a carried result skips the role and performer-exclusion checks, and two probes are silent. Rows RC56 and RC57 cover them.
 - C2 (auto-fix, confidence 6): the same empty reviewed pair as P1. The two findings share one repair target.
+
+RC-WRITE: 3 findings. Worst issue: C1.
+
+- C1 (auto-fix, confidence 8): no case imports a mutant-set answer with `--mutant` for the confirmation form.
+- C2 (auto-fix, confidence 6): no malformed-value refusal test for the confirmation form.
+- C3 (auto-fix, confidence 6): the writer records `pass` for a probe that did not bite. The axis reaffirmed auto-fix through row RC58, which reuses the one bite predicate and is flagged for reviewer veto.
 
 ## Advice
 
@@ -1347,6 +1428,10 @@ RC-CARRY: 2 findings in the first round. Worst issue: C1. The confirming round c
 - RC-CARRY confirming round: the RC37 cell should say that `TestProbeChecksAgree` catches a verdict drift on its four probes. Two test literals use a placeholder.
 - RC-CARRY Coverage: fold strictness is not red-capable, and the RC55 test needs a chunk of test files only.
 
+- RC-WRITE Standards: four files state the test-only exception, as ticket 05 asks. The anchors package mixes a path constant and literal paths.
+- RC-WRITE Spec: the written-confirmation test calls the core writer, not the verb, and the RC46 and RC47 reds live only in a commit body.
+- RC-WRITE Coverage: a duplicate `--finding` refuses with no pinning test, and some writer edges are covered only through the checkpoint.
+
 ## Repair state
 
 RC-CYCLE: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t01_rep1` closed S1 at `8907784b`, and the confirming round of all three axes passed.
@@ -1354,3 +1439,5 @@ RC-CYCLE: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t01_re
 RC-PROVE: 1 of 2 repair cycles and its one hardening cycle consumed. The repair session `claude:ft379_t02_rep1` closed S1, S3, and C1 to C5 at `b14ecb28`. The chunk froze at `78f71b6c`, and the confirming round of all three axes passed.
 
 RC-CARRY: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t03_rep1` closed S1 to S4, P1, C1, and C2 at `4d026a78`. P2 closed through a coverage-map amendment with no code change. The chunk froze at `d591e0ab`.
+
+RC-WRITE: 0 of 2 repair cycles consumed before this repair. S1, S2, and C1 to C3 go to one fresh repair session for ticket 04.
