@@ -226,6 +226,72 @@
           "tip": "6dc1bb38ec18b0cdaecefb060de116b51b4a62c7",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "rc-cycle-standards-2",
+          "performer": "claude:rc-cycle-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d5bd593a80eeb67b33b05b675e1b94b80c50111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-cycle-standards-2",
+            "digest": "sha256:651d0197835cafee2f71a3521d7b874a25a1d23bcdce3a1e2df50f17982019a9",
+            "excerpt": "Standards axis, RC-CYCLE confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip 394bd24a; repair delta 6dc1bb38..8907784b; named finding S1.\nS1 closed: the spec records under Further notes (spec.md:597-608) one red for each RC1 and RC2 anchor and twin, as a short lead and a four-row table, with no raw transcript.\nAdvice (no ID): ticket 01 line 27 says the record covers the two twins only, but the table also records the anchor reds.\n"
+          },
+          "axis": "Standards",
+          "base": "2ca4b1419c8f3aefe621f5928dc41f5dd73a4ae0",
+          "tip": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-cycle-standards-1"
+          ]
+        },
+        {
+          "id": "rc-cycle-spec-2",
+          "performer": "claude:rc-cycle-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d5bd593a80eeb67b33b05b675e1b94b80c50111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-cycle-spec-2",
+            "digest": "sha256:febcb6fd668767713d4d35b96ca8381d3d343134410243a665d3e084070c2822",
+            "excerpt": "Spec axis, RC-CYCLE confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip 394bd24a; repair delta 6dc1bb38..8907784b; named finding S1.\nThe plan expansion (63b6661e) adds the spec to ticket 01 Writes and the fence; Covers, Blocked by, the acceptance rows, and coverage-map rows RC1 and RC2 are unchanged. The assignment record (6b80572c) leaves the chunks, checks, probes, and final verification byte-identical.\nThe red record (spec.md:597-608) names RC1 and RC2 with an anchor and a twin red each, and matches the twin diagnostics (implementation_continuation_test.go:311).\nThe repair (8907784b) changes only the spec, under Further notes.\nAdvice (no ID): the twin reds come from a removed registry row, which differs from the map wording at spec.md:318-319.\n"
+          },
+          "axis": "Spec",
+          "base": "2ca4b1419c8f3aefe621f5928dc41f5dd73a4ae0",
+          "tip": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-cycle-spec-1"
+          ]
+        },
+        {
+          "id": "rc-cycle-coverage-2",
+          "performer": "claude:rc-cycle-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d5bd593a80eeb67b33b05b675e1b94b80c50111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-cycle-coverage-2",
+            "digest": "sha256:4a2e286caf1f5fe2913d3b3d2e8f0bd8bd93aea9d21414eebcf5e11221cb42cc",
+            "excerpt": "Coverage axis, RC-CYCLE confirming round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip 394bd24a; repair delta 6dc1bb38..8907784b; named finding S1.\nS1 closed: two rows of the red record were reproduced by independent probes, and both match the recorded test and diagnostic.\nProbe RC2 twin: omit the RC2 registry row (registry_retained_workflow.go:381), TestImplementationContinuation, bit, restored=yes.\nProbe RC1 anchor: omit the RC1 policy sentence, --check docs-currency-workflow, TestRootConformance, bit, restored=yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "2ca4b1419c8f3aefe621f5928dc41f5dd73a4ae0",
+          "tip": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-cycle-coverage-1"
+          ]
         }
       ]
     }
@@ -253,25 +319,26 @@
 
 ## Standards
 
-RC-CYCLE: 1 finding. Worst issue: S1.
+RC-CYCLE: 1 finding in the first round. Worst issue: S1. The confirming round closed S1.
 
 - S1 (auto-fix, confidence 8): the two new twins in `internal/conformance/implementation_continuation_test.go` lines 234-241 and their anchors in `internal/anchors/registry_retained_workflow.go` lines 380-381 have no recorded red. `AGENTS.md` requires a recorded red, and `craft-comments` makes the commit or the spec the owner of that record.
 
 ## Spec
 
-RC-CYCLE: 0 findings. Worst issue: none.
+RC-CYCLE: 0 findings in both rounds. Worst issue: none.
 
 ## Coverage
 
-RC-CYCLE: 0 findings. Worst issue: none. The first return listed C1, and the axis reaffirmed it as advice after a consultation.
+RC-CYCLE: 0 findings. Worst issue: none. The first return listed C1, and the axis reaffirmed it as advice after a consultation. The confirming round passed.
 
 ## Advice
 
 - RC-CYCLE Coverage: an added sentence that makes a disposition change evidence-only stays green, because an anchor matches one fixed needle.
 - RC-CYCLE Coverage: a negating prefix keeps a section needle green.
 - RC-CYCLE Standards: the blank line at policy line 48 splits the definition from its no-cycle consequence. A split before line 50 also meets the limit.
+- RC-CYCLE confirming round: ticket 01 says the red record covers the two twins only, but the table also records the anchor reds.
 - RC-CYCLE Spec: policy line 54 does not say whether a record-only disposition change is a substantive repair.
 
 ## Repair state
 
-RC-CYCLE: 0 of 2 repair cycles consumed. S1 goes to a fresh repair session for ticket 01.
+RC-CYCLE: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t01_rep1` closed S1 at `8907784b`, and the confirming round of all three axes passed.
