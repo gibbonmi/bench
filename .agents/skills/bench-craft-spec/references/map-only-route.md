@@ -34,7 +34,6 @@ The spec-stage close in the `Exit handoff` section of [`/bench-write-spec`](../.
 
 The slicer stops when a map decision is not an exact predicate.
 The slicer also stops when the map leaves a code seam open.
-The slicer also stops when the map holds no decision ticket.
 The stop returns to the reviewer with a recommendation for the full route, and the slicer writes no further ticket.
 
 ## Thin spec
