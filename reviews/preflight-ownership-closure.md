@@ -1148,7 +1148,87 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft293-oc-c2-standards-r1",
+          "performer": "claude:ft293_oc-c2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7a4200509101962b10089aa0e9004f4e9320e5e6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_standards",
+            "digest": "sha256:252bc9f3fc3bfbbb4595d525fbb417698167add00f8a306f4b33f3f04c5886ff",
+            "excerpt": "## Standards axis, OC-C2 (tickets 02 and 03)\n\nThe evidence check bound. `bench preflight evidence sha256:3a1d…e2e --check-current` returned `current=true` and `dirty_record=false` at HEAD `0e108087`. The only change after `b73e3715` is in `reviews/preflight-ownership-closure.md`, so the worktree files I cite are the frozen code.\n\n### Findings\n\n- **S1** (ticket 02, `auto-fix`, confidence 8). The new producer walker writes its own copy of how a Go declaration is named.\n  - `internal/preflight/ownership/producers.go:121-134` (`receiverName`) copies `internal/consumers/rows.go:329-350` almost line for line.\n  - `producers.go:92-118` (`index`) re-derives the function, `Type.Method`, type, and var/const naming. `rows.go:295-296` calls `declNames` \"the one derivation of the declaration-name forms\", and `internal/consumers/blast.go:51-52` says both walks read it.\n  - This breaks the one-source-per-fact rule in `AGENTS.md`. The const-group-as-one-unit choice can stay; the receiver name and the method spelling should come from consumers. The repair goes to ticket 03, whose `Writes:` line holds both `internal/preflight/ownership (new)` and `internal/consumers/rows.go`.\n- **S2** (tickets 02 and 03, `auto-fix`, confidence 7). The \"local name of an import\" rule (use `spec.Name` if set, else `path.Base` of the path) is written three times.\n  - `producers.go:84-90` and `producers.go:157-165` (ticket 02).\n  - `internal/consumers/rows.go:211-219` (ticket 03, in `firstUse`).\n  - `producers.go:159` also matches the import path by suffix with its own code, beside `internal/consumers/resolve.go:148-154` (`pkgSuffixMatches`). Same rule as S1.\n- **S3** (ticket 03, `auto-fix`, confidence 6). `localName` (`internal/preflight/ownership/helpers.go:153-157`) reads the symbol grammar a second time, and the two readings disagree.\n  - `blast.go:99-101` says Resolve owns that grammar. `resolve.go:21-23,55-69` accepts a bare name and a package suffix with several segments.\n  - `localName` assumes exactly one qualifier segment. A bare `Kind` becomes `\"\"`, and `preflight.ownership.Kind` becomes `ownership.Kind`.\n  - Result: the tip side resolves through Resolve, while the base census (`deletion.go:195`) and `declaredRoot` (`effects.go:432-434`) look for a different name. They report a wrong \"declares no … at the source base\" or \"no registered grammar producer\" diagnostic. It fails closed, but on the wrong reason.\n  - `ownerKeys` decoding (`manifest.go:138`) does not check the symbol's shape.\n- **S4** (ticket 03, `auto-fix`, confidence 6). The set of member-census kinds is written twice: in the switch at `helpers.go:184` and in the `shape` table at `helpers.go:266-268`. A kind added to the switch only gets a zero shape and a misleading key error.\n- **S5** (ticket 03, `auto-fix`, confidence 5). There is a second per-kind table beside `closureFamily`.\n  - `internal/preflight/proposal.go:149-158` (`proposalSource`) maps each kind to its label in its own switch. Ticket 03 added the `caller` case there, and any unknown writing kind silently falls to \"registry\".\n  - Ticket 03 also rewrote the comment at `internal/preflight/closure.go:18-22` to say \"a new kind joins each projection from this one table\". With `proposalSource` outside the table, that is now false.\n  - The switch already existed in part at the base.\n\n### Advice (no IDs, not counted)\n\n- `helpers.go:359`: the parameter `consumers` shadows the imported `consumers` package.\n- `closure.go:21`: \"has no verdict row yet\" points to a future change. The timeless-present register in `bench-craft-comments` prefers \"has no verdict row\".\n- `registry_data.go` `rowKey` joins with \".\" separately from `GrammarRoot.String`. `TestBindingLinesLocateEveryRow` catches any drift, so this is acceptable.\n- `helpers.go:83-86`: `declaration` drops a Resolve \"malformed symbol\" error and treats the symbol as absent.\n\n### Author-flagged calls\n\n- T02, AST references in `producers.go`: after ticket 03, the reference walk (`producers.go:329-364`) answers a different question than `consumers.Rows`. The typed `Load` can read only the clean tip, not the base, so this walk is not a duplicate. The naming and import knowledge is, which is S1 and S2.\n- T02, separate `producers.go`: no finding; it is 364 lines.\n- T03, `SourceUses` in `rows.go` and the shared `localName`: it reuses `parseDecls` and `topLevelDecls` correctly, but `localName` raises S3. The disposition list and owner-key list do each have one source.\n- T03, `owner` kind and the `writes` flag: no defect, apart from S5.\n\n### Other hunt items, all clean\n\n- There is no second write-entry parser outside `internal/tickets/writes.go`.\n- The `ownership` package imports `internal/preflight` only in the test files.\n- Moving the disposition decoding into `metadata.go` kept its validation.\n- The new expectations have recorded reds: `oc-02-omission` and `oc-03-omission` are in the review record.\n\n**Count:** 5 findings: 0 `ask-user`, 5 `auto-fix`. The worst is S1.\n"
+          },
+          "axis": "Standards",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "6a9f1a46e203cb965abf89f3795e176308c21a07",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft293-oc-c2-spec-r1",
+          "performer": "claude:ft293_oc-c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7a4200509101962b10089aa0e9004f4e9320e5e6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_spec",
+            "digest": "sha256:e9ebb45129f696838ded8cb18ded143e4ebc91073292ccf5728cd2103c0e5365",
+            "excerpt": "## Spec axis: OC-C2 (tickets 02 and 03), base 10c458e5 to code b73e3715\n\nThe evidence check bound (`current=true`, `dirty_record=false`).\n\nResult: 7 findings, all on ticket 02 or 03. All 19 rows hold. The worst issue is P1.\n\n## Findings\n- **P1** (ticket 02) | Spec 318 \"walked through typed references\", 321 \"An unresolved argument or producer dependency stays diagnostic\". Code: `internal/preflight/ownership/producers.go:329-364`. `deps` matches same-package names by syntax only. An identifier that is not a package unit is skipped silently (354), and so is a selector on an imported package (348-352). Traced input: `h := helpText(); usage.Parse(usage.Grammar{Help: h}, args)` — an edit to `helpText` classifies as body-only and drops the Grammar obligation with no diagnostic. A typed walk is possible at the tip now that `consumers.Load` exists; the base side still has no typed loader. Disposition: ask-user, confidence 7.\n- **P2** (ticket 02) | Story 5, spec 312, 317, 333. Code: `effects.go:77`, `92-94`. A changed `usage.Parse` grammar in a package with no Grammar row adds no inventory obligation (19 production packages). A custom root in such a package does. Disposition: ask-user, confidence 5.\n- **P3** (ticket 03) | Spec 246, 262, 264. Code: `helpers.go:266-268`, `294-297`, `metadata.go:84-96`. A posture or printed-field item that follows the spec table is refused because of an unknown key. `writer_probe` accepts any object. Disposition: ask-user, confidence 7.\n- **P4** (ticket 03) | Spec 264, 370. Code: `helpers.go:317-331`. Code that only reads the field counts as a producer, so a correct producer-only census never turns green. Disposition: ask-user, confidence 6.\n- **P5** (ticket 03) | Spec 476 \"Path in closure is the originating write entry\". Code: `ownership/closure.go:75`. For an owner requirement, `Entry` holds the premise ID, so `closure.path` shows `home-owner`. Disposition: ask-user, confidence 6.\n- **P6** (ticket 02, spec text) | Spec 241-242 contradicts the change rows at 225-226. The code follows the table and takes the inventories from `tickets.GrammarFiles()`. Non-behavioral; disposition: no-op, confidence 7.\n- **P7** (ticket 03) | Spec 367, 371. Code: `helpers.go:112`, `effects.go:168`. Nothing grades `changes[].dispositions` of a liveness change. Disposition: ask-user, confidence 4.\n\n## Author-flagged calls\nT02-1 holds; T02-3 shortfall (P1); T02-4 gap (P2); T02-5 holds; T02-6 holds; T03-1 holds except P5; T03-2 see P3; T03-3 holds for this chunk.\n\n## Advice\n- The OC17 test asserts 2 of the 5 holders; looping over `tickets.GrammarFiles()` would cover all five.\n- A Writes entry that no committed change covers keeps the full Grammar obligation.\n- A changed non-Go file under a Grammar package is classified as body-only (`effects.go:77`).\n- `helpers.go:83-86` discards a `Resolve` error.\n- The fixture uses `internal/merge/`, where spec 508 says `internal/example/`.\n- Ticket 08 must make dispatch refuse when a proposed caller is missing.\n\n## Rows\nOC14-OC31 and OC82 held (OC17 asserts 2 of 5 holders; OC31 held with P4 separate). Every case goes through the real `preflight.Command` on committed git fixtures. I ran no test or probe.\n"
+          },
+          "axis": "Spec",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "6a9f1a46e203cb965abf89f3795e176308c21a07",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3",
+            "P4",
+            "P5",
+            "P7"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft293-oc-c2-coverage-r1",
+          "performer": "claude:ft293_oc-c2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7a4200509101962b10089aa0e9004f4e9320e5e6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_coverage",
+            "digest": "sha256:941621eb447d1f3eb57caaff079a9daf613ffc90d87f661b095dfa0ebde231dd",
+            "excerpt": "## Coverage axis: OC-C2 (tickets 02 and 03)\n\nThe evidence `sha256:3a1da1eb…` binds: `current=true`, `dirty_record=false`, head `0e108087`. The worktree is clean.\n\n### Findings\n\n- **C1.** `internal/commitment/repository/light_path.go:165`. A light-path ticket with an `x.go (deleted)` entry. Ticket 03 says this consumer shares the marker rule (ticket 03, line 23). No test in `light_path_test.go` uses a `(deleted)` entry. My probe replaced `WritesPath` with the old strip that only removes `(new)`, and the probe stayed silent. The record consumer (`internal/reviewrecord/plan.go:116`) has no marker test either. Ticket 03, `auto-fix`, confidence 8.\n- **C2.** `internal/preflight/fence_writes.go:47`, `paths_authorized.go:65`, `ownership/closure.go:296`, `testreport/floor.go:51`. The `(deleted)` projection of `WritesPath` in the delegating consumers. Every TestDeletedEntry case uses the directory-only `helperFence` (`effects_test.go:203`), and the proposal tolerates a red `fence-writes`. A `WritesPath` that returns the raw deleted entry would probably pass. Not probed. Ticket 03, `auto-fix`, confidence 5.\n- **C3.** `internal/preflight/ownership/producers.go:318-320`. \"Ambiguous symbols … cannot certify completion\" (spec line 727). No ownership test exercises the ambiguous-declaration diagnostic. My probe omitted it, and all tests under `./internal/preflight/...` still passed (silent). Malformed Go at the base or tip (`producers.go:63-66`) also has no test fixture. Ticket 02, `auto-fix`, confidence 8.\n- **C4.** `internal/preflight/ownership/producers.go:348-352`. A grammar root that depends on a value in another package. `deps` stops at a selector on an imported package and records no diagnostic. Example: `cmd/bench/main.go:131` reads `commit.HelpRowSuffix` and `commit.LaneClause` from unbound `internal/commit`, and `help_inventory_test.go:145` pins that help row. The fix is a design decision. Ticket 02, `ask-user`, confidence 6.\n- **C5.** `internal/preflight/ownership/helpers.go:135` with `internal/consumers/rows.go:191`. A signature change or relocation of a method that still exists at the tip, where one caller stops using it. `SourceUses` returns no base uses for a method name, and the method diagnostic fires only when `obj == nil`. No test uses a method symbol. Ticket 03, `auto-fix`, confidence 6.\n\n### Advice\n- OC24 and OC26 only assert exit 0.\n- `SourceUses` skips a base file that does not parse (`rows.go:196`).\n\n### Probes (both restored `yes`)\n| Site | Mutation | Command | Verdict | first_failure | restored |\n|---|---|---|---|---|---|\n| `producers.go` | omit the ambiguous-declaration diagnostic | `--package ./internal/preflight/...` | silent | null | yes |\n| `light_path.go` | swap `WritesPath` for a strip that only removes `(new)` | `--package ./internal/commitment/... --package ./internal/worktree` | silent | null | yes |\n\n**Count:** 5 findings. **Worst:** C1, then C3.\n\n### `git status --short`\n(empty)\n"
+          },
+          "axis": "Coverage",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "6a9f1a46e203cb965abf89f3795e176308c21a07",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1228,3 +1308,40 @@ failures[1]{package,test,line,lines}:
   github.com/gibbonmi/bench/internal/tickets,TestBindingRulesProjectBoundFiles,"registry_data_test.go:139: BindingRules(internal/toon/toon.go) = [{internal/toon internal/conformance/data_handling_test.go} {internal/toon internal/toon/toon_fixture_test.go}] and BoundFiles = [internal/conformance/data_handling_test.go in… (389 bytes)",2
 skips[0]{package,test,reason}:
 ```
+
+## OC-C2 repair state
+
+OC-C2: repair cycle 1 of 2 opens. Ticket 02 repairs first, then ticket 03. No reviewer extension exists.
+An Opus/high consultant decided each ask-user finding under the auto-approve direction; each decision is open to reviewer veto.
+
+## OC-C2 Standards
+
+OC-C2: 5 findings. The worst issue is S1. Ticket 03's repair takes all five, because its `Writes:` line holds every cited path.
+
+- S1 (auto-fix, confidence 8): `internal/preflight/ownership/producers.go:92-134` derives declaration names and receiver names again beside `internal/consumers/rows.go` `declNames`.
+- S2 (auto-fix, confidence 7): the import local-name rule appears at `producers.go:84-90`, `producers.go:157-165`, and `rows.go:211-219`; `producers.go:159` matches import suffixes beside `resolve.go:148-154`.
+- S3 (auto-fix, confidence 6): `helpers.go:153-157` `localName` reads the symbol grammar a second time and disagrees with `consumers.Resolve`.
+- S4 (auto-fix, confidence 6): the member-census kinds appear twice, at `helpers.go:184` and `helpers.go:266-268`.
+- S5 (auto-fix, confidence 5): `internal/preflight/proposal.go:149-158` keeps a second per-kind table beside `closureFamily`.
+
+## OC-C2 Spec
+
+OC-C2: 6 actionable findings. The worst issue is P1.
+
+- P1 (auto-fix after consultation, confidence 7, ticket 02): `producers.go:343-352` skips a selector on an in-module import with no edge and no diagnostic. The repair resolves it through the import table, roots it in the target package, and keeps the walk out of function literals. Flagged: the walk stays syntactic, because the typed loader reads only the tip.
+- P2 (auto-fix after consultation, confidence 5, ticket 02): `effects.go:77` skips a changed production package with no Grammar row; every changed production Go package becomes classifiable.
+- P3 (auto-fix after consultation, confidence 7, ticket 03): posture and printed-field items take the table shapes with exact key sets. `writer_probe` decodes as a reused-test subject. Flagged: the key spellings `callers` and `producers` follow the retirement precedent.
+- P4 (auto-fix after consultation, confidence 6, ticket 03): a printed-field producer is a static write only, not a read.
+- P5 (auto-fix after consultation, confidence 6, ticket 03): an owner requirement names each originating write entry in `closure.path`.
+- P7 (auto-fix after consultation, confidence 4, ticket 03): each existing liveness change grades its dispositions against the retirement census. Flagged: the allowed actions follow the manifest table.
+- P6 (no-op, confidence 7): spec 241-242 and the change rows at 225-226 disagree; the code follows the table. Flagged for reviewer veto.
+
+## OC-C2 Coverage
+
+OC-C2: 5 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 8, ticket 03): no light-path or record test uses a `(deleted)` entry; a probe mutant at `light_path.go` stayed silent.
+- C2 (auto-fix, confidence 5, ticket 03): no `fence-writes` or authorization test needs the `(deleted)` strip.
+- C3 (auto-fix, confidence 8, ticket 02): no test reaches the ambiguous-declaration diagnostic or malformed Go; a probe mutant at `producers.go` stayed silent.
+- C4 (merged into P1, ticket 02): a cross-package grammar dependency adds no edge and no diagnostic.
+- C5 (auto-fix, confidence 6, ticket 03): no test changes a method symbol whose former caller stops using it.
