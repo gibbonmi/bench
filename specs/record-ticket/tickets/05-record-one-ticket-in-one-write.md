@@ -1,6 +1,6 @@
 # Record one ticket in one write
 
-Blocked by: 02-stage-an-excerpt-for-a-requirement.md, 04-extract-the-record-change-functions.md
+Blocked by: 04-extract-the-record-change-functions.md
 Writes: internal/reviewrecord/ticket.go (new), internal/reviewrecord/ticket_test.go (new), internal/reviewrecord/change.go (new), internal/reviewrecord/repair.go, internal/reviewrecord/repair_test.go, internal/reviewrecord/fold.go, internal/reviewrecord/fold_test.go, internal/reviewrecord/export_test.go, internal/reviewrecord/recordcmd/ticket.go (new), internal/reviewrecord/recordcmd/ticket_test.go (new), internal/reviewrecord/recordcmd/command.go, internal/reviewrecord/recordcmd/command_test.go, internal/reviewrecord/recordcmd/refusal.go, internal/reviewrecord/recordcmd/planned_cell.go, internal/reviewrecord/recordcmd/verification.go, internal/reviewrecord/recordcmd/stage.go (new), internal/reviewrecord/recordcmd/ordering_test.go, internal/reviewrecord/recordtest/fixture.go, internal/reviewrecord/recordtest/stage.go (new), internal/responsebound/retain.go (new), cmd/bench/record_operations_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: RT18, RT19, RT20, RT21, RT22, RT23, RT24, RT25, RT26, RT27, RT28, RT29, RT30, RT31, RT32, RT33, RT34, RT35, RT36, RT38, RT55, RT56, RT60, RT61, RT62, RT63
 

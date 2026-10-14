@@ -1,6 +1,6 @@
 # Report a dirty record in the current binding
 
-Blocked by: none
+Blocked by: 02-stage-an-excerpt-for-a-requirement.md
 Writes: internal/preflight/preparation.go, internal/preflight/charge_pack.go, internal/preflight/charge.go, internal/preflight/review.go, internal/preflight/proposal.go, internal/preflight/command.go, internal/preflight/charge_evidence_test.go, internal/preflight/charge_legacy_pack_test.go, internal/preflight/proposal_command_test.go, internal/preflight/review_charge_test.go, internal/preflight/testdata/legacy-charge/, internal/preflight/preflighttest/fixture.go, internal/preflight/evidencecmd/evidence_modes_test.go, internal/preflight/evidencecmd/evidence_grammar_test.go, internal/preflight/evidencecmd/evidence_record_order_test.go, internal/preflight/evidencecmd/evidence_budget_test.go, internal/preflight/evidencecmd/operations.go, internal/chargeevidence/read.go, internal/chargeevidence/schema.go, internal/chargeevidence/reference.go, internal/chargeevidence/format_test.go, .agents/skills/bench-craft-delegate/references/charge-evidence-format.md, internal/anchors/registry_charge_binding.go, internal/anchors/registry_charge_binding_test.go, cmd/bench/commitment_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: RT40, RT41, RT42, RT43, RT44, RT45, RT46
 

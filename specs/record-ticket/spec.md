@@ -286,7 +286,7 @@ The repair-session criterion leaves the binding and returns to intake as a Won't
 
 RT-RETAIN creates the stage that RT-TICKET reads, so it is its own review chunk.
 RT-RETAIN also owns the shared porcelain reader in `internal/git/status.go` and the `LandedState` call site there.
-RT-CURRENT touches disjoint packages and has no prerequisite.
+RT-CURRENT shares the command registry files with RT-RETAIN and RT-TICKET, so the graph runs serially in chunk order.
 RT-GUIDE comes last, because its sentences name the forms that RT-TICKET ships.
 
 The central-property mutation of RT-TICKET makes the ticket form run three separate writes.
