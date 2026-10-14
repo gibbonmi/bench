@@ -58,6 +58,16 @@ func stageOwed(f *recordtest.Fixture, home, chunk, ticket string, dirty ...strin
 	}
 }
 
+// recordPath is the record path of the fixture spec, as a run's dirty paths name it.
+func recordPath(t *testing.T) string {
+	t.Helper()
+	path, err := rr.RecordPath(recordtest.Spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
 // freezeChunk1 commits a chunk 1 change and records ticket 1.md with the prefix c1 and an
 // explicit base. It answers the chunk 1 tip.
 func freezeChunk1(t *testing.T, f *recordtest.Fixture, home string) string {
@@ -126,10 +136,25 @@ func TestTicketRefusals(t *testing.T) {
 			base, _ := advance(f, "chunk 1")
 			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement tests: the staged run is at " + f.Git("rev-parse", "HEAD^")
 		}},
+		{"later stage from another commit", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
+			f, home := pooled(t, 1)
+			base, _ := advance(f, "chunk 1")
+			stageOwed(f, home, "1", "1.md")
+			run := f.Run(0, "ok\n")
+			run.Head = base
+			f.Stage(home, "1", "additional", run)
+			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement additional: the staged run is at " + base
+		}},
 		{"stage with a dirty Go file", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
 			f, home := pooled(t, 1)
 			base, _ := advance(f, "chunk 1")
 			stageOwed(f, home, "1", "1.md", "main.go")
+			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement tests: the staged run had the dirty path main.go"
+		}},
+		{"stage with the record path and a dirty Go file", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
+			f, home := pooled(t, 1)
+			base, _ := advance(f, "chunk 1")
+			stageOwed(f, home, "1", "1.md", recordPath(t), "main.go")
 			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement tests: the staged run had the dirty path main.go"
 		}},
 		{"earlier ticket with no chunk entry", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
@@ -220,22 +245,25 @@ func TestTicketFreezesTheFirstChunk(t *testing.T) {
 
 // RT19, RT20, RT27, RT55, RT62: a later chunk takes the covered commit after its predecessor as
 // base, and a moved plan digest takes one amendment. A run with only the record path dirty stages.
+// A --tip before HEAD freezes the chunk at that tip.
 func TestTicketFreezesALaterChunk(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		between func(f *recordtest.Fixture, tip string) string
 		amended bool
 		dirty   bool
+		pastTip bool
 	}{
-		{"unchanged plan", func(_ *recordtest.Fixture, tip string) string { return tip }, false, false},
-		{"moved plan", func(f *recordtest.Fixture, tip string) string { replan(f, "go test -count=1 ./..."); return tip }, true, false},
+		{"unchanged plan", func(_ *recordtest.Fixture, tip string) string { return tip }, false, false, false},
+		{"moved plan", func(f *recordtest.Fixture, tip string) string { replan(f, "go test -count=1 ./..."); return tip }, true, false, false},
 		{"recorded fold", func(f *recordtest.Fixture, _ string) string {
 			f.Commit("retain chunk 1")
 			fold := f.HandFold(f.Mainline(map[string]string{"main.txt": "main\n"}), nil)
 			f.RecordFold(rr.FoldDelta{})
 			return fold
-		}, false, false},
-		{"dirty record path", func(_ *recordtest.Fixture, tip string) string { return tip }, false, true},
+		}, false, false, false},
+		{"dirty record path", func(_ *recordtest.Fixture, tip string) string { return tip }, false, true, false},
+		{"tip before HEAD", func(_ *recordtest.Fixture, tip string) string { return tip }, false, false, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f, home := pooled(t, 2)
@@ -244,11 +272,15 @@ func TestTicketFreezesALaterChunk(t *testing.T) {
 			_, tip := advance(f, "chunk 2")
 			var dirty []string
 			if tc.dirty {
-				path, _ := rr.RecordPath(recordtest.Spec)
-				dirty = []string{path}
+				dirty = []string{recordPath(t)}
 			}
 			stageOwed(f, home, "2", "2.md", dirty...)
-			succeed(t, f, ticketArgs(t, "2", "2.md", "c2"))
+			var extra []string
+			if tc.pastTip {
+				advance(f, "past the chunk 2 tip")
+				extra = []string{"--tip", tip}
+			}
+			succeed(t, f, ticketArgs(t, "2", "2.md", "c2", extra...))
 			record, chunk := read(t, f), chunkEntry(t, f, "2")
 			if chunk.Base != wantBase || chunk.Tip != tip || len(chunk.Verification) != 2 {
 				t.Errorf("chunk 2 = %s..%s with %d results, want %s..%s with 2", chunk.Base, chunk.Tip, len(chunk.Verification), wantBase, tip)
@@ -264,19 +296,34 @@ func TestTicketFreezesALaterChunk(t *testing.T) {
 	}
 }
 
-// RT26: a refreeze of the last ticket keeps the base of the chunk entry.
+// RT26: a refreeze of the last ticket keeps the base of the chunk entry, and a --base on the
+// refreeze takes precedence over that base.
 func TestTicketRefreezeKeepsTheBase(t *testing.T) {
-	f, home := pooled(t, 2)
-	freezeChunk1(t, f, home)
-	_, base := advance(f, "between")
-	advance(f, "chunk 2")
-	stageOwed(f, home, "2", "2.md")
-	succeed(t, f, ticketArgs(t, "2", "2.md", "a", "--base", base))
-	_, tip := advance(f, "chunk 2 repair")
-	stageOwed(f, home, "2", "2.md")
-	succeed(t, f, ticketArgs(t, "2", "2.md", "b"))
-	if chunk := chunkEntry(t, f, "2"); chunk.Base != base || chunk.Tip != tip {
-		t.Errorf("refrozen chunk 2 = %s..%s, want %s..%s", chunk.Base, chunk.Tip, base, tip)
+	for _, tc := range []struct {
+		name  string
+		given bool
+	}{
+		{"no --base", false},
+		{"--base given", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f, home := pooled(t, 2)
+			chunk1 := freezeChunk1(t, f, home)
+			_, base := advance(f, "between")
+			advance(f, "chunk 2")
+			stageOwed(f, home, "2", "2.md")
+			succeed(t, f, ticketArgs(t, "2", "2.md", "a", "--base", base))
+			_, tip := advance(f, "chunk 2 repair")
+			stageOwed(f, home, "2", "2.md")
+			var extra []string
+			if tc.given {
+				base, extra = chunk1, []string{"--base", chunk1}
+			}
+			succeed(t, f, ticketArgs(t, "2", "2.md", "b", extra...))
+			if chunk := chunkEntry(t, f, "2"); chunk.Base != base || chunk.Tip != tip {
+				t.Errorf("refrozen chunk 2 = %s..%s, want %s..%s", chunk.Base, chunk.Tip, base, tip)
+			}
+		})
 	}
 }
 
@@ -318,13 +365,10 @@ func TestTicketImportsAMutantRow(t *testing.T) {
 	}
 }
 
-// RT63: the ticket help lists the completion steps before the first review step, in order.
+// RT63: the ticket help lists the ticket steps of the completion order, in order.
 func TestTicketHelpFollowsCompletionOrder(t *testing.T) {
 	want := []string{}
-	for _, step := range rr.CompletionOrder() {
-		if step.Form == rr.FormReview {
-			break
-		}
+	for _, step := range rr.TicketSteps() {
 		want = append(want, step.Form)
 	}
 	var description string

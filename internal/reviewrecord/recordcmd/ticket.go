@@ -22,8 +22,9 @@ var ticketForm = form{name: reviewrecord.FormTicket, description: "write the ent
 
 // ticket writes the entries that one ticket owes from the stages of its owed requirements,
 // through reviewrecord.RecordTicket at --tip, HEAD by default. Before the write it refuses, in
-// order, a ticket or a plan that owes no requirement, a planned seam cell for the last ticket,
-// and an owed requirement with no stage. After the write it removes the stages that it used.
+// order, what reviewrecord.TicketRequirements refuses for the plan at the tip, a planned seam
+// cell for the last ticket, and an owed requirement with no stage. After the write it removes
+// the stages that it used.
 func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	values := maps.Clone(parsed.Flags)
 	if _, ok := values["--tip"]; !ok {
