@@ -379,7 +379,77 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-prove-spec-1",
+          "performer": "claude:rc-prove-spec-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "be120416457f52be935c0fb87148cc0618e013d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-prove-spec-1",
+            "digest": "sha256:5fd2e6651f38c6e45889dd3df86db534da91c52f3d222c7d6426c4c1a2b2075f",
+            "excerpt": "Spec axis, RC-PROVE: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip c9960c5e; frozen pair 8907784b..3db8f92b.\nProve(root, reviewed, later string) error mirrors commentgap.Prove; the six sentinels match the spec; the check order is status, mode, test file, testdata (spec.md:192-195); --no-renames arrives through TreeChangesIncludingSubmodules (internal/git/tree.go:222-229); each error names its path.\ngo list -deps ./internal/testgap shows no internal/reviewrecord package.\nRC13-RC19, RC52, and RC53 each have a TestProveTestGap subtest; TestProveTreeGap keeps all 16 cases and both assertions through gittest.NewTrees; the coverage cells cite the real tests.\nTickets 03 and 04 can call testgap.Prove as the spec describes.\nAdvice (no ID): the RC-PROVE tests cell in the chunk table (spec.md:271) still says the planned prover tests; Go also skips _ and . prefixed directories, which the spec does not refuse (spec.md:195, 401).\n"
+          },
+          "axis": "Spec",
+          "base": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+          "tip": "3db8f92bbfb8a7d3d9c491d5b8a2519c375522f4",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-prove-coverage-1",
+          "performer": "claude:rc-prove-coverage-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "be120416457f52be935c0fb87148cc0618e013d6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:rc-prove-coverage-1",
+            "digest": "sha256:2a26d7d8c34842e04f7d9758deda8fbe0c6197f608d07c4b3c27a381e8eac525",
+            "excerpt": "Coverage axis, RC-PROVE: fail. Count: 5 findings. Worst issue: C1.\nEvidence bound current=true at source tip c9960c5e; frozen pair 8907784b..3db8f92b. Every probe restored=yes.\nC1 (auto-fix, confidence 9): no hidden-gitlink case; swapping TreeChangesIncludingSubmodules to TreeChanges at testgap.go:30 is silent, so under diff.ignoreSubmodules=all a mixed test and gitlink delta passes (spec line 189; sibling CG30 and CG46 in commentgap/trees_test.go:169-178).\nC2 (auto-fix, confidence 9): no mixed delta whose bad change sorts last; range changes[:1] at testgap.go:37 is silent.\nC3 (auto-fix, confidence 8): no root testdata/ case; dropping the first path element at testgap.go:57 is silent (spec line 195).\nC4 (auto-fix, confidence 6): no accepted 100755 test file; narrowing the mode check to 100644 at testgap.go:49 is silent (spec line 193).\nC5 (auto-fix, confidence 6): no accepted path with testdata only inside a name; a substring check at testgap.go:57 is silent (spec line 195).\nAdvice (no ID): the comment-only suite move lost no case; status T refuses through the status check, and status C cannot occur with --no-renames.\n"
+          },
+          "axis": "Coverage",
+          "base": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+          "tip": "3db8f92bbfb8a7d3d9c491d5b8a2519c375522f4",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-prove-standards-1",
+          "performer": "claude:rc-prove-standards-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "be120416457f52be935c0fb87148cc0618e013d6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:rc-prove-standards-1",
+            "digest": "sha256:55b797f5b433256038eca5a0a1c66b0992a978a367b6076a26f118a8dc1ce260",
+            "excerpt": "Standards axis, RC-PROVE: fail. Count: 2 findings. Worst issue: S1.\nEvidence bound current=true at source tip c9960c5e; frozen pair 8907784b..3db8f92b.\nS1 (auto-fix, confidence 6): internal/testgap/testgap.go:57 derives the testdata path fact a second time; internal/outline/read.go:12-19 (fixtureDir, isFixture) already owns it, and testgap already imports outline. Export the outline predicate and reuse it.\nS3 (auto-fix, confidence 4): internal/testgap/testgap_test.go:64-70 repeats the refusal assertion tail of internal/commentgap/trees_test.go:76-82 (errors.Is plus the path-substring check), a fixture harness that AGENTS.md keeps single-sourced. Fix: one exported assertion helper in internal/gittest/trees.go that takes want and path as arguments and imports no prover sentinel.\nThe first return listed S3 as ask-user and S2 as a finding. After a consultation, this axis reaffirmed S3 as auto-fix and S2 as advice.\nAdvice (no ID): S2, the testgap frame mirrors commentgap.Prove (testgap.go:26-43 and commentgap.go:26-43) by the approved mirror decision, and the matching sentinel text is incidental; flagged for reviewer veto. The RC53 red record reuses the RC14 mutation. An unkeyed {\"160000\", first} literal in internal/gittest/gittest_test.go.\n"
+          },
+          "axis": "Standards",
+          "base": "8907784b1c8bce7eaef2c48c115e22cf6b8132fc",
+          "tip": "3db8f92bbfb8a7d3d9c491d5b8a2519c375522f4",
+          "finding_ids": [
+            "S1",
+            "S3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -418,13 +488,28 @@ RC-CYCLE: 1 finding in the first round. Worst issue: S1. The confirming round cl
 
 - S1 (auto-fix, confidence 8): the two new twins in `internal/conformance/implementation_continuation_test.go` lines 234-241 and their anchors in `internal/anchors/registry_retained_workflow.go` lines 380-381 have no recorded red. `AGENTS.md` requires a recorded red, and `craft-comments` makes the commit or the spec the owner of that record.
 
+RC-PROVE: 2 findings. Worst issue: S1.
+
+- S1 (auto-fix, confidence 6): `internal/testgap/testgap.go` line 57 derives the testdata path fact again. The fixture predicate in `internal/outline/read.go` lines 12-19 already owns it.
+- S3 (auto-fix, confidence 4): `internal/testgap/testgap_test.go` lines 64-70 repeat the refusal assertion of `internal/commentgap/trees_test.go` lines 76-82. One exported helper in `internal/gittest/trees.go` takes its place, and it imports no prover sentinel.
+
 ## Spec
 
 RC-CYCLE: 0 findings in both rounds. Worst issue: none.
 
+RC-PROVE: 0 findings. Worst issue: none.
+
 ## Coverage
 
 RC-CYCLE: 0 findings. Worst issue: none. The first return listed C1, and the axis reaffirmed it as advice after a consultation. The confirming round passed.
+
+RC-PROVE: 5 findings. Worst issue: C1. The chunk uses its one hardening cycle for C1 to C5.
+
+- C1 (auto-fix, confidence 9): no case hides a gitlink, so a swap to `TreeChanges` at `internal/testgap/testgap.go` line 30 is silent.
+- C2 (auto-fix, confidence 9): no mixed delta puts the bad change last, so a check of only the first change is silent.
+- C3 (auto-fix, confidence 8): no case puts `testdata/` at the root.
+- C4 (auto-fix, confidence 6): no case accepts an executable test file.
+- C5 (auto-fix, confidence 6): no case accepts a path that holds `testdata` only inside a name.
 
 ## Advice
 
@@ -434,6 +519,11 @@ RC-CYCLE: 0 findings. Worst issue: none. The first return listed C1, and the axi
 - RC-CYCLE confirming round: ticket 01 says the red record covers the two twins only, but the table also records the anchor reds.
 - RC-CYCLE Spec: policy line 54 does not say whether a record-only disposition change is a substantive repair.
 
+- RC-PROVE Standards (S2, flagged for reviewer veto): the prover frame mirrors `commentgap.Prove`, as the ticket directs. The consultation and the issuing axis class the repetition as incidental.
+- RC-PROVE Standards: the RC53 red record reuses the RC14 mutation, and `internal/gittest/gittest_test.go` has one unkeyed literal.
+- RC-PROVE Spec: the RC-PROVE tests cell of the chunk table still names the planned prover tests.
+
 ## Repair state
 
 RC-CYCLE: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t01_rep1` closed S1 at `8907784b`, and the confirming round of all three axes passed.
+RC-PROVE: 0 of 2 repair cycles consumed before this repair. S1, S3, and C1 to C5 go to one fresh repair session for ticket 02.
