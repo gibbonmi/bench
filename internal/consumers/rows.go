@@ -76,7 +76,7 @@ func WriteRows(pkgs []*Package, target types.Object, root string) []Row {
 
 // UnkeyedWrites is every unkeyed composite literal across pkgs whose struct type declares the
 // field target, in the order Rows uses. Such a literal writes the field by position and names
-// no field, so WriteRows cannot list it. An element literal that elides &T has the type *T.
+// no field, so WriteRows cannot list it. literalStructs owns which struct a literal writes.
 func UnkeyedWrites(pkgs []*Package, target types.Object, root string) []Row {
 	var out []Row
 	for _, pkg := range pkgs {
@@ -93,11 +93,7 @@ func UnkeyedWrites(pkgs []*Package, target types.Object, root string) []Row {
 				if _, keyed := lit.Elts[0].(*ast.KeyValueExpr); keyed {
 					return true
 				}
-				typ := types.Unalias(pkg.Info.TypeOf(lit))
-				if ptr, isPtr := typ.Underlying().(*types.Pointer); isPtr {
-					typ = types.Unalias(ptr.Elem())
-				}
-				if fields, isStruct := typ.Underlying().(*types.Struct); isStruct {
+				for _, fields := range literalStructs(pkg.Info.TypeOf(lit)) {
 					for i := range fields.NumFields() {
 						if declKey(pkg.Fset, fields.Field(i)) == want {
 							pos := pkg.Fset.Position(lit.Pos())

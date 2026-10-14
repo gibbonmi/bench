@@ -257,6 +257,37 @@ func origin(obj types.Object) types.Object {
 	return obj
 }
 
+// literalStructs is every struct type that an unkeyed composite literal of the recorded type t
+// can write by position. An elided element literal records its hint type, so t can also be a
+// pointer to the struct, a named pointer, or a type parameter. A type parameter gives the
+// struct of each term of its constraint, alone or under the one elided pointer. The terms of a
+// literal that type-checks share one core type, so a term outside the type set only widens
+// the answer toward the diagnostic and never hides a write.
+func literalStructs(t types.Type) []*types.Struct {
+	var out []*types.Struct
+	var visit func(t types.Type, deref bool)
+	visit = func(t types.Type, deref bool) {
+		switch u := types.Unalias(t).Underlying().(type) {
+		case *types.Struct:
+			out = append(out, u)
+		case *types.Pointer:
+			if deref {
+				visit(u.Elem(), false)
+			}
+		case *types.Interface:
+			for i := range u.NumEmbeddeds() {
+				visit(u.EmbeddedType(i), deref)
+			}
+		case *types.Union:
+			for i := range u.Len() {
+				visit(u.Term(i).Type(), deref)
+			}
+		}
+	}
+	visit(t, true)
+	return out
+}
+
 // declNames is the one derivation of the declaration-name forms this surface reports: a
 // function, a Type.Method, a package-level type, and a package-level var or const spec. A
 // node outside those reports false, so the row walker's innermost open name is the answer
