@@ -284,45 +284,47 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {"mode": "delegate", "run_id": "ft379-build-20261014", "orchestrator_session": "claude:ft379-orchestrator-20261014", "author_limit": 1, "assignments": {}},
   "chunks": [
     {
       "id": "RC-CYCLE",
       "tickets": ["01-state-record-only-repair-cycle-rule.md"],
       "verification": [
-        {"id": "policy-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
-        {"id": "policy-prose", "command": "bench test --check prose-mechanics"},
-        {"id": "command-registries", "command": "bench test --package ./cmd/bench"},
-        {"id": "cycle-root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "policy-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors", "ticket": "01-state-record-only-repair-cycle-rule.md"},
+        {"id": "policy-prose", "command": "bench test --check prose-mechanics", "ticket": "01-state-record-only-repair-cycle-rule.md"},
+        {"id": "command-registries", "command": "bench test --package ./cmd/bench", "ticket": "01-state-record-only-repair-cycle-rule.md"},
+        {"id": "cycle-root-conformance", "command": "bench test --check root-conformance", "ticket": "01-state-record-only-repair-cycle-rule.md"}
       ]
     },
     {
       "id": "RC-PROVE",
       "tickets": ["02-prove-test-only-tree-deltas.md"],
       "verification": [
-        {"id": "prover", "command": "bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/gittest"},
-        {"id": "prover-status", "command": "bench test --package ./internal/testgap", "probe": "accept status D in the prover"},
-        {"id": "prove-root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "prover", "command": "bench test --package ./internal/testgap --package ./internal/commentgap --package ./internal/gittest", "ticket": "02-prove-test-only-tree-deltas.md"},
+        {"id": "prover-status", "command": "bench test --package ./internal/testgap", "probe": "accept status D in the prover", "ticket": "02-prove-test-only-tree-deltas.md"},
+        {"id": "prove-root-conformance", "command": "bench test --check root-conformance", "ticket": "02-prove-test-only-tree-deltas.md"}
       ]
     },
     {
       "id": "RC-CARRY",
       "tickets": ["03-carry-confirmed-axis-results.md"],
       "verification": [
-        {"id": "record-and-checkpoint", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate"},
-        {"id": "carry-prover", "command": "bench test --package ./internal/gate", "probe": "skip the test-only prover in the carry branch"},
-        {"id": "carry-root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "record-and-checkpoint", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate", "ticket": "03-carry-confirmed-axis-results.md"},
+        {"id": "carry-prover", "command": "bench test --package ./internal/gate", "probe": "skip the test-only prover in the carry branch", "ticket": "03-carry-confirmed-axis-results.md"},
+        {"id": "carry-root-conformance", "command": "bench test --check root-conformance", "ticket": "03-carry-confirmed-axis-results.md"}
       ]
     },
     {
       "id": "RC-WRITE",
       "tickets": ["04-write-confirmations-with-bench-record.md", "05-document-the-test-only-confirmation.md"],
       "verification": [
-        {"id": "writer-and-route", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench"},
-        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
-        {"id": "route-precedence", "command": "bench test --package ./internal/gate", "probe": "let the outcome refusal fire before the confirmation route"},
-        {"id": "guidance-prose", "command": "bench test --check prose-mechanics"},
-        {"id": "write-root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "writer-and-route", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench", "ticket": "04-write-confirmations-with-bench-record.md"},
+        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors", "ticket": "05-document-the-test-only-confirmation.md"},
+        {"id": "route-precedence", "command": "bench test --package ./internal/gate", "probe": "let the outcome refusal fire before the confirmation route", "ticket": "04-write-confirmations-with-bench-record.md"},
+        {"id": "guidance-prose", "command": "bench test --check prose-mechanics", "ticket": "05-document-the-test-only-confirmation.md"},
+        {"id": "write-root-conformance", "command": "bench test --check root-conformance", "ticket": "04-write-confirmations-with-bench-record.md"},
+        {"id": "guidance-root-conformance", "command": "bench test --check root-conformance", "ticket": "05-document-the-test-only-confirmation.md"}
       ]
     }
   ],
