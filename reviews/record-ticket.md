@@ -567,7 +567,79 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft405_rv_excerpt-standards",
+          "performer": "claude:ft405_rv_excerpt_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c467e49a0570d575d809f5b7104f3173cf8c4eab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_standards",
+            "digest": "sha256:093f2d2d2d5afaf6dc4d725572eccacf0f66edd87c4f25f9521d8837c54691d7",
+            "excerpt": "## Standards\n\nI found 6 findings: 3 hard and 3 judgment. Worst issue: `readScoped` adds a third copy of the store's per-level real-directory walk, and because it reuses `realDir`, a read refusal also reports `mkdir <path>: not a real directory`.\n\n- S1 hard. `internal/responsebound/retain.go:155-160` repeats the walk in `store.go:138-147` (`privateDirs`) and `retire.go:27-35` (`Drop`). The `Op: \"mkdir\"` text comes from `store.go:158`. Rule: AGENTS.md \"one source per fact\". Disposition: ask-user; the fix is one `scopeDir` level-check method in `store.go`, outside the ticket 02 fence. Confidence 6.\n- S2 judgment. `internal/reviewrecord/recordcmd/stage.go:65` uses the literal `\"probe\"`, and the refusal on the next line repeats it; the registry names it at `cmd/bench/main.go:109`. Rule: one source per fact. Disposition: ask-user; a shared verb-name constant needs `internal/probe` and `cmd/bench`, outside the fence. Confidence 5.\n- S3 hard. `internal/reviewrecord/recordcmd/stage_test.go:173` rebuilds the digest formula of `stageName` (`retain.go:103-106`), and `reviews/record-ticket.md` records no red for that expectation; RT59 needs only \"inside the scope and nowhere else\". Rule: AGENTS.md independent-expectation exception. Disposition: auto-fix. Confidence 6.\n- S4 hard. The `setAnswer` doc comment at `stage_test.go:41-42` is not a sentence. Rule: craft-comments register and doc-comment form. Disposition: auto-fix. Confidence 8.\n- S5 judgment. `stage_test.go:43-46` hand-writes the mutant-set envelope that `internal/probe/set.go:16,30` owns; the package already has `setProducer` (`verification_import_test.go:150`), and no red is recorded. Rule: independent-expectation exception. Disposition: ask-user. Confidence 4.\n- S6 judgment. `internal/reviewrecord/write.go:216-219` always runs the final-list lookup, then overwrites `requirement` and `err` for a chunk call; behavior holds but reads as if both lookups apply. Rule: smell baseline (clarity). Disposition: auto-fix with if/else. Confidence 5.\n\n## Advice\n- The record excerpt limit has no named owner; `stage.go:71` is the third `ClassifyBytes(Read(..., ControlRecordLimit))` use in reviewrecord (`write.go:94`, `parse.go:223`), and its refusal wording differs from `native` (`command.go:316-322`).\n- `ReadRetained` now refuses a symlinked level, a small widening beyond the stage rows.\n\n## Examined\nThe full code delta; `store.go`, `retire.go`, `bounds/classify.go`; `native` in `recordcmd/command.go`; `verification_import_test.go` and the probe set schema; spec lines 142-190; finding-discipline; craft-comments. Preflight current=true through `bench worktree exec`. Cannot tell whether the implementation command caused any issue.\n"
+          },
+          "axis": "Standards",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "c1268bd0ad448f3aad3e0daad2f86552a89df335",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_excerpt-spec",
+          "performer": "claude:ft405_rv_excerpt_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c467e49a0570d575d809f5b7104f3173cf8c4eab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_spec",
+            "digest": "sha256:ce412bb236c80481190c01f2b22f1fdf8c6045e0dbb1c38ae7e5bb56deb315e0",
+            "excerpt": "## Spec\n\nCount: 0 findings. Worst issue: none. RT9–RT17 and RT57–RT59 are all built, and nothing in the delta is wrong or out of scope.\n\n- Grammar and help (spec 174): the excerpt form is registered at `internal/reviewrecord/recordcmd/command.go:70`; the help row comes from the form's description (`command.go:222`); `cmd/bench/help_inventory_test.go:154` lists `excerpt <slug> --chunk <id> --requirement <id> [--mutant <n>]`.\n- Plan at HEAD and the three refusals (spec 174–175): `stage.go:333-344` reads the plan at the worktree's HEAD. The unplanned-requirement refusal comes from `ChunkRequirement`/`plannedRequirement` (`write.go:771-788`) and names the planned IDs. No retained response refuses at `stage.go:355`. Over-limit bytes refuse at `stage.go:369` through `ClassifyBytes` at `ControlRecordLimit`, which also refuses empty bytes and invalid UTF-8 (edge lines 412–413).\n- Planned-command parse (spec 177–180): `plannedCall` (`stage.go:387-400`) requires a lexed parse, word tokens only, and `bench` as the first word; the typed verb plus arguments must equal the planned words after `bench`.\n- Probe requirements (spec 181–182): verb `probe` and an import through `readImported`; `--mutant` without a probe refuses at `stage.go:346`; the mutant is kept in `Staged.Mutant`.\n- Storage (spec 184–189): each stage file is named by the SHA-256 of slug, chunk, and requirement joined by NUL bytes (`retain.go:122-125`), written into the assignment scope by durable replacement; the retained struct is copied whole; the form writes no record and no worktree file.\n- Symlinks (edge 414): `readScoped` (`retain.go:166-199`) refuses a linked store level or a non-regular file; `TestStageRefusesASymlinkedScope` tests it.\n- Seam cells: every cited test exists and reaches its row.\n- Scope: the `write.go` change is a behavior-preserving extraction of the requirement lookup.\n\n## Advice\n- Every staging test retains `Dirty: []string{}` (`recordtest/stage.go:712`), so spec 187 (\"copies the retained commit and dirty paths\") is never checked with a non-empty dirty list.\n- The `write.go` fence expansion should have a plan commit or a learning entry.\n- `stage.go:71` repeats the `ClassifyBytes(Read(..., ControlRecordLimit))` pair that `ClassifyNoFollow` owns.\n\n## Examined\nThe diff adfc95fe..c1268bd0; `bench coverage`; spec lines 143–189 and 405–426; stories 10–17, 57, 58; `recordcmd/command.go:235-323`; `bounds/classify.go:125-210`; `responsebound/retire.go`. Preflight current=true at 026c8f72 through `bench worktree exec`. No tests run; no command output contributed to any issue.\n"
+          },
+          "axis": "Spec",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "c1268bd0ad448f3aad3e0daad2f86552a89df335",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_excerpt-coverage",
+          "performer": "claude:ft405_rv_excerpt_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c467e49a0570d575d809f5b7104f3173cf8c4eab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_coverage",
+            "digest": "sha256:8f67bb29208b526dabdc68d16decbc96b39aa4d6041574bbb8b3925df2e4aa27",
+            "excerpt": "## Coverage\n\nI found 3 gaps, and all three are silent mutants. The worst is C1: the record excerpt bound refuses empty and invalid UTF-8 responses, but no test feeds it either one.\n\n- C1. Input: a retained response that is empty or holds invalid UTF-8. The edge inventory at `specs/record-ticket/spec.md:412-413` says the bound refuses both; the check is at `internal/reviewrecord/recordcmd/stage.go:369`. Break: a bound that refuses only an unreadable read stages empty or malformed bytes. Missing test: rows \"empty\" and \"invalid UTF-8\" in `TestExcerptRefusals`. Disposition: auto-fix. Confidence 8.\n- C2. State: the stage file or the retained file is a symlink or another non-regular file while every store level is a real directory. The spec says the stage reads through the no-follow classification (`spec.md:414`). Break: dropping the `IsRegular` check at `internal/responsebound/retain.go:165` lets `os.ReadFile` follow a file-level symlink; `TestStageRefusesASymlinkedScope` and `cmd/bench/retain_test.go:162` only symlink the scope directory. Missing test: a `ReadStaged` call through a stage-file symlink and through a FIFO must refuse. Disposition: auto-fix. Confidence 7.\n- C3. Input: `excerpt ... --mutant x` or `--mutant 0`. Break: if the form's `valid` hook always passes, `integer` gives 0, so the stage keeps a single-form answer and exits 0 instead of a usage refusal. The `mutantValid` rule is tested only through confirmation (`confirmation_test.go:157-158`). Missing test: a usage-refusal row for each value on the excerpt form. Disposition: auto-fix. Confidence 5.\n\n## Probes (all through `bench probe`; every probe restored = yes)\n\n| # | Mutation | Verdict |\n|---|---|---|\n| 1 | `stage.go`: `graded.State != bounds.StateParsed` becomes `== bounds.StateUnreadable` | silent |\n| 2 | `retain.go`: `!info.Mode().IsRegular()` becomes `... && false` | silent |\n| 3 | `stage.go`: the excerpt form's `valid` hook returns `true` | silent |\n\n## Advice\n- The `RecordVerification` rework keeps its behavior for chunk and `--final` calls; a duplicate ID now resolves to its first match, a state `checkVerification` (`internal/reviewrecord/check.go:35-55`) cannot complete either way.\n- No test runs the excerpt form from the primary checkout; it refuses with the \"no retained response\" text.\n\n## Examined\nPreflight current=true through `bench worktree exec`; the diff adfc95fe..c1268bd0; the ticket; spec lines 140-199 and 405-426; `bounds.ClassifyBytes`, `requirementsValid`, `finalRequirements`, `checkVerification`, `integer`. `git status --porcelain` clean. Not read: the craft-tdd edge classes and the benchkit hostile-input checklist. The implementation command contributed to none of these issues.\n"
+          },
+          "axis": "Coverage",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "c1268bd0ad448f3aad3e0daad2f86552a89df335",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -614,6 +686,8 @@
 RT-RETAIN: repair cycle 1 of 2 is complete for ticket 01. The repair commit is 9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b. No reviewer extension exists.
 RT-RETAIN: repair cycle 2 of 2 is complete for ticket 01 to close S5, with a fence expansion to `internal/responsebound/size.go` under the auto-approve direction. The repair commit is adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa.
 
+RT-EXCERPT: repair cycle 1 of 2 is in progress for ticket 02. The fence expands with `internal/responsebound/store.go`, `internal/responsebound/retire.go`, `internal/probe/probe.go`, and `cmd/bench/main.go` under the auto-approve direction.
+
 ## Standards
 
 RT-RETAIN: 4 findings. The worst issue is S1.
@@ -629,6 +703,15 @@ Confirming round: S1 to S4 are closed. 1 new finding.
 
 Confirming round 2: S5 is closed, with no new findings.
 
+RT-EXCERPT: 6 findings. The worst issue is S1.
+
+- S1 (auto-fix after a fence expansion, confidence 6): `internal/responsebound/retain.go:155-160` repeats the per-level directory walk of `privateDirs` and `Drop`. Its read refusal also reports a `mkdir` operation.
+- S2 (auto-fix after a fence expansion, confidence 5): `internal/reviewrecord/recordcmd/stage.go:65` repeats the literal probe verb name that the command registry owns.
+- S3 (auto-fix, confidence 6): `stage_test.go:173` rebuilds the stage-name digest formula with no recorded red.
+- S4 (auto-fix, confidence 8): the `setAnswer` doc comment at `stage_test.go:41-42` is not a sentence.
+- S5 (auto-fix, confidence 4): `stage_test.go:43-46` hand-writes the mutant-set envelope that `setProducer` already produces.
+- S6 (auto-fix, confidence 5): `internal/reviewrecord/write.go:216-219` runs the final-list lookup and then overwrites it for a chunk call.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -640,6 +723,8 @@ Confirming round: pass, with no findings.
 
 Confirming round 2: pass, with no findings.
 
+RT-EXCERPT: pass, with no findings.
+
 ## Coverage
 
 RT-RETAIN: 2 findings. The worst issue is C1.
@@ -650,3 +735,9 @@ RT-RETAIN: 2 findings. The worst issue is C1.
 Confirming round: C1 and C2 are closed, with no new findings.
 
 Confirming round 2: pass, with no findings.
+
+RT-EXCERPT: 3 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 8): no test stages an empty or invalid UTF-8 retained response.
+- C2 (auto-fix, confidence 7): no test reads a stage or retained file that is a symbolic link or a FIFO under real store levels.
+- C3 (auto-fix, confidence 5): no test refuses `--mutant x` or `--mutant 0` on the excerpt form.
