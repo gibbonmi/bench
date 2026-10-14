@@ -92,7 +92,8 @@ func missingMessage(name string) string {
 // every basename in the same tickets folder, and tag is the spec tag. An empty
 // tag skips the citation tag rule, which is the tickets-only posture.
 // The diagnostics arrive in one stable order: duplicate fields, an unterminated
-// fence, absent required fields, the citation grammar, then the declared edges.
+// fence, absent required fields, the write-entry grammar, the citation grammar, then the
+// declared edges.
 func ParseTicket(name string, content []byte, siblings []string, tag string) (Ticket, []string) {
 	ticket := Ticket{Name: name}
 	scanned, diagnostics := fieldScan().Scan(content)
@@ -128,6 +129,11 @@ func ParseTicket(name string, content []byte, siblings []string, tag string) (Ti
 		}
 		if !isHeading(required) && values[required] == "" {
 			diagnostics = append(diagnostics, missingMessage(required))
+		}
+	}
+	for _, entry := range ticket.Writes {
+		if _, err := ParseWrite(entry); err != nil {
+			diagnostics = append(diagnostics, fmt.Sprintf("malformed Writes entry %q: %v", entry, err))
 		}
 	}
 	diagnostics = append(diagnostics, coversDiagnostics(ticket, tag)...)

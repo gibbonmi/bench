@@ -116,6 +116,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		ExplicitSourceRange:   source != nil,
 		ChangedPaths:          changedPaths,
 		DeletedPaths:          resolvedSource.DeletedPaths,
+		DeletedBefore:         deletedBefore(root, reviewBase, ticketFacts.parsed),
 		DefaultTipPaths:       defaultTipPaths,
 		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,

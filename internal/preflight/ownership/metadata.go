@@ -119,3 +119,36 @@ func enum(where, field, value string, allowed ...string) error {
 	}
 	return nil
 }
+
+// disposition decodes one retirement disposition: an exact symbol and one action.
+func disposition(raw json.RawMessage, where string) (Disposition, error) {
+	var item Disposition
+	if _, err := typed(raw, where, &item, "symbol", "action"); err != nil {
+		return Disposition{}, err
+	}
+	return item, enum(where, "action", item.Action, "retain", "migrate", "remove")
+}
+
+// identity decodes one exact owner identity.
+func identity(raw json.RawMessage, where string) (Owner, error) {
+	var owner Owner
+	_, err := typed(raw, where, &owner, ownerKeys...)
+	return owner, err
+}
+
+// identities decodes one array of exact owner identities.
+func identities(raw json.RawMessage, where string) ([]Owner, error) {
+	var items []json.RawMessage
+	if err := json.Unmarshal(raw, &items); err != nil || items == nil {
+		return nil, fmt.Errorf("%sis not a JSON array", where)
+	}
+	owners := make([]Owner, 0, len(items))
+	for i, item := range items {
+		owner, err := identity(item, fmt.Sprintf("%s[%d]: ", where, i))
+		if err != nil {
+			return nil, err
+		}
+		owners = append(owners, owner)
+	}
+	return owners, nil
+}

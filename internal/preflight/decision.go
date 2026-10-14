@@ -59,6 +59,9 @@ type Facts struct {
 	ChangedPaths []string
 	// DeletedPaths is the explicit committed range's exact D-status subset.
 	DeletedPaths []string
+	// DeletedBefore reports, for each (deleted) `Writes:` entry, whether its path is a
+	// tracked file at the review base. The gatherer owns the probe; writes-resolve grades it.
+	DeletedBefore map[string]bool
 	// DefaultTipPaths is the ChangedPaths subset whose bytes and mode at SourceTip equal
 	// those at the default-branch tip. Such a path came in unchanged through a fold of the
 	// default branch, so it is no write of the build.

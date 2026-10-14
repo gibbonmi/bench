@@ -19,6 +19,17 @@ const loadMode = packages.NeedName | packages.NeedFiles | packages.NeedCompiledG
 // subprocess. It joins no audited port registry; the audit's package set is closed.
 var load = loadPackages
 
+// Load type-checks every package of the checkout at root, its tests included, in the
+// default build context, for a caller outside this package. Resolve and Rows read the
+// answer. The packages hold the checkout's bytes, so only a clean checkout answers for
+// its committed HEAD, and a dirty one refuses.
+func Load(root string) ([]*Package, error) {
+	if (citation{root: root}).state() != "clean" {
+		return nil, fmt.Errorf("checkout %s is dirty; typed packages answer only for a clean committed HEAD", root)
+	}
+	return loadPackages(root, "./...")
+}
+
 // loadPackages type-checks patterns rooted at dir and returns them in the core's shape.
 // It fails closed on the first load error, because an enumeration over a partially typed
 // tree under-reports and reads as an absence proof.

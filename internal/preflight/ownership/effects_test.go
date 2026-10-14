@@ -1,6 +1,8 @@
 package ownership_test
 
 import (
+	"cmp"
+	"fmt"
 	"maps"
 	"path/filepath"
 	"slices"
@@ -50,21 +52,68 @@ func plannedForm(path, symbol, kind string) string {
 		`"changes":[{"id":"new-form",`+itemLocation+`,"kind":"grammar","owner":{"path":"`+path+`","package":"github.com/gibbonmi/bench/`+filepath.ToSlash(filepath.Dir(path))+`","symbol":"`+symbol+`","kind":"`+kind+`","signature":""},"caller_scope":"production-and-tests","state":"planned","destination":null,"dispositions":[]}]`, 1))
 }
 
-// TestGrammarEffects drives each grammar effect through the actual proposal over a committed
-// base and a tip that edits the case's files. want maps each path to whether the closure
+// effectCase is one actual proposal over a committed base and a tip that edits the case's
+// files; an empty tip body deletes its file. want maps each path to whether the closure
 // requires it, and evidence maps a required path to text that one of its reasons holds. A
 // later hop of the fixed point can require a path again, so only its reason shows which
-// rule required it. premise names a premise row whose reason must hold reason.
+// rule required it. premise names a premise row whose reason must hold reason. A nonempty
+// refusal is text that the proposal's refusal must name instead.
+type effectCase struct {
+	name                          string
+	writes                        []string
+	tip                           map[string]string
+	facts                         string
+	want                          map[string]bool
+	evidence                      map[string]string
+	premise, premiseState, reason string
+	refusal                       string
+	files                         map[string]string
+	fence                         []string
+}
+
+// run seeds the case's base, commits its tip, and grades the proposal.
+func (test effectCase) run(t *testing.T) {
+	root := ownershiptest.ProposalRepo{Writes: test.writes, Files: test.files, Fence: test.fence, Tail: test.facts}.Seed(t)
+	if len(test.tip) > 0 {
+		for path, body := range test.tip {
+			if body == "" {
+				preflighttest.RunGit(t, "rm", "-q", path)
+				continue
+			}
+			preflighttest.MustWriteFile(t, path, body)
+		}
+		preflighttest.RunGit(t, "add", "-A")
+		preflighttest.RunGit(t, "commit", "-q", "-m", "tip")
+	}
+	if test.refusal != "" {
+		out, code := propose(t, root)
+		refused(t, out, code, test.refusal)
+		return
+	}
+	out := mustPropose(t, root)
+	for path, want := range test.want {
+		if got := len(matching(t, out, "closure", map[string]string{"ticket": "one.md", "requires": path})) > 0; got != want {
+			t.Errorf("closure requires %s = %t, want %t:\n%s", path, got, want, out)
+		}
+	}
+	for path, reason := range test.evidence {
+		rows := matching(t, out, "closure_evidence", map[string]string{"ticket": "one.md", "path": path})
+		if !slices.ContainsFunc(rows, func(row map[string]any) bool { return strings.Contains(cell(row, "reason"), reason) }) {
+			t.Errorf("evidence for %s = %v, want a reason naming %q", path, rows, reason)
+		}
+	}
+	if test.premise != "" {
+		state := cmp.Or(test.premiseState, "unknown")
+		row := one(t, out, "premises", map[string]string{"id": test.premise})
+		if cell(row, "state") != state || !strings.Contains(cell(row, "reason"), test.reason) {
+			t.Errorf("premise %s = %v, want %s and a reason naming %q", test.premise, row, state, test.reason)
+		}
+	}
+}
+
+// TestGrammarEffects drives each grammar effect through the actual proposal.
 func TestGrammarEffects(t *testing.T) {
-	cases := []struct {
-		name            string
-		writes          []string
-		tip             map[string]string
-		facts           string
-		want            map[string]bool
-		evidence        map[string]string
-		premise, reason string
-	}{
+	cases := []effectCase{
 		{name: "OC14 body-only edit adds no grammar obligation", writes: []string{commandFile, helperFile},
 			tip:  merged(edited(helperFile, "return 0", "return 1"), edited(commandFile, "code + helper()", "code + helper() + 1")),
 			want: map[string]bool{rootHelp: false, routingCensus: false, helpFile: false}},
@@ -95,34 +144,8 @@ func TestGrammarEffects(t *testing.T) {
 			want: map[string]bool{rootHelp: false}},
 	}
 	for _, test := range cases {
-		t.Run(test.name, func(t *testing.T) {
-			root := ownershiptest.ProposalRepo{Writes: test.writes, Files: grammarBase, Tail: test.facts}.Seed(t)
-			if len(test.tip) > 0 {
-				for path, body := range test.tip {
-					preflighttest.MustWriteFile(t, path, body)
-				}
-				preflighttest.RunGit(t, "add", "-A")
-				preflighttest.RunGit(t, "commit", "-q", "-m", "tip")
-			}
-			out := mustPropose(t, root)
-			for path, want := range test.want {
-				if got := len(matching(t, out, "closure", map[string]string{"ticket": "one.md", "requires": path})) > 0; got != want {
-					t.Errorf("closure requires %s = %t, want %t:\n%s", path, got, want, out)
-				}
-			}
-			for path, reason := range test.evidence {
-				rows := matching(t, out, "closure_evidence", map[string]string{"ticket": "one.md", "path": path})
-				if !slices.ContainsFunc(rows, func(row map[string]any) bool { return strings.Contains(cell(row, "reason"), reason) }) {
-					t.Errorf("evidence for %s = %v, want a reason naming %q", path, rows, reason)
-				}
-			}
-			if test.premise != "" {
-				row := one(t, out, "premises", map[string]string{"id": test.premise})
-				if cell(row, "state") != "unknown" || !strings.Contains(cell(row, "reason"), test.reason) {
-					t.Errorf("premise %s = %v, want unknown and a reason naming %q", test.premise, row, test.reason)
-				}
-			}
-		})
+		test.files = grammarBase
+		t.Run(test.name, test.run)
 	}
 }
 
@@ -133,4 +156,180 @@ func merged(sets ...map[string]string) map[string]string {
 		maps.Copy(all, set)
 	}
 	return all
+}
+
+// The helper fixture module. helper.go declares the unexported mergeFixture, which three
+// same-package test files call; mergetest.Seed is a fixture helper that another package's
+// test calls. policy.go holds the owners that TestOwnerPremises grades.
+const (
+	module      = "example.com/fixture"
+	mergeHelper = "internal/merge/helper.go"
+	movedFile   = "internal/merge/moved.go"
+	callerA     = "internal/merge/a_test.go"
+	callerB     = "internal/merge/b_test.go"
+	callerC     = "internal/merge/c_test.go"
+	seedFile    = "internal/merge/mergetest/fixture.go"
+	external    = "internal/other/other_test.go"
+	goneFile    = "internal/merge/gone.go"
+	policyFile  = "internal/policy/policy.go"
+)
+
+// caller is one same-package test file of mergeFixture, or of nothing when uses is false.
+func caller(name string, uses bool) string {
+	body := ""
+	if uses {
+		body = ` _ = mergeFixture("a", "b") `
+	}
+	return "package merge\n\nimport \"testing\"\n\nfunc Test" + name + "(t *testing.T) {" + body + "}\n"
+}
+
+// helperBase is the committed base of every helper, deletion, and owner premise case.
+var helperBase = map[string]string{
+	"go.mod":    "module " + module + "\n\ngo 1.25\n",
+	mergeHelper: "package merge\n\nfunc mergeFixture(a, b string) string { return a + b }\n",
+	callerA:     caller("A", true), callerB: caller("B", true), callerC: caller("C", true),
+	seedFile:                       "package mergetest\n\nfunc Seed() string { return \"seed\" }\n",
+	external:                       "package other\n\nimport (\n\t\"testing\"\n\n\t\"" + module + "/internal/merge/mergetest\"\n)\n\nfunc TestOther(t *testing.T) { _ = mergetest.Seed() }\n",
+	goneFile:                       "package merge\n",
+	policyFile:                     "package policy\n\nfunc home() bool { return true }\n\nfunc retired() int { return 1 }\n\nfunc write(v int) int { return v }\n\ntype row struct{ Reason string }\n",
+	"internal/policy/consumers.go": "package policy\n\nfunc keepA() int { return retired() }\n\nfunc keepB() int { return retired() + 1 }\n",
+	"internal/policy/writers.go":   "package policy\n\nfunc reader() bool { return home() }\n\nfunc writerA() int { return write(1) }\n",
+	"internal/policy/sync.go":      "package policy\n\nfunc syncWrite() int { return write(2) }\n",
+	"internal/policy/render.go":    "package policy\n\nfunc renderA() row { return row{Reason: \"a\"} }\n\nfunc renderB() row {\n\tvar r row\n\tr.Reason = \"b\"\n\treturn r\n}\n",
+}
+
+// helperFence authorizes every fixture path that a tip edits, so only the ticket's own
+// Writes separate the owned callers from the proposed ones.
+var helperFence = []string{"- `internal/merge/`", "- `internal/other/`", "- `internal/policy/`"}
+
+// ownerJSON is the exact identity of symbol, declared in path.
+func ownerJSON(path, symbol, kind string) string {
+	return `{"path":"` + path + `","package":"` + module + "/" + filepath.ToSlash(filepath.Dir(path)) + `","symbol":"` + symbol + `","kind":"` + kind + `","signature":""}`
+}
+
+// withItems is the complete-empty inventory whose key array holds items.
+func withItems(key string, items ...string) string {
+	return fenced(strings.Replace(completeEmpty, `"`+key+`":[]`, `"`+key+`":[`+strings.Join(items, ",")+`]`, 1))
+}
+
+// changeItem declares one change of symbol in path, relocated to destination when it is
+// not empty.
+func changeItem(kind, state, path, symbol, destination string) string {
+	target := "null"
+	if destination != "" {
+		target = `"` + destination + `"`
+	}
+	return `{"id":"merge-change",` + itemLocation + `,"kind":"` + kind + `","owner":` + ownerJSON(path, symbol, "func") +
+		`,"caller_scope":"production-and-tests","state":"` + state + `","destination":` + target + `,"dispositions":[]}`
+}
+
+// TestHelperCallers drives each declared helper change through the actual proposal. The
+// ticket owns the helper and its first caller, so each other caller is a proposed write.
+// The third caller sits outside every seed path, so a sampled sweep misses it. After a
+// relocation the third caller stops using the helper, so only the before-state census can
+// still name it.
+func TestHelperCallers(t *testing.T) {
+	signature := withItems("changes", changeItem("signature", "existing", mergeHelper, "merge.mergeFixture", ""))
+	cases := []effectCase{
+		{name: "OC20 signature change proposes each static test caller", writes: []string{mergeHelper, callerA}, facts: signature,
+			want:     map[string]bool{callerB: true, callerC: true},
+			evidence: map[string]string{callerC: "declared in " + mergeHelper + " line 3 at the source tip"}},
+		{name: "OC21 fixture-helper change proposes its external call site", writes: []string{seedFile},
+			facts:    withItems("changes", changeItem("fixture-helper", "existing", seedFile, "mergetest.Seed", "")),
+			want:     map[string]bool{external: true},
+			evidence: map[string]string{external: "uses mergetest.Seed"}},
+		{name: "OC22 relocation retains the before-state caller", writes: []string{mergeHelper + " (deleted)", movedFile + " (new)", callerA},
+			facts: withItems("changes", changeItem("signature", "existing", mergeHelper, "merge.mergeFixture", movedFile)),
+			tip:   map[string]string{mergeHelper: "", movedFile: helperBase[mergeHelper], callerC: caller("C", false)},
+			want:  map[string]bool{callerB: true, callerC: true},
+			evidence: map[string]string{callerB: "declared in " + movedFile + " line 3 at the source tip",
+				callerC: "declared in " + mergeHelper + " line 3 at the source base"}},
+		{name: "OC23 deletion retains the before-state callers", writes: []string{mergeHelper + " (deleted)", callerA}, facts: signature,
+			tip:      map[string]string{mergeHelper: "", callerA: caller("A", false), callerB: caller("B", false), callerC: caller("C", false)},
+			want:     map[string]bool{callerB: true, callerC: true},
+			evidence: map[string]string{callerB: "at the source base", callerC: "at the source base"}},
+		{name: "OC23 deleted fixture helper retains its external before-state caller", writes: []string{seedFile + " (deleted)"},
+			facts:    withItems("changes", changeItem("fixture-helper", "existing", seedFile, "mergetest.Seed", "")),
+			tip:      map[string]string{seedFile: "", external: "package other\n\nimport \"testing\"\n\nfunc TestOther(t *testing.T) {}\n"},
+			want:     map[string]bool{external: true},
+			evidence: map[string]string{external: "declared in " + seedFile + " line 3 at the source base"}},
+		{name: "planned helper has no invented callers", writes: []string{mergeHelper, callerA},
+			facts: withItems("changes", changeItem("signature", "planned", mergeHelper, "merge.mergeFixture", "")),
+			want:  map[string]bool{callerB: false, callerC: false}},
+	}
+	for _, test := range cases {
+		test.files, test.fence = helperBase, helperFence
+		t.Run(test.name, test.run)
+	}
+}
+
+// TestDeletedEntry drives each deletion marker shape through the actual proposal: a file
+// tracked at the source base resolves whether the tip still holds it or not, and no other
+// shape gains authority from the marker. The legacy unmarked committed deletion stays
+// accepted, while the same unmarked spelling of a never-tracked path stays red.
+func TestDeletedEntry(t *testing.T) {
+	never := "internal/merge/never.go"
+	cases := []effectCase{
+		{name: "OC24 deleted marker resolves a removed before path", writes: []string{goneFile + " (deleted)"}, tip: map[string]string{goneFile: ""}},
+		{name: "OC26 planned deleted marker accepts a present before path", writes: []string{goneFile + " (deleted)"}},
+		{name: "OC25 never-tracked deleted path refuses", writes: []string{never + " (deleted)"}, refusal: "no tracked file at the review base: one.md: " + never},
+		{name: "OC25 destination cannot repair a never-tracked deletion", writes: []string{never + " (deleted)", movedFile + " (new)"},
+			tip: map[string]string{movedFile: "package merge\n"}, refusal: "no tracked file at the review base: one.md: " + never},
+		{name: "OC25 directory before path refuses", writes: []string{"internal/merge (deleted)"}, refusal: "no tracked file at the review base"},
+		{name: "OC25 deleted directory shorthand refuses", writes: []string{"internal/merge/ (deleted)"}, refusal: "names one exact file, not a directory"},
+		{name: "OC27 new then deleted markers refuse parsing", writes: []string{goneFile + " (new) (deleted)"}, refusal: "both the (new) and the (deleted) marker"},
+		{name: "OC27 deleted then new markers refuse parsing", writes: []string{goneFile + " (deleted) (new)"}, refusal: "both the (new) and the (deleted) marker"},
+		{name: "OC82 committed D-status stays accepted", writes: []string{goneFile}, tip: map[string]string{goneFile: ""}},
+		{name: "OC82 unmarked never-tracked path stays red", writes: []string{never}, refusal: "names no tree path and carries no (new) marker: one.md: " + never},
+	}
+	for _, test := range cases {
+		test.files, test.fence = helperBase, helperFence
+		t.Run(test.name, test.run)
+	}
+}
+
+// premiseItem is one current premise of kind with its tagged subject and expected values.
+func premiseItem(id, kind, subject, expected string) string {
+	return `{"id":"` + id + `",` + itemLocation + `,"kind":"` + kind + `","state":"current","subject":` + subject + `,"expected":` + expected + `}`
+}
+
+// TestOwnerPremises grades each owner premise of one inventory through the actual
+// proposal. Each partial census omits a second real member: a second lifecycle consumer, an
+// independent writer site, and a second renderer branch.
+func TestOwnerPremises(t *testing.T) {
+	consumer := func(symbol string) string { return ownerJSON("internal/policy/consumers.go", symbol, "func") }
+	home := func(line int) string {
+		return `{"owner":{"path":"` + policyFile + `","line":` + fmt.Sprint(line) + `,"needle":"func home() bool","source":"tip"}}`
+	}
+	facts := withItems("premises",
+		premiseItem("home-owner", "reused-owner", home(3), `{"required":true}`),
+		premiseItem("moved-owner", "reused-owner", home(4), `{"required":true}`),
+		premiseItem("partial-retirement", "retirement", `{"owner":`+ownerJSON(policyFile, "policy.retired", "func")+`,"consumers":[`+consumer("policy.keepA")+`]}`, `{"dispositions":[{"symbol":"policy.keepA","action":"remove"}]}`),
+		premiseItem("complete-retirement", "retirement", `{"owner":`+ownerJSON(policyFile, "policy.retired", "func")+`,"consumers":[`+consumer("policy.keepA")+`,`+consumer("policy.keepB")+`]}`,
+			`{"dispositions":[{"symbol":"policy.keepA","action":"remove"},{"symbol":"policy.keepB","action":"retain"}]}`),
+		premiseItem("partial-posture", "posture", `{"owner":`+ownerJSON(policyFile, "policy.write", "func")+`,"writer_probe":{"function":"TestWrite"}}`, `{"callers":[`+ownerJSON("internal/policy/writers.go", "policy.writerA", "func")+`]}`),
+		premiseItem("partial-field", "printed-field", `{"field":`+ownerJSON(policyFile, "policy.row.Reason", "field")+`}`, `{"producers":[`+ownerJSON("internal/policy/render.go", "policy.renderA", "func")+`]}`))
+	out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: helperBase, Fence: helperFence, Tail: facts}.Seed(t))
+	t.Run("OC28 reused owner adds its rule source", func(t *testing.T) {
+		one(t, out, "closure", map[string]string{"ticket": "one.md", "path": "home-owner", "requires": policyFile})
+		row := one(t, out, "closure_evidence", map[string]string{"ticket": "one.md", "path": policyFile, "kind": "owner"})
+		if cell(row, "source") != policyFile || cell(row, "line") != "3" || len(matching(t, out, "writes_proposal", map[string]string{"path": policyFile})) != 0 {
+			t.Fatalf("owner evidence = %v, want %s line 3 and no proposed write", row, policyFile)
+		}
+	})
+	for id, want := range map[string][2]string{
+		"home-owner":          {"green", "holds its needle"},
+		"moved-owner":         {"unknown", "line 4 does not hold its needle exactly once"},
+		"partial-retirement":  {"unknown", "omits internal/policy/consumers.go keepB"},
+		"complete-retirement": {"green", "complete at the source tip: 2 member(s)"},
+		"partial-posture":     {"unknown", "omits internal/policy/sync.go syncWrite"},
+		"partial-field":       {"unknown", "omits internal/policy/render.go renderB"},
+	} {
+		t.Run(id, func(t *testing.T) {
+			row := one(t, out, "premises", map[string]string{"id": id})
+			if cell(row, "state") != want[0] || !strings.Contains(cell(row, "reason"), want[1]) {
+				t.Fatalf("premise %s = %v, want %s and a reason naming %q", id, row, want[0], want[1])
+			}
+		})
+	}
 }

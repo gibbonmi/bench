@@ -131,6 +131,9 @@ func proposalRows(f Facts, selected tickets.Ticket) [][]string {
 	seen := map[string]bool{}
 	var rows [][]string
 	for _, closure := range closureFamily {
+		if !closure.writes {
+			continue
+		}
 		for _, requirement := range missingClosures(f, closure.kind) {
 			if requirement.Ticket != selected.Name || seen[requirement.Path] {
 				continue
@@ -149,6 +152,8 @@ func proposalSource(requirement ownership.Requirement) string {
 		return "fixture " + requirement.Path
 	case ownership.KindAnchor:
 		return "anchor " + requirement.Entry
+	case ownership.KindCaller:
+		return "caller " + requirement.Entry
 	}
 	return "registry " + tickets.BindingRegistry
 }

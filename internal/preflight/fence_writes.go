@@ -77,28 +77,39 @@ func implicitEntries(f Facts) []string {
 	return entries
 }
 
-// writesResolveCheck grades each `Writes:` entry against the tree. An entry without the
-// (new) marker must name a path the tree holds, or an exact committed deletion of the
-// explicit source range.
+// writesResolveCheck grades each `Writes:` entry against the tree. An entry without a
+// marker must name a path the tree holds, or an exact committed deletion of the explicit
+// source range. A (deleted) entry must name a tracked file at the review base, whatever
+// the tip holds, so no marker gives authority over a path that never existed. An entry
+// that the ticket grammar refuses is tickets-parse's red.
 func writesResolveCheck(f Facts) CheckResult {
-	var unresolved []string
+	var unresolved, unborn []string
 	seen := map[string]bool{}
 	for _, ticket := range f.Tickets {
 		for _, entry := range ticket.Writes {
-			path, isNew := tickets.WritesPath(entry)
-			if isNew {
-				continue
-			}
+			write, err := tickets.ParseWrite(entry)
 			named := ticket.Name + ": " + entry
-			if seen[named] || f.WritesPathExists[entry] || slices.Contains(f.DeletedPaths, path) {
-				continue
+			switch {
+			case err != nil || write.Kind == tickets.WriteNew || seen[named]:
+			case write.Kind == tickets.WriteDeleted:
+				if !f.DeletedBefore[entry] {
+					unborn = append(unborn, named)
+				}
+			case !f.WritesPathExists[entry] && !slices.Contains(f.DeletedPaths, write.Path):
+				unresolved = append(unresolved, named)
 			}
 			seen[named] = true
-			unresolved = append(unresolved, named)
 		}
 	}
+	var details []string
 	if len(unresolved) > 0 {
-		return red("writes-resolve", "Writes: entry names no tree path and carries no (new) marker: "+strings.Join(unresolved, ", "))
+		details = append(details, "Writes: entry names no tree path and carries no (new) marker: "+strings.Join(unresolved, ", "))
+	}
+	if len(unborn) > 0 {
+		details = append(details, "(deleted) entry names no tracked file at the review base: "+strings.Join(unborn, ", "))
+	}
+	if len(details) > 0 {
+		return red("writes-resolve", strings.Join(details, "; "))
 	}
 	return green("writes-resolve")
 }

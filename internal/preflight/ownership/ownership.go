@@ -43,13 +43,17 @@ type Kit struct {
 	Identity string
 }
 
-// Kind is the canonical owner family that requires a path.
+// Kind is the canonical owner family that requires a path. A caller requirement is a file
+// that statically uses a declared changed declaration. An owner requirement is the exact
+// rule source that a declared reused owner pins; the ticket reads it and need not own it.
 type Kind string
 
 const (
 	KindFixture  Kind = "fixture"
 	KindRegistry Kind = "registry"
 	KindAnchor   Kind = "anchor"
+	KindCaller   Kind = "caller"
+	KindOwner    Kind = "owner"
 )
 
 // Scope tells tree evidence, which binds committed owner bytes, from kit evidence, which
@@ -77,7 +81,8 @@ type Provenance struct {
 
 // Requirement is one path that a ticket entry requires, directly or through the fixed
 // point, with every independent reason that requires it. Entry is the originating
-// `Writes:` entry, so a transitive requirement names the write that started its chain.
+// `Writes:` entry, so a transitive requirement names the write that started its chain. An
+// owner requirement starts at no write, so its Entry is the premise that declares it.
 type Requirement struct {
 	Ticket, Entry, Path string
 	Kind                Kind
@@ -150,17 +155,20 @@ func (e *Error) Error() string { return e.Stage + " " + e.Subject + ": " + e.Cau
 func (e *Error) Unwrap() error { return e.Cause }
 
 // Collect reads the canonical closure of every parsed ticket at root, with each Grammar
-// binding classified by the committed change it covers, and projects the manifest's premise
-// inventory. A failed owner read returns an *Error and no snapshot, so a
-// partial collection never reads as a complete one.
+// binding classified by the committed change it covers and each declared changed
+// declaration's static callers, and grades the manifest's premise inventory. A failed owner
+// read returns an *Error and no snapshot, so a partial collection never reads as a
+// complete one.
 func Collect(root string, source Source, manifest Manifest, parsed []tickets.Ticket) (Snapshot, error) {
-	requirements, diagnostics, err := closure(root, source, parsed, manifest.Changes)
+	census := &census{root: root, source: source}
+	graded, owners := census.premises(manifest.Premises)
+	requirements, diagnostics, err := closure(root, source, parsed, manifest.Changes, census, owners)
 	if err != nil {
 		return Snapshot{}, err
 	}
 	snapshot := Snapshot{
 		Requirements: requirements,
-		Premises:     manifest.premises(source.Tip),
+		Premises:     manifest.premises(source.Tip, graded),
 		Diagnostics:  append(manifest.diagnostics(), diagnostics...),
 	}
 	snapshot.Complete = manifest.Present && manifest.Completeness == completenessDeclared && len(snapshot.Diagnostics) == 0
@@ -171,15 +179,19 @@ func Collect(root string, source Source, manifest Manifest, parsed []tickets.Tic
 	return snapshot, nil
 }
 
-// premises projects the inventory's premise and manual items onto premise rows. No
-// supported collector certifies a current premise, so each stays unknown; a planned
-// premise stays planned, and a manual claim stays manual.
-func (m Manifest) premises(tip string) []Premise {
+// premises projects the inventory's premise and manual items onto premise rows. graded
+// holds the row of each current premise that a supported collector graded. Any other
+// current premise stays unknown; a planned premise stays planned, and a manual claim stays
+// manual.
+func (m Manifest) premises(tip string, graded map[string]Premise) []Premise {
 	var rows []Premise
 	for _, item := range m.Premises {
-		row := Premise{ID: item.ID, State: StateUnknown, Source: tip, Reason: "no " + item.Kind + " premise collector certifies current source"}
-		if item.State == "planned" {
-			row.State, row.Reason = StatePlanned, "a planned "+item.Kind+" premise certifies no current source"
+		row, ok := graded[item.ID]
+		switch {
+		case item.State == "planned":
+			row = Premise{ID: item.ID, State: StatePlanned, Source: tip, Reason: "a planned " + item.Kind + " premise certifies no current source"}
+		case !ok:
+			row = Premise{ID: item.ID, State: StateUnknown, Source: tip, Reason: "no " + item.Kind + " premise collector certifies current source"}
 		}
 		rows = append(rows, row)
 	}
@@ -198,8 +210,8 @@ func (m Manifest) diagnostics() []Diagnostic {
 	return m.Diagnostics
 }
 
-// readiness is the charge projection of the inventory. No supported collector proves a
-// required current premise, so CurrentComplete holds only when none is required.
+// readiness is the charge projection of the inventory. It reads no collector proof, so
+// CurrentComplete holds only when no current premise is required.
 func (m Manifest) readiness() ChargeReadiness {
 	ready := ChargeReadiness{InventoryComplete: m.Present && len(m.Diagnostics) == 0 && m.Completeness == completenessDeclared}
 	for _, item := range m.Premises {

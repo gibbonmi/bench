@@ -9,22 +9,29 @@ import (
 
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // closureFamily is every closure kind in row order. Decide renders one row for each
-// kind, the proposal lists each kind's missing files, and the proposal tolerates
-// each kind's red, so a new kind joins all three from this one table.
+// kind that names a check, the proposal tolerates that row's red, and the proposal lists
+// the missing files of each kind that writes. Every kind joins the closure tables, so a
+// new kind joins each projection from this one table. A kind with no check has no verdict
+// row yet, and a kind that does not write names a source that a ticket reads, not one it
+// must own.
 var closureFamily = []struct {
-	kind  ownership.Kind
-	check string
-	lead  string
-	verb  string
+	kind   ownership.Kind
+	check  string
+	lead   string
+	verb   string
+	writes bool
 }{
-	{ownership.KindFixture, "fixture-closure", "Writes: entry names a fixture-pinned path without naming the fixture: ", "is pinned by"},
-	{ownership.KindRegistry, "registry-closure", "Writes: entry names a bound package without naming every bound file: ", "requires"},
-	{ownership.KindAnchor, "anchor-closure", "Writes: entry names an anchored guidance path without naming every anchor registry file: ", "is anchored by"},
+	{ownership.KindFixture, "fixture-closure", "Writes: entry names a fixture-pinned path without naming the fixture: ", "is pinned by", true},
+	{ownership.KindRegistry, "registry-closure", "Writes: entry names a bound package without naming every bound file: ", "requires", true},
+	{ownership.KindAnchor, "anchor-closure", "Writes: entry names an anchored guidance path without naming every anchor registry file: ", "is anchored by", true},
+	{ownership.KindCaller, "", "", "", true},
+	{ownership.KindOwner, "", "", "", false},
 }
 
 // missingClosures is every requirement of one kind that its ticket does not own, in
@@ -49,6 +56,9 @@ func missingClosures(f Facts, kind ownership.Kind) []ownership.Requirement {
 func closureRows(f Facts) []CheckResult {
 	rows := make([]CheckResult, 0, len(closureFamily))
 	for _, closure := range closureFamily {
+		if closure.check == "" {
+			continue
+		}
 		rows = append(rows, ticketRow(f, closure.check, func(f Facts) CheckResult {
 			if missing := closureMessages(missingClosures(f, closure.kind)); len(missing) > 0 {
 				return red(closure.check, closure.lead+strings.Join(missing, ", "))
@@ -61,9 +71,11 @@ func closureRows(f Facts) []CheckResult {
 
 // closureCheckNames is the check name of every closure kind, in row order.
 func closureCheckNames() []string {
-	names := make([]string, len(closureFamily))
-	for i, closure := range closureFamily {
-		names[i] = closure.check
+	var names []string
+	for _, closure := range closureFamily {
+		if closure.check != "" {
+			names = append(names, closure.check)
+		}
 	}
 	return names
 }
@@ -127,6 +139,22 @@ func ownershipSource(root, specPath string, source diff.SourceRange, changed []s
 		}
 	}
 	return result
+}
+
+// deletedBefore reports, for each (deleted) entry of the parsed tickets, whether its path
+// is a tracked file at base. A deletion holds its authority from that before-state, so the
+// tip can hold the file before the implementation and lack it after.
+func deletedBefore(root, base string, parsed []tickets.Ticket) map[string]bool {
+	before := map[string]bool{}
+	for _, ticket := range parsed {
+		for _, entry := range ticket.Writes {
+			if write, err := tickets.ParseWrite(entry); err == nil && write.Kind == tickets.WriteDeleted && base != "" {
+				kind, err := git.Output("-C", root, "cat-file", "-t", base+":"+write.Path)
+				before[entry] = err == nil && kind == "blob"
+			}
+		}
+	}
+	return before
 }
 
 // treeHolds reports whether one `Writes:` path names something in the tree.

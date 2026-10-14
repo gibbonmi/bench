@@ -28,6 +28,8 @@ type inventory struct {
 	unbound string
 	// effects classifies each Grammar binding by the committed change it covers.
 	effects *effects
+	// uses is every static use of each declared changed declaration.
+	uses []use
 }
 
 // found is one path that one probe requires, with its reason.
@@ -39,8 +41,10 @@ type found struct {
 
 // closure walks every ticket entry to its fixed point. A ticket with no write reads no
 // owner, so a repository whose tickets write nothing needs no readable inventory. changes
-// are the inventory's declared changes, whose grammar declarations the walk resolves.
-func closure(root string, source Source, parsed []tickets.Ticket, changes []Change) ([]Requirement, []Diagnostic, error) {
+// are the inventory's declared changes, whose grammar declarations the walk resolves and
+// whose callers census reads. Each ticket that writes also reads every verified reused
+// owner in owners.
+func closure(root string, source Source, parsed []tickets.Ticket, changes []Change, census *census, owners []ownerSource) ([]Requirement, []Diagnostic, error) {
 	if !slices.ContainsFunc(parsed, func(ticket tickets.Ticket) bool { return len(ticket.Writes) > 0 }) {
 		return nil, nil, nil
 	}
@@ -56,14 +60,22 @@ func closure(root string, source Source, parsed []tickets.Ticket, changes []Chan
 		return nil, nil, err
 	}
 	inv.effects.declare(changes)
+	var callerDiagnostics []Diagnostic
+	inv.uses, callerDiagnostics = census.callers(changes)
 	var requirements []Requirement
 	for _, ticket := range parsed {
+		if len(ticket.Writes) == 0 {
+			continue
+		}
 		owned := OwnedPaths(ticket)
 		for _, entry := range ticket.Writes {
 			requirements = append(requirements, inv.walk(ticket.Name, entry, owned)...)
 		}
+		for _, owner := range owners {
+			requirements = append(requirements, Requirement{Ticket: ticket.Name, Entry: owner.premise, Path: owner.reason.Owner, Kind: KindOwner, Provenance: []Provenance{owner.reason}})
+		}
 	}
-	return requirements, append(inv.diagnostics(requirements), inv.effects.diagnostics...), nil
+	return requirements, append(append(inv.diagnostics(requirements), inv.effects.diagnostics...), callerDiagnostics...), nil
 }
 
 // repositoryPath reports whether one entry path names a place inside the repository by
@@ -148,14 +160,21 @@ func (inv inventory) walk(ticket, entry string, owned []string) []Requirement {
 	return group
 }
 
-// probe is every path that subject requires under the three canonical owners: each fixture
-// that pins it, each file its binding rows require, and each anchor registry file whose
-// literal names it or a path under it. A Core row always applies; a Grammar row applies only
-// when the subject's grammar effect does, and a grammar change also requires its sources.
+// probe is every path that subject requires under the canonical owners: each fixture that
+// pins it, each file its binding rows require, each anchor registry file whose literal
+// names it or a path under it, and each file that uses a changed declaration that subject
+// declares before or after its change. A Core row always applies; a Grammar row applies
+// only when the subject's grammar effect does, and a grammar change also requires its
+// sources.
 func (inv inventory) probe(subject string) []found {
 	var next []found
 	for _, pin := range inv.pins[subject] {
 		next = append(next, found{pin.Fixture, KindFixture, inv.tree(pin.Owner, pin.Line, "fixture "+string(pin.Rule), pinReason(pin.Rule)+" "+subject)})
+	}
+	for _, use := range inv.uses {
+		if use.file != subject && use.declares(subject) {
+			next = append(next, found{use.file, KindCaller, use.reason(inv.source)})
+		}
 	}
 	grammar := inv.effects.classify(subject)
 	bound := false
