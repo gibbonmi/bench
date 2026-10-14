@@ -1713,7 +1713,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft405_rv_guide-standards",
+          "performer": "claude:ft405_rv_guide_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7580316bd959358d8e0ccd344d25e908873dae9b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_guide_standards",
+            "digest": "sha256:fb970e113262cdab272e058425bddc2ecb97497be7461834c71053fcda55ab21",
+            "excerpt": "## Standards\n\n2 findings. Worst: S1. Every changed sentence is within the 20-word and 25-word caps, and every paragraph has 6 sentences or fewer.\n\n- S1. `.agents/commands/bench-implement-spec.md:52`, pinned by `internal/anchors/registry_check_floor.go:8`. Rule: ticket 06 line 9, \"The guidance names the last ticket's author as the freezer and `bench record ticket` as the record call.\"; BENCH.md invariant 3, docs \"give the current decided state\". The Build clause \"so that `bench record chunk` accepts the chunk\" is still literally true (`recordcmd/chunk.go:23`), but the build no longer calls `bench record chunk`; the same `refusePlanned` refusal now runs inside `bench record ticket` (`recordcmd/ticket.go:52-56`). Verdict: a binding staleness defect. Repair: name `bench record ticket` in line 52, the check-floor needle, and its twin; all three paths are on the ticket's Writes line. Disposition: auto-fix. Confidence 7.\n- S2. `.bench/BENCH-reference.md:339`. Rule: ste-prose \"Keep one topic per paragraph\"; concrete defect: \"Each accepted finding there\" has no antecedent after the edit removed \"Semantic review freezes…\". Repair: name the chunk review in that sentence. Disposition: auto-fix. Confidence 7.\n\n## Advice\n- `docs/known-issues.md:13` still tells a delegate to run `bench record amendment` before the chunk freeze, which the ticket form now writes itself.\n- The changelog repeats the excerpt grammar; it matches `recordcmd/stage.go:23-24` today.\n- Step 6 names `bench record ticket` in adjacent paragraphs (lines 216 and 230).\n\n## Examined\nPreflight current=true, dirty_record=false; the diff 79bcc99..262e019 without plan and review records; ticket 06; `internal/reviewrecord/recordcmd/ticket.go` and `internal/reviewrecord/ticket.go`; ste-prose. No tests or probes run.\n"
+          },
+          "axis": "Standards",
+          "base": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+          "tip": "262e019bdc8f7612b294cc2bf5e3918dd7d3c1e5",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_guide-spec",
+          "performer": "claude:ft405_rv_guide_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7580316bd959358d8e0ccd344d25e908873dae9b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_guide_spec",
+            "digest": "sha256:26d6c530e7801f2f3ca177990d8ad3ae375562b5d79843a36c2fa154b8eb0313",
+            "excerpt": "## Spec\n\nCount: 1. Worst issue: P1, the chunk form drops out of the review phase's form list (low confidence).\n\nMet:\n- RT47/48: the two Land sentences changed in place.\n- RT49: the operating-guide sentence has 23 words.\n- RT50/64: the step 6 sentence is replaced, and the new sentence sits in a separate paragraph of step 6. The \"Write each completed…\" sentence is byte-identical (review-implementation.md:215).\n- RT51/52/54: craft-tickets and the reference name the author, and no `review freezes` text remains in either file.\n- RT53: no FT405 text remains in known-issues, and the seam cell holds the citation.\n- The nested-exec workaround sentences have 14 and 7 words.\n- The changelog entry names all four items, and its grammar matches help_inventory_test.go:154.\n- The cited tests exist: `TestChunkChainAnchors` (registry_chunk_chain_test.go:6), `TestRetainedWorkflow` (retained_workflow_test.go:14), `TestWriteSpecChunkedSlicing` (registry_ticket_passes_test.go:53).\n\nFindings:\n- P1. Story 47: \"list the excerpt and ticket forms, so that the form list stays complete.\" Location: `.agents/commands/bench-review-implementation.md:216`. Gap: the replaced sentence was the only place step 6 named `bench record chunk`; the chunk form still exists, so the step 6 form list is now incomplete. Disposition: ask-user. Confidence 4.\n\n## Advice\n- `bench-implement-spec.md:52` still says \"so that `bench record chunk` accepts the chunk\".\n- `bench-review-implementation.md:229-230`: \"Pass the minimal native excerpt … in a file\" sits next to the retained-excerpt sentence; a reader could take them to conflict.\n- The changelog repeats the excerpt grammar from help.\n\n## Examined\nPreflight current=true, dirty_record=false (source tip 471066c); the frozen diff 79bcc99..262e019; `bench coverage`; spec stories 44–50, the Guidance decision (spec.md:259-270), rows RT47–RT54 and RT64; ticket 06; step 6 of the review phase. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+          "tip": "262e019bdc8f7612b294cc2bf5e3918dd7d3c1e5",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_guide-coverage",
+          "performer": "claude:ft405_rv_guide_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7580316bd959358d8e0ccd344d25e908873dae9b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_guide_coverage",
+            "digest": "sha256:5d3fa99e50b887feb9dfe262f6c1b5fc8b8ce752e14a3e7850635293a39d351a",
+            "excerpt": "## Coverage\n\n1 finding. Worst: the RT52 Forbid matches only lowercase text, so a capitalized `Review freezes` sentence passes root conformance. Every changed sentence has a live root-conformance anchor and a twin.\n\n- C1. Input: in `.agents/skills/bench-craft-tickets/SKILL.md`, after \"In each chunk, the last ticket's author freezes the chunk base and the current tip.\", add \"Review freezes the chunk base again before the axes run.\" Break: RT52 (\"The ticket craft and the reference hold no `review freezes` text.\"). Missing check: the `Kind: Forbid` needle `review freezes` matches case-sensitively in the craftTickets and benchReference rows (`internal/anchors/registry_chunk_chain.go:53-54`); `ForbidCaseFoldedEmphasis` exists, and neither twin tests a capitalized sentence. Disposition: auto-fix. Confidence 6.\n\nProbes (JSON under /tmp/claude-1000/ft405_rv_guide_coverage/):\n\n| Subject | Mutation | Verdict | Restored |\n|---|---|---|---|\n| craft-tickets | add a sentence that starts \"Review freezes\" | silent | yes |\n| craft-tickets | \"the last ticket's author freezes\" → \"the orchestrator freezes\" | bit | yes |\n| review step 6 | move the RT50 sentence into step 5 | bit | yes |\n| review step 6 | \"The last ticket's author writes\" → \"The orchestrator writes\" | bit | yes |\n| implement phase | move the RT47 sentence from Land into Build | bit | yes |\n\n`git status` is clean afterwards.\n\n## Advice\n- The RT49 needle and its diagnostic appear in both `internal/anchors/registry_ft311_review_dispatch.go:47` and `internal/conformance/retained_workflow_test.go:128`; that pair predates this change.\n- RT49 and RT51 require the sentence somewhere in the file; a contradicting extra sentence would pass, and no approved row demands its exclusion.\n\n## Examined\nPreflight current=true, dirty=false; the frozen diff 79bcc99..262e019; spec rows RT47–RT54 and RT64; `internal/anchors/match.go`, `registry_chunk_chain.go`, `registry_chunk_chain_test.go`; the implement phase's Land and Build sections; review step 6.\n"
+          },
+          "axis": "Coverage",
+          "base": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+          "tip": "262e019bdc8f7612b294cc2bf5e3918dd7d3c1e5",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1900,6 +1968,8 @@ RT-EXTRACT: no repair cycle is used. The orchestrator removed two cancelling pla
 
 RT-TICKET: repair cycle 1 of 2 is complete for ticket 05. One combined charge carried S1, S2, and C1 to C4. The repair commit is 79bcc9970705f0eb5178025a560741ad992e5aa9.
 
+RT-GUIDE: repair cycle 1 of 2 is in progress for ticket 06. One combined charge carries S1, S2, P1, and C1.
+
 ## Standards
 
 RT-RETAIN: 4 findings. The worst issue is S1.
@@ -1948,6 +2018,11 @@ RT-TICKET: 2 findings, and RT37 is met. The worst issue is S2.
 
 RT-TICKET confirming round: S1 and S2 are closed, with no blocking findings.
 
+RT-GUIDE: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 7): the Build section of the implementation phase still names `bench record chunk` as the call that accepts the chunk.
+- S2 (auto-fix, confidence 7): a sentence in `.bench/BENCH-reference.md` lost its antecedent when the freeze sentence changed.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -1974,6 +2049,10 @@ RT-EXTRACT: pass, with no findings. RT37 gets its second half at RT-TICKET.
 RT-TICKET: pass, with no findings. The refusal-order deviation that the author flagged is non-behavioral.
 
 RT-TICKET confirming round: pass, with no findings.
+
+RT-GUIDE: 1 finding.
+
+- P1 (auto-fix, confidence 4): step 6 of the review phase no longer names `bench record chunk` in its form list.
 
 ## Coverage
 
@@ -2012,3 +2091,7 @@ RT-TICKET: 4 findings. The worst issue is C1.
 - C4 (auto-fix, confidence 7): no test passes `--tip` with a commit other than `HEAD`.
 
 RT-TICKET confirming round: C1 to C4 are closed, with no blocking findings.
+
+RT-GUIDE: 1 finding.
+
+- C1 (auto-fix, confidence 6): the RT52 Forbid rows match only lowercase text, so a capitalized `Review freezes` sentence passes.
