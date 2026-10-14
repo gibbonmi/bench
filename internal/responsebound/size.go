@@ -19,10 +19,14 @@ func (o *Owner) Size() Size {
 
 // AssignmentScope answers the assignment of the worktree at root, the scope a spill of a
 // verb that retires nothing takes. It answers false for a root outside any assignment
-// worktree. The census output record takes this scope when the verb reports no assignment.
+// worktree, and for a home that has no absolute form. The census output record takes this
+// scope when the verb reports no assignment.
 // The two stores can disagree: a retiring verb spills under the primary scope, but its
 // record can go to a still-active assignment, for example when it runs from another tree.
 func AssignmentScope(home, root string) (string, bool) {
-	_, scope := location(home, root, false)
-	return scope, scope != primaryScope
+	dir, ok, err := assignmentDir(home, root)
+	if err != nil {
+		return "", false
+	}
+	return dir.scope, ok
 }

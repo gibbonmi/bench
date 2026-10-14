@@ -81,6 +81,17 @@ func storeScope(home, root string, retiring bool) (scopeDir, error) {
 	return scopeDir{home: home, levels: []string{storeDirName, key, scope}, scope: scope}, nil
 }
 
+// assignmentDir answers the store directory of the assignment scope of the worktree at root.
+// It answers false for a root outside any assignment worktree. The census output record and
+// the retained response both take their scope from it.
+func assignmentDir(home, root string) (scopeDir, bool, error) {
+	dir, err := storeScope(home, root, false)
+	if err != nil {
+		return scopeDir{}, false, err
+	}
+	return dir, dir.scope != primaryScope, nil
+}
+
 // file answers the path of the file name in the scope directory. A path that is not
 // line-safe returns an error.
 func (d scopeDir) file(name string) (string, error) {

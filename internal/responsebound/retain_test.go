@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"io/fs"
+	"path/filepath"
 	"testing"
 
 	rb "github.com/gibbonmi/bench/internal/responsebound"
@@ -57,5 +58,27 @@ func TestRetainClearsAnIncompleteResponse(t *testing.T) {
 				t.Fatalf("retained after the %s response = (%+v, %v), want none", row.name, got, err)
 			}
 		})
+	}
+}
+
+// The census record and retention answer one assignment scope for the same inputs. A
+// relative Bench home names the assignment of its absolute form, and a response retained
+// through the relative home reads back through the absolute home.
+func TestAssignmentScopeAndRetentionAgree(t *testing.T) {
+	home := rb.PrivateHome(t)
+	_, checkout, id := responseboundtest.AssignmentCheckout(t, home)
+	t.Chdir(filepath.Dir(home))
+	relative := filepath.Base(home)
+	if got, ok := rb.AssignmentScope(relative, checkout); !ok || got != id {
+		t.Fatalf("AssignmentScope with a relative home = (%q, %v), want (%q, true)", got, ok, id)
+	}
+	var sink bytes.Buffer
+	owner := rb.New(relative, &sink, &sink, func() string { return checkout }, false)
+	rb.RespondWith(t, owner, &sink, rb.StdoutLines("kept\n"))
+	if err := owner.Retain(relative, checkout, retainCall); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := rb.ReadRetained(home, checkout); err != nil {
+		t.Fatalf("retained response through the absolute home: %v", err)
 	}
 }

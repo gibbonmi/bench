@@ -27,10 +27,10 @@ type Retained struct {
 }
 
 // retainedPath answers the assignment scope directory of the worktree at root and the
-// retained response path in it. It answers false for a root outside any assignment worktree.
+// retained response path in it. It answers false where assignmentDir answers false.
 func retainedPath(home, root string) (scopeDir, string, bool, error) {
-	dir, err := storeScope(home, root, false)
-	if err != nil || dir.scope == primaryScope {
+	dir, ok, err := assignmentDir(home, root)
+	if err != nil || !ok {
 		return dir, "", false, err
 	}
 	path, err := dir.file(retainedName)
