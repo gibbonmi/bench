@@ -144,7 +144,7 @@ func checkReviews(pair reviewed, excluded []string, reviewerCount int) error {
 			return refused(axis, fmt.Errorf("%s: missing %s; record the native review result", pair.scope, axis))
 		}
 		if current.Role != "independent-review" || slices.Contains(excluded, current.Performer) || current.Performer == "" {
-			return refused(axis, fmt.Errorf("%s: invalid %s performer or role; obtain independent review", pair.scope, axis))
+			return refused(axis, fmt.Errorf("%s: invalid %s performer %q or role %q; obtain independent review", pair.scope, axis, current.Performer, current.Role))
 		}
 		axisOwners[current.Performer] = axis
 		if current.State != "completed" || (!pair.carried && (current.Outcome != "pass" || len(current.FindingIDs) != 0)) {

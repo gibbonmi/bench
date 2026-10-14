@@ -15,12 +15,9 @@ func bitProbe(mutation string) rr.Probe {
 func (f *Fixture) Refreeze() {
 	f.T.Helper()
 	chunk := &f.Record.Chunks[len(f.Record.Chunks)-1]
-	digest, err := rr.SourceDigest(f.Root, f.Tree(), f.Record.Spec)
-	if err != nil {
-		f.T.Fatal(err)
-	}
-	chunk.Tip, chunk.SourceDigest = f.Tip(), digest
-	chunk.Verification = append(chunk.Verification, f.Verification("chunk-"+chunk.ID+"-"+chunk.Tip, digest, f.Plan.Chunk(chunk.ID).Verification)...)
+	chunk.Tip = f.Tip()
+	digest, verification := f.freeze(chunk.ID, "chunk-"+chunk.ID+"-"+chunk.Tip)
+	chunk.SourceDigest, chunk.Verification = digest, append(chunk.Verification, verification...)
 }
 
 // Confirm appends to the last recorded chunk the confirmation that the completion

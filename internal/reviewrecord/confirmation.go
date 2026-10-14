@@ -67,11 +67,12 @@ var errAtChunkPair = errors.New("the axis results sit at the chunk pair")
 
 // FindReviewedPair derives the reviewed pair of chunk from the current result of each axis.
 // spec names the record that the source digest excludes. It refuses a missing axis, results
-// at different pairs or at the chunk pair, a reviewed tip outside the line from the chunk
-// base to the chunk tip, and a delta from the reviewed digest to the chunk digest that
-// testgap.Prove refuses. Each refusal names the chunk.
+// at different pairs or at the chunk pair, a reviewed tip equal to the chunk base, a
+// reviewed tip outside the line from the chunk base to the chunk tip, and a delta from the
+// reviewed digest to the chunk digest that testgap.Prove refuses. Each refusal names the
+// chunk.
 func FindReviewedPair(root, spec string, chunk Chunk) (ReviewedPair, error) {
-	scope := "chunk " + chunk.ID
+	scope := chunk.reviewed().scope
 	tip, mixed, pairs, findings := "", false, []string{}, []string{}
 	for _, axis := range Axes() {
 		current := currentReview(chunk.Reviews, axis)
@@ -90,6 +91,10 @@ func FindReviewedPair(root, spec string, chunk Chunk) (ReviewedPair, error) {
 	}
 	if tip == chunk.Tip {
 		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, errAtChunkPair)
+	}
+	// The ancestry query is reflexive, so it accepts a reviewed tip equal to the chunk base.
+	if tip == chunk.Base {
+		return ReviewedPair{}, fmt.Errorf("%s: empty reviewed pair %s..%s; review the three axes at a tip after the chunk base", scope, chunk.Base, tip)
 	}
 	descends, err := isAncestor(root, chunk.Base, tip)
 	if err != nil {
@@ -150,7 +155,7 @@ func checkChunkReviews(root string, record Record, plan Plan, chunk *Chunk, excl
 // and the failed condition.
 func confirms(chunk Chunk, reviewed ReviewedPair, reconciler string) error {
 	latest := chunk.Confirmations[len(chunk.Confirmations)-1]
-	scope := "chunk " + chunk.ID + ": confirmation " + latest.ID
+	scope := chunk.reviewed().scope + ": confirmation " + latest.ID
 	bit, restored := probeBites(latest.Probe)
 	switch {
 	case latest.Base != chunk.Base || latest.RepairedTip != chunk.Tip || latest.SourceDigest != chunk.SourceDigest:

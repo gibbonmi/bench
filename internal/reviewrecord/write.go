@@ -298,10 +298,8 @@ func RecordReview(root, spec string, call ReviewCall) (Review, error) {
 			return err
 		}
 		supersedes := []string{}
-		for _, prior := range *pair.reviews {
-			if prior.Axis == call.Axis {
-				supersedes = []string{prior.ID}
-			}
+		if prior := currentReview(*pair.reviews, call.Axis); prior != nil {
+			supersedes = []string{prior.ID}
 		}
 		entry = Review{Evidence: call.Evidence, Axis: call.Axis, Base: pair.base, Tip: pair.tip, FindingIDs: append([]string{}, call.Findings...), Supersedes: supersedes}
 		entry.Role, entry.SourceDigest, entry.State, entry.Outcome = "independent-review", pair.digest, "completed", "pass"
@@ -332,8 +330,8 @@ func reviewTarget(record *Record, call ReviewCall) (reviewed, error) {
 	return reviewed{}, Repair{Form: FormFold, Err: fmt.Errorf("fold %s has no entry", call.Fold)}
 }
 
-// unclaimed refuses an ID that a verification or review result of record already has,
-// and the refusal names that ID.
+// unclaimed refuses an ID that an evidence entry of record already has, and the refusal
+// names that ID. evidenceIDs owns the set of entries.
 func unclaimed(record Record, id string) error {
 	if slices.Contains(evidenceIDs(record), id) {
 		return fmt.Errorf("evidence ID %s is already in the record", id)

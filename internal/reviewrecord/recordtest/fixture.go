@@ -329,16 +329,23 @@ func (f *Fixture) AddChunk() {
 func (f *Fixture) RecordChunk(base string) {
 	f.T.Helper()
 	planned := f.Plan.Chunks[len(f.Record.Chunks)]
-	digest, err := rr.SourceDigest(f.Root, f.Tree(), f.Record.Spec)
-	if err != nil {
-		f.T.Fatal(err)
-	}
-	chunk := rr.Chunk{ID: planned.ID, Base: base, Tip: f.Tip(), PlanDigest: f.Plan.Digest, SourceDigest: digest, AcceptanceRows: planned.Rows}
-	chunk.Verification = f.Verification("chunk-"+planned.ID, digest, planned.Verification)
+	digest, verification := f.freeze(planned.ID, "chunk-"+planned.ID)
+	chunk := rr.Chunk{ID: planned.ID, Base: base, Tip: f.Tip(), PlanDigest: f.Plan.Digest, SourceDigest: digest, AcceptanceRows: planned.Rows, Verification: verification}
 	for _, axis := range rr.Axes() {
 		chunk.Reviews = append(chunk.Reviews, rr.Review{Evidence: f.Evidence("chunk-"+planned.ID+"-"+axis, digest, "independent-review"), Axis: axis, Base: base, Tip: chunk.Tip})
 	}
 	f.Record.Chunks = append(f.Record.Chunks, chunk)
+}
+
+// freeze is the source digest of the current tip and the verification of planned chunk id
+// at that digest, whose IDs start with prefix.
+func (f *Fixture) freeze(id, prefix string) (string, []rr.Verification) {
+	f.T.Helper()
+	digest, err := rr.SourceDigest(f.Root, f.Tree(), f.Record.Spec)
+	if err != nil {
+		f.T.Fatal(err)
+	}
+	return digest, f.Verification(prefix, digest, f.Plan.Chunk(id).Verification)
 }
 
 func (f *Fixture) Complete() {

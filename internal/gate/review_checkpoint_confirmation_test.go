@@ -180,6 +180,18 @@ func TestReviewCheckpointConfirmationRefusals(t *testing.T) {
 		{"reviewed tip before base", "chunk 1: reviewed tip <moved> does not descend from the chunk base <base>", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			return moveReviewed(f, f.Git("rev-parse", f.Record.Chunks[0].Base+"^"))
 		}},
+		{"empty reviewed pair", "chunk 1: empty reviewed pair <reviewed>..<reviewed>", "review", modifyTest, func(f *recordtest.Fixture, reviewed string) string {
+			chunk := &f.Record.Chunks[0]
+			chunk.Base, latest(f).Base = reviewed, reviewed
+			for i := range chunk.Reviews {
+				chunk.Reviews[i].Base = reviewed
+			}
+			return ""
+		}},
+		{"author carried result", `chunk 1: invalid Standards performer "<moved>"`, "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
+			f.Record.Chunks[0].Reviews[0].Performer = recordtest.Author(f.Plan.Chunks[0].Tickets[0])
+			return f.Record.Chunks[0].Reviews[0].Performer
+		}},
 		{"forged carried digest", "chunk 1: stale Spec; review the current frozen pair", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			f.Record.Chunks[0].Reviews[1].SourceDigest = f.Record.Chunks[0].SourceDigest
 			return ""
