@@ -6,7 +6,7 @@ Roadmap: FT379
 
 Decision source: Named reviewed artifact roadmap/FT379.md with its approved criteria in .bench/commitment.json. A reviewer-delegated top-tier consultation (fable / high) closed design forks F1–F9 on 2026-10-13.
 
-Verification log: pending
+Verification log: 5 iteration(s) to accept — the spec review took 3 iterations on opus / medium, and the ticket review took 2. The third spec iteration was an extension past the cap of 2, which a fable / high consultant granted. The spec round found an outcome refusal that hid the stale refusal and two derivations of the open finding set. The ticket round found gaps in the reviewed-pair contract, the confirmation route, and the guidance prose check.
 
 ## Problem
 
