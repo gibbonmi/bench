@@ -119,50 +119,27 @@ func replace(path string, data []byte) error {
 }
 
 // RecordChunk writes the entry of planned chunk id for the frozen pair base..tip, both
-// full commit IDs. The tip tree supplies the source digest, the plan digest, and the
-// acceptance rows. A recorded chunk keeps its results, and a new chunk follows the
-// recorded chunks. Only a version 2 plan starts a new record, and an existing record
-// whose plan digest differs from the plan at tip needs its amendment first. The answer
-// is the action, created, added, or updated, and the entry as written.
+// full commit IDs, through changeChunk. The tip tree supplies the source digest, the plan
+// digest, and the acceptance rows, and createRecord starts an absent record. The answer is
+// the action, created, added, or updated, and the entry as written.
 func RecordChunk(root, spec, id, base, tip string) (string, Chunk, error) {
 	digest, plan, err := atSource(root, spec, tip)
 	if err != nil {
 		return "", Chunk{}, err
 	}
-	action, entry := "", Chunk{}
+	action, entry, created := "", Chunk{}, false
 	create := func(string) (Record, error) {
-		if plan.Version != 2 {
-			return Record{}, fmt.Errorf("a new record needs a version 2 completion plan, and the plan at %s has version %d", tip, plan.Version)
-		}
-		action = "created"
-		return Record{Version: 2, Spec: spec, PlanDigest: plan.Digest, Completion: Completion{State: "pending", Reconciliation: map[string]string{}, Verification: []Verification{}}}, nil
+		record, err := createRecord(spec, plan, tip)
+		created = err == nil
+		return record, err
 	}
 	err = write(root, spec, create, func(record *Record) error {
-		if err := currentPlan(*record, plan, tip); err != nil {
-			return err
-		}
-		planned := findChunk(plan, id)
-		if planned == nil {
-			return fmt.Errorf("chunk %s is not a chunk of the plan at %s", id, tip)
-		}
-		index := len(record.Chunks)
-		for i := range record.Chunks {
-			if record.Chunks[i].ID == id {
-				index, action = i, "updated"
-			}
-		}
-		if index == len(record.Chunks) {
-			record.Chunks = append(record.Chunks, Chunk{ID: id, Verification: []Verification{}, Reviews: []Review{}})
-			if action == "" {
-				action = "added"
-			}
-		}
-		chunk := &record.Chunks[index]
-		chunk.Base, chunk.Tip, chunk.PlanDigest, chunk.SourceDigest = base, tip, plan.Digest, digest
-		chunk.AcceptanceRows = append([]string{}, planned.Rows...)
-		entry = *chunk
-		return nil
+		action, entry, err = changeChunk(record, plan, digest, id, base, tip)
+		return err
 	})
+	if created {
+		action = "created"
+	}
 	return action, entry, err
 }
 
@@ -186,67 +163,14 @@ type VerificationCall struct {
 	Probe                      *Probe
 }
 
-// RecordVerification appends one completed verification result to the chunk list or to
-// the completion list. The plan at the source tree supplies the requirement, its command,
-// its probe mutation, and the role; the source tree supplies the source digest. A final
-// result can also name the merged-test requirement of a fold package. A chunk result must
-// name the source of its chunk entry. The answer is the entry as written.
+// RecordVerification appends one completed verification result of spec under root
+// through changeVerification. An absent record refuses. The answer is the entry as written.
 func RecordVerification(root, spec string, call VerificationCall) (Verification, error) {
 	var entry Verification
 	err := write(root, spec, absent(call.Chunk), func(record *Record) error {
-		list, source, requirement := &record.Completion.Verification, call.Source, Requirement{}
-		var chunk *Chunk
 		var err error
-		if call.Chunk != "" {
-			if chunk, err = entryOf(record, call.Chunk); err != nil {
-				return err
-			}
-			list = &chunk.Verification
-			if source == "" {
-				source = chunk.Tip
-			}
-		}
-		digest, plan, err := atSource(root, spec, source)
-		if err != nil {
-			return err
-		}
-		if chunk != nil && digest != chunk.SourceDigest {
-			return Repair{Form: FormChunk, Chunk: chunk.ID, Err: fmt.Errorf("source %s differs from the source of chunk %s: %w", source, chunk.ID, ErrNoChunkEntry)}
-		}
-		if chunk != nil {
-			requirement, err = ChunkRequirement(plan, source, chunk.ID, call.Requirement)
-		} else {
-			requirement, err = plannedRequirement(finalRequirements(plan, *record), call.Requirement)
-		}
-		if err != nil {
-			return err
-		}
-		_, role, err := verifier(plan, *record, requirement, chunk == nil)
-		if err != nil {
-			return err
-		}
-		if requirement.Probe == "" && call.Probe != nil {
-			return fmt.Errorf("requirement %s plans no probe: %w", requirement.ID, ErrProbe)
-		}
-		if requirement.Probe != "" && call.Probe == nil {
-			return fmt.Errorf("requirement %s plans the probe %q: %w", requirement.ID, requirement.Probe, ErrProbe)
-		}
-		if err := unclaimed(*record, call.Evidence.ID); err != nil {
-			return err
-		}
-		exitCode, outcome := call.ExitCode, "fail"
-		if exitCode == 0 {
-			outcome = "pass"
-		}
-		entry = Verification{Evidence: call.Evidence, Requirement: requirement.ID, Command: requirement.Command, ExitCode: &exitCode}
-		entry.Role, entry.SourceDigest, entry.State, entry.Outcome = role, digest, "completed", outcome
-		if call.Probe != nil {
-			probe := *call.Probe
-			probe.Mutation, probe.NativeRef = requirement.Probe, call.Evidence.NativeRef
-			entry.Probe = &probe
-		}
-		*list = append(*list, entry)
-		return nil
+		entry, err = changeVerification(root, spec, record, call)
+		return err
 	})
 	return entry, err
 }
