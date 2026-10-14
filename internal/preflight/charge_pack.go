@@ -95,8 +95,8 @@ func prepareBuildPack(root string, facts Facts, selected *tickets.Entry, parsed 
 // currentEvidenceCommand binds one prepared artifact to the current action. The manifest
 // supplies the frozen selectors; the assignment, the checkout state, the source pair, and
 // the required bytes come from the current checkout, so a released assignment, a dirty
-// checkout, a moved source, or a changed required source refuses. A dirty review record of
-// the selected spec binds and is reported. The binding names the current assignment, never
+// checkout, a moved source, or a changed required source refuses. The binding accepts a dirty
+// review record of the selected spec and reports it. The binding names the current assignment, never
 // the assignment that prepared the artifact.
 func currentEvidenceCommand(root, identity string, args []string) (string, int) {
 	artifact, refusal, code := evidencecmd.OpenEvidence(root, identity)
