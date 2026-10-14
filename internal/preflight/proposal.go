@@ -131,7 +131,7 @@ func proposalRows(f Facts, selected tickets.Ticket) [][]string {
 	seen := map[string]bool{}
 	var rows [][]string
 	for _, closure := range closureFamily {
-		if !closure.writes {
+		if closure.source == nil {
 			continue
 		}
 		for _, requirement := range missingClosures(f, closure.kind) {
@@ -139,23 +139,10 @@ func proposalRows(f Facts, selected tickets.Ticket) [][]string {
 				continue
 			}
 			seen[requirement.Path] = true
-			rows = append(rows, []string{requirement.Path, proposalSource(requirement), proposalFence(requirement.Path, f.FenceEntries)})
+			rows = append(rows, []string{requirement.Path, closure.source(requirement), proposalFence(requirement.Path, f.FenceEntries)})
 		}
 	}
 	return rows
-}
-
-// proposalSource names the fact that requires one proposed path.
-func proposalSource(requirement ownership.Requirement) string {
-	switch requirement.Kind {
-	case ownership.KindFixture:
-		return "fixture " + requirement.Path
-	case ownership.KindAnchor:
-		return "anchor " + requirement.Entry
-	case ownership.KindCaller:
-		return "caller " + requirement.Entry
-	}
-	return "registry " + tickets.BindingRegistry
 }
 
 func proposalFence(path string, entries []string) string {

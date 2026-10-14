@@ -16,22 +16,25 @@ import (
 
 // closureFamily is every closure kind in row order. Decide renders one row for each
 // kind that names a check, the proposal tolerates that row's red, and the proposal lists
-// the missing files of each kind that writes. Every kind joins the closure tables, so a
-// new kind joins each projection from this one table. A kind with no check has no verdict
-// row yet, and a kind that does not write names a source that a ticket reads, not one it
-// must own.
+// the missing files of each kind that names a source, under that source. Every kind joins
+// the closure tables, so a new kind joins each projection from this one table. A kind with
+// no check has no verdict row yet, and a kind with no source names a file that a ticket
+// reads, not one it must own.
 var closureFamily = []struct {
 	kind   ownership.Kind
 	check  string
 	lead   string
 	verb   string
-	writes bool
+	source func(ownership.Requirement) string
 }{
-	{ownership.KindFixture, "fixture-closure", "Writes: entry names a fixture-pinned path without naming the fixture: ", "is pinned by", true},
-	{ownership.KindRegistry, "registry-closure", "Writes: entry names a bound package without naming every bound file: ", "requires", true},
-	{ownership.KindAnchor, "anchor-closure", "Writes: entry names an anchored guidance path without naming every anchor registry file: ", "is anchored by", true},
-	{ownership.KindCaller, "", "", "", true},
-	{ownership.KindOwner, "", "", "", false},
+	{ownership.KindFixture, "fixture-closure", "Writes: entry names a fixture-pinned path without naming the fixture: ", "is pinned by",
+		func(r ownership.Requirement) string { return "fixture " + r.Path }},
+	{ownership.KindRegistry, "registry-closure", "Writes: entry names a bound package without naming every bound file: ", "requires",
+		func(ownership.Requirement) string { return "registry " + tickets.BindingRegistry }},
+	{ownership.KindAnchor, "anchor-closure", "Writes: entry names an anchored guidance path without naming every anchor registry file: ", "is anchored by",
+		func(r ownership.Requirement) string { return "anchor " + r.Entry }},
+	{ownership.KindCaller, "", "", "", func(r ownership.Requirement) string { return "caller " + r.Entry }},
+	{ownership.KindOwner, "", "", "", nil},
 }
 
 // missingClosures is every requirement of one kind that its ticket does not own, in

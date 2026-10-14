@@ -9,9 +9,9 @@ import (
 	"go/token"
 	"path"
 	"slices"
-	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -83,61 +83,40 @@ func readProducers(root, rev, dir, module string) (producers, error) {
 	return p, nil
 }
 
-// index adds each package-level declaration of one file. A const group is one unit, because
-// each member's value can depend on its place in the group.
+// index adds each package-level declaration of one file under the name that the consumers
+// declaration reader gives it. A const group is one unit, because each member's value can
+// depend on its place in the group.
 func (p *producers) index(file *ast.File) {
 	imports := map[string]string{}
 	for _, spec := range file.Imports {
-		imported, _ := strconv.Unquote(spec.Path.Value)
-		name := path.Base(imported)
-		if spec.Name != nil {
-			name = spec.Name.Name
-		}
+		name, imported := consumers.ImportName(spec)
 		imports[name] = imported
 	}
 	p.imports[p.fset.Position(file.Package).Filename] = imports
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			if d.Recv == nil {
-				p.add(d.Name.Name, d)
-				continue
+			names, _ := consumers.DeclNames(d)
+			p.add(names[0], d)
+			if d.Recv != nil {
+				p.methods[d.Name.Name] = append(p.methods[d.Name.Name], names[0])
 			}
-			key := receiverName(d.Recv.List[0].Type) + "." + d.Name.Name
-			p.add(key, d)
-			p.methods[d.Name.Name] = append(p.methods[d.Name.Name], key)
 		case *ast.GenDecl:
 			for _, spec := range d.Specs {
-				switch s := spec.(type) {
-				case *ast.ValueSpec:
-					node := ast.Node(s)
-					if d.Tok == token.CONST {
-						node = d
-					}
-					for _, name := range s.Names {
-						p.add(name.Name, node)
-					}
-				case *ast.TypeSpec:
-					p.add(s.Name.Name, s)
+				names, ok := consumers.DeclNames(spec)
+				if !ok {
+					continue
+				}
+				node := ast.Node(spec)
+				if d.Tok == token.CONST {
+					node = d
+				}
+				for _, name := range names {
+					p.add(name, node)
 				}
 			}
 		}
 	}
-}
-
-// receiverName is the base type name of one method receiver.
-func receiverName(expr ast.Expr) string {
-	switch t := expr.(type) {
-	case *ast.StarExpr:
-		return receiverName(t.X)
-	case *ast.IndexExpr:
-		return receiverName(t.X)
-	case *ast.IndexListExpr:
-		return receiverName(t.X)
-	case *ast.Ident:
-		return t.Name
-	}
-	return ""
 }
 
 // add records one unit. A second declaration of one name is ambiguous, so a walk that
@@ -163,11 +142,8 @@ func (p *producers) parserCalls(file *ast.File) {
 	parse := tickets.GrammarParser()
 	local := ""
 	for _, spec := range file.Imports {
-		if imported, _ := strconv.Unquote(spec.Path.Value); imported == parse.Dir || strings.HasSuffix(imported, "/"+parse.Dir) {
-			local = path.Base(imported)
-			if spec.Name != nil {
-				local = spec.Name.Name
-			}
+		if name, imported := consumers.ImportName(spec); consumers.PathHasSuffix(imported, parse.Dir) {
+			local = name
 		}
 	}
 	if local == "" {

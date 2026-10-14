@@ -5,7 +5,7 @@ import (
 	"go/token"
 	"go/types"
 	"maps"
-	"path"
+	pathpkg "path"
 	"slices"
 	"sort"
 	"strconv"
@@ -64,6 +64,18 @@ func staticCallee(call *ast.CallExpr) *ast.Ident {
 // Rows enumerates every reference to target across pkgs, sorted by file, line, then
 // column. root makes the file cells repository-relative.
 func Rows(pkgs []*Package, target types.Object, root string) []Row {
+	return sortRows(append(useRows(pkgs, target, root, false), implementsRows(pkgs, target, root)...))
+}
+
+// WriteRows is every static write of target across pkgs, in the order Rows uses: an
+// assignment or op-assignment target, an increment or decrement operand, and a field key of
+// a composite literal. A read is no write.
+func WriteRows(pkgs []*Package, target types.Object, root string) []Row {
+	return sortRows(useRows(pkgs, target, root, true))
+}
+
+// useRows is every use of target across pkgs, or only every static write of it.
+func useRows(pkgs []*Package, target types.Object, root string, writesOnly bool) []Row {
 	var out []Row
 	for _, pkg := range pkgs {
 		if pkg.Info == nil {
@@ -82,10 +94,14 @@ func Rows(pkgs []*Package, target types.Object, root string) []Row {
 			continue
 		}
 		for _, file := range pkg.Files {
-			out = append(out, fileRows(pkg, file, targets, root)...)
+			out = append(out, fileRows(pkg, file, targets, root, writesOnly)...)
 		}
 	}
-	out = append(out, implementsRows(pkgs, target, root)...)
+	return out
+}
+
+// sortRows orders rows by file, line, then column, and drops repeated positions.
+func sortRows(out []Row) []Row {
 	sort.Slice(out, func(i, j int) bool {
 		a, b := out[i], out[j]
 		if a.File != b.File {
@@ -115,8 +131,9 @@ func dedupe(rows []Row) []Row {
 }
 
 // fileRows walks one file once and emits a row for each target identifier it reaches,
-// carrying the innermost enclosing named declaration open at that point.
-func fileRows(pkg *Package, file *ast.File, targets map[*ast.Ident]bool, root string) []Row {
+// carrying the innermost enclosing named declaration open at that point. writesOnly keeps
+// only the identifiers that a statement or a composite literal writes.
+func fileRows(pkg *Package, file *ast.File, targets map[*ast.Ident]bool, root string, writesOnly bool) []Row {
 	var out []Row
 	var names []string
 	var pushed []bool
@@ -124,6 +141,9 @@ func fileRows(pkg *Package, file *ast.File, targets map[*ast.Ident]bool, root st
 	// is complete for every identifier by the time the walk reaches it. This is the one
 	// derivation of call position; classify reads it and never re-walks.
 	callees := map[*ast.Ident]bool{}
+	// The write set fills the same way: a statement or a literal precedes the identifiers it
+	// writes.
+	writes := map[*ast.Ident]bool{}
 	ast.Inspect(file, func(n ast.Node) bool {
 		if n == nil {
 			if pushed[len(pushed)-1] {
@@ -142,7 +162,8 @@ func fileRows(pkg *Package, file *ast.File, targets map[*ast.Ident]bool, root st
 				callees[id] = true
 			}
 		}
-		if id, isIdent := n.(*ast.Ident); isIdent && targets[id] {
+		markWrites(pkg, n, writes)
+		if id, isIdent := n.(*ast.Ident); isIdent && targets[id] && (!writesOnly || writes[id]) {
 			pos := pkg.Fset.Position(id.Pos())
 			enclosing := ""
 			if len(names) > 0 {
@@ -159,6 +180,46 @@ func fileRows(pkg *Package, file *ast.File, targets map[*ast.Ident]bool, root st
 		return true
 	})
 	return out
+}
+
+// markWrites adds each identifier that n writes: each assignment target, an increment or
+// decrement operand, and each composite-literal key that names a field. A selector target
+// writes its selected name.
+func markWrites(pkg *Package, n ast.Node, writes map[*ast.Ident]bool) {
+	written := func(expr ast.Expr) {
+		for {
+			switch e := expr.(type) {
+			case *ast.ParenExpr:
+				expr = e.X
+				continue
+			case *ast.SelectorExpr:
+				writes[e.Sel] = true
+			case *ast.Ident:
+				writes[e] = true
+			}
+			return
+		}
+	}
+	switch s := n.(type) {
+	case *ast.AssignStmt:
+		for _, lhs := range s.Lhs {
+			written(lhs)
+		}
+	case *ast.IncDecStmt:
+		written(s.X)
+	case *ast.CompositeLit:
+		for _, elt := range s.Elts {
+			kv, ok := elt.(*ast.KeyValueExpr)
+			if !ok {
+				continue
+			}
+			if key, ok := kv.Key.(*ast.Ident); ok && pkg.Info != nil {
+				if field, ok := pkg.Info.Uses[key].(*types.Var); ok && field.IsField() {
+					writes[key] = true
+				}
+			}
+		}
+	}
 }
 
 // SourceUse is one file of a revision's sources that names a declaration, at the line of
@@ -196,7 +257,7 @@ func SourceUses(sources map[string]string, file, importPath, name string) (decla
 		if other == file || err != nil {
 			continue
 		}
-		same := path.Dir(other) == path.Dir(file) && parsed.Name.Name == owner.Name.Name
+		same := pathpkg.Dir(other) == pathpkg.Dir(file) && parsed.Name.Name == owner.Name.Name
 		if line := firstUse(fset, parsed, same, importPath, name); line > 0 {
 			uses = append(uses, SourceUse{File: other, Line: line})
 		}
@@ -210,11 +271,8 @@ func SourceUses(sources map[string]string, file, importPath, name string) (decla
 func firstUse(fset *token.FileSet, file *ast.File, same bool, importPath, name string) int {
 	qualifier := ""
 	for _, spec := range file.Imports {
-		if imported, _ := strconv.Unquote(spec.Path.Value); imported == importPath {
-			qualifier = path.Base(imported)
-			if spec.Name != nil {
-				qualifier = spec.Name.Name
-			}
+		if name, imported := ImportName(spec); imported == importPath {
+			qualifier = name
 		}
 	}
 	line := 0
@@ -236,6 +294,16 @@ func firstUse(fset *token.FileSet, file *ast.File, same bool, importPath, name s
 	}
 	ast.Inspect(file, visit)
 	return line
+}
+
+// ImportName is the one reading of an import's local name: its explicit name, else the
+// last element of its path. path is the unquoted import path.
+func ImportName(spec *ast.ImportSpec) (name, path string) {
+	imported, _ := strconv.Unquote(spec.Path.Value)
+	if spec.Name != nil {
+		return spec.Name.Name, imported
+	}
+	return pathpkg.Base(imported), imported
 }
 
 // implementsRows answers the interface half of the via column. A query for an interface
@@ -290,61 +358,4 @@ func implementsRows(pkgs []*Package, target types.Object, root string) []Row {
 		}
 	}
 	return out
-}
-
-// declNames is the one derivation of the declaration-name forms this surface reports: a
-// function, a Type.Method, a package-level type, and a package-level var or const spec. A
-// node outside those reports false, so the row walker's innermost open name is the answer
-// for every row, and a use with no enclosing declaration at all keeps the empty string.
-// fileScope says no named declaration is open yet.
-//
-// A spec declaring several names reports them all, because the blast walk names each
-// declaration separately. The row walker reads the first, because a use inside the spec
-// sits inside one declaration statement whatever that statement declares.
-func declNames(n ast.Node, fileScope bool) ([]string, bool) {
-	switch d := n.(type) {
-	case *ast.FuncDecl:
-		if recv := receiverName(d); recv != "" {
-			return []string{recv + "." + d.Name.Name}, true
-		}
-		return []string{d.Name.Name}, true
-	case *ast.TypeSpec:
-		if fileScope {
-			return []string{d.Name.Name}, true
-		}
-	case *ast.ValueSpec:
-		// Only a package-level spec names a row. A local `var x = ...` inside a function
-		// is not the declaration an agent is looking for; the function is.
-		if fileScope && len(d.Names) > 0 {
-			names := make([]string, 0, len(d.Names))
-			for _, name := range d.Names {
-				names = append(names, name.Name)
-			}
-			return names, true
-		}
-	}
-	return nil, false
-}
-
-// receiverName is the base type name a method hangs off, with the pointer star and any
-// type parameters stripped. It is the empty string for a plain function.
-func receiverName(d *ast.FuncDecl) string {
-	if d.Recv == nil || len(d.Recv.List) == 0 {
-		return ""
-	}
-	expr := d.Recv.List[0].Type
-	for {
-		switch t := expr.(type) {
-		case *ast.StarExpr:
-			expr = t.X
-		case *ast.IndexExpr:
-			expr = t.X
-		case *ast.IndexListExpr:
-			expr = t.X
-		case *ast.Ident:
-			return t.Name
-		default:
-			return ""
-		}
-	}
 }

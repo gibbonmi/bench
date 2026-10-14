@@ -42,9 +42,9 @@ type found struct {
 // closure walks every ticket entry to its fixed point. A ticket with no write reads no
 // owner, so a repository whose tickets write nothing needs no readable inventory. changes
 // are the inventory's declared changes, whose grammar declarations the walk resolves and
-// whose callers census reads. Each ticket that writes also reads every verified reused
-// owner in owners.
-func closure(root string, source Source, parsed []tickets.Ticket, changes []Change, census *census, owners []ownerSource) ([]Requirement, []Diagnostic, error) {
+// whose callers and liveness censuses read. Each write entry of a ticket also reads the rule
+// source of every verified reused owner in owners.
+func closure(root string, source Source, parsed []tickets.Ticket, changes []Change, census *census, owners []Provenance) ([]Requirement, []Diagnostic, error) {
 	if !slices.ContainsFunc(parsed, func(ticket tickets.Ticket) bool { return len(ticket.Writes) > 0 }) {
 		return nil, nil, nil
 	}
@@ -62,6 +62,7 @@ func closure(root string, source Source, parsed []tickets.Ticket, changes []Chan
 	inv.effects.declare(changes)
 	var callerDiagnostics []Diagnostic
 	inv.uses, callerDiagnostics = census.callers(changes)
+	callerDiagnostics = append(callerDiagnostics, census.liveness(changes)...)
 	var requirements []Requirement
 	for _, ticket := range parsed {
 		if len(ticket.Writes) == 0 {
@@ -70,9 +71,9 @@ func closure(root string, source Source, parsed []tickets.Ticket, changes []Chan
 		owned := OwnedPaths(ticket)
 		for _, entry := range ticket.Writes {
 			requirements = append(requirements, inv.walk(ticket.Name, entry, owned)...)
-		}
-		for _, owner := range owners {
-			requirements = append(requirements, Requirement{Ticket: ticket.Name, Entry: owner.premise, Path: owner.reason.Owner, Kind: KindOwner, Provenance: []Provenance{owner.reason}})
+			for _, owner := range owners {
+				requirements = append(requirements, Requirement{Ticket: ticket.Name, Entry: entry, Path: owner.Owner, Kind: KindOwner, Provenance: []Provenance{owner}})
+			}
 		}
 	}
 	return requirements, append(append(inv.diagnostics(requirements), inv.effects.diagnostics...), callerDiagnostics...), nil

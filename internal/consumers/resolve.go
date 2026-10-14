@@ -2,6 +2,7 @@ package consumers
 
 import (
 	"fmt"
+	"go/ast"
 	"go/token"
 	"go/types"
 	"slices"
@@ -16,6 +17,8 @@ type Match struct {
 	PkgPath   string
 	Qualified string
 	Kind      string
+	// Name is the declaration's spelling inside its package: a name, or Type.Member.
+	Name string
 }
 
 // Resolve maps a symbol query onto the declarations it names. The grammar is an
@@ -44,27 +47,20 @@ func Resolve(pkgs []*Package, query string) ([]Match, error) {
 		}
 		seen[key] = true
 		names = append(names, name)
-		out = append(out, Match{Obj: o, PkgPath: pkg.PkgPath, Kind: kind})
+		out = append(out, Match{Obj: o, PkgPath: pkg.PkgPath, Kind: kind, Name: name})
 	}
-	n := len(parts)
 	for _, pkg := range pkgs {
 		if pkg.Types == nil {
 			continue
 		}
 		scope := pkg.Types.Scope()
-		// A trailing single name reads as a package-scope declaration.
-		if pkgSuffixMatches(pkg.PkgPath, parts[:n-1]) {
-			name := parts[n-1]
-			if obj := scope.Lookup(name); obj != nil {
-				add(pkg, obj, name, objKind(obj))
-			}
-		}
-		// A trailing pair reads as Type.Method. Both readings are attempted, because
-		// `a.B` is ambiguous between a package-qualified name and a method on a
-		// package-scope type in the current package.
-		if n >= 2 && pkgSuffixMatches(pkg.PkgPath, parts[:n-2]) {
-			if m := lookupMember(scope, parts[n-2], parts[n-1]); m != nil {
-				add(pkg, m, parts[n-2]+"."+parts[n-1], objKind(m))
+		for _, local := range readings(pkg.PkgPath, parts) {
+			if len(local) == 1 {
+				if obj := scope.Lookup(local[0]); obj != nil {
+					add(pkg, obj, local[0], objKind(obj))
+				}
+			} else if m := lookupMember(scope, local[0], local[1]); m != nil {
+				add(pkg, m, local[0]+"."+local[1], objKind(m))
 			}
 		}
 	}
@@ -73,6 +69,39 @@ func Resolve(pkgs []*Package, query string) ([]Match, error) {
 	}
 	qualify(out, names)
 	return out, nil
+}
+
+// readings is every declaration spelling that the query parts name inside the package at
+// pkgPath. A trailing single name reads as a package-scope declaration, and a trailing pair
+// reads as Type.Member, each when the parts before it qualify pkgPath. Both readings are
+// kept, because `a.B` is ambiguous between a package-qualified name and a member of a
+// package-scope type in an unqualified package. The single name comes first.
+func readings(pkgPath string, parts []string) [][]string {
+	n := len(parts)
+	var out [][]string
+	if pkgSuffixMatches(pkgPath, parts[:n-1]) {
+		out = append(out, parts[n-1:])
+	}
+	if n >= 2 && pkgSuffixMatches(pkgPath, parts[:n-2]) {
+		out = append(out, parts[n-2:])
+	}
+	return out
+}
+
+// LocalName is the spelling inside the package at pkgPath that a symbol query names, by the
+// grammar Resolve reads: a name, or Type.Member. When both readings qualify, the single name
+// wins, as the package-qualified reading. A malformed query, or one that names no
+// declaration spelling of that package, is an error.
+func LocalName(pkgPath, query string) (string, error) {
+	parts := strings.Split(query, ".")
+	if slices.Contains(parts, "") {
+		return "", fmt.Errorf("malformed symbol %q", query)
+	}
+	local := readings(pkgPath, parts)
+	if len(local) == 0 {
+		return "", fmt.Errorf("symbol %q names no declaration of package %q", query, pkgPath)
+	}
+	return strings.Join(local[0], "."), nil
 }
 
 // qualify fills in each match's re-query spelling. The spelling is an import-path suffix
@@ -146,11 +175,13 @@ func lookupMember(scope *types.Scope, typeName, member string) types.Object {
 // pkgSuffixMatches reports whether path is qualified by the dotted suffix the query
 // carried. An empty suffix matches every package, which is what a bare identifier means.
 func pkgSuffixMatches(path string, suffix []string) bool {
-	if len(suffix) == 0 {
-		return true
-	}
-	want := strings.Join(suffix, "/")
-	return path == want || strings.HasSuffix(path, "/"+want)
+	return PathHasSuffix(path, strings.Join(suffix, "/"))
+}
+
+// PathHasSuffix reports whether the import path ends in the slash-separated suffix at an
+// element boundary. An empty suffix matches every path.
+func PathHasSuffix(path, suffix string) bool {
+	return suffix == "" || path == suffix || strings.HasSuffix(path, "/"+suffix)
 }
 
 // pathSuffix is the import path's last depth elements, the spelling a qualified re-query
@@ -224,4 +255,67 @@ func origin(obj types.Object) types.Object {
 		return o.Origin()
 	}
 	return obj
+}
+
+// declNames is the one derivation of the declaration-name forms this surface reports: a
+// function, a Type.Method, a package-level type, and a package-level var or const spec. A
+// node outside those reports false, so the row walker's innermost open name is the answer
+// for every row, and a use with no enclosing declaration at all keeps the empty string.
+// fileScope says no named declaration is open yet.
+//
+// A spec declaring several names reports them all, because the blast walk names each
+// declaration separately. The row walker reads the first, because a use inside the spec
+// sits inside one declaration statement whatever that statement declares.
+func declNames(n ast.Node, fileScope bool) ([]string, bool) {
+	switch d := n.(type) {
+	case *ast.FuncDecl:
+		if recv := receiverName(d); recv != "" {
+			return []string{recv + "." + d.Name.Name}, true
+		}
+		return []string{d.Name.Name}, true
+	case *ast.TypeSpec:
+		if fileScope {
+			return []string{d.Name.Name}, true
+		}
+	case *ast.ValueSpec:
+		// Only a package-level spec names a row. A local `var x = ...` inside a function
+		// is not the declaration an agent is looking for; the function is.
+		if fileScope && len(d.Names) > 0 {
+			names := make([]string, 0, len(d.Names))
+			for _, name := range d.Names {
+				names = append(names, name.Name)
+			}
+			return names, true
+		}
+	}
+	return nil, false
+}
+
+// DeclNames is declNames for a package-level node: the names one top-level declaration or
+// spec declares, in the spelling a row's enclosing cell carries.
+func DeclNames(n ast.Node) ([]string, bool) {
+	return declNames(n, true)
+}
+
+// receiverName is the base type name a method hangs off, with the pointer star and any
+// type parameters stripped. It is the empty string for a plain function.
+func receiverName(d *ast.FuncDecl) string {
+	if d.Recv == nil || len(d.Recv.List) == 0 {
+		return ""
+	}
+	expr := d.Recv.List[0].Type
+	for {
+		switch t := expr.(type) {
+		case *ast.StarExpr:
+			expr = t.X
+		case *ast.IndexExpr:
+			expr = t.X
+		case *ast.IndexListExpr:
+			expr = t.X
+		case *ast.Ident:
+			return t.Name
+		default:
+			return ""
+		}
+	}
 }

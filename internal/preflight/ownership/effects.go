@@ -205,7 +205,7 @@ func (e *effects) declare(changes []Change) {
 // declaredRoot is the selector a declared change names: its owner's package directory and
 // the exact declaration name after the symbol's package qualifier.
 func declaredRoot(change Change) tickets.GrammarRoot {
-	return tickets.GrammarRoot{Dir: path.Dir(change.Owner.Path), Name: localName(change.Owner.Symbol)}
+	return tickets.GrammarRoot{Dir: path.Dir(change.Owner.Path), Name: localName(change.Owner)}
 }
 
 // unionKeys is the sorted key union of two unit maps.

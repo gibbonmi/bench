@@ -214,71 +214,6 @@ func merged(sets ...map[string]string) map[string]string {
 	return all
 }
 
-// The helper fixture module. helper.go declares the unexported mergeFixture, which three
-// same-package test files call; mergetest.Seed is a fixture helper that another package's
-// test calls. policy.go holds the owners that TestOwnerPremises grades.
-const (
-	module      = "example.com/fixture"
-	mergeHelper = "internal/merge/helper.go"
-	movedFile   = "internal/merge/moved.go"
-	callerA     = "internal/merge/a_test.go"
-	callerB     = "internal/merge/b_test.go"
-	callerC     = "internal/merge/c_test.go"
-	seedFile    = "internal/merge/mergetest/fixture.go"
-	external    = "internal/other/other_test.go"
-	goneFile    = "internal/merge/gone.go"
-	policyFile  = "internal/policy/policy.go"
-)
-
-// caller is one same-package test file of mergeFixture, or of nothing when uses is false.
-func caller(name string, uses bool) string {
-	body := ""
-	if uses {
-		body = ` _ = mergeFixture("a", "b") `
-	}
-	return "package merge\n\nimport \"testing\"\n\nfunc Test" + name + "(t *testing.T) {" + body + "}\n"
-}
-
-// helperBase is the committed base of every helper, deletion, and owner premise case.
-var helperBase = map[string]string{
-	"go.mod":    "module " + module + "\n\ngo 1.25\n",
-	mergeHelper: "package merge\n\nfunc mergeFixture(a, b string) string { return a + b }\n",
-	callerA:     caller("A", true), callerB: caller("B", true), callerC: caller("C", true),
-	seedFile:                       "package mergetest\n\nfunc Seed() string { return \"seed\" }\n",
-	external:                       "package other\n\nimport (\n\t\"testing\"\n\n\t\"" + module + "/internal/merge/mergetest\"\n)\n\nfunc TestOther(t *testing.T) { _ = mergetest.Seed() }\n",
-	goneFile:                       "package merge\n",
-	policyFile:                     "package policy\n\nfunc home() bool { return true }\n\nfunc retired() int { return 1 }\n\nfunc write(v int) int { return v }\n\ntype row struct{ Reason string }\n",
-	"internal/policy/consumers.go": "package policy\n\nfunc keepA() int { return retired() }\n\nfunc keepB() int { return retired() + 1 }\n",
-	"internal/policy/writers.go":   "package policy\n\nfunc reader() bool { return home() }\n\nfunc writerA() int { return write(1) }\n",
-	"internal/policy/sync.go":      "package policy\n\nfunc syncWrite() int { return write(2) }\n",
-	"internal/policy/render.go":    "package policy\n\nfunc renderA() row { return row{Reason: \"a\"} }\n\nfunc renderB() row {\n\tvar r row\n\tr.Reason = \"b\"\n\treturn r\n}\n",
-}
-
-// helperFence authorizes every fixture path that a tip edits, so only the ticket's own
-// Writes separate the owned callers from the proposed ones.
-var helperFence = []string{"- `internal/merge/`", "- `internal/other/`", "- `internal/policy/`"}
-
-// ownerJSON is the exact identity of symbol, declared in path.
-func ownerJSON(path, symbol, kind string) string {
-	return `{"path":"` + path + `","package":"` + module + "/" + filepath.ToSlash(filepath.Dir(path)) + `","symbol":"` + symbol + `","kind":"` + kind + `","signature":""}`
-}
-
-// withItems is the complete-empty inventory whose key array holds items.
-func withItems(key string, items ...string) string {
-	return fenced(strings.Replace(completeEmpty, `"`+key+`":[]`, `"`+key+`":[`+strings.Join(items, ",")+`]`, 1))
-}
-
-// changeItem declares one change of symbol in path, relocated to destination when it is
-// not empty.
-func changeItem(kind, state, path, symbol, destination string) string {
-	target := "null"
-	if destination != "" {
-		target = `"` + destination + `"`
-	}
-	return `{"id":"merge-change",` + itemLocation + `,"kind":"` + kind + `","owner":` + ownerJSON(path, symbol, "func") +
-		`,"caller_scope":"production-and-tests","state":"` + state + `","destination":` + target + `,"dispositions":[]}`
-}
-
 // TestHelperCallers drives each declared helper change through the actual proposal. The
 // ticket owns the helper and its first caller, so each other caller is a proposed write.
 // The third caller sits outside every seed path, so a sampled sweep misses it. After a
@@ -312,6 +247,14 @@ func TestHelperCallers(t *testing.T) {
 		{name: "planned helper has no invented callers", writes: []string{mergeHelper, callerA},
 			facts: withItems("changes", changeItem("signature", "planned", mergeHelper, "merge.mergeFixture", "")),
 			want:  map[string]bool{callerB: false, callerC: false}},
+		{name: "a present method's former caller stays diagnostic", writes: []string{teeFile, teeCallerD},
+			facts:   withItems("changes", changeItem("signature", "existing", teeFile, "merge.T.Merge", "")),
+			tip:     map[string]string{teeFile: strings.Replace(helperBase[teeFile], "return a", `return a + "!"`, 1), teeCallerE: teeCaller("E", false)},
+			premise: "caller-census", reason: "merge.T.Merge is a method, whose former callers need the types"},
+		{name: "a liveness change grades its dispositions against the retirement census", writes: []string{policyFile},
+			facts: withItems("changes", `{"id":"retire",`+itemLocation+`,"kind":"liveness","owner":`+ownerJSON(policyFile, "policy.retired", "func")+
+				`,"caller_scope":"production-and-tests","state":"existing","destination":null,"dispositions":[{"symbol":"policy.keepA","action":"remove"}]}`),
+			premise: "liveness-census", reason: "internal/policy/consumers.go keepB has 0 dispositions, want 1"},
 	}
 	for _, test := range cases {
 		test.files, test.fence = helperBase, helperFence
@@ -344,30 +287,47 @@ func TestDeletedEntry(t *testing.T) {
 	}
 }
 
-// premiseItem is one current premise of kind with its tagged subject and expected values.
-func premiseItem(id, kind, subject, expected string) string {
-	return `{"id":"` + id + `",` + itemLocation + `,"kind":"` + kind + `","state":"current","subject":` + subject + `,"expected":` + expected + `}`
-}
-
 // TestOwnerPremises grades each owner premise of one inventory through the actual
 // proposal. Each partial census omits a second real member: a second lifecycle consumer, an
-// independent writer site, and a second renderer branch.
+// independent writer site, and a second renderer branch. The printer's read of the field is
+// no producer.
 func TestOwnerPremises(t *testing.T) {
 	consumer := func(symbol string) string { return ownerJSON("internal/policy/consumers.go", symbol, "func") }
 	home := func(line int) string {
 		return `{"owner":{"path":"` + policyFile + `","line":` + fmt.Sprint(line) + `,"needle":"func home() bool","source":"tip"}}`
 	}
+	list := func(path string, symbols ...string) string {
+		owners := make([]string, len(symbols))
+		for i, symbol := range symbols {
+			owners[i] = ownerJSON(path, symbol, "func")
+		}
+		return "[" + strings.Join(owners, ",") + "]"
+	}
+	probe := `{"path":"internal/policy/policy_test.go","function":"TestWrite","record_spec":"specs/policy/spec.md","source_commit":"a","evidence_commit":"b","chunk":"C1","verification":"policy-1","mutation":"drop-sync"`
+	posture := func(callers, extra string) string {
+		return `{"owner":` + ownerJSON(policyFile, "policy.write", "func") + `,"callers":` + callers + `,"writer_probe":` + probe + extra + `}}`
+	}
+	field := func(producers string) string {
+		return `{"field":` + ownerJSON(policyFile, "policy.row.Reason", "field") + `,"producers":` + producers + `}`
+	}
+	writers := list("internal/policy/writers.go", "policy.writerA")
+	both := `[` + ownerJSON("internal/policy/writers.go", "policy.writerA", "func") + `,` + ownerJSON("internal/policy/sync.go", "policy.syncWrite", "func") + `]`
+	renderers := list("internal/policy/render.go", "policy.renderA", "policy.renderB")
 	facts := withItems("premises",
 		premiseItem("home-owner", "reused-owner", home(3), `{"required":true}`),
 		premiseItem("moved-owner", "reused-owner", home(4), `{"required":true}`),
 		premiseItem("partial-retirement", "retirement", `{"owner":`+ownerJSON(policyFile, "policy.retired", "func")+`,"consumers":[`+consumer("policy.keepA")+`]}`, `{"dispositions":[{"symbol":"policy.keepA","action":"remove"}]}`),
 		premiseItem("complete-retirement", "retirement", `{"owner":`+ownerJSON(policyFile, "policy.retired", "func")+`,"consumers":[`+consumer("policy.keepA")+`,`+consumer("policy.keepB")+`]}`,
 			`{"dispositions":[{"symbol":"policy.keepA","action":"remove"},{"symbol":"policy.keepB","action":"retain"}]}`),
-		premiseItem("partial-posture", "posture", `{"owner":`+ownerJSON(policyFile, "policy.write", "func")+`,"writer_probe":{"function":"TestWrite"}}`, `{"callers":[`+ownerJSON("internal/policy/writers.go", "policy.writerA", "func")+`]}`),
-		premiseItem("partial-field", "printed-field", `{"field":`+ownerJSON(policyFile, "policy.row.Reason", "field")+`}`, `{"producers":[`+ownerJSON("internal/policy/render.go", "policy.renderA", "func")+`]}`))
+		premiseItem("partial-posture", "posture", posture(writers, ""), `{"callers":`+writers+`}`),
+		premiseItem("complete-posture", "posture", posture(both, ""), `{"callers":`+both+`}`),
+		premiseItem("loose-probe", "posture", posture(both, `,"extra":true`), `{"callers":`+both+`}`),
+		premiseItem("partial-field", "printed-field", field(list("internal/policy/render.go", "policy.renderA")), `{"producers":`+list("internal/policy/render.go", "policy.renderA")+`}`),
+		premiseItem("complete-field", "printed-field", field(renderers), `{"producers":`+renderers+`}`),
+		premiseItem("mismatched-field", "printed-field", field(renderers), `{"producers":`+list("internal/policy/render.go", "policy.renderA")+`}`))
 	out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: helperBase, Fence: helperFence, Tail: facts}.Seed(t))
 	t.Run("OC28 reused owner adds its rule source", func(t *testing.T) {
-		one(t, out, "closure", map[string]string{"ticket": "one.md", "path": "home-owner", "requires": policyFile})
+		one(t, out, "closure", map[string]string{"ticket": "one.md", "path": "internal/policy/render.go", "requires": policyFile})
 		row := one(t, out, "closure_evidence", map[string]string{"ticket": "one.md", "path": policyFile, "kind": "owner"})
 		if cell(row, "source") != policyFile || cell(row, "line") != "3" || len(matching(t, out, "writes_proposal", map[string]string{"path": policyFile})) != 0 {
 			t.Fatalf("owner evidence = %v, want %s line 3 and no proposed write", row, policyFile)
@@ -379,7 +339,11 @@ func TestOwnerPremises(t *testing.T) {
 		"partial-retirement":  {"unknown", "omits internal/policy/consumers.go keepB"},
 		"complete-retirement": {"green", "complete at the source tip: 2 member(s)"},
 		"partial-posture":     {"unknown", "omits internal/policy/sync.go syncWrite"},
+		"complete-posture":    {"unknown", "no collector certifies its writer_probe evidence"},
+		"loose-probe":         {"unknown", `subject: writer_probe: unknown field "extra"`},
 		"partial-field":       {"unknown", "omits internal/policy/render.go renderB"},
+		"complete-field":      {"green", "complete at the source tip: 2 member(s)"},
+		"mismatched-field":    {"unknown", "the expected producers differ from the subject producers"},
 	} {
 		t.Run(id, func(t *testing.T) {
 			row := one(t, out, "premises", map[string]string{"id": id})

@@ -24,7 +24,7 @@ type beforeState struct {
 // base Go sources whose bytes hold the name; the reader then keeps only the files that name
 // the declaration itself. An absent source base reads nothing.
 func (c *census) before(change Change) (beforeState, error) {
-	name := localName(change.Owner.Symbol)
+	name := localName(change.Owner)
 	if c.source.Base == "" || name == "" {
 		return beforeState{}, nil
 	}

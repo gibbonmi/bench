@@ -138,7 +138,10 @@ var (
 	ownerKeys    = []string{"path", "package", "symbol", "kind", "signature"}
 	manualKeys   = []string{"id", "location", "reason", "applicability"}
 	nativeKeys   = []string{"row", "chunk", "ticket", "verification", "phase_owner", "observation"}
-	premiseKinds = []string{"lines", "glob-members", "headroom", "symbol", "import", "anchor-kind", "sentinel", "error", "bound",
+	// reusedTestKeys is the reused-test subject, which a posture premise's writer probe also
+	// takes.
+	reusedTestKeys = []string{"path", "function", "record_spec", "source_commit", "evidence_commit", "chunk", "verification", "mutation"}
+	premiseKinds   = []string{"lines", "glob-members", "headroom", "symbol", "import", "anchor-kind", "sentinel", "error", "bound",
 		"reused-test", "reused-owner", "retirement", "posture", "fence-exclusion", "printed-field"}
 )
 
@@ -280,7 +283,7 @@ func decodeChange(_ *itemDecoder, raw json.RawMessage, where string) (Change, st
 	var item Change
 	object, err := typed(raw, where, &item, "id", "location", "kind", "owner", "caller_scope", "state", "destination", "dispositions")
 	if err == nil {
-		_, err = fields(object["owner"], where+"owner: ", ownerKeys...)
+		_, err = identity(object["owner"], where+"owner: ")
 	}
 	var dispositions []json.RawMessage
 	if err == nil {

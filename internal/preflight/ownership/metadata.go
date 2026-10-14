@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/maps"
 )
@@ -129,11 +130,17 @@ func disposition(raw json.RawMessage, where string) (Disposition, error) {
 	return item, enum(where, "action", item.Action, "retain", "migrate", "remove")
 }
 
-// identity decodes one exact owner identity.
+// identity decodes one exact owner identity. Its symbol must spell a declaration of its
+// package by the consumers query grammar.
 func identity(raw json.RawMessage, where string) (Owner, error) {
 	var owner Owner
-	_, err := typed(raw, where, &owner, ownerKeys...)
-	return owner, err
+	if _, err := typed(raw, where, &owner, ownerKeys...); err != nil {
+		return Owner{}, err
+	}
+	if _, err := consumers.LocalName(owner.Package, owner.Symbol); err != nil {
+		return Owner{}, fmt.Errorf("%sinvalid symbol: %v", where, err)
+	}
+	return owner, nil
 }
 
 // identities decodes one array of exact owner identities.

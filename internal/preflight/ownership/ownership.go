@@ -82,7 +82,8 @@ type Provenance struct {
 // Requirement is one path that a ticket entry requires, directly or through the fixed
 // point, with every independent reason that requires it. Entry is the originating
 // `Writes:` entry, so a transitive requirement names the write that started its chain. An
-// owner requirement starts at no write, so its Entry is the premise that declares it.
+// owner requirement appears under each write entry of its ticket, and its reason names the
+// premise that declares it.
 type Requirement struct {
 	Ticket, Entry, Path string
 	Kind                Kind

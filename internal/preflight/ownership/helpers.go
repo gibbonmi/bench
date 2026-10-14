@@ -1,7 +1,6 @@
 package ownership
 
 import (
-	"encoding/json"
 	"fmt"
 	"go/types"
 	"path/filepath"
@@ -85,16 +84,22 @@ func (c *census) declaration(owner Owner) (types.Object, string, int, error) {
 		return nil, "", 0, nil
 	}
 	for _, match := range matches {
-		if match.PkgPath == owner.Package && len(pkgs) > 0 {
-			position := pkgs[0].Fset.Position(match.Obj.Pos())
-			rel, err := filepath.Rel(c.root, position.Filename)
-			if err != nil {
-				return nil, "", 0, err
-			}
-			return match.Obj, filepath.ToSlash(rel), position.Line, nil
+		if match.PkgPath == owner.Package {
+			file, line, err := c.position(pkgs, match.Obj)
+			return match.Obj, file, line, err
 		}
 	}
 	return nil, "", 0, nil
+}
+
+// position is the repository path and line that declare one loaded object.
+func (c *census) position(pkgs []*consumers.Package, obj types.Object) (string, int, error) {
+	position := pkgs[0].Fset.Position(obj.Pos())
+	rel, err := filepath.Rel(c.root, position.Filename)
+	if err != nil {
+		return "", 0, err
+	}
+	return filepath.ToSlash(rel), position.Line, nil
 }
 
 // callers is every static use of each existing signature or fixture-helper change, in
@@ -132,7 +137,7 @@ func (c *census) callers(changes []Change) ([]use, []Diagnostic) {
 			diagnose(change, "the base census does not read: %v", err)
 		case before.line == 0:
 			diagnose(change, "%s declares no %s at the source base", change.Owner.Path, change.Owner.Symbol)
-		case obj == nil && strings.Contains(localName(change.Owner.Symbol), "."):
+		case strings.Contains(localName(change.Owner), "."):
 			diagnose(change, "%s is a method, whose former callers need the types that the source base does not load", change.Owner.Symbol)
 		}
 		for _, found := range before.uses {
@@ -150,39 +155,36 @@ func appendUse(uses []use, next use) []use {
 	return append(uses, next)
 }
 
-// localName is a symbol's name inside its package, after the package qualifier.
-func localName(symbol string) string {
-	_, name, _ := strings.Cut(symbol, ".")
+// localName is an owner's declaration spelling inside its package, by the consumers query
+// grammar. Owner decoding refuses a symbol with no such spelling, so that read cannot fail
+// here.
+func localName(owner Owner) string {
+	name, _ := consumers.LocalName(owner.Package, owner.Symbol)
 	return name
-}
-
-// ownerSource is one verified reused owner: the premise that declares it and the reason
-// that locates its rule source.
-type ownerSource struct {
-	premise string
-	reason  Provenance
 }
 
 // premises grades each current premise of a kind this census owns: a reused owner, and the
 // retirement, posture, and printed-field member censuses. It answers the graded row of each
-// such premise by ID, and each verified reused owner that the closure reads. A fault
+// such premise by ID, and the reason that locates each verified reused owner's rule source,
+// which the closure reads. A fault
 // leaves its premise unknown with that fault as the reason.
-func (c *census) premises(items []PremiseItem) (map[string]Premise, []ownerSource) {
+func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance) {
 	graded := map[string]Premise{}
-	var owners []ownerSource
+	var owners []Provenance
 	for _, item := range items {
 		var reason string
 		var err error
+		shape, member := memberCensuses[item.Kind]
 		switch {
 		case item.State != "current":
 			continue
 		case item.Kind == "reused-owner":
-			var owner ownerSource
+			var owner Provenance
 			if owner, reason, err = c.reusedOwner(item); err == nil {
 				owners = append(owners, owner)
 			}
-		case item.Kind == "retirement" || item.Kind == "posture" || item.Kind == "printed-field":
-			reason, err = c.memberCensus(item)
+		case member:
+			reason, err = c.memberCensus(item, shape)
 		default:
 			continue
 		}
@@ -196,8 +198,8 @@ func (c *census) premises(items []PremiseItem) (map[string]Premise, []ownerSourc
 }
 
 // reusedOwner verifies one reused owner location at its pinned source and answers the
-// rule source that the closure reads.
-func (c *census) reusedOwner(item PremiseItem) (ownerSource, string, error) {
+// reason that locates the rule source the closure reads.
+func (c *census) reusedOwner(item PremiseItem) (Provenance, string, error) {
 	var subject struct {
 		Owner Location `json:"owner"`
 	}
@@ -219,13 +221,13 @@ func (c *census) reusedOwner(item PremiseItem) (ownerSource, string, error) {
 		rev, err = c.locate(subject.Owner)
 	}
 	if err != nil {
-		return ownerSource{}, "", err
+		return Provenance{}, "", err
 	}
 	loc := subject.Owner
 	at := fmt.Sprintf("%s line %d at the source %s", loc.Path, loc.Line, loc.Source)
 	reason := Provenance{Owner: loc.Path, Line: loc.Line, Rule: "reused owner", Reason: "premise " + item.ID + " reuses the rule that " + at + " holds",
 		Base: c.source.Base, Tip: c.source.Tip, Source: rev, Scope: ScopeTree}
-	return ownerSource{premise: item.ID, reason: reason}, "reused owner " + at + " holds its needle", nil
+	return reason, "reused owner " + at + " holds its needle", nil
 }
 
 // locate verifies that one owner location's line holds its needle exactly once at its
@@ -248,131 +250,4 @@ func (c *census) locate(loc Location) (string, error) {
 		return "", fmt.Errorf("%s line %d does not hold its needle exactly once at the source %s", loc.Path, loc.Line, loc.Source)
 	}
 	return rev, nil
-}
-
-// memberCensus grades one member census against the static references at the source tip.
-// A retirement premise names every consumer of its owner, each with one disposition; a
-// posture premise names every static caller of its writer; a printed-field premise names
-// every declaration that references its field. A missing or extra member is no complete
-// census. A complete posture census still waits for its writer probe, which only a
-// reused-test collector certifies.
-func (c *census) memberCensus(item PremiseItem) (string, error) {
-	// Each kind's subject keys and expected keys, with the subject or expected key that
-	// lists the members.
-	shape := map[string]struct {
-		subject, expected []string
-		owner, members    string
-	}{
-		"retirement":    {[]string{"owner", "consumers"}, []string{"dispositions"}, "owner", "consumers"},
-		"posture":       {[]string{"owner", "writer_probe"}, []string{"callers"}, "owner", "callers"},
-		"printed-field": {[]string{"field"}, []string{"producers"}, "field", "producers"},
-	}[item.Kind]
-	subject, err := fields(item.Subject, "subject: ", shape.subject...)
-	if err != nil {
-		return "", err
-	}
-	expected, err := fields(item.Expected, "expected: ", shape.expected...)
-	if err != nil {
-		return "", err
-	}
-	owner, err := identity(subject[shape.owner], "subject: "+shape.owner+": ")
-	if err != nil {
-		return "", err
-	}
-	members := subject[shape.members]
-	if members == nil {
-		members = expected[shape.members]
-	}
-	listed, err := identities(members, shape.members+": ")
-	if err != nil {
-		return "", err
-	}
-	switch item.Kind {
-	case "retirement":
-		err = dispositions(listed, expected["dispositions"])
-	case "posture":
-		var probe map[string]json.RawMessage
-		if json.Unmarshal(subject["writer_probe"], &probe) != nil || probe == nil {
-			err = fmt.Errorf("subject: writer_probe is not a tagged object")
-		}
-	}
-	if err != nil {
-		return "", err
-	}
-	actual, err := c.members(owner, item.Kind == "posture")
-	if err != nil {
-		return "", err
-	}
-	if err := censusGaps(listed, actual); err != nil {
-		return "", err
-	}
-	if item.Kind == "posture" {
-		return "", fmt.Errorf("the caller census of %s is complete, but no collector certifies its writer_probe evidence", owner.Symbol)
-	}
-	return fmt.Sprintf("the %s census of %s is complete at the source tip: %d member(s)", item.Kind, owner.Symbol, len(actual)), nil
-}
-
-// members is every declaration that statically references owner at the source tip, or
-// only every static caller. Each member is a file and its enclosing declaration name.
-func (c *census) members(owner Owner, calls bool) ([]Owner, error) {
-	obj, file, _, err := c.declaration(owner)
-	if err != nil {
-		return nil, err
-	}
-	if obj == nil || file != owner.Path {
-		return nil, fmt.Errorf("%s does not resolve in %s at the source tip", owner.Symbol, owner.Path)
-	}
-	var found []Owner
-	for _, row := range consumers.Rows(c.pkgs, obj, c.root) {
-		member := Owner{Path: row.File, Symbol: row.Enclosing}
-		if (!calls || row.Via == consumers.ViaCall) && !slices.Contains(found, member) {
-			found = append(found, member)
-		}
-	}
-	return found, nil
-}
-
-// censusGaps names each actual member that listed omits and each listed identity that is
-// no member. A listed identity matches a member by path and by its name inside its package.
-func censusGaps(listed, actual []Owner) error {
-	matches := func(owner, member Owner) bool {
-		return owner.Path == member.Path && localName(owner.Symbol) == member.Symbol
-	}
-	var gaps []string
-	for _, member := range actual {
-		if !slices.ContainsFunc(listed, func(owner Owner) bool { return matches(owner, member) }) {
-			gaps = append(gaps, "omits "+member.Path+" "+member.Symbol)
-		}
-	}
-	for _, owner := range listed {
-		if !slices.ContainsFunc(actual, func(member Owner) bool { return matches(owner, member) }) {
-			gaps = append(gaps, "names "+owner.Symbol+", which is no member")
-		}
-	}
-	if len(gaps) > 0 {
-		return fmt.Errorf("the census %s", strings.Join(gaps, "; "))
-	}
-	return nil
-}
-
-// dispositions grades a retirement's dispositions: one valid action for each consumer.
-func dispositions(consumers []Owner, raw json.RawMessage) error {
-	var items []json.RawMessage
-	if err := json.Unmarshal(raw, &items); err != nil || items == nil {
-		return fmt.Errorf("expected: dispositions is not a JSON array")
-	}
-	actions := map[string][]string{}
-	for i, item := range items {
-		decoded, err := disposition(item, fmt.Sprintf("expected: dispositions[%d]: ", i))
-		if err != nil {
-			return err
-		}
-		actions[decoded.Symbol] = append(actions[decoded.Symbol], decoded.Action)
-	}
-	for _, consumer := range consumers {
-		if len(actions[consumer.Symbol]) != 1 {
-			return fmt.Errorf("retirement consumer %s has %d dispositions, want 1", consumer.Symbol, len(actions[consumer.Symbol]))
-		}
-	}
-	return nil
 }
