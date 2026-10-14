@@ -12,7 +12,7 @@ The guidance names the last ticket's author as the freezer and `bench record tic
 - The operating guide's chunk sentence names the last ticket's author as the freezer, within the 25-word sentence cap.
 - The review phase's step 6 names the last ticket's author as the writer of the frozen pair. The step 6 record paragraph holds 6 sentences, so the sentence that lists the excerpt and ticket forms goes in another paragraph of step 6. The sentence "Write each completed chunk, verification, review, and amendment entry with `bench record`, not with hand-built JSON." stays byte for byte.
 - The ticket craft and the reference name the last ticket's author as the freezer, and neither file holds `review freezes`.
-- The known-issues row that names FT405 goes. The other rows stay. The workaround of the nested-exec spill row keeps each sentence within 20 words (RT-CURRENT Standards S1).
+- The known-issues row that names FT405 goes. The other rows stay.
 - The changelog gains one entry that names the excerpt form, the ticket form, the retained response, and the `dirty_record` field.
 
 The chunk-chain registry and its twin get the changed and new anchors.
@@ -29,6 +29,5 @@ RT53 is a Forbid row on `FT405` in `docs/known-issues.md`, in `registry_ticket_p
 - [ ] The review phase's step 6 names the last ticket's author and `bench record ticket` for the frozen pair, and names the excerpt and ticket forms.
 - [ ] The ticket craft and the reference name the last ticket's author as the freezer and hold no `review freezes` text.
 - [ ] `docs/known-issues.md` holds no row that names FT405.
-- [ ] Each workaround sentence of the nested-exec spill row in `docs/known-issues.md` has 20 words or fewer.
 - [ ] Each changed sentence has an anchor and an independent twin that turn red when the sentence is absent.
 - [ ] `bench test --check guidance-prose-budgets` and `bench test --check prose-mechanics` pass.
