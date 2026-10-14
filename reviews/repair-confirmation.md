@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-confirmation/spec.md",
-  "plan_digest": "sha256:8183e6e25b90535106876889594989901d687b1bf04edf0782413b202d5df491",
+  "plan_digest": "sha256:95ed828f5d5f89a29adf85e5e1d81364d3cefdf3b1f08210a2973d040d61bb97",
   "implementation_session": "",
   "chunks": [
     {
@@ -1032,9 +1032,9 @@
     {
       "id": "RC-WRITE",
       "base": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
-      "tip": "b2ae2671830831521cb2e96635df46598dc6f1f7",
-      "plan_digest": "sha256:8183e6e25b90535106876889594989901d687b1bf04edf0782413b202d5df491",
-      "source_digest": "e244148f96a4c0a0f8835a838c7fd9ee2b7a64ac",
+      "tip": "1e4d31fb5cc3d773169ad0bb5c90f7a7c7060e3e",
+      "plan_digest": "sha256:95ed828f5d5f89a29adf85e5e1d81364d3cefdf3b1f08210a2973d040d61bb97",
+      "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
       "acceptance_rows": [
         "RC38",
         "RC39",
@@ -1044,6 +1044,7 @@
         "RC43",
         "RC44",
         "RC45",
+        "RC58",
         "RC46",
         "RC47"
       ],
@@ -1162,6 +1163,71 @@
             "ref": "claude-agent:ft379_t04:write-root-conformance",
             "digest": "sha256:70ea8804c429c0b37c6f05e48f45f919dc47bb04bc21965737d4c7dde896389c",
             "excerpt": "tree[1]{target,head,dirty}:\n  ft379-build,4feb26a55f0d4b9bb1eb3011f9ec2572e02be868,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15172,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "write-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-write-t04-rep1-writer-and-route",
+          "performer": "claude:ft379_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t04_rep1:writer-and-route",
+            "digest": "sha256:79e309817b85ef327f86910edcd5f3770c59e1b3802f53a44ef452d9ae50795b",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft379-build,1e4d31fb5cc3d773169ad0bb5c90f7a7c7060e3e,true\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17714,335\n  github.com/gibbonmi/bench/internal/conformance,pass,59161,1694\n  github.com/gibbonmi/bench/internal/gate,pass,42283,489\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3147,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17035,206\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "writer-and-route",
+          "command": "bench test --package ./internal/reviewrecord/... --package ./internal/gate --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-write-t04-rep1-route-precedence",
+          "performer": "claude:ft379_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t04_rep1:route-precedence",
+            "digest": "sha256:893f73f0dc3f75d71420cde0f37d96c750aa390d005f21579bc01c8085facd9c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,2,TestCheckpointEntryRepairForms/test-only_repair,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,489\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,795\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35895,489\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointEntryRepairForms/test-only_repair,\"record_repair_test.go:81: checkpoint = exit 1, stderr \\\"gate subject unavailable: completion evidence: chunk 1: completed Standards; resolve findings and obtain a completed result\\\\\\\\nnext=bench record 'review' --help\\\\\\\\n\\\"; want a refusal whose r… (291 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointKeepsStrictEvidence/moved_chunk,\"review_checkpoint_commits_test.go:188: strict evidence = 1 gate subject unavailable: completion evidence: chunk 1: stale Standards; review the current frozen pair\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "route-precedence",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "let the outcome refusal fire before the confirmation route",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft379_t04_rep1:route-precedence",
+              "digest": "sha256:893f73f0dc3f75d71420cde0f37d96c750aa390d005f21579bc01c8085facd9c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,2,TestCheckpointEntryRepairForms/test-only_repair,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,489\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,795\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35895,489\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointEntryRepairForms/test-only_repair,\"record_repair_test.go:81: checkpoint = exit 1, stderr \\\"gate subject unavailable: completion evidence: chunk 1: completed Standards; resolve findings and obtain a completed result\\\\\\\\nnext=bench record 'review' --help\\\\\\\\n\\\"; want a refusal whose r… (291 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointKeepsStrictEvidence/moved_chunk,\"review_checkpoint_commits_test.go:188: strict evidence = 1 gate subject unavailable: completion evidence: chunk 1: stale Standards; review the current frozen pair\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "rc-write-t04-rep1-write-root-conformance",
+          "performer": "claude:ft379_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t04_rep1:write-root-conformance",
+            "digest": "sha256:22b02ade8cc79096cd3276606a0d2b018f5189686385d43c3f8aa48ba4ec2d6e",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft379-build,1e4d31fb5cc3d773169ad0bb5c90f7a7c7060e3e,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14710,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "write-root-conformance",
           "command": "bench test --check root-conformance",
@@ -1343,6 +1409,24 @@
         ],
         "RC-PROVE": [
           "RC-PROVE"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8183e6e25b90535106876889594989901d687b1bf04edf0782413b202d5df491",
+      "to": "sha256:95ed828f5d5f89a29adf85e5e1d81364d3cefdf3b1f08210a2973d040d61bb97",
+      "chunk_ids": {
+        "RC-CARRY": [
+          "RC-CARRY"
+        ],
+        "RC-CYCLE": [
+          "RC-CYCLE"
+        ],
+        "RC-PROVE": [
+          "RC-PROVE"
+        ],
+        "RC-WRITE": [
+          "RC-WRITE"
         ]
       }
     }
