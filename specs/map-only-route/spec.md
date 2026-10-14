@@ -129,11 +129,12 @@ The spec-stage close in `/bench-write-spec`'s `Exit handoff` applies unchanged.
 ### Stop and return
 
 The slicer stops when a map decision is not an exact predicate or when the map leaves a code seam open.
+The slicer also stops when the map holds no decision ticket.
 The stop returns to the reviewer with a recommendation for the full route, and the slicer writes no further ticket.
 
 ### Thin spec
 
-A thin spec holds these parts, because the coverage check and the build preflight read them (`internal/preflight/gather.go:48-70`).
+A thin spec holds the parts that the coverage check and the build preflight read (`internal/preflight/gather.go:48-70`), and it holds the gap log for the sign-off.
 
 - `Status: staged`, one `Decision source:` line that names the compiled map, a `Verification log:` line, and the `Line:` fields.
 - `## User stories`, with at least one story for each map decision.
@@ -161,7 +162,7 @@ The two write-spec passages in `docs/field-guide.html` gain one clause each.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| MR-A / 1-add-the-map-only-route.md | The route reference, the write-spec pointer, the route anchors and their test rows, and the reader updates | MR1-MR33 | planned TestWriteSpecMapOnlyRoute, the live anchors check, the prose and budget checks | no |
+| MR-A / 1-add-the-map-only-route.md | The route reference, the write-spec pointer, the route anchors and their test rows, and the reader updates | MR1-MR34 | planned TestWriteSpecMapOnlyRoute, the live anchors check, the prose and budget checks | no |
 
 One chunk holds the change, because every part is guidance prose and its anchors, and no part creates a seam for a sibling.
 
@@ -213,17 +214,18 @@ One chunk holds the change, because every part is guidance prose and its anchors
 | MR20 | 20 | The route reference stops the slicer when a decision is not an exact predicate | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecMapOnlyRoute`) | A slicer without the stop writes a decision that the reviewer never made. |
 | MR21 | 21 | The route reference stops the slicer when the map leaves a code seam open | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecMapOnlyRoute`) | A slicer without the stop designs a seam with no research or spec review. |
 | MR22 | 22 | The route reference returns a stop to the reviewer with a recommendation for the full route | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecMapOnlyRoute`) | A stop with no return leaves the spec stage idle with no decision request. |
-| MR23 | 23 | The route reference lists the thin-spec parts that the coverage check and the build preflight read | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecMapOnlyRoute`) | A thin spec without the fence or the plan fails the build preflight bootstrap. |
+| MR23 | 23 | The route reference lists the thin-spec parts that the coverage check and the build preflight read, and it names the gap log apart from them | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecMapOnlyRoute`) | A thin spec without the fence or the plan fails the build preflight bootstrap. |
 | MR24 | 24 | The route reference requires the thin spec's `Decision source:` line to name the compiled map | review-owned | A thin spec that names the conversation hides the map from the ticket author. |
 | MR25 | 25 | `/bench-write-spec` holds the pointer sentence to `references/map-only-route.md` under `Who runs this phase` | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecMapOnlyRoute`) | A route reference with no pointer is unreachable from the phase. |
 | MR26 | 26 | `/bench-write-spec` holds 87 lines | `bench test --check guidance-prose-budgets` | A pointer on a new line breaks the 87-line budget. |
 | MR27 | 27 | Every existing write-spec anchor and canary stays green | `bench test --check docs-currency-workflow` (the live anchors over `/bench-write-spec`) | A reworded full-route sentence or a moved line wrap reds its anchor or its canary. |
-| MR28 | 28 | The registry holds one `RequireInSection` anchor for each route sentence of rows MR1-MR4, MR6-MR8, MR10-MR18, MR20-MR23, and MR25 | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecMapOnlyRoute`) | A sentence with no anchor can leave the reference with no red. |
+| MR28 | 28 | The registry holds one `RequireInSection` anchor for each route sentence of rows MR1-MR4, MR6-MR8, MR10-MR18, MR20-MR23, MR25, and MR34 | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecMapOnlyRoute`) | A sentence with no anchor can leave the reference with no red. |
 | MR29 | 29 | `TestWriteSpecMapOnlyRoute` states each needle and diagnostic as its own literal | review-owned | A test that reads the registry entries passes when a rule drops out of both. |
 | MR30 | 30 | The spec-authoring entry of `projects/benchkit.md` names the map-only route | review-owned | A routing entry that names only the fork misstates the reviewer-selected route. |
 | MR31 | 31 | Both write-spec passages of `docs/field-guide.html` name the map-only route | review-owned | A guide that names only the fan-out misstates the phase. |
 | MR32 | 32 | `CHANGELOG.md` holds an Unreleased entry for the map-only route | review-owned | A missing entry hides the change from a release note. |
 | MR33 | 33 | `README.md` and ADR 0022 hold no edit in the build diff | review-owned | An edit there restates the route in a second place. |
+| MR34 | 22 | The route reference stops the slicer when the map holds no decision ticket | planned TestWriteSpecMapOnlyRoute in internal/anchors/registry_ticket_passes_test.go | A slicer on an empty map writes a thin spec with zero stories, and no check turns red. |
 
 Not covered: story 34 — a reviewed exclusion whose cost the Out of scope section prices.
 Not covered: story 35 — a reviewed exclusion whose cost the Out of scope section prices.
