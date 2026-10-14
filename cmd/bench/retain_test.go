@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
@@ -37,7 +40,12 @@ func useRetainFixture(t *testing.T, definitions ...commandDefinition) retainFixt
 // boundedCommand is a bounded, tree-scoped command whose handler prints lines numbered lines
 // and exits with exit, so its response carries the identity row.
 func boundedCommand(name string, lines, exit int) commandDefinition {
-	return commandDefinition{Name: name, Inventory: publicInventory(), Bound: boundResponse, Scope: scopeTree, Run: exitingHandler(lines, exit)}
+	return boundedRun(name, exitingHandler(lines, exit))
+}
+
+// boundedRun is a bounded, tree-scoped command that runs run.
+func boundedRun(name string, run commandHandler) commandDefinition {
+	return commandDefinition{Name: name, Inventory: publicInventory(), Bound: boundResponse, Scope: scopeTree, Run: run}
 }
 
 func (f retainFixture) retained(t *testing.T) responsebound.Retained {
@@ -49,23 +57,47 @@ func (f retainFixture) retained(t *testing.T) responsebound.Retained {
 	return retained
 }
 
-// RT1, RT2, RT3: a call within the bound and a spilled call each leave their complete output
-// without the identity row or a spill frame, with the typed verb, the arguments after it, the
-// exit code, and the worktree's commit and dirty paths.
+// alternatingHandler answers a handler that prints lines numbered lines, the odd lines on
+// stdout and the even lines on stderr, and exits exit.
+func alternatingHandler(lines, exit int) commandHandler {
+	return func(c Command, _ []string) int {
+		streams := [2]io.Writer{c.Stdout, c.Stderr}
+		index := 0
+		for line := range strings.Lines(numberedLines(lines)) {
+			_, _ = io.WriteString(streams[index%2], line)
+			index++
+		}
+		return exit
+	}
+}
+
+// RT1, RT2, RT3: a call within the bound, a call within the bound that alternates its two
+// streams, and a spilled call each replace the retained response of an earlier call. Each
+// leaves its complete output in arrival order, without the identity row or a spill frame,
+// with the typed verb, the arguments after it, the exit code, and the worktree's commit and
+// dirty paths.
 func TestRetainKeepsTheCompleteResponse(t *testing.T) {
 	for _, row := range []struct {
 		name        string
 		lines, exit int
+		handler     func(lines, exit int) commandHandler
 	}{
-		{"within the bound", 3, 3},
-		{"spilled", 25, 0},
+		{"within the bound", 3, 3, exitingHandler},
+		{"alternating streams", 4, 3, alternatingHandler},
+		{"spilled", 25, 0, exitingHandler},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			f := useRetainFixture(t, boundedCommand("test", row.lines, row.exit))
+			f := useRetainFixture(t, boundedCommand("test", 1, 5))
+			if _, code := dispatch("test", "--earlier"); code != 5 || f.retained(t).Exit != 5 {
+				t.Fatalf("earlier test exit = %d, want 5 and a retained response", code)
+			}
+			commandRegistry = []commandDefinition{boundedRun("test", row.handler(row.lines, row.exit))}
 			if err := os.WriteFile(filepath.Join(f.checkout, "note.txt"), []byte("dirty\n"), 0o600); err != nil {
 				t.Fatal(err)
 			}
-			if _, code := dispatch("test", "--package", "./x"); code != row.exit {
+			// Each stream takes its own writer, as in a real process, so the owner keeps them apart.
+			var stdout, stderr bytes.Buffer
+			if code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"test", "--package", "./x"}); code != row.exit {
 				t.Fatalf("test exit = %d, want %d", code, row.exit)
 			}
 			want := responsebound.Retained{

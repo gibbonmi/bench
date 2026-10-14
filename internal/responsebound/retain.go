@@ -6,11 +6,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
-	"slices"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
-	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
 // retainedName is the file of the retained response in an assignment scope. It carries no
@@ -29,28 +26,31 @@ type Retained struct {
 	Output []byte   `json:"output"`
 }
 
-// retainedPath answers the store levels below home of the assignment scope of the worktree
-// at root, the retained response path in that scope, and false for a root outside any
-// assignment worktree.
-func retainedPath(home, root string) ([]string, string, bool) {
-	scope, ok := AssignmentScope(home, root)
-	if !ok {
-		return nil, "", false
+// retainedPath answers the assignment scope directory of the worktree at root and the
+// retained response path in it. It answers false for a root outside any assignment worktree.
+func retainedPath(home, root string) (scopeDir, string, bool, error) {
+	dir, err := storeScope(home, root, false)
+	if err != nil || dir.scope == primaryScope {
+		return dir, "", false, err
 	}
-	levels := []string{storeDirName, poolkey.Key(root), scope}
-	return levels, filepath.Join(slices.Concat([]string{home}, levels, []string{retainedName})...), true
+	path, err := dir.file(retainedName)
+	return dir, path, err == nil, err
 }
 
-// Retain replaces the retained response of the assignment worktree at root with the complete
-// output of the finished response o and the call that call answers. A response with no
-// complete copy clears the retained response, and so does a failed call; call runs only when
-// the write follows. A root outside any assignment worktree keeps nothing.
+// Retain replaces the retained response of the assignment worktree at root with the
+// complete output of the finished response o. The call function answers the other fields
+// of the retained response, and Retain runs it only when the write follows. A response with
+// no complete copy clears the retained response. A call function that returns an error
+// clears it too. A root outside any assignment worktree keeps nothing.
 func (o *Owner) Retain(home, root string, call func() (Retained, error)) error {
-	levels, path, ok := retainedPath(home, root)
+	dir, path, ok, err := retainedPath(home, root)
+	if err != nil {
+		return fmt.Errorf("retain response: %w", err)
+	}
 	if !ok {
 		return nil
 	}
-	if err := privateDirs(home, levels...); err != nil {
+	if err := dir.create(); err != nil {
 		return fmt.Errorf("retain response: %w", err)
 	}
 	output, ok := o.completeOutput()
@@ -80,7 +80,10 @@ func clearRetained(path string) error {
 // response, and a root outside any assignment worktree, answer an error that matches
 // fs.ErrNotExist.
 func ReadRetained(home, root string) (Retained, error) {
-	_, path, ok := retainedPath(home, root)
+	_, path, ok, err := retainedPath(home, root)
+	if err != nil {
+		return Retained{}, fmt.Errorf("read retained response: %w", err)
+	}
 	if !ok {
 		return Retained{}, fmt.Errorf("read retained response: no assignment worktree: %w", fs.ErrNotExist)
 	}

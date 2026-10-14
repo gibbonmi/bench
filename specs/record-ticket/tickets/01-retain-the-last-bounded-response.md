@@ -13,7 +13,7 @@ It also holds the `HEAD` commit of the worktree and its dirty paths, read after 
 `responsebound` gains one accessor for the complete bytes of a finished response.
 The accessor answers the retained writes of a response within the bound and the spill file bytes of a spilled response.
 It answers no bytes for the spill-failed state and for the `passing` state.
-`Finish` sets the retained writes to nil today, so the accessor reads them before that reset.
+`Finish` keeps the retained writes and the phase, so the accessor reads them after the response prints.
 The lead identity row is not part of the retained bytes.
 
 The only caller of `runBounded` passes the arguments after the verb word.

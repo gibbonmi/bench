@@ -39,8 +39,6 @@ const (
 	passing
 	// unspilled keeps every byte the spill file refused after a midway write failure.
 	unspilled
-	// finished passes a late write through to its own stream.
-	finished
 )
 
 // streamWrite is one retained write and the stream it arrived on.
@@ -59,7 +57,10 @@ type Owner struct {
 	retiring       bool
 	create         func(path string) (io.WriteCloser, error)
 
+	// phase stays where the response stood at Finish, so the retained writes or the spill
+	// file still answer the complete bytes after it.
 	phase    phase
+	finished bool
 	retained []streamWrite
 	lines    lineTracker
 	// stdoutOpen and stderrOpen report that the stream's last byte is not a newline. The
@@ -75,10 +76,6 @@ type Owner struct {
 	reason     string
 	// lead is the block that Finish prints first on stdout, outside the bound.
 	lead string
-	// whole reports a finished response that one copy holds complete: replayed within the
-	// bound, or the spill file at path.
-	whole    bool
-	replayed []byte
 }
 
 // New returns the owner of one response whose original streams are stdout and stderr.
@@ -116,7 +113,8 @@ func (o *Owner) write(stdout bool, p []byte) {
 	if stdout {
 		stream = o.stdout
 	}
-	if o.phase == finished {
+	if o.finished {
+		// A late write passes through to its own stream.
 		_, _ = stream.Write(p)
 		return
 	}
@@ -205,18 +203,19 @@ func (o *Owner) Lead(block string) {
 func (o *Owner) Finish() {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	if o.phase != passing && o.phase != finished {
+	if o.finished {
+		return
+	}
+	o.finished = true
+	if o.phase != passing {
 		_, _ = io.WriteString(o.stdout, o.lead)
 	}
 	switch o.phase {
 	case retaining:
 		for _, w := range o.retained {
 			_, _ = w.stream.Write(w.data)
-			o.replayed = append(o.replayed, w.data...)
 		}
-		o.retained, o.whole = nil, true
 	case spilling:
-		o.whole = true
 		_ = o.file.Close()
 		o.printProjection(fmt.Sprintf("%s{lines=%d,bytes=%d,omitted_lines=%d,cut_lines=%d,"+pathField+"%s}\n",
 			Spilled, o.lines.count, o.bytes, o.lines.omitted(), o.lines.cutLines(), o.path), o.lines.tailBytes())
@@ -233,7 +232,6 @@ func (o *Owner) Finish() {
 		}
 		_, _ = fmt.Fprintf(o.stdout, "%s%s{"+reasonField+"%s}\n", separator, SpillFailed, o.reason)
 	}
-	o.phase = finished
 }
 
 // completeOutput answers the complete bytes of a finished response in arrival order, without
@@ -243,13 +241,19 @@ func (o *Owner) completeOutput() ([]byte, bool) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	switch {
-	case !o.whole:
+	case !o.finished:
 		return nil, false
-	case o.path == "":
-		return o.replayed, true
+	case o.phase == retaining:
+		var output []byte
+		for _, w := range o.retained {
+			output = append(output, w.data...)
+		}
+		return output, true
+	case o.phase == spilling:
+		data, err := os.ReadFile(o.path)
+		return data, err == nil
 	}
-	data, err := os.ReadFile(o.path)
-	return data, err == nil
+	return nil, false
 }
 
 func (o *Owner) printProjection(line string, rest []byte) {

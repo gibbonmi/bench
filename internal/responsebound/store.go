@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/poolkey"
@@ -39,26 +40,61 @@ var (
 // create all return an error, and the caller takes the create-failure route. A new
 // spill in a primary scope then prunes that scope.
 func openSpill(home string, root func() string, retiring bool, create func(string) (io.WriteCloser, error)) (io.WriteCloser, string, error) {
-	home, err := filepath.Abs(home)
+	dir, err := storeScope(home, root(), retiring)
 	if err != nil {
 		return nil, "", err
 	}
-	key, scope := location(home, root(), retiring)
-	path := filepath.Join(home, storeDirName, key, scope, spillName())
-	if !sanitize.LineSafe(path) {
-		return nil, "", errUnsafePath
+	path, err := dir.file(spillName())
+	if err != nil {
+		return nil, "", err
 	}
-	if err := privateDirs(home, storeDirName, key, scope); err != nil {
+	if err := dir.create(); err != nil {
 		return nil, "", err
 	}
 	file, err := create(path)
 	if err != nil {
 		return nil, "", err
 	}
-	if scope == primaryScope {
+	if dir.scope == primaryScope {
 		prunePrimary(filepath.Dir(path))
 	}
 	return file, path, nil
+}
+
+// scopeDir is the store directory of one scope: the absolute Bench home, the store levels
+// below it, and the scope name. The spill files and the retained response of a scope share
+// this one directory.
+type scopeDir struct {
+	home   string
+	levels []string
+	scope  string
+}
+
+// storeScope answers the store directory of the scope of a process whose repository root
+// is root, or the empty string outside a repository.
+func storeScope(home, root string, retiring bool) (scopeDir, error) {
+	home, err := filepath.Abs(home)
+	if err != nil {
+		return scopeDir{}, err
+	}
+	key, scope := location(home, root, retiring)
+	return scopeDir{home: home, levels: []string{storeDirName, key, scope}, scope: scope}, nil
+}
+
+// file answers the path of the file name in the scope directory. A path that is not
+// line-safe returns an error.
+func (d scopeDir) file(name string) (string, error) {
+	path := filepath.Join(slices.Concat([]string{d.home}, d.levels, []string{name})...)
+	if !sanitize.LineSafe(path) {
+		return "", errUnsafePath
+	}
+	return path, nil
+}
+
+// create makes each level of the scope directory, and refuses a level that is not a real
+// directory.
+func (d scopeDir) create() error {
+	return privateDirs(d.home, d.levels...)
 }
 
 // location answers the repo key and the scope of a process whose repository root is
