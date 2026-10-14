@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/probe"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/shellcommand"
@@ -62,8 +63,8 @@ func excerpt(f form, root, spec string, parsed usage.Result) (string, int) {
 	}
 	call := append([]string{retained.Verb}, retained.Args...)
 	if requirement.Probe != "" {
-		if retained.Verb != "probe" {
-			return f.refuse(fmt.Sprintf("requirement %s plans a probe; the retained call is bench %s, not bench probe", requirement.ID, retained.Verb))
+		if retained.Verb != probe.Verb {
+			return f.refuse(fmt.Sprintf("requirement %s plans a probe; the retained call is bench %s, not bench %s", requirement.ID, retained.Verb, probe.Verb))
 		}
 	} else if !slices.Equal(call, planned) {
 		return f.refuse(fmt.Sprintf("the retained call bench %s differs from the planned command %s", strings.Join(call, " "), requirement.Command))

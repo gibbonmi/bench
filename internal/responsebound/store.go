@@ -95,17 +95,53 @@ func assignmentDir(home, root string) (scopeDir, bool, error) {
 // file answers the path of the file name in the scope directory. A path that is not
 // line-safe returns an error.
 func (d scopeDir) file(name string) (string, error) {
-	path := filepath.Join(slices.Concat([]string{d.home}, d.levels, []string{name})...)
+	path := filepath.Join(d.dir(), name)
 	if !sanitize.LineSafe(path) {
 		return "", errUnsafePath
 	}
 	return path, nil
 }
 
+// dir answers the path of the scope directory: the home and each store level below it.
+func (d scopeDir) dir() string {
+	return filepath.Join(slices.Concat([]string{d.home}, d.levels)...)
+}
+
 // create makes each level of the scope directory, and refuses a level that is not a real
 // directory.
 func (d scopeDir) create() error {
-	return privateDirs(d.home, d.levels...)
+	if err := os.MkdirAll(d.home, privateDir); err != nil {
+		return err
+	}
+	return d.realLevels("mkdir", func(dir string) error {
+		if err := os.Mkdir(dir, privateDir); err != nil && !errors.Is(err, fs.ErrExist) {
+			return err
+		}
+		return nil
+	})
+}
+
+// realLevels checks each store level below the home, in order. It never follows a symlink: a
+// level that is not a real directory refuses with a path error of the operation op. When
+// prepare is not nil, it runs on each level before the check.
+func (d scopeDir) realLevels(op string, prepare func(string) error) error {
+	dir := d.home
+	for _, component := range d.levels {
+		dir = filepath.Join(dir, component)
+		if prepare != nil {
+			if err := prepare(dir); err != nil {
+				return err
+			}
+		}
+		info, err := os.Lstat(dir)
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			return &fs.PathError{Op: op, Path: dir, Err: errNotOwnDir}
+		}
+	}
+	return nil
 }
 
 // location answers the repo key and the scope of a process whose repository root is
@@ -127,37 +163,6 @@ func location(home, root string, retiring bool) (string, string) {
 		return key, id
 	}
 	return key, primaryScope
-}
-
-// privateDirs creates each store directory below home with mode 0700. It never follows a
-// symlink: a component that already exists must be a real directory.
-func privateDirs(home string, components ...string) error {
-	if err := os.MkdirAll(home, privateDir); err != nil {
-		return err
-	}
-	dir := home
-	for _, component := range components {
-		dir = filepath.Join(dir, component)
-		if err := os.Mkdir(dir, privateDir); err != nil && !errors.Is(err, fs.ErrExist) {
-			return err
-		}
-		if err := realDir(dir); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// realDir refuses a path that is not a real directory, so a symlink is never followed.
-func realDir(dir string) error {
-	info, err := os.Lstat(dir)
-	if err != nil {
-		return err
-	}
-	if !info.IsDir() {
-		return &fs.PathError{Op: "mkdir", Path: dir, Err: errNotOwnDir}
-	}
-	return nil
 }
 
 // spillName generates a file name, so no operand or output byte forms the path. The time

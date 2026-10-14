@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 )
@@ -152,12 +151,8 @@ func readScoped(home, root, name string, v any) error {
 	if !ok {
 		return errNoAssignment
 	}
-	level := dir.home
-	for _, component := range dir.levels {
-		level = filepath.Join(level, component)
-		if err := realDir(level); err != nil {
-			return err
-		}
+	if err := dir.realLevels("read", nil); err != nil {
+		return err
 	}
 	info, err := os.Lstat(path)
 	if err != nil {

@@ -194,7 +194,7 @@ type VerificationCall struct {
 func RecordVerification(root, spec string, call VerificationCall) (Verification, error) {
 	var entry Verification
 	err := write(root, spec, absent(call.Chunk), func(record *Record) error {
-		list, source := &record.Completion.Verification, call.Source
+		list, source, requirement := &record.Completion.Verification, call.Source, Requirement{}
 		var chunk *Chunk
 		var err error
 		if call.Chunk != "" {
@@ -213,9 +213,10 @@ func RecordVerification(root, spec string, call VerificationCall) (Verification,
 		if chunk != nil && digest != chunk.SourceDigest {
 			return Repair{Form: FormChunk, Chunk: chunk.ID, Err: fmt.Errorf("source %s differs from the source of chunk %s: %w", source, chunk.ID, ErrNoChunkEntry)}
 		}
-		requirement, err := plannedRequirement(finalRequirements(plan, *record), call.Requirement)
 		if chunk != nil {
 			requirement, err = ChunkRequirement(plan, source, chunk.ID, call.Requirement)
+		} else {
+			requirement, err = plannedRequirement(finalRequirements(plan, *record), call.Requirement)
 		}
 		if err != nil {
 			return err

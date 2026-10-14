@@ -24,16 +24,13 @@ func Drop(home, root, assignment string) error {
 	if !poolkey.IsAssignmentID(assignment) {
 		return fmt.Errorf("response spill assignment id is malformed: %s", sanitize.Controls(assignment))
 	}
-	dir := home
-	for _, component := range []string{storeDirName, poolkey.Key(root)} {
-		dir = filepath.Join(dir, component)
-		if err := realDir(dir); errors.Is(err, fs.ErrNotExist) {
-			return nil
-		} else if err != nil {
-			return fmt.Errorf("remove response spills: %w", err)
-		}
+	repo := scopeDir{home: home, levels: []string{storeDirName, poolkey.Key(root)}}
+	if err := repo.realLevels("remove", nil); errors.Is(err, fs.ErrNotExist) {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("remove response spills: %w", err)
 	}
-	if err := os.RemoveAll(filepath.Join(dir, assignment)); err != nil {
+	if err := os.RemoveAll(filepath.Join(repo.dir(), assignment)); err != nil {
 		return fmt.Errorf("remove response spills: %w", err)
 	}
 	return nil

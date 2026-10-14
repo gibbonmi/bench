@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
@@ -14,6 +15,10 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// Verb is the verb word of the probe, as the grammar line of Usage names it after `bench`. A
+// retained call of the probe carries this verb word.
+var Verb = strings.Fields(Usage)[1]
 
 // probeFields is the verdict row's schema. failed_tests is a genuine count, so the row
 // renders through toon.TableTyped and that cell stays an integer on a round-trip.

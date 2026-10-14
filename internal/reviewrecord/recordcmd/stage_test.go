@@ -1,12 +1,11 @@
 package recordcmd_test
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"io/fs"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -38,17 +37,20 @@ func requireNoWorktreeWrite(t *testing.T, f *recordtest.Fixture) {
 	}
 }
 
-// setAnswer is a one-row mutant-set answer whose row bit, authored apart from the producer in
-// the envelope that the probe owner reads.
-const setAnswer = "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n" +
-	"  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\n" +
-	"selection[1]{form,target,run,baseline,builds}:\n  package,./,^TestClampNegative$,passed,0\n" +
-	"probe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+// setAnswer answers a mutant-set answer with one row, and that row bit. The probe runs in a scratch
+// fixture and binds its own Bench home, so a test calls it before recordtest.Staging.
+func setAnswer(t *testing.T) string {
+	t.Helper()
+	produce, _ := setProducer(t, linked(t, 1))
+	data, _ := produce([][]string{bitingEntry}, bite)
+	return data
+}
 
 // RT10, RT57: a retained call that equals the planned command stages its bytes, exit, commit,
 // and dirty paths, and the planned single-quoted operand folds as the shell folds it. A probe
 // requirement stages a `bench probe` answer, and a mutant-set answer stages with its row.
 func TestExcerptStagesTheRetainedResponse(t *testing.T) {
+	set := setAnswer(t)
 	for _, tc := range []struct {
 		name, requirement, verb string
 		args                    []string
@@ -58,7 +60,7 @@ func TestExcerptStagesTheRetainedResponse(t *testing.T) {
 	}{
 		{"quoted operand", "quoted", "test", []string{"--run", "TestA|TestB"}, "ok\n", nil, 0},
 		{"probe", "tests", "probe", []string{"clamp.go"}, answer("bit", "yes", 0, "1", report), nil, 0},
-		{"probe row", "tests", "probe", []string{"--mutants", "m.json"}, setAnswer, []string{"--mutant", "1"}, 1},
+		{"probe row", "tests", "probe", []string{"--mutants", "m.json"}, set, []string{"--mutant", "1"}, 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f, home := recordtest.Staging(t)
@@ -93,7 +95,7 @@ func TestExcerptReplacesTheFirstStage(t *testing.T) {
 
 // RT11, RT12, RT13, RT14, RT15, RT17: each refusal stages nothing and writes no worktree file.
 func TestExcerptRefusals(t *testing.T) {
-	quoted := []string{"--run", "TestA|TestB"}
+	quoted, set := []string{"--run", "TestA|TestB"}, setAnswer(t)
 	for _, tc := range []struct {
 		name, requirement string
 		retain            func(f *recordtest.Fixture, home string)
@@ -108,13 +110,17 @@ func TestExcerptRefusals(t *testing.T) {
 		{"probe without bench probe", "tests", func(f *recordtest.Fixture, home string) {
 			f.Retain(home, "test", []string{"--package", "./internal/example"}, 0, answer("bit", "yes", 0, "1", report))
 		}, nil, "requirement tests plans a probe; the retained call is bench test, not bench probe"},
-		{"mutant set without --mutant", "tests", func(f *recordtest.Fixture, home string) { f.Retain(home, "probe", nil, 0, setAnswer) }, nil,
+		{"mutant set without --mutant", "tests", func(f *recordtest.Fixture, home string) { f.Retain(home, "probe", nil, 0, set) }, nil,
 			"the retained response is a mutant-set answer; name one row with --mutant <n>"},
 		{"unplanned requirement", "typo", func(f *recordtest.Fixture, home string) { f.Retain(home, "test", quoted, 0, "ok\n") }, nil,
 			"requirement typo is not planned; the planned requirements are tests, quoted"},
 		{"over the excerpt limit", "quoted", func(f *recordtest.Fixture, home string) {
 			f.Retain(home, "test", quoted, 0, strings.Repeat("x", int(bounds.ControlRecordLimit)+1))
 		}, nil, "the retained response is unreadable: read limit exceeded"},
+		{"empty", "quoted", func(f *recordtest.Fixture, home string) { f.Retain(home, "test", quoted, 0, "") }, nil,
+			"the retained response is empty"},
+		{"invalid UTF-8", "quoted", func(f *recordtest.Fixture, home string) { f.Retain(home, "test", quoted, 0, "\xff\n") }, nil,
+			"the retained response is malformed"},
 		{"mutant without a probe", "quoted", func(f *recordtest.Fixture, home string) { f.Retain(home, "test", quoted, 0, "ok\n") }, []string{"--mutant", "1"},
 			"--mutant needs a probe requirement; requirement quoted plans no probe"},
 	} {
@@ -157,9 +163,8 @@ func TestExcerptRefusesAPlannedCommandThatIsNotOneBenchCommand(t *testing.T) {
 	}
 }
 
-// RT59: a requirement ID of ../x stages one file, named by the digest of the slug, the chunk
-// ID, and the requirement ID, in the assignment scope beside the retained response, and
-// nowhere else.
+// RT59: a requirement ID of ../x stages one new file in the assignment scope beside the
+// retained response, and nowhere else. No character of the ID forms the file name.
 func TestExcerptKeysAHostileRequirementInsideTheScope(t *testing.T) {
 	f, home := recordtest.Staging(t)
 	f.Plan.Chunks[0].Verification[1].ID = "../x"
@@ -170,10 +175,21 @@ func TestExcerptKeysAHostileRequirementInsideTheScope(t *testing.T) {
 		t.Fatalf("store files before the stage = %q, want the retained response alone", before)
 	}
 	succeed(t, f, stageArgs(t, "../x"))
-	sum := sha256.Sum256([]byte(slug(t) + "\x00" + "1" + "\x00" + "../x"))
-	want := []string{filepath.Join(filepath.Dir(before[0]), hex.EncodeToString(sum[:])), before[0]}
-	if got := responseboundtest.StoreFiles(t, home); !reflect.DeepEqual(got, want) {
-		t.Fatalf("store files after the stage = %q, want %q", got, want)
+	after := responseboundtest.StoreFiles(t, home)
+	added := slices.DeleteFunc(slices.Clone(after), func(file string) bool { return file == before[0] })
+	if len(after) != 2 || len(added) != 1 || filepath.Dir(added[0]) != filepath.Dir(before[0]) || strings.ContainsAny(filepath.Base(added[0]), "./x") {
+		t.Fatalf("store files after the stage = %q, want one new file beside %s whose name holds no ID character", after, before[0])
 	}
 	requireNoWorktreeWrite(t, f)
+}
+
+// The excerpt form refuses a --mutant value that is not a positive decimal row with its usage.
+func TestExcerptRefusesAnInvalidMutantRow(t *testing.T) {
+	f, _ := recordtest.Staging(t)
+	for _, row := range []string{"x", "0"} {
+		out, code := recordcmd.Command(f.Root, stageArgs(t, "tests", "--mutant", row))
+		if code != 2 || !strings.HasPrefix(out, "usage: bench record excerpt") {
+			t.Errorf("--mutant %s = exit %d, output %q; want exit 2 with a usage: bench record excerpt line", row, code, out)
+		}
+	}
 }

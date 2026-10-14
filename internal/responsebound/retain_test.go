@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 
 	rb "github.com/gibbonmi/bench/internal/responsebound"
@@ -118,6 +119,93 @@ func TestStageRefusesASymlinkedScope(t *testing.T) {
 	}
 	if got, err := rb.ReadStaged(home, checkout, "example", "1", "tests"); err == nil {
 		t.Fatalf("read through a symlinked scope = %+v, want a refusal", got)
+	}
+}
+
+// A stage or a retained response that is not a regular file refuses its read, even when each
+// store level is a real directory. A symlink to a valid copy refuses, and a FIFO whose writer
+// sends a valid copy refuses too, so the read never follows a link or reads a pipe.
+func TestReadRefusesAScopedFileThatIsNotRegular(t *testing.T) {
+	for _, store := range []struct {
+		name  string
+		write func(home, checkout string) error
+		read  func(home, checkout string) error
+	}{
+		{"stage", func(home, checkout string) error {
+			return rb.Stage(home, checkout, "example", "1", "tests", rb.Staged{Mutant: 1})
+		}, func(home, checkout string) error {
+			_, err := rb.ReadStaged(home, checkout, "example", "1", "tests")
+			return err
+		}},
+		{"retained", func(home, checkout string) error {
+			var sink bytes.Buffer
+			owner := rb.New(home, &sink, &sink, func() string { return checkout }, false)
+			rb.RespondWith(t, owner, &sink, rb.StdoutLines("kept\n"))
+			return owner.Retain(home, checkout, retainCall)
+		}, func(home, checkout string) error {
+			_, err := rb.ReadRetained(home, checkout)
+			return err
+		}},
+	} {
+		for _, kind := range []string{"symlink", "fifo"} {
+			t.Run(store.name+" "+kind, func(t *testing.T) {
+				home := rb.PrivateHome(t)
+				_, checkout, _ := responseboundtest.AssignmentCheckout(t, home)
+				if err := store.write(home, checkout); err != nil {
+					t.Fatal(err)
+				}
+				files := responseboundtest.StoreFiles(t, home)
+				if len(files) != 1 {
+					t.Fatalf("store files = %q, want one", files)
+				}
+				valid, err := os.ReadFile(files[0])
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Remove(files[0]); err != nil {
+					t.Fatal(err)
+				}
+				if kind == "symlink" {
+					copied := filepath.Join(t.TempDir(), "copy")
+					if err := os.WriteFile(copied, valid, 0o600); err != nil {
+						t.Fatal(err)
+					}
+					if err := os.Symlink(copied, files[0]); err != nil {
+						t.Fatal(err)
+					}
+				} else {
+					defer feedFIFO(t, files[0], valid)()
+				}
+				if err := store.read(home, checkout); err == nil {
+					t.Fatalf("read of a %s %s = nil, want a refusal", kind, store.name)
+				}
+			})
+		}
+	}
+}
+
+// feedFIFO makes path a FIFO whose writer sends data once a reader opens it. The answered
+// function opens and closes a reader without blocking, so the writer ends when no read came.
+func feedFIFO(t *testing.T, path string, data []byte) func() {
+	t.Helper()
+	if err := syscall.Mkfifo(path, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		writer, err := os.OpenFile(path, os.O_WRONLY, 0)
+		if err != nil {
+			return
+		}
+		_, _ = writer.Write(data)
+		_ = writer.Close()
+	}()
+	return func() {
+		if reader, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NONBLOCK, 0); err == nil {
+			_ = reader.Close()
+		}
+		<-done
 	}
 }
 
