@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/record-ticket/spec.md",
-  "plan_digest": "sha256:e8251dd1728182f946187f20d4eaba706b5aef43e7b9466d453dc0a7f24489e1",
+  "plan_digest": "sha256:42486740f78eecf36a5d28256e39518bcc3322ca5fa9ff6a5ccbfd36a77c74ce",
   "implementation_session": "",
   "chunks": [
     {
       "id": "RT-RETAIN",
       "base": "53e60dc58f0432fdadf2b31b78d4e7a25f85570d",
-      "tip": "9d989e126b4cbeac507b12ea3137250fd9c6b294",
-      "plan_digest": "sha256:e8251dd1728182f946187f20d4eaba706b5aef43e7b9466d453dc0a7f24489e1",
-      "source_digest": "e3239b89055da6012a766088982793175b60df59",
+      "tip": "9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b",
+      "plan_digest": "sha256:42486740f78eecf36a5d28256e39518bcc3322ca5fa9ff6a5ccbfd36a77c74ce",
+      "source_digest": "cab8f539483d4defec944d2a5f6804f75ea64e06",
       "acceptance_rows": [
         "RT1",
         "RT2",
@@ -107,6 +107,89 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/retain.go,omit,failed,1,TestRetainSkipsRecordWorktreeAndRetiringCalls/record,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,all,passed,345\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,527\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,14822,345\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRetainSkipsRecordWorktreeAndRetiringCalls/record,\"retain_test.go:102: retained after [\\\"record\\\" \\\"chunk\\\"] = {Verb:record Args:[chunk] Exit:0 Head:726829397659fa99a2294cdda885d1cf0a718bd0 Dirty:[] Output:[108 105 110 101 32 48 49 10 108 105 110 101 32 48 50 10]}, want the test response {Verb:… (352 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "ft405_t01_rep1-retention",
+          "performer": "claude:ft405_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cab8f539483d4defec944d2a5f6804f75ea64e06",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t01_rep1",
+            "digest": "sha256:9ecc567fbb07afad1be432d4c37857f183828f4cb278b775806dc2a28764b50e",
+            "excerpt": "packages[11]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17535,346\n  github.com/gibbonmi/bench/internal/conformance,pass,75581,1694\n  github.com/gibbonmi/bench/internal/gate,pass,46577,489\n  github.com/gibbonmi/bench/internal/git,pass,1388,172\n  github.com/gibbonmi/bench/internal/handoff,pass,2848,56\n  github.com/gibbonmi/bench/internal/responsebound,pass,245,61\n  github.com/gibbonmi/bench/internal/responsebound/responseboundtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/roadmap,pass,1819,176\n  github.com/gibbonmi/bench/internal/shift,pass,6024,116\n  github.com/gibbonmi/bench/internal/status,pass,8054,142\n  github.com/gibbonmi/bench/internal/worktree,pass,71792,1433\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "retention",
+          "command": "bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git --package ./internal/gate --package ./internal/handoff --package ./internal/roadmap --package ./internal/shift --package ./internal/status --package ./internal/worktree --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t01_rep1-retain-root",
+          "performer": "claude:ft405_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cab8f539483d4defec944d2a5f6804f75ea64e06",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t01_rep1",
+            "digest": "sha256:033fa4098d07a89ed8d91e8766e694b631a339412a0e15331b881b54d6bd2927",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft405-build,9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14872,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "retain-root",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t01_rep1-nested-exec",
+          "performer": "claude:ft405_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cab8f539483d4defec944d2a5f6804f75ea64e06",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t01_rep1",
+            "digest": "sha256:fa5e6c0e25644ea5426f41e34744009e4175fe559dd0233c53be51671d4bace5",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft405-build,9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b,true\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,2,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,442,2\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "nested-exec",
+          "command": "bench test --check system --run TestExecNested",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t01_rep1-record-skip",
+          "performer": "claude:ft405_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cab8f539483d4defec944d2a5f6804f75ea64e06",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t01_rep1",
+            "digest": "sha256:aaa697de6baba8552e9db7857f66b28e9435b00b91212195332d7e2adec9c7e8",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/retain.go,omit,failed,1,TestRetainSkipsRecordWorktreeAndRetiringCalls/record,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,all,passed,346\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,527\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,13777,346\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRetainSkipsRecordWorktreeAndRetiringCalls/record,\"retain_test.go:134: retained after [\\\"record\\\" \\\"chunk\\\"] = {Verb:record Args:[chunk] Exit:0 Head:b6164b11c80e15f340f6dd325403958956fa27da Dirty:[] Output:[108 105 110 101 32 48 49 10 108 105 110 101 32 48 50 10]}, want the test response {Verb:… (352 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-skip",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the record-family skip from retention",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft405_t01_rep1",
+              "digest": "sha256:aaa697de6baba8552e9db7857f66b28e9435b00b91212195332d7e2adec9c7e8",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/retain.go,omit,failed,1,TestRetainSkipsRecordWorktreeAndRetiringCalls/record,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,all,passed,346\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,527\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,13777,346\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRetainSkipsRecordWorktreeAndRetiringCalls/record,\"retain_test.go:134: retained after [\\\"record\\\" \\\"chunk\\\"] = {Verb:record Args:[chunk] Exit:0 Head:b6164b11c80e15f340f6dd325403958956fa27da Dirty:[] Output:[108 105 110 101 32 48 49 10 108 105 110 101 32 48 50 10]}, want the test response {Verb:… (352 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -187,13 +270,24 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:e8251dd1728182f946187f20d4eaba706b5aef43e7b9466d453dc0a7f24489e1",
+      "to": "sha256:42486740f78eecf36a5d28256e39518bcc3322ca5fa9ff6a5ccbfd36a77c74ce",
+      "chunk_ids": {
+        "RT-RETAIN": [
+          "RT-RETAIN"
+        ]
+      }
+    }
+  ]
 }
 ```
 
 ## Repair state
 
-RT-RETAIN: repair cycle 1 of 2 is in progress for ticket 01. No reviewer extension exists.
+RT-RETAIN: repair cycle 1 of 2 is complete for ticket 01. The repair commit is 9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b. No reviewer extension exists.
 
 ## Standards
 
