@@ -960,6 +960,72 @@
           "supersedes": [
             "rc-carry-coverage-1"
           ]
+        },
+        {
+          "id": "rc-carry-standards-3",
+          "performer": "claude:rc-carry-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "29aa0289855b6a4ba3b6baa3f4b30e579bdb92eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-carry-standards-3",
+            "digest": "sha256:4209d18a46d6900764753e02e81a3b21ee568dc4d8ec78175b038403fd1f47dd",
+            "excerpt": "Standards axis, RC-CARRY row-amendment round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current at source tip 1c295511; delta 4d026a78..d591e0ab touches only specs/repair-confirmation/spec.md (4 lines) and the review record; no code changed.\nRow RC37 (spec.md:356) has one sentence of 22 words; row RC57 (spec.md:376) has sentences of 24 and 12 words. Neither row adds duplicated knowledge. The earlier Standards pass at 4d026a78 still holds.\n"
+          },
+          "axis": "Standards",
+          "base": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "tip": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-carry-standards-2"
+          ]
+        },
+        {
+          "id": "rc-carry-spec-3",
+          "performer": "claude:rc-carry-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "29aa0289855b6a4ba3b6baa3f4b30e579bdb92eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-carry-spec-3",
+            "digest": "sha256:6b954713499a214f07dd9b5155f96ee65605bba24979b80c690f1d5c4088bacc",
+            "excerpt": "Spec axis, RC-CARRY row-amendment round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound at source tip 1c295511; named finding P2.\nP2 closed: RC57 (spec.md:375) matches the code; the parser refuses a non-independent role first (parse.go:109), and the test forces carried=true and expects a message that names the role (record_test.go:22-34; record.go:146-147).\nRC37 (spec.md:355): no guarantee weakened.\nAdvice (no ID): the RC37 cell is mildly overstated, because each of the four probes flips one condition of probeBites, so some drifts and an identical copy still pass, and the cell no longer says that review compares the two call sites.\n"
+          },
+          "axis": "Spec",
+          "base": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "tip": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-carry-spec-2"
+          ]
+        },
+        {
+          "id": "rc-carry-coverage-3",
+          "performer": "claude:rc-carry-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "29aa0289855b6a4ba3b6baa3f4b30e579bdb92eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:rc-carry-coverage-3",
+            "digest": "sha256:d675fc0d2bb71e54d556f8b9b05c59d64da34f4d19b456186c1282795d75779f",
+            "excerpt": "Coverage axis, RC-CARRY row-amendment round: pass. Count: 0 findings. Worst issue: none.\nEvidence bound current=true at source tip 1c295511; nothing after d591e0ab changes the spec or code.\nRC57 (spec.md:375) names the carried branch of checkReviews and the parser's earlier refusal; TestCarriedReviewKeepsTheRoleCondition (record_test.go:22-35) sets pair.carried, calls checkReviews, and asserts the role; its earlier probe bit.\nRC37 (spec.md:360) matches TestProbeChecksAgree (record_test.go:39-59), which compares the two verdicts on four probes; its earlier probe bit.\n"
+          },
+          "axis": "Coverage",
+          "base": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "tip": "d591e0ab58d0e5b01ed0455136f23939b4f39768",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-carry-coverage-2"
+          ]
         }
       ]
     }
@@ -1087,7 +1153,7 @@ RC-PROVE: 0 findings in both rounds. Worst issue: none.
 RC-CARRY: 1 finding in the first round. Worst issue: P1. The confirming round closed P1 and found P2.
 
 - P1 (auto-fix, confidence 4): a reviewed tip equal to the chunk base passes, so a test-only chunk can close with no review. The axis reaffirmed auto-fix through a strict-descent spec expansion (RC55), which is flagged for reviewer veto.
-- P2 (auto-fix, confidence 7): the RC57 row says the checkpoint refuses a carried wrong-role result with a reason that names the role. The parser refuses first, so the row's seam is the carried branch of `checkReviews`. A coverage-map amendment fixes the row.
+- P2 (auto-fix, confidence 7): the RC57 row says the checkpoint refuses a carried wrong-role result with a reason that names the role. The parser refuses first, so the row's seam is the carried branch of `checkReviews`. A coverage-map amendment fixed the row at `d591e0ab`, and a narrow round of all three axes passed.
 
 ## Coverage
 
@@ -1121,6 +1187,7 @@ RC-CARRY: 2 findings in the first round. Worst issue: C1. The confirming round c
 
 - RC-CARRY Standards: `checkChunkReviews` builds its review-form repair by hand, and two ancestry refusals end with no route clause.
 - RC-CARRY Spec: the RC-CARRY tests cell of the chunk table names planned tests, and the carry reads the reconciler from the frozen plan.
+- RC-CARRY row round: the RC37 cell still overstates `TestProbeChecksAgree`, because some drifts and an identical copy pass its four probes.
 - RC-CARRY confirming round: the RC37 cell should say that `TestProbeChecksAgree` catches a verdict drift on its four probes. Two test literals use a placeholder.
 - RC-CARRY Coverage: fold strictness is not red-capable, and the RC55 test needs a chunk of test files only.
 
@@ -1130,4 +1197,4 @@ RC-CYCLE: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t01_re
 
 RC-PROVE: 1 of 2 repair cycles and its one hardening cycle consumed. The repair session `claude:ft379_t02_rep1` closed S1, S3, and C1 to C5 at `b14ecb28`. The chunk froze at `78f71b6c`, and the confirming round of all three axes passed.
 
-RC-CARRY: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t03_rep1` closed S1 to S4, P1, C1, and C2 at `4d026a78`. P2 is a coverage-map amendment with no code change.
+RC-CARRY: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t03_rep1` closed S1 to S4, P1, C1, and C2 at `4d026a78`. P2 closed through a coverage-map amendment with no code change. The chunk froze at `d591e0ab`.
