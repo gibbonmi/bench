@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/gibbonmi/bench/internal/coverage"
+	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
 // Manifest is the authored planning-claim inventory of one spec. Authority and
@@ -142,13 +143,15 @@ var (
 
 // decodeManifest grades one payload against the version 1 schema. Every top-level array
 // is required, every object carries exactly its declared keys, and every enum takes its
-// exact spelling. rows is the spec's coverage map, which each row reference must name.
+// exact spelling. rows is the spec's coverage map, which each row reference must name. The
+// strict shared decoder reads the payload first, because a plain decode keeps the last
+// value of a repeated key and loses the first promise.
 func decodeManifest(payload []byte, rows []coverage.MapRow) (Manifest, error) {
-	if err := duplicateKey(payload); err != nil {
-		return Manifest{}, err
-	}
 	var top map[string]json.RawMessage
-	if err := json.Unmarshal(payload, &top); err != nil || top == nil {
+	if err := jsonfile.DecodeDocument(payload, &top); err != nil {
+		return Manifest{}, fmt.Errorf("%s payload: %w", MetadataLabel, err)
+	}
+	if top == nil {
 		return Manifest{}, fmt.Errorf("%s payload is not a JSON object", MetadataLabel)
 	}
 	var m Manifest

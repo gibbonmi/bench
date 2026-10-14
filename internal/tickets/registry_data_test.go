@@ -122,23 +122,27 @@ func TestBindingLinesLocateEveryRow(t *testing.T) {
 }
 
 // TestBindingRulesProjectBoundFiles keeps the typed rules and the legacy projection on one
-// table: every rule's prefix covers the path, no rule requires the path itself, and the
-// projection is the rules' sorted file set.
+// table. A path under the internal/toon row takes one rule for each bound file, a bound
+// file takes no rule that requires itself, and a sibling package takes none.
 func TestBindingRulesProjectBoundFiles(t *testing.T) {
-	for _, row := range Bindings() {
-		path := row.Prefix + "/probe.go"
-		var files []string
-		for _, rule := range BindingRules(path) {
-			if !Covers(rule.Prefix, path) || rule.File == path {
-				t.Errorf("BindingRules(%s) holds %v", path, rule)
-			}
-			if !slices.Contains(files, rule.File) {
-				files = append(files, rule.File)
-			}
+	for path, want := range map[string][]BindingRule{
+		"internal/toon/toon.go": {
+			{Prefix: "internal/toon", File: "internal/conformance/data_handling_test.go"},
+			{Prefix: "internal/toon", File: "internal/toon/toon_test.go"},
+		},
+		"internal/toon/toon_test.go": {{Prefix: "internal/toon", File: "internal/conformance/data_handling_test.go"}},
+		"internal/toonery/x.go":      nil,
+	} {
+		rules := BindingRules(path)
+		files := BoundFiles(path)
+		if !reflect.DeepEqual(rules, want) || len(files) != len(want) {
+			t.Errorf("BindingRules(%s) = %v and BoundFiles = %v, want rules %v", path, rules, files, want)
+			continue
 		}
-		sort.Strings(files)
-		if got := BoundFiles(path); len(files) == 0 || !reflect.DeepEqual(got, files) {
-			t.Errorf("BoundFiles(%s) = %v, want the rules' files %v", path, got, files)
+		for i, rule := range want {
+			if files[i] != rule.File {
+				t.Errorf("BoundFiles(%s) = %v, want the rules' files in order", path, files)
+			}
 		}
 	}
 }

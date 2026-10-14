@@ -6,11 +6,15 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/maps"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 )
+
+// itemLocation is the spec location every item of these cases carries.
+const itemLocation = `"location":{"path":"specs/example/spec.md","line":1,"needle":"# example","source":"spec"}`
 
 // linesPremise is one well-formed current premise item with the given id.
 func linesPremise(id string) string {
-	return `{"id":"` + id + `","location":{"path":"specs/example/spec.md","line":1,"needle":"# example","source":"spec"},"kind":"lines","state":"current","subject":{"path":"internal/example/foo.go","source":"tip"},"expected":{"count":1}}`
+	return `{"id":"` + id + `",` + itemLocation + `,"kind":"lines","state":"current","subject":{"path":"internal/example/foo.go","source":"tip"},"expected":{"count":1}}`
 }
 
 // withPremises is the complete-empty inventory holding the given premise items.
@@ -20,7 +24,7 @@ func withPremises(items ...string) string {
 
 // manualClaim is one manual claim item whose applicability tail the case supplies.
 func manualClaim(tail string) string {
-	return strings.Replace(completeEmpty, `"manual_claims":[]`, `"manual_claims":[{"id":"semantic","location":{"path":"specs/example/spec.md","line":1,"needle":"# example","source":"spec"},"reason":"semantic equivalence requires review",`+tail+`}]`, 1)
+	return strings.Replace(completeEmpty, `"manual_claims":[]`, `"manual_claims":[{"id":"semantic",`+itemLocation+`,"reason":"semantic equivalence requires review",`+tail+`}]`, 1)
 }
 
 // TestMetadataGrammar drives each planning-facts grammar case through the actual proposal.
@@ -33,9 +37,11 @@ func TestMetadataGrammar(t *testing.T) {
 		reason     string
 	}{
 		{"OC55 duplicate fence", fenced(completeEmpty) + fenced(completeEmpty), "metadata", "unknown", "more than once"},
-		{"OC56 duplicate key", fenced(strings.Replace(completeEmpty, `"version":1,`, `"version":1,"version":1,`, 1)), "metadata", "unknown", `duplicate JSON key "version"`},
+		{"OC56 duplicate key", fenced(strings.Replace(completeEmpty, `"version":1,`, `"version":1,"version":1,`, 1)), "metadata", "unknown", `duplicate object field "version"`},
+		{"OC56 nested duplicate key", fenced(withPremises(strings.Replace(linesPremise("p1"), `"expected":{"count":1}`, `"expected":{"count":1,"count":2}`, 1))), "metadata", "unknown", `duplicate object field "count"`},
 		{"OC57 unknown field", fenced(strings.Replace(completeEmpty, `"version":1,`, `"version":1,"extra":true,`, 1)), "metadata", "unknown", `unknown field "extra"`},
 		{"OC58 duplicate id", fenced(withPremises(linesPremise("p1"), linesPremise("p1"))), "metadata", "unknown", `duplicate item id "p1"`},
+		{"OC58 cross-array duplicate id", fenced(strings.Replace(withPremises(linesPremise("p1")), `"scope":[]`, `"scope":[{"id":"p1",`+itemLocation+`,"paths":["internal/example"]}]`, 1)), "metadata", "unknown", `duplicate item id "p1"`},
 		{"OC59 unsupported version", fenced(strings.Replace(completeEmpty, `"version":1`, `"version":2`, 1)), "metadata", "unknown", "unsupported metadata version 2"},
 		{"OC60 invalid enum", fenced(strings.Replace(completeEmpty, `"declared-complete"`, `"Declared-Complete"`, 1)), "metadata", "unknown", `invalid completeness "Declared-Complete"`},
 		{"OC91 opener inside another fence", "\n```text\n```bench-planning-facts\n" + completeEmpty + "\n```\n```\n", "metadata", "unknown", "no bench-planning-facts fence"},
@@ -44,6 +50,7 @@ func TestMetadataGrammar(t *testing.T) {
 		{"missing array", fenced(strings.Replace(completeEmpty, `,"manual_claims":[]`, "", 1)), "metadata", "unknown", `missing field "manual_claims"`},
 		{"current premise stays unproved", fenced(withPremises(linesPremise("p1"))), "p1", "unknown", "lines"},
 		{"current-premise manual claim", fenced(manualClaim(`"applicability":"current-premise"`)), "semantic", "manual", "current-premise"},
+		{"CRLF fence section", strings.ReplaceAll(fenced(manualClaim(`"applicability":"current-premise"`)), "\n", "\r\n"), "semantic", "manual", "current-premise"},
 		{"current-premise rejects native fields", fenced(manualClaim(`"applicability":"current-premise","row":"PF1"`)), "metadata", "unknown", `unknown field "row"`},
 		{"native-future requires its descriptor", fenced(manualClaim(`"applicability":"native-future","row":"PF1","chunk":"c1","ticket":"one.md","verification":"tests"`)), "metadata", "unknown", `missing field "phase_owner"`},
 		{"native-future stays manual", fenced(manualClaim(`"applicability":"native-future","row":"PF1","chunk":"c1","ticket":"one.md","verification":"tests","phase_owner":{"path":".agents/commands/bench-implement-spec.md","line":1,"needle":"# Source","source":"tip"},"observation":"unobserved"`)), "semantic", "manual", "native-future"},
@@ -55,6 +62,21 @@ func TestMetadataGrammar(t *testing.T) {
 			row := one(t, out, "premises", map[string]string{"id": test.id})
 			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
 				t.Fatalf("premise %s = %v, want state %s and a reason naming %q", test.id, row, test.state, test.reason)
+			}
+		})
+	}
+	for name, test := range map[string]struct {
+		text     string
+		complete bool
+	}{
+		"declared-complete empty inventory": {fenced(completeEmpty), true},
+		"partial inventory":                 {fenced(strings.Replace(completeEmpty, `"declared-complete"`, `"partial"`, 1)), false},
+		"manual claim":                      {fenced(manualClaim(`"applicability":"current-premise"`)), false},
+	} {
+		t.Run("Complete "+name, func(t *testing.T) {
+			snapshot, err := ownership.Collect(t.TempDir(), ownership.Source{}, ownership.ParseManifest([]byte(test.text)), nil)
+			if err != nil || snapshot.Complete != test.complete {
+				t.Fatalf("Collect = Complete %t, %v; want Complete %t", snapshot.Complete, err, test.complete)
 			}
 		})
 	}

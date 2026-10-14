@@ -169,11 +169,21 @@ func TestPinsNameEachProducerLocation(t *testing.T) {
 }
 
 // TestPinsRefuseASpecialInventory keeps a present inventory that is no readable directory
-// a fault. Only absence answers empty, so a link or a file at tests/canary cannot read as
-// a repository with nothing pinned.
+// a fault. Only absence answers empty, so a link, a file, or an unreadable directory at
+// tests/canary cannot read as a repository with nothing pinned.
 func TestPinsRefuseASpecialInventory(t *testing.T) {
 	for name, place := range map[string]func(t *testing.T, root string){
 		"file": func(t *testing.T, root string) { writeFixtureFile(t, Dir(root), "not a directory\n") },
+		"unreadable": func(t *testing.T, root string) {
+			if os.Geteuid() == 0 {
+				t.Skip("root reads a mode 000 directory")
+			}
+			writeFixtureFile(t, filepath.Join(Dir(root), "family", "fixture", "BASE"), "internal/example/base.go\n")
+			if err := os.Chmod(Dir(root), 0); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = os.Chmod(Dir(root), 0o755) })
+		},
 		"link": func(t *testing.T, root string) {
 			writeFixtureFile(t, filepath.Join(root, "elsewhere", "family", "fixture", "BASE"), "internal/example/base.go\n")
 			if err := os.MkdirAll(filepath.Dir(Dir(root)), 0o755); err != nil {

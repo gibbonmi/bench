@@ -1,7 +1,6 @@
 package ownership_test
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 const slug = "example"
@@ -121,6 +121,21 @@ func TestProposalFixedPoint(t *testing.T) {
 			t.Fatalf("kit-pin evidence = %v, want the tagged file, its build line, and BENCH_KIT", row)
 		}
 	})
+	// A BASE list separates its paths by white space, so the space sits in the fixture
+	// directory and in a second written path.
+	t.Run("OC1 path with a space", func(t *testing.T) {
+		out := mustPropose(t, ownershiptest.ProposalRepo{
+			Writes: []string{"internal/example/pinned.go", "internal/example/with space.go"},
+			Files: map[string]string{
+				"internal/example/pinned.go":            "package example\n",
+				"internal/example/with space.go":        "package example\n",
+				"tests/canary/fam/space fixture/BASE":   "internal/example/pinned.go\n",
+				"tests/canary/fam/space fixture/EXPECT": "red\n",
+			},
+		}.Seed(t))
+		one(t, out, "writes_proposal", map[string]string{"path": "tests/canary/fam/space fixture"})
+		one(t, out, "closure", map[string]string{"ticket": "one.md", "path": "internal/example/pinned.go", "requires": "tests/canary/fam/space fixture"})
+	})
 }
 
 // TestProposalProvenance grades each reason's owner, line, and source identity.
@@ -174,19 +189,19 @@ var kitRegistry, kitRegistryErr = os.ReadFile(filepath.Join("..", "..", "tickets
 
 // sealedKit seeds a repository whose published binary seal verifies, so its binding
 // registry source is the caller's authenticated kit context. The registry source is the
-// kit's own file. It answers the root and the line of the internal/toon binding row,
-// read from those bytes by a plain text search.
+// kit's own file. It answers the root and the line of the internal/toon binding row, which
+// the registry's own line owner locates in those bytes.
 func sealedKit(t *testing.T) (string, string) {
 	t.Helper()
 	registry, err := kitRegistry, kitRegistryErr
 	if err != nil {
 		t.Fatal(err)
 	}
-	at := bytes.Index(registry, []byte(`{Prefix: "internal/toon",`))
-	if at < 0 {
-		t.Fatal("kit registry holds no internal/toon binding row")
+	lines, err := tickets.BindingLines(registry)
+	if err != nil || lines["internal/toon"] < 1 {
+		t.Fatalf("kit registry locates no internal/toon binding row: %v", err)
 	}
-	line := fmt.Sprint(bytes.Count(registry[:at], []byte("\n")) + 1)
+	line := fmt.Sprint(lines["internal/toon"])
 	kit := ownershiptest.ProposalRepo{
 		Writes: []string{"internal/toon/toon.go"},
 		Files: map[string]string{
@@ -340,6 +355,22 @@ func TestProposalUnknown(t *testing.T) {
 				refused(t, out, code, "fixture inventory")
 			})
 		}
+		// The checkout read walks the whole tree before the collector runs, so it refuses an
+		// unreadable inventory first; TestPinsRefuseASpecialInventory grades the collector's
+		// own refusal of that state.
+		t.Run("unreadable directory", func(t *testing.T) {
+			if os.Geteuid() == 0 {
+				t.Skip("root reads a mode 000 directory")
+			}
+			root := closureTree().Seed(t)
+			inventory := filepath.Join(root, "tests", "canary")
+			if err := os.Chmod(inventory, 0); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = os.Chmod(inventory, 0o755) })
+			out, code := propose(t, root)
+			refused(t, out, code, "tests/canary: permission denied")
+		})
 	})
 	t.Run("OC84 unreadable anchor registry", func(t *testing.T) {
 		root := closureTree().Seed(t)

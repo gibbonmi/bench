@@ -122,8 +122,8 @@ type ChargeReadiness struct {
 }
 
 // Snapshot is one immutable collection. Complete means full supported premise
-// certification with no diagnostic; it is never reviewer approval, and any manual claim
-// keeps it false.
+// certification of a declared-complete inventory with no diagnostic; it is never reviewer
+// approval, and a partial inventory or any manual claim keeps it false.
 type Snapshot struct {
 	Requirements    []Requirement
 	Premises        []Premise
@@ -162,7 +162,7 @@ func Collect(root string, source Source, manifest Manifest, parsed []tickets.Tic
 		Premises:     manifest.premises(source.Tip),
 		Diagnostics:  append(manifest.diagnostics(), diagnostics...),
 	}
-	snapshot.Complete = manifest.Present && len(snapshot.Diagnostics) == 0
+	snapshot.Complete = manifest.Present && manifest.Completeness == completenessDeclared && len(snapshot.Diagnostics) == 0
 	for _, premise := range snapshot.Premises {
 		snapshot.Complete = snapshot.Complete && premise.State == StateGreen
 	}
