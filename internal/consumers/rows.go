@@ -2,14 +2,9 @@ package consumers
 
 import (
 	"go/ast"
-	"go/token"
 	"go/types"
-	"maps"
-	pathpkg "path"
 	"slices"
 	"sort"
-	"strconv"
-	"strings"
 )
 
 // The three values the via column carries. reference is the default: an appearance of
@@ -69,37 +64,56 @@ func Rows(pkgs []*Package, target types.Object, root string) []Row {
 
 // WriteRows is every static write of target across pkgs, in the order Rows uses: an
 // assignment or op-assignment target, an increment or decrement operand, and a field key of
-// a composite literal. A read is no write.
+// a composite literal of a struct type identical to target's struct. A read is no write.
 func WriteRows(pkgs []*Package, target types.Object, root string) []Row {
 	return sortRows(useRows(pkgs, target, root, true))
 }
 
-// UnkeyedWrites is every unkeyed composite literal across pkgs whose struct type declares the
-// field target, in the order Rows uses. Such a literal writes the field by position and names
-// no field, so WriteRows cannot list it. literalStructs owns which struct a literal writes.
-func UnkeyedWrites(pkgs []*Package, target types.Object, root string) []Row {
+// The two Via values of an unnamed write.
+const (
+	viaUnkeyed    = "an unkeyed literal"
+	viaConversion = "a conversion"
+)
+
+// UnnamedWrites is every write across pkgs that reaches the struct declaring the field target
+// and names no field, in the order Rows uses. An unkeyed composite literal of an identical
+// struct type writes the field by position, and a conversion to that struct from another type
+// carries a value whose write the census cannot see. Via names the form. A nil operand and
+// an operand of the conversion's own type write nothing. literalStructs owns which struct a
+// literal or a conversion writes, and structKey owns struct identity.
+func UnnamedWrites(pkgs []*Package, target types.Object, root string) []Row {
+	s := fieldStruct(target)
+	if s == nil {
+		return nil
+	}
+	want := structKey(s)
 	var out []Row
 	for _, pkg := range pkgs {
 		if pkg.Info == nil {
 			continue
 		}
-		want := declKey(pkg.Fset, target)
+		add := func(n ast.Node, via string) {
+			pos := pkg.Fset.Position(n.Pos())
+			out = append(out, Row{File: relPath(root, pos.Filename), Line: pos.Line, Column: pos.Column, Via: via})
+		}
 		for _, file := range pkg.Files {
 			ast.Inspect(file, func(n ast.Node) bool {
-				lit, ok := n.(*ast.CompositeLit)
-				if !ok || len(lit.Elts) == 0 || pkg.Info.TypeOf(lit) == nil {
-					return true
-				}
-				if _, keyed := lit.Elts[0].(*ast.KeyValueExpr); keyed {
-					return true
-				}
-				for _, fields := range literalStructs(pkg.Info.TypeOf(lit)) {
-					for i := range fields.NumFields() {
-						if declKey(pkg.Fset, fields.Field(i)) == want {
-							pos := pkg.Fset.Position(lit.Pos())
-							out = append(out, Row{File: relPath(root, pos.Filename), Line: pos.Line, Column: pos.Column})
-							break
-						}
+				switch e := n.(type) {
+				case *ast.CompositeLit:
+					if len(e.Elts) == 0 || !writesStruct(pkg.Info.TypeOf(e), want) {
+						return true
+					}
+					if _, keyed := e.Elts[0].(*ast.KeyValueExpr); !keyed {
+						add(e, viaUnkeyed)
+					}
+				case *ast.CallExpr:
+					to, ok := pkg.Info.Types[e.Fun]
+					if !ok || !to.IsType() || len(e.Args) != 1 || !writesStruct(to.Type, want) {
+						return true
+					}
+					from := pkg.Info.Types[e.Args[0]]
+					if !from.IsNil() && (from.Type == nil || !types.Identical(from.Type, to.Type)) {
+						add(e, viaConversion)
 					}
 				}
 				return true
@@ -107,6 +121,15 @@ func UnkeyedWrites(pkgs []*Package, target types.Object, root string) []Row {
 		}
 	}
 	return sortRows(out)
+}
+
+// writesStruct reports whether a literal or a conversion of the recorded type t writes the
+// struct whose structKey is want.
+func writesStruct(t types.Type, want string) bool {
+	if t == nil {
+		return false
+	}
+	return slices.ContainsFunc(literalStructs(t), func(s *types.Struct) bool { return structKey(s) == want })
 }
 
 // useRows is every use of target across pkgs, or only every static write of it.
@@ -125,6 +148,9 @@ func useRows(pkgs []*Package, target types.Object, root string, writesOnly bool)
 				targets[id] = true
 			}
 		}
+		if writesOnly {
+			identicalKeys(pkg, target, targets)
+		}
 		if len(targets) == 0 {
 			continue
 		}
@@ -133,6 +159,33 @@ func useRows(pkgs []*Package, target types.Object, root string, writesOnly bool)
 		}
 	}
 	return out
+}
+
+// identicalKeys adds to targets each field key in pkg that names target's field in a composite
+// literal of a struct type identical to target's struct. Such a literal declares its own field,
+// so the key's object is not target, yet the literal writes target's struct.
+func identicalKeys(pkg *Package, target types.Object, targets map[*ast.Ident]bool) {
+	s := fieldStruct(target)
+	if s == nil {
+		return
+	}
+	want := structKey(s)
+	for _, file := range pkg.Files {
+		ast.Inspect(file, func(n ast.Node) bool {
+			lit, ok := n.(*ast.CompositeLit)
+			if !ok || !writesStruct(pkg.Info.TypeOf(lit), want) {
+				return true
+			}
+			for _, elt := range lit.Elts {
+				if kv, ok := elt.(*ast.KeyValueExpr); ok {
+					if key, ok := kv.Key.(*ast.Ident); ok && key.Name == target.Name() {
+						targets[key] = true
+					}
+				}
+			}
+			return true
+		})
+	}
 }
 
 // sortRows orders rows by file, line, then column, and drops repeated positions.
@@ -255,90 +308,6 @@ func markWrites(pkg *Package, n ast.Node, writes map[*ast.Ident]bool) {
 			}
 		}
 	}
-}
-
-// SourceUse is one file of a revision's sources that names a declaration, at the line of
-// its first naming.
-type SourceUse struct {
-	File string
-	Line int
-}
-
-// SourceUses reads one revision's sources without type information, the way the deleted
-// table reads its base side. file declares name at package level in the package whose
-// import path is importPath. declared is the first line of that declaration, zero when
-// file declares no such name. uses is every other source that names it: a file of the
-// declaring package through the bare identifier, and any other file through a selector
-// on its import of importPath. The reading is lexical, so a local name that shadows the
-// declaration still counts as a use, and a source that does not parse names nothing. A
-// method spelling has no receiver type to resolve here, so it can declare but names
-// nothing.
-func SourceUses(sources map[string]string, file, importPath, name string) (declared int, uses []SourceUse) {
-	fset := token.NewFileSet()
-	owner, err := parseDecls(fset, file, sources[file])
-	if err != nil {
-		return 0, nil
-	}
-	for _, site := range topLevelDecls(fset, owner) {
-		if site.Name == name && declared == 0 {
-			declared = site.Start
-		}
-	}
-	if declared == 0 || strings.Contains(name, ".") {
-		return declared, nil
-	}
-	for _, other := range slices.Sorted(maps.Keys(sources)) {
-		parsed, err := parseDecls(fset, other, sources[other])
-		if other == file || err != nil {
-			continue
-		}
-		same := pathpkg.Dir(other) == pathpkg.Dir(file) && parsed.Name.Name == owner.Name.Name
-		if line := firstUse(fset, parsed, same, importPath, name); line > 0 {
-			uses = append(uses, SourceUse{File: other, Line: line})
-		}
-	}
-	return declared, uses
-}
-
-// firstUse is the first line of file that names name: a bare identifier in the declaring
-// package, or a selector on the file's import of importPath elsewhere. It is zero when
-// the file names it nowhere.
-func firstUse(fset *token.FileSet, file *ast.File, same bool, importPath, name string) int {
-	qualifier := ""
-	for _, spec := range file.Imports {
-		if name, imported := ImportName(spec); imported == importPath {
-			qualifier = name
-		}
-	}
-	line := 0
-	var visit func(ast.Node) bool
-	visit = func(node ast.Node) bool {
-		switch n := node.(type) {
-		case *ast.SelectorExpr:
-			if id, ok := n.X.(*ast.Ident); ok && !same && qualifier != "" && id.Name == qualifier && n.Sel.Name == name && line == 0 {
-				line = fset.Position(n.Sel.Pos()).Line
-			}
-			ast.Inspect(n.X, visit)
-			return false
-		case *ast.Ident:
-			if same && n.Name == name && line == 0 {
-				line = fset.Position(n.Pos()).Line
-			}
-		}
-		return line == 0
-	}
-	ast.Inspect(file, visit)
-	return line
-}
-
-// ImportName is the one reading of an import's local name: its explicit name, else the
-// last element of its path. path is the unquoted import path.
-func ImportName(spec *ast.ImportSpec) (name, path string) {
-	imported, _ := strconv.Unquote(spec.Path.Value)
-	if spec.Name != nil {
-		return spec.Name.Name, imported
-	}
-	return pathpkg.Base(imported), imported
 }
 
 // implementsRows answers the interface half of the via column. A query for an interface

@@ -257,8 +257,53 @@ func origin(obj types.Object) types.Object {
 	return obj
 }
 
-// literalStructs is every struct type that an unkeyed composite literal of the recorded type t
-// can write by position. An elided element literal records its hint type, so t can also be a
+// structKey is the one source of struct identity across loads. Two struct types that
+// types.Identical compares as one struct print as one key, and the key holds across a package
+// and its test variant, whose named field types are distinct objects. A key can join two
+// structs that types.Identical keeps apart, such as two packages' unexported field names; that
+// only widens a census toward its diagnostic.
+func structKey(s *types.Struct) string {
+	return types.TypeString(s, nil)
+}
+
+// fieldStruct is the struct type that declares the field target, found among the
+// package-scope types of target's package, including an anonymous struct nested in one. It is
+// nil when target is no field.
+func fieldStruct(target types.Object) *types.Struct {
+	field, ok := target.(*types.Var)
+	if !ok || !field.IsField() || field.Pkg() == nil {
+		return nil
+	}
+	field = field.Origin()
+	var declaring func(s *types.Struct) *types.Struct
+	declaring = func(s *types.Struct) *types.Struct {
+		for i := range s.NumFields() {
+			if s.Field(i) == field {
+				return s
+			}
+			if inner, ok := types.Unalias(s.Field(i).Type()).(*types.Struct); ok {
+				if found := declaring(inner); found != nil {
+					return found
+				}
+			}
+		}
+		return nil
+	}
+	scope := field.Pkg().Scope()
+	for _, name := range scope.Names() {
+		if tn, ok := scope.Lookup(name).(*types.TypeName); ok {
+			if s, ok := tn.Type().Underlying().(*types.Struct); ok {
+				if found := declaring(s); found != nil {
+					return found
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// literalStructs is every struct type that a composite literal or a conversion of the recorded
+// type t can write. An elided element literal records its hint type, so t can also be a
 // pointer to the struct, a named pointer, or a type parameter. A type parameter gives the
 // struct of each term of its constraint, alone or under the one elided pointer. The terms of a
 // literal that type-checks share one core type, so a term outside the type set only widens

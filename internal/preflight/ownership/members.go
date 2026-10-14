@@ -45,11 +45,11 @@ type memberShape struct {
 // memberCensuses is every member census kind. A retirement's members are every reference
 // to its owner, a posture's members are the static callers of its writer, and a
 // printed-field's members are the static writes of its field. An unkeyed literal of the
-// field's struct keeps a printed-field census incomplete.
+// field's struct, or a conversion to it, keeps a printed-field census incomplete.
 var memberCensuses = map[string]memberShape{
 	"retirement":    {[]string{"owner", "consumers"}, []string{"dispositions"}, "owner", "consumers", consumers.Rows, nil},
 	"posture":       {[]string{"owner", "callers", "writer_probe"}, []string{"callers"}, "owner", "callers", callRows, nil},
-	"printed-field": {[]string{"field", "producers"}, []string{"producers"}, "field", "producers", consumers.WriteRows, consumers.UnkeyedWrites},
+	"printed-field": {[]string{"field", "producers"}, []string{"producers"}, "field", "producers", consumers.WriteRows, consumers.UnnamedWrites},
 }
 
 // callRows is every static call of target.
@@ -136,7 +136,7 @@ func (c *census) members(owner Owner, shape memberShape) ([]Owner, error) {
 	}
 	if shape.unnamed != nil {
 		if unnamed := shape.unnamed(c.pkgs, obj, c.root); len(unnamed) > 0 {
-			return nil, fmt.Errorf("%s line %d writes %s through an unkeyed literal, which names no field", unnamed[0].File, unnamed[0].Line, owner.Symbol)
+			return nil, fmt.Errorf("%s line %d writes %s through %s, which names no field", unnamed[0].File, unnamed[0].Line, owner.Symbol, unnamed[0].Via)
 		}
 	}
 	var found []Owner

@@ -3,6 +3,12 @@ package consumers
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
+	"maps"
+	pathpkg "path"
+	"slices"
+	"strconv"
+	"strings"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -68,4 +74,88 @@ func loadPackages(dir string, patterns ...string) ([]*Package, error) {
 		})
 	}
 	return out, nil
+}
+
+// SourceUse is one file of a revision's sources that names a declaration, at the line of
+// its first naming.
+type SourceUse struct {
+	File string
+	Line int
+}
+
+// SourceUses reads one revision's sources without type information, the way the deleted
+// table reads its base side. file declares name at package level in the package whose
+// import path is importPath. declared is the first line of that declaration, zero when
+// file declares no such name. uses is every other source that names it: a file of the
+// declaring package through the bare identifier, and any other file through a selector
+// on its import of importPath. The reading is lexical, so a local name that shadows the
+// declaration still counts as a use, and a source that does not parse names nothing. A
+// method spelling has no receiver type to resolve here, so it can declare but names
+// nothing.
+func SourceUses(sources map[string]string, file, importPath, name string) (declared int, uses []SourceUse) {
+	fset := token.NewFileSet()
+	owner, err := parseDecls(fset, file, sources[file])
+	if err != nil {
+		return 0, nil
+	}
+	for _, site := range topLevelDecls(fset, owner) {
+		if site.Name == name && declared == 0 {
+			declared = site.Start
+		}
+	}
+	if declared == 0 || strings.Contains(name, ".") {
+		return declared, nil
+	}
+	for _, other := range slices.Sorted(maps.Keys(sources)) {
+		parsed, err := parseDecls(fset, other, sources[other])
+		if other == file || err != nil {
+			continue
+		}
+		same := pathpkg.Dir(other) == pathpkg.Dir(file) && parsed.Name.Name == owner.Name.Name
+		if line := firstUse(fset, parsed, same, importPath, name); line > 0 {
+			uses = append(uses, SourceUse{File: other, Line: line})
+		}
+	}
+	return declared, uses
+}
+
+// firstUse is the first line of file that names name: a bare identifier in the declaring
+// package, or a selector on the file's import of importPath elsewhere. It is zero when
+// the file names it nowhere.
+func firstUse(fset *token.FileSet, file *ast.File, same bool, importPath, name string) int {
+	qualifier := ""
+	for _, spec := range file.Imports {
+		if name, imported := ImportName(spec); imported == importPath {
+			qualifier = name
+		}
+	}
+	line := 0
+	var visit func(ast.Node) bool
+	visit = func(node ast.Node) bool {
+		switch n := node.(type) {
+		case *ast.SelectorExpr:
+			if id, ok := n.X.(*ast.Ident); ok && !same && qualifier != "" && id.Name == qualifier && n.Sel.Name == name && line == 0 {
+				line = fset.Position(n.Sel.Pos()).Line
+			}
+			ast.Inspect(n.X, visit)
+			return false
+		case *ast.Ident:
+			if same && n.Name == name && line == 0 {
+				line = fset.Position(n.Pos()).Line
+			}
+		}
+		return line == 0
+	}
+	ast.Inspect(file, visit)
+	return line
+}
+
+// ImportName is the one reading of an import's local name: its explicit name, else the
+// last element of its path. path is the unquoted import path.
+func ImportName(spec *ast.ImportSpec) (name, path string) {
+	imported, _ := strconv.Unquote(spec.Path.Value)
+	if spec.Name != nil {
+		return spec.Name.Name, imported
+	}
+	return pathpkg.Base(imported), imported
 }

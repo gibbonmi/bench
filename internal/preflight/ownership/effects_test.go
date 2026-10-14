@@ -361,30 +361,5 @@ func TestOwnerPremises(t *testing.T) {
 			}
 		})
 	}
-	// Each form is one way an unkeyed literal can write row.Reason. An elided element literal
-	// records its hint type, so the recorded type can be a pointer, a named pointer, or a type
-	// parameter whose core type is the struct or a pointer to it.
-	for name, source := range map[string]string{
-		"an explicit unkeyed literal":                  "func renderC() row { return row{\"c\"} }\n",
-		"a value-elided slice element":                 "func renderC() []row { return []row{{\"c\"}} }\n",
-		"a pointer-elided slice element":               "func renderC() []*row { return []*row{{\"c\"}} }\n",
-		"a pointer-elided map element":                 "func renderC() map[string]*row { return map[string]*row{\"k\": {\"c\"}} }\n",
-		"an address-of literal":                        "func renderC() *row { return &row{\"c\"} }\n",
-		"an element of a named pointer type":           "type rowPtr *row; func renderC() []rowPtr { return []rowPtr{{\"c\"}} }\n",
-		"a type parameter literal":                     "func renderC[T row]() T { return T{\"c\"} }\n",
-		"a pointer-elided type parameter element":      "func renderC[T row]() []*T { return []*T{{\"c\"}} }\n",
-		"an element of a pointer-cored type parameter": "func renderC[P *row]() []P { return []P{{\"c\"}} }\n",
-		"a type parameter with a named constraint":     "type rowSet interface{ row }; func renderC[T rowSet]() T { return T{\"c\"} }\n",
-		"a type parameter with a union constraint":     "type rowCopy row; func renderC[T interface{ row | rowCopy }]() T { return T{\"c\"} }\n",
-	} {
-		t.Run(name, func(t *testing.T) {
-			files := merged(helperBase, map[string]string{"internal/policy/positional.go": "package policy\n\n" + source})
-			out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: files, Fence: helperFence,
-				Tail: withItems("premises", premiseItem("positional-field", "printed-field", field(renderers), `{"producers":`+renderers+`}`))}.Seed(t))
-			row := one(t, out, "premises", map[string]string{"id": "positional-field"})
-			if cell(row, "state") != "unknown" || !strings.Contains(cell(row, "reason"), "internal/policy/positional.go line 3 writes policy.row.Reason through an unkeyed literal") {
-				t.Fatalf("premise positional-field = %v, want unknown and a reason naming the unkeyed literal", row)
-			}
-		})
-	}
+	printedFieldWrites(t, field(renderers), renderers)
 }
