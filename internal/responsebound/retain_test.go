@@ -87,8 +87,7 @@ func TestDropRemovesTheRetainedResponseAndStages(t *testing.T) {
 	}
 }
 
-// A store level that is a symlink refuses the stage and its read, and the link target
-// receives no file.
+// A store level that is a symlink refuses the stage, and the link target receives no file.
 func TestStageRefusesASymlinkedScope(t *testing.T) {
 	home := rb.PrivateHome(t)
 	_, checkout, _ := responseboundtest.AssignmentCheckout(t, home)
@@ -114,44 +113,18 @@ func TestStageRefusesASymlinkedScope(t *testing.T) {
 	if entries, err := os.ReadDir(target); err != nil || len(entries) != 0 {
 		t.Fatalf("link target entries = %v (%v), want none", entries, err)
 	}
-	if err := os.WriteFile(filepath.Join(target, filepath.Base(stage)), []byte(`{"mutant":1}`), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if got, err := rb.ReadStaged(home, checkout, "example", "1", "tests"); err == nil {
-		t.Fatalf("read through a symlinked scope = %+v, want a refusal", got)
-	}
 }
 
 // A stage or a retained response that is not a regular file refuses its read, even when each
 // store level is a real directory. A symlink to a valid copy refuses, and a FIFO whose writer
 // sends a valid copy refuses too, so the read never follows a link or reads a pipe.
 func TestReadRefusesAScopedFileThatIsNotRegular(t *testing.T) {
-	for _, store := range []struct {
-		name  string
-		write func(home, checkout string) error
-		read  func(home, checkout string) error
-	}{
-		{"stage", func(home, checkout string) error {
-			return rb.Stage(home, checkout, "example", "1", "tests", rb.Staged{Mutant: 1})
-		}, func(home, checkout string) error {
-			_, err := rb.ReadStaged(home, checkout, "example", "1", "tests")
-			return err
-		}},
-		{"retained", func(home, checkout string) error {
-			var sink bytes.Buffer
-			owner := rb.New(home, &sink, &sink, func() string { return checkout }, false)
-			rb.RespondWith(t, owner, &sink, rb.StdoutLines("kept\n"))
-			return owner.Retain(home, checkout, retainCall)
-		}, func(home, checkout string) error {
-			_, err := rb.ReadRetained(home, checkout)
-			return err
-		}},
-	} {
+	for _, store := range scopedStores() {
 		for _, kind := range []string{"symlink", "fifo"} {
 			t.Run(store.name+" "+kind, func(t *testing.T) {
 				home := rb.PrivateHome(t)
 				_, checkout, _ := responseboundtest.AssignmentCheckout(t, home)
-				if err := store.write(home, checkout); err != nil {
+				if err := store.write(t, home, checkout); err != nil {
 					t.Fatal(err)
 				}
 				files := responseboundtest.StoreFiles(t, home)
@@ -178,6 +151,72 @@ func TestReadRefusesAScopedFileThatIsNotRegular(t *testing.T) {
 				}
 				if err := store.read(home, checkout); err == nil {
 					t.Fatalf("read of a %s %s = nil, want a refusal", kind, store.name)
+				}
+			})
+		}
+	}
+}
+
+// scopedStore writes and reads one file in the assignment scope of a checkout.
+type scopedStore struct {
+	name  string
+	write func(t *testing.T, home, checkout string) error
+	read  func(home, checkout string) error
+}
+
+// scopedStores answers the two scoped files: a staged excerpt and a retained response.
+func scopedStores() []scopedStore {
+	return []scopedStore{
+		{"stage", func(_ *testing.T, home, checkout string) error {
+			return rb.Stage(home, checkout, "example", "1", "tests", rb.Staged{Mutant: 1})
+		}, func(home, checkout string) error {
+			_, err := rb.ReadStaged(home, checkout, "example", "1", "tests")
+			return err
+		}},
+		{"retained", func(t *testing.T, home, checkout string) error {
+			var sink bytes.Buffer
+			owner := rb.New(home, &sink, &sink, func() string { return checkout }, false)
+			rb.RespondWith(t, owner, &sink, rb.StdoutLines("kept\n"))
+			return owner.Retain(home, checkout, retainCall)
+		}, func(home, checkout string) error {
+			_, err := rb.ReadRetained(home, checkout)
+			return err
+		}},
+	}
+}
+
+// A symlink at any store level refuses the read of a stage and of a retained response. Each
+// link points to the moved level, so the valid file stays reachable through the link, and only
+// the no-follow check of each level refuses the read.
+func TestReadRefusesASymlinkedStoreLevel(t *testing.T) {
+	for _, store := range scopedStores() {
+		for depth, level := range []string{"scope", "repository key", "responses"} {
+			t.Run(store.name+" "+level, func(t *testing.T) {
+				home := rb.PrivateHome(t)
+				_, checkout, _ := responseboundtest.AssignmentCheckout(t, home)
+				if err := store.write(t, home, checkout); err != nil {
+					t.Fatal(err)
+				}
+				files := responseboundtest.StoreFiles(t, home)
+				if len(files) != 1 {
+					t.Fatalf("store files = %q, want one", files)
+				}
+				if err := store.read(home, checkout); err != nil {
+					t.Fatalf("read before the link: %v", err)
+				}
+				dir := filepath.Dir(files[0])
+				for range depth {
+					dir = filepath.Dir(dir)
+				}
+				moved := filepath.Join(t.TempDir(), "moved")
+				if err := os.Rename(dir, moved); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Symlink(moved, dir); err != nil {
+					t.Fatal(err)
+				}
+				if err := store.read(home, checkout); err == nil {
+					t.Fatalf("read through a symlinked %s level = nil, want a refusal", level)
 				}
 			})
 		}
