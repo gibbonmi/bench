@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-confirmation/spec.md",
-  "plan_digest": "sha256:59611926b48fca458ad84ef01e1784c403ab1d239585da0dce36acde74c12593",
+  "plan_digest": "sha256:e13b727a079ae5e4ec2466ff214079d7f6fa72745cf6eca8228750e92d87c2a7",
   "implementation_session": "",
   "chunks": [
     {
@@ -164,7 +164,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:59611926b48fca458ad84ef01e1784c403ab1d239585da0dce36acde74c12593",
+      "to": "sha256:e13b727a079ae5e4ec2466ff214079d7f6fa72745cf6eca8228750e92d87c2a7",
+      "chunk_ids": {
+        "RC-CYCLE": [
+          "RC-CYCLE"
+        ]
+      }
+    }
+  ]
 }
 ```
 
