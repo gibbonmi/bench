@@ -239,6 +239,14 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
 			needle: "The issuing axis reaffirms a changed disposition.",
 		},
+		"implementation continuation: bounded repair dropped the test-only confirmation exception": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A test-only repair whose coordinator probe bites takes no new axis results; the coordinator writes a confirmation with `bench record confirmation` instead.",
+		},
+		"implementation continuation: bounded repair dropped the confirmation's finding-list disposition": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "The confirmation's finding list is the coordinator's disposition of the findings that the repair closes.",
+		},
 		"implementation continuation: bounded repair widened prose reaffirmation": {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
 			needle: "Only the issuing axis reaffirms an evidence-only correction unless it invalidates another axis's evidence.",

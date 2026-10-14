@@ -41,7 +41,8 @@ The pre-push hook guards the default branch. This line only states the binding.)
   a path the landing writes. The operator's other local files stay in place.
 
   Completion checkpoints require current author verification and all three
-  terminal review axes. Final landing also requires the complete acceptance
+  terminal review axes. A coordinator confirmation carries those axis results
+  over a test-only repair. Final landing also requires the complete acceptance
   reconciliation and final integration results. The prospective gate permits
   the broker's exact status transform; new destination content requires review.
 

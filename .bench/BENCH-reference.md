@@ -498,6 +498,7 @@ is no separate conformance phase, driver, or per-check evidence partition.
 
 `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` checks the named chunk's
 source-bound author verification and three independent review results before advancement.
+After a test-only repair, the checkpoint accepts a coordinator confirmation in place of three new review results.
 Use `--complete` instead of `--chunk <id>` for final acceptance and integration evidence.
 `--complete` grades the published tree of the committed source.
 The authored `bench-completion-plan` fence in `specs/<slug>/spec.md` declares version 1, the chunks

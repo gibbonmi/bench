@@ -52,6 +52,9 @@ The issuing axis reaffirms a changed disposition.
 Only the issuing axis reaffirms an evidence-only correction unless it invalidates another axis's evidence.
 
 After substantive repairs, obtain current results or permitted native reaffirmations from every review axis.
+A test-only repair whose coordinator probe bites takes no new axis results; the coordinator writes a confirmation with `bench record confirmation` instead.
+The confirmation's finding list is the coordinator's disposition of the findings that the repair closes.
+
 Required verification, acceptance reconciliation, and completion checkpoints remain mandatory.
 Unresolved findings, stale source identity, missing axes, and incomplete verification still block completion.
 Repeat independent review only for a later semantic change or a cross-chunk concern that invalidates earlier evidence.
