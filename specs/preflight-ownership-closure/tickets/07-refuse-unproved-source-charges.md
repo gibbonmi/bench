@@ -8,7 +8,7 @@ Covers: OC51, OC52, OC53, OC54, OC88, OC89, OC93, OC94, OC95
 
 A build charge refuses before prepared-evidence publication when a required current premise lacks complete supported proof.
 Consume every predecessor collector through the same Snapshot.
-Add premises.go, TestPredicatePremises, and TestChargePremises; reuse the dynamic-helper fixture in effects_test.go.
+Add premises.go, TestPredicatePremises, and TestChargePremises; reuse the dynamic-helper fixture in effects_test.go, and run TestHelperCallers for OC53.
 Each decision maps exact predicate bytes to one declared row.
 
 Complete inventory includes every supported typed seam citation.
@@ -26,6 +26,7 @@ Assert prepared-handle absence for an unproved current claim.
 Use the missing second-citation fixture through the real dispatcher.
 Charge policy changes here; breakdown remains unavailable.
 Preserve checkout, source, seal, assignment, evidence, and current-action authority.
+Keep the existing dirty review record report of the current-evidence route.
 
 Implement the accepted ManualApplicability and ChargeReadiness contract without changing the global completeness meaning.
 Validate each native-future descriptor against the exact canonical coverage row, unique ticket, chunk, verification, and pinned native procedure.
@@ -41,7 +42,8 @@ Use TestChargeManualApplicability through the actual charge and current-evidence
 Prove readiness with no future witness record, refusal for competing unknown current proof, and refusal for invalid native ownership.
 No refusal may publish a prepared handle.
 Keep ordinary continuation, plan-only, proposal, breakdown, and review applicability unchanged.
-The existing buildChargePack still refuses every red verdict; no publisher exception is authorized.
+The existing buildChargePack in charge.go still refuses every red verdict.
+This ticket does not edit charge.go, and no publisher exception is authorized.
 
 This ticket belongs to OC-C3.
 The explicit predecessor edge orders every overlapping write.
@@ -70,7 +72,7 @@ Compilation failure supplies no behavioral evidence.
 - `bench test --package ./internal/coverage`
 - `bench test --package ./internal/reviewrecord`
 
-Focused producer command: `bench test --package ./internal/preflight/... --run 'TestChargeManualApplicability|TestChargePremises|TestPredicatePremises'`.
+Focused producer command: `bench test --package ./internal/preflight/... --run 'TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers'`.
 Named mutation identity: `oc-07-omission`.
 This obligation uses the named production seam and observable omission in this ticket, not a compile-failure substitute.
 

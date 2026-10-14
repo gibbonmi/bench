@@ -10,6 +10,7 @@ The real proposal grades reused-test evidence through reviewrecord.CheckTrees an
 Consume the established Source and premise values.
 Pass exact source/evidence commits, spec, chunk, and complete false.
 Select the named verification from that same validated committed record.
+A coordinator confirmation is not a verification, so it cannot supply a reused-test premise.
 
 Require matching subject digest, mutation, bit outcome, nonzero probe exit, successful restoration, and the behavioral red_needle in the native excerpt.
 Compilation failure without that marker cannot satisfy reuse.

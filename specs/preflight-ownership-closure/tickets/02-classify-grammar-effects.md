@@ -11,6 +11,7 @@ Consume the reviewed OC-C1 Source, Snapshot, provenance, and real proposal route
 Add exact Core and Grammar kinds and selectors to the existing tickets registry.
 Keep terminal and toon obligations Core and all five commandRegistries paths Grammar.
 BoundFiles stays a compatibility projection of this same policy source.
+CommandPackage stays a projection of the same Grammar binding, so the check floor keeps its current result.
 
 Resolve usage.Grammar values passed to usage.Parse and their typed shape/help dependencies.
 Use the canonical custom roots evidencecmd.flagTable, evidencecmd.operations, recordcmd.forms, and cmd/bench.commandRegistry.
