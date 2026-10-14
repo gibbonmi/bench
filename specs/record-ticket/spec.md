@@ -302,7 +302,8 @@ RT21 and RT22 turn red under that mutation.
       "id": "RT-RETAIN",
       "tickets": ["01-retain-the-last-bounded-response.md", "02-stage-an-excerpt-for-a-requirement.md"],
       "verification": [
-        {"id": "retention", "command": "bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git"},
+        {"id": "retention", "command": "bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git --package ./internal/gate --package ./internal/handoff --package ./internal/roadmap --package ./internal/shift --package ./internal/status --package ./internal/worktree --package ./internal/shellcommand --package ./internal/conformance"},
+        {"id": "retain-root", "command": "bench test --check root-conformance"},
         {"id": "excerpt-stage", "command": "bench test --package ./internal/reviewrecord/..."},
         {"id": "nested-exec", "command": "bench test --check system --run TestExecNested"},
         {"id": "record-skip", "command": "bench test --package ./cmd/bench", "probe": "drop the record-family skip from retention"}
@@ -312,7 +313,8 @@ RT21 and RT22 turn red under that mutation.
       "id": "RT-CURRENT",
       "tickets": ["03-report-a-dirty-record-in-the-current-binding.md"],
       "verification": [
-        {"id": "binding", "command": "bench test --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/anchors"},
+        {"id": "binding", "command": "bench test --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "binding-root", "command": "bench test --check root-conformance"},
         {"id": "strict-charge", "command": "bench test --package ./internal/preflight/...", "probe": "skip the record path for every preparation action"}
       ]
     },
@@ -320,7 +322,8 @@ RT21 and RT22 turn red under that mutation.
       "id": "RT-TICKET",
       "tickets": ["04-extract-the-record-change-functions.md", "05-record-one-ticket-in-one-write.md"],
       "verification": [
-        {"id": "record-writers", "command": "bench test --package ./internal/reviewrecord/... --package ./cmd/bench"},
+        {"id": "record-writers", "command": "bench test --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/responsebound --package ./internal/conformance"},
+        {"id": "record-root", "command": "bench test --check root-conformance"},
         {"id": "one-write", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "run the ticket form as three separate writes"}
       ]
     },
@@ -328,7 +331,8 @@ RT21 and RT22 turn red under that mutation.
       "id": "RT-GUIDE",
       "tickets": ["06-name-the-ticket-author-as-the-freezer.md"],
       "verification": [
-        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
+        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench"},
+        {"id": "guidance-root", "command": "bench test --check root-conformance"},
         {"id": "guidance-prose", "command": "bench test --check prose-mechanics"},
         {"id": "guidance-budgets", "command": "bench test --check guidance-prose-budgets"}
       ]
