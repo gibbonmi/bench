@@ -46,6 +46,7 @@ Each planned chunk takes one review across Standards, Spec, and Coverage. The ax
 After the fresh repair author repairs accepted findings, current repair coverage closes those predicates. A repeated review uses the full chunk diff as context and blocks only on the later delta or the named concern that starts it.
 A chunk that ends on a repair takes one confirming round of all three axes at its final tip.
 A confirming round reads only the repair delta and examines only the findings that its charge names. Its charge names those findings and the folds to confirm.
+A test-only repair whose coordinator probe bites closes through `bench record confirmation` and takes no confirming round.
 
 When every accepted finding of a round falls on one ticket, one combined repair charge carries them all. That charge holds the findings of every axis and goes to that ticket's repair session. When the accepted findings fall on several tickets, each affected ticket keeps its own repair session under `.bench/BENCH.md`'s repair rule.
 
@@ -217,6 +218,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    `bench record fold` writes one fold entry, and `bench record review --fold <id>` appends one axis result for its resolution.
    Supply the performer, model, effort, and native result. The verb derives the role, the source, and each digest.
 
+   `bench record confirmation` writes the coordinator confirmation of a test-only repair.
    `bench record completion` writes the completion entry after the final verification.
    Each test package that a fold brings in adds the final requirement `merged-test:<package>`, which `bench record verification --final` records.
    Each result in the failed, skipped, or pending state stays hand-written, because `bench record` has no form for it.

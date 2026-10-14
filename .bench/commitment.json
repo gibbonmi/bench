@@ -1119,6 +1119,14 @@
       "identity": "sha256:5554780a1f55e1060eea6ab78f1d1841eaf50f6dcad27f46afbc855c04b437f4",
       "source": "e61ee7041fe7f197e864bb79e719555dba78f29e",
       "evidence": "963269ff9d55eb80590bbb244e28566b4e352916"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT379",
+      "binding": "repair-confirmation",
+      "identity": "sha256:9dc09408ef9c4b05efc7fd48eae577665f952dcdd07f2997f8d5acc71e7439da",
+      "source": "a23074e300056e43a1af97506207e93a61616c17",
+      "evidence": "82fa4b1fcea5adbc239a52f01dd5019ac3fec7e5"
     }
   ]
 }

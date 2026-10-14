@@ -71,6 +71,15 @@ func TestKitCopyPreservesTheVisibleWorkingTree(t *testing.T) {
 	}
 }
 
+func TestTreesNamesTheGitlinkCommit(t *testing.T) {
+	f := NewTrees(t)
+	first, _ := f.Commits()
+	tree := f.Tree(map[string]TreeEntry{"kit": {"160000", first}})
+	if got, want := Output(t, f.Root, "ls-tree", tree), "160000 commit "+first+"\tkit"; got != want {
+		t.Fatalf("gitlink entry = %q, want %q", got, want)
+	}
+}
+
 func writeKitCopyFile(t *testing.T, root, name, body string, mode os.FileMode) {
 	t.Helper()
 	path := filepath.Join(root, name)

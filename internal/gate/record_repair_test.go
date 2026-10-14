@@ -11,8 +11,16 @@ import (
 // TestCheckpointEntryRepairForms covers NR17 through NR21: each checkpoint refusal for a
 // missing entry routes to the help of the record form that writes that entry. A changed
 // plan routes to the amendment form, and an unplanned chunk, which no form writes, keeps
-// the preflight review route.
+// the preflight review route. RC43 and RC44: axis results at an earlier pair with a failed
+// Standards result route to the confirmation form after a test-only repair, and to the review
+// form after a repair of a non-test Go file.
 func TestCheckpointEntryRepairForms(t *testing.T) {
+	repaired := func(repair func(*recordtest.Fixture)) func(*testing.T) *recordtest.Fixture {
+		return func(t *testing.T) *recordtest.Fixture {
+			f, _ := repairedFixture(t, repair)
+			return f
+		}
+	}
 	undispatched := func(t *testing.T) *recordtest.Fixture {
 		f := attachedCheckpointFixture(t, recordtest.AttachDelegated, func(f *recordtest.Fixture) {
 			recordtest.Undispatched(&f.Plan)
@@ -58,6 +66,8 @@ func TestCheckpointEntryRepairForms(t *testing.T) {
 			return f
 		}},
 		{"unplanned chunk", "9", "bench preflight review 'example'", checkpointFixture},
+		{"test-only repair", "1", "bench record 'confirmation' --help", repaired(modifyTest)},
+		{"non-test repair", "1", "bench record 'review' --help", repaired(modifySource)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := tc.fixture(t)

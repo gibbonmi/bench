@@ -63,6 +63,7 @@ func init() {
 		chunkForm,
 		verificationForm,
 		reviewForm,
+		confirmationForm,
 		foldForm,
 		completionForm,
 		amendmentForm,
