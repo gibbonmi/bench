@@ -730,6 +730,18 @@
               "path": "roadmap/FT379.md",
               "identity": "sha256:c0f49651f4b07a9e9abb92b79fa939b282d2ec1c6664d61631d67eb9837a15ae"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "repair-confirmation",
+                "path": "specs/repair-confirmation/spec.md",
+                "identity": "sha256:9dc09408ef9c4b05efc7fd48eae577665f952dcdd07f2997f8d5acc71e7439da"
+              },
+              "obligations": [
+                "FT379"
+              ]
+            }
           ]
         },
         {
