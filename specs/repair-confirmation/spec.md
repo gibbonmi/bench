@@ -450,9 +450,136 @@ The audience is every repository that links the kit, because the record and the 
 
 ## Ownership fences
 
-Pending: the slicing writes this section after the ticket review accepts.
+Each entry is an exact repo-relative file or path prefix that a writer of this build may edit.
+The list is the union of the ticket `Writes:` lines plus the review pickup.
 
+- `.agents/commands/bench-review-implementation.md`
+- `.agents/skills/bench-craft-line/references/bounded-repair-policy.md`
+- `.bench/BENCH-reference.md`
+- `.bench/commitment.json`
+- `CHANGELOG.md`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `internal/anchors/registry_calibration.go`
+- `internal/anchors/registry_calibration_test.go`
+- `internal/anchors/registry_chunk_chain.go`
+- `internal/anchors/registry_chunk_chain_test.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/commentgap/commentgap_test.go`
+- `internal/commentgap/trees_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/implementation_continuation_test.go`
+- `internal/conformance/retained_workflow_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `internal/gate/checkpoint.go`
+- `internal/gate/complete_checkpoint_test.go`
+- `internal/gate/delegated_checkpoint_test.go`
+- `internal/gate/record_repair_test.go`
+- `internal/gate/review_checkpoint_commits_test.go`
+- `internal/gate/review_checkpoint_confirmation_test.go`
+- `internal/gate/review_checkpoint_test.go`
+- `internal/gittest/gittest.go`
+- `internal/gittest/gittest_test.go`
+- `internal/gittest/trees.go`
+- `internal/reviewrecord/check.go`
+- `internal/reviewrecord/completion.go`
+- `internal/reviewrecord/confirmation.go`
+- `internal/reviewrecord/confirmation_test.go`
+- `internal/reviewrecord/coverage.go`
+- `internal/reviewrecord/delegated_test.go`
+- `internal/reviewrecord/export_test.go`
+- `internal/reviewrecord/fold.go`
+- `internal/reviewrecord/fold_test.go`
+- `internal/reviewrecord/parse.go`
+- `internal/reviewrecord/record.go`
+- `internal/reviewrecord/record_test.go`
+- `internal/reviewrecord/recordcmd/amendment_test.go`
+- `internal/reviewrecord/recordcmd/command.go`
+- `internal/reviewrecord/recordcmd/confirmation.go`
+- `internal/reviewrecord/recordcmd/confirmation_test.go`
+- `internal/reviewrecord/recordcmd/ordering_test.go`
+- `internal/reviewrecord/recordcmd/refusal.go`
+- `internal/reviewrecord/recordcmd/review_test.go`
+- `internal/reviewrecord/recordcmd/verification.go`
+- `internal/reviewrecord/recordcmd/verification_import_test.go`
+- `internal/reviewrecord/recordtest/confirmation.go`
+- `internal/reviewrecord/recordtest/fixture.go`
+- `internal/reviewrecord/repair.go`
+- `internal/reviewrecord/repair_test.go`
+- `internal/reviewrecord/source_test.go`
+- `internal/reviewrecord/write.go`
+- `internal/testgap/testgap.go`
+- `internal/testgap/testgap_test.go`
+- `projects/benchkit.md`
 - `reviews/repair-confirmation.md`
+- `tests/canary/docs-currency-token-diet/benchref-imported`
+- `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
+- `tests/canary/docs-currency-token-diet/benchref-section-duplicated`
+- `tests/canary/guidance-prose-budgets/over-budget-skill`
+- `tests/canary/line-routing/line-binding-prose-drift`
+- `tests/canary/skill-description-budgets/budget-table-missing`
+- `tests/canary/skill-description-budgets/description-folded`
+- `tests/canary/skill-description-budgets/description-missing`
+- `tests/canary/skill-description-budgets/over-budget-command`
+- `tests/canary/skill-description-budgets/over-budget-description`
+- `tests/canary/skills-index-command-adapters/adapter-inert-invocation-key`
+- `tests/canary/skills-index-command-adapters/command-invocation-disabled-against-policy`
+- `tests/canary/skills-index-command-adapters/dangling-index`
+- `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
+- `tests/canary/skills-index-command-adapters/missing-index-field`
+- `tests/canary/skills-index-command-adapters/stale-index-wording`
+- `tests/canary/skills-index-command-adapters/unindexed-skill`
+- `tests/canary/workflow-guidance-anchors/agents-handoff-section-rule`
+- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading`
+- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner`
+- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing`
+- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership`
+- `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route`
+- `tests/canary/workflow-guidance-anchors/calibration-pickup-confidence`
+- `tests/canary/workflow-guidance-anchors/calibration-pickup-step-move`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
+- `tests/canary/workflow-guidance-anchors/coverage-axis-anchor`
+- `tests/canary/workflow-guidance-anchors/delegated-axis-exclusions`
+- `tests/canary/workflow-guidance-anchors/prepared-review-axis-returns`
+- `tests/canary/workflow-guidance-anchors/prepared-review-blast-evidence`
+- `tests/canary/workflow-guidance-anchors/prepared-review-capable-handoff`
+- `tests/canary/workflow-guidance-anchors/prepared-review-inline-axis-route`
+- `tests/canary/workflow-guidance-anchors/prepared-review-legacy-entry-points`
+- `tests/canary/workflow-guidance-anchors/prepared-review-native-dispatch`
+- `tests/canary/workflow-guidance-anchors/prepared-review-runtime-capability`
+- `tests/canary/workflow-guidance-anchors/prepared-review-shared-evidence`
+- `tests/canary/workflow-guidance-anchors/reference-agent-push-rule`
+- `tests/canary/workflow-guidance-anchors/reference-bench-operational-layer`
+- `tests/canary/workflow-guidance-anchors/reference-category-context`
+- `tests/canary/workflow-guidance-anchors/reference-category-oracle`
+- `tests/canary/workflow-guidance-anchors/reference-category-setup`
+- `tests/canary/workflow-guidance-anchors/reference-category-work`
+- `tests/canary/workflow-guidance-anchors/reference-gate-authority`
+- `tests/canary/workflow-guidance-anchors/reference-kit-only-ship`
+- `tests/canary/workflow-guidance-anchors/reference-no-path-fallback`
+- `tests/canary/workflow-guidance-anchors/reference-progressive-loading-term`
+- `tests/canary/workflow-guidance-anchors/reference-refusal-route-shape`
+- `tests/canary/workflow-guidance-anchors/reference-retro-capture-owner`
+- `tests/canary/workflow-guidance-anchors/reference-retro-drain-owner`
+- `tests/canary/workflow-guidance-anchors/reference-skills-guidance`
+- `tests/canary/workflow-guidance-anchors/reference-upgrade-route`
+- `tests/canary/workflow-guidance-anchors/review-base-merged-main-tip`
+- `tests/canary/workflow-guidance-anchors/review-clean-terminal-result`
+- `tests/canary/workflow-guidance-anchors/review-cross-harness-opt-in`
+- `tests/canary/workflow-guidance-anchors/review-falsification-accept-routing`
+- `tests/canary/workflow-guidance-anchors/review-falsification-dispositions`
+- `tests/canary/workflow-guidance-anchors/review-persistence-anchor`
+- `tests/canary/workflow-guidance-anchors/review-preflight-explicit-base`
+- `tests/canary/workflow-guidance-anchors/review-repair-ticket-covers`
+- `tests/canary/workflow-guidance-anchors/review-repair-ticket-owner`
+- `tests/canary/workflow-guidance-anchors/review-standing-falsification`
+- `tests/canary/workflow-guidance-anchors/review-universal-claim-bar`
 
 ## Out of scope
 
@@ -512,4 +639,4 @@ Pending: the slicing writes this section after the ticket review accepts.
 ### Not verified
 
 - The exact line counts of the new test files against any structure budget.
-- Whether `TestHelpInventoryIsComplete` asserts the form's usage row; the ticket reads it before it edits the help.
+- The slicing research settled one item: `TestHelpInventoryIsComplete` asserts each form's usage row, so ticket 04 writes `cmd/bench/help_inventory_test.go`.

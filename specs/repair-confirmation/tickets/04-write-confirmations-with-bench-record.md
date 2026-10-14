@@ -24,7 +24,7 @@ Without a valid confirmation, an axis result can sit at an earlier pair of the c
 Its refusal names the confirmation form only when all three results sit at that pair and `testgap.Prove` accepts the delta.
 That refusal comes before the outcome refusal.
 Otherwise the refusal names the review form, as today.
-A confirmation-validity refusal whose three axis results sit at a test-only reviewed pair routes to `bench record 'confirmation' --help`.
+A confirmation-validity refusal routes to `bench record 'confirmation' --help` when its three axis results sit at an earlier pair, as defined above, with a test-only delta.
 Update the route assertion of each such ticket 03 row.
 
 The writer and the stale-axis route call ticket 03's reviewed-pair function.
@@ -44,3 +44,4 @@ The over-budget registry test files must not grow.
 - [ ] RC44: with a delta that changes a non-test Go file, the refusal routes to `bench record 'review' --help`.
 - [ ] RC45: `bench record` help lists the confirmation form, and the completion order puts it after review.
 - [ ] A confirmation that `bench record confirmation` writes for the RC9 state makes `bench gate --checkpoint` pass for that chunk.
+- [ ] A refusal for an invalid confirmation, such as the RC20 silent probe, routes to `bench record 'confirmation' --help` at a test-only earlier pair.
