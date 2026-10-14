@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-ticket/spec.md",
-  "plan_digest": "sha256:caa2ef2e9804d56c5000b36d258fc60f24303010d3633407acabdbf846b8d6cc",
+  "plan_digest": "sha256:dd4cad635f7e681f9081dff1d7a6f7818b83e70092f6c554a2c4390f1dd7eae9",
   "implementation_session": "",
   "chunks": [
     {
@@ -1621,6 +1621,99 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RT-GUIDE",
+      "base": "79bcc9970705f0eb5178025a560741ad992e5aa9",
+      "tip": "262e019bdc8f7612b294cc2bf5e3918dd7d3c1e5",
+      "plan_digest": "sha256:dd4cad635f7e681f9081dff1d7a6f7818b83e70092f6c554a2c4390f1dd7eae9",
+      "source_digest": "7580316bd959358d8e0ccd344d25e908873dae9b",
+      "acceptance_rows": [
+        "RT47",
+        "RT48",
+        "RT49",
+        "RT50",
+        "RT51",
+        "RT52",
+        "RT53",
+        "RT54",
+        "RT64"
+      ],
+      "verification": [
+        {
+          "id": "ft405_t06-guidance-anchors",
+          "performer": "claude:ft405_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7580316bd959358d8e0ccd344d25e908873dae9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t06",
+            "digest": "sha256:16e4479b2cb2c241af910a6f7e40c90b448667056775ce1cff93f5a0b7245a2c",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16949,346\n  github.com/gibbonmi/bench/internal/anchors,pass,2329,180\n  github.com/gibbonmi/bench/internal/conformance,pass,55211,1694\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "guidance-anchors",
+          "command": "bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t06-guidance-root",
+          "performer": "claude:ft405_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7580316bd959358d8e0ccd344d25e908873dae9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t06",
+            "digest": "sha256:97133d240d3572fce57a0f79f0face5995bdf5da659ebb8a850b4ad6e7bd9a32",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15160,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance-root",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t06-guidance-prose",
+          "performer": "claude:ft405_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7580316bd959358d8e0ccd344d25e908873dae9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t06",
+            "digest": "sha256:77acaa2faddd9173d32f79f82933de6ee258b1479a3333cacd3ab759b38bda98",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,277,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t06-guidance-budgets",
+          "performer": "claude:ft405_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7580316bd959358d8e0ccd344d25e908873dae9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t06",
+            "digest": "sha256:3f06c905c47c532aee4beedd4774da6859c4763fbfd2f64abbef865f11e69e14",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,10,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1742,6 +1835,27 @@
     {
       "from": "sha256:743fef1ac7fc5dc4cf4ba5e0c9334c0a2f77b46c3a66833e51dadcad10df2903",
       "to": "sha256:caa2ef2e9804d56c5000b36d258fc60f24303010d3633407acabdbf846b8d6cc",
+      "chunk_ids": {
+        "RT-CURRENT": [
+          "RT-CURRENT"
+        ],
+        "RT-EXCERPT": [
+          "RT-EXCERPT"
+        ],
+        "RT-EXTRACT": [
+          "RT-EXTRACT"
+        ],
+        "RT-RETAIN": [
+          "RT-RETAIN"
+        ],
+        "RT-TICKET": [
+          "RT-TICKET"
+        ]
+      }
+    },
+    {
+      "from": "sha256:caa2ef2e9804d56c5000b36d258fc60f24303010d3633407acabdbf846b8d6cc",
+      "to": "sha256:dd4cad635f7e681f9081dff1d7a6f7818b83e70092f6c554a2c4390f1dd7eae9",
       "chunk_ids": {
         "RT-CURRENT": [
           "RT-CURRENT"
