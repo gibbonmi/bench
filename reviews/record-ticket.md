@@ -1420,7 +1420,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft405_rv_ticket-standards",
+          "performer": "claude:ft405_rv_ticket_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d384e7dfca9b921b0dd9a0412e3a51d2fcd4e256",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_ticket_standards",
+            "digest": "sha256:b7a7b03799a2f65d5fd6f9920ad7124ba5d32cd00c8e00097ec36b760d517b63",
+            "excerpt": "## Standards\n\nRT37: met. No function body was copied. The exported writers and the ticket path call the same single definitions in `internal/reviewrecord/change.go`: `createRecord` :11, `changeAmendment` :25, `changeChunk` :78, `changeVerification` :106. `RecordChunk` calls them at write.go:132 and :137, `RecordVerification` at write.go:172, `RecordAmendment` at coverage.go:243; `RecordTicket` calls them at reviewrecord/ticket.go:94, :117, :130, :136, and the form (recordcmd/ticket.go:66) reaches them only through `RecordTicket`. No refusal text moved into the form; `plannedChunk` (ticket.go:62) takes over the old copy in `changeChunk`. The delta adds no copy of \"chunk X is not a chunk of the plan\" (three copies before and after: write.go:183, coverage.go:35, ticket.go:66).\n\nCount: 2 findings. Worst: S2.\n\n- S1. `internal/reviewrecord/recordcmd/ticket.go:24-26`: the doc comment says the form refuses \"a ticket or a plan that owes no requirement\", but the code refuses a ticket the chunk does not list (reviewrecord/ticket.go:44); a listed ticket that owes no requirement is not refused. Rule (craft-comments): \"What survives merge is only what's true of the code as it stands.\" Disposition: auto-fix. Confidence 6.\n- S2. `internal/reviewrecord/recordcmd/ticket_test.go:323-329`: the test writes its own copy of `TicketSteps`' \"cut at the first review step\" rule (reviewrecord/ticket.go:11-14). Rule (AGENTS.md): an independently authored expectation is duplicated knowledge unless its independence is necessary for a named omission or mutation to turn the gate red. A test that calls `rr.TicketSteps()` also turns RT63's named mutation red, so the independence is not necessary. Disposition: auto-fix. Confidence 5.\n\n## Advice\n- `RecordTicket`'s create closure and \"created\" action (ticket.go:92-98, :161-163) repeat `RecordChunk`'s (write.go:131-135, :140-142).\n- `stagedProbe` reads a mutant answer twice, so `importedProbe`'s exit check always passes; its refusals name `probeResult`, a flag the ticket form does not have.\n- `ChunkRequirement` (write.go:179-183) could call `plannedChunk`.\n- `Fixture.Run` and `Fixture.Retain` (recordtest/stage.go:51, :62) each build the same clean-at-tip `Retained`.\n- The help line at help_inventory_test.go:155 is a literal, which follows the golden-inventory convention.\n\n## Examined\nPreflight current=true; the delta e599c2cf..396576d4 under `internal` and `cmd`; change.go, write.go, coverage.go, recordcmd/verification.go, stage.go at the tip; ticket 05; spec rows RT37 and RT63; craft-comments.\n"
+          },
+          "axis": "Standards",
+          "base": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+          "tip": "396576d49660eb0e369d71317d0d33514ff5b39a",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_ticket-spec",
+          "performer": "claude:ft405_rv_ticket_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d384e7dfca9b921b0dd9a0412e3a51d2fcd4e256",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_ticket_spec",
+            "digest": "sha256:3c64cc799709c11ae699ad8ed5c8d2e6ef09b1cda02f107e71c06b3a316fb6ee",
+            "excerpt": "## Spec\n\nFindings: 0. No quoted spec line breaks and no traced wrong behavior.\n\n- Grammar and help: the grammar and `--tip` defaulting to HEAD are at recordcmd/ticket.go:125-139; `FormTicket` at repair.go:17, registered at command.go:71; the help step list comes from `TicketSteps()`, which cuts `CompletionOrder` before the first review step (reviewrecord/ticket.go:12-15).\n- Refusal order: refusals 1–4 run before the transaction (recordcmd/ticket.go:155-172); refusal 5 checks every stage before refusal 6 runs (:236-245).\n- Transaction: the three in-transaction steps run in completion order inside one `write` (reviewrecord/ticket.go:813-861).\n- Other rules: the chunk source rule (:800-812); the amendment repair `Form: FormAmendment` (:820), with RT29 asserting the `bench record amendment` text; base precedence in `chunkBase` (:877-891); evidence IDs as prefix-hyphen-requirement (recordcmd/ticket.go:250); probe import with `staged.Mutant` (:265-276); stages removed only after `RecordTicket` succeeds (:174-182); an earlier ticket passes `absent` (:789-792). RT37 holds.\n- Seam citations: every cited test exists and exercises its row. RT56 starts from an absent record (`Prepare` writes none, fixture.go:186-211). RT21 and RT22 compare the record bytes after a step that already ran inside the transaction.\n\nAuthor-flagged deviation: acceptable and non-behavioral. The build keeps the relative order of refusals 1–6; the spec does not place the no-entry refusal (spec.md:224), and an earlier ticket cannot check refusal 5 without the entry's tip (spec.md:212). `bind` runs before any change, so the record bytes stay the same.\n\n## Advice\n- Change \"Before the write\" at spec.md:197 to \"before any record change\", and say where the no-entry refusal falls.\n- spec.md:227 says \"The exit code comes from the stage\", but a mutant-set row records the row's own exit; `TestTicketImportsAMutantRow` pins this (ticket_test.go:587-601) and no row covers it.\n- The `ticket` doc comment says it refuses \"a ticket or a plan that owes no requirement\" (recordcmd/ticket.go:131-134); a listed ticket that owes no requirement is not refused.\n\n## Examined\nPreflight current=true, dirty_record=false at 456e144; the code diff e599c2c..396576d; coverage rows RT18–RT38, RT55, RT56, RT60–RT63; stories 18–37 and 53–58; spec.md:191-246; write.go:71-207, change.go:11-25, repair.go, refusal.go `cause`, fixture.go `Prepare`. No tests or probes run.\n"
+          },
+          "axis": "Spec",
+          "base": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+          "tip": "396576d49660eb0e369d71317d0d33514ff5b39a",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_ticket-coverage",
+          "performer": "claude:ft405_rv_ticket_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d384e7dfca9b921b0dd9a0412e3a51d2fcd4e256",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_ticket_coverage",
+            "digest": "sha256:32f47f6f3cb799d5c44b32424ad97cf0d11e4feea644b7cf566eb4e5320b6af8",
+            "excerpt": "## Coverage\n\nCount: 4 findings. Five mutants ran, and all five survived; every probe shows restored=yes, and `git status` is clean. Worst issue: C1, a stale stage on an owed requirement after the first one records at the chunk source, which breaks RT60.\n\n- C1 (auto-fix, confidence 9). Input: the `tests` stage is at the tip and the `additional` stage is at `HEAD^`. Break: RT60; the form accepts the stale excerpt, because the \"another commit\" case puts every stage at the old head and only the first requirement is checked. Site: `internal/reviewrecord/recordcmd/ticket.go:129`.\n- C2 (auto-fix, confidence 8). Input: the run's dirty paths are `[<record path>, main.go]`. Break: RT61 and spec line 204; no test has a mixed dirty list. Site: `recordcmd/ticket.go:134`.\n- C3 (auto-fix, confidence 7). Input: `--base X` on a refreeze when the chunk entry exists. Break: spec line 219 (`--base` wins when given); no test gives `--base` with an existing entry. Site: `internal/reviewrecord/ticket.go:177`.\n- C4 (auto-fix, confidence 7). Input: `--tip <commit other than HEAD>`. Break: spec lines 193–194; no test passes `--tip`. Site: `recordcmd/ticket.go:29`.\n\nProbes (packages `./internal/reviewrecord/...` and `./cmd/bench`):\n\n| Mutation | Verdict | Restored |\n|---|---|---|\n| Head check only for i==0 | silent | yes |\n| Dirty refusal only when `Dirty[0]` is not the record path | silent | yes |\n| `--tip` always `HEAD` | silent | yes |\n| Existing-entry base checked before `--base` | silent | yes |\n| Amendment skipped for an earlier ticket (`ticket.go:114`) | silent | yes |\n\n## Advice\n- No test calls an earlier ticket after the plan digest moved; the fifth mutant shows it, but no broken row is confirmed.\n- No test stages a requirement that hits both refusal 5 and refusal 6.\n\n## Examined\nPreflight current=true at 456e144; the frozen diff; ticket 05; spec rows RT18–RT38, RT55, RT56, RT60–RT63; spec lines 193–223; the edge inventory and Won't handle lines.\n"
+          },
+          "axis": "Coverage",
+          "base": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+          "tip": "396576d49660eb0e369d71317d0d33514ff5b39a",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1563,6 +1632,8 @@ RT-CURRENT: no repair cycle is used. S2 closes through a comment-only correction
 
 RT-EXTRACT: no repair cycle is used. The orchestrator removed two cancelling plan amendments from the record by hand, on a consultant's recommendation, and that correction stays open to reviewer veto.
 
+RT-TICKET: repair cycle 1 of 2 is in progress for ticket 05. One combined charge carries S1, S2, and C1 to C4.
+
 ## Standards
 
 RT-RETAIN: 4 findings. The worst issue is S1.
@@ -1604,6 +1675,11 @@ RT-CURRENT reaffirmation: S1 is closed for this chunk by its reassignment to tic
 
 RT-EXTRACT: pass, with no findings.
 
+RT-TICKET: 2 findings, and RT37 is met. The worst issue is S2.
+
+- S1 (auto-fix, confidence 6): the doc comment at `internal/reviewrecord/recordcmd/ticket.go:24-26` misstates a refusal. The form refuses a ticket that the chunk does not list.
+- S2 (auto-fix, confidence 5): `recordcmd/ticket_test.go:323-329` copies the step-cut rule of `TicketSteps`, and the copy is not needed for the RT63 mutation to turn red.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -1626,6 +1702,8 @@ RT-EXCERPT confirming round 3: pass, with no findings.
 RT-CURRENT: pass, with no findings.
 
 RT-EXTRACT: pass, with no findings. RT37 gets its second half at RT-TICKET.
+
+RT-TICKET: pass, with no findings. The refusal-order deviation that the author flagged is non-behavioral.
 
 ## Coverage
 
@@ -1655,3 +1733,10 @@ RT-EXCERPT confirming round 3: pass, with no blocking findings.
 RT-CURRENT: pass, with no findings. Four silent mutants are recorded as advice, because the code is correct for each input.
 
 RT-EXTRACT: pass, with no findings. Ten independent mutants on the extracted refusals all bite.
+
+RT-TICKET: 4 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 9): no test stages a stale excerpt on an owed requirement after the first one (RT60).
+- C2 (auto-fix, confidence 8): no test gives a run a dirty list that holds the record path and a Go file (RT61).
+- C3 (auto-fix, confidence 7): no test gives `--base` on a refreeze when the chunk entry exists.
+- C4 (auto-fix, confidence 7): no test passes `--tip` with a commit other than `HEAD`.
