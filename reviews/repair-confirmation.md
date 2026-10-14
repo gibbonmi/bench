@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-confirmation/spec.md",
-  "plan_digest": "sha256:e13b727a079ae5e4ec2466ff214079d7f6fa72745cf6eca8228750e92d87c2a7",
+  "plan_digest": "sha256:916b0a0f5a2d90347ebcefb5f5ef436ff33df27695c9098c9706ddc955d03128",
   "implementation_session": "",
   "chunks": [
     {
@@ -307,6 +307,15 @@
     {
       "from": "sha256:59611926b48fca458ad84ef01e1784c403ab1d239585da0dce36acde74c12593",
       "to": "sha256:e13b727a079ae5e4ec2466ff214079d7f6fa72745cf6eca8228750e92d87c2a7",
+      "chunk_ids": {
+        "RC-CYCLE": [
+          "RC-CYCLE"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e13b727a079ae5e4ec2466ff214079d7f6fa72745cf6eca8228750e92d87c2a7",
+      "to": "sha256:916b0a0f5a2d90347ebcefb5f5ef436ff33df27695c9098c9706ddc955d03128",
       "chunk_ids": {
         "RC-CYCLE": [
           "RC-CYCLE"
