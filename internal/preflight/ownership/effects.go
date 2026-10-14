@@ -19,18 +19,12 @@ const grammarEffectsID = "grammar-effects"
 type effects struct {
 	root        string
 	source      Source
-	reads       map[string]producerRead
+	reads       map[string]revRead[producers]
 	modules     map[string]revRead[string]
 	grammar     map[string]revRead[map[string]bool]
 	packages    map[string]packageEffect
 	planned     []Change
 	diagnostics []Diagnostic
-}
-
-// producerRead is one package read at one revision, or the fault that stopped it.
-type producerRead struct {
-	producers producers
-	err       error
 }
 
 // grammarChange is one changed producer declaration and one grammar root that reaches it:
@@ -57,7 +51,7 @@ type effect struct {
 }
 
 func newEffects(root string, source Source) *effects {
-	return &effects{root: root, source: source, reads: map[string]producerRead{}, modules: map[string]revRead[string]{},
+	return &effects{root: root, source: source, reads: map[string]revRead[producers]{}, modules: map[string]revRead[string]{},
 		grammar: map[string]revRead[map[string]bool]{}, packages: map[string]packageEffect{}}
 }
 
@@ -115,10 +109,10 @@ func (e *effects) pkg(dir string) packageEffect {
 		result.failure = "base " + base.err.Error()
 	case tip.err != nil:
 		result.failure = "tip " + tip.err.Error()
-	case len(base.producers.unresolved) > 0:
-		result.failure = "base " + base.producers.unresolved[0]
-	case len(tip.producers.unresolved) > 0:
-		result.failure = "tip " + tip.producers.unresolved[0]
+	case len(base.value.unresolved) > 0:
+		result.failure = "base " + base.value.unresolved[0]
+	case len(tip.value.unresolved) > 0:
+		result.failure = "tip " + tip.value.unresolved[0]
 	}
 	if result.failure == "" {
 		baseRefs, baseFailure = e.referred(e.source.Base, dir)
@@ -135,7 +129,7 @@ func (e *effects) pkg(dir string) packageEffect {
 		e.packages[dir] = result
 		return result
 	}
-	before, after := base.producers, tip.producers
+	before, after := base.value, tip.value
 	for _, key := range unionKeys(before.units, after.units) {
 		old, inBase := before.units[key]
 		current, inTip := after.units[key]
@@ -166,17 +160,17 @@ func (e *effects) pkg(dir string) packageEffect {
 }
 
 // read loads one package's producers at one revision once.
-func (e *effects) read(rev, dir string) producerRead {
+func (e *effects) read(rev, dir string) revRead[producers] {
 	key := rev + "\x00" + dir
 	if cached, ok := e.reads[key]; ok {
 		return cached
 	}
 	module, err := e.module(rev)
-	var producers producers
+	var read producers
 	if err == nil {
-		producers, err = readProducers(e.root, rev, dir, module)
+		read, err = readProducers(e.root, rev, dir, module)
 	}
-	e.reads[key] = producerRead{producers, err}
+	e.reads[key] = revRead[producers]{read, err}
 	return e.reads[key]
 }
 
@@ -191,8 +185,8 @@ func (e *effects) declare(changes []Change) {
 		}
 		root := declaredRoot(change)
 		read := e.read(e.source.Tip, root.Dir)
-		unit, declared := read.producers.units[root.Name]
-		if read.err != nil || !declared || unit.file != change.Owner.Path || !slices.Contains(read.producers.roots, root.Name) {
+		unit, declared := read.value.units[root.Name]
+		if read.err != nil || !declared || unit.file != change.Owner.Path || !slices.Contains(read.value.roots, root.Name) {
 			e.diagnose(change.ID, "grammar change names "+change.Owner.Symbol+" in "+change.Owner.Path+", which no registered grammar producer declares at the source tip")
 			continue
 		}

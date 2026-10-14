@@ -95,10 +95,10 @@ func (e *effects) referred(rev, dir string) (map[string][]grammarChange, string)
 		if read.err != nil {
 			return nil, read.err.Error()
 		}
-		for _, key := range read.producers.roots {
-			at := read.producers.units[key]
+		for _, key := range read.value.roots {
+			at := read.value.units[key]
 			origin := grammarChange{root: tickets.GrammarRoot{Dir: from, Name: key}.String(), file: at.file, line: at.line}
-			reached, failure := e.follow(rev, read.producers.external[key])
+			reached, failure := e.follow(rev, read.value.external[key])
 			if failure != "" {
 				return nil, origin.root + " " + failure
 			}
@@ -126,19 +126,19 @@ func (e *effects) follow(rev string, edges []edge) ([]tickets.GrammarRoot, strin
 		}
 		seen[next] = true
 		read := e.read(rev, next.target.Dir)
-		declared, ok := read.producers.units[next.target.Name]
+		declared, ok := read.value.units[next.target.Name]
 		switch {
 		case read.err != nil:
 			return nil, read.err.Error()
 		case !ok:
 			return nil, "references " + next.target.String() + ", which its package does not declare"
-		case read.producers.ambiguous[next.target.Name]:
+		case read.value.ambiguous[next.target.Name]:
 			return nil, ambiguity(next.target.String())
 		}
 		if !declared.reachedBy(next.called) {
 			continue
 		}
-		keys, external, problems := read.producers.reach(next.target.Name)
+		keys, external, problems := read.value.reach(next.target.Name)
 		if len(problems) > 0 {
 			return nil, problems[0]
 		}

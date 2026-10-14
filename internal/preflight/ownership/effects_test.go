@@ -16,7 +16,8 @@ import (
 // Grammar effect fixture paths. command.go passes a local grammar to the parser, and that
 // grammar reads its help from help.go. helper.go is an unrelated helper of the same package.
 // cross.go passes a grammar whose help reads names.Suffix, and whose handler literal calls
-// helper and names.Count. shared.go passes names.Grammar, which grammar.go declares.
+// helper and names.Count. shared.go passes names.Grammar, which grammar.go declares. called.go
+// passes a grammar whose help calls names.Help, which help.go of names declares.
 // gauge.go, in a package with no Grammar row, passes a literal grammar to the parser.
 // dynamic.go, in another bound package, passes a parameter to the parser. operations.go
 // declares the custom root operations beside a case-variant Operations.
@@ -28,6 +29,8 @@ const (
 	namesFile      = "internal/names/names.go"
 	sharedFile     = "internal/harnesses/shared.go"
 	namesGrammar   = "internal/names/grammar.go"
+	calledFile     = "internal/harnesses/called.go"
+	namesHelp      = "internal/names/help.go"
 	gaugeFile      = "internal/gauge/gauge.go"
 	dynamicFile    = "internal/roadmap/dynamic.go"
 	terminalFile   = "internal/terminal/terminal.go"
@@ -167,6 +170,12 @@ func TestGrammarEffects(t *testing.T) {
 			tip:      edited(namesFile, "[--all]", "[--all] [--json]"),
 			want:     map[string]bool{crossFile: true, rootHelp: true, routingCensus: true},
 			evidence: map[string]string{crossFile: "internal/names.Suffix changes the grammar that internal/harnesses.Cross.grammar produces"}},
+		{name: "cross-package called producer requires its root and the shared inventories", writes: []string{namesHelp},
+			files: merged(crossBase, map[string]string{calledFile: "package harnesses\n\nimport (\n\t\"github.com/gibbonmi/bench/internal/names\"\n\t\"github.com/gibbonmi/bench/internal/usage\"\n)\n\nfunc Called(args []string) int {\n\tgrammar := usage.Grammar{Cmd: \"bench called\", Help: names.Help()}\n\t_, _, code := usage.Parse(grammar, args)\n\treturn code\n}\n",
+				namesHelp: "package names\n\nfunc Help() string { return \"usage: bench called\" }\n"}),
+			tip:      map[string]string{namesHelp: "package names\n\nfunc Help() string { return \"usage: bench called [--all]\" }\n"},
+			want:     map[string]bool{calledFile: true, rootHelp: true, routingCensus: true},
+			evidence: map[string]string{calledFile: "internal/names.Help changes the grammar that internal/harnesses.Called.grammar produces"}},
 		{name: "a referrer's unresolved producer stays its own diagnostic", writes: []string{namesFile},
 			files: merged(crossBase, map[string]string{dynamicFile: "package roadmap\n\nimport (\n\t\"github.com/gibbonmi/bench/internal/names\"\n\t\"github.com/gibbonmi/bench/internal/usage\"\n)\n\nfunc run(g usage.Grammar, args []string) int {\n\t_, _, code := usage.Parse(g, args)\n\treturn code + names.Count()\n}\n"}),
 			tip:   edited(namesFile, "[--all]", "[--all] [--json]"),
@@ -352,4 +361,13 @@ func TestOwnerPremises(t *testing.T) {
 			}
 		})
 	}
+	t.Run("an unkeyed literal write keeps the field census diagnostic", func(t *testing.T) {
+		files := merged(helperBase, map[string]string{"internal/policy/positional.go": "package policy\n\nfunc renderC() row { return row{\"c\"} }\n"})
+		out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: files, Fence: helperFence,
+			Tail: withItems("premises", premiseItem("positional-field", "printed-field", field(renderers), `{"producers":`+renderers+`}`))}.Seed(t))
+		row := one(t, out, "premises", map[string]string{"id": "positional-field"})
+		if cell(row, "state") != "unknown" || !strings.Contains(cell(row, "reason"), "internal/policy/positional.go line 3 writes policy.row.Reason through an unkeyed literal") {
+			t.Fatalf("premise positional-field = %v, want unknown and a reason naming the unkeyed literal", row)
+		}
+	})
 }

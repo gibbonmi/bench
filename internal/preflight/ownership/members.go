@@ -21,7 +21,7 @@ func (c *census) liveness(changes []Change) []Diagnostic {
 		if change.State != "existing" || change.Kind != "liveness" {
 			continue
 		}
-		members, err := c.members(change.Owner, memberCensuses["retirement"].rows)
+		members, err := c.members(change.Owner, memberCensuses["retirement"])
 		if err == nil {
 			err = c.dispositions(members, change.Dispositions)
 		}
@@ -33,22 +33,23 @@ func (c *census) liveness(changes []Change) []Diagnostic {
 }
 
 // memberShape is one member census kind: its exact subject and expected keys, the subject
-// key that names its owner, the key that lists its members, and the static references that
-// make a member. A kind whose expected keys hold the member key lists its members on both
-// sides, and the two lists must be one set.
+// key that names its owner, the key that lists its members, the static references that make
+// a member, and the static writes that name no member. A kind whose expected keys hold the
+// member key lists its members on both sides, and the two lists must be one set.
 type memberShape struct {
 	subject, expected []string
 	owner, members    string
-	rows              func(pkgs []*consumers.Package, target types.Object, root string) []consumers.Row
+	rows, unnamed     func(pkgs []*consumers.Package, target types.Object, root string) []consumers.Row
 }
 
 // memberCensuses is every member census kind. A retirement's members are every reference
 // to its owner, a posture's members are the static callers of its writer, and a
-// printed-field's members are the static writes of its field.
+// printed-field's members are the static writes of its field. An unkeyed literal of the
+// field's struct keeps a printed-field census incomplete.
 var memberCensuses = map[string]memberShape{
-	"retirement":    {[]string{"owner", "consumers"}, []string{"dispositions"}, "owner", "consumers", consumers.Rows},
-	"posture":       {[]string{"owner", "callers", "writer_probe"}, []string{"callers"}, "owner", "callers", callRows},
-	"printed-field": {[]string{"field", "producers"}, []string{"producers"}, "field", "producers", consumers.WriteRows},
+	"retirement":    {[]string{"owner", "consumers"}, []string{"dispositions"}, "owner", "consumers", consumers.Rows, nil},
+	"posture":       {[]string{"owner", "callers", "writer_probe"}, []string{"callers"}, "owner", "callers", callRows, nil},
+	"printed-field": {[]string{"field", "producers"}, []string{"producers"}, "field", "producers", consumers.WriteRows, consumers.UnkeyedWrites},
 }
 
 // callRows is every static call of target.
@@ -104,7 +105,7 @@ func (c *census) memberCensus(item PremiseItem, shape memberShape) (string, erro
 			return "", fmt.Errorf("the expected %s differ from the subject %s: %w", shape.members, shape.members, err)
 		}
 	}
-	actual, err := c.members(owner, shape.rows)
+	actual, err := c.members(owner, shape)
 	if err != nil {
 		return "", err
 	}
@@ -122,9 +123,10 @@ func (c *census) memberCensus(item PremiseItem, shape memberShape) (string, erro
 	return fmt.Sprintf("the %s census of %s is complete at the source tip: %d member(s)", item.Kind, owner.Symbol, len(actual)), nil
 }
 
-// members is every declaration that one row reader finds for owner at the source tip. Each
-// member is a file and its enclosing declaration name.
-func (c *census) members(owner Owner, rows func([]*consumers.Package, types.Object, string) []consumers.Row) ([]Owner, error) {
+// members is every declaration that the shape's row reader finds for owner at the source tip.
+// Each member is a file and its enclosing declaration name. A write that names no member
+// leaves the members unknown.
+func (c *census) members(owner Owner, shape memberShape) ([]Owner, error) {
 	obj, file, _, err := c.declaration(owner)
 	if err != nil {
 		return nil, err
@@ -132,8 +134,13 @@ func (c *census) members(owner Owner, rows func([]*consumers.Package, types.Obje
 	if obj == nil || file != owner.Path {
 		return nil, fmt.Errorf("%s does not resolve in %s at the source tip", owner.Symbol, owner.Path)
 	}
+	if shape.unnamed != nil {
+		if unnamed := shape.unnamed(c.pkgs, obj, c.root); len(unnamed) > 0 {
+			return nil, fmt.Errorf("%s line %d writes %s through an unkeyed literal, which names no field", unnamed[0].File, unnamed[0].Line, owner.Symbol)
+		}
+	}
 	var found []Owner
-	for _, row := range rows(c.pkgs, obj, c.root) {
+	for _, row := range shape.rows(c.pkgs, obj, c.root) {
 		member := Owner{Path: row.File, Symbol: row.Enclosing}
 		if !slices.Contains(found, member) {
 			found = append(found, member)

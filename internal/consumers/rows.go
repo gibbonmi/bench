@@ -74,6 +74,41 @@ func WriteRows(pkgs []*Package, target types.Object, root string) []Row {
 	return sortRows(useRows(pkgs, target, root, true))
 }
 
+// UnkeyedWrites is every unkeyed composite literal across pkgs whose struct type declares the
+// field target, in the order Rows uses. Such a literal writes the field by position and names
+// no field, so WriteRows cannot list it.
+func UnkeyedWrites(pkgs []*Package, target types.Object, root string) []Row {
+	var out []Row
+	for _, pkg := range pkgs {
+		if pkg.Info == nil {
+			continue
+		}
+		want := declKey(pkg.Fset, target)
+		for _, file := range pkg.Files {
+			ast.Inspect(file, func(n ast.Node) bool {
+				lit, ok := n.(*ast.CompositeLit)
+				if !ok || len(lit.Elts) == 0 || pkg.Info.TypeOf(lit) == nil {
+					return true
+				}
+				if _, keyed := lit.Elts[0].(*ast.KeyValueExpr); keyed {
+					return true
+				}
+				if fields, isStruct := types.Unalias(pkg.Info.TypeOf(lit)).Underlying().(*types.Struct); isStruct {
+					for i := range fields.NumFields() {
+						if declKey(pkg.Fset, fields.Field(i)) == want {
+							pos := pkg.Fset.Position(lit.Pos())
+							out = append(out, Row{File: relPath(root, pos.Filename), Line: pos.Line, Column: pos.Column})
+							break
+						}
+					}
+				}
+				return true
+			})
+		}
+	}
+	return sortRows(out)
+}
+
 // useRows is every use of target across pkgs, or only every static write of it.
 func useRows(pkgs []*Package, target types.Object, root string, writesOnly bool) []Row {
 	var out []Row
