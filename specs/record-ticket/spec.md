@@ -147,7 +147,7 @@ After `Finish`, it writes the retained response of the assignment scope that `As
 The retained response holds the complete response bytes in arrival order, the exit code, the typed verb word, and its arguments.
 It also holds the `HEAD` commit of the worktree and its dirty paths, read after the verb returns.
 The dirty paths come from one shared porcelain reader: `git status --porcelain=v1 -z --no-renames` and `ParsePorcelainZ`.
-`LandedState` already runs that read, so the read moves into one `internal/git` function that `LandedState` and retention both call.
+`LandedState` and `Facts` already run that read, so the read moves into one `internal/git` function that `LandedState`, `Facts`, and retention call.
 
 The commit comes from `rev-parse HEAD`.
 Both reads run only when retention writes, so the skipped calls below and the primary checkout pay no Git read.
@@ -382,7 +382,7 @@ The slicing writes this plan's tickets and its verification commands.
 | RT55 | 55 | For a later chunk whose predecessor entry has one recorded fold after it, the ticket form freezes with that fold's commit as base. | planned | A form that takes the predecessor tip writes a base that the checkpoint refuses as a chain gap and the row reds. |
 | RT56 | 56 | For the last ticket of the first chunk with an absent record and `--base`, the ticket form creates the record with the chunk entry and the verifications. | planned | A form that passes the absent-record refusal as its create function refuses and the row reds. |
 | RT57 | 57 | `bench record excerpt` stages a run whose arguments equal a planned command with a single-quoted operand. | planned | A stage that splits on spaces keeps the quotes and refuses the match and the row reds. |
-| RT58 | 13 | `bench record excerpt` refuses a planned command whose first word is not `bench`, and a planned command that holds a pipe operator. | planned | A stage that drops the first word compares a foreign command and the row reds. |
+| RT58 | 13 | `bench record excerpt` refuses a planned command whose first word is not `bench`, a planned command that holds a pipe operator, and a planned command that the lexer cannot read. | planned | A stage that drops the first word compares a foreign command, and a stage that checks only the first word accepts the pipe or the unlexed text, so the row reds. |
 | RT59 | 58 | A requirement ID of `../x` stages a file inside the assignment scope and nowhere else. | planned | A stage that joins the ID into the path writes outside the scope and the row reds. |
 | RT60 | 53 | The ticket form refuses a stage whose run commit is not the chunk source and names the requirement. | planned | A form that ignores the run commit records an excerpt from an earlier tip and the row reds. |
 | RT61 | 54 | The ticket form refuses a stage whose run had a dirty Go file and names the requirement. | planned | A form that ignores the dirty paths records an uncommitted run and the row reds. |
@@ -459,7 +459,7 @@ The excerpts come from staged retained responses in place of a folder in the wor
 
 ### Pre-review proof checklist
 
-- `Cited symbols`: `coveredAfter`, `shellcommand.Parse`, `LandedState`, and `ParsePorcelainZ` resolve in the tree. So do `write`, `replace`, `RecordAmendment`, `RecordChunk`, `RecordVerification`, `currentPlan`, `CompletionOrder`, `refusePlanned`, `importedProbe`, `runBounded`, `AssignmentScope`, `Drop`, `preparationCheckoutRefusal`, `currentEvidenceCommand`, `chargeevidence.Current`, and `ResponseBlocks` resolve in the tree.
+- `Cited symbols`: `coveredAfter`, `shellcommand.Parse`, `LandedState`, and `ParsePorcelainZ` resolve in the tree. `Facts`, `write`, `replace`, `RecordAmendment`, `RecordChunk`, `RecordVerification`, `currentPlan`, `CompletionOrder`, `refusePlanned`, `importedProbe`, `runBounded`, `AssignmentScope`, `Drop`, `preparationCheckoutRefusal`, `currentEvidenceCommand`, `chargeevidence.Current`, and `ResponseBlocks` also resolve in the tree.
 - `Import edges`: `cmd/bench` already imports `internal/responsebound`; `recordcmd` imports `internal/responsebound` for the stage. The slicing runs `go list` before it locks the edge.
 - `Source-row clauses and occurrences`: the source-sentence table quotes each clause; the occurrences are FT349, NRO, FT217, and the FT379 freeze retries.
 - `Promised field labels`: forms `ticket` and `excerpt`; flags `--ticket`, `--id-prefix`, `--requirement`, `--mutant`, `--base`, and `--tip`; response field `dirty_record`.
