@@ -13,14 +13,14 @@ package anchors
 // a fold in the review delta of the last chunk or refreeze that chunk. A fold row also pins the
 // craft-delegate sentence that leaves the build's fold timing to the implement phase.
 // The freezer rows pin the last ticket's author as the chunk freezer in craft-tickets and the
-// reference, and forbid the retired review freeze in both.
+// reference, and forbid the retired review freeze in both, in any case.
 // The light-path rows pin the build's light-path hold in the implement phase and in ADR 0023. They also forbid the ADR's
 // retired unscoped clause. The chunk-record rows pin the last ticket author's freeze and chunk
 // record. They pin the chunk checkpoint gate before a successor chunk and the last chunk's close
 // through the complete checkpoint. They also forbid each retired sentence. The build-log rows pin
 // the orchestrator's one build log, its line for each saved step, and its retro reader.
 // The `bench record` rows route each completed review-record entry to the verb, name the
-// excerpt and ticket forms, and forbid the retired hand-recording sentences.
+// chunk, excerpt, and ticket forms, and forbid the retired hand-recording sentences.
 // The review-round rows pin the parallel axis dispatch, the combined repair charge, and the
 // named-findings scope of a confirming round. They also forbid the two retired sentences that widen that scope.
 // The confirmation rows pin the bounded repair policy's test-only exception and its finding-list
@@ -50,8 +50,8 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "review delta of the last chunk", Diagnostic: "chunk chain: the implement phase restored the fold in the review delta of the last chunk"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "the last chunk refreezes", Diagnostic: "chunk chain: the implement phase restored the refreeze of the last chunk after a fold"},
 	{Group: AfterImplementSpec, File: craftDelegate, Kind: Require, Needle: "During a build, `/bench-implement-spec` owns the fold timing, and a ticket charge starts without this fold.", Diagnostic: "chunk chain: craft-delegate leaves the build fold timing to the implement phase"},
-	{Group: AfterImplementSpec, File: craftTickets, Kind: Forbid, Needle: "review freezes", Diagnostic: "chunk chain: craft-tickets restored the review as the chunk freezer"},
-	{Group: AfterImplementSpec, File: benchReference, Kind: Forbid, Needle: "review freezes", Diagnostic: "chunk chain: the reference restored the review as the chunk freezer"},
+	{Group: AfterImplementSpec, File: craftTickets, Kind: ForbidCaseFoldedEmphasis, Needle: "review freezes", Diagnostic: "chunk chain: craft-tickets restored the review as the chunk freezer"},
+	{Group: AfterImplementSpec, File: benchReference, Kind: ForbidCaseFoldedEmphasis, Needle: "review freezes", Diagnostic: "chunk chain: the reference restored the review as the chunk freezer"},
 	{Group: AfterImplementSpec, File: craftTickets, Kind: Require, Needle: "In each chunk, the last ticket's author freezes the chunk base and the current tip.", Diagnostic: "chunk chain: craft-tickets dropped the last ticket's author as the chunk freezer"},
 	{Group: AfterImplementSpec, File: benchReference, Kind: Require, Needle: "The last ticket's author freezes each chunk's base and current tip.", Diagnostic: "chunk chain: the reference dropped the last ticket's author as the chunk freezer"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "After the last ticket of a chunk, that ticket's author freezes the chunk and records the chunk entry with `bench record ticket`.", Diagnostic: "chunk chain: the last ticket's author records the chunk entry at the freeze"},
@@ -88,7 +88,7 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 6, Needle: "A review worktree moves to the record commit, and the frozen pair still names the source tip.", Diagnostic: "chunk chain: the frozen pair keeps the source tip after the record commit"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 6, Needle: "Write each completed chunk, verification, review, and amendment entry with `bench record`, not with hand-built JSON.", Diagnostic: "chunk chain: step 6 writes each completed entry with bench record"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 6, Needle: "The last ticket's author writes the frozen pair and its digests with `bench record ticket`, and `bench record review` appends one axis result.", Diagnostic: "chunk chain: step 6 dropped the last ticket's author as the writer of the frozen pair"},
-	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 6, Needle: "`bench record excerpt` stages the last retained response as one excerpt, and `bench record ticket` writes one ticket's entries.", Diagnostic: "chunk chain: step 6 dropped the excerpt or the ticket record form"},
+	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 6, Needle: "`bench record chunk` writes one chunk entry, `bench record excerpt` stages the last retained response as one excerpt, and `bench record ticket` writes one ticket's entries.", Diagnostic: "chunk chain: step 6 dropped the chunk, excerpt, or ticket record form"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Preflight supplies the source and plan digests.", Diagnostic: "chunk chain: the review phase restored the preflight digest sentence"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Record the performer, role, model, effort, frozen base and tip, source, state, and native result.", Diagnostic: "chunk chain: the review phase restored the hand-recording field sentence"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Embed the minimal native excerpt and its SHA-256 digest; local logs are supplemental evidence.", Diagnostic: "chunk chain: the review phase restored the hand-embedded excerpt sentence"},
