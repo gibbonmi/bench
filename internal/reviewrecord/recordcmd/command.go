@@ -67,6 +67,7 @@ func init() {
 		foldForm,
 		completionForm,
 		amendmentForm,
+		excerptForm,
 	}
 }
 

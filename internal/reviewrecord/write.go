@@ -213,26 +213,14 @@ func RecordVerification(root, spec string, call VerificationCall) (Verification,
 		if chunk != nil && digest != chunk.SourceDigest {
 			return Repair{Form: FormChunk, Chunk: chunk.ID, Err: fmt.Errorf("source %s differs from the source of chunk %s: %w", source, chunk.ID, ErrNoChunkEntry)}
 		}
-		requirements := finalRequirements(plan, *record)
+		requirement, err := plannedRequirement(finalRequirements(plan, *record), call.Requirement)
 		if chunk != nil {
-			planned := findChunk(plan, chunk.ID)
-			if planned == nil {
-				return fmt.Errorf("chunk %s is not a chunk of the plan at %s", chunk.ID, source)
-			}
-			requirements = planned.Verification
+			requirement, err = ChunkRequirement(plan, source, chunk.ID, call.Requirement)
 		}
-		var requirement *Requirement
-		ids := []string{}
-		for i := range requirements {
-			ids = append(ids, requirements[i].ID)
-			if requirements[i].ID == call.Requirement {
-				requirement = &requirements[i]
-			}
+		if err != nil {
+			return err
 		}
-		if requirement == nil {
-			return fmt.Errorf("requirement %s is not planned; the planned requirements are %s", call.Requirement, strings.Join(ids, ", "))
-		}
-		_, role, err := verifier(plan, *record, *requirement, chunk == nil)
+		_, role, err := verifier(plan, *record, requirement, chunk == nil)
 		if err != nil {
 			return err
 		}
@@ -260,6 +248,26 @@ func RecordVerification(root, spec string, call VerificationCall) (Verification,
 		return nil
 	})
 	return entry, err
+}
+
+// ChunkRequirement answers requirement id of chunk of plan, the plan at source.
+func ChunkRequirement(plan Plan, source, chunk, id string) (Requirement, error) {
+	if planned := findChunk(plan, chunk); planned != nil {
+		return plannedRequirement(planned.Verification, id)
+	}
+	return Requirement{}, fmt.Errorf("chunk %s is not a chunk of the plan at %s", chunk, source)
+}
+
+// plannedRequirement answers requirement id, or refuses with the planned requirements named.
+func plannedRequirement(requirements []Requirement, id string) (Requirement, error) {
+	ids := []string{}
+	for _, requirement := range requirements {
+		if requirement.ID == id {
+			return requirement, nil
+		}
+		ids = append(ids, requirement.ID)
+	}
+	return Requirement{}, fmt.Errorf("requirement %s is not planned; the planned requirements are %s", id, strings.Join(ids, ", "))
 }
 
 // entryOf returns the entry of chunk id in record. A chunk without an entry needs the

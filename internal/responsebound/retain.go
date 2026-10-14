@@ -1,11 +1,14 @@
 package responsebound
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 )
@@ -26,14 +29,14 @@ type Retained struct {
 	Output []byte   `json:"output"`
 }
 
-// retainedPath answers the assignment scope directory of the worktree at root and the
-// retained response path in it. It answers false where assignmentDir answers false.
-func retainedPath(home, root string) (scopeDir, string, bool, error) {
+// scopedPath answers the assignment scope directory of the worktree at root and the path of
+// the file name in it. It answers false where assignmentDir answers false.
+func scopedPath(home, root, name string) (scopeDir, string, bool, error) {
 	dir, ok, err := assignmentDir(home, root)
 	if err != nil || !ok {
 		return dir, "", false, err
 	}
-	path, err := dir.file(retainedName)
+	path, err := dir.file(name)
 	return dir, path, err == nil, err
 }
 
@@ -43,7 +46,7 @@ func retainedPath(home, root string) (scopeDir, string, bool, error) {
 // no complete copy clears the retained response. A call function that returns an error
 // clears it too. A root outside any assignment worktree keeps nothing.
 func (o *Owner) Retain(home, root string, call func() (Retained, error)) error {
-	dir, path, ok, err := retainedPath(home, root)
+	dir, path, ok, err := scopedPath(home, root, retainedName)
 	if err != nil {
 		return fmt.Errorf("retain response: %w", err)
 	}
@@ -80,20 +83,94 @@ func clearRetained(path string) error {
 // response, and a root outside any assignment worktree, answer an error that matches
 // fs.ErrNotExist.
 func ReadRetained(home, root string) (Retained, error) {
-	_, path, ok, err := retainedPath(home, root)
-	if err != nil {
-		return Retained{}, fmt.Errorf("read retained response: %w", err)
-	}
-	if !ok {
-		return Retained{}, fmt.Errorf("read retained response: no assignment worktree: %w", fs.ErrNotExist)
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return Retained{}, fmt.Errorf("read retained response: %w", err)
-	}
 	var retained Retained
-	if err := json.Unmarshal(data, &retained); err != nil {
+	if err := readScoped(home, root, retainedName, &retained); err != nil {
 		return Retained{}, fmt.Errorf("read retained response: %w", err)
 	}
 	return retained, nil
 }
+
+// Staged is one staged excerpt: a copy of the retained response, and the row of a mutant-set
+// probe answer that its import reads, or 0 for any other answer.
+type Staged struct {
+	Retained
+	Mutant int `json:"mutant,omitempty"`
+}
+
+// stageName is the file name of the staged excerpt of one requirement: the hex SHA-256 digest
+// of the spec slug, the chunk ID, and the requirement ID, joined by NUL bytes. No plan string
+// forms a path component, so no ID can name a path outside the scope.
+func stageName(slug, chunk, requirement string) string {
+	sum := sha256.Sum256([]byte(slug + "\x00" + chunk + "\x00" + requirement))
+	return hex.EncodeToString(sum[:])
+}
+
+// Stage replaces the staged excerpt of one requirement in the assignment scope of the
+// worktree at root, so Drop removes it with the scope. A root outside any assignment
+// worktree refuses.
+func Stage(home, root, slug, chunk, requirement string, staged Staged) error {
+	dir, path, ok, err := scopedPath(home, root, stageName(slug, chunk, requirement))
+	if err == nil && !ok {
+		err = errNoAssignment
+	}
+	if err == nil {
+		err = dir.create()
+	}
+	if err != nil {
+		return fmt.Errorf("stage excerpt: %w", err)
+	}
+	data, err := json.Marshal(staged)
+	if err != nil {
+		return fmt.Errorf("stage excerpt: %w", err)
+	}
+	return durablefile.Replace(path, data, privateFile)
+}
+
+// ReadStaged answers the staged excerpt of one requirement in the assignment worktree at
+// root. An absent stage, and a root outside any assignment worktree, answer an error that
+// matches fs.ErrNotExist.
+func ReadStaged(home, root, slug, chunk, requirement string) (Staged, error) {
+	var staged Staged
+	if err := readScoped(home, root, stageName(slug, chunk, requirement), &staged); err != nil {
+		return Staged{}, fmt.Errorf("read staged excerpt: %w", err)
+	}
+	return staged, nil
+}
+
+// errNoAssignment matches fs.ErrNotExist, because a root outside any assignment worktree
+// holds no retained response and no stage.
+var errNoAssignment = fmt.Errorf("no assignment worktree: %w", fs.ErrNotExist)
+
+// readScoped decodes the file name in the assignment scope of the worktree at root into v.
+// It never follows a symlink: each store level must be a real directory, and the file must
+// be a regular file.
+func readScoped(home, root, name string, v any) error {
+	dir, path, ok, err := scopedPath(home, root, name)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errNoAssignment
+	}
+	level := dir.home
+	for _, component := range dir.levels {
+		level = filepath.Join(level, component)
+		if err := realDir(level); err != nil {
+			return err
+		}
+	}
+	info, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+	if !info.Mode().IsRegular() {
+		return &fs.PathError{Op: "read", Path: path, Err: errNotOwnFile}
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, v)
+}
+
+var errNotOwnFile = errors.New("not a regular file")

@@ -54,9 +54,14 @@ func verificationValid(f form, parsed usage.Result) bool {
 // positive decimal row when the call names mutantFlag.
 func exitsValid(parsed usage.Result) bool {
 	_, exitCode := integer(parsed.Flags, "--exit-code")
+	return exitCode && mutantValid(parsed)
+}
+
+// mutantValid closes the mutantFlag value: a positive decimal row when the call names it.
+func mutantValid(parsed usage.Result) bool {
 	_, mutant := parsed.Flags[mutantFlag]
 	row, decimal := integer(parsed.Flags, mutantFlag)
-	return exitCode && (!mutant || decimal && row > 0)
+	return !mutant || decimal && row > 0
 }
 
 func verification(f form, root, spec string, parsed usage.Result) (string, int) {
@@ -111,37 +116,39 @@ type importedAnswer struct {
 
 // readImported reads the probe values through the probe owner: a single-form answer when
 // mutant is 0, and row mutant of a mutant-set answer otherwise. The explicit exit binds to the
-// command exit of a single-form answer and to the row's own exit of a mutant set.
-func readImported(data []byte, mutant int) (importedAnswer, string) {
+// command exit of a single-form answer and to the row's own exit of a mutant set. source
+// names the answer in a refusal.
+func readImported(data []byte, mutant int, source string) (importedAnswer, string) {
 	if mutant == 0 {
 		result, err := probe.ReadResult(data)
 		if err != nil {
-			return importedAnswer{}, importRefusal(err, mutant)
+			return importedAnswer{}, importRefusal(err, mutant, source)
 		}
 		return importedAnswer{verdict: result.Verdict, restored: result.Restored, exit: result.CommandExit, focused: result.FocusedExit,
 			exitField: probe.FieldSource("command_exit_code"), focusedField: probe.FieldSource("focused_exit_code")}, ""
 	}
 	result, err := probe.ReadMutant(data, mutant)
 	if err != nil {
-		return importedAnswer{}, importRefusal(err, mutant)
+		return importedAnswer{}, importRefusal(err, mutant, source)
 	}
 	return importedAnswer{verdict: result.Verdict, restored: result.Restored, exit: result.RowExit, focused: result.FocusedExit,
 		exitField: probe.SetFieldSource("exit_code"), focusedField: probe.SetFieldSource("focused_exit_code")}, ""
 }
 
-// importRefusal maps a probe reader's refusal to its record line. The probe owner's sentinels
-// carry no flag, so each line here names the flag that repairs the call.
-func importRefusal(err error, mutant int) string {
+// importRefusal maps a probe reader's refusal of the answer that source names to its record
+// line. The probe owner's sentinels carry no flag, so each line here names the flag that
+// repairs the call.
+func importRefusal(err error, mutant int, source string) string {
 	var missing *probe.RowRangeError
 	switch {
 	case errors.Is(err, probe.ErrMutantSet):
-		return probeResult + " is a mutant-set answer; name one row with " + mutantFlag + " <n>"
+		return source + " is a mutant-set answer; name one row with " + mutantFlag + " <n>"
 	case errors.Is(err, probe.ErrSingleForm):
-		return mutantFlag + " needs a mutant-set answer; " + probeResult + " holds a " + probe.ResultSchema + " answer"
+		return mutantFlag + " needs a mutant-set answer; " + source + " holds a " + probe.ResultSchema + " answer"
 	case errors.As(err, &missing):
 		return fmt.Sprintf("%s %d names no row; the answer holds %d rows", mutantFlag, mutant, missing.Rows)
 	}
-	return probeResult + " " + err.Error()
+	return source + " " + err.Error()
 }
 
 // importedProbe reads the probe values from one complete probe answer, or from its row mutant
@@ -149,7 +156,7 @@ func importRefusal(err error, mutant int) string {
 // whose mutated run never started has no focused exit to record. A silent or unrestored answer
 // imports as it reads; the checkpoint or the confirmation writer refuses it.
 func importedProbe(data []byte, exitCode, mutant int) (*reviewrecord.Probe, string) {
-	answer, out := readImported(data, mutant)
+	answer, out := readImported(data, mutant, probeResult)
 	if out != "" {
 		return nil, out
 	}

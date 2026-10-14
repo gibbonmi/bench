@@ -13,6 +13,7 @@ const (
 	FormConfirmation = "confirmation"
 	FormFold         = "fold"
 	FormCompletion   = "completion"
+	FormExcerpt      = "excerpt"
 )
 
 // Repair is a refusal that one record form repairs. Form names that form, and Err is the

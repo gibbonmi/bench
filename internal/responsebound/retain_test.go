@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -58,6 +59,65 @@ func TestRetainClearsAnIncompleteResponse(t *testing.T) {
 				t.Fatalf("retained after the %s response = (%+v, %v), want none", row.name, got, err)
 			}
 		})
+	}
+}
+
+// RT9: the release of a worktree removes its retained response and its staged excerpts.
+func TestDropRemovesTheRetainedResponseAndStages(t *testing.T) {
+	home := rb.PrivateHome(t)
+	repo, checkout, id := responseboundtest.AssignmentCheckout(t, home)
+	var sink bytes.Buffer
+	owner := rb.New(home, &sink, &sink, func() string { return checkout }, false)
+	rb.RespondWith(t, owner, &sink, rb.StdoutLines("kept\n"))
+	if err := owner.Retain(home, checkout, retainCall); err != nil {
+		t.Fatal(err)
+	}
+	if err := rb.Stage(home, checkout, "example", "1", "tests", rb.Staged{Mutant: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if files := responseboundtest.StoreFiles(t, home); len(files) != 2 {
+		t.Fatalf("store files before the drop = %q, want the retained response and the stage", files)
+	}
+	if err := rb.Drop(home, repo, id); err != nil {
+		t.Fatal(err)
+	}
+	if files := responseboundtest.StoreFiles(t, home); len(files) != 0 {
+		t.Fatalf("store files after the drop = %q, want none", files)
+	}
+}
+
+// A store level that is a symlink refuses the stage and its read, and the link target
+// receives no file.
+func TestStageRefusesASymlinkedScope(t *testing.T) {
+	home := rb.PrivateHome(t)
+	_, checkout, _ := responseboundtest.AssignmentCheckout(t, home)
+	if err := rb.Stage(home, checkout, "example", "1", "tests", rb.Staged{}); err != nil {
+		t.Fatal(err)
+	}
+	files := responseboundtest.StoreFiles(t, home)
+	if len(files) != 1 {
+		t.Fatalf("store files = %q, want one stage", files)
+	}
+	stage := files[0]
+	scope := filepath.Dir(stage)
+	target := t.TempDir()
+	if err := os.RemoveAll(scope); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, scope); err != nil {
+		t.Fatal(err)
+	}
+	if err := rb.Stage(home, checkout, "example", "1", "tests", rb.Staged{}); err == nil {
+		t.Fatal("stage through a symlinked scope = nil, want a refusal")
+	}
+	if entries, err := os.ReadDir(target); err != nil || len(entries) != 0 {
+		t.Fatalf("link target entries = %v (%v), want none", entries, err)
+	}
+	if err := os.WriteFile(filepath.Join(target, filepath.Base(stage)), []byte(`{"mutant":1}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := rb.ReadStaged(home, checkout, "example", "1", "tests"); err == nil {
+		t.Fatalf("read through a symlinked scope = %+v, want a refusal", got)
 	}
 }
 
