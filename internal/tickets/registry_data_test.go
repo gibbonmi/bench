@@ -99,7 +99,8 @@ func TestCommandRowsBindTheHelpProjectionAndEnvelopeCases(t *testing.T) {
 
 // TestBindingLinesLocateEveryRow reads this registry's own source. BindingRegistry must
 // name that file, and BindingLines must place each compiled row on the line that spells
-// its prefix, so a closure reason cites the row it applied.
+// its prefix, and each grammar root on the line that spells its name, so a closure reason
+// cites the row it applied.
 func TestBindingLinesLocateEveryRow(t *testing.T) {
 	src, err := os.ReadFile(path.Base(BindingRegistry))
 	if err != nil {
@@ -116,6 +117,12 @@ func TestBindingLinesLocateEveryRow(t *testing.T) {
 			t.Errorf("BindingLines()[%q] = %d, want the line that declares the row", row.Prefix, line)
 		}
 	}
+	for _, root := range GrammarRoots() {
+		line := lines[root.String()]
+		if line < 1 || !strings.Contains(physical[line-1], "Name: "+strconv.Quote(root.Name)) {
+			t.Errorf("BindingLines()[%q] = %d, want the line that declares the root", root, line)
+		}
+	}
 	if _, err := BindingLines([]byte("package tickets\n")); err == nil {
 		t.Error("BindingLines over source without a bindings table succeeded, want an error")
 	}
@@ -127,10 +134,10 @@ func TestBindingLinesLocateEveryRow(t *testing.T) {
 func TestBindingRulesProjectBoundFiles(t *testing.T) {
 	for path, want := range map[string][]BindingRule{
 		"internal/toon/toon.go": {
-			{Prefix: "internal/toon", File: "internal/conformance/data_handling_test.go"},
-			{Prefix: "internal/toon", File: "internal/toon/toon_test.go"},
+			{Prefix: "internal/toon", File: "internal/conformance/data_handling_test.go", Kind: BindingCore},
+			{Prefix: "internal/toon", File: "internal/toon/toon_test.go", Kind: BindingCore},
 		},
-		"internal/toon/toon_test.go": {{Prefix: "internal/toon", File: "internal/conformance/data_handling_test.go"}},
+		"internal/toon/toon_test.go": {{Prefix: "internal/toon", File: "internal/conformance/data_handling_test.go", Kind: BindingCore}},
 		"internal/toonery/x.go":      nil,
 	} {
 		rules := BindingRules(path)

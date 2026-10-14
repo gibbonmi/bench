@@ -149,11 +149,12 @@ func (e *Error) Error() string { return e.Stage + " " + e.Subject + ": " + e.Cau
 
 func (e *Error) Unwrap() error { return e.Cause }
 
-// Collect reads the canonical closure of every parsed ticket at root and projects the
-// manifest's premise inventory. A failed owner read returns an *Error and no snapshot, so a
+// Collect reads the canonical closure of every parsed ticket at root, with each Grammar
+// binding classified by the committed change it covers, and projects the manifest's premise
+// inventory. A failed owner read returns an *Error and no snapshot, so a
 // partial collection never reads as a complete one.
 func Collect(root string, source Source, manifest Manifest, parsed []tickets.Ticket) (Snapshot, error) {
-	requirements, diagnostics, err := closure(root, source, parsed)
+	requirements, diagnostics, err := closure(root, source, parsed, manifest.Changes)
 	if err != nil {
 		return Snapshot{}, err
 	}
