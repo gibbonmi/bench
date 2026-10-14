@@ -8,6 +8,8 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func TestRunReportsAcceptedInventoryBindings(t *testing.T) {
@@ -176,7 +178,7 @@ func TestPinsRefuseASpecialInventory(t *testing.T) {
 		"file": func(t *testing.T, root string) { writeFixtureFile(t, Dir(root), "not a directory\n") },
 		"unreadable": func(t *testing.T, root string) {
 			if os.Geteuid() == 0 {
-				t.Skip("root reads a mode 000 directory")
+				capability.Capability(t, capability.Privilege, "root reads a mode 000 directory; the unreadable inventory is unobservable")
 			}
 			writeFixtureFile(t, filepath.Join(Dir(root), "family", "fixture", "BASE"), "internal/example/base.go\n")
 			if err := os.Chmod(Dir(root), 0); err != nil {

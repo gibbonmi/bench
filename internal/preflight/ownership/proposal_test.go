@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
@@ -360,7 +361,7 @@ func TestProposalUnknown(t *testing.T) {
 		// own refusal of that state.
 		t.Run("unreadable directory", func(t *testing.T) {
 			if os.Geteuid() == 0 {
-				t.Skip("root reads a mode 000 directory")
+				capability.Capability(t, capability.Privilege, "root reads a mode 000 directory; the unreadable inventory is unobservable")
 			}
 			root := closureTree().Seed(t)
 			inventory := filepath.Join(root, "tests", "canary")
