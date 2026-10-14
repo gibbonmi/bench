@@ -52,9 +52,18 @@ func (c *census) before(change Change) (beforeState, error) {
 
 // baseCandidates is every Go source at the source base whose bytes hold name. The fixed
 // string search is a superset of the files that name the declaration, so it drops no use.
-// git grep exits 1 when no file matches, which is an empty answer.
 func (c *census) baseCandidates(name string) ([]string, error) {
-	out, err := git.Raw("-C", c.root, "grep", "-z", "-l", "-F", "-e", name, c.source.Base, "--", "*.go")
+	return grepFiles(c.root, c.source.Base, name)
+}
+
+// grepFiles is every Go source at rev whose bytes hold one of needles. git grep exits 1 when
+// no file matches, which is an empty answer.
+func grepFiles(root, rev string, needles ...string) ([]string, error) {
+	args := []string{"-C", root, "grep", "-z", "-l", "-F"}
+	for _, needle := range needles {
+		args = append(args, "-e", needle)
+	}
+	out, err := git.Raw(append(args, rev, "--", "*.go")...)
 	var exit *exec.ExitError
 	if errors.As(err, &exit) && exit.ExitCode() == 1 {
 		return nil, nil
@@ -64,7 +73,7 @@ func (c *census) baseCandidates(name string) ([]string, error) {
 	}
 	var files []string
 	for _, entry := range bytes.Split(bytes.TrimSuffix(out, []byte{0}), []byte{0}) {
-		if file, ok := strings.CutPrefix(string(entry), c.source.Base+":"); ok {
+		if file, ok := strings.CutPrefix(string(entry), rev+":"); ok {
 			files = append(files, file)
 		}
 	}

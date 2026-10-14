@@ -13,14 +13,20 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// Grammar effect fixture paths. command.go passes a local grammar to the parser, and that
+// Grammar effect fixture paths. With no go.mod, every import is outside the module. command.go passes a local grammar to the parser, and that
 // grammar reads its help from help.go. helper.go is an unrelated helper of the same package.
-// dynamic.go, in another bound package, passes a parameter to the parser.
-// operations.go declares the custom root operations beside a case-variant Operations.
+// cross.go passes a grammar whose help reads names.Suffix through an in-module import, and
+// whose handler literal calls helper and names.Count. gauge.go, in a package with no Grammar
+// row, passes a literal grammar to the parser. dynamic.go, in another bound package, passes a
+// parameter to the parser. operations.go declares the custom root operations beside a
+// case-variant Operations.
 const (
 	commandFile    = "internal/harnesses/command.go"
 	helpFile       = "internal/harnesses/help.go"
 	helperFile     = "internal/harnesses/helper.go"
+	crossFile      = "internal/harnesses/cross.go"
+	namesFile      = "internal/names/names.go"
+	gaugeFile      = "internal/gauge/gauge.go"
 	dynamicFile    = "internal/roadmap/dynamic.go"
 	terminalFile   = "internal/terminal/terminal.go"
 	operationsFile = "internal/preflight/evidencecmd/operations.go"
@@ -34,11 +40,21 @@ var grammarBase = map[string]string{
 	commandFile:    "package harnesses\n\nimport \"github.com/gibbonmi/bench/internal/usage\"\n\nfunc Command(args []string) int {\n\tgrammar := usage.Grammar{Cmd: \"bench harnesses\", Help: harnessesHelp}\n\t_, _, code := usage.Parse(grammar, args)\n\treturn code + helper()\n}\n",
 	helpFile:       "package harnesses\n\nconst harnessesHelp = \"usage: bench harnesses\"\n",
 	helperFile:     "package harnesses\n\nfunc helper() int { return 0 }\n",
+	crossFile:      "package harnesses\n\nimport (\n\t\"github.com/gibbonmi/bench/internal/names\"\n\t\"github.com/gibbonmi/bench/internal/usage\"\n)\n\nfunc Cross(args []string) int {\n\tgrammar := usage.Grammar{Cmd: \"bench cross\", Help: harnessesHelp + names.Suffix, Run: func() int { return helper() + names.Count() }}\n\t_, _, code := usage.Parse(grammar, args)\n\treturn code\n}\n",
+	namesFile:      "package names\n\nconst Suffix = \" [--all]\"\n\nfunc Count() int { return 0 }\n",
+	gaugeFile:      "package gauge\n\nimport \"github.com/gibbonmi/bench/internal/usage\"\n\nfunc Command(args []string) int {\n\t_, _, code := usage.Parse(usage.Grammar{Cmd: \"bench gauge\"}, args)\n\treturn code\n}\n",
 	dynamicFile:    "package roadmap\n\nimport \"github.com/gibbonmi/bench/internal/usage\"\n\nfunc run(g usage.Grammar, args []string) int {\n\t_, _, code := usage.Parse(g, args)\n\treturn code\n}\n",
 	terminalFile:   "package terminal\n\nfunc Run() int { return 0 }\n",
 	operationsFile: "package evidencecmd\n\nvar operations = []string{\"build\"}\n\nvar Operations = []string{\"x\"}\n",
 	breakdownFile:  "package evidencecmd\n",
 }
+
+// crossBase is grammarBase inside the module that its imports name, with the parser package
+// the module's package index needs.
+var crossBase = merged(grammarBase, map[string]string{
+	"go.mod":                  "module github.com/gibbonmi/bench\n\ngo 1.25\n",
+	"internal/usage/usage.go": "package usage\n\ntype Grammar struct {\n\tCmd, Help string\n\tRun       func() int\n}\n\nfunc Parse(g Grammar, args []string) (any, any, int) { return nil, nil, 0 }\n",
+})
 
 // edited is one base file with its first old replaced by new.
 func edited(path, old, new string) map[string]string {
@@ -142,12 +158,39 @@ func TestGrammarEffects(t *testing.T) {
 		{name: "OC19 case-variant declaration is no root", writes: []string{operationsFile},
 			tip:  edited(operationsFile, `"x"`, `"y"`),
 			want: map[string]bool{rootHelp: false}},
+		{name: "cross-package producer requires its root and the shared inventories", writes: []string{namesFile}, files: crossBase,
+			tip:      edited(namesFile, "[--all]", "[--all] [--json]"),
+			want:     map[string]bool{crossFile: true, rootHelp: true, routingCensus: true},
+			evidence: map[string]string{crossFile: "internal/names.Suffix changes the grammar that internal/harnesses.Cross.grammar produces"}},
+		{name: "handler literal body adds no grammar obligation", writes: []string{helperFile, namesFile}, files: crossBase,
+			tip:  merged(edited(helperFile, "return 0", "return 1"), edited(namesFile, "return 0", "return 1")),
+			want: map[string]bool{crossFile: false, rootHelp: false, routingCensus: false}},
+		{name: "unbound package grammar requires the shared inventories", writes: []string{gaugeFile},
+			tip:      edited(gaugeFile, "bench gauge", "bench gauge [--all]"),
+			want:     map[string]bool{rootHelp: true, routingCensus: true},
+			evidence: map[string]string{rootHelp: "grammar root internal/gauge.Command#1 requires " + rootHelp}},
+		{name: "ambiguous producer declaration stays diagnostic", writes: []string{helpFile},
+			files: merged(grammarBase, map[string]string{"internal/harnesses/help_other.go": "//go:build ignore\n\npackage harnesses\n\nconst harnessesHelp = \"other\"\n"}),
+			tip:   edited(helpFile, "usage: bench harnesses", "usage: bench harnesses [--all]"),
+			want:  map[string]bool{rootHelp: true}, premise: "grammar-effects", reason: "reaches the ambiguous declaration harnessesHelp"},
+		{name: "malformed tip source stays diagnostic", writes: []string{helperFile},
+			tip:  map[string]string{helperFile: malformedHelper},
+			want: map[string]bool{rootHelp: true}, premise: "grammar-effects", reason: "tip " + helperFile + ":"},
+		{name: "malformed base source stays diagnostic", writes: []string{helperFile},
+			files: merged(grammarBase, map[string]string{helperFile: malformedHelper}),
+			tip:   map[string]string{helperFile: grammarBase[helperFile]},
+			want:  map[string]bool{rootHelp: true}, premise: "grammar-effects", reason: "base " + helperFile + ":"},
 	}
 	for _, test := range cases {
-		test.files = grammarBase
+		if test.files == nil {
+			test.files = grammarBase
+		}
 		t.Run(test.name, test.run)
 	}
 }
+
+// malformedHelper is helper.go with a syntax error.
+const malformedHelper = "package harnesses\n\nfunc helper( int {\n"
 
 // merged is the union of several edit sets.
 func merged(sets ...map[string]string) map[string]string {

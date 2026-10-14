@@ -1,6 +1,7 @@
 package ownership
 
 import (
+	"cmp"
 	"maps"
 	"path"
 	"slices"
@@ -13,12 +14,14 @@ import (
 const grammarEffectsID = "grammar-effects"
 
 // effects classifies the grammar effect of the committed source range. It reads each
-// classified package at the source base and at the source tip, so a classification binds
-// exactly those two commits.
+// classified package, and each grammar package that can reach it, at the source base and at
+// the source tip, so a classification binds exactly those two commits.
 type effects struct {
 	root        string
 	source      Source
 	reads       map[string]producerRead
+	modules     map[string]revRead[string]
+	grammar     map[string]revRead[map[string]bool]
 	packages    map[string]packageEffect
 	planned     []Change
 	diagnostics []Diagnostic
@@ -54,14 +57,17 @@ type effect struct {
 }
 
 func newEffects(root string, source Source) *effects {
-	return &effects{root: root, source: source, reads: map[string]producerRead{}, packages: map[string]packageEffect{}}
+	return &effects{root: root, source: source, reads: map[string]producerRead{}, modules: map[string]revRead[string]{},
+		grammar: map[string]revRead[map[string]bool]{}, packages: map[string]packageEffect{}}
 }
 
 func (e *effects) diagnose(id, reason string) {
 	e.diagnostics = append(e.diagnostics, Diagnostic{ID: id, Reason: reason})
 }
 
-// classify is the grammar effect of one subject over the source range.
+// classify is the grammar effect of one subject over the source range. Every changed
+// production Go file is classified, so a package with no Grammar row still changes grammar
+// when one of its own parser calls, or a grammar root of another package, reaches it.
 func (e *effects) classify(subject string) effect {
 	if e.source.Base == "" || e.source.Tip == "" {
 		return effect{applies: true}
@@ -73,11 +79,10 @@ func (e *effects) classify(subject string) effect {
 			continue
 		}
 		observed = true
-		dir := path.Dir(changed.Path)
-		if !producerFile(changed.Path) || !grammarScope(dir) {
+		if !producerFile(changed.Path) {
 			continue
 		}
-		pkg := e.pkg(dir)
+		pkg := e.pkg(path.Dir(changed.Path))
 		if pkg.failure != "" || len(pkg.changes[changed.Path]) > 0 {
 			result.applies = true
 			result.changes = append(result.changes, pkg.changes[changed.Path]...)
@@ -87,26 +92,24 @@ func (e *effects) classify(subject string) effect {
 	return result
 }
 
-// grammarScope reports whether the registry classifies dir: a Grammar binding covers it, or
-// it declares a custom grammar root.
-func grammarScope(dir string) bool {
-	return tickets.CommandPackage(dir) || slices.ContainsFunc(tickets.GrammarRoots(), func(root tickets.GrammarRoot) bool { return root.Dir == dir })
-}
-
 // producerFile reports whether one path is production Go source.
 func producerFile(name string) bool {
 	return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
 }
 
 // pkg classifies one package once. A producer declaration changes when its printed syntax
-// differs between the base and the tip, or when only one side declares it. An unchanged
-// dependency stays unchanged even when its caller changes.
+// differs between the base and the tip, or when only one side declares it. It changes the
+// grammar of each root of its own package that reaches it, and of each root of another
+// package that reaches it through in-module imports. An unchanged dependency stays
+// unchanged even when its caller changes.
 func (e *effects) pkg(dir string) packageEffect {
 	if cached, ok := e.packages[dir]; ok {
 		return cached
 	}
 	result := packageEffect{changes: map[string][]grammarChange{}}
 	base, tip := e.read(e.source.Base, dir), e.read(e.source.Tip, dir)
+	var baseRefs, tipRefs map[string][]grammarChange
+	var baseFailure, tipFailure string
 	switch {
 	case base.err != nil:
 		result.failure = "base " + base.err.Error()
@@ -116,6 +119,16 @@ func (e *effects) pkg(dir string) packageEffect {
 		result.failure = "base " + base.producers.unresolved[0]
 	case len(tip.producers.unresolved) > 0:
 		result.failure = "tip " + tip.producers.unresolved[0]
+	}
+	if result.failure == "" {
+		baseRefs, baseFailure = e.referred(e.source.Base, dir)
+		tipRefs, tipFailure = e.referred(e.source.Tip, dir)
+	}
+	switch {
+	case baseFailure != "":
+		result.failure = "base " + baseFailure
+	case tipFailure != "":
+		result.failure = "tip " + tipFailure
 	}
 	if result.failure != "" {
 		e.diagnose(grammarEffectsID, dir+": "+result.failure+", so its grammar effect is unclassified")
@@ -129,14 +142,18 @@ func (e *effects) pkg(dir string) packageEffect {
 		if inBase && inTip && old.text == current.text {
 			continue
 		}
-		roots := append(append([]string(nil), before.reached[key]...), after.reached[key]...)
-		slices.Sort(roots)
-		for _, root := range slices.Compact(roots) {
+		var changes []grammarChange
+		for _, root := range append(append([]string(nil), before.reached[key]...), after.reached[key]...) {
 			at, ok := after.units[root]
 			if !ok {
 				at = before.units[root]
 			}
-			change := grammarChange{unit: tickets.GrammarRoot{Dir: dir, Name: key}.String(), root: tickets.GrammarRoot{Dir: dir, Name: root}.String(), file: at.file, line: at.line}
+			changes = append(changes, grammarChange{root: tickets.GrammarRoot{Dir: dir, Name: root}.String(), file: at.file, line: at.line})
+		}
+		changes = append(append(changes, tipRefs[key]...), baseRefs[key]...)
+		slices.SortStableFunc(changes, func(a, b grammarChange) int { return cmp.Compare(a.root, b.root) })
+		for _, change := range slices.CompactFunc(changes, func(a, b grammarChange) bool { return a.root == b.root }) {
+			change.unit = tickets.GrammarRoot{Dir: dir, Name: key}.String()
 			for _, file := range []string{old.file, current.file} {
 				if file != "" && !slices.Contains(result.changes[file], change) {
 					result.changes[file] = append(result.changes[file], change)
@@ -154,7 +171,11 @@ func (e *effects) read(rev, dir string) producerRead {
 	if cached, ok := e.reads[key]; ok {
 		return cached
 	}
-	producers, err := readProducers(e.root, rev, dir)
+	module, err := e.module(rev)
+	var producers producers
+	if err == nil {
+		producers, err = readProducers(e.root, rev, dir, module)
+	}
 	e.reads[key] = producerRead{producers, err}
 	return e.reads[key]
 }

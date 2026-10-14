@@ -27,30 +27,35 @@ type unit struct {
 
 // producers is one package's grammar producers at one revision. units holds every package
 // declaration and every producer expression, roots names the grammar roots, reached maps
-// each unit a root reaches to those roots, and unresolved names each producer that the
-// static walk cannot resolve.
+// each unit a root reaches to those roots, external maps each root to the declarations of
+// other module packages that its units reference, and unresolved names each producer that
+// the static walk cannot resolve.
 type producers struct {
 	units      map[string]unit
 	roots      []string
 	reached    map[string][]string
+	external   map[string][]edge
 	unresolved []string
 
 	fset      *token.FileSet
+	module    string
 	methods   map[string][]string
 	ambiguous map[string]bool
-	imports   map[string]bool
+	// imports maps each file to its import table: each local import name to its path.
+	imports map[string]map[string]string
 }
 
 // readProducers reads the production Go files of dir at rev and walks its grammar roots: each
 // value passed to the registry's ordinary parser, and each custom root the registry names
-// in dir.
-func readProducers(root, rev, dir string) (producers, error) {
+// in dir. module is the module path at rev, which places an import inside the module; an
+// empty module places every import outside it.
+func readProducers(root, rev, dir, module string) (producers, error) {
 	listing, err := git.Output("-C", root, "ls-tree", "-z", "--name-only", rev, "--", dir+"/")
 	if err != nil {
 		return producers{}, fmt.Errorf("%s listing at %s: %w", dir, rev, err)
 	}
-	p := producers{units: map[string]unit{}, reached: map[string][]string{}, fset: token.NewFileSet(),
-		methods: map[string][]string{}, ambiguous: map[string]bool{}, imports: map[string]bool{}}
+	p := producers{units: map[string]unit{}, reached: map[string][]string{}, external: map[string][]edge{}, fset: token.NewFileSet(),
+		module: module, methods: map[string][]string{}, ambiguous: map[string]bool{}, imports: map[string]map[string]string{}}
 	var files []*ast.File
 	for _, name := range strings.Split(listing, "\x00") {
 		if path.Dir(name) != dir || !producerFile(name) {
@@ -81,14 +86,16 @@ func readProducers(root, rev, dir string) (producers, error) {
 // index adds each package-level declaration of one file. A const group is one unit, because
 // each member's value can depend on its place in the group.
 func (p *producers) index(file *ast.File) {
+	imports := map[string]string{}
 	for _, spec := range file.Imports {
 		imported, _ := strconv.Unquote(spec.Path.Value)
 		name := path.Base(imported)
 		if spec.Name != nil {
 			name = spec.Name.Name
 		}
-		p.imports[name] = true
+		imports[name] = imported
 	}
+	p.imports[p.fset.Position(file.Package).Filename] = imports
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
@@ -209,7 +216,7 @@ func (p *producers) producer(fn *ast.FuncDecl, call *ast.CallExpr, n int) {
 			}
 		}
 	case *ast.CallExpr:
-		if p.resolvedCall(arg) {
+		if p.resolvedCall(p.fset.Position(call.Pos()).Filename, arg) {
 			p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg)
 			return
 		}
@@ -229,15 +236,16 @@ func (p *producers) rootUnit(key string, node ast.Node) {
 	p.root(key)
 }
 
-// resolvedCall reports whether call invokes a package function or a method this package
-// declares.
-func (p *producers) resolvedCall(call *ast.CallExpr) bool {
+// resolvedCall reports whether call, in file, invokes a package function or a method this
+// package declares.
+func (p *producers) resolvedCall(file string, call *ast.CallExpr) bool {
 	switch fun := call.Fun.(type) {
 	case *ast.Ident:
 		_, declared := p.units[fun.Name]
 		return declared
 	case *ast.SelectorExpr:
-		return !p.imported(fun.X) && len(p.methods[fun.Sel.Name]) > 0
+		_, imported := p.imported(file, fun.X)
+		return !imported && len(p.methods[fun.Sel.Name]) > 0
 	}
 	return false
 }
@@ -297,26 +305,36 @@ func isIdent(expr ast.Expr, name string) bool {
 	return ok && id.Name == name
 }
 
-func (p *producers) imported(expr ast.Expr) bool {
-	id, ok := expr.(*ast.Ident)
-	return ok && p.imports[id.Name]
-}
-
-// root walks one grammar root to every unit it reaches. A value, const, or type reference
-// reaches its declaration. A called function or method reaches its body. A function used
-// only as a value contributes its name, not its body, so a handler's body is no grammar.
+// root walks one grammar root to every unit it reaches, and records each reference to
+// another package of the module that those units hold.
 func (p *producers) root(key string) {
 	if slices.Contains(p.roots, key) {
 		return
 	}
 	p.roots = append(p.roots, key)
+	keys, external, problems := p.reach(key)
+	for _, current := range keys {
+		p.reached[current] = append(p.reached[current], key)
+	}
+	p.external[key] = external
+	p.unresolved = append(p.unresolved, problems...)
+}
+
+// reach is every unit that key reaches, the references to other packages of the module that
+// those units hold, and each reach that the static walk cannot resolve. A value, const, or
+// type reference reaches its declaration. A called function or method reaches its body. A
+// function used only as a value contributes its name, not its body, and a function literal
+// contributes nothing, so a handler's body is no grammar.
+func (p *producers) reach(key string) (keys []string, external []edge, problems []string) {
 	seen := map[string]bool{key: true}
 	for queue := []string{key}; len(queue) > 0; queue = queue[1:] {
 		current := queue[0]
-		p.reached[current] = append(p.reached[current], key)
-		for _, dep := range p.deps(p.units[current].node) {
+		keys = append(keys, current)
+		local, out, bad := p.deps(p.units[current])
+		external, problems = append(external, out...), append(problems, bad...)
+		for _, dep := range local {
 			if p.ambiguous[dep] {
-				p.unresolved = append(p.unresolved, key+" reaches the ambiguous declaration "+dep)
+				problems = append(problems, key+" "+ambiguity(dep))
 			}
 			if !seen[dep] {
 				seen[dep] = true
@@ -324,41 +342,48 @@ func (p *producers) root(key string) {
 			}
 		}
 	}
+	return keys, external, problems
 }
 
-// deps is every package unit one node references, by the rule root states.
-func (p *producers) deps(node ast.Node) []string {
-	if node == nil {
-		return nil
+// deps is every package unit that one unit references, by the rule reach states, and every
+// declaration of another package of the module that it references through its file's
+// import table. An import outside the module adds nothing. A dot import hides which package
+// an identifier names, so it leaves the unit unresolved.
+func (p *producers) deps(u unit) (deps []string, external []edge, problems []string) {
+	if u.node == nil {
+		return nil, nil, nil
 	}
-	called := map[*ast.Ident]bool{}
-	var deps []string
+	if imported, dot := p.imports[u.file]["."]; dot {
+		problems = append(problems, u.file+" dot-imports "+imported)
+	}
+	called := map[ast.Expr]bool{}
 	var visit func(ast.Node) bool
 	visit = func(node ast.Node) bool {
 		switch n := node.(type) {
+		case *ast.FuncLit:
+			return false
 		case *ast.CallExpr:
-			switch fun := n.Fun.(type) {
-			case *ast.Ident:
-				called[fun] = true
-			case *ast.SelectorExpr:
-				if !p.imported(fun.X) {
+			called[n.Fun] = true
+			if fun, ok := n.Fun.(*ast.SelectorExpr); ok {
+				if _, imported := p.imported(u.file, fun.X); !imported {
 					deps = append(deps, p.methods[fun.Sel.Name]...)
 				}
 			}
 		case *ast.SelectorExpr:
-			if !p.imported(n.X) {
+			imported, isImport := p.imported(u.file, n.X)
+			if !isImport {
 				ast.Inspect(n.X, visit)
+			} else if dir, in := p.inModule(imported); in {
+				external = append(external, edge{target: tickets.GrammarRoot{Dir: dir, Name: n.Sel.Name}, called: called[n]})
 			}
 			return false
 		case *ast.Ident:
-			if declared, ok := p.units[n.Name]; ok {
-				if _, function := declared.node.(*ast.FuncDecl); called[n] || !function {
-					deps = append(deps, n.Name)
-				}
+			if declared, ok := p.units[n.Name]; ok && declared.reachedBy(called[n]) {
+				deps = append(deps, n.Name)
 			}
 		}
 		return true
 	}
-	ast.Inspect(node, visit)
-	return deps
+	ast.Inspect(u.node, visit)
+	return deps, external, problems
 }
