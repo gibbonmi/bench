@@ -411,6 +411,72 @@
           "supersedes": [
             "ft405_rv_retain-coverage"
           ]
+        },
+        {
+          "id": "ft405_rv_retain_c2-standards",
+          "performer": "claude:ft405_rv_retain_c2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca09f68392623c074d4d8281b94fa11b11190111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_retain_c2_standards",
+            "digest": "sha256:ef8704cb365a6f63ca2caa41a0717317ebc103bc45607919ed1e8da016a741a7",
+            "excerpt": "## Standards\n\nS5 is closed. `assignmentDir` (`internal/responsebound/store.go:87-93`) is now the only place that decides \"assignment scope means not `primaryScope`\". `retainedPath` (`internal/responsebound/retain.go:32`) and `AssignmentScope` (`internal/responsebound/size.go:27`) both call it. Both paths make the home absolute through `storeScope` (`store.go:76`), so the old difference in home handling is gone. An rg over `internal` and `cmd` finds no other code that restates the check. `TestAssignmentScopeAndRetentionAgree` (`retain_test.go:63-84`) uses a relative home in both paths. That meets the AGENTS.md one-source rule.\n\nNew findings: 0. The new error path in `AssignmentScope` (`size.go:28-30`) answers `(\"\", false)`; its doc comment states this. It happens only when `os.Getwd` fails for a relative home. Its one caller, `recordOutput` (`cmd/bench/census_output.go:65-68`), then writes no record, and the dispatcher discards census errors anyway. The new and edited comments are in present tense, with no narration and no FT tags.\n\n## Advice\n- The `assignmentDir` comment names its two callers (`store.go:85-86`); that list goes out of date if a third caller arrives.\n- The `retainedPath` line \"It answers false where assignmentDir answers false\" (`retain.go:30`) points at the code; harmless.\n\n## Examined\nPreflight current=true at 8fdc93f2 through `bench worktree exec`; the repair delta 9dba46b7..adfc95fe; `store.go`, `retain.go`, and `size.go` at adfc95fe; callers of the scope helpers and `census_output.go:50-78`; `AGENTS.md`, `bench-craft-comments`, `bench-craft-review`. No files written; no tests or probes run.\n"
+          },
+          "axis": "Standards",
+          "base": "53e60dc58f0432fdadf2b31b78d4e7a25f85570d",
+          "tip": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_retain_c-standards"
+          ]
+        },
+        {
+          "id": "ft405_rv_retain_c2-spec",
+          "performer": "claude:ft405_rv_retain_c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca09f68392623c074d4d8281b94fa11b11190111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_retain_c2_spec",
+            "digest": "sha256:1de4f57e39bf1f54c5c3b2c7c4d1a9365c3abd8e88249e8ba14bf6028b7177f8",
+            "excerpt": "## Spec\n\nPass. The repair keeps RT1–RT8 and RT65 met. No findings.\n\n- Spec line 146, \"After `Finish`, it writes the retained response of the assignment scope that `AssignmentScope` answers.\", now holds by construction. `AssignmentScope` (`internal/responsebound/size.go:26-31`) and `retainedPath` (`internal/responsebound/retain.go:31-38`) both call `assignmentDir` (`internal/responsebound/store.go:87-93`). `TestAssignmentScopeAndRetentionAgree` (`internal/responsebound/retain_test.go:67`) checks that the two agree when the home is relative.\n- RT6 holds. In the primary checkout, `location` answers `primaryScope` (`store.go:114-130`), so `assignmentDir` answers false and `Retain` returns before any write (`retain.go:50-52`). The same is true outside a repository (`store.go:115-117`).\n- The new error path changes no approved behavior. `filepath.Abs` fails only for a relative home when `Getwd` fails; that input also answered false before the repair. `Retain` then writes nothing, and the dispatcher discards the error (`cmd/bench/census_output.go:29`), as RT8 requires.\n- The seam citations name real tests: `cmd/bench/retain_test.go:79,117,141,155`, `internal/responsebound/retain_test.go:21`, and `internal/systemtest/exec_nested_bound_test.go:50`.\n\n## Advice\n- With a relative home, `AssignmentScope` now answers the assignment, so `recordOutput` writes a census record (`census_output.go:65-77`) where it wrote none before. This matches the intent of S5; no spec row covers it.\n\n## Examined\nPreflight current=true at 8fdc93f2 through `bench worktree exec`; the repair delta 9dba46b7..adfc95fe; `store.go`, `retain.go`, `census_output.go`; spec lines 140-169 and 334-344. No files written; no tests or probes run.\n"
+          },
+          "axis": "Spec",
+          "base": "53e60dc58f0432fdadf2b31b78d4e7a25f85570d",
+          "tip": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_retain_c-spec"
+          ]
+        },
+        {
+          "id": "ft405_rv_retain_c2-coverage",
+          "performer": "claude:ft405_rv_retain_c2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ca09f68392623c074d4d8281b94fa11b11190111",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_retain_c2_coverage",
+            "digest": "sha256:19cdd87946ea66cbb3ddedcfb109379bc7d581be7368adc68230c598d531ce79",
+            "excerpt": "## Coverage\n\nFindings: 0. The repair delta adds no uncovered state that a test should reach. `TestAssignmentScopeAndRetentionAgree` (`internal/responsebound/retain_test.go:67-84`) holds both callers of `assignmentDir`. The author's probes pinned the census side; probe 1 pins the retention side.\n\nProbes (both through `bench probe` on `./internal/responsebound/...` and `./cmd/bench`):\n\n| # | Mutation | Verdict | Restored |\n|---|---|---|---|\n| 1 | `retain.go:32`: `retainedPath` skips `assignmentDir`, keeps the absolute `storeScope` dir, and takes `ok` from `location(home, …)` with the raw home | bit, 1 failed: `TestAssignmentScopeAndRetentionAgree` (`retain_test.go:82`) | yes |\n| 2 | `size.go:28-30`: drop the `AssignmentScope` error return | silent (equivalent mutant: `assignmentDir` returns `scopeDir{}, false` on error, `store.go:89-91`) | yes |\n\n`git status --porcelain` was empty at the end. `git diff --stat adfc95fe HEAD -- internal cmd` is empty, so the probed code is the frozen tip.\n\n## Advice\n- The `AssignmentScope` error branch changes nothing observable; `dir, ok, _ := assignmentDir(home, root); return dir.scope, ok` gives the same result.\n\n## Examined\nPreflight current=true through `bench worktree exec`; the repair delta 9dba46b7..adfc95fe; `store.go` (`storeScope`, `assignmentDir`, `location`), `retain.go`, `size.go`, and the new test; `cmd/bench/census_output.go:58-78`; `bench-craft-review`.\n"
+          },
+          "axis": "Coverage",
+          "base": "53e60dc58f0432fdadf2b31b78d4e7a25f85570d",
+          "tip": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_retain_c-coverage"
+          ]
         }
       ]
     }
@@ -463,6 +529,8 @@ Confirming round: S1 to S4 are closed. 1 new finding.
 
 - S5 (auto-fix, confidence 5): `internal/responsebound/retain.go:33` restates the assignment-scope check that `AssignmentScope` owns at `internal/responsebound/size.go:27`, and the two paths treat the home path differently.
 
+Confirming round 2: S5 is closed, with no new findings.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -472,6 +540,8 @@ RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
 
 Confirming round: pass, with no findings.
 
+Confirming round 2: pass, with no findings.
+
 ## Coverage
 
 RT-RETAIN: 2 findings. The worst issue is C1.
@@ -480,3 +550,5 @@ RT-RETAIN: 2 findings. The worst issue is C1.
 - C2 (auto-fix, confidence 7): no test interleaves stdout and stderr in a response within the bound, so a stdout-only mutant stays silent.
 
 Confirming round: C1 and C2 are closed, with no new findings.
+
+Confirming round 2: pass, with no findings.
