@@ -279,10 +279,10 @@ The repair-session criterion leaves the binding and returns to intake as a Won't
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| RT-RETAIN / (sliced at slicing) | Bench keeps the last response of each assignment worktree, and `bench record excerpt` stages it for one requirement. | RT1–RT17, RT57–RT59, RT65 | the planned retention and excerpt tests, the system suite's nested exec test, `TestHelpInventoryIsComplete` | no |
-| RT-CURRENT / (sliced at slicing) | `--check-current` binds beside a dirty review record of its spec and reports it. | RT40–RT46 | `TestEvidenceCurrentBinding`, `TestEvidenceSchemaRegistry`, and the planned binding tests | no |
-| RT-TICKET / (sliced at slicing) | `bench record ticket` writes the amendment, the freeze, and the owed verifications in one transaction. | RT18–RT39, RT55, RT56, RT60–RT63 | `TestChunkNeedsCurrentAmendment`, `TestCompletionHelpOrdering`, `TestHelpInventoryIsComplete`, and the planned ticket tests | yes |
-| RT-GUIDE / (sliced at slicing) | The guidance names the last ticket's author as the freezer and the ticket form as the record call. | RT47–RT54, RT64 | `TestChunkChainAnchors` with `registry_chunk_chain.go` and its twin, and `TestRetainedWorkflow` with the `.bench/BENCH.md` needle in `registry_ft311_review_dispatch.go` | no |
+| RT-RETAIN / 01-retain-the-last-bounded-response.md, 02-stage-an-excerpt-for-a-requirement.md | Bench keeps the last response of each assignment worktree, and `bench record excerpt` stages it for one requirement. | RT1–RT17, RT57–RT59, RT65 | the planned retention and excerpt tests, the system suite's nested exec test, `TestHelpInventoryIsComplete` | no |
+| RT-CURRENT / 03-report-a-dirty-record-in-the-current-binding.md | `--check-current` binds beside a dirty review record of its spec and reports it. | RT40–RT46 | `TestEvidenceCurrentBinding`, `TestEvidenceSchemaRegistry`, and the planned binding tests | no |
+| RT-TICKET / 04-extract-the-record-change-functions.md, 05-record-one-ticket-in-one-write.md | `bench record ticket` writes the amendment, the freeze, and the owed verifications in one transaction. | RT18–RT39, RT55, RT56, RT60–RT63 | `TestChunkNeedsCurrentAmendment`, `TestCompletionHelpOrdering`, `TestHelpInventoryIsComplete`, and the planned ticket tests | yes |
+| RT-GUIDE / 06-name-the-ticket-author-as-the-freezer.md | The guidance names the last ticket's author as the freezer and the ticket form as the record call. | RT47–RT54, RT64 | `TestChunkChainAnchors` with `registry_chunk_chain.go` and its twin, and `TestRetainedWorkflow` with the `.bench/BENCH.md` needle in `registry_ft311_review_dispatch.go` | no |
 
 RT-RETAIN creates the stage that RT-TICKET reads, so it is its own review chunk.
 RT-RETAIN also owns the shared porcelain reader in `internal/git/status.go` and the `LandedState` call site there.
@@ -294,7 +294,54 @@ RT21 and RT22 turn red under that mutation.
 
 ### Completion plan
 
-The slicing writes this plan's tickets and its verification commands.
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "RT-RETAIN",
+      "tickets": ["01-retain-the-last-bounded-response.md", "02-stage-an-excerpt-for-a-requirement.md"],
+      "verification": [
+        {"id": "retention", "command": "bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git"},
+        {"id": "excerpt-stage", "command": "bench test --package ./internal/reviewrecord/..."},
+        {"id": "nested-exec", "command": "bench test --check system --run TestExecNested"},
+        {"id": "record-skip", "command": "bench test --package ./cmd/bench", "probe": "drop the record-family skip from retention"}
+      ]
+    },
+    {
+      "id": "RT-CURRENT",
+      "tickets": ["03-report-a-dirty-record-in-the-current-binding.md"],
+      "verification": [
+        {"id": "binding", "command": "bench test --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/anchors"},
+        {"id": "strict-charge", "command": "bench test --package ./internal/preflight/...", "probe": "skip the record path for every preparation action"}
+      ]
+    },
+    {
+      "id": "RT-TICKET",
+      "tickets": ["04-extract-the-record-change-functions.md", "05-record-one-ticket-in-one-write.md"],
+      "verification": [
+        {"id": "record-writers", "command": "bench test --package ./internal/reviewrecord/... --package ./cmd/bench"},
+        {"id": "one-write", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "run the ticket form as three separate writes"}
+      ]
+    },
+    {
+      "id": "RT-GUIDE",
+      "tickets": ["06-name-the-ticket-author-as-the-freezer.md"],
+      "verification": [
+        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
+        {"id": "guidance-prose", "command": "bench test --check prose-mechanics"},
+        {"id": "guidance-budgets", "command": "bench test --check guidance-prose-budgets"}
+      ]
+    }
+  ],
+  "final_verification": [
+    {"id": "coverage", "command": "bench coverage --check specs/record-ticket/spec.md"},
+    {"id": "record-and-binding", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/responsebound/... --package ./internal/git --package ./cmd/bench"},
+    {"id": "guidance", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
+    {"id": "system", "command": "bench test --check system --run TestExecNested"}
+  ]
+}
+```
 
 ## Testing decisions
 
