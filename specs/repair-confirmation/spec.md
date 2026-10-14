@@ -438,6 +438,8 @@ The list is the union of the ticket `Writes:` lines plus the review pickup.
 - `internal/gittest/gittest.go`
 - `internal/gittest/gittest_test.go`
 - `internal/gittest/trees.go`
+- `internal/outline/outline.go`
+- `internal/outline/read.go`
 - `internal/reviewrecord/check.go`
 - `internal/reviewrecord/completion.go`
 - `internal/reviewrecord/confirmation.go`
