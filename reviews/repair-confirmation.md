@@ -689,7 +689,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-carry-standards-1",
+          "performer": "claude:rc-carry-standards-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fce090ab601ad58e9098849094cbea42be1295cc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:rc-carry-standards-1",
+            "digest": "sha256:732bd81dcee61923e19d841b2e8f2e1327f278351363c37d13f120063857a184",
+            "excerpt": "Standards axis, RC-CARRY: fail. Count: 4 findings. Worst issue: S1.\nEvidence bound current=true; frozen pair 78f71b6c..20d3ac26.\nS1 (auto-fix, confidence 6): RecordReview keeps its own last-result-of-an-axis loop (internal/reviewrecord/write.go:301-305); currentReview (record.go:168) now owns that rule.\nS2 (auto-fix, confidence 4): Refreeze (recordtest/confirmation.go:18-23) repeats the freeze steps of RecordChunk (recordtest/fixture.go:332-337), a fixture harness that AGENTS.md keeps single-sourced.\nS3 (auto-fix, confidence 4): the refusal scope \"chunk \" + chunk.ID is built again at confirmation.go:74 and in confirms; Chunk.reviewed().scope (record.go:124) owns it.\nS4 (auto-fix, confidence 5): the doc comment on unclaimed (write.go:335-336) names only verification and review results, but evidenceIDs now walks confirmation IDs too.\nAdvice (no ID): checkChunkReviews builds its review-form Repair by hand, beside the refused closure in checkReviews (record.go:135-138); two new ancestry refusals end with no route clause.\nClean: the new code reuses the ancestry check, SourceDigest, completionReconciler, supersedes, validateProbe, bitProbe, and probeBites; confirmations use omitempty.\n"
+          },
+          "axis": "Standards",
+          "base": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "tip": "20d3ac26b599e960d05d75c3088b6364af8762f5",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-carry-spec-1",
+          "performer": "claude:rc-carry-spec-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fce090ab601ad58e9098849094cbea42be1295cc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:rc-carry-spec-1",
+            "digest": "sha256:a2ae340376d919ab0832132a01e7f8095cc47e4a424eb438381cef5a951a7997",
+            "excerpt": "Spec axis, RC-CARRY: fail. Count: 1 finding. Worst issue: P1.\nEvidence bound current=true at source tip 8ec184b3; frozen pair 78f71b6c..20d3ac26.\nP1 (auto-fix, confidence 4): a reviewed tip equal to the chunk base is accepted. The ancestry check at internal/reviewrecord/confirmation.go:94 is reflexive, and only tip == chunk.Tip is excluded (line 91), so three axis results at base..base and a valid confirmation close a test-only chunk with no review, against story 54 (spec.md:118). The first return said ask-user; this axis reaffirmed auto-fix through a strict-descent spec expansion (row RC55, one refusal in FindReviewedPair), flagged for reviewer veto.\nClean: pair and digest equality, performer, completed state, one probe-bite predicate (check.go:76, RC37), both ancestry directions, a reviewed digest derived from the tree, carry relaxes only outcome and finding IDs (record.go:150), exact finding set, mixed and missing states refuse first, folds and CheckReviews stay strict, the complete checkpoint uses the same rule, verification stays graded at the chunk digest, every row cites a real test, and ticket 04 can call FindReviewedPair.\nAdvice (no ID): the RC-CARRY tests cell of the chunk table (spec.md:272) still names planned tests; the first case of confirms merges three mismatches; the carry reads the reconciler from the frozen plan while checkCompletion reads the current plan.\n"
+          },
+          "axis": "Spec",
+          "base": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "tip": "20d3ac26b599e960d05d75c3088b6364af8762f5",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-carry-coverage-1",
+          "performer": "claude:rc-carry-coverage-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fce090ab601ad58e9098849094cbea42be1295cc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:rc-carry-coverage-1",
+            "digest": "sha256:419bbcef25a452949b33a9733a444519b142b127f1d47bb47bfd9288d95c3f67",
+            "excerpt": "Coverage axis, RC-CARRY: fail. Count: 2 findings. Worst issue: C1.\nEvidence bound current=true; frozen pair 78f71b6c..20d3ac26.\nC1 (auto-fix, confidence 9): spec line 171 keeps the role and performer-exclusion conditions on a carried result, but only the state condition has a row (RC48). Probes at internal/reviewrecord/record.go:146 that apply the performer exclusion or the role check only when the pair is not carried were silent, restored=yes.\nC2 (auto-fix, confidence 6): a reviewed tip equal to the chunk base passes, because isAncestor (confirmation.go:94; git.go:220) is reflexive and RecordChunk (write.go:127) accepts base equal to tip; traced, not run. The first return said ask-user; this axis reaffirmed auto-fix with P1 through a strict-descent spec expansion.\nProbes, all on ./internal/gate and ./internal/reviewrecord/..., all restored=yes: performer exclusion only when not carried, silent; role check only when not carried, silent; fold reviewed() sets carried, silent (story 34 not covered by design); drop the Base term of the mixed check, silent (the base check in checkReviews still refuses with another reason).\nAdvice (no ID): fold strictness is not red-capable; the mixed-state reason changes under probe 4; sameSet handles duplicates and the empty set. The RC55 test needs a chunk of test files only, so that the prover does not refuse first.\n"
+          },
+          "axis": "Coverage",
+          "base": "78f71b6c954779f0cee672faa34a471eff10b111",
+          "tip": "20d3ac26b599e960d05d75c3088b6364af8762f5",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -769,11 +840,22 @@ RC-PROVE: 2 findings in the first round. Worst issue: S1. The confirming round c
 - S1 (auto-fix, confidence 6): `internal/testgap/testgap.go` line 57 derives the testdata path fact again. The fixture predicate in `internal/outline/read.go` lines 12-19 already owns it.
 - S3 (auto-fix, confidence 4): `internal/testgap/testgap_test.go` lines 64-70 repeat the refusal assertion of `internal/commentgap/trees_test.go` lines 76-82. One exported helper in `internal/gittest/trees.go` takes its place, and it imports no prover sentinel.
 
+RC-CARRY: 4 findings. Worst issue: S1.
+
+- S1 (auto-fix, confidence 6): `RecordReview` in `internal/reviewrecord/write.go` keeps its own current-result loop, which `currentReview` now owns.
+- S2 (auto-fix, confidence 4): `Refreeze` in `recordtest/confirmation.go` repeats the freeze steps of `RecordChunk` in `recordtest/fixture.go`.
+- S3 (auto-fix, confidence 4): the refusal scope of a chunk is built again in `confirmation.go`, and `Chunk.reviewed().scope` owns it.
+- S4 (auto-fix, confidence 5): the comment on `unclaimed` in `write.go` does not name confirmation IDs.
+
 ## Spec
 
 RC-CYCLE: 0 findings in both rounds. Worst issue: none.
 
 RC-PROVE: 0 findings in both rounds. Worst issue: none.
+
+RC-CARRY: 1 finding. Worst issue: P1.
+
+- P1 (auto-fix, confidence 4): a reviewed tip equal to the chunk base passes, so a test-only chunk can close with no review. The axis reaffirmed auto-fix through a strict-descent spec expansion (RC55), which is flagged for reviewer veto.
 
 ## Coverage
 
@@ -786,6 +868,11 @@ RC-PROVE: 5 findings. Worst issue: C1. The chunk uses its one hardening cycle fo
 - C3 (auto-fix, confidence 8): no case puts `testdata/` at the root.
 - C4 (auto-fix, confidence 6): no case accepts an executable test file.
 - C5 (auto-fix, confidence 6): no case accepts a path that holds `testdata` only inside a name.
+
+RC-CARRY: 2 findings. Worst issue: C1.
+
+- C1 (auto-fix, confidence 9): a carried result skips the role and performer-exclusion checks, and two probes are silent. Rows RC56 and RC57 cover them.
+- C2 (auto-fix, confidence 6): the same empty reviewed pair as P1. The two findings share one repair target.
 
 ## Advice
 
@@ -800,7 +887,14 @@ RC-PROVE: 5 findings. Worst issue: C1. The chunk uses its one hardening cycle fo
 - RC-PROVE confirming round: the `IsFixture` doc comment opens with a sentence about its own status. The final check `prover-and-guidance` omits `./internal/outline` and `./internal/gittest`.
 - RC-PROVE Spec: the RC-PROVE tests cell of the chunk table still names the planned prover tests.
 
+- RC-CARRY Standards: `checkChunkReviews` builds its review-form repair by hand, and two ancestry refusals end with no route clause.
+- RC-CARRY Spec: the RC-CARRY tests cell of the chunk table names planned tests, and the carry reads the reconciler from the frozen plan.
+- RC-CARRY Coverage: fold strictness is not red-capable, and the RC55 test needs a chunk of test files only.
+
 ## Repair state
 
 RC-CYCLE: 1 of 2 repair cycles consumed. The repair session `claude:ft379_t01_rep1` closed S1 at `8907784b`, and the confirming round of all three axes passed.
+
 RC-PROVE: 1 of 2 repair cycles and its one hardening cycle consumed. The repair session `claude:ft379_t02_rep1` closed S1, S3, and C1 to C5 at `b14ecb28`. The chunk froze at `78f71b6c`, and the confirming round of all three axes passed.
+
+RC-CARRY: 0 of 2 repair cycles consumed before this repair. S1 to S4, P1, C1, and C2 go to one fresh repair session for ticket 03.
