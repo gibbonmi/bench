@@ -1232,6 +1232,60 @@
           "requirement": "write-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "rc-write-guidance-anchors-t05-r1",
+          "performer": "claude:ft379_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t05/guidance-anchors-r1",
+            "digest": "sha256:f34b746a0fdc7968ed01905d6d2ba02a4722b7b773e5a879114c304d10f31fd9",
+            "excerpt": "$ bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15794,335\n  github.com/gibbonmi/bench/internal/anchors,pass,2385,180\n  github.com/gibbonmi/bench/internal/conformance,pass,56346,1694\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "guidance-anchors",
+          "command": "bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-write-guidance-prose-t05-r1",
+          "performer": "claude:ft379_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t05/guidance-prose-r1",
+            "digest": "sha256:b8f0606405b6e586cf3ab64c352f7573e249d854a5266a1e124ff0dbf090c539",
+            "excerpt": "$ bench test --check prose-mechanics\ncheck[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,282,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "rc-write-guidance-root-conformance-t05-r1",
+          "performer": "claude:ft379_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "56094cabbbfe6e5f1e0667c3999021ebf5ed7747",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft379_t05/guidance-root-conformance-r1",
+            "digest": "sha256:b064045ee1111044c917eaec99fe243c2c957e0075fb64a34ad886c746e0582f",
+            "excerpt": "$ bench test --check root-conformance\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14910,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
