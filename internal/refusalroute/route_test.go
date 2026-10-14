@@ -79,6 +79,17 @@ func TestRouteRendering(t *testing.T) {
 			facts: Facts{Preface: "later proofs in this group did not run", Values: map[string]string{"rerun": "bench worktree land"}},
 			want:  "reviewer: later proofs in this group did not run; finish the merge in progress; then bench worktree land",
 		},
+		{
+			name: "a face preface stands next to the first step",
+			face: Face{Authority: Agent, Preface: "remove the path or bind the outcome", Route: []Step{Command(Text("bench doctor"))}},
+			want: "remove the path or bind the outcome; bench doctor",
+		},
+		{
+			name:  "the raising site's preface opens ahead of the face preface",
+			face:  Face{Authority: Agent, Preface: "remove the path or bind the outcome", Route: []Step{Command(Text("bench doctor"))}},
+			facts: Facts{Preface: "later proofs in this group did not run"},
+			want:  "later proofs in this group did not run; remove the path or bind the outcome; bench doctor",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

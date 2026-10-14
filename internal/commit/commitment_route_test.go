@@ -74,7 +74,7 @@ func commitmentFaceFixtures(rerun func(label string, flags ...string) string) []
 			build: func(t *testing.T) commitSet {
 				return unboundCommitSet(t, refusalroute.CommitmentUnbound, gateScript("exit 0"))
 			},
-			contains: "bench commitment start --outcome ",
+			contains: "one-ticket light-path folder; bench commitment start --outcome ",
 			slots:    []string{"<id>", commitmenttest.DeliveryOutcome, "<request>", refusalroute.CommitmentUnbound, "<path>", commitFixtureSpec},
 		},
 		{
