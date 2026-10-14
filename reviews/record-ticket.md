@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-ticket/spec.md",
-  "plan_digest": "sha256:18ca06ebcf3ec58b338df8d8552ecec32801d67f68f66560e9196e8e4864d964",
+  "plan_digest": "sha256:6febb6148ff4363a2d5dcf90bf873a539f0d16f2648aa80ef885f99b874f2228",
   "implementation_session": "",
   "chunks": [
     {
@@ -1037,6 +1037,90 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RT-CURRENT",
+      "base": "52653322c4381d8b8927b9e9b18020b50683969e",
+      "tip": "4829baa3d41336f86c0d2256c70faa436226c775",
+      "plan_digest": "sha256:6febb6148ff4363a2d5dcf90bf873a539f0d16f2648aa80ef885f99b874f2228",
+      "source_digest": "0ffcaea219e9c7eb897af616c15cfdd860622edd",
+      "acceptance_rows": [
+        "RT40",
+        "RT41",
+        "RT42",
+        "RT43",
+        "RT44",
+        "RT45",
+        "RT46"
+      ],
+      "verification": [
+        {
+          "id": "ft405_t03-binding",
+          "performer": "claude:ft405_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0ffcaea219e9c7eb897af616c15cfdd860622edd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t03",
+            "digest": "sha256:561eeef0085f0aff0d699c7135e89c1802fa68e02abc564e4d72144b26f40e49",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20121,346\n  github.com/gibbonmi/bench/internal/anchors,pass,2521,180\n  github.com/gibbonmi/bench/internal/chargeevidence,pass,29,122\n  github.com/gibbonmi/bench/internal/conformance,pass,57853,1694\n  github.com/gibbonmi/bench/internal/preflight,pass,34461,408\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,23604,232\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/chargeevidence,TestEvidenceStoreKinds/CE94_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "binding",
+          "command": "bench test --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t03-binding-root",
+          "performer": "claude:ft405_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0ffcaea219e9c7eb897af616c15cfdd860622edd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t03",
+            "digest": "sha256:058ac4f2c80d55a95ac573b6b1480f0e75ea2bca124154365fa4419ed0a592ad",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft405-build,4829baa3d41336f86c0d2256c70faa436226c775,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14659,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "binding-root",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft405_t03-strict-charge",
+          "performer": "claude:ft405_t03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0ffcaea219e9c7eb897af616c15cfdd860622edd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_t03",
+            "digest": "sha256:182a2712f528fce850e7183f6c41837dd3af9ef820d81f4cf89fec03cf5b3b0e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/preparation.go,swap,failed,1,TestEvidencePreparationRefusals/RT45_dirty_record_of_the_selected_spec,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,all,passed,640\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,788\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,25257,408\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,17189,232\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestEvidencePreparationRefusals/RT45_dirty_record_of_the_selected_spec,\"charge_evidence_test.go:164: RT45 dirty record of the selected spec = (0, \\\"prepared[1]{evidence,mode,base,source_tip,assignment,selection,metadata,sources,pages,manifest_bytes,response_complete,delivery,next}:\\\\\\\\n  \\\\\\\\\\\"sha256:22f9f7c770438db8b8… (628 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "strict-charge",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip the record path for every preparation action",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft405_t03",
+              "digest": "sha256:182a2712f528fce850e7183f6c41837dd3af9ef820d81f4cf89fec03cf5b3b0e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/preparation.go,swap,failed,1,TestEvidencePreparationRefusals/RT45_dirty_record_of_the_selected_spec,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,all,passed,640\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,788\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,25257,408\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,17189,232\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestEvidencePreparationRefusals/RT45_dirty_record_of_the_selected_spec,\"charge_evidence_test.go:164: RT45 dirty record of the selected spec = (0, \\\"prepared[1]{evidence,mode,base,source_tip,assignment,selection,metadata,sources,pages,manifest_bytes,response_complete,delivery,next}:\\\\\\\\n  \\\\\\\\\\\"sha256:22f9f7c770438db8b8… (628 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1101,6 +1185,18 @@
     {
       "from": "sha256:ec6c05c556dbc8f4b29c74e893f9698d108b8cab58f9062abda802e26a1ad5c1",
       "to": "sha256:18ca06ebcf3ec58b338df8d8552ecec32801d67f68f66560e9196e8e4864d964",
+      "chunk_ids": {
+        "RT-EXCERPT": [
+          "RT-EXCERPT"
+        ],
+        "RT-RETAIN": [
+          "RT-RETAIN"
+        ]
+      }
+    },
+    {
+      "from": "sha256:18ca06ebcf3ec58b338df8d8552ecec32801d67f68f66560e9196e8e4864d964",
+      "to": "sha256:6febb6148ff4363a2d5dcf90bf873a539f0d16f2648aa80ef885f99b874f2228",
       "chunk_ids": {
         "RT-EXCERPT": [
           "RT-EXCERPT"
