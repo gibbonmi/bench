@@ -13,19 +13,21 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// Grammar effect fixture paths. With no go.mod, every import is outside the module. command.go passes a local grammar to the parser, and that
+// Grammar effect fixture paths. command.go passes a local grammar to the parser, and that
 // grammar reads its help from help.go. helper.go is an unrelated helper of the same package.
-// cross.go passes a grammar whose help reads names.Suffix through an in-module import, and
-// whose handler literal calls helper and names.Count. gauge.go, in a package with no Grammar
-// row, passes a literal grammar to the parser. dynamic.go, in another bound package, passes a
-// parameter to the parser. operations.go declares the custom root operations beside a
-// case-variant Operations.
+// cross.go passes a grammar whose help reads names.Suffix, and whose handler literal calls
+// helper and names.Count. shared.go passes names.Grammar, which grammar.go declares.
+// gauge.go, in a package with no Grammar row, passes a literal grammar to the parser.
+// dynamic.go, in another bound package, passes a parameter to the parser. operations.go
+// declares the custom root operations beside a case-variant Operations.
 const (
 	commandFile    = "internal/harnesses/command.go"
 	helpFile       = "internal/harnesses/help.go"
 	helperFile     = "internal/harnesses/helper.go"
 	crossFile      = "internal/harnesses/cross.go"
 	namesFile      = "internal/names/names.go"
+	sharedFile     = "internal/harnesses/shared.go"
+	namesGrammar   = "internal/names/grammar.go"
 	gaugeFile      = "internal/gauge/gauge.go"
 	dynamicFile    = "internal/roadmap/dynamic.go"
 	terminalFile   = "internal/terminal/terminal.go"
@@ -35,7 +37,8 @@ const (
 	routingCensus  = "internal/conformance/subcommand_routing_table_test.go"
 )
 
-// grammarBase is the base source of every grammar effect case.
+// grammarBase is the base source of every grammar effect case. It has no go.mod, so every
+// import is outside the module.
 var grammarBase = map[string]string{
 	commandFile:    "package harnesses\n\nimport \"github.com/gibbonmi/bench/internal/usage\"\n\nfunc Command(args []string) int {\n\tgrammar := usage.Grammar{Cmd: \"bench harnesses\", Help: harnessesHelp}\n\t_, _, code := usage.Parse(grammar, args)\n\treturn code + helper()\n}\n",
 	helpFile:       "package harnesses\n\nconst harnessesHelp = \"usage: bench harnesses\"\n",
@@ -50,10 +53,12 @@ var grammarBase = map[string]string{
 }
 
 // crossBase is grammarBase inside the module that its imports name, with the parser package
-// the module's package index needs.
+// the module's package index needs and a grammar value that another package passes.
 var crossBase = merged(grammarBase, map[string]string{
 	"go.mod":                  "module github.com/gibbonmi/bench\n\ngo 1.25\n",
 	"internal/usage/usage.go": "package usage\n\ntype Grammar struct {\n\tCmd, Help string\n\tRun       func() int\n}\n\nfunc Parse(g Grammar, args []string) (any, any, int) { return nil, nil, 0 }\n",
+	sharedFile:                "package harnesses\n\nimport (\n\t\"github.com/gibbonmi/bench/internal/names\"\n\t\"github.com/gibbonmi/bench/internal/usage\"\n)\n\nfunc Shared(args []string) int {\n\t_, _, code := usage.Parse(names.Grammar, args)\n\treturn code\n}\n",
+	namesGrammar:              "package names\n\nimport \"github.com/gibbonmi/bench/internal/usage\"\n\nvar Grammar = usage.Grammar{Cmd: \"bench shared\"}\n",
 })
 
 // edited is one base file with its first old replaced by new.
@@ -162,6 +167,14 @@ func TestGrammarEffects(t *testing.T) {
 			tip:      edited(namesFile, "[--all]", "[--all] [--json]"),
 			want:     map[string]bool{crossFile: true, rootHelp: true, routingCensus: true},
 			evidence: map[string]string{crossFile: "internal/names.Suffix changes the grammar that internal/harnesses.Cross.grammar produces"}},
+		{name: "a referrer's unresolved producer stays its own diagnostic", writes: []string{namesFile},
+			files: merged(crossBase, map[string]string{dynamicFile: "package roadmap\n\nimport (\n\t\"github.com/gibbonmi/bench/internal/names\"\n\t\"github.com/gibbonmi/bench/internal/usage\"\n)\n\nfunc run(g usage.Grammar, args []string) int {\n\t_, _, code := usage.Parse(g, args)\n\treturn code + names.Count()\n}\n"}),
+			tip:   edited(namesFile, "[--all]", "[--all] [--json]"),
+			want:  map[string]bool{crossFile: true, rootHelp: true}},
+		{name: "another package's grammar value requires the passing root", writes: []string{namesGrammar}, files: crossBase,
+			tip:      map[string]string{namesGrammar: strings.Replace(crossBase[namesGrammar], "bench shared", "bench shared [--all]", 1)},
+			want:     map[string]bool{sharedFile: true, rootHelp: true, routingCensus: true},
+			evidence: map[string]string{sharedFile: "internal/names.Grammar changes the grammar that internal/harnesses.Shared#1 produces"}},
 		{name: "handler literal body adds no grammar obligation", writes: []string{helperFile, namesFile}, files: crossBase,
 			tip:  merged(edited(helperFile, "return 0", "return 1"), edited(namesFile, "return 0", "return 1")),
 			want: map[string]bool{crossFile: false, rootHelp: false, routingCensus: false}},

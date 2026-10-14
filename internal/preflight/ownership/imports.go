@@ -80,8 +80,10 @@ func (e *effects) module(rev string) (string, error) {
 }
 
 // referred is every unit of dir at rev that a grammar root of another package reaches through
-// in-module imports, with each such root as a grammar change that names no unit yet. The
-// failure names the first referrer or reference that the static walk cannot resolve.
+// in-module imports, with each such root as a grammar change that names no unit yet. Only a
+// referrer's resolved roots refer: a producer that the referrer cannot resolve is that
+// package's own diagnostic. The failure names the first referrer read or reference that the
+// static walk cannot resolve.
 func (e *effects) referred(rev, dir string) (map[string][]grammarChange, string) {
 	referrers, err := e.referrers(rev, dir)
 	if err != nil {
@@ -92,9 +94,6 @@ func (e *effects) referred(rev, dir string) (map[string][]grammarChange, string)
 		read := e.read(rev, from)
 		if read.err != nil {
 			return nil, read.err.Error()
-		}
-		if len(read.producers.unresolved) > 0 {
-			return nil, from + " " + read.producers.unresolved[0]
 		}
 		for _, key := range read.producers.roots {
 			at := read.producers.units[key]

@@ -194,10 +194,11 @@ func (p *producers) parserCalls(file *ast.File) {
 }
 
 // producer roots the grammar argument of one parser call in fn. A package declaration, a
-// single-definition local, a call of a package function or method, and a literal resolve;
-// a parameter, a reassigned local, and another package's value stay unresolved.
+// single-definition local, a call of a package function or method, a literal, and a
+// declaration of another package of the module resolve; a parameter, a reassigned local, and
+// a value from outside the module stay unresolved.
 func (p *producers) producer(fn *ast.FuncDecl, call *ast.CallExpr, n int) {
-	where := fmt.Sprintf("%s parser call %d", fn.Name.Name, n)
+	where, file := fmt.Sprintf("%s parser call %d", fn.Name.Name, n), p.fset.Position(call.Pos()).Filename
 	if len(call.Args) == 0 {
 		p.unresolved = append(p.unresolved, where+" passes no grammar")
 		return
@@ -216,13 +217,20 @@ func (p *producers) producer(fn *ast.FuncDecl, call *ast.CallExpr, n int) {
 			}
 		}
 	case *ast.CallExpr:
-		if p.resolvedCall(p.fset.Position(call.Pos()).Filename, arg) {
+		if p.resolvedCall(file, arg) {
 			p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg)
 			return
 		}
 	case *ast.CompositeLit, *ast.UnaryExpr:
 		p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg)
 		return
+	case *ast.SelectorExpr:
+		if imported, ok := p.imported(file, arg.X); ok {
+			if _, in := p.inModule(imported); in {
+				p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg)
+				return
+			}
+		}
 	}
 	p.unresolved = append(p.unresolved, where+" passes a grammar that no static producer declares")
 }
