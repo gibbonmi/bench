@@ -969,6 +969,72 @@
           "supersedes": [
             "ft405_rv_excerpt_c-coverage"
           ]
+        },
+        {
+          "id": "ft405_rv_excerpt_c3-standards",
+          "performer": "claude:ft405_rv_excerpt_c3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c761cb295426432ad42e9fc8d2ec9a060a243ec9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_c3_standards",
+            "digest": "sha256:835ddfb233c57652b6a80f36a831b4560e1dbf9c8774c4b35a5a0c214dde44a2",
+            "excerpt": "## Standards\n\nPreflight current=true (evidence sha256:0ce7fc2a…, head 4aa12b7a, clean tree). Delta fcc8fc2f..52653322 read by commit ID.\n\nS7 closed. The typed list `{\"scope\",\"repository key\",\"responses\"}` is gone. The test gets its levels from `writtenStore`, which walks from the written file up to the home (`internal/responsebound/retain_test.go:188`, `:218-239`), and fails when the walk finds no level (`:237`). The walk ends at the home that production uses as `scopeDir.home`, and the production levels are `responses/key/scope` (`internal/responsebound/store.go:81`, `:127-145`). Production stays the only source of the layout, which meets the AGENTS.md one-source-per-fact rule.\n\nBlocking findings: none.\n\nAdvice: the outer `writtenStore` call at `:187` builds a whole fixture only to count the levels; a setup cost, not a defect.\n"
+          },
+          "axis": "Standards",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "52653322c4381d8b8927b9e9b18020b50683969e",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_excerpt_c2-standards"
+          ]
+        },
+        {
+          "id": "ft405_rv_excerpt_c3-spec",
+          "performer": "claude:ft405_rv_excerpt_c3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c761cb295426432ad42e9fc8d2ec9a060a243ec9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_c3_spec",
+            "digest": "sha256:0c616200a1e8ad20ab9445aad4c62fe062babe57fb77b53f94270aade8a43488",
+            "excerpt": "## Spec\n\nPass. No findings. Confidence 8.\n\n- No production change. The delta fcc8fc2f..52653322 touches `internal/responsebound/retain_test.go` (a new `writtenStore` helper and levels derived from the walk), `reviews/record-ticket.md`, and `specs/record-ticket/spec.md` line 305 (only the `claude:ft405_t02_rep3` assignment). Preflight current=true at head 4aa12b7a.\n- Rows still met: RT9–RT17 and RT57–RT59 (spec lines 345–353 and 393–395). Every cited test exists at the tip: `retain_test.go:68`; `stage_test.go:52`, `:84`, `:97`, `:146`, `:168`.\n- Spec line 414 still covered: the walk yields scope, key, and `responses` (`store.go:23`, `:81`), so `TestReadRefusesASymlinkedStoreLevel` (`retain_test.go:185`) still holds the line.\n\nNo advice. No tests run; no files written.\n"
+          },
+          "axis": "Spec",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "52653322c4381d8b8927b9e9b18020b50683969e",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_excerpt_c2-spec"
+          ]
+        },
+        {
+          "id": "ft405_rv_excerpt_c3-coverage",
+          "performer": "claude:ft405_rv_excerpt_c3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c761cb295426432ad42e9fc8d2ec9a060a243ec9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_c3_coverage",
+            "digest": "sha256:fedde7d00d27e715ddd006b605bb6c1ddfee27d144c98142bf0139c876e5c355",
+            "excerpt": "## Coverage\n\nPreflight current=true at tip 4aa12b7a. The repair delta changes only `internal/responsebound/retain_test.go`; `writtenStore` (lines 117-139) derives the store levels from the written store, so a new level gets its own subtest.\n\nProbe: `internal/responsebound/store.go:140`, `if !info.IsDir() {` → `if !info.IsDir() && (op != \"read\" || dir == d.dir()) {`, on `./internal/responsebound/...`. Verdict: bit. Four subtests fail at `retain_test.go:207` (stage and retained, levels 2 and 3 of 3); level 1, which the mutation spares, passes. restored=yes; `git status` clean.\n\nBlocking findings: none.\n\nAdvice (no ID): the subtest names give level numbers, not level names, so a failure message does not name the store level.\n"
+          },
+          "axis": "Coverage",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "52653322c4381d8b8927b9e9b18020b50683969e",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_excerpt_c2-coverage"
+          ]
         }
       ]
     }
@@ -1062,6 +1128,8 @@ RT-EXCERPT: the reviewer's auto-approve direction extends the allowance by one t
 
 RT-EXCERPT: repair cycle 3 is complete for ticket 02 to close S7. The test takes each store level from the written store. The repair commit is 52653322c4381d8b8927b9e9b18020b50683969e.
 
+RT-EXCERPT: 3 repair cycles are consumed, and the third is the auto-approve extension. From confirming round 3 on, each review charge quotes the advice and hardening rules of the bounded repair policy.
+
 ## Standards
 
 RT-RETAIN: 4 findings. The worst issue is S1.
@@ -1092,6 +1160,8 @@ RT-EXCERPT confirming round 2: 1 new finding.
 
 - S7 (auto-fix, confidence 5): `internal/responsebound/retain_test.go:193` types the store levels as a list beside the `storeLevels` helper in `store_test.go:17`, so a new store level passes unseen.
 
+RT-EXCERPT confirming round 3: S7 is closed, with no blocking findings.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -1108,6 +1178,8 @@ RT-EXCERPT: pass, with no findings.
 RT-EXCERPT confirming round: pass, with no findings.
 
 RT-EXCERPT confirming round 2: pass, with no findings.
+
+RT-EXCERPT confirming round 3: pass, with no findings.
 
 ## Coverage
 
@@ -1131,3 +1203,5 @@ RT-EXCERPT confirming round: C1 to C3 are closed. 1 new finding.
 - C4 (auto-fix, confidence 7): no test reads a stage or retained file while the `responses` level or the repository-key level is a symbolic link.
 
 RT-EXCERPT confirming round 2: C4 is closed, with no new findings.
+
+RT-EXCERPT confirming round 3: pass, with no blocking findings.
