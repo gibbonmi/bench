@@ -11,7 +11,7 @@ func TestCheckFloorAnchors(t *testing.T) {
 	)
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
 		{file: implement, section: "Build", needle: "The completion plan carries the check floor of each ticket, and the `check-floor` row of `bench preflight build` grades the plan against that floor.", want: "check floor: the completion plan carries each ticket's floor, and check-floor grades it"},
-		{file: implement, section: "Build", needle: "The ticket commit rewrites each covered `planned` seam cell into the citation form, so that `bench record chunk` accepts the chunk.", want: "check floor: the ticket commit rewrites each covered planned seam cell"},
+		{file: implement, section: "Build", needle: "The ticket commit rewrites each covered `planned` seam cell into the citation form, so that `bench record ticket` accepts the chunk.", want: "check floor: the ticket commit rewrites each covered planned seam cell"},
 		{file: mapRules, section: "Per row", needle: "The `planned` marker lasts until the covering ticket commits.", want: "check floor: the planned marker lasts until the covering ticket commits"},
 		{file: discipline, section: "In the charge", needle: "The root conformance pass is `bench test --check root-conformance`.", want: "check floor: the root conformance pass is bench test --check root-conformance"},
 	}}.check(t)

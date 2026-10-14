@@ -125,7 +125,7 @@ func checkRetainedWorkflow(root string) []string {
 		},
 		"retained workflow: operating guide allows advancement before three-axis chunk review": {
 			file:   ".bench/BENCH.md",
-			needle: "After a chunk's ticket commits, freeze its delta and run Standards, Spec, and Coverage against the whole approved spec before starting its successor.",
+			needle: "The last ticket's author freezes each chunk's delta, and Standards, Spec, and Coverage run against the whole approved spec before the successor starts.",
 		},
 		"retained workflow: operating guide restored routine final full review": {
 			file:   ".bench/BENCH.md",

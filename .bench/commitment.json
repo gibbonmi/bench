@@ -1139,6 +1139,14 @@
       "identity": "sha256:9dc09408ef9c4b05efc7fd48eae577665f952dcdd07f2997f8d5acc71e7439da",
       "source": "a23074e300056e43a1af97506207e93a61616c17",
       "evidence": "82fa4b1fcea5adbc239a52f01dd5019ac3fec7e5"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT405",
+      "binding": "record-ticket",
+      "identity": "sha256:1ccb5fb0742b5d23fe68057f21952f024362138447bc33c68548cdf0680bed83",
+      "source": "0bf744792933d4ac48d984a8c70c18f9717cbdc1",
+      "evidence": "2e89b3757a116ff0eabdfa64a500677f92150968"
     }
   ]
 }

@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Ticket record
+
+- Added the retained response: Bench now keeps the last bounded response of each assignment worktree. `bench record excerpt <slug> --chunk <id> --requirement <id> [--mutant <n>]` stages that retained response for one planned requirement. `bench record ticket` writes one ticket's verification entries from the staged excerpts in one write. That write also holds a needed amendment and, for the last ticket, the chunk freeze. `bench preflight evidence --check-current` binds beside a dirty review record of its spec and reports it in the `dirty_record` field. Before, a ticket author wrote each excerpt to a file and called the amendment, chunk, and verification forms one at a time.
+
 ### Repair confirmation
 
 - Added `bench record confirmation`, which writes a coordinator confirmation to a chunk of the review record. After a test-only repair whose coordinator probe bites, the coordinator writes one confirmation from one complete `bench probe` answer. The chunk checkpoint and the complete checkpoint then accept the axis results of the reviewed tip, so the repair takes no confirming round. A repair that is not test-only still takes a confirming round of all three axes. An older Bench binary refuses a review record that holds a confirmation. Before, every repair took a confirming round of all three axes.

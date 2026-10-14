@@ -1,6 +1,6 @@
 # Record ticket
 
-Status: staged
+Status: implemented
 
 Roadmap: FT405
 
@@ -302,72 +302,7 @@ RT21 and RT22 turn red under that mutation.
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "RT-RETAIN",
-      "tickets": ["01-retain-the-last-bounded-response.md"],
-      "verification": [
-        {"id": "retention", "command": "bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git --package ./internal/gate --package ./internal/handoff --package ./internal/roadmap --package ./internal/shift --package ./internal/status --package ./internal/worktree --package ./internal/conformance"},
-        {"id": "retain-root", "command": "bench test --check root-conformance"},
-        {"id": "nested-exec", "command": "bench test --check system --run TestExecNested"},
-        {"id": "record-skip", "command": "bench test --package ./cmd/bench", "probe": "drop the record-family skip from retention"}
-      ]
-    },
-    {
-      "id": "RT-EXCERPT",
-      "tickets": ["02-stage-an-excerpt-for-a-requirement.md"],
-      "verification": [
-        {"id": "excerpt-stage", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/responsebound/... --package ./internal/shellcommand --package ./cmd/bench --package ./internal/conformance"},
-        {"id": "excerpt-root", "command": "bench test --check root-conformance"},
-        {"id": "command-match", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "compare only the first planned word with the retained call"}
-      ]
-    },
-    {
-      "id": "RT-CURRENT",
-      "tickets": ["03-report-a-dirty-record-in-the-current-binding.md"],
-      "verification": [
-        {"id": "binding", "command": "bench test --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance"},
-        {"id": "binding-root", "command": "bench test --check root-conformance"},
-        {"id": "strict-charge", "command": "bench test --package ./internal/preflight/...", "probe": "skip the record path for every preparation action"}
-      ]
-    },
-    {
-      "id": "RT-EXTRACT",
-      "tickets": ["04-extract-the-record-change-functions.md"],
-      "verification": [
-        {"id": "extract-writers", "command": "bench test --package ./internal/reviewrecord/..."},
-        {"id": "extract-root", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "RT-TICKET",
-      "tickets": ["05-record-one-ticket-in-one-write.md"],
-      "verification": [
-        {"id": "record-writers", "command": "bench test --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/responsebound --package ./internal/conformance"},
-        {"id": "record-root", "command": "bench test --check root-conformance"},
-        {"id": "one-write", "command": "bench test --package ./internal/reviewrecord/...", "probe": "run the ticket form as three separate writes"}
-      ]
-    },
-    {
-      "id": "RT-GUIDE",
-      "tickets": ["06-name-the-ticket-author-as-the-freezer.md"],
-      "verification": [
-        {"id": "guidance-anchors", "command": "bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench"},
-        {"id": "guidance-root", "command": "bench test --check root-conformance"},
-        {"id": "guidance-prose", "command": "bench test --check prose-mechanics"},
-        {"id": "guidance-budgets", "command": "bench test --check guidance-prose-budgets"}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "coverage", "command": "bench coverage --check specs/record-ticket/spec.md"},
-    {"id": "record-and-binding", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/responsebound/... --package ./internal/git --package ./cmd/bench"},
-    {"id": "guidance", "command": "bench test --package ./internal/conformance --package ./internal/anchors"},
-    {"id": "system", "command": "bench test --check system --run TestExecNested"}
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft405-build-20261014","orchestrator_session":"claude:ft405-orchestrator-20261014","author_limit":1,"assignments":{"01-retain-the-last-bounded-response.md":[{"session":"claude:ft405_t01","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"high","source":"d08aa77341e908ece28c82b78461a447c7f01ef1","native_ref":"claude-agent:ft405_t01"},{"session":"claude:ft405_t01_rep1","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"high","source":"040bb97ff6c2f442fec76216b1ba557255ea80e2","native_ref":"claude-agent:ft405_t01_rep1","predecessor":"claude:ft405_t01","trigger":"user-directed","stopped":"claude-agent:ft405_t01","preserved":"9d989e126b4cbeac507b12ea3137250fd9c6b294"},{"session":"claude:ft405_t01_rep2","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"high","source":"26a662dc219ab79d619550c594cb51dfc8bc2d0e","native_ref":"claude-agent:ft405_t01_rep2","predecessor":"claude:ft405_t01_rep1","trigger":"user-directed","stopped":"claude-agent:ft405_t01_rep1","preserved":"9dba46b78f0a49ccd34969a8a13c2a9a5a8a413b"}],"02-stage-an-excerpt-for-a-requirement.md":[{"session":"claude:ft405_t02","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"medium","source":"966a442507d286fbe97a67a48f582be8641b3428","native_ref":"claude-agent:ft405_t02"},{"session":"claude:ft405_t02_rep1","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"medium","source":"553dbfb2b9721e626d64a0fc88ab4b7db0c3948e","native_ref":"claude-agent:ft405_t02_rep1","predecessor":"claude:ft405_t02","trigger":"user-directed","stopped":"claude-agent:ft405_t02","preserved":"c1268bd0ad448f3aad3e0daad2f86552a89df335"},{"session":"claude:ft405_t02_rep2","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"medium","source":"451032f8b32852fa916e3ffbbdad1c4dd997b9f5","native_ref":"claude-agent:ft405_t02_rep2","predecessor":"claude:ft405_t02_rep1","trigger":"user-directed","stopped":"claude-agent:ft405_t02_rep1","preserved":"1c11dbc55ac614689d1b20bb8088cee7725c8206"},{"session":"claude:ft405_t02_rep3","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"medium","source":"7fe930354bf56fb0daf1caef1aeb2a56cf6e071f","native_ref":"claude-agent:ft405_t02_rep3","predecessor":"claude:ft405_t02_rep2","trigger":"user-directed","stopped":"claude-agent:ft405_t02_rep2","preserved":"fcc8fc2f7b85d97b64e36e73c21cec956771abf1"}],"03-report-a-dirty-record-in-the-current-binding.md":[{"session":"claude:ft405_t03","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"medium","source":"152eb8229d1dc496dbccdf007eed629730ea6a8f","native_ref":"claude-agent:ft405_t03"}],"04-extract-the-record-change-functions.md":[{"session":"claude:ft405_t04","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"medium","source":"31d70c9539dcd9944af571f809cca300e8586633","native_ref":"claude-agent:ft405_t04"}],"05-record-one-ticket-in-one-write.md":[{"session":"claude:ft405_t05","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"high","source":"b04bf7b3bb3d42d34b45faed754ad9fcdb750025","native_ref":"claude-agent:ft405_t05"},{"session":"claude:ft405_t05_rep1","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"high","source":"8f9f0ffb7e67693f1f64a7a92a5e8cfc5bdf997d","native_ref":"claude-agent:ft405_t05_rep1","predecessor":"claude:ft405_t05","trigger":"user-directed","stopped":"claude-agent:ft405_t05","preserved":"396576d49660eb0e369d71317d0d33514ff5b39a"}],"06-name-the-ticket-author-as-the-freezer.md":[{"session":"claude:ft405_t06","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"medium","source":"4dbc27155715e0d69f70b696bdf8d79689116063","native_ref":"claude-agent:ft405_t06"},{"session":"claude:ft405_t06_rep1","assignment":"e48a6ad9910edd3d97a8905f41f4f4f8","model":"opus","effort":"medium","source":"8b7ccfa49a40bc1c78f79f7a86187f5640cf5064","native_ref":"claude-agent:ft405_t06_rep1","predecessor":"claude:ft405_t06","trigger":"user-directed","stopped":"claude-agent:ft405_t06","preserved":"262e019bdc8f7612b294cc2bf5e3918dd7d3c1e5"}]}},"chunks":[{"id":"RT-RETAIN","tickets":["01-retain-the-last-bounded-response.md"],"verification":[{"id":"retention","command":"bench test --package ./cmd/bench --package ./internal/responsebound/... --package ./internal/git --package ./internal/gate --package ./internal/handoff --package ./internal/roadmap --package ./internal/shift --package ./internal/status --package ./internal/worktree --package ./internal/conformance","ticket":"01-retain-the-last-bounded-response.md"},{"id":"retain-root","command":"bench test --check root-conformance","ticket":"01-retain-the-last-bounded-response.md"},{"id":"nested-exec","command":"bench test --check system --run TestExecNested","ticket":"01-retain-the-last-bounded-response.md"},{"id":"record-skip","command":"bench test --package ./cmd/bench","probe":"drop the record-family skip from retention","ticket":"01-retain-the-last-bounded-response.md"}]},{"id":"RT-EXCERPT","tickets":["02-stage-an-excerpt-for-a-requirement.md"],"verification":[{"id":"excerpt-stage","command":"bench test --package ./internal/reviewrecord/... --package ./internal/responsebound/... --package ./internal/shellcommand --package ./cmd/bench --package ./internal/conformance --package ./internal/probe","ticket":"02-stage-an-excerpt-for-a-requirement.md"},{"id":"excerpt-root","command":"bench test --check root-conformance","ticket":"02-stage-an-excerpt-for-a-requirement.md"},{"id":"command-match","command":"bench test --package ./internal/reviewrecord/recordcmd","probe":"compare only the first planned word with the retained call","ticket":"02-stage-an-excerpt-for-a-requirement.md"}]},{"id":"RT-CURRENT","tickets":["03-report-a-dirty-record-in-the-current-binding.md"],"verification":[{"id":"binding","command":"bench test --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance","ticket":"03-report-a-dirty-record-in-the-current-binding.md"},{"id":"binding-root","command":"bench test --check root-conformance","ticket":"03-report-a-dirty-record-in-the-current-binding.md"},{"id":"strict-charge","command":"bench test --package ./internal/preflight/...","probe":"skip the record path for every preparation action","ticket":"03-report-a-dirty-record-in-the-current-binding.md"}]},{"id":"RT-EXTRACT","tickets":["04-extract-the-record-change-functions.md"],"verification":[{"id":"extract-writers","command":"bench test --package ./internal/reviewrecord/...","ticket":"04-extract-the-record-change-functions.md"},{"id":"extract-root","command":"bench test --check root-conformance","ticket":"04-extract-the-record-change-functions.md"}]},{"id":"RT-TICKET","tickets":["05-record-one-ticket-in-one-write.md"],"verification":[{"id":"record-writers","command":"bench test --package ./internal/reviewrecord/... --package ./cmd/bench --package ./internal/responsebound --package ./internal/conformance","ticket":"05-record-one-ticket-in-one-write.md"},{"id":"record-root","command":"bench test --check root-conformance","ticket":"05-record-one-ticket-in-one-write.md"},{"id":"one-write","command":"bench test --package ./internal/reviewrecord/...","probe":"run the ticket form as three separate writes","ticket":"05-record-one-ticket-in-one-write.md"}]},{"id":"RT-GUIDE","tickets":["06-name-the-ticket-author-as-the-freezer.md"],"verification":[{"id":"guidance-anchors","command":"bench test --package ./internal/conformance --package ./internal/anchors --package ./cmd/bench","ticket":"06-name-the-ticket-author-as-the-freezer.md"},{"id":"guidance-root","command":"bench test --check root-conformance","ticket":"06-name-the-ticket-author-as-the-freezer.md"},{"id":"guidance-prose","command":"bench test --check prose-mechanics","ticket":"06-name-the-ticket-author-as-the-freezer.md"},{"id":"guidance-budgets","command":"bench test --check guidance-prose-budgets","ticket":"06-name-the-ticket-author-as-the-freezer.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/record-ticket/spec.md"},{"id":"record-and-binding","command":"bench test --package ./internal/reviewrecord/... --package ./internal/preflight/... --package ./internal/chargeevidence --package ./internal/responsebound/... --package ./internal/git --package ./cmd/bench"},{"id":"guidance","command":"bench test --package ./internal/conformance --package ./internal/anchors"},{"id":"system","command":"bench test --check system --run TestExecNested"}]}
 ```
 
 ## Testing decisions
@@ -399,51 +334,51 @@ RT21 and RT22 turn red under that mutation.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| RT1 | 1, 2 | A `bench test` call within the bound in an assignment worktree leaves a retained response with its exact bytes. | planned | A retention that runs only on a spill leaves no retained response and the row reds. |
-| RT2 | 3 | A spilled `bench test` response leaves a retained response that equals the spill file bytes and holds no `spilled{` frame. | planned | A retention that keeps the printed projection holds the frame and the row reds. |
-| RT3 | 4 | The retained response holds the verb's exit code and its argument list after `bench`. | planned | A retention that drops the exit code reads as zero for a failing call and the row reds. |
-| RT4 | 5 | A `bench record` call after a `bench test` call leaves the `bench test` response retained. | planned | A retention without the record-family skip replaces the response and the row reds. |
-| RT5 | 6 | A `bench worktree exec` call in the worktree leaves its child's `bench test` response retained. | planned | A retention without the worktree-family skip replaces the child's response and the row reds. The test needs a real child process, so it sits in the system suite that `bench test --check system` and the gate's system phase run. |
-| RT6 | 7 | A bounded call in the primary checkout writes no retained response. | planned | A retention that writes the primary scope leaves a file there and the row reds. |
-| RT7 | 8 | A response in the spill-failed state removes the earlier retained response. | planned | A retention that skips a failed response leaves the earlier response and the row reds. |
-| RT8 | 9 | A retention write that fails leaves the printed response and the exit code unchanged. | planned | A dispatcher that returns the retention error changes the exit code and the row reds. |
-| RT9 | 10 | The release of a worktree removes its retained response and its staged excerpts. | planned | A retention outside the assignment scope survives the drop and the row reds. |
-| RT10 | 11 | `bench record excerpt` stages the retained `bench test` response for a planned requirement whose command matches. | planned | A stage that copies nothing leaves no staged excerpt and the row reds. |
-| RT11 | 12 | `bench record excerpt` refuses with no retained response. | planned | A stage that stages an empty excerpt passes and the row reds. |
-| RT12 | 13 | `bench record excerpt` refuses a retained response whose argument list differs from the planned command. | planned | A stage without the command comparison stages the wrong response and the row reds. |
-| RT13 | 14 | `bench record excerpt` refuses a probe requirement whose retained call is not `bench probe`. | planned | A stage that skips the probe-call check stages a test response and the row reds. |
-| RT14 | 14 | `bench record excerpt` refuses a mutant-set probe answer without `--mutant`. | planned | A stage that skips the import stages an answer the ticket form cannot import and the row reds. |
-| RT15 | 15 | `bench record excerpt` refuses an unplanned requirement and names the planned requirements. | planned | A stage that keys by any name stages a typo and the row reds. |
-| RT16 | 16 | A second stage of one requirement replaces the first staged bytes. | planned | A stage that keeps the first file holds the old bytes and the row reds. |
-| RT17 | 17 | `bench record excerpt` refuses a retained response over the record excerpt limit. | planned | A stage without the bound stages bytes that the record write refuses later and the row reds. |
-| RT18 | 18, 19 | For the last ticket, `bench record ticket` writes the chunk entry at the tip and one verification entry per owed requirement. | planned | A form that writes only the verifications leaves no chunk entry and the row reds. |
-| RT19 | 20 | With a moved plan digest, the form writes one amendment entry before the chunk entry. | planned | A form without the amendment step refuses with the stale plan digest and the row reds. |
-| RT20 | 20 | With an unchanged plan digest, the form writes no amendment entry. | planned | A form that always amends refuses with the unchanged-plan refusal and the row reds. |
-| RT21 | 21 | When the last owed verification refuses, the record bytes equal the bytes before the call. | planned | A form that runs three writes leaves the amendment and the chunk entry and the row reds. |
-| RT22 | 21 | When the chunk step refuses after a moved plan digest, the record bytes equal the bytes before the call. | planned | A form that writes the amendment first leaves the amendment entry and the row reds. |
-| RT23 | 22 | The form refuses when two owed requirements have no staged excerpt, and the refusal names both requirements. | planned | A form that stops at the first missing requirement names one requirement and the row reds. |
-| RT24 | 23 | A call for an earlier ticket with no chunk entry refuses and names the last ticket of the chunk. | planned | A form that freezes for any ticket writes the entry and the row reds. |
-| RT25 | 24 | A call for an earlier ticket with a chunk entry leaves the chunk tip and base unchanged. | planned | A form that refreezes for every ticket moves the tip to the call's tip and the row reds. |
-| RT26 | 25 | A refreeze for the last ticket keeps the base of the existing chunk entry. | planned | A form that derives the base from the predecessor moves the base and the row reds. |
-| RT27 | 26 | A new entry for a later chunk takes the predecessor chunk entry's tip as its base when no recorded fold follows that entry. | planned | A form that takes the plan base or `HEAD^` writes another base and the row reds. |
-| RT28 | 27 | A call for the first chunk with no `--base` and no chunk entry refuses and asks for `--base`. | planned | A form that guesses a base writes an entry and the row reds. |
-| RT29 | 28 | A plan change that removes a recorded chunk refuses, and the refusal names `bench record amendment`. | planned | A form that maps the chunk itself writes an amendment and the row reds. |
-| RT30 | 29 | The form refuses a planned seam cell at the tip for the last ticket and names the rows. | planned | A form without the planned-cell check freezes the chunk and the row reds. |
-| RT31 | 30 | The form refuses a ticket that the chunk plan does not list. | planned | A form that reads every requirement of the chunk records the wrong set and the row reds. |
-| RT32 | 31 | The form refuses a plan whose chunk requirements name no ticket. | planned | A form that treats every requirement as owed records another ticket's entries and the row reds. |
-| RT33 | 32 | Each verification entry ID is the prefix, a hyphen, and the requirement ID. | planned | A form that uses the prefix alone refuses the second entry as a duplicate ID and the row reds. |
-| RT34 | 33 | A probe requirement records the probe outcome, focused exit, and restore of the staged answer. | planned | A form that records the probe as absent refuses with the probe mismatch and the row reds. |
-| RT35 | 34 | After a written call, the staged excerpts of its owed requirements are absent. | planned | A form that keeps the stage leaves the files and the row reds. |
-| RT36 | 35 | After a refused call, the staged excerpts of its owed requirements are present. | planned | A form that removes the stage before the write removes the files and the row reds. |
+| RT1 | 1, 2 | A `bench test` call within the bound in an assignment worktree leaves a retained response with its exact bytes. | `cmd/bench/retain_test.go` (`TestRetainKeepsTheCompleteResponse`) | A retention that runs only on a spill leaves no retained response and the row reds. |
+| RT2 | 3 | A spilled `bench test` response leaves a retained response that equals the spill file bytes and holds no `spilled{` frame. | `cmd/bench/retain_test.go` (`TestRetainKeepsTheCompleteResponse`) | A retention that keeps the printed projection holds the frame and the row reds. |
+| RT3 | 4 | The retained response holds the verb's exit code and its argument list after `bench`. | `cmd/bench/retain_test.go` (`TestRetainKeepsTheCompleteResponse`) | A retention that drops the exit code reads as zero for a failing call and the row reds. |
+| RT4 | 5 | A `bench record` call after a `bench test` call leaves the `bench test` response retained. | `cmd/bench/retain_test.go` (`TestRetainSkipsRecordWorktreeAndRetiringCalls`) | A retention without the record-family skip replaces the response and the row reds. |
+| RT5 | 6 | A `bench worktree exec` call in the worktree leaves its child's `bench test` response retained. | `internal/systemtest/exec_nested_bound_test.go` (`TestExecNestedBenchKeepsChildRetained`) | A retention without the worktree-family skip replaces the child's response and the row reds. The test needs a real child process, so it sits in the system suite that `bench test --check system` and the gate's system phase run. |
+| RT6 | 7 | A bounded call in the primary checkout writes no retained response. | `cmd/bench/retain_test.go` (`TestRetainSkipsThePrimaryCheckout`) | A retention that writes the primary scope leaves a file there and the row reds. |
+| RT7 | 8 | A response in the spill-failed state removes the earlier retained response. | `internal/responsebound/retain_test.go` (`TestRetainClearsAnIncompleteResponse`) | A retention that skips a failed response leaves the earlier response and the row reds. |
+| RT8 | 9 | A retention write that fails leaves the printed response and the exit code unchanged. | `cmd/bench/retain_test.go` (`TestRetainFailureKeepsTheResponse`) | A dispatcher that returns the retention error changes the exit code and the row reds. |
+| RT9 | 10 | The release of a worktree removes its retained response and its staged excerpts. | `internal/responsebound/retain_test.go` (`TestDropRemovesTheRetainedResponseAndStages`) | A retention outside the assignment scope survives the drop and the row reds. |
+| RT10 | 11 | `bench record excerpt` stages the retained `bench test` response for a planned requirement whose command matches. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptStagesTheRetainedResponse`) | A stage that copies nothing leaves no staged excerpt and the row reds. |
+| RT11 | 12 | `bench record excerpt` refuses with no retained response. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptRefusals`) | A stage that stages an empty excerpt passes and the row reds. |
+| RT12 | 13 | `bench record excerpt` refuses a retained response whose argument list differs from the planned command. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptRefusals`) | A stage without the command comparison stages the wrong response and the row reds. |
+| RT13 | 14 | `bench record excerpt` refuses a probe requirement whose retained call is not `bench probe`. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptRefusals`) | A stage that skips the probe-call check stages a test response and the row reds. |
+| RT14 | 14 | `bench record excerpt` refuses a mutant-set probe answer without `--mutant`. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptRefusals`) | A stage that skips the import stages an answer the ticket form cannot import and the row reds. |
+| RT15 | 15 | `bench record excerpt` refuses an unplanned requirement and names the planned requirements. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptRefusals`) | A stage that keys by any name stages a typo and the row reds. |
+| RT16 | 16 | A second stage of one requirement replaces the first staged bytes. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptReplacesTheFirstStage`) | A stage that keeps the first file holds the old bytes and the row reds. |
+| RT17 | 17 | `bench record excerpt` refuses a retained response over the record excerpt limit. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptRefusals`) | A stage without the bound stages bytes that the record write refuses later and the row reds. |
+| RT18 | 18, 19 | For the last ticket, `bench record ticket` writes the chunk entry at the tip and one verification entry per owed requirement. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesTheFirstChunk`) | A form that writes only the verifications leaves no chunk entry and the row reds. |
+| RT19 | 20 | With a moved plan digest, the form writes one amendment entry before the chunk entry. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesALaterChunk`) | A form without the amendment step refuses with the stale plan digest and the row reds. |
+| RT20 | 20 | With an unchanged plan digest, the form writes no amendment entry. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesALaterChunk`) | A form that always amends refuses with the unchanged-plan refusal and the row reds. |
+| RT21 | 21 | When the last owed verification refuses, the record bytes equal the bytes before the call. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that runs three writes leaves the amendment and the chunk entry and the row reds. |
+| RT22 | 21 | When the chunk step refuses after a moved plan digest, the record bytes equal the bytes before the call. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that writes the amendment first leaves the amendment entry and the row reds. |
+| RT23 | 22 | The form refuses when two owed requirements have no staged excerpt, and the refusal names both requirements. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that stops at the first missing requirement names one requirement and the row reds. |
+| RT24 | 23 | A call for an earlier ticket with no chunk entry refuses and names the last ticket of the chunk. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that freezes for any ticket writes the entry and the row reds. |
+| RT25 | 24 | A call for an earlier ticket with a chunk entry leaves the chunk tip and base unchanged. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketEarlierTicketKeepsTheEntry`) | A form that refreezes for every ticket moves the tip to the call's tip and the row reds. |
+| RT26 | 25 | A refreeze for the last ticket keeps the base of the existing chunk entry. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefreezeKeepsTheBase`) | A form that derives the base from the predecessor moves the base and the row reds. |
+| RT27 | 26 | A new entry for a later chunk takes the predecessor chunk entry's tip as its base when no recorded fold follows that entry. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesALaterChunk`) | A form that takes the plan base or `HEAD^` writes another base and the row reds. |
+| RT28 | 27 | A call for the first chunk with no `--base` and no chunk entry refuses and asks for `--base`. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that guesses a base writes an entry and the row reds. |
+| RT29 | 28 | A plan change that removes a recorded chunk refuses, and the refusal names `bench record amendment`. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that maps the chunk itself writes an amendment and the row reds. |
+| RT30 | 29 | The form refuses a planned seam cell at the tip for the last ticket and names the rows. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form without the planned-cell check freezes the chunk and the row reds. |
+| RT31 | 30 | The form refuses a ticket that the chunk plan does not list. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that reads every requirement of the chunk records the wrong set and the row reds. |
+| RT32 | 31 | The form refuses a plan whose chunk requirements name no ticket. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that treats every requirement as owed records another ticket's entries and the row reds. |
+| RT33 | 32 | Each verification entry ID is the prefix, a hyphen, and the requirement ID. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesTheFirstChunk`) | A form that uses the prefix alone refuses the second entry as a duplicate ID and the row reds. |
+| RT34 | 33 | A probe requirement records the probe outcome, focused exit, and restore of the staged answer. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesTheFirstChunk`) | A form that records the probe as absent refuses with the probe mismatch and the row reds. |
+| RT35 | 34 | After a written call, the staged excerpts of its owed requirements are absent. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesTheFirstChunk`) | A form that keeps the stage leaves the files and the row reds. |
+| RT36 | 35 | After a refused call, the staged excerpts of its owed requirements are present. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that removes the stage before the write removes the files and the row reds. |
 | RT37 | 36 | The amendment, chunk, and verification change functions each have one definition that the exported writer and the ticket form call. | review-owned | Review compares the call sites, because a copied writer body passes every behavior test. |
 | RT38 | 37 | `bench record` help lists the ticket form and the excerpt form with their grammar. | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | The inventory reds when a registered form has no help row. |
 | RT39 | 36 | A chunk entry with a stale plan digest still refuses through the chunk form. | `internal/reviewrecord/recordcmd/ordering_test.go` (`TestChunkNeedsCurrentAmendment`) | A refactor that drops the stale check from the chunk change function passes the stale chunk and the row reds. |
-| RT40 | 38, 39 | `--check-current` with a dirty record of its spec binds and reports `dirty_record` true. | planned | A binding that keeps the strict refusal refuses and the row reds. |
-| RT41 | 39 | `--check-current` on a clean checkout reports `dirty_record` false. | planned | A binding that reports true for every call reds the clean case. |
+| RT40 | 38, 39 | `--check-current` with a dirty record of its spec binds and reports `dirty_record` true. | `internal/preflight/evidencecmd/evidence_modes_test.go` (`TestEvidenceCurrentBinding`) | A binding that keeps the strict refusal refuses and the row reds. |
+| RT41 | 39 | `--check-current` on a clean checkout reports `dirty_record` false. | `internal/preflight/evidencecmd/evidence_modes_test.go` (`TestEvidenceCurrentBinding`) | A binding that reports true for every call reds the clean case. |
 | RT42 | 40 | `--check-current` with a dirty untracked Go file still refuses with the dirty checkout refusal. | `internal/preflight/evidencecmd/evidence_modes_test.go` (`TestEvidenceCurrentBinding`) | A binding that skips every dirty path passes the case and the row reds. |
-| RT43 | 40 | `--check-current` with a dirty record and a dirty Go file refuses. | planned | A binding that skips the check when the record is dirty passes the Go file and the row reds. |
-| RT44 | 41 | `--check-current` with a dirty record of another spec refuses. | planned | A binding that skips every path under `reviews/` passes the case and the row reds. |
-| RT45 | 42 | The build charge with a dirty record of its spec still refuses with the dirty checkout refusal. | planned | A relaxation in the shared refusal passes the charge and the row reds. |
+| RT43 | 40 | `--check-current` with a dirty record and a dirty Go file refuses. | `internal/preflight/evidencecmd/evidence_modes_test.go` (`TestEvidenceCurrentBinding`) | A binding that skips the check when the record is dirty passes the Go file and the row reds. |
+| RT44 | 41 | `--check-current` with a dirty record of another spec refuses. | `internal/preflight/evidencecmd/evidence_modes_test.go` (`TestEvidenceCurrentBinding`) | A binding that skips every path under `reviews/` passes the case and the row reds. |
+| RT45 | 42 | The build charge with a dirty record of its spec still refuses with the dirty checkout refusal. | `internal/preflight/charge_evidence_test.go` (`TestEvidencePreparationRefusals`) | A relaxation in the shared refusal passes the charge and the row reds. |
 | RT46 | 43 | The generated evidence reference lists `dirty_record` in the `current` block. | `internal/chargeevidence/format_test.go` (`TestEvidenceSchemaRegistry`) | A schema change without the regenerated reference reds the registry comparison. |
 | RT47 | 44 | The implementation phase's Land section states that the last ticket's author freezes the chunk with `bench record ticket`. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | The changed anchor and its independent twin red when the sentence is absent. |
 | RT48 | 44 | The implementation phase's Land section states that each ticket author writes its verification entries with `bench record ticket`. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | The changed anchor and its independent twin red when the sentence is absent. |
@@ -451,19 +386,19 @@ RT21 and RT22 turn red under that mutation.
 | RT50 | 46 | The review phase's step 6 states that the last ticket's author writes the frozen pair with `bench record ticket`. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
 | RT51 | 48 | The ticket craft states that the last ticket's author freezes the chunk base and the current tip. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
 | RT52 | 48 | The ticket craft and the reference hold no `review freezes` text. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A Forbid anchor on `review freezes` in each file reds a restored sentence. |
-| RT53 | 49 | The known-issues file holds no row that names FT405. | planned | A row that survives the change names FT405 and the row reds. |
+| RT53 | 49 | The known-issues file holds no row that names FT405. | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecChunkedSlicing`) | A row that survives the change names FT405 and the row reds. |
 | RT54 | 48 | The reference states that the last ticket's author freezes each chunk's base and current tip. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
-| RT55 | 55 | For a later chunk whose predecessor entry has one recorded fold after it, the ticket form freezes with that fold's commit as base. | planned | A form that takes the predecessor tip writes a base that the checkpoint refuses as a chain gap and the row reds. |
-| RT56 | 56 | For the last ticket of the first chunk with an absent record and `--base`, the ticket form creates the record with the chunk entry and the verifications. | planned | A form that passes the absent-record refusal as its create function refuses and the row reds. |
-| RT57 | 57 | `bench record excerpt` stages a run whose arguments equal a planned command with a single-quoted operand. | planned | A stage that splits on spaces keeps the quotes and refuses the match and the row reds. |
-| RT58 | 13 | `bench record excerpt` refuses a planned command whose first word is not `bench`, a planned command that holds a pipe operator, and a planned command that the lexer cannot read. | planned | A stage that drops the first word compares a foreign command, and a stage that checks only the first word accepts the pipe or the unlexed text, so the row reds. |
-| RT59 | 58 | A requirement ID of `../x` stages a file inside the assignment scope and nowhere else. | planned | A stage that joins the ID into the path writes outside the scope and the row reds. |
-| RT60 | 53 | The ticket form refuses a stage whose run commit is not the chunk source and names the requirement. | planned | A form that ignores the run commit records an excerpt from an earlier tip and the row reds. |
-| RT61 | 54 | The ticket form refuses a stage whose run had a dirty Go file and names the requirement. | planned | A form that ignores the dirty paths records an uncommitted run and the row reds. |
-| RT62 | 54 | The ticket form accepts a stage whose run had only the spec's record path dirty. | planned | A form that refuses every dirty path refuses a run after a record write and the row reds. |
-| RT63 | 37 | The ticket form's help lists the amendment, chunk, and verification steps in the order of `CompletionOrder`. | planned | A help text that types its own step list keeps the old order when the completion order changes, and the row's comparison with `CompletionOrder` reds. |
+| RT55 | 55 | For a later chunk whose predecessor entry has one recorded fold after it, the ticket form freezes with that fold's commit as base. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesALaterChunk`) | A form that takes the predecessor tip writes a base that the checkpoint refuses as a chain gap and the row reds. |
+| RT56 | 56 | For the last ticket of the first chunk with an absent record and `--base`, the ticket form creates the record with the chunk entry and the verifications. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesTheFirstChunk`) | A form that passes the absent-record refusal as its create function refuses and the row reds. |
+| RT57 | 57 | `bench record excerpt` stages a run whose arguments equal a planned command with a single-quoted operand. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptStagesTheRetainedResponse`) | A stage that splits on spaces keeps the quotes and refuses the match and the row reds. |
+| RT58 | 13 | `bench record excerpt` refuses a planned command whose first word is not `bench`, a planned command that holds a pipe operator, and a planned command that the lexer cannot read. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptRefusesAPlannedCommandThatIsNotOneBenchCommand`) | A stage that drops the first word compares a foreign command, and a stage that checks only the first word accepts the pipe or the unlexed text, so the row reds. |
+| RT59 | 58 | A requirement ID of `../x` stages a file inside the assignment scope and nowhere else. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestExcerptKeysAHostileRequirementInsideTheScope`) | A stage that joins the ID into the path writes outside the scope and the row reds. |
+| RT60 | 53 | The ticket form refuses a stage whose run commit is not the chunk source and names the requirement. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that ignores the run commit records an excerpt from an earlier tip and the row reds. |
+| RT61 | 54 | The ticket form refuses a stage whose run had a dirty Go file and names the requirement. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`) | A form that ignores the dirty paths records an uncommitted run and the row reds. |
+| RT62 | 54 | The ticket form accepts a stage whose run had only the spec's record path dirty. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketFreezesALaterChunk`) | A form that refuses every dirty path refuses a run after a record write and the row reds. |
+| RT63 | 37 | The ticket form's help lists the amendment, chunk, and verification steps in the order of `CompletionOrder`. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketHelpFollowsCompletionOrder`) | A help text that types its own step list keeps the old order when the completion order changes, and the row's comparison with `CompletionOrder` reds. |
 | RT64 | 47 | The review phase's step 6 states that `bench record excerpt` stages an excerpt and `bench record ticket` writes one ticket's entries. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A new anchor and its independent twin red when the sentence is absent. |
-| RT65 | 8 | A response that takes the create-failure route clears the retained response. | planned | A retention that treats the passing state as complete keeps the earlier response and the row reds. |
+| RT65 | 8 | A response that takes the create-failure route clears the retained response. | `internal/responsebound/retain_test.go` (`TestRetainClearsAnIncompleteResponse`) | A retention that treats the passing state as complete keeps the earlier response and the row reds. |
 
 Not covered: story 50 — the changelog entry is review-owned.
 Not covered: story 51 — the one-session-one-ticket rule stays unchanged, and `TestDelegatedDistinctTicketAuthors` keeps grading it.
@@ -573,12 +508,15 @@ The fence holds the review pickup and the union of the ticket `Writes:` paths.
 - `internal/preflight/review.go`
 - `internal/preflight/review_charge_test.go`
 - `internal/preflight/testdata/legacy-charge`
+- `internal/probe/probe.go`
 - `internal/responsebound/owner.go`
 - `internal/responsebound/owner_test.go`
 - `internal/responsebound/responseboundtest/checkout.go`
 - `internal/responsebound/retain.go`
 - `internal/responsebound/retain_test.go`
+- `internal/responsebound/retire.go`
 - `internal/responsebound/retire_test.go`
+- `internal/responsebound/size.go`
 - `internal/responsebound/store.go`
 - `internal/reviewrecord/change.go`
 - `internal/reviewrecord/completion.go`

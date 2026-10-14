@@ -31,11 +31,16 @@ var scratchFiles = map[string]bool{
 // parseDirtyPaths turns `git status --porcelain -z --no-renames` output into the sorted
 // set of dirty paths, scratch excluded. The NUL framing lets a path with spaces, glob
 // characters, or a literal newline survive whole. This is the case the shell's
-// `printf | sort` pipeline misread. git.ParsePorcelainZ owns that framing; this layers
-// the shift's scratch policy and stable ordering on top.
+// `printf | sort` pipeline misread. git.ParsePorcelainZ owns that framing.
 func parseDirtyPaths(raw []byte) []string {
+	return touchablePaths(git.ParsePorcelainZ(raw))
+}
+
+// touchablePaths layers the shift's scratch policy and stable ordering on the dirty
+// entries.
+func touchablePaths(entries []git.PorcelainEntry) []string {
 	var paths []string
-	for _, entry := range git.ParsePorcelainZ(raw) {
+	for _, entry := range entries {
 		if entry.Path == "" || scratchFiles[entry.Path] {
 			continue
 		}
@@ -50,8 +55,8 @@ func dirtyPaths(root string) []string {
 	// Audit #11: tolerate. This runs inside a shift-created, validated worktree, so an
 	// empty parse stages nothing, and the loop's own commit/gate is the loud oracle for
 	// that worktree.
-	raw, _ := git.Raw("-C", root, "status", "--porcelain", "-z", "--no-renames")
-	return parseDirtyPaths(raw)
+	entries, _ := git.PorcelainStatus(root)
+	return touchablePaths(entries)
 }
 
 // stageTouched stages exactly what the agent touched: the paths dirty after it ran

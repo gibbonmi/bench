@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-implement-spec.md",
-    "old": "The ticket commit rewrites each covered `planned` seam cell into the citation form, so that `bench record chunk` accepts the chunk.",
+    "old": "The ticket commit rewrites each covered `planned` seam cell into the citation form, so that `bench record ticket` accepts the chunk.",
     "new": "The ticket commit keeps each covered `planned` seam cell."
   }
 ]

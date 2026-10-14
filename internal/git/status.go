@@ -63,11 +63,11 @@ func LandedState(root string, excludedDirtyPaths ...string) (LandedStateFact, er
 		excluded[path] = true
 	}
 	dirty := map[string]bool{}
-	raw, err := Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames")
+	entries, err := PorcelainStatus(root)
 	if err != nil {
 		return LandedStateFact{}, fmt.Errorf("git status %s: %w", root, err)
 	}
-	for _, entry := range ParsePorcelainZ(raw) {
+	for _, entry := range entries {
 		if excluded[entry.Path] {
 			continue
 		}
@@ -138,11 +138,11 @@ func Facts(root string) (RepoFacts, error) {
 	if err != nil {
 		return RepoFacts{}, err
 	}
-	raw, err := Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames")
+	changes, err := PorcelainStatus(root)
 	if err != nil {
 		return RepoFacts{}, err
 	}
-	f := RepoFacts{Branch: branch, Changes: ParsePorcelainZ(raw)}
+	f := RepoFacts{Branch: branch, Changes: changes}
 	f.Dirty = len(f.Changes) > 0
 	def, ok := ResolvedDefault(root)
 	if !ok {
@@ -255,6 +255,16 @@ func AllFilesStatus(root string) ([]byte, []PorcelainEntry, error) {
 	}
 	sort.Slice(changes, func(i, j int) bool { return changes[i].Path < changes[j].Path })
 	return raw, changes, nil
+}
+
+// PorcelainStatus reads the dirty entries of the checkout at root, with untracked
+// directories collapsed and renames off.
+func PorcelainStatus(root string) ([]PorcelainEntry, error) {
+	raw, err := Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames")
+	if err != nil {
+		return nil, err
+	}
+	return ParsePorcelainZ(raw), nil
 }
 
 // ParsePorcelainZ splits `git status --porcelain -z --no-renames` output into entries.

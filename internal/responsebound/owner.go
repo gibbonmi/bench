@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"sync"
 
@@ -38,8 +39,6 @@ const (
 	passing
 	// unspilled keeps every byte the spill file refused after a midway write failure.
 	unspilled
-	// finished passes a late write through to its own stream.
-	finished
 )
 
 // streamWrite is one retained write and the stream it arrived on.
@@ -58,7 +57,10 @@ type Owner struct {
 	retiring       bool
 	create         func(path string) (io.WriteCloser, error)
 
+	// phase stays where the response stood at Finish, so the retained writes or the spill
+	// file still answer the complete bytes after it.
 	phase    phase
+	finished bool
 	retained []streamWrite
 	lines    lineTracker
 	// stdoutOpen and stderrOpen report that the stream's last byte is not a newline. The
@@ -111,7 +113,8 @@ func (o *Owner) write(stdout bool, p []byte) {
 	if stdout {
 		stream = o.stdout
 	}
-	if o.phase == finished {
+	if o.finished {
+		// A late write passes through to its own stream.
 		_, _ = stream.Write(p)
 		return
 	}
@@ -200,7 +203,11 @@ func (o *Owner) Lead(block string) {
 func (o *Owner) Finish() {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	if o.phase != passing && o.phase != finished {
+	if o.finished {
+		return
+	}
+	o.finished = true
+	if o.phase != passing {
 		_, _ = io.WriteString(o.stdout, o.lead)
 	}
 	switch o.phase {
@@ -208,7 +215,6 @@ func (o *Owner) Finish() {
 		for _, w := range o.retained {
 			_, _ = w.stream.Write(w.data)
 		}
-		o.retained = nil
 	case spilling:
 		_ = o.file.Close()
 		o.printProjection(fmt.Sprintf("%s{lines=%d,bytes=%d,omitted_lines=%d,cut_lines=%d,"+pathField+"%s}\n",
@@ -226,7 +232,28 @@ func (o *Owner) Finish() {
 		}
 		_, _ = fmt.Fprintf(o.stdout, "%s%s{"+reasonField+"%s}\n", separator, SpillFailed, o.reason)
 	}
-	o.phase = finished
+}
+
+// completeOutput answers the complete bytes of a finished response in arrival order, without
+// the lead. A response whose spill failed, at the create or midway, answers false, because no
+// one copy holds every byte.
+func (o *Owner) completeOutput() ([]byte, bool) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	switch {
+	case !o.finished:
+		return nil, false
+	case o.phase == retaining:
+		var output []byte
+		for _, w := range o.retained {
+			output = append(output, w.data...)
+		}
+		return output, true
+	case o.phase == spilling:
+		data, err := os.ReadFile(o.path)
+		return data, err == nil
+	}
+	return nil, false
 }
 
 func (o *Owner) printProjection(line string, rest []byte) {

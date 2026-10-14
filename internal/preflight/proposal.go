@@ -23,7 +23,7 @@ func proposalSourceCheck(root string, facts Facts, selected *tickets.Entry) stri
 }
 
 func renderWritesProposal(root string, f Facts, name string) (string, int) {
-	if refusal := preparationCheckoutRefusal(root, f, "proposal"); refusal != "" {
+	if refusal, _ := preparationCheckoutRefusal(root, f, "proposal"); refusal != "" {
 		return refusal, 1
 	}
 	verdict := Decide(f)

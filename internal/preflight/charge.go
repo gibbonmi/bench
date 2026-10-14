@@ -14,7 +14,7 @@ import (
 // buildChargePack applies every build charge refusal in its fixed order and returns the
 // validated in-memory pack, or the refusal that stopped it.
 func buildChargePack(root string, facts Facts, verdict Verdict, name string, policy []buildSourceDescriptor) (*chargeevidence.Pack, string) {
-	if refusal := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
+	if refusal, _ := preparationCheckoutRefusal(root, facts, "charge"); refusal != "" {
 		return nil, refusal
 	}
 	if verdict.Red {

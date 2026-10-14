@@ -345,11 +345,12 @@ func (v Verified) Encode() (string, error) {
 // current assignment, never the assignment that prepared the artifact.
 type Current struct {
 	Evidence, Assignment, Base, SourceTip string
+	DirtyRecord                           bool
 }
 
 // Encode renders the current response through the registered schema.
 func (c Current) Encode() (string, error) {
-	return encodeResponse(blockCurrent, []any{c.Evidence, c.Assignment, c.Base, c.SourceTip, true, DeliveryUnverified})
+	return encodeResponse(blockCurrent, []any{c.Evidence, c.Assignment, c.Base, c.SourceTip, true, c.DirtyRecord, DeliveryUnverified})
 }
 
 // Prepared is the registered prepared response row.

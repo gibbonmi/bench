@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/poolkey"
@@ -39,26 +40,108 @@ var (
 // create all return an error, and the caller takes the create-failure route. A new
 // spill in a primary scope then prunes that scope.
 func openSpill(home string, root func() string, retiring bool, create func(string) (io.WriteCloser, error)) (io.WriteCloser, string, error) {
-	home, err := filepath.Abs(home)
+	dir, err := storeScope(home, root(), retiring)
 	if err != nil {
 		return nil, "", err
 	}
-	key, scope := location(home, root(), retiring)
-	path := filepath.Join(home, storeDirName, key, scope, spillName())
-	if !sanitize.LineSafe(path) {
-		return nil, "", errUnsafePath
+	path, err := dir.file(spillName())
+	if err != nil {
+		return nil, "", err
 	}
-	if err := privateDirs(home, storeDirName, key, scope); err != nil {
+	if err := dir.create(); err != nil {
 		return nil, "", err
 	}
 	file, err := create(path)
 	if err != nil {
 		return nil, "", err
 	}
-	if scope == primaryScope {
+	if dir.scope == primaryScope {
 		prunePrimary(filepath.Dir(path))
 	}
 	return file, path, nil
+}
+
+// scopeDir is the store directory of one scope: the absolute Bench home, the store levels
+// below it, and the scope name. The spill files and the retained response of a scope share
+// this one directory.
+type scopeDir struct {
+	home   string
+	levels []string
+	scope  string
+}
+
+// storeScope answers the store directory of the scope of a process whose repository root
+// is root, or the empty string outside a repository.
+func storeScope(home, root string, retiring bool) (scopeDir, error) {
+	home, err := filepath.Abs(home)
+	if err != nil {
+		return scopeDir{}, err
+	}
+	key, scope := location(home, root, retiring)
+	return scopeDir{home: home, levels: []string{storeDirName, key, scope}, scope: scope}, nil
+}
+
+// assignmentDir answers the store directory of the assignment scope of the worktree at root.
+// It answers false for a root outside any assignment worktree. The census output record and
+// the retained response both take their scope from it.
+func assignmentDir(home, root string) (scopeDir, bool, error) {
+	dir, err := storeScope(home, root, false)
+	if err != nil {
+		return scopeDir{}, false, err
+	}
+	return dir, dir.scope != primaryScope, nil
+}
+
+// file answers the path of the file name in the scope directory. A path that is not
+// line-safe returns an error.
+func (d scopeDir) file(name string) (string, error) {
+	path := filepath.Join(d.dir(), name)
+	if !sanitize.LineSafe(path) {
+		return "", errUnsafePath
+	}
+	return path, nil
+}
+
+// dir answers the path of the scope directory: the home and each store level below it.
+func (d scopeDir) dir() string {
+	return filepath.Join(slices.Concat([]string{d.home}, d.levels)...)
+}
+
+// create makes each level of the scope directory, and refuses a level that is not a real
+// directory.
+func (d scopeDir) create() error {
+	if err := os.MkdirAll(d.home, privateDir); err != nil {
+		return err
+	}
+	return d.realLevels("mkdir", func(dir string) error {
+		if err := os.Mkdir(dir, privateDir); err != nil && !errors.Is(err, fs.ErrExist) {
+			return err
+		}
+		return nil
+	})
+}
+
+// realLevels checks each store level below the home, in order. It never follows a symlink: a
+// level that is not a real directory refuses with a path error of the operation op. When
+// prepare is not nil, it runs on each level before the check.
+func (d scopeDir) realLevels(op string, prepare func(string) error) error {
+	dir := d.home
+	for _, component := range d.levels {
+		dir = filepath.Join(dir, component)
+		if prepare != nil {
+			if err := prepare(dir); err != nil {
+				return err
+			}
+		}
+		info, err := os.Lstat(dir)
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			return &fs.PathError{Op: op, Path: dir, Err: errNotOwnDir}
+		}
+	}
+	return nil
 }
 
 // location answers the repo key and the scope of a process whose repository root is
@@ -80,37 +163,6 @@ func location(home, root string, retiring bool) (string, string) {
 		return key, id
 	}
 	return key, primaryScope
-}
-
-// privateDirs creates each store directory below home with mode 0700. It never follows a
-// symlink: a component that already exists must be a real directory.
-func privateDirs(home string, components ...string) error {
-	if err := os.MkdirAll(home, privateDir); err != nil {
-		return err
-	}
-	dir := home
-	for _, component := range components {
-		dir = filepath.Join(dir, component)
-		if err := os.Mkdir(dir, privateDir); err != nil && !errors.Is(err, fs.ErrExist) {
-			return err
-		}
-		if err := realDir(dir); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// realDir refuses a path that is not a real directory, so a symlink is never followed.
-func realDir(dir string) error {
-	info, err := os.Lstat(dir)
-	if err != nil {
-		return err
-	}
-	if !info.IsDir() {
-		return &fs.PathError{Op: "mkdir", Path: dir, Err: errNotOwnDir}
-	}
-	return nil
 }
 
 // spillName generates a file name, so no operand or output byte forms the path. The time

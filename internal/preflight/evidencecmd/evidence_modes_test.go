@@ -49,7 +49,8 @@ func craftedDigestArtifact(t *testing.T, root, identity, oldDigest, newDigest st
 	return craftedIdentity
 }
 
-// TestEvidenceCurrentBinding is CE57, CE58, CE59, CE123, and CE124.
+// TestEvidenceCurrentBinding is CE57, CE58, CE59, CE123, and CE124. CE59 is also RT41, CE123
+// is also RT42, and the record cases are RT40, RT43, and RT44.
 func TestEvidenceCurrentBinding(t *testing.T) {
 	for _, state := range []string{"binding revoked", "outcome blocked"} {
 		t.Run(state, func(t *testing.T) {
@@ -99,15 +100,15 @@ func TestEvidenceCurrentBinding(t *testing.T) {
 		if code != 0 {
 			t.Fatalf("check-current = (%d):\n%s", code, out)
 		}
-		if got := headerLine(out); got != "current[1]{evidence,assignment,base,source_tip,current,delivery}:" {
+		if got := headerLine(out); got != "current[1]{evidence,assignment,base,source_tip,current,dirty_record,delivery}:" {
 			t.Fatalf("current header = %q", got)
 		}
 		row := preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), "current")[0]
 		assertTypedRow(t, row, map[string]string{"evidence": "string", "assignment": "string", "base": "string",
-			"source_tip": "string", "current": "boolean", "delivery": "string"})
+			"source_tip": "string", "current": "boolean", "dirty_record": "boolean", "delivery": "string"})
 		if row["evidence"] != identity || row["assignment"] != preflighttest.ChargeFixtureAssignment ||
 			row["base"] != prepared["base"] || row["source_tip"] != prepared["source_tip"] ||
-			row["current"] != true || row["delivery"] != "unverified" {
+			row["current"] != true || row["dirty_record"] != false || row["delivery"] != "unverified" {
 			t.Fatalf("current row = %v, want the current binding of %v", row, prepared)
 		}
 	})
@@ -140,6 +141,35 @@ func TestEvidenceCurrentBinding(t *testing.T) {
 			t.Fatalf("dirty checkout = (%d):\n%s", code, out)
 		}
 	})
+	t.Run("RT40 dirty record of the selected spec", func(t *testing.T) {
+		root, slug := preflighttest.SeedConformant(t)
+		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
+		preflighttest.MustWriteFile(t, "reviews/"+slug+".md", "# Review\n")
+		out, code := checkCurrent(t, identity)
+		if code != 0 {
+			t.Fatalf("dirty record = (%d):\n%s", code, out)
+		}
+		if row := preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), "current")[0]; row["dirty_record"] != true {
+			t.Fatalf("current row = %v, want dirty_record true", row)
+		}
+	})
+	// RT43 keeps the guard beside a dirty record, and RT44 relaxes only the selected spec's record.
+	for name, dirty := range map[string][]string{
+		"RT43 dirty record and Go file":     {"reviews/example.md", "internal/example/dirty.go"},
+		"RT44 dirty record of another spec": {"reviews/other.md"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			root, slug := preflighttest.SeedConformant(t)
+			identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
+			for _, path := range dirty {
+				preflighttest.MustWriteFile(t, path, "package example\n")
+			}
+			out, code := checkCurrent(t, identity)
+			if code != 1 || !strings.Contains(out, "source checkout is dirty") || strings.Contains(out, "current[1]") {
+				t.Fatalf("%v = (%d):\n%s", dirty, code, out)
+			}
+		})
+	}
 	t.Run("CE124 changed required source bytes", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
 		identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))

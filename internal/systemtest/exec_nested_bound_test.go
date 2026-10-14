@@ -5,7 +5,10 @@ package systemtest
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/responsebound"
 )
 
 // BO30: a nested Bench verb bounds its own response in its own process. The child prints
@@ -38,5 +41,28 @@ func TestExecNestedBenchBoundsOnce(t *testing.T) {
 	scopes, err := os.ReadDir(filepath.Dir(scope))
 	if err != nil || len(scopes) != 1 {
 		t.Fatalf("store scopes = %v (%v), want only the child's scope", scopes, err)
+	}
+}
+
+// RT5: exec from inside the worktree leaves its child's `bench test` response retained. The
+// child and exec both run in the assignment's scope, so a retaining exec would replace the
+// child's response with its own.
+func TestExecNestedBenchKeepsChildRetained(t *testing.T) {
+	fixture, source := execBoundFixture(t)
+	if err := owner.observeSelected(); err != nil {
+		t.Fatal(err)
+	}
+	environment := append(fixture.environment(fixture.home), "BENCH_COMMAND_OBSERVE=0")
+	result := owner.runWithInput(source.path, environment, "", owner.selected.path,
+		execBoundArgs(source, owner.selected.path, "test", "--checks")...)
+	if result.code != 0 {
+		t.Fatalf("exec = (%d, %q, %q), want exit 0", result.code, result.stdout, result.stderr)
+	}
+	retained, err := responsebound.ReadRetained(fixture.home, source.path)
+	if err != nil {
+		t.Fatalf("read the retained response: %v", err)
+	}
+	if retained.Verb != "test" || !reflect.DeepEqual(retained.Args, []string{"--checks"}) || retained.Exit != 0 {
+		t.Fatalf("retained call = (%q, %q, %d), want the child's (test, [--checks], 0)", retained.Verb, retained.Args, retained.Exit)
 	}
 }

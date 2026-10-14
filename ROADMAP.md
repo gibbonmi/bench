@@ -124,8 +124,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT318 (MEDIUM, decision required) — the completion form records a capability-blocked row's decided value, and `bench record` closes its native-operation residuals.**
 
-**FT405 (MEDIUM, decision required) — one `bench record ticket` verb lets a ticket author amend, freeze, and record its chunk in one call.**
-
 **FT414 (HIGH) — the record, commit, and landing verbs state their preconditions before an attempt.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
@@ -337,10 +335,9 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT405
-2. FT293-ownership-closure
-3. FT375-spec-staleness
-4. FT380-plan-commit
-5. FT409
-6. FT402
-7. FT411
+1. FT293-ownership-closure
+2. FT375-spec-staleness
+3. FT380-plan-commit
+4. FT409
+5. FT402
+6. FT411

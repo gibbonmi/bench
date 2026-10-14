@@ -95,8 +95,9 @@ func prepareBuildPack(root string, facts Facts, selected *tickets.Entry, parsed 
 // currentEvidenceCommand binds one prepared artifact to the current action. The manifest
 // supplies the frozen selectors; the assignment, the checkout state, the source pair, and
 // the required bytes come from the current checkout, so a released assignment, a dirty
-// checkout, a moved source, or a changed required source refuses. The binding names the
-// current assignment, never the assignment that prepared the artifact.
+// checkout, a moved source, or a changed required source refuses. The binding accepts a dirty
+// review record of the selected spec and reports it. The binding names the current assignment, never
+// the assignment that prepared the artifact.
 func currentEvidenceCommand(root, identity string, args []string) (string, int) {
 	artifact, refusal, code := evidencecmd.OpenEvidence(root, identity)
 	if refusal != "" {
@@ -106,7 +107,8 @@ func currentEvidenceCommand(root, identity string, args []string) (string, int) 
 	manifest, _ := artifact.Manifest()
 	selection := manifest.Selection
 	return preparedAttempts(root, selection.Mode, specref.LiveSpecSlug(selection.Spec), selection.Base, "", "check", args, func(facts Facts) (string, int) {
-		if refusal := preparationCheckoutRefusal(root, facts, "check"); refusal != "" {
+		refusal, dirtyRecord := preparationCheckoutRefusal(root, facts, "check")
+		if refusal != "" {
 			return refusal, 1
 		}
 		if verdict := Decide(facts); verdict.Red {
@@ -125,7 +127,7 @@ func currentEvidenceCommand(root, identity string, args []string) (string, int) 
 			return refusal, 1
 		}
 		text, err := chargeevidence.Current{Evidence: identity, Assignment: facts.AssignmentTarget,
-			Base: selection.Base, SourceTip: facts.SourceTip}.Encode()
+			Base: selection.Base, SourceTip: facts.SourceTip, DirtyRecord: dirtyRecord}.Encode()
 		if err != nil {
 			return toon.RenderError(err) + "\n", 1
 		}

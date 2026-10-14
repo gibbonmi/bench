@@ -89,6 +89,7 @@ func TestWriteSpecChunkedSlicing(t *testing.T) {
 		{file: implementSpec, needle: "The author meets the cap with fewer independent expectations, such as one table-driven test, and skips no witness.", want: "witness cap: the author meets the cap with fewer expectations and skips no witness"},
 		{file: implementSpec, needle: "The author runs the floor checks and witnesses of several packages in one `bench test` call that repeats `--package`.", want: "witness cap: the author runs several packages in one bench test call"},
 		{file: issues, needle: "Cap the witnesses in a charge", want: "witness cap: the known-issues row kept a copy of the cap", forbidden: true},
+		{file: issues, needle: "| FT405: the record verb reads an excerpt from the last response of the worktree. |", want: "record ticket: the known-issues file kept a row that FT405 retires", forbidden: true},
 	}}.check(t)
 }
 

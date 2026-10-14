@@ -71,6 +71,7 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The author meets the cap with fewer independent expectations, such as one table-driven test, and skips no witness.", Diagnostic: "witness cap: the author meets the cap with fewer expectations and skips no witness"},
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The author runs the floor checks and witnesses of several packages in one `bench test` call that repeats `--package`.", Diagnostic: "witness cap: the author runs several packages in one bench test call"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "Cap the witnesses in a charge", Diagnostic: "witness cap: the known-issues row kept a copy of the cap"},
+	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "FT405", Diagnostic: "record ticket: the known-issues file kept a row that FT405 retires"},
 	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Eligibility", Needle: "The reviewer selects the map-only route for a ready compiled map.", Diagnostic: "map-only route: Eligibility must state that the reviewer selects the route for a ready compiled map"},
 	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Eligibility", Needle: "The full route of `/bench-write-spec` stays the default.", Diagnostic: "map-only route: Eligibility must state that the full route stays the default"},
 	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: RequireInSection, Section: "Eligibility", Needle: "The route accepts only a ready compiled map that `bench maps` reports with no diagnostic.", Diagnostic: "map-only route: Eligibility must require a ready compiled map that bench maps reports with no diagnostic"},
@@ -116,5 +117,6 @@ const mapDiscipline = ".agents/skills/bench-craft-spec/references/map-discipline
 // mapOnlyRoute is the craft-spec reference that states the reviewer-selected map-only route.
 const mapOnlyRoute = ".agents/skills/bench-craft-spec/references/map-only-route.md"
 
-// knownIssues is the known-issues file that never carries a second copy of the witness cap.
+// knownIssues is the known-issues file that never carries a second copy of the witness cap
+// or a row that FT405 retires.
 const knownIssues = "docs/known-issues.md"
