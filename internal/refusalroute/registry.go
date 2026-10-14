@@ -41,11 +41,14 @@ const (
 )
 
 // Face is one registered refusal. Sentence is empty when a policy owns the sentence at
-// the refusal, and the raising site then supplies the observed one.
+// the refusal, and the raising site then supplies the observed one. Preface is a qualifier
+// that the face states ahead of its first step, for a face whose cause has ways out that
+// are not steps of one sequence.
 type Face struct {
 	Verb      Verb
 	Name      string
 	Sentence  string
+	Preface   string
 	Authority Authority
 	Route     []Step
 }

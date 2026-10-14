@@ -205,7 +205,7 @@ func TestCommitmentStaleLanding(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=commitment: ") || !strings.Contains(r.stdout, ",next=bench commitment start --outcome <id> --request <request> --deliverable <path>") {
+	if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=commitment: ") || !strings.Contains(r.stdout, "light-path folder; bench commitment start --outcome <id> --request <request> --deliverable <path>") {
 		t.Fatalf("displaced landing = (%d, %q, %q), want a commitment refusal whose route is the start command", r.exit, r.stdout, r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "main"); got != switched {
