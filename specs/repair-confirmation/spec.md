@@ -118,6 +118,7 @@ Harder chunks: RC-CARRY, RC-WRITE.
 54. As a reviewer, I want a reviewed tip outside the chunk base's line refused, so that a whole chunk never closes with no review.
 55. As a reviewer, I want a confirmation whose base differs from the chunk base refused, so that the confirmation binds to its own chunk.
 56. As a reviewer, I want a mix of fresh and carried axis results refused, so that the writer and the checkpoint compute one finding set.
+57. As a reviewer, I want a carried axis result to keep its role and performer-exclusion conditions, so that only an independent review carries forward.
 
 ## Implementation decisions
 
@@ -158,7 +159,7 @@ That confirmation is valid only when all of these conditions hold:
 - Its base, repaired tip, and source digest equal the chunk pair.
 - Its performer equals `completionReconciler`, and its state is completed.
 - Its probe bites, under the one probe-bite predicate.
-- Its reviewed tip descends from the chunk base and is an ancestor of the chunk tip.
+- Its reviewed tip strictly descends from the chunk base, so it differs from that base, and it is an ancestor of the chunk tip.
 - The test-only prover accepts the delta from the reviewed tip's digest to the chunk digest.
 
 The checkpoint derives the reviewed digest from the reviewed tip's tree.
@@ -269,7 +270,7 @@ This spec follows the invoked `/bench-write-spec` and flags the route for review
 | --- | --- | --- | --- | --- |
 | RC-CYCLE / 01-state-record-only-repair-cycle-rule.md | The policy states that a record-only correction consumes no repair cycle, with its twin pins. | RC1, RC2, RC3 | `TestImplementationContinuation` | no |
 | RC-PROVE / 02-prove-test-only-tree-deltas.md | A new prover accepts only an added or modified regular Go test file outside `testdata`, and both prover suites share one tree fixture builder. | RC13, RC14, RC15, RC16, RC17, RC18, RC19, RC52, RC53 | the planned prover tests and `TestProveTreeGap` | no |
-| RC-CARRY / 03-carry-confirmed-axis-results.md | The record holds coordinator confirmations, and the chunk and complete checkpoints carry the reviewed axis results under a valid confirmation. | RC4–RC12, RC20–RC37, RC48–RC51, RC54 | `TestReviewCheckpointKeepsStrictEvidence`, `TestReviewCheckpointCommentOnlyGap`, and the planned record and checkpoint tests | yes |
+| RC-CARRY / 03-carry-confirmed-axis-results.md | The record holds coordinator confirmations, and the chunk and complete checkpoints carry the reviewed axis results under a valid confirmation. | RC4–RC12, RC20–RC37, RC48–RC51, RC54–RC57 | `TestReviewCheckpointKeepsStrictEvidence`, `TestReviewCheckpointCommentOnlyGap`, and the planned record and checkpoint tests | yes |
 | RC-WRITE / 04-write-confirmations-with-bench-record.md, 05-document-the-test-only-confirmation.md | `bench record confirmation` writes the entry, the refusal routes to it, and the guidance states the exception. | RC38–RC47 | `TestCheckpointEntryRepairForms`, `TestCompletionHelpOrdering`, `TestImplementationContinuation`, `TestChunkChainAnchors`, and the planned writer tests | yes |
 
 The slicing split the reviewed chunk RC-CONFIRM into RC-PROVE, RC-CARRY, and RC-WRITE.
@@ -369,6 +370,9 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
 | RC52 | 18 | The prover refuses a `_test.go` gitlink with mode `160000` with `ErrMode`. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that grades only symbolic links accepts the gitlink and the row reds. |
 | RC53 | 17 | The prover refuses a renamed `_test.go` file with `ErrStatus`, because the rename arrives as a deletion. | `internal/testgap/testgap_test.go` (`TestProveTestGap`) | A prover that drops `--no-renames` or accepts status `R` passes the rename and the row reds. |
 | RC54 | 56 | The checkpoint refuses when Coverage has a fresh pass at the chunk pair and Standards and Spec sit at the reviewed pair under a valid confirmation, with a reason that names the mixed pairs, and routes to `bench record 'review' --help`. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry rule that grades each axis alone accepts the mixed state and the row reds. |
+| RC55 | 54 | The checkpoint refuses a confirmation whose three axis results sit at the chunk base as both base and tip, with a reason that names the empty reviewed pair. | planned | A reflexive ancestry check accepts the empty reviewed pair and the row reds. |
+| RC56 | 57 | The checkpoint refuses a carried Standards result whose performer is an author of the run, with a reason that names the performer. | planned | A carry branch that drops the performer-exclusion condition accepts the result and the row reds. |
+| RC57 | 57 | The checkpoint refuses a carried Standards result whose role is not the independent review role, with a reason that names the role. | planned | A carry branch that drops the role condition accepts the result and the row reds. |
 
 Not covered: story 6 — the build-directions outcome delivered the confirming-round scope, and its pins stay unchanged.
 Not covered: story 12 — the compatibility consequence is a stated limit with no new behavior; the Won't handle line holds it.

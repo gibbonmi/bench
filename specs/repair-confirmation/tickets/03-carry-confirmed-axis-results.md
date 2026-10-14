@@ -2,7 +2,7 @@
 
 Blocked by: 02-prove-test-only-tree-deltas.md
 Writes: internal/reviewrecord/record.go, internal/reviewrecord/parse.go, internal/reviewrecord/check.go, internal/reviewrecord/coverage.go, internal/reviewrecord/completion.go, internal/reviewrecord/write.go, internal/reviewrecord/repair.go, internal/reviewrecord/fold.go, internal/reviewrecord/confirmation.go (new), internal/reviewrecord/confirmation_test.go (new), internal/reviewrecord/export_test.go, internal/reviewrecord/record_test.go, internal/reviewrecord/repair_test.go, internal/reviewrecord/source_test.go, internal/reviewrecord/fold_test.go, internal/reviewrecord/delegated_test.go, internal/reviewrecord/recordtest/fixture.go, internal/reviewrecord/recordtest/confirmation.go (new), internal/gate/checkpoint.go, internal/gate/review_checkpoint_confirmation_test.go (new), internal/gate/review_checkpoint_commits_test.go, internal/gate/review_checkpoint_test.go, internal/gate/complete_checkpoint_test.go, internal/gate/delegated_checkpoint_test.go
-Covers: RC4, RC5, RC6, RC7, RC8, RC9, RC10, RC11, RC12, RC20, RC21, RC22, RC23, RC24, RC25, RC26, RC27, RC28, RC29, RC30, RC31, RC32, RC33, RC34, RC35, RC36, RC37, RC48, RC49, RC50, RC51, RC54
+Covers: RC4, RC5, RC6, RC7, RC8, RC9, RC10, RC11, RC12, RC20, RC21, RC22, RC23, RC24, RC25, RC26, RC27, RC28, RC29, RC30, RC31, RC32, RC33, RC34, RC35, RC36, RC37, RC48, RC49, RC50, RC51, RC54, RC55, RC56, RC57
 
 ## What to build
 
@@ -54,6 +54,8 @@ The writer and the confirmation route come in the next ticket.
 - [ ] RC32–RC34: the strict-evidence and comment-only cases keep their current outcomes.
 - [ ] RC35 and RC36: the verification at the repaired digest and the distinct-session rule stay graded.
 - [ ] RC37: the planned-probe check and the confirmation check call one probe-bite predicate.
+- [ ] RC55: a confirmation whose axis results sit at the chunk base as both base and tip refuses.
+- [ ] RC56 and RC57: a carried result by an author of the run, or with a wrong role, refuses.
 - [ ] RC54: a mix of a fresh Coverage result and carried Standards and Spec results refuses through the review form.
 - [ ] The carry rule gets the reviewed pair, the prover result, and the finding union from the one reviewed-pair function.
 - [ ] The central-property mutation, which skips the prover in the carry branch, reds RC12, RC30, and RC31.
