@@ -71,7 +71,7 @@ func TestReviewCheckpointPassesAWrittenConfirmation(t *testing.T) {
 	f, _ := repairedFixture(t, modifyTest)
 	call := rr.ConfirmationCall{Chunk: "1", Findings: []string{"F-1"},
 		Evidence: rr.Evidence{ID: "confirm-1", Performer: recordtest.Orchestrator, Model: "unknown", Effort: "unknown", NativeRef: recordtest.Native("mutation failed; restore passed")},
-		Probe:    rr.Probe{Mutation: "omit the repaired assertion", Outcome: "bit", ExitCode: 1, Restore: "pass"}}
+		Probe:    recordtest.ConfirmationProbe()}
 	if _, _, err := rr.RecordConfirmation(f.Root, recordtest.Spec, call); err != nil {
 		t.Fatal(err)
 	}

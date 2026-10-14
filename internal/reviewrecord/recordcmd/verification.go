@@ -147,7 +147,7 @@ func importRefusal(err error, mutant int) string {
 // importedProbe reads the probe values from one complete probe answer, or from its row mutant
 // when mutant is not 0. The explicit exit must equal the exit that the answer binds, and an answer
 // whose mutated run never started has no focused exit to record. A silent or unrestored answer
-// records as it reads, so the checkpoint still refuses it.
+// imports as it reads; the checkpoint or the confirmation writer refuses it.
 func importedProbe(data []byte, exitCode, mutant int) (*reviewrecord.Probe, string) {
 	answer, out := readImported(data, mutant)
 	if out != "" {

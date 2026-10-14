@@ -160,8 +160,7 @@ func checkChunkReviews(root string, record Record, plan Plan, chunk *Chunk, excl
 // and the failed condition.
 func confirms(chunk Chunk, reviewed ReviewedPair, reconciler string) error {
 	latest := chunk.Confirmations[len(chunk.Confirmations)-1]
-	scope := chunk.reviewed().scope + ": confirmation " + latest.ID
-	bit, restored := probeBites(latest.Probe)
+	scope := chunk.confirmationScope(latest.ID)
 	switch {
 	case latest.Base != chunk.Base || latest.RepairedTip != chunk.Tip || latest.SourceDigest != chunk.SourceDigest:
 		return fmt.Errorf("%s covers the stale pair %s..%s; confirm the chunk pair %s..%s", scope, latest.Base, latest.RepairedTip, chunk.Base, chunk.Tip)
@@ -169,14 +168,32 @@ func confirms(chunk Chunk, reviewed ReviewedPair, reconciler string) error {
 		return fmt.Errorf("%s performer %s is not the completion reconciler %s", scope, latest.Performer, reconciler)
 	case latest.State != "completed":
 		return fmt.Errorf("%s state is %s; record a completed confirmation", scope, latest.State)
-	case !bit:
-		return fmt.Errorf("%s probe did not bite: outcome %s, focused exit %d; record a probe that bites", scope, latest.Probe.Outcome, latest.Probe.ExitCode)
-	case !restored:
-		return fmt.Errorf("%s probe restore %s; restore and verify the source", scope, latest.Probe.Restore)
-	case latest.ReviewedTip != reviewed.Tip:
+	}
+	if err := probeHolds(scope, latest.Probe); err != nil {
+		return err
+	}
+	if latest.ReviewedTip != reviewed.Tip {
 		return fmt.Errorf("%s names the reviewed tip %s, and the axis results sit at %s", scope, latest.ReviewedTip, reviewed.Tip)
 	}
 	return closesOpen(scope, latest.FindingIDs, reviewed)
+}
+
+// confirmationScope names the confirmation id of c in a refusal.
+func (c *Chunk) confirmationScope(id string) string {
+	return c.reviewed().scope + ": confirmation " + id
+}
+
+// probeHolds refuses a confirmation probe that did not bite or did not restore. scope names the
+// confirmation that holds the probe.
+func probeHolds(scope string, probe Probe) error {
+	bit, restored := probeBites(probe)
+	if !bit {
+		return fmt.Errorf("%s probe did not bite: outcome %s, focused exit %d; record a probe that bites", scope, probe.Outcome, probe.ExitCode)
+	}
+	if !restored {
+		return fmt.Errorf("%s probe restore %s; restore and verify the source", scope, probe.Restore)
+	}
+	return nil
 }
 
 // closesOpen refuses findings that differ from the open findings at reviewed. scope names the

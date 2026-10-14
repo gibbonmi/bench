@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -13,12 +14,12 @@ import (
 // mutation is the caller's mutation text of each confirmation call below.
 const mutation = "omit the repaired assertion"
 
-// confirmArgs is the confirmation argv for chunk 1 that imports one biting probe answer. Each
-// finding follows as one --finding flag, in order.
-func confirmArgs(t *testing.T, id string, findings ...string) []string {
+// confirmArgs is the confirmation argv for chunk 1 that imports one biting probe answer, with
+// edits applied as formArgs applies them. Each finding follows as one --finding flag, in order.
+func confirmArgs(t *testing.T, edits map[string]string, id string, findings ...string) []string {
 	t.Helper()
 	args := formArgs(t, "confirmation", map[string]string{"--chunk": "1", "--id": id, "--performer": recordtest.Orchestrator, "--model": "unknown", "--effort": "unknown",
-		"--exit-code": "0", "--ref": "fixture:terminal-result", "--probe-result": excerptFile(t, "probe.out", answer("bit", "yes", 0, "1", report)), "--mutation": mutation})
+		"--exit-code": "0", "--ref": "fixture:terminal-result", "--probe-result": excerptFile(t, "probe.out", answer("bit", "yes", 0, "1", report)), "--mutation": mutation}, edits)
 	for _, finding := range findings {
 		args = append(args, "--finding", finding)
 	}
@@ -63,7 +64,7 @@ func lastConfirmation(t *testing.T, f *recordtest.Fixture) rr.Confirmation {
 func TestRecordConfirmationWritesTheDerivedPair(t *testing.T) {
 	f, reviewedTip := repaired(t, "repair_test.go")
 	chunk := onlyChunk(t, f)
-	out := succeed(t, f, confirmArgs(t, "confirm-1", "F-1"))
+	out := succeed(t, f, confirmArgs(t, nil, "confirm-1", "F-1"))
 	got := lastConfirmation(t, f)
 	data := answer("bit", "yes", 0, "1", report)
 	want := rr.Confirmation{Evidence: rr.Evidence{ID: "confirm-1", Performer: recordtest.Orchestrator, Role: rr.ConfirmationRole, Model: "unknown", Effort: "unknown",
@@ -110,8 +111,55 @@ func TestRecordConfirmationRefusals(t *testing.T) {
 			if tc.change != nil {
 				tc.change(t, f)
 			}
-			refuseArgs(t, f, tc.want, confirmArgs(t, "confirm-1", tc.findings...))
+			refuseArgs(t, f, tc.want, confirmArgs(t, nil, "confirm-1", tc.findings...))
 		})
+	}
+}
+
+// TestRecordConfirmationImportsOneMutantRow covers RC38 for a mutant-set answer: --mutant 2
+// imports the biting row 2 alone.
+func TestRecordConfirmationImportsOneMutantRow(t *testing.T) {
+	f, _ := repaired(t, "repair_test.go")
+	produce, _ := setProducer(t, f)
+	data, _ := silentThenBiting(produce)
+	succeed(t, f, confirmArgs(t, importingRow(t, data, 0, "2"), "confirm-1", "F-1"))
+	got := lastConfirmation(t, f).Probe
+	want := rr.Probe{Mutation: mutation, Outcome: "bit", ExitCode: 1, Restore: "pass", NativeRef: got.NativeRef}
+	if !reflect.DeepEqual(got, want) || got.NativeRef.Excerpt != data {
+		t.Fatalf("probe = %+v with excerpt %q, want %+v and the exact answer bytes", got, got.NativeRef.Excerpt, want)
+	}
+}
+
+// TestRecordConfirmationRefusesAProbeThatFails covers RC58: an imported probe that did not bite
+// or did not restore refuses by the failed condition and leaves the record bytes unchanged.
+func TestRecordConfirmationRefusesAProbeThatFails(t *testing.T) {
+	for name, tc := range map[string]struct {
+		data, want string
+		exit       int
+	}{
+		"silent":          {answer("silent", "yes", 1, "0", report), "chunk 1: confirmation confirm-1 probe did not bite: outcome silent, focused exit 0", 1},
+		"restore failed":  {answer("restore-failed", "no", 2, "1", report), "chunk 1: confirmation confirm-1 probe did not bite: outcome restore-failed", 2},
+		"unrestored bite": {answer("bit", "no", 0, "1", report), "chunk 1: confirmation confirm-1 probe restore fail", 0},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f, _ := repaired(t, "repair_test.go")
+			refuseArgs(t, f, tc.want, confirmArgs(t, importing(t, tc.data, tc.exit), "confirm-1", "F-1"))
+		})
+	}
+}
+
+// TestRecordConfirmationUsage requires the form usage and exit 2 for a non-integer --exit-code
+// and for a --mutant row that is not a positive decimal.
+func TestRecordConfirmationUsage(t *testing.T) {
+	f, _ := repaired(t, "repair_test.go")
+	for name, edits := range map[string]map[string]string{
+		"non-integer exit": {"--exit-code": "x"},
+		"zero row":         {"--mutant": "0"},
+		"non-decimal row":  {"--mutant": "x"},
+	} {
+		if out, code := recordcmd.Command(f.Root, confirmArgs(t, edits, "confirm-1", "F-1")); code != 2 || !strings.HasPrefix(out, "usage: bench record confirmation") {
+			t.Errorf("%s = exit %d, output %q; want the usage line and exit 2", name, code, out)
+		}
 	}
 }
 
@@ -119,9 +167,9 @@ func TestRecordConfirmationRefusals(t *testing.T) {
 // test-only repair names the first confirmation in its supersession link.
 func TestRecordConfirmationSupersedesThePrior(t *testing.T) {
 	f, _ := repaired(t, "repair_test.go")
-	succeed(t, f, confirmArgs(t, "confirm-1", "F-1"))
+	succeed(t, f, confirmArgs(t, nil, "confirm-1", "F-1"))
 	repairAt(t, f, "repair_test.go", onlyChunk(t, f).Base)
-	out := succeed(t, f, confirmArgs(t, "confirm-2", "F-1"))
+	out := succeed(t, f, confirmArgs(t, nil, "confirm-2", "F-1"))
 	if got := lastConfirmation(t, f); got.ID != "confirm-2" || !reflect.DeepEqual(got.Supersedes, []string{"confirm-1"}) || !strings.Contains(out, ",confirm-1,") {
 		t.Fatalf("second confirmation %s supersedes %q with output %q, want confirm-2 superseding confirm-1", got.ID, got.Supersedes, out)
 	}

@@ -326,8 +326,8 @@ type ConfirmationCall struct {
 // RecordConfirmation appends one completed coordinator confirmation to a recorded chunk.
 // FindReviewedPair supplies the reviewed pair, the chunk entry supplies the base, the repaired
 // tip, and the source digest, and the entry supersedes the prior confirmation of the chunk.
-// It refuses findings other than the open findings at the reviewed pair. The answer is the
-// entry as written and the reviewed pair.
+// It refuses findings other than the open findings at the reviewed pair, and a probe that did
+// not bite or did not restore. The answer is the entry as written and the reviewed pair.
 func RecordConfirmation(root, spec string, call ConfirmationCall) (Confirmation, ReviewedPair, error) {
 	var entry Confirmation
 	var reviewed ReviewedPair
@@ -339,7 +339,11 @@ func RecordConfirmation(root, spec string, call ConfirmationCall) (Confirmation,
 		if reviewed, err = FindReviewedPair(root, spec, *chunk); err != nil {
 			return err
 		}
-		if err := closesOpen(chunk.reviewed().scope+": confirmation "+call.Evidence.ID, call.Findings, reviewed); err != nil {
+		scope := chunk.confirmationScope(call.Evidence.ID)
+		if err := closesOpen(scope, call.Findings, reviewed); err != nil {
+			return err
+		}
+		if err := probeHolds(scope, call.Probe); err != nil {
 			return err
 		}
 		if err := unclaimed(*record, call.Evidence.ID); err != nil {
