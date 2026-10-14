@@ -119,6 +119,7 @@ Harder chunks: RC-CARRY, RC-WRITE.
 55. As a reviewer, I want a confirmation whose base differs from the chunk base refused, so that the confirmation binds to its own chunk.
 56. As a reviewer, I want a mix of fresh and carried axis results refused, so that the writer and the checkpoint compute one finding set.
 57. As a reviewer, I want a carried axis result to keep its role and performer-exclusion conditions, so that only an independent review carries forward.
+58. As a reviewer, I want the writer to refuse a silent or unrestored probe, so that no record calls it a pass.
 
 ## Implementation decisions
 
@@ -271,7 +272,7 @@ This spec follows the invoked `/bench-write-spec` and flags the route for review
 | RC-CYCLE / 01-state-record-only-repair-cycle-rule.md | The policy states that a record-only correction consumes no repair cycle, with its twin pins. | RC1, RC2, RC3 | `TestImplementationContinuation` | no |
 | RC-PROVE / 02-prove-test-only-tree-deltas.md | A new prover accepts only an added or modified regular Go test file outside `testdata`, and both prover suites share one tree fixture builder. | RC13, RC14, RC15, RC16, RC17, RC18, RC19, RC52, RC53 | the planned prover tests and `TestProveTreeGap` | no |
 | RC-CARRY / 03-carry-confirmed-axis-results.md | The record holds coordinator confirmations, and the chunk and complete checkpoints carry the reviewed axis results under a valid confirmation. | RC4–RC12, RC20–RC37, RC48–RC51, RC54–RC57 | `TestReviewCheckpointKeepsStrictEvidence`, `TestReviewCheckpointCommentOnlyGap`, and the planned record and checkpoint tests | yes |
-| RC-WRITE / 04-write-confirmations-with-bench-record.md, 05-document-the-test-only-confirmation.md | `bench record confirmation` writes the entry, the refusal routes to it, and the guidance states the exception. | RC38–RC47 | `TestCheckpointEntryRepairForms`, `TestCompletionHelpOrdering`, `TestImplementationContinuation`, `TestChunkChainAnchors`, and the planned writer tests | yes |
+| RC-WRITE / 04-write-confirmations-with-bench-record.md, 05-document-the-test-only-confirmation.md | `bench record confirmation` writes the entry, the refusal routes to it, and the guidance states the exception. | RC38–RC47, RC58 | `TestCheckpointEntryRepairForms`, `TestCompletionHelpOrdering`, `TestImplementationContinuation`, `TestChunkChainAnchors`, and the planned writer tests | yes |
 
 The slicing split the reviewed chunk RC-CONFIRM into RC-PROVE, RC-CARRY, and RC-WRITE.
 RC-PROVE and RC-CARRY each create a seam that a later ticket consumes, so each is its own review chunk.
@@ -373,6 +374,7 @@ A second mutation keeps the pass-and-no-findings condition on a carried result, 
 | RC55 | 54 | The checkpoint refuses a confirmation whose three axis results sit at the chunk base as both base and tip, with a reason that names the empty reviewed pair. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A reflexive ancestry check accepts the empty reviewed pair and the row reds. |
 | RC56 | 57 | The checkpoint refuses a carried Standards result whose performer is an author of the run, with a reason that names the performer. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationRefusals`) | A carry branch that drops the performer-exclusion condition accepts the result and the row reds. |
 | RC57 | 57 | The carried branch of `checkReviews` refuses a Standards result whose role is not the independent review role, with a reason that names the role. The parser refuses such a record before the checkpoint reaches the carry. | `internal/reviewrecord/record_test.go` (`TestCarriedReviewKeepsTheRoleCondition`) | A carry branch that drops the role condition accepts the result and the row reds. |
+| RC58 | 58 | `bench record confirmation` refuses a probe answer that did not bite or did not restore, through the one probe-bite predicate, and writes no entry. | planned | A writer that skips the bite predicate records a silent probe as a pass and the row reds. |
 
 Not covered: story 6 — the build-directions outcome delivered the confirming-round scope, and its pins stay unchanged.
 Not covered: story 12 — the compatibility consequence is a stated limit with no new behavior; the Won't handle line holds it.
@@ -554,7 +556,7 @@ The list is the union of the ticket `Writes:` lines plus the review pickup.
 - The parser refuses a confirmation with a wrong role or an invalid excerpt (RC5, RC6). The criterion needs a well-formed form.
 - The checkpoint derives the reviewed digest from the reviewed tip's tree (RC27). A hand-editable record otherwise passes a forged digest.
 - The checkpoint requires an ancestry chain for the reviewed tip (RC26). This closes the borrowed-review hole.
-- The writer refuses before the checkpoint does (RC39, RC40, RC41). It composes the same prover and set comparison, so no second fact source appears.
+- The writer refuses before the checkpoint does (RC39, RC40, RC41, RC58). It composes the same prover and set comparison, so no second fact source appears.
 - One probe-bite predicate serves both graders (RC37). The one-source-per-fact rule requires it.
 - The policy names the confirmation's finding list as the coordinator's disposition (RC46). The consultant raised this risk beside the no-op rule.
 - The issuing axis reaffirms a changed disposition (RC2). Fork F8 closed it, so that each disposition change keeps an independent owner.
