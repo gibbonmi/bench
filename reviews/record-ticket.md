@@ -836,6 +836,74 @@
           "supersedes": [
             "ft405_rv_excerpt-coverage"
           ]
+        },
+        {
+          "id": "ft405_rv_excerpt_c2-standards",
+          "performer": "claude:ft405_rv_excerpt_c2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5e12b49b8485b6f6198f5cf7344e71afc795fc3c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_c2_standards",
+            "digest": "sha256:8c50df8853a8dcc23a2910d556676c90a312e48b637a4f2b7bc1e32cfe839b1d",
+            "excerpt": "## Standards\n\nOne judgment finding. No hard violations.\n\n- S7 (judgment), `internal/responsebound/retain_test.go:193`. Rule: AGENTS.md \"one source per fact\" (fixture harnesses stay single-sourced). `TestReadRefusesASymlinkedStoreLevel` hardcodes the store layout as the depth list `[]string{\"scope\", \"repository key\", \"responses\"}`, while `storeLevels` at `internal/responsebound/store_test.go:17` already derives the layout from `storeDirName` and `primaryScope`. The independent-expectation exception does not apply: if a store level is added, the test misses it and still passes. Fix: derive the levels from the walk between `filepath.Join(home, storeDirName)` and `files[0]`, or generalize `storeLevels`. Disposition: auto-fix (test-only). Confidence 5.\n\nThe `scopedStores()` fixture at retain_test.go:168 removes the earlier inline copy and has no duplicate. The new comments at :160, :167, and :188-190 state the why in the present tense, with no provenance tag.\n\n## Advice\n- The edited comment at retain_test.go:90 says \"A store level that is a symlink refuses the stage\", but the test links only the scope level. Confidence 3.\n\n## Examined\nPreflight current=true; the repair delta 1c11dbc5..fcc8fc2f -- internal; `retain_test.go` at fcc8fc2f; `store_test.go:15-85`; `export_test.go`; craft-review; craft-comments.\n"
+          },
+          "axis": "Standards",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "fcc8fc2f7b85d97b64e36e73c21cec956771abf1",
+          "finding_ids": [
+            "S7"
+          ],
+          "supersedes": [
+            "ft405_rv_excerpt_c-standards"
+          ]
+        },
+        {
+          "id": "ft405_rv_excerpt_c2-spec",
+          "performer": "claude:ft405_rv_excerpt_c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5e12b49b8485b6f6198f5cf7344e71afc795fc3c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_c2_spec",
+            "digest": "sha256:8f6585f576290b19146d4ea4f7ecd92d2eddb902c56cd9f159a85c8b6ab72250",
+            "excerpt": "## Spec\n\nPass. 0 findings, no worst issue (confidence 8).\n\n- No production change. The repair delta 1c11dbc5..fcc8fc2f touches `internal/responsebound/retain_test.go`, `reviews/record-ticket.md`, and the `specs/record-ticket/spec.md` completion-plan line; the spec edit only adds the `claude:ft405_t02_rep2` assignment. The worktree head 31ff2262 differs from fcc8fc2f only in `reviews/record-ticket.md`.\n- Spec edge line 414 (\"the response store never follows a symbolic link at a store level\") is covered: `TestStageRefusesASymlinkedScope` (`retain_test.go:91`) still refuses the stage, and `TestReadRefusesASymlinkedStoreLevel` (`retain_test.go:191`) holds the read refusal for the stage and the retained file at the scope, repository-key, and `responses` levels (`store.go:81`). Each level is moved and then linked, so only the `realLevels` `Lstat`/`IsDir` check (`store.go:136-141`) can refuse.\n- Rows and seam citations: RT9–RT17 and RT57–RT59 stay met; every cited seam test exists at fcc8fc2f (`retain_test.go:67`; `stage_test.go:52, 84, 97, 146, 168`).\n\nExamined: preflight current=true at 31ff2262; the full repair diff; the post-tip diff stat; spec rows 345-353 and 393-395, spec line 414; `store.go:64-145`. No tests run; no files written.\n"
+          },
+          "axis": "Spec",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "fcc8fc2f7b85d97b64e36e73c21cec956771abf1",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_excerpt_c-spec"
+          ]
+        },
+        {
+          "id": "ft405_rv_excerpt_c2-coverage",
+          "performer": "claude:ft405_rv_excerpt_c2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5e12b49b8485b6f6198f5cf7344e71afc795fc3c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_excerpt_c2_coverage",
+            "digest": "sha256:f131b94eba5cf7117dba5f2c2ec5a2eee4e3449c8f9ab3caf043b671d06441b6",
+            "excerpt": "## Coverage\n\nC4 is closed. Preflight reported `current=true`; the worktree is at 31ff2262 with no `internal` diff from fcc8fc2f.\n\nProbe evidence (`bench probe` on `./internal/responsebound/...`):\n- Mutant: at `internal/responsebound/store.go:140`, `if !info.IsDir() {` → `if !info.IsDir() && (op != \"read\" || dir == d.dir()) {`. Verdict bit, 4 failures (`TestReadRefusesASymlinkedStoreLevel/{stage,retained}_{repository_key,responses}` at `retain_test.go:219`), restored yes.\n- Inverse mutant (`dir != d.dir()`, which removes only the scope-level read check): bit, 2 failures (`stage_scope`, `retained_scope`), restored yes.\n- `git status` clean after both probes.\n\nThe trim lost no coverage. `TestStageRefusesASymlinkedScope` (`internal/responsebound/retain_test.go:91-116`) still asserts that the stage write through a symlinked scope refuses (line 110) and that the link target stays empty (line 113). The dropped read assertion is covered by the `stage_scope` and `retained_scope` cells of the new test.\n\nNew findings: none.\n\nExamined: the preflight; the repair delta 1c11dbc5..fcc8fc2f (test-only, `internal/responsebound/retain_test.go`); `internal/responsebound/store.go:105-145`; the callers of `realLevels` (`retain.go:154`, `retire.go:28`); the two probes above.\n"
+          },
+          "axis": "Coverage",
+          "base": "adfc95fe490d5b1d7d816bcefe382f89f0f1d5fa",
+          "tip": "fcc8fc2f7b85d97b64e36e73c21cec956771abf1",
+          "finding_ids": [],
+          "supersedes": [
+            "ft405_rv_excerpt_c-coverage"
+          ]
         }
       ]
     }
@@ -912,6 +980,9 @@ RT-EXCERPT: repair cycle 1 of 2 is complete for ticket 02. The fence expands wit
 
 RT-EXCERPT: repair cycle 2 of 2 is complete for ticket 02 to close C4. It is a test-only repair, so a coordinator confirmation can close it. The repair commit is fcc8fc2f7b85d97b64e36e73c21cec956771abf1.
 
+RT-EXCERPT: the coordinator confirmation for C4 refused, because the delta held the repair-assignment plan commit. Confirming round 2 ran instead.
+RT-EXCERPT: the reviewer's auto-approve direction extends the allowance by one test-only repair cycle, cycle 3, to close S7. It permits that one cycle only.
+
 ## Standards
 
 RT-RETAIN: 4 findings. The worst issue is S1.
@@ -938,6 +1009,10 @@ RT-EXCERPT: 6 findings. The worst issue is S1.
 
 RT-EXCERPT confirming round: S1 to S6 are closed, with no new findings. S2 is closed for the build delta. The registry literal for the probe verb predates the build, and a learning holds it.
 
+RT-EXCERPT confirming round 2: 1 new finding.
+
+- S7 (auto-fix, confidence 5): `internal/responsebound/retain_test.go:193` types the store levels as a list beside the `storeLevels` helper in `store_test.go:17`, so a new store level passes unseen.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -952,6 +1027,8 @@ Confirming round 2: pass, with no findings.
 RT-EXCERPT: pass, with no findings.
 
 RT-EXCERPT confirming round: pass, with no findings.
+
+RT-EXCERPT confirming round 2: pass, with no findings.
 
 ## Coverage
 
@@ -973,3 +1050,5 @@ RT-EXCERPT: 3 findings. The worst issue is C1.
 RT-EXCERPT confirming round: C1 to C3 are closed. 1 new finding.
 
 - C4 (auto-fix, confidence 7): no test reads a stage or retained file while the `responses` level or the repository-key level is a symbolic link.
+
+RT-EXCERPT confirming round 2: C4 is closed, with no new findings.
