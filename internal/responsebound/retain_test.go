@@ -3,6 +3,7 @@ package responsebound_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -87,7 +88,7 @@ func TestDropRemovesTheRetainedResponseAndStages(t *testing.T) {
 	}
 }
 
-// A store level that is a symlink refuses the stage, and the link target receives no file.
+// A scope directory that is a symlink refuses the stage, and the link target receives no file.
 func TestStageRefusesASymlinkedScope(t *testing.T) {
 	home := rb.PrivateHome(t)
 	_, checkout, _ := responseboundtest.AssignmentCheckout(t, home)
@@ -122,20 +123,12 @@ func TestReadRefusesAScopedFileThatIsNotRegular(t *testing.T) {
 	for _, store := range scopedStores() {
 		for _, kind := range []string{"symlink", "fifo"} {
 			t.Run(store.name+" "+kind, func(t *testing.T) {
-				home := rb.PrivateHome(t)
-				_, checkout, _ := responseboundtest.AssignmentCheckout(t, home)
-				if err := store.write(t, home, checkout); err != nil {
-					t.Fatal(err)
-				}
-				files := responseboundtest.StoreFiles(t, home)
-				if len(files) != 1 {
-					t.Fatalf("store files = %q, want one", files)
-				}
-				valid, err := os.ReadFile(files[0])
+				home, checkout, file, _ := writtenStore(t, store)
+				valid, err := os.ReadFile(file)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if err := os.Remove(files[0]); err != nil {
+				if err := os.Remove(file); err != nil {
 					t.Fatal(err)
 				}
 				if kind == "symlink" {
@@ -143,11 +136,11 @@ func TestReadRefusesAScopedFileThatIsNotRegular(t *testing.T) {
 					if err := os.WriteFile(copied, valid, 0o600); err != nil {
 						t.Fatal(err)
 					}
-					if err := os.Symlink(copied, files[0]); err != nil {
+					if err := os.Symlink(copied, file); err != nil {
 						t.Fatal(err)
 					}
 				} else {
-					defer feedFIFO(t, files[0], valid)()
+					defer feedFIFO(t, file, valid)()
 				}
 				if err := store.read(home, checkout); err == nil {
 					t.Fatalf("read of a %s %s = nil, want a refusal", kind, store.name)
@@ -185,29 +178,24 @@ func scopedStores() []scopedStore {
 	}
 }
 
-// A symlink at any store level refuses the read of a stage and of a retained response. Each
-// link points to the moved level, so the valid file stays reachable through the link, and only
-// the no-follow check of each level refuses the read.
+// A symlink at any store level refuses the read of a stage and of a retained response. The
+// levels come from the written store, so a new level gets its own subtest. Each link points to
+// the moved level, so the valid file stays reachable through the link, and only the no-follow
+// check of each level refuses the read.
 func TestReadRefusesASymlinkedStoreLevel(t *testing.T) {
 	for _, store := range scopedStores() {
-		for depth, level := range []string{"scope", "repository key", "responses"} {
+		_, _, _, layout := writtenStore(t, store)
+		for depth := range layout {
+			level := fmt.Sprintf("level %d of %d above the file", depth+1, len(layout))
 			t.Run(store.name+" "+level, func(t *testing.T) {
-				home := rb.PrivateHome(t)
-				_, checkout, _ := responseboundtest.AssignmentCheckout(t, home)
-				if err := store.write(t, home, checkout); err != nil {
-					t.Fatal(err)
-				}
-				files := responseboundtest.StoreFiles(t, home)
-				if len(files) != 1 {
-					t.Fatalf("store files = %q, want one", files)
+				home, checkout, _, levels := writtenStore(t, store)
+				if len(levels) != len(layout) {
+					t.Fatalf("store levels = %q, want %d", levels, len(layout))
 				}
 				if err := store.read(home, checkout); err != nil {
 					t.Fatalf("read before the link: %v", err)
 				}
-				dir := filepath.Dir(files[0])
-				for range depth {
-					dir = filepath.Dir(dir)
-				}
+				dir := levels[depth]
 				moved := filepath.Join(t.TempDir(), "moved")
 				if err := os.Rename(dir, moved); err != nil {
 					t.Fatal(err)
@@ -216,11 +204,39 @@ func TestReadRefusesASymlinkedStoreLevel(t *testing.T) {
 					t.Fatal(err)
 				}
 				if err := store.read(home, checkout); err == nil {
-					t.Fatalf("read through a symlinked %s level = nil, want a refusal", level)
+					t.Fatalf("read through a symlinked %s = nil, want a refusal", level)
 				}
 			})
 		}
 	}
+}
+
+// writtenStore writes the one file of store in a new home and answers the home, the checkout,
+// the file, and each directory between the file and the home, from the file's own directory
+// upward. The home is not a level. A store with no level below the home fails the test, so a level list
+// is never empty.
+func writtenStore(t *testing.T, store scopedStore) (home, checkout, file string, levels []string) {
+	t.Helper()
+	home = rb.PrivateHome(t)
+	_, checkout, _ = responseboundtest.AssignmentCheckout(t, home)
+	if err := store.write(t, home, checkout); err != nil {
+		t.Fatal(err)
+	}
+	files := responseboundtest.StoreFiles(t, home)
+	if len(files) != 1 {
+		t.Fatalf("store files = %q, want one", files)
+	}
+	file = files[0]
+	for dir := filepath.Dir(file); dir != home; dir = filepath.Dir(dir) {
+		if dir == filepath.Dir(dir) {
+			t.Fatalf("store file %s is not below the home %s", file, home)
+		}
+		levels = append(levels, dir)
+	}
+	if len(levels) == 0 {
+		t.Fatalf("store file %s has no store level below the home", file)
+	}
+	return home, checkout, file, levels
 }
 
 // feedFIFO makes path a FIFO whose writer sends data once a reader opens it. The answered
