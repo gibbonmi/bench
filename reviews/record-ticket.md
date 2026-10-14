@@ -1255,7 +1255,68 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft405_rv_extract-standards",
+          "performer": "claude:ft405_rv_extract_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "22eadc65881080907340bf386c13b78c47daba4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_extract_standards",
+            "digest": "sha256:74499a01ce6e1f1951177c208a2b37af769a0b38c11f924c9432aa4862498e2d",
+            "excerpt": "## Standards\n\nCount: 0 findings. Worst issue: none. Confidence 8.\n\n- One definition each: `createRecord` at `internal/reviewrecord/change.go:11`, `changeAmendment` at `:25`, `changeChunk` at `:78`, and `changeVerification` at `:106`. No copy stays in the callers (`coverage.go:243`, `write.go:132`, `write.go:137`, `write.go:172`). The only other `Record{Version: 2…}` literals are test fixtures (`internal/preflight/delegated_evidence_test.go:33,36`).\n- Refusal text: every `fmt.Errorf` and `Repair{…}` string matches the removed text byte for byte. The stale-plan check stays in the chunk path (`currentPlan`, `change.go:79`), so RT39 stays covered.\n- Error handling: every early return still passes the error up; `changeAmendment` still returns the partly built entry on its later errors (`:63`, `:65`, `:73`); in `RecordChunk`, the `created` flag after `write` (`write.go:130-142`) returns the same action on every traced path.\n- Comments: timeless, with no provenance; the writer contract text moved into the helper doc comments.\n\n## Advice\n- The `changeChunk` doc comment (`change.go:73`) says \"writes the entry\", but the function changes the in-memory record and `write` saves it; the old comment used the same verb.\n\n## Examined\nPreflight current=true, dirty_record=false; the frozen pair 4829baa3..e599c2cf under `internal/reviewrecord`; `write`/`absent` at the tip (`write.go:71-109`); ticket 04; spec lines 215-231 and RT37/RT39; craft-comments; a `git grep` for the refusal text, the version 2 literal, and the four function names.\n"
+          },
+          "axis": "Standards",
+          "base": "4829baa3d41336f86c0d2256c70faa436226c775",
+          "tip": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_extract-spec",
+          "performer": "claude:ft405_rv_extract_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "22eadc65881080907340bf386c13b78c47daba4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_extract_spec",
+            "digest": "sha256:2539460e723f020e63e4a01a1ac4da41eb4c0374755a5611995a8c36c2eaebc9",
+            "excerpt": "## Spec\n\nCount: 0 findings. Worst issue: none.\n\n- Four extractions, one definition each: `createRecord` (`internal/reviewrecord/change.go:11`), `changeAmendment` (`:25`), `changeChunk` (`:78`), `changeVerification` (`:106`).\n- Each writer calls `write` with its own functions: `RecordAmendment` (coverage.go) and `RecordVerification` (`write.go:166-175`) pass `absent(...)` plus their change function; `RecordChunk` (`write.go:121-143`) passes a closure over `createRecord` plus `changeChunk`, and a flag after `write` keeps the old action on every path.\n- Ticket 05 can compose them in one `write` call: each change function takes `*Record` and returns its entry and an error, and none calls `write`. `changeAmendment` takes a loaded `Plan`, and a nil map serves the \"no chunk map\" step (spec:208). After the amendment moves `PlanDigest`, the `currentPlan` guard in `changeChunk` passes.\n- No refusal text changed: every `fmt.Errorf` and `Repair` matches the removed bodies byte for byte.\n- The RT39 seam is real: `TestChunkNeedsCurrentAmendment` (`ordering_test.go:18`) drives the stale-digest refusal through the chunk form into `currentPlan` (`change.go:79`).\n\n## Advice\n- The frozen range also holds the RT-CURRENT comment-only correction (`internal/preflight/charge_pack.go:9-12`), the ticket 06 expansion, and the `claude:ft405_t04` plan entry; attribute them to RT-CURRENT, not ticket 04.\n- RT37 (\"the exported writer and the ticket form call\") is half met until ticket 05 lands; recheck it at RT-TICKET.\n\n## Examined\nPreflight current=true, dirty_record=false at 3c6ce765; `git diff 4829baa..e599c2c` and its log; `change.go`, `write.go:65-163`, the `RecordAmendment` hunk of `coverage.go`; `recordcmd/ordering_test.go:14-47`; spec lines 206-242, 285, 373, 375; ticket 04.\n"
+          },
+          "axis": "Spec",
+          "base": "4829baa3d41336f86c0d2256c70faa436226c775",
+          "tip": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_extract-coverage",
+          "performer": "claude:ft405_rv_extract_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "22eadc65881080907340bf386c13b78c47daba4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_extract_coverage",
+            "digest": "sha256:d9522cc3f8d04929df987761e1c6463fba24635ac20b6f2bab6e9cf8a8715e3a",
+            "excerpt": "## Coverage\n\nCount: 0 findings. Worst issue: none. All ten mutants bit, and every one reports restored yes. `git status --porcelain` is clean afterward.\n\nThe extraction keeps behavior: each moved body is copied verbatim; on the map-target error, `changeAmendment` returns a partly filled entry as the old closure did; the `created`/`added`/`updated` action order holds through the `created` flag (`internal/reviewrecord/write.go:141`), and `recordcmd/chunk_test.go:269`, `:280`, and `:291` test all three actions.\n\nProbes (one `--mutants` call on `./internal/reviewrecord/...`, all in `internal/reviewrecord/change.go`):\n1. :12, version 2 refusal off: bit, `TestRecordChunkRefusesAVersionOnePlan`, restored yes\n2. :144, duplicate-ID refusal off: bit, `TestRecordFinalVerificationRefusesADuplicateID`, restored yes\n3. :53, unmapped recorded chunk refusal off: bit, `TestRecordAmendmentRefusesAnUnmappedChunk`, restored yes\n4. :59, map-target refusal replaced with `continue`: bit, `TestRecordAmendmentRefusesAMapToAnUnplannedChunk`, restored yes\n5. :42, map for an unrecorded key refusal off: bit, `TestRecordAmendmentRefusesAMapForAnUnrecordedChunk`, restored yes\n6. :26, unchanged-plan refusal off: bit, `TestRecordAmendmentRefusesAnUnchangedPlan`, restored yes\n7. :123, chunk source-digest refusal off: bit, `TestRecordVerificationRefusesAStaleSource`, restored yes\n8. :138, unplanned-probe refusal off: bit, `TestRecordVerificationRefusesAnUnplannedProbe`, restored yes\n9. :141, missing planned-probe refusal off: bit, `TestRecordVerificationRequiresThePlannedProbe`, restored yes\n10. :79, `currentPlan` refusal off: bit, `TestChunkNeedsCurrentAmendment/plan`, restored yes\n\nAdvice: none.\n\n## Examined\nPreflight current=true at 3c6ce765 (no `internal` change from e599c2c); the diff 4829baa..e599c2c under `internal`.\n"
+          },
+          "axis": "Coverage",
+          "base": "4829baa3d41336f86c0d2256c70faa436226c775",
+          "tip": "e599c2cf0745cefdb0999ec388678cbab616e57d",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1378,6 +1439,8 @@ RT-EXCERPT: 3 repair cycles are consumed, and the third is the auto-approve exte
 
 RT-CURRENT: no repair cycle is used. S2 closes through a comment-only correction by the orchestrator. S1 moves to ticket 06, which owns `docs/known-issues.md`, through a plan expansion.
 
+RT-EXTRACT: no repair cycle is used. The orchestrator removed two cancelling plan amendments from the record by hand, on a consultant's recommendation, and that correction stays open to reviewer veto.
+
 ## Standards
 
 RT-RETAIN: 4 findings. The worst issue is S1.
@@ -1417,6 +1480,8 @@ RT-CURRENT: 2 findings. The worst issue is S2.
 
 RT-CURRENT reaffirmation: S1 is closed for this chunk by its reassignment to ticket 06, and S2 is closed by the comment-only correction.
 
+RT-EXTRACT: pass, with no findings.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -1437,6 +1502,8 @@ RT-EXCERPT confirming round 2: pass, with no findings.
 RT-EXCERPT confirming round 3: pass, with no findings.
 
 RT-CURRENT: pass, with no findings.
+
+RT-EXTRACT: pass, with no findings. RT37 gets its second half at RT-TICKET.
 
 ## Coverage
 
@@ -1464,3 +1531,5 @@ RT-EXCERPT confirming round 2: C4 is closed, with no new findings.
 RT-EXCERPT confirming round 3: pass, with no blocking findings.
 
 RT-CURRENT: pass, with no findings. Four silent mutants are recorded as advice, because the code is correct for each input.
+
+RT-EXTRACT: pass, with no findings. Ten independent mutants on the extracted refusals all bite.
