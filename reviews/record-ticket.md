@@ -1120,7 +1120,71 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft405_rv_current-standards",
+          "performer": "claude:ft405_rv_current_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffcaea219e9c7eb897af616c15cfdd860622edd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_current_standards",
+            "digest": "sha256:4cc3dca898c526f16977d336528e4f6f2162f31ad43cd6ebd26a41f843597547",
+            "excerpt": "## Standards\n\n2 findings, both prose; neither involves code or knowledge duplication. Preflight `current=true`, `dirty_record=false` at 8242341a. Worst issue: S2.\n\n- S1, `docs/known-issues.md:13` (orchestrator row): the workaround sentence has 22 words, against \"Keep a procedural sentence to 20 words or fewer\" (`ste-prose.md:17`, required through `BENCH.md` \"Every written artifact … uses ASD-STE100 prose\"). Disposition: auto-fix. Confidence 6.\n- S2, `internal/preflight/charge_pack.go:98-100`: \"A dirty review record of the selected spec binds and is reported.\" The record does not bind; the binding proceeds beside the record. Against \"Use the active voice and name the agent\" (`ste-prose.md:14`, required by craft-comments). Disposition: auto-fix. Confidence 6.\n\nRefuted: the record path comes only from `reviewrecord.RecordPath` (`preparation.go:76`); the dirty-path read reuses `git.AllFilesStatus`; the refusal text stays in one place (`preparation.go:82`); the reference is generated from `schema.go:205-206` and `TestEvidenceSchemaRegistry` compares them; the `(string, bool)` move keeps the `AllFilesStatus` error branch (`preparation.go:71-73`).\n\n## Advice\n- `evidence_modes_test.go:158` hard-codes `reviews/example.md`, while RT40 at line 147 builds `\"reviews/\"+slug+\".md\"`.\n- `evidence_modes_test.go:146-148,156` add row-ID provenance to comments, which follows the surrounding test-file convention.\n- The `preparation.go:77` refusal uses the kind `checkout` for a spec-slug error.\n\n## Examined\nThe diff 52653322..4829baa3 except plan and review records; `reviewrecord/files.go:17-23`, `git/status.go:207-239`, `preparation.go:1-90`, `gather.go:60-110`, `SeedConformant`, ticket 03, `AGENTS.md`, `BENCH.md`, craft-comments, and the `ste-prose.md` limits.\n"
+          },
+          "axis": "Standards",
+          "base": "52653322c4381d8b8927b9e9b18020b50683969e",
+          "tip": "4829baa3d41336f86c0d2256c70faa436226c775",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_current-spec",
+          "performer": "claude:ft405_rv_current_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffcaea219e9c7eb897af616c15cfdd860622edd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_current_spec",
+            "digest": "sha256:c6fcd504aac0843dae27af6fa0395b97e3b86ef291b8d7fed60364a64bb0736c",
+            "excerpt": "## Spec\n\nCount: 0 findings. Worst issue: none. Rows RT40–RT46 (stories 38–43) are implemented as the spec states, and each seam citation names a real test case that exercises its row.\n\nBehavior against the spec:\n- Only the check action skips a dirty path, and it skips only `RecordPath(facts.SpecPath)` (`internal/preflight/preparation.go:66-85`). The charge, review charge, and proposal leave the record path empty, so any dirty path refuses (`charge.go:17`, `review.go:208`, `proposal.go:26`).\n- `dirty_record` comes right after `current` (`internal/chargeevidence/schema.go:205`), the value is passed through (`charge_pack.go:130`), and the generated reference lists it (`charge-evidence-format.md:94`).\n- The record path still reaches `ChangedPaths` and `Decide` (`preparation.go:37-42`); `SourceDigest` still excludes the record (`plan.go:209`).\n- Tests: RT40, RT43, RT44 (`evidence_modes_test.go:144-172`), RT41 (`:111`), RT42 (CE123, `:135`), RT45 (`charge_evidence_test.go:131-135`), RT46 (`format_test.go:168`). The fixture slug is `example` (`preflighttest/fixture.go:191`), so RT43 dirties the selected spec's own record.\n\n## Advice\n- Story 42 also names the review charge and the proposal; only the build charge has a row (RT45), and those two rest on the `strict-charge` probe.\n- Commit 152eb8229 adds four `docs/known-issues.md` rows at reviewer direction; it is the orchestrator's commit, not ticket scope creep.\n- The new `RecordPath` error branch would refuse a clean check for a non-folder spec path; a staged spec cannot reach it.\n\n## Examined\nPreflight (current row prints `dirty_record` false); `git diff 52653322..4829baa3`; `bench coverage` rows RT40–RT46; spec Current binding (248-257), Paths-authorized settlement (617-623), stories 38–43; ticket 03; `preparation.go`, `charge_pack.go`, `reviewrecord/files.go`, `reviewrecord/plan.go:201`, `gather.go`, the fixture slug, `evidence_modes_test.go`. No tests run. Confidence 8.\n"
+          },
+          "axis": "Spec",
+          "base": "52653322c4381d8b8927b9e9b18020b50683969e",
+          "tip": "4829baa3d41336f86c0d2256c70faa436226c775",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft405_rv_current-coverage",
+          "performer": "claude:ft405_rv_current_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0ffcaea219e9c7eb897af616c15cfdd860622edd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft405_rv_current_coverage",
+            "digest": "sha256:1c7f3d1095095aca709c8ea61a0f89573df384193a80e026be7f2684f9cdbab3",
+            "excerpt": "## Coverage\n\nCount: 0 findings. Worst issue: none at the blocking level. For every input examined, the shipped code is correct. Four mutants survived; each is a test gap on correct code, so each is advice.\n\nInputs: no dirty paths binds with `dirty_record` false; only the selected spec's record (untracked, or tracked modified or deleted) binds with true; a rename shows as a delete plus an untracked path, so the new path refuses; record plus a Go file, another spec's record, or a prefix-sharing path refuses because the match is exact; the charge, review charge, and proposal pass `record=\"\"` and keep the strict refusal; a `RecordPath` failure cannot happen in practice, because `LiveSpecSlug` plus `resolve` always yields `specs/<slug>/spec.md`.\n\nProbes (one `--mutants` call on `internal/preflight/preparation.go`, over `./internal/preflight/...`; `git status` clean afterwards):\n\n| # | Mutation | Verdict | Restored |\n|---|---|---|---|\n| 1 | Line 81: skip any path that starts with `record` (check only) | silent | yes |\n| 2 | Line 75: `action == \"check\"` → `action != \"charge\"` (relaxes the proposal) | silent | yes |\n| 3 | Line 81: skip the record only when its status is `??` | silent | yes |\n| 4 | Line 77: ignore the `RecordPath` error | silent | yes |\n\n## Advice\n- Story 42 says the proposal and the review charge keep the strict refusal, but RT45 tests only the build charge, so mutant 2 survives.\n- RT40 dirties an untracked record only; a case that modifies a committed record would close mutant 3.\n- A path like `reviews/<slug>.md.orig` would pin exact matching (mutant 1).\n- The `RecordPath` error branch (lines 76–78) has no test and looks unreachable.\n\n## Examined\nPreflight current=true, dirty_record=false; the base..tip diff over `internal cmd .agents`; the spec Current binding section, RT40–RT46, stories 38–43, the edge inventory and Won't handle lines; the benchkit hostile-input checklist; `reviewrecord.RecordPath`/`Slug`, `git.AllFilesStatus`, `spec.resolve`.\n"
+          },
+          "axis": "Coverage",
+          "base": "52653322c4381d8b8927b9e9b18020b50683969e",
+          "tip": "4829baa3d41336f86c0d2256c70faa436226c775",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1226,6 +1290,8 @@ RT-EXCERPT: repair cycle 3 is complete for ticket 02 to close S7. The test takes
 
 RT-EXCERPT: 3 repair cycles are consumed, and the third is the auto-approve extension. From confirming round 3 on, each review charge quotes the advice and hardening rules of the bounded repair policy.
 
+RT-CURRENT: no repair cycle is used. S2 closes through a comment-only correction by the orchestrator. S1 moves to ticket 06, which owns `docs/known-issues.md`, through a plan expansion.
+
 ## Standards
 
 RT-RETAIN: 4 findings. The worst issue is S1.
@@ -1258,6 +1324,11 @@ RT-EXCERPT confirming round 2: 1 new finding.
 
 RT-EXCERPT confirming round 3: S7 is closed, with no blocking findings.
 
+RT-CURRENT: 2 findings. The worst issue is S2.
+
+- S1 (auto-fix in ticket 06, confidence 6): the workaround sentence of the evidence-preflight row in `docs/known-issues.md` has 22 words, over the 20-word procedural bound.
+- S2 (auto-fix, comment-only, confidence 6): the doc comment at `internal/preflight/charge_pack.go:98-100` uses the passive voice and names the record as the agent that binds.
+
 ## Spec
 
 RT-RETAIN: 0 actionable findings. P1 and P2 are no-op.
@@ -1276,6 +1347,8 @@ RT-EXCERPT confirming round: pass, with no findings.
 RT-EXCERPT confirming round 2: pass, with no findings.
 
 RT-EXCERPT confirming round 3: pass, with no findings.
+
+RT-CURRENT: pass, with no findings.
 
 ## Coverage
 
@@ -1301,3 +1374,5 @@ RT-EXCERPT confirming round: C1 to C3 are closed. 1 new finding.
 RT-EXCERPT confirming round 2: C4 is closed, with no new findings.
 
 RT-EXCERPT confirming round 3: pass, with no blocking findings.
+
+RT-CURRENT: pass, with no findings. Four silent mutants are recorded as advice, because the code is correct for each input.
