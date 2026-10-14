@@ -16,6 +16,48 @@ func TestReviewRecord(t *testing.T) {
 	})
 }
 
+// TestCarriedReviewKeepsTheRoleCondition grades a carried Standards result whose role is not
+// the independent review role. The parser refuses that role in every record, so the
+// checkpoint never reaches this condition of the carry branch, and this test calls it.
+func TestCarriedReviewKeepsTheRoleCondition(t *testing.T) {
+	chunk := Chunk{ID: "1", Base: "base", Tip: "reviewed", SourceDigest: "reviewed-digest"}
+	for _, axis := range Axes() {
+		chunk.Reviews = append(chunk.Reviews, Review{Evidence: Evidence{ID: axis, Performer: "reviewer-" + axis, Role: "independent-review", SourceDigest: chunk.SourceDigest, State: "completed", Outcome: "pass"}, Axis: axis, Base: chunk.Base, Tip: chunk.Tip})
+	}
+	standards := &chunk.Reviews[0]
+	standards.Role, standards.Outcome, standards.FindingIDs = "author-verification", "fail", []string{"F-1"}
+	pair := chunk.reviewed()
+	pair.carried = true
+	want := `chunk 1: invalid Standards performer "reviewer-Standards" or role "author-verification"`
+	if err := checkReviews(pair, []string{"author"}, 3); err == nil || !strings.Contains(err.Error(), want) {
+		t.Fatalf("carried result with a wrong role: %v; want %q", err, want)
+	}
+}
+
+// TestProbeChecksAgree grades the planned-probe check and the confirmation check on each
+// probe: the two checks give one verdict, because they call one probe-bite predicate.
+func TestProbeChecksAgree(t *testing.T) {
+	zero := 0
+	requirement := Requirement{ID: "tests", Command: "go test ./...", Probe: "omit the check"}
+	record := Record{Version: 1, ImplementationSession: "author"}
+	chunk := Chunk{ID: "1", Base: "base", Tip: "repaired", SourceDigest: "repaired-digest"}
+	for i, probe := range []Probe{
+		{Outcome: "bit", ExitCode: 1, Restore: "pass"},
+		{Outcome: "silent", ExitCode: 1, Restore: "pass"},
+		{Outcome: "bit", ExitCode: 0, Restore: "pass"},
+		{Outcome: "bit", ExitCode: 1, Restore: "fail"},
+	} {
+		probe.Mutation = requirement.Probe
+		verification := Verification{Evidence: Evidence{Performer: "author", Role: "author-verification", SourceDigest: chunk.SourceDigest, State: "completed", Outcome: "pass"}, Requirement: requirement.ID, Command: requirement.Command, ExitCode: &zero, Probe: &probe}
+		planned := checkVerification([]Verification{verification}, []Requirement{requirement}, Plan{}, record, chunk.SourceDigest, Repair{Chunk: chunk.ID})
+		chunk.Confirmations = []Confirmation{{Evidence: Evidence{Performer: "reconciler", SourceDigest: chunk.SourceDigest, State: "completed"}, Base: chunk.Base, ReviewedTip: "reviewed", RepairedTip: chunk.Tip, Probe: probe}}
+		confirmed := confirms(chunk, ReviewedPair{Tip: "reviewed"}, "reconciler")
+		if (planned == nil) != (confirmed == nil) || (i == 0 && planned != nil) {
+			t.Errorf("probe %+v: planned-probe check %v, confirmation check %v; want one verdict, and a pass for the probe that bit", probe, planned, confirmed)
+		}
+	}
+}
+
 func TestReviewRecordSchema(t *testing.T) {
 	data, _ := json.Marshal(Record{Version: 99})
 	if _, err := Parse(data); err == nil || !strings.Contains(err.Error(), "unsupported version") {

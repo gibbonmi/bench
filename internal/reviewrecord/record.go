@@ -53,6 +53,7 @@ type Chunk struct {
 	AcceptanceRows []string       `json:"acceptance_rows"`
 	Verification   []Verification `json:"verification"`
 	Reviews        []Review       `json:"reviews"`
+	Confirmations  []Confirmation `json:"confirmations,omitempty"`
 }
 type Completion struct {
 	State          string            `json:"state"`
@@ -108,11 +109,14 @@ func CheckReviews(chunk Chunk, excluded []string, distinct bool) error {
 
 // reviewed is one frozen pair that takes independent review: a chunk entry or a fold entry.
 // scope names the pair in a refusal, at holds its repair target, and reviews is its list.
+// carried marks the reviewed pair of a valid confirmation: a result there may hold open
+// findings, because the confirmation closes them.
 type reviewed struct {
 	scope             string
 	at                Repair
 	base, tip, digest string
 	reviews           *[]Review
+	carried           bool
 }
 
 // reviewed is the frozen pair of a chunk entry.
@@ -133,23 +137,17 @@ func checkReviews(pair reviewed, excluded []string, reviewerCount int) error {
 		repair.Form, repair.Axis, repair.Err = FormReview, axis, err
 		return repair
 	}
-	reviews := *pair.reviews
 	axisOwners := map[string]string{}
 	for _, axis := range Axes() {
-		var current *Review
-		for i := range reviews {
-			if reviews[i].Axis == axis {
-				current = &reviews[i]
-			}
-		}
+		current := currentReview(*pair.reviews, axis)
 		if current == nil {
 			return refused(axis, fmt.Errorf("%s: missing %s; record the native review result", pair.scope, axis))
 		}
 		if current.Role != "independent-review" || slices.Contains(excluded, current.Performer) || current.Performer == "" {
-			return refused(axis, fmt.Errorf("%s: invalid %s performer or role; obtain independent review", pair.scope, axis))
+			return refused(axis, fmt.Errorf("%s: invalid %s performer %q or role %q; obtain independent review", pair.scope, axis, current.Performer, current.Role))
 		}
 		axisOwners[current.Performer] = axis
-		if current.State != "completed" || current.Outcome != "pass" || len(current.FindingIDs) != 0 {
+		if current.State != "completed" || (!pair.carried && (current.Outcome != "pass" || len(current.FindingIDs) != 0)) {
 			return refused(axis, fmt.Errorf("%s: %s %s; resolve findings and obtain a completed result", pair.scope, current.State, axis))
 		}
 		if current.SourceDigest != pair.digest || current.Base != pair.base || current.Tip != pair.tip {
@@ -163,6 +161,18 @@ func checkReviews(pair reviewed, excluded []string, reviewerCount int) error {
 		return refused("", fmt.Errorf("%s: unified review requires one reviewer for all three axes", pair.scope))
 	}
 	return nil
+}
+
+// currentReview returns the current result of axis in reviews: the last result of that
+// axis, or nil when reviews holds none.
+func currentReview(reviews []Review, axis string) *Review {
+	var current *Review
+	for i := range reviews {
+		if reviews[i].Axis == axis {
+			current = &reviews[i]
+		}
+	}
+	return current
 }
 
 func Axes() []string { return []string{"Standards", "Spec", "Coverage"} }

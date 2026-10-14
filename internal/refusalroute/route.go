@@ -166,8 +166,12 @@ func (f Face) Render(facts Facts) string {
 		steps = append(steps, step.render(fill))
 	}
 	route := strings.Join(steps, StepJoiner)
-	if facts.Preface != "" {
-		route = asWritten(prefaceSlot, facts.Preface) + prefaceJoiner + route
+	// The face's own preface stands next to the steps, and the raising site's qualifier
+	// opens the whole route.
+	for _, preface := range []string{f.Preface, facts.Preface} {
+		if preface != "" {
+			route = asWritten(prefaceSlot, preface) + prefaceJoiner + route
+		}
 	}
 	if f.Authority == Reviewer {
 		route = reviewerMarker + route
