@@ -117,7 +117,7 @@ Three predicates ride with them:
 
 **Plan and review coherent chunks.** An implementation chunk is one coherent behavior outcome with acceptance rows, tests, and a review checkpoint. A ticket remains a serial green commit checkpoint. Each planned chunk names its stable ID, outcome, acceptance rows, and tests. A chunk can contain several tickets.
 
-After a chunk's ticket commits, freeze its delta and run Standards, Spec, and Coverage against the whole approved spec before starting its successor. After the last chunk, the orchestrator reconciles the final acceptance and integration. Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence.
+The last ticket's author freezes each chunk's delta, and Standards, Spec, and Coverage run against the whole approved spec before the successor starts. After the last chunk, the orchestrator reconciles the final acceptance and integration. Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence.
 
 A post-review repair goes to a fresh repair session for each affected ticket, and that session reruns the ticket's verification with current repair coverage. The plan records each repair session as a new assignment with the trigger `user-directed`. At final reconciliation, the orchestrator does not repair. A finding there goes to a fresh repair session for the ticket whose `Writes:` line holds the path. A finding on a path that no `Writes:` line holds is a material acceptance shortfall.
 

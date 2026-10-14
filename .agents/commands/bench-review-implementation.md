@@ -213,7 +213,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    The `internal/reviewrecord` types own the schema.
 
    Write each completed chunk, verification, review, and amendment entry with `bench record`, not with hand-built JSON.
-   `bench record chunk` writes the frozen pair and its digests, and `bench record review` appends one axis result.
+   The last ticket's author writes the frozen pair and its digests with `bench record ticket`, and `bench record review` appends one axis result.
    `bench record verification` appends one planned result, and `bench record amendment` records a plan-digest change.
    `bench record fold` writes one fold entry, and `bench record review --fold <id>` appends one axis result for its resolution.
    Supply the performer, model, effort, and native result. The verb derives the role, the source, and each digest.
@@ -227,6 +227,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
 
    Use explicit `unknown` for unavailable model or effort metadata.
    Pass the minimal native excerpt to `bench record` in a file, and the verb computes its digest.
+   `bench record excerpt` stages the last retained response as one excerpt, and `bench record ticket` writes one ticket's entries.
    Local logs are supplemental evidence.
    Keep author verification separate from independent review.
 

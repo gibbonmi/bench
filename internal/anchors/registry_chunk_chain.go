@@ -11,15 +11,16 @@ package anchors
 // fold in review step 1. They forbid the retired sentences that fold main at the start of the
 // last chunk or refuse a fold between two chunks. They also forbid the retired sentences that put
 // a fold in the review delta of the last chunk or refreeze that chunk. A fold row also pins the
-// craft-delegate sentence that leaves the build's fold timing to the implement phase. Another
-// fold row forbids the retired craft-tickets sentence that freezes the predecessor tip as the
-// base of each chunk review.
+// craft-delegate sentence that leaves the build's fold timing to the implement phase.
+// The freezer rows pin the last ticket's author as the chunk freezer in craft-tickets and the
+// reference, and forbid the retired review freeze in both.
 // The light-path rows pin the build's light-path hold in the implement phase and in ADR 0023. They also forbid the ADR's
 // retired unscoped clause. The chunk-record rows pin the last ticket author's freeze and chunk
 // record. They pin the chunk checkpoint gate before a successor chunk and the last chunk's close
 // through the complete checkpoint. They also forbid each retired sentence. The build-log rows pin
 // the orchestrator's one build log, its line for each saved step, and its retro reader.
-// The `bench record` rows route each completed review-record entry to the verb and forbid the retired hand-recording sentences.
+// The `bench record` rows route each completed review-record entry to the verb, name the
+// excerpt and ticket forms, and forbid the retired hand-recording sentences.
 // The review-round rows pin the parallel axis dispatch, the combined repair charge, and the
 // named-findings scope of a confirming round. They also forbid the two retired sentences that widen that scope.
 // The confirmation rows pin the bounded repair policy's test-only exception and its finding-list
@@ -49,8 +50,11 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "review delta of the last chunk", Diagnostic: "chunk chain: the implement phase restored the fold in the review delta of the last chunk"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "the last chunk refreezes", Diagnostic: "chunk chain: the implement phase restored the refreeze of the last chunk after a fold"},
 	{Group: AfterImplementSpec, File: craftDelegate, Kind: Require, Needle: "During a build, `/bench-implement-spec` owns the fold timing, and a ticket charge starts without this fold.", Diagnostic: "chunk chain: craft-delegate leaves the build fold timing to the implement phase"},
-	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-tickets/SKILL.md", Kind: Forbid, Needle: "review freezes its predecessor tip and current tip", Diagnostic: "chunk chain: craft-tickets restored the predecessor tip as the base of each chunk review"},
-	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "After the last ticket of a chunk, that ticket's author freezes the chunk and records the chunk entry with `bench record chunk`.", Diagnostic: "chunk chain: the last ticket's author records the chunk entry at the freeze"},
+	{Group: AfterImplementSpec, File: craftTickets, Kind: Forbid, Needle: "review freezes", Diagnostic: "chunk chain: craft-tickets restored the review as the chunk freezer"},
+	{Group: AfterImplementSpec, File: benchReference, Kind: Forbid, Needle: "review freezes", Diagnostic: "chunk chain: the reference restored the review as the chunk freezer"},
+	{Group: AfterImplementSpec, File: craftTickets, Kind: Require, Needle: "In each chunk, the last ticket's author freezes the chunk base and the current tip.", Diagnostic: "chunk chain: craft-tickets dropped the last ticket's author as the chunk freezer"},
+	{Group: AfterImplementSpec, File: benchReference, Kind: Require, Needle: "The last ticket's author freezes each chunk's base and current tip.", Diagnostic: "chunk chain: the reference dropped the last ticket's author as the chunk freezer"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "After the last ticket of a chunk, that ticket's author freezes the chunk and records the chunk entry with `bench record ticket`.", Diagnostic: "chunk chain: the last ticket's author records the chunk entry at the freeze"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "The last ticket's author performs that freeze, as the Land section states.", Diagnostic: "chunk chain: the Build section dropped the last ticket's author as the freeze owner"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "When the orchestrator freezes a chunk after its last ticket", Diagnostic: "chunk chain: the implement phase restored the orchestrator's chunk record"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Before a successor chunk starts, run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>`.", Diagnostic: "chunk chain: the chunk checkpoint gate runs before a successor chunk"},
@@ -64,7 +68,7 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: "README.md", Kind: Require, Needle: "more -->|\"yes; chunk checkpoint\"| chunk", Diagnostic: "chunk chain: the README chunk flow dropped the chunk checkpoint on the successor edge"},
 	{Group: AfterImplementSpec, File: "README.md", Kind: Forbid, Needle: "\"none; chunk checkpoint\"", Diagnostic: "chunk chain: the README chunk flow restored the chunk checkpoint on the no-successor edge"},
 	{Group: AfterImplementSpec, File: "README.md", Kind: Forbid, Needle: "chunk checkpoint\"| accepted", Diagnostic: "chunk chain: the README chunk flow put the chunk checkpoint on the edge into accepted"},
-	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Each ticket author then writes its verification entries at that chunk source with `bench record verification`.", Diagnostic: "chunk chain: each ticket author records its verification at the chunk source"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Each ticket author then writes its verification entries at that chunk source with `bench record ticket`.", Diagnostic: "chunk chain: each ticket author records its verification at the chunk source"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "`--full <spec>`", Needle: "A green chunk checkpoint and its handoff refresh are not a phase exit. The orchestrator continues into the successor chunk in the same turn, and it stops only on a `craft-line` stop condition.", Diagnostic: "chunk chain: a green chunk checkpoint is not a phase exit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Write the ordinary assessment record before the `bench worktree land` step, and append the landing evidence after it.", Diagnostic: "chunk chain: the assessment record precedes the landing"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 1, Needle: "A later plan commit is never a chunk base.", Diagnostic: "chunk chain: a plan commit is never a chunk base"},
@@ -83,6 +87,8 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 4, Needle: "On one shared tree, only one axis runs tests or probes while the other axes read.", Diagnostic: "chunk chain: one axis probes a shared tree"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 6, Needle: "A review worktree moves to the record commit, and the frozen pair still names the source tip.", Diagnostic: "chunk chain: the frozen pair keeps the source tip after the record commit"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 6, Needle: "Write each completed chunk, verification, review, and amendment entry with `bench record`, not with hand-built JSON.", Diagnostic: "chunk chain: step 6 writes each completed entry with bench record"},
+	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 6, Needle: "The last ticket's author writes the frozen pair and its digests with `bench record ticket`, and `bench record review` appends one axis result.", Diagnostic: "chunk chain: step 6 dropped the last ticket's author as the writer of the frozen pair"},
+	{Group: AfterImplementSpec, File: reviewPhase, Kind: RequireInStep, Section: "Process", Step: 6, Needle: "`bench record excerpt` stages the last retained response as one excerpt, and `bench record ticket` writes one ticket's entries.", Diagnostic: "chunk chain: step 6 dropped the excerpt or the ticket record form"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Preflight supplies the source and plan digests.", Diagnostic: "chunk chain: the review phase restored the preflight digest sentence"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Record the performer, role, model, effort, frozen base and tip, source, state, and native result.", Diagnostic: "chunk chain: the review phase restored the hand-recording field sentence"},
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Embed the minimal native excerpt and its SHA-256 digest; local logs are supplemental evidence.", Diagnostic: "chunk chain: the review phase restored the hand-embedded excerpt sentence"},
@@ -96,10 +102,13 @@ var chunkChainAnchors = []Anchor{
 // stalenessPass is the reference that owns the build-entry staleness charge.
 // freshAuthorADR is the decision record that states the build's light-path hold and the
 // orchestrator's handoff refresh. boundedRepairPolicy is the reference that owns the
-// repair allowance, the hardening cap, and the test-only exception.
+// repair allowance, the hardening cap, and the test-only exception. craftTickets and
+// benchReference also name the chunk freezer.
 const (
 	implementPhase      = ".agents/commands/bench-implement-spec.md"
 	reviewPhase         = ".agents/commands/bench-review-implementation.md"
+	craftTickets        = ".agents/skills/bench-craft-tickets/SKILL.md"
+	benchReference      = ".bench/BENCH-reference.md"
 	stalenessPass       = ".agents/skills/bench-implement-spec/references/staleness-pass.md"
 	freshAuthorADR      = "docs/adr/0023-each-ticket-gets-a-fresh-author.md"
 	boundedRepairPolicy = ".agents/skills/bench-craft-line/references/bounded-repair-policy.md"
