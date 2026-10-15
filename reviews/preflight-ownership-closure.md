@@ -3638,7 +3638,7 @@
     {
       "id": "OC-C3",
       "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
-      "tip": "94967bbf3473014a76a4dd5f8e14424535f1e957",
+      "tip": "5a556ab7772e20acaf147c34172a93a94fd76927",
       "plan_digest": "sha256:c5d7d55edcbcc0e1f790c7db9f2c7ee991d4efaa0f910543de4197d00c514a98",
       "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
       "acceptance_rows": [
@@ -5044,6 +5044,125 @@
             "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14664,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "oc-04-check-4",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t05c-oc-05-focused",
+          "performer": "claude:ft293_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t05",
+            "digest": "sha256:9af02a8d8522273976d982b8f6799bfd8a71363d0e7398544b2059452848c790",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/ownership/symbols.go,swap,failed,3,TestSymbolPremises/OC39_symbol-other-owner,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,TestSymbolPremises,passed,25\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1711\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,497,25\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSymbolPremises/OC39_symbol-other-owner,\"premises_test.go:233: premise symbol-other-owner = map[id:symbol-other-owner reason:symbol premise: other.Check declares \\\"func Check() error\\\", not \\\"func Check(rows int) error\\\" source:6edd33bd019503c4f67cf631a479249720fa973a state:unknown], … (354 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSymbolPremises/OC44_sentinel-familiar,\"premises_test.go:233: premise sentinel-familiar = map[id:sentinel-familiar reason:sentinel premise: rules.Check does not statically use other.ErrMissing source:6edd33bd019503c4f67cf631a479249720fa973a state:unknown], want unknown and a reas… (336 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSymbolPremises/OC46_bound-local-literal,\"premises_test.go:233: premise bound-local-literal = map[id:bound-local-literal reason:rules.maxRows holds the constant value 32 at the source tip source:6edd33bd019503c4f67cf631a479249720fa973a state:green], want unknown and a reason naming… (324 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-05-focused",
+          "command": "bench test --package ./internal/preflight/... --run TestSymbolPremises",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "oc-05-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t05",
+              "digest": "sha256:9af02a8d8522273976d982b8f6799bfd8a71363d0e7398544b2059452848c790",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/ownership/symbols.go,swap,failed,3,TestSymbolPremises/OC39_symbol-other-owner,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,TestSymbolPremises,passed,25\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1711\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,497,25\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSymbolPremises/OC39_symbol-other-owner,\"premises_test.go:233: premise symbol-other-owner = map[id:symbol-other-owner reason:symbol premise: other.Check declares \\\"func Check() error\\\", not \\\"func Check(rows int) error\\\" source:6edd33bd019503c4f67cf631a479249720fa973a state:unknown], … (354 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSymbolPremises/OC44_sentinel-familiar,\"premises_test.go:233: premise sentinel-familiar = map[id:sentinel-familiar reason:sentinel premise: rules.Check does not statically use other.ErrMissing source:6edd33bd019503c4f67cf631a479249720fa973a state:unknown], want unknown and a reas… (336 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSymbolPremises/OC46_bound-local-literal,\"premises_test.go:233: premise bound-local-literal = map[id:bound-local-literal reason:rules.maxRows holds the constant value 32 at the source tip source:6edd33bd019503c4f67cf631a479249720fa973a state:green], want unknown and a reason naming… (324 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft293_t05c-oc-05-check-1",
+          "performer": "claude:ft293_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t05",
+            "digest": "sha256:1bfacb9f34bf7845a3fcd92ce94660dcba5a4d1888e56fb19a93fde4b00fd44e",
+            "excerpt": "packages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,37316,409\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,22974,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,36765,240\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-05-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t05c-oc-05-check-2",
+          "performer": "claude:ft293_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t05",
+            "digest": "sha256:2b0e10c2f56ec4175a6b875da44d07f072636f84fc8f6dbedb19971003d5cf82",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/consumers,pass,2003,66\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-05-check-2",
+          "command": "bench test --package ./internal/consumers",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t05c-oc-05-check-3",
+          "performer": "claude:ft293_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t05",
+            "digest": "sha256:5fcb5959ab64e0bf83bb8eb4b5d8eaa5e5486ec6fef71032a360976fc63cd91d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1918,181\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-05-check-3",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t05c-oc-05-check-4",
+          "performer": "claude:ft293_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t05",
+            "digest": "sha256:898b2dcc74911c421443e9fe6bed32403ec6c5720f52d8bbb0646af1caf808f8",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15233,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-05-check-4",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t05c-oc-05-check-5",
+          "performer": "claude:ft293_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t05",
+            "digest": "sha256:9e79ee031bb216aa3035d36ad939a2f873ca4f03e19e538988d31a239d090bc2",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14511,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-05-check-5",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
         }
