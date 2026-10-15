@@ -257,15 +257,6 @@ func origin(obj types.Object) types.Object {
 	return obj
 }
 
-// structKey is the one source of struct identity across loads. Two struct types that
-// types.Identical compares as one struct print as one key, and the key holds across a package
-// and its test variant, whose named field types are distinct objects. A key can join two
-// structs that types.Identical keeps apart, such as two packages' unexported field names; that
-// only widens a census toward its diagnostic.
-func structKey(s *types.Struct) string {
-	return types.TypeString(s, nil)
-}
-
 // fieldStruct is the struct type that declares the field target, found among the
 // package-scope types of target's package, including an anonymous struct nested in one, and the
 // package-scope type whose struct holds it. Both are nil when target is no field.

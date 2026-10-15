@@ -83,13 +83,12 @@ const (
 // composite literal of the field's struct writes the field by position, and each appearance of
 // another type identical to that struct gives a row, because a value of that type reaches the
 // field through an assignment, a conversion, an argument, or a return. literalStructs owns which
-// struct a literal writes, and structKey owns struct identity.
+// struct a literal writes, and sameStruct owns struct identity.
 func UnnamedWrites(pkgs []*Package, target types.Object, root string) []Row {
 	s, own := fieldStruct(target)
 	if s == nil {
 		return nil
 	}
-	want := structKey(s)
 	var out []Row
 	for _, pkg := range pkgs {
 		if pkg.Info == nil {
@@ -99,11 +98,11 @@ func UnnamedWrites(pkgs []*Package, target types.Object, root string) []Row {
 			pos := pkg.Fset.Position(at)
 			out = append(out, Row{File: relPath(root, pos.Filename), Line: pos.Line, Column: pos.Column, Via: via})
 		}
-		if named, ok := own.Type().(*types.Named); ok && named.TypeParams().Len() > 0 {
+		if genericDecl(own.Type()) {
 			add(own.Pos(), viaGeneric)
 			return out
 		}
-		foreign := identicalType(pkg, target, own, want)
+		foreign := identicalType(pkg, target, own, s)
 		for expr, tv := range pkg.Info.Types {
 			if foreign(tv.Type) {
 				add(expr.Pos(), viaIdentical)
@@ -116,7 +115,7 @@ func UnnamedWrites(pkgs []*Package, target types.Object, root string) []Row {
 		}
 		for _, file := range pkg.Files {
 			ast.Inspect(file, func(n ast.Node) bool {
-				if lit, ok := n.(*ast.CompositeLit); ok && len(lit.Elts) > 0 && writesStruct(pkg.Info.TypeOf(lit), want) {
+				if lit, ok := n.(*ast.CompositeLit); ok && len(lit.Elts) > 0 && writesStruct(pkg.Info.TypeOf(lit), s) {
 					if _, keyed := lit.Elts[0].(*ast.KeyValueExpr); !keyed {
 						add(lit.Pos(), viaUnkeyed)
 					}
@@ -128,10 +127,29 @@ func UnnamedWrites(pkgs []*Package, target types.Object, root string) []Row {
 	return sortRows(out)
 }
 
+// genericDecl reports whether the declared type t has type parameters, as a generic named type or
+// a generic alias.
+func genericDecl(t types.Type) bool {
+	if alias, ok := t.(*types.Alias); ok && alias.TypeParams().Len() > 0 {
+		return true
+	}
+	named, ok := types.Unalias(t).(*types.Named)
+	return ok && named.TypeParams().Len() > 0
+}
+
+// sameStruct is the one source of struct identity. Go converts between two structs that
+// types.IdenticalIgnoreTags compares as one, whatever their tags and alias spellings. A package
+// and its test variant hold distinct objects for one named field type, so two structs that print
+// as one type are one struct too. Either test can join two structs Go keeps apart; that only
+// widens a census toward its diagnostic.
+func sameStruct(a, b *types.Struct) bool {
+	return types.IdenticalIgnoreTags(a, b) || types.TypeString(a, nil) == types.TypeString(b, nil)
+}
+
 // identicalType reports whether a type recorded in pkg, or an element of a recorded tuple, is a
-// type other than own whose struct, alone or under one pointer, has the structKey want. The
+// type other than own whose struct, alone or under one pointer, is the same struct as want. The
 // struct that declares target is own's struct, named or nested, so it is no other type.
-func identicalType(pkg *Package, target types.Object, own *types.TypeName, want string) func(types.Type) bool {
+func identicalType(pkg *Package, target types.Object, own *types.TypeName, want *types.Struct) func(types.Type) bool {
 	ownKey, fieldKey := declKey(pkg.Fset, own), declKey(pkg.Fset, target)
 	var foreign func(t types.Type) bool
 	foreign = func(t types.Type) bool {
@@ -151,7 +169,7 @@ func identicalType(pkg *Package, target types.Object, own *types.TypeName, want 
 		}
 		t = types.Unalias(t)
 		u, ok := t.Underlying().(*types.Struct)
-		if !ok || structKey(u) != want {
+		if !ok || !sameStruct(u, want) {
 			return false
 		}
 		if named, ok := t.(*types.Named); ok {
@@ -167,13 +185,12 @@ func identicalType(pkg *Package, target types.Object, own *types.TypeName, want 
 	return foreign
 }
 
-// writesStruct reports whether a literal of the recorded type t writes the struct whose
-// structKey is want.
-func writesStruct(t types.Type, want string) bool {
+// writesStruct reports whether a literal of the recorded type t writes the same struct as want.
+func writesStruct(t types.Type, want *types.Struct) bool {
 	if t == nil {
 		return false
 	}
-	return slices.ContainsFunc(literalStructs(t), func(s *types.Struct) bool { return structKey(s) == want })
+	return slices.ContainsFunc(literalStructs(t), func(s *types.Struct) bool { return sameStruct(s, want) })
 }
 
 // useRows is every use of target across pkgs, or only every static write of it.
