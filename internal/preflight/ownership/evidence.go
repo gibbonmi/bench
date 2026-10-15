@@ -210,21 +210,16 @@ func checkVerificationProbe(verification reviewrecord.Verification, subject reus
 	if probe.Mutation != subject.Mutation {
 		return fmt.Errorf("verification %s probe mutation is %q, not %q", subject.Verification, probe.Mutation, subject.Mutation)
 	}
-	if probe.Outcome != "bit" {
-		return fmt.Errorf("verification %s probe outcome is %q, not \"bit\"", subject.Verification, probe.Outcome)
+	bit, restored := reviewrecord.ProbeBites(probe)
+	if !bit {
+		return fmt.Errorf("verification %s probe did not bite: outcome %q, exit code %d", subject.Verification, probe.Outcome, probe.ExitCode)
 	}
-	if probe.ExitCode == 0 {
-		return fmt.Errorf("verification %s probe exit code is 0, want nonzero", subject.Verification)
-	}
-	if probe.Restore != "pass" {
+	if !restored {
 		return fmt.Errorf("verification %s probe restoration is %q, not \"pass\"", subject.Verification, probe.Restore)
 	}
 	excerpt := probe.NativeRef.Excerpt
 	if excerpt == "" || reviewrecord.Digest([]byte(excerpt)) != probe.NativeRef.Digest {
 		return fmt.Errorf("verification %s probe native excerpt is missing or corrupt", subject.Verification)
-	}
-	if compileFailureExcerpt(excerpt) {
-		return fmt.Errorf("verification %s probe excerpt records a compile failure rather than a behavioral failure of %s", subject.Verification, subject.Function)
 	}
 	if !witnessesSubject(excerpt, subject.Function) {
 		return fmt.Errorf("verification %s probe excerpt does not witness test subject %s", subject.Verification, subject.Function)
@@ -233,35 +228,6 @@ func checkVerificationProbe(verification reviewrecord.Verification, subject reus
 		return fmt.Errorf("verification %s probe excerpt does not hold red_needle %q", subject.Verification, expected.RedNeedle)
 	}
 	return nil
-}
-
-// compileFailureExcerpt reports whether a native probe excerpt records a build or compiler
-// failure rather than a behavioral test failure.
-func compileFailureExcerpt(excerpt string) bool {
-	for _, marker := range []string{
-		"build-failed",
-		"build-fail",
-		"[build failed]",
-		"mutant[1]{first_build_line}:",
-		"syntax error:",
-		"undefined:",
-		"cannot use ",
-		"imported and not used",
-		"declared and not used",
-		"too many arguments",
-		"not enough arguments",
-		"undeclared name:",
-	} {
-		if strings.Contains(excerpt, marker) {
-			return true
-		}
-	}
-	for _, line := range strings.Split(excerpt, "\n") {
-		if strings.HasPrefix(strings.TrimSpace(line), "# ") {
-			return true
-		}
-	}
-	return false
 }
 
 // witnessesSubject reports whether excerpt names function as the failing test subject and

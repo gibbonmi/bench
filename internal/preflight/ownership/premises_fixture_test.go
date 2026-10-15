@@ -160,6 +160,7 @@ type evidenceCommits struct {
 	unrestoredPlanned string
 	unrestored        string
 	compileFailure    string
+	forgedCompile     string
 }
 
 // seedEvidenceCommits attaches a prior spec record fixture to root, freezes chunk 1 at a
@@ -194,18 +195,23 @@ func seedEvidenceCommits(t *testing.T, root string) evidenceCommits {
 		chunk.Verification[0].Probe.Restore = "fail"
 		chunk.Verification[0].Probe.NativeRef = recordtest.Native(behavioralExcerpt)
 	})
-	commits.unrestored = saveVariant("record unrestored evidence", func(chunk *rr.Chunk) {
+	// additionalProbe records a probe of the mutation on the unplanned additional verification.
+	additionalProbe := func(chunk *rr.Chunk, outcome, restore, excerpt string) {
 		chunk.Verification[0].Probe.NativeRef = recordtest.Native(behavioralExcerpt)
-		chunk.Verification[1].Probe = &rr.Probe{
-			Mutation:  evidenceMutation,
-			Outcome:   "bit",
-			ExitCode:  1,
-			Restore:   "fail",
-			NativeRef: recordtest.Native(behavioralExcerpt),
-		}
+		chunk.Verification[1].Probe = &rr.Probe{Mutation: evidenceMutation, Outcome: outcome, ExitCode: 1, Restore: restore, NativeRef: recordtest.Native(excerpt)}
+	}
+	commits.unrestored = saveVariant("record unrestored evidence", func(chunk *rr.Chunk) {
+		additionalProbe(chunk, "bit", "fail", behavioralExcerpt)
 	})
+	// A real compile-failure probe records the outcome build-failed; its excerpt names the
+	// subject and red_needle, so only the shared probe-bite predicate refuses it.
+	compileExcerpt := "# internal/reused [internal/reused.test]\ninternal/reused/reused_test.go:5:2: undefined: " + evidenceTestFunc
 	commits.compileFailure = saveVariant("record compile failure evidence", func(chunk *rr.Chunk) {
-		chunk.Verification[0].Probe.NativeRef = recordtest.Native("# internal/reused [internal/reused.test]\ninternal/reused/reused_test.go:5:2: undefined: " + evidenceTestFunc + " " + evidenceNeedle + "\nFAIL\tinternal/reused [build failed]")
+		additionalProbe(chunk, "build-failed", "pass", compileExcerpt+" "+evidenceNeedle+"\nFAIL\tinternal/reused [build failed]")
+	})
+	// A forged probe reads bit over a compile-failure excerpt that lacks red_needle.
+	commits.forgedCompile = saveVariant("record forged compile failure evidence", func(chunk *rr.Chunk) {
+		chunk.Verification[0].Probe.NativeRef = recordtest.Native(compileExcerpt + "\nFAIL\tinternal/reused [build failed]")
 	})
 	return commits
 }

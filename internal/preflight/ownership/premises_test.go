@@ -256,7 +256,8 @@ func TestEvidencePremises(t *testing.T) {
 		reusedTestItem("evidence-absent-func", evidenceTestPath, "TestAbsent", evidenceSpec, commits.source, commits.valid, "1", "tests", evidenceMutation, evidenceNeedle),
 		reusedTestItem("evidence-unrestored-planned", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.unrestoredPlanned, "1", "tests", evidenceMutation, evidenceNeedle),
 		reusedTestItem("evidence-unrestored-probe", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.unrestored, "1", "additional", evidenceMutation, evidenceNeedle),
-		reusedTestItem("evidence-compile-failure", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.compileFailure, "1", "tests", evidenceMutation, evidenceNeedle))
+		reusedTestItem("evidence-compile-failure", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.compileFailure, "1", "additional", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-forged-compile", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.forgedCompile, "1", "tests", evidenceMutation, evidenceNeedle))
 	writeEvidenceSpec(t, root, facts)
 	out := mustPropose(t, root)
 	for _, test := range []struct{ row, id, state, reason string }{
@@ -270,7 +271,8 @@ func TestEvidencePremises(t *testing.T) {
 		{"OC49", "evidence-absent-func", "unknown", "declares no test function TestAbsent"},
 		{"OC50", "evidence-unrestored-planned", "unknown", "restore failed"},
 		{"OC50", "evidence-unrestored-probe", "unknown", `probe restoration is "fail", not "pass"`},
-		{"OC87", "evidence-compile-failure", "unknown", "records a compile failure rather than a behavioral failure of TestReused"},
+		{"OC87", "evidence-compile-failure", "unknown", `probe did not bite: outcome "build-failed"`},
+		{"OC87", "evidence-forged-compile", "unknown", `does not hold red_needle "expected behavioral needle"`},
 	} {
 		t.Run(test.row+" "+test.id, func(t *testing.T) {
 			row := one(t, out, "premises", map[string]string{"id": test.id})
