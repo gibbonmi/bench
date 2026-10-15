@@ -267,12 +267,12 @@ func structKey(s *types.Struct) string {
 }
 
 // fieldStruct is the struct type that declares the field target, found among the
-// package-scope types of target's package, including an anonymous struct nested in one. It is
-// nil when target is no field.
-func fieldStruct(target types.Object) *types.Struct {
+// package-scope types of target's package, including an anonymous struct nested in one, and the
+// package-scope type whose struct holds it. Both are nil when target is no field.
+func fieldStruct(target types.Object) (*types.Struct, *types.TypeName) {
 	field, ok := target.(*types.Var)
 	if !ok || !field.IsField() || field.Pkg() == nil {
-		return nil
+		return nil, nil
 	}
 	field = field.Origin()
 	var declaring func(s *types.Struct) *types.Struct
@@ -294,16 +294,16 @@ func fieldStruct(target types.Object) *types.Struct {
 		if tn, ok := scope.Lookup(name).(*types.TypeName); ok {
 			if s, ok := tn.Type().Underlying().(*types.Struct); ok {
 				if found := declaring(s); found != nil {
-					return found
+					return found, tn
 				}
 			}
 		}
 	}
-	return nil
+	return nil, nil
 }
 
-// literalStructs is every struct type that a composite literal or a conversion of the recorded
-// type t can write. An elided element literal records its hint type, so t can also be a
+// literalStructs is every struct type that a composite literal of the recorded type t can
+// write. An elided element literal records its hint type, so t can also be a
 // pointer to the struct, a named pointer, or a type parameter. A type parameter gives the
 // struct of each term of its constraint, alone or under the one elided pointer. The terms of a
 // literal that type-checks share one core type, so a term outside the type set only widens

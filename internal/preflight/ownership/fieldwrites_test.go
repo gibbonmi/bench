@@ -7,44 +7,65 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 )
 
+// genericRow replaces the printed-field fixture's row with a generic struct, and its renderers
+// with the same writes of one instantiation.
+var genericRow = map[string]string{
+	policyFile:                  "package policy\n\ntype row[T any] struct{ Reason T }\n\nfunc home() bool { return true }\n\nfunc retired() int { return 1 }\n\nfunc write(v int) int { return v }\n",
+	"internal/policy/render.go": "package policy\n\nfunc renderA() row[string] { return row[string]{Reason: \"a\"} }\n\nfunc renderB() row[string] {\n\tvar r row[string]\n\tr.Reason = \"b\"\n\treturn r\n}\n",
+}
+
 // printedFieldWrites grades the printed-field premise of row.Reason, whose census lists
 // renderers, against each form of a write in one added file. An elided element literal
 // records its hint type, so the recorded type can be a pointer, a named pointer, or a type
-// parameter whose core type is the struct or a pointer to it. A literal of an identical
-// struct type writes the field too, and a conversion from another type names no field. A
-// keyed write is a producer, so the census that omits it is incomplete. A nil pointer
-// conversion and a conversion from the struct's own type write nothing.
+// parameter whose core type is the struct or a pointer to it. A keyed write is a producer, so
+// the census that omits it is incomplete. Another type identical to the struct, and a generic
+// struct, keep the census diagnostic whatever writes through them. A nil pointer conversion and
+// a conversion from the struct's own type write nothing.
 func printedFieldWrites(t *testing.T, subject, renderers string) {
-	const unkeyed, converted = "line 3 writes policy.row.Reason through an unkeyed literal", "line 3 writes policy.row.Reason through a conversion"
+	const unkeyed = "line 3 writes policy.row.Reason through an unkeyed literal"
+	const identical = "line 3 writes policy.row.Reason through a type identical to its struct"
+	const generic = "line 3 writes policy.row.Reason through a generic struct"
 	const omitted = "omits internal/policy/positional.go renderC"
-	for name, form := range map[string][3]string{
-		"an explicit unkeyed literal":                  {"func renderC() row { return row{\"c\"} }\n", "unknown", unkeyed},
-		"a value-elided slice element":                 {"func renderC() []row { return []row{{\"c\"}} }\n", "unknown", unkeyed},
-		"a pointer-elided slice element":               {"func renderC() []*row { return []*row{{\"c\"}} }\n", "unknown", unkeyed},
-		"a pointer-elided map element":                 {"func renderC() map[string]*row { return map[string]*row{\"k\": {\"c\"}} }\n", "unknown", unkeyed},
-		"an address-of literal":                        {"func renderC() *row { return &row{\"c\"} }\n", "unknown", unkeyed},
-		"an element of a named pointer type":           {"type rowPtr *row; func renderC() []rowPtr { return []rowPtr{{\"c\"}} }\n", "unknown", unkeyed},
-		"a type parameter literal":                     {"func renderC[T row]() T { return T{\"c\"} }\n", "unknown", unkeyed},
-		"a pointer-elided type parameter element":      {"func renderC[T row]() []*T { return []*T{{\"c\"}} }\n", "unknown", unkeyed},
-		"an element of a pointer-cored type parameter": {"func renderC[P *row]() []P { return []P{{\"c\"}} }\n", "unknown", unkeyed},
-		"a type parameter with a named constraint":     {"type rowSet interface{ row }; func renderC[T rowSet]() T { return T{\"c\"} }\n", "unknown", unkeyed},
-		"a type parameter with a union constraint":     {"type rowCopy row; func renderC[T interface{ row | rowCopy }]() T { return T{\"c\"} }\n", "unknown", unkeyed},
-		"an identical-layout type parameter literal":   {"func renderC[T ~struct{ Reason string }]() T { return T{\"c\"} }\n", "unknown", unkeyed},
-		"an identical-layout anonymous literal":        {"func renderC() row { return struct{ Reason string }{\"c\"} }\n", "unknown", unkeyed},
-		"a keyed identical-layout type parameter":      {"func renderC[T ~struct{ Reason string }]() T { return T{Reason: \"c\"} }\n", "unknown", omitted},
-		"a keyed identical-layout anonymous literal":   {"func renderC() row { return struct{ Reason string }{Reason: \"c\"} }\n", "unknown", omitted},
-		"a conversion from another struct type":        {"type other struct{ Reason string }; func renderC(o other) row { return row(o) }\n", "unknown", converted},
-		"a pointer conversion from another type":       {"type other struct{ Reason string }; func renderC(o *other) *row { return (*row)(o) }\n", "unknown", converted},
-		"a conversion to a type parameter":             {"type other struct{ Reason string }; func renderC[T ~struct{ Reason string }](o other) T { return T(o) }\n", "unknown", converted},
-		"a nil or same-type conversion":                {"var _ = (*row)(nil); func same(r row) row { return row(r) }\n", "green", "complete at the source tip: 2 member(s)"},
+	for name, form := range map[string]struct {
+		code, state, reason string
+		generic             bool
+	}{
+		"an explicit unkeyed literal":                  {"func renderC() row { return row{\"c\"} }\n", "unknown", unkeyed, false},
+		"a value-elided slice element":                 {"func renderC() []row { return []row{{\"c\"}} }\n", "unknown", unkeyed, false},
+		"a pointer-elided slice element":               {"func renderC() []*row { return []*row{{\"c\"}} }\n", "unknown", unkeyed, false},
+		"a pointer-elided map element":                 {"func renderC() map[string]*row { return map[string]*row{\"k\": {\"c\"}} }\n", "unknown", unkeyed, false},
+		"an address-of literal":                        {"func renderC() *row { return &row{\"c\"} }\n", "unknown", unkeyed, false},
+		"an element of a named pointer type":           {"type rowPtr *row; func renderC() []rowPtr { return []rowPtr{{\"c\"}} }\n", "unknown", unkeyed, false},
+		"a type parameter literal":                     {"func renderC[T row]() T { return T{\"c\"} }\n", "unknown", unkeyed, false},
+		"a keyed type parameter literal":               {"func renderC[T row]() T { return T{Reason: \"c\"} }\n", "unknown", omitted, false},
+		"a pointer-elided type parameter element":      {"func renderC[T row]() []*T { return []*T{{\"c\"}} }\n", "unknown", unkeyed, false},
+		"an element of a pointer-cored type parameter": {"func renderC[P *row]() []P { return []P{{\"c\"}} }\n", "unknown", unkeyed, false},
+		"a type parameter with a named constraint":     {"type rowSet interface{ row }; func renderC[T rowSet]() T { return T{\"c\"} }\n", "unknown", unkeyed, false},
+		"a type parameter with a union constraint":     {"type rowCopy row; func renderC[T interface{ row | rowCopy }]() T { return T{\"c\"} }\n", "unknown", identical, false},
+		"an identical-layout type parameter literal":   {"func renderC[T ~struct{ Reason string }]() T { return T{\"c\"} }\n", "unknown", identical, false},
+		"an identical-layout anonymous literal":        {"func renderC() row { return struct{ Reason string }{\"c\"} }\n", "unknown", identical, false},
+		"a keyed identical-layout type parameter":      {"func renderC[T ~struct{ Reason string }]() T { return T{Reason: \"c\"} }\n", "unknown", identical, false},
+		"a keyed identical-layout anonymous literal":   {"func renderC() row { return struct{ Reason string }{Reason: \"c\"} }\n", "unknown", identical, false},
+		"a conversion from another struct type":        {"type other struct{ Reason string }; func renderC(o other) row { return row(o) }\n", "unknown", identical, false},
+		"a pointer conversion from another type":       {"type other struct{ Reason string }; func renderC(o *other) *row { return (*row)(o) }\n", "unknown", identical, false},
+		"a conversion to a type parameter":             {"type other struct{ Reason string }; func renderC[T ~struct{ Reason string }](o other) T { return T(o) }\n", "unknown", identical, false},
+		"an implicit assignment from an unnamed type":  {"func renderC() row { var s struct{ Reason string }; s.Reason = \"c\"; var r row = s; return r }\n", "unknown", identical, false},
+		"an identical type that writes nothing":        {"type other struct{ Reason string }\n", "unknown", identical, false},
+		"a nil or same-type conversion":                {"var _ = (*row)(nil); func same(r row) row { return row(r) }\n", "green", "complete at the source tip: 2 member(s)", false},
+		"a generic struct with no added write":         {"", "unknown", generic, true},
+		"an unkeyed instantiation literal":             {"func renderC() row[string] { return row[string]{\"c\"} }\n", "unknown", generic, true},
+		"an instantiation conversion":                  {"type other struct{ Reason string }; func renderC(o other) row[string] { return row[string](o) }\n", "unknown", generic, true},
 	} {
 		t.Run(name, func(t *testing.T) {
-			files := merged(helperBase, map[string]string{"internal/policy/positional.go": "package policy\n\n" + form[0]})
+			files := merged(helperBase, map[string]string{"internal/policy/positional.go": "package policy\n\n" + form.code})
+			if form.generic {
+				files = merged(files, genericRow)
+			}
 			out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: files, Fence: helperFence,
 				Tail: withItems("premises", premiseItem("positional-field", "printed-field", subject, `{"producers":`+renderers+`}`))}.Seed(t))
 			row := one(t, out, "premises", map[string]string{"id": "positional-field"})
-			if cell(row, "state") != form[1] || !strings.Contains(cell(row, "reason"), form[2]) {
-				t.Fatalf("premise positional-field = %v, want %s and a reason naming %q", row, form[1], form[2])
+			if cell(row, "state") != form.state || !strings.Contains(cell(row, "reason"), form.reason) {
+				t.Fatalf("premise positional-field = %v, want %s and a reason naming %q", row, form.state, form.reason)
 			}
 		})
 	}

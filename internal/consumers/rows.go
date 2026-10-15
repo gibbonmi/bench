@@ -2,6 +2,7 @@ package consumers
 
 import (
 	"go/ast"
+	"go/token"
 	"go/types"
 	"slices"
 	"sort"
@@ -64,25 +65,27 @@ func Rows(pkgs []*Package, target types.Object, root string) []Row {
 
 // WriteRows is every static write of target across pkgs, in the order Rows uses: an
 // assignment or op-assignment target, an increment or decrement operand, and a field key of
-// a composite literal of a struct type identical to target's struct. A read is no write.
+// a composite literal. A read is no write. UnnamedWrites owns every write that names no field.
 func WriteRows(pkgs []*Package, target types.Object, root string) []Row {
 	return sortRows(useRows(pkgs, target, root, true))
 }
 
-// The two Via values of an unnamed write.
+// The three Via values of an unnamed write.
 const (
-	viaUnkeyed    = "an unkeyed literal"
-	viaConversion = "a conversion"
+	viaUnkeyed   = "an unkeyed literal"
+	viaGeneric   = "a generic struct"
+	viaIdentical = "a type identical to its struct"
 )
 
-// UnnamedWrites is every write across pkgs that reaches the struct declaring the field target
-// and names no field, in the order Rows uses. An unkeyed composite literal of an identical
-// struct type writes the field by position, and a conversion to that struct from another type
-// carries a value whose write the census cannot see. Via names the form. A nil operand and
-// an operand of the conversion's own type write nothing. literalStructs owns which struct a
-// literal or a conversion writes, and structKey owns struct identity.
+// UnnamedWrites is every write across pkgs that can reach the field target and names no field
+// of its own struct type, in the order Rows uses. Via names the form. A generic struct gives one
+// row at its declaration, because an instantiation is a struct of its own. Otherwise an unkeyed
+// composite literal of the field's struct writes the field by position, and each appearance of
+// another type identical to that struct gives a row, because a value of that type reaches the
+// field through an assignment, a conversion, an argument, or a return. literalStructs owns which
+// struct a literal writes, and structKey owns struct identity.
 func UnnamedWrites(pkgs []*Package, target types.Object, root string) []Row {
-	s := fieldStruct(target)
+	s, own := fieldStruct(target)
 	if s == nil {
 		return nil
 	}
@@ -92,28 +95,30 @@ func UnnamedWrites(pkgs []*Package, target types.Object, root string) []Row {
 		if pkg.Info == nil {
 			continue
 		}
-		add := func(n ast.Node, via string) {
-			pos := pkg.Fset.Position(n.Pos())
+		add := func(at token.Pos, via string) {
+			pos := pkg.Fset.Position(at)
 			out = append(out, Row{File: relPath(root, pos.Filename), Line: pos.Line, Column: pos.Column, Via: via})
+		}
+		if named, ok := own.Type().(*types.Named); ok && named.TypeParams().Len() > 0 {
+			add(own.Pos(), viaGeneric)
+			return out
+		}
+		foreign := identicalType(pkg, target, own, want)
+		for expr, tv := range pkg.Info.Types {
+			if foreign(tv.Type) {
+				add(expr.Pos(), viaIdentical)
+			}
+		}
+		for id, obj := range pkg.Info.Defs {
+			if obj != nil && foreign(obj.Type()) {
+				add(id.Pos(), viaIdentical)
+			}
 		}
 		for _, file := range pkg.Files {
 			ast.Inspect(file, func(n ast.Node) bool {
-				switch e := n.(type) {
-				case *ast.CompositeLit:
-					if len(e.Elts) == 0 || !writesStruct(pkg.Info.TypeOf(e), want) {
-						return true
-					}
-					if _, keyed := e.Elts[0].(*ast.KeyValueExpr); !keyed {
-						add(e, viaUnkeyed)
-					}
-				case *ast.CallExpr:
-					to, ok := pkg.Info.Types[e.Fun]
-					if !ok || !to.IsType() || len(e.Args) != 1 || !writesStruct(to.Type, want) {
-						return true
-					}
-					from := pkg.Info.Types[e.Args[0]]
-					if !from.IsNil() && (from.Type == nil || !types.Identical(from.Type, to.Type)) {
-						add(e, viaConversion)
+				if lit, ok := n.(*ast.CompositeLit); ok && len(lit.Elts) > 0 && writesStruct(pkg.Info.TypeOf(lit), want) {
+					if _, keyed := lit.Elts[0].(*ast.KeyValueExpr); !keyed {
+						add(lit.Pos(), viaUnkeyed)
 					}
 				}
 				return true
@@ -123,8 +128,47 @@ func UnnamedWrites(pkgs []*Package, target types.Object, root string) []Row {
 	return sortRows(out)
 }
 
-// writesStruct reports whether a literal or a conversion of the recorded type t writes the
-// struct whose structKey is want.
+// identicalType reports whether a type recorded in pkg, or an element of a recorded tuple, is a
+// type other than own whose struct, alone or under one pointer, has the structKey want. The
+// struct that declares target is own's struct, named or nested, so it is no other type.
+func identicalType(pkg *Package, target types.Object, own *types.TypeName, want string) func(types.Type) bool {
+	ownKey, fieldKey := declKey(pkg.Fset, own), declKey(pkg.Fset, target)
+	var foreign func(t types.Type) bool
+	foreign = func(t types.Type) bool {
+		if tuple, ok := t.(*types.Tuple); ok {
+			for i := range tuple.Len() {
+				if foreign(tuple.At(i).Type()) {
+					return true
+				}
+			}
+			return false
+		}
+		if t == nil {
+			return false
+		}
+		if p, ok := types.Unalias(t).(*types.Pointer); ok {
+			t = p.Elem()
+		}
+		t = types.Unalias(t)
+		u, ok := t.Underlying().(*types.Struct)
+		if !ok || structKey(u) != want {
+			return false
+		}
+		if named, ok := t.(*types.Named); ok {
+			return declKey(pkg.Fset, named.Obj()) != ownKey
+		}
+		for i := range u.NumFields() {
+			if declKey(pkg.Fset, u.Field(i)) == fieldKey {
+				return false
+			}
+		}
+		return true
+	}
+	return foreign
+}
+
+// writesStruct reports whether a literal of the recorded type t writes the struct whose
+// structKey is want.
 func writesStruct(t types.Type, want string) bool {
 	if t == nil {
 		return false
@@ -148,9 +192,6 @@ func useRows(pkgs []*Package, target types.Object, root string, writesOnly bool)
 				targets[id] = true
 			}
 		}
-		if writesOnly {
-			identicalKeys(pkg, target, targets)
-		}
 		if len(targets) == 0 {
 			continue
 		}
@@ -159,33 +200,6 @@ func useRows(pkgs []*Package, target types.Object, root string, writesOnly bool)
 		}
 	}
 	return out
-}
-
-// identicalKeys adds to targets each field key in pkg that names target's field in a composite
-// literal of a struct type identical to target's struct. Such a literal declares its own field,
-// so the key's object is not target, yet the literal writes target's struct.
-func identicalKeys(pkg *Package, target types.Object, targets map[*ast.Ident]bool) {
-	s := fieldStruct(target)
-	if s == nil {
-		return
-	}
-	want := structKey(s)
-	for _, file := range pkg.Files {
-		ast.Inspect(file, func(n ast.Node) bool {
-			lit, ok := n.(*ast.CompositeLit)
-			if !ok || !writesStruct(pkg.Info.TypeOf(lit), want) {
-				return true
-			}
-			for _, elt := range lit.Elts {
-				if kv, ok := elt.(*ast.KeyValueExpr); ok {
-					if key, ok := kv.Key.(*ast.Ident); ok && key.Name == target.Name() {
-						targets[key] = true
-					}
-				}
-			}
-			return true
-		})
-	}
 }
 
 // sortRows orders rows by file, line, then column, and drops repeated positions.

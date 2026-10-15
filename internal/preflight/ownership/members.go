@@ -44,8 +44,8 @@ type memberShape struct {
 
 // memberCensuses is every member census kind. A retirement's members are every reference
 // to its owner, a posture's members are the static callers of its writer, and a
-// printed-field's members are the static writes of its field. An unkeyed literal of the
-// field's struct, or a conversion to it, keeps a printed-field census incomplete.
+// printed-field's members are the static writes of its field. Each unnamed write that
+// consumers.UnnamedWrites reports keeps a printed-field census incomplete.
 var memberCensuses = map[string]memberShape{
 	"retirement":    {[]string{"owner", "consumers"}, []string{"dispositions"}, "owner", "consumers", consumers.Rows, nil},
 	"posture":       {[]string{"owner", "callers", "writer_probe"}, []string{"callers"}, "owner", "callers", callRows, nil},
