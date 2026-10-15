@@ -4757,6 +4757,76 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft293-oc-c3-coverage-r2",
+          "performer": "claude:ft293_oc-c3_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "527be2de6597f11a2c7bf20618603b8b205f73db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_coverage_r2",
+            "digest": "sha256:3055d75713219b6407f8b6b1064a50c5753e41c346e9d98d6a7dd94923b79bf1",
+            "excerpt": "OC-C3 Coverage axis, confirming round after repair cycle 1 (opus / medium, one iteration), evidence sha256:788e2cb4d4059068fa76e91e51081132aa857aee09c53d41e400570a2e55e4bf bound at 25607967.\nClosure: C1 closed (premises_test.go:358, 362-375; charge_pack.go:111 sets Operation from kind; probe 1 bites). C2 closed (charge_fixture_test.go:131 stale p1 beside the valid native claim; PendingNative==1 then refusal p1). C3 closed (charge_fixture_test.go:133-142 row location, unowned ticket, two owners, foreign chunk, another ticket's v2 verification, wrong procedure; probe 2 bites). C4 closed (premises_test.go:387-398 ordinary build, plan-only, and review verdicts stay at exit 0 with no charge-premises).\nNew findings: none. 0 open.\nAdvice (no IDs): no premise-path fixture records bit with exit 0, so dropping the nonzero-exit branch of reviewrecord.ProbeBites stays green; agreement with the canonical validator holds by construction; graded advice under the hardening rule.\nProbes: command.go:87 op.Kind -> KindReadEvidence bit, first_failure TestChargeManualApplicability/OC94_current_evidence_refuses_an_unproved_current_premise, restored yes. premises.go:252 v.Ticket == w.Ticket -> v.Ticket != \"\" bit, first_failure TestChargeManualApplicability/OC95_another_ticket's_verification, restored yes.\ngit status --short empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "d9fc2b459f7b1318c84ce8967cb65b4b7f657f6b",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c3-coverage-r1"
+          ]
+        },
+        {
+          "id": "ft293-oc-c3-standards-r2",
+          "performer": "claude:ft293_oc-c3_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "527be2de6597f11a2c7bf20618603b8b205f73db",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_standards_r2",
+            "digest": "sha256:3e29e72775cadc0c24ef4e26ae0b02b95ebe7e8284571b3f2066e44f147ace7d",
+            "excerpt": "OC-C3 Standards axis, confirming round after repair cycle 1 (opus / medium, one iteration), evidence sha256:788e2cb4d4059068fa76e91e51081132aa857aee09c53d41e400570a2e55e4bf bound at 25607967.\nClosure: S1 closed (budgets.go:144 calls Lines). S2 closed (compileFailureExcerpt removed; build-failed refused by the bite predicate; forged bit refused by red_needle). S3 closed (evidence.go:213 calls reviewrecord.ProbeBites). S4 closed (inventorytest.Manifest is the one source; the one remaining literal at premises_test.go:36 goes red on drift). S5 closed (explicit Seal). S6 closed (anchored path, t.Fatalf). S7 closed (explicit OwnInventory; emptyTree(\"\") restored). S8 closed (explicit SpecBodyNoInventory). S9 closed (decision.go:353 reports ready.Blocker).\nNew: S10 T07 ownership/premises.go:220 validateNativeFuture reads the row location with strings.Contains(needle, \"| \"+w.Row+\" |\") plus the Behavior text, a second lexical reading of the coverage pipe table; coverage/rows.go:266-268 says no caller outside coverage splits the table again; a padded cell gets a false refusal. Needs a coverage seam (row line or locator). ask-user. conf 6.\nRepair choices graded sound: inventorytest; Seal, OwnInventory, SpecBodyNoInventory, Cut, review-fence table move; chargesource import (constants only); Blocker; dispatch op.Kind; ProbeBites with three callers; comment register.\nAdvice (no IDs): chargesource package doc names only its producer; premises_test.go:413-415 indexes ChargeArgs; sealedKit spells the registry path; moved helpers lack doc comments.\n1 open (S10).\n"
+          },
+          "axis": "Standards",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "d9fc2b459f7b1318c84ce8967cb65b4b7f657f6b",
+          "finding_ids": [
+            "S10"
+          ],
+          "supersedes": [
+            "ft293-oc-c3-standards-r1"
+          ]
+        },
+        {
+          "id": "ft293-oc-c3-spec-r2",
+          "performer": "claude:ft293_oc-c3_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "527be2de6597f11a2c7bf20618603b8b205f73db",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_spec_r2",
+            "digest": "sha256:6383e4667762b59aa5f219880c7e2c10bb6af15e15c29691f291d57a7f578d04",
+            "excerpt": "OC-C3 Spec axis, confirming round after repair cycle 1 (opus / medium, one iteration), evidence sha256:788e2cb4d4059068fa76e91e51081132aa857aee09c53d41e400570a2e55e4bf bound at 25607967.\nClosure: P1 closed (premises.go:86-97 checks every citation; premises_test.go:298, 337). P2 closed (charge_fixture_test.go:131; premises_test.go:362-375). P3 closed (premises_test.go:358, 368-371). P4 closed (premises.go:220, 223, 238, 246, 252; charge_fixture_test.go:133-142). P5 closed; decision matches spec 275-277 (ProbeBites is the canonical validator; red_needle refuses the forged bit). P6 closed; decision matches spec 60, 146 (OC52 by changed predicate bytes). P8 closed (premises_test.go:387-399).\nP7 partly open T07: command.go:79, 87 pass op.Kind into both charge routes, but the proposal (proposal.go:30), review charge (command.go:125), and verdict (command.go:158) routes still carry the zero KindVerdict (operations.go:21); spec 199 says Facts carries the registered kind. Behavior unchanged because gating reads only the two charge kinds. auto-fix. conf 4.\nRows: OC32-OC54, OC87-OC89, OC93-OC95 all held; none refuted, none unverified.\nNew findings: none.\nAdvice (no IDs): spec 188 does not list Blocker; the OC93 ready case asserts the retained manual diagnostic only through Complete false; collectChargeSnapshot builds its tickets by hand.\n1 open (P7, partial).\n"
+          },
+          "axis": "Spec",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "d9fc2b459f7b1318c84ce8967cb65b4b7f657f6b",
+          "finding_ids": [
+            "P7"
+          ],
+          "supersedes": [
+            "ft293-oc-c3-spec-r1"
+          ]
         }
       ]
     }
