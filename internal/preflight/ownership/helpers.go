@@ -18,13 +18,15 @@ const callersID = "caller-census"
 // census reads the static references of declared owners. Its tip side is the typed
 // packages of the checkout, which must be clean and at the source tip, loaded once on first
 // use; its base side reads the source base without types. A snapshot keeps only the
-// resolved identities that the census reads, never the packages themselves.
+// resolved identities that the census reads, never the packages themselves. tracked holds
+// the tracked paths of each commit that a sizing premise read.
 type census struct {
-	root   string
-	source Source
-	loaded bool
-	pkgs   []*consumers.Package
-	err    error
+	root    string
+	source  Source
+	loaded  bool
+	pkgs    []*consumers.Package
+	err     error
+	tracked map[string][]string
 }
 
 // use is one file that statically uses one changed declaration: the file and the line of
@@ -53,22 +55,28 @@ func (u use) reason(source Source) Provenance {
 		Base:   source.Base, Tip: source.Tip, Source: u.rev, Scope: ScopeTree}
 }
 
-// packages is the typed tip side. A checkout that is not the source tip would enumerate
-// bytes that the source pair does not hold, so it answers an error.
+// packages is the typed tip side, which reads the checkout at the source tip.
 func (c *census) packages() ([]*consumers.Package, error) {
 	if !c.loaded {
 		c.loaded = true
-		head, err := git.Output("-C", c.root, "rev-parse", "HEAD")
-		switch {
-		case err != nil:
-			c.err = fmt.Errorf("the checkout HEAD does not resolve: %w", err)
-		case head != c.source.Tip:
-			c.err = fmt.Errorf("the checkout HEAD %s is not the source tip %s", head, c.source.Tip)
-		default:
+		if c.err = c.atTip(); c.err == nil {
 			c.pkgs, c.err = consumers.Load(c.root)
 		}
 	}
 	return c.pkgs, c.err
+}
+
+// atTip refuses a checkout that is not the source tip, because a read of it would enumerate
+// bytes that the source pair does not hold.
+func (c *census) atTip() error {
+	head, err := git.Output("-C", c.root, "rev-parse", "HEAD")
+	switch {
+	case err != nil:
+		return fmt.Errorf("the checkout HEAD does not resolve: %w", err)
+	case head != c.source.Tip:
+		return fmt.Errorf("the checkout HEAD %s is not the source tip %s", head, c.source.Tip)
+	}
+	return nil
 }
 
 // declaration resolves one owner identity at the source tip: the declaration that its
@@ -163,11 +171,11 @@ func localName(owner Owner) string {
 	return name
 }
 
-// premises grades each current premise of a kind this census owns: a reused owner, and the
-// retirement, posture, and printed-field member censuses. It answers the graded row of each
-// such premise by ID, and the reason that locates each verified reused owner's rule source,
-// which the closure reads. A fault
-// leaves its premise unknown with that fault as the reason.
+// premises grades each current premise of a kind this census owns: a reused owner, the
+// retirement, posture, and printed-field member censuses, and the sizing premises. It
+// answers the graded row of each such premise by ID, and the reason that locates each
+// verified reused owner's rule source, which the closure reads. A fault leaves its premise
+// unknown with that fault as the reason.
 func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance) {
 	graded := map[string]Premise{}
 	var owners []Provenance
@@ -175,6 +183,7 @@ func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance
 		var reason string
 		var err error
 		shape, member := memberCensuses[item.Kind]
+		sizing, sized := sizingPremises[item.Kind]
 		switch {
 		case item.State != "current":
 			continue
@@ -185,6 +194,8 @@ func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance
 			}
 		case member:
 			reason, err = c.memberCensus(item, shape)
+		case sized:
+			reason, err = sizing(c, item)
 		default:
 			continue
 		}
@@ -234,12 +245,9 @@ func (c *census) reusedOwner(item PremiseItem) (Provenance, string, error) {
 // pinned source, and answers that source's commit. A moved or repeated needle is a fault,
 // never a nearby match.
 func (c *census) locate(loc Location) (string, error) {
-	rev := c.source.Tip
-	if loc.Source == "base" {
-		rev = c.source.Base
-	}
-	if rev == "" {
-		return "", fmt.Errorf("no source %s pins %s", loc.Source, loc.Path)
+	rev, err := c.rev(loc.Source, loc.Path)
+	if err != nil {
+		return "", err
 	}
 	data, err := git.ReadTreeFile(c.root, rev, loc.Path)
 	if err != nil {
@@ -248,6 +256,21 @@ func (c *census) locate(loc Location) (string, error) {
 	lines := strings.Split(string(data), "\n")
 	if loc.Line > len(lines) || strings.Count(strings.TrimSuffix(lines[loc.Line-1], "\r"), loc.Needle) != 1 {
 		return "", fmt.Errorf("%s line %d does not hold its needle exactly once at the source %s", loc.Path, loc.Line, loc.Source)
+	}
+	return rev, nil
+}
+
+// rev is the commit that a declared source of subject names: the explicit base or tip.
+func (c *census) rev(source, subject string) (string, error) {
+	if err := enum("", "source", source, "base", "tip"); err != nil {
+		return "", err
+	}
+	rev := c.source.Tip
+	if source == "base" {
+		rev = c.source.Base
+	}
+	if rev == "" {
+		return "", fmt.Errorf("no source %s pins %s", source, subject)
 	}
 	return rev, nil
 }

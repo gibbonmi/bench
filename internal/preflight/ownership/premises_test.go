@@ -1,12 +1,15 @@
 package ownership_test
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
 // itemLocation is the spec location every item of these cases carries.
@@ -48,7 +51,7 @@ func TestMetadataGrammar(t *testing.T) {
 		{"unclosed fence", "\n```bench-planning-facts\n" + completeEmpty + "\n", "metadata", "unknown", "not closed"},
 		{"nested fence", "\n```bench-planning-facts\n" + completeEmpty + "\n```json\n```\n", "metadata", "unknown", "another fence marker"},
 		{"missing array", fenced(strings.Replace(completeEmpty, `,"manual_claims":[]`, "", 1)), "metadata", "unknown", `missing field "manual_claims"`},
-		{"current premise stays unproved", fenced(withPremises(linesPremise("p1"))), "p1", "unknown", "lines"},
+		{"stale current premise stays unproved", fenced(withPremises(strings.Replace(linesPremise("p1"), `"count":1`, `"count":2`, 1))), "p1", "unknown", "lines"},
 		{"current-premise manual claim", fenced(manualClaim(`"applicability":"current-premise"`)), "semantic", "manual", "current-premise"},
 		{"CRLF fence section", strings.ReplaceAll(fenced(manualClaim(`"applicability":"current-premise"`)), "\n", "\r\n"), "semantic", "manual", "current-premise"},
 		{"current-premise rejects native fields", fenced(manualClaim(`"applicability":"current-premise","row":"PF1"`)), "metadata", "unknown", `unknown field "row"`},
@@ -102,5 +105,108 @@ func TestMetadataGrammarFenceRoles(t *testing.T) {
 	}
 	if !reflect.DeepEqual(lines, want) || !reflect.DeepEqual(diagnostics, []string{"duplicate Owner"}) {
 		t.Fatalf("Scan = %#v, %#v; want %#v and one duplicate", lines, diagnostics, want)
+	}
+}
+
+// sizingBase is the committed base of every sizing case. The sized directory holds three
+// sources under a three-file budget row; the granted directory holds one source under a
+// one-file budget row and an accept grant. The glob directory holds a tracked dot member,
+// a literal metacharacter name, its class-matching twin, and a nested file. limits.go holds
+// the owner needles that a headroom premise locates.
+var sizingBase = map[string]string{
+	"internal/sized/a.go":       "package sized\n",
+	"internal/sized/b.go":       "package sized\n",
+	"internal/sized/c.go":       "package sized\n",
+	"internal/granted/g.go":     "package granted\n",
+	"internal/glob/.hidden.go":  "package glob\n",
+	"internal/glob/a1.go":       "package glob\n",
+	"internal/glob/a[1].go":     "package glob\n",
+	"internal/glob/visible.go":  "package glob\n",
+	"internal/glob/sub/deep.go": "package sub\n",
+	"internal/limits/limits.go": "package limits\n\nconst maxFiles = 12\n\nfunc acceptedReason() {}\n",
+	".bench/structure.budgets":  "internal/sized/ 3\ninternal/granted/ 1\n",
+	".bench/structure-accept":   "internal/granted/ one cohesive family\n",
+}
+
+// globItem is one current glob-members premise over the glob directory.
+func globItem(id, pattern, members string) string {
+	return premiseItem(id, "glob-members", `{"pattern":"`+pattern+`","scope":"internal/glob/","source":"tip"}`, `{"members":[`+members+`]}`)
+}
+
+// headroomItem is one current headroom premise whose plan and expected counts the case
+// supplies; its owner locations name the needles of limits.go.
+func headroomItem(id, dir, create, remove string, maximum, current, net int) string {
+	owner := func(line int, needle string) string {
+		return `{"path":"internal/limits/limits.go","line":` + fmt.Sprint(line) + `,"needle":"` + needle + `","source":"tip"}`
+	}
+	return premiseItem(id, "headroom", `{"directory":"`+dir+`","files":{"create":[`+create+`],"delete":[`+remove+`]}}`,
+		fmt.Sprintf(`{"maximum":%d,"current":%d,"net":%d,"budget_owner":%s,"grant_owner":%s}`, maximum, current, net, owner(3, "const maxFiles"), owner(5, "func acceptedReason(")))
+}
+
+// TestSizingPremises drives the line-count, glob-member, and headroom collectors through
+// the actual proposal. The tip adds one physical line to a.go, so a count names its source.
+// Each unproved form keeps its premise unknown with the reason the case names.
+func TestSizingPremises(t *testing.T) {
+	lines := func(id, path, source string, count int) string {
+		return premiseItem(id, "lines", `{"path":"`+path+`","source":"`+source+`"}`, fmt.Sprintf(`{"count":%d}`, count))
+	}
+	const (
+		hidden, a1, literal, visible = `"internal/glob/.hidden.go"`, `"internal/glob/a1.go"`, `"internal/glob/a[1].go"`, `"internal/glob/visible.go"`
+		plannedLines                 = `{"id":"lines-planned",` + itemLocation + `,"kind":"lines","state":"planned","subject":{"path":"internal/sized/future.go","source":"tip"},"expected":{"count":40}}`
+	)
+	facts := withItems("premises",
+		lines("lines-stale", "internal/sized/a.go", "tip", 1),
+		lines("lines-tip", "internal/sized/a.go", "tip", 2),
+		lines("lines-base", "internal/sized/a.go", "base", 1),
+		lines("lines-unbuilt", "internal/sized/future.go", "tip", 40),
+		plannedLines,
+		globItem("glob-visible-only", "internal/glob/*.go", a1+","+literal+","+visible),
+		globItem("glob-complete", "internal/glob/*.go", hidden+","+a1+","+literal+","+visible),
+		globItem("glob-literal", `internal/glob/a\\[1\\].go`, literal),
+		globItem("glob-class", "internal/glob/a[1].go", literal),
+		globItem("glob-unsorted", "internal/glob/*.go", visible+","+hidden+","+a1+","+literal),
+		globItem("glob-recursive", "internal/glob/**/*.go", ""),
+		globItem("glob-escaping", "internal/sized/*.go", ""),
+		globItem("glob-malformed", "internal/glob/[", ""),
+		headroomItem("headroom-limit", "internal/sized", "", "", 3, 3, 0),
+		headroomItem("headroom-copied-cap", "internal/sized", "", "", 12, 3, 0),
+		headroomItem("headroom-swap", "internal/sized", `"internal/sized/d.go"`, `"internal/sized/b.go"`, 3, 3, 0),
+		headroomItem("headroom-ignored-deletion", "internal/sized", `"internal/sized/d.go"`, `"internal/sized/b.go"`, 3, 3, 1),
+		headroomItem("headroom-over", "internal/sized", `"internal/sized/d.go"`, "", 3, 3, 1),
+		headroomItem("headroom-absent-deletion", "internal/sized", "", `"internal/sized/z.go"`, 3, 3, -1),
+		headroomItem("headroom-granted", "internal/granted", `"internal/granted/n.go"`, "", 1, 1, 1))
+	root := ownershiptest.ProposalRepo{Writes: []string{"internal/sized/a.go"}, Files: sizingBase, Tail: facts}.Seed(t)
+	preflighttest.MustWriteFile(t, "internal/sized/a.go", "package sized\n\n")
+	preflighttest.RunGit(t, "add", "-A")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "tip")
+	out := mustPropose(t, root)
+	for _, test := range []struct{ row, id, state, reason string }{
+		{"OC32", "lines-stale", "unknown", "holds 2 line(s) at the source tip"},
+		{"OC32", "lines-tip", "green", "holds 2 line(s) at the source tip"},
+		{"OC32", "lines-base", "green", "holds 1 line(s) at the source base"},
+		{"OC33", "glob-visible-only", "unknown", "omits internal/glob/.hidden.go"},
+		{"OC33", "glob-complete", "green", "4 tracked member(s)"},
+		{"OC34", "glob-literal", "green", "1 tracked member(s)"},
+		{"OC34", "glob-class", "unknown", "omits internal/glob/a1.go; names internal/glob/a[1].go, which is no member"},
+		{"OC35", "glob-recursive", "unknown", "recursive"},
+		{"OC35", "glob-escaping", "unknown", "escapes its scope"},
+		{"OC35", "glob-malformed", "unknown", "syntax"},
+		{"OC35", "glob-unsorted", "unknown", "complete sorted"},
+		{"OC36", "headroom-limit", "green", "limit 3"},
+		{"OC36", "headroom-copied-cap", "unknown", "maximum 12, the canonical limit is 3"},
+		{"OC36", "headroom-over", "unknown", "exceeds"},
+		{"OC36", "headroom-granted", "green", "one cohesive family"},
+		{"OC37", "headroom-swap", "green", "net 0"},
+		{"OC37", "headroom-ignored-deletion", "unknown", "net 1, the plan nets 0"},
+		{"OC37", "headroom-absent-deletion", "unknown", "internal/sized/z.go is no tracked source"},
+		{"OC38", "lines-unbuilt", "unknown", "unobserved estimate"},
+		{"OC38", "lines-planned", "planned", "certifies no current source"},
+	} {
+		t.Run(test.row+" "+test.id, func(t *testing.T) {
+			row := one(t, out, "premises", map[string]string{"id": test.id})
+			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
+			}
+		})
 	}
 }
