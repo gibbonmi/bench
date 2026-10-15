@@ -1,7 +1,7 @@
 # Check recorded behavioral evidence without authenticating execution
 
 Blocked by: 05-check-symbol-and-rule-premises.md
-Writes: internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/proposal.go
+Writes: internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/proposal.go, internal/reviewrecord/check.go
 Covers: OC48, OC49, OC50, OC87
 
 ## What to build
