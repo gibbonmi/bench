@@ -14,7 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
-	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -65,13 +64,16 @@ func Cut(t *testing.T, s, part string) string {
 // from the ticket union. The spec declares the complete-empty inventory unless
 // OwnInventory is set; Tail then closes the spec, so its bytes are part of what the fixture
 // admits. Files are committed in the base; a charge source that Files omits takes a
-// one-line body.
+// one-line body. Seal publishes a verified kit binary over the kit's binding registry, so
+// that registry source is the authenticated kit context; a registry that Files omits takes
+// the kit's own.
 type ProposalRepo struct {
 	Writes       []string
 	Others       map[string][]string
 	Files        map[string]string
 	Fence        []string
 	OwnInventory bool
+	Seal         bool
 	Tail         string
 }
 
@@ -100,7 +102,7 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 	spec := "specs/" + slug + "/spec.md"
 	body := preflighttest.SpecBody(slug, fence...)
 	if r.OwnInventory {
-		body = Cut(t, body, inventorytest.Section(inventorytest.CompleteEmpty))
+		body = preflighttest.SpecBodyNoInventory(slug, fence...)
 	}
 	preflighttest.MustWriteFile(t, spec, body+r.Tail)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), r.Writes...), "PF1", "PF2"))
@@ -115,11 +117,9 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 			preflighttest.MustWriteFile(t, source, body)
 		}
 	}
-	_, hasRegistry := r.Files["internal/tickets/registry_data.go"]
-	seal := hasRegistry || (len(r.Others) > 0 && len(r.Writes) >= 4)
-	if seal {
-		if !hasRegistry {
-			preflighttest.MustWriteFile(t, "internal/tickets/registry_data.go", string(KitRegistry(t)))
+	if r.Seal {
+		if _, given := r.Files[tickets.BindingRegistry]; !given {
+			preflighttest.MustWriteFile(t, tickets.BindingRegistry, string(KitRegistry(t)))
 		}
 		preflighttest.MustWriteFile(t, "go.mod", "module example.com/kit\n\ngo 1.25\n")
 		preflighttest.MustWriteFile(t, "cmd/bench/main.go", "package main\n\nimport _ \"example.com/kit/internal/tickets\"\n\nfunc main() {}\n")
@@ -134,7 +134,7 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 	preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n")
 	preflighttest.RunGit(t, "add", "internal/example/foo.go")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
-	if seal {
+	if r.Seal {
 		staged := filepath.Join(t.TempDir(), "bench")
 		if err := os.WriteFile(staged, []byte("Bench executable"), 0o755); err != nil {
 			t.Fatal(err)

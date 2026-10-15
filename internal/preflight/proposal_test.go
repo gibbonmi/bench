@@ -22,10 +22,15 @@ func seedProposal(t *testing.T) (string, string) {
 		map[string]string{"two.md": "tests/canary/example-family/pinning-fixture/EXPECT"})
 }
 
-// seedProposalWith fences every entry the tickets write, so only extraFence can leave the
-// fence and the ticket union apart. The selected ticket also writes the conformant fence.
+// seedProposalWith seeds proposalRepo over the given writes, with no kit seal.
 func seedProposalWith(t *testing.T, selectedWrites string, others map[string]string, extraFence ...string) (string, string) {
 	t.Helper()
+	return proposalRepo(selectedWrites, others, extraFence...).Seed(t), "example"
+}
+
+// proposalRepo fences every entry the tickets write, so only extraFence can leave the fence
+// and the ticket union apart. The selected ticket also writes the conformant fence.
+func proposalRepo(selectedWrites string, others map[string]string, extraFence ...string) ownershiptest.ProposalRepo {
 	repo := ownershiptest.ProposalRepo{Writes: strings.Split(selectedWrites, ", "), Others: map[string][]string{}, Files: map[string]string{
 		"tests/canary/example-family/pinning-fixture/BASE":   "internal/example/pinned.go\n",
 		"tests/canary/example-family/pinning-fixture/EXPECT": "fixture\n",
@@ -45,7 +50,7 @@ func seedProposalWith(t *testing.T, selectedWrites string, others map[string]str
 			repo.Fence = append(repo.Fence, "- `"+entry+"`")
 		}
 	}
-	return repo.Seed(t), "example"
+	return repo
 }
 
 func writeProposalTicket(t *testing.T, slug, name, title, blockers string, writes ...string) {
@@ -103,14 +108,18 @@ func TestWritesProposalLinkedRepoNeedsNoKitRegistrySource(t *testing.T) {
 	}
 }
 
-// TestWritesProposalAlreadyCovered covers DP13 without adding a repeat request.
+// TestWritesProposalAlreadyCovered covers DP13 without adding a repeat request. The kit
+// seal certifies the registry source, so the approved charge prepares.
 func TestWritesProposalAlreadyCovered(t *testing.T) {
 	for _, test := range []struct{ name, writes string }{
 		{"exact", "internal/example/pinned.go, tests/canary/example-family/pinning-fixture, internal/toon/toon.go, internal/conformance/data_handling_test.go, internal/toon/toon_test.go"},
 		{"prefix", "internal/example/pinned.go, tests/canary, internal/toon, internal/conformance"},
+		{"three prefixes", "internal/toon, internal/conformance, tests/canary"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			root, slug := seedProposalWith(t, test.writes, map[string]string{"two.md": "tests/canary/example-family/pinning-fixture/EXPECT"})
+			repo := proposalRepo(test.writes, map[string]string{"two.md": "tests/canary/example-family/pinning-fixture/EXPECT"})
+			repo.Seal = true
+			root, slug := repo.Seed(t), "example"
 			writeProposalTicket(t, slug, "two.md", "Two", "one.md", "tests/canary/example-family/pinning-fixture/EXPECT")
 			preflighttest.RunGit(t, "add", "specs/"+slug)
 			preflighttest.RunGit(t, "commit", "-q", "-m", "approve closure and ordering")

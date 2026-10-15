@@ -195,6 +195,7 @@ func sealedKit(t *testing.T) (string, string) {
 	}
 	line := fmt.Sprint(lines["internal/toon"])
 	kit := ownershiptest.ProposalRepo{
+		Seal:   true,
 		Writes: []string{"internal/toon/toon.go"},
 		Files: map[string]string{
 			"internal/tickets/registry_data.go":          string(registry),

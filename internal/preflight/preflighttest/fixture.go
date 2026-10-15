@@ -41,42 +41,6 @@ var ConformantFence = []string{
 	".agents/commands/bench-implement-spec.md",
 }
 
-// reviewFenceExtra are the fence entries SeedReviewEvidence's spec adds to ConformantFence,
-// each beside the annotation its line carries. The seeded spec lines and ReviewFence both
-// derive from this table, so the fixture states its own fence once.
-var reviewFenceExtra = []struct{ path, annotation string }{
-	{"target/", "review fixture"},
-	{"edited/", "review fixture"},
-	{"outside/", "review fixture"},
-	{"notes/", "review fixture"},
-	{".agents/skills/bench-craft-review/", "review instructions"},
-	{".agents/commands/bench-review-implementation.md", "review phase"},
-}
-
-// ReviewFence is the complete ownership fence SeedReviewEvidence's spec declares, in
-// document order.
-func ReviewFence() []string {
-	fence := append([]string{}, ConformantFence...)
-	for _, entry := range reviewFenceExtra {
-		fence = append(fence, entry.path)
-	}
-	return fence
-}
-
-// reviewFenceLines renders the extra fence entries as the spec's own document lines.
-func reviewFenceLines() []string {
-	lines := make([]string, len(reviewFenceExtra))
-	for i, entry := range reviewFenceExtra {
-		lines[i] = fenceLine(entry.path, entry.annotation)
-	}
-	return lines
-}
-
-// fenceLine renders one fence entry as the spec's own document line.
-func fenceLine(path, annotation string) string {
-	return "- `" + path + "` (" + annotation + ")"
-}
-
 // RunGit runs one git command in the working directory and returns its trimmed output.
 func RunGit(t *testing.T, args ...string) string {
 	t.Helper()
@@ -151,10 +115,19 @@ func PlanSection(plan reviewrecord.Plan) string {
 }
 
 // SpecBody renders a bootstrap-conformant spec for slug. It has staged status, a valid
-// opted-in coverage map declaring rows PF1 and PF2, and the ConformantFence entries plus
-// extraFenceLines, the complete-empty inventory unless the first extra line opens the review
-// fence, and the completion plan over the tickets/one.md that every seed writes.
+// opted-in coverage map declaring rows PF1 and PF2, the ConformantFence entries plus
+// extraFenceLines, the complete-empty inventory, and the completion plan over the
+// tickets/one.md that every seed writes.
 func SpecBody(slug string, extraFenceLines ...string) string {
+	return specBody(slug, true, extraFenceLines)
+}
+
+// SpecBodyNoInventory is SpecBody with no planning inventory section.
+func SpecBodyNoInventory(slug string, extraFenceLines ...string) string {
+	return specBody(slug, false, extraFenceLines)
+}
+
+func specBody(slug string, inventory bool, extraFenceLines []string) string {
 	var b strings.Builder
 	b.WriteString("# " + slug + "\n\nStatus: staged\n\n")
 	b.WriteString("## User stories\n1. As a, I want b, so c.\n\n")
@@ -171,7 +144,7 @@ func SpecBody(slug string, extraFenceLines ...string) string {
 	for _, line := range extraFenceLines {
 		b.WriteString(line + "\n")
 	}
-	if len(extraFenceLines) == 0 || extraFenceLines[0] != fenceLine(reviewFenceExtra[0].path, reviewFenceExtra[0].annotation) {
+	if inventory {
 		b.WriteString(inventorytest.Section(inventorytest.CompleteEmpty))
 	}
 	b.WriteString(PlanFence("one.md"))
