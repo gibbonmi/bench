@@ -14,24 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// itemLocation is the spec location every item of these cases carries.
-const itemLocation = `"location":{"path":"specs/example/spec.md","line":1,"needle":"# example","source":"spec"}`
-
-// linesPremise is one well-formed current premise item with the given id.
-func linesPremise(id string) string {
-	return `{"id":"` + id + `",` + itemLocation + `,"kind":"lines","state":"current","subject":{"path":"internal/example/foo.go","source":"tip"},"expected":{"count":1}}`
-}
-
-// withPremises is the complete-empty inventory holding the given premise items.
-func withPremises(items ...string) string {
-	return strings.Replace(completeEmpty, `"premises":[]`, `"premises":[`+strings.Join(items, ",")+`]`, 1)
-}
-
-// manualClaim is one manual claim item whose applicability tail the case supplies.
-func manualClaim(tail string) string {
-	return strings.Replace(completeEmpty, `"manual_claims":[]`, `"manual_claims":[{"id":"semantic",`+itemLocation+`,"reason":"semantic equivalence requires review",`+tail+`}]`, 1)
-}
-
 // TestMetadataGrammar drives each planning-facts grammar case through the actual proposal.
 // A diagnostic case keeps the inventory incomplete, so the premises table names it; a
 // valid inventory reports its own items instead.
@@ -110,41 +92,6 @@ func TestMetadataGrammarFenceRoles(t *testing.T) {
 	}
 }
 
-// sizingBase is the committed base of every sizing case. The sized directory holds three
-// sources under a three-file budget row; the granted directory holds one source under a
-// one-file budget row and an accept grant. The glob directory holds a tracked dot member,
-// a literal metacharacter name, its class-matching twin, and a nested file. limits.go holds
-// the owner needles that a headroom premise locates.
-var sizingBase = map[string]string{
-	"internal/sized/a.go":       "package sized\n",
-	"internal/sized/b.go":       "package sized\n",
-	"internal/sized/c.go":       "package sized\n",
-	"internal/granted/g.go":     "package granted\n",
-	"internal/glob/.hidden.go":  "package glob\n",
-	"internal/glob/a1.go":       "package glob\n",
-	"internal/glob/a[1].go":     "package glob\n",
-	"internal/glob/visible.go":  "package glob\n",
-	"internal/glob/sub/deep.go": "package sub\n",
-	"internal/limits/limits.go": "package limits\n\nconst maxFiles = 12\n\nfunc acceptedReason() {}\n",
-	".bench/structure.budgets":  "internal/sized/ 3\ninternal/granted/ 1\n",
-	".bench/structure-accept":   "internal/granted/ one cohesive family\n",
-}
-
-// globItem is one current glob-members premise over the glob directory.
-func globItem(id, pattern, members string) string {
-	return premiseItem(id, "glob-members", `{"pattern":"`+pattern+`","scope":"internal/glob/","source":"tip"}`, `{"members":[`+members+`]}`)
-}
-
-// headroomItem is one current headroom premise whose plan and expected counts the case
-// supplies; its owner locations name the needles of limits.go.
-func headroomItem(id, dir, create, remove string, maximum, current, net int) string {
-	owner := func(line int, needle string) string {
-		return `{"path":"internal/limits/limits.go","line":` + fmt.Sprint(line) + `,"needle":"` + needle + `","source":"tip"}`
-	}
-	return premiseItem(id, "headroom", `{"directory":"`+dir+`","files":{"create":[`+create+`],"delete":[`+remove+`]}}`,
-		fmt.Sprintf(`{"maximum":%d,"current":%d,"net":%d,"budget_owner":%s,"grant_owner":%s}`, maximum, current, net, owner(3, "const maxFiles"), owner(5, "func acceptedReason(")))
-}
-
 // TestSizingPremises drives the line-count, glob-member, and headroom collectors through
 // the actual proposal. The tip adds one physical line to a.go, so a count names its source.
 // Each unproved form keeps its premise unknown with the reason the case names.
@@ -211,67 +158,6 @@ func TestSizingPremises(t *testing.T) {
 			}
 		})
 	}
-}
-
-// symbolModule is the module of every symbol and rule premise case. It is the kit module, so
-// its internal/anchors package declares the anchors kind inventory that the collector reads.
-const symbolModule = "github.com/gibbonmi/bench"
-
-// symbolBase is the committed module of every symbol and rule premise case. other.go
-// repeats the familiar sentinel name, the bound's value, and the name Check of rules.go, and
-// it imports rules, so an edge back from rules closes a cycle. local.go holds a same-valued
-// literal of the bound. The secret package sits under the internal directory of other.
-var symbolBase = map[string]string{
-	"go.mod": "module " + symbolModule + "\n\ngo 1.25\n",
-	"internal/rules/rules.go": `package rules
-
-import (
-	"errors"
-	"os"
-)
-
-// ErrMissing is the sentinel that Check returns.
-var ErrMissing = errors.New("missing")
-
-var errDynamic = errors.New(reason())
-
-const maxRows = 2 << 4
-
-var limit = len(os.Args)
-
-type staticError struct{}
-
-func (staticError) Error() string { return "static" }
-
-type dynamicError struct {
-	// msg is the text that the caller sets.
-	msg string
-}
-
-func (e dynamicError) Error() string { return e.msg }
-
-func reason() string { return "dynamic" }
-
-func Check(rows int) error {
-	if rows > maxRows || rows > limit {
-		return ErrMissing
-	}
-	return errDynamic
-}
-
-func fail(dynamic bool) error {
-	if dynamic {
-		return dynamicError{msg: "dynamic"}
-	}
-	return staticError{}
-}
-
-func write(v int) int { return v }
-`,
-	"internal/rules/local.go":                  "package rules\n\nconst localMax = 32\n",
-	"internal/other/other.go":                  "package other\n\nimport (\n\t\"errors\"\n\n\t\"" + symbolModule + "/internal/rules\"\n)\n\nvar ErrMissing = errors.New(\"missing\")\n\nconst maxRows = 32\n\nfunc Check() error { return rules.Check(maxRows) }\n",
-	"internal/other/internal/secret/secret.go": "package secret\n\nfunc Exported() {}\n",
-	"internal/anchors/match.go":                "package anchors\n\ntype Kind uint8\n\nconst (\n\tRequire Kind = iota\n\tRequireInSection\n\tRequireInStep\n)\n\nconst Width = 3\n",
 }
 
 // TestSymbolPremises drives the symbol, import, anchor-kind, sentinel, error, and bound
@@ -369,6 +255,52 @@ func TestSymbolPremises(t *testing.T) {
 		{"OC46", "bound-local-literal", "unknown", "rules.maxRows is declared in internal/rules/rules.go, not internal/rules/local.go"},
 		{"OC46", "bound-text", "unknown", "holds the constant value 32, not 2 << 4"},
 		{"OC47", "bound-runtime", "unknown", "rules.limit is a var, so its value is no static bound"},
+	} {
+		t.Run(test.row+" "+test.id, func(t *testing.T) {
+			row := one(t, out, "premises", map[string]string{"id": test.id})
+			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
+			}
+		})
+	}
+}
+
+// TestEvidencePremises drives the reused-test premise collector through the actual
+// proposal over committed review-record fixtures. Only a source-bound record whose named
+// verification carries a restored, biting behavioral probe of the named test subject with
+// red_needle turns green; every unproved form stays unknown with a diagnostic reason.
+func TestEvidencePremises(t *testing.T) {
+	files := map[string]string{
+		evidenceTestPath: "package reused\n\nimport \"testing\"\n\nfunc " + evidenceTestFunc + "(t *testing.T) {}\n",
+	}
+	root := ownershiptest.ProposalRepo{Writes: []string{"internal/example/after.go"}, Files: files}.Seed(t)
+	commits := seedEvidenceCommits(t, root)
+	facts := withItems("premises",
+		reusedTestItem("evidence-certified", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.valid, "1", "tests", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-missing-record", evidenceTestPath, evidenceTestFunc, "specs/unrecorded/spec.md", commits.source, commits.valid, "1", "tests", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-stale-source", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.valid, commits.valid, "1", "tests", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-confirmation", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.valid, "1", "confirm-1", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-other-subject", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.otherSubject, "1", "tests", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-other-mutation", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.valid, "1", "tests", "other mutation", evidenceNeedle),
+		reusedTestItem("evidence-missing-needle", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.missingNeedle, "1", "tests", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-absent-func", evidenceTestPath, "TestAbsent", evidenceSpec, commits.source, commits.valid, "1", "tests", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-unrestored-planned", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.unrestoredPlanned, "1", "tests", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-unrestored-probe", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.unrestored, "1", "additional", evidenceMutation, evidenceNeedle),
+		reusedTestItem("evidence-compile-failure", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.compileFailure, "1", "tests", evidenceMutation, evidenceNeedle))
+	writeEvidenceSpec(t, root, facts)
+	out := mustPropose(t, root)
+	for _, test := range []struct{ row, id, state, reason string }{
+		{"OC48", "evidence-certified", "green", "is certified by specs/prior/spec.md chunk 1 verification tests"},
+		{"OC48", "evidence-missing-record", "unknown", "failed check for source_commit"},
+		{"OC48", "evidence-stale-source", "unknown", "binds to"},
+		{"OC48", "evidence-confirmation", "unknown", "coordinator confirmation, not a verification"},
+		{"OC49", "evidence-other-subject", "unknown", "does not witness test subject TestReused"},
+		{"OC49", "evidence-other-mutation", "unknown", `probe mutation is "omit source check", not "other mutation"`},
+		{"OC49", "evidence-missing-needle", "unknown", `does not hold red_needle "expected behavioral needle"`},
+		{"OC49", "evidence-absent-func", "unknown", "declares no test function TestAbsent"},
+		{"OC50", "evidence-unrestored-planned", "unknown", "restore failed"},
+		{"OC50", "evidence-unrestored-probe", "unknown", `probe restoration is "fail", not "pass"`},
+		{"OC87", "evidence-compile-failure", "unknown", "records a compile failure rather than a behavioral failure of TestReused"},
 	} {
 		t.Run(test.row+" "+test.id, func(t *testing.T) {
 			row := one(t, out, "premises", map[string]string{"id": test.id})

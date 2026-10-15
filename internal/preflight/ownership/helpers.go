@@ -171,12 +171,11 @@ func localName(owner Owner) string {
 	return name
 }
 
-// premises grades each current premise of a kind this census owns: a reused owner, the
-// retirement, posture, and printed-field member censuses, the sizing premises, and the
-// symbol and rule premises. It
-// answers the graded row of each such premise by ID, and the reason that locates each
-// verified reused owner's rule source, which the closure reads. A fault leaves its premise
-// unknown with that fault as the reason.
+// premises grades each current premise of a kind this census owns: a reused owner, a reused
+// test, the retirement, posture, and printed-field member censuses, the sizing premises, and
+// the symbol and rule premises. It answers the graded row of each such premise by ID, and
+// the reason that locates each verified reused owner's rule source, which the closure reads.
+// A fault leaves its premise unknown with that fault as the reason.
 func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance) {
 	graded := map[string]Premise{}
 	var owners []Provenance
@@ -196,6 +195,8 @@ func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance
 			if owner, reason, err = c.reusedOwner(item); err == nil {
 				owners = append(owners, owner)
 			}
+		case item.Kind == "reused-test":
+			reason, err = c.reusedTest(item)
 		case member:
 			reason, err = c.memberCensus(item, shape)
 		case collected:
