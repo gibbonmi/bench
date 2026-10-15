@@ -3145,6 +3145,75 @@
           "supersedes": [
             "ft293-oc-c2-coverage-r4"
           ]
+        },
+        {
+          "id": "ft293-oc-c2-standards-r6",
+          "performer": "claude:ft293_oc-c2_standards_r6",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c7979e3262180f27c9a94c7de4b040a41a8532b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_standards_r6",
+            "digest": "sha256:7571b2e9756b496e93170270567b064920a915ec069b3ed3f5ad88c89d034d00",
+            "excerpt": "## Result\nNo finding. The evidence binds: `current=true`, `dirty_record=false`, tip `75f73194`. There is no `internal/` change between `1395b49d` and the tip.\n\nThe removed path is fully gone. A search of the whole tree finds no remaining `identicalKeys`, `viaConversion`, `*ast.CallExpr` conversion branch, or `writesOnly` hook in `useRows`. The comments that described the old behavior were rewritten in present tense: `WriteRows` (rows.go:66-68), `UnnamedWrites` (rows.go:80-86), `writesStruct` (rows.go:170-171), `literalStructs` (resolve.go:305-306), `fieldStruct` (resolve.go:269-271), and `memberCensuses` (members.go:45-48). Struct identity still comes only from `structKey`, and `identicalType` uses it rather than a second comparison.\n\n## Advice\n- `identicalType` returns a predicate, but its doc says it \"reports whether\" (rows.go:131).\n- The generic-struct check at rows.go:102-105 does not depend on the package but runs inside the per-package loop.\n- \"The three Via values\" (rows.go:73) is a count that has to change whenever the constant block changes.\n"
+          },
+          "axis": "Standards",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "e382cdac4398cf16f0ef929b637fbb41dbc71edb",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-standards-r5"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-spec-r6",
+          "performer": "claude:ft293_oc-c2_spec_r6",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c7979e3262180f27c9a94c7de4b040a41a8532b6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_spec_r6",
+            "digest": "sha256:c528f80370a7b8ee2363aabc62ce176d8d91284eefb4c2144332f7d80c88d2a8",
+            "excerpt": "Evidence sha256:280f913a… was current (tip 75f7319, record clean). The internal diff from 1395b49 to the tip is empty, so I graded the committed cycle 5 delta.\n\nP10 is closed. `internal/consumers/rows.go:102-105` makes a generic named struct diagnostic at its declaration. Tests at `internal/preflight/ownership/fieldwrites_test.go:55-57`.\n\nP11 is closed. `identicalType` (`rows.go:134-168`), fed by `Info.Types` and `Info.Defs` (`rows.go:107-116`), reports the unnamed identical struct. Test at `fieldwrites_test.go:52`.\n\nKeyed writes of the field's own struct stay producers (`fieldwrites_test.go:40`). An unkeyed literal stays diagnostic (`rows.go:119-123`).\n\nP12 (blocking, rule sentence 3, in scope, confidence 8). A conversion from a struct type that differs only in field tags reads green. Go ignores tags in a conversion, so `type other struct{ Reason string `json:\"r\"` }; func renderC(o other) row { return row(o) }` writes `row.Reason`. But `structKey` includes tags (`types.TypeString`, `internal/consumers/resolve.go:265-267`), so `identicalType` (`rows.go:154`) never matches. Rule sentence 3 says \"a conversion from another type\" stays diagnostic.\n\nP13 (blocking, rule sentence 4, in scope, confidence 4). A generic alias, `type row[T any] = struct{ Reason T }`, skips the generic check: `own.Type()` is a `*types.Alias`, not a `*types.Named` (`rows.go:102`). An unkeyed `row[string]{\"c\"}` then misses the `structKey` match and reads green.\n\nOC28-OC31 hold by reading.\n\nAdvice: add a tag-differing conversion row to the `fieldwrites_test.go` table.\n"
+          },
+          "axis": "Spec",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "e382cdac4398cf16f0ef929b637fbb41dbc71edb",
+          "finding_ids": [
+            "P12",
+            "P13"
+          ],
+          "supersedes": [
+            "ft293-oc-c2-spec-r5"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-coverage-r6",
+          "performer": "claude:ft293_oc-c2_coverage_r6",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c7979e3262180f27c9a94c7de4b040a41a8532b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_coverage_r6",
+            "digest": "sha256:60283ab3a79a666160bde977a8a62c4039992c62db1a2a594a4ccf43d14407df",
+            "excerpt": "Coverage round 6 for OC-C2: no finding. The evidence binds: `current=true`, `dirty_record=false`, tip 75f7319464ad.\n\nProbe: removed `add(own.Pos(), viaGeneric)` from `internal/consumers/rows.go:103`, ran `--package ./internal/preflight/... --run TestOwnerPremises`. Verdict `bit`, 3 tests failed, first_failure `TestOwnerPremises/a_generic_struct_with_no_added_write` (also `an_instantiation_conversion`, `an_unkeyed_instantiation_literal`); restored `yes`.\n\nCase grading (`internal/preflight/ownership/fieldwrites_test.go`): generic instantiation literal (line 56) and conversion (line 57) expect `unknown`; implicit assignment (line 52) and bare identical type (line 53) expect `identical`; plain keyed census of a non-generic struct (line 54) stays green with 2 members.\n\nAdvice: the generic branch at rows.go:104 returns inside the package loop and skips `sortRows`; harmless.\n\n`git status --short` printed nothing.\n"
+          },
+          "axis": "Coverage",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "e382cdac4398cf16f0ef929b637fbb41dbc71edb",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-coverage-r5"
+          ]
         }
       ]
     }
@@ -3353,3 +3422,10 @@ Repair cycle 5 closes the class by type presence, under the reviewer's fail-clos
 
 - P10 (auto-fix, confidence 7): `internal/consumers/resolve.go:265` keys an instantiation of a generic struct apart from its origin, so `row[string]{"c"}` escapes.
 - P11 (auto-fix, confidence 6): an implicit assignment from an unnamed identical struct type, such as `var r row = s`, leaves the census green.
+
+## OC-C2 fifth confirming round
+
+Repair cycle 5 closed P10 and P11 by type presence. The round found two defects in the identity test itself, and the reviewer chose repair cycle 6 for both.
+
+- P12 (auto-fix, confidence 8): `internal/consumers/resolve.go:265-267` keys a struct with its field tags, but Go ignores tags in a conversion, so a tag-differing conversion reads green.
+- P13 (auto-fix, confidence 4): `internal/consumers/rows.go:102` misses a generic alias, because its type is a `*types.Alias`.
