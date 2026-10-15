@@ -2748,6 +2748,75 @@
           "supersedes": [
             "ft293-oc-c2-coverage-r3"
           ]
+        },
+        {
+          "id": "ft293-oc-c2-standards-r5",
+          "performer": "claude:ft293_oc-c2_standards_r5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7c776f6d667e5158847a8281567695aa4cc0fdfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_standards_r5",
+            "digest": "sha256:f54db1c38a9ec6d2774ae7b9315246fd5eda4d2e7e61d0adb0afe42200959f97",
+            "excerpt": "## Result\nNo finding on the Standards axis for OC-C2 cycle 4. The evidence check bound: `current=true`, `dirty_record=false`, tip `84096486439cd7f7b417c23e0b11b6cf149ab4f0`.\n\nThe move into `loader.go`: no binding requirement is broken. The only binding text is `.agents/skills/bench-craft-seams/SKILL.md:96`: \"Split along responsibility, never line count, and never fragment to dodge the limit\". The four symbols (SourceUse, SourceUses, firstUse, ImportName) are one lexical, untyped reading, and they moved whole without change. `blast.go` (338 lines) cannot take them under the cap, a new file is outside the fence, and `resolve.go` and `rows.go` have no room, so `loader.go` is the only fence file that fits.\n\n## Advice\n- `internal/consumers/loader.go:79-161` puts lexical source reading next to the typed loader.\n- `Row.Via` now carries two vocabularies: the three column values (`rows.go:10-16`) and the prose fragments `viaUnkeyed`/`viaConversion` (`rows.go:72-76`).\n- `resolve.go:269-271`: \"nil when target is no field\" leaves out a field whose struct is not a package-scope type.\n- `fieldwrites_test.go:18` repeats the `viaConversion` text.\n- Not tested: a selector write like `s.Reason = …` on a variable of the same unnamed struct type, later assigned as `row`, seems to escape both `identicalKeys` and `UnnamedWrites`.\n"
+          },
+          "axis": "Standards",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "449b26b52db1864bedada8c26129df197b70b6e7",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-standards-r4"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-spec-r5",
+          "performer": "claude:ft293_oc-c2_spec_r5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7c776f6d667e5158847a8281567695aa4cc0fdfa",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_spec_r5",
+            "digest": "sha256:18b7e588fb8196ebd5a2e14e9454b0537fae9e0b3c9bb0066b016a98b833bfbe",
+            "excerpt": "Evidence sha256:398232e0… binds: current=true, dirty_record=false, tip 84096486. Tip equals 92bed0be for internal/.\n\nP8: closed. Rule at spec.md:373-375. Keyed identical-layout literals become producers through identicalKeys (rows.go:167-189, called at rows.go:151-153). Unkeyed ones become diagnostics at rows.go:102-108. writesStruct (rows.go:132) and literalStructs (resolve.go:311-334) cover the `~struct{...}` constraint terms. Tests at fieldwrites_test.go:74-77.\n\nP9: closed. Conversions are caught at rows.go:109-117. Nil and same-type operands are exempt (rows.go:115). Tests at fieldwrites_test.go:78-81.\n\nOC28-OC31 still hold. Moving SourceUses, firstUse and ImportName to loader.go:79-105 is a verbatim relocation.\n\nP10. The code is narrower than the rule for a field of a generic struct. fieldStruct returns the origin struct `struct{Reason T}` (resolve.go:277, 292-301), and structKey (resolve.go:265) gives an instantiation `row[string]` a different key. So `row[string]{\"c\"}` and `row[string](o)` no longer reach the diagnostic, and the census can read green. Disposition: fix. Confidence 7.\n\nP11. An implicit-assignability path to the struct leaves the census green. Example: `var s struct{Reason string}; s.Reason = \"c\"; var r row = s`. The selector write is to a different field object, and it is neither a literal nor a conversion. Disposition: fix, or a reviewer ruling. Confidence 6.\n\nAdvice: structKey treats unexported-field structs from different packages as one struct (resolve.go:260-267), stricter only toward the diagnostic.\n"
+          },
+          "axis": "Spec",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "449b26b52db1864bedada8c26129df197b70b6e7",
+          "finding_ids": [
+            "P10",
+            "P11"
+          ],
+          "supersedes": [
+            "ft293-oc-c2-spec-r4"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-coverage-r5",
+          "performer": "claude:ft293_oc-c2_coverage_r5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7c776f6d667e5158847a8281567695aa4cc0fdfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_coverage_r5",
+            "digest": "sha256:f780b9e2e41fc13fab409f9480fa9ead96063971e05c8e30556920ba2e25a05e",
+            "excerpt": "## Result\nNo finding. The evidence binds: `--check-current` reports current=true, dirty_record=false, at tip 84096486.\n\nProbe row: omitted `add(e, viaConversion)` at `internal/consumers/rows.go:116`, ran `--package ./internal/preflight/... --run TestOwnerPremises`. verdict `bit`; failed, 3 tests (all three conversion rows went green); first_failure `TestOwnerPremises/a_conversion_from_another_struct_type`; restored `yes`.\n\nWrite-form table (`internal/preflight/ownership/fieldwrites_test.go:20-40`), by reading: identical-layout unkeyed rows bite under the author's `structKey` probe; identical-layout keyed rows bite by reasoning (not probed); conversion rows bite (probe); the nil and same-type row expects green, and dropping either guard at `rows.go:115` turns it unknown.\n\n## Advice\n- The `from.Type == nil` branch at `rows.go:115` has no test row; it looks unreachable for a type-checked conversion.\n- Splitting the nil and same-type row into two rows would make a red name its guard.\n\n## git status --short\n(empty)\n"
+          },
+          "axis": "Coverage",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "449b26b52db1864bedada8c26129df197b70b6e7",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-coverage-r4"
+          ]
         }
       ]
     }
@@ -2936,3 +3005,11 @@ The spec gains one rule in the helper and owner closure section that defines the
 
 - P8 (auto-fix, confidence 7): `internal/consumers/rows.go:96-98` matches by declaration position, so an anonymous identical-layout struct escapes.
 - P9 (auto-fix, confidence 5): a conversion such as `row(other{"c"})` writes the field with no census match.
+
+## OC-C2 fourth confirming round
+
+Repair cycle 4 closed P8 and P9, but it added conversions to a list instead of closing the class. The round found P10 and P11.
+Repair cycle 5 closes the class by type presence, under the reviewer's fail-closed decision and the auto-approve direction. The spec rule gains one sentence for the generic and identical-type cases.
+
+- P10 (auto-fix, confidence 7): `internal/consumers/resolve.go:265` keys an instantiation of a generic struct apart from its origin, so `row[string]{"c"}` escapes.
+- P11 (auto-fix, confidence 6): an implicit assignment from an unnamed identical struct type, such as `var r row = s`, leaves the census green.
