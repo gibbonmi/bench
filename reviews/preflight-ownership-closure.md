@@ -3638,7 +3638,7 @@
     {
       "id": "OC-C3",
       "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
-      "tip": "e76d0a1b1af2d69f9e8ad6674ed65549484daa10",
+      "tip": "94967bbf3473014a76a4dd5f8e14424535f1e957",
       "plan_digest": "sha256:c5d7d55edcbcc0e1f790c7db9f2c7ee991d4efaa0f910543de4197d00c514a98",
       "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
       "acceptance_rows": [
@@ -4944,6 +4944,107 @@
           },
           "requirement": "oc-07-check-6",
           "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t04_rep1b-oc-04-focused",
+          "performer": "claude:ft293_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t04_rep1",
+            "digest": "sha256:6cda14b08cd82ea3dc81c1d92af66139bc59193293afcf977242bf4c99a87497",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestSizingPremises/OC33_glob-complete,21,1,0,null,yes\n  2,bit,swap,failed,2,TestSizingPremises/OC37_headroom-ignored-deletion,21,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestSizingPremises,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2723\nmutant_report[1]{mutant}:\n  1\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,132,21\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSizingPremises/OC33_glob-complete,\"premises_test.go:156: premise glob-complete = map[id:glob-complete reason:glob-members premise: the member list names internal/glob/.hidden.go, which is no member source:4427cc5714ed710dea123f50fc7909531dee9a72 state:unknown], want green an… (279 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSizingPremises/OC33_glob-visible-only,\"premises_test.go:156: premise glob-visible-only = map[id:glob-visible-only reason:the glob internal/glob/*.go holds 3 tracked member(s) at the source tip 4427cc5714ed710dea123f50fc7909531dee9a72 source:4427cc5714ed710dea123f50fc7909531dee9a… (322 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,134,21\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSizingPremises/OC37_headroom-ignored-deletion,\"premises_test.go:156: premise headroom-ignored-deletion = map[id:headroom-ignored-deletion reason:headroom premise: the plan of net 1 exceeds the limit 3 of internal/sized, which no grant exempts source:806487bf2d608c110ce92fc063a499152f2ae… (317 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSizingPremises/OC37_headroom-swap,\"premises_test.go:156: premise headroom-swap = map[id:headroom-swap reason:headroom premise: expected net 0, the plan nets 1 source:806487bf2d608c110ce92fc063a499152f2aedf4 state:unknown], want green and a reason naming \\\"net 0\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-04-focused",
+          "command": "bench test --package ./internal/preflight/... --run TestSizingPremises",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "oc-04-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t04_rep1",
+              "digest": "sha256:6cda14b08cd82ea3dc81c1d92af66139bc59193293afcf977242bf4c99a87497",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestSizingPremises/OC33_glob-complete,21,1,0,null,yes\n  2,bit,swap,failed,2,TestSizingPremises/OC37_headroom-ignored-deletion,21,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestSizingPremises,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2723\nmutant_report[1]{mutant}:\n  1\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,132,21\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSizingPremises/OC33_glob-complete,\"premises_test.go:156: premise glob-complete = map[id:glob-complete reason:glob-members premise: the member list names internal/glob/.hidden.go, which is no member source:4427cc5714ed710dea123f50fc7909531dee9a72 state:unknown], want green an… (279 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSizingPremises/OC33_glob-visible-only,\"premises_test.go:156: premise glob-visible-only = map[id:glob-visible-only reason:the glob internal/glob/*.go holds 3 tracked member(s) at the source tip 4427cc5714ed710dea123f50fc7909531dee9a72 source:4427cc5714ed710dea123f50fc7909531dee9a… (322 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,134,21\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSizingPremises/OC37_headroom-ignored-deletion,\"premises_test.go:156: premise headroom-ignored-deletion = map[id:headroom-ignored-deletion reason:headroom premise: the plan of net 1 exceeds the limit 3 of internal/sized, which no grant exempts source:806487bf2d608c110ce92fc063a499152f2ae… (317 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestSizingPremises/OC37_headroom-swap,\"premises_test.go:156: premise headroom-swap = map[id:headroom-swap reason:headroom premise: expected net 0, the plan nets 1 source:806487bf2d608c110ce92fc063a499152f2aedf4 state:unknown], want green and a reason naming \\\"net 0\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft293_t04_rep1b-oc-04-check-1",
+          "performer": "claude:ft293_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t04_rep1",
+            "digest": "sha256:47ede02be2de24043c2cbebf9c5d7b3976bafa046ce7daa43d6bddee67e4878a",
+            "excerpt": "packages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,38250,409\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,23170,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,37286,240\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-04-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t04_rep1b-oc-04-check-2",
+          "performer": "claude:ft293_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t04_rep1",
+            "digest": "sha256:d07ff95e6627fd088fb6e61b6ba62b83e67d28ed3b05ef1ffa5a9e1bea096392",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/structure,pass,248,34\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-04-check-2",
+          "command": "bench test --package ./internal/structure",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t04_rep1b-oc-04-check-3",
+          "performer": "claude:ft293_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t04_rep1",
+            "digest": "sha256:922abc1fee4151b24c64330d64fae8394e8664294f011ecb49ead97a760113a5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15391,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-04-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t04_rep1b-oc-04-check-4",
+          "performer": "claude:ft293_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t04_rep1",
+            "digest": "sha256:40fb9d02819c2a63f379d83783254ddafdaf57b8e7d6def53612a491ada81066",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14664,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-04-check-4",
+          "command": "bench test --package ./cmd/bench",
           "exit_code": 0
         }
       ],
