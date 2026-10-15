@@ -5422,6 +5422,72 @@
           "supersedes": [
             "ft293-oc-c3-spec-r1"
           ]
+        },
+        {
+          "id": "ft293-oc-c3-standards-r3",
+          "performer": "claude:ft293_oc-c3_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_standards_r3",
+            "digest": "sha256:838b2ef00a10719d794e765b12c9af6b384f2ea1dcbbf83a6b36d689d9c018f0",
+            "excerpt": "OC-C3 Standards axis, second confirming round after repair cycle 2 (opus / medium, one iteration), evidence sha256:eed4142fa8abb200493fa306d88644e175ffd067333bc8fa2b47210b9f9a77a1 bound at 1d9c54af.\nS10 closed: coverage/rows.go:31, 265, 279 carry the row line from the one parse; ownership/premises.go:220 compares claim.Location.Line with m.rows[idx].Line; the lexical checks are gone; parse and locateSpec share the line base; padded-cell case in charge_fixture_test.go and coverage_test.go lines 7 and 8.\nNew findings: none. planOnly replaced by kind != KindPlanOnly from the one op.Kind; preparedCommand takes the kind as plumbing; no moved validation; comment register present tense.\nAdvice (no IDs): premises.go:205 doc comment not re-wrapped; facts.Operation = kind is set at five sites and could be set once in preparedAttempts or GatherPinned; decision.go:22-24 says Gather gathers every Facts field although callers set Operation after Gather.\n0 open.\n"
+          },
+          "axis": "Standards",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "73ae150570ca4752b8aaf60c8ea0fd7d75102422",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c3-standards-r2"
+          ]
+        },
+        {
+          "id": "ft293-oc-c3-spec-r3",
+          "performer": "claude:ft293_oc-c3_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_spec_r3",
+            "digest": "sha256:c90167d8289e812bd4aeda00cfc6ef52fa87181462a4c76b8d48b2a5ca07ed2b",
+            "excerpt": "OC-C3 Spec axis, second confirming round after repair cycle 2 (opus / medium, one iteration), evidence sha256:eed4142fa8abb200493fa306d88644e175ffd067333bc8fa2b47210b9f9a77a1 bound at 1d9c54af.\nP7 closed (spec 199-200): every Decide route sets Operation from op.Kind: proposal command.go:77 -> preparation.go:22; build charge command.go:79, 104; review charge command.go:81, 126; current evidence command.go:87 -> charge_pack.go:111; verdict and plan-only command.go:95, 161. The only reader is decision.go:228. Applicability unchanged; charge.go has no diff from cd54d245.\nRows: OC51, OC52, OC53, OC54, OC88, OC89, OC93, OC94, OC95 held. OC95 compares the claim line with the coverage parser's row line; locateSpec still checks the needle on that line.\nNew findings: none. 0 open.\nAdvice (no IDs): seededRows hard-codes spec lines 11 and 12; nativeClaim.json still builds an ungraded needle from the row ID and behavior; premises.go:205 comment line is long.\n"
+          },
+          "axis": "Spec",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "73ae150570ca4752b8aaf60c8ea0fd7d75102422",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c3-spec-r2"
+          ]
+        },
+        {
+          "id": "ft293-oc-c3-coverage-r3",
+          "performer": "claude:ft293_oc-c3_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_coverage_r3",
+            "digest": "sha256:aa0706cc3ff4c6409b4053b68a0ba524cabafcf510925b3ae4379d980847c412",
+            "excerpt": "OC-C3 Coverage axis, second confirming round after repair cycle 2 (opus / medium, one iteration), evidence sha256:eed4142fa8abb200493fa306d88644e175ffd067333bc8fa2b47210b9f9a77a1 bound at 1d9c54af.\nC1-C4 stay closed. Cycle 2 delta: MapRows line assignment pinned by coverage_test.go:13-22 (lines 7 and 8, padded PF1 cell); premises.go:203 line comparison covered by the padded-cell fixture at charge_fixture_test.go:181 and the repair's probes; verdict and proposal kind threading covered by the repair's kind-swap probes.\nNew findings: none. 0 open.\nAdvice (no IDs): command.go:126 sets Operation on the review charge, but decision.go:228 reads Operation only in build mode, so that site is an equivalent mutant.\nProbe: internal/coverage/rows.go:49 p.processMapLine(line, n+1) -> (line, n) bit, 13 failed tests, first_failure TestMapRowsProjectTheParsedMap, restored yes.\ngit status --short empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "73ae150570ca4752b8aaf60c8ea0fd7d75102422",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c3-coverage-r2"
+          ]
         }
       ]
     }
