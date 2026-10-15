@@ -8,7 +8,6 @@ package structure
 // It pairs with accept_validation.go, which grades the same accept list.
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"sort"
@@ -129,8 +128,8 @@ type fileSizing struct {
 // overBudget is the length rule itself: a regular file whose newline count exceeds its cap.
 func (s fileSizing) overBudget() bool { return s.regular && s.count > s.limit }
 
-// sizeFile reads one repository-relative path against its cap: the newline count of the
-// working tree's file (wc -l semantics) and the cap the budget list gives that exact path,
+// sizeFile reads one repository-relative path against its cap: the Lines count of the
+// working tree's file and the cap the budget list gives that exact path,
 // else fallback. A missing, non-regular, or unreadable path counts zero and is never over
 // budget. Every over-budget judgment goes through here — the all scan and the growth
 // ratchet alike — so the two cannot disagree about what "too long" means.
@@ -142,7 +141,7 @@ func sizeFile(root, path string, budgets map[string]int, fallback int) fileSizin
 	}
 	sizing.regular = true
 	if content, err := os.ReadFile(filepath.Join(root, path)); err == nil {
-		sizing.count = bytes.Count(content, []byte{'\n'})
+		sizing.count = Lines(content)
 	}
 	return sizing
 }
