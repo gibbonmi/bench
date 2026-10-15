@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
@@ -195,7 +196,7 @@ func sealedKit(t *testing.T) (string, string) {
 	}
 	line := fmt.Sprint(lines["internal/toon"])
 	kit := ownershiptest.ProposalRepo{
-		Seal:   true,
+		Seal:   freshness.Publish,
 		Writes: []string{"internal/toon/toon.go"},
 		Files: map[string]string{
 			"internal/tickets/registry_data.go":          string(registry),

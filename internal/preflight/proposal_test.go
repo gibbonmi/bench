@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
@@ -118,7 +119,7 @@ func TestWritesProposalAlreadyCovered(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			repo := proposalRepo(test.writes, map[string]string{"two.md": "tests/canary/example-family/pinning-fixture/EXPECT"})
-			repo.Seal = true
+			repo.Seal = freshness.Publish
 			root, slug := repo.Seed(t), "example"
 			writeProposalTicket(t, slug, "two.md", "Two", "one.md", "tests/canary/example-family/pinning-fixture/EXPECT")
 			preflighttest.RunGit(t, "add", "specs/"+slug)

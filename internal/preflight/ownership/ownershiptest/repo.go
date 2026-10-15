@@ -64,18 +64,22 @@ func Cut(t *testing.T, s, part string) string {
 // from the ticket union. The spec declares the complete-empty inventory unless
 // OwnInventory is set; Tail then closes the spec, so its bytes are part of what the fixture
 // admits. Files are committed in the base; a charge source that Files omits takes a
-// one-line body. Seal publishes a verified kit binary over the kit's binding registry, so
-// that registry source is the authenticated kit context; a registry that Files omits takes
-// the kit's own.
+// one-line body. A non-nil Seal publishes a verified kit binary over the kit's binding
+// registry, so that registry source is the authenticated kit context; a registry that Files
+// omits takes the kit's own.
 type ProposalRepo struct {
 	Writes       []string
 	Others       map[string][]string
 	Files        map[string]string
 	Fence        []string
 	OwnInventory bool
-	Seal         bool
+	Seal         Publisher
 	Tail         string
 }
+
+// Publisher is the sealed run-binary publication that a test file sets as Seal. A test file
+// supplies it, so this non-test package cannot publish a sealed run binary on its own.
+type Publisher func(root, staged, executable, manifestDir, version string) error
 
 // Seed commits the repository as the base on main, then adds one authorized change on a
 // feature branch, and returns the root, which is also the working directory.
@@ -117,7 +121,7 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 			preflighttest.MustWriteFile(t, source, body)
 		}
 	}
-	if r.Seal {
+	if r.Seal != nil {
 		if _, given := r.Files[tickets.BindingRegistry]; !given {
 			preflighttest.MustWriteFile(t, tickets.BindingRegistry, string(KitRegistry(t)))
 		}
@@ -134,7 +138,7 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 	preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n")
 	preflighttest.RunGit(t, "add", "internal/example/foo.go")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
-	if r.Seal {
+	if r.Seal != nil {
 		staged := filepath.Join(t.TempDir(), "bench")
 		if err := os.WriteFile(staged, []byte("Bench executable"), 0o755); err != nil {
 			t.Fatal(err)
@@ -143,7 +147,7 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 		if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		if err := freshness.Publish(root, staged, executable, filepath.Dir(executable), "1.2.3"); err != nil {
+		if err := r.Seal(root, staged, executable, filepath.Dir(executable), "1.2.3"); err != nil {
 			t.Fatalf("Publish: %v", err)
 		}
 	}
