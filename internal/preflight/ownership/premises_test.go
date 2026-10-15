@@ -243,7 +243,10 @@ type staticError struct{}
 
 func (staticError) Error() string { return "static" }
 
-type dynamicError struct{ msg string }
+type dynamicError struct {
+	// msg is the text that the caller sets.
+	msg string
+}
 
 func (e dynamicError) Error() string { return e.msg }
 
@@ -318,7 +321,7 @@ func TestSymbolPremises(t *testing.T) {
 	facts := withItems("premises",
 		symbol("symbol-owner", check),
 		symbol("symbol-other-owner", misplaced),
-		symbol("symbol-type", owner(rules, "rules.dynamicError", "type", "type dynamicError struct{ msg string }")),
+		symbol("symbol-type", owner(rules, "rules.dynamicError", "type", "type dynamicError struct {\n\tmsg string\n}")),
 		symbol("symbol-signature", owner(rules, "rules.write", "func", "func write(v string) int")),
 		symbol("symbol-kind", owner(rules, "rules.Check", "method", "func Check(rows int) error")),
 		edge("import-exported", "internal/other", check),
@@ -335,7 +338,7 @@ func TestSymbolPremises(t *testing.T) {
 		rule("sentinel-unused-producer", "sentinel", missing, `errors.New("missing")`, write),
 		rule("sentinel-no-producer", "sentinel", missing, `errors.New("missing")`),
 		rule("error-static", "error", owner(rules, "rules.staticError", "type", "type staticError struct{}"), `"static"`, fail),
-		rule("error-dynamic", "error", owner(rules, "rules.dynamicError", "type", "type dynamicError struct{ msg string }"), "e.msg", fail),
+		rule("error-dynamic", "error", owner(rules, "rules.dynamicError", "type", "type dynamicError struct {\n\tmsg string\n}"), "e.msg", fail),
 		bound("bound-owner", owner(rules, "rules.maxRows", "const", ""), "32"),
 		bound("bound-local-literal", moved, "32"),
 		bound("bound-text", owner(rules, "rules.maxRows", "const", ""), "2 << 4"),

@@ -140,24 +140,19 @@ func declarationNode(pkgs []*consumers.Package, pkgPath string, obj types.Object
 // because its value belongs to a bound premise. A declaration with no top-level node, such
 // as a field, has no supported normalization.
 func (d declared) signature() (string, error) {
-	var node ast.Node
-	prefix := ""
+	node, prefix := d.node, ""
 	switch n := d.node.(type) {
 	case *ast.FuncDecl:
 		trimmed := *n
-		trimmed.Doc, trimmed.Body = nil, nil
+		trimmed.Body = nil
 		node = &trimmed
 	case *ast.TypeSpec:
-		trimmed := *n
-		trimmed.Doc, trimmed.Comment = nil, nil
-		node, prefix = &trimmed, "type "
+		prefix = "type "
 	case *ast.ValueSpec:
 		if _, isConst := d.obj.(*types.Const); isConst {
 			return "", nil
 		}
-		trimmed := *n
-		trimmed.Doc, trimmed.Comment = nil, nil
-		node, prefix = &trimmed, "var "
+		prefix = "var "
 	default:
 		return "", fmt.Errorf("%s has no top-level declaration whose syntax normalizes", d.obj.Name())
 	}
@@ -165,8 +160,41 @@ func (d declared) signature() (string, error) {
 	return prefix + text, err
 }
 
-// render is the Go formatter's print of one node of pkg.
+// render is the Go formatter's print of one node of pkg without its comments. The printer
+// prints each comment group that a node holds, such as a field's doc, so render detaches
+// every group before the print. The loaded syntax is shared, so each group returns to its
+// node before render returns.
 func render(pkg *consumers.Package, node ast.Node) (string, error) {
+	var restore []func()
+	defer func() {
+		for _, reattach := range restore {
+			reattach()
+		}
+	}()
+	detach := func(groups ...**ast.CommentGroup) {
+		for _, group := range groups {
+			held := *group
+			*group = nil
+			restore = append(restore, func() { *group = held })
+		}
+	}
+	ast.Inspect(node, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.Field:
+			detach(&n.Doc, &n.Comment)
+		case *ast.ValueSpec:
+			detach(&n.Doc, &n.Comment)
+		case *ast.TypeSpec:
+			detach(&n.Doc, &n.Comment)
+		case *ast.ImportSpec:
+			detach(&n.Doc, &n.Comment)
+		case *ast.GenDecl:
+			detach(&n.Doc)
+		case *ast.FuncDecl:
+			detach(&n.Doc)
+		}
+		return true
+	})
 	var buf bytes.Buffer
 	if err := format.Node(&buf, pkg.Fset, node); err != nil {
 		return "", fmt.Errorf("the declaration syntax does not format: %w", err)
