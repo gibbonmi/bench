@@ -3610,6 +3610,28 @@
           "supersedes": [
             "ft293-oc-c2-coverage-r6"
           ]
+        },
+        {
+          "id": "ft293-oc-c2-standards-r8",
+          "performer": "claude:ft293_oc-c2_standards_r7",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "27d3621dd5a6cbded15bb40405c808669fc74b1b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_standards_r7",
+            "digest": "sha256:ff726e6602eb37cb2c73d9281967675750f08fc4c2cac544481b8997aee2e0bd",
+            "excerpt": "Reaffirmation after the evidence-only correction at fed2ca8bf.\n\nS7 is closed. In commit fed2ca8bf, `internal/preflight/ownership/fieldwrites_test.go:20-21` now says: \"A type that differs from the struct only in tags or alias spellings counts as identical, because Go converts between the two.\" It no longer claims that Go's identity rule ignores tags, and the reason it gives matches `sameStruct` (`internal/consumers/rows.go:140-141`).\n\nThe commit changes no code in `internal/`. That file has one hunk (-2/+2), and only comment lines change. The commit touches one other file, `reviews/preflight-ownership-closure.md`, a review record.\n\nNo other Standards finding of round 7 changes.\n"
+          },
+          "axis": "Standards",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-standards-r7"
+          ]
         }
       ]
     }
