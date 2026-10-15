@@ -113,7 +113,8 @@ type manualRefusal struct {
 }
 
 // manualRefusals is each current-premise claim, unproved current premise beside pending
-// native work, and invalid native ownership that refuses the charge.
+// native work, and invalid native ownership that refuses the charge. A padded row cell keeps
+// its native claim pending, because the coverage parser trims the cell and reports its line.
 func manualRefusals() []manualRefusal {
 	inventory := func(premises, seams []string, claim string) string {
 		return manifestJSON("declared-complete", premises, seams, nil, []string{claim})
@@ -122,6 +123,9 @@ func manualRefusals() []manualRefusal {
 		return chargeRepo{facts: inventory(nil, nil, editedNative(edit))}
 	}
 	valid := validNative().json()
+	pad := func(text string) string {
+		return strings.Replace(text, "| PF1 | 1 | does x |", "| PF1  | 1 | does x |", 1)
+	}
 	twoOwners := chargeRepo{facts: inventory(nil, nil, valid), plan: preflighttest.PlanFence("one.md", "two.md"), extra: secondTicket("PF1")}
 	foreign, delegated := native(func(c *nativeClaim) { c.chunk = "c2" }), native(func(c *nativeClaim) { c.verification = "tests-two" })
 	foreign.plan, foreign.extra = splitPlan(), secondTicket("PF2")
@@ -129,6 +133,7 @@ func manualRefusals() []manualRefusal {
 	return []manualRefusal{
 		{name: "OC89 OC94 current-premise claim", repo: chargeRepo{facts: inventory(nil, nil, currentManualJSON("manual-current", "unproved current assumption"))}, want: "manual-current"},
 		{name: "OC94 unproved current premise beside pending native work", repo: chargeRepo{facts: inventory([]string{stalePremise}, nil, valid)}, want: "p1: ", pending: true},
+		{name: "OC94 OC95 padded row cell keeps its native claim pending", repo: chargeRepo{spec: pad(preflighttest.SpecBody(slug)), facts: inventory([]string{stalePremise}, nil, pad(valid))}, want: "p1: ", pending: true},
 		{name: "OC95 supported test seam on the native row", repo: chargeRepo{spec: citedSpec("`TestFoo`"), facts: inventory(nil, []string{seamItem("seam-1", "internal/example/foo_test.go", "TestFoo", "existing", "PF1")}, valid)}, want: "declares a supported test seam"},
 		{name: "OC95 another row's location", repo: native(func(c *nativeClaim) { c.located = "PF2" }), want: "is not the location of row PF1"},
 		{name: "OC95 unowned ticket", repo: native(func(c *nativeClaim) { c.ticket = "two.md" }), want: "owned by ticket two.md alone"},

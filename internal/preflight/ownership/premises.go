@@ -202,7 +202,7 @@ func (c *census) manualClaims(m Manifest, parsed []tickets.Ticket) ([]Premise, [
 }
 
 // validateNativeFuture checks that a native-future manual claim sits at its own coverage
-// row's location and names an exclusively owned manual row, a valid completion-plan chunk
+// row's spec line, as the coverage parser reports it, and names an exclusively owned manual row, a valid completion-plan chunk
 // and verification requirement, and the native implementation procedure as its phase owner,
 // located at its pinned source.
 func (c *census) validateNativeFuture(m Manifest, claim ManualClaim, parsed []tickets.Ticket) error {
@@ -217,7 +217,7 @@ func (c *census) validateNativeFuture(m Manifest, claim ManualClaim, parsed []ti
 	if err := c.locateSpec(m, claim.Location); err != nil {
 		return err
 	}
-	if loc := claim.Location.Needle; !strings.Contains(loc, "| "+w.Row+" |") || !strings.Contains(loc, m.rows[idx].Behavior) {
+	if claim.Location.Line != m.rows[idx].Line {
 		return fmt.Errorf("%s line %d is not the location of row %s", claim.Location.Path, claim.Location.Line, w.Row)
 	}
 	if w.PhaseOwner.Path != chargesource.BuildPhase {

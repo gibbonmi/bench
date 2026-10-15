@@ -99,6 +99,7 @@ func schemaFor(header string) schema {
 
 type dataRow struct {
 	cells []string // one map row's cells, trimmed, exactly as many as were written
+	line  int      // the 1-based spec line the row sits on
 }
 
 // parsed is the result of one scan of a spec. It records whether the scan saw the
@@ -135,7 +136,7 @@ func parse(content []byte) parsed {
 	var p parsed
 	p.fences, p.fencesDeclared = specref.FenceTokens(content)
 	inStories, inMap := false, false
-	for _, raw := range strings.Split(string(content), "\n") {
+	for n, raw := range strings.Split(string(content), "\n") {
 		line := strings.TrimSuffix(raw, "\r")
 		if line == historicalMarker {
 			p.historical = true
@@ -176,13 +177,13 @@ func parse(content []byte) parsed {
 			inMap = false
 		}
 		if inMap {
-			p.processMapLine(line)
+			p.processMapLine(line, n+1)
 		}
 	}
 	return p
 }
 
-func (p *parsed) processMapLine(raw string) {
+func (p *parsed) processMapLine(raw string, lineNum int) {
 	line := trimSpaceTab(raw)
 	if !strings.HasPrefix(line, "|") {
 		return
@@ -208,7 +209,7 @@ func (p *parsed) processMapLine(raw string) {
 	if allSep {
 		return
 	}
-	p.dataRows = append(p.dataRows, dataRow{cells: cells})
+	p.dataRows = append(p.dataRows, dataRow{cells: cells, line: lineNum})
 }
 
 // State classifies the spec: no-map (no coverage header), historical (opted out), or
@@ -258,9 +259,10 @@ func rowIDs(p parsed) []string {
 }
 
 // MapRow is one data row of a spec's coverage map: its row ID when the map opts into row
-// IDs, and its story, behavior, and seam cells.
+// IDs, its story, behavior, and seam cells, and the 1-based spec line it sits on.
 type MapRow struct {
 	ID, Story, Behavior, Seam string
+	Line                      int
 }
 
 // MapRows projects the coverage map in content into typed rows, in map order. A spec that
@@ -274,7 +276,7 @@ func MapRows(content []byte) []MapRow {
 	s := p.projection()
 	rows := make([]MapRow, len(p.dataRows))
 	for i, r := range p.dataRows {
-		rows[i] = MapRow{ID: s.cell(r, fieldRow), Story: s.cell(r, fieldStory), Behavior: s.cell(r, fieldBehavior), Seam: s.cell(r, fieldSeam)}
+		rows[i] = MapRow{ID: s.cell(r, fieldRow), Story: s.cell(r, fieldStory), Behavior: s.cell(r, fieldBehavior), Seam: s.cell(r, fieldSeam), Line: r.line}
 	}
 	return rows
 }

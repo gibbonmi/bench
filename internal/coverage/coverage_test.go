@@ -260,13 +260,13 @@ func TestParseSpecOptIn(t *testing.T) {
 }
 
 // TestMapRowsProjectTheParsedMap keeps the typed projection on the one parse: an opted-in
-// map yields each row's ID and cells in map order, an escaped pipe stays in its cell, and
-// a spec with no map yields no row.
+// map yields each row's ID, cells, and spec line in map order, a padded cell is trimmed, an
+// escaped pipe stays in its cell, and a spec with no map yields no row.
 func TestMapRowsProjectTheParsedMap(t *testing.T) {
 	spec := "## User stories\n1. As a, I want b, so c.\n\n### Acceptance coverage map\n" +
 		"| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam | catches z |\n| PF2 | 1 | does \\| y | other seam | catches w |\n"
-	want := []MapRow{{"PF1", "1", "does x", "cli seam"}, {"PF2", "1", "does \\| y", "other seam"}}
+		"| PF1  | 1 | does x | cli seam | catches z |\n| PF2 | 1 | does \\| y | other seam | catches w |\n"
+	want := []MapRow{{"PF1", "1", "does x", "cli seam", 7}, {"PF2", "1", "does \\| y", "other seam", 8}}
 	if got := MapRows([]byte(spec)); !reflect.DeepEqual(got, want) {
 		t.Fatalf("MapRows = %#v, want %#v", got, want)
 	}

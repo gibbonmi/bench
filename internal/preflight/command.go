@@ -78,7 +78,7 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 	case evidencecmd.KindPrepareEvidence:
 		return prepareEvidenceCommand(root, op.Kind, slug, base, sourceTip, ticket, quota, args)
 	case evidencecmd.KindPrepareReviewEvidence:
-		return prepareReviewEvidenceCommand(root, version, slug, base, sourceTip, quota, args)
+		return prepareReviewEvidenceCommand(root, op.Kind, version, slug, base, sourceTip, quota, args)
 	case evidencecmd.KindReadEvidence:
 		return evidencecmd.Read(root, slug, flags)
 	case evidencecmd.KindVerifyEvidence:
@@ -92,7 +92,7 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 	case evidencecmd.KindCleanApply:
 		return evidencecmd.CleanApply(root, flags)
 	}
-	return verdictCommand(root, op.Mode, slug, base, sourceTip, args, op.Kind == evidencecmd.KindPlanOnly)
+	return verdictCommand(root, op.Kind, op.Mode, slug, base, sourceTip, args)
 }
 
 // prepareEvidenceCommand runs the movement-checked build preparation and hands each
@@ -119,9 +119,11 @@ func prepareEvidenceCommand(root string, kind evidencecmd.Kind, slug, base, sour
 // prepareReviewEvidenceCommand runs the movement-checked review preparation on the same
 // publisher the build uses. Each attempt runs the collectors once and stages its validated
 // pack; a refused attempt publishes no handle, and only the unmoved final attempt publishes.
-func prepareReviewEvidenceCommand(root, version, slug, base, sourceTip string, quota uint64, args []string) (string, int) {
+// kind is the operation that the dispatcher selected, and the facts carry it into Decide.
+func prepareReviewEvidenceCommand(root string, kind evidencecmd.Kind, version, slug, base, sourceTip string, quota uint64, args []string) (string, int) {
 	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
 		return preparedAttempts(root, modeReview, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
+			facts.Operation = kind
 			pack, refusal := reviewChargePack(root, version, facts, boundedVerdict(Decide(facts)))
 			if refusal = stage(pack, facts.AssignmentTarget, refusal); refusal != "" {
 				return refusal, 1
@@ -143,7 +145,9 @@ func boundedVerdict(verdict Verdict) Verdict {
 	return verdict
 }
 
-func verdictCommand(root, mode, slug, base, sourceTip string, args []string, planOnly bool) (string, int) {
+// verdictCommand renders the ordinary or plan-only verdict. kind is the operation that the
+// dispatcher selected, and the facts carry it into Decide.
+func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip string, args []string) (string, int) {
 	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
 	if bootErr != nil {
 		if bootErr.Kind == "snapshot drift" {
@@ -154,9 +158,10 @@ func verdictCommand(root, mode, slug, base, sourceTip string, args []string, pla
 	if err := unrepresentableChangedPath(facts.ChangedPaths); err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
+	facts.Operation = kind
 
 	verdict := Decide(facts)
-	if mode == modeBuild && !planOnly && !verdict.Red {
+	if mode == modeBuild && kind != evidencecmd.KindPlanOnly && !verdict.Red {
 		if err := (commitrepo.Store{Root: root}).Ready(facts.SpecPath); err != nil {
 			verdict.Checks = append(verdict.Checks, CheckResult{Check: "commitment", Verdict: verdictRed, Detail: err.Error(), Next: "bench commitment start"})
 			verdict.Red = true
