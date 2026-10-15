@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/preflight-ownership-closure/spec.md",
-  "plan_digest": "sha256:9de99bb1f6e996574324f2d278b8357129972bb0143631cd3ffa66f0300512e3",
+  "plan_digest": "sha256:fa4a88a7ab799bed77ecdce96efa188b078dbdacb71b33a4b4d540237f415c27",
   "implementation_session": "",
   "chunks": [
     {
@@ -3634,6 +3634,166 @@
           ]
         }
       ]
+    },
+    {
+      "id": "OC-C3",
+      "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+      "tip": "04a5376fbbb31a308f747d8c05763697c6d73f21",
+      "plan_digest": "sha256:fa4a88a7ab799bed77ecdce96efa188b078dbdacb71b33a4b4d540237f415c27",
+      "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+      "acceptance_rows": [
+        "OC32",
+        "OC33",
+        "OC34",
+        "OC35",
+        "OC36",
+        "OC37",
+        "OC38",
+        "OC39",
+        "OC40",
+        "OC41",
+        "OC42",
+        "OC43",
+        "OC44",
+        "OC45",
+        "OC46",
+        "OC47",
+        "OC48",
+        "OC49",
+        "OC50",
+        "OC87",
+        "OC51",
+        "OC52",
+        "OC53",
+        "OC54",
+        "OC88",
+        "OC89",
+        "OC93",
+        "OC94",
+        "OC95"
+      ],
+      "verification": [
+        {
+          "id": "ft293_t07-oc-07-focused",
+          "performer": "agy:ft293_t07",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t07",
+            "digest": "sha256:5dad21a491c016c533e4120ca033af0263a3359767459390839f3b070a820c2e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/ownership/premises.go,swap,failed,2,TestChargePremises/OC88_omitted_second_seam_citation,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers,passed,31\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,904\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,6701,31\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestChargePremises/OC88_omitted_second_seam_citation,\"premises_test.go:342: charge succeeded, want refusal:\",3\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestPredicatePremises/OC88_omitted_second_seam_citation,\"premises_test.go:305: premises rows matching map[id:metadata] = 0, want 1:\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-focused",
+          "command": "bench test --package ./internal/preflight/... --run 'TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "oc-07-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agy:ft293_t07",
+              "digest": "sha256:5dad21a491c016c533e4120ca033af0263a3359767459390839f3b070a820c2e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/ownership/premises.go,swap,failed,2,TestChargePremises/OC88_omitted_second_seam_citation,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers,passed,31\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,904\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,6701,31\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestChargePremises/OC88_omitted_second_seam_citation,\"premises_test.go:342: charge succeeded, want refusal:\",3\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestPredicatePremises/OC88_omitted_second_seam_citation,\"premises_test.go:305: premises rows matching map[id:metadata] = 0, want 1:\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft293_t07-oc-07-check-1",
+          "performer": "agy:ft293_t07",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t07",
+            "digest": "sha256:121b34d5e69586176bba5e079ed3a2a4cd3eff6846867ab3f92fee770408c8c5",
+            "excerpt": "packages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,36527,408\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,23301,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,35062,225\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07-oc-07-check-2",
+          "performer": "agy:ft293_t07",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t07",
+            "digest": "sha256:016ca0756faa4e838fa97a11a94f1d0e5b9deb97b405f19aa5148517f45fb4ad",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,pass,1754,145\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-2",
+          "command": "bench test --package ./internal/coverage",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07-oc-07-check-3",
+          "performer": "agy:ft293_t07",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t07",
+            "digest": "sha256:2e354af432285a621d82b7894c104795d4f1c94a98945a5e9f63b311a0c5f823",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2759,110\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-3",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07-oc-07-check-4",
+          "performer": "agy:ft293_t07",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t07",
+            "digest": "sha256:0e43ecbb80d0d28f03f985c7b27dd61be591641578efffed8974c1254ebafcbc",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15655,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-4",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07-oc-07-check-5",
+          "performer": "agy:ft293_t07",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t07",
+            "digest": "sha256:d0d134bf56c787b506d0819c2c130e150eb11aa2fb894f639b7ed17e750e738f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15264,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-5",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -3725,6 +3885,18 @@
     {
       "from": "sha256:78434ecbdf9c9baaefedd9eb9ffc55b6bf2177c716f531deb6f6ae0296e98ab3",
       "to": "sha256:9de99bb1f6e996574324f2d278b8357129972bb0143631cd3ffa66f0300512e3",
+      "chunk_ids": {
+        "OC-C1": [
+          "OC-C1"
+        ],
+        "OC-C2": [
+          "OC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9de99bb1f6e996574324f2d278b8357129972bb0143631cd3ffa66f0300512e3",
+      "to": "sha256:fa4a88a7ab799bed77ecdce96efa188b078dbdacb71b33a4b4d540237f415c27",
       "chunk_ids": {
         "OC-C1": [
           "OC-C1"
