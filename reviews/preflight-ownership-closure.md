@@ -4114,7 +4114,92 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft293-oc-c3-standards-r1",
+          "performer": "claude:ft293_oc-c3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_standards",
+            "digest": "sha256:b9d5192e30ba53524ea36dcf3f6a152be3ee4eda4b43b3df87b5f452acb922c1",
+            "excerpt": "OC-C3 Standards axis (opus / medium, one iteration), evidence sha256:132130bda610a2a6ef89578f2fe2cbd183082cec88fc71140cc0004d7f09b869 bound at 287862e0; code equals 04a5376f.\n9 findings: T04 1, T06 2, T07 6. Worst: S4.\nS1 T04 internal/structure/facts.go:101 Lines vs budgets.go:145 sizeFile own bytes.Count; two derivations of one length rule; comment false. auto-fix (sizeFile calls Lines). conf 8.\nS2 T06 ownership/evidence.go:240-266 compileFailureExcerpt is a second lexical build-failure classifier beside testreport OutcomeBuildFailed and probe bit mapping; generic markers can match a real failing test. ask-user (OC87 may intend a forged-excerpt guard). conf 6.\nS3 T06 evidence.go:213-221 re-derives the probe bite predicate; reviewrecord/check.go:73-78 probeBites is the one predicate. auto-fix (export and call). conf 7.\nS4 T07 empty declared-complete inventory written four times: preflighttest/fixture.go:170, ownershiptest/repo.go:67 (silent Replace needle), proposal_test.go:22 completeEmpty, premises_fixture_test.go:30. auto-fix (one exported constant in preflighttest). conf 8.\nS5 T07 repo.go:83 seal chosen by len(r.Writes) >= 4. auto-fix (explicit Seal field). conf 7.\nS6 T07 repo.go:19-26 kitRegistry reads relative paths and silently falls back to an empty registry. auto-fix (anchor path, t.Fatal on failure). conf 8.\nS7 T07 repo.go:66 strips inventory only when Tail != \"\"; proposal_test.go:293 emptyTree(\"\") -> emptyTree(\"\\n\") as a whitespace sentinel. auto-fix (explicit option, with S4/S5). conf 7.\nS8 T07 fixture.go:169 omits the inventory when the first extra line equals reviewFenceExtra[0]; doc comment fixture.go:148-151 does not say so. auto-fix. conf 6.\nS9 T07 decision.go:348-366 chargePremisesCheck re-derives the blocker with a different rule from chargeReadiness (premises.go:283-313); Planned required-current premise gets a generic reason. auto-fix (chargeReadiness names the first blocker). conf 5.\nAdvice (no IDs): reflect.TypeFor anchors.Kind is single-sourced; render mutates shared AST under defer, safe without concurrency; sentinel gofmt text vs bound ExactString; confirmation loop only sharpens the message; trackedAt is honest repetition.\n"
+          },
+          "axis": "Standards",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "0b757ed60ea5118ed5bb184183ffcb58d24e6e2c",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6",
+            "S7",
+            "S8",
+            "S9"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft293-oc-c3-spec-r1",
+          "performer": "claude:ft293_oc-c3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_spec",
+            "digest": "sha256:54ca885156a0cff4ac106908a67e6c8d8d34f25e5d1a4b3e6d5ad21827b6e95b",
+            "excerpt": "OC-C3 Spec axis (opus / medium, one iteration), evidence sha256:132130bda610a2a6ef89578f2fe2cbd183082cec88fc71140cc0004d7f09b869 bound at 287862e0.\n8 findings: T06 1, T07 7. Worst: P1. Rows refuted: OC88 (P1), OC94 (P2), OC95 partial (P4); OC93 current-evidence unverified (P3); all other OC-C3 rows held.\nP1 T07 premises.go:87 skips a row when len(m.Seams) == 0 && len(cites) <= 1, so a declared-complete manifest with \"seams\":[] omits every single-citation row and stays charge-ready (spec lines 146, 185). auto-fix. conf 8.\nP2 T07 premises_test.go:363-365 OC94 refusal case has no pending native-future claim (spec line 578). auto-fix. conf 8.\nP3 T07 TestChargeManualApplicability drives only --charge, not current-evidence (spec line 576, ticket 07 line 41); charge_pack.go:110 Operation omission fails no test. auto-fix. conf 8.\nP4 T07 native-future validation partial: premises.go:227 checks only the needle, not the row location; premises.go:230 only locates PhaseOwner; OC95 cases lack ticket, chunk, and row mismatch (spec lines 163, 173). auto-fix. conf 6.\nP5 T06 evidence.go:240-265 compile-failure marker list is a plaintext classification that ticket 06 line 22 forbids; red_needle is the spec's discriminator (spec lines 276-277); a real behavioral excerpt with \"undefined:\", \"cannot use \", or a \"# \" line is refused. ask-user. conf 7.\nP6 T07 premises.go:146-154 requires every coverage row to have a decision once one decision exists; no spec line asks for it; the test \"OC52 unmapped coverage row\" (premises_test.go:336) rests on it. ask-user. conf 5.\nP7 T07 command.go:75-95 dispatch never passes op.Kind; the Operation is hard-coded in two closures (command.go:103, charge_pack.go:110); other routes carry the zero KindVerdict (spec lines 199-200). auto-fix. conf 5.\nP8 T07 TestChargeManualApplicability has no review or ordinary-continuation case (spec line 581). auto-fix. conf 6.\nAdvice (no IDs): OC51/OC52 test labels swapped; repo.go seal rule and fixture.go fence skip are hidden couplings; no charge test covers the absent-manifest refusal of spec line 498; evidence.go re-derives probeBites; premises.go:260 accepts an empty v2 ticket; collectChargeSnapshot hand-builds tickets and Source.\n"
+          },
+          "axis": "Spec",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "0b757ed60ea5118ed5bb184183ffcb58d24e6e2c",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3",
+            "P4",
+            "P5",
+            "P6",
+            "P7",
+            "P8"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft293-oc-c3-coverage-r1",
+          "performer": "claude:ft293_oc-c3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_coverage",
+            "digest": "sha256:55113bc85f5571e90b94bcfd08bdf0a8acf94df5f264efc62e4d514edd6c2b96",
+            "excerpt": "OC-C3 Coverage axis (opus / medium, one iteration), evidence sha256:132130bda610a2a6ef89578f2fe2cbd183082cec88fc71140cc0004d7f09b869 bound at 287862e0.\n4 findings, all T07. Worst: C1.\nC1 T07 internal/preflight/charge_pack.go:110 facts.Operation = KindCurrentEvidence is untested; TestChargeManualApplicability (premises_test.go:350-379) drives only the charge route, spec line 576 requires the current-evidence route too. Probe: omission silent, restored yes. auto-fix (current-evidence refusal case). conf 9.\nC2 T07 premises_test.go:363-365 OC94 case has no competing valid native-future claim (spec line 578); a check that goes green on non-empty PendingNative survives. auto-fix (combine validNative with currentManualJSON). conf 8.\nC3 T07 premises.go:240-248, 253-258 native-future ticket ownership and chunk-owns-ticket checks have no case (spec lines 168, 170). Probe: swap len(owners) != 1 || owners[0] != w.Ticket -> len(owners) == 0 silent, restored yes. auto-fix (wrong-ticket, two-owner, foreign-chunk, unnamed-ticket verification cases). conf 9.\nC4 T07 TestChargeManualApplicability has no review-mode or ordinary build-verdict call (spec line 581); dropping the operation guard at decision.go:229 is unproved. auto-fix. conf 6.\nAdvice (no IDs): shared empty-fence literal drift fails loudly; seal rule uncommented; assertChargeRefused substrings acceptable with exit code and AssertNothingPublished.\nProbes: charge_pack.go Operation omission silent, restored yes; premises.go ownership weakening silent, restored yes.\ngit status --short empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "0b757ed60ea5118ed5bb184183ffcb58d24e6e2c",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
