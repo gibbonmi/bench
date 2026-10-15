@@ -74,6 +74,8 @@ Compilation failure supplies no behavioral evidence.
 - `bench test --package ./internal/conformance`
 - `bench test --check system`
 
+The system charge fixture runs real child processes, so this ticket sets `BENCH_KIT` for the system suite through `bench test --check system`.
+
 Focused producer command: `bench test --package ./internal/preflight/... --run 'TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers'`.
 Named mutation identity: `oc-07-omission`.
 This obligation uses the named production seam and observable omission in this ticket, not a compile-failure substitute.
