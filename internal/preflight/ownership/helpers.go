@@ -172,7 +172,8 @@ func localName(owner Owner) string {
 }
 
 // premises grades each current premise of a kind this census owns: a reused owner, the
-// retirement, posture, and printed-field member censuses, and the sizing premises. It
+// retirement, posture, and printed-field member censuses, the sizing premises, and the
+// symbol and rule premises. It
 // answers the graded row of each such premise by ID, and the reason that locates each
 // verified reused owner's rule source, which the closure reads. A fault leaves its premise
 // unknown with that fault as the reason.
@@ -183,7 +184,10 @@ func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance
 		var reason string
 		var err error
 		shape, member := memberCensuses[item.Kind]
-		sizing, sized := sizingPremises[item.Kind]
+		collect, collected := sizingPremises[item.Kind]
+		if !collected {
+			collect, collected = symbolPremises[item.Kind]
+		}
 		switch {
 		case item.State != "current":
 			continue
@@ -194,8 +198,8 @@ func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance
 			}
 		case member:
 			reason, err = c.memberCensus(item, shape)
-		case sized:
-			reason, err = sizing(c, item)
+		case collected:
+			reason, err = collect(c, item)
 		default:
 			continue
 		}

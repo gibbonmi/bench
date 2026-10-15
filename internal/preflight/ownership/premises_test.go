@@ -1,7 +1,9 @@
 package ownership_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -201,6 +203,169 @@ func TestSizingPremises(t *testing.T) {
 		{"OC37", "headroom-absent-deletion", "unknown", "internal/sized/z.go is no tracked source"},
 		{"OC38", "lines-unbuilt", "unknown", "unobserved estimate"},
 		{"OC38", "lines-planned", "planned", "certifies no current source"},
+	} {
+		t.Run(test.row+" "+test.id, func(t *testing.T) {
+			row := one(t, out, "premises", map[string]string{"id": test.id})
+			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
+			}
+		})
+	}
+}
+
+// symbolModule is the module of every symbol and rule premise case. It is the kit module, so
+// its internal/anchors package declares the anchors kind inventory that the collector reads.
+const symbolModule = "github.com/gibbonmi/bench"
+
+// symbolBase is the committed module of every symbol and rule premise case. other.go
+// repeats the familiar sentinel name, the bound's value, and the name Check of rules.go, and
+// it imports rules, so an edge back from rules closes a cycle. local.go holds a same-valued
+// literal of the bound. The secret package sits under the internal directory of other.
+var symbolBase = map[string]string{
+	"go.mod": "module " + symbolModule + "\n\ngo 1.25\n",
+	"internal/rules/rules.go": `package rules
+
+import (
+	"errors"
+	"os"
+)
+
+// ErrMissing is the sentinel that Check returns.
+var ErrMissing = errors.New("missing")
+
+var errDynamic = errors.New(reason())
+
+const maxRows = 2 << 4
+
+var limit = len(os.Args)
+
+type staticError struct{}
+
+func (staticError) Error() string { return "static" }
+
+type dynamicError struct{ msg string }
+
+func (e dynamicError) Error() string { return e.msg }
+
+func reason() string { return "dynamic" }
+
+func Check(rows int) error {
+	if rows > maxRows || rows > limit {
+		return ErrMissing
+	}
+	return errDynamic
+}
+
+func fail(dynamic bool) error {
+	if dynamic {
+		return dynamicError{msg: "dynamic"}
+	}
+	return staticError{}
+}
+
+func write(v int) int { return v }
+`,
+	"internal/rules/local.go":                  "package rules\n\nconst localMax = 32\n",
+	"internal/other/other.go":                  "package other\n\nimport (\n\t\"errors\"\n\n\t\"" + symbolModule + "/internal/rules\"\n)\n\nvar ErrMissing = errors.New(\"missing\")\n\nconst maxRows = 32\n\nfunc Check() error { return rules.Check(maxRows) }\n",
+	"internal/other/internal/secret/secret.go": "package secret\n\nfunc Exported() {}\n",
+	"internal/anchors/match.go":                "package anchors\n\ntype Kind uint8\n\nconst (\n\tRequire Kind = iota\n\tRequireInSection\n\tRequireInStep\n)\n\nconst Width = 3\n",
+}
+
+// TestSymbolPremises drives the symbol, import, anchor-kind, sentinel, error, and bound
+// collectors through the actual proposal. Each case names its owner by exact identity, so
+// a familiar name, a same-valued literal, or a same-named declaration of another owner
+// cannot certify it. Each unproved form keeps its premise unknown with the reason the case
+// names.
+func TestSymbolPremises(t *testing.T) {
+	owner := func(path, symbol, kind, signature string) ownership.Owner {
+		return ownership.Owner{Path: path, Package: symbolModule + "/" + filepath.ToSlash(filepath.Dir(path)), Symbol: symbol, Kind: kind, Signature: signature}
+	}
+	encode := func(value any) string {
+		data, err := json.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	const rules, other, local, match = "internal/rules/rules.go", "internal/other/other.go", "internal/rules/local.go", "internal/anchors/match.go"
+	check := owner(rules, "rules.Check", "func", "func Check(rows int) error")
+	write := owner(rules, "rules.write", "func", "func write(v int) int")
+	fail := owner(rules, "rules.fail", "func", "func fail(dynamic bool) error")
+	missing := owner(rules, "rules.ErrMissing", "var", `var ErrMissing = errors.New("missing")`)
+	symbol := func(id string, o ownership.Owner) string {
+		return premiseItem(id, "symbol", encode(o), encode(map[string]string{"kind": o.Kind, "signature": o.Signature}))
+	}
+	edge := func(id, caller string, target ownership.Owner) string {
+		return premiseItem(id, "import", encode(map[string]any{"caller": symbolModule + "/" + caller, "target": target.Package, "owner": target}), `{"reachable":true}`)
+	}
+	anchor := func(id, kind string, line int, needle, source string) string {
+		return premiseItem(id, "anchor-kind", encode(map[string]any{"owner": ownership.Location{Path: match, Line: line, Needle: needle, Source: source}, "kind": kind}), `{"supported":true}`)
+	}
+	rule := func(id, kind string, o ownership.Owner, value string, producers ...ownership.Owner) string {
+		if producers == nil {
+			producers = []ownership.Owner{}
+		}
+		return premiseItem(id, kind, encode(map[string]any{"owner": o, "producers": producers}), encode(map[string]string{"value": value}))
+	}
+	bound := func(id string, o ownership.Owner, value string) string {
+		return premiseItem(id, "bound", encode(o), encode(map[string]string{"value": value}))
+	}
+	misplaced := check
+	misplaced.Package, misplaced.Symbol = symbolModule+"/internal/other", "other.Check"
+	moved := owner(local, "rules.maxRows", "const", "")
+	familiar := missing
+	familiar.Package, familiar.Symbol = symbolModule+"/internal/other", "other.ErrMissing"
+	facts := withItems("premises",
+		symbol("symbol-owner", check),
+		symbol("symbol-other-owner", misplaced),
+		symbol("symbol-type", owner(rules, "rules.dynamicError", "type", "type dynamicError struct{ msg string }")),
+		symbol("symbol-signature", owner(rules, "rules.write", "func", "func write(v string) int")),
+		symbol("symbol-kind", owner(rules, "rules.Check", "method", "func Check(rows int) error")),
+		edge("import-exported", "internal/other", check),
+		edge("import-unexported", "internal/other", write),
+		edge("import-internal", "internal/rules", owner("internal/other/internal/secret/secret.go", "secret.Exported", "func", "func Exported()")),
+		edge("import-cycle", "internal/rules", owner(other, "other.Check", "func", "func Check() error")),
+		anchor("anchor-step", "RequireInStep", 8, "RequireInStep", "tip"),
+		anchor("anchor-section-at-step", "RequireInSection", 8, "RequireInStep", "tip"),
+		anchor("anchor-invented", "ForbidInStep", 8, "RequireInStep", "tip"),
+		anchor("anchor-other-const", "Width", 11, "Width", "tip"),
+		rule("sentinel-owner", "sentinel", missing, `errors.New("missing")`, check),
+		rule("sentinel-familiar", "sentinel", familiar, `errors.New("missing")`, check),
+		rule("sentinel-dynamic", "sentinel", owner(rules, "rules.errDynamic", "var", "var errDynamic = errors.New(reason())"), "errors.New(reason())", check),
+		rule("sentinel-unused-producer", "sentinel", missing, `errors.New("missing")`, write),
+		rule("sentinel-no-producer", "sentinel", missing, `errors.New("missing")`),
+		rule("error-static", "error", owner(rules, "rules.staticError", "type", "type staticError struct{}"), `"static"`, fail),
+		rule("error-dynamic", "error", owner(rules, "rules.dynamicError", "type", "type dynamicError struct{ msg string }"), "e.msg", fail),
+		bound("bound-owner", owner(rules, "rules.maxRows", "const", ""), "32"),
+		bound("bound-local-literal", moved, "32"),
+		bound("bound-text", owner(rules, "rules.maxRows", "const", ""), "2 << 4"),
+		bound("bound-runtime", owner(rules, "rules.limit", "var", "var limit = len(os.Args)"), "1"))
+	out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{rules}, Files: symbolBase, Tail: facts}.Seed(t))
+	for _, test := range []struct{ row, id, state, reason string }{
+		{"OC39", "symbol-owner", "green", "rules.Check resolves in internal/rules/rules.go"},
+		{"OC39", "symbol-other-owner", "unknown", "other.Check is declared in internal/other/other.go, not internal/rules/rules.go"},
+		{"OC39", "symbol-type", "green", "rules.dynamicError resolves in internal/rules/rules.go"},
+		{"OC40", "symbol-signature", "unknown", `declares "func write(v int) int", not "func write(v string) int"`},
+		{"OC40", "symbol-kind", "unknown", "rules.Check is a func, not a method"},
+		{"OC41", "import-exported", "green", "reaches rules.Check"},
+		{"OC41", "import-unexported", "unknown", "rules.write is unexported"},
+		{"OC41", "import-internal", "unknown", "outside the tree of " + symbolModule + "/internal/other"},
+		{"OC42", "import-cycle", "unknown", "already imports " + symbolModule + "/internal/rules"},
+		{"OC43", "anchor-step", "green", "declares the anchor kind RequireInStep at internal/anchors/match.go line 8"},
+		{"OC43", "anchor-section-at-step", "unknown", "declares RequireInSection at internal/anchors/match.go line 7, not line 8"},
+		{"OC43", "anchor-invented", "unknown", `"ForbidInStep" is no constant of the anchor kind inventory`},
+		{"OC43", "anchor-other-const", "unknown", `"Width" is no constant of the anchor kind inventory`},
+		{"OC44", "sentinel-owner", "green", `constructs errors.New("missing")`},
+		{"OC44", "sentinel-familiar", "unknown", "other.ErrMissing is declared in internal/other/other.go, not internal/rules/rules.go"},
+		{"OC44", "sentinel-unused-producer", "unknown", "rules.write does not statically use rules.ErrMissing"},
+		{"OC44", "sentinel-no-producer", "unknown", "names no producer"},
+		{"OC44", "error-static", "green", `constructs "static"`},
+		{"OC45", "sentinel-dynamic", "unknown", "is no static construction"},
+		{"OC45", "error-dynamic", "unknown", "the Error method of rules.dynamicError returns no constant"},
+		{"OC46", "bound-owner", "green", "rules.maxRows holds the constant value 32"},
+		{"OC46", "bound-local-literal", "unknown", "rules.maxRows is declared in internal/rules/rules.go, not internal/rules/local.go"},
+		{"OC46", "bound-text", "unknown", "holds the constant value 32, not 2 << 4"},
+		{"OC47", "bound-runtime", "unknown", "rules.limit is a var, so its value is no static bound"},
 	} {
 		t.Run(test.row+" "+test.id, func(t *testing.T) {
 			row := one(t, out, "premises", map[string]string{"id": test.id})
