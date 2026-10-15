@@ -1,7 +1,7 @@
 # Refuse unproved source charges with complete reviewed inventories
 
 Blocked by: 06-check-recorded-evidence-premises.md
-Writes: internal/preflight/charge_pack.go, internal/preflight/charge_test.go, internal/preflight/closure.go, internal/preflight/command.go, internal/preflight/command_build_test.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/preflighttest/reviewcases.go, internal/preflight/preflighttest/reviewfiles.go, internal/preflight/preparation.go, internal/preflight/proposal.go, internal/preflight/proposal_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/coverage/coverage_test.go, internal/coverage/rows.go, internal/preflight/charge_pack.go, internal/preflight/charge_test.go, internal/preflight/closure.go, internal/preflight/command.go, internal/preflight/command_build_test.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/preflighttest/reviewcases.go, internal/preflight/preflighttest/reviewfiles.go, internal/preflight/preparation.go, internal/preflight/proposal.go, internal/preflight/proposal_test.go
 Covers: OC51, OC52, OC53, OC54, OC88, OC89, OC93, OC94, OC95
 
 ## What to build
@@ -71,6 +71,7 @@ Compilation failure supplies no behavioral evidence.
 - `bench test --package ./internal/preflight/...`
 - `bench test --package ./internal/coverage`
 - `bench test --package ./internal/reviewrecord`
+- `bench test --package ./internal/conformance`
 
 Focused producer command: `bench test --package ./internal/preflight/... --run 'TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers'`.
 Named mutation identity: `oc-07-omission`.
