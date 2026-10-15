@@ -3638,7 +3638,7 @@
     {
       "id": "OC-C3",
       "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
-      "tip": "76e08db7bd0737e28244adfbb416aae15aebf748",
+      "tip": "0b757ed60ea5118ed5bb184183ffcb58d24e6e2c",
       "plan_digest": "sha256:fa4a88a7ab799bed77ecdce96efa188b078dbdacb71b33a4b4d540237f415c27",
       "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
       "acceptance_rows": [
@@ -4009,6 +4009,107 @@
             "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14468,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "oc-05-check-5",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t06a-oc-06-focused",
+          "performer": "agy:ft293_t06",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t06",
+            "digest": "sha256:ba10f2c7e704db1ff3a1cca9f6660e3b4f56ddf903e801ab7367b0abad34c199",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestEvidencePremises/OC49_evidence-other-subject,12,1,0,null,yes\n  2,bit,swap,failed,1,TestEvidencePremises/OC50_evidence-unrestored-probe,12,1,0,null,yes\n  3,bit,swap,failed,1,TestEvidencePremises/OC87_evidence-compile-failure,12,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestEvidencePremises,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2822\nmutant_report[1]{mutant}:\n  1\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,389,12\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestEvidencePremises/OC49_evidence-other-subject,\"premises_test.go:278: premise evidence-other-subject = map[id:evidence-other-subject reason:internal/reused/reused_test.go (TestReused) is certified by specs/prior/spec.md chunk 1 verification tests at ae0f79e0ee2e5eb68e4c0af4ac17d6be1eaa83… (380 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,393,12\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestEvidencePremises/OC50_evidence-unrestored-probe,\"premises_test.go:278: premise evidence-unrestored-probe = map[id:evidence-unrestored-probe reason:internal/reused/reused_test.go (TestReused) is certified by specs/prior/spec.md chunk 1 verification additional at 543619908f2be55c94a19c9681d… (394 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,390,12\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestEvidencePremises/OC87_evidence-compile-failure,\"premises_test.go:278: premise evidence-compile-failure = map[id:evidence-compile-failure reason:internal/reused/reused_test.go (TestReused) is certified by specs/prior/spec.md chunk 1 verification tests at e803472e58706864b8e9107bac4d9d88a5… (416 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-06-focused",
+          "command": "bench test --package ./internal/preflight/... --run TestEvidencePremises",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "oc-06-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agy:ft293_t06",
+              "digest": "sha256:ba10f2c7e704db1ff3a1cca9f6660e3b4f56ddf903e801ab7367b0abad34c199",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestEvidencePremises/OC49_evidence-other-subject,12,1,0,null,yes\n  2,bit,swap,failed,1,TestEvidencePremises/OC50_evidence-unrestored-probe,12,1,0,null,yes\n  3,bit,swap,failed,1,TestEvidencePremises/OC87_evidence-compile-failure,12,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestEvidencePremises,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2822\nmutant_report[1]{mutant}:\n  1\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,389,12\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestEvidencePremises/OC49_evidence-other-subject,\"premises_test.go:278: premise evidence-other-subject = map[id:evidence-other-subject reason:internal/reused/reused_test.go (TestReused) is certified by specs/prior/spec.md chunk 1 verification tests at ae0f79e0ee2e5eb68e4c0af4ac17d6be1eaa83… (380 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,393,12\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestEvidencePremises/OC50_evidence-unrestored-probe,\"premises_test.go:278: premise evidence-unrestored-probe = map[id:evidence-unrestored-probe reason:internal/reused/reused_test.go (TestReused) is certified by specs/prior/spec.md chunk 1 verification additional at 543619908f2be55c94a19c9681d… (394 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,3,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,390,12\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestEvidencePremises/OC87_evidence-compile-failure,\"premises_test.go:278: premise evidence-compile-failure = map[id:evidence-compile-failure reason:internal/reused/reused_test.go (TestReused) is certified by specs/prior/spec.md chunk 1 verification tests at e803472e58706864b8e9107bac4d9d88a5… (416 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft293_t06a-oc-06-check-1",
+          "performer": "agy:ft293_t06",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t06",
+            "digest": "sha256:df685de81b1f2ad1f4f174ec7e77eeb2e53e8246278c10dee30d0eb057ccca15",
+            "excerpt": "packages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,36318,408\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,22701,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,35310,225\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-06-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t06a-oc-06-check-2",
+          "performer": "agy:ft293_t06",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t06",
+            "digest": "sha256:32361e5a77cb5f176feb3ee091b96be8f4fdc8565f34fbf88fef8f2e0a7947c7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2774,110\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-06-check-2",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t06a-oc-06-check-3",
+          "performer": "agy:ft293_t06",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t06",
+            "digest": "sha256:bf7565a51099998c719957ac8ec1317d44512f618143f63f9bacaeed4bbdf418",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15226,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-06-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t06a-oc-06-check-4",
+          "performer": "agy:ft293_t06",
+          "role": "author-verification",
+          "model": "gemini-4-argon-medium",
+          "effort": "medium",
+          "source_digest": "e034437d316941fd9fa5cc132b97c85eb58fda48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agy:ft293_t06",
+            "digest": "sha256:eb0f0d57a836eea96fc74ad1b1bb1a76cd7d31382cb3dda7bd8744b95a9185f5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14493,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-06-check-4",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
         }
