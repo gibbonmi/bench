@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/preflight-ownership-closure/spec.md",
-  "plan_digest": "sha256:c5d7d55edcbcc0e1f790c7db9f2c7ee991d4efaa0f910543de4197d00c514a98",
+  "plan_digest": "sha256:10e74ce1b538af054a4b095dabaef5b5e6ab6ac2f7c71019f6248c1d8536b645",
   "implementation_session": "",
   "chunks": [
     {
@@ -3638,9 +3638,9 @@
     {
       "id": "OC-C3",
       "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
-      "tip": "73ae150570ca4752b8aaf60c8ea0fd7d75102422",
-      "plan_digest": "sha256:c5d7d55edcbcc0e1f790c7db9f2c7ee991d4efaa0f910543de4197d00c514a98",
-      "source_digest": "8992716ed4cc042dc338aaf8fe9f9728aad20348",
+      "tip": "3009145a11b4e704c9e934408e92818d5622f917",
+      "plan_digest": "sha256:10e74ce1b538af054a4b095dabaef5b5e6ab6ac2f7c71019f6248c1d8536b645",
+      "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
       "acceptance_rows": [
         "OC32",
         "OC33",
@@ -5266,6 +5266,161 @@
           "requirement": "oc-06-check-4",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "ft293_t07_rep3-oc-07-focused",
+          "performer": "claude:ft293_t07_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t07_rep3",
+            "digest": "sha256:172e4d3a94d3fd60fbe31991054a616797b6e5328998fb411c851cd4db72efee",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/charge_pack.go,omit,failed,1,TestChargeManualApplicability/OC94_current_evidence_refuses_an_unproved_current_premise,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers,passed,45\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,848\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,8,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,7552,45\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestChargeManualApplicability/OC94_current_evidence_refuses_an_unproved_current_premise,\"premises_test.go:370: current evidence over an unproved premise = (1):\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-focused",
+          "command": "bench test --package ./internal/preflight/... --run 'TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "oc-07-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t07_rep3",
+              "digest": "sha256:172e4d3a94d3fd60fbe31991054a616797b6e5328998fb411c851cd4db72efee",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/charge_pack.go,omit,failed,1,TestChargeManualApplicability/OC94_current_evidence_refuses_an_unproved_current_premise,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers,passed,45\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,848\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,8,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,7552,45\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestChargeManualApplicability/OC94_current_evidence_refuses_an_unproved_current_premise,\"premises_test.go:370: current evidence over an unproved premise = (1):\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft293_t07_rep3-oc-07-check-1",
+          "performer": "claude:ft293_t07_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t07_rep3",
+            "digest": "sha256:a0a995f9ac6920b1d79541213ac32d1af6bf725913af1b3a4f57c0733884d922",
+            "excerpt": "packages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,36596,409\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,22751,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,36523,240\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07_rep3-oc-07-check-2",
+          "performer": "claude:ft293_t07_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t07_rep3",
+            "digest": "sha256:61944ee2a5c625cfa06b1e5a0cbbe7b50922e171228b48fd2fda29ebee0f2603",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,pass,1774,145\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-2",
+          "command": "bench test --package ./internal/coverage",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07_rep3-oc-07-check-3",
+          "performer": "claude:ft293_t07_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t07_rep3",
+            "digest": "sha256:1352113471073f0cd02f86821f589779532a85be4be5486f905c40d0bd3488b3",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2657,110\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-3",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07_rep3-oc-07-check-4",
+          "performer": "claude:ft293_t07_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t07_rep3",
+            "digest": "sha256:6d23a4e19f4c633bf1a3e5530673d87e412df40cd2add062fb51468e85c9e155",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15421,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-4",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07_rep3-oc-07-check-5",
+          "performer": "claude:ft293_t07_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t07_rep3",
+            "digest": "sha256:e27c0dda0ad7cac6e7077ef6143111da1b1b4927d2cc979aee7203a5b12b6328",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14513,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-5",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07_rep3-oc-07-check-6",
+          "performer": "claude:ft293_t07_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t07_rep3",
+            "digest": "sha256:6b02748f22e05a5d2898f64f493ea375818c9a4986546e364bd26ac175cf77ec",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,55406,1694\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "oc-07-check-6",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t07_rep3-oc-07-check-7",
+          "performer": "claude:ft293_t07_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t07_rep3",
+            "digest": "sha256:57893cce6cb59de8cb8d15c0bebed6a5ad0aa9211332dfef4233ffbccffd5606",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,170,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,68994,170\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-07-check-7",
+          "command": "bench test --check system",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -5635,6 +5790,21 @@
     {
       "from": "sha256:153a94678508e508d02621d842c2ffc2c24543978ce545a5d5facc480b3bbb46",
       "to": "sha256:c5d7d55edcbcc0e1f790c7db9f2c7ee991d4efaa0f910543de4197d00c514a98",
+      "chunk_ids": {
+        "OC-C1": [
+          "OC-C1"
+        ],
+        "OC-C2": [
+          "OC-C2"
+        ],
+        "OC-C3": [
+          "OC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c5d7d55edcbcc0e1f790c7db9f2c7ee991d4efaa0f910543de4197d00c514a98",
+      "to": "sha256:10e74ce1b538af054a4b095dabaef5b5e6ab6ac2f7c71019f6248c1d8536b645",
       "chunk_ids": {
         "OC-C1": [
           "OC-C1"
