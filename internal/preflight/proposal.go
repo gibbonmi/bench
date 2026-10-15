@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -14,8 +15,8 @@ import (
 // because the proposal itself reports the repair that the red requires.
 var proposalToleratedChecks = append(closureCheckNames(), "fence-writes")
 
-func proposeWritesCommand(root, mode, slug, base, sourceTip, name string, args []string) (string, int) {
-	return preparedCommand(root, mode, slug, base, sourceTip, name, args)
+func proposeWritesCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip, name string, args []string) (string, int) {
+	return preparedCommand(root, kind, mode, slug, base, sourceTip, name, args)
 }
 
 func proposalSourceCheck(root string, facts Facts, selected *tickets.Entry) string {

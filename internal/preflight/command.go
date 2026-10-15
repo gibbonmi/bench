@@ -74,7 +74,7 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 	}
 	switch op.Kind {
 	case evidencecmd.KindProposal:
-		return proposeWritesCommand(root, op.Mode, slug, base, sourceTip, ticket, args)
+		return proposeWritesCommand(root, op.Kind, op.Mode, slug, base, sourceTip, ticket, args)
 	case evidencecmd.KindPrepareEvidence:
 		return prepareEvidenceCommand(root, op.Kind, slug, base, sourceTip, ticket, quota, args)
 	case evidencecmd.KindPrepareReviewEvidence:
