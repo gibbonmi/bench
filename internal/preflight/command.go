@@ -76,7 +76,7 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 	case evidencecmd.KindProposal:
 		return proposeWritesCommand(root, op.Mode, slug, base, sourceTip, ticket, args)
 	case evidencecmd.KindPrepareEvidence:
-		return prepareEvidenceCommand(root, slug, base, sourceTip, ticket, quota, args)
+		return prepareEvidenceCommand(root, op.Kind, slug, base, sourceTip, ticket, quota, args)
 	case evidencecmd.KindPrepareReviewEvidence:
 		return prepareReviewEvidenceCommand(root, version, slug, base, sourceTip, quota, args)
 	case evidencecmd.KindReadEvidence:
@@ -84,7 +84,7 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 	case evidencecmd.KindVerifyEvidence:
 		return evidencecmd.Verify(root, slug)
 	case evidencecmd.KindCurrentEvidence:
-		return currentEvidenceCommand(root, slug, args)
+		return currentEvidenceCommand(root, op.Kind, slug, args)
 	case evidencecmd.KindExportEvidence:
 		return evidencecmd.Export(root, slug, flags[evidencecmd.FlagTo], chargeevidence.WriteAll)
 	case evidencecmd.KindCleanPlan:
@@ -96,11 +96,12 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 }
 
 // prepareEvidenceCommand runs the movement-checked build preparation and hands each
-// attempt's validated pack, or its refusal, to the evidence publisher.
-func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint64, args []string) (string, int) {
+// attempt's validated pack, or its refusal, to the evidence publisher. kind is the
+// operation that the dispatcher selected, and the facts carry it into Decide.
+func prepareEvidenceCommand(root string, kind evidencecmd.Kind, slug, base, sourceTip, name string, quota uint64, args []string) (string, int) {
 	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
 		return preparedAttempts(root, modeBuild, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
-			facts.Operation = evidencecmd.KindPrepareEvidence
+			facts.Operation = kind
 			pack, refusal := buildChargePack(root, facts, boundedVerdict(Decide(facts)), name, buildSourcePolicy())
 			if refusal == "" {
 				if err := (commitrepo.Store{Root: root}).Ready(facts.SpecPath); err != nil {

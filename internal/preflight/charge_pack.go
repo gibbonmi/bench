@@ -97,8 +97,9 @@ func prepareBuildPack(root string, facts Facts, selected *tickets.Entry, parsed 
 // the required bytes come from the current checkout, so a released assignment, a dirty
 // checkout, a moved source, or a changed required source refuses. The binding accepts a dirty
 // review record of the selected spec and reports it. The binding names the current assignment, never
-// the assignment that prepared the artifact.
-func currentEvidenceCommand(root, identity string, args []string) (string, int) {
+// the assignment that prepared the artifact. kind is the operation that the dispatcher
+// selected, and the facts carry it into Decide.
+func currentEvidenceCommand(root string, kind evidencecmd.Kind, identity string, args []string) (string, int) {
 	artifact, refusal, code := evidencecmd.OpenEvidence(root, identity)
 	if refusal != "" {
 		return refusal, code
@@ -107,7 +108,7 @@ func currentEvidenceCommand(root, identity string, args []string) (string, int) 
 	manifest, _ := artifact.Manifest()
 	selection := manifest.Selection
 	return preparedAttempts(root, selection.Mode, specref.LiveSpecSlug(selection.Spec), selection.Base, "", "check", args, func(facts Facts) (string, int) {
-		facts.Operation = evidencecmd.KindCurrentEvidence
+		facts.Operation = kind
 		refusal, dirtyRecord := preparationCheckoutRefusal(root, facts, "check")
 		if refusal != "" {
 			return refusal, 1

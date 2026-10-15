@@ -4,6 +4,7 @@
 package ownershiptest
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -13,30 +14,65 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
-var kitRegistry = func() []byte {
-	for _, rel := range []string{"../tickets/registry_data.go", "../../tickets/registry_data.go"} {
-		if data, err := os.ReadFile(rel); err == nil {
-			return data
-		}
+// kitRegistry is the kit's own binding registry source, read from the module root before
+// any test changes the working directory. A test binary starts in its package directory, so
+// the module root is the nearest ancestor that holds go.mod.
+var kitRegistry, kitRegistryErr = func() ([]byte, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return os.ReadFile(filepath.Join(dir, filepath.FromSlash(tickets.BindingRegistry)))
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return nil, errors.New("no go.mod above the test package directory")
+		}
+		dir = parent
+	}
 }()
+
+// KitRegistry is the kit's own binding registry source. It fails the test when the source
+// is unreadable.
+func KitRegistry(t *testing.T) []byte {
+	t.Helper()
+	if kitRegistryErr != nil {
+		t.Fatalf("kit registry source: %v", kitRegistryErr)
+	}
+	return kitRegistry
+}
+
+// Cut removes the one occurrence of part from s. It fails the test unless s holds part
+// exactly once, so a drifted fixture cannot pass unchanged.
+func Cut(t *testing.T, s, part string) string {
+	t.Helper()
+	if n := strings.Count(s, part); n != 1 {
+		t.Fatalf("fixture text holds %q %d times, want once", part, n)
+	}
+	return strings.Replace(s, part, "", 1)
+}
 
 // ProposalRepo is one committed proposal repository over the slug example. The selected
 // ticket one.md writes the conformant fence plus Writes, and each Others ticket writes its
 // own list. A nil Fence fences every write, so only an explicit Fence separates the spec
-// from the ticket union. Tail closes the spec, so its bytes are part of what the fixture
+// from the ticket union. The spec declares the complete-empty inventory unless
+// OwnInventory is set; Tail then closes the spec, so its bytes are part of what the fixture
 // admits. Files are committed in the base; a charge source that Files omits takes a
 // one-line body.
 type ProposalRepo struct {
-	Writes []string
-	Others map[string][]string
-	Files  map[string]string
-	Fence  []string
-	Tail   string
+	Writes       []string
+	Others       map[string][]string
+	Files        map[string]string
+	Fence        []string
+	OwnInventory bool
+	Tail         string
 }
 
 // Seed commits the repository as the base on main, then adds one authorized change on a
@@ -63,10 +99,10 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 	}
 	spec := "specs/" + slug + "/spec.md"
 	body := preflighttest.SpecBody(slug, fence...)
-	if r.Tail != "" {
-		body = strings.Replace(body, "\n## Planning claim inventory\n\n```bench-planning-facts\n{\"version\":1,\"authority\":\"authored-spec\",\"completeness\":\"declared-complete\",\"baseline\":\"source-base\",\"scope\":[],\"changes\":[],\"premises\":[],\"seams\":[],\"decisions\":[],\"manual_claims\":[]}\n```\n", "", 1) + r.Tail
+	if r.OwnInventory {
+		body = Cut(t, body, inventorytest.Section(inventorytest.CompleteEmpty))
 	}
-	preflighttest.MustWriteFile(t, spec, body)
+	preflighttest.MustWriteFile(t, spec, body+r.Tail)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), r.Writes...), "PF1", "PF2"))
 	for _, name := range others {
 		preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/"+name, preflighttest.WritesTicketDoc(strings.TrimSuffix(name, ".md"), r.Others[name], "PF1", "PF2"))
@@ -83,7 +119,7 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 	seal := hasRegistry || (len(r.Others) > 0 && len(r.Writes) >= 4)
 	if seal {
 		if !hasRegistry {
-			preflighttest.MustWriteFile(t, "internal/tickets/registry_data.go", string(kitRegistry))
+			preflighttest.MustWriteFile(t, "internal/tickets/registry_data.go", string(KitRegistry(t)))
 		}
 		preflighttest.MustWriteFile(t, "go.mod", "module example.com/kit\n\ngo 1.25\n")
 		preflighttest.MustWriteFile(t, "cmd/bench/main.go", "package main\n\nimport _ \"example.com/kit/internal/tickets\"\n\nfunc main() {}\n")

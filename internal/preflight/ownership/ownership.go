@@ -119,12 +119,14 @@ type Diagnostic struct {
 // InventoryComplete means a declared-complete inventory passed its structural checks; it
 // is no review and no proof. RequiredCurrent holds every required current-source premise,
 // and CurrentComplete means each one has complete supported proof. PendingNative holds the
-// validated native-future claims.
+// validated native-future claims. Blocker names the first unmet condition, and it is empty
+// when both completions hold.
 type ChargeReadiness struct {
 	InventoryComplete bool
 	CurrentComplete   bool
 	RequiredCurrent   []string
 	PendingNative     []ManualClaim
+	Blocker           string
 }
 
 // Snapshot is one immutable collection. Complete means full supported premise
@@ -167,10 +169,10 @@ func Collect(root string, source Source, manifest Manifest, parsed []tickets.Tic
 	if err != nil {
 		return Snapshot{}, err
 	}
-	decisionPremises, decisionDiag := census.decisions(manifest)
+	decisionPremises := census.decisions(manifest)
 	manualPremises, pendingNative, nativeValid := census.manualClaims(manifest, parsed)
 	allPremises := append(append(manifest.premises(source.Tip, graded), decisionPremises...), manualPremises...)
-	allDiag := append(append(append(manifest.diagnostics(), census.checkSeams(manifest)...), decisionDiag...), diagnostics...)
+	allDiag := append(append(manifest.diagnostics(), census.checkSeams(manifest)...), diagnostics...)
 	snapshot := Snapshot{
 		Requirements: requirements,
 		Premises:     allPremises,

@@ -69,7 +69,7 @@ func printedFieldWrites(t *testing.T, subject, renderers string) {
 			files := merged(helperBase, map[string]string{"internal/policy/positional.go": "package policy\n\n" + form.code})
 			files = merged(files, form.base)
 			out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: files, Fence: helperFence,
-				Tail: withItems("premises", premiseItem("positional-field", "printed-field", subject, `{"producers":`+renderers+`}`))}.Seed(t))
+				OwnInventory: true, Tail: withItems("premises", premiseItem("positional-field", "printed-field", subject, `{"producers":`+renderers+`}`))}.Seed(t))
 			row := one(t, out, "premises", map[string]string{"id": "positional-field"})
 			if cell(row, "state") != form.state || !strings.Contains(cell(row, "reason"), form.reason) {
 				t.Fatalf("premise positional-field = %v, want %s and a reason naming %q", row, form.state, form.reason)

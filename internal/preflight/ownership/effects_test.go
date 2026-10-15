@@ -95,9 +95,10 @@ type effectCase struct {
 	fence                         []string
 }
 
-// run seeds the case's base, commits its tip, and grades the proposal.
+// run seeds the case's base, commits its tip, and grades the proposal. A case with no facts
+// declares the complete-empty inventory.
 func (test effectCase) run(t *testing.T) {
-	root := ownershiptest.ProposalRepo{Writes: test.writes, Files: test.files, Fence: test.fence, Tail: test.facts}.Seed(t)
+	root := ownershiptest.ProposalRepo{Writes: test.writes, Files: test.files, Fence: test.fence, OwnInventory: true, Tail: cmp.Or(test.facts, fenced(completeEmpty))}.Seed(t)
 	if len(test.tip) > 0 {
 		for path, body := range test.tip {
 			if body == "" {
@@ -337,7 +338,7 @@ func TestOwnerPremises(t *testing.T) {
 		premiseItem("partial-field", "printed-field", field(list("internal/policy/render.go", "policy.renderA")), `{"producers":`+list("internal/policy/render.go", "policy.renderA")+`}`),
 		premiseItem("complete-field", "printed-field", field(renderers), `{"producers":`+renderers+`}`),
 		premiseItem("mismatched-field", "printed-field", field(renderers), `{"producers":`+list("internal/policy/render.go", "policy.renderA")+`}`))
-	out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: helperBase, Fence: helperFence, Tail: facts}.Seed(t))
+	out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{"internal/policy/render.go"}, Files: helperBase, Fence: helperFence, OwnInventory: true, Tail: facts}.Seed(t))
 	t.Run("OC28 reused owner adds its rule source", func(t *testing.T) {
 		one(t, out, "closure", map[string]string{"ticket": "one.md", "path": "internal/policy/render.go", "requires": policyFile})
 		row := one(t, out, "closure_evidence", map[string]string{"ticket": "one.md", "path": policyFile, "kind": "owner"})

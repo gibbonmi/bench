@@ -18,6 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	toonlib "github.com/toon-format/toon-go"
 )
@@ -129,7 +130,7 @@ const PlanCommand = "bench test --package ./..."
 // landing later requires. The section heading closes the ownership-fence section above it,
 // so no payload byte reads as a fence token.
 func PlanFence(tickets ...string) string {
-	plan := reviewrecord.Plan{
+	return PlanSection(reviewrecord.Plan{
 		Version: 1,
 		Chunks: []reviewrecord.PlannedChunk{{
 			ID:           "c1",
@@ -137,7 +138,11 @@ func PlanFence(tickets ...string) string {
 			Verification: []reviewrecord.Requirement{{ID: "tests", Command: PlanCommand}},
 		}},
 		FinalVerification: []reviewrecord.Requirement{{ID: "acceptance", Command: "go test ./..."}},
-	}
+	})
+}
+
+// PlanSection renders plan as the bench-completion-plan section that PlanFence frames.
+func PlanSection(plan reviewrecord.Plan) string {
 	data, err := json.Marshal(plan)
 	if err != nil {
 		panic(err)
@@ -147,8 +152,8 @@ func PlanFence(tickets ...string) string {
 
 // SpecBody renders a bootstrap-conformant spec for slug. It has staged status, a valid
 // opted-in coverage map declaring rows PF1 and PF2, and the ConformantFence entries plus
-// extraFenceLines. It closes with the completion plan the landing's checkpoint reads, over
-// the tickets/one.md every conformant seed writes.
+// extraFenceLines, the complete-empty inventory unless the first extra line opens the review
+// fence, and the completion plan over the tickets/one.md that every seed writes.
 func SpecBody(slug string, extraFenceLines ...string) string {
 	var b strings.Builder
 	b.WriteString("# " + slug + "\n\nStatus: staged\n\n")
@@ -167,7 +172,7 @@ func SpecBody(slug string, extraFenceLines ...string) string {
 		b.WriteString(line + "\n")
 	}
 	if len(extraFenceLines) == 0 || extraFenceLines[0] != fenceLine(reviewFenceExtra[0].path, reviewFenceExtra[0].annotation) {
-		b.WriteString("\n## Planning claim inventory\n\n```bench-planning-facts\n{\"version\":1,\"authority\":\"authored-spec\",\"completeness\":\"declared-complete\",\"baseline\":\"source-base\",\"scope\":[],\"changes\":[],\"premises\":[],\"seams\":[],\"decisions\":[],\"manual_claims\":[]}\n```\n")
+		b.WriteString(inventorytest.Section(inventorytest.CompleteEmpty))
 	}
 	b.WriteString(PlanFence("one.md"))
 	return b.String()

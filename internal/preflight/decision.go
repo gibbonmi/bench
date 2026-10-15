@@ -10,7 +10,6 @@
 package preflight
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/freshness"
@@ -344,24 +343,12 @@ func diffNonemptyCheck(f Facts) CheckResult {
 }
 
 // chargePremisesCheck refuses build charge preparation and current-evidence binding unless
-// the planning-facts inventory and every required current premise are proved.
+// the planning-facts inventory and every required current premise are proved. Its detail is
+// the blocker that the charge readiness names.
 func chargePremisesCheck(f Facts) CheckResult {
 	ready := f.Ownership.ChargeReadiness
 	if ready.InventoryComplete && ready.CurrentComplete {
 		return green("charge-premises")
 	}
-	if len(f.Ownership.Diagnostics) > 0 {
-		d := f.Ownership.Diagnostics[0]
-		return red("charge-premises", d.ID+": "+d.Reason)
-	}
-	for _, p := range f.Ownership.Premises {
-		if p.State == ownership.StateGreen || p.State == ownership.StatePlanned {
-			continue
-		}
-		if p.State == ownership.StateManual && slices.ContainsFunc(ready.PendingNative, func(c ownership.ManualClaim) bool { return c.ID == p.ID }) {
-			continue
-		}
-		return red("charge-premises", p.ID+": "+p.Reason)
-	}
-	return red("charge-premises", "premise inventory is partial or incomplete")
+	return red("charge-premises", ready.Blocker)
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/tickets"
@@ -17,14 +18,12 @@ import (
 
 const slug = "example"
 
-// completeEmpty is a declared-complete planning inventory with no item. Each grammar case
+// completeEmpty is the declared-complete planning inventory with no item. Each grammar case
 // edits one part of it, so the cases share one valid baseline.
-const completeEmpty = `{"version":1,"authority":"authored-spec","completeness":"declared-complete","baseline":"source-base","scope":[],"changes":[],"premises":[],"seams":[],"decisions":[],"manual_claims":[]}`
+var completeEmpty = inventorytest.CompleteEmpty
 
 // fenced is one bench-planning-facts section that holds payload.
-func fenced(payload string) string {
-	return "\n## Planning claim inventory\n\n```bench-planning-facts\n" + payload + "\n```\n"
-}
+var fenced = inventorytest.Section
 
 const (
 	specPath   = "specs/" + slug + "/spec.md"
@@ -183,20 +182,13 @@ func TestProposalProvenance(t *testing.T) {
 	})
 }
 
-// kitRegistry is the kit's own binding registry source, read from the package directory
-// before any test changes the working directory.
-var kitRegistry, kitRegistryErr = os.ReadFile(filepath.Join("..", "..", "tickets", "registry_data.go"))
-
 // sealedKit seeds a repository whose published binary seal verifies, so its binding
 // registry source is the caller's authenticated kit context. The registry source is the
 // kit's own file. It answers the root and the line of the internal/toon binding row, which
 // the registry's own line owner locates in those bytes.
 func sealedKit(t *testing.T) (string, string) {
 	t.Helper()
-	registry, err := kitRegistry, kitRegistryErr
-	if err != nil {
-		t.Fatal(err)
-	}
+	registry := ownershiptest.KitRegistry(t)
 	lines, err := tickets.BindingLines(registry)
 	if err != nil || lines["internal/toon"] < 1 {
 		t.Fatalf("kit registry locates no internal/toon binding row: %v", err)
@@ -256,7 +248,8 @@ func TestProposalReadOnly(t *testing.T) {
 }
 
 // emptyTree is a linked repository with no anchor registry and no fixture inventory, whose
-// ticket writes a guidance path and a source file. tail closes its spec.
+// ticket writes a guidance path and a source file. tail closes its spec and states its whole
+// planning inventory, so an empty tail declares none.
 func emptyTree(tail string) ownershiptest.ProposalRepo {
 	return ownershiptest.ProposalRepo{
 		Writes: []string{".agents/x/SKILL.md", "internal/example/pinned.go"},
@@ -264,7 +257,8 @@ func emptyTree(tail string) ownershiptest.ProposalRepo {
 			".agents/x/SKILL.md":         "# X\n",
 			"internal/example/pinned.go": "package example\n",
 		},
-		Tail: tail,
+		OwnInventory: true,
+		Tail:         tail,
 	}
 }
 
@@ -290,7 +284,7 @@ func TestProposalEmpty(t *testing.T) {
 		}
 	})
 	t.Run("absent manifest stays diagnostic", func(t *testing.T) {
-		out := mustPropose(t, emptyTree("\n").Seed(t))
+		out := mustPropose(t, emptyTree("").Seed(t))
 		row := one(t, out, "premises", map[string]string{"id": "metadata"})
 		if cell(row, "state") != "unknown" || !strings.Contains(cell(row, "reason"), "no bench-planning-facts fence") {
 			t.Fatalf("absent manifest premise = %v, want an unknown inventory diagnostic", row)
@@ -302,7 +296,7 @@ func TestProposalEmpty(t *testing.T) {
 func TestProposalUnknown(t *testing.T) {
 	t.Run("OC13 unverified registry source", func(t *testing.T) {
 		tr := closureTree()
-		tr.Tail = fenced(completeEmpty)
+		tr.OwnInventory, tr.Tail = true, fenced(completeEmpty)
 		out := mustPropose(t, tr.Seed(t))
 		row := one(t, out, "premises", map[string]string{"id": "kit-registry"})
 		if cell(row, "state") != "unknown" {
