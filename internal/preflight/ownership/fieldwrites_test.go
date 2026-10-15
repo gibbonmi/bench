@@ -23,8 +23,8 @@ var genericAlias = merged(genericRow, map[string]string{policyFile: strings.Repl
 // parameter whose core type is the struct or a pointer to it. A keyed write is a producer, so
 // the census that omits it is incomplete. Another type identical to the struct, and a generic
 // struct, keep the census diagnostic whatever writes through them. A nil pointer conversion and
-// a conversion from the struct's own type write nothing. Go ignores tags and alias spellings
-// when it compares two structs, so a type that differs from the struct only in those is identical.
+// a conversion from the struct's own type write nothing. A type that differs from the struct
+// only in tags or alias spellings counts as identical, because Go converts between the two.
 func printedFieldWrites(t *testing.T, subject, renderers string) {
 	const unkeyed = "line 3 writes policy.row.Reason through an unkeyed literal"
 	const identical = "line 3 writes policy.row.Reason through a type identical to its struct"

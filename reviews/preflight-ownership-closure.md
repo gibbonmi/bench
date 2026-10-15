@@ -3542,6 +3542,74 @@
           "supersedes": [
             "ft293-oc-c2-coverage-r5"
           ]
+        },
+        {
+          "id": "ft293-oc-c2-standards-r7",
+          "performer": "claude:ft293_oc-c2_standards_r7",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "27d3621dd5a6cbded15bb40405c808669fc74b1b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_standards_r7",
+            "digest": "sha256:ac313e07cbb7c06c863329e565d091f75b4e7bf0ae796e0ba35e93e819f24bc2",
+            "excerpt": "Standards round 7, OC-C2, cycle 6 delta (1395b49d..24279ede, internal). Evidence sha256:1b1e62c1… bound, `current=true`, tip ee1360c3.\n\nS7. `internal/preflight/ownership/fieldwrites_test.go:26-27` says \"Go ignores tags and alias spellings when it compares two structs, so a type that differs from the struct only in those is identical.\" That is false for tags. Go's type identity includes field tags; only conversion ignores them. `sameStruct`'s own comment at `internal/consumers/rows.go:140-141` has it right (\"Go converts between…\").\n- Binding requirement: `bench-craft-comments` \"What survives merge is only what's true of the code as it stands\", plus one source per fact.\n- Disposition: fix the wording (say Go converts between them), or drop the sentence and let `sameStruct` own the fact.\n- Confidence: 6.\n\nNo `structKey` caller or definition is left in `internal/`. `sameStruct` is the only source of struct identity at `rows.go:145`, used at `:172` and `:193`.\n\nAdvice:\n- `rows.go:143`: \"Either test can join two structs Go keeps apart\" is loose.\n- `rows.go:371` has its own check for generic named types; a different policy, optional to unify.\n"
+          },
+          "axis": "Standards",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "finding_ids": [
+            "S7"
+          ],
+          "supersedes": [
+            "ft293-oc-c2-standards-r6"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-spec-r7",
+          "performer": "claude:ft293_oc-c2_spec_r7",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "27d3621dd5a6cbded15bb40405c808669fc74b1b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_spec_r7",
+            "digest": "sha256:7763389ed9dddce4baf1cd6e01433933a35f47e0e3bf42d3290f4e1803dc2d98",
+            "excerpt": "P12 and P13 are both closed. The evidence check bound (current=true, dirty_record=false, tip ee1360c3), and the only commit after 24279ede changes `reviews/preflight-ownership-closure.md`.\n\n- P12 (closed): `sameStruct` at `internal/consumers/rows.go:145-147` now uses `types.IdenticalIgnoreTags`. Both struct-identity checks call it: `identicalType` (`rows.go:172`) and `writesStruct` (`rows.go:193`). Fixture rows at `internal/preflight/ownership/fieldwrites_test.go:201-203`. `structKey` is gone.\n- P13 (closed): `genericDecl` at `rows.go:132-138` catches an `*types.Alias` that has type params. `fieldStruct` (`internal/consumers/resolve.go:286`) finds the struct through the alias's underlying type. Fixtures at `fieldwrites_test.go:130` and `:204-205`.\n\nResiduals\n- R1 (confirmed as the author states): the struct is declared in a test-variant load, differs in tags or nested aliases, and its field type is a named type with distinct objects across loads. Won't handle: a test-variant struct that differs in tags or alias spelling over a named field type — Go's identity test separates the two loads' objects, so the census can read green and needs manual review.\n- R2: `(*row)(unsafe.Pointer(&o))`, where `o` has a different layout. Won't handle: unsafe pointer conversions to the field's struct — the census sees no identical type, and the write needs manual review.\n- R3: reflection writes, such as `json.Unmarshal(b, &r)` or `reflect.Value.Field(i).SetString`. The existing reflection entry covers callers only. Won't handle: reflection writes to a printed field — no static form exists, and the write needs manual review.\n\nFindings: none. OC28-OC31 still hold.\n\nAdvice: the wider identity test could flip the real repo's OC31 preflight run to diagnostic.\n"
+          },
+          "axis": "Spec",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-spec-r6"
+          ]
+        },
+        {
+          "id": "ft293-oc-c2-coverage-r7",
+          "performer": "claude:ft293_oc-c2_coverage_r7",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "27d3621dd5a6cbded15bb40405c808669fc74b1b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c2_coverage_r7",
+            "digest": "sha256:6c38318a1b4753b7e0e8f7199a82bc1610a47f46bdf8c2b43fe6375f30c6ea94",
+            "excerpt": "The evidence binds (current=true, dirty_record=false, tip ee1360c3b), and the one probe went red and restored cleanly. No finding, one residual.\n\nProbe: in `internal/consumers/rows.go:133` swapped `ok && alias.TypeParams().Len() > 0 {` to `< 0`, disabling `genericDecl`'s alias branch; `--package ./internal/preflight/... --run TestOwnerPremises`.\n\n| verdict | first_failure | failed_tests | restored |\n|---|---|---|---|\n| bit | TestOwnerPremises/a_generic_alias_with_no_added_write | 2 | yes |\n\nRow grades (`internal/preflight/ownership/fieldwrites_test.go`): tag-differing (:62) needs `IdenticalIgnoreTags` (author probe bit); alias-spelled field (:63) graded by reading; alias of the struct (:64) harmless; two generic-alias rows (:65-66) bite under my probe.\n\nFindings: none.\n\nResiduals: R1: the `TypeString` disjunct in `sameStruct` (`rows.go:146`) has no row with a named field type loaded both plainly and as a test variant. Confidence 6; not probed.\n\nAdvice: the `Unalias`→`*types.Named` arm (`rows.go:136`) also counts a non-generic alias of an instance as generic; untested but only widens toward the diagnostic.\n\n`git status --short`: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "10c458e5cd49c50d8c3c30e7cfd13c353569d266",
+          "tip": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c2-coverage-r6"
+          ]
         }
       ]
     }
@@ -3769,3 +3837,15 @@ Repair cycle 5 closed P10 and P11 by type presence. The round found two defects 
 
 - P12 (auto-fix, confidence 8): `internal/consumers/resolve.go:265-267` keys a struct with its field tags, but Go ignores tags in a conversion, so a tag-differing conversion reads green.
 - P13 (auto-fix, confidence 4): `internal/consumers/rows.go:102` misses a generic alias, because its type is a `*types.Alias`.
+
+## OC-C2 sixth confirming round
+
+Repair cycle 6 closed P12 and P13, and the round found no repair finding. The orchestrator fixed S7, a false test comment, as a comment-only evidence correction with no plan assignment.
+
+Three residuals of the printed-field census get Won't-handle lines in the chunk-gap plan commit:
+
+- R1: a test-variant struct that differs in tags or alias spelling over a named field type.
+- R2: an unsafe pointer conversion to the field's struct.
+- R3: a reflection write to a printed field.
+
+OC-C2: repair cycles are closed at six. No reviewer extension remains open.
