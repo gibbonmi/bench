@@ -77,9 +77,6 @@ func ProbeBites(probe Probe) (bit, restored bool) {
 	return probe.Outcome == "bit" && probe.ExitCode != 0, probe.Restore == "pass"
 }
 
-// probeBites is the in-package name of ProbeBites that the confirmation check calls.
-var probeBites = ProbeBites
-
 // checkCompletion grades the completion entry and the final verification against the
 // current plan at source, the digest of tip. The final list includes the merged-test
 // requirements of the folds.
