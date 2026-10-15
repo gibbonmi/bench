@@ -3,12 +3,18 @@ package ownership_test
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // itemLocation is the spec location every item of these cases carries.
@@ -241,7 +247,145 @@ func reusedTestItem(id, path, fn, spec, sourceCommit, evidenceCommit, chunk, ver
 
 func writeEvidenceSpec(t *testing.T, root, facts string) {
 	t.Helper()
-	preflighttest.MustWriteFile(t, specPath, preflighttest.SpecBody(slug, "- `internal/example/after.go`")+facts)
+	body := strings.ReplaceAll(strings.Replace(preflighttest.SpecBody(slug, "- `internal/example/after.go`"), preflighttest.PlanFence("one.md"), "", 1), fenced(completeEmpty), "")
+	preflighttest.MustWriteFile(t, specPath, body+facts+preflighttest.PlanFence("one.md"))
 	commitmenttest.SeedAdmission(t, root, specPath)
 	commit(t, "evidence premises")
+}
+
+func encodeJSON(value any) string {
+	data, err := json.Marshal(value)
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
+}
+
+func symbolOwner(path, symbol, kind, signature string) ownership.Owner {
+	return ownership.Owner{Path: path, Package: symbolModule + "/" + filepath.ToSlash(filepath.Dir(path)), Symbol: symbol, Kind: kind, Signature: signature}
+}
+
+func symbolItem(id string, o ownership.Owner) string {
+	return premiseItem(id, "symbol", encodeJSON(o), encodeJSON(map[string]string{"kind": o.Kind, "signature": o.Signature}))
+}
+
+func edgeItem(id, caller string, target ownership.Owner) string {
+	return premiseItem(id, "import", encodeJSON(map[string]any{"caller": symbolModule + "/" + caller, "target": target.Package, "owner": target}), `{"reachable":true}`)
+}
+
+func anchorItem(path, id, kind string, line int, needle, source string) string {
+	return premiseItem(id, "anchor-kind", encodeJSON(map[string]any{"owner": ownership.Location{Path: path, Line: line, Needle: needle, Source: source}, "kind": kind}), `{"supported":true}`)
+}
+
+func ruleItem(id, kind string, o ownership.Owner, value string, producers ...ownership.Owner) string {
+	if producers == nil {
+		producers = []ownership.Owner{}
+	}
+	return premiseItem(id, kind, encodeJSON(map[string]any{"owner": o, "producers": producers}), encodeJSON(map[string]string{"value": value}))
+}
+
+func boundItem(id string, o ownership.Owner, value string) string {
+	return premiseItem(id, "bound", encodeJSON(o), encodeJSON(map[string]string{"value": value}))
+}
+
+func decisionItem(id, row, predicate string, line int, needle string) string {
+	loc := fmt.Sprintf(`{"path":%q,"line":%d,"needle":%q,"source":"tip"}`, specPath, line, needle)
+	return fmt.Sprintf(`{"id":%q,%s,"source":%s,"predicate":%q,"row":%q}`, id, itemLocation, loc, predicate, row)
+}
+
+func seamItem(id, path, fn, state string, rows ...string) string {
+	return fmt.Sprintf(`{"id":%q,%s,"path":%q,"package":"example.com/fixture/internal/example","function":%q,"state":%q,"rows":%s}`,
+		id, itemLocation, path, fn, state, encodeJSON(rows))
+}
+
+func nativeClaimJSON(id, row, chunk, ticket, verification, ownerPath string, ownerLine int, ownerNeedle string) string {
+	return fmt.Sprintf(`{"id":%q,%s,"reason":"future native execution","applicability":"native-future","row":%q,"chunk":%q,"ticket":%q,"verification":%q,"phase_owner":{"path":%q,"line":%d,"needle":%q,"source":"tip"},"observation":"unobserved"}`,
+		id, itemLocation, row, chunk, ticket, verification, ownerPath, ownerLine, ownerNeedle)
+}
+
+func currentManualJSON(id, reason string) string {
+	return fmt.Sprintf(`{"id":%q,%s,"reason":%q,"applicability":"current-premise"}`, id, itemLocation, reason)
+}
+
+func manifestJSON(completeness string, premises, seams, decisions, manual []string) string {
+	return fmt.Sprintf(`{"version":1,"authority":"authored-spec","completeness":%q,"baseline":"source-base","scope":[],"changes":[],"premises":[%s],"seams":[%s],"decisions":[%s],"manual_claims":[%s]}`,
+		completeness, joinItems(premises), joinItems(seams), joinItems(decisions), joinItems(manual))
+}
+
+// seedChargeRepo seeds a conformant build repository whose main branch carries specBody,
+// facts, and extra files, and whose feature branch edits internal/example/foo.go.
+func seedChargeRepo(t *testing.T, specBody, facts string, extra map[string]string) (string, []string) {
+	t.Helper()
+	root, _ := preflighttest.SeedConformant(t)
+	preflighttest.RunGit(t, "checkout", "-q", "main")
+	if specBody == "" {
+		specBody = preflighttest.SpecBody(slug)
+	}
+	base := strings.ReplaceAll(strings.TrimSuffix(specBody, preflighttest.PlanFence("one.md")), fenced(completeEmpty), "")
+	preflighttest.MustWriteFile(t, specPath, base+fenced(facts)+preflighttest.PlanFence("one.md"))
+	preflighttest.MustWriteFile(t, "internal/example/foo_test.go", "package example\n\nimport \"testing\"\n\nfunc TestFoo(t *testing.T) {}\nfunc TestBar(t *testing.T) {}\n")
+	for path, body := range extra {
+		preflighttest.MustWriteFile(t, path, body)
+	}
+	commitmenttest.SeedAdmission(t, root, specPath)
+	preflighttest.RunGit(t, "add", "-A")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "seed charge premises")
+	preflighttest.RunGit(t, "checkout", "-q", "-B", "feature")
+	preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n\nfunc Foo(ctx int) int { return ctx }\n")
+	preflighttest.RunGit(t, "add", "internal/example/foo.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
+	return root, preflighttest.ChargeArgs(t, root, slug)
+}
+
+func writePredicateSpec(t *testing.T, root, specBody, facts string) {
+	t.Helper()
+	base := strings.ReplaceAll(strings.TrimSuffix(specBody, preflighttest.PlanFence("one.md")), fenced(completeEmpty), "")
+	preflighttest.MustWriteFile(t, specPath, base+fenced(facts)+preflighttest.PlanFence("one.md"))
+	preflighttest.MustWriteFile(t, "internal/example/foo_test.go", "package example\n\nimport \"testing\"\n\nfunc TestFoo(t *testing.T) {}\nfunc TestBar(t *testing.T) {}\n")
+	commitmenttest.SeedAdmission(t, root, specPath)
+	commit(t, "predicate spec")
+}
+
+func assertChargeRefused(t *testing.T, root string, args []string, want ...string) {
+	t.Helper()
+	out, code := preflight.Command(args)
+	if code == 0 {
+		t.Fatalf("charge succeeded, want refusal:\n%s", out)
+	}
+	for _, needle := range want {
+		if !strings.Contains(out, needle) {
+			t.Fatalf("charge refusal = %q, want substring %q", out, needle)
+		}
+	}
+	preflighttest.AssertNothingPublished(t, root)
+}
+
+func assertChargePublished(t *testing.T, root string, args []string) {
+	t.Helper()
+	out, code := preflight.Command(args)
+	if code != 0 {
+		t.Fatalf("charge = (%d), want 0:\n%s", code, out)
+	}
+	if packs := preflighttest.PublishedPacks(t, root); len(packs) != 1 {
+		t.Fatalf("published packs = %v, want 1", packs)
+	}
+}
+
+func collectChargeSnapshot(t *testing.T, root string) ownership.Snapshot {
+	t.Helper()
+	specBytes, err := os.ReadFile(filepath.Join(root, specPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed := []tickets.Ticket{{Name: "one.md", Covers: []string{"PF1", "PF2"}, Writes: []string{"internal/example/foo.go"}}}
+	source := ownership.Source{
+		SpecPath: specPath,
+		Base:     preflighttest.RunGit(t, "rev-parse", "main"),
+		Tip:      preflighttest.RunGit(t, "rev-parse", "HEAD"),
+	}
+	snap, err := ownership.Collect(root, source, ownership.ParseManifest(specBytes), parsed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return snap
 }

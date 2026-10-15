@@ -100,6 +100,7 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint64, args []string) (string, int) {
 	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
 		return preparedAttempts(root, modeBuild, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
+			facts.Operation = evidencecmd.KindPrepareEvidence
 			pack, refusal := buildChargePack(root, facts, boundedVerdict(Decide(facts)), name, buildSourcePolicy())
 			if refusal == "" {
 				if err := (commitrepo.Store{Root: root}).Ready(facts.SpecPath); err != nil {

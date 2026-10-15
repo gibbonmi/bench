@@ -1,9 +1,7 @@
 package ownership_test
 
 import (
-	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -166,69 +164,41 @@ func TestSizingPremises(t *testing.T) {
 // cannot certify it. Each unproved form keeps its premise unknown with the reason the case
 // names.
 func TestSymbolPremises(t *testing.T) {
-	owner := func(path, symbol, kind, signature string) ownership.Owner {
-		return ownership.Owner{Path: path, Package: symbolModule + "/" + filepath.ToSlash(filepath.Dir(path)), Symbol: symbol, Kind: kind, Signature: signature}
-	}
-	encode := func(value any) string {
-		data, err := json.Marshal(value)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return string(data)
-	}
 	const rules, other, local, match = "internal/rules/rules.go", "internal/other/other.go", "internal/rules/local.go", "internal/anchors/match.go"
-	check := owner(rules, "rules.Check", "func", "func Check(rows int) error")
-	write := owner(rules, "rules.write", "func", "func write(v int) int")
-	fail := owner(rules, "rules.fail", "func", "func fail(dynamic bool) error")
-	missing := owner(rules, "rules.ErrMissing", "var", `var ErrMissing = errors.New("missing")`)
-	symbol := func(id string, o ownership.Owner) string {
-		return premiseItem(id, "symbol", encode(o), encode(map[string]string{"kind": o.Kind, "signature": o.Signature}))
-	}
-	edge := func(id, caller string, target ownership.Owner) string {
-		return premiseItem(id, "import", encode(map[string]any{"caller": symbolModule + "/" + caller, "target": target.Package, "owner": target}), `{"reachable":true}`)
-	}
-	anchor := func(id, kind string, line int, needle, source string) string {
-		return premiseItem(id, "anchor-kind", encode(map[string]any{"owner": ownership.Location{Path: match, Line: line, Needle: needle, Source: source}, "kind": kind}), `{"supported":true}`)
-	}
-	rule := func(id, kind string, o ownership.Owner, value string, producers ...ownership.Owner) string {
-		if producers == nil {
-			producers = []ownership.Owner{}
-		}
-		return premiseItem(id, kind, encode(map[string]any{"owner": o, "producers": producers}), encode(map[string]string{"value": value}))
-	}
-	bound := func(id string, o ownership.Owner, value string) string {
-		return premiseItem(id, "bound", encode(o), encode(map[string]string{"value": value}))
-	}
+	check := symbolOwner(rules, "rules.Check", "func", "func Check(rows int) error")
+	write := symbolOwner(rules, "rules.write", "func", "func write(v int) int")
+	fail := symbolOwner(rules, "rules.fail", "func", "func fail(dynamic bool) error")
+	missing := symbolOwner(rules, "rules.ErrMissing", "var", `var ErrMissing = errors.New("missing")`)
 	misplaced := check
 	misplaced.Package, misplaced.Symbol = symbolModule+"/internal/other", "other.Check"
-	moved := owner(local, "rules.maxRows", "const", "")
+	moved := symbolOwner(local, "rules.maxRows", "const", "")
 	familiar := missing
 	familiar.Package, familiar.Symbol = symbolModule+"/internal/other", "other.ErrMissing"
 	facts := withItems("premises",
-		symbol("symbol-owner", check),
-		symbol("symbol-other-owner", misplaced),
-		symbol("symbol-type", owner(rules, "rules.dynamicError", "type", "type dynamicError struct {\n\tmsg string\n}")),
-		symbol("symbol-signature", owner(rules, "rules.write", "func", "func write(v string) int")),
-		symbol("symbol-kind", owner(rules, "rules.Check", "method", "func Check(rows int) error")),
-		edge("import-exported", "internal/other", check),
-		edge("import-unexported", "internal/other", write),
-		edge("import-internal", "internal/rules", owner("internal/other/internal/secret/secret.go", "secret.Exported", "func", "func Exported()")),
-		edge("import-cycle", "internal/rules", owner(other, "other.Check", "func", "func Check() error")),
-		anchor("anchor-step", "RequireInStep", 8, "RequireInStep", "tip"),
-		anchor("anchor-section-at-step", "RequireInSection", 8, "RequireInStep", "tip"),
-		anchor("anchor-invented", "ForbidInStep", 8, "RequireInStep", "tip"),
-		anchor("anchor-other-const", "Width", 11, "Width", "tip"),
-		rule("sentinel-owner", "sentinel", missing, `errors.New("missing")`, check),
-		rule("sentinel-familiar", "sentinel", familiar, `errors.New("missing")`, check),
-		rule("sentinel-dynamic", "sentinel", owner(rules, "rules.errDynamic", "var", "var errDynamic = errors.New(reason())"), "errors.New(reason())", check),
-		rule("sentinel-unused-producer", "sentinel", missing, `errors.New("missing")`, write),
-		rule("sentinel-no-producer", "sentinel", missing, `errors.New("missing")`),
-		rule("error-static", "error", owner(rules, "rules.staticError", "type", "type staticError struct{}"), `"static"`, fail),
-		rule("error-dynamic", "error", owner(rules, "rules.dynamicError", "type", "type dynamicError struct {\n\tmsg string\n}"), "e.msg", fail),
-		bound("bound-owner", owner(rules, "rules.maxRows", "const", ""), "32"),
-		bound("bound-local-literal", moved, "32"),
-		bound("bound-text", owner(rules, "rules.maxRows", "const", ""), "2 << 4"),
-		bound("bound-runtime", owner(rules, "rules.limit", "var", "var limit = len(os.Args)"), "1"))
+		symbolItem("symbol-owner", check),
+		symbolItem("symbol-other-owner", misplaced),
+		symbolItem("symbol-type", symbolOwner(rules, "rules.dynamicError", "type", "type dynamicError struct {\n\tmsg string\n}")),
+		symbolItem("symbol-signature", symbolOwner(rules, "rules.write", "func", "func write(v string) int")),
+		symbolItem("symbol-kind", symbolOwner(rules, "rules.Check", "method", "func Check(rows int) error")),
+		edgeItem("import-exported", "internal/other", check),
+		edgeItem("import-unexported", "internal/other", write),
+		edgeItem("import-internal", "internal/rules", symbolOwner("internal/other/internal/secret/secret.go", "secret.Exported", "func", "func Exported()")),
+		edgeItem("import-cycle", "internal/rules", symbolOwner(other, "other.Check", "func", "func Check() error")),
+		anchorItem(match, "anchor-step", "RequireInStep", 8, "RequireInStep", "tip"),
+		anchorItem(match, "anchor-section-at-step", "RequireInSection", 8, "RequireInStep", "tip"),
+		anchorItem(match, "anchor-invented", "ForbidInStep", 8, "RequireInStep", "tip"),
+		anchorItem(match, "anchor-other-const", "Width", 11, "Width", "tip"),
+		ruleItem("sentinel-owner", "sentinel", missing, `errors.New("missing")`, check),
+		ruleItem("sentinel-familiar", "sentinel", familiar, `errors.New("missing")`, check),
+		ruleItem("sentinel-dynamic", "sentinel", symbolOwner(rules, "rules.errDynamic", "var", "var errDynamic = errors.New(reason())"), "errors.New(reason())", check),
+		ruleItem("sentinel-unused-producer", "sentinel", missing, `errors.New("missing")`, write),
+		ruleItem("sentinel-no-producer", "sentinel", missing, `errors.New("missing")`),
+		ruleItem("error-static", "error", symbolOwner(rules, "rules.staticError", "type", "type staticError struct{}"), `"static"`, fail),
+		ruleItem("error-dynamic", "error", symbolOwner(rules, "rules.dynamicError", "type", "type dynamicError struct {\n\tmsg string\n}"), "e.msg", fail),
+		boundItem("bound-owner", symbolOwner(rules, "rules.maxRows", "const", ""), "32"),
+		boundItem("bound-local-literal", moved, "32"),
+		boundItem("bound-text", symbolOwner(rules, "rules.maxRows", "const", ""), "2 << 4"),
+		boundItem("bound-runtime", symbolOwner(rules, "rules.limit", "var", "var limit = len(os.Args)"), "1"))
 	out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{rules}, Files: symbolBase, Tail: facts}.Seed(t))
 	for _, test := range []struct{ row, id, state, reason string }{
 		{"OC39", "symbol-owner", "green", "rules.Check resolves in internal/rules/rules.go"},
@@ -307,6 +277,103 @@ func TestEvidencePremises(t *testing.T) {
 			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
 				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
+		})
+	}
+}
+
+// TestPredicatePremises drives decision predicate-to-row mappings and multi-citation seam
+// checks through the actual proposal.
+func TestPredicatePremises(t *testing.T) {
+	seam := []string{seamItem("seam-1", "internal/example/foo_test.go", "TestFoo", "planned", "PF1", "PF2")}
+	decs := []string{decisionItem("dec-ok", "PF1", "does x", 11, "does x"), decisionItem("dec-2", "PF2", "does y", 12, "does y")}
+	multiSpec := strings.Replace(preflighttest.SpecBody(slug), "| PF1 | 1 | does x | cli seam |", "| PF1 | 1 | does x | `internal/example/foo_test.go` (`TestFoo`, `TestBar`) |", 1)
+	dupPredSpec := strings.Replace(preflighttest.SpecBody(slug), "| PF2 | 1 | does y |", "| PF2 | 1 | does x |", 1)
+	for _, test := range []struct{ name, spec, facts, id, state, reason string }{
+		{"OC51 exact predicate mapping", "", manifestJSON("declared-complete", nil, seam, decs, nil), "dec-ok", "green", "maps predicate to coverage row PF1"},
+		{"OC51 changed predicate bytes", "", manifestJSON("declared-complete", nil, seam, []string{decisionItem("dec-stale", "PF1", "does stale", 11, "does x"), decs[1]}, nil), "dec-stale", "unknown", "does x"},
+		{"OC52 missing coverage row", "", manifestJSON("declared-complete", nil, seam, []string{decisionItem("dec-missing", "PF9", "does x", 11, "does x")}, nil), "metadata", "unknown", "PF9"},
+		{"OC52 duplicate row mapping", "", manifestJSON("declared-complete", nil, seam, []string{decisionItem("dec-1", "PF1", "does x", 11, "does x"), decisionItem("dec-dup", "PF1", "does x", 11, "does x"), decs[1]}, nil), "dec-1", "unknown", "multiple decisions"},
+		{"OC52 multi-row predicate", dupPredSpec, manifestJSON("declared-complete", nil, seam, []string{decisionItem("dec-m1", "PF1", "does x", 11, "does x"), decisionItem("dec-m2", "PF2", "does x", 12, "does x")}, nil), "dec-m1", "unknown", "multiple coverage rows"},
+		{"OC88 omitted second seam citation", multiSpec, manifestJSON("declared-complete", nil, seam, nil, nil), "metadata", "unknown", "TestBar"},
+		{"OC89 manual claim stays manual", "", manifestJSON("declared-complete", nil, seam, nil, []string{currentManualJSON("manual-sem", "semantic equivalence")}), "manual-sem", "manual", "semantic equivalence"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := emptyTree(fenced(test.facts)).Seed(t)
+			if test.spec != "" {
+				writePredicateSpec(t, root, test.spec, test.facts)
+			}
+			row := one(t, mustPropose(t, root), "premises", map[string]string{"id": test.id})
+			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+				t.Fatalf("premise %s = %v, want %s and reason %q", test.id, row, test.state, test.reason)
+			}
+		})
+	}
+}
+
+// TestChargePremises drives build --charge through the real preflight.Command dispatcher
+// over proved and unproved premise inventories, asserting that every refusal leaves the
+// evidence store empty.
+func TestChargePremises(t *testing.T) {
+	seam := []string{seamItem("seam-1", "internal/example/foo_test.go", "TestFoo", "planned", "PF1", "PF2")}
+	decs := []string{decisionItem("dec-1", "PF1", "does x", 11, "does x"), decisionItem("dec-2", "PF2", "does y", 12, "does y")}
+	root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", nil, seam, decs, nil), nil)
+	assertChargePublished(t, root, args)
+
+	multiSpec := strings.Replace(preflighttest.SpecBody(slug), "| PF1 | 1 | does x | cli seam |", "| PF1 | 1 | does x | `internal/example/foo_test.go` (`TestFoo`, `TestBar`) |", 1)
+	dynamicChange := changeItem("signature", "existing", "internal/example/foo.go", "example.Foo", "")
+	dynamicCaller := map[string]string{
+		"go.mod":                    "module " + module + "\n\ngo 1.25\n",
+		"internal/example/foo.go":   "package example\n\nfunc Foo() int { return 0 }\n",
+		"internal/caller/caller.go": "package caller\n\nimport \"" + module + "/internal/example\"\n\nvar fn = example.Foo\n",
+	}
+	for _, test := range []struct {
+		name, spec, facts, want string
+		extra                   map[string]string
+	}{
+		{"OC54 partial inventory", "", manifestJSON("partial", nil, nil, nil, nil), "partial", nil},
+		{"OC54 stale current premise", "", withPremises(strings.Replace(linesPremise("p1"), `"count":1`, `"count":9`, 1)), "p1", nil},
+		{"OC51 changed predicate", "", manifestJSON("declared-complete", nil, seam, []string{decisionItem("dec-stale", "PF1", "does stale", 11, "does x"), decs[1]}, nil), "dec-stale", nil},
+		{"OC52 unmapped coverage row", "", manifestJSON("declared-complete", nil, seam, decs[:1], nil), "PF2", nil},
+		{"OC53 dynamic caller claim", "", strings.Replace(manifestJSON("declared-complete", nil, seam, nil, nil), `"changes":[]`, `"changes":[`+dynamicChange+`]`, 1), "caller-census", dynamicCaller},
+		{"OC88 omitted second seam citation", multiSpec, manifestJSON("declared-complete", nil, seam, nil, nil), "TestBar", nil},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			r, a := seedChargeRepo(t, test.spec, test.facts, test.extra)
+			assertChargeRefused(t, r, a, "charge-premises", test.want)
+		})
+	}
+}
+
+// TestChargeManualApplicability verifies that manual claims keep Snapshot.Complete false
+// while current-premise claims and invalid native-future claims refuse build --charge and
+// valid native-future claims allow it without a future execution record.
+func TestChargeManualApplicability(t *testing.T) {
+	seamSpec := strings.Replace(preflighttest.SpecBody(slug), "| PF1 | 1 | does x | cli seam |", "| PF1 | 1 | does x | `internal/example/foo_test.go` (`TestFoo`) |", 1)
+	validNative := manifestJSON("declared-complete", nil, nil, nil, []string{
+		nativeClaimJSON("manual-native", "PF1", "c1", "one.md", "tests", ".agents/commands/bench-implement-spec.md", 3, "Run root conformance"),
+	})
+	t.Run("OC89 OC93 native-future manual claim allows charge", func(t *testing.T) {
+		root, args := seedChargeRepo(t, "", validNative, nil)
+		snap := collectChargeSnapshot(t, root)
+		if snap.Complete || !snap.ChargeReadiness.InventoryComplete || !snap.ChargeReadiness.CurrentComplete || len(snap.ChargeReadiness.PendingNative) != 1 || snap.ChargeReadiness.PendingNative[0].ID != "manual-native" {
+			t.Fatalf("native-future snapshot = Complete %t, readiness %+v, premises %+v, diag %+v", snap.Complete, snap.ChargeReadiness, snap.Premises, snap.Diagnostics)
+		}
+		assertChargePublished(t, root, args)
+	})
+	currentFacts := manifestJSON("declared-complete", nil, nil, nil, []string{currentManualJSON("manual-current", "unproved current assumption")})
+	for _, test := range []struct{ name, spec, facts, want string }{
+		{"OC89 OC94 current-premise manual claim refuses charge", "", currentFacts, "manual-current"},
+		{"OC95 supported test seam on native-future row", seamSpec, validNative, "manual-native"},
+		{"OC95 missing chunk verification on native-future row", "", manifestJSON("declared-complete", nil, nil, nil, []string{
+			nativeClaimJSON("manual-native", "PF1", "c1", "one.md", "missing-req", ".agents/commands/bench-implement-spec.md", 3, "Run root conformance"),
+		}), "manual-native"},
+		{"OC95 missing phase owner on native-future row", "", manifestJSON("declared-complete", nil, nil, nil, []string{
+			nativeClaimJSON("manual-native", "PF1", "c1", "one.md", "tests", ".agents/commands/absent.md", 1, "# Source"),
+		}), "manual-native"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			r, a := seedChargeRepo(t, test.spec, test.facts, nil)
+			assertChargeRefused(t, r, a, "charge-premises", test.want)
 		})
 	}
 }

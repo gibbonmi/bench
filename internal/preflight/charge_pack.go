@@ -107,6 +107,7 @@ func currentEvidenceCommand(root, identity string, args []string) (string, int) 
 	manifest, _ := artifact.Manifest()
 	selection := manifest.Selection
 	return preparedAttempts(root, selection.Mode, specref.LiveSpecSlug(selection.Spec), selection.Base, "", "check", args, func(facts Facts) (string, int) {
+		facts.Operation = evidencecmd.KindCurrentEvidence
 		refusal, dirtyRecord := preparationCheckoutRefusal(root, facts, "check")
 		if refusal != "" {
 			return refusal, 1

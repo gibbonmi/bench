@@ -23,6 +23,8 @@ type Manifest struct {
 	Decisions                         []Decision
 	ManualClaims                      []ManualClaim
 	Diagnostics                       []Diagnostic
+	spec                              []byte
+	rows                              []coverage.MapRow
 }
 
 // Location is one exact place: a path, its positive line, the needle bytes that line holds,
@@ -387,14 +389,4 @@ func decodeManual(d *itemDecoder, raw json.RawMessage, where string) (ManualClai
 		claim.NativeWitness = &native
 	}
 	return claim, head.ID, err
-}
-
-// firstError is the first fault of an ordered check list.
-func firstError(errs ...error) error {
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

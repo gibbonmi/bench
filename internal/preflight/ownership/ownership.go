@@ -167,23 +167,26 @@ func Collect(root string, source Source, manifest Manifest, parsed []tickets.Tic
 	if err != nil {
 		return Snapshot{}, err
 	}
+	decisionPremises, decisionDiag := census.decisions(manifest)
+	manualPremises, pendingNative, nativeValid := census.manualClaims(manifest, parsed)
+	allPremises := append(append(manifest.premises(source.Tip, graded), decisionPremises...), manualPremises...)
+	allDiag := append(append(append(manifest.diagnostics(), census.checkSeams(manifest)...), decisionDiag...), diagnostics...)
 	snapshot := Snapshot{
 		Requirements: requirements,
-		Premises:     manifest.premises(source.Tip, graded),
-		Diagnostics:  append(manifest.diagnostics(), diagnostics...),
+		Premises:     allPremises,
+		Diagnostics:  allDiag,
 	}
-	snapshot.Complete = manifest.Present && manifest.Completeness == completenessDeclared && len(snapshot.Diagnostics) == 0
+	snapshot.Complete = manifest.Present && manifest.Completeness == completenessDeclared && len(snapshot.Diagnostics) == 0 && nativeValid
 	for _, premise := range snapshot.Premises {
 		snapshot.Complete = snapshot.Complete && premise.State == StateGreen
 	}
-	snapshot.ChargeReadiness = manifest.readiness()
+	snapshot.ChargeReadiness = chargeReadiness(manifest, snapshot.Premises, snapshot.Diagnostics, pendingNative, nativeValid)
 	return snapshot, nil
 }
 
-// premises projects the inventory's premise and manual items onto premise rows. graded
-// holds the row of each current premise that a supported collector graded. Any other
-// current premise stays unknown; a planned premise stays planned, and a manual claim stays
-// manual.
+// premises projects the inventory's premise items onto premise rows. graded holds the row
+// of each current premise that a supported collector graded. Any other current premise
+// stays unknown, and a planned premise stays planned.
 func (m Manifest) premises(tip string, graded map[string]Premise) []Premise {
 	var rows []Premise
 	for _, item := range m.Premises {
@@ -196,9 +199,6 @@ func (m Manifest) premises(tip string, graded map[string]Premise) []Premise {
 		}
 		rows = append(rows, row)
 	}
-	for _, claim := range m.ManualClaims {
-		rows = append(rows, Premise{ID: claim.ID, State: StateManual, Source: tip, Reason: string(claim.Applicability) + " manual claim: " + claim.Reason})
-	}
 	return rows
 }
 
@@ -209,25 +209,4 @@ func (m Manifest) diagnostics() []Diagnostic {
 		return []Diagnostic{{ID: metadataID, Reason: "no " + MetadataLabel + " fence: the premise inventory is incomplete"}}
 	}
 	return m.Diagnostics
-}
-
-// readiness is the charge projection of the inventory. It reads no collector proof, so
-// CurrentComplete holds only when no current premise is required.
-func (m Manifest) readiness() ChargeReadiness {
-	ready := ChargeReadiness{InventoryComplete: m.Present && len(m.Diagnostics) == 0 && m.Completeness == completenessDeclared}
-	for _, item := range m.Premises {
-		if item.State == "current" {
-			ready.RequiredCurrent = append(ready.RequiredCurrent, item.ID)
-		}
-	}
-	for _, claim := range m.ManualClaims {
-		switch claim.Applicability {
-		case CurrentPremise:
-			ready.RequiredCurrent = append(ready.RequiredCurrent, claim.ID)
-		case NativeFuture:
-			ready.PendingNative = append(ready.PendingNative, claim)
-		}
-	}
-	ready.CurrentComplete = ready.InventoryComplete && len(ready.RequiredCurrent) == 0
-	return ready
 }

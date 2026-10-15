@@ -10,9 +10,11 @@
 package preflight
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
@@ -22,7 +24,8 @@ import (
 // gathered once, up front, by Gather, and never re-read mid-verdict. So a
 // rerun over the same Facts value always answers the same way.
 type Facts struct {
-	Mode string
+	Mode      string
+	Operation evidencecmd.Kind
 
 	// SpecPath is the resolved spec's repo-relative path, printed on the `spec:` line.
 	SpecPath string
@@ -223,6 +226,9 @@ func Decide(f Facts) Verdict {
 		ticketRow(f, "rows-membership", rowsMembershipCheck),
 		diffNonemptyRow(f),
 	)
+	if f.Mode == modeBuild && (f.Operation == evidencecmd.KindPrepareEvidence || f.Operation == evidencecmd.KindCurrentEvidence) {
+		checks = append(checks, chargePremisesCheck(f))
+	}
 	red := false
 	for _, c := range checks {
 		if c.Verdict == verdictRed {
@@ -335,4 +341,27 @@ func diffNonemptyCheck(f Facts) CheckResult {
 		return red("diff-nonempty", "no changed files since the resolved review base")
 	}
 	return green("diff-nonempty")
+}
+
+// chargePremisesCheck refuses build charge preparation and current-evidence binding unless
+// the planning-facts inventory and every required current premise are proved.
+func chargePremisesCheck(f Facts) CheckResult {
+	ready := f.Ownership.ChargeReadiness
+	if ready.InventoryComplete && ready.CurrentComplete {
+		return green("charge-premises")
+	}
+	if len(f.Ownership.Diagnostics) > 0 {
+		d := f.Ownership.Diagnostics[0]
+		return red("charge-premises", d.ID+": "+d.Reason)
+	}
+	for _, p := range f.Ownership.Premises {
+		if p.State == ownership.StateGreen || p.State == ownership.StatePlanned {
+			continue
+		}
+		if p.State == ownership.StateManual && slices.ContainsFunc(ready.PendingNative, func(c ownership.ManualClaim) bool { return c.ID == p.ID }) {
+			continue
+		}
+		return red("charge-premises", p.ID+": "+p.Reason)
+	}
+	return red("charge-premises", "premise inventory is partial or incomplete")
 }

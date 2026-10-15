@@ -134,6 +134,9 @@ func (c *census) callers(changes []Change) ([]use, []Diagnostic) {
 				diagnose(change, "%s is declared in %s, which is neither its owner path nor its declared destination", change.Owner.Symbol, file)
 			}
 			for _, row := range consumers.Rows(c.pkgs, obj, c.root) {
+				if row.Via != consumers.ViaCall {
+					diagnose(change, "%s line %d uses %s as a non-call %s, so its dynamic callers are not a complete static census", row.File, row.Line, change.Owner.Symbol, row.Via)
+				}
 				uses = appendUse(uses, use{change: change, file: row.File, line: row.Line, rev: c.source.Tip, side: "tip", declared: file, declaredAtLine: line})
 			}
 		}

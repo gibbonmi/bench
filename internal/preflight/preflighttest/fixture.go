@@ -166,6 +166,9 @@ func SpecBody(slug string, extraFenceLines ...string) string {
 	for _, line := range extraFenceLines {
 		b.WriteString(line + "\n")
 	}
+	if len(extraFenceLines) == 0 || extraFenceLines[0] != fenceLine(reviewFenceExtra[0].path, reviewFenceExtra[0].annotation) {
+		b.WriteString("\n## Planning claim inventory\n\n```bench-planning-facts\n{\"version\":1,\"authority\":\"authored-spec\",\"completeness\":\"declared-complete\",\"baseline\":\"source-base\",\"scope\":[],\"changes\":[],\"premises\":[],\"seams\":[],\"decisions\":[],\"manual_claims\":[]}\n```\n")
+	}
 	b.WriteString(PlanFence("one.md"))
 	return b.String()
 }

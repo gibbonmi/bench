@@ -4,14 +4,26 @@
 package ownershiptest
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
+
+var kitRegistry = func() []byte {
+	for _, rel := range []string{"../tickets/registry_data.go", "../../tickets/registry_data.go"} {
+		if data, err := os.ReadFile(rel); err == nil {
+			return data
+		}
+	}
+	return nil
+}()
 
 // ProposalRepo is one committed proposal repository over the slug example. The selected
 // ticket one.md writes the conformant fence plus Writes, and each Others ticket writes its
@@ -50,7 +62,11 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 		}
 	}
 	spec := "specs/" + slug + "/spec.md"
-	preflighttest.MustWriteFile(t, spec, preflighttest.SpecBody(slug, fence...)+r.Tail)
+	body := preflighttest.SpecBody(slug, fence...)
+	if r.Tail != "" {
+		body = strings.Replace(body, "\n## Planning claim inventory\n\n```bench-planning-facts\n{\"version\":1,\"authority\":\"authored-spec\",\"completeness\":\"declared-complete\",\"baseline\":\"source-base\",\"scope\":[],\"changes\":[],\"premises\":[],\"seams\":[],\"decisions\":[],\"manual_claims\":[]}\n```\n", "", 1) + r.Tail
+	}
+	preflighttest.MustWriteFile(t, spec, body)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), r.Writes...), "PF1", "PF2"))
 	for _, name := range others {
 		preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/"+name, preflighttest.WritesTicketDoc(strings.TrimSuffix(name, ".md"), r.Others[name], "PF1", "PF2"))
@@ -63,6 +79,18 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 			preflighttest.MustWriteFile(t, source, body)
 		}
 	}
+	_, hasRegistry := r.Files["internal/tickets/registry_data.go"]
+	seal := hasRegistry || (len(r.Others) > 0 && len(r.Writes) >= 4)
+	if seal {
+		if !hasRegistry {
+			preflighttest.MustWriteFile(t, "internal/tickets/registry_data.go", string(kitRegistry))
+		}
+		preflighttest.MustWriteFile(t, "go.mod", "module example.com/kit\n\ngo 1.25\n")
+		preflighttest.MustWriteFile(t, "cmd/bench/main.go", "package main\n\nimport _ \"example.com/kit/internal/tickets\"\n\nfunc main() {}\n")
+		preflighttest.MustWriteFile(t, "scripts/go-build.sh", "#!/usr/bin/env bash\n")
+		preflighttest.MustWriteFile(t, freshness.BuildInputsManifest, freshness.BuildInputLine("build_script", "scripts/go-build.sh"))
+		preflighttest.MustWriteFile(t, ".gitignore", "dist/\n")
+	}
 	commitmenttest.SeedAdmission(t, root, spec)
 	preflighttest.RunGit(t, "add", ".")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
@@ -70,5 +98,18 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 	preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n")
 	preflighttest.RunGit(t, "add", "internal/example/foo.go")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
+	if seal {
+		staged := filepath.Join(t.TempDir(), "bench")
+		if err := os.WriteFile(staged, []byte("Bench executable"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		executable := freshness.PublishedExecutable(root)
+		if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := freshness.Publish(root, staged, executable, filepath.Dir(executable), "1.2.3"); err != nil {
+			t.Fatalf("Publish: %v", err)
+		}
+	}
 	return root
 }

@@ -26,18 +26,19 @@ const metadataID = "metadata"
 // incomplete without refusing the closure. A spec with no fence answers a manifest that is
 // not present.
 func ParseManifest(content []byte) Manifest {
+	rows := coverage.MapRows(content)
 	payload, present, err := metadataPayload(content)
 	if !present {
-		return Manifest{}
+		return Manifest{spec: content, rows: rows}
 	}
 	if err == nil {
 		var manifest Manifest
-		if manifest, err = decodeManifest(payload, coverage.MapRows(content)); err == nil {
-			manifest.Present = true
+		if manifest, err = decodeManifest(payload, rows); err == nil {
+			manifest.Present, manifest.spec, manifest.rows = true, content, rows
 			return manifest
 		}
 	}
-	return Manifest{Present: true, Diagnostics: []Diagnostic{{ID: metadataID, Reason: err.Error()}}}
+	return Manifest{Present: true, Diagnostics: []Diagnostic{{ID: metadataID, Reason: err.Error()}}, spec: content, rows: rows}
 }
 
 // metadataPayload is the bounded payload of the one metadata fence. present is false when
@@ -158,4 +159,14 @@ func identities(raw json.RawMessage, where string) ([]Owner, error) {
 		owners = append(owners, owner)
 	}
 	return owners, nil
+}
+
+// firstError is the first fault of an ordered check list.
+func firstError(errs ...error) error {
+	for _, err := range errs {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

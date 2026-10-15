@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
@@ -206,30 +205,13 @@ func sealedKit(t *testing.T) (string, string) {
 	kit := ownershiptest.ProposalRepo{
 		Writes: []string{"internal/toon/toon.go"},
 		Files: map[string]string{
-			"go.mod":                                     "module example.com/kit\n\ngo 1.25\n",
-			"cmd/bench/main.go":                          "package main\n\nimport _ \"example.com/kit/internal/tickets\"\n\nfunc main() {}\n",
 			"internal/tickets/registry_data.go":          string(registry),
-			"scripts/go-build.sh":                        "#!/usr/bin/env bash\n",
-			freshness.BuildInputsManifest:                freshness.BuildInputLine("build_script", "scripts/go-build.sh"),
-			".gitignore":                                 "dist/\n",
 			"internal/toon/toon.go":                      "package toon\n",
 			"internal/toon/toon_test.go":                 "package toon\n",
 			"internal/conformance/data_handling_test.go": "package conformance\n",
 		},
 	}
-	root := kit.Seed(t)
-	staged := filepath.Join(t.TempDir(), "bench")
-	if err := os.WriteFile(staged, []byte("Bench executable"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	executable := freshness.PublishedExecutable(root)
-	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := freshness.Publish(root, staged, executable, filepath.Dir(executable), "1.2.3"); err != nil {
-		t.Fatalf("Publish: %v", err)
-	}
-	return root, line
+	return kit.Seed(t), line
 }
 
 // authorityState is every byte a proposal must leave alone: the spec, the ticket, the
@@ -308,7 +290,7 @@ func TestProposalEmpty(t *testing.T) {
 		}
 	})
 	t.Run("absent manifest stays diagnostic", func(t *testing.T) {
-		out := mustPropose(t, emptyTree("").Seed(t))
+		out := mustPropose(t, emptyTree("\n").Seed(t))
 		row := one(t, out, "premises", map[string]string{"id": "metadata"})
 		if cell(row, "state") != "unknown" || !strings.Contains(cell(row, "reason"), "no bench-planning-facts fence") {
 			t.Fatalf("absent manifest premise = %v, want an unknown inventory diagnostic", row)

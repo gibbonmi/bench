@@ -264,6 +264,9 @@ func TestHelperCallers(t *testing.T) {
 			facts: withItems("changes", `{"id":"retire",`+itemLocation+`,"kind":"liveness","owner":`+ownerJSON(policyFile, "policy.retired", "func")+
 				`,"caller_scope":"production-and-tests","state":"existing","destination":null,"dispositions":[{"symbol":"policy.keepA","action":"remove"}]}`),
 			premise: "liveness-census", reason: "internal/policy/consumers.go keepB has 0 dispositions, want 1"},
+		{name: "OC53 dynamic caller claim stays diagnostic", writes: []string{mergeHelper, callerA}, facts: signature,
+			tip:     map[string]string{callerA: "package merge\n\nimport (\n\t\"reflect\"\n\t\"testing\"\n)\n\nfunc TestA(t *testing.T) { _ = reflect.ValueOf(mergeFixture) }\n"},
+			premise: "caller-census", reason: "dynamic"},
 	}
 	for _, test := range cases {
 		test.files, test.fence = helperBase, helperFence
