@@ -5964,6 +5964,28 @@
           "supersedes": [
             "ft293-oc-c3-coverage-r2"
           ]
+        },
+        {
+          "id": "ft293-oc-c3-coverage-r4",
+          "performer": "claude:ft293_oc-c3_coverage_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_coverage_r4",
+            "digest": "sha256:6f8ac9b9de413f2b8d6b506f4b165b6c58187195f3da1652f0ae391fbe2e67ee",
+            "excerpt": "OC-C3 Coverage axis round 4 (opus / medium, one iteration), evidence sha256:b1c843d028a962161b6937a7990e9c45357ae5b5e01f772b801006bd8bb11af1 bound at 877480c9 (current=true, dirty_record=false). Scope: repair cycle 3 delta c6edc0dd..3009145a.\nNo findings.\nPublisher seam: only two callers set Seal, both to freshness.Publish (ownership/proposal_test.go:199, preflight/proposal_test.go:122); repo-wide rg finds no other Seal assignment. Probe: swap r.Seal(...) at ownershiptest/repo.go:150 for error(nil) -> bit, 4 failed (TestWritesProposalAlreadyCovered/{exact,prefix,three_prefixes}, TestProposalProvenance/OC8_registry_owner), restored yes. No OC-C3 row witness lost red capability.\nSystem journey: inventorytest.Section(inventorytest.CompleteEmpty) at systemtest/charge_evidence_test.go:61 uses the shared declaration of preflighttest/fixture.go:148; the capacity refusal witness still needs exit 1 and the retry --max-store-bytes message, so it is not green by construction.\nNew gaps: none.\nAdvice (no finding): the Publisher doc comment (repo.go:26-27) alone keeps a later caller from passing a test double; a topology check could require every Seal assignment to be freshness.Publish.\n"
+          },
+          "axis": "Coverage",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "bd58548d98d52906b149442b98c18f290e98e9aa",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c3-coverage-r3"
+          ]
         }
       ]
     }
