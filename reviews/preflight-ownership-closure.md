@@ -6204,6 +6204,27 @@
         ]
       }
     }
+  ],
+  "folds": [
+    {
+      "id": "F1",
+      "after": "OC-C3",
+      "from": "3aa876b6801437ffab8707148762e603faf48533",
+      "commit": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+      "incoming": "caadb3b215548e0d8c8e6f05c6014311fa819bef",
+      "source_digest": "27423178a867290e3ab9862d2aeb6e8139a65558",
+      "resolution": [],
+      "resolution_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_packages": [
+        "./internal/conformance",
+        "./internal/freshness",
+        "./internal/gate",
+        "./internal/intent",
+        "./internal/skillsindex",
+        "./internal/visibletree"
+      ],
+      "reviews": []
+    }
   ]
 }
 ```

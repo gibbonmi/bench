@@ -57,6 +57,7 @@ Compilation failure supplies no behavioral evidence.
 - `bench test --package ./cmd/bench`
 - `bench test --check ticket-grammar`
 - `bench test --check docs-currency-workflow`
+- `bench test --check system`
 
 Focused producer command: `bench test --package ./internal/preflight/... --run 'TestBreakdownRows|TestExplicitAuthority|TestBreakdownGrammar|TestProposalOrdering'`.
 Named mutation identity: `oc-08-omission`.
