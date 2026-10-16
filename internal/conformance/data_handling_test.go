@@ -3,6 +3,7 @@ package conformance
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -11,6 +12,8 @@ import (
 
 	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/env"
+	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/visibletree"
 )
 
 // DATA_HANDLING.md carries a machine-parseable passlist listing between these markers.
@@ -125,35 +128,36 @@ func checkSingleControlEscaper(root string) []string {
 
 func controlEscaperPackages(root string) []string {
 	seen := map[string]bool{}
-	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return nil
+	// A listing fault leaves seen empty, and the check then reports no owner rather than
+	// passing.
+	visible, _ := visibletree.Files(root)
+	for _, rel := range visible {
+		if !strings.HasSuffix(rel, ".go") || strings.HasSuffix(rel, "_test.go") || strings.HasPrefix(rel, "internal/toon/") || escaperSkippedDir(rel) {
+			continue
 		}
-		if d.IsDir() {
-			switch d.Name() {
-			case ".git", "node_modules", "tests", "dist":
-				return filepath.SkipDir
-			}
-			if rel, rerr := filepath.Rel(root, path); rerr == nil && filepath.ToSlash(rel) == "internal/toon" {
-				return filepath.SkipDir
-			}
-			return nil
+		if controlEscapeRe.MatchString(readIfExists(filepath.Join(root, filepath.FromSlash(rel)))) {
+			seen[path.Dir(rel)] = true
 		}
-		name := d.Name()
-		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
-			return nil
-		}
-		if controlEscapeRe.MatchString(readIfExists(path)) {
-			seen[slashRel(root, filepath.Dir(path))] = true
-		}
-		return nil
-	})
+	}
 	pkgs := make([]string, 0, len(seen))
 	for dir := range seen {
 		pkgs = append(pkgs, dir)
 	}
 	sort.Strings(pkgs)
 	return pkgs
+}
+
+// escaperSkippedDir reports whether a directory of rel is one the escaper census never
+// reads, at any depth.
+func escaperSkippedDir(rel string) bool {
+	parts := strings.Split(rel, "/")
+	for _, dir := range parts[:len(parts)-1] {
+		switch dir {
+		case "node_modules", "tests", "dist":
+			return true
+		}
+	}
+	return false
 }
 
 // TestDataHandlingDerivationBites is the recorded bite proof for
@@ -279,6 +283,19 @@ func TestSingleControlEscaperBites(t *testing.T) {
 	writePkg(t, none, "internal/shift", detectionBody)
 	if diags := checkSingleControlEscaper(none); !containsDiagnostic(diags, "has no owner") {
 		t.Fatalf("no escaper: want a no-owner diagnostic, got %v", diags)
+	}
+
+	// An escaper under an ignored path is a local copy no commit carries, so it is not a
+	// second owner. The same escaper at a visible untracked path is one.
+	ignoring := gittest.RepoIgnoring(t, ".logs/")
+	writePkg(t, ignoring, "internal/sanitize", escaperBody)
+	writePkg(t, ignoring, ".logs/copy/internal/sanitize", escaperBody)
+	if diags := checkSingleControlEscaper(ignoring); len(diags) != 0 {
+		t.Fatalf("ignored second escaper: want no diagnostics, got %v", diags)
+	}
+	writePkg(t, ignoring, "internal/copy", escaperBody)
+	if diags := checkSingleControlEscaper(ignoring); !containsDiagnostic(diags, "more than one owner") || !containsDiagnostic(diags, "internal/copy") || containsDiagnostic(diags, ".logs/") {
+		t.Fatalf("visible second escaper: want a more-than-one-owner diagnostic naming only internal/copy, got %v", diags)
 	}
 }
 

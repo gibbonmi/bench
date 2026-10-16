@@ -124,7 +124,7 @@ func Entries(root string) ([]Entry, error) {
 			names = append(names, child.Name())
 		}
 	}
-	sort.Strings(names)
+	names = sortedVisibleSkills(root, names)
 	var entries []Entry
 	for _, name := range names {
 		file := filepath.Join(root, ".agents", "skills", name, "SKILL.md")

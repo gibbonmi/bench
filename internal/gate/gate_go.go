@@ -18,6 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/visibletree"
 )
 
 // raceTest is one regression test the race phase must execute.
@@ -126,9 +127,25 @@ func CoreTestPackages(root string, tier registry.Tier) ([]string, string, error)
 // gofmtStep reds on the files `gofmt -l` names, which `gofmt -l` cannot do on its own:
 // the listing is a green exit with output. The verdict goes to stderr, where every
 // other red in this file writes. So a caller reading a step's stdout for the tool's own
-// output never finds a policy line folded into it.
+// output never finds a policy line folded into it. The step names the visible Go files
+// rather than `.`, because gofmt walks into ignored directories, and their copies of the
+// tree are not the subject this step grades.
 func gofmtStep(root string, stdout, stderr io.Writer) int {
-	listed, combined, err := stepOutput(root, "gofmt", "-l", ".")
+	visible, err := visibletree.Files(root)
+	if err != nil {
+		fmt.Fprintln(stderr, "gofmt failed: list the visible tree: "+err.Error())
+		return 1
+	}
+	argv := []string{"gofmt", "-l"}
+	for _, rel := range visible {
+		if strings.HasSuffix(rel, ".go") {
+			argv = append(argv, filepath.FromSlash(rel))
+		}
+	}
+	if len(argv) == 2 {
+		return 0
+	}
+	listed, combined, err := stepOutput(root, argv...)
 	if err != nil {
 		fmt.Fprintln(stderr, "gofmt failed: "+err.Error())
 		fmt.Fprintln(stderr, combined)
