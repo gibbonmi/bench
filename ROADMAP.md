@@ -336,8 +336,9 @@ recommended table is sequencing advice.
 ## Recommended sequence
 
 1. FT293-ownership-closure
-2. FT375-spec-staleness
-3. FT380-plan-commit
-4. FT409
-5. FT402
-6. FT411
+2. anchor-admission-prune
+3. FT375-spec-staleness
+4. FT380-plan-commit
+5. FT409
+6. FT402
+7. FT411

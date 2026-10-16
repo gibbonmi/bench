@@ -7,20 +7,19 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/visibletree"
 )
 
 // CommitWorkingTree copies tracked and visible untracked files into destination. It
 // commits that exact snapshot, so tests can authenticate the tree they are grading.
 func CommitWorkingTree(source, destination string) error {
-	listed := exec.Command("git", "-C", source, "ls-files", "-z", "--cached", "--others", "--exclude-standard")
-	output, err := listed.Output()
+	visible, err := visibletree.Files(source)
 	if err != nil {
 		return err
 	}
-	for _, relative := range strings.Split(strings.TrimSuffix(string(output), "\x00"), "\x00") {
-		if relative == "" {
-			continue
-		}
+	for _, relative := range visible {
+		relative = filepath.FromSlash(relative)
 		from, to := filepath.Join(source, relative), filepath.Join(destination, relative)
 		info, err := os.Lstat(from)
 		if os.IsNotExist(err) {

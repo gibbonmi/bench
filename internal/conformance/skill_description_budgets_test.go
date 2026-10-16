@@ -72,6 +72,10 @@ func listingTreeEntries(root, rel, prefix string) (entries []os.DirEntry, diags 
 	if err != nil {
 		return nil, []string{prefix + " subject unreadable: " + rel + ": " + err.Error()}
 	}
+	// An ignored child is a local install no commit carries, so it is not a subject.
+	if found, err = withoutIgnoredEntries(root, rel, found); err != nil {
+		return nil, []string{prefix + " subject unreadable: " + rel + ": " + err.Error()}
+	}
 	for _, entry := range found {
 		if entry.Type()&os.ModeSymlink != 0 {
 			diags = append(diags, prefix+" subject refused: "+path.Join(rel, entry.Name())+" is a symbolic link, not a regular directory")

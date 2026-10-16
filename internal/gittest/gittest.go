@@ -148,6 +148,20 @@ func RepoOnBranch(t testing.TB, branch string) string {
 	return root
 }
 
+// RepoIgnoring initializes a repository on main whose committed .gitignore holds one
+// line per pattern. A check that grades the visible tree plants the same offender under
+// an ignored path and under a visible one, and only the visible one may count.
+func RepoIgnoring(t testing.TB, patterns ...string) string {
+	t.Helper()
+	root := RepoOnBranch(t, "main")
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(strings.Join(patterns, "\n")+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	run(t, root, "add", ".gitignore")
+	run(t, root, "commit", "-qm", "ignore rules")
+	return root
+}
+
 // TopicTrackingRepo initializes a repository whose checked-out branch is "topic" and
 // whose "topic" branch tracks "origin/main". So the default branch resolves to "main",
 // and a bare push has both a checked-out answer and an upstream answer. It returns the
