@@ -103,6 +103,10 @@ Harder chunks: AP-C2, AP-C5.
 
 48. As a maintainer, I want each over-bound COMMAND needle re-cut to its `bench …` sentence, so that a kept row passes the sentence bound.
 
+### Kept Forbid checks keep their scope
+
+49. As a maintainer, I want the integration-source stale phrases kept as Forbid rows, so that a retired phrase still turns the gate red.
+
 ## Implementation decisions
 
 ### The admission classes
@@ -120,9 +124,9 @@ The admission test lives in the anchors package. It walks `Entries()` and applie
 - A COMMAND needle contains a `bench ` span followed by an argument or a flag.
 - No Require needle has more words than `prose.MaxSentenceWords`.
 
-The word bound comes from `internal/prose`, so the test restates no bound.
+The word bound comes from `internal/prose`, so the test restates no bound. The test also counts words the way `internal/prose` counts them, where a code span is one word. If `internal/prose` exports no counter for one sentence, the AP-C5 ticket exports one there.
 
-At the spec base, 11 COMMAND needles are longer than the bound, and one holds a newline. Each pruning ticket re-cuts each such needle in its registry file to the one sentence that holds the `bench …` span. The row stays and its needle shrinks, as the craft-spec rubric prescribes for a long needle. This re-cut is a non-behavioral call, flagged for reviewer veto; the alternative is a COMMAND exemption from the bound.
+By a whitespace count, 11 COMMAND needles at the spec base are longer than the bound, and one holds a newline. The `internal/prose` count is lower, because a code span is one word. Each pruning ticket finds the needles in its registry file that are over the bound under the `internal/prose` count. It re-cuts each one to the sentence that holds its `bench …` span. The row stays and its needle shrinks, as the craft-spec rubric prescribes for a long needle. This re-cut is a non-behavioral call, flagged for reviewer veto; the alternative is a COMMAND exemption from the bound.
 
 This test is the cheapest red-capable owner. A new rule-sentence row fails the unclassified rule at once. A misclassified row fails its shape rule.
 
@@ -134,9 +138,15 @@ This test is the cheapest red-capable owner. A new rule-sentence row fails the u
 
 The retained-workflow check keeps its document reads. It takes its expected diagnostics from the main registry, by its group and its diagnostic prefix. Each stale phrase that it forbids moves into the registry as a Forbid row on the same file. Its model identifiers come from the line binding reader. The check then holds no list that the registry also holds.
 
+The integration-source stale-phrase check takes its file list from the integration-source Require rows, and AP-C1 removes 9 of those 10 rows. So AP-C1 moves each stale phrase of that check into the registry. Each phrase becomes a Forbid row on each file that the check scanned at the ticket base. The check and its count pin then leave, because the registry holds the same fact.
+
 ### Hand-coded pins
 
-A hand-coded pin stays only when its text is in one of the five classes, or when a program reads the text. The structured-phase clause check, the shared-rule single-source check, the skills-index checks, and the `BENCH_MODEL` pin stay. A marker that both the registry and the shared-rule check enforce keeps only the shared-rule check. The exported marker constants stay, because that check reads them. That check pins some Workflow markers of `.bench/BENCH.md` as a cross-file single source, so those few marker phrases stay pinned there and nowhere else.
+A hand-coded pin stays only when its text is in one of the five classes, or when a program reads the text. The structured-phase clause check, the shared-rule single-source check, the skills-index checks, and the `BENCH_MODEL` pin stay. A marker that both the registry and the shared-rule check enforce keeps only the shared-rule check.
+
+That check asserts each marker in two ways: present in `.bench/BENCH.md`, and absent from `AGENTS.md` and `README.md`. One of its markers is the Roles needle of a core row. So the registry drops that row, and `.bench/BENCH.md` keeps 8 core Require rows in the registry and the Roles sentence through the shared-rule check. This is a non-behavioral call, flagged for reviewer veto.
+
+The exported marker constants stay, because that check reads them. That check pins some Workflow markers of `.bench/BENCH.md` as a cross-file single source, so those few marker phrases stay pinned there and nowhere else.
 
 ### Removal census
 
@@ -144,31 +154,35 @@ A row whose removal leaves no test that still expects it cannot turn red, becaus
 
 ### Match kinds
 
-All nine step-scoped Require rows are rule sentences, so they leave. The step-scoped kind then has no row. The kind, its step field, and its step narrowing leave the anchors package. This is a non-behavioral call, flagged for reviewer veto. The alternative is to keep one step-scoped row.
+All nine step-scoped Require rows are rule sentences, so they leave. The kind tests need one row of each declared kind, so the nine rows leave in AP-C5 together with the kind, not in AP-C3. The kind, its step field, and its step narrowing leave the anchors package. The `bench anchors` table then has no `step` column, and `CHANGELOG.md` records that change. This is a non-behavioral call, flagged for reviewer veto. The alternative is to keep one step-scoped row and the column.
 
 ### Fixtures
 
 A fixture leaves when its expected diagnostic belongs to a removed row. The fixture-bite test derives its set from the tree, so it needs no edit. The handoff-fixture list test and the cadence mutation test hold independent lists. Their entries for removed rules leave with those rules. This is the reviewer-decided retirement of those rules, not a weakening of a test to pass.
 
+`assets/fixture-census.md` lists, for each ticket, the fixture directories that the ticket deletes. Each ticket names `tests/canary/workflow-guidance-anchors` as one `Writes:` prefix, and its author re-derives the list against the tree at the ticket base.
+
+The anchors help test drops every second `AGENTS.md` Require row and expects a failure. After AP-C2 and AP-C1, `AGENTS.md` keeps one Require row, so the test drops nothing. The AP-C1 ticket reworks that test and its fixture repository in the same commit.
+
 ## Implementation chunks
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| AP-C1 / `1-prune-core-registry.md` | The core registry file keeps only admitted rows, BENCH.md keeps its core rows, and the three invariant anchors exist. | AP02, AP03, AP04, AP05, AP06, AP07, AP08, AP10, AP18, AP20, AP21, AP24, AP46 | `bench test --package ./internal/anchors`, `bench test --check docs-currency-workflow`, `bench test --check conformance-canary-families`, `bench test --package ./cmd/bench` | no |
-| AP-C2 / `2-fold-retained-workflow.md` | The retained-workflow check reads the main registry, and its rule rows leave. | AP02, AP03, AP04, AP10, AP25, AP26, AP27, AP31, AP46 | `bench test --package ./internal/anchors`, `bench test --check docs-currency-workflow`, `bench test --package ./internal/conformance` | yes |
+| AP-C2 / `1-fold-retained-workflow.md` | The retained-workflow check reads the main registry, and its rule rows leave. | AP02, AP03, AP04, AP10, AP25, AP26, AP27, AP31, AP46 | `bench test --package ./internal/anchors`, `bench test --check docs-currency-workflow`, `bench test --package ./internal/conformance`, `bench test --package ./cmd/bench` | yes |
+| AP-C1 / `2-prune-core-registry.md` | The core registry file keeps only admitted rows, BENCH.md keeps its core rows, the three invariant anchors exist, and the integration-source check keeps its scope. | AP02, AP03, AP04, AP05, AP06, AP07, AP08, AP10, AP18, AP20, AP21, AP24, AP46, AP47 | `bench test --package ./internal/anchors`, `bench test --package ./internal/conformance`, `bench test --check docs-currency-workflow`, `bench test --check conformance-canary-families`, `bench test --package ./cmd/bench` | no |
 | AP-C3 / `3-prune-build-registries.md`, `4-prune-phase-registries.md` | The build and phase topic registries keep only admitted rows, and empty topic files are gone. | AP02, AP03, AP04, AP10, AP18, AP19, AP20, AP22, AP23, AP46 | `bench test --package ./internal/anchors`, `bench test --check docs-currency-workflow`, `bench test --package ./internal/conformance` | no |
 | AP-C4 / `5-prune-hand-pins.md` | The hand-coded pins keep only admitted facts, each with one source. | AP28, AP29, AP30, AP32 | `bench test --package ./internal/conformance`, `bench test --check docs-currency-workflow` | no |
 | AP-C5 / `6-admit-by-class.md` | Each Require row declares its class, the admission test refuses an unclassified row, and the step kind is retired. | AP01, AP09, AP11, AP12, AP13, AP14, AP15, AP16, AP17, AP33, AP34, AP35, AP36, AP37, AP38 | `bench test --package ./internal/anchors`, `bench test --package ./cmd/bench`, `bench test --package ./internal/gate`, `bench test --check docs-currency-workflow` | yes |
 | AP-C6 / `7-state-admission-rule.md` | ADR 0012 and the guidance state the admission rule. | AP39, AP40, AP41, AP42, AP43, AP44, AP45 | `bench test --check docs-currency-workflow`, `bench test --check prose-mechanics`, `bench test --check guidance-prose-budgets` | no |
 
-The ticket basenames are planned names. The slicing confirms or changes them. AP-C1 goes first, because it holds the BENCH.md rows and the invariant anchors. AP-C5 waits for AP-C1 to AP-C4, because the admission test reds the live tree until the last unadmitted row goes. AP-C6 waits for AP-C5.
+AP-C2 goes first, because the retained-workflow check hard-codes diagnostics of rows in the core and topic registries. A prune of those rows before the fold turns that check red. AP-C1 follows and holds the BENCH.md rows and the invariant anchors. AP-C5 waits for AP-C1 to AP-C4, because the admission test reds the live tree until the last unadmitted row goes. AP-C6 waits for AP-C5.
 
 Each ticket that writes `internal/anchors` names the five command-binding files. The preflight anchor-closure rule also makes a ticket that writes a guarded guidance file name every registry file that pins it. AP-C6 edits guidance files that many registry rows pin, so its `Writes:` line names `internal/anchors` files too. So all seven tickets run in series.
 
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"AP-C1","tickets":["1-prune-core-registry.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"conformance-canary-families","command":"bench test --check conformance-canary-families"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"}]},{"id":"AP-C2","tickets":["2-fold-retained-workflow.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]},{"id":"AP-C3","tickets":["3-prune-build-registries.md","4-prune-phase-registries.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]},{"id":"AP-C4","tickets":["5-prune-hand-pins.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"}]},{"id":"AP-C5","tickets":["6-admit-by-class.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"}]},{"id":"AP-C6","tickets":["7-state-admission-rule.md"],"verification":[{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"prose-mechanics","command":"bench test --check prose-mechanics"},{"id":"guidance-prose-budgets","command":"bench test --check guidance-prose-budgets"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/anchor-admission-prune/spec.md"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"conformance-canary-families","command":"bench test --check conformance-canary-families"},{"id":"conformance-meta","command":"bench test --check conformance-meta"}]}
+{"version":1,"chunks":[{"id":"AP-C2","tickets":["1-fold-retained-workflow.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"}]},{"id":"AP-C1","tickets":["2-prune-core-registry.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"conformance-canary-families","command":"bench test --check conformance-canary-families"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"}]},{"id":"AP-C3","tickets":["3-prune-build-registries.md","4-prune-phase-registries.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]},{"id":"AP-C4","tickets":["5-prune-hand-pins.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"}]},{"id":"AP-C5","tickets":["6-admit-by-class.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"}]},{"id":"AP-C6","tickets":["7-state-admission-rule.md"],"verification":[{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"prose-mechanics","command":"bench test --check prose-mechanics"},{"id":"guidance-prose-budgets","command":"bench test --check guidance-prose-budgets"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/anchor-admission-prune/spec.md"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"conformance-canary-families","command":"bench test --check conformance-canary-families"},{"id":"conformance-meta","command":"bench test --check conformance-meta"}]}
 ```
 
 ## Testing decisions
@@ -196,7 +210,7 @@ Each ticket that writes `internal/anchors` names the five command-binding files.
 | AP02 | 2 | Every Forbid-kind row at the ticket base is still in the registry after the ticket | review-owned removal census in each pruning ticket record | A prune that deletes a Forbid row with its test rule stays green, so the census must show each removed row as DROP. |
 | AP03 | 3 | Each LABEL row at the ticket base is still in the registry after the ticket | review-owned removal census in each pruning ticket record | A deleted label row and its test rule leave together and stay green, so the census must show each removed row as DROP. |
 | AP04 | 4 | Each ROUTE row at the ticket base is still in the registry after the ticket | review-owned removal census in each pruning ticket record | A deleted route row and its test rule leave together and stay green, so the census must show each removed row as DROP. |
-| AP05 | 5 | The 9 core Require rows on `.bench/BENCH.md` are still in the registry | registry_data_test.go core tuple test | A prune that drops a core row breaks the exact tuple list. |
+| AP05 | 5 | The 8 core Require rows on `.bench/BENCH.md` are still in the registry, and the shared-rule check still requires the Roles marker in `.bench/BENCH.md` | registry_data_test.go core tuple test and `internal/conformance/validity_checks_test.go` (`checkSharedRuleSingleSource`) | A prune that drops a core row breaks the exact tuple list, and a deleted Roles sentence raises the shared-rule diagnostic. |
 | AP06 | 6 | Deletion of "Never edit, skip, weaken, or delete a test or a check to make it pass." raises the invariant diagnostic | planned rule in registry_data_test.go | No row reds when the invariant 1 clause goes. |
 | AP07 | 7 | Deletion of "Before any multi-cycle stage, state the model, the effort, the iteration cap, and a one-clause justification in one line." raises the invariant diagnostic | planned rule in registry_data_test.go | No row reds when the invariant 2 clause goes. |
 | AP08 | 8 | Deletion of `Put no file paths and no code snippets in an ADR; they rot.` raises the invariant diagnostic | planned rule in registry_data_test.go | No row reds when the invariant 3 clause goes. |
@@ -237,6 +251,7 @@ Each ticket that writes `internal/anchors` names the five command-binding files.
 | AP43 | 43 | The spec skill allows a drop of a long needle that holds rule wording | review-owned guidance text | No check reads this guidance, so review grades it. |
 | AP44 | 44 | The delegation discipline applies the probe rule to admitted anchors | review-owned guidance text | No check reads this guidance, so review grades it. |
 | AP45 | 45 | The project profile describes the workflow-guidance family by its admitted classes | review-owned profile text | No check reads this text, so review grades it. |
+| AP47 | 49 | Each stale phrase that the integration-source check forbade at the ticket base is a registry Forbid row on each file that the check scanned | review-owned removal census in the AP-C1 ticket record | A prune that drops the check and its phrases together stays green, so the census must pair each old phrase and file with its new Forbid row. |
 | AP46 | 48 | Each COMMAND needle that was longer than `prose.MaxSentenceWords` is re-cut to the one sentence that holds its `bench …` span | review-owned re-cut census in each pruning ticket record, then AP17 in AP-C5 | A ticket that keeps a long needle leaves AP-C5 red on the live tree, and the census names each re-cut. |
 
 Not covered: story 46 — the trims belong to the guidance-weight re-slice, which is outside this spec.
@@ -274,6 +289,7 @@ This prune lands before `specs/guidance-weight` re-slices. The reviewer confirme
 - `specs/preflight-ownership-closure` ticket 08 and `specs/preflight-spec-staleness` ticket 05 keep co-owned anchor and canary assertions. A build of either before this prune keeps rows that this prune deletes.
 - `specs/markdown-block-reader` changes only the matcher. Its fence overlaps four registry files.
 - `specs/exact-planning-readers` adds a reader-specific registry file. Its needles need a class check before it builds.
+- `specs/process-lifetime` tickets 01 and 07 name the retained-workflow registry file. A build of it before this prune edits rows that this prune folds or deletes.
 
 ### Roadmap rows for the drain
 
@@ -284,13 +300,15 @@ The drain updates FT100, FT326, FT368, and FT369 to cite this prune. FT293 lines
 - The class field on the registry type. It is the executable owner of the admission rule.
 - The retirement of the step-scoped kind. This is a non-behavioral call, flagged for reviewer veto.
 - The fold of the retained-workflow lists into the registry, under the one-source rule in AGENTS.md.
-- The re-cut of the 11 over-bound COMMAND needles. This is a non-behavioral call, flagged for reviewer veto.
+- The re-cut of the over-bound COMMAND needles. This is a non-behavioral call, flagged for reviewer veto.
+- The Roles marker single-sourced in the shared-rule check, so 8 core rows stay in the registry. This is a non-behavioral call, flagged for reviewer veto.
+- The removal of the `step` column from the `bench anchors` table with the step kind. This is a non-behavioral call, flagged for reviewer veto.
 
 ### Source-sentence-to-row table
 
 | source decision | rows |
 | --- | --- |
-| Forbid anchors stay | AP02 |
+| Forbid anchors stay | AP02, AP26, AP47 |
 | Label anchors stay | AP03, AP12 |
 | Route anchors stay | AP04, AP13 |
 | BENCH.md core stays | AP05, AP14, AP15 |
