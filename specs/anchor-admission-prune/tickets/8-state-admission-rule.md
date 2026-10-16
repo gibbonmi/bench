@@ -1,17 +1,18 @@
 # State the admission rule in the ADR and the guidance
 
-Blocked by: 6-admit-by-class.md
+Blocked by: 7-admit-by-class.md
 Writes: docs/adr/0012-document-anchors-use-a-declarative-substring-registry.md, .agents/skills/bench-craft-gate/SKILL.md, .agents/skills/bench-craft-tickets/references/slicing-checks.md, .agents/skills/bench-craft-review/references/finding-discipline.md, .agents/skills/bench-craft-spec/SKILL.md, .agents/skills/bench-craft-delegate/references/delegation-discipline.md, projects/benchkit.md, internal/anchors, tests/canary/workflow-guidance-anchors, tests/canary/skill-description-budgets, tests/canary/line-routing, tests/canary/guidance-prose-budgets, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: AP39, AP40, AP41, AP42, AP43, AP44, AP45
 
 ## What to build
 
-ADR 0012 states the admission rule as the current decision. An anchor earns a place only in one of four classes:
+ADR 0012 states the admission rule as the current decision. An anchor earns a place only in one of five classes:
 
 - It forbids a stale or wrong form.
 - It names a label or heading that a parser or template uses.
 - It names a routing reference.
 - It carries a `.bench/BENCH.md` invariant.
+- It pins a `bench …` command line with an argument. This COMMAND class is interim, until a grammar check of command spans replaces it.
 
  The wording of a rule sentence is review-owned. Canary coverage stays at one needle for each family. The ADR holds no file path and no code snippet.
 
@@ -28,6 +29,6 @@ The gate-authoring and spec skills are at their prose line budgets, so their edi
 
 ## Acceptance
 
-- [ ] ADR 0012 states the four classes, review-owned rule wording, and one needle per family.
+- [ ] ADR 0012 states the five classes, with COMMAND as the interim class, review-owned rule wording, and one needle per family.
 - [ ] Each of the six guidance sites states its rule under the amended ADR.
 - [ ] `bench test --check docs-currency-workflow`, `bench test --check prose-mechanics`, and `bench test --check guidance-prose-budgets` pass.

@@ -6,7 +6,7 @@ Covers: AP02, AP03, AP04, AP10, AP25, AP26, AP27, AP31, AP46
 
 ## What to build
 
-The retained-workflow check stops being a second registry. It reads its expected diagnostics from the main registry, by its group and its diagnostic prefix. Each stale phrase that it forbids becomes a registry Forbid row on the same file. Its hard-coded model identifiers leave; the line-binding check already compares the profile prose with the binding, so derive them from that reader or remove them.
+The retained-workflow check stops being a second registry. It reads its expected diagnostics from the main registry, by its group and its diagnostic prefix. Each stale phrase that it forbids becomes a registry Forbid row on the same file. Its hard-coded model identifiers leave, because the line-binding check already compares the profile prose with the binding.
 
 The retained-workflow registry file keeps only its admitted rows: every Forbid row, the one INVARIANT row on `.bench/BENCH.md`, and the COMMAND rows. Each removed row leaves with its test rule and its entries in the implementation-continuation pin list. Its fixture directories, which `assets/fixture-census.md` lists for this ticket, leave too. Keep each constant that a row in another registry file still reads.
 
@@ -15,6 +15,8 @@ This ticket runs first, because the check hard-codes diagnostics of rows in the 
 ## Acceptance
 
 - [ ] The retained-workflow check holds no diagnostic literal that the registry also holds, and a test proves it from `Entries()`.
+- [ ] The retained-workflow test derives its expected row count from `Entries()`.
+- [ ] The retained-workflow check holds no model identifier, and the ticket record shows the identifier list gone.
 - [ ] Each stale phrase that the check forbade at the ticket base is a registry Forbid row on the same file.
 - [ ] The ticket record carries a removal census: each removed row is DROP in `assets/classified.md`, and each stale phrase is paired with its new Forbid row.
 - [ ] `bench test --check docs-currency-workflow`, `bench test --package ./internal/conformance`, `bench test --package ./internal/anchors`, and `bench test --package ./cmd/bench` pass.

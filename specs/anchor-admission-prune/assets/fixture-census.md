@@ -310,7 +310,7 @@ tests/canary/workflow-guidance-anchors/shape-idea-skeleton-checks
 tests/canary/workflow-guidance-anchors/ticket-decision-map-lifecycle-anchor
 ```
 
-## 6-admit-by-class.md
+## 6-retire-step-kind.md
 
 ```text
 tests/canary/workflow-guidance-anchors/calibration-pickup-confidence
