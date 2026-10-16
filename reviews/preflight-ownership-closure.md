@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/preflight-ownership-closure/spec.md",
-  "plan_digest": "sha256:10e74ce1b538af054a4b095dabaef5b5e6ab6ac2f7c71019f6248c1d8536b645",
+  "plan_digest": "sha256:ee53e1def775505c3b20465d68392d8fb75ef14127c1d3a442cbf2f221f51fbd",
   "implementation_session": "",
   "chunks": [
     {
@@ -6192,6 +6192,21 @@
     {
       "from": "sha256:c5d7d55edcbcc0e1f790c7db9f2c7ee991d4efaa0f910543de4197d00c514a98",
       "to": "sha256:10e74ce1b538af054a4b095dabaef5b5e6ab6ac2f7c71019f6248c1d8536b645",
+      "chunk_ids": {
+        "OC-C1": [
+          "OC-C1"
+        ],
+        "OC-C2": [
+          "OC-C2"
+        ],
+        "OC-C3": [
+          "OC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:10e74ce1b538af054a4b095dabaef5b5e6ab6ac2f7c71019f6248c1d8536b645",
+      "to": "sha256:ee53e1def775505c3b20465d68392d8fb75ef14127c1d3a442cbf2f221f51fbd",
       "chunk_ids": {
         "OC-C1": [
           "OC-C1"
