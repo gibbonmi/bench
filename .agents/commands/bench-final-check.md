@@ -76,10 +76,9 @@ The landing retires the sibling worktrees whose work it carries, and `bench work
 
 The phase close reads the assignment census record before `bench worktree land` removes it, and it carries the per-verb breakdown into the close.
 
-Read `census=<n>` from the landed record; for `n > 0`, write exactly one `bench learning --rule` entry for the landing.
-The entry's title names the assignment label and `n`.
-Its `--what` lists each verb head with its count. Its `--right` names the Bench form per head, or `none`. Its `--rule` proposes the verb or the help change.
-Fold a delegate's zero to two CLI improvements into that same entry.
+Read `census=<n>` from the landed record, and write no `bench learning` entry for a census.
+For `n > 0`, name the Bench form for each verb head in the close, or `none`. Then propose the verb or the help change.
+Fold a delegate's zero to two CLI improvements into the close's census account.
 
 For `n = 0`, state `census: 0 raw calls` in the close; a nonzero count never blocks a landing.
 The duty is advisory, so a nonzero count never reds the gate.
@@ -110,7 +109,7 @@ Record concrete evidence:
 - what the coordinator caught while accepting delegate claims
 - specific improvements to Bench CLI, skills, and process, with the friction and expected effect named
 
-A spec retro cites the landing's census entry under `### Bench CLI` with its `Feeds:` line.
+A spec retro records the close's census account as one `### Bench CLI` item with its `Feeds:` line.
 
 The retro fills the scaffold's calibration table with one row per labeled claim.
 The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.

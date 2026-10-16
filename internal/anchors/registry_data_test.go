@@ -263,8 +263,8 @@ func TestCensusDutyAnchorsRedOnRemoval(t *testing.T) {
 		rules: []anchorRule{
 			{
 				file:   finalCheck,
-				needle: "Read `census=<n>` from the landed record; for `n > 0`, write exactly one `bench learning --rule` entry for the landing.",
-				want:   ".agents/commands/bench-final-check.md post-merge tail dropped the census duty: read census=<n> and write one bench learning --rule entry",
+				needle: "Read `census=<n>` from the landed record, and write no `bench learning` entry for a census.",
+				want:   ".agents/commands/bench-final-check.md post-merge tail dropped the census duty: read census=<n> and write no bench learning entry",
 			},
 			{
 				file:   finalCheck,
@@ -273,17 +273,17 @@ func TestCensusDutyAnchorsRedOnRemoval(t *testing.T) {
 			},
 			{
 				file:   finalCheck,
-				needle: "Its `--what` lists each verb head with its count. Its `--right` names the Bench form per head, or `none`. Its `--rule` proposes the verb or the help change.",
-				want:   ".agents/commands/bench-final-check.md post-merge tail dropped the census learning fields: --what, --right, and --rule",
+				needle: "For `n > 0`, name the Bench form for each verb head in the close, or `none`. Then propose the verb or the help change.",
+				want:   ".agents/commands/bench-final-check.md post-merge tail dropped the census close fields: the Bench form per verb head and the proposed verb or help change",
 			},
 			{
 				file:   finalCheck,
-				needle: "A spec retro cites the landing's census entry under `### Bench CLI` with its `Feeds:` line.",
-				want:   ".agents/commands/bench-final-check.md retro section dropped the census citation under ### Bench CLI with its Feeds: line",
+				needle: "A spec retro records the close's census account as one `### Bench CLI` item with its `Feeds:` line.",
+				want:   ".agents/commands/bench-final-check.md retro section dropped the census record under ### Bench CLI with its Feeds: line",
 			},
 			{
 				file:   ".agents/skills/bench-craft-delegate/SKILL.md",
-				needle: "Ask the delegate for zero to two Bench CLI improvements derived from its own calls, and fold them into the landing's census entry.",
+				needle: "Ask the delegate for zero to two Bench CLI improvements derived from its own calls, and fold them into the phase close's census account.",
 				want:   ".agents/skills/bench-craft-delegate/SKILL.md charge dropped the delegate's zero to two Bench CLI improvements",
 			},
 			{
