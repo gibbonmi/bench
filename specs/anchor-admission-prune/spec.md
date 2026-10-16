@@ -270,8 +270,76 @@ Not covered: story 47 — the COMMAND class is a kept state, and AP10 and AP16 a
 
 ## Ownership fences
 
-The slicing writes the ticket fences after the ticket review accepts. The review pickup is fixed now:
+These paths are the union of the ticket `Writes:` lines, plus the review pickup:
 
+- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
+- `.agents/skills/bench-craft-gate/SKILL.md`
+- `.agents/skills/bench-craft-review/references/finding-discipline.md`
+- `.agents/skills/bench-craft-spec/SKILL.md`
+- `.agents/skills/bench-craft-tickets/references/slicing-checks.md`
+- `CHANGELOG.md`
+- `cmd/bench/anchor_help_test.go`
+- `cmd/bench/anchors_command.go`
+- `cmd/bench/anchors_dir_test.go`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `cmd/bench/testdata/anchors/fixture-repo/AGENTS.md`
+- `docs/adr/0012-document-anchors-use-a-declarative-substring-registry.md`
+- `internal/anchors`
+- `internal/anchors/anchor_harness_diagnostics_test.go`
+- `internal/anchors/registry_calibration.go`
+- `internal/anchors/registry_calibration_test.go`
+- `internal/anchors/registry_charge_binding.go`
+- `internal/anchors/registry_charge_binding_test.go`
+- `internal/anchors/registry_check_floor.go`
+- `internal/anchors/registry_check_floor_test.go`
+- `internal/anchors/registry_chunk_chain.go`
+- `internal/anchors/registry_chunk_chain_test.go`
+- `internal/anchors/registry_commitment.go`
+- `internal/anchors/registry_craft_research.go`
+- `internal/anchors/registry_craft_research_test.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry_decision_maps.go`
+- `internal/anchors/registry_decision_maps_test.go`
+- `internal/anchors/registry_front_door.go`
+- `internal/anchors/registry_front_door_test.go`
+- `internal/anchors/registry_ft311_preparation.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/anchors/registry_review_rules.go`
+- `internal/anchors/registry_review_rules_test.go`
+- `internal/anchors/registry_spec_trace.go`
+- `internal/anchors/registry_spec_trace_test.go`
+- `internal/anchors/registry_ticket_passes.go`
+- `internal/anchors/registry_ticket_passes_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/charge_evidence_guidance_test.go`
+- `internal/conformance/checks_test.go`
+- `internal/conformance/commitment_guidance_test.go`
+- `internal/conformance/data_handling_test.go`
+- `internal/conformance/docs_workflow_checks_test.go`
+- `internal/conformance/docs_workflow_helpers_test.go`
+- `internal/conformance/fixture_bite_test.go`
+- `internal/conformance/ft311_preparation_test.go`
+- `internal/conformance/implementation_continuation_test.go`
+- `internal/conformance/recurrence_maintenance_contract_test.go`
+- `internal/conformance/retained_workflow_test.go`
+- `internal/conformance/skills_index_checks_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/tier_live_tree_test.go`
+- `internal/conformance/validity_checks_test.go`
+- `internal/gate/lane_select_test.go`
+- `internal/gate/lane_test.go`
+- `internal/prose`
+- `projects/benchkit.md`
+- `tests/canary/guidance-prose-budgets`
+- `tests/canary/line-routing`
+- `tests/canary/skill-description-budgets`
+- `tests/canary/skills-index-command-adapters`
+- `tests/canary/workflow-guidance-anchors`
 - `reviews/anchor-admission-prune.md`
 
 ## Out of scope

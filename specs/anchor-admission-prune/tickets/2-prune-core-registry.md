@@ -18,7 +18,9 @@ Each new row gets one test rule that proves a deletion of its clause raises its 
 
 The check also stripped backticks and `<code>` tags before it matched. That matters only for a phrase of more than one word with an inner code span. For each such phrase, add a row for each spelling that the old normalization matched at the ticket base.
 
-Remove the entries for removed rules from the handoff-fixture list test and the cadence mutation test. This is the reviewer-decided retirement of those rules. After this ticket, `AGENTS.md` keeps one Require row. So rework the anchors help test and its fixture repository to prove an absent needle with that row. Re-cut each COMMAND needle in this file that is over the bound under the `internal/prose` word count. No touched file may grow.
+Remove the entries for removed rules from the handoff-fixture list test and the cadence mutation test. This is the reviewer-decided retirement of those rules. After this ticket, `AGENTS.md` keeps one Require row. So rework the anchors help test and its fixture repository to prove an absent needle with that row.
+
+The new case-folded rows come before the debug-loop rows in registry order. So make the anchors help test select its case-folded emphasis row by its needle, not by position. Re-cut each COMMAND needle in this file that is over the bound under the `internal/prose` word count. No touched file may grow.
 
 ## Acceptance
 
