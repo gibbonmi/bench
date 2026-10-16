@@ -5986,6 +5986,50 @@
           "supersedes": [
             "ft293-oc-c3-coverage-r3"
           ]
+        },
+        {
+          "id": "ft293-oc-c3-standards-r4",
+          "performer": "claude:ft293_oc-c3_standards_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_standards_r4",
+            "digest": "sha256:b43b889a781aa9be50c62f2f7ba85c527f3a28028a59574d15691189752014aa",
+            "excerpt": "OC-C3 Standards axis round 4 (opus / medium, one iteration), evidence sha256:b1c843d028a962161b6937a7990e9c45357ae5b5e01f772b801006bd8bb11af1. Scope: repair cycle 3 delta c6edc0dd..3009145a.\nBinding limit: --check-current refused at e28cb72d (prepared tip 877480c9); e28cb72d adds only the Coverage review-record commit, so the source digest 61cda1a9 is unchanged and the graded range is fixed.\nNo findings.\nOne source per fact: systemtest/charge_evidence_test.go:61 uses the shared inventorytest.Section(inventorytest.CompleteEmpty) (inventorytest/inventory.go:19-22); no second literal.\nPublication topology: ownershiptest/repo.go:28 adds Publisher; Seal is a Publisher (line 22), nil-checked at 121 and 141, called at 150; only callers ownership/proposal_test.go:199 and preflight/proposal_test.go:122 pass freshness.Publish unwrapped.\nComments: Publisher doc comment names the symbol, present tense, no provenance; the ProposalRepo and newEvidenceJourney comments match the code.\nAdvice (no finding): repo.go:151 t.Fatalf(\"Publish: %v\") could read \"Seal:\".\n"
+          },
+          "axis": "Standards",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "bd58548d98d52906b149442b98c18f290e98e9aa",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c3-standards-r3"
+          ]
+        },
+        {
+          "id": "ft293-oc-c3-spec-r4",
+          "performer": "claude:ft293_oc-c3_spec_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61cda1a964d35e3d7e53a4c4cfb00e6951243abb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c3_spec_r4",
+            "digest": "sha256:7c510792f94cd8fb112deb1d037568b9f23a278fccc8c395d7dac826e3537a92",
+            "excerpt": "OC-C3 Spec axis round 4 (opus / medium, one iteration), evidence sha256:b1c843d028a962161b6937a7990e9c45357ae5b5e01f772b801006bd8bb11af1. Scope: repair cycle 3 delta c6edc0dd..3009145a.\nBinding limit: --check-current refused at e28cb72d (prepared tip 877480c9); 3009145a..e28cb72d changes only reviews/preflight-ownership-closure.md, so the graded source matches the frozen pair.\nNo findings.\nRows checked: OC12, OC13, OC51, OC52, OC53, OC54, OC88, OC89, OC93, OC94, OC95. Predicates: spec.md:94, 141, 143, 144, 146, 185, 196.\nComplete-empty journey inventory (charge_evidence_test.go:61): line 144 governs proposals, not inventory; journey row E1 has the untyped seam command, so line 146 holds; line 196 conjunction unchanged.\nMissing-fence diagnostic (ownership.go:211) and its tests are outside the delta.\nSealed publication (ownershiptest/repo.go:22, 28, 56) still runs the real freshness.Publish from both test callers; the one non-test caller is the publish verb cmd/bench/freshness_publish.go:48.\nFence: all four paths inside ticket 07 Writes (two by name, two under internal/preflight/ownership).\n"
+          },
+          "axis": "Spec",
+          "base": "cd54d245ab7a1aa2fdf0ca4431125adb6264f205",
+          "tip": "bd58548d98d52906b149442b98c18f290e98e9aa",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293-oc-c3-spec-r3"
+          ]
         }
       ]
     }
