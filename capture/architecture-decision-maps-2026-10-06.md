@@ -27,7 +27,7 @@ The active FT290 commitment and all existing roadmap dependencies remain unchang
 | C03: source observations | [Observations](../decisions/architecture-observations.md) | landing-test-efficiency; residual FT365 | Three reviewed plans are integrated |
 | C04: generic Git fixtures | [Fixtures](../decisions/architecture-fixtures.md) | FT360; shared-test-fixtures | Accepted spec and ticket amendment |
 | C05: cleanup traversal | [Cleanup](../specs/cleanup-member-traversal/decisions/architecture-cleanup.md) | FT363 | Accepted spec and four implementation tickets |
-| C06: lifecycle decision consumption | [Adoption](../specs/adoption-lifecycle-consumption/decisions/architecture-adoption.md) | FT217 | Accepted spec and four implementation tickets |
+| C06: lifecycle decision consumption | Adoption; retired with its spec | FT217 | None; the four tickets landed and the spec is retired |
 | C07: shared guard grammar | [Guards](../decisions/architecture-guards.md) | FT366 | Accepted projection and scan plans; integrated |
 | C08: shared primitives | [Primitives](../decisions/architecture-primitives.md) | FT354 | Four reviewed plans are integrated |
 | C09: production test seams | [Test seams](../specs/production-test-seam-policy/decisions/architecture-test-seams.md) | FT343 | Accepted spec and four tickets; integrated |
@@ -70,7 +70,7 @@ The document checks establish the following results:
 - The prose check passes every map and decision ticket.
 - Every map source path and ticket link resolves.
 - Every cited source line in the decision tickets exists.
-- The set contains one map for each architecture candidate.
+- The set contains one map for each architecture candidate, except the C06 map, which is retired with its spec.
 
 The FT362 census also includes the bounds process runner.
 That runner was absent from the earlier candidate summary.
@@ -101,7 +101,7 @@ The primary handoff pins reviewed commits, close commits, and workspaces.
 | Independent expectations | [independent-expectation-audit](../specs/independent-expectation-audit/spec.md) | Spec and three tickets accepted; integrated |
 | Generic Git fixtures | [shared-test-fixtures](../specs/shared-test-fixtures/spec.md) | Spec and amended tickets accepted; integrated |
 | Cleanup traversal | [cleanup-member-traversal](../specs/cleanup-member-traversal/spec.md) | Spec and four tickets accepted; integrated |
-| Adoption lifecycle | [adoption-lifecycle-consumption](../specs/adoption-lifecycle-consumption/spec.md) | Spec and four tickets accepted; integrated |
+| Adoption lifecycle | `adoption-lifecycle-consumption`; retired | Spec and four tickets accepted; landed; spec retired |
 | Malformed guard refusal | [degraded-guard-refusal](../specs/degraded-guard-refusal/spec.md) | Spec and one ticket accepted; integrated |
 | Shared guard grammar | [shared-guard-projection](../specs/shared-guard-projection/spec.md) | Spec and three tickets accepted; integrated |
 | Guard inventory scan | [guard-scan-loop](../specs/guard-scan-loop/spec.md) | Spec and one ticket accepted; integrated |
