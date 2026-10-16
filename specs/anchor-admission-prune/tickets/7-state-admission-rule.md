@@ -1,7 +1,7 @@
 # State the admission rule in the ADR and the guidance
 
 Blocked by: 6-admit-by-class.md
-Writes: docs/adr/0012-document-anchors-use-a-declarative-substring-registry.md, .agents/skills/bench-craft-gate/SKILL.md, .agents/skills/bench-craft-tickets/references/slicing-checks.md, .agents/skills/bench-craft-review/references/finding-discipline.md, .agents/skills/bench-craft-spec/SKILL.md, .agents/skills/bench-craft-delegate/references/delegation-discipline.md, projects/benchkit.md, internal/anchors, tests/canary, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: docs/adr/0012-document-anchors-use-a-declarative-substring-registry.md, .agents/skills/bench-craft-gate/SKILL.md, .agents/skills/bench-craft-tickets/references/slicing-checks.md, .agents/skills/bench-craft-review/references/finding-discipline.md, .agents/skills/bench-craft-spec/SKILL.md, .agents/skills/bench-craft-delegate/references/delegation-discipline.md, projects/benchkit.md, internal/anchors, tests/canary/workflow-guidance-anchors, tests/canary/skill-description-budgets, tests/canary/line-routing, tests/canary/guidance-prose-budgets, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: AP39, AP40, AP41, AP42, AP43, AP44, AP45
 
 ## What to build
