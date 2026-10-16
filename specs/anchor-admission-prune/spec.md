@@ -10,7 +10,7 @@ Decision source: reviewer-confirmed conversation, 2026-10-16. The reviewer accep
 - `.bench/BENCH.md` keeps its 29 Forbid anchors and its 9 core Require anchors in Roles, the Bench CLI contract, the four invariants, and the three predicates. It gains one anchor for each of invariants 1, 2, and 3. Its 44 Workflow-section Require anchors go. Under the same rule, its three Require anchors outside the core sections go too: one in Capture and two in How to talk to me.
 - A Require needle that pins a `bench …` command line with an argument or a flag stays in this cut (class COMMAND). A sentence that names a verb with no argument counts as a rule sentence.
 
-Verification log: <n> iteration(s) to accept — <note>
+Verification log: 4 iteration(s) to accept — the spec review round took 2 iterations, and the ticket review round took 2.
 
 ## Problem
 

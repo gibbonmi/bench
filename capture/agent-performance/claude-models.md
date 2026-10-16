@@ -32,6 +32,10 @@ The `record-ticket` spec stage ran on Claude Code for FT405. An Opus coordinator
 
 Provider usage and charges remain unknown. The harness reported about 990k tokens for the eight slicing readers and 140k for the ticket review.
 
+The `anchor-admission-prune` spec stage ran on Claude Code from a reviewer-confirmed conversation. An Opus coordinator ran four Opus/high research readers and twelve paired Sonnet/high slicing readers, and it sliced the eight tickets itself. An Opus fork wrote the spec. Opus/medium ran the spec review in 2 iterations and the ticket review in 2. The reviewer then directed that Sonnet research delegates run at medium effort.
+
+Provider usage and charges remain unknown. The harness reported about 140k to 250k tokens for each slicing reader.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use | calibration |
