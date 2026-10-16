@@ -828,6 +828,37 @@
           ]
         },
         {
+          "id": "anchor-admission-prune",
+          "criteria": [
+            {
+              "id": "anchor-admission-prune.registry",
+              "text": "The anchor registry admits only Forbid, label, route, invariant, and command rows, and a test refuses an unclassified Require row."
+            },
+            {
+              "id": "anchor-admission-prune.single-source",
+              "text": "The retained-workflow check and the hand-coded prose pins hold no anchor fact that the registry also holds."
+            },
+            {
+              "id": "anchor-admission-prune.invariants",
+              "text": "The registry pins the key clause of invariants 1, 2, and 3 in .bench/BENCH.md."
+            },
+            {
+              "id": "anchor-admission-prune.adr",
+              "text": "ADR 0012 states the admission rule, and the guidance no longer asks for rule-sentence anchors."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "anchor-admission-prune",
+                "path": "specs/anchor-admission-prune/spec.md",
+                "identity": "sha256:648756eb63c9fda693157c958f1966c5d53d8f86ae2b5da3bee0bfed707f8d8f"
+              }
+            }
+          ]
+        },
+        {
           "id": "FT375-spec-staleness",
           "criteria": [
             {
