@@ -88,6 +88,24 @@ func TestDropRemovesTheRetainedResponseAndStages(t *testing.T) {
 	}
 }
 
+// A drop with no repository root names the store directory that a spill writer outside any
+// repository names. The working directory never supplies a repository, so the drop keeps the
+// assignment scope of the repository at the working directory.
+func TestDropOutsideARepositoryKeepsTheWorkingRepository(t *testing.T) {
+	home := rb.PrivateHome(t)
+	_, checkout, id := responseboundtest.AssignmentCheckout(t, home)
+	if err := rb.Stage(home, checkout, "example", "1", "tests", rb.Staged{Mutant: 1}); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(checkout)
+	if err := rb.Drop(home, "", id); err != nil {
+		t.Fatal(err)
+	}
+	if files := responseboundtest.StoreFiles(t, home); len(files) != 1 {
+		t.Fatalf("store files after a drop outside a repository = %q, want the stage", files)
+	}
+}
+
 // A scope directory that is a symlink refuses the stage, and the link target receives no file.
 func TestStageRefusesASymlinkedScope(t *testing.T) {
 	home := rb.PrivateHome(t)
