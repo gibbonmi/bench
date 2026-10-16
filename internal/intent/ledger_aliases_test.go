@@ -1,14 +1,16 @@
 package intent
 
 import (
-	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent/ledger"
+	"github.com/gibbonmi/bench/internal/visibletree"
 )
 
 // TestIntentReExportsEveryMovedLedgerName proves every name the leaf package declares
@@ -95,51 +97,71 @@ func TestIntentReExportsEveryMovedLedgerName(t *testing.T) {
 // build that rewrites a consumer's import to the leaf adds an edge this test names.
 // (Coverage row LS12.)
 func TestOnlyTheIntentOwnerImportsTheLeafLedger(t *testing.T) {
-	const leafImport = `"github.com/gibbonmi/bench/internal/intent/ledger"`
-	// The admission policy is the intent owner's own child. The lifecycle policy is a
-	// pure package whose own census forbids internal/intent, so the schema types it
-	// reads must come from the leaf directly.
-	owners := map[string]bool{
-		filepath.Join("internal", "intent"):                      true,
-		filepath.Join("internal", "intent", "admissionpolicy"):   true,
-		filepath.Join("internal", "worktree", "lifecyclepolicy"): true,
-	}
-	root := filepath.Join("..", "..")
-	var offenders []string
-	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if entry.IsDir() {
-			if name := entry.Name(); name == ".git" || name == "dist" {
-				return fs.SkipDir
-			}
-			return nil
-		}
-		if !strings.HasSuffix(entry.Name(), ".go") {
-			return nil
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(data), leafImport) {
-			return nil
-		}
-		rel, err := filepath.Rel(root, path)
-		if err != nil {
-			return err
-		}
-		if owners[filepath.Dir(rel)] {
-			return nil
-		}
-		offenders = append(offenders, rel)
-		return nil
-	})
+	offenders, err := leafLedgerOffenders(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(offenders) != 0 {
 		t.Errorf("these files import the leaf ledger outside the intent owner: %v", offenders)
 	}
+}
+
+// TestLeafLedgerCensusGradesOnlyTheVisibleTree is the bite proof for the census scope. A
+// consumer import under an ignored path is a local copy no commit carries, so it is not an
+// offender. The same import at a visible untracked path is one.
+func TestLeafLedgerCensusGradesOnlyTheVisibleTree(t *testing.T) {
+	root := gittest.RepoIgnoring(t, ".logs/")
+	consumer := []byte("package consumer\n\nimport _ \"github.com/gibbonmi/bench/internal/intent/ledger\"\n")
+	write := func(rel string) {
+		t.Helper()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, consumer, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write(".logs/copy/internal/consumer/consumer.go")
+	if offenders, err := leafLedgerOffenders(root); err != nil || len(offenders) != 0 {
+		t.Fatalf("ignored consumer: offenders %v, %v, want none", offenders, err)
+	}
+	write("internal/consumer/consumer.go")
+	offenders, err := leafLedgerOffenders(root)
+	if err != nil || !reflect.DeepEqual(offenders, []string{"internal/consumer/consumer.go"}) {
+		t.Fatalf("visible consumer: offenders %v, %v, want only internal/consumer/consumer.go", offenders, err)
+	}
+}
+
+// leafLedgerOffenders lists the visible Go files under root that import the leaf ledger
+// outside the intent owner.
+func leafLedgerOffenders(root string) ([]string, error) {
+	const leafImport = `"github.com/gibbonmi/bench/internal/intent/ledger"`
+	// The admission policy is the intent owner's own child. The lifecycle policy is a
+	// pure package whose own census forbids internal/intent, so the schema types it
+	// reads must come from the leaf directly.
+	owners := map[string]bool{
+		"internal/intent":                   true,
+		"internal/intent/admissionpolicy":   true,
+		"internal/worktree/lifecyclepolicy": true,
+	}
+	visible, err := visibletree.Files(root)
+	if err != nil {
+		return nil, err
+	}
+	var offenders []string
+	for _, rel := range visible {
+		if !strings.HasSuffix(rel, ".go") || strings.HasPrefix(rel, "dist/") || owners[path.Dir(rel)] {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel)))
+		if err != nil {
+			return nil, err
+		}
+		if strings.Contains(string(data), leafImport) {
+			offenders = append(offenders, rel)
+		}
+	}
+	return offenders, nil
 }

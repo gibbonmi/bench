@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Visible-tree check scope
+
+- Fixed the gofmt step and the in-place checks that grade the tree, so that they read only the visible tree: tracked files and untracked files that git does not ignore. The checks are the leaf-ledger import census, the freshness publication topology, the control-rune escaper census, the prose and skill-description budgets, and the skills index. Before, an ordinary `bench gate` in a checkout that held ignored copies of Go source, such as files under `.logs/`, or a locally installed ignored skill went red on content that no commit can carry.
+
 ### Ticket record
 
 - Added the retained response: Bench now keeps the last bounded response of each assignment worktree. `bench record excerpt <slug> --chunk <id> --requirement <id> [--mutant <n>]` stages that retained response for one planned requirement. `bench record ticket` writes one ticket's verification entries from the staged excerpts in one write. That write also holds a needed amendment and, for the last ticket, the chunk freeze. `bench preflight evidence --check-current` binds beside a dirty review record of its spec and reports it in the `dirty_record` field. Before, a ticket author wrote each excerpt to a file and called the amendment, chunk, and verification forms one at a time.
