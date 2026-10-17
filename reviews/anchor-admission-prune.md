@@ -1005,7 +1005,81 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "apc7-standards-r1",
+          "performer": "claude:aap_apc7_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7e5d0d9e23c0f03f0d5b03284eeeb155b45e44c1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc7_standards_r1",
+            "digest": "sha256:293a1460e360cf212f9cc47da19097ff23a5e25324d67687372f22bb390f6b5d",
+            "excerpt": "Standards axis, AP-C7, frozen pair 3f56db6d..e05ac6a0; check-current current=true, dirty_record=false.\nS1 | medium | the explicit-base path now calls reviewBaseFacts (internal/preflight/gather.go:82), which reaches diff.ResolveReviewBase; that resolver ignores root for its branch, config, and merge-base reads (internal/diff/range.go:322, 337-348), so a root!=cwd caller gets a wrong landing range | ask-user | confidence 7\nS2 | low | the new test hand-writes the review-record grammar (internal/preflight/fence_writes_test.go:118-120); recordFence renders it through reviewrecord.Render (delegated_evidence_test.go:12) | auto-fix | confidence 8\nS3 | low | buildDeletedPaths drops the range-resolution kind (closure.go:29-31); the Facts comment (decision.go:68) says the field is empty only when the record holds no chunk | ask-user | confidence 6\nS4 | low | the writes-resolve comment (fence_writes.go:84-85) states a \"before the review base\" rule that the code does not test | auto-fix | confidence 6\nSeam: reviewBaseFacts is the one existing seam that bench diff consumes; not a second derivation.\nCount 4. Worst: S1.\n"
+          },
+          "axis": "Standards",
+          "base": "3f56db6dba6dd6821669a112487776e5002840dc",
+          "tip": "808cda856428aa8d219ae9e0f24ca701a39e395f",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc7-spec-r1",
+          "performer": "claude:aap_apc7_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7e5d0d9e23c0f03f0d5b03284eeeb155b45e44c1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc7_spec_r1",
+            "digest": "sha256:a490d291092a35740a2799560854ce7f260613b046facf6fa789101bcb9bad7a",
+            "excerpt": "Spec axis, AP-C7, frozen pair 3f56db6d..e05ac6a0; check-current current=true; AP48 mapped; nine planning-facts seam lines re-derived and matching.\nP1 | medium | ticket 4a acceptance line 1 (the ticket 5 charge passes writes-resolve, tickets/4a-resolve-earlier-deletions.md:15) has no evidence in the range | ask-user | confidence 7\nP2 | low | the ticket 5 assignment was recorded at 3f56db6d, before its new blocker 4a existed | auto-fix | confidence 6\nP3 | low | spec.md:185 says all eight tickets run in series; the spec has nine | auto-fix | confidence 8\nP4 | low | the 4a charge with --base d568cb05 has no bench learning entry | auto-fix | confidence 5\nP5 | low | with an explicit --source-tip, gather.go:148 takes the landing base from the checkout, not from the source tip | no-op | confidence 4\nP6 | low | the fence list puts internal/preflight before internal/gate (spec.md:340-345) | auto-fix | confidence 7\nAuthor calls: the chunk gate (closure.go:26) and (deleted) resolution both hold.\nCount 6. Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "3f56db6dba6dd6821669a112487776e5002840dc",
+          "tip": "808cda856428aa8d219ae9e0f24ca701a39e395f",
+          "finding_ids": [
+            "P1",
+            "P3",
+            "P6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc7-coverage-r1",
+          "performer": "claude:aap_apc7_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7e5d0d9e23c0f03f0d5b03284eeeb155b45e44c1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc7_coverage_r1",
+            "digest": "sha256:ca1fff3bc655facd72b976b417a6bb8aef8d2f9f5c2ee7d10bb4e72113328f65",
+            "excerpt": "Coverage axis, AP-C7, frozen pair 3f56db6d..e05ac6a0; check-current current=true.\nC1 | low | no test covers a record that reads but holds no chunks (closure.go:26 zero-chunk arm) | auto-fix | confidence 7\nC2 | low | a benchBase key recorded before a fold could put a main deletion inside the landing range (range.go:313, 341; shift/loop.go:198) | ask-user | confidence 5\nC3 | low | no test covers a landing range that does not resolve (closure.go:29-32) | auto-fix | confidence 6\nC4 | low | no test pins the bare-preflight behavior change, where landingBase equals reviewBase (gather.go:153) | auto-fix | confidence 6\nC5 | info | a landing-range deletion resolves any ticket's entry; writes-resolve grades existence and fence-writes grades authority | no-op | confidence 6\nC6 | info | a deleted and re-added path is not D-status in the net range (range.go:158-168) | no-op | confidence 8\nProbe: one bench probe on closure.go returned invalid (substring-miss), 0 tests. No bench test.\nCount 6. Worst: C2.\n"
+          },
+          "axis": "Coverage",
+          "base": "3f56db6dba6dd6821669a112487776e5002840dc",
+          "tip": "808cda856428aa8d219ae9e0f24ca701a39e395f",
+          "finding_ids": [
+            "C1",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1161,3 +1235,38 @@ AP-C3: 0 actionable findings. The worst issue is C1.
 - C2 (no-op, confidence 8): the kept debug-loop rows have no test rule, and the base had none. It goes to `bench learning` with C1.
 - C3 (no-op, confidence 7): the fresh-author rows and the narrow-axis row have no count pin. The family reads its rows from the registry by design.
 - C4 (no-op, confidence 9): `roadmap/FT369.md:166` names a removed test in a historical occurrence line, which is not a live consumer.
+
+## AP-C7 repair state
+
+AP-C7: repair cycle 1 of 2 starts. Every accepted finding falls on ticket 4a, so one combined repair charge carries them all. The S1 fix needs `internal/diff/range.go` and its test, so the repair expands the 4a `Writes:` line under the reviewer's advance approval. No reviewer extension exists.
+
+## AP-C7 Standards
+
+AP-C7: 4 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 7): the explicit-base path now reaches `diff.ResolveReviewBase` (`internal/preflight/gather.go:82`). That resolver ignores `root` for its git reads (`internal/diff/range.go:322`, `:337-348`), so a caller whose directory is not `root` gets a wrong landing range. The repair makes the resolver read `root`.
+- S2 (auto-fix, confidence 8): `internal/preflight/fence_writes_test.go:118-120` writes the review-record grammar by hand. The repair renders the record through the existing `recordFence` helper.
+- S3 (auto-fix, confidence 6): `internal/preflight/decision.go:68` says that the field is empty only when the record holds no chunk. A failed range or record read also leaves it empty. The repair corrects the comment; the diagnostic text stays as it is.
+- S4 (auto-fix, confidence 6): `internal/preflight/fence_writes.go:84-85` states a "before the review base" rule that the code does not enforce. The repair states the rule that the code enforces.
+
+## AP-C7 Spec
+
+AP-C7: 6 findings. The worst issue is P1.
+
+- P1 (auto-fix, confidence 7): ticket 4a acceptance line 1 has no evidence. The repair session runs the ticket 5 charge and reports its `writes-resolve` result.
+- P2 (auto-fix, confidence 6): the ticket 5 assignment predates its new blocker. The orchestrator records a new ticket 5 assignment at dispatch.
+- P3 (auto-fix, confidence 8): `specs/anchor-admission-prune/spec.md:185` says that eight tickets run in series, and the spec has nine. The repair corrects the count.
+- P4 (auto-fix, confidence 5): the 4a charge at the landing base had no learning entry. The orchestrator records one.
+- P5 (no-op, confidence 4): the landing base comes from the checkout, not from an explicit source tip. Grading through the worktree is not affected. Flagged for reviewer veto.
+- P6 (auto-fix, confidence 7): `specs/anchor-admission-prune/spec.md:340-345` breaks the sort order of the fence list. The repair sorts it.
+
+## AP-C7 Coverage
+
+AP-C7: 6 findings. The worst issue is C2.
+
+- C1 (auto-fix, confidence 7): no test covers a record that reads but holds no chunks. The repair adds that case.
+- C2 (no-op, confidence 5): a `benchBase` key that a shift recorded before a fold could put a deletion from `main` inside the landing range. The key semantics belong to the shift loop, so it goes to `bench learning`. Flagged for reviewer veto.
+- C3 (auto-fix, confidence 6): no test covers a landing range that does not resolve. The repair adds that case.
+- C4 (auto-fix, confidence 6): no test pins the bare-preflight change, where the landing base equals the review base. The repair adds that case.
+- C5 (no-op, confidence 6): a landing-range deletion resolves the entry of any ticket. `writes-resolve` grades existence, and `fence-writes` grades authority.
+- C6 (no-op, confidence 8): a deleted and re-added path is not a deletion in the net range.
