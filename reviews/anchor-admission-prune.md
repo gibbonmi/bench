@@ -1168,6 +1168,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "apc7-standards-r2",
+          "performer": "claude:aap_apc7_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc7_standards_r2",
+            "digest": "sha256:dd70f084767e532e9dec10812b1e7af8b2810c664286ffa676d81e86e2961261",
+            "excerpt": "Standards confirming round, AP-C7, repair delta 55968a0a..44ad243d; check-current current=true at f05dcd48, dirty_record=false.\nS1 closed, confidence 9: every git read in ResolveReviewBase and resolveBase binds root (internal/diff/range.go:318, :323, :337-349); signature unchanged; review_base_test.go changes directory before the call.\nS2 closed, confidence 9: fence_writes_test.go:175 renders the record through recordFence.\nS3 closed, confidence 8: decision.go:67-69 names the three empty cases that closure.go:171-180 returns.\nS4 closed, confidence 8: fence_writes.go:84-85 states the landing-base to source-tip range.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "3f56db6dba6dd6821669a112487776e5002840dc",
+          "tip": "44ad243d65d3d317c375004a260734504584ad37",
+          "finding_ids": [],
+          "supersedes": [
+            "apc7-standards-r1"
+          ]
+        },
+        {
+          "id": "apc7-spec-r2",
+          "performer": "claude:aap_apc7_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc7_spec_r2",
+            "digest": "sha256:2d4f5a0e4b241716169a0a2d8fc65ec5f1aba0a22c7653df85ccdda602b891cb",
+            "excerpt": "Spec confirming round, AP-C7, delta c41aa0f4..f05dcd48; check-current current=true.\nP1 closed, confidence 9: the exact ticket 5 charge at f05dcd48 prepared evidence sha256:7de722a1 with no refusal (tickets/4a-resolve-earlier-deletions.md:15).\nP3 closed, confidence 9: spec.md:185 says nine tickets.\nP6 closed, confidence 8: the fence list at spec.md:281-355 is sorted.\nPlan holds, confidence 9: ticket 4a Writes adds the two diff files and the five command-binding files; AP-C7 lists five checks in the table and the plan.\nP7 | low | the 4a acceptance line names two of the five planned checks | no-op | confidence 6\nVerdict: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "3f56db6dba6dd6821669a112487776e5002840dc",
+          "tip": "44ad243d65d3d317c375004a260734504584ad37",
+          "finding_ids": [],
+          "supersedes": [
+            "apc7-spec-r1"
+          ]
+        },
+        {
+          "id": "apc7-coverage-r2",
+          "performer": "claude:aap_apc7_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc7_coverage_r2",
+            "digest": "sha256:4842f5e51bd5461b35e2469085c9475a89a2e9a39ab8c0706d859a4f9d983ebc",
+            "excerpt": "Coverage confirming round, AP-C7, repair delta 55968a0a..44ad243d; check-current current=true at f05dcd48. No probe.\nC1 closed, confidence 8: fence_writes_test.go:158 renders a record with no chunks and expects red; it reaches closure.go:174.\nC3 closed, confidence 7: fence_writes_test.go:159 renames main, so ResolveReviewBase fails and closure.go:171 returns.\nC4 closed, confidence 8: fence_writes_test.go:160 uses an unmarked bare entry that only gather.go:87 turns green.\nS1 test adequate, confidence 8.\nC7 | low | the ResolveSourceRange-failure arm at closure.go:177-179 is never run | no-op | confidence 6\nVerdict: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "3f56db6dba6dd6821669a112487776e5002840dc",
+          "tip": "44ad243d65d3d317c375004a260734504584ad37",
+          "finding_ids": [],
+          "supersedes": [
+            "apc7-coverage-r1"
+          ]
         }
       ]
     }
@@ -1346,7 +1412,9 @@ AP-C3: 0 actionable findings. The worst issue is C1.
 
 ## AP-C7 repair state
 
-AP-C7: repair cycle 1 of 2 starts. Every accepted finding falls on ticket 4a, so one combined repair charge carries them all. The S1 fix needs `internal/diff/range.go` and its test, so the repair expands the 4a `Writes:` line under the reviewer's advance approval. No reviewer extension exists.
+AP-C7: repair cycle 1 of 2 is complete at 44ad243d (claude:aap_t04a_rep1, opus, medium), with its refreeze at f05dcd48. The confirming round of all three axes passed. It added two no-op findings. P7 is a no-op because the plan runs the two checks that the ticket names. C7 is a no-op because the untested range-failure arm fails closed.
+
+Every accepted finding fell on ticket 4a, so one combined repair charge carried them all. The S1 fix needs `internal/diff/range.go` and its test, so the repair expands the 4a `Writes:` line under the reviewer's advance approval. No reviewer extension exists.
 
 ## AP-C7 Standards
 
