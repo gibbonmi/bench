@@ -1582,6 +1582,72 @@
           "tip": "dcb0ae7cd42b93e1b3630cd38a3a2b5191b81bef",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "apc4-standards-r2",
+          "performer": "claude:aap_apc4_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "326e59a21baabca125c6138b2b960696cc8b4dab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc4_standards_r2",
+            "digest": "sha256:ffa95b3214e7651c70336e68db06344b3b85013dbeb83da68e116aefa84ae977",
+            "excerpt": "Standards confirming round, AP-C4, repair delta 23b5af25..66843bd4; check-current current=true, dirty_record=false.\nS2 closed, confidence 9: checkOccurrenceLedgerAndDrainCommit and checkDrainCommitCommand (recurrence_maintenance_contract_test.go:12, :16), TestDrainCommitCommandCheckBites (:30, tier_live_tree_test.go:49), caller docs_workflow_checks_test.go:30.\nS3 closed, confidence 8: the message at :23 names the command; the bite at :38 replaces only the command span.\nS4 closed, confidence 9: docs_workflow_checks_test.go:276 holds one line.\nS5 | low | the file name recurrence_maintenance_contract_test.go is stale | no-op (the name is on the Writes line and the fences) | confidence 5\nVerdict: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "66168c19db46ee4beb78e7a374294f94aad47509",
+          "tip": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+          "finding_ids": [],
+          "supersedes": [
+            "apc4-standards-r1"
+          ]
+        },
+        {
+          "id": "apc4-spec-r2",
+          "performer": "claude:aap_apc4_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "326e59a21baabca125c6138b2b960696cc8b4dab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc4_spec_r2",
+            "digest": "sha256:ba07f88ef5155b17cd74a58bef44383fb1c29f802f6c0802ba6f06feb42d9305",
+            "excerpt": "Spec confirming round, AP-C4, repair delta 23b5af25..66843bd4; check-current current=true.\nP1 closed, confidence 8: the bench worktree list pin and its bite are gone; the bench capture drain commit <drain-id> COMMAND pin stays with a diagnostic that names it (recurrence_maintenance_contract_test.go:22-23).\nP2 closed, confidence 8: the README file-name pins are gone; docs_workflow_helpers_test.go:38-40 keeps the bin/bench FORBID half.\nAll four files are on ticket 5's Writes line and only shrank; AP29 holds.\nP3 | low | the kept drain needle keeps the rule clause around its command | no-op, flagged for reviewer veto | confidence 5\nVerdict: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "66168c19db46ee4beb78e7a374294f94aad47509",
+          "tip": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+          "finding_ids": [],
+          "supersedes": [
+            "apc4-spec-r1"
+          ]
+        },
+        {
+          "id": "apc4-coverage-r2",
+          "performer": "claude:aap_apc4_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "326e59a21baabca125c6138b2b960696cc8b4dab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc4_coverage_r2",
+            "digest": "sha256:cec6573a36e9ef2a8de0efe92cefffef554e0fdc9db09edb07591afaf6514210",
+            "excerpt": "Coverage confirming round, AP-C4, repair delta 23b5af25..66843bd4; check-current current=true.\nConfirmed: the drain-commit pin keeps a bite that changes its command span (recurrence_maintenance_contract_test.go:22-23, :38); the README FORBID half (docs_workflow_helpers_test.go:38-39) keeps the coordinator's demonstrated red; no removed pin had a fixture that a kept check reads; markdownH2Sections has no reference left.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "66168c19db46ee4beb78e7a374294f94aad47509",
+          "tip": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+          "finding_ids": [],
+          "supersedes": [
+            "apc4-coverage-r1"
+          ]
         }
       ]
     }
@@ -1836,7 +1902,9 @@ AP-C7: 6 findings. The worst issue is C2.
 
 ## AP-C4 repair state
 
-AP-C4: repair cycle 1 of 2 starts. Every accepted finding falls on ticket 5, so one combined repair charge carries them all. No reviewer extension exists.
+AP-C4: repair cycle 1 of 2 is complete at 66843bd4 (claude:aap_t05_rep1, opus, medium), with its refreeze at ef0d7c83. The confirming round of all three axes passed. Every accepted finding fell on ticket 5, so one combined repair charge carried them all. No reviewer extension exists.
+
+The confirming round added two no-op findings. S5 is the stale file name `recurrence_maintenance_contract_test.go`, which the `Writes:` line and the fences name. P3 is the rule clause that the kept drain needle keeps around its command, the class of AP-C2 P3. Both are flagged for reviewer veto.
 
 ## AP-C4 Standards
 
