@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/preflight-ownership-closure/spec.md",
-  "plan_digest": "sha256:e6fe21da311349b188fcc2927c39e567c15ace4b837acf776921085bbe8c2e4d",
+  "plan_digest": "sha256:0d533a730709ae64c1bd3c530326b28c37389675eb37b1429dbb5e8db32464c7",
   "implementation_session": "",
   "chunks": [
     {
@@ -6036,9 +6036,9 @@
     {
       "id": "OC-C4",
       "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
-      "tip": "2fea500be2547d74c33c20ed925df717db71c80d",
-      "plan_digest": "sha256:e6fe21da311349b188fcc2927c39e567c15ace4b837acf776921085bbe8c2e4d",
-      "source_digest": "79e2e448d88a2515017d087a7224891fae7012a0",
+      "tip": "920985d98bbcc78c5932822741bcbc91abcb99af",
+      "plan_digest": "sha256:0d533a730709ae64c1bd3c530326b28c37389675eb37b1429dbb5e8db32464c7",
+      "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
       "acceptance_rows": [
         "OC61",
         "OC62",
@@ -6607,6 +6607,197 @@
           "requirement": "oc-08-check-9",
           "command": "bench test --package ./internal/tickets",
           "exit_code": 0
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-focused",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:a442f02664e8fba8185f06aface3dba6c47e05ad1e416049aa93c25d41c8a72e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/decision.go,omit,failed,2,TestBreakdownRows/OC61_OC62_uncited_row,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,TestBreakdownRows|TestExplicitAuthority|TestBreakdownGrammar|TestProposalOrdering,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1005\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,851,16\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestBreakdownRows/OC61_OC62_uncited_row,\"authority_test.go:83: ordinary build = (1), want the rows-owned red for PF2:\",8\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestBreakdownRows/OC64_present_empty_directory,\"authority_test.go:123: checks rows matching map[check:rows-owned verdict:red] = 0, want 1:\",11\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-08-focused",
+          "command": "bench test --package ./internal/preflight/... --run 'TestBreakdownRows|TestExplicitAuthority|TestBreakdownGrammar|TestProposalOrdering'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "oc-08-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t08_rep3",
+              "digest": "sha256:a442f02664e8fba8185f06aface3dba6c47e05ad1e416049aa93c25d41c8a72e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/decision.go,omit,failed,2,TestBreakdownRows/OC61_OC62_uncited_row,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight/...,TestBreakdownRows|TestExplicitAuthority|TestBreakdownGrammar|TestProposalOrdering,passed,16\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1005\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,fail,851,16\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestBreakdownRows/OC61_OC62_uncited_row,\"authority_test.go:83: ordinary build = (1), want the rows-owned red for PF2:\",8\n  github.com/gibbonmi/bench/internal/preflight/ownership,TestBreakdownRows/OC64_present_empty_directory,\"authority_test.go:123: checks rows matching map[check:rows-owned verdict:red] = 0, want 1:\",11\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-check-1",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:c1ddf6f645bfd81f6ee06f0c4ddb2794767950d64ce103496c1240250635b087",
+            "excerpt": "packages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,36824,409\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,22605,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,39171,263\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-08-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-check-2",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:1274723148f7e9c47a59f459cb7f4721cac07d0d71c0c9d6e79b6a19305a8721",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15160,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-08-check-2",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-check-3",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:a71f4412b6f0467365be0bea54f74252d6cc14d992e5bc9e38f37cfe4a6d935f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  ticket-grammar,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4550,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-08-check-3",
+          "command": "bench test --check ticket-grammar",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-check-4",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:14ea584fd6fb6efe4a0783c7709c37a4e408262ca41fc6d2c3b6cfc0a94f3aa4",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5596,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-08-check-4",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-check-5",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:8a0487bff0b524578a48bba4f3b16ee5015a7722c2632f574a776c772d52d0f9",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16636,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-08-check-5",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-check-6",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:145bd8517dc08a39572897361584e0ab550de9082e6140bdaa20ebca35645c2e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1908,181\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-08-check-6",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-check-7",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:70bbfe262d93999ea9e48395865db6201a1363e102c71edd17beaa63b69d043e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,58235,1695\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "oc-08-check-7",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-check-8",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:43c376d48b8230ee172196ae30dd96ce30bdbee59fb951c75502a90256455711",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,170,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,70282,170\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-08-check-8",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "ft293_t08_rep3-oc-08-check-9",
+          "performer": "claude:ft293_t08_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t08_rep3",
+            "digest": "sha256:88e523cdedf9efe73ab2c21b4389e19f812e14d597f51de6a81ad7ab19ed4742",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/tickets,pass,4,48\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "oc-08-check-9",
+          "command": "bench test --package ./internal/tickets",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -7045,6 +7236,24 @@
     {
       "from": "sha256:788df392c95fea04f302ba485d12d3858ebb0c5f80f2f50f3c553518a39bde69",
       "to": "sha256:e6fe21da311349b188fcc2927c39e567c15ace4b837acf776921085bbe8c2e4d",
+      "chunk_ids": {
+        "OC-C1": [
+          "OC-C1"
+        ],
+        "OC-C2": [
+          "OC-C2"
+        ],
+        "OC-C3": [
+          "OC-C3"
+        ],
+        "OC-C4": [
+          "OC-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e6fe21da311349b188fcc2927c39e567c15ace4b837acf776921085bbe8c2e4d",
+      "to": "sha256:0d533a730709ae64c1bd3c530326b28c37389675eb37b1429dbb5e8db32464c7",
       "chunk_ids": {
         "OC-C1": [
           "OC-C1"
