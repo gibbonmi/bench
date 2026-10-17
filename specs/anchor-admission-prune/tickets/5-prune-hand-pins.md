@@ -1,6 +1,6 @@
 # Prune the hand-coded prose pins
 
-Blocked by: 4-prune-phase-registries.md
+Blocked by: 4a-resolve-earlier-deletions.md
 Writes: internal/conformance/docs_workflow_helpers_test.go, internal/conformance/docs_workflow_checks_test.go, internal/conformance/validity_checks_test.go, internal/conformance/skills_index_checks_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/recurrence_maintenance_contract_test.go, internal/conformance/fixture_bite_test.go, internal/conformance/checks_test.go, internal/conformance/commitment_guidance_test.go, internal/conformance/tier_live_tree_test.go, tests/canary/workflow-guidance-anchors, tests/canary/skills-index-command-adapters
 Covers: AP28, AP29, AP30, AP32
 
