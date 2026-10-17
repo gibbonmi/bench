@@ -188,7 +188,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT302 (MEDIUM) — the deepening batch's residuals: the diff package policy extraction and the Git-reader promotion.**
 
-**FT314 (MEDIUM, decision required) — an unchanged landing composition reuses gate evidence only under a complete authorization key.**
+**FT314 (MEDIUM) — an unchanged landing composition reuses gate evidence only under a complete authorization key.**
 
 **FT351 (LOW) — an offline diff report carries the approved visual prototype into a supported feature.**
 
@@ -271,6 +271,9 @@ qualification requirements are met.
 
 **FT426 (MEDIUM, parked pending a repro) — `bench commitment plan` refuses a dependency that the order puts after its dependent.**
 
+**FT431 (MEDIUM, parked pending a repro) — a spec-stage close binds, folds, and re-plans with no deadlock and no unfenced board write.**
+
+**FT432 (MEDIUM, parked pending a repro) — one line-ending rule serves every spec reader.**
 
 ## Release and bank reassessment gate
 
