@@ -24,7 +24,10 @@ func Drop(home, root, assignment string) error {
 	if !poolkey.IsAssignmentID(assignment) {
 		return fmt.Errorf("response spill assignment id is malformed: %s", sanitize.Controls(assignment))
 	}
-	repo := scopeDir{home: home, levels: []string{storeDirName, poolkey.Key(root)}}
+	repo, _, err := repoDir(home, root)
+	if err != nil {
+		return fmt.Errorf("remove response spills: %w", err)
+	}
 	if err := repo.realLevels("remove", nil); errors.Is(err, fs.ErrNotExist) {
 		return nil
 	} else if err != nil {
