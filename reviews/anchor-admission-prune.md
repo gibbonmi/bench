@@ -116,7 +116,72 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "apc2-standards-r1",
+          "performer": "claude:aap_apc2_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e9b4216c4d59e10744f9ff0b06de7a959f815caa",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc2_standards_r1",
+            "digest": "sha256:2b738dc2d2c67af8808da5a3a392bbbbd442541779eb5b2184eada61cfb8ccab",
+            "excerpt": "Standards axis, AP-C2, frozen pair ca0e6ec7..32923169; check-current current=true, dirty_record=false.\nS1 | low | internal/anchors/registry_retained_workflow.go:9-10 | the family header still calls defaultWorkflowAnchors \"the default contract below\" and delegatedWorkflowAnchors \"the opt-in delegated exception\"; both groups now hold only Forbid rows for retired text | craft-comments Aging | auto-fix | confidence 7\nS2 | low | internal/anchors/registry_retained_workflow.go:153-155 | the laneAndLandingAnchors header says the family pins \"`bench worktree land` runs the whole-project gate\"; the delta removed the only row that pinned it | craft-comments Aging | auto-fix | confidence 7\nS3 | low | internal/conformance/retained_workflow_test.go:44-58 | checkRetainedWorkflow writes its own EvaluateGroup loop and prefix filter beside checkWorkflowAnchors | BENCH.md invariant 4, AGENTS.md one source | ask-user | confidence 4\nCount 3, all low. Worst: S2.\n"
+          },
+          "axis": "Standards",
+          "base": "ca0e6ec76eac0a2ef65d22c1c5405b948bb15dcf",
+          "tip": "1e169d060fc785115f5b6f42eff6a83761bae863",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc2-spec-r1",
+          "performer": "claude:aap_apc2_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e9b4216c4d59e10744f9ff0b06de7a959f815caa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc2_spec_r1",
+            "digest": "sha256:08e07cf3bff63d8b2037343ab9988223bc6b4b418efdab9e4a505869d0ef51d2",
+            "excerpt": "Spec axis, AP-C2, tip 32923169; check-current current=true, dirty_record=false. All nine covered rows hold (AP02, AP03, AP04, AP10, AP25, AP26, AP27, AP31, AP46). Census sample of nine removed rows: each DROP in classified.md; 15 stale phrases each have a Forbid row at registry_retained_workflow.go:21-35; 25 deleted fixtures match fixture-census.md:8-32.\nP1 | low | the moved stale phrases now match through the registry matcher, which strips HTML comments and collapses whitespace; spec.md:139 requires only a Forbid row on the same file | no-op, flagged for reviewer veto | confidence 7\nP2 | low | removal of checkRetainedWorkflow from the aggregate (docs_workflow_checks_test.go:30) keeps the document reads; checkWorkflowAnchors already evaluates the group | no-op | confidence 8\nP3 | low | registry_retained_workflow.go:164 needle holds two sentences at 23 words; story 17 intent versus the AP17 word bound | ask-user | confidence 5\nCount 3, all low. Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "ca0e6ec76eac0a2ef65d22c1c5405b948bb15dcf",
+          "tip": "1e169d060fc785115f5b6f42eff6a83761bae863",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "apc2-coverage-r1",
+          "performer": "claude:aap_apc2_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e9b4216c4d59e10744f9ff0b06de7a959f815caa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc2_coverage_r1",
+            "digest": "sha256:e86fa20b61e715e2f8812d195fb9b28ef9e45d37e3b8865e5c5078d5ce116cab",
+            "excerpt": "Coverage axis, AP-C2, tree at 32923169; check-current current=true, dirty_record=false. 2 low findings, no blocker.\nC1 | low | internal/anchors/registry.go:234 with registry_retained_workflow.go:33-34 | the 15 stale phrases now pass the HTML-comment strip, so a stale instruction inside an HTML comment no longer reds | ask-user | confidence 7\nC2 | low | internal/conformance/retained_workflow_test.go:73 | the no-registry-literal subtest parses one hard-coded file name and matches exact literals only | no-op for this chunk | confidence 5\nVerified: each new Forbid row bites through runAnchorBites (docs_workflow_helpers_test.go:449); checkWorkflowAnchors still evaluates every row (docs_workflow_helpers_test.go:36,42); 25 deleted fixtures name removed rows.\nTests: bench test --package ./internal/conformance --run \"TestRetainedWorkflow|TestEveryRetainedFixtureBitesThroughRegisteredOwner|TestFreshTicketAuthors|TestImplementationContinuation|TestLineBinding\" pass, 707 tests; bench test --package ./cmd/bench --run TestAnchorsReportsAbsentNeedles pass, 1 test.\nCount 2. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "ca0e6ec76eac0a2ef65d22c1c5405b948bb15dcf",
+          "tip": "1e169d060fc785115f5b6f42eff6a83761bae863",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -128,3 +193,30 @@
   }
 }
 ```
+
+## Repair state
+
+AP-C2: no repair cycle is consumed. The S1 and S2 correction is comment-only, so it is evidence-only under the bounded repair policy. No reviewer extension exists.
+
+## Standards
+
+AP-C2: 3 findings. The worst issue is S2.
+
+- S1 (auto-fix, confidence 7): `internal/anchors/registry_retained_workflow.go:9-10` still calls the default and delegated groups a contract and an exception, and both groups now hold only Forbid rows. The orchestrator corrects the comment.
+- S2 (auto-fix, confidence 7): `internal/anchors/registry_retained_workflow.go:153-155` says the family pins that `bench worktree land` runs the whole-project gate, and no remaining row pins it. The orchestrator corrects the comment.
+- S3 (no-op, confidence 4): `internal/conformance/retained_workflow_test.go:44-58` keeps its own group loop. The spec says the check keeps its document reads, and the group set derives from the rows. Flagged for reviewer veto.
+
+## Spec
+
+AP-C2: 0 actionable findings. The worst issue is P1.
+
+- P1 (no-op, confidence 7): the moved stale phrases match through the registry matcher, which strips HTML comments. The spec requires only a Forbid row on the same file. Flagged for reviewer veto.
+- P2 (no-op, confidence 8): the aggregate check no longer calls `checkRetainedWorkflow`, because `checkWorkflowAnchors` already evaluates the group.
+- P3 (no-op, confidence 5): `internal/anchors/registry_retained_workflow.go:164` holds two sentences in 23 words. AP17 bounds words, and the AP-C5 admission test grades it. Flagged for reviewer veto.
+
+## Coverage
+
+AP-C2: 0 actionable findings. The worst issue is C1.
+
+- C1 (no-op, confidence 7): the same HTML-comment narrowing as P1. Merged with P1.
+- C2 (no-op, confidence 5): `internal/conformance/retained_workflow_test.go:73` parses one fixed file name. AP25 holds as written.
