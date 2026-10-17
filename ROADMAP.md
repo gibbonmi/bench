@@ -18,7 +18,7 @@ findings in the owner details.
 The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
 and review cost that recent builds paid.
 
-**FT293 (HIGH) — preflight closes each ticket's complete ownership fence.**
+**FT293 (HIGH) — preflight stops predicting ownership closure, and a gate-found need widens a ticket's expected writes.**
 
 **FT375 (MEDIUM) — the build preflight reports spec staleness, and the staleness pass audits only drift and red rows.**
 
@@ -344,3 +344,9 @@ recommended table is sequencing advice.
 4. FT409
 5. FT402
 6. FT411
+7. FT293-closure-removal
+8. FT366-degraded-guard
+9. FT362-process-lifetime
+10. FT360-shared-fixtures
+11. FT125-exact-readers
+12. FT314-gate-reuse
