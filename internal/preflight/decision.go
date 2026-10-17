@@ -64,6 +64,9 @@ type Facts struct {
 	// DeletedBefore reports, for each (deleted) `Writes:` entry, whether its path is a
 	// tracked file at the review base. The gatherer owns the probe; writes-resolve grades it.
 	DeletedBefore map[string]bool
+	// BuildDeletedPaths is the exact D-status subset of the build's landing range, from the
+	// landing base to SourceTip. It is empty for a source whose review record holds no chunk.
+	BuildDeletedPaths []string
 	// DefaultTipPaths is the ChangedPaths subset whose bytes and mode at SourceTip equal
 	// those at the default-branch tip. Such a path came in unchanged through a fold of the
 	// default branch, so it is no write of the build.

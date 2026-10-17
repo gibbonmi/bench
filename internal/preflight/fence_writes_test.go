@@ -1,6 +1,7 @@
 package preflight
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -115,6 +116,44 @@ func TestCommandBuildFenceWritesIgnoresProseToken(t *testing.T) {
 		t.Fatalf("build printed a fence-writes row for a prose token:\n%s", out)
 	}
 	requireVerdict(t, decidedVerdicts(t, modeBuild, fenceFixtureSlug), verdictGreen, "fence-writes")
+}
+
+// TestWritesResolveEarlierChunkDeletion covers AP48. A build commit before the chunk
+// --base deleted the owned path, and the review record holds a chunk, so the deletion
+// lies in the build's landing range: both the unmarked and the (deleted) entry resolve.
+// A never-tracked path stays red. TestCommandFrozenRangeWithoutDeletionEvidenceReds
+// holds the same range without a recorded chunk red.
+func TestWritesResolveEarlierChunkDeletion(t *testing.T) {
+	const gone, typo = "internal/example/gone.go", "internal/example/typo.go"
+	for _, tc := range []struct {
+		name, missing, marker string
+		wantRed               bool
+	}{
+		{name: "unmarked entry"},
+		{name: "deleted entry", marker: " (deleted)"},
+		{name: "never-tracked path", missing: typo, wantRed: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, slug, base, deletion := seedDeletionReview(t, tc.missing, true)
+			ticket := "specs/" + slug + "/tickets/one.md"
+			doc, err := os.ReadFile(ticket)
+			if err != nil {
+				t.Fatal(err)
+			}
+			preflighttest.MustWriteFile(t, ticket, strings.Replace(string(doc), gone, gone+tc.marker, 1))
+			preflighttest.MustWriteFile(t, "reviews/"+slug+".md", "# Review outcomes\n\n```bench-review-record\n"+
+				`{"version": 2, "spec": "specs/`+slug+`/spec.md", "plan_digest": "sha256:plan", "implementation_session": "", "chunks": [`+
+				`{"id": "C1", "base": "`+base+`", "tip": "`+deletion+`", "plan_digest": "sha256:plan", "source_digest": "`+deletion+`"}]}`+"\n```\n")
+			preflighttest.RunGit(t, "add", ".")
+			preflighttest.RunGit(t, "commit", "-q", "-m", "record the chunk")
+			tip := preflighttest.RunGit(t, "rev-parse", "HEAD")
+			out, _ := Command([]string{"build", slug, "--base", tip, "--source-tip", tip})
+			red := strings.Contains(out, "writes-resolve,red")
+			if red != tc.wantRed || (red && (!strings.Contains(out, typo) || strings.Contains(out, "one.md: "+gone))) {
+				t.Fatalf("writes-resolve red = %t, want %t naming only %s:\n%s", red, tc.wantRed, typo, out)
+			}
+		})
+	}
 }
 
 // TestProposeWritesToleratesFenceWrites covers SC21. The proposal reports the fence
