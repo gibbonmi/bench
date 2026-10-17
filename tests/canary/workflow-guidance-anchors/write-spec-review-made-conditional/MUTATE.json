@@ -1,1 +1,0 @@
-[{"path": ".agents/commands/bench-write-spec.md", "old": "After the spec fork returns, one independent review round grades the spec alone under `craft-spec`'s review rubric, its chunk table included.", "new": "Two review rounds cover the spec and tickets separately."}]

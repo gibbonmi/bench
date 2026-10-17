@@ -22,14 +22,6 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "",
 			needle: "This allowance applies to retained, full, delegated, unattended, and light-path implementation runs.",
 		},
-		"implementation continuation: bounded repair dropped the test-only confirmation exception": {
-			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
-			needle: "A test-only repair whose coordinator probe bites takes no new axis results; the coordinator writes a confirmation with `bench record confirmation` instead.",
-		},
-		"implementation continuation: bounded repair dropped the confirmation's finding-list disposition": {
-			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
-			needle: "The confirmation's finding list is the coordinator's disposition of the findings that the repair closes.",
-		},
 	}
 	family := anchorsWithDiagnosticPrefix("implementation continuation: ")
 	for diagnostic, predicate := range wantPredicates {

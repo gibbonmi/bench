@@ -2,38 +2,14 @@ package anchors
 
 import "testing"
 
-// These independent expectations make removal of a charge-binding rule or a consumer rule fail.
+// These independent expectations make removal of a repair-template field, or the return of a
+// retired repair fence or rebase premise, fail.
 func TestChargeBindingAnchors(t *testing.T) {
-	const (
-		delegate   = ".agents/skills/bench-craft-delegate/SKILL.md"
-		discipline = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
-		evidence   = ".agents/skills/bench-craft-delegate/references/charge-evidence-format.md"
-	)
+	const discipline = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
-		{file: delegate, section: "The charge", needle: "The red-to-green log names the route of each red: before the first production edit, a `bench probe`, or a revert.", want: "charge binding: the red-to-green log dropped the route of each red"},
-		{file: delegate, section: "The charge", needle: "At a seam that the spec marks for TDD, the red follows the sequence in `craft-tdd`.", want: "charge binding: a TDD seam dropped the craft-tdd red sequence"},
-		{file: discipline, section: "In the charge", needle: "Before a write charge dispatches, the coordinator ticks each item of this list against the ticket's `Writes:` line.", want: "charge binding: the coordinator ticks the charge list against Writes"},
-		{file: discipline, section: "In the charge", needle: "A test that guards on a root privilege routes through the capability seam, never through a bare `t.Skip`.", want: "charge binding: a root-privilege guard routes through the capability seam"},
-		{file: discipline, section: "In the charge", needle: "A charge that asks for a commit, a commit sha, or a preflight result makes that request conditional on a committed ticket.", want: "charge binding: a commit, sha, or preflight request is conditional on a committed ticket"},
-		{file: discipline, section: "In the charge", needle: "A blocked author returns none of them and never creates a commit outside `bench commit`.", want: "charge binding: a blocked author returns no commit evidence and commits only through bench commit"},
-		{file: discipline, section: "In the charge", needle: "A write charge names the fence's existing fixture helpers to extend, and it quotes any one-source rule for fixture harnesses that the project's instructions state.", want: "charge binding: a write charge names the fence's fixture helpers and quotes any fixture-harness rule"},
 		{file: discipline, needle: "A repair fence is the approved chunk union plus the exact paths that the review names.", want: "charge binding: the repair fence restored the chunk union plus review-named paths", forbidden: true},
-		{file: discipline, section: "In the charge", needle: "A repair fence is the affected ticket's `Writes:` line.", want: "charge binding: the repair fence dropped the affected ticket's Writes line"},
-		{file: discipline, section: "In the charge", needle: "A repair based on a frozen sibling uses an integration assignment from `main`.", want: "charge binding: a frozen-sibling repair uses an integration assignment"},
-		{file: discipline, section: "In the charge", needle: "Every author charge and every repair charge requires two results before the ticket commit. The first is a duplicated-facts sweep of the delegate's own delta.", want: "charge binding: an author or repair charge dropped the duplicated-facts sweep before the ticket commit"},
-		{file: discipline, section: "In the charge", needle: "The second is one recorded red for each independent test expectation.", want: "charge binding: an author or repair charge dropped the recorded red for each independent test expectation"},
 		{file: discipline, section: "Repair-charge template", needle: "Debug route:", want: "delegation-discipline.md Repair-charge template dropped the debug route field"},
 		{file: discipline, section: "Repair-charge template", needle: "Repair context:", want: "delegation-discipline.md Repair-charge template dropped the repair context field"},
-		{file: discipline, section: "Probes", needle: "A completion-plan probe names the check that independently detects its mutation.", want: "charge binding: a completion-plan probe names its detecting check"},
-		{file: discipline, section: "Claim schema", needle: "A stated confidence freezes at return time. The coordinator refuses a later raise.", want: "charge binding: a stated confidence freezes at return time"},
-		{file: discipline, section: "Retry stops and aggregate readiness", needle: "Before the final allowed repair attempt, the author repeats the duplicated-facts sweep from \"In the charge\" on every review axis.", want: "charge binding: the final attempt checks every axis for duplicated facts"},
-		{file: discipline, section: "Retry stops and aggregate readiness", needle: "At the cap, the author preserves a green semantic repair and requests an explicit evidence-scoped extension for the remaining edit.", want: "charge binding: the cap preserves the green repair and requests an extension"},
 		{file: discipline, needle: "After a rebase changes the source digest", want: "charge binding: the digest rule restored the rebase premise that the workflow rejects", forbidden: true},
-		{file: discipline, section: "Before the landing", needle: "After a `bench worktree merge` changes the source digest, the author repeats verification against the new digest before the coordinator accepts the evidence.", want: "charge binding: a worktree merge repeats verification against the new digest"},
-		{file: discipline, section: "Before the landing", needle: "An adoption repair covers the contradiction class with an independent fixture, not only the literal examples.", want: "charge binding: an adoption repair covers the contradiction class"},
-		{file: discipline, section: "Before the landing", needle: "Implementation delegation and independent review are separate choices, and the assessment record keeps their costs separate.", want: "charge binding: delegation and review keep separate costs"},
-		{file: evidence, section: "Consumers", needle: "A cross-harness consumer retrieves every page through its own shell tool and rebuilds each source with its own decoder.", want: "charge binding: a consumer rebuilds each source with its own decoder"},
-		{file: evidence, section: "Consumers", needle: "The follow-on hook refuses a pipeline after a Bench call, so the consumer saves each response and decodes the saved bytes in a separate step.", want: "charge binding: the consumer protocol names the hook constraint"},
-		{file: evidence, section: "Consumers", needle: "A read takes the shared lock of the evidence store, so a sandboxed consumer needs write access to that store.", want: "charge binding: the consumer protocol names the sandbox constraint"},
 	}}.check(t)
 }

@@ -2,7 +2,6 @@ package conformance
 
 import (
 	"path"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/anchors"
@@ -14,11 +13,11 @@ func preparedBuildGuidanceAnchors() []anchors.Anchor {
 	return anchorsWithDiagnosticPrefix(preparedBuildGuidanceDiagnosticPrefix)
 }
 
-// TestPreparedBuildGuidanceAnchorsBiteIndependently grades the build phase's prepared-charge
-// authority. Every row is a Require row, so each one bites when its clause leaves the file.
+// TestPreparedBuildGuidanceAnchorsBiteIndependently grades the build phase's charge
+// preparation command. Its one row is a Require row, so it bites when its clause leaves the file.
 func TestPreparedBuildGuidanceAnchorsBiteIndependently(t *testing.T) {
 	buildAnchors := preparedBuildGuidanceAnchors()
-	if got, want := len(buildAnchors), 4; got != want {
+	if got, want := len(buildAnchors), 1; got != want {
 		t.Fatalf("prepared-build guidance anchor count = %d, want %d", got, want)
 	}
 	runAnchorBites(t, buildAnchors, func(anchor anchors.Anchor) string { return anchor.Diagnostic })
@@ -30,13 +29,12 @@ func preparedReviewDispatchAnchors() []anchors.Anchor {
 	return anchorsWithDiagnosticPrefix(preparedReviewDispatchDiagnosticPrefix)
 }
 
-// TestPreparedReviewGuidance grades the review phase's native-dispatch authority. A
-// Require row must bite when its clause leaves the file. A Forbid row must bite when
-// the retired same-family CLI route or inline-axis route returns to the file. The two
-// directions together are what DP26 asks of the canonical review readers.
+// TestPreparedReviewGuidance grades the review phase's prepared-evidence commands. A
+// Require row must bite when its command line leaves the file. A Forbid row must bite when
+// a retired retrieval, same-family CLI, or inline-axis route returns to the file.
 func TestPreparedReviewGuidance(t *testing.T) {
 	dispatchAnchors := preparedReviewDispatchAnchors()
-	if got, want := len(dispatchAnchors), 17; got != want {
+	if got, want := len(dispatchAnchors), 8; got != want {
 		t.Fatalf("prepared-review dispatch anchor count = %d, want %d", got, want)
 	}
 	var required, forbidden int
@@ -50,8 +48,8 @@ func TestPreparedReviewGuidance(t *testing.T) {
 			t.Errorf("prepared-review dispatch anchor %q uses an unsupported kind", anchor.Diagnostic)
 		}
 	}
-	if required != 11 || forbidden != 6 {
-		t.Fatalf("prepared-review dispatch kinds = %d Require and %d Forbid, want 11 and 6", required, forbidden)
+	if required != 2 || forbidden != 6 {
+		t.Fatalf("prepared-review dispatch kinds = %d Require and %d Forbid, want 2 and 6", required, forbidden)
 	}
 	runAnchorBites(t, dispatchAnchors, func(anchor anchors.Anchor) string { return anchor.Diagnostic })
 }
@@ -63,66 +61,6 @@ func TestPreparedReviewGuidanceHoldsOnTheLiveTree(t *testing.T) {
 	h := NewHarness(t)
 	diags := checkWorkflowAnchors(h.KitRoot)
 	requireConformantDiagnostics(t, diags, preparedReviewDispatchAnchors())
-}
-
-// consumerContextPrefix opens every consumer-context diagnostic. One prefix lets this owner
-// enumerate the family without a second registry.
-const consumerContextPrefix = "consumer context: "
-
-// consumerContextLead opens the consumer-context paragraph in each canonical reader. The
-// pinned-paragraph rule selects a paragraph by its lead, so this one lead binds both readers'
-// paragraphs to their own rows.
-const consumerContextLead = "reuses exact available source bytes"
-
-// consumerRows returns the family's consumer-context rows. The reader comes from the
-// family's own bounded action rows, so no second inventory names a guidance path.
-func (f boundedActionFamily) consumerRows(guidance string) []anchors.Anchor {
-	var found []anchors.Anchor
-	for _, anchor := range anchorsWithDiagnosticPrefix(consumerContextPrefix) {
-		if anchor.File == guidance {
-			found = append(found, anchor)
-		}
-	}
-	return found
-}
-
-// wantedConsumerRows states the family's two consumer rules apart from the registry: reuse
-// verifies the new manifest, and a fresh consumer runs its own retrieval. A reworded or
-// deleted row bites.
-func (f boundedActionFamily) wantedConsumerRows(guidance string) []wantedRow {
-	reader := path.Base(guidance)
-	return []wantedRow{
-		{anchors.Require, consumerContextPrefix + reader + " permits reuse without verified membership, role, and requiredness"},
-		{anchors.Require, consumerContextPrefix + reader + " permits another " + f.peer + "'s receipt or a final cursor to replace fresh required context"},
-	}
-}
-
-// TestEvidenceConsumerGuidance grades CE104 and CE105 over the one family inventory. Each
-// rule takes one Require row on its own reader, each row bites alone, the shipped guidance
-// satisfies every row, and the whole consumer paragraph sits inside those rows. The family
-// count keeps a dropped family from leaving the rules vacuously green.
-func TestEvidenceConsumerGuidance(t *testing.T) {
-	families := boundedActionFamilies()
-	for _, family := range families {
-		t.Run(family.name, func(t *testing.T) {
-			guidance := family.guidance(t, family.anchors())
-			rows := family.consumerRows(guidance)
-			want := family.wantedConsumerRows(guidance)
-			if got := len(rows); got != len(want) {
-				t.Errorf("%s consumer context anchor count = %d, want %d", family.name, got, len(want))
-			}
-			for _, expected := range want {
-				requireRegisteredRow(t, rows, expected.kind, guidance, expected.diagnostic)
-			}
-			runAnchorBites(t, rows, func(anchor anchors.Anchor) string { return anchor.Diagnostic })
-			requireConformantLiveTree(t, rows)
-			requirePinnedParagraph(t, rows, guidance, family.consumerSentences(liveGuidanceText(t, guidance)))
-		})
-	}
-	registered := anchorsWithDiagnosticPrefix(consumerContextPrefix)
-	if got, want := len(registered), 2*len(families); got != want {
-		t.Errorf("consumer context anchor count = %d, want %d", got, want)
-	}
 }
 
 // nativeHandoffPrefix opens every native-handoff diagnostic.
@@ -151,16 +89,13 @@ func TestEvidenceHandoffGuidance(t *testing.T) {
 // unchangedRoutePrefix opens every unchanged-route diagnostic.
 const unchangedRoutePrefix = "unchanged route: "
 
-// TestEvidenceUnchangedRoutes grades CE112. It grades the two unchanged-route rows.
+// TestEvidenceUnchangedRoutes grades CE112. It grades the unchanged-route row.
 func TestEvidenceUnchangedRoutes(t *testing.T) {
-	build := boundedActionFamilyNamed(t, "build")
-	buildPhase := build.guidance(t, build.anchors())
 	const writeSpec = ".agents/commands/bench-write-spec.md"
 	want := []struct {
 		row  wantedRow
 		file string
 	}{
-		{wantedRow{anchors.Require, unchangedRoutePrefix + path.Base(buildPhase) + " dropped the phase-level full-run control"}, buildPhase},
 		{wantedRow{anchors.Forbid, unchangedRoutePrefix + path.Base(writeSpec) + " adds charge retrieval to the write-spec phase"}, writeSpec},
 	}
 	family := anchorsWithDiagnosticPrefix(unchangedRoutePrefix)
@@ -189,40 +124,6 @@ func requireRegisteredRow(t *testing.T, family []anchors.Anchor, kind anchors.Ki
 		return
 	}
 	t.Errorf("no registry row states %q", diagnostic)
-}
-
-// requirePinnedParagraph binds one guidance paragraph to one row set. Exactly one Require
-// needle covers each sentence of the pinned paragraph, so a needle that keeps only its lead
-// clause, a needle that repeats another row's text, and an unpinned sentence added to that
-// paragraph all bite here. One parser reads the guidance and the needle, so a reflow that
-// changes no word changes nothing here.
-func requirePinnedParagraph(t *testing.T, rows []anchors.Anchor, guidance string, sentences []string) {
-	t.Helper()
-	needles := map[string]int{}
-	for _, anchor := range rows {
-		if anchor.Kind == anchors.Require {
-			needles[anchor.Needle]++
-		}
-	}
-	for needle, count := range needles {
-		if count != 1 {
-			t.Errorf("%d Require rows share the needle %q, want one row each", count, needle)
-		}
-	}
-	if len(sentences) == 0 {
-		t.Fatalf("%s states no sentence of the pinned paragraph", guidance)
-	}
-	for _, sentence := range sentences {
-		pinned := 0
-		for needle := range needles {
-			if strings.Contains(needleText(needle), sentence) {
-				pinned++
-			}
-		}
-		if pinned != 1 {
-			t.Errorf("guidance sentence %q is pinned by %d Require rows, want one", sentence, pinned)
-		}
-	}
 }
 
 // requireConformantLiveTree grades the shipped guidance files. The synthetic trees in

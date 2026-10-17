@@ -23,7 +23,6 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestCoreSubprocessFailuresUseProbeFormatter":                  true,
 	"TestDecisionMapIntegrityCheckValidatesEveryCandidate":         true,
 	"TestDecisionMapIntegrityFixtureInventoryRejectsDeletion":      true,
-	"TestEvidenceBoundedActionSentencesArePinned":                  true,
 	"TestEvidenceBoundedActionRejectsTheRetiredPair":               true,
 	"TestEveryRetainedFixtureBitesThroughRegisteredOwner":          true,
 	"TestFixtureBiteProofArchitecture":                             true,

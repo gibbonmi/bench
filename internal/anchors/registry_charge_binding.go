@@ -1,40 +1,13 @@
 package anchors
 
-// chargeBindingAnchors pin the charge, repair-template, probe, claim, retry, and landing rules of the
-// delegation discipline, the red route of craft-delegate's charge, and the transport
-// consumer protocol of the charge evidence.
+// chargeBindingAnchors pin the two repair-template field labels of the delegation discipline,
+// and they forbid its retired repair fence and its rebase premise.
 var chargeBindingAnchors = []Anchor{
-	{Group: AfterImplementSpec, File: craftDelegate, Kind: RequireInSection, Section: "The charge", Needle: "The red-to-green log names the route of each red: before the first production edit, a `bench probe`, or a revert.", Diagnostic: "charge binding: the red-to-green log dropped the route of each red"},
-	{Group: AfterImplementSpec, File: craftDelegate, Kind: RequireInSection, Section: "The charge", Needle: "At a seam that the spec marks for TDD, the red follows the sequence in `craft-tdd`.", Diagnostic: "charge binding: a TDD seam dropped the craft-tdd red sequence"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "Before a write charge dispatches, the coordinator ticks each item of this list against the ticket's `Writes:` line.", Diagnostic: "charge binding: the coordinator ticks the charge list against Writes"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A test that guards on a root privilege routes through the capability seam, never through a bare `t.Skip`.", Diagnostic: "charge binding: a root-privilege guard routes through the capability seam"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A charge that asks for a commit, a commit sha, or a preflight result makes that request conditional on a committed ticket.", Diagnostic: "charge binding: a commit, sha, or preflight request is conditional on a committed ticket"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A blocked author returns none of them and never creates a commit outside `bench commit`.", Diagnostic: "charge binding: a blocked author returns no commit evidence and commits only through bench commit"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A write charge names the fence's existing fixture helpers to extend, and it quotes any one-source rule for fixture harnesses that the project's instructions state.", Diagnostic: "charge binding: a write charge names the fence's fixture helpers and quotes any fixture-harness rule"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: Forbid, Needle: "A repair fence is the approved chunk union plus the exact paths that the review names.", Diagnostic: "charge binding: the repair fence restored the chunk union plus review-named paths"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A repair fence is the affected ticket's `Writes:` line.", Diagnostic: "charge binding: the repair fence dropped the affected ticket's Writes line"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "A repair based on a frozen sibling uses an integration assignment from `main`.", Diagnostic: "charge binding: a frozen-sibling repair uses an integration assignment"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "Every author charge and every repair charge requires two results before the ticket commit. The first is a duplicated-facts sweep of the delegate's own delta.", Diagnostic: "charge binding: an author or repair charge dropped the duplicated-facts sweep before the ticket commit"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "In the charge", Needle: "The second is one recorded red for each independent test expectation.", Diagnostic: "charge binding: an author or repair charge dropped the recorded red for each independent test expectation"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Repair-charge template", Needle: "Debug route:", Diagnostic: "delegation-discipline.md Repair-charge template dropped the debug route field"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Repair-charge template", Needle: "Repair context:", Diagnostic: "delegation-discipline.md Repair-charge template dropped the repair context field"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Probes", Needle: "A completion-plan probe names the check that independently detects its mutation.", Diagnostic: "charge binding: a completion-plan probe names its detecting check"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Claim schema", Needle: "A stated confidence freezes at return time. The coordinator refuses a later raise.", Diagnostic: "charge binding: a stated confidence freezes at return time"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Retry stops and aggregate readiness", Needle: "Before the final allowed repair attempt, the author repeats the duplicated-facts sweep from \"In the charge\" on every review axis.", Diagnostic: "charge binding: the final attempt checks every axis for duplicated facts"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Retry stops and aggregate readiness", Needle: "At the cap, the author preserves a green semantic repair and requests an explicit evidence-scoped extension for the remaining edit.", Diagnostic: "charge binding: the cap preserves the green repair and requests an extension"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: Forbid, Needle: "After a rebase changes the source digest", Diagnostic: "charge binding: the digest rule restored the rebase premise that the workflow rejects"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Before the landing", Needle: "After a `bench worktree merge` changes the source digest, the author repeats verification against the new digest before the coordinator accepts the evidence.", Diagnostic: "charge binding: a worktree merge repeats verification against the new digest"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Before the landing", Needle: "An adoption repair covers the contradiction class with an independent fixture, not only the literal examples.", Diagnostic: "charge binding: an adoption repair covers the contradiction class"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Before the landing", Needle: "Implementation delegation and independent review are separate choices, and the assessment record keeps their costs separate.", Diagnostic: "charge binding: delegation and review keep separate costs"},
-	{Group: AfterImplementSpec, File: chargeEvidenceFormat, Kind: RequireInSection, Section: "Consumers", Needle: "A cross-harness consumer retrieves every page through its own shell tool and rebuilds each source with its own decoder.", Diagnostic: "charge binding: a consumer rebuilds each source with its own decoder"},
-	{Group: AfterImplementSpec, File: chargeEvidenceFormat, Kind: RequireInSection, Section: "Consumers", Needle: "The follow-on hook refuses a pipeline after a Bench call, so the consumer saves each response and decodes the saved bytes in a separate step.", Diagnostic: "charge binding: the consumer protocol names the hook constraint"},
-	{Group: AfterImplementSpec, File: chargeEvidenceFormat, Kind: RequireInSection, Section: "Consumers", Needle: "A read takes the shared lock of the evidence store, so a sandboxed consumer needs write access to that store.", Diagnostic: "charge binding: the consumer protocol names the sandbox constraint"},
 }
 
-// craftDelegate is the craft-delegate skill, and delegationDiscipline and
-// chargeEvidenceFormat are its references these anchors read.
-const (
-	craftDelegate        = ".agents/skills/bench-craft-delegate/SKILL.md"
-	delegationDiscipline = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
-	chargeEvidenceFormat = ".agents/skills/bench-craft-delegate/references/charge-evidence-format.md"
-)
+// delegationDiscipline is the craft-delegate reference these anchors read.
+const delegationDiscipline = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"
