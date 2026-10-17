@@ -6227,7 +6227,77 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft293_oc-c4_standards_r1",
+          "performer": "claude:ft293_oc-c4_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ee1558c103b7a96b476538d4e615b62f70f4aa7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_standards_r1",
+            "digest": "sha256:ea92db319623a2054e87fbfb2c0370b52d46364ee64ef689eeeaa9570ef383b9",
+            "excerpt": "OC-C4 Standards review (claude:ft293_oc-c4_standards_r1, opus, medium), pair 4dc58d41..242612c0, evidence sha256:81974a54 current=true.\nS1 (no-op, confidence 3): internal/preflight/ownership/breakdown.go:24-37 and ownership.go:183 vs internal/preflight/ticket_rows.go:44: UncitedIDs is one rule, but the breakdown reads row IDs from coverage.MapRows and rows-owned reads ParseSpec rowIDs; the bootstrap refusal at gather.go:61 makes the difference unreachable today. Rule: AGENTS.md one source per fact.\nS2 (ask-user, confidence 3): internal/preflight/ownership/authority_test.go:377,397-401 and cmd/bench/help_inventory_test.go:113 both hand-write the breakdown help form; no recorded necessary red for the OC67 copy. Rule: AGENTS.md test-expectation rule.\nCount 2; worst S1. Implementation command: no change necessary.\n"
+          },
+          "axis": "Standards",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "cfe82163cc00d20ce3fb43fd3b2c82d1d1d45774",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft293_oc-c4_spec_r1",
+          "performer": "claude:ft293_oc-c4_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ee1558c103b7a96b476538d4e615b62f70f4aa7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_spec_r1",
+            "digest": "sha256:0c17352a02f696f612f533802d0ed5c2f157345a2d13a2f323b8497b9f502840",
+            "excerpt": "OC-C4 Spec review (claude:ft293_oc-c4_spec_r1, opus, medium), pair 4dc58d41..242612c0, evidence sha256:81974a54 current=true.\nP1 (auto-fix, confidence 7): internal/preflight/proposal.go:169-170 with charge.go:83-91: a non-tolerated red refuses through chargeVerdictRefusal, which names the first red in decision.go:213-225 order; completion-plan, closure, fence-writes, and rows-owned come before rows-membership, so on an unfinished graph a foreign or phantom token exits 1 naming a tolerated check with next \"rerun the exact charge\". Violates spec line 493 and the OC63 why cell; the OC63 test at authority_test.go:340-348 has no tolerated red present.\nCall 1 (709df04c completion-plan tolerance): pass; residual no-op, confidence 3: one red covers every ReadPlan error (plan.go:40-44), so a malformed plan fence is tolerated too; spec line 1000 requires a valid v2 plan only before dispatch.\nCall 2 (cfe82163 ticket 02 Writes and oc-02-check-7): pass.\nRows OC61-OC70 and OC86: no other defect. Count 1; worst P1. Implementation command: no change necessary.\n"
+          },
+          "axis": "Spec",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "cfe82163cc00d20ce3fb43fd3b2c82d1d1d45774",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft293_oc-c4_coverage_r1",
+          "performer": "claude:ft293_oc-c4_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ee1558c103b7a96b476538d4e615b62f70f4aa7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_coverage_r1",
+            "digest": "sha256:8b3bada8837ff991e19316712f19f41ea13a7fdb4010d94d256a29828a34f68a",
+            "excerpt": "OC-C4 Coverage review (claude:ft293_oc-c4_coverage_r1, opus, medium), pair 4dc58d41..242612c0, evidence sha256:81974a54 current=true.\nC1 (no-op, confidence 4): authority_test.go:324-329: OC66 omits --source, --cursor, and --max-store-bytes with --breakdown; the registry derives the exclusion.\nC2 (ask-user, confidence 5): proposal.go:599-606: the breakdown closure and premises tables have no test; deleting either stays green (ticket 08 line 9).\nC3 (ask-user, confidence 4): breakdown.go:15 vs ticket_rows.go:44: the breakdown reads coverage.MapRows (rows.go:273) and rows-owned reads ParseSpec rowIDs (gather.go:57,122); no test separates them.\nProbe: bench probe internal/preflight/proposal.go --swap '\"rows-owned\", \"completion-plan\")' --with '\"rows-owned\")' --package ./internal/preflight/... --run 'TestBreakdownRows|TestExplicitAuthority|TestBreakdownGrammar|TestProposalOrdering': bit, restored yes, first failure TestBreakdownRows/OC64_present_empty_directory (authority_test.go:98).\nCount 3; worst C2. Implementation command: no change necessary. git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "cfe82163cc00d20ce3fb43fd3b2c82d1d1d45774",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -6588,3 +6658,31 @@ Three residuals of the printed-field census get Won't-handle lines in the chunk-
 - R3: a reflection write to a printed field.
 
 OC-C2: repair cycles are closed at six. No reviewer extension remains open.
+
+## OC-C4 repair state
+
+OC-C4: the first review at 4dc58d41..242612c0 found 6 raw findings and 4 repair targets, all on ticket 08. Repair cycle 1 of 2 opens in one combined ticket 08 repair session. No reviewer extension exists.
+Under the reviewer's auto-approve direction, the orchestrator accepted each ask-user finding as an auto-fix; each decision is open to reviewer veto.
+
+## OC-C4 Standards
+
+OC-C4: 2 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 3): `internal/preflight/ownership/breakdown.go:24-37` reads row IDs from `coverage.MapRows`, and `internal/preflight/ticket_rows.go:44` reads the `ParseSpec` row IDs. The orchestrator merges S1 with C3 into one repair target: one row-ID derivation for both readers.
+- S2 (auto-fix, confidence 3): `internal/preflight/ownership/authority_test.go:377,397-401` copies the breakdown help form that `cmd/bench/help_inventory_test.go:113` owns, with no recorded necessary red.
+
+## OC-C4 Spec
+
+OC-C4: 1 finding. The worst issue is P1.
+
+- P1 (auto-fix, confidence 7): `internal/preflight/proposal.go:169-170` refuses with the first red in check order. A rows-membership refusal then names a tolerated check when a tolerated red is present.
+
+Advice: one completion-plan red covers every plan read error, so the breakdown also tolerates a malformed plan fence. The Spec axis judged it consistent with the spec.
+
+## OC-C4 Coverage
+
+OC-C4: 3 findings. The worst issue is C2.
+
+- C1 (no-op, confidence 4): `internal/preflight/ownership/authority_test.go:324-329` omits three selectors, but the operation registry derives the exclusion.
+- C2 (auto-fix, confidence 5): `internal/preflight/proposal.go:599-606` renders the closure and premises tables, and no test reads them.
+- C3 (auto-fix, confidence 4): the same two row-ID derivations as S1; the orchestrator merges it with S1.
