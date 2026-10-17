@@ -1,7 +1,7 @@
 # Resolve a parameter grammar through its callers
 
 Blocked by: 6-retire-step-kind.md
-Writes: internal/preflight/ownership/producers.go, internal/preflight/ownership/effects_test.go
+Writes: internal/preflight/ownership/producers.go, internal/preflight/ownership/effects_test.go, internal/preflight/ownership/arguments.go (new), internal/preflight/ownership/parameter_grammar_test.go (new)
 Covers: AP49
 
 ## What to build

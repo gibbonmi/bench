@@ -351,7 +351,9 @@ These paths are the union of the ticket `Writes:` lines, plus the review pickup:
 - `internal/preflight/fence_writes.go`
 - `internal/preflight/fence_writes_test.go`
 - `internal/preflight/gather.go`
+- `internal/preflight/ownership/arguments.go`
 - `internal/preflight/ownership/effects_test.go`
+- `internal/preflight/ownership/parameter_grammar_test.go`
 - `internal/preflight/ownership/producers.go`
 - `internal/prose`
 - `projects/benchkit.md`
