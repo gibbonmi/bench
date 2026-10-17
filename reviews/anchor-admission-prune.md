@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/anchor-admission-prune/spec.md",
-  "plan_digest": "sha256:04240b9eee1b526ec23c3e50635e48d46eaec43ecb9c878a38018918fd1de806",
+  "plan_digest": "sha256:a9db6069d403fba5f59f97414e53aeb33b61251b5a775c681c9f8cbf5da8525a",
   "implementation_session": "",
   "chunks": [
     {
@@ -581,6 +581,116 @@
           ]
         }
       ]
+    },
+    {
+      "id": "AP-C3",
+      "base": "5cb682f7490edf031e1e6eec22440a4e1eb424da",
+      "tip": "86a3220821524d0ba3f46d1cc920079a5b2f4944",
+      "plan_digest": "sha256:a9db6069d403fba5f59f97414e53aeb33b61251b5a775c681c9f8cbf5da8525a",
+      "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+      "acceptance_rows": [
+        "AP02",
+        "AP03",
+        "AP04",
+        "AP10",
+        "AP18",
+        "AP19",
+        "AP20",
+        "AP46"
+      ],
+      "verification": [
+        {
+          "id": "t4-t4-anchors",
+          "performer": "claude:aap_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04",
+            "digest": "sha256:f61a8481394a4d8a68f39d6f05206966334b9f9b7ace8d06a56b00dcd4fa06f2",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,137,153\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-t4-docs-currency-workflow",
+          "performer": "claude:aap_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04",
+            "digest": "sha256:c10a47f5930b7669ddb4e20c24e1c9081172e2b97b7d2c27ce3c2c3c281d8bdf",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4588,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-docs-currency-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-t4-conformance",
+          "performer": "claude:aap_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04",
+            "digest": "sha256:de56f0e8484cddf79a62fdbd4320a72fbc1fcf8e021e875bf794d1151c3fa8ab",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,33301,1176\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-t4-cmd-bench",
+          "performer": "claude:aap_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04",
+            "digest": "sha256:39adf8ce057b0a6cfe609d3d451d8df2d93794e1b153bb98caeb3479e9d4d669",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13833,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-t4-root-conformance",
+          "performer": "claude:aap_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04",
+            "digest": "sha256:86506276cd3aa81d8623c923437c7b7e2a57becc1c01c9804d8ee7b33e3fb775",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14046,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -603,6 +713,18 @@
     {
       "from": "sha256:9ae1c28cf65da60d226e873b3fb29a0ac2ef2a7eb9b940da5a78c04c69067181",
       "to": "sha256:04240b9eee1b526ec23c3e50635e48d46eaec43ecb9c878a38018918fd1de806",
+      "chunk_ids": {
+        "AP-C1": [
+          "AP-C1"
+        ],
+        "AP-C2": [
+          "AP-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:04240b9eee1b526ec23c3e50635e48d46eaec43ecb9c878a38018918fd1de806",
+      "to": "sha256:a9db6069d403fba5f59f97414e53aeb33b61251b5a775c681c9f8cbf5da8525a",
       "chunk_ids": {
         "AP-C1": [
           "AP-C1"
