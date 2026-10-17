@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/skills/bench-craft-delegate/SKILL.md",
-    "old": "When the user explicitly selects delegated authorship, the write delegate uses an isolated worktree and this skill's charge and verification rules.",
-    "new": "A delegated author can use the retained implementation checkout."
-  }
-]

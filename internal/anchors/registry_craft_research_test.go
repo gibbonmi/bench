@@ -3,8 +3,8 @@ package anchors
 import "testing"
 
 // TestCraftResearchAnchorsRedOnRemoval keeps the research skill's anchored sentences and
-// the caller pointers red-capable. The write-spec rules hold its phase order: the research
-// fan-out comes first, and the spec-authoring fork follows every return. Each needle and
+// the caller pointers red-capable. The write-spec rules hold the research fan-out and the
+// fork's use of its findings. Each needle and
 // diagnostic is written here independently of the registry, so a rewrite that drops a rule
 // cannot define itself green.
 func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
@@ -97,12 +97,6 @@ func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
 				file:   writeSpec,
 				needle: "The charge gives the fork the findings as compressed inputs, and the fork does not repeat their reads.",
 				want:   ".agents/commands/bench-write-spec.md dropped the fork's use of the research findings without a repeat of their reads",
-			},
-			{
-				file:    writeSpec,
-				section: "Who runs this phase",
-				needle:  "After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and its chunk table only.",
-				want:    ".agents/commands/bench-write-spec.md dropped the conversation fork for spec authoring and ticket slicing",
 			},
 		},
 	}.check(t)

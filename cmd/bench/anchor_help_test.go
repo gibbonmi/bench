@@ -96,9 +96,9 @@ func TestAnchorsReportsNeedleLines(t *testing.T) {
 
 func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	rows := anchorsFixtureRows(t)
-	// Drop every second Require needle's line (and its blank separator) from the on-disk
-	// fixture, so those rows must read 0 while their kept siblings — unmoved by the removal
-	// — close up to lines 3, 5, and 7. A Forbid row reads 0 and raises no diagnostic.
+	// Drop the first Require needle's line (and its blank separator) from the on-disk
+	// fixture, so that row must read 0 while each later Require sibling closes up from
+	// line 3. A Forbid row reads 0 and raises no diagnostic.
 	var drop []string
 	lines := make([]int, len(rows))
 	planted, next := 0, 3
@@ -106,7 +106,7 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 		if anchor.Kind != anchors.Require {
 			continue
 		}
-		if planted%2 == 1 {
+		if planted == 0 {
 			drop = append(drop, anchor.Needle)
 		} else {
 			lines[i] = next

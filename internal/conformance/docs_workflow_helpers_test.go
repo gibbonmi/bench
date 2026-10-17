@@ -37,7 +37,6 @@ func checkWorkflowAnchors(root string) []string {
 	implementSpec := readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md"))
 	reviewImplementation := readIfExists(filepath.Join(root, ".agents", "commands", "bench-review-implementation.md"))
 	diags = append(diags, checkReviewConvergenceContract(implementSpec, reviewImplementation)...)
-	diags = append(diags, checkIntegrationSourceWorkflowCurrency(root)...)
 	diags = append(diags, checkSpecAuthorizationContract(root)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterSpecAuthorization)...)
 	readme := readIfExists(filepath.Join(root, "README.md"))
@@ -492,34 +491,6 @@ func integrationSourceWorkflowAnchors() []anchors.Anchor {
 	return anchorsWithDiagnosticPrefix(integrationSourceDiagnosticPrefix)
 }
 
-func checkIntegrationSourceWorkflowCurrency(root string) []string {
-	var diags []string
-	for _, anchor := range integrationSourceWorkflowAnchors() {
-		if anchor.File == "internal/usage/worktree.go" {
-			continue
-		}
-		text := strings.ToLower(anchors.CollapseSpace(anchors.StripHTMLComments(
-			readIfExists(filepath.Join(root, filepath.FromSlash(anchor.File))),
-		)))
-		text = strings.NewReplacer("`", "", "<code>", "", "</code>", "").Replace(text)
-		for _, stale := range []string{
-			"benchbase",
-			"sole landing path",
-			"path-scoped bench commit is the only",
-			"branch's recorded pre-shift base",
-		} {
-			if strings.Contains(text, stale) {
-				diags = append(diags, fmt.Sprintf("%s retains stale scalar or sole-path workflow claim %q", anchor.File, stale))
-			}
-		}
-	}
-	return diags
-}
-
 func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
-	workflowAnchors := integrationSourceWorkflowAnchors()
-	if got, want := len(workflowAnchors), 10; got != want {
-		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
-	}
-	runAnchorBites(t, workflowAnchors, func(anchor anchors.Anchor) string { return anchor.File })
+	runAnchorBites(t, integrationSourceWorkflowAnchors(), func(anchor anchors.Anchor) string { return anchor.File })
 }

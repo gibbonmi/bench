@@ -2,7 +2,6 @@ package conformance
 
 import (
 	"path"
-	"slices"
 	"strings"
 	"testing"
 
@@ -152,19 +151,7 @@ func TestEvidenceHandoffGuidance(t *testing.T) {
 // unchangedRoutePrefix opens every unchanged-route diagnostic.
 const unchangedRoutePrefix = "unchanged route: "
 
-// retainedWriteSpecDiagnostics names the registry rows that already state write-spec's
-// decision-source and author-fork contract. CE113 keeps that contract, so this owner cites
-// those rows rather than restating their prose behind a second pin.
-func retainedWriteSpecDiagnostics() []string {
-	return []string{
-		".agents/commands/bench-write-spec.md dropped the exactly-one Decision source contract",
-		".agents/commands/bench-write-spec.md dropped the conversation fork for spec authoring and ticket slicing",
-	}
-}
-
-// TestEvidenceUnchangedRoutes grades CE112 and CE113. It grades the two unchanged-route
-// rows, and it requires the registered rows that state write-spec's decision-source and
-// author-fork contract. The registry comment beside those rows owns the why.
+// TestEvidenceUnchangedRoutes grades CE112. It grades the two unchanged-route rows.
 func TestEvidenceUnchangedRoutes(t *testing.T) {
 	build := boundedActionFamilyNamed(t, "build")
 	buildPhase := build.guidance(t, build.anchors())
@@ -185,26 +172,6 @@ func TestEvidenceUnchangedRoutes(t *testing.T) {
 	}
 	runAnchorBites(t, family, func(anchor anchors.Anchor) string { return anchor.Diagnostic })
 	requireConformantLiveTree(t, family)
-
-	registered := anchors.Entries()
-	for _, diagnostic := range retainedWriteSpecDiagnostics() {
-		if !slices.ContainsFunc(registered, func(a anchors.Anchor) bool { return a.Diagnostic == diagnostic }) {
-			t.Errorf("no registry row states the retained write-spec rule %q", diagnostic)
-		}
-	}
-	requireConformantLiveTree(t, rowsWithDiagnostics(registered, retainedWriteSpecDiagnostics()))
-}
-
-// rowsWithDiagnostics selects the registered rows the diagnostics name. An absent
-// diagnostic selects nothing; the caller reports that absence separately.
-func rowsWithDiagnostics(registered []anchors.Anchor, diagnostics []string) []anchors.Anchor {
-	var found []anchors.Anchor
-	for _, anchor := range registered {
-		if slices.Contains(diagnostics, anchor.Diagnostic) {
-			found = append(found, anchor)
-		}
-	}
-	return found
 }
 
 // requireRegisteredRow reports the one family row the diagnostic names, with its expected

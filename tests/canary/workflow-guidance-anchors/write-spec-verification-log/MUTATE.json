@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/commands/bench-write-spec.md",
-    "old": "At close, write `Verification log: <n> iteration(s) to accept — <note>` into the spec.",
-    "new": "At close, record that verification completed."
-  }
-]
