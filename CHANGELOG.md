@@ -6,6 +6,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Preflight ownership closure
+
+- Added `bench preflight build <slug> --breakdown [--base <commit>] [--source-tip <commit>]`. It lists each coverage row that no ticket cites, with its seam cell, and the closure and premises of each ticket. It shows each red of an unfinished ticket graph as a diagnostic, refuses each other red, and grants no authority. The ordinary build still reds each uncited row.
+- Changed `bench preflight build --propose-writes`, which now also prints the `closure`, `closure_evidence`, `source`, and `premises` tables. Each closure path names its canonical owner, source line, and reason.
+- Added the `bench-planning-facts` spec fence. A build charge refuses until its declared-complete inventory and each required current premise have proof. A `Writes:` entry can carry the `(deleted)` marker for a path that the source base tracks.
+- Before, a proposal named each missing path without its reason, and a slicer saw no uncited row until each row had a ticket.
+
 ### Visible-tree check scope
 
 - Fixed the gofmt step and the in-place checks that grade the tree, so that they read only the visible tree: tracked files and untracked files that git does not ignore. The checks are the leaf-ledger import census, the freshness publication topology, the control-rune escaper census, the prose and skill-description budgets, and the skills index. Before, an ordinary `bench gate` in a checkout that held ignored copies of Go source, such as files under `.logs/`, or a locally installed ignored skill went red on content that no commit can carry.

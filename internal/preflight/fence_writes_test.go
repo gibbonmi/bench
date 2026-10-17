@@ -58,9 +58,11 @@ func TestFenceWritesIgnoresReviewPickup(t *testing.T) {
 	assertFenceWrites(t, fencedFacts([]string{"a/"}, "a", "reviews/example.md (new)"), "")
 }
 
-// TestFenceWritesNormalizesSpelling covers SC18, a spaced path too.
+// TestFenceWritesNormalizesSpelling covers SC18, a spaced path too. An exact fence file
+// meets its (deleted) entry only through the marker strip.
 func TestFenceWritesNormalizesSpelling(t *testing.T) {
 	assertFenceWrites(t, fencedFacts([]string{"internal/x/", "internal/spaced dir/"}, "internal/x (new)", "internal/spaced dir (new)"), "")
+	assertFenceWrites(t, fencedFacts([]string{"internal/x/gone.go"}, "internal/x/gone.go (deleted)"), "")
 }
 
 // TestFenceWritesIgnoresImplicitAuthority covers SC19. The spec folder and capture

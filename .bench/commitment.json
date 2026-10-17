@@ -1178,6 +1178,14 @@
       "identity": "sha256:1ccb5fb0742b5d23fe68057f21952f024362138447bc33c68548cdf0680bed83",
       "source": "0bf744792933d4ac48d984a8c70c18f9717cbdc1",
       "evidence": "2e89b3757a116ff0eabdfa64a500677f92150968"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT293-ownership-closure",
+      "binding": "preflight-ownership-closure",
+      "identity": "sha256:84d26ede4104181b241626588a6a5faff395de00cd31c459f8ab9dfab2fa3ebb",
+      "source": "b0e998195e8ea6e506b057116bc265e574b49cb5",
+      "evidence": "4c6a3b832fbfb9088dd143920ccdc6d305af6c35"
     }
   ]
 }
