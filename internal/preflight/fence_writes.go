@@ -81,8 +81,8 @@ func implicitEntries(f Facts) []string {
 // marker must name a path the tree holds, or an exact committed deletion of the explicit
 // source range. A (deleted) entry must name a tracked file at the review base, whatever
 // the tip holds, so no marker gives authority over a path that never existed. Either
-// entry also resolves through an exact deletion of the build's landing range, which an
-// earlier chunk made before the review base. An entry that the ticket grammar refuses is
+// entry also resolves through an exact deletion of the build's landing range, from the
+// landing base to the source tip. An entry that the ticket grammar refuses is
 // tickets-parse's red.
 func writesResolveCheck(f Facts) CheckResult {
 	var unresolved, unborn []string

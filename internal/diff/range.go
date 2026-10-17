@@ -308,9 +308,10 @@ func resolveBranchRangeFromFacts(root string, facts git.DiffFacts) (dr diffRange
 // default branch. method carries which path answered: `recorded`, `merge-base`, or one
 // of the loud fallback labels when a recorded key is present but unusable. A non-empty
 // errKind/errHint with an empty base is the only absence shape; base is never empty on
-// a nil error.
+// a nil error. Every git read binds root, so the caller's working directory does
+// not matter.
 func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
-	base, method = resolveBase()
+	base, method = resolveBase(root)
 	if base != "" {
 		return base, method, "", ""
 	}
@@ -319,7 +320,7 @@ func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
 		return "", "", "cannot resolve a review base",
 			"this repository has no resolvable default branch; record one with: git config branch.<name>.benchBase <sha>"
 	}
-	mb, err := git.Output("merge-base", def, "HEAD")
+	mb, err := git.Output("-C", root, "merge-base", def, "HEAD")
 	if err != nil {
 		return "", "", "cannot resolve a review base",
 			"no merge-base with '" + def + "'; record one with: git config branch.<name>.benchBase <sha>"
@@ -333,19 +334,19 @@ func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
 // resolveBase returns the recorded-key base and `recorded` when the key names a
 // reachable ancestor, or ("", <loud fallback method>) when the key is present but
 // unreachable/divergent, or ("","") when there is no usable recorded key.
-func resolveBase() (base, method string) {
-	branch, _ := git.Output("symbolic-ref", "--quiet", "--short", "HEAD")
+func resolveBase(root string) (base, method string) {
+	branch, _ := git.Output("-C", root, "symbolic-ref", "--quiet", "--short", "HEAD")
 	if branch == "" {
 		return "", ""
 	}
-	key, _ := git.Output("config", "branch."+branch+".benchBase")
+	key, _ := git.Output("-C", root, "config", "branch."+branch+".benchBase")
 	if key == "" {
 		return "", ""
 	}
 	switch {
-	case !git.OK("cat-file", "-e", key+"^{commit}"):
+	case !git.OK("-C", root, "cat-file", "-e", key+"^{commit}"):
 		return "", "merge-base (recorded sha unreachable)"
-	case !git.OK("merge-base", "--is-ancestor", key, "HEAD"):
+	case !git.OK("-C", root, "merge-base", "--is-ancestor", key, "HEAD"):
 		return "", "merge-base (recorded sha not an ancestor)"
 	default:
 		return key, "recorded"

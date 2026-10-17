@@ -155,6 +155,37 @@ func TestResolveReviewBase_Unresolvable(t *testing.T) {
 	}
 }
 
+// TestResolveReviewBase_ReadsRootFromAnotherDirectory pins that every git read of
+// the resolver binds root: a caller whose working directory is outside the
+// repository still gets the recorded base and the merge-base of root.
+func TestResolveReviewBase_ReadsRootFromAnotherDirectory(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		recorded bool
+	}{
+		{name: "recorded", recorded: true},
+		{name: "merge-base", recorded: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, c0, c1, _ := seedDivergedRepo(t)
+			wantBase, wantMethod := c1, "merge-base"
+			if tc.recorded {
+				runGit(t, "config", "branch.feature.benchBase", c0)
+				wantBase, wantMethod = c0, "recorded"
+			}
+			t.Chdir(t.TempDir())
+
+			base, method, errKind, errHint := ResolveReviewBase(root)
+			if errKind != "" || errHint != "" {
+				t.Fatalf("ResolveReviewBase returned error (%q, %q), want none", errKind, errHint)
+			}
+			if base != wantBase || method != wantMethod {
+				t.Errorf("ResolveReviewBase = (%q, %q), want (%q, %q)", base, method, wantBase, wantMethod)
+			}
+		})
+	}
+}
+
 // TestResolveBranchRangeConsumesExport is DX5: resolveBranchRange, and therefore bare
 // `bench diff`, agrees byte-for-byte with the exported resolution. No second,
 // divergence-capable derivation survives inline.
