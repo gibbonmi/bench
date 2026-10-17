@@ -933,6 +933,28 @@
           "tip": "6a6bd068adc481c89f69d88e4e238d198fdb571d",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "apc3-standards-r2",
+          "performer": "claude:aap_apc3_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc3_standards_r2",
+            "digest": "sha256:e50a0df465c8bdeb3eded4dcc73f5d1a5e66774bc3d416c73105dbee602f7098",
+            "excerpt": "Standards confirming round, AP-C3, correction delta 71c74c54..ab4aa62b (comment-only, two files); check-current current=true at ab4aa62b, dirty_record=false.\nS1 closed, confidence 9: internal/anchors/registry_chunk_chain.go:45 says the three files carry retired sentences that the Forbid rows refuse; only Forbid rows at lines 14, 20, 21 read them.\nS3 closed, confidence 9: registry_charge_binding.go:12 says several topic registries read the file, matching registry_check_floor.go:5, registry_chunk_chain.go:32, and registry_charge_binding.go:6-9.\nS2 not re-graded (no-op).\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "5cb682f7490edf031e1e6eec22440a4e1eb424da",
+          "tip": "6a6bd068adc481c89f69d88e4e238d198fdb571d",
+          "finding_ids": [],
+          "supersedes": [
+            "apc3-standards-r1"
+          ]
         }
       ]
     }
