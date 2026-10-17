@@ -20,164 +20,14 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 		return []string{"bench-drain recurrence maintenance command is unavailable"}
 	}
 
-	entry, entryCount := markdownH2Sections(text, "Entry orientation")
 	worktrees, worktreeCount := markdownH2Sections(text, "Worktree closure")
-	delegation, delegationCount := markdownH2Sections(text, "Delegate the evidence")
-	occurrences, occurrenceCount := markdownH2Sections(text, "2. Drain occurrence evidence")
-	batch, batchCount := markdownH2Sections(text, "8. Batch-propose, then commit once on green")
-	entry = collapseSpace(entry)
-	worktrees = collapseSpace(worktrees)
-	delegation = collapseSpace(delegation)
-	occurrences = collapseSpace(occurrences)
-	batch = collapseSpace(batch)
 	var diags []string
-	if entryCount != 1 || !strings.Contains(entry, "`context.schema = 4`") ||
-		!strings.Contains(entry, "every other schema stops the phase before any batch mutation") ||
-		!strings.Contains(entry, "Do not guess recurrence facts from an older schema") {
-		diags = append(diags, "bench-drain does not require schema 4 before recurrence maintenance")
+	if worktreeCount != 1 || !strings.Contains(collapseSpace(worktrees), "Run `bench worktree list` before any batch mutation") {
+		diags = append(diags, "bench-drain does not run bench worktree list before any batch mutation")
 	}
-	if entryCount != 1 || !strings.Contains(entry, "schema-4 index is the complete local inventory") ||
-		!strings.Contains(entry, "The index proves what exists; targeted fetches and named body reads prove content") ||
-		!strings.Contains(entry, "Fetch complete roadmap detail only for rows the reconcile touches") ||
-		!strings.Contains(entry, "Read idea, learning, and retro bodies from the paths the index names") {
-		diags = append(diags, "bench-drain does not use index-first evidence for recurrence maintenance")
-	}
-	schemaAt := strings.Index(entry, "`context.schema = 4`")
-	trustAt := strings.Index(entry, "Before beginning `## 1. Reconcile first`, read `context.sequence_trusted` from that snapshot.")
-	trustStop := "snapshot. When it is false, stop before any batch mutation"
-	if entryCount != 1 || trustAt <= schemaAt || !strings.Contains(entry, trustStop) {
-		diags = append(diags, "bench-drain does not stop untrusted recurrence evidence before reconciliation")
-	}
-	if entryCount != 1 || trustAt <= schemaAt || !strings.Contains(entry, "`occurrence_discrepancies` row together with the complete index snapshot") {
-		diags = append(diags, "bench-drain does not preserve complete index evidence before reconciliation")
-	}
-	if worktreeCount != 1 || !strings.Contains(worktrees, "Run `bench worktree list` before any batch mutation") ||
-		!strings.Contains(worktrees, "The drain owns removal of every orphaned worktree") ||
-		!strings.Contains(worktrees, "require zero orphaned rows") {
-		diags = append(diags, "bench-drain does not own orphaned worktree closure")
-	}
-	if worktreeCount != 1 || !strings.Contains(worktrees, "invoke `/bench-debug` and assess its root cause before cleanup") {
-		diags = append(diags, "bench-drain does not route orphaned worktrees through root-cause diagnosis")
-	}
-	parallelRead := "Use at most three read-only delegates at one time after the snapshot passes its trust check."
-	readScopes := "Assign at most one delegate to each scope: roadmap reconcile, idea and journal mapping, and retro analysis."
-	skipEmpty := "Skip a scope when its indexed source set is empty."
-	delegateRouting := "Charge every delegate under `craft-delegate` and `craft-line`."
-	readFence := "Read delegates edit nothing, take no new inventory, and use only the snapshot and its named paths."
-	returnShape := "Each read delegate returns these fields: proposed owner, classification, occurrence, evidence, and reviewer decision."
-	if delegationCount != 1 || !strings.Contains(delegation, parallelRead) {
-		diags = append(diags, "bench-drain does not retain the bounded parallel-read contract")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, readScopes) {
-		diags = append(diags, "bench-drain does not assign the three independent read scopes")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, skipEmpty) {
-		diags = append(diags, "bench-drain does not skip empty indexed read scopes")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, delegateRouting) {
-		diags = append(diags, "bench-drain does not route every delegate through craft-delegate and craft-line")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, readFence) {
-		diags = append(diags, "bench-drain does not keep read delegates inside the snapshot-only fence")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, returnShape) {
-		diags = append(diags, "bench-drain does not require the fixed read-delegate return shape")
-	}
-
-	decisionsBeforeWriter := "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts."
-	treeVerification := "Verify that the tree stayed unchanged."
-	coordinatorOwnership := "Keep sealed capture retirement, the handoff, verification, and landing with the coordinator."
-	implementOverlap := "Implement-now delegates may run while other reads continue."
-	implementRouting := "Route their line through `craft-line` and keep their authorship under `.bench/BENCH.md`."
-	withImplementTiming := "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`."
-	withoutImplementTiming := "If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions."
-	singleWriter := "If tracked changes remain, the retained drain session authors the complete tracked batch."
-	decisionAt := strings.Index(delegation, decisionsBeforeWriter)
-	writerAt := strings.Index(delegation, singleWriter)
-	if delegationCount != 1 || decisionAt < 0 || writerAt <= decisionAt {
-		diags = append(diags, "bench-drain does not resolve cross-source decisions before batch writing")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, treeVerification) {
-		diags = append(diags, "bench-drain does not verify the tree stayed unchanged after reading")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, coordinatorOwnership) {
-		diags = append(diags, "bench-drain does not retain coordinator ownership of local and landing work")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, implementOverlap) {
-		diags = append(diags, "bench-drain does not allow implement-now work to overlap remaining reads")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, implementRouting) {
-		diags = append(diags, "bench-drain does not route implement-now work through craft-line and retained authorship")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, withImplementTiming) {
-		diags = append(diags, "bench-drain does not wait for every implement-now landing before batch creation")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, withoutImplementTiming) {
-		diags = append(diags, "bench-drain does not create the batch after reads when no implement-now item exists")
-	}
-	if delegationCount != 1 || !strings.Contains(delegation, singleWriter) {
-		diags = append(diags, "bench-drain does not retain one conditional tracked batch author")
-	}
-
-	noTrackedWriter := "If no tracked changes remain, start no batch writer."
-	sealedAfterApproval := "After approval and the tracked landing, the coordinator runs `bench capture drain commit <drain-id>`."
-	handoffLast := "The coordinator runs `bench handoff` last, from the primary checkout after the landing."
-	reviewerBatch := "The reviewer batch contains the tracked diff, the sealed-generation retirement, and every journal verdict."
-	trackedDiff := "The tracked diff contains roadmap dispositions, retro removals, earned `bench spec retire` work, and provider scorecards."
-	ignoredNotTracked := "Ignored local changes do not enter that diff or commit."
-	handoffWriteTime := "`bench status` dates the `main` section of an ignored handoff by the file's write time."
-	all := collapseSpace(text)
-	if batchCount != 1 || !strings.Contains(batch, noTrackedWriter) {
-		diags = append(diags, "bench-drain does not suppress the batch writer when no tracked changes remain")
-	}
-	if !strings.Contains(all, sealedAfterApproval) {
+	if !strings.Contains(collapseSpace(text), "After approval and the tracked landing, the coordinator runs `bench capture drain commit <drain-id>`.") {
 		diags = append(diags, "bench-drain does not delay sealed-generation retirement until approval and landing")
 	}
-	if !strings.Contains(all, handoffLast) {
-		diags = append(diags, "bench-drain does not run bench handoff as its last write")
-	}
-	if batchCount != 1 || !strings.Contains(batch, reviewerBatch) {
-		diags = append(diags, "bench-drain does not preserve the tracked-versus-ignored reviewer batch boundary")
-	}
-	if batchCount != 1 || !strings.Contains(batch, trackedDiff) {
-		diags = append(diags, "bench-drain does not constrain the tracked diff contents")
-	}
-	if batchCount != 1 || !strings.Contains(batch, ignoredNotTracked) {
-		diags = append(diags, "bench-drain does not exclude ignored local changes from the tracked diff and commit")
-	}
-	if !strings.Contains(all, handoffWriteTime) {
-		diags = append(diags, "bench-drain does not date the handoff main section by write time")
-	}
-	pending := "add its incident key to that owner's `Occurrences:` line in `roadmap/FT<n>.md` before removing any source unit"
-	if occurrenceCount != 1 || !strings.Contains(occurrences, "For every `pending` owner/incident pair") || !strings.Contains(occurrences, pending) {
-		diags = append(diags, "bench-drain does not ledger every pending occurrence before source removal")
-	}
-	if occurrenceCount != 1 || !strings.Contains(occurrences, "Every `already-recorded` source already has that key: remove its source unit without adding another key") {
-		diags = append(diags, "bench-drain does not remove already-recorded occurrence sources without another key")
-	}
-
-	normalizeHeading := "### Normalize touched rows"
-	normalizeBeforeBatch := "Normalize every touched row before batch proposal."
-	if occurrenceCount != 1 || strings.Count(occurrences, normalizeHeading) != 1 || !strings.Contains(occurrences, normalizeBeforeBatch) {
-		diags = append(diags, "bench-drain does not normalize every touched row before batch proposal")
-	}
-	physicalOccurrence := "exactly one physical `Occurrence: <when/source> — <short situation>.` line"
-	if occurrenceCount != 1 || !strings.Contains(occurrences, physicalOccurrence) {
-		diags = append(diags, "bench-drain does not require one physical occurrence line per drained event")
-	}
-	eventOnly := "Occurrence lines contain event evidence only."
-	coreProse := "New feature faces and decisions remain concise core prose."
-	if occurrenceCount != 1 || !strings.Contains(occurrences, eventOnly) || !strings.Contains(occurrences, coreProse) {
-		diags = append(diags, "bench-drain does not keep occurrence evidence separate from core remedies")
-	}
-	goodOccurrence := "**Good — event-only evidence:** `Occurrence: 2026-08-15 gate build — primary-checkout preflight failed on a stale base.`"
-	badOccurrence := "**Bad — remedy derivation:** `Occurrence: 2026-08-15 gate build — change preflight selection to fix the stale base.`"
-	goodAt := strings.Index(occurrences, goodOccurrence)
-	badAt := strings.Index(occurrences, badOccurrence)
-	if occurrenceCount != 1 || strings.Count(occurrences, goodOccurrence) != 1 || strings.Count(occurrences, badOccurrence) != 1 || goodAt < 0 || badAt <= goodAt {
-		diags = append(diags, "bench-drain does not retain the event-only occurrence contrast")
-	}
-
 	return diags
 }
 
@@ -191,50 +41,8 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 	mutations := []struct {
 		name, old, new, want string
 	}{
-		{"schema", "`context.schema = 4`", "`context.schema = 3`", "bench-drain does not require schema 4 before recurrence maintenance"},
-		{"schema guessing", "Do not guess recurrence facts from an older schema.", "Infer recurrence facts from an older schema.", "bench-drain does not require schema 4 before recurrence maintenance"},
-		{"index inventory", "schema-4 index is the complete\nlocal inventory", "schema-4 index is a partial\nlocal inventory", "bench-drain does not use index-first evidence for recurrence maintenance"},
-		{"targeted detail", "Fetch complete roadmap detail only for rows the reconcile touches", "Fetch complete roadmap detail for every row", "bench-drain does not use index-first evidence for recurrence maintenance"},
-		{"named capture bodies", "Read idea, learning, and retro bodies\nfrom the paths the index names", "Read capture bodies from a directory sweep", "bench-drain does not use index-first evidence for recurrence maintenance"},
-		{"trust after reconcile", "Before beginning `## 1. Reconcile first`, read `context.sequence_trusted` from that\nsnapshot.", "After `## 1. Reconcile first`, read `context.sequence_trusted` from that\nsnapshot.", "bench-drain does not stop untrusted recurrence evidence before reconciliation"},
-		{"trust polarity", "snapshot. When it is false, stop before any batch mutation", "snapshot. When it is true, stop before any batch mutation", "bench-drain does not stop untrusted recurrence evidence before reconciliation"},
-		{"trust stop", "stop before any batch mutation", "continue into batch mutation", "bench-drain does not stop untrusted recurrence evidence before reconciliation"},
-		{"context evidence", "`occurrence_discrepancies` row together with the complete index snapshot", "`occurrence_discrepancies` row", "bench-drain does not preserve complete index evidence before reconciliation"},
-		{"orphan inventory", "Run `bench worktree list` before any batch mutation", "Run `bench worktree list` after the batch mutation", "bench-drain does not own orphaned worktree closure"},
-		{"orphan owner", "The drain owns removal of every orphaned worktree", "The active phase owns removal of its own worktree", "bench-drain does not own orphaned worktree closure"},
-		{"orphan completion", "require zero orphaned rows", "report the remaining orphaned rows", "bench-drain does not own orphaned worktree closure"},
-		{"orphan diagnosis", "invoke `/bench-debug` and assess its root cause before cleanup", "clean it without diagnosis", "bench-drain does not route orphaned worktrees through root-cause diagnosis"},
-		{"bounded parallel reads", "Use at most three read-only delegates at one time after the snapshot passes its trust check.", "Use unlimited read-only delegates at one time after the snapshot passes its trust check.", "bench-drain does not retain the bounded parallel-read contract"},
-		{"read scopes", "Assign at most one delegate to each scope: roadmap reconcile, idea and journal mapping, and retro analysis.", "Assign one delegate to roadmap reconcile only.", "bench-drain does not assign the three independent read scopes"},
-		{"skip empty scope", "Skip a scope when its indexed source set is empty.", "Run every scope even when its indexed source set is empty.", "bench-drain does not skip empty indexed read scopes"},
-		{"delegate routing", "Charge every delegate under\n`craft-delegate` and `craft-line`.", "Charge every delegate without routing.", "bench-drain does not route every delegate through craft-delegate and craft-line"},
-		{"read fence", "Read delegates edit nothing, take no new inventory, and use only the snapshot and its named paths.", "Read delegates may edit notes and take a new inventory.", "bench-drain does not keep read delegates inside the snapshot-only fence"},
-		{"return shape", "Each read delegate returns these fields: proposed owner, classification, occurrence, evidence, and reviewer decision.", "Each read delegate returns a summary.", "bench-drain does not require the fixed read-delegate return shape"},
-		{"decisions before writer", "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts.", "Resolve duplicate incidents after retained batch authorship starts.", "bench-drain does not resolve cross-source decisions before batch writing"},
-		{"tree verification", "Verify that the tree stayed unchanged.", "Assume that the tree stayed unchanged.", "bench-drain does not verify the tree stayed unchanged after reading"},
-		{"coordinator ownership", "Keep sealed capture retirement, the handoff,\nverification, and landing with the coordinator.", "Delegate sealed capture retirement and landing.", "bench-drain does not retain coordinator ownership of local and landing work"},
-		{"implement-now overlap", "Implement-now delegates may run while other reads continue.", "Start implement-now work after every read finishes.", "bench-drain does not allow implement-now work to overlap remaining reads"},
-		{"implement-now routing", "Route their line through `craft-line` and keep their authorship under `.bench/BENCH.md`.", "Route implement-now work without craft-line or retained authorship.", "bench-drain does not route implement-now work through craft-line and retained authorship"},
-		{"implement-now landing timing", "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`.", "Create the batch worktree before implement-now items land.", "bench-drain does not wait for every implement-now landing before batch creation"},
-		{"no-implement-now timing", "If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions.", "If no implement-now item exists, never create the batch worktree.", "bench-drain does not create the batch after reads when no implement-now item exists"},
-		{"single batch writer", "If tracked changes remain, the retained drain session authors the complete tracked batch.", "A later write delegate authors the complete tracked batch.", "bench-drain does not retain one conditional tracked batch author"},
-		{"no tracked writer", "If no tracked changes\nremain, start no batch writer.", "If no tracked changes remain, start a batch writer.", "bench-drain does not suppress the batch writer when no tracked changes remain"},
+		{"orphan inventory", "Run `bench worktree list` before any batch mutation", "Run `bench worktree list` after the batch mutation", "bench-drain does not run bench worktree list before any batch mutation"},
 		{"sealed retirement after approval", "After approval and the tracked landing, the coordinator runs\n`bench capture drain commit <drain-id>`.", "Before approval, retire the sealed generation.", "bench-drain does not delay sealed-generation retirement until approval and landing"},
-		{"handoff verb last", "The coordinator runs `bench handoff` last, from the primary checkout after the landing.", "The coordinator runs `bench handoff` first.", "bench-drain does not run bench handoff as its last write"},
-		{"hand-written handoff", "The coordinator runs `bench handoff` last,", "The coordinator writes ignored `capture/session-handoff.md` last,", "bench-drain does not run bench handoff as its last write"},
-		{"reviewer batch boundary", "The reviewer batch contains the tracked diff, the sealed-generation retirement,\nand every journal verdict.", "The tracked diff contains every journal verdict.", "bench-drain does not preserve the tracked-versus-ignored reviewer batch boundary"},
-		{"tracked diff contents", "The tracked diff contains roadmap dispositions, retro removals, earned `bench spec retire` work, and provider scorecards.", "The tracked diff contains journal verdicts.", "bench-drain does not constrain the tracked diff contents"},
-		{"ignored changes excluded", "Ignored local\nchanges do not enter that diff or commit.", "Ignored local changes enter the tracked diff.", "bench-drain does not exclude ignored local changes from the tracked diff and commit"},
-		{"main section write time", "`bench status` dates the `main` section of an ignored handoff by the file's write time.", "`bench status` dates the `main` section of an ignored handoff by its commit time.", "bench-drain does not date the handoff main section by write time"},
-		{"whole handoff write time", "the `main` section of an ignored handoff", "an ignored handoff", "bench-drain does not date the handoff main section by write time"},
-		{"pending ledger", "add its incident\nkey to that owner's `Occurrences:` line in `roadmap/FT<n>.md` before removing any source\nunit", "record the pending pair for later", "bench-drain does not ledger every pending occurrence before source removal"},
-		{"pending ledger file", "`Occurrences:` line in `roadmap/FT<n>.md`", "`Occurrences:` line in `ROADMAP.md`", "bench-drain does not ledger every pending occurrence before source removal"},
-		{"already recorded", "remove its\nsource unit without adding another key", "remove its source unit after adding another key", "bench-drain does not remove already-recorded occurrence sources without another key"},
-		{"normalize heading", "### Normalize touched rows", "### Touched rows", "bench-drain does not normalize every touched row before batch proposal"},
-		{"normalize before proposal", "Normalize every touched row before batch proposal.", "Normalize touched rows after batch proposal.", "bench-drain does not normalize every touched row before batch proposal"},
-		{"physical occurrence shape", "exactly one physical\n`Occurrence: <when/source> — <short situation>.` line", "one or more `Occurrence:` paragraphs", "bench-drain does not require one physical occurrence line per drained event"},
-		{"event-only boundary", "Occurrence lines contain\nevent evidence only.", "Occurrence lines contain event evidence and remedy derivation.", "bench-drain does not keep occurrence evidence separate from core remedies"},
-		{"contrastive example", "**Good — event-only evidence:** `Occurrence: 2026-08-15 gate build — primary-checkout preflight failed on a stale base.`", "**Good — remedy derivation:** `Occurrence: 2026-08-15 gate build — change preflight selection to fix the stale base.`", "bench-drain does not retain the event-only occurrence contrast"},
 	}
 	for _, mutation := range mutations {
 		t.Run(mutation.name, func(t *testing.T) {

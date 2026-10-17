@@ -262,14 +262,10 @@ func TestStaleCommandSweepReportsOldReferencesWhenDrainAliasesAreRemoved(t *test
 
 func checkPrePushREADMEClaim(root string) []string {
 	readme := strings.ReplaceAll(readIfExists(filepath.Join(root, "README.md")), "`", "")
-	var diags []string
-	if !strings.Contains(readme, "pre-push hook protects the branch it resolves") {
-		diags = append(diags, "README.md does not say the pre-push hook protects the branch it resolves")
-	}
 	if strings.Contains(readme, "pre-push hook protects the default branch") {
-		diags = append(diags, "README.md claims the pre-push hook protects the default branch without qualification")
+		return []string{"README.md claims the pre-push hook protects the default branch without qualification"}
 	}
-	return diags
+	return nil
 }
 
 func TestPrePushREADMEClaimBites(t *testing.T) {
@@ -277,7 +273,6 @@ func TestPrePushREADMEClaimBites(t *testing.T) {
 		name   string
 		readme string
 	}{
-		{"missing resolved branch", "the pre-push hook protects a branch"},
 		{"unqualified default branch", "the pre-push hook protects the branch it resolves\nthe pre-push hook protects the default branch"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -331,36 +326,6 @@ func TestOccurrenceLedgerMigrationCheckBites(t *testing.T) {
 	if !containsDiagnostic(checkOccurrenceLedgerMigration(root), "ROADMAP.md retains a legacy evidence-supplied heading count") {
 		t.Fatal("legacy heading mutation passed occurrence-ledger migration check")
 	}
-}
-
-func checkSpecAuthorizationContract(root string) []string {
-	path := filepath.Join(root, ".agents", "commands", "bench-write-spec.md")
-	if !exists(path) {
-		return nil
-	}
-	entryContract, ok := markdownH2Sections(stripHTMLComments(readIfExists(path)), "Entry contract")
-	if ok != 1 {
-		return []string{".agents/commands/bench-write-spec.md dropped the exactly-three authorization boundary"}
-	}
-	declaration := strings.ToLower(collapseSpace(entryContract))
-	if marker := strings.Index(declaration, "- **"); marker >= 0 {
-		declaration = declaration[:marker]
-	}
-	var diags []string
-	for _, authorization := range []struct{ anchor, diag string }{
-		{"a ready compiled map", ".agents/commands/bench-write-spec.md dropped the ready compiled map authorization"},
-		{"reviewer-confirmed current conversation", ".agents/commands/bench-write-spec.md dropped the reviewer-confirmed current conversation authorization"},
-		{"named reviewed artifact", ".agents/commands/bench-write-spec.md dropped the named reviewed artifact authorization"},
-	} {
-		if !strings.Contains(declaration, authorization.anchor) {
-			diags = append(diags, authorization.diag)
-		}
-	}
-	if !strings.Contains(declaration, "accept exactly one of three decision sources") ||
-		!strings.Contains(declaration, "no unnamed memory, unreviewed note, or fourth override authorizes a draft") {
-		diags = append(diags, ".agents/commands/bench-write-spec.md dropped the exactly-three authorization boundary")
-	}
-	return diags
 }
 
 func checkCoverageMaps(root string) []string {

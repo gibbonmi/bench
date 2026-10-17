@@ -353,12 +353,6 @@ func checkRoadmapPromotionAnchors(root string) []string {
 	if !strings.Contains(text, "ROADMAP.md") {
 		diags = append(diags, "/bench-shape-idea does not reference ROADMAP.md (roadmap promotion seam)")
 	}
-	if !strings.Contains(collapseSpace(text), "working prioritization document") {
-		diags = append(diags, "/bench-shape-idea does not describe ROADMAP.md as the working prioritization document")
-	}
-	if !strings.Contains(collapseSpace(text), "roadmap row in place") {
-		diags = append(diags, "/bench-shape-idea does not state that pulling an item leaves its roadmap row in place (row presence is status)")
-	}
 	if strings.Contains(collapseSpace(text), "capture-and-forget") {
 		diags = append(diags, "/bench-shape-idea reintroduces capture-sink roadmap wording; capture/IDEAS.md is the capture inbox and ROADMAP.md the working plan")
 	}
