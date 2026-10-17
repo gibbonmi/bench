@@ -12,8 +12,8 @@ const CommitmentDiagnosticPrefix = "commitment guidance: "
 // outside the committed outcome. Another grant let a build ship a light-path fix. A
 // restriction held light-path work behind the active commitment.
 var commitmentAnchors = []Anchor{
-	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: Require, Needle: "A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.", Diagnostic: CommitmentDiagnosticPrefix + "spec authoring dropped the planning-only staged spec"},
-	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Section: "Exit handoff", Needle: "From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.", Diagnostic: CommitmentDiagnosticPrefix + "spec authoring dropped the start command as the handoff next command"},
+	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: Require, Class: Command, Needle: "A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.", Diagnostic: CommitmentDiagnosticPrefix + "spec authoring dropped the planning-only staged spec"},
+	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Class: Command, Section: "Exit handoff", Needle: "From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.", Diagnostic: CommitmentDiagnosticPrefix + "spec authoring dropped the start command as the handoff next command"},
 
 	{Group: AfterImplementSpec, File: drainCommand, Kind: Forbid, Needle: "build the item in this session (\"implement now\") by default.", Diagnostic: CommitmentDiagnosticPrefix + "drain restored the default implementation of a light-path item"},
 	{Group: AfterImplementSpec, File: drainCommand, Kind: Forbid, Needle: "Open a `ROADMAP.md` row only when the reviewer declines.", Diagnostic: CommitmentDiagnosticPrefix + "drain restored the roadmap row only for a declined item"},

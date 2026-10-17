@@ -10,15 +10,35 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 )
 
-// Anchor describes one ordered conformance prose anchor.
+// Anchor describes one ordered conformance prose anchor. Reader names the Go parser or the
+// template that reads a Label row's needle; it is review text, not a path.
 type Anchor struct {
 	Group      Group
 	File       string
 	Kind       Kind
+	Class      Class
+	Reader     string
 	Section    string
 	Needle     string
 	Diagnostic string
 }
+
+// Class states why a Require row earns its place in the registry. A Forbid kind implies the
+// forbid class, so a Forbid row declares no class. The zero value is unclassified, and the
+// admission test refuses an unclassified Require row.
+type Class uint8
+
+const (
+	Unclassified Class = iota
+	// Label names a label or a heading that a parser or a template reads.
+	Label
+	// Route names a phase, a skill, or a verb as a routing reference.
+	Route
+	// Invariant carries a platform invariant in a core section of the operating guide.
+	Invariant
+	// Command pins a `bench …` command line with an argument or a flag.
+	Command
+)
 
 // Group places registry evaluations around bespoke conformance checks.
 type Group uint8

@@ -1,6 +1,139 @@
 package anchors
 
-import "testing"
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/prose"
+)
+
+// TestAdmissionClasses walks the live registry and applies the class shape rules of the
+// anchor admission. Each table case is one row that a rule must refuse or admit.
+func TestAdmissionClasses(t *testing.T) {
+	guide, err := os.ReadFile(filepath.Join("..", "..", operatingGuide))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, anchor := range Entries() {
+		if faults := admissionFaults(anchor, string(guide)); len(faults) > 0 {
+			t.Errorf("%s needle %q is not admitted: %s", anchor.File, anchor.Needle, strings.Join(faults, "; "))
+		}
+	}
+	const testGuide = "## Roles\n\nRole text.\n\n## Workflow\n\nWorkflow text.\n"
+	words := func(n int) string { return strings.TrimSpace(strings.Repeat("word ", n)) }
+	for _, test := range []struct {
+		name   string
+		anchor Anchor
+		admit  bool
+	}{
+		{"AP01 unclassified", Anchor{File: "a.md", Kind: Require, Needle: "Status: staged"}, false},
+		{"forbid needs no class", Anchor{File: "a.md", Kind: Forbid, Needle: "retired form"}, true},
+		{"AP12 label with a reader", Anchor{File: "a.md", Kind: Require, Class: Label, Reader: "ticket parser", Needle: "Blocked by:"}, true},
+		{"AP12 label with an empty reader", Anchor{File: "a.md", Kind: Require, Class: Label, Needle: "Blocked by:"}, false},
+		{"AP13 route of six words", Anchor{File: "a.md", Kind: Require, Class: Route, Needle: "route through craft-gate for the gate"}, true},
+		{"AP13 route of seven words", Anchor{File: "a.md", Kind: Require, Class: Route, Needle: "route through craft-gate for the gate now"}, false},
+		{"route with no route token", Anchor{File: "a.md", Kind: Require, Class: Route, Needle: "the gate"}, false},
+		{"AP14 invariant on another file", Anchor{File: "AGENTS.md", Kind: Require, Class: Invariant, Needle: "Role text."}, false},
+		{"invariant located in Roles", Anchor{File: operatingGuide, Kind: Require, Class: Invariant, Needle: "Role text."}, true},
+		{"AP15 invariant in the Workflow section", Anchor{File: operatingGuide, Kind: RequireInSection, Class: Invariant, Section: "Workflow", Needle: "Workflow text."}, false},
+		{"AP15 invariant located in Workflow", Anchor{File: operatingGuide, Kind: Require, Class: Invariant, Needle: "Workflow text."}, false},
+		{"AP09 route row on a Workflow line", Anchor{File: operatingGuide, Kind: Require, Class: Route, Needle: "Workflow text."}, false},
+		{"AP16 command with a flag", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "Run `bench roadmap --flow` once."}, true},
+		{"AP16 command with a placeholder", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "bench coverage <spec>"}, true},
+		{"AP16 command with no bench span", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "Run the gate --full once."}, false},
+		{"AP17 needle at the bound with a code span", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "`bench test --check a b c d e f` " + words(prose.MaxSentenceWords-1)}, true},
+		{"AP17 needle over the bound", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "`bench test --check system` " + words(prose.MaxSentenceWords)}, false},
+	} {
+		if got := len(admissionFaults(test.anchor, testGuide)) == 0; got != test.admit {
+			t.Errorf("%s: admitted = %t, want %t", test.name, got, test.admit)
+		}
+	}
+	// Each argument-free verb sentence of the classification snapshot names a verb and its
+	// subcommands with no argument, so it is a rule sentence and not a command row.
+	for _, needle := range []string{
+		"only `bench worktree land` releases it after the reviewed source publishes",
+		"It opens with `bench preflight review` in explicit-base mode; a red preflight stops the phase.",
+		"a linked repo upgrades with `bench upgrade`",
+		"Each fold after the first chunk takes `bench record fold` before the next commit.",
+		"The changed-function caller sweep runs `bench consumers` for each changed function, unexported functions included.",
+		"Run `bench maps` before declaring readiness",
+	} {
+		if len(admissionFaults(Anchor{File: "a.md", Kind: Require, Class: Command, Needle: needle}, testGuide)) == 0 {
+			t.Errorf("argument-free verb sentence %q is admitted as a command row", needle)
+		}
+	}
+}
+
+// admissionFaults applies the class shape rules to one row. guide is the operating guide
+// text, where a row with no section field locates the H2 of its needle.
+func admissionFaults(anchor Anchor, guide string) []string {
+	if anchor.Kind != Require && anchor.Kind != RequireInSection {
+		return nil
+	}
+	var faults []string
+	words := prose.SentenceWords(anchor.Needle)
+	if words > prose.MaxSentenceWords {
+		faults = append(faults, fmt.Sprintf("needle of %d words is over the %d-word bound", words, prose.MaxSentenceWords))
+	}
+	if anchor.File == operatingGuide && !inCoreSection(anchor, guide) {
+		faults = append(faults, "row guards an operating guide line outside its core sections")
+	}
+	switch anchor.Class {
+	case Label:
+		if strings.TrimSpace(anchor.Reader) == "" {
+			faults = append(faults, "label row names no reader")
+		}
+	case Route:
+		if words > 6 || !slices.ContainsFunc([]string{"/bench-", "$bench-", "craft-", "bench-craft-", "bench "}, func(token string) bool { return strings.Contains(anchor.Needle, token) }) {
+			faults = append(faults, "route needle is over six words or names no route token")
+		}
+	case Invariant:
+		if anchor.File != operatingGuide {
+			faults = append(faults, "invariant row guards a file other than the operating guide")
+		}
+	case Command:
+		if !commandArgument(anchor.Needle) {
+			faults = append(faults, "command needle holds no `bench ` span with an argument or a flag")
+		}
+	default:
+		faults = append(faults, "require row declares no class")
+	}
+	return faults
+}
+
+// inCoreSection reports whether a row sits in Roles, The Bench CLI contract, or the
+// four-invariants section of the operating guide. A row with no section field uses the
+// located H2 of its needle.
+func inCoreSection(anchor Anchor, guide string) bool {
+	core := []string{"Roles", "The Bench CLI contract", invariantsSection}
+	if anchor.Section != "" {
+		return slices.Contains(core, anchor.Section)
+	}
+	return slices.ContainsFunc(core, func(title string) bool {
+		body, count := MarkdownH2Sections(StripHTMLComments(guide), title)
+		return count == 1 && Satisfied(Require, body, anchor.Needle)
+	})
+}
+
+// commandArgument is the COMMAND argument token rule. A `bench ` span runs from "bench " to
+// the next backtick, or to the end of the needle. The span has an argument when one of its
+// whitespace-separated tokens opens with "-", "<", "\"", or ".": a flag, a placeholder, a
+// quoted value, or a path. A bare word, such as "land" in `bench worktree land`, names a verb
+// or a subcommand and is no argument.
+func commandArgument(needle string) bool {
+	for rest := needle; strings.Contains(rest, "bench "); {
+		_, rest, _ = strings.Cut(rest, "bench ")
+		span, _, _ := strings.Cut(rest, "`")
+		if slices.ContainsFunc(strings.Fields(span), func(token string) bool { return strings.ContainsAny(token[:1], "-<\".") }) {
+			return true
+		}
+	}
+	return false
+}
 
 // TestLocateHonorsSectionScope pins DG28 and DG39: a section kind searches its own
 // section body only, and a duplicated owning section — which the evaluator's section

@@ -32,6 +32,19 @@ func Paragraphs(doc string) [][]string {
 	return out
 }
 
+// SentenceWords counts the words of one sentence the way the sentence bound counts them: an
+// inline code span is one word, a link counts its text, and bare punctuation is no word.
+func SentenceWords(sentence string) int {
+	content, spans := foldCodeSpans(sentence)
+	words := 0
+	for _, t := range tokenize(content, 0, spans) {
+		if isWord(t.text) {
+			words++
+		}
+	}
+	return words
+}
+
 // gradeBlocks grades every paragraph of the remaining lines.
 func gradeBlocks(lines []string) []Finding {
 	var out []Finding

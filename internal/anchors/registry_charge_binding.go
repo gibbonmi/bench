@@ -4,8 +4,8 @@ package anchors
 // and they forbid its retired repair fence and its rebase premise.
 var chargeBindingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: Forbid, Needle: "A repair fence is the approved chunk union plus the exact paths that the review names.", Diagnostic: "charge binding: the repair fence restored the chunk union plus review-named paths"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Repair-charge template", Needle: "Debug route:", Diagnostic: "delegation-discipline.md Repair-charge template dropped the debug route field"},
-	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Section: "Repair-charge template", Needle: "Repair context:", Diagnostic: "delegation-discipline.md Repair-charge template dropped the repair context field"},
+	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Class: Label, Reader: "repair-charge template", Section: "Repair-charge template", Needle: "Debug route:", Diagnostic: "delegation-discipline.md Repair-charge template dropped the debug route field"},
+	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: RequireInSection, Class: Label, Reader: "repair-charge template", Section: "Repair-charge template", Needle: "Repair context:", Diagnostic: "delegation-discipline.md Repair-charge template dropped the repair context field"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: Forbid, Needle: "After a rebase changes the source digest", Diagnostic: "charge binding: the digest rule restored the rebase premise that the workflow rejects"},
 }
 
