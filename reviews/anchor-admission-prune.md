@@ -180,6 +180,28 @@
           "tip": "1e169d060fc785115f5b6f42eff6a83761bae863",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "apc2-standards-r2",
+          "performer": "claude:aap_apc2_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e9b4216c4d59e10744f9ff0b06de7a959f815caa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc2_standards_r2",
+            "digest": "sha256:a49549bcfd1a8b603d502eccde24ac5ee3aead9aa8f9f9067ea48152fe8d69d4",
+            "excerpt": "Standards confirming round, AP-C2, correction delta c532d30d..ae3f7254 (comment-only; the file shrank by two lines).\nS1 closed, confidence 9: internal/anchors/registry_retained_workflow.go:9-10 reads \"the retired default and delegated workflow forms\", matching the Forbid-only groups at lines 181-195.\nS2 closed, confidence 9: registry_retained_workflow.go:153-159 no longer claims a landing-gate pin; each claim matches a row at lines 162-178.\nS3 not re-graded (no-op).\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "ca0e6ec76eac0a2ef65d22c1c5405b948bb15dcf",
+          "tip": "1e169d060fc785115f5b6f42eff6a83761bae863",
+          "finding_ids": [],
+          "supersedes": [
+            "apc2-standards-r1"
+          ]
         }
       ]
     }
