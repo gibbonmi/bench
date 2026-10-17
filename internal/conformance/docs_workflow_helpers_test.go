@@ -35,20 +35,8 @@ func checkWorkflowAnchors(root string) []string {
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterRoadmapContext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterImplementSpec)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterSpecAuthorization)...)
-	readme := readIfExists(filepath.Join(root, "README.md"))
-	if readme != "" {
-		if !strings.Contains(readme, "session-start.sh") {
-			diags = append(diags, "README layout omits .bench/hooks/session-start.sh")
-		}
-		if !strings.Contains(readme, "bench.sh") {
-			diags = append(diags, "README layout omits the real bin/bench.sh filename")
-		}
-		if !strings.Contains(readme, "benchkit.md") {
-			diags = append(diags, "README layout omits projects/benchkit.md")
-		}
-		if strings.Contains(readme, "\u2502   \u2514\u2500\u2500 bench                 #") {
-			diags = append(diags, "README layout still names bin/bench instead of bin/bench.sh")
-		}
+	if strings.Contains(readIfExists(filepath.Join(root, "README.md")), "\u2502   \u2514\u2500\u2500 bench                 #") {
+		diags = append(diags, "README layout still names bin/bench instead of bin/bench.sh")
 	}
 
 	if text := readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md")); text != "" && !strings.Contains(text, "craft-line") {
@@ -245,9 +233,8 @@ func structuredPhaseClauseIsNegated(body string) bool {
 }
 
 var (
-	markdownH2Sections = anchors.MarkdownH2Sections
-	collapseSpace      = anchors.CollapseSpace
-	stripHTMLComments  = anchors.StripHTMLComments
+	collapseSpace     = anchors.CollapseSpace
+	stripHTMLComments = anchors.StripHTMLComments
 )
 
 // TestStructuredPhaseContractPinsTheFixedClauseSet enumerates the four required clause

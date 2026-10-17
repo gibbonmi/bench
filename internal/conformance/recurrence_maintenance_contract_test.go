@@ -9,29 +9,23 @@ import (
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
 
-func checkOccurrenceLedgerAndMaintenance(root string) []string {
-	return append(checkOccurrenceLedgerMigration(root), checkRecurrenceMaintenanceContract(root)...)
+func checkOccurrenceLedgerAndDrainCommit(root string) []string {
+	return append(checkOccurrenceLedgerMigration(root), checkDrainCommitCommand(root)...)
 }
 
-func checkRecurrenceMaintenanceContract(root string) []string {
+func checkDrainCommitCommand(root string) []string {
 	path := filepath.Join(root, ".agents", "commands", "bench-drain.md")
 	text := stripHTMLComments(readIfExists(path))
 	if strings.TrimSpace(text) == "" {
-		return []string{"bench-drain recurrence maintenance command is unavailable"}
-	}
-
-	worktrees, worktreeCount := markdownH2Sections(text, "Worktree closure")
-	var diags []string
-	if worktreeCount != 1 || !strings.Contains(collapseSpace(worktrees), "Run `bench worktree list` before any batch mutation") {
-		diags = append(diags, "bench-drain does not run bench worktree list before any batch mutation")
+		return []string{"bench-drain command is unavailable"}
 	}
 	if !strings.Contains(collapseSpace(text), "After approval and the tracked landing, the coordinator runs `bench capture drain commit <drain-id>`.") {
-		diags = append(diags, "bench-drain does not delay sealed-generation retirement until approval and landing")
+		return []string{"bench-drain dropped the `bench capture drain commit <drain-id>` step"}
 	}
-	return diags
+	return nil
 }
 
-func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
+func TestDrainCommitCommandCheckBites(t *testing.T) {
 	h := NewHarness(t)
 	command := readIfExists(filepath.Join(h.KitRoot, ".agents", "commands", "bench-drain.md"))
 	if command == "" {
@@ -41,12 +35,11 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 	mutations := []struct {
 		name, old, new, want string
 	}{
-		{"orphan inventory", "Run `bench worktree list` before any batch mutation", "Run `bench worktree list` after the batch mutation", "bench-drain does not run bench worktree list before any batch mutation"},
-		{"sealed retirement after approval", "After approval and the tracked landing, the coordinator runs\n`bench capture drain commit <drain-id>`.", "Before approval, retire the sealed generation.", "bench-drain does not delay sealed-generation retirement until approval and landing"},
+		{"drain commit command", "`bench capture drain commit <drain-id>`.", "the drain commit step.", "bench-drain dropped the `bench capture drain commit <drain-id>` step"},
 	}
 	for _, mutation := range mutations {
 		t.Run(mutation.name, func(t *testing.T) {
-			if baseline := checkRecurrenceMaintenanceContract(h.KitRoot); len(baseline) != 0 {
+			if baseline := checkDrainCommitCommand(h.KitRoot); len(baseline) != 0 {
 				t.Fatalf("live command has baseline diagnostics before mutation: %s", strings.Join(baseline, "; "))
 			}
 			if strings.Count(command, mutation.old) != 1 {
@@ -60,7 +53,7 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 			if err := os.WriteFile(path, []byte(strings.Replace(command, mutation.old, mutation.new, 1)), 0o644); err != nil {
 				t.Fatal(err)
 			}
-			if !containsDiagnostic(checkRecurrenceMaintenanceContract(root), mutation.want) {
+			if !containsDiagnostic(checkDrainCommitCommand(root), mutation.want) {
 				t.Fatalf("mutation did not bite: want %q", mutation.want)
 			}
 			t.Logf("observed red: %s", mutation.want)

@@ -46,7 +46,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestOccurrenceLedgerMigrationCheckBitesOnFT98Count":           true,
 	"TestOfflineSmokeSliceOneProofIsExecutableNotTokenOnly":        true,
 	"TestBranchNativeArchitectureCensus":                           true,
-	"TestRecurrenceMaintenanceContractCheckBites":                  true,
+	"TestDrainCommitCommandCheckBites":                             true,
 	"TestResidualCheckCallsCrossCompileMatrix":                     true,
 	"TestRetroImprovementMarkersFixtureInventoryRejectsDeletion":   true,
 	"TestRetroImprovementMarkersFixturesCoverEveryDiagnosticClass": true,

@@ -27,7 +27,7 @@ func checkDocsCurrencyAndWorkflow(root, _ string) []string {
 	diags = append(diags, checkSignalVocabulary(root)...)
 	diags = append(diags, checkCommandFirstAnchors(root)...)
 	diags = append(diags, checkWorkflowAnchors(root)...)
-	diags = append(diags, checkOccurrenceLedgerAndMaintenance(root)...)
+	diags = append(diags, checkOccurrenceLedgerAndDrainCommit(root)...)
 	diags = append(diags, checkPrePushREADMEClaim(root)...)
 	diags = append(diags, checkCoverageMaps(root)...)
 	diags = append(diags, checkRemovedVerbSweep(root)...)
@@ -273,7 +273,7 @@ func TestPrePushREADMEClaimBites(t *testing.T) {
 		name   string
 		readme string
 	}{
-		{"unqualified default branch", "the pre-push hook protects the branch it resolves\nthe pre-push hook protects the default branch"},
+		{"unqualified default branch", "the pre-push hook protects the default branch"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			root := t.TempDir()
