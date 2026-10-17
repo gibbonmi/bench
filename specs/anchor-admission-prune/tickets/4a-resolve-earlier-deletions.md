@@ -1,7 +1,7 @@
 # Resolve an earlier chunk's deletion in a later chunk charge
 
 Blocked by: 4-prune-phase-registries.md
-Writes: internal/preflight/gather.go, internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/fence_writes.go, internal/preflight/fence_writes_test.go, internal/diff/range.go, internal/diff/review_base_test.go
+Writes: internal/preflight/gather.go, internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/fence_writes.go, internal/preflight/fence_writes_test.go, internal/diff/range.go, internal/diff/review_base_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: AP48
 
 ## What to build
