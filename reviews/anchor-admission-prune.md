@@ -1461,7 +1461,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "apc4-standards-r1",
+          "performer": "claude:aap_apc4_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d9e10497841a3d0e05222ba8851cc051a51f6e60",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc4_standards_r1",
+            "digest": "sha256:3b12ddfcfcda06c43bfe8945344a6933b50520bead0981152a157c1dc60c0082",
+            "excerpt": "Standards axis, AP-C4, frozen pair 66168c19..1a28a3e0; check-current current=true.\nS1 | low | the anchor group AfterSpecAuthorization (internal/anchors/registry.go:35) is named for a check that is gone; the fix is outside ticket 5's Writes | ask-user | confidence 8\nS2 | low | checkRecurrenceMaintenanceContract, TestRecurrenceMaintenanceContractCheckBites, and its message are stale after the trim (recurrence_maintenance_contract_test.go:16, :20, :34) | auto-fix | confidence 6\nS3 | medium | two kept needles are whole ordering sentences called COMMAND (recurrence_maintenance_contract_test.go:25, :28); the message at :29 grades the ordering rule, and the bite at :45 replaces the whole sentence | ask-user | confidence 5\nS4 | low | TestPrePushREADMEClaimBites keeps a line that the check no longer reads (docs_workflow_checks_test.go:276) | auto-fix | confidence 5\nNo dead helpers; no touched file grew.\nCount 4. Worst: S3.\n"
+          },
+          "axis": "Standards",
+          "base": "66168c19db46ee4beb78e7a374294f94aad47509",
+          "tip": "dcb0ae7cd42b93e1b3630cd38a3a2b5191b81bef",
+          "finding_ids": [
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc4-spec-r1",
+          "performer": "claude:aap_apc4_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d9e10497841a3d0e05222ba8851cc051a51f6e60",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc4_spec_r1",
+            "digest": "sha256:16ced66f92cc0151903ade980a93f645cdb6c7cdf433ca5b2d25242c29d9fd67",
+            "excerpt": "Spec axis, AP-C4, frozen pair 66168c19..1a28a3e0; check-current current=true; AP28, AP29, AP30, AP32 mapped.\nP1 | low | the census keeps the bench worktree list sentence (recurrence_maintenance_contract_test.go:23) but drops the bench spec retire sentence (bench-drain.md:273); both name a verb with no argument (spec.md:11, :128) | ask-user | confidence 6\nP2 | low | the README layout file-name pins (docs_workflow_helpers_test.go:40-48) hold no ROUTE token (spec.md:127) and no program reads them (spec.md:149) | ask-user | confidence 5\nCensus (enumerated): the six removed fixtures match fixture-census.md:323-328; the 13 BENCH.md markers have no registry Require twin; the named keeps stay. The extra 26th site is most likely the unchanged commitment guidance test.\nCount 2. Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "66168c19db46ee4beb78e7a374294f94aad47509",
+          "tip": "dcb0ae7cd42b93e1b3630cd38a3a2b5191b81bef",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc4-coverage-r1",
+          "performer": "claude:aap_apc4_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d9e10497841a3d0e05222ba8851cc051a51f6e60",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc4_coverage_r1",
+            "digest": "sha256:040b2142ee60cdc37b990b89edde2ca824313ff26189ee095d310f81ce6be51d",
+            "excerpt": "Coverage axis, AP-C4, frozen pair 66168c19..1a28a3e0; check-current current=true.\nC1 | low | the kept ROADMAP.md ROUTE pin and capture-and-forget FORBID pin in checkRoadmapPromotionAnchors (skills_index_checks_test.go:353-357) have no bite case; the gap predates the diff | ask-user | confidence 7\nClean: every trimmed check keeps a bite on its remaining half; no removed diagnostic or helper has a consumer.\nNo test or probe.\nCount 1. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "66168c19db46ee4beb78e7a374294f94aad47509",
+          "tip": "dcb0ae7cd42b93e1b3630cd38a3a2b5191b81bef",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1690,3 +1758,29 @@ AP-C7: 6 findings. The worst issue is C2.
 - C4 (auto-fix, confidence 6): no test pins the bare-preflight change, where the landing base equals the review base. The repair adds that case.
 - C5 (no-op, confidence 6): a landing-range deletion resolves the entry of any ticket. `writes-resolve` grades existence, and `fence-writes` grades authority.
 - C6 (no-op, confidence 8): a deleted and re-added path is not a deletion in the net range.
+
+## AP-C4 repair state
+
+AP-C4: repair cycle 1 of 2 starts. Every accepted finding falls on ticket 5, so one combined repair charge carries them all. No reviewer extension exists.
+
+## AP-C4 Standards
+
+AP-C4: 4 findings. The worst issue is S3.
+
+- S1 (no-op, confidence 8): the anchor group name `AfterSpecAuthorization` (`internal/anchors/registry.go:35`) names a check that is gone. The rename touches 28 uses in files of completed tickets and changes no behavior, so it goes to `bench learning`. Flagged for reviewer veto.
+- S2 (auto-fix, confidence 6): `internal/conformance/recurrence_maintenance_contract_test.go:16`, `:20`, and `:34` keep names and a message that describe recurrence maintenance. The repair renames them to what the check now holds.
+- S3 (auto-fix, confidence 5): `internal/conformance/recurrence_maintenance_contract_test.go:25` keeps the `bench worktree list` sentence as COMMAND, and `:29` grades an ordering rule. Merged with P1.
+- S4 (auto-fix, confidence 5): `internal/conformance/docs_workflow_checks_test.go:276` keeps a test-data line that the check no longer reads. The repair removes it.
+
+## AP-C4 Spec
+
+AP-C4: 2 findings. The worst issue is P1.
+
+- P1 (auto-fix, confidence 6): the census keeps the `bench worktree list` sentence and drops the `bench spec retire` sentence, and both name a verb with no argument. `specs/anchor-admission-prune/spec.md:11` makes such a sentence a rule sentence. The repair removes the `bench worktree list` pin and its bite case. The kept `bench capture drain commit <drain-id>` diagnostic then names its command, and its bite case mutates the command.
+- P2 (auto-fix, confidence 5): the README layout file-name pins (`internal/conformance/docs_workflow_helpers_test.go:40-48`) hold no ROUTE token, and no program reads them. The repair removes them and keeps their FORBID half.
+
+## AP-C4 Coverage
+
+AP-C4: 1 finding. The worst issue is C1.
+
+- C1 (no-op, confidence 7): the kept ROADMAP.md ROUTE pin and the capture-and-forget FORBID pin (`internal/conformance/skills_index_checks_test.go:353-357`) have no bite case. The gap predates the diff, so it goes to `bench learning` with the AP-C3 gaps. Flagged for reviewer veto.
