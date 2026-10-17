@@ -339,7 +339,74 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "apc1-standards-r1",
+          "performer": "claude:aap_apc1_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "456c681ccc9744bd468cd19e7fe78d75aaee79ec",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc1_standards_r1",
+            "digest": "sha256:f42ba4eb736183c1c3b1aa36ee883a59878b55f270b8cf44b909da42357875fb",
+            "excerpt": "Standards axis, AP-C1, pair bba9f7e6..18f6c6dd; check-current current=true, dirty_record=false.\nS1 | low | internal/anchors/registry_data_test.go:352 | TestDelegateExecOnlyAndCapChangeAnchorsRedOnRemoval still names the cap-change rule that the prune removed; the function holds only the exec-only rule | craft-comments SKILL.md:16-17 and :68-70 | ask-user | confidence 6\nClean: folded marker comment (registry_data.go:5-6), staleLandingPathAnchors single source (:26-59), drain family comment (:130), ft311_preparation_test.go removals.\nCount 1. Worst: S1.\n"
+          },
+          "axis": "Standards",
+          "base": "bba9f7e68856f827f535943983102164c6a79061",
+          "tip": "8dee1a027b4b1a32731bffa71f620d3c31a10413",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc1-spec-r1",
+          "performer": "claude:aap_apc1_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "456c681ccc9744bd468cd19e7fe78d75aaee79ec",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc1_spec_r1",
+            "digest": "sha256:d8fa3e2cc50c1fc03deb4c43cbd36c1c892eeffa7e9cd83eeaa22b0f87221c82",
+            "excerpt": "Spec axis, AP-C1, base bba9f7e6, tip 18f6c6dd; check-current current=true. All covered rows audited; none of the eight author calls contradicts the spec or the ticket.\nP1 | low | ticket commit 8dee1a02 edited specs/anchor-admission-prune/spec.md seam cells AP06-AP08 (lines 214-216) and planning seam-8 (line 410), outside the ticket Writes line | ask-user | confidence 7\nP2 | low | internal/anchors/registry_data.go:92 row 133 diagnostic still names \"does not create or retain the integration worktree\", which the re-cut needle no longer holds | auto-fix with tests/canary/workflow-guidance-anchors/implement-spec-worktree-before-preflight/EXPECT | confidence 6\nCensus (full enumeration): 333 DROP rows and the Roles row removed; no FORBID, LABEL, ROUTE, or COMMAND row left; 155 fixtures deleted (154 listed plus implement-spec-entry-validation); 9 integration-source files covered; no kept Require needle over 25 words.\nCount 2. Worst: P2.\n"
+          },
+          "axis": "Spec",
+          "base": "bba9f7e68856f827f535943983102164c6a79061",
+          "tip": "8dee1a027b4b1a32731bffa71f620d3c31a10413",
+          "finding_ids": [
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc1-coverage-r1",
+          "performer": "claude:aap_apc1_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "456c681ccc9744bd468cd19e7fe78d75aaee79ec",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc1_coverage_r1",
+            "digest": "sha256:69eaf1da96ff42e3f884ccf567305f1c5eee3219f5f6245b7c255180cb46b60e",
+            "excerpt": "Coverage axis, AP-C1, base bba9f7e6, tip 18f6c6dd; evidence current=true.\nC1 | medium | internal/anchors/locate.go:199-208 with registry_data.go:41-48 | ForbidCaseFoldedEmphasis strips only emphasis; the old check stripped every backtick and <code> tag, so four partial-span spellings now pass | ask-user | confidence 8\nC2 | low | internal/anchors/registry_data.go:36 | docs/greenfield-build-sequence.md keeps only Forbid rows, so a rename leaves them silently green | ask-user | confidence 7\nC3 | low | internal/anchors/registry_data.go:110 | the re-cut needle's diagnostic still names the create-or-retain clause | ask-user | confidence 7\nC4 | low | cmd/bench/anchor_help_test.go:99-116 | the sibling-close-up branch no longer runs with one Require row | no-op | confidence 6\nClean: AP06-AP08 each red on clause removal; wrapped needle matches; implement-spec-entry-validation left with its Require owner.\nTests: bench test --package ./internal/anchors pass, 165 tests; bench anchors .bench/BENCH.md 63 rows, no diagnostics.\nCount 4. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "bba9f7e68856f827f535943983102164c6a79061",
+          "tip": "8dee1a027b4b1a32731bffa71f620d3c31a10413",
+          "finding_ids": [
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -403,3 +470,29 @@ AP-C2: 0 actionable findings. The worst issue is C1.
 
 - C1 (no-op, confidence 7): the same HTML-comment narrowing as P1. Merged with P1.
 - C2 (no-op, confidence 5): `internal/conformance/retained_workflow_test.go:73` parses one fixed file name. AP25 holds as written.
+
+## AP-C1 repair state
+
+AP-C1: repair cycle 1 of 2 starts for ticket 2, with the targets S1 and C3. P2 merges with C3. No reviewer extension exists.
+
+## AP-C1 Standards
+
+AP-C1: 1 finding. The worst issue is S1.
+
+- S1 (auto-fix, confidence 6): `internal/anchors/registry_data_test.go:352` names a cap-change rule that the prune removed. The repair renames the test to the rule that it holds.
+
+## AP-C1 Spec
+
+AP-C1: 1 actionable finding. The worst issue is P2.
+
+- P1 (no-op, confidence 7): the ticket commit rewrote the AP06 to AP08 seam cells and added a planning-facts seam. The implement-spec phase directs the ticket commit to rewrite each covered planned seam cell into the citation form.
+- P2 (auto-fix, confidence 6): `internal/anchors/registry_data.go:92` keeps a diagnostic that names a clause that the re-cut needle no longer holds. Merged with C3.
+
+## AP-C1 Coverage
+
+AP-C1: 1 actionable finding. The worst issue is C1.
+
+- C1 (no-op, confidence 8): the generated case-folded rows do not catch every partial backtick or `<code>` spelling that the removed check stripped. The ticket asks for a row for each spelling that the old normalization matched at the ticket base. The spec says that this prune changes no matcher behavior. The repair records the narrowing in the AP47 census. Flagged for reviewer veto.
+- C2 (no-op, confidence 7): `docs/greenfield-build-sequence.md` keeps only Forbid rows, so a rename leaves them silently green. Every Forbid row has this property, so it goes to `bench learning`. Flagged for reviewer veto.
+- C3 (auto-fix, confidence 7): `internal/anchors/registry_data.go:110` keeps a diagnostic that names the create-or-retain clause. The repair rewords the diagnostic and the EXPECT of `implement-spec-worktree-before-preflight` together.
+- C4 (no-op, confidence 6): `cmd/bench/anchor_help_test.go:99-116` keeps a branch that one Require row cannot reach; the unit tests in `locate_test.go` cover the line shift.
