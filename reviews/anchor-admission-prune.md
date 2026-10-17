@@ -513,6 +513,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "apc1-standards-r2",
+          "performer": "claude:aap_apc1_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc1_standards_r2",
+            "digest": "sha256:87412042d462d4d41e3a6929ca6a71316b6f665d73b46406762aba9b3960feb2",
+            "excerpt": "Standards confirming round, AP-C1, repair delta 8b39eabd..6d96e6ae (3 files).\nS1 closed, confidence 9: internal/anchors/registry_data_test.go:352 TestDelegateExecOnlyAnchorRedOnRemoval holds one exec-only rule (:356-362); its doc comment (:349-351) states only that rule.\nNew findings: none. The diagnostic at registry_data.go:92 and its fixture EXPECT state the current fact. Verdict: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "bba9f7e68856f827f535943983102164c6a79061",
+          "tip": "6d96e6ae1a7d1ba06f4a8b20cfb2551265f0af74",
+          "finding_ids": [],
+          "supersedes": [
+            "apc1-standards-r1"
+          ]
+        },
+        {
+          "id": "apc1-spec-r2",
+          "performer": "claude:aap_apc1_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc1_spec_r2",
+            "digest": "sha256:ce31134336c64ca2784346046aaeb2efca9b3243a09e921c90314d1f3dafc8d3",
+            "excerpt": "Spec confirming round, AP-C1, repair delta 8b39eabd..6d96e6ae.\nP2 closed, confidence 9: internal/anchors/registry_data.go:92 names only what the re-cut needle guards. MUTATE.json:4-5 removes the needle and EXPECT:1 matches the new diagnostic, so AP20 holds.\nAP47 census line accurate, confidence 8: the removed check stripped every backtick and <code> tag; the generated rows miss a phrase that a span cuts partway through.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "bba9f7e68856f827f535943983102164c6a79061",
+          "tip": "6d96e6ae1a7d1ba06f4a8b20cfb2551265f0af74",
+          "finding_ids": [],
+          "supersedes": [
+            "apc1-spec-r1"
+          ]
+        },
+        {
+          "id": "apc1-coverage-r2",
+          "performer": "claude:aap_apc1_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc1_coverage_r2",
+            "digest": "sha256:12ed3cf6ba27a4a1de62c58c63ff17955203ed4787d0146cd22e5ba0c01c9b2f",
+            "excerpt": "Coverage confirming round, AP-C1, repair delta 8b39eabd..6d96e6ae.\nC3 closed, confidence 8: the diagnostic at internal/anchors/registry_data.go:92 matches its needle; EXPECT:1 matches the diagnostic; MUTATE.json:4 removes the sentence, so the fixture bites through row 133. No test uses the old diagnostic text.\nTests: TestDelegateExecOnlyAnchorRedOnRemoval pass; TestEveryRetainedFixtureBitesThroughRegisteredOwner ok.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "bba9f7e68856f827f535943983102164c6a79061",
+          "tip": "6d96e6ae1a7d1ba06f4a8b20cfb2551265f0af74",
+          "finding_ids": [],
+          "supersedes": [
+            "apc1-coverage-r1"
+          ]
         }
       ]
     }
@@ -593,7 +659,7 @@ AP-C2: 0 actionable findings. The worst issue is C1.
 
 ## AP-C1 repair state
 
-AP-C1: repair cycle 1 of 2 starts for ticket 2, with the targets S1 and C3. P2 merges with C3. No reviewer extension exists.
+AP-C1: repair cycle 1 of 2 is complete at 6d96e6ae (claude:aap_t02_rep1, opus, medium). It closed S1 and C3, and P2 merged with C3. The confirming round of all three axes passed. No reviewer extension exists.
 
 ## AP-C1 Standards
 
