@@ -145,8 +145,9 @@ func boundedVerdict(verdict Verdict) Verdict {
 	return verdict
 }
 
-// verdictCommand renders the ordinary or plan-only verdict. kind is the operation that the
-// dispatcher selected, and the facts carry it into Decide.
+// verdictCommand renders the ordinary or plan-only verdict, or the breakdown of the same
+// gathered facts. kind is the operation that the dispatcher selected, and the facts carry it
+// into Decide.
 func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip string, args []string) (string, int) {
 	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
 	if bootErr != nil {
@@ -159,6 +160,9 @@ func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, source
 		return toon.RenderError(err) + "\n", 1
 	}
 	facts.Operation = kind
+	if kind == evidencecmd.KindBreakdown {
+		return renderBreakdown(facts)
+	}
 
 	verdict := Decide(facts)
 	if mode == modeBuild && kind != evidencecmd.KindPlanOnly && !verdict.Red {
@@ -197,23 +201,34 @@ func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, source
 // green charge prints no check row.
 func renderChecks(verdict Verdict) (string, error) {
 	counts := map[string]int{}
-	var red [][]string
 	for _, c := range verdict.Checks {
 		counts[c.Verdict]++
-		if c.Verdict == verdictRed {
-			red = append(red, []string{c.Check, c.Verdict, c.Detail, c.Next})
-		}
 	}
 	summary := fmt.Sprintf("checks{green=%d,not_applicable=%d,red=%d}\n",
 		counts[verdictGreen], counts[verdictNA], counts[verdictRed])
+	red := redRows(verdict)
 	if len(red) == 0 {
 		return summary, nil
 	}
-	tbl, err := toon.Table("checks", []string{"check", "verdict", "detail", "next"}, red)
+	tbl, err := toon.Table("checks", checkFields, red)
 	if err != nil {
 		return "", err
 	}
 	return summary + tbl, nil
+}
+
+// checkFields are the columns of every rendered red check row, and redRows is the row of
+// each red check of verdict, in check order.
+var checkFields = []string{"check", "verdict", "detail", "next"}
+
+func redRows(verdict Verdict) [][]string {
+	var red [][]string
+	for _, c := range verdict.Checks {
+		if c.Verdict == verdictRed {
+			red = append(red, []string{c.Check, c.Verdict, c.Detail, c.Next})
+		}
+	}
+	return red
 }
 
 func snapshotDriftRefusal(args []string, hint string) string {

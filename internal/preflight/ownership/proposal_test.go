@@ -249,6 +249,28 @@ func TestProposalReadOnly(t *testing.T) {
 	}
 }
 
+// TestProposalOrdering grades that a second ticket that writes a proposed path needs an
+// explicit blocker edge, and that the blocker removes the requirement.
+func TestProposalOrdering(t *testing.T) {
+	for name, blocker := range map[string]string{"OC68 shared proposed path": "", "explicit blocker": "one.md"} {
+		t.Run(name, func(t *testing.T) {
+			two := []string{"tests/canary/fam/pin-fixture/EXPECT"}
+			root := ownershiptest.ProposalRepo{Writes: []string{"internal/example/pinned.go"}, Others: map[string][]string{"two.md": two}, Files: coveredTree().Files}.Seed(t)
+			if blocker != "" {
+				doc := strings.Replace(preflighttest.WritesTicketDoc("Two", two, "PF1", "PF2"), "Blocked by: none", "Blocked by: "+blocker, 1)
+				preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/two.md", doc)
+				commit(t, "block two.md")
+			}
+			out := mustPropose(t, root)
+			one(t, out, "writes_proposal", map[string]string{"path": "tests/canary/fam/pin-fixture"})
+			edges := matching(t, out, "ordering", map[string]string{"ticket": "one.md", "other": "two.md", "required": "approved ordering edge required"})
+			if want := map[bool]int{true: 1, false: 0}[blocker == ""]; len(edges) != want || len(table(t, out, "ordering")) != want {
+				t.Fatalf("ordering edges = %v, want %d:\n%s", edges, want, out)
+			}
+		})
+	}
+}
+
 // emptyTree is a linked repository with no anchor registry and no fixture inventory, whose
 // ticket writes a guidance path and a source file. tail closes its spec and states its whole
 // planning inventory, so an empty tail declares none.

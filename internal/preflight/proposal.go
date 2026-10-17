@@ -15,6 +15,12 @@ import (
 // because the proposal itself reports the repair that the red requires.
 var proposalToleratedChecks = append(closureCheckNames(), "fence-writes")
 
+// breakdownToleratedChecks adds two reds of a graph that slicing has not finished to the
+// proposal's set: rows-owned, whose uncited rows the breakdown lists, and completion-plan,
+// because a valid plan names only ticket files that exist. Only this read-only view
+// tolerates them.
+var breakdownToleratedChecks = append(slices.Clone(proposalToleratedChecks), "rows-owned", "completion-plan")
+
 func proposeWritesCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip, name string, args []string) (string, int) {
 	return preparedCommand(root, kind, mode, slug, base, sourceTip, name, args)
 }
@@ -28,11 +34,8 @@ func renderWritesProposal(root string, f Facts, name string) (string, int) {
 	if refusal, _ := preparationCheckoutRefusal(root, f, "proposal"); refusal != "" {
 		return refusal, 1
 	}
-	verdict := Decide(f)
-	for _, check := range verdict.Checks {
-		if check.Verdict == verdictRed && !slices.Contains(proposalToleratedChecks, check.Check) {
-			return chargeVerdictRefusal(verdict), 1
-		}
+	if verdict := Decide(f); refusesBeyond(verdict, proposalToleratedChecks) {
+		return chargeVerdictRefusal(verdict), 1
 	}
 	entry, selected, detail, next := preparationTicket(root, f, name)
 	if detail != "" {
@@ -42,27 +45,14 @@ func renderWritesProposal(root string, f Facts, name string) (string, int) {
 		return chargeRefusal("source", failure, "restore the named canonical source and rerun the exact proposal"), 1
 	}
 	rows := proposalRows(f, *selected)
-	tables := []struct {
-		name   string
-		fields []string
-		rows   [][]string
-	}{
+	return renderTables([]responseTable{
 		{"writes_proposal", []string{"path", "source", "fence"}, rows},
 		{"ordering", []string{"ticket", "other", "required"}, proposalEdges(f.Tickets, *selected, rows)},
 		{"closure", []string{"ticket", "path", "requires"}, closureTable(f, selected.Name)},
 		{"closure_evidence", []string{"ticket", "path", "kind", "source", "line", "reason"}, evidenceTable(f, selected.Name)},
 		{"source", []string{"base", "tip"}, [][]string{{f.SourceBase, f.SourceTip}}},
 		{"premises", []string{"id", "state", "source", "reason"}, premiseTable(f)},
-	}
-	var out strings.Builder
-	for _, table := range tables {
-		rendered, err := toon.Table(table.name, table.fields, table.rows)
-		if err != nil {
-			return toon.RenderError(err) + "\n", 1
-		}
-		out.WriteString(rendered)
-	}
-	return out.String(), 0
+	})
 }
 
 // selectedRequirements is every requirement of the selected ticket, owned or not, in
@@ -156,11 +146,8 @@ func proposalFence(path string, entries []string) string {
 func proposalEdges(all []tickets.Ticket, selected tickets.Ticket, rows [][]string) [][]string {
 	proposed := append(append([]string{}, ownership.OwnedPaths(selected)...), pathsFromRows(rows)...)
 	var edges [][]string
-	for _, other := range all {
-		if other.Name == selected.Name || ordered(selected, other, all) || !overlaps(proposed, ownership.OwnedPaths(other)) {
-			continue
-		}
-		edges = append(edges, []string{selected.Name, other.Name, "approved ordering edge required"})
+	for _, other := range ownership.Unordered(all, selected, proposed) {
+		edges = append(edges, []string{selected.Name, other, "approved ordering edge required"})
 	}
 	return edges
 }
@@ -173,35 +160,54 @@ func pathsFromRows(rows [][]string) []string {
 	return paths
 }
 
-func overlaps(left, right []string) bool {
-	for _, a := range left {
-		for _, b := range right {
-			if tickets.Covers(b, a) || tickets.Covers(a, b) {
-				return true
-			}
-		}
+// renderBreakdown prints the read-only authoring view of the gathered facts: the source,
+// each uncited coverage row with its seam cell, every ticket's closure, the premises, and
+// each tolerated red check. It refuses every other red check, and it grants no frontier,
+// ordering, or write authority.
+func renderBreakdown(f Facts) (string, int) {
+	verdict := Decide(f)
+	if refusesBeyond(verdict, breakdownToleratedChecks) {
+		return chargeVerdictRefusal(verdict), 1
 	}
-	return false
+	var uncited, closure [][]string
+	for _, row := range f.Ownership.Uncited {
+		uncited = append(uncited, []string{row.ID, row.Story, row.Seam})
+	}
+	for _, ticket := range f.Tickets {
+		closure = append(closure, closureTable(f, ticket.Name)...)
+	}
+	return renderTables([]responseTable{
+		{"source", []string{"base", "tip"}, [][]string{{f.SourceBase, f.SourceTip}}},
+		{"uncited", []string{"row", "story", "seam"}, uncited},
+		{"closure", []string{"ticket", "path", "requires"}, closure},
+		{"premises", []string{"id", "state", "source", "reason"}, premiseTable(f)},
+		{"checks", checkFields, redRows(verdict)},
+	})
 }
 
-func ordered(left, right tickets.Ticket, all []tickets.Ticket) bool {
-	return reaches(left.Name, right.Name, all, map[string]bool{}) || reaches(right.Name, left.Name, all, map[string]bool{})
+// refusesBeyond reports whether verdict holds a red check that tolerated does not name.
+func refusesBeyond(verdict Verdict, tolerated []string) bool {
+	return slices.ContainsFunc(verdict.Checks, func(check CheckResult) bool {
+		return check.Verdict == verdictRed && !slices.Contains(tolerated, check.Check)
+	})
 }
 
-func reaches(from, target string, all []tickets.Ticket, seen map[string]bool) bool {
-	if seen[from] {
-		return false
-	}
-	seen[from] = true
-	for _, ticket := range all {
-		if ticket.Name != from {
-			continue
+// responseTable is one TOON table of a proposal or breakdown response.
+type responseTable struct {
+	name   string
+	fields []string
+	rows   [][]string
+}
+
+// renderTables renders tables in order, or the render error alone.
+func renderTables(tables []responseTable) (string, int) {
+	var out strings.Builder
+	for _, table := range tables {
+		rendered, err := toon.Table(table.name, table.fields, table.rows)
+		if err != nil {
+			return toon.RenderError(err) + "\n", 1
 		}
-		for _, blocker := range ticket.Blockers {
-			if blocker == target || reaches(blocker, target, all, seen) {
-				return true
-			}
-		}
+		out.WriteString(rendered)
 	}
-	return false
+	return out.String(), 0
 }

@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -29,7 +30,7 @@ func kitPinCheck(f Facts) CheckResult {
 }
 
 // coversTokens is every row ID the parsed tickets cite, in enumeration order.
-// It is the one ownership evidence both row checks read.
+// rows-membership reads it.
 func coversTokens(f Facts) []string {
 	var tokens []string
 	for _, ticket := range f.Tickets {
@@ -38,15 +39,9 @@ func coversTokens(f Facts) []string {
 	return tokens
 }
 
+// rowsOwnedCheck reds each declared row that the one ownership rule finds uncited.
 func rowsOwnedCheck(f Facts) CheckResult {
-	cited := coversTokens(f)
-	var uncited []string
-	for _, id := range f.DeclaredRowIDs {
-		if !slices.Contains(cited, id) {
-			uncited = append(uncited, id)
-		}
-	}
-	if len(uncited) > 0 {
+	if uncited := ownership.UncitedIDs(f.DeclaredRowIDs, f.Tickets); len(uncited) > 0 {
 		return red("rows-owned", "declared row(s) cited by no ticket file: "+strings.Join(uncited, ", "))
 	}
 	return green("rows-owned")

@@ -9,6 +9,7 @@
 package ownership
 
 import (
+	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -131,13 +132,15 @@ type ChargeReadiness struct {
 
 // Snapshot is one immutable collection. Complete means full supported premise
 // certification of a declared-complete inventory with no diagnostic; it is never reviewer
-// approval, and a partial inventory or any manual claim keeps it false.
+// approval, and a partial inventory or any manual claim keeps it false. Uncited is every
+// coverage row that no parsed ticket cites, which the read-only breakdown lists.
 type Snapshot struct {
 	Requirements    []Requirement
 	Premises        []Premise
 	Diagnostics     []Diagnostic
 	Complete        bool
 	ChargeReadiness ChargeReadiness
+	Uncited         []coverage.MapRow
 }
 
 // The stages a collection refusal names.
@@ -177,6 +180,7 @@ func Collect(root string, source Source, manifest Manifest, parsed []tickets.Tic
 		Requirements: requirements,
 		Premises:     allPremises,
 		Diagnostics:  allDiag,
+		Uncited:      uncited(manifest.rows, parsed),
 	}
 	snapshot.Complete = manifest.Present && manifest.Completeness == completenessDeclared && len(snapshot.Diagnostics) == 0 && nativeValid
 	for _, premise := range snapshot.Premises {
