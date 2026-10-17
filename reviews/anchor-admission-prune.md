@@ -212,7 +212,21 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "folds": [
+    {
+      "id": "F1",
+      "after": "AP-C2",
+      "from": "ebef308d813d87763b2482ada126ffe8103c648b",
+      "commit": "bba9f7e68856f827f535943983102164c6a79061",
+      "incoming": "d568cb05bc180bcd39ed95041edb265393a5fbb2",
+      "source_digest": "6fb54f2d9c6369b4a1672a657335fb63c7596ada",
+      "resolution": [],
+      "resolution_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_packages": [],
+      "reviews": []
+    }
+  ]
 }
 ```
 
