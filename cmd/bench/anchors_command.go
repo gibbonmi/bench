@@ -39,9 +39,9 @@ func anchorsCommand(args []string) (string, int) {
 	}
 	var rows [][]any
 	for _, anchor := range evaluation.Locations {
-		rows = append(rows, []any{anchorKindName(anchor.Kind), anchor.Section, anchor.Step, anchor.Needle, anchor.Line})
+		rows = append(rows, []any{anchorKindName(anchor.Kind), anchor.Section, anchor.Needle, anchor.Line})
 	}
-	out, err := toon.TableTyped("anchors", []string{"kind", "section", "step", "needle", "line"}, rows)
+	out, err := toon.TableTyped("anchors", []string{"kind", "section", "needle", "line"}, rows)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
@@ -120,8 +120,6 @@ func anchorKindName(kind anchors.Kind) string {
 		return "forbid-in-section"
 	case anchors.ForbidCaseFoldedEmphasis:
 		return "forbid-case-folded-emphasis"
-	case anchors.RequireInStep:
-		return "require-in-step"
 	default:
 		return "unknown"
 	}

@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Anchor step kind
+
+- Removed the `require-in-step` anchor kind and the `step` column of the `bench anchors` table, so the table now reads `anchors[N]{kind,section,needle,line}`. Before, the table carried a `step` cell for each row, and nine registry rows pinned a sentence inside one numbered step of a section.
+
 ### Preflight ownership closure
 
 - Added `bench preflight build <slug> --breakdown [--base <commit>] [--source-tip <commit>]`. It lists each coverage row that no ticket cites, with its seam cell, and the closure and premises of each ticket. It shows each red of an unfinished ticket graph as a diagnostic, refuses each other red, and grants no authority. The ordinary build still reds each uncited row.

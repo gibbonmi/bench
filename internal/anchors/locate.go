@@ -17,31 +17,13 @@ import (
 // a rune's byte length cannot shift the reported line. A forbid kind is located
 // the same way as a require kind: a non-zero line locates the violation, the
 // presence of the forbidden needle.
-//
-// This entry point passes step 0, which no line opens, so a step-scoped kind
-// answers 0 here. The evaluator locates such an anchor with the anchor's own step.
 func Locate(kind Kind, section, needle, data string) int {
-	return locate(kind, section, 0, needle, data)
-}
-
-// locate is the package's one location walk. Locate is its step-free projection, and the
-// evaluator calls it with the anchor's own step, so a step-scoped anchor reports the line
-// of the match inside its step and nothing else.
-func locate(kind Kind, section string, step int, needle, data string) int {
 	stripped, origin := stripCommentsMapped(data)
 	text, textOrigin := stripped, origin
 	if kind.sectionScoped() {
 		body, bodyOrigin, count := sectionRunesMapped(stripped, origin, section)
 		// An absent section and a duplicated one both refuse: the evaluator resolves a
 		// scoped anchor against exactly one owning heading.
-		if count != 1 {
-			return 0
-		}
-		text, textOrigin = body, bodyOrigin
-	}
-	if kind.stepScoped() {
-		body, bodyOrigin, count := stepRunesMapped(text, textOrigin, step)
-		// An absent step and a duplicated one refuse for the same reason a section does.
 		if count != 1 {
 			return 0
 		}
@@ -95,9 +77,8 @@ func stripCommentsMapped(data string) (text []rune, origin []int) {
 // the first region opens accepts, that region's origin mapping into runes, and the number of
 // lines opens accepted. A line inside a fenced block neither opens nor closes a region. The
 // body and the count come from the same walk, so a caller that refuses a duplicated region
-// reads the count the body came from. keepOpener keeps the opening line inside the body, for
-// a region whose own first line carries text.
-func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line []rune) bool, keepOpener bool) (body []rune, bodyOrigin []int, count int) {
+// reads the count the body came from. The body starts on the line after the opener.
+func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line []rune) bool) (body []rune, bodyOrigin []int, count int) {
 	lines := splitRuneLines(runes)
 	fenced := false
 	start, end := -1, -1
@@ -112,10 +93,7 @@ func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line []rune
 		if opens(line) {
 			count++
 			if count == 1 {
-				start = i
-				if !keepOpener {
-					start = i + 1
-				}
+				start = i + 1
 			}
 			continue
 		}
@@ -156,22 +134,7 @@ func sectionRunesMapped(runes []rune, origin []int, title string) (body []rune, 
 	heading := []rune("## " + title)
 	return scopeRunesMapped(runes, origin,
 		func(line []rune) bool { return slices.Equal(trimSpaceRunes(line), heading) },
-		func(line []rune) bool { return hasPrefixRunes(line, headingMark) },
-		false)
-}
-
-// stepRunesMapped is the package's one numbered-step resolution: the first body of the step
-// the reader sees as step, and the number of lines that open it. The next opener of any step
-// closes the body, so an indented continuation line stays inside its step. The opener's own
-// line joins the body, because that line carries the step's first words.
-// MarkdownNumberedSteps is this function's string projection.
-func stepRunesMapped(runes []rune, origin []int, step int) (body []rune, bodyOrigin []int, count int) {
-	return scopeRunesMapped(runes, origin,
-		// The reader sees the literal digits, so the match is on the written number and
-		// never on the opener's ordinal position in the section.
-		func(line []rune) bool { number, opens := stepOpener(line); return opens && number == step },
-		func(line []rune) bool { _, opens := stepOpener(line); return opens },
-		true)
+		func(line []rune) bool { return hasPrefixRunes(line, headingMark) })
 }
 
 // collapseSpaceMapped is the package's one whitespace collapse: each whitespace run becomes
