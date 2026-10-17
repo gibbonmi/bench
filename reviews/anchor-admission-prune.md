@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/anchor-admission-prune/spec.md",
-  "plan_digest": "sha256:a9db6069d403fba5f59f97414e53aeb33b61251b5a775c681c9f8cbf5da8525a",
+  "plan_digest": "sha256:4bda71bf949f25284e948224aa86ae0dd779bea92b2ba5fa0b4b62257557308a",
   "implementation_session": "",
   "chunks": [
     {
@@ -957,6 +957,55 @@
           ]
         }
       ]
+    },
+    {
+      "id": "AP-C7",
+      "base": "3f56db6dba6dd6821669a112487776e5002840dc",
+      "tip": "808cda856428aa8d219ae9e0f24ca701a39e395f",
+      "plan_digest": "sha256:4bda71bf949f25284e948224aa86ae0dd779bea92b2ba5fa0b4b62257557308a",
+      "source_digest": "7e5d0d9e23c0f03f0d5b03284eeeb155b45e44c1",
+      "acceptance_rows": [
+        "AP48"
+      ],
+      "verification": [
+        {
+          "id": "t4a-t4a-preflight",
+          "performer": "claude:aap_t04a",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7e5d0d9e23c0f03f0d5b03284eeeb155b45e44c1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a",
+            "digest": "sha256:9d5da6a8dbdbac28c15ccb2c0e7487bac2984ea11162a59c44cca7290277dade",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,28612,413\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t4a-t4a-root-conformance",
+          "performer": "claude:aap_t04a",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7e5d0d9e23c0f03f0d5b03284eeeb155b45e44c1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a",
+            "digest": "sha256:742aa02e63e32885296a8ead7de01c5da8477bfb53688a7555b244552200586b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14501,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -997,6 +1046,21 @@
         ],
         "AP-C2": [
           "AP-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a9db6069d403fba5f59f97414e53aeb33b61251b5a775c681c9f8cbf5da8525a",
+      "to": "sha256:4bda71bf949f25284e948224aa86ae0dd779bea92b2ba5fa0b4b62257557308a",
+      "chunk_ids": {
+        "AP-C1": [
+          "AP-C1"
+        ],
+        "AP-C2": [
+          "AP-C2"
+        ],
+        "AP-C3": [
+          "AP-C3"
         ]
       }
     }
