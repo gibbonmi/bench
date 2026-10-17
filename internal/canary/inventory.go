@@ -2,13 +2,11 @@
 package canary
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"sort"
 	"strings"
 
@@ -131,104 +129,6 @@ func Inventory(root string) (Selection, error) {
 		return result, errors.New(strings.Join(result.Diagnostics, "\n"))
 	}
 	return result, nil
-}
-
-// FixturePins maps every repository path the live fixture inventory pins to the
-// repo-relative fixture directories that pin it. A fixture pins a path when its
-// BASE list names it, when its files/ overlay carries it, or when its
-// MUTATE.json anchors a mutation in it. The BASE walk follows @ includes, so an
-// included list pins for the fixture that includes it.
-//
-// The enumeration reads the inventory rather than a copied list, so a fixture
-// that moves carries its pins with it. A root with no fixture inventory pins
-// nothing; that is an answer, not a fault.
-func FixturePins(root string) (map[string][]string, error) {
-	records, err := rootRecords(root)
-	if err != nil {
-		return nil, err
-	}
-	pins := map[string][]string{}
-	for _, record := range records {
-		dir, relErr := filepath.Rel(root, record.dir)
-		if relErr != nil {
-			return nil, relErr
-		}
-		dir = filepath.ToSlash(dir)
-		paths, pinErr := pinnedPaths(root, record.dir)
-		if pinErr != nil {
-			return nil, pinErr
-		}
-		for _, path := range paths {
-			if !slices.Contains(pins[path], dir) {
-				pins[path] = append(pins[path], dir)
-			}
-		}
-	}
-	for path := range pins {
-		sort.Strings(pins[path])
-	}
-	return pins, nil
-}
-
-// PinnedPaths is every repository path one fixture directory pins, in BASE,
-// overlay, and mutation order. The fixture directory is an absolute path or a
-// path relative to the working directory; the root resolves the BASE includes.
-//
-// A caller that reads one fixture, such as a failure message that narrows a
-// diagnostic list to the pinned lines, uses this accessor. FixturePins builds
-// its map on the same reader, so the two answers cannot disagree.
-func PinnedPaths(root, fixtureDir string) ([]string, error) {
-	return pinnedPaths(root, fixtureDir)
-}
-
-// pinnedPaths is every repository path one fixture directory pins, in BASE,
-// overlay, and mutation order. It reuses the BASE reader the materializer
-// drives, so the pinned set and the materialized set cannot disagree.
-func pinnedPaths(root, fixture string) ([]string, error) {
-	var paths []string
-	basePath := filepath.Join(fixture, "BASE")
-	if regularFile(basePath) {
-		rels, err := basePaths(root, basePath)
-		if err != nil {
-			return nil, err
-		}
-		paths = append(paths, rels...)
-	}
-	filesDir := filepath.Join(fixture, filesDirName)
-	if info, err := os.Stat(filesDir); err == nil && info.IsDir() {
-		if err := filepath.WalkDir(filesDir, func(path string, entry os.DirEntry, walkErr error) error {
-			if walkErr != nil {
-				return walkErr
-			}
-			if entry.IsDir() {
-				return nil
-			}
-			rel, relErr := filepath.Rel(filesDir, path)
-			if relErr != nil {
-				return relErr
-			}
-			paths = append(paths, filepath.ToSlash(restoredFixturePath(rel)))
-			return nil
-		}); err != nil {
-			return nil, err
-		}
-	}
-	mutatePath := filepath.Join(fixture, "MUTATE.json")
-	if !regularFile(mutatePath) {
-		return paths, nil
-	}
-	data, err := os.ReadFile(mutatePath)
-	if err != nil {
-		return nil, err
-	}
-	var mutations []fixtureMutation
-	if err := json.Unmarshal(data, &mutations); err != nil {
-		return nil, err
-	}
-	for _, mutation := range mutations {
-		paths = append(paths, filepath.ToSlash(filepath.Clean(mutation.Path)))
-	}
-	return paths, nil
 }
 
 func discoverFixtures(dir string) ([]fixtureRecord, error) {

@@ -186,7 +186,7 @@ func (c *Chunk) confirmationScope(id string) string {
 // probeHolds refuses a confirmation probe that did not bite or did not restore. scope names the
 // confirmation that holds the probe.
 func probeHolds(scope string, probe Probe) error {
-	bit, restored := probeBites(probe)
+	bit, restored := ProbeBites(probe)
 	if !bit {
 		return fmt.Errorf("%s probe did not bite: outcome %s, focused exit %d; record a probe that bites", scope, probe.Outcome, probe.ExitCode)
 	}

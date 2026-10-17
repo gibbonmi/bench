@@ -29,6 +29,11 @@ The `--propose-writes` form of build preflight lists each missing closure file w
 source and its fence state. A trailing `/` and the `(new)` marker never make two entries
 differ.
 
+The `--breakdown` form lists each coverage row that no ticket cites, with its seam cell,
+and the closure and premises of each ticket. It reads the facts that the verdict reads.
+It shows each red of an unfinished ticket graph as a diagnostic, and it refuses each other
+red. Neither form grants write, ordering, or dispatch authority.
+
 ## Slicing rules
 
 - A lane-check ticket proves its check through the real lane over a composed tree. A
@@ -45,6 +50,12 @@ differ.
   for each affected ticket. The slicer adds each listed closure file to the `Writes:` line of that ticket.
   The spec and its tickets go to sign-off and to their landing only on a green preflight of the current ticket graph.
   Sign-off then grades the final fence, not an earlier one.
+- Before each row has a ticket, the slicer runs `bench preflight build <slug> --breakdown`.
+  Each row that it lists goes to the ticket that writes the seam path of that row.
+- A proposal is not an approval. For each proposed path, the slicer amends the spec fence
+  and the ticket `Writes:` line in one commit. For each `ordering` row, the slicer adds a
+  `Blocked by:` edge to one of the two tickets. An independent ticket review then grades
+  the amended graph before sign-off.
 - A plan commit that renames a spec symbol runs one `rg` for the old symbol across every ticket, and it corrects each hit.
 - A fence expansion reads the fence section of the spec and corrects each sentence that names the added package.
 - Each acceptance claim names an available producer and an executable check at its ticket checkpoint. A claim whose producer lands in a later ticket has no evidence at that checkpoint.
