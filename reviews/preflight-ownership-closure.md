@@ -7011,6 +7011,72 @@
           "supersedes": [
             "ft293_oc-c4_coverage_r2"
           ]
+        },
+        {
+          "id": "ft293_oc-c4_standards_r4",
+          "performer": "claude:ft293_oc-c4_standards_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_standards_r4",
+            "digest": "sha256:d83488cbdfd8846f19e7fcf33674951d45869437150214b9e949cba6473f5842",
+            "excerpt": "OC-C4 Standards confirming round 3 (claude:ft293_oc-c4_standards_r4, opus, medium), test-only repair delta fcf56548..920985d9, evidence sha256:1beb10af current=true.\nPass. kitFiles (kitrow_test.go:34) derives each sealed fixture from crossBase and ownershiptest.KitModule; kitGauge and kitGaugeTip are defined once (kitrow_test.go:44-47); usageFile (effects_test.go:41) is the one literal; both cases run through effectCase.run; the copied reason text has its recorded red; comments obey bench-craft-comments.\nCount 0. Implementation command: no change necessary.\n"
+          },
+          "axis": "Standards",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "920985d98bbcc78c5932822741bcbc91abcb99af",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293_oc-c4_standards_r3"
+          ]
+        },
+        {
+          "id": "ft293_oc-c4_spec_r4",
+          "performer": "claude:ft293_oc-c4_spec_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_spec_r4",
+            "digest": "sha256:aeec2ab0527ee748417c67d3a15cbbd75ad45e33976208f7c693dcae7b12aaab",
+            "excerpt": "OC-C4 Spec confirming round 3 (claude:ft293_oc-c4_spec_r4, opus, medium), delta 2fea500b..920985d9, evidence sha256:1beb10af current=true.\nPass. The spec.md change adds only the delegate-plan assignment of claude:ft293_t08_rep3. The two new kit cases match spec 93-95, 317-318, and 323. No OC61-OC70 or OC86 witness is lost.\nCount 0. Implementation command: no change necessary.\n"
+          },
+          "axis": "Spec",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "920985d98bbcc78c5932822741bcbc91abcb99af",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293_oc-c4_spec_r3"
+          ]
+        },
+        {
+          "id": "ft293_oc-c4_coverage_r4",
+          "performer": "claude:ft293_oc-c4_coverage_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "147863ceaba0f0d8fa6408a7d2ad9626596444cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_coverage_r4",
+            "digest": "sha256:2486f8ab2af9901323f8a4229604d72c83096b02cdd13d99c4a671e8472eea70",
+            "excerpt": "OC-C4 Coverage confirming round 3 (claude:ft293_oc-c4_coverage_r4, opus, medium), test-only repair delta fcf56548..920985d9, evidence sha256:1beb10af current=true.\nC5 closed: kitrow_test.go:73; the located check at effects_test.go:137 fails without the effects.go:153 base-side fallback (coordinator probe bit, restored yes).\nC6 closed: kitrow_test.go:78; the imports.go:100 row fill reaches the output only there (coordinator probe bit, restored yes).\nAdvice outside the chunk delta: effects.go:151 (at = before.units[root]) has no witness; probe bench probe internal/preflight/ownership/effects.go --omit \"at = before.units[root]\" --package ./internal/preflight/ownership/... was silent, restored yes. git blame puts effects.go:149-152 in 31f74e9b (ticket 02, accepted chunk OC-C2); the OC-C4 delta does not add it. The orchestrator captured it with bench learning for the drain; open to reviewer veto.\nCount 0 open in the chunk delta. Implementation command: no change necessary. git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "920985d98bbcc78c5932822741bcbc91abcb99af",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293_oc-c4_coverage_r3"
+          ]
         }
       ]
     }
@@ -7481,3 +7547,10 @@ The round found 2 new findings and 2 repair targets, both test-only on ticket 08
 - C6 (auto-fix, confidence 6): `internal/preflight/ownership/imports.go:100` fills the row for a cross-package referrer, and no sealed case reads that row.
 
 Advice: `internal/preflight/ownership/proposal_test.go:276` does not assert that the tolerated closure red is present.
+
+## OC-C4 third confirming round
+
+OC-C4: repair cycle 3 is complete at 920985d9 (claude:ft293_t08_rep3, opus, medium), one cycle past the allowance by the auto-approve direction. The repair is test-only, and both coordinator probes bit.
+The confirmation verb refused, because the delegate-plan record commit inside the range edits the spec. So all three axes reviewed the chunk pair again, and all three passed. Every OC-C4 finding is closed.
+
+Advice outside the chunk delta: `internal/preflight/ownership/effects.go:151` falls back to the base unit, and no test reaches it. Ticket 02 wrote that line in the accepted chunk OC-C2. The orchestrator captured it with `bench learning` for the drain; that call is open to reviewer veto.
