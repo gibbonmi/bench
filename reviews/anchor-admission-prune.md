@@ -960,8 +960,8 @@
     },
     {
       "id": "AP-C7",
-      "base": "3f56db6dba6dd6821669a112487776e5002840dc",
-      "tip": "44ad243d65d3d317c375004a260734504584ad37",
+      "base": "6a6bd068adc481c89f69d88e4e238d198fdb571d",
+      "tip": "66168c19db46ee4beb78e7a374294f94aad47509",
       "plan_digest": "sha256:8c7447a0ebc33c9bb855578c7857d4e198d20d12d2eac73202f3c8e20386130a",
       "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
       "acceptance_rows": [
@@ -1089,6 +1089,96 @@
             "ref": "claude-agent:aap_t04a_rep1",
             "digest": "sha256:be219355595f1e55f3ac881404894d30cc151edafad10de55f8e5aae113e19a7",
             "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,32673,1176\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4a-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1b-t4a-preflight",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:4f2b2f3af0f8e02722abc829f8cbf94ce22e41f86900a477fcdf2b55ce23ca78",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,28908,416\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1b-t4a-root-conformance",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:1abd4af7ae2741ccfafd978ab5fd68b081ad10108a3b838e5eb6217daaae450f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14120,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1b-t4a-diff",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:e808290b04c6f4490ae40768f06e28614e6f953f5cd239b67fb590b683ad48cd",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,pass,5585,101\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-diff",
+          "command": "bench test --package ./internal/diff",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1b-t4a-cmd-bench",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:c137ae2aabf2ece0e3ec425e665887b907905bac753c9abb55c7923f835db57a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14278,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1b-t4a-conformance",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:f93d5ee4bf7f2e2cebeffc428ecf8c5a2c86e89f663b348ba9041e0dc3704f68",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,32302,1176\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
           },
           "requirement": "t4a-conformance",
           "command": "bench test --package ./internal/conformance",
