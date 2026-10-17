@@ -648,9 +648,9 @@ harness-independent backstops.
 ## Assessment records
 
 Use `bench assessment` to store, compare, and inspect local workflow cost and quality.
-The [record schema](../internal/assessment/README.md) defines the normalized input and unknown-value rules.
+The record schema in `internal/assessment/README.md` of the Bench kit repository defines the normalized input and unknown-value rules.
 Assessment never launches a paid trial or changes a model default.
 
-Ordinary workflow assessment uses the normalized input documented in `internal/assessment/README.md`.
+Ordinary workflow assessment uses the normalized input that the record schema defines.
 Select only the current work's native evidence. Include every attempt role, failed work, and unavailable measurements.
 Keep provider charges separate from estimates. A local record update grants no paid-trial or model-default authorization.
