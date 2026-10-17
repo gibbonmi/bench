@@ -165,6 +165,8 @@ governs each current-code claim in the spec prose.
 - Before the first review charge, the author walks each coverage row's seam path
   against the ticket `Writes:` lines. The author moves the row to the ticket that
   writes that path.
+- Before the graph review, the author does the breakdown, proposal, amendment, and
+  independent review steps of [the slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules).
 - A golden-file row states its exact predicate, and the old-versus-new diff stays
   review-owned.
 - A build-time rewrite scope excludes `specs/*/spec.md` and the tickets by name.

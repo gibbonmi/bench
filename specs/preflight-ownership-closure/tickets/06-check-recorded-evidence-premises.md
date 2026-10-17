@@ -1,7 +1,7 @@
 # Check recorded behavioral evidence without authenticating execution
 
 Blocked by: 05-check-symbol-and-rule-premises.md
-Writes: internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/proposal.go
+Writes: internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/proposal.go, internal/reviewrecord/check.go, internal/reviewrecord/confirmation.go
 Covers: OC48, OC49, OC50, OC87
 
 ## What to build
@@ -10,6 +10,7 @@ The real proposal grades reused-test evidence through reviewrecord.CheckTrees an
 Consume the established Source and premise values.
 Pass exact source/evidence commits, spec, chunk, and complete false.
 Select the named verification from that same validated committed record.
+A coordinator confirmation is not a verification, so it cannot supply a reused-test premise.
 
 Require matching subject digest, mutation, bit outcome, nonzero probe exit, successful restoration, and the behavioral red_needle in the native excerpt.
 Compilation failure without that marker cannot satisfy reuse.

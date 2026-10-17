@@ -86,6 +86,7 @@ func TestLightPathCandidate(t *testing.T) {
 		// The bound assignment's active claim does not block the light path.
 		{name: "beside-active-claim", steps: steps(ticket(lightTicket, "change.go"), write("change.go"))},
 		{name: "new-marker", steps: steps(ticket(lightTicket, "new.go (new)"), write("new.go"))},
+		{name: "deleted-marker", steps: steps(ticket(lightTicket, productionFile+" (deleted)"), remove(productionFile))},
 		{name: "directory-entry", steps: steps(ticket(lightTicket, "pkg"), write("pkg/a.go"))},
 		{name: "directory-sibling", steps: steps(ticket(lightTicket, "pkg"), write("pkgx/a.go")), want: `production path "pkgx/a.go" is outside the Writes line of light-path ticket "` + lightTicket + `"`},
 		// A retirement deletes its review record and adds its ADR.

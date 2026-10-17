@@ -1,14 +1,14 @@
 # Refuse unproved source charges with complete reviewed inventories
 
 Blocked by: 06-check-recorded-evidence-premises.md
-Writes: internal/preflight/charge_pack.go, internal/preflight/charge_test.go, internal/preflight/closure.go, internal/preflight/command.go, internal/preflight/command_build_test.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/preparation.go, internal/preflight/proposal.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/coverage/coverage_test.go, internal/coverage/rows.go, internal/preflight/charge_pack.go, internal/preflight/charge_test.go, internal/preflight/closure.go, internal/preflight/command.go, internal/preflight/command_build_test.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/preflighttest/reviewcases.go, internal/preflight/preflighttest/reviewfiles.go, internal/preflight/preparation.go, internal/preflight/proposal.go, internal/preflight/proposal_test.go, internal/systemtest/charge_evidence_test.go
 Covers: OC51, OC52, OC53, OC54, OC88, OC89, OC93, OC94, OC95
 
 ## What to build
 
 A build charge refuses before prepared-evidence publication when a required current premise lacks complete supported proof.
 Consume every predecessor collector through the same Snapshot.
-Add premises.go, TestPredicatePremises, and TestChargePremises; reuse the dynamic-helper fixture in effects_test.go.
+Add premises.go, TestPredicatePremises, and TestChargePremises; reuse the dynamic-helper fixture in effects_test.go, and run TestHelperCallers for OC53.
 Each decision maps exact predicate bytes to one declared row.
 
 Complete inventory includes every supported typed seam citation.
@@ -26,6 +26,7 @@ Assert prepared-handle absence for an unproved current claim.
 Use the missing second-citation fixture through the real dispatcher.
 Charge policy changes here; breakdown remains unavailable.
 Preserve checkout, source, seal, assignment, evidence, and current-action authority.
+Keep the existing dirty review record report of the current-evidence route.
 
 Implement the accepted ManualApplicability and ChargeReadiness contract without changing the global completeness meaning.
 Validate each native-future descriptor against the exact canonical coverage row, unique ticket, chunk, verification, and pinned native procedure.
@@ -41,7 +42,8 @@ Use TestChargeManualApplicability through the actual charge and current-evidence
 Prove readiness with no future witness record, refusal for competing unknown current proof, and refusal for invalid native ownership.
 No refusal may publish a prepared handle.
 Keep ordinary continuation, plan-only, proposal, breakdown, and review applicability unchanged.
-The existing buildChargePack still refuses every red verdict; no publisher exception is authorized.
+The existing buildChargePack in charge.go still refuses every red verdict.
+This ticket does not edit charge.go, and no publisher exception is authorized.
 
 This ticket belongs to OC-C3.
 The explicit predecessor edge orders every overlapping write.
@@ -69,8 +71,12 @@ Compilation failure supplies no behavioral evidence.
 - `bench test --package ./internal/preflight/...`
 - `bench test --package ./internal/coverage`
 - `bench test --package ./internal/reviewrecord`
+- `bench test --package ./internal/conformance`
+- `bench test --check system`
 
-Focused producer command: `bench test --package ./internal/preflight/... --run 'TestChargeManualApplicability|TestChargePremises|TestPredicatePremises'`.
+The system charge fixture runs real child processes, so this ticket sets `BENCH_KIT` for the system suite through `bench test --check system`.
+
+Focused producer command: `bench test --package ./internal/preflight/... --run 'TestChargeManualApplicability|TestChargePremises|TestPredicatePremises|TestHelperCallers'`.
 Named mutation identity: `oc-07-omission`.
 This obligation uses the named production seam and observable omission in this ticket, not a compile-failure substitute.
 

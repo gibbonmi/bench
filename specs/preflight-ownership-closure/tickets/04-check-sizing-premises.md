@@ -1,7 +1,7 @@
 # Check source sizing premises through real proposals
 
 Blocked by: 03-propose-helper-and-owner-closure.md
-Writes: internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/proposal.go, internal/structure/facts.go, internal/structure/structure.go, internal/structure/structure_test.go
+Writes: internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/proposal.go, internal/structure/budgets.go, internal/structure/facts.go, internal/structure/structure.go, internal/structure/structure_test.go
 Covers: OC32, OC33, OC34, OC35, OC36, OC37, OC38
 
 ## What to build
