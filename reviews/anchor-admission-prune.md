@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/anchor-admission-prune/spec.md",
-  "plan_digest": "sha256:9ae1c28cf65da60d226e873b3fb29a0ac2ef2a7eb9b940da5a78c04c69067181",
+  "plan_digest": "sha256:04240b9eee1b526ec23c3e50635e48d46eaec43ecb9c878a38018918fd1de806",
   "implementation_session": "",
   "chunks": [
     {
@@ -208,9 +208,9 @@
     {
       "id": "AP-C1",
       "base": "bba9f7e68856f827f535943983102164c6a79061",
-      "tip": "8dee1a027b4b1a32731bffa71f620d3c31a10413",
-      "plan_digest": "sha256:9ae1c28cf65da60d226e873b3fb29a0ac2ef2a7eb9b940da5a78c04c69067181",
-      "source_digest": "456c681ccc9744bd468cd19e7fe78d75aaee79ec",
+      "tip": "6d96e6ae1a7d1ba06f4a8b20cfb2551265f0af74",
+      "plan_digest": "sha256:04240b9eee1b526ec23c3e50635e48d46eaec43ecb9c878a38018918fd1de806",
+      "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
       "acceptance_rows": [
         "AP02",
         "AP03",
@@ -337,6 +337,114 @@
           "requirement": "t2-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t2r1-t2-anchors",
+          "performer": "claude:aap_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t02_rep1",
+            "digest": "sha256:dc0725c44e5c11ce4f0cf532d44d28062c2791f24b5456df8dc77c31773513e4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1183,165\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r1-t2-conformance",
+          "performer": "claude:aap_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t02_rep1",
+            "digest": "sha256:7feb5f95fcb8fa2a3e48313f683a743ce623aca5c6f1ff450924f606820c0bba",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,41597,1377\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t2-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r1-t2-docs-currency-workflow",
+          "performer": "claude:aap_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t02_rep1",
+            "digest": "sha256:442d5cbb8926df2b155f5f5cf828fb6117e6400b53b00c7fe37eee65cc14cbc3",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5048,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-docs-currency-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r1-t2-conformance-canary-families",
+          "performer": "claude:aap_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t02_rep1",
+            "digest": "sha256:da0df75c7192311f7a4eafcb11b48966f9a1b32bed408746b743e63c3c15d6e8",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  conformance-canary-families,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,9,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-conformance-canary-families",
+          "command": "bench test --check conformance-canary-families",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r1-t2-cmd-bench",
+          "performer": "claude:aap_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t02_rep1",
+            "digest": "sha256:3dffdac77ccf13d2a2b58f451ba10e8c23a1bcb1f764e91fe1f1939f4ad8e441",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13609,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r1-t2-root-conformance",
+          "performer": "claude:aap_t02_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4ea7cfe3c5ff9f1c4916f8d8e9b9e36b63a061ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t02_rep1",
+            "digest": "sha256:25c5c4c0abcfdefebfcc7229aa837e14a5c1e81b33001a53a930cb0bda27c9f7",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14714,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -421,6 +529,18 @@
       "from": "sha256:294bb59a470b025b0faa1f465f8561a826966e0879b0b69714709866831db182",
       "to": "sha256:9ae1c28cf65da60d226e873b3fb29a0ac2ef2a7eb9b940da5a78c04c69067181",
       "chunk_ids": {
+        "AP-C2": [
+          "AP-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9ae1c28cf65da60d226e873b3fb29a0ac2ef2a7eb9b940da5a78c04c69067181",
+      "to": "sha256:04240b9eee1b526ec23c3e50635e48d46eaec43ecb9c878a38018918fd1de806",
+      "chunk_ids": {
+        "AP-C1": [
+          "AP-C1"
+        ],
         "AP-C2": [
           "AP-C2"
         ]
