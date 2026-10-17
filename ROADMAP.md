@@ -344,3 +344,9 @@ recommended table is sequencing advice.
 4. FT409
 5. FT402
 6. FT411
+7. FT293-closure-removal
+8. FT366-degraded-guard
+9. FT362-process-lifetime
+10. FT360-shared-fixtures
+11. FT125-exact-readers
+12. FT314-gate-reuse
