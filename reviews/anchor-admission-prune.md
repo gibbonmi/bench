@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/anchor-admission-prune/spec.md",
-  "plan_digest": "sha256:d12058f393cc9b2d0cad01467bb6393e93d71e11fe2f2f6dd339ce999ae10d03",
+  "plan_digest": "sha256:829f4cbe3854fc142d7866f0e42caf2510aef5288f9b55b2000572056456dc8c",
   "implementation_session": "",
   "chunks": [
     {
@@ -1396,9 +1396,9 @@
     {
       "id": "AP-C4",
       "base": "66168c19db46ee4beb78e7a374294f94aad47509",
-      "tip": "dcb0ae7cd42b93e1b3630cd38a3a2b5191b81bef",
-      "plan_digest": "sha256:d12058f393cc9b2d0cad01467bb6393e93d71e11fe2f2f6dd339ce999ae10d03",
-      "source_digest": "d9e10497841a3d0e05222ba8851cc051a51f6e60",
+      "tip": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+      "plan_digest": "sha256:829f4cbe3854fc142d7866f0e42caf2510aef5288f9b55b2000572056456dc8c",
+      "source_digest": "326e59a21baabca125c6138b2b960696cc8b4dab",
       "acceptance_rows": [
         "AP28",
         "AP29",
@@ -1455,6 +1455,60 @@
             "ref": "claude-agent:aap_t05b",
             "digest": "sha256:4e1efeacf5a6690805f3b9997f8dfb666fd9480a46140c301ce40349f3f2b300",
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13666,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-t5-conformance",
+          "performer": "claude:aap_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "326e59a21baabca125c6138b2b960696cc8b4dab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t05_rep1",
+            "digest": "sha256:d37032a3af823ccf9a0f1ea7195884a752a1d7fb954882477c8784207f870fae",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,32433,1120\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t5-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-t5-docs-currency-workflow",
+          "performer": "claude:aap_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "326e59a21baabca125c6138b2b960696cc8b4dab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t05_rep1",
+            "digest": "sha256:2b3bb7c79920f3d7581f7b034e23d890e8102f91db1db63b03145a0cbf1b1b26",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4290,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-docs-currency-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-t5-root-conformance",
+          "performer": "claude:aap_t05_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "326e59a21baabca125c6138b2b960696cc8b4dab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t05_rep1",
+            "digest": "sha256:2f5e16c4b516f33e1f6c14d131f30b4b901adc0bb6e85b034d18b81f2aecbe9b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13357,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "t5-root-conformance",
           "command": "bench test --check root-conformance",
@@ -1618,6 +1672,27 @@
         ],
         "AP-C3": [
           "AP-C3"
+        ],
+        "AP-C7": [
+          "AP-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d12058f393cc9b2d0cad01467bb6393e93d71e11fe2f2f6dd339ce999ae10d03",
+      "to": "sha256:829f4cbe3854fc142d7866f0e42caf2510aef5288f9b55b2000572056456dc8c",
+      "chunk_ids": {
+        "AP-C1": [
+          "AP-C1"
+        ],
+        "AP-C2": [
+          "AP-C2"
+        ],
+        "AP-C3": [
+          "AP-C3"
+        ],
+        "AP-C4": [
+          "AP-C4"
         ],
         "AP-C7": [
           "AP-C7"
