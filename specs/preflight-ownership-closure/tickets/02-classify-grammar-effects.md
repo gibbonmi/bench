@@ -1,7 +1,7 @@
 # Classify grammar effects through real proposals
 
 Blocked by: 01-propose-canonical-closure.md
-Writes: internal/preflight/closure.go, internal/preflight/decision.go, internal/preflight/evidencecmd/evidence_grammar_test.go, internal/preflight/evidencecmd/operations.go, internal/preflight/evidencecmd/operations_test.go, internal/preflight/gather.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/proposal.go, internal/tickets/registry_data.go, internal/tickets/registry_data_test.go, internal/usage/parse.go, internal/usage/parse_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/preflight/closure.go, internal/preflight/command.go, internal/preflight/decision.go, internal/preflight/evidencecmd/evidence_grammar_test.go, internal/preflight/evidencecmd/operations.go, internal/preflight/evidencecmd/operations_test.go, internal/preflight/gather.go, internal/preflight/ownership (new), internal/preflight/preflighttest/fixture.go, internal/preflight/proposal.go, internal/tickets/registry_data.go, internal/tickets/registry_data_test.go, internal/usage/parse.go, internal/usage/parse_test.go, tests/canary/package-core-guard/unrouted-subcommand
 Covers: OC14, OC15, OC16, OC17, OC18, OC19
 
 ## What to build
