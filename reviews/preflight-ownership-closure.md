@@ -6664,6 +6664,8 @@ OC-C2: repair cycles are closed at six. No reviewer extension remains open.
 OC-C4: the first review at 4dc58d41..242612c0 found 6 raw findings and 4 repair targets, all on ticket 08. Repair cycle 1 of 2 opens in one combined ticket 08 repair session. No reviewer extension exists.
 Under the reviewer's auto-approve direction, the orchestrator accepted each ask-user finding as an auto-fix; each decision is open to reviewer veto.
 
+- X1 (auto-fix, cross-chunk, confidence 8): after the freeze, every build charge refuses with a kit-registry red for the grammar root `internal/preflight.command#1`. The provenance key at `internal/preflight/ownership/closure.go:236` names an ordinary parser-call root, and `tickets.BindingLines` at `internal/tickets/registry_data.go:195` never keys such a root. Ticket 02 wrote both lines. The ticket 08 repair session takes X1, because OC-C2 is frozen and ticket 08's Writes line holds both owners.
+
 ## OC-C4 Standards
 
 OC-C4: 2 findings. The worst issue is S1.
