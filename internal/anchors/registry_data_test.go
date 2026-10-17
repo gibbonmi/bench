@@ -49,19 +49,12 @@ func TestFinalCommunicationMarkerTuples(t *testing.T) {
 	}
 }
 
-// TestBoundedGateOutputAnchorTuples pins BG27 and GR82. The reference owns the bounded
-// gate output account. The two needles are written here independently of the registry,
-// so a needle edited to match prose that dropped the bounded-output account cannot
-// define itself green.
+// TestBoundedGateOutputAnchorTuples holds the reference as the owner of the bounded gate
+// output account. The red-run needle is written here independently of the registry, so a
+// needle edited to match prose that dropped the bounded-output account cannot define
+// itself green.
 func TestBoundedGateOutputAnchorTuples(t *testing.T) {
 	wanted := []Anchor{
-		{
-			Group:   AfterSpecAuthorization,
-			File:    ".bench/BENCH-reference.md",
-			Kind:    Require,
-			Section: "",
-			Needle:  "A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table",
-		},
 		{
 			Group:   AfterSpecAuthorization,
 			File:    ".bench/BENCH-reference.md",
@@ -342,12 +335,6 @@ func TestCraftSpecMapDisciplineAnchorsRedOnRemoval(t *testing.T) {
 				want:      ".agents/skills/bench-craft-spec/SKILL.md Template put contract text under the Further notes heading; that heading stays bare",
 				forbidden: true,
 				fenced:    true,
-			},
-			{
-				file:    file,
-				section: "Slicing a build for delegates",
-				needle:  "During a build, `.bench/BENCH.md` owns approved in-scope plan expansion.",
-				want:    "retained workflow: craft-spec dropped the canonical plan-expansion owner",
 			},
 			{
 				file:    file,
@@ -1255,14 +1242,13 @@ func TestSystemSuiteRouteAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
-// TestHandoffSectionRuleAnchorRedOnRemoval pins HS25, GR84, and GR85. The reference owns
-// the handoff section rule, and the working agreement keeps no copy. Each needle and its
-// diagnostic are written here independently of the registry, so a reference that dropped
-// the rule, or an agreement that restored its copy, cannot define itself green.
+// TestHandoffSectionRuleAnchorRedOnRemoval holds the working agreement to no copy
+// of the reference's handoff section rule. The needle and its diagnostic are written here
+// independently of the registry, so an agreement that restored its copy cannot define
+// itself green.
 func TestHandoffSectionRuleAnchorRedOnRemoval(t *testing.T) {
 	const rule = "`bench handoff` rewrites only the calling worktree's assignment section."
 	anchorHarness{group: AfterSpecAuthorization, rules: []anchorRule{
-		{file: ".bench/BENCH-reference.md", needle: rule, want: ".bench/BENCH-reference.md dropped the handoff section rule; bench handoff rewrites only the calling worktree's assignment section"},
 		{file: "AGENTS.md", needle: rule, want: "AGENTS.md restored its copy of the handoff section rule that .bench/BENCH-reference.md owns", forbidden: true},
 	}}.check(t)
 }

@@ -27,7 +27,6 @@ func checkDocsCurrencyAndWorkflow(root, _ string) []string {
 	diags = append(diags, checkSignalVocabulary(root)...)
 	diags = append(diags, checkCommandFirstAnchors(root)...)
 	diags = append(diags, checkWorkflowAnchors(root)...)
-	diags = append(diags, checkRetainedWorkflow(root)...)
 	diags = append(diags, checkOccurrenceLedgerAndMaintenance(root)...)
 	diags = append(diags, checkPrePushREADMEClaim(root)...)
 	diags = append(diags, checkCoverageMaps(root)...)

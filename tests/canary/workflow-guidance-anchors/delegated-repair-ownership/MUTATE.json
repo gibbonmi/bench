@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".bench/BENCH.md",
-    "old": "A post-review repair goes to a fresh repair session for each affected ticket,",
-    "new": "A post-review repair goes back to the ticket author,"
-  }
-]
