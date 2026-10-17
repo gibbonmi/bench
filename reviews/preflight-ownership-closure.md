@@ -6487,6 +6487,79 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft293_oc-c4_standards_r2",
+          "performer": "claude:ft293_oc-c4_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "572b2e7ec12ef71320fe72ee8db6aa3b6e213f91",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_standards_r2",
+            "digest": "sha256:ed6ea5dd8611eb11537bbdfe4af273cc623d72b0edec598f5b02941c7244c5e7",
+            "excerpt": "OC-C4 Standards confirming round (claude:ft293_oc-c4_standards_r2, opus, medium), repair delta 6707b8b3..6080fc2e, evidence sha256:4b54f803 current=true.\nS1 closed: gather.go:57 gives one ParseSpec ids set to DeclaredRowIDs and to ownership.Collect/uncited (breakdown.go:135-147).\nS2 closed: the form literal is gone; authority_test.go:167-176 finds the form in evidencecmd.HelpRows().\nS3 (ask-user, confidence 3): ownership/closure.go:255-260 rootRow infers the registering row from the root string; producers.go:75-81 already decides it at rooting. Rule: one source per fact.\nS4 (auto-fix, confidence 5): effects_test.go:213 copies \" at kit source\" from closure.go:281 with no recorded red.\nS5 (auto-fix, confidence 5): effects_test.go:216 copies the grammarParser declaration line from tickets/registry_data.go:115 with no recorded red; tickets.GrammarParser() can build it.\nS6 (auto-fix, confidence 3): authority_test.go:112 copies the check+\": \" separator of charge.go:90 with no recorded red.\nCount 4 new; worst S4 and S5. Implementation command: no change necessary.\n"
+          },
+          "axis": "Standards",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "6080fc2e873642245efd73a2d8be1c62d0c41147",
+          "finding_ids": [
+            "S3",
+            "S4",
+            "S5",
+            "S6"
+          ],
+          "supersedes": [
+            "ft293_oc-c4_standards_r1"
+          ]
+        },
+        {
+          "id": "ft293_oc-c4_spec_r2",
+          "performer": "claude:ft293_oc-c4_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "572b2e7ec12ef71320fe72ee8db6aa3b6e213f91",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_spec_r2",
+            "digest": "sha256:dc6677dafcb20f37fc034c3716d5ff251369e62dedbd08a099206d1ef4f911de",
+            "excerpt": "OC-C4 Spec confirming round (claude:ft293_oc-c4_spec_r2, opus, medium), repair delta 6707b8b3..6080fc2e, evidence sha256:4b54f803 current=true.\nP1 closed: untolerated (proposal.go:189-198) keeps only reds outside the tolerated set; renderBreakdown refuses with it (spec 491-493, OC63 at spec 692); the {PF1, PF9} case asserts rows-membership.\nP1 reach consistent: renderWritesProposal refuses under the same condition; only the named red changes; the spec names no refusal order for the proposal (spec 469, 479-488, 538).\nX1 closed: rootRow keys a custom root by its row, else GrammarParser() (spec 314, 317, 319-320); a missing row or unverified source stays diagnostic (spec 93-97).\nCount 0. Implementation command: no change necessary.\n"
+          },
+          "axis": "Spec",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "6080fc2e873642245efd73a2d8be1c62d0c41147",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293_oc-c4_spec_r1"
+          ]
+        },
+        {
+          "id": "ft293_oc-c4_coverage_r2",
+          "performer": "claude:ft293_oc-c4_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "572b2e7ec12ef71320fe72ee8db6aa3b6e213f91",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_coverage_r2",
+            "digest": "sha256:4d578bdf2863e33291812d8b91f51abba04e067e2fc956e4c664799a1a77d18a",
+            "excerpt": "OC-C4 Coverage confirming round (claude:ft293_oc-c4_coverage_r2, opus, medium), repair delta 6707b8b3..6080fc2e, evidence sha256:4b54f803 current=true.\nC2 closed (authority_test.go:89-97). C3 closed (ownership.go:184, breakdown.go:135-148). X1 closed (closure.go:189-194, effects_test.go:269-275, registry_data_test.go:120). P1 closed for the breakdown (authority_test.go:107).\nC4 (auto-fix, confidence 8): proposal.go:37-38: the untolerated change in renderWritesProposal has no test where a tolerated closure or fence-writes red comes before an untolerated red; proposal_test.go:144-157 uses tickets-parse, which comes first.\nProbe: bench probe internal/preflight/proposal.go --swap \"return chargeVerdictRefusal(refused), 1\" --with \"return chargeVerdictRefusal(Decide(f)), 1\" --occurrence 1 --package ./internal/preflight/...: silent, cause passed, restored yes.\nCount 1 new; worst C4. Implementation command: no change necessary. git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "6080fc2e873642245efd73a2d8be1c62d0c41147",
+          "finding_ids": [
+            "C4"
+          ],
+          "supersedes": [
+            "ft293_oc-c4_coverage_r1"
+          ]
         }
       ]
     }
@@ -6897,3 +6970,16 @@ OC-C4: 3 findings. The worst issue is C2.
 - C1 (no-op, confidence 4): `internal/preflight/ownership/authority_test.go:324-329` omits three selectors, but the operation registry derives the exclusion.
 - C2 (auto-fix, confidence 5): `internal/preflight/proposal.go:599-606` renders the closure and premises tables, and no test reads them.
 - C3 (auto-fix, confidence 4): the same two row-ID derivations as S1; the orchestrator merges it with S1.
+
+## OC-C4 confirming round
+
+OC-C4: repair cycle 1 of 2 is complete at 6080fc2e (claude:ft293_t08_rep1, opus, medium). The confirming round over 6707b8b3..6080fc2e closed X1, P1, C2, S1, C3, and S2. Spec passed with no new finding.
+
+The round found 5 new findings and 5 repair targets, all on ticket 08. Repair cycle 2 of 2 opens in one ticket 08 repair session. Under the reviewer's direction, that session runs the bench-debug route for each repair.
+Under the auto-approve direction, the orchestrator accepted S3 as an auto-fix; that decision is open to reviewer veto.
+
+- S3 (auto-fix, confidence 3): `internal/preflight/ownership/closure.go:255-260` infers the registering row from the root string. `internal/preflight/ownership/producers.go:75-81` already decides that row when it roots the declaration.
+- S4 (auto-fix, confidence 5): `internal/preflight/ownership/effects_test.go:213` copies the reason suffix of `closure.go:281` with no recorded red.
+- S5 (auto-fix, confidence 5): `internal/preflight/ownership/effects_test.go:216` copies the parser declaration line of `internal/tickets/registry_data.go:115` with no recorded red.
+- S6 (auto-fix, confidence 3): `internal/preflight/ownership/authority_test.go:112` copies the refusal separator of `internal/preflight/charge.go:90` with no recorded red.
+- C4 (auto-fix, confidence 8): `internal/preflight/proposal.go:37-38` changed the proposal refusal, and no test puts a tolerated red before an untolerated red. A coverage probe of that line stayed silent.
