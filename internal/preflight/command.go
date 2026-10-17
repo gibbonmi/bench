@@ -74,17 +74,17 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 	}
 	switch op.Kind {
 	case evidencecmd.KindProposal:
-		return proposeWritesCommand(root, op.Mode, slug, base, sourceTip, ticket, args)
+		return proposeWritesCommand(root, op.Kind, op.Mode, slug, base, sourceTip, ticket, args)
 	case evidencecmd.KindPrepareEvidence:
-		return prepareEvidenceCommand(root, slug, base, sourceTip, ticket, quota, args)
+		return prepareEvidenceCommand(root, op.Kind, slug, base, sourceTip, ticket, quota, args)
 	case evidencecmd.KindPrepareReviewEvidence:
-		return prepareReviewEvidenceCommand(root, version, slug, base, sourceTip, quota, args)
+		return prepareReviewEvidenceCommand(root, op.Kind, version, slug, base, sourceTip, quota, args)
 	case evidencecmd.KindReadEvidence:
 		return evidencecmd.Read(root, slug, flags)
 	case evidencecmd.KindVerifyEvidence:
 		return evidencecmd.Verify(root, slug)
 	case evidencecmd.KindCurrentEvidence:
-		return currentEvidenceCommand(root, slug, args)
+		return currentEvidenceCommand(root, op.Kind, slug, args)
 	case evidencecmd.KindExportEvidence:
 		return evidencecmd.Export(root, slug, flags[evidencecmd.FlagTo], chargeevidence.WriteAll)
 	case evidencecmd.KindCleanPlan:
@@ -92,14 +92,16 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 	case evidencecmd.KindCleanApply:
 		return evidencecmd.CleanApply(root, flags)
 	}
-	return verdictCommand(root, op.Mode, slug, base, sourceTip, args, op.Kind == evidencecmd.KindPlanOnly)
+	return verdictCommand(root, op.Kind, op.Mode, slug, base, sourceTip, args)
 }
 
 // prepareEvidenceCommand runs the movement-checked build preparation and hands each
-// attempt's validated pack, or its refusal, to the evidence publisher.
-func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint64, args []string) (string, int) {
+// attempt's validated pack, or its refusal, to the evidence publisher. kind is the
+// operation that the dispatcher selected, and the facts carry it into Decide.
+func prepareEvidenceCommand(root string, kind evidencecmd.Kind, slug, base, sourceTip, name string, quota uint64, args []string) (string, int) {
 	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
 		return preparedAttempts(root, modeBuild, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
+			facts.Operation = kind
 			pack, refusal := buildChargePack(root, facts, boundedVerdict(Decide(facts)), name, buildSourcePolicy())
 			if refusal == "" {
 				if err := (commitrepo.Store{Root: root}).Ready(facts.SpecPath); err != nil {
@@ -117,9 +119,11 @@ func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint
 // prepareReviewEvidenceCommand runs the movement-checked review preparation on the same
 // publisher the build uses. Each attempt runs the collectors once and stages its validated
 // pack; a refused attempt publishes no handle, and only the unmoved final attempt publishes.
-func prepareReviewEvidenceCommand(root, version, slug, base, sourceTip string, quota uint64, args []string) (string, int) {
+// kind is the operation that the dispatcher selected, and the facts carry it into Decide.
+func prepareReviewEvidenceCommand(root string, kind evidencecmd.Kind, version, slug, base, sourceTip string, quota uint64, args []string) (string, int) {
 	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
 		return preparedAttempts(root, modeReview, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
+			facts.Operation = kind
 			pack, refusal := reviewChargePack(root, version, facts, boundedVerdict(Decide(facts)))
 			if refusal = stage(pack, facts.AssignmentTarget, refusal); refusal != "" {
 				return refusal, 1
@@ -141,7 +145,10 @@ func boundedVerdict(verdict Verdict) Verdict {
 	return verdict
 }
 
-func verdictCommand(root, mode, slug, base, sourceTip string, args []string, planOnly bool) (string, int) {
+// verdictCommand renders the ordinary or plan-only verdict, or the breakdown of the same
+// gathered facts. kind is the operation that the dispatcher selected, and the facts carry it
+// into Decide.
+func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip string, args []string) (string, int) {
 	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
 	if bootErr != nil {
 		if bootErr.Kind == "snapshot drift" {
@@ -152,9 +159,13 @@ func verdictCommand(root, mode, slug, base, sourceTip string, args []string, pla
 	if err := unrepresentableChangedPath(facts.ChangedPaths); err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
+	facts.Operation = kind
+	if kind == evidencecmd.KindBreakdown {
+		return renderBreakdown(facts)
+	}
 
 	verdict := Decide(facts)
-	if mode == modeBuild && !planOnly && !verdict.Red {
+	if mode == modeBuild && kind != evidencecmd.KindPlanOnly && !verdict.Red {
 		if err := (commitrepo.Store{Root: root}).Ready(facts.SpecPath); err != nil {
 			verdict.Checks = append(verdict.Checks, CheckResult{Check: "commitment", Verdict: verdictRed, Detail: err.Error(), Next: "bench commitment start"})
 			verdict.Red = true
@@ -190,23 +201,34 @@ func verdictCommand(root, mode, slug, base, sourceTip string, args []string, pla
 // green charge prints no check row.
 func renderChecks(verdict Verdict) (string, error) {
 	counts := map[string]int{}
-	var red [][]string
 	for _, c := range verdict.Checks {
 		counts[c.Verdict]++
-		if c.Verdict == verdictRed {
-			red = append(red, []string{c.Check, c.Verdict, c.Detail, c.Next})
-		}
 	}
 	summary := fmt.Sprintf("checks{green=%d,not_applicable=%d,red=%d}\n",
 		counts[verdictGreen], counts[verdictNA], counts[verdictRed])
+	red := redRows(verdict)
 	if len(red) == 0 {
 		return summary, nil
 	}
-	tbl, err := toon.Table("checks", []string{"check", "verdict", "detail", "next"}, red)
+	tbl, err := toon.Table("checks", checkFields, red)
 	if err != nil {
 		return "", err
 	}
 	return summary + tbl, nil
+}
+
+// checkFields are the columns of every rendered red check row, and redRows is the row of
+// each red check of verdict, in check order.
+var checkFields = []string{"check", "verdict", "detail", "next"}
+
+func redRows(verdict Verdict) [][]string {
+	var red [][]string
+	for _, c := range verdict.Checks {
+		if c.Verdict == verdictRed {
+			red = append(red, []string{c.Check, c.Verdict, c.Detail, c.Next})
+		}
+	}
+	return red
 }
 
 func snapshotDriftRefusal(args []string, hint string) string {

@@ -110,6 +110,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight [--in <label|primary>] build <slug> --plan-only [--base <commit>] [--source-tip <commit>]  validate the authored spec and tickets without delivery admission or a build charge
   bench preflight [--in <label|primary>] build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
   bench preflight [--in <label|primary>] build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
+  bench preflight [--in <label|primary>] build <slug> --breakdown [--base <commit>] [--source-tip <commit>]  list each coverage row that no ticket cites, with the closure and the premises, and grant no authority
   bench preflight [--in <label|primary>] evidence <id> [--cursor <cursor>]  print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor
   bench preflight [--in <label|primary>] evidence <id> --source <source-id> [--cursor <cursor>]  print one bounded fragment of one declared source stream and its exact successor
   bench preflight [--in <label|primary>] evidence <id> --verify  verify every stored page and source digest of a prepared evidence artifact

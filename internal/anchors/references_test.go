@@ -46,6 +46,21 @@ func TestReferencingFilesIncludeTestFiles(t *testing.T) {
 	}
 }
 
+// TestReferencesNameEachLiteralLine keeps the typed scan's location: each distinct
+// literal reports its holder and the line of its first occurrence, and a repeat adds none.
+func TestReferencesNameEachLiteralLine(t *testing.T) {
+	root := t.TempDir()
+	writeRegistryFile(t, root, "lines.go", "package anchors\n\nvar rows = []string{\n\t\"first.md\",\n\t\"second.md\",\n\t\"first.md\",\n}\n")
+	refs, err := References(root)
+	if err != nil {
+		t.Fatalf("References: %v", err)
+	}
+	want := []Reference{{"first.md", "internal/anchors/lines.go", 4}, {"second.md", "internal/anchors/lines.go", 5}}
+	if !reflect.DeepEqual(refs, want) {
+		t.Fatalf("References = %v, want %v", refs, want)
+	}
+}
+
 // TestReferencingFilesReadEveryStringLiteral covers SC5. A constant and a positional
 // value name the path without a File: key.
 func TestReferencingFilesReadEveryStringLiteral(t *testing.T) {

@@ -57,7 +57,7 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 		if requirement.Probe != "" {
 			bit, restored := false, false
 			if probe := current.Probe; probe != nil && probe.Mutation == requirement.Probe {
-				bit, restored = probeBites(*probe)
+				bit, restored = ProbeBites(*probe)
 			}
 			if !bit {
 				return refused("verification %s requires a successful diagnostic probe %s; run and retain it", requirement.ID, requirement.Probe)
@@ -70,10 +70,10 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 	return nil
 }
 
-// probeBites is the one probe-bite predicate of the planned-probe check and the confirmation
-// check. A probe bit when its outcome is bit and its focused exit is not zero, and it
-// restored when its restore passed.
-func probeBites(probe Probe) (bit, restored bool) {
+// ProbeBites is the one probe-bite predicate of the planned-probe check, the confirmation
+// check, and the reused-test premise. A probe bit when its outcome is bit and its focused
+// exit is not zero, and it restored when its restore passed.
+func ProbeBites(probe Probe) (bit, restored bool) {
 	return probe.Outcome == "bit" && probe.ExitCode != 0, probe.Restore == "pass"
 }
 

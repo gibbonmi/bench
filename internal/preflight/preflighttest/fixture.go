@@ -18,6 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	toonlib "github.com/toon-format/toon-go"
 )
@@ -38,42 +39,6 @@ var ConformantFence = []string{
 	"reviews/example.md",
 	".agents/skills/bench-craft-delegate/",
 	".agents/commands/bench-implement-spec.md",
-}
-
-// reviewFenceExtra are the fence entries SeedReviewEvidence's spec adds to ConformantFence,
-// each beside the annotation its line carries. The seeded spec lines and ReviewFence both
-// derive from this table, so the fixture states its own fence once.
-var reviewFenceExtra = []struct{ path, annotation string }{
-	{"target/", "review fixture"},
-	{"edited/", "review fixture"},
-	{"outside/", "review fixture"},
-	{"notes/", "review fixture"},
-	{".agents/skills/bench-craft-review/", "review instructions"},
-	{".agents/commands/bench-review-implementation.md", "review phase"},
-}
-
-// ReviewFence is the complete ownership fence SeedReviewEvidence's spec declares, in
-// document order.
-func ReviewFence() []string {
-	fence := append([]string{}, ConformantFence...)
-	for _, entry := range reviewFenceExtra {
-		fence = append(fence, entry.path)
-	}
-	return fence
-}
-
-// reviewFenceLines renders the extra fence entries as the spec's own document lines.
-func reviewFenceLines() []string {
-	lines := make([]string, len(reviewFenceExtra))
-	for i, entry := range reviewFenceExtra {
-		lines[i] = fenceLine(entry.path, entry.annotation)
-	}
-	return lines
-}
-
-// fenceLine renders one fence entry as the spec's own document line.
-func fenceLine(path, annotation string) string {
-	return "- `" + path + "` (" + annotation + ")"
 }
 
 // RunGit runs one git command in the working directory and returns its trimmed output.
@@ -129,7 +94,7 @@ const PlanCommand = "bench test --package ./..."
 // landing later requires. The section heading closes the ownership-fence section above it,
 // so no payload byte reads as a fence token.
 func PlanFence(tickets ...string) string {
-	plan := reviewrecord.Plan{
+	return PlanSection(reviewrecord.Plan{
 		Version: 1,
 		Chunks: []reviewrecord.PlannedChunk{{
 			ID:           "c1",
@@ -137,7 +102,11 @@ func PlanFence(tickets ...string) string {
 			Verification: []reviewrecord.Requirement{{ID: "tests", Command: PlanCommand}},
 		}},
 		FinalVerification: []reviewrecord.Requirement{{ID: "acceptance", Command: "go test ./..."}},
-	}
+	})
+}
+
+// PlanSection renders plan as the bench-completion-plan section that PlanFence frames.
+func PlanSection(plan reviewrecord.Plan) string {
 	data, err := json.Marshal(plan)
 	if err != nil {
 		panic(err)
@@ -146,10 +115,19 @@ func PlanFence(tickets ...string) string {
 }
 
 // SpecBody renders a bootstrap-conformant spec for slug. It has staged status, a valid
-// opted-in coverage map declaring rows PF1 and PF2, and the ConformantFence entries plus
-// extraFenceLines. It closes with the completion plan the landing's checkpoint reads, over
-// the tickets/one.md every conformant seed writes.
+// opted-in coverage map declaring rows PF1 and PF2, the ConformantFence entries plus
+// extraFenceLines, the complete-empty inventory, and the completion plan over the
+// tickets/one.md that every seed writes.
 func SpecBody(slug string, extraFenceLines ...string) string {
+	return specBody(slug, true, extraFenceLines)
+}
+
+// SpecBodyNoInventory is SpecBody with no planning inventory section.
+func SpecBodyNoInventory(slug string, extraFenceLines ...string) string {
+	return specBody(slug, false, extraFenceLines)
+}
+
+func specBody(slug string, inventory bool, extraFenceLines []string) string {
 	var b strings.Builder
 	b.WriteString("# " + slug + "\n\nStatus: staged\n\n")
 	b.WriteString("## User stories\n1. As a, I want b, so c.\n\n")
@@ -165,6 +143,9 @@ func SpecBody(slug string, extraFenceLines ...string) string {
 	b.WriteString("- `.agents/commands/bench-implement-spec.md` (build instructions)\n")
 	for _, line := range extraFenceLines {
 		b.WriteString(line + "\n")
+	}
+	if inventory {
+		b.WriteString(inventorytest.Section(inventorytest.CompleteEmpty))
 	}
 	b.WriteString(PlanFence("one.md"))
 	return b.String()

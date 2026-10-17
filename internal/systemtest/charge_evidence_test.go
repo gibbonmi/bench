@@ -18,6 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 )
@@ -28,8 +29,9 @@ type evidenceJourney struct {
 	root, home, base string
 }
 
-// newEvidenceJourney seeds a build-ready spec: one ticket, its completion plan, and the
-// canonical guidance sources a build charge requires.
+// newEvidenceJourney seeds a build-ready spec: one ticket, its completion plan, the
+// declared-complete empty planning-facts inventory, and the canonical guidance sources a
+// build charge requires.
 func newEvidenceJourney(t *testing.T) evidenceJourney {
 	t.Helper()
 	root, err := os.MkdirTemp(owner.root, "charge-evidence [journey]-")
@@ -56,7 +58,7 @@ func newEvidenceJourney(t *testing.T) evidenceJourney {
 			t.Fatal(err)
 		}
 	}
-	spec := "# x\n\nStatus: staged\n\n## User stories\n1. Prepare evidence.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | prepares | command | catches failure |\n\n## Ownership fences\n\n- `source.txt`\n- `reviews/x.md`\n"
+	spec := "# x\n\nStatus: staged\n\n## User stories\n1. Prepare evidence.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | prepares | command | catches failure |\n\n## Ownership fences\n\n- `source.txt`\n- `reviews/x.md`\n" + inventorytest.Section(inventorytest.CompleteEmpty)
 	recordtest.Prepare(t, root, 1, "specs/x/spec.md", spec)
 	commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")
 	commitmenttest.Commit(t, root, "approve fixture delivery")
