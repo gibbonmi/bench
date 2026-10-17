@@ -38,6 +38,7 @@ const (
 	terminalFile   = "internal/terminal/terminal.go"
 	operationsFile = "internal/preflight/evidencecmd/operations.go"
 	breakdownFile  = "internal/preflight/evidencecmd/breakdown.go"
+	usageFile      = "internal/usage/usage.go"
 	rootHelp       = "cmd/bench/help_inventory_test.go"
 	routingCensus  = "internal/conformance/subcommand_routing_table_test.go"
 )
@@ -60,10 +61,10 @@ var grammarBase = map[string]string{
 // crossBase is grammarBase inside the module that its imports name, with the parser package
 // the module's package index needs and a grammar value that another package passes.
 var crossBase = merged(grammarBase, map[string]string{
-	"go.mod":                  "module github.com/gibbonmi/bench\n\ngo 1.25\n",
-	"internal/usage/usage.go": "package usage\n\ntype Grammar struct {\n\tCmd, Help string\n\tRun       func() int\n}\n\nfunc Parse(g Grammar, args []string) (any, any, int) { return nil, nil, 0 }\n",
-	sharedFile:                "package harnesses\n\nimport (\n\t\"github.com/gibbonmi/bench/internal/names\"\n\t\"github.com/gibbonmi/bench/internal/usage\"\n)\n\nfunc Shared(args []string) int {\n\t_, _, code := usage.Parse(names.Grammar, args)\n\treturn code\n}\n",
-	namesGrammar:              "package names\n\nimport \"github.com/gibbonmi/bench/internal/usage\"\n\nvar Grammar = usage.Grammar{Cmd: \"bench shared\"}\n",
+	"go.mod":     "module github.com/gibbonmi/bench\n\ngo 1.25\n",
+	usageFile:    "package usage\n\ntype Grammar struct {\n\tCmd, Help string\n\tRun       func() int\n}\n\nfunc Parse(g Grammar, args []string) (any, any, int) { return nil, nil, 0 }\n",
+	sharedFile:   "package harnesses\n\nimport (\n\t\"github.com/gibbonmi/bench/internal/names\"\n\t\"github.com/gibbonmi/bench/internal/usage\"\n)\n\nfunc Shared(args []string) int {\n\t_, _, code := usage.Parse(names.Grammar, args)\n\treturn code\n}\n",
+	namesGrammar: "package names\n\nimport \"github.com/gibbonmi/bench/internal/usage\"\n\nvar Grammar = usage.Grammar{Cmd: \"bench shared\"}\n",
 })
 
 // edited is one base file with its first old replaced by new.
@@ -147,13 +148,6 @@ func (test effectCase) run(t *testing.T) {
 
 // TestGrammarEffects drives each grammar effect through the actual proposal.
 func TestGrammarEffects(t *testing.T) {
-	// kitGauge is the gauge package inside a sealed kit's module, beside the parser package
-	// that the module's package index needs, and kitGaugeTip changes its grammar.
-	kitGauge := map[string]string{
-		gaugeFile:                 strings.Replace(grammarBase[gaugeFile], "github.com/gibbonmi/bench", ownershiptest.KitModule, 1),
-		"internal/usage/usage.go": crossBase["internal/usage/usage.go"],
-	}
-	kitGaugeTip := map[string]string{gaugeFile: strings.Replace(kitGauge[gaugeFile], "bench gauge", "bench gauge [--all]", 1)}
 	cases := []effectCase{
 		{name: "OC14 body-only edit adds no grammar obligation", writes: []string{commandFile, helperFile},
 			tip:  merged(edited(helperFile, "return 0", "return 1"), edited(commandFile, "code + helper()", "code + helper() + 1")),

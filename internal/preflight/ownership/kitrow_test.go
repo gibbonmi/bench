@@ -29,6 +29,45 @@ func TestKitCustomRootRow(t *testing.T) {
 	}
 }
 
+// kitFiles is each named crossBase file inside a sealed kit's module, so each of its
+// in-module imports names a package of the kit.
+func kitFiles(paths ...string) map[string]string {
+	files := map[string]string{}
+	for _, path := range paths {
+		files[path] = strings.ReplaceAll(crossBase[path], "github.com/gibbonmi/bench", ownershiptest.KitModule)
+	}
+	return files
+}
+
+// kitGauge is the gauge package inside a sealed kit's module, beside the parser package that
+// the module's package index needs, and kitGaugeTip changes its grammar.
+var (
+	kitGauge    = kitFiles(gaugeFile, usageFile)
+	kitGaugeTip = map[string]string{gaugeFile: strings.Replace(kitGauge[gaugeFile], "bench gauge", "bench gauge [--all]", 1)}
+)
+
+// TestKitRootRowSides grades that a verified kit source locates each grammar change at the row
+// that registered its root on the side of the range that declares that root: a root that only
+// the base declares, and a root of another package that reaches the changed declaration.
+func TestKitRootRowSides(t *testing.T) {
+	kitShared := kitFiles(sharedFile, namesGrammar, usageFile)
+	cases := []effectCase{
+		{name: "a verified kit source locates a root that only the base declares", writes: []string{gaugeFile}, seal: freshness.Publish, files: kitGauge,
+			tip:      map[string]string{gaugeFile: "package gauge\n\nfunc Command(args []string) int { return 0 }\n"},
+			want:     map[string]bool{rootHelp: true},
+			evidence: map[string]string{rootHelp: "grammar root internal/gauge.Command#1 requires " + rootHelp + " beside " + gaugeFile},
+			located:  true},
+		{name: "a verified kit source locates another package's passing root", writes: []string{namesGrammar}, seal: freshness.Publish, files: kitShared,
+			tip:      map[string]string{namesGrammar: strings.Replace(kitShared[namesGrammar], "bench shared", "bench shared [--all]", 1)},
+			want:     map[string]bool{sharedFile: true, rootHelp: true},
+			evidence: map[string]string{rootHelp: "grammar root internal/harnesses.Shared#1 requires " + rootHelp + " beside " + namesGrammar},
+			located:  true},
+	}
+	for _, test := range cases {
+		t.Run(test.name, test.run)
+	}
+}
+
 // withoutParserRow is the kit's binding registry without the line that holds the ordinary
 // parser's row, at the line that the registry's own line owner locates.
 func withoutParserRow(t *testing.T) string {
