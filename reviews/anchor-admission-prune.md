@@ -1324,6 +1324,72 @@
           "supersedes": [
             "apc7-coverage-r1"
           ]
+        },
+        {
+          "id": "apc7-standards-r3",
+          "performer": "claude:aap_apc7_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc7_standards_r3",
+            "digest": "sha256:f2bf32725bf226d1c7aceb90edf8dddf8b032f8d422161ff98e180e416389088",
+            "excerpt": "Standards round 3, AP-C7, refrozen pair 6a6bd068..e9a934b5; check-current current=true.\nThe uncovered delta 6a6bd068..3f56db6d is comment-only: internal/anchors/registry_chunk_chain.go:45 and registry_charge_binding.go:12. Both comments are accurate: only Forbid rows read the three constants (:14, :20-21), and three registries read delegationDiscipline.\nf05dcd48..e9a934b5 changes only reviews/anchor-admission-prune.md.\nFindings: none. Verdict: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "6a6bd068adc481c89f69d88e4e238d198fdb571d",
+          "tip": "66168c19db46ee4beb78e7a374294f94aad47509",
+          "finding_ids": [],
+          "supersedes": [
+            "apc7-standards-r2"
+          ]
+        },
+        {
+          "id": "apc7-spec-r3",
+          "performer": "claude:aap_apc7_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc7_spec_r3",
+            "digest": "sha256:84715e14423c00df23c0cec279d235edb36a77d1beccd62cb356f0fe98cb4136",
+            "excerpt": "Spec round 3, AP-C7, refrozen pair 6a6bd068..e9a934b5; check-current current=true.\n6a6bd068..3f56db6d touches only comment lines in two internal/anchors files and the review record; f05dcd48..e9a934b5 touches only the review record. Neither delta changes the spec, ticket 4a, or AP48 behavior, so the round 2 verdict carries over.\nFindings: none. Verdict: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "6a6bd068adc481c89f69d88e4e238d198fdb571d",
+          "tip": "66168c19db46ee4beb78e7a374294f94aad47509",
+          "finding_ids": [],
+          "supersedes": [
+            "apc7-spec-r2"
+          ]
+        },
+        {
+          "id": "apc7-coverage-r3",
+          "performer": "claude:aap_apc7_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc7_coverage_r3",
+            "digest": "sha256:b30e1c87b22a52ca769adba96291baa650782673ae9aeef605dc8176394e0376",
+            "excerpt": "Coverage round 3, AP-C7, refrozen pair 6a6bd068..e9a934b5; check-current current=true. No probe.\nThe uncovered delta ab4aa62b changes only comments, so test coverage does not change. f05dcd48..e9a934b5 is record-only.\nThe five t4ar1b-* verifications pass with exit 0 at source digest d0cb069a, which matches the AP-C7 chunk entry with base 6a6bd068.\nFindings: none. Verdict: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "6a6bd068adc481c89f69d88e4e238d198fdb571d",
+          "tip": "66168c19db46ee4beb78e7a374294f94aad47509",
+          "finding_ids": [],
+          "supersedes": [
+            "apc7-coverage-r2"
+          ]
         }
       ]
     }
