@@ -96,7 +96,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	sealPresent, sealRefusal := binarySealFacts(root)
 	specPath := filepath.ToSlash(specref.RelTo(root, resolved))
 	collected := ownershipSource(root, specPath, resolvedSource, changedPaths, sealPresent, sealRefusal == nil)
-	snapshot, ownershipFailure := collectOwnership(root, content, collected, ticketFacts.parsed)
+	snapshot, ownershipFailure := collectOwnership(root, content, collected, ids, ticketFacts.parsed)
 	if ownershipFailure != nil {
 		return Facts{}, ownershipFailure
 	}

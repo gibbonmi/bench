@@ -273,7 +273,7 @@ func collectChargeSnapshot(t *testing.T, root string) ownership.Snapshot {
 		Base:     preflighttest.RunGit(t, "rev-parse", "main"),
 		Tip:      preflighttest.RunGit(t, "rev-parse", "HEAD"),
 	}
-	snap, err := ownership.Collect(root, source, ownership.ParseManifest(specBytes), parsed)
+	snap, err := ownership.Collect(root, source, ownership.ParseManifest(specBytes), nil, parsed)
 	if err != nil {
 		t.Fatal(err)
 	}

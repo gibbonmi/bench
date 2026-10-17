@@ -34,8 +34,8 @@ func renderWritesProposal(root string, f Facts, name string) (string, int) {
 	if refusal, _ := preparationCheckoutRefusal(root, f, "proposal"); refusal != "" {
 		return refusal, 1
 	}
-	if verdict := Decide(f); refusesBeyond(verdict, proposalToleratedChecks) {
-		return chargeVerdictRefusal(verdict), 1
+	if refused := untolerated(Decide(f), proposalToleratedChecks); refused.Red {
+		return chargeVerdictRefusal(refused), 1
 	}
 	entry, selected, detail, next := preparationTicket(root, f, name)
 	if detail != "" {
@@ -166,8 +166,8 @@ func pathsFromRows(rows [][]string) []string {
 // ordering, or write authority.
 func renderBreakdown(f Facts) (string, int) {
 	verdict := Decide(f)
-	if refusesBeyond(verdict, breakdownToleratedChecks) {
-		return chargeVerdictRefusal(verdict), 1
+	if refused := untolerated(verdict, breakdownToleratedChecks); refused.Red {
+		return chargeVerdictRefusal(refused), 1
 	}
 	var uncited, closure [][]string
 	for _, row := range f.Ownership.Uncited {
@@ -185,11 +185,16 @@ func renderBreakdown(f Facts) (string, int) {
 	})
 }
 
-// refusesBeyond reports whether verdict holds a red check that tolerated does not name.
-func refusesBeyond(verdict Verdict, tolerated []string) bool {
-	return slices.ContainsFunc(verdict.Checks, func(check CheckResult) bool {
-		return check.Verdict == verdictRed && !slices.Contains(tolerated, check.Check)
-	})
+// untolerated is verdict with only its red checks that tolerated does not name, so a refusal
+// names the first red that refuses and never a red that the response itself reports.
+func untolerated(verdict Verdict, tolerated []string) Verdict {
+	var refused Verdict
+	for _, check := range verdict.Checks {
+		if check.Verdict == verdictRed && !slices.Contains(tolerated, check.Check) {
+			refused.Checks, refused.Red = append(refused.Checks, check), true
+		}
+	}
+	return refused
 }
 
 // responseTable is one TOON table of a proposal or breakdown response.

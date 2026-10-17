@@ -181,33 +181,41 @@ func BoundFiles(path string) []string {
 	return files
 }
 
-// BindingLines maps each binding row's prefix, and each grammar root's selector, to its line
-// in src, the source bytes of this registry. A caller that holds verified kit source names
-// the row's actual location this way. Source that does not parse, or that declares no
-// bindings table, is an error.
+// BindingLines maps each binding row's prefix, each grammar root's selector, and the ordinary
+// parser's selector to its line in src, the source bytes of this registry. A caller that
+// holds verified kit source names the row's actual location this way. Source that does not
+// parse, or that declares no bindings table, is an error.
 func BindingLines(src []byte) (map[string]int, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, BindingRegistry, src, parser.SkipObjectResolution)
 	if err != nil {
 		return nil, err
 	}
-	// Each table names the row fields whose values spell the row's key.
-	tables := map[string][]string{"bindings": {"Prefix"}, "grammarRoots": {"Dir", "Name"}}
+	// Each table names the row fields whose values spell the row's key. A single row is the
+	// value itself, not an element of a table.
+	selector := []string{"Dir", "Name"}
+	tables := map[string][]string{"bindings": {"Prefix"}, "grammarRoots": selector}
+	singles := map[string][]string{"grammarParser": selector}
 	lines := map[string]int{}
 	found := false
 	ast.Inspect(file, func(node ast.Node) bool {
 		spec, ok := node.(*ast.ValueSpec)
-		if !ok || len(spec.Names) != 1 || tables[spec.Names[0].Name] == nil || len(spec.Values) != 1 {
+		if !ok || len(spec.Names) != 1 || len(spec.Values) != 1 {
 			return true
 		}
-		table, ok := spec.Values[0].(*ast.CompositeLit)
-		if !ok {
+		name := spec.Names[0].Name
+		value, ok := spec.Values[0].(*ast.CompositeLit)
+		if !ok || tables[name] == nil && singles[name] == nil {
 			return true
 		}
-		found = found || spec.Names[0].Name == "bindings"
-		for _, element := range table.Elts {
+		rows, fields := value.Elts, tables[name]
+		if fields == nil {
+			rows, fields = []ast.Expr{value}, singles[name]
+		}
+		found = found || name == "bindings"
+		for _, element := range rows {
 			if row, ok := element.(*ast.CompositeLit); ok {
-				if key, ok := rowKey(row, tables[spec.Names[0].Name]); ok {
+				if key, ok := rowKey(row, fields); ok {
 					lines[key] = fset.Position(row.Pos()).Line
 				}
 			}

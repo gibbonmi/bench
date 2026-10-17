@@ -77,6 +77,10 @@ type ProposalRepo struct {
 	Tail         string
 }
 
+// KitModule is the module path of a sealed repository, so a sealed fixture's import names a
+// package inside it.
+const KitModule = "example.com/kit"
+
 // Publisher is the sealed run-binary publication that a test file sets as Seal. A test file
 // supplies it, so this non-test package cannot publish a sealed run binary on its own.
 type Publisher func(root, staged, executable, manifestDir, version string) error
@@ -125,8 +129,8 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 		if _, given := r.Files[tickets.BindingRegistry]; !given {
 			preflighttest.MustWriteFile(t, tickets.BindingRegistry, string(KitRegistry(t)))
 		}
-		preflighttest.MustWriteFile(t, "go.mod", "module example.com/kit\n\ngo 1.25\n")
-		preflighttest.MustWriteFile(t, "cmd/bench/main.go", "package main\n\nimport _ \"example.com/kit/internal/tickets\"\n\nfunc main() {}\n")
+		preflighttest.MustWriteFile(t, "go.mod", "module "+KitModule+"\n\ngo 1.25\n")
+		preflighttest.MustWriteFile(t, "cmd/bench/main.go", "package main\n\nimport _ \""+KitModule+"/internal/tickets\"\n\nfunc main() {}\n")
 		preflighttest.MustWriteFile(t, "scripts/go-build.sh", "#!/usr/bin/env bash\n")
 		preflighttest.MustWriteFile(t, freshness.BuildInputsManifest, freshness.BuildInputLine("build_script", "scripts/go-build.sh"))
 		preflighttest.MustWriteFile(t, ".gitignore", "dist/\n")

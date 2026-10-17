@@ -99,8 +99,8 @@ func TestCommandRowsBindTheHelpProjectionAndEnvelopeCases(t *testing.T) {
 
 // TestBindingLinesLocateEveryRow reads this registry's own source. BindingRegistry must
 // name that file, and BindingLines must place each compiled row on the line that spells
-// its prefix, and each grammar root on the line that spells its name, so a closure reason
-// cites the row it applied.
+// its prefix, and each grammar root and the ordinary parser on the line that spells its
+// name, so a closure reason cites the row it applied.
 func TestBindingLinesLocateEveryRow(t *testing.T) {
 	src, err := os.ReadFile(path.Base(BindingRegistry))
 	if err != nil {
@@ -117,7 +117,7 @@ func TestBindingLinesLocateEveryRow(t *testing.T) {
 			t.Errorf("BindingLines()[%q] = %d, want the line that declares the row", row.Prefix, line)
 		}
 	}
-	for _, root := range GrammarRoots() {
+	for _, root := range append(GrammarRoots(), GrammarParser()) {
 		line := lines[root.String()]
 		if line < 1 || !strings.Contains(physical[line-1], "Name: "+strconv.Quote(root.Name)) {
 			t.Errorf("BindingLines()[%q] = %d, want the line that declares the root", root, line)

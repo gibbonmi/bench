@@ -109,10 +109,11 @@ func (facts *ticketFacts) probe(root, entry string) {
 }
 
 // collectOwnership reads the canonical closure of the parsed tickets against the source
-// that the gatherer resolved, and the spec's planning-facts inventory. An owner that does
-// not read refuses the gather, so no partial closure reaches Decide.
-func collectOwnership(root string, content []byte, source ownership.Source, parsed []tickets.Ticket) (ownership.Snapshot, *BootstrapFailure) {
-	snapshot, err := ownership.Collect(root, source, ownership.ParseManifest(content), parsed)
+// that the gatherer resolved, the spec's planning-facts inventory, and the uncited rows of
+// the declared row IDs. An owner that does not read refuses the gather, so no partial
+// closure reaches Decide.
+func collectOwnership(root string, content []byte, source ownership.Source, declared []string, parsed []tickets.Ticket) (ownership.Snapshot, *BootstrapFailure) {
+	snapshot, err := ownership.Collect(root, source, ownership.ParseManifest(content), declared, parsed)
 	var refusal *ownership.Error
 	if errors.As(err, &refusal) {
 		return ownership.Snapshot{}, &BootstrapFailure{refusal.Stage + " refused", refusal.Error()}

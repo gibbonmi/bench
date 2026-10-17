@@ -133,7 +133,7 @@ type ChargeReadiness struct {
 // Snapshot is one immutable collection. Complete means full supported premise
 // certification of a declared-complete inventory with no diagnostic; it is never reviewer
 // approval, and a partial inventory or any manual claim keeps it false. Uncited is every
-// coverage row that no parsed ticket cites, which the read-only breakdown lists.
+// declared coverage row that no parsed ticket cites, which the read-only breakdown lists.
 type Snapshot struct {
 	Requirements    []Requirement
 	Premises        []Premise
@@ -162,10 +162,11 @@ func (e *Error) Unwrap() error { return e.Cause }
 
 // Collect reads the canonical closure of every parsed ticket at root, with each Grammar
 // binding classified by the committed change it covers and each declared changed
-// declaration's static callers, and grades the manifest's premise inventory. A failed owner
+// declaration's static callers, and grades the manifest's premise inventory. declared is the
+// spec's declared row IDs, the set whose uncited rows the snapshot names. A failed owner
 // read returns an *Error and no snapshot, so a partial collection never reads as a
 // complete one.
-func Collect(root string, source Source, manifest Manifest, parsed []tickets.Ticket) (Snapshot, error) {
+func Collect(root string, source Source, manifest Manifest, declared []string, parsed []tickets.Ticket) (Snapshot, error) {
 	census := &census{root: root, source: source}
 	graded, owners := census.premises(manifest.Premises)
 	requirements, diagnostics, err := closure(root, source, parsed, manifest.Changes, census, owners)
@@ -180,7 +181,7 @@ func Collect(root string, source Source, manifest Manifest, parsed []tickets.Tic
 		Requirements: requirements,
 		Premises:     allPremises,
 		Diagnostics:  allDiag,
-		Uncited:      uncited(manifest.rows, parsed),
+		Uncited:      uncited(declared, manifest.rows, parsed),
 	}
 	snapshot.Complete = manifest.Present && manifest.Completeness == completenessDeclared && len(snapshot.Diagnostics) == 0 && nativeValid
 	for _, premise := range snapshot.Premises {

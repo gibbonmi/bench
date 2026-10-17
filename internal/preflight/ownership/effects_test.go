@@ -9,8 +9,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // Grammar effect fixture paths. command.go passes a local grammar to the parser, and that
@@ -81,7 +83,9 @@ func plannedForm(path, symbol, kind string) string {
 // requires it, and evidence maps a required path to text that one of its reasons holds. A
 // later hop of the fixed point can require a path again, so only its reason shows which
 // rule required it. premise names a premise row whose reason must hold reason. A nonempty
-// refusal is text that the proposal's refusal must name instead.
+// refusal is text that the proposal's refusal must name instead. A non-nil seal publishes a
+// verified kit binary, so the registry source is the authenticated kit context, and located
+// requires that the verified source locates every registry reason: no kit-registry premise.
 type effectCase struct {
 	name                          string
 	writes                        []string
@@ -93,12 +97,14 @@ type effectCase struct {
 	refusal                       string
 	files                         map[string]string
 	fence                         []string
+	seal                          ownershiptest.Publisher
+	located                       bool
 }
 
 // run seeds the case's base, commits its tip, and grades the proposal. A case with no facts
 // declares the complete-empty inventory.
 func (test effectCase) run(t *testing.T) {
-	root := ownershiptest.ProposalRepo{Writes: test.writes, Files: test.files, Fence: test.fence, OwnInventory: true, Tail: cmp.Or(test.facts, fenced(completeEmpty))}.Seed(t)
+	root := ownershiptest.ProposalRepo{Writes: test.writes, Files: test.files, Fence: test.fence, OwnInventory: true, Seal: test.seal, Tail: cmp.Or(test.facts, fenced(completeEmpty))}.Seed(t)
 	if len(test.tip) > 0 {
 		for path, body := range test.tip {
 			if body == "" {
@@ -127,6 +133,9 @@ func (test effectCase) run(t *testing.T) {
 			t.Errorf("evidence for %s = %v, want a reason naming %q", path, rows, reason)
 		}
 	}
+	if rows := matching(t, out, "premises", map[string]string{"id": "kit-registry"}); test.located && len(rows) > 0 {
+		t.Errorf("kit-registry premise = %v, want every registry reason located", rows)
+	}
 	if test.premise != "" {
 		state := cmp.Or(test.premiseState, "unknown")
 		row := one(t, out, "premises", map[string]string{"id": test.premise})
@@ -138,6 +147,13 @@ func (test effectCase) run(t *testing.T) {
 
 // TestGrammarEffects drives each grammar effect through the actual proposal.
 func TestGrammarEffects(t *testing.T) {
+	// kitGauge is the gauge package inside a sealed kit's module, beside the parser package
+	// that the module's package index needs, and kitGaugeTip changes its grammar.
+	kitGauge := map[string]string{
+		gaugeFile:                 strings.Replace(grammarBase[gaugeFile], "github.com/gibbonmi/bench", ownershiptest.KitModule, 1),
+		"internal/usage/usage.go": crossBase["internal/usage/usage.go"],
+	}
+	kitGaugeTip := map[string]string{gaugeFile: strings.Replace(kitGauge[gaugeFile], "bench gauge", "bench gauge [--all]", 1)}
 	cases := []effectCase{
 		{name: "OC14 body-only edit adds no grammar obligation", writes: []string{commandFile, helperFile},
 			tip:  merged(edited(helperFile, "return 0", "return 1"), edited(commandFile, "code + helper()", "code + helper() + 1")),
@@ -192,6 +208,13 @@ func TestGrammarEffects(t *testing.T) {
 			tip:      edited(gaugeFile, "bench gauge", "bench gauge [--all]"),
 			want:     map[string]bool{rootHelp: true, routingCensus: true},
 			evidence: map[string]string{rootHelp: "grammar root internal/gauge.Command#1 requires " + rootHelp}},
+		{name: "a verified kit source locates an unbound package's parser root", writes: []string{gaugeFile}, seal: freshness.Publish, files: kitGauge, tip: kitGaugeTip,
+			want:     map[string]bool{rootHelp: true},
+			evidence: map[string]string{rootHelp: "grammar root internal/gauge.Command#1 requires " + rootHelp + " beside " + gaugeFile + " at kit source"},
+			located:  true},
+		{name: "a kit source with no parser row stays diagnostic", writes: []string{gaugeFile}, seal: freshness.Publish, tip: kitGaugeTip,
+			files: merged(kitGauge, map[string]string{tickets.BindingRegistry: ownershiptest.Cut(t, string(ownershiptest.KitRegistry(t)), `var grammarParser = GrammarRoot{Dir: "internal/usage", Name: "Parse"}`+"\n")}),
+			want:  map[string]bool{rootHelp: true}, premise: "kit-registry", reason: "holds no row for grammar root internal/gauge.Command#1"},
 		{name: "ambiguous producer declaration stays diagnostic", writes: []string{helpFile},
 			files: merged(grammarBase, map[string]string{"internal/harnesses/help_other.go": "//go:build ignore\n\npackage harnesses\n\nconst harnessesHelp = \"other\"\n"}),
 			tip:   edited(helpFile, "usage: bench harnesses", "usage: bench harnesses [--all]"),

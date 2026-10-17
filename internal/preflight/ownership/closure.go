@@ -233,7 +233,7 @@ func (inv inventory) grammarSources(subject string, grammar effect, bound bool) 
 			continue
 		}
 		for _, file := range tickets.GrammarFiles() {
-			require(file, inv.kit(change.root, "grammar root "+change.root, "grammar root "+change.root+" requires "+file+" beside "+subject))
+			require(file, inv.kit(rootRow(change.root), "grammar root "+change.root, "grammar root "+change.root+" requires "+file+" beside "+subject))
 		}
 	}
 	for _, change := range inv.effects.planned {
@@ -243,10 +243,20 @@ func (inv inventory) grammarSources(subject string, grammar effect, bound bool) 
 		}
 		require(change.Owner.Path, inv.tree(inv.source.SpecPath, change.Location.Line, "planned grammar change", "planned grammar change "+change.ID+" registers through "+root.String()))
 		for _, file := range tickets.GrammarFiles() {
-			require(file, inv.kit(root.String(), "grammar root "+root.String(), "planned grammar change "+change.ID+" requires "+file+" beside "+subject))
+			require(file, inv.kit(rootRow(root.String()), "grammar root "+root.String(), "planned grammar change "+change.ID+" requires "+file+" beside "+subject))
 		}
 	}
 	return next
+}
+
+// rootRow is the registry selector that registers one grammar root, the key of its binding
+// line: the root itself when a custom root row names it, and otherwise the ordinary parser,
+// whose call is the only other way a declaration becomes a root.
+func rootRow(root string) string {
+	if slices.ContainsFunc(tickets.GrammarRoots(), func(custom tickets.GrammarRoot) bool { return custom.String() == root }) {
+		return root
+	}
+	return tickets.GrammarParser().String()
 }
 
 // registry is one reason whose owner is a compiled binding row.

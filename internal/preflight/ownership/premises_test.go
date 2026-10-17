@@ -60,7 +60,7 @@ func TestMetadataGrammar(t *testing.T) {
 		"manual claim":                      {fenced(manualClaim(`"applicability":"current-premise"`)), false},
 	} {
 		t.Run("Complete "+name, func(t *testing.T) {
-			snapshot, err := ownership.Collect(t.TempDir(), ownership.Source{}, ownership.ParseManifest([]byte(test.text)), nil)
+			snapshot, err := ownership.Collect(t.TempDir(), ownership.Source{}, ownership.ParseManifest([]byte(test.text)), nil, nil)
 			if err != nil || snapshot.Complete != test.complete {
 				t.Fatalf("Collect = Complete %t, %v; want Complete %t", snapshot.Complete, err, test.complete)
 			}

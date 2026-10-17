@@ -84,12 +84,33 @@ func TestBreakdownRows(t *testing.T) {
 		}
 		one(t, out, "checks", map[string]string{"check": "rows-owned", "verdict": "red"})
 	})
+	// The closure tree's ticket cites every row, so its breakdown shows the closure and the
+	// premise diagnostics alone: a fixture pin and the unverified kit registry source.
+	t.Run("closure and premise diagnostics", func(t *testing.T) {
+		tr := closureTree()
+		tr.OwnInventory, tr.Tail = true, fenced(completeEmpty)
+		tr.Seed(t)
+		out := mustBreakdown(t, []string{"build", slug, "--breakdown", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD")})
+		one(t, out, "closure", map[string]string{"ticket": "one.md", "path": "internal/example/pinned.go", "requires": "tests/canary/fam/pin-fixture"})
+		if row := one(t, out, "premises", map[string]string{"id": "kit-registry"}); cell(row, "state") != "unknown" {
+			t.Fatalf("kit-registry premise = %v, want unknown:\n%s", row, out)
+		}
+	})
+	// The uncited PF2 case also holds the tolerated rows-owned red, which precedes
+	// rows-membership in check order, so the refusal must still name rows-membership.
 	t.Run("OC63 foreign or phantom token", func(t *testing.T) {
-		for token, check := range map[string]string{"PF9": "rows-membership", "FT93": "tickets-parse"} {
-			breakdown, _ := breakdownRepo(t, map[string]string{"one.md": preflighttest.TicketDoc("One", "PF1", "PF2", token)})
+		for _, test := range []struct {
+			covers []string
+			check  string
+		}{
+			{[]string{"PF1", "PF2", "PF9"}, "rows-membership"},
+			{[]string{"PF1", "PF9"}, "rows-membership"},
+			{[]string{"PF1", "PF2", "FT93"}, "tickets-parse"},
+		} {
+			breakdown, _ := breakdownRepo(t, map[string]string{"one.md": preflighttest.TicketDoc("One", test.covers...)})
 			out, code := preflight.Command(breakdown)
-			if code != 1 || !strings.Contains(out, check) || strings.Contains(out, "uncited[") {
-				t.Errorf("breakdown with %s = (%d), want the %s refusal and no uncited table:\n%s", token, code, check, out)
+			if code != 1 || !strings.Contains(out, test.check+": ") || strings.Contains(out, "uncited[") {
+				t.Errorf("breakdown covering %v = (%d), want the %s refusal and no uncited table:\n%s", test.covers, code, test.check, out)
 			}
 		}
 	})
@@ -121,7 +142,6 @@ func TestBreakdownRows(t *testing.T) {
 
 // TestBreakdownGrammar grades the breakdown selector through the actual command grammar.
 func TestBreakdownGrammar(t *testing.T) {
-	const form = "build <slug> --breakdown [--base <commit>] [--source-tip <commit>]"
 	t.Run("OC66 incompatible selector", func(t *testing.T) {
 		pinned := []string{"build", slug, "--breakdown", "--base", "base", "--source-tip", "tip"}
 		for _, test := range []struct {
@@ -140,12 +160,20 @@ func TestBreakdownGrammar(t *testing.T) {
 			}
 		}
 	})
+	// The root help inventory owns the form's exact text, so this witness finds the one
+	// registered root help row that the breakdown selector names.
 	t.Run("OC67 help derives the selector", func(t *testing.T) {
-		if out, code := preflight.Command([]string{"--help"}); code != 0 || !strings.Contains(out, "bench preflight "+form+"\n") {
-			t.Errorf("preflight help = (%d), want the form %q:\n%s", code, form, out)
+		var forms []evidencecmd.HelpRow
+		for _, row := range evidencecmd.HelpRows() {
+			if slices.Contains(strings.Fields(row.Suffix), "--breakdown") {
+				forms = append(forms, row)
+			}
 		}
-		if !slices.ContainsFunc(evidencecmd.HelpRows(), func(row evidencecmd.HelpRow) bool { return row.Suffix == " "+form && row.Description != "" }) {
-			t.Errorf("root help rows %v omit the form %q", evidencecmd.HelpRows(), form)
+		if len(forms) != 1 || forms[0].Description == "" {
+			t.Fatalf("root help rows %v, want one described --breakdown form", evidencecmd.HelpRows())
+		}
+		if out, code := preflight.Command([]string{"--help"}); code != 0 || !strings.Contains(out, "bench preflight"+forms[0].Suffix+"\n") {
+			t.Errorf("preflight help = (%d), want the form %q:\n%s", code, forms[0].Suffix, out)
 		}
 	})
 }
