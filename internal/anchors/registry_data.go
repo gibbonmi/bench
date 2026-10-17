@@ -60,7 +60,7 @@ func staleLandingPathAnchors() []Anchor {
 
 // registry is the ordered anchor registry every evaluation reads. It appends onto a
 // fresh slice, so no source slice below or in a sibling registry file is ever aliased.
-var registry = append(append(append(append(append(append(append(append(append(append(append(append(append(append(append(append(append([]Anchor{}, generalAnchors...), frontDoorAnchors...), decisionMapAnchors...), craftResearchAnchors...), ft311PreparationAnchors...), ft311ReviewDispatchAnchors...), retainedWorkflowAnchors...), implementationContinuationAnchors...), ticketSlicingAnchors...), debugLoopAnchors...), calibrationAnchors...), chunkChainAnchors...), reviewRuleAnchors...), chargeBindingAnchors...), commitmentAnchors...), checkFloorAnchors...), staleLandingPathAnchors()...)
+var registry = append(append(append(append(append(append(append(append(append(append(append(append(append(append(append([]Anchor{}, generalAnchors...), decisionMapAnchors...), craftResearchAnchors...), ft311PreparationAnchors...), ft311ReviewDispatchAnchors...), retainedWorkflowAnchors...), implementationContinuationAnchors...), ticketSlicingAnchors...), debugLoopAnchors...), calibrationAnchors...), chunkChainAnchors...), chargeBindingAnchors...), commitmentAnchors...), checkFloorAnchors...), staleLandingPathAnchors()...)
 
 var generalAnchors = []Anchor{
 	{File: ".agents/skills/bench-craft-spec/SKILL.md", Kind: RequireInSection, Section: "Template", Needle: "why it catches the failure", Diagnostic: ".agents/skills/bench-craft-spec/SKILL.md Template missing acceptance coverage anchor: why it catches the failure"},

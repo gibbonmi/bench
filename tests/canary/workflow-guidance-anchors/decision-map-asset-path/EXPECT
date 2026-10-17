@@ -1,1 +1,0 @@
-internal/maps/schema.go dropped the decisions/<topic>/assets/ path for a map-owned asset from the decision-map template
