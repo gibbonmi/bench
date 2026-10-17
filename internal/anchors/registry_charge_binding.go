@@ -9,5 +9,5 @@ var chargeBindingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: Forbid, Needle: "After a rebase changes the source digest", Diagnostic: "charge binding: the digest rule restored the rebase premise that the workflow rejects"},
 }
 
-// delegationDiscipline is the craft-delegate reference these anchors read.
+// delegationDiscipline is the craft-delegate reference that several topic registries read.
 const delegationDiscipline = ".agents/skills/bench-craft-delegate/references/delegation-discipline.md"

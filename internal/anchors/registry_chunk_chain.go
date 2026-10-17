@@ -42,8 +42,7 @@ var chunkChainAnchors = []Anchor{
 }
 
 // implementPhase and reviewPhase are the phase files that state the chunk chain.
-// freshAuthorADR is the decision record that states the build's light-path hold.
-// craftTickets and benchReference also name the chunk freezer.
+// freshAuthorADR, craftTickets, and benchReference carry retired sentences that the Forbid rows refuse.
 const (
 	implementPhase = ".agents/commands/bench-implement-spec.md"
 	reviewPhase    = ".agents/commands/bench-review-implementation.md"
