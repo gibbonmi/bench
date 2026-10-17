@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/anchor-admission-prune/spec.md",
-  "plan_digest": "sha256:829f4cbe3854fc142d7866f0e42caf2510aef5288f9b55b2000572056456dc8c",
+  "plan_digest": "sha256:07d30c1a3e740819b16144c33081d107abb5dd8332a2fe665fb6c96b9d459212",
   "implementation_session": "",
   "chunks": [
     {
@@ -1650,6 +1650,322 @@
           ]
         }
       ]
+    },
+    {
+      "id": "AP-C5",
+      "base": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+      "tip": "4be36325bf966fdb1e31f1880314bc1becbacc3b",
+      "plan_digest": "sha256:07d30c1a3e740819b16144c33081d107abb5dd8332a2fe665fb6c96b9d459212",
+      "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+      "acceptance_rows": [
+        "AP33",
+        "AP34",
+        "AP35",
+        "AP36",
+        "AP37",
+        "AP38",
+        "AP49",
+        "AP01",
+        "AP09",
+        "AP11",
+        "AP12",
+        "AP13",
+        "AP14",
+        "AP15",
+        "AP16",
+        "AP17"
+      ],
+      "verification": [
+        {
+          "id": "t7b-t7-anchors",
+          "performer": "claude:aap_t07b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t07b",
+            "digest": "sha256:1684a022aa63f9661add2d4d8602eeb7e96fe368bdac01cbe3dab742e472d087",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,115,128\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t7b-t7-cmd-bench",
+          "performer": "claude:aap_t07b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t07b",
+            "digest": "sha256:0bfd8e0aa08ecd8c97a4b7d4e6746ddaeff7253ed90814b173e1b92a1628bda8",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19191,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t7b-t7-gate",
+          "performer": "claude:aap_t07b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t07b",
+            "digest": "sha256:ef353c85577cf833b6685062bb8ff719c8fd225043a56639b840940e7f534bc4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,47324,490\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t7b-t7-conformance",
+          "performer": "claude:aap_t07b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t07b",
+            "digest": "sha256:1d5abc2b1c769edad1c316073cb20c923156762a92a9ee249402ca57152c842a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,44666,1118\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t7-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t7b-t7-prose",
+          "performer": "claude:aap_t07b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t07b",
+            "digest": "sha256:f1e911b1ff245eeb18054e0c8a682c76976b4b9b4ebd6297caa38ac01ddeeb24",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/prose,pass,401,79\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-prose",
+          "command": "bench test --package ./internal/prose",
+          "exit_code": 0
+        },
+        {
+          "id": "t7b-t7-docs-currency-workflow",
+          "performer": "claude:aap_t07b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t07b",
+            "digest": "sha256:31bdc0ac9089f9a45331f1953e0388ab381776836b6897ed5be0d971270a7a43",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6033,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-docs-currency-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t7b-t7-root-conformance",
+          "performer": "claude:aap_t07b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t07b",
+            "digest": "sha256:b93489c2006ecd4121e150b89ec6bcbd04e1311020fb47fb97e09ea8da825c61",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18675,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-anchors",
+          "performer": "claude:aap_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t06",
+            "digest": "sha256:1684a022aa63f9661add2d4d8602eeb7e96fe368bdac01cbe3dab742e472d087",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,115,128\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-cmd-bench",
+          "performer": "claude:aap_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t06",
+            "digest": "sha256:f1823f131bac4c1fe2eaa94728b651fbc621f25aa6a205013c583a18acb40420",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19662,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-gate",
+          "performer": "claude:aap_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t06",
+            "digest": "sha256:567d72760cb2e1aff8847b85781a21282321dde65501bccc17255d37e34aae97",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,47602,490\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-conformance",
+          "performer": "claude:aap_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t06",
+            "digest": "sha256:8db0073b6233ad6961a5e2a1db71df8a6bb2d8eea7d8d35d22ca6ea190431728",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,44502,1118\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t6-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-prose",
+          "performer": "claude:aap_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t06",
+            "digest": "sha256:e6ff86722f8ea0e50b4dc2924451d9b0c8c6cf9ec0a66a6fa36100cce08a6154",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/prose,pass,385,79\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-prose",
+          "command": "bench test --package ./internal/prose",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-docs-currency-workflow",
+          "performer": "claude:aap_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t06",
+            "digest": "sha256:f051f8da6457c7ff778abee136af6e0b6b7969ae8052aa946b5c1d9e8a3fa332",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5532,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-docs-currency-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-root-conformance",
+          "performer": "claude:aap_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t06",
+            "digest": "sha256:65162909792460c2335dfe00b7338d65cc10ab5e4471bfd7d25823290e1eeea5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16612,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t6a-t6a-preflight",
+          "performer": "claude:aap_t06a",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t06a",
+            "digest": "sha256:13f70d2065cdf142f28b6f45354c3b62e519e6b3bd775bf30a042d2060d1d8e3",
+            "excerpt": "packages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,45348,416\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,26653,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,47438,267\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6a-preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "t6a-t6a-root-conformance",
+          "performer": "claude:aap_t06a",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t06a",
+            "digest": "sha256:ddf472477d942fc498d1ca002cb4de113af69fb16d462e64e3f33c509d53524a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16847,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6a-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1747,6 +2063,27 @@
     {
       "from": "sha256:d12058f393cc9b2d0cad01467bb6393e93d71e11fe2f2f6dd339ce999ae10d03",
       "to": "sha256:829f4cbe3854fc142d7866f0e42caf2510aef5288f9b55b2000572056456dc8c",
+      "chunk_ids": {
+        "AP-C1": [
+          "AP-C1"
+        ],
+        "AP-C2": [
+          "AP-C2"
+        ],
+        "AP-C3": [
+          "AP-C3"
+        ],
+        "AP-C4": [
+          "AP-C4"
+        ],
+        "AP-C7": [
+          "AP-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:829f4cbe3854fc142d7866f0e42caf2510aef5288f9b55b2000572056456dc8c",
+      "to": "sha256:07d30c1a3e740819b16144c33081d107abb5dd8332a2fe665fb6c96b9d459212",
       "chunk_ids": {
         "AP-C1": [
           "AP-C1"
