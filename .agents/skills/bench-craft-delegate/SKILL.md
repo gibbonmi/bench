@@ -61,7 +61,7 @@ own finished work and report the observed result. Require the delegate to add th
 the mutation comes back silently green. A mutation probe requires a behavioral mutation. A probe
 that fails to compile proves nothing, and a probe of provably redundant code passes by
 construction. Ask the delegate for zero to two Bench CLI improvements derived from its own calls,
-and fold them into the landing's census entry.
+and fold them into the phase close's census account.
 
 For a defect outside its fence, a delegate follows [debug integration](../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) for the diagnostic handoff.
 A new worktree charge starts after the coordinator runs `git rev-parse HEAD main`.
