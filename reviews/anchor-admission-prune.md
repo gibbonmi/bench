@@ -870,7 +870,71 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "apc3-standards-r1",
+          "performer": "claude:aap_apc3_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc3_standards_r1",
+            "digest": "sha256:32d10b680a1282977ba8f640191b4676f44b3b171a7e13aaecadded89bf9f3fe",
+            "excerpt": "Standards axis, AP-C3, frozen pair 5cb682f7..6a6bd068; check-current current=true.\nS1 | low | internal/anchors/registry_chunk_chain.go:45-46 comment says freshAuthorADR states the light-path hold and craftTickets and benchReference name the chunk freezer; those Require rows are removed, and only Forbid rows at :14, :20, :21 remain | auto-fix | confidence 8\nS2 | low | reviewRepeatRule and finalReconciliationRule stay in registry_ft311_review_dispatch.go:38-43; their only readers are registry_retained_workflow.go:218-221 | ask-user | confidence 6\nS3 | low | registry_charge_binding.go:12 calls delegationDiscipline the reference \"these anchors\" read; registry_check_floor.go and registry_chunk_chain.go:32 also read it | auto-fix | confidence 5\nClean: merged tests mirror their rows; re-cut diagnostics match needles; count pins match; no touched file grew; every edit inside Writes.\nCount 3, all low. Worst: S1.\n"
+          },
+          "axis": "Standards",
+          "base": "5cb682f7490edf031e1e6eec22440a4e1eb424da",
+          "tip": "6a6bd068adc481c89f69d88e4e238d198fdb571d",
+          "finding_ids": [
+            "S1",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc3-spec-r1",
+          "performer": "claude:aap_apc3_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc3_spec_r1",
+            "digest": "sha256:3d43a78f4a1320dfc87907c59c28da79f12e05a02db563eb31b8fae7b7580147",
+            "excerpt": "Spec axis, AP-C3, frozen pair 5cb682f7..6a6bd068; check-current current=true; bench coverage state mapped.\nP1 | low | registry_ft311_preparation.go:9 and the ticket_passes Process row keep a rule sentence beside the bench sentence in a COMMAND needle; both are under prose.MaxSentenceWords, so AP46 (spec.md:129) does not require a re-cut | ask-user | confidence 5\nCensus (full enumeration): each file's DROP count equals its removed count; chunk_chain 47 DROP = 39 removed + 8 step-scoped; calibration 25 DROP = 24 removed + 1 step-scoped; no FORBID, LABEL, ROUTE, or COMMAND row left; spec_trace, review_rules, front_door and tests gone and dropped from registry_data.go:63; 109 deleted fixtures (57 + 52) identical to fixture-census.md.\nAuthor calls: all four consistent with the spec.\nCount 1. Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "5cb682f7490edf031e1e6eec22440a4e1eb424da",
+          "tip": "6a6bd068adc481c89f69d88e4e238d198fdb571d",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "apc3-coverage-r1",
+          "performer": "claude:aap_apc3_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a1964e58fe13a363ff7930336127582468e9116",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc3_coverage_r1",
+            "digest": "sha256:7eb2b65cde6c254f5e04abfcbd28f28da14b42b2a8d151dedb0bf7b83787c83a",
+            "excerpt": "Coverage axis, AP-C3, frozen pair 5cb682f7..6a6bd068; check-current current=true.\nC1 | low | the kept retros.CalibrationHeader Forbid row (registry_calibration.go:10) has no rule in TestCalibrationAnchors; the base test had the same gap | auto-fix (optional) | confidence 8\nC2 | low | registry_debug_loop.go kept rows have no test rule; already so at base | no-op | confidence 8\nC3 | low | fresh ticket author rows and the narrow review axis row have no count pin or named expectation; the family reads rows from the registry by design | no-op | confidence 7\nC4 | info | roadmap/FT369.md:166 names a removed test in a historical occurrence line | no-op | confidence 9\nTest run: bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench at 4c994b7a: all pass (153, 1176, 346), one privilege skip. No probe.\nCount 4, 0 blocking. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "5cb682f7490edf031e1e6eec22440a4e1eb424da",
+          "tip": "6a6bd068adc481c89f69d88e4e238d198fdb571d",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -984,3 +1048,30 @@ AP-C1: 1 actionable finding. The worst issue is C1.
 - C2 (no-op, confidence 7): `docs/greenfield-build-sequence.md` keeps only Forbid rows, so a rename leaves them silently green. Every Forbid row has this property, so it goes to `bench learning`. Flagged for reviewer veto.
 - C3 (auto-fix, confidence 7): `internal/anchors/registry_data.go:110` keeps a diagnostic that names the create-or-retain clause. The repair rewords the diagnostic and the EXPECT of `implement-spec-worktree-before-preflight` together.
 - C4 (no-op, confidence 6): `cmd/bench/anchor_help_test.go:99-116` keeps a branch that one Require row cannot reach; the unit tests in `locate_test.go` cover the line shift.
+
+## AP-C3 repair state
+
+AP-C3: no repair cycle is consumed. The S1 and S3 correction is comment-only, so it is evidence-only under the bounded repair policy. No reviewer extension exists.
+
+## AP-C3 Standards
+
+AP-C3: 3 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 8): `internal/anchors/registry_chunk_chain.go:45-46` says that the ADR states the light-path hold and that two files name the chunk freezer. The prune removed those Require rows, and only Forbid rows read the files now. The orchestrator corrects the comment.
+- S2 (no-op, confidence 6): `internal/anchors/registry_ft311_review_dispatch.go:38-43` keeps two constants whose only readers are in `registry_retained_workflow.go`. Each constant has one definition, and the move needs a path outside both `Writes:` lines. Flagged for reviewer veto.
+- S3 (auto-fix, confidence 5): `internal/anchors/registry_charge_binding.go:12` says that only these anchors read `delegationDiscipline`, and two other files read it. The orchestrator corrects the comment.
+
+## AP-C3 Spec
+
+AP-C3: 0 actionable findings. The worst issue is P1.
+
+- P1 (no-op, confidence 5): two kept COMMAND needles keep a rule sentence next to their `bench …` sentence. Both are under the word bound, so AP46 does not require a re-cut. This is the class of AP-C2 P3, and the AP-C5 admission test grades it. Flagged for reviewer veto.
+
+## AP-C3 Coverage
+
+AP-C3: 0 actionable findings. The worst issue is C1.
+
+- C1 (no-op, confidence 8): the kept calibration-header Forbid row has no rule in `TestCalibrationAnchors`. The base had the same gap, and AP18 asks only that no rule remains for a removed row. It goes to `bench learning`. Flagged for reviewer veto.
+- C2 (no-op, confidence 8): the kept debug-loop rows have no test rule, and the base had none. It goes to `bench learning` with C1.
+- C3 (no-op, confidence 7): the fresh-author rows and the narrow-axis row have no count pin. The family reads its rows from the registry by design.
+- C4 (no-op, confidence 9): `roadmap/FT369.md:166` names a removed test in a historical occurrence line, which is not a live consumer.
