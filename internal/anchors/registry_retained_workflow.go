@@ -6,8 +6,8 @@ import (
 	"github.com/gibbonmi/bench/internal/retros"
 )
 
-// retainedWorkflowAnchors is the whole retained-workflow family: the default
-// contract below, the opt-in delegated exception that follows it, the
+// retainedWorkflowAnchors is the whole retained-workflow family: the retired
+// default and delegated workflow forms, the
 // lane-and-landing split, the retro capture route, the declared author line, the
 // fact owners that the guides point to, the drain and craft skill references, and
 // the stale implementation instructions. The registry reads this one name, so its
@@ -150,15 +150,13 @@ var retroCaptureAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".bench/BENCH-reference.md", Kind: Forbid, Needle: "A tracked retro commits with the phase close", Diagnostic: "retro capture: reference restored its copy of the final check's tracked-or-ignored retro rule"},
 }
 
-// laneAndLandingAnchors pin one statement of the commit and landing split: a
-// worktree `bench commit` runs the declared lane, and `bench worktree land` runs
-// the whole-project gate. Forbid rows keep out the retired claims that the commit
-// is the gate run or the source of the green verdict, the second gate before the
-// landing, and the reference's claims that the landing boundary is
-// unenforced and that a stale executable reruns the landing. A Forbid row reads the
-// operating guide's enforcement sentence through its named constant, so no copy
-// returns there. Require rows pin the
-// synthesis gate source, the final check's broker rehearsal, and its spec retirement.
+// laneAndLandingAnchors guard the commit and landing split. Forbid rows keep out the
+// retired claims that the commit is the gate run or the source of the green verdict,
+// the second gate before the landing, and the reference's claims that the landing
+// boundary is unenforced and that a stale executable reruns the landing. A Forbid row
+// reads the operating guide's enforcement sentence through its named constant, so no
+// copy returns there. Require rows pin the synthesis gate source, the final check's
+// broker rehearsal, and its spec retirement.
 var laneAndLandingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Forbid, Needle: "`bench commit` gates the tree it lands", Diagnostic: "lane and landing: craft-synthesis restored the claim that bench commit gates the tree it lands"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-synthesis/SKILL.md", Kind: Require, Needle: "Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench worktree exec <target> -- bench gate` for a batch that waits for approval.", Diagnostic: "lane and landing: craft-synthesis dropped the whole-project gate as the source of the prose-only green verdict"},
