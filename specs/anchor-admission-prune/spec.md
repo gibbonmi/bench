@@ -182,7 +182,7 @@ The anchors help test drops every second `AGENTS.md` Require row and expects a f
 
 AP-C2 goes first, because the retained-workflow check hard-codes diagnostics of rows in the core and topic registries. A prune of those rows before the fold turns that check red. AP-C1 follows and holds the BENCH.md rows and the invariant anchors. AP-C7 comes before AP-C4, because the AP-C3 deletions block each later charge until it lands. AP-C5 waits for AP-C1 to AP-C4, because the admission test reds the live tree until the last unadmitted row goes. AP-C6 waits for AP-C5.
 
-Each ticket that writes `internal/anchors` names the five command-binding files. The preflight anchor-closure rule also makes a ticket that writes a guarded guidance file name every registry file that pins it. AP-C6 edits guidance files that many registry rows pin, so its `Writes:` line names `internal/anchors` files too. So all eight tickets run in series.
+Each ticket that writes `internal/anchors` names the five command-binding files. The preflight anchor-closure rule also makes a ticket that writes a guarded guidance file name every registry file that pins it. AP-C6 edits guidance files that many registry rows pin, so its `Writes:` line names `internal/anchors` files too. So all nine tickets run in series.
 
 ### Completion plan
 
@@ -337,13 +337,15 @@ These paths are the union of the ticket `Writes:` lines, plus the review pickup:
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/tier_live_tree_test.go`
 - `internal/conformance/validity_checks_test.go`
+- `internal/diff/range.go`
+- `internal/diff/review_base_test.go`
+- `internal/gate/lane_select_test.go`
+- `internal/gate/lane_test.go`
 - `internal/preflight/closure.go`
 - `internal/preflight/decision.go`
 - `internal/preflight/fence_writes.go`
 - `internal/preflight/fence_writes_test.go`
 - `internal/preflight/gather.go`
-- `internal/gate/lane_select_test.go`
-- `internal/gate/lane_test.go`
 - `internal/prose`
 - `projects/benchkit.md`
 - `tests/canary/guidance-prose-budgets`
