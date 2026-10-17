@@ -109,7 +109,7 @@ func TestBreakdownRows(t *testing.T) {
 		} {
 			breakdown, _ := breakdownRepo(t, map[string]string{"one.md": preflighttest.TicketDoc("One", test.covers...)})
 			out, code := preflight.Command(breakdown)
-			if code != 1 || !strings.Contains(out, test.check+": ") || strings.Contains(out, "uncited[") {
+			if code != 1 || !strings.Contains(out, test.check) || strings.Contains(out, "uncited[") {
 				t.Errorf("breakdown covering %v = (%d), want the %s refusal and no uncited table:\n%s", test.covers, code, test.check, out)
 			}
 		}

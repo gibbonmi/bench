@@ -271,6 +271,17 @@ func TestProposalOrdering(t *testing.T) {
 	}
 }
 
+// TestProposalRefusal grades that a proposal refusal names the first red that the proposal
+// does not tolerate. The ticket omits the pin fixture, so a tolerated fixture-closure red
+// stands beside the kit-pin red of its system-tagged test.
+func TestProposalRefusal(t *testing.T) {
+	tr := coveredTree()
+	tr.Writes = []string{"internal/example/pinned.go", "internal/example/system_test.go"}
+	tr.Files["internal/example/system_test.go"] = "//go:build system\n\npackage example\n"
+	out, code := propose(t, tr.Seed(t))
+	refused(t, out, code, "kit-pin")
+}
+
 // emptyTree is a linked repository with no anchor registry and no fixture inventory, whose
 // ticket writes a guidance path and a source file. tail closes its spec and states its whole
 // planning inventory, so an empty tail declares none.

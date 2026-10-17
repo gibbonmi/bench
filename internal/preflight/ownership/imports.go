@@ -97,7 +97,7 @@ func (e *effects) referred(rev, dir string) (map[string][]grammarChange, string)
 		}
 		for _, key := range read.value.roots {
 			at := read.value.units[key]
-			origin := grammarChange{root: tickets.GrammarRoot{Dir: from, Name: key}.String(), file: at.file, line: at.line}
+			origin := grammarChange{root: tickets.GrammarRoot{Dir: from, Name: key}.String(), row: read.value.rows[key], file: at.file, line: at.line}
 			reached, failure := e.follow(rev, read.value.external[key])
 			if failure != "" {
 				return nil, origin.root + " " + failure

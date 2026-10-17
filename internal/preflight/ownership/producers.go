@@ -26,13 +26,15 @@ type unit struct {
 }
 
 // producers is one package's grammar producers at one revision. units holds every package
-// declaration and every producer expression, roots names the grammar roots, reached maps
-// each unit a root reaches to those roots, external maps each root to the declarations of
-// other module packages that its units reference, and unresolved names each producer that
-// the static walk cannot resolve.
+// declaration and every producer expression, roots names the grammar roots, rows maps each
+// root to the selector of the registry row that registered it, reached maps each unit a root
+// reaches to those roots, external maps each root to the declarations of other module
+// packages that its units reference, and unresolved names each producer that the static walk
+// cannot resolve.
 type producers struct {
 	units      map[string]unit
 	roots      []string
+	rows       map[string]string
 	reached    map[string][]string
 	external   map[string][]edge
 	unresolved []string
@@ -54,7 +56,7 @@ func readProducers(root, rev, dir, module string) (producers, error) {
 	if err != nil {
 		return producers{}, fmt.Errorf("%s listing at %s: %w", dir, rev, err)
 	}
-	p := producers{units: map[string]unit{}, reached: map[string][]string{}, external: map[string][]edge{}, fset: token.NewFileSet(),
+	p := producers{units: map[string]unit{}, rows: map[string]string{}, reached: map[string][]string{}, external: map[string][]edge{}, fset: token.NewFileSet(),
 		module: module, methods: map[string][]string{}, ambiguous: map[string]bool{}, imports: map[string]map[string]string{}}
 	var files []*ast.File
 	for _, name := range strings.Split(listing, "\x00") {
@@ -74,7 +76,7 @@ func readProducers(root, rev, dir, module string) (producers, error) {
 	}
 	for _, custom := range tickets.GrammarRoots() {
 		if _, declared := p.units[custom.Name]; custom.Dir == dir && declared {
-			p.root(custom.Name)
+			p.root(custom.Name, custom)
 		}
 	}
 	for _, file := range files {
@@ -162,18 +164,18 @@ func (p *producers) parserCalls(file *ast.File) {
 			}
 			if sel, ok := call.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == parse.Name && isIdent(sel.X, local) {
 				calls++
-				p.producer(fn, call, calls)
+				p.producer(fn, call, calls, parse)
 			}
 			return true
 		})
 	}
 }
 
-// producer roots the grammar argument of one parser call in fn. A package declaration, a
-// single-definition local, a call of a package function or method, a literal, and a
-// declaration of another package of the module resolve; a parameter, a reassigned local, and
-// a value from outside the module stay unresolved.
-func (p *producers) producer(fn *ast.FuncDecl, call *ast.CallExpr, n int) {
+// producer roots the grammar argument of one parser call in fn, which parse registers. A
+// package declaration, a single-definition local, a call of a package function or method, a
+// literal, and a declaration of another package of the module resolve; a parameter, a
+// reassigned local, and a value from outside the module stay unresolved.
+func (p *producers) producer(fn *ast.FuncDecl, call *ast.CallExpr, n int, parse tickets.GrammarRoot) {
 	where, file := fmt.Sprintf("%s parser call %d", fn.Name.Name, n), p.fset.Position(call.Pos()).Filename
 	if len(call.Args) == 0 {
 		p.unresolved = append(p.unresolved, where+" passes no grammar")
@@ -184,26 +186,26 @@ func (p *producers) producer(fn *ast.FuncDecl, call *ast.CallExpr, n int) {
 		value, local, ok := localValue(fn, arg.Name)
 		switch {
 		case local && ok:
-			p.rootUnit(fn.Name.Name+"."+arg.Name, value)
+			p.rootUnit(fn.Name.Name+"."+arg.Name, value, parse)
 			return
 		case !local:
 			if _, declared := p.units[arg.Name]; declared {
-				p.root(arg.Name)
+				p.root(arg.Name, parse)
 				return
 			}
 		}
 	case *ast.CallExpr:
 		if p.resolvedCall(file, arg) {
-			p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg)
+			p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg, parse)
 			return
 		}
 	case *ast.CompositeLit, *ast.UnaryExpr:
-		p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg)
+		p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg, parse)
 		return
 	case *ast.SelectorExpr:
 		if imported, ok := p.imported(file, arg.X); ok {
 			if _, in := p.inModule(imported); in {
-				p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg)
+				p.rootUnit(fmt.Sprintf("%s#%d", fn.Name.Name, n), arg, parse)
 				return
 			}
 		}
@@ -211,13 +213,13 @@ func (p *producers) producer(fn *ast.FuncDecl, call *ast.CallExpr, n int) {
 	p.unresolved = append(p.unresolved, where+" passes a grammar that no static producer declares")
 }
 
-// rootUnit roots one producer expression under key. Two parser calls that pass one local
-// share its unit.
-func (p *producers) rootUnit(key string, node ast.Node) {
+// rootUnit roots one producer expression under key, which row registers. Two parser calls
+// that pass one local share its unit.
+func (p *producers) rootUnit(key string, node ast.Node, row tickets.GrammarRoot) {
 	if _, declared := p.units[key]; !declared {
 		p.add(key, node)
 	}
-	p.root(key)
+	p.root(key, row)
 }
 
 // resolvedCall reports whether call, in file, invokes a package function or a method this
@@ -290,12 +292,13 @@ func isIdent(expr ast.Expr, name string) bool {
 }
 
 // root walks one grammar root to every unit it reaches, and records each reference to
-// another package of the module that those units hold.
-func (p *producers) root(key string) {
+// another package of the module that those units hold. The first row that registers a root
+// keeps it.
+func (p *producers) root(key string, row tickets.GrammarRoot) {
 	if slices.Contains(p.roots, key) {
 		return
 	}
-	p.roots = append(p.roots, key)
+	p.roots, p.rows[key] = append(p.roots, key), row.String()
 	keys, external, problems := p.reach(key)
 	for _, current := range keys {
 		p.reached[current] = append(p.reached[current], key)

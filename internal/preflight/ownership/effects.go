@@ -23,15 +23,23 @@ type effects struct {
 	modules     map[string]revRead[string]
 	grammar     map[string]revRead[map[string]bool]
 	packages    map[string]packageEffect
-	planned     []Change
+	planned     []plannedChange
 	diagnostics []Diagnostic
 }
 
 // grammarChange is one changed producer declaration and one grammar root that reaches it:
-// the root's selector and the file and line that declare that root.
+// the root's selector, the selector of the registry row that registered the root, and the
+// file and line that declare that root.
 type grammarChange struct {
-	unit, root, file string
-	line             int
+	unit, root, row, file string
+	line                  int
+}
+
+// plannedChange is one planned grammar change that resolves to a registered producer, with
+// the selector of the registry row that registered that producer.
+type plannedChange struct {
+	Change
+	row string
 }
 
 // packageEffect is one package's classification: the grammar changes in each changed file,
@@ -142,7 +150,7 @@ func (e *effects) pkg(dir string) packageEffect {
 			if !ok {
 				at = before.units[root]
 			}
-			changes = append(changes, grammarChange{root: tickets.GrammarRoot{Dir: dir, Name: root}.String(), file: at.file, line: at.line})
+			changes = append(changes, grammarChange{root: tickets.GrammarRoot{Dir: dir, Name: root}.String(), row: cmp.Or(after.rows[root], before.rows[root]), file: at.file, line: at.line})
 		}
 		changes = append(append(changes, tipRefs[key]...), baseRefs[key]...)
 		slices.SortStableFunc(changes, func(a, b grammarChange) int { return cmp.Compare(a.root, b.root) })
@@ -191,7 +199,7 @@ func (e *effects) declare(changes []Change) {
 			continue
 		}
 		if change.State == "planned" {
-			e.planned = append(e.planned, change)
+			e.planned = append(e.planned, plannedChange{change, read.value.rows[root.Name]})
 		}
 	}
 }
