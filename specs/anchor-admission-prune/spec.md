@@ -354,14 +354,14 @@ These paths are the union of the ticket `Writes:` lines, plus the review pickup:
 This prune lands before `specs/guidance-weight` re-slices. The reviewer confirmed that order on 2026-10-16. These staged specs overlap the prune:
 
 - `specs/guidance-weight` moves 21 BENCH.md Require rows, repoints 5 Forbid rows, and adds 3 Require rows. The admission rule refuses GW04 and GW21. The reviewer decided on 2026-10-16 that GW03 gets no anchor. Its fence holds about 283 workflow-guidance fixtures, and its map drift line triggers on this prune.
-- `specs/preflight-ownership-closure` ticket 08 and `specs/preflight-spec-staleness` ticket 05 keep co-owned anchor and canary assertions. A build of either before this prune keeps rows that this prune deletes.
+- `specs/preflight-spec-staleness` ticket 05 keeps co-owned anchor and canary assertions. A build of it before this prune keeps rows that this prune deletes.
 - `specs/markdown-block-reader` changes only the matcher. Its fence overlaps four registry files.
 - `specs/exact-planning-readers` adds a reader-specific registry file. Its needles need a class check before it builds.
 - `specs/process-lifetime` tickets 01 and 07 name the retained-workflow registry file. A build of it before this prune edits rows that this prune folds or deletes.
 
 ### Roadmap rows for the drain
 
-The drain updates FT100, FT326, FT368, and FT369 to cite this prune. FT293 lines 55 to 57 ask each coverage row to name an anchor. The active outcome pins FT293, so that row changes only through its outcome. This spec flags the needed "or mark the row review-owned" clause for that outcome.
+The drain updates FT100, FT326, FT368, and FT369 to cite this prune.
 
 ### Flagged additions
 
@@ -392,7 +392,7 @@ The drain updates FT100, FT326, FT368, and FT369 to cite this prune. FT293 lines
 - `Import edges`: the admission test in `internal/anchors` imports `internal/prose`. `go list -deps ./internal/prose` names no `internal/anchors` edge, so no cycle forms.
 - `Source-row clauses and occurrences`: the decision bullets above quote each clause.
 - `Promised field labels`: none.
-- `Changed-function callers`: `Entries` callers include `internal/gate/lane_select.go`, `cmd/bench/anchors_command.go`, `internal/preflight/closure.go`, and the conformance helpers. The slicing runs `bench consumers` for each.
+- `Changed-function callers`: the one production `Entries` caller is `internal/gate/lane_select.go`. The other callers are test helpers in `cmd/bench`, `internal/conformance`, and `internal/anchors`. The slicing runs `bench consumers` for each.
 - `Copy survival`: AP25 and AP31 fail if a copy of a registry diagnostic list survives.
 - `Rendered-shape readers`: none.
 - `Pin operators`: the per-topic tests use exact diagnostic equality. The help test uses exact line placement.
