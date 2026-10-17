@@ -6751,6 +6751,75 @@
           "supersedes": [
             "ft293_oc-c4_coverage_r1"
           ]
+        },
+        {
+          "id": "ft293_oc-c4_standards_r3",
+          "performer": "claude:ft293_oc-c4_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "79e2e448d88a2515017d087a7224891fae7012a0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_standards_r3",
+            "digest": "sha256:91dd6bec8254f6a61c720c64ef030cbe4ff354c72ab76ed441635af7f7c1c10a",
+            "excerpt": "OC-C4 Standards confirming round 2 (claude:ft293_oc-c4_standards_r3, opus, medium), repair delta 0259f0d2..2fea500b, evidence sha256:0598c6c9 current=true.\nS3 closed: rootRow is gone; the row is decided once at producers.go:301 and carried by effects.go:153, effects.go:202, imports.go:100 to inv.kit at closure.go:236, 246.\nS4 closed (effects_test.go:213-214). S5 closed (withoutParserRow, kitrow_test.go:34-42). S6 closed (authority_test.go:112).\nThe kept reason copy at effects_test.go:213 has its recorded red.\nAdvice (no-op, confidence 3): proposal_test.go:276 does not assert that the tolerated fixture-closure red is present.\nCount 0 open findings. Implementation command: no change necessary.\n"
+          },
+          "axis": "Standards",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "2fea500be2547d74c33c20ed925df717db71c80d",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293_oc-c4_standards_r2"
+          ]
+        },
+        {
+          "id": "ft293_oc-c4_spec_r3",
+          "performer": "claude:ft293_oc-c4_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "79e2e448d88a2515017d087a7224891fae7012a0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_spec_r3",
+            "digest": "sha256:2a604a8705c50606f43ee4fddc49f77406c4057580cbfbee93746cb46c1c5091",
+            "excerpt": "OC-C4 Spec confirming round 2 (claude:ft293_oc-c4_spec_r3, opus, medium), repair delta 0259f0d2..2fea500b, evidence sha256:0598c6c9 current=true.\nS3 consistent: parser-call roots take GrammarParser() and custom roots their own row (producers.go:144-313; spec 317-319); a missing row stays diagnostic (closure.go:269-285; spec 93, 97).\nC4 consistent: the proposal tolerates only the closure family and fence-writes, so a kit-pin refusal matches spec 479-493 and 538.\nS4-S6 consistent: every OC61-OC70 and OC86 witness is intact.\nCount 0. Implementation command: no change necessary.\n"
+          },
+          "axis": "Spec",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "2fea500be2547d74c33c20ed925df717db71c80d",
+          "finding_ids": [],
+          "supersedes": [
+            "ft293_oc-c4_spec_r2"
+          ]
+        },
+        {
+          "id": "ft293_oc-c4_coverage_r3",
+          "performer": "claude:ft293_oc-c4_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "79e2e448d88a2515017d087a7224891fae7012a0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_oc-c4_coverage_r3",
+            "digest": "sha256:502222302b2ef1352648c1539971e5056bf1be19a6350fffc6a1a1e51f02434c",
+            "excerpt": "OC-C4 Coverage confirming round 2 (claude:ft293_oc-c4_coverage_r3, opus, medium), repair delta 0259f0d2..2fea500b, evidence sha256:0598c6c9 current=true.\nC4 closed (proposal_test.go:328-334). S3 parser, custom, and missing-row paths closed (effects_test.go:211-217, kitrow_test.go:156-182). S4-S6 closed.\nC5 (auto-fix, confidence 8): effects.go:153: the before-side fallback of cmp.Or(after.rows[root], before.rows[root]) has no red-capable test; no kit case removes a root at the tip under a sealed kit source (spec 93).\nC6 (auto-fix, confidence 6): imports.go:100: the row fill for a cross-package referrer looks uncovered; the cross-package cases at effects_test.go:186-203 set no seal (spec 93).\nProbe: bench probe internal/preflight/ownership/effects.go --swap \"row: cmp.Or(after.rows[root], before.rows[root]),\" --with \"row: after.rows[root],\" --package ./internal/preflight/ownership/...: silent, restored yes.\nCount 2 new; worst C5. Implementation command: no change necessary. git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "4dc58d41bb54e5e1d07e3ebbc8e5cfb67e05efa4",
+          "tip": "2fea500be2547d74c33c20ed925df717db71c80d",
+          "finding_ids": [
+            "C5",
+            "C6"
+          ],
+          "supersedes": [
+            "ft293_oc-c4_coverage_r2"
+          ]
         }
       ]
     }
@@ -7192,3 +7261,14 @@ Under the auto-approve direction, the orchestrator accepted S3 as an auto-fix; t
 - S5 (auto-fix, confidence 5): `internal/preflight/ownership/effects_test.go:216` copies the parser declaration line of `internal/tickets/registry_data.go:115` with no recorded red.
 - S6 (auto-fix, confidence 3): `internal/preflight/ownership/authority_test.go:112` copies the refusal separator of `internal/preflight/charge.go:90` with no recorded red.
 - C4 (auto-fix, confidence 8): `internal/preflight/proposal.go:37-38` changed the proposal refusal, and no test puts a tolerated red before an untolerated red. A coverage probe of that line stayed silent.
+
+## OC-C4 second confirming round
+
+OC-C4: repair cycle 2 of 2 is complete at 2fea500b (claude:ft293_t08_rep2, opus, medium). The second confirming round closed S3, S4, S5, S6, and C4. Standards and Spec passed.
+
+The round found 2 new findings and 2 repair targets, both test-only on ticket 08. The reviewer's auto-approve direction extends the allowance by one cycle. Repair cycle 3 opens for C5 and C6 only, in one ticket 08 repair session that runs the bench-debug route. A biting coordinator probe closes this test-only repair through a confirmation.
+
+- C5 (auto-fix, confidence 8): `internal/preflight/ownership/effects.go:153` falls back to the base row, and no kit case removes a root at the tip. A coverage probe of that fallback stayed silent.
+- C6 (auto-fix, confidence 6): `internal/preflight/ownership/imports.go:100` fills the row for a cross-package referrer, and no sealed case reads that row.
+
+Advice: `internal/preflight/ownership/proposal_test.go:276` does not assert that the tolerated closure red is present.
