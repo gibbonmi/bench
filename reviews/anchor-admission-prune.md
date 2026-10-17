@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/anchor-admission-prune/spec.md",
-  "plan_digest": "sha256:4bda71bf949f25284e948224aa86ae0dd779bea92b2ba5fa0b4b62257557308a",
+  "plan_digest": "sha256:8c7447a0ebc33c9bb855578c7857d4e198d20d12d2eac73202f3c8e20386130a",
   "implementation_session": "",
   "chunks": [
     {
@@ -961,9 +961,9 @@
     {
       "id": "AP-C7",
       "base": "3f56db6dba6dd6821669a112487776e5002840dc",
-      "tip": "808cda856428aa8d219ae9e0f24ca701a39e395f",
-      "plan_digest": "sha256:4bda71bf949f25284e948224aa86ae0dd779bea92b2ba5fa0b4b62257557308a",
-      "source_digest": "7e5d0d9e23c0f03f0d5b03284eeeb155b45e44c1",
+      "tip": "44ad243d65d3d317c375004a260734504584ad37",
+      "plan_digest": "sha256:8c7447a0ebc33c9bb855578c7857d4e198d20d12d2eac73202f3c8e20386130a",
+      "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
       "acceptance_rows": [
         "AP48"
       ],
@@ -1002,6 +1002,96 @@
           },
           "requirement": "t4a-root-conformance",
           "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1-t4a-preflight",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:e6a1cefc33a43666dfc0c5032778bd427aa717860c94279932943e2188e6d429",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,28886,416\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1-t4a-root-conformance",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:f7cc6b4a8225325872a79a08296c4ae4c453331f4327746493e847e2a83f120c",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14113,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1-t4a-diff",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:3f1180c100bc90334c1dcb0cd78365137e789129501214c70b07ac00be0cad32",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,pass,5486,101\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-diff",
+          "command": "bench test --package ./internal/diff",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1-t4a-cmd-bench",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:006ed1f0c040b87b76b2481b2d0b9f368cef4a33355cd47b184c6aec40b7d780",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13653,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4a-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t4ar1-t4a-conformance",
+          "performer": "claude:aap_t04a_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cb069aa24bb7670333211b138dc1c1ead390a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t04a_rep1",
+            "digest": "sha256:be219355595f1e55f3ac881404894d30cc151edafad10de55f8e5aae113e19a7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,32673,1176\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4a-conformance",
+          "command": "bench test --package ./internal/conformance",
           "exit_code": 0
         }
       ],
@@ -1135,6 +1225,24 @@
         ],
         "AP-C3": [
           "AP-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4bda71bf949f25284e948224aa86ae0dd779bea92b2ba5fa0b4b62257557308a",
+      "to": "sha256:8c7447a0ebc33c9bb855578c7857d4e198d20d12d2eac73202f3c8e20386130a",
+      "chunk_ids": {
+        "AP-C1": [
+          "AP-C1"
+        ],
+        "AP-C2": [
+          "AP-C2"
+        ],
+        "AP-C3": [
+          "AP-C3"
+        ],
+        "AP-C7": [
+          "AP-C7"
         ]
       }
     }
