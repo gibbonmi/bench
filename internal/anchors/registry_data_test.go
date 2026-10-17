@@ -346,10 +346,10 @@ func TestChargeProbeOracleAnchorsRedOnRemoval(t *testing.T) {
 	}.check(t)
 }
 
-// TestDelegateExecOnlyAndCapChangeAnchorsRedOnRemoval holds the one command form for every
+// TestDelegateExecOnlyAnchorRedOnRemoval holds the one command form for every
 // caller into an assignment worktree. The section, needle, and diagnostic are written here
 // independently of the registry.
-func TestDelegateExecOnlyAndCapChangeAnchorsRedOnRemoval(t *testing.T) {
+func TestDelegateExecOnlyAnchorRedOnRemoval(t *testing.T) {
 	anchorHarness{
 		group: AfterImplementSpec,
 		rules: []anchorRule{
