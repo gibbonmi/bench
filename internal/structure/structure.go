@@ -13,7 +13,6 @@
 package structure
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -43,25 +42,32 @@ var sourceRe = regexp.MustCompile(`\.(py|ts|tsx|js|jsx|go|rs|java|rb|kt|scala|cs
 // split of a git query, filtered to source extensions here). Querying git and propagating
 // its error is the caller's job — checkAll for the whole tracked tree, Touched for the
 // touched scope. So the rules have one home, and each git query owns its own error. It
-// returns the full human report the CLI prints and the violation count. Exit-code mapping
-// is the caller's (Command's) job.
+// returns the full human report the CLI prints and the violation count; Command maps it to
+// an exit code.
 //
 // allMode is set for the whole-tree scan and cleared for the touched (--since) scope. Both
-// honor the .bench/structure-accept exclusion (an accepted over-budget file drops out of
-// the count). Only the whole-tree scan can judge the accept list's completeness. So the
-// accepted: section, the malformed-row warnings, and the stale-row warnings are all-mode only.
+// honor the .bench/structure-accept exclusion. Only the whole-tree scan judges the accept
+// list's completeness, so its warnings and the accepted: section are all-mode only.
 func Check(root string, rawFiles []string, allMode bool) (report string, violations int) {
 	report, violations, _ = evaluate(root, rawFiles, allMode)
 	return report, violations
 }
 
-func evaluate(root string, rawFiles []string, allMode bool) (report string, violations int, facts []Fact) {
+// readLimits is the one read of the limit engine's configuration at root. Every structure
+// surface takes its caps, budget rows, and accept grants from here.
+func readLimits(root string) limits {
 	maxLines := envInt("BENCH_MAX_LINES", 400)
 	maxFiles := envInt("BENCH_MAX_DIR_FILES", 12)
-	budgets, budgetWarnings := loadBudgets(filepath.Join(root, ".bench", "structure.budgets"))
-	accepts, acceptWarnings, acceptErr := loadAccepts(filepath.Join(root, ".bench", "structure-accept"))
+	budgets, budgetWarnings := loadBudgets(filepath.Join(root, budgetsPath))
+	accepts, acceptWarnings, acceptErr := loadAccepts(filepath.Join(root, acceptPath))
+	return limits{maxLines, maxFiles, budgets, budgetWarnings, accepts, acceptWarnings, acceptErr}
+}
 
-	lines := append([]string(nil), budgetWarnings...)
+func evaluate(root string, rawFiles []string, allMode bool) (report string, violations int, facts []Fact) {
+	l := readLimits(root)
+	maxLines, maxFiles, budgets, accepts, acceptErr := l.maxLines, l.maxFiles, l.budgets, l.accepts, l.acceptErr
+
+	lines := append([]string(nil), l.budgetWarnings...)
 
 	// Fail-closed read error (FT29): a present-but-unreadable accept file is loud. A named
 	// line and a forced non-zero count return through the same path both the report and
@@ -81,7 +87,7 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 	}
 
 	if allMode {
-		lines = append(lines, acceptWarnings...)
+		lines = append(lines, l.acceptWarnings...)
 		lines = append(lines, staleAcceptWarnings(accepts, files)...)
 	}
 
@@ -108,16 +114,12 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 	}
 
 	// DIR CROWDED: a directory whose source-file count exceeds its cap (its `<dir>/`
-	// budget override, else the global BENCH_MAX_DIR_FILES). Directories are the path up
-	// to the last '/', or '.' when none, counted over the same source list in sorted order.
-	// An accepted `<dir>/` key is likewise excluded and recorded, reusing budgetFor's keying.
+	// budget override, else the global BENCH_MAX_DIR_FILES), counted over the same source
+	// list in sorted order. An accepted `<dir>/` key is likewise excluded and recorded,
+	// reusing budgetFor's keying.
 	dirs := make([]string, 0, len(files))
 	for _, f := range files {
-		dir := "."
-		if i := strings.LastIndex(f, "/"); i >= 0 {
-			dir = f[:i]
-		}
-		dirs = append(dirs, dir)
+		dirs = append(dirs, sourceDir(f))
 	}
 	sort.Strings(dirs)
 	for i := 0; i < len(dirs); {
@@ -128,9 +130,9 @@ func evaluate(root string, rawFiles []string, allMode bool) (report string, viol
 		count := j - i
 		key := dirs[i] + "/"
 		limit := budgetFor(budgets, key, maxFiles)
-		if count > limit {
+		if crowded(count, limit) {
 			fact := Fact{Kind: "directory", Path: key, Actual: count, Limit: limit, State: "violation"}
-			if reason, ok := accepts[key]; ok {
+			if reason, ok := acceptedReason(accepts, key); ok {
 				acceptedLines = append(acceptedLines, fmt.Sprintf("accepted: %s — %s", key, reason))
 				fact.State, fact.Detail = "accepted", reason
 				facts = append(facts, fact)
@@ -281,13 +283,12 @@ type growthChange struct {
 // fail-closed posture (FT29). It returns the report, the count of grown files, and the git
 // error when the diff query failed; Command renders that error as `--since` does.
 func Growth(root, base string) (report string, violations int, err error) {
-	maxLines := envInt("BENCH_MAX_LINES", 400)
-	budgets, budgetWarnings := loadBudgets(filepath.Join(root, ".bench", "structure.budgets"))
-	accepts, _, acceptErr := loadAccepts(filepath.Join(root, ".bench", "structure-accept"))
+	l := readLimits(root)
+	maxLines, budgets, accepts := l.maxLines, l.budgets, l.accepts
 
-	lines := append([]string(nil), budgetWarnings...)
-	if acceptErr != nil {
-		lines = append(lines, acceptUnreadable(acceptErr))
+	lines := append([]string(nil), l.budgetWarnings...)
+	if l.acceptErr != nil {
+		lines = append(lines, acceptUnreadable(l.acceptErr))
 		return strings.Join(lines, "\n") + "\n", 1, nil
 	}
 
@@ -385,7 +386,7 @@ func growthBaseCount(root, base, path string) int {
 	if err != nil {
 		return 0
 	}
-	return bytes.Count(blob, []byte{'\n'})
+	return Lines(blob)
 }
 
 func exitOf(violations int) int {

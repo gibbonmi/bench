@@ -146,7 +146,7 @@ func ReviewShapePatches(renames bool) []ShapePatch {
 // reviewDocuments is a pinned pair whose diff holds only the spec and the review record.
 func reviewDocuments() ReviewPair {
 	return ReviewPair{Tip: map[string]TreeEntry{
-		pairSpecPath:         Regular(SpecBody(pairSlug, reviewFenceLines()...) + "\n## Further notes\n\nEdited.\n"),
+		pairSpecPath:         Regular(SpecBodyNoInventory(pairSlug, reviewFenceLines()...) + "\n## Further notes\n\nEdited.\n"),
 		"reviews/example.md": Regular("# Review record\n"),
 	}}
 }

@@ -73,12 +73,28 @@ type scopeDir struct {
 // storeScope answers the store directory of the scope of a process whose repository root
 // is root, or the empty string outside a repository.
 func storeScope(home, root string, retiring bool) (scopeDir, error) {
-	home, err := filepath.Abs(home)
+	dir, key, err := repoDir(home, root)
 	if err != nil {
 		return scopeDir{}, err
 	}
-	key, scope := location(home, root, retiring)
-	return scopeDir{home: home, levels: []string{storeDirName, key, scope}, scope: scope}, nil
+	dir.scope = location(dir.home, root, key, retiring)
+	dir.levels = append(dir.levels, dir.scope)
+	return dir, nil
+}
+
+// repoDir answers the store directory of the repository at root and its repo key, below the
+// absolute home. Each store path starts here, so a spill writer and its drop never name two
+// repository directories.
+func repoDir(home, root string) (scopeDir, string, error) {
+	home, err := filepath.Abs(home)
+	if err != nil {
+		return scopeDir{}, "", err
+	}
+	key := noRepository
+	if root != "" {
+		key = poolkey.Key(root)
+	}
+	return scopeDir{home: home, levels: []string{storeDirName, key}}, key, nil
 }
 
 // assignmentDir answers the store directory of the assignment scope of the worktree at root.
@@ -144,25 +160,21 @@ func (d scopeDir) realLevels(op string, prepare func(string) error) error {
 	return nil
 }
 
-// location answers the repo key and the scope of a process whose repository root is
-// root, or the empty string outside a repository. A retiring verb takes the primary
+// location answers the scope of a process whose repository root is root, or the empty
+// string outside a repository, and whose repo key is key. A retiring verb takes the primary
 // scope wherever it runs.
-func location(home, root string, retiring bool) (string, string) {
-	if root == "" {
-		return noRepository, primaryScope
-	}
-	key := poolkey.Key(root)
-	if retiring {
-		return key, primaryScope
+func location(home, root, key string, retiring bool) string {
+	if root == "" || retiring {
+		return primaryScope
 	}
 	segment, err := filepath.Rel(filepath.Join(poolkey.Pools(home), key), root)
 	if err != nil {
-		return key, primaryScope
+		return primaryScope
 	}
 	if id, ok := poolkey.SplitAssignmentSegment(segment); ok {
-		return key, id
+		return id
 	}
-	return key, primaryScope
+	return primaryScope
 }
 
 // spillName generates a file name, so no operand or output byte forms the path. The time
