@@ -15,6 +15,42 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 )
 
+// reviewFenceExtra are the fence entries SeedReviewEvidence's spec adds to ConformantFence,
+// each beside the annotation its line carries. The seeded spec lines and ReviewFence both
+// derive from this table, so the fixture states its own fence once.
+var reviewFenceExtra = []struct{ path, annotation string }{
+	{"target/", "review fixture"},
+	{"edited/", "review fixture"},
+	{"outside/", "review fixture"},
+	{"notes/", "review fixture"},
+	{".agents/skills/bench-craft-review/", "review instructions"},
+	{".agents/commands/bench-review-implementation.md", "review phase"},
+}
+
+// ReviewFence is the complete ownership fence SeedReviewEvidence's spec declares, in
+// document order.
+func ReviewFence() []string {
+	fence := append([]string{}, ConformantFence...)
+	for _, entry := range reviewFenceExtra {
+		fence = append(fence, entry.path)
+	}
+	return fence
+}
+
+// reviewFenceLines renders the extra fence entries as the spec's own document lines.
+func reviewFenceLines() []string {
+	lines := make([]string, len(reviewFenceExtra))
+	for i, entry := range reviewFenceExtra {
+		lines[i] = fenceLine(entry.path, entry.annotation)
+	}
+	return lines
+}
+
+// fenceLine renders one fence entry as the spec's own document line.
+func fenceLine(path, annotation string) string {
+	return "- `" + path + "` (" + annotation + ")"
+}
+
 // fixtureFile is one repository file of a seeded review tree.
 type fixtureFile struct{ path, body string }
 
@@ -29,7 +65,7 @@ func reviewCanonical(slug string, extraFence ...string) []fixtureFile {
 	}
 	return []fixtureFile{
 		{"go.mod", "module example.com/review\n\ngo 1.25\n"},
-		{"specs/" + slug + "/spec.md", SpecBody(slug, fenceLines...)},
+		{"specs/" + slug + "/spec.md", SpecBodyNoInventory(slug, fenceLines...)},
 		{"specs/" + slug + "/tickets/one.md", WritesTicketDoc("One", FenceWrites(append(ReviewFence(), extraFence...)), "PF1", "PF2")},
 		{chargesource.DelegateSkill, "# Delegation skill\n"},
 		{chargesource.DelegateProcedure, "# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n"},

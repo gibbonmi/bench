@@ -3,6 +3,7 @@ package preflight
 import (
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -500,10 +501,9 @@ func TestDecidePathsAuthorizedImplicitSpecFolder(t *testing.T) {
 // fixture-pinned path and does not name the pinning fixture directory reds with
 // both the path and the fixture named.
 func TestFixtureClosureNamesUnnamedFixture(t *testing.T) {
-	f := baseFacts()
-	f.WritesFixturePins = map[string][]string{
+	f := requiring(baseFacts(), ownership.KindFixture, map[string][]string{
 		"internal/example/foo.go": {"tests/canary/example-family/pinning-fixture"},
-	}
+	})
 	c, ok := checkRow(Decide(f), "fixture-closure")
 	const want = "Writes: entry names a fixture-pinned path without naming the fixture: " +
 		"one.md: internal/example/foo.go is pinned by tests/canary/example-family/pinning-fixture"
@@ -522,10 +522,10 @@ func TestFixtureClosureNamesUnnamedFixture(t *testing.T) {
 // bound package and omits a bound file reds with the omitted file named.
 func TestRegistryClosureNamesOmittedRegistry(t *testing.T) {
 	f := baseFacts()
-	f.WritesBoundFiles = map[string][]string{
-		"internal/example/foo.go": {"cmd/bench/command_registry.go", "cmd/bench/main_test.go"},
-	}
 	f.Tickets[0].Writes = []string{"internal/example/foo.go", "cmd/bench/command_registry.go"}
+	f = requiring(f, ownership.KindRegistry, map[string][]string{
+		"internal/example/foo.go": {"cmd/bench/command_registry.go", "cmd/bench/main_test.go"},
+	})
 	c, ok := checkRow(Decide(f), "registry-closure")
 	const want = "Writes: entry names a bound package without naming every bound file: " +
 		"one.md: internal/example/foo.go requires cmd/bench/main_test.go"

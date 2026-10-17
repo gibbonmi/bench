@@ -1,9 +1,13 @@
 package tickets
 
 import (
+	"os"
+	"path"
 	"reflect"
 	"slices"
 	"sort"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -89,6 +93,63 @@ func TestCommandRowsBindTheHelpProjectionAndEnvelopeCases(t *testing.T) {
 	for _, file := range []string{"cmd/bench/command_registry.go", "cmd/bench/command_registry_test.go"} {
 		if !slices.Contains(BoundFiles("internal/harnesses/harnesses.go"), file) {
 			t.Errorf("BoundFiles for a command package omits %q", file)
+		}
+	}
+}
+
+// TestBindingLinesLocateEveryRow reads this registry's own source. BindingRegistry must
+// name that file, and BindingLines must place each compiled row on the line that spells
+// its prefix, and each grammar root and the ordinary parser on the line that spells its
+// name, so a closure reason cites the row it applied.
+func TestBindingLinesLocateEveryRow(t *testing.T) {
+	src, err := os.ReadFile(path.Base(BindingRegistry))
+	if err != nil {
+		t.Fatalf("BindingRegistry %s is not this package's file: %v", BindingRegistry, err)
+	}
+	lines, err := BindingLines(src)
+	if err != nil {
+		t.Fatalf("BindingLines: %v", err)
+	}
+	physical := strings.Split(string(src), "\n")
+	for _, row := range Bindings() {
+		line := lines[row.Prefix]
+		if line < 1 || !strings.Contains(physical[line-1], "Prefix: "+strconv.Quote(row.Prefix)) {
+			t.Errorf("BindingLines()[%q] = %d, want the line that declares the row", row.Prefix, line)
+		}
+	}
+	for _, root := range append(GrammarRoots(), GrammarParser()) {
+		line := lines[root.String()]
+		if line < 1 || !strings.Contains(physical[line-1], "Name: "+strconv.Quote(root.Name)) {
+			t.Errorf("BindingLines()[%q] = %d, want the line that declares the root", root, line)
+		}
+	}
+	if _, err := BindingLines([]byte("package tickets\n")); err == nil {
+		t.Error("BindingLines over source without a bindings table succeeded, want an error")
+	}
+}
+
+// TestBindingRulesProjectBoundFiles keeps the typed rules and the legacy projection on one
+// table. A path under the internal/toon row takes one rule for each bound file, a bound
+// file takes no rule that requires itself, and a sibling package takes none.
+func TestBindingRulesProjectBoundFiles(t *testing.T) {
+	for path, want := range map[string][]BindingRule{
+		"internal/toon/toon.go": {
+			{Prefix: "internal/toon", File: "internal/conformance/data_handling_test.go", Kind: BindingCore},
+			{Prefix: "internal/toon", File: "internal/toon/toon_test.go", Kind: BindingCore},
+		},
+		"internal/toon/toon_test.go": {{Prefix: "internal/toon", File: "internal/conformance/data_handling_test.go", Kind: BindingCore}},
+		"internal/toonery/x.go":      nil,
+	} {
+		rules := BindingRules(path)
+		files := BoundFiles(path)
+		if !reflect.DeepEqual(rules, want) || len(files) != len(want) {
+			t.Errorf("BindingRules(%s) = %v and BoundFiles = %v, want rules %v", path, rules, files, want)
+			continue
+		}
+		for i, rule := range want {
+			if files[i] != rule.File {
+				t.Errorf("BoundFiles(%s) = %v, want the rules' files in order", path, files)
+			}
 		}
 	}
 }

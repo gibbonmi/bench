@@ -10,10 +10,11 @@
 package preflight
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -22,7 +23,8 @@ import (
 // gathered once, up front, by Gather, and never re-read mid-verdict. So a
 // rerun over the same Facts value always answers the same way.
 type Facts struct {
-	Mode string
+	Mode      string
+	Operation evidencecmd.Kind
 
 	// SpecPath is the resolved spec's repo-relative path, printed on the `spec:` line.
 	SpecPath string
@@ -59,6 +61,9 @@ type Facts struct {
 	ChangedPaths []string
 	// DeletedPaths is the explicit committed range's exact D-status subset.
 	DeletedPaths []string
+	// DeletedBefore reports, for each (deleted) `Writes:` entry, whether its path is a
+	// tracked file at the review base. The gatherer owns the probe; writes-resolve grades it.
+	DeletedBefore map[string]bool
 	// DefaultTipPaths is the ChangedPaths subset whose bytes and mode at SourceTip equal
 	// those at the default-branch tip. Such a path came in unchanged through a fold of the
 	// default branch, so it is no write of the build.
@@ -105,18 +110,14 @@ type Facts struct {
 	// probe; whether an absent path is a fault is Decide's.
 	WritesPathExists map[string]bool
 
-	// WritesFixturePins reports, for each `Writes:` entry, the canary fixture
-	// directories that pin the path it names. The gatherer enumerates the live
-	// inventory; whether an unnamed fixture is a fault is Decide's.
-	WritesFixturePins map[string][]string
+	// Ownership is the canonical closure snapshot of the parsed tickets: every path each
+	// write requires, with every source reason, and the premise inventory with its
+	// diagnostics. The gatherer collects it; the closure rows grade its requirements.
+	Ownership ownership.Snapshot
 
-	// WritesBoundFiles reports, for each `Writes:` entry, the files the binding
-	// registry binds to the package the entry writes into.
-	WritesBoundFiles map[string][]string
-
-	// WritesAnchorFiles reports, for each `Writes:` entry, the anchor registry files
-	// whose string literal names the entry path or a path under it.
-	WritesAnchorFiles map[string][]string
+	// KitObligations is every required closure path that is a system-tagged test, with the
+	// file and line that carry the tag. The proposal reports each as a BENCH_KIT obligation.
+	KitObligations []KitObligation
 
 	// WritesSystemTagged reports, for each `Writes:` entry, whether it names a Go
 	// test file whose build constraint carries the system tag.
@@ -224,6 +225,9 @@ func Decide(f Facts) Verdict {
 		ticketRow(f, "rows-membership", rowsMembershipCheck),
 		diffNonemptyRow(f),
 	)
+	if f.Mode == modeBuild && (f.Operation == evidencecmd.KindPrepareEvidence || f.Operation == evidencecmd.KindCurrentEvidence) {
+		checks = append(checks, chargePremisesCheck(f))
+	}
 	red := false
 	for _, c := range checks {
 		if c.Verdict == verdictRed {
@@ -328,29 +332,6 @@ func blockersResolveCheck(f Facts) CheckResult {
 	return green("blockers-resolve")
 }
 
-func writesResolveCheck(f Facts) CheckResult {
-	var unresolved []string
-	seen := map[string]bool{}
-	for _, ticket := range f.Tickets {
-		for _, entry := range ticket.Writes {
-			path, isNew := tickets.WritesPath(entry)
-			if isNew {
-				continue
-			}
-			named := ticket.Name + ": " + entry
-			if seen[named] || f.WritesPathExists[entry] || slices.Contains(f.DeletedPaths, path) {
-				continue
-			}
-			seen[named] = true
-			unresolved = append(unresolved, named)
-		}
-	}
-	if len(unresolved) > 0 {
-		return red("writes-resolve", "Writes: entry names no tree path and carries no (new) marker: "+strings.Join(unresolved, ", "))
-	}
-	return green("writes-resolve")
-}
-
 func diffNonemptyCheck(f Facts) CheckResult {
 	if !f.ReviewBaseResolved {
 		return red("diff-nonempty", "review base does not resolve: "+f.ReviewBaseHint)
@@ -359,4 +340,15 @@ func diffNonemptyCheck(f Facts) CheckResult {
 		return red("diff-nonempty", "no changed files since the resolved review base")
 	}
 	return green("diff-nonempty")
+}
+
+// chargePremisesCheck refuses build charge preparation and current-evidence binding unless
+// the planning-facts inventory and every required current premise are proved. Its detail is
+// the blocker that the charge readiness names.
+func chargePremisesCheck(f Facts) CheckResult {
+	ready := f.Ownership.ChargeReadiness
+	if ready.InventoryComplete && ready.CurrentComplete {
+		return green("charge-premises")
+	}
+	return red("charge-premises", ready.Blocker)
 }

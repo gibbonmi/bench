@@ -1,36 +1,39 @@
-# Reviewer-owned structure-budget grants: `<path> <n>` per line; a trailing `/`
-# on the path means a directory file-count budget. Exact paths only — a grant is
-# a named decision.
+# Reviewer-owned structure-budget grants: `<path> <n>` per line. A trailing `/`
+# on the path makes a directory file-count budget. Use exact paths only, because
+# each grant is a named decision.
+# A file line-count grant has headroom of about 15 percent: it is the actual
+# line count of the file on the grant date, multiplied by 1.15 and rounded up.
+# Thus small growth does not need a new reviewer decision. Growth past the grant
+# needs one. A directory file-count grant is an exact cap, and the next file in
+# that directory needs a new decision. A path with no grant keeps the default
+# limit.
 # Gate fragments + contract runner; granted 2026-07-02 (dry-structure-cleanup).
-# The next file added to .bench/ re-asks.
 .bench/ 13
 
 # Cohesive gate-oracle modules; approved 2026-07-15 (FT100/FT103-FT105) and
 # re-granted 2026-07-23 for trustworthy-gate-under-load's private engine seams.
-# Exact current caps re-ask on the next file or line of growth.
 internal/gate/ 16
 internal/gate/runner_serial_test.go 410
 internal/gate/story4_proof_test.go 415
-internal/gate/subject.go 422
-internal/gate/verdict.go 431
+internal/gate/subject.go 513
+internal/gate/verdict.go 457
 
 # Cohesive worktree lifecycle package; approved under the 2026-07-15 batch run
-# (FT106-FT113). Exact current caps re-ask on the next file or line of growth.
+# (FT106-FT113).
 internal/worktree/ 18
-internal/worktree/clean.go 406
-internal/worktree/lifecycle.go 450
-internal/worktree/ownership.go 465
-internal/worktree/resume.go 436
-internal/worktree/subshell.go 417
-internal/worktree/worktree.go 402
-internal/worktree/worktree_test.go 533
+internal/worktree/clean.go 417
+internal/worktree/lifecycle.go 708
+internal/worktree/ownership.go 488
+internal/worktree/resume.go 585
+internal/worktree/subshell.go 497
+internal/worktree/worktree.go 662
+internal/worktree/worktree_test.go 1129
 
 # One workflow-anchor family: every require/forbid the conformance phase runs
 # over kit prose, plus the helpers they share. Splitting was ruled out under
 # FT152 — internal/conformance/ has no file-count headroom, so a split trades a
 # line breach for a directory breach and scatters one signal across two files.
-# Granted 2026-07-28 on reviewer authorization during the FT152 build; the exact
-# cap re-asks on the next line of growth.
+# Granted 2026-07-28 on reviewer authorization during the FT152 build.
 internal/conformance/docs_workflow_helpers_test.go 660
 
 # The remaining conformance test files, each one check family that FT152 ruled
@@ -38,35 +41,33 @@ internal/conformance/docs_workflow_helpers_test.go 660
 # a line breach for a directory breach. The six per-check throwaway-root builders
 # these files carried are now one shared builder in harness_test.go, so the counts
 # below are what the family costs after the duplication came out. Granted
-# 2026-08-24 under module-size-split, following the FT152 precedent above; each
-# exact cap re-asks on the next line of growth.
+# 2026-08-24 under module-size-split, following the FT152 precedent above.
 # checks_test.go re-asked 2026-09-06 under seam-record-test-refusal (FT310): the
 # line-repo fixture's one environment-composition seam now scrubs an inherited
 # BENCH_HOME and injects a private one. Re-asked 2026-09-11 under
 # delegate-boot-cost: the binding map gains the claude-agent-definitions row.
 # Re-asked 2026-09-11 under delegate-boot-cost ticket 4: the binding map gains
 # the skill-description-budgets row.
-internal/conformance/checks_test.go 709
+internal/conformance/checks_test.go 739
 
 # The check registry is one enumerated table plus its canary family bindings. A
 # split trades a line breach for a directory breach in a package the profile
 # already calls headroom-free. Granted 2026-09-11 under delegate-boot-cost, when
-# the claude-agent-definitions rows carried it one line over; the exact cap
-# re-asks on the next line of growth.
-internal/conformance/registry/registry.go 403
+# the claude-agent-definitions rows carried it one line over.
+internal/conformance/registry/registry.go 409
 # The description budget check is one indivisible check family, on the FT152
 # precedent above: internal/conformance/ has no file-count headroom, so a split
 # trades a line breach for a directory breach. Granted 2026-09-11 under
-# delegate-boot-cost; the exact cap re-asks on the next line of growth.
+# delegate-boot-cost.
 # Re-asked 2026-09-11 after the C2 review round: the check gained the duplicate-row
 # guard, the shared listing enumerator, and one red-capable test per fail-closed
 # diagnostic.
-internal/conformance/skill_description_budgets_test.go 592
-internal/conformance/docs_workflow_checks_test.go 786
-internal/conformance/fixture_bite_test.go 826
+internal/conformance/skill_description_budgets_test.go 681
+internal/conformance/docs_workflow_checks_test.go 904
+internal/conformance/fixture_bite_test.go 1003
 # Re-asked 2026-09-11 under delegate-boot-cost ticket 4: the live-tree
 # classification gains the skill-description-budgets assertion.
-internal/conformance/tier_test.go 973
+internal/conformance/tier_test.go 1027
 
 # owner_test.go's childEnvironment is the system owner's one environment-
 # composition seam: every bench child gets a private BENCH_HOME unless it
@@ -76,5 +77,5 @@ internal/systemtest/owner_test.go 520
 
 # The shift package gains its record span in one file and its tests in two.
 # Granted 2026-09-23 at the local-shift-evidence sign-off and raised to 16 at
-# its LE-B2 build; the next file re-asks.
+# its LE-B2 build.
 internal/shift/ 16

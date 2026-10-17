@@ -1,22 +1,37 @@
 package preflight
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 const anchorClosureLead = "Writes: entry names an anchored guidance path without naming every anchor registry file: "
 
-// anchoredFacts is baseFacts with one ticket that writes each guidance path, and an
-// anchor map that names files for those paths.
+// requiring is f with the collector's requirements of one kind: each ticket entry that
+// required names, in ticket, entry, and listed path order.
+func requiring(f Facts, kind ownership.Kind, required map[string][]string) Facts {
+	for _, ticket := range f.Tickets {
+		for _, entry := range ticket.Writes {
+			for _, path := range required[entry] {
+				f.Ownership.Requirements = append(f.Ownership.Requirements, ownership.Requirement{Ticket: ticket.Name, Entry: entry, Path: path, Kind: kind})
+			}
+		}
+	}
+	return f
+}
+
+// anchoredFacts is baseFacts with one ticket that writes each guidance path, and the
+// anchor requirements that name files for those paths.
 func anchoredFacts(anchored map[string][]string, writes ...string) Facts {
 	f := baseFacts()
 	f.Tickets[0].Writes = append(f.Tickets[0].Writes, writes...)
-	f.WritesAnchorFiles = anchored
-	return f
+	return requiring(f, ownership.KindAnchor, anchored)
 }
 
 func assertAnchorClosure(t *testing.T, f Facts, want string) {
@@ -116,11 +131,13 @@ func TestAnchorClosureCoversDirectoryEntry(t *testing.T) {
 
 // TestProposeWritesListsAnchorClosure covers SC9. The proposal lists the missing
 // anchor file with its source and fence state, and the anchor-closure red does not
-// refuse it.
+// refuse it. The anchor file sits under a bound package, so the fixed point also
+// proposes each file its binding rows require, and nothing else.
 func TestProposeWritesListsAnchorClosure(t *testing.T) {
 	root, slug := seedAnchoredTicket(t, ".agents/x/SKILL.md")
 	out, code := Command(proposalArgs(t, root, slug))
-	if code != 0 || !strings.Contains(out, "writes_proposal[1]{path,source,fence}") {
+	header := "writes_proposal[" + strconv.Itoa(1+len(tickets.BoundFiles("internal/anchors/extra.go"))) + "]{path,source,fence}"
+	if code != 0 || !strings.Contains(out, header) {
 		t.Fatalf("proposal = (%d):\n%s", code, out)
 	}
 	assertProposalRow(t, out, "internal/anchors/extra.go", "anchor .agents/x/SKILL.md", "covered")
