@@ -3277,3 +3277,23 @@ Count: 0. Worst: none.
 Count: 0. Worst: none.
 
 Advice: the diagnostic branch of the staleness decision is redundant while each producer pairs a diagnostic state with a diagnostic. A decision-level case would pin that assumption. The drain takes it.
+
+## SS-C3 review round 3
+
+The frozen pair is f7916681..d7f786c2. A refreeze on the recorded SS-C2 tip closed a review chain gap. The source delta did not change. Repair cycle 2 of 2 opens for ticket 05 on opus/medium under the advance approval. The edit is a Go comment, so the native evidence stays current.
+
+## Standards
+
+Count: 1. Worst: S1.
+
+- S1 (auto-fix, confidence 4): the doc comment of requiredGreen restates the omission conjunction that the staleness package owns. Remove the sentence, or make it a pointer to the staleness decision.
+
+## Spec
+
+Count: 0. Worst: none.
+
+Advice: the binary-seal collector treats any read error as an absent binary. The drain takes it.
+
+## Coverage
+
+Count: 0. Worst: none.
