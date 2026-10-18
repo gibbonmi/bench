@@ -143,7 +143,7 @@ The `source-not-fenced` route tells the operator to add the path to a ticket wit
 
 ADR 0016 makes the installed broker the owner of every landing. The installation manifest authenticates that broker by path, version, and digest, so the candidate tree cannot replace it. The broker that lands this build therefore runs the pre-FT293 path check.
 
-That check reads this spec's `## Ownership fences` section. It refuses an empty section, applies the old pickup rule, and loads the canary inventory and the anchor registries for the old closure. So this spec keeps its own section equal to its final ticket union plus `reviews/closure-removal.md`. The orchestrator updates that section in each plan expansion. A gap shows as the broker's `source-not-fenced` refusal. Spec retirement removes the section with the spec.
+That check reads this spec's `## Ownership fences` section. It refuses an empty section, applies the old pickup rule, and loads the canary inventory and the anchor registries for the old closure. It also reads the binding registry when the kit seal verifies (`internal/preflight/ownership/closure.go:119-131`), but an absent registry gives an unbound string and no refusal. So this spec keeps its own section equal to its final ticket union plus `reviews/closure-removal.md`. The orchestrator updates that section in each plan expansion. A gap shows as the broker's `source-not-fenced` refusal. Spec retirement removes the section with the spec.
 
 The build keeps the canary inventory and the anchor registry formats that the old closure loader parses. The prospective gate builds from the composed tree, so it runs the new code and ignores the section.
 
@@ -157,7 +157,7 @@ The build edits no other staged spec. `bench commitment start` validates each bo
 
 `delegation-discipline.md` loses the refusal-boundary sentence and keeps the expectation sentence. That sentence names the widening route: the orchestrator widens a gate-found need with `bench spec widen` or asks the reviewer.
 
-The slicing checks lose the `Enforced rules` section, because each rule there repeats a check that the ticket parser or build preflight owns. The checks also lose each slicing rule that runs a removed form or edits a spec fence. The upper-bound sentence becomes an expectation sentence. `Fence-expansion evidence` stays, because FT293 does not name it.
+The slicing checks lose the `Enforced rules` section, because each rule there repeats a check that the ticket parser or build preflight owns. The checks also lose each slicing rule that runs a removed form or edits a spec fence. The `.bench/commitment.json` rule keeps its ticket half: exactly one ticket's `Writes:` line names that file, because only a ticket entry authorizes it under the derived fence. Ticket 05 owns that rewrite. The upper-bound sentence becomes an expectation sentence. `Fence-expansion evidence` stays, because FT293 does not name it.
 
 The craft-spec template, its slicing paragraph, and its approval table drop the fence section. `/bench-write-spec` drops the fence-section sentences and the `--propose-writes` comparison. `/bench-implement-spec` drops the closure and `fence-writes` clauses, names the verb at the plan-expansion sentence, and states the scope rule at the out-of-`Writes:` pause. The operating guide's plan-expansion paragraph names the verb and the scope rule.
 
@@ -306,13 +306,13 @@ The landing rows run through the landing surface tests, which already seed ticke
 | CR85 | 42 | `map-discipline.md` holds no `breakdown, proposal` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored slicing step reds the forbid anchor |
 | CR86 | 43 | The craft-spec skill holds no `## Ownership fences` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored template section reds the forbid anchor |
 | CR87 | 43 | `bench-write-spec.md` holds the needle "After the ticket review accepts, `bench preflight build <slug> --plan-only` grades the whole ticket graph." in its Process section | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A sentence that keeps the fence step fails the exact needle |
-| CR88 | 44 | The operating guide names `bench spec widen` in its Workflow section | planned require row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A plan-expansion rule without the verb fails the require anchor |
+| CR88 | 44 | The operating guide names `bench spec widen` in its plan-expansion paragraph | review-owned: the Spec axis reads the paragraph against story 44 | Review owns rule wording, so no require anchor pins it |
 | CR89 | 45 | `bench-implement-spec.md` holds no `*-closure` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored closure route reds the forbid anchor |
 | CR90 | 45 | `bench-implement-spec.md` holds no `fence-writes` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored fence route reds the forbid anchor |
 | CR91 | 47 | `docs/known-issues.md` holds no `writes proposal` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored row reds the forbid anchor |
 | CR92 | 48 | The `[Unreleased]` section of `CHANGELOG.md` names `bench spec widen` | review-owned: the Spec axis reads the entry | Review owns changelog prose |
 | CR93 | 48 | The `[Unreleased]` section holds no entry that adds `--breakdown` | review-owned: the Spec axis reads the entry | Review owns changelog prose |
-| CR94 | 49 | Each budgeted guidance file that the build edits holds a line count at or below its budget row | review-owned: the `guidance-prose-budgets` lane check reds a count above its limit | A net addition to a full file breaks the lane |
+| CR94 | 49 | Each budgeted guidance file that the build edits holds a line count at or below its budget row | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | A net addition to a full file exceeds its limit and reds the live-tree budget test |
 | CR95 | 46 | The anchor registry holds no require row for the `--propose-writes` sentence | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A kept require row reds the live check after the sentence goes |
 
 Not covered: story 50 — reviewed exclusion; the `Fence-expansion evidence` section and the paired slicing readers stay unchanged, and review grades that no ticket touches them.
@@ -370,7 +370,8 @@ Evidence status: source-backed proposal from eight paired read-only research ret
 
 - The clean-path refusal moves from the closure into `tickets.ParseWrite` (CR19 to CR22). It preserves an existing guarantee that the closure deletion would otherwise remove.
 - Only the audit kind gathers the ownership snapshot. No row grades this call, because no remaining verdict reads the snapshot.
-- The forbid anchors CR78 and CR80 to CR91 follow the slicing checks' retirement rule for each sentence that grants a removed form.
+- The forbid anchors CR78, CR80 to CR87, and CR89 to CR91 follow the slicing checks' retirement rule for each sentence that grants a removed form.
+- The review pickup joins `implicitEntries` (CR58). The derived fence needs it, because no ticket names the pickup. The entry is the exact path from `reviewrecord.RecordPath`, never the `reviews` folder; the build's mutation probe widens the entry to the folder and expects `reviews/<other>.md` to red `paths-authorized`.
 
 ### Source-sentence-to-row table
 
@@ -429,6 +430,6 @@ At 658ba0dbb, `bench-write-spec.md` holds 87 of 87 lines, `bench-implement-spec.
 
 ### Validation plan
 
-Each ticket author observes each independent new expectation red before the production edit, or through a named `bench probe`. The author probes in CR1 remove the clean-path refusal, in CR2 admit every entry, in CR3 drop the implicit pickup, and in CR4 restore the refusal-boundary sentence. The coordinator probe appends the leftover section tokens to the authorizing entries. Each probe must report a restored subject.
+Each ticket author observes each independent new expectation red before the production edit, or through a named `bench probe`. The author probes in CR1 remove the clean-path refusal, in CR2 admit every entry, in CR3 drop the implicit pickup, and in CR4 restore the refusal-boundary sentence. The coordinator probe appends the leftover section tokens to the authorizing entries. A CR3 review probe widens the pickup entry to the `reviews` folder and expects `reviews/<other>.md` to red `paths-authorized`. Each probe must report a restored subject.
 
 The final landing runs under the pre-FT293 broker. Before the landing, the orchestrator compares this spec's fence section with its ticket union plus the pickup. After the landing, `/bench-final-check` runs the broker install step that the landing names.
