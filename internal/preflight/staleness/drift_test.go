@@ -1,21 +1,26 @@
 package staleness_test
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight"
-	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/responsebound"
 )
 
-// Each test of this package drives the actual preflight command through committed fixture
-// objects, except the committed tip inventory case, whose input no command reaches past the
-// clean-source refusal. The tests state the expected drift rows, table headers, and refusal
-// texts independently of the audit renderer, and each expected object ID comes from git
+// Each test in this file drives the actual preflight command through committed fixture
+// objects. The expected drift rows, table headers, and refusal texts are stated here
+// independently of the audit renderer, and each expected object ID comes from git
 // rev-parse, not from the collector's tree listing.
 
 // absent is the cell the audit prints for the side of a drift entry that holds no member.
@@ -98,26 +103,6 @@ func dropBaselineSpec(t *testing.T, slug string) (base, tip string) {
 	base = commitAll(t, "baseline without the spec")
 	write(t, map[string]string{spec: string(body)})
 	return base, commitAll(t, "spec returns")
-}
-
-// specPath is the repository path of the fixture spec.
-func specPath(slug string) string {
-	return "specs/" + slug + "/spec.md"
-}
-
-// itemLocation is the inventory location of an item that the fixture spec's title line holds.
-func itemLocation(slug string) string {
-	return `"location":{"path":"` + specPath(slug) + `","line":1,"needle":"# ` + slug + `","source":"spec"}`
-}
-
-// seamClaim is one inventory test seam whose path is the claim source path.
-func seamClaim(slug, path string) string {
-	return `{"id":"claim",` + itemLocation(slug) + `,"path":"` + path + `","package":"example.com/outside","function":"TestClaim","state":"existing","rows":["PF1"]}`
-}
-
-// inventorySpec is the fixture spec whose inventory holds each given premise and seam.
-func inventorySpec(slug string, premises, seams []string) string {
-	return preflighttest.SpecBodyNoInventory(slug) + inventorytest.Section(inventorytest.Manifest("declared-complete", premises, seams, nil, nil))
 }
 
 // TestDriftObjects covers SS1, SS2, SS3, SS4, SS5, SS6, SS10, and SS11.
@@ -224,5 +209,174 @@ func TestDriftIdentity(t *testing.T) {
 	base, tip = dropBaselineSpec(t, slug)
 	if out, code := audit(t, slug, base, tip); code != 1 || !strings.Contains(out, "baseline spec refused") || strings.Contains(out, "staleness[") {
 		t.Fatalf("SS8 absent baseline spec = (%d), want a refusal and no staleness result:\n%s", code, out)
+	}
+}
+
+// TestAuditPrecedence covers SS35: the checkout refusal wins over a staleness refusal.
+func TestAuditPrecedence(t *testing.T) {
+	_, slug := preflighttest.SeedAdmitted(t)
+	base, tip := dropBaselineSpec(t, slug)
+	write(t, map[string]string{"dirty.txt": "dirty\n"})
+	out, code := audit(t, slug, base, tip)
+	if code != 1 || !strings.Contains(out, "source not clean") || strings.Contains(out, "baseline spec") || strings.Contains(out, "staleness[") {
+		t.Fatalf("dirty source = (%d), want the checkout refusal before any staleness result:\n%s", code, out)
+	}
+}
+
+// TestAuditMovement covers SS36 and SS37.
+func TestAuditMovement(t *testing.T) {
+	t.Run("SS36 persistent movement", func(t *testing.T) {
+		_, slug := preflighttest.SeedAdmitted(t)
+		base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
+		// Each read ends with a new commit, so the checkout stays clean and only the source moves.
+		calls := 0
+		restore := diff.SetSnapshotAfterReadForTest(func() {
+			calls++
+			preflighttest.RunGit(t, "commit", "-q", "--allow-empty", "-m", fmt.Sprintf("move %d", calls))
+		})
+		defer restore()
+		out, code := audit(t, slug, base, tip)
+		if code != 1 || calls != 2 || !strings.Contains(out, "snapshot drift") || strings.Contains(out, "staleness[") || strings.Contains(out, "drift[") {
+			t.Fatalf("persistent movement = (%d, %d calls), want the drift refusal and no audit result:\n%s", code, calls, out)
+		}
+	})
+	t.Run("SS37 source-tip mismatch", func(t *testing.T) {
+		// The pair holds no drift, so only the readiness red can make the audit exit 1.
+		_, slug := preflighttest.SeedAdmitted(t)
+		out, code := audit(t, slug, preflighttest.RunGit(t, "rev-parse", "HEAD"), preflighttest.RunGit(t, "rev-parse", "main"))
+		if code != 1 || !strings.Contains(out, "tip-current,red") || table(t, out, "staleness")[0]["manual_required"] != true {
+			t.Fatalf("stale pin = (%d), want the red tip-current row and manual review:\n%s", code, out)
+		}
+	})
+}
+
+// TestAuditTrust covers SS38 and SS56.
+func TestAuditTrust(t *testing.T) {
+	t.Run("SS38 executable seal", func(t *testing.T) {
+		root, slug := preflighttest.SeedAdmitted(t)
+		write(t, map[string]string{".gitignore": "dist/\n"})
+		tip := commitAll(t, "ignore the published binary")
+		executable := freshness.PublishedExecutable(root)
+		if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(filepath.Join(root, "absent-bench"), executable); err != nil {
+			t.Fatal(err)
+		}
+		out, code := audit(t, slug, tip, tip)
+		if code != 1 || !strings.Contains(out, "binary-seal,red") || table(t, out, "staleness")[0]["manual_required"] != true {
+			t.Fatalf("refused seal = (%d), want the red binary-seal row and manual review:\n%s", code, out)
+		}
+	})
+	t.Run("SS56 current-action binding", func(t *testing.T) {
+		root, slug := preflighttest.SeedConformant(t)
+		args := preflighttest.ChargeArgs(t, root, slug)
+		prepared, code := preflight.Command(args)
+		if code != 0 {
+			t.Fatalf("prepare = (%d):\n%s", code, prepared)
+		}
+		identity := table(t, prepared, "prepared")[0]["evidence"].(string)
+		check := []string{"evidence", identity, "--check-current"}
+		if out, _ := audit(t, slug, args[6], args[8]); strings.Contains(out, identity) || len(preflighttest.PublishedPacks(t, root)) != 1 {
+			t.Fatalf("audit touched the prepared evidence:\n%s", out)
+		}
+		if out, code := preflight.Command(check); code != 0 {
+			t.Fatalf("binding after the audit = (%d):\n%s", code, out)
+		}
+		write(t, map[string]string{".agents/skills/bench-craft-delegate/SKILL.md": "# Delegation skill, changed\n"})
+		tip := commitAll(t, "required source changes")
+		out, _ := audit(t, slug, args[6], tip)
+		if !slices.ContainsFunc(driftRows(t, out), func(row string) bool { return strings.HasPrefix(row, ".agents/skills/bench-craft-delegate/SKILL.md|") }) {
+			t.Fatalf("audit does not report the changed required source:\n%s", out)
+		}
+		if out, code := preflight.Command(check); code != 1 || !strings.Contains(out, "source required") {
+			t.Fatalf("binding after the source moved = (%d), want the source refusal:\n%s", code, out)
+		}
+	})
+}
+
+// TestAuditGrammar covers SS39 and SS40.
+func TestAuditGrammar(t *testing.T) {
+	_, slug := preflighttest.SeedConformant(t)
+	base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
+	for _, selector := range []string{"--charge", "--plan-only", "--propose-writes", "--breakdown", "--check-current", "--verify"} {
+		out, code := audit(t, slug, base, tip, selector)
+		if code != 2 || !strings.Contains(out, "cannot be combined") || strings.Contains(out, "staleness[") {
+			t.Errorf("--audit-spec %s = (%d), want exit 2 and no collection:\n%s", selector, code, out)
+		}
+	}
+	for _, args := range [][]string{
+		{"build", slug, "--audit-spec", "--source-tip", tip},
+		{"build", slug, "--audit-spec", "--base", base},
+		{"build", slug, "--audit-spec"},
+	} {
+		out, code := preflight.Command(args)
+		if code != 2 || !strings.Contains(out, "--audit-spec requires build, --base, and --source-tip") {
+			t.Errorf("%v = (%d), want exit 2 naming both identities:\n%s", args, code, out)
+		}
+	}
+}
+
+// TestAuditSafety covers SS51: a link in scope at either identity refuses, and its outside
+// target stays unread.
+func TestAuditSafety(t *testing.T) {
+	_, slug := preflighttest.SeedAdmitted(t)
+	base := preflighttest.RunGit(t, "rev-parse", "HEAD")
+	const sentinel = "outside-sentinel-bytes"
+	target := filepath.Join(t.TempDir(), "sentinel")
+	if err := os.WriteFile(target, []byte(sentinel), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, "internal/example/link"); err != nil {
+		t.Fatal(err)
+	}
+	refuses := func(side, base, tip string) {
+		t.Helper()
+		out, code := audit(t, slug, base, tip)
+		if code != 1 || !strings.Contains(out, "special source refused") || strings.Contains(out, sentinel) || strings.Contains(out, "staleness[") {
+			t.Errorf("special %s source = (%d), want a refusal that follows nothing:\n%s", side, code, out)
+		}
+	}
+	linked := commitAll(t, "link in scope")
+	refuses("after", base, linked)
+	preflighttest.RunGit(t, "rm", "-q", "internal/example/link")
+	refuses("before", linked, commitAll(t, "link leaves scope"))
+}
+
+// TestAuditBound covers SS52: the shared response bound spills a long audit whole.
+func TestAuditBound(t *testing.T) {
+	root, slug := preflighttest.SeedAdmitted(t)
+	base := preflighttest.RunGit(t, "rev-parse", "HEAD")
+	var want []string
+	for i := range 40 {
+		path := fmt.Sprintf("internal/example/bulk/file%02d.txt", i)
+		write(t, map[string]string{path: path + "\n"})
+		want = append(want, path)
+	}
+	tip := commitAll(t, "many fenced members")
+	restore := evidencecmd.SetResponseLimitForTest(4096)
+	defer restore()
+	out, _ := audit(t, slug, base, tip)
+
+	var stdout, stderr bytes.Buffer
+	owner := responsebound.New(t.TempDir(), &stdout, &stderr, func() string { return root }, false)
+	if _, err := io.WriteString(owner.Stdout(), out); err != nil {
+		t.Fatal(err)
+	}
+	owner.Finish()
+	frame, _, err := responsebound.First(stdout.Bytes())
+	if err != nil || frame.Path == "" {
+		t.Fatalf("long audit printed no spill frame (%v):\n%s", err, stdout.String())
+	}
+	spilled, err := os.ReadFile(frame.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, row := range driftRows(t, string(spilled)) {
+		got = append(got, strings.SplitN(row, "|", 3)[1])
+	}
+	if !slices.Equal(got, sorted(want...)) {
+		t.Fatalf("spilled drift after paths = %q, want every one of %q", got, want)
 	}
 }
