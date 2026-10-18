@@ -11,16 +11,17 @@ import (
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
-// unsupported names each mechanical check that no collector grades yet. Each one stays a
+// unsupported names each required collector that does not run yet. Each one stays a
 // diagnostic, so the audit stays incomplete and manual review stays required.
-var unsupported = []string{CheckCitedTests}
+var unsupported = []string{"coverage"}
 
 // Collect reads the audit scope of the committed pair that source names at root. It reads
 // the spec and its planning-facts inventory at both identities from committed objects, never
 // from the checkout. sourceFacts is the closure snapshot of the same pair, whose diagnostics
-// stay open in the audit and whose symbol identities the cited-symbols audit grades. An
-// absent or special spec at either identity, an unreadable tree, a member of the scope that
-// is no regular file, or a cited symbol's baseline object that does not read refuses the
+// stay open in the audit and whose symbol identities the cited-symbols audit grades. The
+// test seams of the tip inventory are what the cited-tests audit grades. An absent or
+// special spec at either identity, an unreadable tree, a member of the scope that is no
+// regular file, or a cited symbol's or test's object that does not read refuses the
 // collection with an *Error and no facts.
 func Collect(root string, source ownership.Source, sourceFacts ownership.Snapshot) (AuditFacts, error) {
 	baseline, err := readSpec(root, source.Base, source.SpecPath, StageBaselineSpec)
@@ -31,7 +32,8 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 	if err != nil {
 		return AuditFacts{}, err
 	}
-	entries, unread := scope(source.SpecPath, [][]byte{baseline, current}, []ownership.Manifest{ownership.ParseManifest(baseline), ownership.ParseManifest(current)})
+	tipManifest := ownership.ParseManifest(current)
+	entries, unread := scope(source.SpecPath, [][]byte{baseline, current}, []ownership.Manifest{ownership.ParseManifest(baseline), tipManifest})
 	before, err := members(root, source.Base, entries)
 	if err != nil {
 		return AuditFacts{}, err
@@ -46,12 +48,17 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 		return AuditFacts{}, err
 	}
 	facts.Symbols = cited
+	seams, unjudged, err := tests(root, facts.Paths, tipManifest.Seams)
+	if err != nil {
+		return AuditFacts{}, err
+	}
+	facts.Tests = seams
 	for _, diagnostic := range sourceFacts.Diagnostics {
 		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: diagnostic.ID, Reason: diagnostic.Reason})
 	}
-	facts.Diagnostics = append(append(facts.Diagnostics, unread...), undecided...)
-	for _, check := range unsupported {
-		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: check, Reason: "no " + check + " collector grades this audit"})
+	facts.Diagnostics = append(append(append(facts.Diagnostics, unread...), undecided...), unjudged...)
+	for _, collector := range unsupported {
+		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: collector, Reason: "no " + collector + " collector grades this audit"})
 	}
 	return facts, nil
 }

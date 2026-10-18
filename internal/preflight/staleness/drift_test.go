@@ -121,7 +121,7 @@ func TestDriftObjects(t *testing.T) {
 	if code != 0 || !strings.Contains(out, "drift[0]{before,after,kind,before_object,after_object}:\n") || !strings.Contains(out, "spec-drift,green") {
 		t.Fatalf("SS10 unchanged members = (%d), want a green spec-drift row and a complete empty drift table:\n%s", code, out)
 	}
-	// The test collector does not run, so a clean drift result is still no complete audit.
+	// The coverage collector does not run, so a clean drift result is still no complete audit.
 	if row := table(t, out, "staleness")[0]; row["complete"] != false || row["manual_required"] != true {
 		t.Fatalf("SS10 staleness = %v, want complete false and manual review while collectors are missing:\n%s", row, out)
 	}
@@ -174,16 +174,18 @@ func TestDriftIdentity(t *testing.T) {
 		t.Fatalf("SS9 spec drift = (%d) %q, want the audit red alone and %q:\n%s", code, driftRows(t, out), want, out)
 	}
 
-	// The reused-owner premise names its owner path only inside a nested subject object.
+	// The reused-owner premise names its owner path only inside a nested subject object. The
+	// seam's file declares its test at both identities, so only the path drift is a row.
 	owner := `{"id":"owner",` + itemLocation(slug) + `,"kind":"reused-owner","state":"current",` +
 		`"subject":{"owner":{"path":"outside/owner.go","line":1,"needle":"package outside","source":"tip"}},"expected":{"required":true}}`
+	const claim = "package outside\n\nfunc TestClaim() {}\n"
 	write(t, map[string]string{
 		spec:                    inventorySpec(slug, []string{owner}, []string{seamClaim(slug, "outside/claim_test.go")}),
-		"outside/claim_test.go": "package outside\n",
+		"outside/claim_test.go": claim,
 		"outside/owner.go":      "package outside\n",
 	})
 	before = commitAll(t, "claims outside the fence")
-	write(t, map[string]string{"outside/claim_test.go": "package outside\n\n// changed seam\n", "outside/owner.go": "package outside\n\n// changed premise owner\n"})
+	write(t, map[string]string{"outside/claim_test.go": claim + "\n// changed seam\n", "outside/owner.go": "package outside\n\n// changed premise owner\n"})
 	tip = commitAll(t, "claim sources change")
 	modified := func(path string) string {
 		return path + "|" + path + "|modified|" + object(t, before, path) + "|" + object(t, tip, path)

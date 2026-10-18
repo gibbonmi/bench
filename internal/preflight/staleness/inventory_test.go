@@ -1,6 +1,7 @@
 package staleness_test
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -20,9 +21,14 @@ func itemLocation(slug string) string {
 	return `"location":{"path":"` + specPath(slug) + `","line":1,"needle":"# ` + slug + `","source":"spec"}`
 }
 
+// seamItem is one inventory test seam of row PF1.
+func seamItem(slug, id, path, pkg, function, state string) string {
+	return fmt.Sprintf(`{"id":%q,%s,"path":%q,"package":%q,"function":%q,"state":%q,"rows":["PF1"]}`, id, itemLocation(slug), path, pkg, function, state)
+}
+
 // seamClaim is one inventory test seam whose path is the claim source path.
 func seamClaim(slug, path string) string {
-	return `{"id":"claim",` + itemLocation(slug) + `,"path":"` + path + `","package":"example.com/outside","function":"TestClaim","state":"existing","rows":["PF1"]}`
+	return seamItem(slug, "claim", path, "example.com/outside", "TestClaim", "existing")
 }
 
 // inventorySpec is the fixture spec whose inventory holds each given premise and seam.

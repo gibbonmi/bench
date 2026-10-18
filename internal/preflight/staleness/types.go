@@ -54,15 +54,45 @@ type Diagnostic struct {
 
 // AuditFacts is one immutable collection over one exact committed pair. Paths holds every
 // member of the audit scope at either identity, in path order, so a deleted member keeps its
-// row. Symbols holds each cited symbol in inventory order. Decide grades these values and
-// reads nothing else.
+// row. Symbols holds each cited symbol and Tests each test seam, both in inventory order.
+// Decide grades these values and reads nothing else.
 type AuditFacts struct {
 	Baseline, Tip string
 	SpecPath      string
 	Paths         []PathState
 	Symbols       []SymbolState
+	Tests         []TestState
 	Diagnostics   []Diagnostic
 }
+
+// TestState is the audit of one test seam of the tip inventory: its seam ID, its file and
+// cited name, whether the seam is planned, the file's object at each identity, and the first
+// discrepancy with its reason. An empty discrepancy is a declared existing test at both
+// identities, or a planned test that neither identity declares.
+type TestState struct {
+	Seam, Path, Function string
+	Planned              bool
+	Before, After        Object
+	Discrepancy          TestDiscrepancy
+	Reason               string
+}
+
+// TestDiscrepancy is the class of one test seam's discrepancy.
+type TestDiscrepancy string
+
+const (
+	// TestFileAbsent is an existing test whose file one identity does not hold.
+	TestFileAbsent TestDiscrepancy = "file-absent"
+	// TestFunctionAbsent is an existing test whose present file does not declare it.
+	TestFunctionAbsent TestDiscrepancy = "function-absent"
+	// TestAlreadyShipped is a planned test that one identity already declares.
+	TestAlreadyShipped TestDiscrepancy = "already-shipped"
+	// TestUnsupported is a cited name that the citation grammar cannot judge.
+	TestUnsupported TestDiscrepancy = "unsupported"
+	// TestContext is an existing test that only a file outside the default build context
+	// declares.
+	TestContext TestDiscrepancy = "unsupported-context"
+)
 
 // SymbolState is the audit of one cited symbol: its premise and cited owner, the declaration
 // that the baseline source and the tip types hold, and the first discrepancy with its reason.
@@ -110,6 +140,7 @@ const (
 	StageMembers      = "audit members"
 	StageSpecial      = "special source"
 	StageSymbol       = "cited symbol source"
+	StageTest         = "cited test source"
 )
 
 // Error is a collection refusal: the stage that failed, the subject it read, and the cause.

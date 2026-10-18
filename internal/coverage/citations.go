@@ -214,33 +214,42 @@ func checkCitation(rn int, base, rel, list string, scopes []*executionScope) []s
 		return []string{fmt.Sprintf("coverage map row %d cites '%s', which does not exist", rn, rel)}
 	}
 	var v []string
-	literal, subtests := runNames(content)
 	for _, n := range names {
-		// A subtest citation names its parent function before the slash. The function is
-		// what the file declares, so that leading segment is what resolves.
-		name := strings.TrimSpace(n[1])
-		segment := ""
-		if i := strings.IndexByte(name, '/'); i >= 0 {
-			// Only the first segment is graded. A deeper composed name needs the call
-			// graph, which this grammar does not read.
-			name, segment = name[:i], name[i+1:]
-			if j := strings.IndexByte(segment, '/'); j >= 0 {
-				segment = segment[:j]
-			}
-		}
-		if name == "" || !declaresFunc(content, name) {
+		switch state, segment := ResolveTest(content, n[1]); state {
+		case TestUndeclared:
 			v = append(v, fmt.Sprintf("coverage map row %d cites '%s', which '%s' does not declare", rn, n[1], rel))
-			continue
+		case TestNoSubtest:
+			v = append(v, fmt.Sprintf("coverage map row %d cites '%s', whose subtest '%s' is no t.Run name in '%s'", rn, n[1], segment, rel))
 		}
-		// The parent resolves against a declaration; the segment resolves against the
-		// t.Run names the file spells out. A file that computes a name spells none, so
-		// its segments are unreadable here and stay unjudged.
-		if segment == "" || !literal || hasSubtest(subtests, segment) {
-			continue
-		}
-		v = append(v, fmt.Sprintf("coverage map row %d cites '%s', whose subtest '%s' is no t.Run name in '%s'", rn, n[1], segment, rel))
 	}
 	return append(v, checkExecution(rn, rel, path, content, scopes)...)
+}
+
+// TestState is the grammar's answer for one cited test name in one file. An unjudged name
+// is a declared function whose segment the grammar cannot read.
+type TestState string
+
+const TestDeclared, TestUndeclared, TestNoSubtest, TestUnjudged TestState = "declared", "undeclared", "no-subtest", "unjudged"
+
+// ResolveTest resolves one cited test name, as a citation list spells it, against the source
+// of the file it cites, and returns the state and the first subtest segment. It is the one
+// test-citation grammar, so the coverage check and the staleness audit cannot disagree.
+func ResolveTest(content []byte, cited string) (state TestState, segment string) {
+	// The file declares the parent function before the slash. Only the first segment is
+	// graded, because a deeper composed name needs the call graph. That segment resolves
+	// against the t.Run names the file spells out; a file that computes a name spells none.
+	name, rest, _ := strings.Cut(strings.TrimSpace(cited), "/")
+	segment, _, deeper := strings.Cut(rest, "/")
+	literal, subtests := runNames(content)
+	switch {
+	case name == "" || !declaresFunc(content, name):
+		return TestUndeclared, segment
+	case segment != "" && literal && !hasSubtest(subtests, segment):
+		return TestNoSubtest, segment
+	case segment != "" && (!literal || deeper):
+		return TestUnjudged, segment
+	}
+	return TestDeclared, segment
 }
 
 // citedPathSafe reports whether rel is a repo-relative forward-slash path that stays

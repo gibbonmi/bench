@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
@@ -105,5 +106,101 @@ func TestSymbolIdentity(t *testing.T) {
 	// The alias names its origin's declaration, so a lexical reading of it adds a row.
 	if len(symbolRows) != rows {
 		t.Errorf("symbol drift rows = %d, want %d: %v", len(symbolRows), rows, symbolRows)
+	}
+}
+
+// TestTestIdentity covers SS20, SS21, SS22, SS23, SS24, SS25, SS26, and SS27. One committed
+// pair changes each test seam in its own way, and the actual audit-spec response grades
+// them all. Each expected drift row and diagnostic is stated here by hand, with object IDs
+// from git rev-parse. The ordinary preflight over the same pair is the continuation, which
+// must not repeat the initial planned-test absence.
+func TestTestIdentity(t *testing.T) {
+	_, slug := preflighttest.SeedAdmitted(t)
+	const (
+		kept, gone, removed = "internal/example/kept_test.go", "internal/example/gone_test.go", "internal/example/removed_test.go"
+		future, computed    = "internal/example/future_test.go", "internal/example/computed_test.go"
+		tagged              = "internal/example/tagged_test.go"
+	)
+	seam := func(id, path, function, state string) string {
+		return seamItem(slug, id, path, "example.com/internal/example", function, state)
+	}
+	const header = "package example\n\nimport \"testing\"\n\n"
+	write(t, map[string]string{
+		specPath(slug): inventorySpec(slug, nil, []string{
+			seam("kept", kept, "TestKept", "existing"),
+			seam("gone", gone, "TestGone", "existing"),
+			seam("removed", removed, "TestRemoved", "existing"),
+			seam("future", future, "TestFuture", "planned"),
+			seam("early", future, "TestEarly", "planned"),
+			seam("subtest", kept, "TestSub/case one", "existing"),
+			seam("nosub", kept, "TestSub/case two", "existing"),
+			seam("computed", computed, "TestComputed/x", "existing"),
+			seam("tagged", tagged, "TestTagged", "existing"),
+		}),
+		kept:     header + "func TestKept(t *testing.T) {}\n\nfunc TestSub(t *testing.T) {\n\tt.Run(\"case one\", func(t *testing.T) {})\n}\n",
+		gone:     header + "func TestGone(t *testing.T) {}\n",
+		removed:  header + "func TestRemoved(t *testing.T) {}\n\nfunc TestStays(t *testing.T) {}\n",
+		future:   header + "func TestOther(t *testing.T) {}\n",
+		computed: header + "func TestComputed(t *testing.T) {\n\tname := \"x\"\n\tt.Run(name, func(t *testing.T) {})\n}\n",
+		tagged:   "//go:build benchnever\n\n" + header + "func TestTagged(t *testing.T) {}\n",
+	})
+	base := commitAll(t, "cited tests")
+	preflighttest.RunGit(t, "rm", "-q", gone)
+	write(t, map[string]string{
+		removed: header + "func TestStays(t *testing.T) {}\n",
+		future:  header + "func TestOther(t *testing.T) {}\n\nfunc TestEarly(t *testing.T) {}\n",
+	})
+	tip := commitAll(t, "cited tests change")
+
+	out, code := audit(t, slug, base, tip)
+	if code != 1 || !strings.Contains(out, "cited-tests,red") {
+		t.Fatalf("audit = (%d), want exit 1 and a red cited-tests row:\n%s", code, out)
+	}
+	testRows := map[string]bool{}
+	for _, row := range driftRows(t, out) {
+		if strings.Contains(row, "|test ") {
+			testRows[row] = true
+		}
+	}
+	diagnostics := map[string]string{}
+	for _, row := range table(t, out, "audit_diagnostics") {
+		diagnostics[fmt.Sprint(row["subject"])] = fmt.Sprint(row["reason"])
+	}
+	same := func(path, kind string) string {
+		return path + "|" + path + "|" + kind + "|" + object(t, base, path) + "|" + object(t, tip, path)
+	}
+	rows := 0
+	for _, test := range []struct{ row, seam, drift, diagnostic string }{
+		{"SS20", "gone", gone + "|" + absent + "|test TestGone file-absent|" + object(t, base, gone) + "|" + absent, ""},
+		{"SS21", "removed", same(removed, "test TestRemoved function-absent"), ""},
+		{"SS22", "future", "", ""},
+		{"SS23", "early", same(future, "test TestEarly already-shipped"), ""},
+		{"SS24", "kept", "", ""},
+		{"SS25", "subtest", "", ""},
+		{"SS25", "nosub", same(kept, "test TestSub/case two function-absent"), ""},
+		{"SS26", "computed", "", "cited test TestComputed/x is unsupported"},
+		{"SS27", "tagged", "", "cited test TestTagged is unsupported-context"},
+	} {
+		if test.drift != "" {
+			rows++
+		}
+		t.Run(test.row+" "+test.seam, func(t *testing.T) {
+			if test.drift != "" && !testRows[test.drift] {
+				t.Errorf("drift lacks %q; test rows %v", test.drift, testRows)
+			}
+			if got := diagnostics[test.seam]; test.diagnostic == "" && got != "" || !strings.HasPrefix(got, test.diagnostic) {
+				t.Errorf("diagnostic of %s = %q, want prefix %q", test.seam, got, test.diagnostic)
+			}
+		})
+	}
+	// A planned function in a file that holds other tests, and a declared subtest, add no row.
+	if len(testRows) != rows {
+		t.Errorf("test drift rows = %d, want %d: %v", len(testRows), rows, testRows)
+	}
+
+	// The continuation: the ordinary preflight over the pair keeps its own verdict, so a
+	// predecessor's legitimate planned test leaves it usable.
+	if out, code := preflight.CommandWithVersion("staleness-test")([]string{"build", slug, "--base", base, "--source-tip", tip}); code != 0 || strings.Contains(out, "already-shipped") {
+		t.Errorf("ordinary preflight = (%d), want exit 0 and no initial planned-test absence:\n%s", code, out)
 	}
 }
