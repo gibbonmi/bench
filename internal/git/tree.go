@@ -150,7 +150,7 @@ func (e TreeEntry) IsRegularFile() bool { return regularFileModes[e.Mode] }
 
 // ListTree runs `git -C root ls-tree -z <args>` and reads its records. Each record is
 // `<mode> <type> <object>\t<path>` and ends at a NUL, so the path is every byte past the
-// first tab and Git quotes none of it. This function is the one reader of that grammar.
+// first tab and Git quotes none of it.
 func ListTree(root string, args ...string) ([]TreeEntry, error) {
 	raw, err := Raw(append([]string{"-C", root, "ls-tree", "-z"}, args...)...)
 	if err != nil {

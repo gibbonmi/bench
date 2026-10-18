@@ -206,6 +206,17 @@ func TestDriftIdentity(t *testing.T) {
 		t.Fatalf("dropped claim drift = %q, want %q:\n%s", driftRows(t, out), dropped, out)
 	}
 
+	// The tip drops a fence prefix while its member changes, so only the baseline fence names it.
+	const member = "outside/fenced/member.txt"
+	write(t, map[string]string{spec: preflighttest.SpecBody(slug, "- `outside/fenced/` (dropped fence)"), member: "one\n"})
+	before = commitAll(t, "fence outside the seed")
+	write(t, map[string]string{spec: preflighttest.SpecBody(slug), member: "two\n"})
+	tip = commitAll(t, "fence drops while its member changes")
+	fenced := sorted(modified(spec), modified(member))
+	if out, _ := audit(t, slug, before, tip); !slices.Equal(driftRows(t, out), fenced) {
+		t.Fatalf("dropped fence drift = %q, want %q:\n%s", driftRows(t, out), fenced, out)
+	}
+
 	base, tip = dropBaselineSpec(t, slug)
 	if out, code := audit(t, slug, base, tip); code != 1 || !strings.Contains(out, "baseline spec refused") || strings.Contains(out, "staleness[") {
 		t.Fatalf("SS8 absent baseline spec = (%d), want a refusal and no staleness result:\n%s", code, out)
