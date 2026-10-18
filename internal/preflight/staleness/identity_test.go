@@ -15,6 +15,10 @@ import (
 // symbolModule is the module of the cited-symbol fixture.
 const symbolModule = "example.com/sym"
 
+// overBound is a Go comment line longer than the control-record bound, so a committed object
+// that holds it does not read.
+func overBound() string { return "// " + strings.Repeat("x", int(bounds.ControlRecordLimit)) + "\n\n" }
+
 // symbolPremise is one current symbol premise of the fixture inventory, whose expected kind
 // and signature repeat its owner identity.
 func symbolPremise(t *testing.T, slug, id, path, pkg, symbol, kind, signature string) string {
@@ -141,7 +145,7 @@ func TestSymbolIdentity(t *testing.T) {
 	const big = "internal/example/big.go"
 	write(t, map[string]string{
 		specPath(slug): inventorySpec(slug, append(premises, premise("big", big, "example.Big", consumers.KindFunc, "func Big()")), nil),
-		big:            "package example\n\n// " + strings.Repeat("x", int(bounds.ControlRecordLimit)) + "\n\nfunc Big() {}\n",
+		big:            "package example\n\n" + overBound() + "func Big() {}\n",
 	})
 	oversized := commitAll(t, "oversized owner")
 	write(t, map[string]string{big: "package example\n\nfunc Big() {}\n"})
@@ -154,7 +158,8 @@ func TestSymbolIdentity(t *testing.T) {
 // pair changes each test seam in its own way, and the actual audit-spec response grades
 // them all. Each expected drift row and diagnostic is stated here by hand, with object IDs
 // from git rev-parse. The ordinary preflight over the same pair is the continuation, which
-// must not repeat the initial planned-test absence.
+// must not repeat the initial planned-test absence. A baseline test object that does not
+// read refuses the audit.
 func TestTestIdentity(t *testing.T) {
 	_, slug := preflighttest.SeedAdmitted(t)
 	const (
@@ -166,26 +171,28 @@ func TestTestIdentity(t *testing.T) {
 		return seamItem(slug, id, path, "example.com/internal/example", function, state, "PF1")
 	}
 	const header = "package example\n\nimport \"testing\"\n\n"
+	seams := []string{
+		seam("kept", kept, "TestKept", "existing"),
+		seam("gone", gone, "TestGone", "existing"),
+		seam("removed", removed, "TestRemoved", "existing"),
+		seam("future", future, "TestFuture", "planned"),
+		seam("early", future, "TestEarly", "planned"),
+		seam("subtest", kept, "TestSub/case one", "existing"),
+		seam("nosub", kept, "TestSub/case two", "existing"),
+		seam("deep", kept, "TestSub/case one/inner", "existing"),
+		seam("computed", computed, "TestComputed/x", "existing"),
+		seam("tagged", tagged, "TestTagged", "existing"),
+		seam("untagged", untagged, "TestUntagged", "existing"),
+	}
 	write(t, map[string]string{
-		specPath(slug): inventorySpec(slug, nil, []string{
-			seam("kept", kept, "TestKept", "existing"),
-			seam("gone", gone, "TestGone", "existing"),
-			seam("removed", removed, "TestRemoved", "existing"),
-			seam("future", future, "TestFuture", "planned"),
-			seam("early", future, "TestEarly", "planned"),
-			seam("subtest", kept, "TestSub/case one", "existing"),
-			seam("nosub", kept, "TestSub/case two", "existing"),
-			seam("computed", computed, "TestComputed/x", "existing"),
-			seam("tagged", tagged, "TestTagged", "existing"),
-			seam("untagged", untagged, "TestUntagged", "existing"),
-		}),
-		kept:     header + "func TestKept(t *testing.T) {}\n\nfunc TestSub(t *testing.T) {\n\tt.Run(\"case one\", func(t *testing.T) {})\n}\n",
-		gone:     header + "func TestGone(t *testing.T) {}\n",
-		removed:  header + "func TestRemoved(t *testing.T) {}\n\nfunc TestStays(t *testing.T) {}\n",
-		future:   header + "func TestOther(t *testing.T) {}\n",
-		computed: header + "func TestComputed(t *testing.T) {\n\tname := \"x\"\n\tt.Run(name, func(t *testing.T) {})\n}\n",
-		tagged:   "//go:build benchnever\n\n" + header + "func TestTagged(t *testing.T) {}\n",
-		untagged: "//go:build benchnever\n\n" + header + "func TestUntagged(t *testing.T) {}\n",
+		specPath(slug): inventorySpec(slug, nil, seams),
+		kept:           header + "func TestKept(t *testing.T) {}\n\nfunc TestSub(t *testing.T) {\n\tt.Run(\"case one\", func(t *testing.T) {})\n}\n",
+		gone:           header + "func TestGone(t *testing.T) {}\n",
+		removed:        header + "func TestRemoved(t *testing.T) {}\n\nfunc TestStays(t *testing.T) {}\n",
+		future:         header + "func TestOther(t *testing.T) {}\n",
+		computed:       header + "func TestComputed(t *testing.T) {\n\tname := \"x\"\n\tt.Run(name, func(t *testing.T) {})\n}\n",
+		tagged:         "//go:build benchnever\n\n" + header + "func TestTagged(t *testing.T) {}\n",
+		untagged:       "//go:build benchnever\n\n" + header + "func TestUntagged(t *testing.T) {}\n",
 	})
 	base := commitAll(t, "cited tests")
 	preflighttest.RunGit(t, "rm", "-q", gone)
@@ -223,6 +230,8 @@ func TestTestIdentity(t *testing.T) {
 		{"SS25", "subtest", "", ""},
 		{"SS25", "nosub", same(kept, "test TestSub/case two function-absent"), ""},
 		{"SS26", "computed", "", "cited test TestComputed/x is unsupported"},
+		// A declared first segment cannot vouch for a deeper one, which needs the call graph.
+		{"SS26", "deep", "", "cited test TestSub/case one/inner is unsupported"},
 		{"SS27", "tagged", "", "cited test TestTagged is unsupported-context"},
 		// A wrong context at the base cannot mask the removal at the tip.
 		{"SS27", "untagged", same(untagged, "test TestUntagged function-absent"), ""},
@@ -248,5 +257,18 @@ func TestTestIdentity(t *testing.T) {
 	// predecessor's legitimate planned test leaves it usable.
 	if out, code := preflight.CommandWithVersion("staleness-test")([]string{"build", slug, "--base", base, "--source-tip", tip}); code != 0 || strings.Contains(out, "already-shipped") {
 		t.Errorf("ordinary preflight = (%d), want exit 0 and no initial planned-test absence:\n%s", code, out)
+	}
+
+	// A baseline test object over the control-record bound does not read, so the audit
+	// refuses with no staleness result.
+	const big = "internal/example/big_test.go"
+	write(t, map[string]string{
+		specPath(slug): inventorySpec(slug, nil, append(seams, seam("big", big, "TestBig", "existing"))),
+		big:            header + overBound() + "func TestBig(t *testing.T) {}\n",
+	})
+	oversized := commitAll(t, "oversized test")
+	write(t, map[string]string{big: header + "func TestBig(t *testing.T) {}\n"})
+	if out, code := audit(t, slug, oversized, commitAll(t, "test shrinks")); code != 1 || !strings.Contains(out, "cited test source refused") || strings.Contains(out, "staleness[") {
+		t.Errorf("oversized baseline test = (%d), want the cited test source refusal and no staleness result:\n%s", code, out)
 	}
 }
