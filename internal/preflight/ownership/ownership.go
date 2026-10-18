@@ -180,7 +180,8 @@ const (
 
 // SymbolIdentity is the tip identity of one current symbol premise: the cited owner, the
 // declaration that the typed packages resolve it to, and the first discrepancy with its
-// reason.
+// reason. A bare cited spelling that names more than one declaration is ambiguous in place
+// of any other class, although the premise verdict can still pass.
 type SymbolIdentity struct {
 	Premise     string
 	Owner       Owner
@@ -372,9 +373,9 @@ func SourceDeclaration(path string, src []byte, name string) (decl Declaration, 
 		if names, _ := consumers.DeclNames(top.node); !slices.Contains(names, name) {
 			continue
 		}
-		kind := map[token.Token]string{token.FUNC: "func", token.TYPE: "type", token.CONST: "const", token.VAR: "var"}[top.tok]
+		kind := map[token.Token]string{token.FUNC: consumers.KindFunc, token.TYPE: consumers.KindType, token.CONST: consumers.KindConst, token.VAR: consumers.KindVar}[top.tok]
 		if fn, ok := top.node.(*ast.FuncDecl); ok && fn.Recv != nil {
-			kind = "method"
+			kind = consumers.KindMethod
 		}
 		signature, err := normalize(fset, top.node, top.tok == token.CONST, name)
 		return Declaration{Path: path, Name: name, Kind: kind, Signature: signature}, err == nil, err

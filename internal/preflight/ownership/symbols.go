@@ -40,12 +40,13 @@ type declared struct {
 
 // symbol grades one symbol premise. Its subject is the owner identity, and its expected
 // kind and signature repeat that identity's values. The census keeps the premise's tip
-// identity, and a fault that names no discrepancy class leaves it unread.
+// identity, and a fault that names no discrepancy class leaves it unread. An ambiguous bare
+// spelling marks that identity and leaves the premise verdict as identify gives it.
 func (c *census) symbol(item PremiseItem) (reason string, err error) {
 	identity := SymbolIdentity{Premise: item.ID}
 	defer func() {
 		if err != nil {
-			identity.Reason = err.Error()
+			identity.Reason = cmp.Or(identity.Reason, err.Error())
 			identity.Discrepancy = cmp.Or(identity.Discrepancy, DiscrepancyUnread)
 		}
 		c.symbols = append(c.symbols, identity)
@@ -64,7 +65,11 @@ func (c *census) symbol(item PremiseItem) (reason string, err error) {
 	if expected.Kind == nil || expected.Signature == nil || *expected.Kind != owner.Kind || *expected.Signature != owner.Signature {
 		return "", errors.New("expected: the kind and signature differ from the subject identity")
 	}
-	if _, identity.Current, identity.Discrepancy, err = c.identify(owner); err != nil {
+	_, identity.Current, identity.Discrepancy, err = c.identify(owner)
+	if why := c.ambiguity(owner); why != "" {
+		identity.Discrepancy, identity.Reason = DiscrepancyAmbiguous, why
+	}
+	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%s resolves in %s as the %s that its signature names at the source tip", owner.Symbol, owner.Path, owner.Kind), nil
@@ -86,20 +91,18 @@ func (c *census) exact(owner Owner) (declared, error) {
 // identify resolves one owner identity at the source tip: the one declaration that its
 // symbol names in its exact package, through the consumers origin of an alias, and the
 // file, consumers kind, and normalized syntax that declare it. It answers the current
-// declaration and, as err, the first discrepancy with its class. A bare spelling that names
-// several declarations is ambiguous, because a package filter that selects one proves no
-// cited owner.
+// declaration and, as err, the first discrepancy with its class. The package filter selects
+// the cited owner, so a bare spelling that also names a declaration of another package is no
+// fault here.
 func (c *census) identify(owner Owner) (declared, Declaration, Discrepancy, error) {
 	pkgs, err := c.packages()
 	if err != nil {
 		return declared{}, Declaration{}, DiscrepancyUnread, err
 	}
 	name := localName(owner)
-	all, _ := consumers.Resolve(pkgs, owner.Symbol)
-	matches := slices.DeleteFunc(slices.Clone(all), func(m consumers.Match) bool { return m.PkgPath != owner.Package || m.Name != name })
+	matches, _ := consumers.Resolve(pkgs, owner.Symbol)
+	matches = slices.DeleteFunc(matches, func(m consumers.Match) bool { return m.PkgPath != owner.Package || m.Name != name })
 	switch {
-	case name == owner.Symbol && len(all) > 1:
-		return declared{}, Declaration{}, DiscrepancyAmbiguous, fmt.Errorf("the bare name %s names %d declarations at the source tip", owner.Symbol, len(all))
 	case len(matches) > 1:
 		return declared{}, Declaration{}, DiscrepancyAmbiguous, fmt.Errorf("%s names %d declarations of %s at the source tip", owner.Symbol, len(matches), owner.Package)
 	case len(matches) == 0:
@@ -128,6 +131,20 @@ func (c *census) identify(owner Owner) (declared, Declaration, Discrepancy, erro
 		return declared{}, current, class, errors.New(reason)
 	}
 	return decl, current, "", nil
+}
+
+// ambiguity is the reason that the bare spelling of owner names more than one declaration at
+// the source tip, or empty. The spelling alone then proves no cited owner, so the audit keeps
+// that identity diagnostic; a premise verdict ignores it.
+func (c *census) ambiguity(owner Owner) string {
+	pkgs, err := c.packages()
+	if err != nil || localName(owner) != owner.Symbol {
+		return ""
+	}
+	if all, _ := consumers.Resolve(pkgs, owner.Symbol); len(all) > 1 {
+		return fmt.Sprintf("the bare name %s names %d declarations at the source tip", owner.Symbol, len(all))
+	}
+	return ""
 }
 
 // context classifies an owner path that no loaded package holds but the committed tip

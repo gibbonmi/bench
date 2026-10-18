@@ -194,25 +194,37 @@ func pathSuffix(path string, depth int) string {
 	return strings.Join(parts[len(parts)-depth:], "/")
 }
 
+// The declaration kinds that a match carries. A reader that classifies a declaration from
+// its syntax alone spells the same kinds, so the two readings compare.
+const (
+	KindFunc   = "func"
+	KindMethod = "method"
+	KindType   = "type"
+	KindConst  = "const"
+	KindVar    = "var"
+	KindField  = "field"
+	KindDecl   = "decl"
+)
+
 // objKind names the declaration class for a candidates row.
 func objKind(obj types.Object) string {
 	switch o := obj.(type) {
 	case *types.Func:
 		if sig, ok := o.Type().(*types.Signature); ok && sig.Recv() != nil {
-			return "method"
+			return KindMethod
 		}
-		return "func"
+		return KindFunc
 	case *types.TypeName:
-		return "type"
+		return KindType
 	case *types.Const:
-		return "const"
+		return KindConst
 	case *types.Var:
 		if o.IsField() {
-			return "field"
+			return KindField
 		}
-		return "var"
+		return KindVar
 	}
-	return "decl"
+	return KindDecl
 }
 
 // declKey is the one source of typed declaration identity: every comparison of two loaded

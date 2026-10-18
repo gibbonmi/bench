@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
@@ -28,24 +30,29 @@ func symbolPremise(t *testing.T, slug, id, path, pkg, symbol, kind, signature st
 // pair changes each cited symbol in its own way, and the actual audit-spec response grades
 // them all. Each expected drift row states the declaration syntax of both sides by hand, so
 // a collector that resolves a name to the wrong owner, or that compares no receiver or
-// signature, loses its row.
+// signature, loses its row. The kind words come from consumers, the one source that both
+// the typed and the syntax readings spell. The breakdown over the same pair gives each
+// premise verdict, which an ambiguous bare spelling does not fail.
 func TestSymbolIdentity(t *testing.T) {
 	_, slug := preflighttest.SeedAdmitted(t)
-	const sym, moved = "internal/example/sym.go", "internal/example/moved.go"
+	const sym, moved, broken = "internal/example/sym.go", "internal/example/moved.go", "internal/example/broken.go"
 	premise := func(id, path, symbol, kind, signature string) string {
 		return symbolPremise(t, slug, id, path, "internal/example", symbol, kind, signature)
 	}
 	premises := []string{
-		premise("gone", sym, "example.Gone", "func", "func Gone()"),
-		premise("change", sym, "example.Change", "func", "func Change(a int) int"),
-		premise("receiver", sym, "example.Origin.Method", "method", "func (Origin) Method()"),
-		premise("move", sym, "example.Move", "func", "func Move()"),
-		premise("rule", sym, "example.Rule", "const", ""),
-		premise("fresh", sym, "example.Fresh", "func", "func Fresh()"),
-		premise("bare", sym, "Dup", "func", "func Dup()"),
-		premise("alias", sym, "example.Alias", "type", "type Origin struct{ N int }"),
-		premise("tagged", "internal/example/tagged.go", "example.Tagged", "func", "func Tagged()"),
-		symbolPremise(t, slug, "prose", "docs/notes.md", "docs", "docs.Notes", "func", "func Notes()"),
+		premise("gone", sym, "example.Gone", consumers.KindFunc, "func Gone()"),
+		premise("change", sym, "example.Change", consumers.KindFunc, "func Change(a int) int"),
+		premise("receiver", sym, "example.Origin.Method", consumers.KindMethod, "func (Origin) Method()"),
+		premise("kept", sym, "example.Origin.Kept", consumers.KindMethod, "func (Origin) Kept()"),
+		premise("steady", sym, "example.Steady", consumers.KindFunc, "func Steady()"),
+		premise("move", sym, "example.Move", consumers.KindFunc, "func Move()"),
+		premise("rule", sym, "example.Rule", consumers.KindConst, ""),
+		premise("fresh", sym, "example.Fresh", consumers.KindFunc, "func Fresh()"),
+		premise("bare", sym, "Dup", consumers.KindFunc, "func Dup()"),
+		premise("alias", sym, "example.Alias", consumers.KindType, "type Origin struct{ N int }"),
+		premise("broken", broken, "example.Broken", consumers.KindFunc, "func Broken()"),
+		premise("tagged", "internal/example/tagged.go", "example.Tagged", consumers.KindFunc, "func Tagged()"),
+		symbolPremise(t, slug, "prose", "docs/notes.md", "docs", "docs.Notes", consumers.KindFunc, "func Notes()"),
 	}
 	write(t, map[string]string{
 		specPath(slug):                inventorySpec(slug, premises, nil),
@@ -53,16 +60,26 @@ func TestSymbolIdentity(t *testing.T) {
 		"internal/example/sub/sub.go": "package sub\n\nfunc Dup() {}\n",
 		"internal/example/tagged.go":  "//go:build benchnever\n\npackage example\n\nfunc Tagged() {}\n",
 		"docs/notes.md":               "# Notes\n\nfunc Notes()\n",
-		sym: "package example\n\ntype Origin struct{ N int }\n\ntype Alias = Origin\n\nfunc (Origin) Method() {}\n\n" +
+		broken:                        "package example\n\nfunc Broken( {\n",
+		sym: "package example\n\ntype Origin struct{ N int }\n\ntype Alias = Origin\n\nfunc (Origin) Method() {}\n\nfunc (Origin) Kept() {}\n\nfunc Steady() {}\n\n" +
 			"func Gone() {}\n\nfunc Change(a int) int { return a }\n\nfunc Move() {}\n\nconst Rule = 1\n\nfunc Dup() {}\n",
 	})
 	base := commitAll(t, "cited symbols")
 	write(t, map[string]string{
-		moved: "package example\n\nfunc Move() {}\n",
-		sym: "package example\n\ntype Origin struct{ N int }\n\ntype Alias = Origin\n\nfunc (*Origin) Method() {}\n\n" +
+		moved:  "package example\n\nfunc Move() {}\n",
+		broken: "package example\n\nfunc Broken() {}\n",
+		sym: "package example\n\ntype Origin struct{ N int }\n\ntype Alias = Origin\n\nfunc (*Origin) Method() {}\n\nfunc (Origin) Kept() {}\n\nfunc Steady() {}\n\n" +
 			"func Change(a string) int { return len(a) }\n\nvar Rule = 1\n\nfunc Dup() {}\n\nfunc Fresh() {}\n",
 	})
 	tip := commitAll(t, "cited symbols change")
+	breakdown, code := preflight.CommandWithVersion("staleness-test")([]string{"build", slug, "--breakdown", "--base", base, "--source-tip", tip})
+	if code != 0 {
+		t.Fatalf("breakdown = (%d), want exit 0:\n%s", code, breakdown)
+	}
+	verdicts := map[string]string{}
+	for _, row := range table(t, breakdown, "premises") {
+		verdicts[fmt.Sprint(row["id"])] = fmt.Sprint(row["state"])
+	}
 
 	out, code := audit(t, slug, base, tip)
 	if code != 1 || !strings.Contains(out, "cited-symbols,red") {
@@ -79,22 +96,33 @@ func TestSymbolIdentity(t *testing.T) {
 		diagnostics[fmt.Sprint(row["subject"])] = fmt.Sprint(row["reason"])
 	}
 	rows := 0
-	for _, test := range []struct{ row, premise, drift, diagnostic string }{
-		{"SS13", "gone", sym + "|" + absent + "|symbol example.Gone absent|func Gone()|" + absent, ""},
-		{"SS14", "change", sym + "|" + sym + "|symbol example.Change signature|func Change(a int) int|func Change(a string) int", ""},
-		{"SS14", "receiver", sym + "|" + sym + "|symbol example.Origin.Method signature|func (Origin) Method()|func (*Origin) Method()", ""},
-		{"SS15", "move", sym + "|" + moved + "|symbol example.Move moved|func Move()|func Move()", ""},
-		{"SS16", "rule", sym + "|" + sym + "|symbol example.Rule kind|const|var Rule = 1", ""},
-		{"SS13", "fresh", absent + "|" + sym + "|symbol example.Fresh absent|" + absent + "|func Fresh()", ""},
-		{"SS17", "bare", "", "cited symbol Dup is ambiguous"},
-		{"SS18", "alias", "", ""},
-		{"SS19", "tagged", "", "cited symbol example.Tagged is unsupported-context"},
-		{"SS19", "prose", "", "cited symbol docs.Notes is unread"},
+	for _, test := range []struct{ row, premise, verdict, drift, diagnostic string }{
+		{"SS13", "gone", "unknown", sym + "|" + absent + "|symbol example.Gone absent|func Gone()|" + absent, ""},
+		{"SS14", "change", "unknown", sym + "|" + sym + "|symbol example.Change signature|func Change(a int) int|func Change(a string) int", ""},
+		{"SS14", "receiver", "unknown", sym + "|" + sym + "|symbol example.Origin.Method signature|func (Origin) Method()|func (*Origin) Method()", ""},
+		// An unchanged method or function reads as the same kind on both sides, so it adds
+		// no row.
+		{"SS16", "kept", "green", "", ""},
+		{"SS16", "steady", "green", "", ""},
+		{"SS15", "move", "unknown", sym + "|" + moved + "|symbol example.Move moved|func Move()|func Move()", ""},
+		{"SS16", "rule", "unknown", sym + "|" + sym + "|symbol example.Rule kind|" + consumers.KindConst + "|var Rule = 1", ""},
+		{"SS13", "fresh", "green", absent + "|" + sym + "|symbol example.Fresh absent|" + absent + "|func Fresh()", ""},
+		// The package filter selects the cited owner, so the premise passes; the bare
+		// spelling alone proves no owner, so the audit keeps it diagnostic.
+		{"SS17", "bare", "green", "", "cited symbol Dup is ambiguous"},
+		{"SS18", "alias", "green", "", ""},
+		// A baseline owner that does not parse stays unread, never absent.
+		{"SS19", "broken", "green", "", "cited symbol example.Broken is unread"},
+		{"SS19", "tagged", "unknown", "", "cited symbol example.Tagged is unsupported-context"},
+		{"SS19", "prose", "unknown", "", "cited symbol docs.Notes is unread"},
 	} {
 		if test.drift != "" {
 			rows++
 		}
 		t.Run(test.row+" "+test.premise, func(t *testing.T) {
+			if got := verdicts[test.premise]; got != test.verdict {
+				t.Errorf("premise %s = %q, want %q", test.premise, got, test.verdict)
+			}
 			if test.drift != "" && !symbolRows[test.drift] {
 				t.Errorf("drift lacks %q; symbol rows %v", test.drift, symbolRows)
 			}
@@ -106,6 +134,19 @@ func TestSymbolIdentity(t *testing.T) {
 	// The alias names its origin's declaration, so a lexical reading of it adds a row.
 	if len(symbolRows) != rows {
 		t.Errorf("symbol drift rows = %d, want %d: %v", len(symbolRows), rows, symbolRows)
+	}
+
+	// A baseline owner object over the control-record bound does not read, so the audit
+	// refuses with no staleness result.
+	const big = "internal/example/big.go"
+	write(t, map[string]string{
+		specPath(slug): inventorySpec(slug, append(premises, premise("big", big, "example.Big", consumers.KindFunc, "func Big()")), nil),
+		big:            "package example\n\n// " + strings.Repeat("x", int(bounds.ControlRecordLimit)) + "\n\nfunc Big() {}\n",
+	})
+	oversized := commitAll(t, "oversized owner")
+	write(t, map[string]string{big: "package example\n\nfunc Big() {}\n"})
+	if out, code := audit(t, slug, oversized, commitAll(t, "owner shrinks")); code != 1 || !strings.Contains(out, "cited symbol source refused") || strings.Contains(out, "staleness[") {
+		t.Errorf("oversized baseline owner = (%d), want the cited symbol source refusal and no staleness result:\n%s", code, out)
 	}
 }
 
