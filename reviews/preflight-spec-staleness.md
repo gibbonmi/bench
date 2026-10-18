@@ -502,6 +502,77 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft375_ss-c1_standards_r2",
+          "performer": "claude:ft375_ss-c1_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c1_standards_r2",
+            "digest": "sha256:36ba8a6703b9342989ec7fd6a667fcfcead88633d597e6b25e59fa3a1f43e946",
+            "excerpt": "Standards confirm: S1 closed, S2 closed, S3 closed; new: N1, N2\n\nEvidence bound: `--check-current` showed current=true at 040a2953 with no dirty record.\n\n- **S1 closed.** `ownership.SubjectPaths` (internal/preflight/ownership/ownership.go:217) reads paths through each collector's own decoder: decodeCensusSubject, ruleSubject, ownerSubject, decodeImportSubject, decodeAnchorSubject, decodeLinesSubject/Glob/Headroom, testSubject and reusedOwnerSubject. The local `subjectPath` is deleted from staleness/collect.go, and a subject that fails to decode becomes a diagnostic.\n- **S2 closed.** `git.ListTree` (internal/git/tree.go:151) now serves ReadTreeFile, TreeWithoutFile, the census `trackedAt` (sizing.go:291) and staleness `members` (collect.go:130).\n- **S3 closed.** The drift_test.go header no longer claims a red result.\n- **C4 code.** The fact now has one source. `Collect` parses both inventories from the committed spec bytes (collect.go:33), `gather` passes no manifest, and the doc comments are timeless.\n\nNew:\n- **N1** internal/git/tree.go:153. The comment says \"This function is the one reader of that grammar.\" That is false: other code still hand-parses full `ls-tree -z` records (internal/commitment/repository/light_path.go:121, internal/consumers/hunks.go:217, internal/roadmap/tree_validation.go:55). Rule: \"What survives merge is only what's true of the code as it stands\" (craft-comments). Disposition: concrete comment defect. Narrow the claim or delete it, or leave migrating the other callers for later. Confidence 7.\n- **N2** internal/preflight/ownership/source_test.go:585. TestSubjectPaths has a hand-written table of expected paths for each kind, and I found no recorded red for it in the commits, the review record or the spec. AGENTS.md: \"An independently authored test expectation counts as duplicated implementation knowledge, unless … someone must record and demonstrate that red.\" Disposition: either record a red (for example, drop the writer_probe path from `censusSubject.paths`) or get a reviewer ruling. Confidence 5.\n\nAdvice\n- The `subjectPaths` map lists premise kinds a second time next to `sizingPremises`, `symbolPremises` and the `premises` switch. The kinds match today, and a missing kind shows up as a diagnostic, not a silent gap.\n\nRead: AGENTS.md (in context); .agents/skills/bench-craft-comments/SKILL.md; the repair diff 7a1535fd..decb17ff; ownership/helpers.go:170-217; members.go:35-74; rg sweeps for `ls-tree`; commit messages in that range.\n\nNot verified: whether the tree_test.go named in plan commit 3b4220c exists (it is not in the diff; this is the Coverage axis); behaviour at run time (no tests run).\n"
+          },
+          "axis": "Standards",
+          "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
+          "tip": "decb17ff468daefc64c1b0c64c4b19d89f480568",
+          "finding_ids": [
+            "N1",
+            "N2"
+          ],
+          "supersedes": [
+            "ft375_ss-c1_standards_r1"
+          ]
+        },
+        {
+          "id": "ft375_ss-c1_spec_r2",
+          "performer": "claude:ft375_ss-c1_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c1_spec_r2",
+            "digest": "sha256:dd45024cf9b4b54bb984b98e02bc1f0b8e700c1a3d2467834694b33372a00f3a",
+            "excerpt": "Spec confirm: P1 closed, C4 closed; new: none\n\nEvidence check: `bench preflight evidence ... --check-current` binds (`current=true`, `dirty_record=false`, pair 81b10e74..040a2953).\n\nP1: closed. At the given pair, `--audit-spec` prints only two `audit_diagnostics`: `cited-symbols` and `cited-tests`, each with \"no ... collector grades this audit\". It prints no `metadata` diagnostic. I parsed spec.md line 647 (the planning JSON) at the worktree tip and checked every location against its line:\n- All 8 SS-C1 seams (TestDriftObjects through TestAuditBound, lines 396–447) hold their needle exactly once.\n- So do all 21 SS-C1 decisions (SS1–12, SS35–40, SS51, SS52, SS56), at both `location` and `source`.\n- No other decision failed.\n\nC4: closed.\n- Spec line 79 gives the signature `Collect(root string, source ownership.Source, sourceFacts ownership.Snapshot) (AuditFacts, error)`. It matches internal/preflight/staleness/collect.go:24.\n- Line 80 (\"Collect parses both planning inventories from the committed spec bytes\") is met. collect.go:25-33 reads both sides through `git.ReadTreeFile` at Base and Tip and passes each through `ParseManifest`. gather.go:110 no longer passes checkout `content`.\n- Line 128 (\"Worktree content cannot replace committed source bytes\") is met. TestAuditCommittedInventory (inventory_test.go:93) checks it.\n- The new diagnostic for an unread premise subject (collect.go:838-841 in the delta, through `ownership.SubjectPaths` in ownership.go) stays within line 216 (\"An unsupported input is diagnostic and keeps manual review required\"). Decide sets `Complete = len(Diagnostics)==0` and `ManualRequired = !Complete` (staleness/decision.go:19,21). `fence-exclusion` is a valid manifest kind (manifest.go:147) that has no collector, so it lands as a diagnostic. It is not dropped.\n- No regression to SS1–12, SS35–40, SS51, SS52, or SS56. The drift_test.go changes only add cases: a quoted path for SS1–6, a nested reused-owner subject and a dropped-claim case for SS12, and a link refusal on both sides for SS51. No assertion was removed.\n\nAdvice:\n- The `subjectPaths` map (ownership.go) is a second kind-to-decoder registry next to the `premises` switch (helpers.go:182-209). This is a Standards-axis concern, not a spec defect.\n- SubjectPaths runs on premises that are not current, so they also produce diagnostics. That is conservative and allowed by the spec.\n- `git.ListTree` has no direct test in internal/git. tree_test.go is fenced but missing from the delta.\n\nRead: the repair delta (all files except reviews/), spec.md lines 74–143 and 216, collect.go:18-65, decision.go (rg), helpers.go:174-219, manifest.go:140-148, the audit-spec spill.\n\nNot verified: test execution; the reviews/ record; the SS-C1 needles at the base commit.\n"
+          },
+          "axis": "Spec",
+          "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
+          "tip": "decb17ff468daefc64c1b0c64c4b19d89f480568",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c1_spec_r1"
+          ]
+        },
+        {
+          "id": "ft375_ss-c1_coverage_r2",
+          "performer": "claude:ft375_ss-c1_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c1_coverage_r2",
+            "digest": "sha256:19bac5bf2fd587484e83b84f0ce0b5d5e2471b26124d29088cf0bd55a05def42",
+            "excerpt": "Coverage confirm: C1 open (fence half); C2, C3, C4, X1 closed; new: none\n\nEvidence check: `--check-current` binds (current=true, dirty_record=false, source_tip 040a2953). I read the repair delta 7a1535fd..decb17ff once. `git status --short` is empty at exit.\n\n**C1, still open (fence half)**\n- Input: in `scope` at /home/mgibs/.bench/worktrees/bench-2826441890/b8e8080d78971d37a88341856b9407bb-bb87c9fc56cc0af9f6e84908b2d9a3a6/internal/preflight/staleness/collect.go:69, I changed the loop to `for _, content := range specs[1:] {`, which drops the baseline fence tokens.\n- Break: no test failed. That held for the narrow selection and for the full `./internal/preflight/...` plus `./internal/git` run.\n- Why: the new dropped-claim case in drift_test.go (around line 196–206) drops only the inventory claims. No staleness fixture changes a fence, so a baseline-only fence entry has no witness.\n- Spec line 112 requires every fence entry \"at both identities\", so this misses a binding requirement and is a blocking coverage gap. The inventory half is closed.\n- Disposition: needs a fresh repair session for the ticket that owns drift_test.go. Confidence 8.\n\n**Probes run** (every cell restored=yes)\n1. C1, baseline fence loop `specs[1:]`: silent.\n2. C1, baseline manifest replaced by the tip manifest: bit (TestDriftIdentity:206).\n3. C2, symlink exempted in `members`: bit (TestAuditSafety, \"after\" case).\n4. C2, special-file check made side-gated (`strict` flag, false for Base): bit (TestAuditSafety:343, \"before\" case).\n5. C3, ListTree splits at the last tab: bit (TestDriftObjects:122).\n6. C3, ListTree rewrites non-ASCII path bytes: bit (TestDriftObjects:153).\n7. C4, tip manifest parsed from the checkout file through `os.ReadFile`: bit (TestAuditCommittedInventory:47).\n8. X1, `censusSubject.paths` drops the writer-probe path: bit (TestSubjectPaths, posture).\n9. X1, `censusSubject.paths` drops the listed members: bit (TestSubjectPaths, retirement).\n\nA first attempt at probe 9 used `--omit`. It did not compile, so it counts as invalid and is not a result.\n\n**Advice**\nThe tip fence tokens come from committed bytes, but no test shows that. A checkout spec with a different fence would not turn TestAuditCommittedInventory red. C4's charge names only claim sources, so this is optional.\n\n**Not verified**\n- Whether the author's C1 probe dropped fences and inventory together, which would hide the fence gap.\n- The gate and the system suite.\n- Packages outside `./internal/preflight/...` and `./internal/git`.\n"
+          },
+          "axis": "Coverage",
+          "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
+          "tip": "decb17ff468daefc64c1b0c64c4b19d89f480568",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": [
+            "ft375_ss-c1_coverage_r1"
+          ]
         }
       ]
     }
@@ -562,3 +633,28 @@ Count: 4. Worst: C1.
 - C2 (auto-fix, confidence 8): no test places a special file only at the baseline; the probe was silent (SS51).
 - C3 (auto-fix, confidence 7): no test names a member path with a quote, a backslash, a tab, or a non-ASCII byte. A probe without -z was silent.
 - C4 (auto-fix, confidence 5): the tip manifest comes from the checkout bytes, not from the committed tip (spec line 127). The coordinator accepted it as a defect under --auto-approve.
+
+## SS-C1 confirming round 1
+
+Repair cycle 1 closed S1, S2, S3, P1, C2, C3, C4, and the coordinator finding X1. A consensus of a Fable/high and a Sonnet/high consultant decided C4: Collect drops its manifest parameter.
+
+The coordinator probe for X1 bit at 040a2953. It swapped the headroom projection to return no path, and TestSubjectPaths failed with restored yes. That run is the recorded red for N2.
+
+Repair cycle 2 of 2 opens for ticket 01. It takes C1 and N1 and runs on opus/medium by reviewer direction.
+
+## Standards
+
+Count: 2. Worst: N1.
+
+- N1 (auto-fix, confidence 7): the ListTree comment in internal/git/tree.go says that it is the one reader of the ls-tree grammar. Three other parsers exist (craft-comments).
+- N2 (no-op, confidence 5): TestSubjectPaths had no recorded red. The coordinator probe above records it.
+
+## Spec
+
+Count: 0. Worst: none.
+
+## Coverage
+
+Count: 1. Worst: C1.
+
+- C1 (auto-fix, confidence 8): the fence half stays open. A probe that drops the baseline fence tokens from the scope was silent (spec line 112).
