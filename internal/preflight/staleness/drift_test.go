@@ -120,6 +120,10 @@ func TestDriftObjects(t *testing.T) {
 	if code != 0 || !strings.Contains(out, "drift[0]{before,after,kind,before_object,after_object}:\n") || !strings.Contains(out, "spec-drift,green") {
 		t.Fatalf("SS10 unchanged members = (%d), want a green spec-drift row and a complete empty drift table:\n%s", code, out)
 	}
+	// The symbol and test collectors do not run, so a clean drift result is still no complete audit.
+	if row := table(t, out, "staleness")[0]; row["complete"] != false || row["manual_required"] != true {
+		t.Fatalf("SS10 staleness = %v, want complete false and manual review while collectors are missing:\n%s", row, out)
+	}
 
 	write(t, map[string]string{
 		"internal/example/mod.txt": "two\n", "internal/example/new.txt": "new\n",
