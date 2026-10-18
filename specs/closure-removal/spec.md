@@ -6,7 +6,7 @@ Roadmap: FT293
 
 Decision source: roadmap/FT293.md (named reviewed artifact; reviewer decision 2026-10-17, drain d-6c97ed54c629)
 
-Verification log: pending
+Verification log: 3 iteration(s) to accept — the spec round accepted in 1 iteration with six non-blocking findings folded; the ticket round took 2 iterations, because ticket 02 deleted a canary file that live in-package callers read.
 
 ## Problem
 
@@ -565,6 +565,10 @@ These are planning estimates, not approved priorities.
 ## Further notes
 
 Evidence status: source-backed proposal from eight paired read-only research returns at 77f4fb2ff and targeted reads at 658ba0dbb, with no runtime red claimed during specification.
+
+### Sign-off
+
+The reviewer approved the spec and its six tickets on 2026-10-18 with no veto. The three flagged calls below therefore stand as decided.
 
 ### Flagged for reviewer veto
 
