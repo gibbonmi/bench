@@ -2567,6 +2567,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft375_ss-c3_standards_r2",
+          "performer": "claude:ft375_ss-c3_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_standards_r2",
+            "digest": "sha256:15205dcef9544ace70f15b1156b7cdcc587bee8fd1bb03489bc884960fe847e1",
+            "excerpt": "Standards: 0 findings; worst: none\n\nEvidence: `bench preflight evidence sha256:431f2492…effa8 --check-current` returned current=true, assignment bb87c9fc56cc0af9f6e84908b2d9a3a6, base e0cf7e22, source_tip 6e8edc4a (head 6e8edc4a), dirty false, dirty_record false, delivery unverified. I graded the repair delta in `git diff 561ef5f4..d7f786c2`, which holds one repair commit, d7f786c2. It touches three files, and ticket 05's `Writes:` line holds all three. No edit falls outside the acceptance reach.\n\n## Round 1 findings\n- S1: closed. The case now sits inside the BENCH.md pointer: staleness-pass.md:64-65 \"A finding outside the plan-expansion scope of `.bench/BENCH.md`, including a material acceptance change, stops the phase.\" BENCH.md:124 stays the owner of the rule.\n- S2: closed. The Inputs entry defines the term once (staleness-pass.md:22-25). Step 1 points to it (staleness-pass.md:33). CHANGELOG.md:12 no longer lists the items again.\n- S3: closed. The `CheckResult.exempt` field comment owns the definition (decision.go:180-181). The `exempt()` comment points to it (decision.go:261). The `requiredGreen` comment states the conjunction and points to the field (decision.go:267-269).\n\n## New findings\nNone. The P2 rerun text (staleness-pass.md:67-71) introduces no Standards defect.\n\n## Advice\n- A1 (optional, staleness-pass.md:69-70): \"The reviewed graph commit stays the `--base`\" refers back to the command file instead of restating it, so this is not a defect.\n- A2 (optional, CHANGELOG.md:12): \"audit items\" is defined in staleness-pass.md; the preceding bullet lists what the response prints. Leaving it as is is fine.\n\n## Not verified\n- The craft-review skill files and ste-prose.md were not opened in this pass.\n- Runtime drift behavior of the rerun pair (a Spec claim).\n- Gate, lane, and anchor status at d7f786c2.\n"
+          },
+          "axis": "Standards",
+          "base": "e0cf7e221ea607a00e02e28272a0761958ea48ac",
+          "tip": "d7f786c2b6532683fd279982f4ddb8051ee084db",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c3_standards_r1"
+          ]
+        },
+        {
+          "id": "ft375_ss-c3_spec_r2",
+          "performer": "claude:ft375_ss-c3_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_spec_r2",
+            "digest": "sha256:429824982e4e7cec71f135af9ef2c987cf4f0cf8c981d3f4ba654dcbc97deb18",
+            "excerpt": "Spec: 0 findings; worst: none\n\nEvidence binding: `bench preflight evidence sha256:431f2492...0effa8 --check-current` reports current=true, dirty_record=false, delivery=unverified. It binds assignment bb87c9fc56cc0af9f6e84908b2d9a3a6, base e0cf7e221ea6, and source_tip 6e8edc4a8393 (HEAD, not dirty). The only file that d7f786c2..6e8edc4a changes is reviews/preflight-spec-staleness.md. The graded source is the frozen chunk tip d7f786c2.\n\nP2: closed. staleness-pass.md:67-71 at d7f786c2 reads: \"The orchestrator then reruns the audit. The reviewed graph commit stays the `--base`, and the plan commit is the `--source-tip`, so the audit shows the amendment as drift.\" This meets spec.md:94, spec.md:108, and spec.md:250. The native diagnostic rep1 session independently planned the same rerun shape.\n\n## Row verdicts (at d7f786c2)\nThe repair delta touches only staleness-pass.md, CHANGELOG.md and the comments in internal/preflight/decision.go. No Go logic changed.\n- SS41-SS46: pass, unaffected. requiredGreen code is unchanged; its comment now matches the code at :272 and the field definition at :180-182.\n- SS47: pass. staleness-pass.md:22-27 and step 1 at :33-34 still carry every drift path, red check and unsupported claim location (spec.md:244). The diagnostic rep1 charge carried greeting-semantics resolved to specs/example/spec.md:10.\n- SS48: pass. The approval sentence at staleness-pass.md:13-14 is unchanged. Both rep1 sessions quote it and did not treat the audit as approval.\n- SS53: pass. clean rep1: complete=true, manual_required=false, pass omitted, decided on the staleness row, not the exit code.\n- SS54: pass. diagnostic rep1: exit 0, complete=false, manual_required=true, pass charged with the exact claim location.\n- SS55: pass. staleness-pass.md:64-65 routes a material acceptance change through the BENCH.md plan-expansion rule (\"requires my decision\"), which matches spec.md:253. The native witness stays the retained route text plus review (round-1 P1 disposition).\n\nNative evidence currency: current. ft375_native_clean_rep1 and ft375_native_diagnostic_rep1 both name kit source d7f786c2, are opus/medium with outcome pass, quote the d7f786c2 omission sentence, and carry source_digest e033f1d9, which matches the chunk entry. The round-1 native entries (kit source 1e57040a) are superseded.\n\n## New findings\nNone.\n\n## Advice (optional)\n- staleness-pass.md:64-65: \"stops the phase\" no longer names the reviewer in this file; the route depends on the BENCH.md pointer. Correct under one-source-per-fact. No change is required.\n\n## Not verified\n- The craft-review skill files were not read in this pass.\n- No test, native fixture, or gate run; SS41-SS46 rest on the comments-only delta plus the recorded ft375_t05 verifications.\n- The derivation of source_digest e033f1d9.\n"
+          },
+          "axis": "Spec",
+          "base": "e0cf7e221ea607a00e02e28272a0761958ea48ac",
+          "tip": "d7f786c2b6532683fd279982f4ddb8051ee084db",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c3_spec_r1"
+          ]
+        },
+        {
+          "id": "ft375_ss-c3_coverage_r2",
+          "performer": "claude:ft375_ss-c3_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_coverage_r2",
+            "digest": "sha256:16d6798ac5503c1bc105a46461d6a07f442a95c15426f85af4f8c388ff4693d5",
+            "excerpt": "Coverage: 0 findings; worst: none\n\nEvidence binding: `bench preflight evidence sha256:431f2492…effa8 --check-current` reports assignment bb87c9fc56cc0af9f6e84908b2d9a3a6, base e0cf7e22, source_tip 6e8edc4a, current=true, dirty_record=false, delivery=unverified. The tree is at 6e8edc4a and is clean. The SS-C3 chunk entry records base e0cf7e22, tip d7f786c2, source_digest e033f1d9, and acceptance_rows SS41-SS48 and SS53-SS55 (all 11 rows).\n\nRecorded verifications are at the frozen tip: every `_rep1` entry has source_digest e033f1d9.\n- Seven floor checks ss-05-check-1 to check-7 pass; each excerpt shows tree head d7f786c2.\n- Named probe: ss-05-focused records ss-05-omission as bit at TestAuditDecision/SS43_diagnostic_only, restored.\n- Native sessions ft375_native_clean_rep1 and ft375_native_diagnostic_rep1 name kit source d7f786c2 on rebuilt fixtures 03ab5a1a and 782f0fbb. Clean omitted on true,false; diagnostic charged greeting-semantics at specs/example/spec.md:10 and used the repaired rerun form.\n- Row mapping: SS41-SS46 map to TestAuditDecision / TestAuditApplicability, which drive the real preflight.CommandWithVersion. SS47, SS48 and SS53-SS55 map to the native sessions plus review (C1).\n- The older entries (source_digest 493aedb2) are superseded by the rep1 entries.\n\nC1 status: still a no-op and unchanged. No anchor or test references staleness-pass.md. Every sentence the repair changed is unanchored, so the repair needed no anchor move.\n\nFindings: none. The repair delta 561ef5f4..d7f786c2 changes no executable Go line.\n\n## Probes run\nAll ran `--package ./internal/preflight/... --run \"TestAuditDecision|TestAuditApplicability\"`; every one restored=yes.\n1. bit — command.go:204 `verdict.requiredGreen()` -> `true`. SS42_commitment_refusal, SS42_red_seal, SS42_supported_readiness_red, SS44_not-applicable_required_row failed.\n2. bit — decision.go:272 drop the exempt test. SS44_not-applicable_required_row failed.\n3. bit — decision.go:295 `exempt(notApplicable(\"diff-nonempty\"))` -> `notApplicable(...)`. SS41_complete_clean_evidence and SS46_no_other_operation_decides failed.\n4. bit — decision.go:234 `exempt(binarySealCheck(f))` -> `binarySealCheck(f)`. SS41 and SS46 failed.\n5. silent — staleness/decision.go:61 `state != StateGreen` -> `state == StateRed`. Not a finding: equivalent under the producer (identity.go:31-33 adds a Diagnostic for every diagnostic-class symbol state, so Complete is false and line 50 already forces manual_required). The line predates SS-C3 (4ac8c6f3, ticket 01).\n`git status --short` was empty at the end.\n\n## Advice\n- (Optional) A Decide-level case with an undecided discrepancy and no Diagnostic would pin the decision.go:61 assumption. No requirement asks for it.\n\n## Not verified\n- The derivation of e033f1d9.\n- Full rep1 native transcripts beyond the excerpts.\n- The test-side producer's diagnostic pairing.\n- A runtime run of the metadata-amendment rerun form.\n- SS55: no native session reached a material acceptance change; it stays a review-owned witness under C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "e0cf7e221ea607a00e02e28272a0761958ea48ac",
+          "tip": "d7f786c2b6532683fd279982f4ddb8051ee084db",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c3_coverage_r1"
+          ]
         }
       ]
     }
@@ -2843,3 +2909,21 @@ Count: 3. Worst: P2.
 Count: 1. Worst: C1.
 
 - C1 (no-op, confidence 8): four guidance mutations stayed silent under the docs-currency-workflow check. This finding is the same as P1.
+
+## SS-C3 confirming round 1
+
+The frozen pair is e0cf7e22..d7f786c2. The ticket 05 repair closed S1, S2, S3, and P2 in one cycle. Two fresh native sessions ran again on fixtures that carry the repaired guidance. All three axes ran on opus/medium, and every SS-C3 finding is closed.
+
+## Standards
+
+Count: 0. Worst: none.
+
+## Spec
+
+Count: 0. Worst: none.
+
+## Coverage
+
+Count: 0. Worst: none.
+
+Advice: the diagnostic branch of the staleness decision is redundant while each producer pairs a diagnostic state with a diagnostic. A decision-level case would pin that assumption. The drain takes it.
