@@ -2610,6 +2610,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "apc5-standards-r2",
+          "performer": "claude:aap_apc5_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "52f728eb8913745bd3da6aeffa30c039321c3f5f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc5_standards_r2",
+            "digest": "sha256:5e6d4135c0155a6fdf3355c73ea9db6c0e17aed117e9bead016125123784e79b",
+            "excerpt": "Standards confirming round, AP-C5, repair delta a5802ba9..b53c07e9; check-current current=true at 5a140cde.\nS1 closed, confidence 9: countWords (internal/prose/starts.go:145) is the one counter; SentenceWords (:139) and the sentence bound (:98) call it; the bound behaves as before.\nS2 closed, confidence 8: routeMaxWords at internal/anchors/locate_test.go:77 feeds the check and its message; the AP13 cases at :38-39 are literal six- and seven-word needles.\nS4 closed, confidence 9: arguments.go:51-56 names every refusal the code makes.\ninCoreSection composes Locate; no comment or test name in the delta is false.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+          "tip": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "finding_ids": [],
+          "supersedes": [
+            "apc5-standards-r1"
+          ]
+        },
+        {
+          "id": "apc5-spec-r2",
+          "performer": "claude:aap_apc5_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "52f728eb8913745bd3da6aeffa30c039321c3f5f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc5_spec_r2",
+            "digest": "sha256:dfde1b6930b23844d0322b002200799a5b45e088399d7c50aaa9ec842e15ef4d",
+            "excerpt": "Spec confirming round, AP-C5, repair delta a5802ba9..b53c07e9; check-current current=true at 5a140cde.\nC3 rule confirmed: inCoreSection admits a row only when a core-section locate gives the line of the needle's first whole-file match (locate_test.go:124-127), which is the located H2 of spec.md:129; the shared-text case is refused (AP15).\nROUTE stays six words; the six-word case is admitted and the seven-word case refused (AP13).\nThe new COMMAND cases agree with spec.md:11 and :132.\nEvery path is inside the owning ticket's Writes line.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+          "tip": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "finding_ids": [],
+          "supersedes": [
+            "apc5-spec-r1"
+          ]
+        },
+        {
+          "id": "apc5-coverage-r2",
+          "performer": "claude:aap_apc5_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "52f728eb8913745bd3da6aeffa30c039321c3f5f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc5_coverage_r2",
+            "digest": "sha256:dabfce083ca54e41aba559b423f16e08a0a78453819ab5720c4ae8b3b3f74df7",
+            "excerpt": "Coverage confirming round, AP-C5, repair delta a5802ba9..b53c07e9; check-current current=true at 5a140cde.\nC1 closed, confidence 9: locate_test.go:52; the dropped backtick cut turns it red.\nC2 closed, confidence 9: locate_test.go:49-50; each opener is the only argument token, so removing it turns the case red.\nC3 closed, confidence 8: locate_test.go:45; the any-core-H2 mutant turns it red.\nC4 closed, confidence 7: parameter_grammar_test.go:27, :29, :31; the recursion red shows only as a crash.\nAP13 closed, confidence 8: locate_test.go:38-39; routeMaxWords 7 turns the seven-word case red.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+          "tip": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "finding_ids": [],
+          "supersedes": [
+            "apc5-coverage-r1"
+          ]
         }
       ]
     }
@@ -2961,7 +3027,7 @@ AP-C4: 1 finding. The worst issue is C1.
 
 ## AP-C5 repair state
 
-AP-C5: repair cycle 1 of 2 starts. The accepted findings fall on two tickets, so each one takes its own repair session in series: ticket 6a first, then ticket 7. The ticket 7 repair refreezes the chunk without a commit. The ticket 6 author and the ticket 6a repair session then record at that tip, and one record commit follows. No reviewer extension exists.
+AP-C5: repair cycles 1 and 2 of 2 are complete, and the confirming round of all three axes passed at b53c07e9. Cycle 1 repaired ticket 6a at 0e64d52e (claude:aap_t06a_rep1) and ticket 7 at 2daf0a41 (claude:aap_t07_rep1). Cycle 2 repaired ticket 7 at b53c07e9 (claude:aap_t07_rep2). It restored a literal seven-word ROUTE case, because a coordinator probe of the repair 1 bound constant stayed silent. Each refreeze stayed uncommitted while the other ticket sessions recorded, and one record commit followed. No reviewer extension exists.
 
 ## AP-C5 Standards
 
