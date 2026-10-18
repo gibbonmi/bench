@@ -69,9 +69,9 @@ A grep-anchor is still legitimate as a cheap *tripwire* on prose (a command
 file must keep naming a skill). It catches deletion, not decay — never
 present one as a behavior check.
 
-A prose rewrite adds an anchor Forbid row for the retired text of each rewritten sentence.
-A move of a rule to its owner also forbids the owner sentence at each former copy site.
-A Forbid row never removes the last Require guard of a surviving duty; a Require row on the owner sentence comes with it.
+A prose rewrite adds an anchor Forbid row only for a stale or wrong form that must not return.
+The retired text of a rewritten sentence and a rule copy at a former site are such forms.
+Review owns the wording of a rule sentence, so a rewrite adds no Require row; ADR 0012 names the admitted classes.
 [The slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules) state the retirement-pass form of the retired-text rule.
 
 ## Hermetic and fast
