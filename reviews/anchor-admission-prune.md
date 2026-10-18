@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/anchor-admission-prune/spec.md",
-  "plan_digest": "sha256:e437f03df1f36039accfc356f139c35500cad8cd4826389e0027e935a3621b32",
+  "plan_digest": "sha256:d31aab113f35823d0b9d703c25b18750a335fe9b28c8a29a11d7f0b3e9a37a4a",
   "implementation_session": "",
   "chunks": [
     {
@@ -2678,6 +2678,151 @@
           ]
         }
       ]
+    },
+    {
+      "id": "AP-C6",
+      "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+      "tip": "84c768effbfb25372ee022e8fb46dd790ddaecc7",
+      "plan_digest": "sha256:d31aab113f35823d0b9d703c25b18750a335fe9b28c8a29a11d7f0b3e9a37a4a",
+      "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+      "acceptance_rows": [
+        "AP39",
+        "AP40",
+        "AP41",
+        "AP42",
+        "AP43",
+        "AP44",
+        "AP45"
+      ],
+      "verification": [
+        {
+          "id": "t8-t8-docs-currency-workflow",
+          "performer": "claude:aap_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t08",
+            "digest": "sha256:ecc77231fc4f18c3816116bc0b3e98136df562835820e826dc4b0a93a2ef6ea7",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4703,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-docs-currency-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-t8-prose-mechanics",
+          "performer": "claude:aap_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t08",
+            "digest": "sha256:e7d73fff0ed9806c25ed48c3756647393f08a4e9f703a7111faf52e713051115",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,103,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-prose-mechanics",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-t8-guidance-prose-budgets",
+          "performer": "claude:aap_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t08",
+            "digest": "sha256:b682aaa6a2f3a10908927cd53ce11e0bf9cf598d196444453baf84591b6728d5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-guidance-prose-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-t8-anchors",
+          "performer": "claude:aap_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t08",
+            "digest": "sha256:69b0ac1dc1fb8527574409312276b414bf7776c1d56777b9d3bf3df2d2abb095",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,97,128\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-t8-conformance",
+          "performer": "claude:aap_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t08",
+            "digest": "sha256:aab8f0b40718d3b137b36b9db69e404d18991a0a199e741de9ffe5ba773b5d47",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,35235,1118\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t8-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-t8-cmd-bench",
+          "performer": "claude:aap_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t08",
+            "digest": "sha256:9c5b20bd2636475b2901a73238a8f1e1f558cbc1af01d2b63fe835841341d268",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14897,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-t8-root-conformance",
+          "performer": "claude:aap_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_t08",
+            "digest": "sha256:58bc9889364f71a70922d6b480bbbf4b7a4efe160dbee6651c90e6548cbfc090",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14810,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2841,6 +2986,30 @@
     {
       "from": "sha256:f9823c578dc094a0d33b04dceb624c486dd85fc383adb1fbd9ad4ce342b6bc5b",
       "to": "sha256:e437f03df1f36039accfc356f139c35500cad8cd4826389e0027e935a3621b32",
+      "chunk_ids": {
+        "AP-C1": [
+          "AP-C1"
+        ],
+        "AP-C2": [
+          "AP-C2"
+        ],
+        "AP-C3": [
+          "AP-C3"
+        ],
+        "AP-C4": [
+          "AP-C4"
+        ],
+        "AP-C5": [
+          "AP-C5"
+        ],
+        "AP-C7": [
+          "AP-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e437f03df1f36039accfc356f139c35500cad8cd4826389e0027e935a3621b32",
+      "to": "sha256:d31aab113f35823d0b9d703c25b18750a335fe9b28c8a29a11d7f0b3e9a37a4a",
       "chunk_ids": {
         "AP-C1": [
           "AP-C1"
