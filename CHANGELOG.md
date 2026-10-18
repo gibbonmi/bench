@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Resumed capture drain
+
+- Changed `bench capture drain`, which now prints a `resumed[1]{sealed_at}:` block after the `drain` block when it resumes a drain that is already open. The `sealed_at` cell is the UTC time that the drain was sealed. Before, a resumed drain printed the same output as a fresh drain, so a session could read an old snapshot as a new one. The output of a fresh drain and of `bench capture drain show` does not change.
+
 ### Spec staleness audit
 
 - Added `bench preflight build <slug> --audit-spec --base <commit> --source-tip <commit>`. It prints the exact drift of the spec's audit scope between the two commits, the `spec-drift`, `cited-symbols`, and `cited-tests` states, each unsupported claim, and the `staleness` decision. `manual_required` is false only for a complete audit with empty drift, green audit checks, every required build check green, and a ready commitment.
