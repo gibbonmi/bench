@@ -2306,7 +2306,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft375_ss-c3_standards_r1",
+          "performer": "claude:ft375_ss-c3_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "493aedb268bfd5e04f100b572a30547d9ceb3465",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_standards_r1",
+            "digest": "sha256:b5269b9494bd14e4e996fc9b9339c1ea646e746b4e46c23db60742058c06ac28",
+            "excerpt": "Standards: 3 findings; worst: S1\n\nThe evidence check bound: current=true, dirty_record=false, at source tip fef8eb19.\n\n- **S1** — `.agents/skills/bench-implement-spec/references/staleness-pass.md:64-65`. Rule: AGENTS.md \"one source per fact\", and BENCH.md:124 \"Unrelated scope, a material acceptance change, or a weakened guarantee requires my decision\". The new sentence \"A material acceptance change returns to the reviewer.\" restates BENCH.md's own rule. The sentence just before it already sends that case there: \"A finding outside the plan-expansion scope of `.bench/BENCH.md` stops the phase\". No anchor in `internal/anchors/registry_data.go` pins it. Disposition: auto-fix. Delete the sentence, or name the case inside the reference to BENCH.md. Confidence 6.\n- **S2** — `staleness-pass.md:23-24` and `:32-33`. Rule: one source per fact (judgment call, Duplicated Code smell). The Inputs bullet lists \"every drift path, red check, and unsupported claim location of the audit response\". Procedure step 1 lists the same three items again (\"of the charge\"), and CHANGELOG.md:12 lists them a third time. If the Inputs list changes, step 1 can drift. Disposition: auto-fix. Step 1 should point to \"the audit items of the charge\" and not list them again. Confidence 4.\n- **S3** — `internal/preflight/decision.go:180-181` and `:261-262`. Rule: craft-comments \"One source owns a fact.\" The field comment and the `exempt()` doc comment state the same definition in two different wordings (\"can exclude it from this mode or source\" and \"decides whether this mode or source requires it\"). The `requiredGreen` comment (:268-271) adds a third partial version. Disposition: auto-fix. Keep the definition on one comment; leave the other as a pointer or a constraint only. Confidence 5.\n\n## Advice\n- The CHANGELOG.md:11 line \"every required build check green, and a ready commitment\" lists the commitment row apart from the required build checks, but `requiredGreen` counts it as one of them.\n- The CHANGELOG.md:11-12 sentences run about 27 and 33 words, over STE's 25. I did not verify whether the prose gate grades CHANGELOG.\n- The new COMMAND anchor (`registry_data.go:93`) fits ADR 0012 COMMAND (\"a Bench command line with an argument or a flag\"). Its leading word \"run \" pins a little of the rule wording, which ADR 0012 leaves to review. Low stakes.\n- In `decision_test.go`, `charge[6]` and `charge[8]` are positional indexes that repeat the argument layout of `commitCompleteness`. A named base and tip would remove that.\n- Clean on the points you asked about: the ManualRequired conjunction is derived once (`staleness.Decide`, fed by `Verdict.requiredGreen`), the omission rule is stated only in staleness-pass.md:9-14 (the command file points to it), and the exempt set is marked only at its two call sites.\n\nRead: the chunk diff (`git diff e0cf7e22..d11bb6c3`, without reviews), craft-review SKILL.md and finding-discipline.md, ste-prose.md, craft-comments:44-55, ADR 0012, BENCH.md:124, `internal/prose/prose.go:1-55`, `internal/preflight/command.go:145-235`, `internal/preflight/staleness/decision.go` at d11bb6c3, ticket 05 mutation lines (an rg search only).\n\nNot verified: whether the ss-05-omission mutation red is recorded for the hand-written expectations in decision_test.go (the AGENTS.md exception for independent test expectations); whether CHANGELOG is in the scope of the prose check; projects/benchkit.md and craft-synthesis (only an rg search for duplication).\n"
+          },
+          "axis": "Standards",
+          "base": "e0cf7e221ea607a00e02e28272a0761958ea48ac",
+          "tip": "d11bb6c3fe8f7a80306505201e0caeb7211f3b8c",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft375_ss-c3_spec_r1",
+          "performer": "claude:ft375_ss-c3_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "493aedb268bfd5e04f100b572a30547d9ceb3465",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_spec_r1",
+            "digest": "sha256:87ef441ec1a63cf09fe2fcdd7a2209cdcb170e91a03dad66af2d218014e82b72",
+            "excerpt": "Spec: 3 findings; worst: P1\n\nEvidence sha256:9e0a…: `--check-current` returned current=true, bound to the assignment with source_tip fef8eb19. I read the delta at e0cf7e22..d11bb6c3. Later `bench anchors`/`coverage` runs showed the worktree dirty=true at fef8eb19. That dirt is not mine.\n\n- **P1 (partial seam, SS47/48/53/54/55).** The rows cite \"fresh-session adoption and docs-currency-workflow\", and spec:362 says \"The existing docs-currency-workflow check protects required and forbidden guidance anchors.\" `bench anchors` on staleness-pass.md returns `anchors[0]`. The only anchor added for this behavior is the audit-spec invocation (registry_data.go:93; command line 21). Mutating the omission rule (staleness-pass.md:11-14), the charge inputs (:22-26, :32-33), \"never supplies reviewer approval\" (:13-14) or \"A material acceptance change returns to the reviewer\" (:64-65) keeps docs-currency green. A later edit to the owner bytes also goes unseen, although ticket 05:32 says such an edit \"invalidates and reruns this evidence\". Disposition: ask-user, because anchor admission is an ADR 0012 decision. Confidence 7.\n- **P2.** Spec:94 says \"The initial workflow passes its frozen reviewed graph commit as base\", and spec:250 says \"rerun the same initial audit\". staleness-pass.md:68-70 instead reruns \"with that commit [the enabling plan commit] as the reviewed graph commit\". That base is not reviewer-approved, and it hides the metadata amendment from drift. Disposition: ask-user. Confidence 5.\n- **P3.** Ticket 05:40 asks for \"real harness dispatch\". In the diagnostic session, \"I spawned nothing… stopped at that dispatch point\", and the clean session also stopped before any spawn. Only the dispatch decision and the composed charge are retained. Disposition: no-op if your subagent-form direction covers this; otherwise ask-user. Confidence 4.\n\n**Row verdicts**\n- **SS41–SS44: met.** Traced decision.go:50 and :61 (`!Complete || !ready`, any non-green check) and command.go:204 (`requiredGreen()`). Every non-exempt not-applicable or red row keeps the decision true. TestAuditDecision exercises clean, audit red, readiness red, seal red, commitment refusal, diagnostic-only exit 0, and absent tickets.\n- **SS45–SS46: met** (TestAuditApplicability).\n- **SS47: met in substance.** The diagnostic charge carried the unsupported location resolved to `specs/example/spec.md:10`, which is the spec:268-270 scenario. The fixture had no drift or reds, so only the guidance shows that those two kinds would be retained.\n- **SS48: met by guidance.** staleness-pass.md:13-14 and command line 23 hold it. Neither session treated the audit as approval, but neither checked approval explicitly. Subject to P1.\n- **SS53: met.** The clean session omitted the pass \"based … on the `staleness` row, not on the exit code\".\n- **SS54: met**, with the caveat in P3.\n- **SS55: not a material acceptance shortfall.** The behavior is retention of an existing route, and staleness-pass.md:64-65 retains it verbatim. However, neither seam half observes it: no session had an occasion, and the sentence is unanchored. Close it through P1 (anchor it), or record your acceptance of guidance-only evidence.\n\nNative evidence is current. `git diff 1e57040a..d11bb6c3 -- .agents internal/preflight internal/anchors cmd` is empty.\n\n**Advice:** spec:185 names only diff-nonempty as excluded, but decision.go also exempts binary-seal while it is not applicable. That is settled, but the spec text needs a wording sync. The `MetadataLabel` diagnostic, which applies when metadata is absent, has no inventory location for the guidance to resolve it to.\n\n**Read:** spec.md (all), ticket 05, the full delta, review record lines 2110-2160, staleness/decision.go and collect.go, preflight/command.go, the craft-review skill and finding discipline, and `bench anchors` for both guidance files. Cursors fetched: the diff spill …a3384ca9.out and the anchors spill …deeed476.out.\n\n**Not verified:** I did not run the audit-spec read, because the tree is dirty. I did not check whether the fixtures were approved, and I ran no tests or probes.\n"
+          },
+          "axis": "Spec",
+          "base": "e0cf7e221ea607a00e02e28272a0761958ea48ac",
+          "tip": "d11bb6c3fe8f7a80306505201e0caeb7211f3b8c",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft375_ss-c3_coverage_r1",
+          "performer": "claude:ft375_ss-c3_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "493aedb268bfd5e04f100b572a30547d9ceb3465",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_coverage_r1",
+            "digest": "sha256:4db7cbf03136e40c5d13e77ad7a016cf5585e5cf89b98b83b783d92dee97402c",
+            "excerpt": "Coverage: 1 finding; worst: C1\n\nThe evidence (sha256:9e0a187e...) binds: `--check-current` returned current=true for assignment bb87c9fc, base e0cf7e22, tip fef8eb19. I read the delta e0cf7e22..d11bb6c3 once.\n\n**C1. The guidance rows have no docs-currency-workflow witness.**\n- Input/state: the new omission and charge guidance. That is `.agents/skills/bench-implement-spec/references/staleness-pass.md` lines 8-14 (the Omission section), the Inputs bullet near line 22, and the Amendment close near lines 64-70. It also includes `.agents/commands/bench-implement-spec.md` line 10 (\"or omit it only under its omission rule\").\n- Break: the delta adds one anchor only (`internal/anchors/registry_data.go` line 93), and it pins only the `--audit-spec` run command. `bench anchors` returns `anchors[0]` for staleness-pass.md. Four guidance probes all went silent: the omission sentence weakened to \"when the audit exits zero\", the SS48 approval sentence dropped, the SS47 charge inputs dropped, and the command-file omission clause weakened.\n- Row/test that should exist: SS47, SS48, SS53, SS54 and SS55 (spec lines 442-443 and 448-450) name \"docs-currency-workflow\" as a witness. They need anchors, or an equal check, on the omission conjunction (complete true and manual_required false), the exact drift/red/unsupported charge inputs, \"never supplies reviewer approval\", and the material-acceptance return to the reviewer. The native-session half of each row stays manual, but its stated mechanical half is absent.\n- Probe rows: P3, P4, P5 and P6 below.\n- Disposition: repair through a fresh session for ticket 05, which owns these paths in the delta. If the anchor admission rule (ADR 0012) refuses these sentences, the witness column is a material acceptance shortfall for the reviewer.\n- Confidence: high.\n\n**Probes run** (all were restored, and `git status --short` is empty):\n- P1 `command.go`: computes requiredGreen before the commitment Ready append. **Bit**: TestAuditDecision/SS42_commitment_refusal.\n- P2 `operations.go`: `--audit-spec --plan-only` selects audit and accepts plan-only. **Bit**: TestAuditGrammar (exit 1, not 2). This is a pre-existing witness.\n- P3 `staleness-pass.md`: omission sentence changed to \"Omit the pass when the audit exits zero.\", run under `--check docs-currency-workflow`. **Silent.**\n- P4: same mutation as P3, run under `--check prose`. **Silent**, as expected for a prose check.\n- P5 `bench-implement-spec.md`: \"omit it only under its omission rule\" changed to \"omit it when the audit exits zero\", under docs-currency-workflow. **Silent.**\n- P6 `staleness-pass.md`: drops the approval sentence and the drift/red/unsupported inputs, under docs-currency-workflow. **Silent.**\n- P7 `command.go`: breakdown falls through and renders the audit decision, run on `./internal/preflight/...`. **Bit**: TestBreakdownRows and TestSymbolIdentity.\n\n**Advice** (optional):\n- P7 bit only by accident, through structural breakdown tests. TestAuditApplicability (`decision_test.go` lines 163-169) leaves `--breakdown` and `--propose-writes` out of its operation list. Adding both would make the claim \"no other operation decides\" direct.\n- \"A preference without a binding requirement or concrete defect remains optional advice.\"\n\n**Not verified:**\n- The native sessions ss-native-clean and ss-native-diagnostic (SS47/48/53-55 adoption half).\n- Whether ADR 0012 admits the needed anchor classes.\n- Reviews/spec/ticket line-level edits beyond the witness columns.\n- Full-gate state at d11bb6c3: the evidence tip is fef8eb19, and I ran no gate.\n"
+          },
+          "axis": "Coverage",
+          "base": "e0cf7e221ea607a00e02e28272a0761958ea48ac",
+          "tip": "d11bb6c3fe8f7a80306505201e0caeb7211f3b8c",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2538,3 +2609,31 @@ Count: 0. Worst: none.
 Count: 0. Worst: none.
 
 Advice: no test refuses an oversized object at the tip side. The refusal path serves both sides, and the axis rated the gap optional under the hardening rule. The drain takes it.
+
+## SS-C3 review round 1
+
+The frozen pair is e0cf7e22..d11bb6c3. Repair cycle 1 of 2 opens for ticket 05 on opus/medium. A guidance edit invalidates the native evidence, so both native sessions run again after the repair.
+
+A consensus of a Fable/high and a Sonnet/high consultant decided P1, C1, P3, and the form of S1. The consultants split twice on P2, and the reviewer chose the original reviewed graph base.
+
+## Standards
+
+Count: 3. Worst: S1.
+
+- S1 (auto-fix, confidence 6): the sentence on a material acceptance change restates the reviewer rule of BENCH.md. Fold it into the existing pointer to the plan-expansion scope of BENCH.md.
+- S2 (auto-fix, confidence 4): the staleness-pass procedure lists the charge items again after the Inputs list. Step 1 points to the Inputs list.
+- S3 (auto-fix, confidence 5): three comments in internal/preflight/decision.go define the exempt row. One comment owns the definition.
+
+## Spec
+
+Count: 3. Worst: P2.
+
+- P1 (no-op, confidence 7): the omission, approval, and reviewer-route sentences have no anchor. ADR 0012 keeps rule wording review-owned, so the native sessions and review are the witness.
+- P2 (auto-fix, confidence 5): after a metadata amendment, the guidance reruns the audit with the enabling commit as the reviewed base. Rerun with the original reviewed graph base and the amended tip.
+- P3 (no-op, confidence 4): each native session stopped at its dispatch decision and spawned no delegate. A read-only subagent cannot spawn, so the retained decision and charge are the witness.
+
+## Coverage
+
+Count: 1. Worst: C1.
+
+- C1 (no-op, confidence 8): four guidance mutations stayed silent under the docs-currency-workflow check. This finding is the same as P1.
