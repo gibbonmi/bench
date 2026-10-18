@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
@@ -214,10 +215,17 @@ func TestPreparingRefusesChangedLiveSource(t *testing.T) {
 func TestSealedGenerationStaysOpen(t *testing.T) {
 	f := newFixture(t)
 	opened := f.begin(t)
+	if opened.Resumed || !opened.SealedAt.IsZero() {
+		t.Fatalf("fresh Begin = %+v; want a generation that is not resumed", opened)
+	}
+	sealedAt := time.Date(2026, 10, 16, 9, 30, 0, 0, time.UTC)
+	if err := os.Chtimes(filepath.Join(transactionDir(f.common), manifestName), sealedAt, sealedAt); err != nil {
+		t.Fatal(err)
+	}
 	f.append(t, f.ideas, "post\n")
 	again, err := Begin(f.root, []Source{f.ideas})
-	if err != nil || again.ID != opened.ID {
-		t.Fatalf("repeated Begin = %+v, %v; want generation %s", again, err, opened.ID)
+	if err != nil || again.ID != opened.ID || !again.Resumed || !again.SealedAt.Equal(sealedAt) {
+		t.Fatalf("repeated Begin = %+v, %v; want generation %s resumed and sealed at %s", again, err, opened.ID, sealedAt)
 	}
 	bundle, present, err := Current(f.root)
 	if err != nil || !present || bundle.State != "sealed" || len(bundle.Sources) != 2 || bundle.Sources[0].Bytes != 9 {

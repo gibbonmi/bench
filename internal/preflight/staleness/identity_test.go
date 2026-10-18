@@ -158,8 +158,8 @@ func TestSymbolIdentity(t *testing.T) {
 // pair changes each test seam in its own way, and the actual audit-spec response grades
 // them all. Each expected drift row and diagnostic is stated here by hand, with object IDs
 // from git rev-parse. The ordinary preflight over the same pair is the continuation, which
-// must not repeat the initial planned-test absence. A baseline test object that does not
-// read refuses the audit.
+// must not repeat the initial planned-test absence. A test object that does not read at
+// either identity refuses the audit.
 func TestTestIdentity(t *testing.T) {
 	_, slug := preflighttest.SeedAdmitted(t)
 	const (
@@ -259,16 +259,19 @@ func TestTestIdentity(t *testing.T) {
 		t.Errorf("ordinary preflight = (%d), want exit 0 and no initial planned-test absence:\n%s", code, out)
 	}
 
-	// A baseline test object over the control-record bound does not read, so the audit
-	// refuses with no staleness result.
+	// A test object over the control-record bound at either identity does not read, so the
+	// audit refuses with no staleness result. Each pair ends at the head, which the audit
+	// grades as its tip, so only the named side is oversized.
 	const big = "internal/example/big_test.go"
-	write(t, map[string]string{
-		specPath(slug): inventorySpec(slug, nil, append(seams, seam("big", big, "TestBig", "existing"))),
-		big:            header + overBound() + "func TestBig(t *testing.T) {}\n",
-	})
-	oversized := commitAll(t, "oversized test")
-	write(t, map[string]string{big: header + "func TestBig(t *testing.T) {}\n"})
-	if out, code := audit(t, slug, oversized, commitAll(t, "test shrinks")); code != 1 || !strings.Contains(out, "cited test source refused") || strings.Contains(out, "staleness[") {
-		t.Errorf("oversized baseline test = (%d), want the cited test source refusal and no staleness result:\n%s", code, out)
+	small, large := header+"func TestBig(t *testing.T) {}\n", header+overBound()+"func TestBig(t *testing.T) {}\n"
+	write(t, map[string]string{specPath(slug): inventorySpec(slug, nil, append(seams, seam("big", big, "TestBig", "existing"))), big: large})
+	before := commitAll(t, "oversized test")
+	for _, step := range []struct{ side, body string }{{"baseline", small}, {"tip", large}} {
+		write(t, map[string]string{big: step.body})
+		after := commitAll(t, "test changes size")
+		if out, code := audit(t, slug, before, after); code != 1 || !strings.Contains(out, "cited test source refused") || strings.Contains(out, "staleness[") {
+			t.Errorf("oversized %s test = (%d), want the cited test source refusal and no staleness result:\n%s", step.side, code, out)
+		}
+		before = after
 	}
 }

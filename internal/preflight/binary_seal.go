@@ -2,6 +2,7 @@ package preflight
 
 import (
 	"errors"
+	"io/fs"
 	"os"
 
 	"github.com/gibbonmi/bench/internal/freshness"
@@ -19,19 +20,25 @@ import (
 // artifact, so a dangling or non-regular dist/bench is present and graded,
 // which is the state doctor's seal row already reds. Stat here would follow
 // the link and report the one root that publishes a broken binary as the one
-// root with no binary to grade.
+// root with no binary to grade. An lstat that fails for any other cause cannot
+// show that no binary exists, so the binary is present and refused with that
+// cause rather than graded.
 func binarySealFacts(root string) (present bool, refusal *freshness.Refusal) {
 	executable := freshness.PublishedExecutable(root)
-	if _, err := os.Lstat(executable); err != nil {
+	_, err := os.Lstat(executable)
+	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
 	}
-	if err := freshness.Verify(root, executable); err != nil {
-		if errors.As(err, &refusal) {
-			return true, refusal
-		}
-		return true, &freshness.Refusal{Executable: executable, RepairRoot: root, Cause: err}
+	if err == nil {
+		err = freshness.Verify(root, executable)
 	}
-	return true, nil
+	if err == nil {
+		return true, nil
+	}
+	if errors.As(err, &refusal) {
+		return true, refusal
+	}
+	return true, &freshness.Refusal{Executable: executable, RepairRoot: root, Cause: err}
 }
 
 // binarySealCheck grades the published dist/bench a build is about to run.

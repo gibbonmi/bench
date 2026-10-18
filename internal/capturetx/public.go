@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 )
 
 // Source identifies one live capture document and its stable evidence name.
@@ -23,6 +24,11 @@ type Bundle struct {
 	ID      string
 	State   string
 	Sources []SourceFact
+	// Resumed reports that Begin found this generation already open.
+	Resumed bool
+	// SealedAt is set only when Resumed is true. It is the modification time of the
+	// manifest, because the last manifest write of an open generation sets the state sealed.
+	SealedAt time.Time
 }
 
 // SourceFact describes one source in a bundle.
@@ -51,7 +57,8 @@ func Append(root string, source Source, compose func([]byte) ([]byte, error)) er
 }
 
 // Begin seals sources as one immutable generation and immediately clears their
-// live documents for later appends. A repeated call returns the open generation.
+// live documents for later appends. A repeated call returns the open generation as
+// resumed.
 func Begin(root string, sources []Source) (Bundle, error) {
 	var bundle Bundle
 	err := withLock(root, func(common string) error {
@@ -59,7 +66,12 @@ func Begin(root string, sources []Source) (Bundle, error) {
 			return err
 		}
 		if current, err := readManifest(common); err == nil {
+			info, err := os.Stat(filepath.Join(transactionDir(common), manifestName))
+			if err != nil {
+				return err
+			}
 			bundle = project(current)
+			bundle.Resumed, bundle.SealedAt = true, info.ModTime()
 			return nil
 		} else if !errors.Is(err, os.ErrNotExist) {
 			return err

@@ -2,6 +2,7 @@ package staleness_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -9,8 +10,10 @@ import (
 
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/preflight/staleness"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
@@ -21,7 +24,7 @@ import (
 // they cannot mask the red ownership rows. The expected drift is the complete list stated here
 // by hand, so a lost ticket member, a lost coverage entry, or an asset read as a ticket fails.
 func TestCoverageIdentity(t *testing.T) {
-	_, slug := preflighttest.SeedAdmitted(t)
+	root, slug := preflighttest.SeedAdmitted(t)
 	spec, one, two, asset := specPath(slug), "specs/"+slug+"/tickets/one.md", "specs/"+slug+"/tickets/two.md", "specs/"+slug+"/tickets/notes.txt"
 	base := preflighttest.RunGit(t, "rev-parse", "HEAD")
 	write(t, map[string]string{
@@ -80,13 +83,24 @@ func TestCoverageIdentity(t *testing.T) {
 		t.Errorf("drift = %v, want %v", got, want)
 	}
 
-	// A baseline ticket object over the control-record bound does not read, so the audit
-	// refuses with no staleness result.
-	write(t, map[string]string{one: preflighttest.TicketDoc("One", "PF1") + overBound()})
+	// A ticket object over the control-record bound at either identity does not read, so the
+	// audit refuses with no staleness result.
+	small, large := preflighttest.TicketDoc("One", "PF1"), preflighttest.TicketDoc("One", "PF1")+overBound()
+	write(t, map[string]string{one: large})
 	oversized := commitAll(t, "oversized ticket")
-	write(t, map[string]string{one: preflighttest.TicketDoc("One", "PF1")})
-	if out, code := audit(t, slug, oversized, commitAll(t, "ticket shrinks")); code != 1 || !strings.Contains(out, "ticket source refused") || strings.Contains(out, "staleness[") {
+	write(t, map[string]string{one: small})
+	shrunk := commitAll(t, "ticket shrinks")
+	if out, code := audit(t, slug, oversized, shrunk); code != 1 || !strings.Contains(out, "ticket source refused") || strings.Contains(out, "staleness[") {
 		t.Errorf("oversized baseline ticket = (%d), want the ticket source refusal and no staleness result:\n%s", code, out)
+	}
+	// The command reads the tickets of its clean checkout at the tip before it collects, so
+	// only Collect itself reaches a tip ticket object that does not read.
+	write(t, map[string]string{one: large})
+	grown := commitAll(t, "ticket grows")
+	var refusal *staleness.Error
+	if _, err := staleness.Collect(root, ownership.Source{Base: shrunk, Tip: grown, SpecPath: spec}, ownership.Snapshot{}); !errors.As(err, &refusal) ||
+		refusal.Stage != staleness.StageTicket || refusal.Subject != one {
+		t.Errorf("oversized tip ticket = %v, want the ticket source refusal of %s", err, one)
 	}
 }
 
