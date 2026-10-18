@@ -1965,7 +1965,77 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "apc5-standards-r1",
+          "performer": "claude:aap_apc5_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc5_standards_r1",
+            "digest": "sha256:d44125100dc55a01287ef698bfc760ba1f937061cb0ebf85974667348c9f29b7",
+            "excerpt": "Standards axis, AP-C5, frozen pair 66843bd4..4be36325; check-current current=true, dirty_record=false.\nS1 | low | SentenceWords (internal/prose/starts.go:37-46) adds a third word-counting loop next to gradeParagraph (:87-96) and sentenceSpans (:63-67) | ticket 7 | auto-fix | confidence 6\nS2 | low | the ROUTE word limit is a bare 6 (internal/anchors/locate_test.go:469), restated in the fault text | ticket 7 | auto-fix | confidence 5\nS3 | low | the admission rules sit in locate_test.go:392-514, a file about Locate | ticket 7 | auto-fix | confidence 5\nS4 | low | the callers doc (internal/preflight/ownership/arguments.go:372-375) omits the value-use refusal at :404 | ticket 6a | auto-fix | confidence 7\nS5 | low | ticket 6a changes what bench preflight build reports and adds no CHANGELOG entry | ticket 6a | ask-user | confidence 4\nS6 | info | LABEL reader strings repeat across rows; spec line 124 accepts them as review text | ticket 7 | no-op | confidence 6\nClean: the COMMAND rule lives once; the producers/arguments split is clean; no stale step-kind text; every edit is inside its Writes line.\nCount 6. Worst: S1.\n"
+          },
+          "axis": "Standards",
+          "base": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+          "tip": "4be36325bf966fdb1e31f1880314bc1becbacc3b",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc5-spec-r1",
+          "performer": "claude:aap_apc5_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc5_spec_r1",
+            "digest": "sha256:3ec40b3770b0a06b13220f7353a0fd789f4c682d981f788631400269f693b1e1",
+            "excerpt": "Spec axis, AP-C5, frozen pair 66843bd4..4be36325; check-current current=true; coverage mapped.\nP1 | low | tickets 6 and 7 say no touched file may grow, but registry.go (+20), prose/starts.go (+13), locate_test.go (+133), registry_data_test.go (+2), and CHANGELOG.md (+4) grow; each growth is forced by another line of the same ticket | tickets 6, 7 | no-op, flagged for reviewer veto | confidence 8\nP2 | low | three kept COMMAND needles pin two sentences (registry_ft311_preparation.go:8, registry_retained_workflow.go:162, registry_ticket_passes.go:10); AP17 bounds only words | ticket 7 | ask-user | confidence 6\nP3 | low | classified.md:278 labels the bench learning --rule row argument-free, and the token rule would admit it; the row is gone | ticket 7 | no-op | confidence 6\nCensus (enumerated): LABEL 25, ROUTE 17, INVARIANT 11, COMMAND 46, total 99, each difference from the snapshot reconciled; the two GRAY rows are correctly ROUTE; every COMMAND row holds a - < or \" token; the rule refuses 43 of the 44 argument-free snapshot rows (the 44th is P3); all 11 BENCH.md Require rows are INVARIANT in core sections; the AP33 census is complete.\nCount 3. Worst: P2.\n"
+          },
+          "axis": "Spec",
+          "base": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+          "tip": "4be36325bf966fdb1e31f1880314bc1becbacc3b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "apc5-coverage-r1",
+          "performer": "claude:aap_apc5_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f072bdd9eb15e076ccd8940adad80ed513fa48eb",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc5_coverage_r1",
+            "digest": "sha256:264849acc8a36a5df8a2b773ed3132ee06b31d4d658a6cca29d7797bb541369f",
+            "excerpt": "Coverage axis, AP-C5, frozen pair 66843bd4..4be36325; check-current current=true.\nC1 | medium | in commandArgument (internal/anchors/locate_test.go:131) the span end at the next backtick has no refuse case; a probe that removed the cut stayed green | ticket 7 | auto-fix | confidence 9\nC2 | low | the \" and . argument openers (locate_test.go:132) are not pinned | ticket 7 | ask-user | confidence 7\nC3 | low | with an empty section field the section rule (locate_test.go:117-120) admits a needle that any core H2 holds, so a needle in both Roles and Workflow passes | ticket 7 | ask-user | confidence 5\nC4 | low | the recursion, receiver, and exported guards of callers (internal/preflight/ownership/arguments.go:57) have no test case | ticket 6a | ask-user | confidence 7\nC5 | info | the remaining RequireInStep strings are a self-contained fixture | ticket 6 | no-op | confidence 8\nProbe: swapped the span cut for the whole rest in locate_test.go; TestAdmissionClasses stayed green (silent), confirming C1; restored.\nCount 5. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "66843bd459846aa785a01c8ae4eaa060c43c238e",
+          "tip": "4be36325bf966fdb1e31f1880314bc1becbacc3b",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2264,3 +2334,36 @@ AP-C4: 2 findings. The worst issue is P1.
 AP-C4: 1 finding. The worst issue is C1.
 
 - C1 (no-op, confidence 7): the kept ROADMAP.md ROUTE pin and the capture-and-forget FORBID pin (`internal/conformance/skills_index_checks_test.go:353-357`) have no bite case. The gap predates the diff, so it goes to `bench learning` with the AP-C3 gaps. Flagged for reviewer veto.
+
+## AP-C5 repair state
+
+AP-C5: repair cycle 1 of 2 starts. The accepted findings fall on two tickets, so each one takes its own repair session in series: ticket 6a first, then ticket 7. The ticket 7 repair refreezes the chunk without a commit. The ticket 6 author and the ticket 6a repair session then record at that tip, and one record commit follows. No reviewer extension exists.
+
+## AP-C5 Standards
+
+AP-C5: 6 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 6): `SentenceWords` (`internal/prose/starts.go:37-46`) adds a third word-counting loop. The ticket 7 repair makes one word counter that the sentence bound and `SentenceWords` share.
+- S2 (auto-fix, confidence 5): the ROUTE word limit is a bare `6` (`internal/anchors/locate_test.go:469`). The ticket 7 repair names it once.
+- S3 (no-op, confidence 5): the admission rules sit in `locate_test.go`. Ticket 7 directs the test into an existing anchors test file with line headroom.
+- S4 (auto-fix, confidence 7): the `callers` doc (`internal/preflight/ownership/arguments.go:372-375`) omits the value-use refusal. The ticket 6a repair corrects the comment.
+- S5 (no-op, confidence 4): ticket 6a adds no CHANGELOG entry. AP-C7 changed preflight behavior in the same way without one. Flagged for reviewer veto.
+- S6 (no-op, confidence 6): the LABEL reader strings repeat, and the spec accepts them as review text.
+
+## AP-C5 Spec
+
+AP-C5: 3 findings. The worst issue is P2.
+
+- P1 (no-op, confidence 8): tickets 6 and 7 say that no touched file may grow, and five files grow. Each growth follows from another line of the same ticket. Flagged for reviewer veto.
+- P2 (no-op, confidence 6): three kept COMMAND needles pin two sentences. The spec bounds words, not sentences; this is the class of AP-C2 P3. Flagged for reviewer veto.
+- P3 (no-op, confidence 6): `assets/classified.md:278` mislabels a row that the build already removed.
+
+## AP-C5 Coverage
+
+AP-C5: 5 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 9): the end of a `bench ` span at its closing backtick has no refuse case (`internal/anchors/locate_test.go:131`). The ticket 7 repair adds an argument-free case with a flag-like token outside the span.
+- C2 (auto-fix, confidence 7): the `"` and `.` argument openers are not pinned. The ticket 7 repair adds a case for each.
+- C3 (auto-fix, confidence 5): with an empty section field, the section rule admits a needle that any core H2 holds. `specs/anchor-admission-prune/spec.md:121` says that the row uses the located H2 of its needle. The ticket 7 repair applies that rule and adds a case.
+- C4 (auto-fix, confidence 7): the recursion, receiver, and exported guards of `callers` have no test case. The ticket 6a repair adds them.
+- C5 (no-op, confidence 8): the remaining `RequireInStep` strings are a self-contained fixture.
