@@ -1359,7 +1359,79 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft375_ss-c2_standards_r1",
+          "performer": "claude:ft375_ss-c2_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6987147fc849eda9d61f1577d1293a7f3d0e8f3c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c2_standards_r1",
+            "digest": "sha256:89ac6d9dbbb5db60f8699e35559d5ee9c0cfa2212a7b2e01ca7bd5f49a8821a7",
+            "excerpt": "Standards: 3 findings; worst: S1\n\nThe evidence check bound: sha256:9209cead… is current for assignment bb87c9fc…, base c585f9d0, source tip 83b3d693, dirty_record false. I read the delta c585f9d0..758d350d with specs and reviews excluded. Paths below are under the worktree /home/mgibs/.bench/worktrees/bench-2826441890/b8e8080d78971d37a88341856b9407bb-bb87c9fc56cc0af9f6e84908b2d9a3a6.\n\n- **S1** (item 1): internal/preflight/ownership/ownership.go:375-378 against internal/consumers/resolve.go:198-216. Rule: \"Two derivations of the same fact must collapse into one source.\" `SourceDeclaration` spells the declaration-kind words (\"func\", \"type\", \"const\", \"var\", \"method\") a second time, beside `objKind`. `Owner.Mismatch` (ownership.go:201) compares the baseline kind from `SourceDeclaration` with the tip kind from `match.Kind`, which comes from `objKind`. If one word changes in `objKind`, every cited symbol reads as a false `kind` discrepancy at the baseline. The syntax-side reading is necessary, but the second word list is not. Owner: ticket 02. Fix: one kind-word source that both sides use, probably exported from consumers. internal/consumers is outside 02's Writes, so the fix needs a fence-expansion plan commit. Confidence 7.\n- **S2** (item 5): internal/preflight/preflighttest/fixture.go:192 against internal/preflight/ownership/charge_fixture_test.go:166-182. Rule: fixture harnesses \"remain single-sourced\". The new `CommitChargeSource` repeats `chargeRepo.seed` step for step, with the same slug \"example\" and the same foo.go body. The steps are: checkout main, write files, SeedAdmission, commit, `checkout -B feature`, commit, `ChargeArgs`. The delta added a second copy and did not move `seed` onto it. Owner: ticket 04. Fix: `seed` calls `CommitChargeSource`; charge_fixture_test.go needs a fence-expansion plan commit. Confidence 7.\n- **S3** (item 2): internal/preflight/staleness/identity_test.go:18 against internal/preflight/ownership/premises_fixture_test.go:265. Same rule. `symbolPremise` spells the symbol-premise item shape again, including the rule that expected kind and signature repeat the owner. `seamItem` (staleness/inventory_test.go:25) also matches ownership/charge_fixture_test.go:25. A shared seam already exists: inventorytest, which completeness_test.go already uses. Owner: ticket 02 for the symbol builder; the seam builder came from 03 and 04. A wrong shape fails loudly when it decodes, so the drift risk is low. Disposition: repair through inventorytest, or the reviewer can veto it as incidental fixture text. Confidence 5.\n\nItems with no finding:\n- Item 3: the delta changes only the decoder that the anchor-kind entry calls (ownership.go:319-322). The map itself predates the delta, so this is advice only.\n- Item 4: no finding. Ticket 03:14 says \"Keep a single grammar owner; the coverage citation check calls the same seam\". `checkCitation` (coverage/citations.go:218) and staleness/tests.go:64 both call `ResolveTest`. The delta did not touch `declaresTestFunction` (evidence.go:165) or `rowSeamCitations` (premises.go:23).\n- Item 6: no finding, cohesion only. I found no binding size or placement rule that the move breaks.\n\n**Advice**\n- `anchorKind` is registered in `symbolPremises` (symbols.go) but now sits in helpers.go, next to the census plumbing and `topLevel`. It belongs in its own file.\n- ownership/evidence.go:165 `declaresTestFunction` is still a test-function grammar outside `ResolveTest`. This predates the delta; a later drain could fold it in.\n- `subjectPaths` is still a kind registry beside `symbolPremises` and `memberCensuses`. This came from SS-C1.\n- The string \"unsupported-context\" appears twice: in staleness `TestContext` (types.go:105) and in ownership `DiscrepancyContext` (ownership.go:169). The two types are separate, but the output word is the same, so consider one source.\n\n**Read:** the delta, the evidence check, consumers/resolve.go:190-229, ownership/evidence.go:150-199, ownership/premises.go:1-70, ownership/ownership.go:275-324, the two ownership fixture files (excerpts), tickets 02 and 03, and the AGENTS.md and BENCH.md rules from context.\n\n**Not verified:**\n- I did not re-read projects/benchkit.md, bench-craft-review SKILL.md, finding-discipline.md, or bench-craft-comments SKILL.md this session, so the comment-standard grading is not done.\n- I did not review ticket 04's full text.\n- I did not check consumer rows.\n- I did not check whether `completeness.go`'s claim count repeats an existing emptiness check in the manifest.\n"
+          },
+          "axis": "Standards",
+          "base": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+          "tip": "bc54d2f77717f0f4e14b14f73acb359879770db4",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft375_ss-c2_spec_r1",
+          "performer": "claude:ft375_ss-c2_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6987147fc849eda9d61f1577d1293a7f3d0e8f3c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c2_spec_r1",
+            "digest": "sha256:2bac6c5c598bd1a1be606d43a5ca094e6bfd7446de28d33444776fbbdddfda8d",
+            "excerpt": "Spec: 1 finding; worst: P1\n\nEvidence binding: `bench preflight evidence sha256:9209cead… --check-current` bound the evidence (current=true, pair c585f9d0..83b3d693).\n\n- **P1, scope creep into ownership policy (author item 1).** Spec line 326 says \"Consume the landed ownership projections without modifying their policy.\" Ticket 04 line 155 says \"Preserve ordinary charge and after-ticket applicability without changing ownership policy.\" The change is in `internal/preflight/ownership/symbols.go:101`, inside the shared `identify` that `exact` now calls: `case name == owner.Symbol && len(all) > 1` returns ambiguous. Traced input: an owner with Package `…/internal/example` and bare Symbol `Dup`, where a second `Dup` exists in `…/sub`. Before this chunk, the package filter left one match and the premise passed. Now the premise faults. Every `exact` caller inherits the change (`rules.go:45,58,156` and `symbols.go:298`), so charge readiness for symbol, rule, and bound premises changes too. The package key is required (`metadata.go:138-141`), so the selection was not arbitrary. The audit could class ambiguity in staleness alone. No live spec breaks today: only this spec has planning facts, and all of its symbols are qualified. Owner: ticket 02. Disposition: ask-user. Confidence 7.\n\n**Row verdicts**\n- SS13–SS19: met (`identity_test.go` TestSymbolIdentity cases, plus `staleness/identity.go`).\n- SS20–SS27: met (`staleness/tests.go`, `coverage.ResolveTest`). The coverage check keeps its prior behavior.\n- SS28–SS31: met (TestCoverageIdentity, `coverage.go`, Decide).\n- SS32–SS34, SS49, SS50, SS57, SS58: met (TestAuditCompleteness, `completeness.go`).\n\n**Other author-flagged items**\n- **Item 2:** within spec. Line 144 says \"non-Go language … stay diagnostic.\" The ownership charge still refuses in that case; only the reason text changed.\n- **Item 3:** within spec. Lines 148/156 define test metadata as seams. Reused-test premises stay graded by the census, and a non-green one stays open through `completeness.go:864-868`.\n- **Item 4:** the change to line 134 is non-behavioral and follows the tree. It is fine for veto. Ticket 04 line 11 now matches the moved coverage-map seams (`completeness_test.go`). The plan expansion is consistent: ticket 02's Writes now includes the ownership files, and the fence and scope now hold `premises_fixture_test.go`.\n- **Item 5:** by reasoning, consistent with line 165. The tip metadata flips seams from planned to existing, so the baseline lacks them, which gives cited-tests red. The spec changed, which gives spec-drift red. The five native claims make the audit complete=false and manual_required=true. Reds exit 1 per line 225. I did not confirm this by a run (see Not verified).\n\n**Advice**\n- SS49 reads \"refuses complete audit collection.\" The build implements it as an exit-0 diagnostic with complete=false, not as an exit-1 refusal. That is a defensible reading, but the reviewer may want to confirm it.\n- A missing subtest is labeled `function-absent` (`tests.go:745-746`), although the parent function exists. The finding is still red; only the label is imprecise.\n\n**Read:** spec.md (all 650 lines); tickets 02, 03, 04 at 758d350d; the full chunk diff (`git diff c585f9d0..758d350d`, spilled to `/home/mgibs/.bench/responses/bench-2826441890/primary/1792300359564396741-5f9f5a3d103a2c18.out`); `ownership/helpers.go:180-205`; `ownership/evidence.go:30-84`; `ownership/metadata.go:136-145`; the SKILL and finding-discipline docs. `bench coverage` returned mapped.\n\n**Not verified:**\n- I could not run the `--audit-spec` audit, which refused both times. At pin 758d350d it refused with \"source not clean\" because HEAD is 83b3d693. At pin 83b3d693 it refused because the worktree became dirty: ` M internal/preflight/staleness/tests.go`. I did not write that file. Another writer is active in this review venue, so the coordinator should check it before accepting any axis result.\n- The plan-expansion `bench learning` record.\n- The behavior of the bare-symbol inventories in `specs/shared-test-fixtures/inventory.json`.\n"
+          },
+          "axis": "Spec",
+          "base": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+          "tip": "bc54d2f77717f0f4e14b14f73acb359879770db4",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft375_ss-c2_coverage_r1",
+          "performer": "claude:ft375_ss-c2_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6987147fc849eda9d61f1577d1293a7f3d0e8f3c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c2_coverage_r1",
+            "digest": "sha256:0d7878e462f043329546547cf3019ad02e4a810d2203591733ca09c7531263e1",
+            "excerpt": "Coverage: 4 findings; worst: C1\n\nThe evidence binding check passed (current=true, dirty_record=false). From 758d350d to HEAD 83b3d693, only reviews/preflight-spec-staleness.md changes, so the source I graded is the frozen chunk. Worktree: /home/mgibs/.bench/worktrees/bench-2826441890/b8e8080d78971d37a88341856b9407bb-bb87c9fc56cc0af9f6e84908b2d9a3a6\n\n- **C1. Unreadable cited-test object.** The refusal at internal/preflight/staleness/tests.go:60-61 can be swallowed and every test stays green. That refusal is required behavior, per spec.md:127 (\"Unreadable before or after objects refuse collection.\") and the Collect contract at collect.go:19-21. Expected break: the audit grades an unreadable file as an empty source, so an existing seam reads as file-absent red, a planned seam reads as valid, and nothing refuses. Missing test: a refusal case in internal/preflight/staleness/drift_test.go beside TestAuditSafety. It can use a committed test file over the 2 MiB ControlRecordLimit (internal/bounds/bounds.go:55) and should assert \"cited test source refused\" with no staleness table. The same gap holds for StageSymbol (identity.go:57-59) and StageTicket (coverage.go:77-79): there is no test reference to any of the three stages. Probe P1 was silent. Owner: ticket 03 (tests.go); 02 and 04 for the siblings. Disposition: repair the tests. Confidence 8.\n- **C2. Deeper subtest citation (`TestSub/case one/x`).** ResolveTest at internal/coverage/citations.go:63 should return unjudged, which makes cited-tests diagnostic and Complete false. Turning off the `deeper` branch leaves the audit green and complete, which breaks SS26 and spec.md:466 (\"No unsupported state can yield complete true\"). Missing test: a TestTestIdentity case with a three-segment citation whose first segment is a declared subtest, expecting an \"unsupported\" diagnostic. Probe P2 was silent. Owner: ticket 03. Disposition: repair the test. Confidence 8.\n- **C3. Unchanged cited method.** SourceDeclaration has a baseline method-kind branch at internal/preflight/ownership/ownership.go:344-346. Turning it into \"func\" leaves the tests green. Expected break: an unchanged cited method gets a false red `kind` drift row. TestSymbolIdentity's only method premise changes at the tip, so the baseline comparison never runs for it. Missing test: an unchanged method premise in TestSymbolIdentity that adds no row (SS14/SS18 count assertion at identity_test.go:107). Probe P3 was silent. Owner: ticket 02. Disposition: repair the test. Confidence 7.\n- **C4. Baseline owner that does not parse as Go, while the tip resolves.** The unread case at internal/preflight/staleness/identity.go:35-36 should keep it diagnostic as unread (spec.md:144 non-Go stays diagnostic). Under the mutant it becomes a red `absent` row. The fixture's prose premise is unread at the tip, so it never reaches this baseline branch. Missing test: a premise whose base object has a Go syntax error and whose tip is valid. Probe P4 was silent. Owner: ticket 02. Disposition: repair the test. Confidence 5, because the red outcome also blocks completion and only the classification and exit code differ.\n\nProbes run:\n- **P1.** tests.go: StageTest refusal → `return \"\", \"\", nil`, package ./internal/preflight/.... Silent, restored yes.\n- **P2.** citations.go: `(!literal || deeper)` → `(!literal || deeper && false)`, coverage and preflight packages. Silent, restored yes. A first attempt was invalid (build failed) and was also restored.\n- **P3.** ownership.go: `kind = \"method\"` → `kind = \"func\"`. Silent, restored yes.\n- **P4.** identity.go: `case unread != \"\":` → `&& false`. Silent, restored yes.\n- **P5.** ownership.go: baseline `top.tok == token.CONST` → `false`. Bit TestSymbolIdentity/SS16_rule, restored yes.\n\n`git status --short` is empty. I ran every probe as a direct swap; no mutants JSON was written.\n\nAdvice: an unchanged const or var premise in TestSymbolIdentity would also guard against false red rows (optional; no row binds it). The order of the planned+unjudged branches in testAt (tests.go:63-68) has no witness. That is optional, because SS26 only requires the result to stay diagnostic.\n\nNot verified:\n- Whether a fixture over 2 MiB reaches ReadControlBlob before an earlier member or bounds refusal. If it does not, the C1 fixture needs another way to make the read fail.\n- Reachability of the StageSymbol and StageTicket refusals; I did not probe them.\n- Full preflight suite outside ./internal/preflight/... and ./internal/coverage/....\n- SS28–SS34, SS49, SS50, SS57 and SS58 beyond reading the diff. The listed prior probes already cover their main branches.\n"
+          },
+          "axis": "Coverage",
+          "base": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+          "tip": "bc54d2f77717f0f4e14b14f73acb359879770db4",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1508,3 +1580,32 @@ Count: 0. Worst: none.
 Count: 0. Worst: none.
 
 Advice: the Coverage probe in members failed first at the claim-drift assertion, not at the new exact-fence case.
+
+## SS-C2 review round 1
+
+The frozen pair is c585f9d0..758d350d. Repair cycle 1 of 2 opens with one session for each affected ticket, in the order 02, 03, 04, on opus/medium.
+
+A consensus of a Fable/high and a Sonnet/high consultant decided P1: restore the prior exact behavior. The consensus also kept the SS49 diagnostic reading. The consultants split twice on S3, and the reviewer then ruled S3 advice only.
+
+## Standards
+
+Count: 3. Worst: S1.
+
+- S1 (auto-fix, confidence 7, ticket 02): SourceDeclaration spells the declaration-kind words again beside consumers objKind (one source per fact).
+- S2 (auto-fix, confidence 7, ticket 04): preflighttest CommitChargeSource repeats the ownership chargeRepo seed steps (fixture harnesses stay single-sourced).
+- S3 (no-op, confidence 5): the staleness test item builders restate the manifest item shapes. The reviewer ruled it advice only.
+
+## Spec
+
+Count: 1. Worst: P1.
+
+- P1 (auto-fix, confidence 7, ticket 02): the shared identify makes the ownership exact check fault an ambiguous bare symbol. That changes ownership policy (spec line 326). Restore exact and classify ambiguity only in the audit.
+
+## Coverage
+
+Count: 4. Worst: C1.
+
+- C1 (auto-fix, confidence 8, tickets 02, 03, 04): no test reaches the unreadable-object refusal of the test, symbol, or ticket stage. A probe at the test stage was silent (spec line 127).
+- C2 (auto-fix, confidence 8, ticket 03): no test cites a subtest deeper than one segment, so the unjudged branch has no witness (SS26).
+- C3 (auto-fix, confidence 7, ticket 02): no test holds an unchanged cited method, so the baseline method kind has no witness.
+- C4 (auto-fix, confidence 5, ticket 02): no test holds a baseline owner that does not parse while the tip resolves. The baseline unread branch has no witness.
