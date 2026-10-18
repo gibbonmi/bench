@@ -346,13 +346,14 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT380-plan-commit
-2. FT409
-3. FT402
-4. FT411
-5. FT293-closure-removal
+1. FT293-closure-removal
+2. FT380-plan-commit
+3. FT409
+4. FT402
+5. FT411
 6. FT366-degraded-guard
 7. FT362-process-lifetime
 8. FT360-shared-fixtures
 9. FT125-exact-readers
 10. FT314-gate-reuse
+11. FT375-residual
