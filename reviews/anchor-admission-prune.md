@@ -3280,11 +3280,188 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+    "performer": "claude:aap-orchestrator-20261017",
+    "reconciliation": {
+      "AP01": "covered",
+      "AP02": "covered",
+      "AP03": "covered",
+      "AP04": "covered",
+      "AP05": "covered",
+      "AP06": "covered",
+      "AP07": "covered",
+      "AP08": "covered",
+      "AP09": "covered",
+      "AP10": "covered",
+      "AP11": "covered",
+      "AP12": "covered",
+      "AP13": "covered",
+      "AP14": "covered",
+      "AP15": "covered",
+      "AP16": "covered",
+      "AP17": "covered",
+      "AP18": "covered",
+      "AP19": "covered",
+      "AP20": "covered",
+      "AP21": "covered",
+      "AP22": "covered",
+      "AP23": "covered",
+      "AP24": "covered",
+      "AP25": "covered",
+      "AP26": "covered",
+      "AP27": "covered",
+      "AP28": "covered",
+      "AP29": "covered",
+      "AP30": "covered",
+      "AP31": "covered",
+      "AP32": "covered",
+      "AP33": "covered",
+      "AP34": "covered",
+      "AP35": "covered",
+      "AP36": "covered",
+      "AP37": "covered",
+      "AP38": "covered",
+      "AP39": "covered",
+      "AP40": "covered",
+      "AP41": "covered",
+      "AP42": "covered",
+      "AP43": "covered",
+      "AP44": "covered",
+      "AP45": "covered",
+      "AP46": "covered",
+      "AP47": "covered",
+      "AP48": "covered",
+      "AP49": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage-check",
+        "performer": "claude:aap-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:aap-orchestrator-20261017",
+          "digest": "sha256:b9b79c274947fba0bdc14709d78385c244d69bb2bd4f0c8c976c1b0cd2d38292",
+          "excerpt": "ok: coverage map valid — 49 row(s)\nuncited: 26 row(s) with no seam-cell citation — AP02, AP03, AP04, AP10, AP18, AP19, AP21, AP26, AP27, AP28, AP29, AP30, AP32, AP33, AP36, AP37, AP38, AP39, AP40, AP41, AP42, AP43, AP44, AP45, AP47, AP46\n"
+        },
+        "requirement": "coverage-check",
+        "command": "bench coverage --check specs/anchor-admission-prune/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-anchors",
+        "performer": "claude:aap-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:aap-orchestrator-20261017",
+          "digest": "sha256:d607d71c08f11cef0b61789e0215994c3c5739dd10c8a620cbd83677ea3636df",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,96,128\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "anchors",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance",
+        "performer": "claude:aap-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:aap-orchestrator-20261017",
+          "digest": "sha256:e3d526c37aed1801765a0b5cec1cf5c95be42e9a617e649c6b4ccb069869fbee",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,34760,1118\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+        },
+        "requirement": "conformance",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-docs-currency-workflow",
+        "performer": "claude:aap-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:aap-orchestrator-20261017",
+          "digest": "sha256:2435eeb528d3efbdbe2899dca4c692b2777f174a4d2311bd8194156cda80d924",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4426,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "docs-currency-workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance-canary-families",
+        "performer": "claude:aap-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:aap-orchestrator-20261017",
+          "digest": "sha256:cf4daff2c6efe73116b92098eb6cd3a451b5e7eea0808bbbbd2eb241918e28bd",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  conformance-canary-families,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "conformance-canary-families",
+        "command": "bench test --check conformance-canary-families",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance-meta",
+        "performer": "claude:aap-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:aap-orchestrator-20261017",
+          "digest": "sha256:6a452c302126387c5b45c2b52c639b757cf8bcfaffd0052a22e6c65fc06d6838",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  conformance-meta,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,30,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "conformance-meta",
+        "command": "bench test --check conformance-meta",
+        "exit_code": 0
+      },
+      {
+        "id": "final-root-conformance",
+        "performer": "claude:aap-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:aap-orchestrator-20261017",
+          "digest": "sha256:aefb2d9f0660fa9c3169bd47a49c6b07979bd3dc4f8228057a4c157b185480a6",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,20820,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
