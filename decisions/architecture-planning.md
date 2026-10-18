@@ -16,8 +16,8 @@ Use craft-cli, craft-spec, and craft-seams for each outcome.
 
 ## Decisions so far
 
-- [How should preflight handle fence and premise knowledge?](architecture-planning/tickets/1.md): derive proposals and verify explicit authorization.
-- [When may the staleness pass be omitted?](architecture-planning/tickets/2.md): skip manual audit only for complete clean mechanical evidence.
+- [How should preflight handle fence and premise knowledge?](architecture-planning/tickets/1.md): Superseded by the 2026-10-17 FT293 decision. A ticket's `Writes:` line is an expectation.
+- [When may the staleness pass be omitted?](architecture-planning/tickets/2.md): skip manual audit only for complete clean mechanical evidence. Shipped with FT375.
 - [Which record operations should the CLI absorb?](architecture-planning/tickets/3.md): add validated assignment writes and actionable refusals.
 - [How should exact readers work?](architecture-planning/tickets/4.md): compose typed readers with bounded exact pages.
 - [What is the recommended order within this candidate?](architecture-planning/tickets/5.md): deliver separate capabilities through their existing owners.
@@ -40,11 +40,11 @@ Use craft-cli, craft-spec, and craft-seams for each outcome.
 ## Sources
 
 - Path: `roadmap/FT293.md`
-  Supports: the ownership closure and premise obligations.
-  Drift: a change to its required closure set.
+  Supports: the decision that supersedes ownership-closure prediction.
+  Drift: a change to its expected-writes rule.
 - Path: `roadmap/FT375.md`
-  Supports: the mechanical staleness rows.
-  Drift: a change to its drift contract.
+  Supports: the staleness faces that the shipped audit left open.
+  Drift: a change to its residual scope.
 - Path: `roadmap/FT318.md`
   Supports: the assignment and record operation gaps.
   Drift: a change to its remaining forms.
