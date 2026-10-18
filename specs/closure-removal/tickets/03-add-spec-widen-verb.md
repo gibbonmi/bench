@@ -14,7 +14,7 @@ The verb grades each entry through `tickets.ParseWrite`, which refuses a `..` se
 
 The verb refuses the primary checkout through the shared refusal, a default tip with no ticket of the slug, a ticket file that is a symbolic link or a special file, and a ticket with no `Writes:` line. It keeps every byte outside the `Writes:` value, including a CRLF ending and a missing final newline. It resolves the ticket from the repository root, so a deeper working directory edits the same file. It writes through `durablefile`.
 
-`bench help` and `bench spec --help` list the leaf, and the changelog's `[Unreleased]` section names it. `internal/spec/spec.go`, `internal/spec/spec_test.go`, and `cmd/bench/main.go` are over their structure budget, so each edit there is net zero. The retire leaf moves to `retire.go`, and its tests move to `retire_test.go`, to give the switch and the pins their headroom. The help test that names only retire and history takes a name that includes widen, with no added line.
+`bench help` and `bench spec --help` list the leaf, and the changelog's `[Unreleased]` section names it. `internal/spec/spec.go`, `internal/spec/spec_test.go`, and `cmd/bench/main.go` are over their structure budget, so each edit there is net zero. The retire leaf moves to `retire.go`, and its tests move to `retire_test.go`, to give the switch and the pins their headroom. `TestHelpSpecRowsNameRetireAndHistoryOnly` in `cmd/bench/command_registry_test.go` takes a name that includes widen, with no added line. `TestSpecHelpPrintsThePublicSubcommandInventory` keeps its name, because CR52 cites it.
 
 Contract for ticket 04: the `source-not-fenced` route names this verb by its exact spelling `bench spec widen`.
 

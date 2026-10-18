@@ -24,3 +24,4 @@ Contract for ticket 06: the craft-spec skill no longer owns a fence, so the revi
 - [ ] `bench-write-spec.md` holds the new plan-only needle in its Process section, and the anchor test pins it.
 - [ ] The slicing checks keep the ticket-only `.bench/commitment.json` rule.
 - [ ] Each edited budgeted guidance file holds a line count at or below its budget row.
+- [ ] The preflight and worktree package suites stay green after the fixture changes, because this ticket is their last writer.

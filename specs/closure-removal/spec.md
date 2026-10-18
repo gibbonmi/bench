@@ -102,7 +102,7 @@ Harder chunks: CR3.
 
 ### The removal
 
-The closure family goes as one unit. `Decide` stops calling `closureRows`, and the closure kinds, the missing-closure projection, and the closure messages leave the preflight package. The ownership package loses `Requirement`, `Kind`, the collection stages, the closure walk, the grammar-effects chain, the caller and liveness censuses, `OwnedPaths`, `Owned`, `Unordered`, and the uncited projection. The binding registry in `internal/tickets` goes with it, because only the closure reads `BindingRules` and `BoundFiles`. The `ticket-grammar` conformance check keeps its ticket-folder sweep and loses its binding-table grader, because that grader only keeps the closure's table valid (`internal/conformance/ticket_grammar_test.go:121-154`). No canary pins the grader. The canary pin reader `canary.Pins` and the anchor reference reader `anchors.References` also go, because the closure loader is their only production caller (`internal/preflight/ownership/closure.go:91`, `:95`). The canary inventory and the anchor registries keep their formats (CR76).
+The closure family goes as one unit. `Decide` stops calling `closureRows`, and the closure kinds, the missing-closure projection, and the closure messages leave the preflight package. The ownership package loses `Requirement`, `Kind`, the collection stages, the closure walk, the grammar-effects chain, the caller and liveness censuses, `OwnedPaths`, `Owned`, `Unordered`, and the uncited projection. The binding registry in `internal/tickets` goes with it, because only the closure reads `BindingRules` and `BoundFiles`. The `ticket-grammar` conformance check keeps its ticket-folder sweep and loses its binding-table grader, because that grader only keeps the closure's table valid (`internal/conformance/ticket_grammar_test.go:121-154`). No canary pins the grader. The anchor reference reader `anchors.References` also goes, because the closure loader is its only production caller (`internal/preflight/ownership/closure.go:95`). The canary pin reader `canary.Pins` stays, because `canary.FixturePins` calls it and the fixture-bite check reads `PinnedPaths` in the same file (`internal/canary/pins.go:81-82`, `:105`). The canary inventory and the anchor registries keep their formats (CR76).
 
 The premise checks mean the `charge-premises` row and its tests. The premise collectors, the planning-facts manifest, `Snapshot.Symbols`, `ChargeReadiness`, and `SubjectPaths` stay, because `--audit-spec` reads them. `Collect` keeps its premise half and loses its closure half and its closure diagnostics. Only the audit kind gathers the snapshot, because no other verdict row reads it after the charge-premises row goes. This call is flagged for reviewer veto.
 
@@ -170,8 +170,8 @@ Each retired command sentence gets one forbid anchor. Each edited budgeted file 
 | --- | --- | --- | --- | --- |
 | CR1 / 01-delete-proposal-and-breakdown-forms.md, 02-delete-ownership-closure.md | Preflight predicts no closure, checks no charge premises, and offers no proposal or breakdown form | CR01-CR22, CR80-CR85, CR89, CR91, CR93, CR95, CR96 | preflight decision, build, charge, and audit tests, the ticket grammar test, the help inventory, and the ticket-slicing anchors | no |
 | CR2 / 03-add-spec-widen-verb.md | `bench spec widen` widens one ticket inside the signed-off scope | CR23-CR54, CR92 | the spec widen tests, the spec help test, and the help inventory | no |
-| CR3 / 04-derive-fence-from-tickets.md, 05-retire-spec-fence-section.md | The ticket union is the fence, and no code reads a spec fence section | CR55-CR72, CR75-CR77, CR86, CR87, CR90 | landing, preflight, charge, audit, coverage, and refusal route tests, and the ticket-slicing anchors | yes |
-| CR4 / 06-align-writes-guidance.md | The guidance states one `Writes:` rule beside the widening verb | CR78, CR79, CR88, CR94 | the guidance anchors and the budget and prose checks | no |
+| CR3 / 04-derive-fence-from-tickets.md, 05-retire-spec-fence-section.md | The ticket union is the fence, and no code reads a spec fence section | CR55-CR72, CR77, CR86, CR87, CR90 | landing, preflight, charge, audit, coverage, and refusal route tests, and the ticket-slicing anchors | yes |
+| CR4 / 06-align-writes-guidance.md | The guidance states one `Writes:` rule beside the widening verb | CR75, CR76, CR78, CR79, CR88, CR94 | the guidance anchors and the budget and prose checks | no |
 
 CR1 deletes before CR3 moves the fence, so CR3 changes no code that CR1 removes. CR2 is its own small chunk, because CR3's refusal route and CR4's guidance name its verb. Its review closes before CR3 starts. CR4 runs last, because it names the verb and the derived fence.
 
@@ -296,7 +296,7 @@ The landing rows run through the landing surface tests, which already seed ticke
 | CR72 | 37 | `paths-authorized` reds a changed path that only a leftover fence section lists | planned TestCommandBuildIgnoresAFenceSection in internal/preflight/command_fence_test.go | A surviving section reader authorizes the listed path |
 | CR75 | 39 | This spec declares a fence section equal to its ticket `Writes:` union plus `reviews/closure-removal.md` at the landing | review-owned: the pre-FT293 broker refuses a gap as `source-not-fenced` | A missing path stops the landing |
 | CR76 | 39 | The build keeps the canary inventory and anchor registry formats that the pre-FT293 closure loader parses | review-owned: the old broker refuses an unparsable inventory as `fixture inventory refused` or `anchor registry refused` | A format change stops the landing |
-| CR77 | 31 | `bench preflight review` reds `paths-authorized` for a change outside every ticket `Writes:` entry | planned TestCommandReviewAuthorizesFromTicketWrites in internal/preflight/command_review_test.go | A review path left on the section authorizes nothing or everything |
+| CR77 | 31 | `bench preflight review` reds `paths-authorized` for a change outside every ticket `Writes:` entry | planned TestCommandReviewAuthorizesFromTicketWrites in internal/preflight/command_fence_test.go | A review path left on the section authorizes nothing or everything |
 | CR78 | 40 | `delegation-discipline.md` holds no `is a refusal boundary` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored sentence reds the forbid anchor |
 | CR79 | 40 | `delegation-discipline.md` names `bench spec widen` beside the expectation rule | review-owned: the Spec axis reads the sentence against story 40 | Review owns rule wording |
 | CR80 | 41 | `slicing-checks.md` holds no `## Enforced rules` heading | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored section reds the forbid anchor |
@@ -432,7 +432,6 @@ The kit audience is every repository that links the kit. A linked repository wit
 - `internal/tickets/writes.go`
 - `internal/tickets/writes_test.go`
 - `internal/conformance/ticket_grammar_test.go`
-- `internal/canary/pins.go`
 - `internal/anchors/references.go`
 - `internal/anchors/references_test.go`
 - `.agents/commands/bench-implement-spec.md`
