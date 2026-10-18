@@ -2824,6 +2824,74 @@
           "supersedes": [
             "ft375_ss-c3_coverage_r1"
           ]
+        },
+        {
+          "id": "ft375_ss-c3_standards_r3",
+          "performer": "claude:ft375_ss-c3_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_standards_r3",
+            "digest": "sha256:7f5811b74dd0ddc5bc032746acb2f073a95c10dc6721ee8c3959bbb4c166f0e7",
+            "excerpt": "Standards: 1 finding; worst: S1\n\nEvidence binding: `bench preflight evidence sha256:a7343317…9bd9 --check-current` returns assignment bb87c9fc56cc0af9f6e84908b2d9a3a6, base f791668126e1, source_tip f80d31330cbb, current=true, dirty_record=false, delivery=unverified. `git diff --stat d7f786c2 f80d3133` touches only reviews/preflight-spec-staleness.md, so the source bytes match d7f786c2.\n\nDiff checks:\n1. `git diff --stat e0cf7e22 f7916681` touches only reviews/preflight-spec-staleness.md. Pass.\n2. `git diff f7916681 d7f786c2 -- . ':!reviews'` and `git diff e0cf7e22 d7f786c2 -- . ':!reviews'` are byte-identical (13 files, +285/-44). Pass.\n\nPrior findings status: none open. Round 1 S1, S2, S3 are closed; confirming round 1 recorded Standards as a pass.\n\n## Findings\n- S1 (judgment call, auto-fix, confidence 4). internal/preflight/decision.go:268-269, the `requiredGreen` doc: \"Only this conjunction lets an audit omit manual review.\" Rule: AGENTS.md \"one source per fact\", and craft-comments \"One source owns a fact.\" The omission conjunction belongs to the staleness package: internal/preflight/staleness/types.go:136-137 owns it, and internal/preflight/staleness/decision.go:16-17 states it again. The sentence in `requiredGreen` is a third statement, written in the producer package about how its consumer uses the value, so it goes stale if the staleness policy changes. Repair: cut that sentence, or make it a pointer to `staleness.Decide`. command.go:154 is an ordering warning at the place an editor could break it, so it earns its place.\n\n## Advice\n- The `seedClean` fixture at decision_test.go:22-30 repeats the \"complete\" case fixture of completeness_test.go:185-187. Optional.\n- CHANGELOG.md:11 lists four parallel items inside one sentence; the prose check passes and existing entries do the same. Optional.\n- Ticket 05 line 91 ends with \"by reviewer direction\", which is provenance from plan commit ce656b6d. Optional.\n\nWrite reach: commits 7a9fd067 and d11bb6c3 edit spec.md seam cells, which acceptance needs (SS23 reports an existing \"planned\" seam as drift). In reach, not a defect.\n\n## Not verified\n- The whole-project gate and the ticket verification commands; only `bench test --check prose` ran.\n- paths_authorized.go past its head.\n- The native-session evidence beyond the headers.\n"
+          },
+          "axis": "Standards",
+          "base": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
+          "tip": "d7f786c2b6532683fd279982f4ddb8051ee084db",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": [
+            "ft375_ss-c3_standards_r2"
+          ]
+        },
+        {
+          "id": "ft375_ss-c3_spec_r3",
+          "performer": "claude:ft375_ss-c3_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_spec_r3",
+            "digest": "sha256:b2d898bdcebd11ef9fddf59ec040526434c6dfa54cfe74ae87b760fa879664da",
+            "excerpt": "Spec: 0 findings; worst: none\n\nEvidence binding: `bench preflight evidence sha256:a7343317…9bd9 --check-current` reports current; assignment bb87c9fc56cc0af9f6e84908b2d9a3a6, base f791668126e10cb8ed959664b58c0ac0bc7cf953, source tip f80d31330cbb2b43cf08450d4521cd86b5753128, dirty_record=false, delivery=unverified. `git diff --stat d7f786c2 f80d3133` touches only reviews/preflight-spec-staleness.md, so every graded source file matches d7f786c2.\n\nDiff check: `git diff --stat e0cf7e22 f7916681` touches one file, reviews/preflight-spec-staleness.md. The graded delta f7916681..d7f786c2 touches 13 files outside reviews/.\n\nRow verdicts:\n- SS41 (met): staleness/decision.go:50 sets `!Complete || !ready`, line 61 ORs in every non-green check; ready is verdict.requiredGreen() at command.go:204; TestAuditDecision \"SS41 complete clean evidence\".\n- SS42 (met): spec-drift red, rows-owned readiness red, binary-seal red, and commitment refusal each hold manual review (exit 1, true|true).\n- SS43 (met): \"SS43 diagnostic only\" expects exit 0, false|true, and every native claim subject in audit_diagnostics (spec 226-228).\n- SS44 (met): requiredGreen accepts a not-applicable row only when exempt is set; only diff-nonempty in build mode and binary-seal carry exempt; \"SS44 not-applicable required row\" expects true|true.\n- SS45 (met): TestAuditApplicability \"SS45\": ordinary build passes, audit-spec over the same pair reports the drift.\n- SS46 (met): five other operations print no staleness row; only command.go:203 calls staleness.Decide.\n- SS47 (met): staleness-pass.md Inputs names every drift path, red check, and unsupported claim location and resolves each audit_diagnostics subject; the native diagnostic excerpt charges greeting-semantics at specs/example/spec.md:10.\n- SS48 (met): \"An audit result never supplies reviewer approval or the commitment.\"; both native excerpts did not treat the audit as approval.\n- SS53 (met): native clean excerpt shows true,false and omits the pass from the typed field.\n- SS54 (met): native diagnostic excerpt shows false,true, exit 0, and charges the pass with the exact location.\n- SS55 (met): staleness-pass.md routes a material acceptance change through the plan-expansion stop; the metadata-amendment paragraph keeps the reviewed graph commit as --base.\n- Commitment ordering (spec 188, ticket line 14): met; command.go:176-181 appends the commitment row before line 204 decides.\n- Focused rerun at f80d3133: staleness package passed, 11 tests, 0 failures.\n\nNative currency: ft375_t05_rep1b-ss-native-clean and ft375_t05_rep1b-ss-native-diagnostic sit in the SS-C3 chunk entry (base f7916681, tip d7f786c2), name kit source d7f786c2, and carry source_digest e033f1d9. No owner byte changes after d7f786c2. Current.\n\nPrior findings: none open. P1 and P3 no-op; P2 closed in d7f786c2; confirming round 1 Spec recorded 0 findings.\n\nFindings: none.\n\nAdvice (optional): binarySealFacts (binary_seal.go:25) treats any Lstat error as \"publishes no binary\"; with exempt(binarySealCheck(f)) an unreadable dist/bench would count as exempt not-applicable. The collector behavior predates this delta and no spec line names it. An errors.Is(err, fs.ErrNotExist) guard would make absence mean absence.\n\nNot verified: fixture approval records, the full gate and the other ticket commands, the anchor and canary census, whether other self-applicable rows should carry exempt, and the JSON plan and inventory lines of the spec diff.\n"
+          },
+          "axis": "Spec",
+          "base": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
+          "tip": "d7f786c2b6532683fd279982f4ddb8051ee084db",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c3_spec_r2"
+          ]
+        },
+        {
+          "id": "ft375_ss-c3_coverage_r3",
+          "performer": "claude:ft375_ss-c3_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_coverage_r3",
+            "digest": "sha256:f8ad77e9f8755dd0bf056fa6b999fb2327bfb197cfb9af24bda23b2b024c6f06",
+            "excerpt": "Coverage: 0 findings; worst: none\n\nEvidence binding: `bench preflight evidence sha256:a7343317…9bd9 --check-current` reports assignment bb87c9fc56cc0af9f6e84908b2d9a3a6, base f791668126e1, source_tip f80d31330cbb (HEAD, dirty=false), current=true, dirty_record=false, delivery=unverified. `git diff --stat d7f786c2 f80d3133` touches only reviews/preflight-spec-staleness.md, so nothing in production or the guidance moved after the frozen tip.\n\nDiff check: `git diff --stat e0cf7e22 f7916681` lists exactly one file, reviews/preflight-spec-staleness.md. Confirmed.\n\nRecord check: the SS-C3 entry has base f791668126e10cb8ed959664b58c0ac0bc7cf953, tip d7f786c2b6532683fd279982f4ddb8051ee084db, and source_digest e033f1d9. The latest verification for each of the ten requirements is the ft375_t05_rep1b-* entry; each has performer claude:ft375_t05_rep1, state completed, outcome pass, and source_digest e033f1d9. ss-05-focused has probe ss-05-omission, outcome bit, exit_code 1, restore pass. The rep1b excerpts ran at HEAD a50b4a4d; `git diff --stat d7f786c2 a50b4a4d` touches only the review record. The native entries name kit source d7f786c2.\n\nPrior findings status: C1 (round 1) is closed as no-op; the confirming round 1 recorded Count 0. No prior Coverage finding is open.\n\nFindings: none. command.go:200-203 runs staleness.Decide(facts.Audit, verdict.requiredGreen()) after the commitment row append; decision.go holds the exempt flag, requiredGreen, and the exempt binary-seal and diff-nonempty rows; staleness/decision.go:50 holds ManualRequired = !Complete || !ready. Every member of the competing-refusal set has a case in TestAuditDecision, and TestAuditApplicability covers each other operation.\n\n## Probes run\nAll used `--package ./internal/preflight/... --run 'TestAuditDecision|TestAuditApplicability'`; all restored=yes.\n1. decision.go `exempt(notApplicable(\"diff-nonempty\"))` -> `notApplicable(\"diff-nonempty\")`: bit (SS41_complete_clean_evidence, SS46_no_other_operation_decides).\n2. decision.go `(c.Verdict != verdictNA || !c.exempt)` -> `c.Verdict != verdictNA`: bit (SS44_not-applicable_required_row).\n3. decision.go `exempt(binarySealCheck(f))` -> `binarySealCheck(f)`: bit (SS41, SS46).\n4. command.go `verdict.requiredGreen()` -> `!verdict.Red`: bit (SS44).\n5. staleness/decision.go `!audit.Complete || !ready` -> `!audit.Complete`: bit (SS42 commitment refusal, SS42 red seal, SS42 readiness red, SS44).\n`git status --short` is clean after the probes.\n\n## Advice\nThe prior advice on the diagnostic branch (staleness/decision.go:61) stays optional.\n\n## Not verified\n- The source_digest algorithm and plan_digest 753536d2.\n- A rerun of the ten recorded verifications or the native sessions.\n- The delivery=unverified state.\n- Guidance probes (review-owned per C1/P1).\n"
+          },
+          "axis": "Coverage",
+          "base": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
+          "tip": "d7f786c2b6532683fd279982f4ddb8051ee084db",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c3_coverage_r2"
+          ]
         }
       ]
     }
