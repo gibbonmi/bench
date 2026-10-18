@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/preflight-spec-staleness/spec.md",
-  "plan_digest": "sha256:59027695274b16599f6e50120d1bf38e3646525ba2f82a6fbb43bb0e7cc7afdb",
+  "plan_digest": "sha256:acbe78295e38ec098e24c56c60e2280c11bc01a9a30a5c1f2223ae14859fbd98",
   "implementation_session": "",
   "chunks": [
     {
       "id": "SS-C1",
       "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
-      "tip": "26824a80094b00abec31242eb162f7d11e55deff",
-      "plan_digest": "sha256:59027695274b16599f6e50120d1bf38e3646525ba2f82a6fbb43bb0e7cc7afdb",
-      "source_digest": "0e41de513c4f3d907df0be76f81b2de273dd76c0",
+      "tip": "decb17ff468daefc64c1b0c64c4b19d89f480568",
+      "plan_digest": "sha256:acbe78295e38ec098e24c56c60e2280c11bc01a9a30a5c1f2223ae14859fbd98",
+      "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
       "acceptance_rows": [
         "SS1",
         "SS2",
@@ -292,6 +292,143 @@
           "requirement": "ss-01-check-6",
           "command": "bench test --package ./internal/git",
           "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep1b-ss-01-focused",
+          "performer": "claude:ft375_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep1",
+            "digest": "sha256:ee30298d638e7966a9473d23921e681ea8f45b49eb84fafdd591b3a0075ede22",
+            "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDriftObjects,5,1,0,null,yes\n  2,bit,swap,failed,1,TestDriftObjects,5,1,0,null,yes\n  3,bit,swap,failed,2,TestDriftIdentity,5,1,0,null,yes\n  4,bit,swap,failed,1,TestDriftObjects,5,1,0,null,yes\n  5,bit,swap,failed,1,TestDriftObjects,5,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestDriftObjects|TestDriftIdentity|TestAuditMovement,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,4503\nmutant_report[1]{mutant}:\n  1\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,592,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",26\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,583,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",26\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,450,5\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftIdentity,\"drift_test.go:174: SS9 spec drift = (0) [], want the audit red alone and \\\"specs/example/spec.md|specs/example/spec.md|modified|c55b53562e122867fb07f345a99cca80bb6936cb|d52507c627fa40f185341a5acc139938da2076de\\\":\",16\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",24\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,604,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",28\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  5\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,584,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",27\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-focused",
+          "command": "bench test --package ./internal/preflight/... --run 'TestDriftObjects|TestDriftIdentity|TestAuditMovement'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "ss-01-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft375_t01_rep1",
+              "digest": "sha256:ee30298d638e7966a9473d23921e681ea8f45b49eb84fafdd591b3a0075ede22",
+              "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDriftObjects,5,1,0,null,yes\n  2,bit,swap,failed,1,TestDriftObjects,5,1,0,null,yes\n  3,bit,swap,failed,2,TestDriftIdentity,5,1,0,null,yes\n  4,bit,swap,failed,1,TestDriftObjects,5,1,0,null,yes\n  5,bit,swap,failed,1,TestDriftObjects,5,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestDriftObjects|TestDriftIdentity|TestAuditMovement,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,4503\nmutant_report[1]{mutant}:\n  1\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,592,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",26\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,583,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",26\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,450,5\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftIdentity,\"drift_test.go:174: SS9 spec drift = (0) [], want the audit red alone and \\\"specs/example/spec.md|specs/example/spec.md|modified|c55b53562e122867fb07f345a99cca80bb6936cb|d52507c627fa40f185341a5acc139938da2076de\\\":\",16\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",24\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,604,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",28\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  5\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,584,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftObjects,\"drift_test.go:153: drifted members = (1)\",27\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft375_t01_rep1b-ss-01-check-1",
+          "performer": "claude:ft375_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep1",
+            "digest": "sha256:3db7c888de6344d104dd95b398cd7fb7ce8e59038184ee9bc6f0e1a7dbbe04dc",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,39537,416\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,23713,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,41408,271\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,1443,13\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep1b-ss-01-check-2",
+          "performer": "claude:ft375_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep1",
+            "digest": "sha256:00f40c4915118ac757ea85a8e3ef619a1d7e4ed5edf4700c4a8b469f38ce8343",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14458,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-2",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep1b-ss-01-check-3",
+          "performer": "claude:ft375_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep1",
+            "digest": "sha256:7e789b6d111943e77ca0cf9d4bd4496dc735deb64d2f15cc06e776cc1892ee26",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  ticket-grammar,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,3967,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-3",
+          "command": "bench test --check ticket-grammar",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep1b-ss-01-check-4",
+          "performer": "claude:ft375_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep1",
+            "digest": "sha256:67cda0136049d2b7997ad3c45749ec4158b083f39603d16752db9ccb8410be91",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14737,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-4",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep1b-ss-01-check-5",
+          "performer": "claude:ft375_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep1",
+            "digest": "sha256:e9e522ebc669842e2738bd6e4c4716fe192d8dda612932839a01995e5233bd6e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,34425,1118\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ss-01-check-5",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep1b-ss-01-check-6",
+          "performer": "claude:ft375_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "410a4337ba0bc62d31ab5f62a7c55710837caaaf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep1",
+            "digest": "sha256:785c5facb67a7bd70cbd8b5fd7147e3adb1458d38c6e752a82a573759b528285",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1294,172\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-6",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -380,6 +517,15 @@
     {
       "from": "sha256:78e919fc76dd6b2ec59b518316b4b9687704d3a9976adbc7fa67671b320d82e1",
       "to": "sha256:59027695274b16599f6e50120d1bf38e3646525ba2f82a6fbb43bb0e7cc7afdb",
+      "chunk_ids": {
+        "SS-C1": [
+          "SS-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:59027695274b16599f6e50120d1bf38e3646525ba2f82a6fbb43bb0e7cc7afdb",
+      "to": "sha256:acbe78295e38ec098e24c56c60e2280c11bc01a9a30a5c1f2223ae14859fbd98",
       "chunk_ids": {
         "SS-C1": [
           "SS-C1"
