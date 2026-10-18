@@ -79,6 +79,15 @@ func TestCoverageIdentity(t *testing.T) {
 	if got, want := driftRows(t, out), sorted(append(drift, modified(spec), added(asset))...); !slices.Equal(got, want) {
 		t.Errorf("drift = %v, want %v", got, want)
 	}
+
+	// A baseline ticket object over the control-record bound does not read, so the audit
+	// refuses with no staleness result.
+	write(t, map[string]string{one: preflighttest.TicketDoc("One", "PF1") + overBound()})
+	oversized := commitAll(t, "oversized ticket")
+	write(t, map[string]string{one: preflighttest.TicketDoc("One", "PF1")})
+	if out, code := audit(t, slug, oversized, commitAll(t, "ticket shrinks")); code != 1 || !strings.Contains(out, "ticket source refused") || strings.Contains(out, "staleness[") {
+		t.Errorf("oversized baseline ticket = (%d), want the ticket source refusal and no staleness result:\n%s", code, out)
+	}
 }
 
 // nativeTicket is the ticket that owns the native rows, and nativeRows are the five rows
