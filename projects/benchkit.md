@@ -366,7 +366,7 @@ a broken document reds at the commit.
 | `structure` | `bench structure --growth <base>` | go-source |
 | `docs-currency-workflow` | `bench test --check docs-currency-workflow` | markdown, anchor-registry |
 | `decision-map-integrity` | `bench test --check decision-map-integrity` | decision-documents |
-| `guidance-prose-budgets` | `bench test --check guidance-prose-budgets` | benchkit-profile |
+| `guidance-prose-budgets` | `bench test --check guidance-prose-budgets` | markdown, benchkit-profile |
 | `skill-description-budgets` | `bench test --check skill-description-budgets` | benchkit-profile |
 | `profile-lane-table` | `bench test --check profile-lane-table` | benchkit-profile |
 | `roadmap-detail-integrity` | `bench test --check roadmap-detail-integrity` | roadmap-board |
