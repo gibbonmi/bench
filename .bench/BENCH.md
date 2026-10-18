@@ -151,6 +151,8 @@ If that outcome has no bound deliverable and its row says `Next: ticket` or `Nex
 `bench commit` enforces this boundary: it refuses the primary checkout and directs the user to create a Bench worktree. The landing is spec-less when the phase has no spec, and within Bench, `main` receives writes only through landings.
 Merge composition is the landing primitive because a rebase rewrites the reviewed tip, so the workflow rejects rebases. `.bench/BENCH-reference.md` holds the landing shape.
 
+**Release a worktree that no landing releases.** A phase that moves its work to a new worktree releases the superseded worktree with `bench worktree release`. A session that ends with no landing also releases its worktree, and so does a read-only assessment that makes no commit of its own.
+
 **Fix, don't park.** A small defect that the active committed outcome needs fixed is not roadmap work: the fix lands in the active workflow as its own commit. A small defect that the active outcome does not need goes to `bench learning`, and the drain delegates its light-path fix. Park a fix to `capture/IDEAS.md` or `capture/learnings.md` when it needs a reviewer decision, a new seam, or spec-level design.
 
 **A batch approval covers per-spec sign-offs when I'm unreachable.** If I
