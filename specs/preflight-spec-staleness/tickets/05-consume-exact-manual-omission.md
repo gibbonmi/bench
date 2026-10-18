@@ -87,7 +87,8 @@ Read the canonical structure report before dispatch.
 Remeasure Growth from the actual preceding tip and whole-tree crowding.
 Keep cohesive extraction and necessary pin relocation in this same ticket.
 
-The two native obligations invoke `$bench-implement-spec specs/example/spec.md` in distinct approved fixture worktrees.
+The two native obligations invoke `/bench-implement-spec specs/example/spec.md` in distinct approved fixture worktrees.
+Each runs as a fresh Claude subagent that follows the command file, by reviewer direction.
 Bind each fixture base and tip, the tested sealed kit source, the initial audit response, and its actual charge and dispatch.
 The clean fixture has no manual claims; the diagnostic fixture exposes its exact unsupported locations.
 Obtain approval for each committed fixture subject before the native session starts; the fixture cannot approve itself.
