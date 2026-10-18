@@ -119,7 +119,7 @@ func TestTestIdentity(t *testing.T) {
 	const (
 		kept, gone, removed = "internal/example/kept_test.go", "internal/example/gone_test.go", "internal/example/removed_test.go"
 		future, computed    = "internal/example/future_test.go", "internal/example/computed_test.go"
-		tagged              = "internal/example/tagged_test.go"
+		tagged, untagged    = "internal/example/tagged_test.go", "internal/example/untagged_test.go"
 	)
 	seam := func(id, path, function, state string) string {
 		return seamItem(slug, id, path, "example.com/internal/example", function, state)
@@ -136,6 +136,7 @@ func TestTestIdentity(t *testing.T) {
 			seam("nosub", kept, "TestSub/case two", "existing"),
 			seam("computed", computed, "TestComputed/x", "existing"),
 			seam("tagged", tagged, "TestTagged", "existing"),
+			seam("untagged", untagged, "TestUntagged", "existing"),
 		}),
 		kept:     header + "func TestKept(t *testing.T) {}\n\nfunc TestSub(t *testing.T) {\n\tt.Run(\"case one\", func(t *testing.T) {})\n}\n",
 		gone:     header + "func TestGone(t *testing.T) {}\n",
@@ -143,12 +144,14 @@ func TestTestIdentity(t *testing.T) {
 		future:   header + "func TestOther(t *testing.T) {}\n",
 		computed: header + "func TestComputed(t *testing.T) {\n\tname := \"x\"\n\tt.Run(name, func(t *testing.T) {})\n}\n",
 		tagged:   "//go:build benchnever\n\n" + header + "func TestTagged(t *testing.T) {}\n",
+		untagged: "//go:build benchnever\n\n" + header + "func TestUntagged(t *testing.T) {}\n",
 	})
 	base := commitAll(t, "cited tests")
 	preflighttest.RunGit(t, "rm", "-q", gone)
 	write(t, map[string]string{
-		removed: header + "func TestStays(t *testing.T) {}\n",
-		future:  header + "func TestOther(t *testing.T) {}\n\nfunc TestEarly(t *testing.T) {}\n",
+		removed:  header + "func TestStays(t *testing.T) {}\n",
+		future:   header + "func TestOther(t *testing.T) {}\n\nfunc TestEarly(t *testing.T) {}\n",
+		untagged: header + "func TestStays(t *testing.T) {}\n",
 	})
 	tip := commitAll(t, "cited tests change")
 
@@ -180,6 +183,8 @@ func TestTestIdentity(t *testing.T) {
 		{"SS25", "nosub", same(kept, "test TestSub/case two function-absent"), ""},
 		{"SS26", "computed", "", "cited test TestComputed/x is unsupported"},
 		{"SS27", "tagged", "", "cited test TestTagged is unsupported-context"},
+		// A wrong context at the base cannot mask the removal at the tip.
+		{"SS27", "untagged", same(untagged, "test TestUntagged function-absent"), ""},
 	} {
 		if test.drift != "" {
 			rows++
