@@ -8,24 +8,38 @@ import (
 )
 
 // Decide classifies one AuditFacts value. It performs no I/O, and the same facts always
-// yield the same audit. spec-drift is red when any audit-scope member changed. A check that a
-// diagnostic names is diagnostic, and any diagnostic makes the audit incomplete.
+// yield the same audit. spec-drift is red when any audit-scope member changed, and
+// cited-symbols is red when any cited symbol has a supported discrepancy, which joins the
+// drift. A check that a diagnostic names, or a cited symbol whose discrepancy no collector
+// grades, is diagnostic unless it is red, and any diagnostic makes the audit incomplete.
 func Decide(facts AuditFacts) Audit {
+	paths := drift(facts.Paths)
+	var symbolDrift []DriftEntry
+	undecided := false
+	for _, state := range facts.Symbols {
+		switch {
+		case slices.Contains(diagnosticDiscrepancies, state.Discrepancy):
+			undecided = true
+		case state.Discrepancy != "":
+			symbolDrift = append(symbolDrift, symbolEntry(state))
+		}
+	}
 	audit := Audit{
 		Baseline:    facts.Baseline,
 		Tip:         facts.Tip,
-		Drift:       drift(facts.Paths),
+		Drift:       append(paths, symbolDrift...),
 		Diagnostics: facts.Diagnostics,
 		Complete:    len(facts.Diagnostics) == 0,
 	}
 	audit.ManualRequired = !audit.Complete
+	red := map[string]bool{CheckSpecDrift: len(paths) > 0, CheckCitedSymbols: len(symbolDrift) > 0}
 	for _, name := range checkNames {
 		state := StateGreen
-		if name == CheckSpecDrift && len(audit.Drift) > 0 {
-			state = StateRed
-		}
-		if slices.ContainsFunc(facts.Diagnostics, func(d Diagnostic) bool { return d.Subject == name }) {
+		if name == CheckCitedSymbols && undecided || slices.ContainsFunc(facts.Diagnostics, func(d Diagnostic) bool { return d.Subject == name }) {
 			state = StateDiagnostic
+		}
+		if red[name] {
+			state = StateRed
 		}
 		audit.Checks = append(audit.Checks, Check{Name: name, State: state})
 		audit.ManualRequired = audit.ManualRequired || state != StateGreen

@@ -10,7 +10,12 @@ package ownership
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"slices"
 
+	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -136,6 +141,7 @@ type ChargeReadiness struct {
 // certification of a declared-complete inventory with no diagnostic; it is never reviewer
 // approval, and a partial inventory or any manual claim keeps it false. Uncited is every
 // declared coverage row that no parsed ticket cites, which the read-only breakdown lists.
+// Symbols holds the tip identity of each current symbol premise, in inventory order.
 type Snapshot struct {
 	Requirements    []Requirement
 	Premises        []Premise
@@ -143,6 +149,60 @@ type Snapshot struct {
 	Complete        bool
 	ChargeReadiness ChargeReadiness
 	Uncited         []coverage.MapRow
+	Symbols         []SymbolIdentity
+}
+
+// Declaration is one declaration as one source holds it: the path that declares it, its
+// spelling inside its package, its consumers declaration kind, and its normalized
+// declaration syntax. The zero value is a declaration that the source does not hold.
+type Declaration struct {
+	Path, Name, Kind, Signature string
+}
+
+// Discrepancy is the class of the first difference between a cited owner identity and the
+// declaration that a source holds. The empty class is an exact match.
+type Discrepancy string
+
+const (
+	DiscrepancyAbsent    Discrepancy = "absent"
+	DiscrepancyMoved     Discrepancy = "moved"
+	DiscrepancyKind      Discrepancy = "kind"
+	DiscrepancySignature Discrepancy = "signature"
+	// DiscrepancyAmbiguous is a cited spelling that names more than one declaration.
+	DiscrepancyAmbiguous Discrepancy = "ambiguous"
+	// DiscrepancyContext is a declaration that only a file outside the default build
+	// context holds, which the default typed load cannot grade.
+	DiscrepancyContext Discrepancy = "unsupported-context"
+	// DiscrepancyUnread is an identity that the census cannot read: a premise that does not
+	// decode, a tip that does not load, or an owner path that holds no Go source.
+	DiscrepancyUnread Discrepancy = "unread"
+)
+
+// SymbolIdentity is the tip identity of one current symbol premise: the cited owner, the
+// declaration that the typed packages resolve it to, and the first discrepancy with its
+// reason.
+type SymbolIdentity struct {
+	Premise     string
+	Owner       Owner
+	Current     Declaration
+	Discrepancy Discrepancy
+	Reason      string
+}
+
+// Mismatch is the first part of d that differs from o, in the order path, kind, and
+// signature, and its reason. A zero d is absent. at names the source that holds d.
+func (o Owner) Mismatch(d Declaration, at string) (Discrepancy, string) {
+	switch {
+	case d == Declaration{}:
+		return DiscrepancyAbsent, fmt.Sprintf("%s declares no %s at the %s", o.Package, localName(o), at)
+	case d.Path != o.Path:
+		return DiscrepancyMoved, fmt.Sprintf("%s is declared in %s, not %s", o.Symbol, d.Path, o.Path)
+	case d.Kind != o.Kind:
+		return DiscrepancyKind, fmt.Sprintf("%s is a %s, not a %s", o.Symbol, d.Kind, o.Kind)
+	case d.Signature != o.Signature:
+		return DiscrepancySignature, fmt.Sprintf("%s declares %q, not %q", o.Symbol, d.Signature, o.Signature)
+	}
+	return "", ""
 }
 
 // The stages a collection refusal names.
@@ -184,6 +244,7 @@ func Collect(root string, source Source, manifest Manifest, declared []string, p
 		Premises:     allPremises,
 		Diagnostics:  allDiag,
 		Uncited:      uncited(declared, manifest.rows, parsed),
+		Symbols:      census.symbols,
 	}
 	snapshot.Complete = manifest.Present && manifest.Completeness == completenessDeclared && len(snapshot.Diagnostics) == 0 && nativeValid
 	for _, premise := range snapshot.Premises {
@@ -294,4 +355,29 @@ func (m Manifest) diagnostics() []Diagnostic {
 		return []Diagnostic{{ID: metadataID, Reason: "no " + MetadataLabel + " fence: the premise inventory is incomplete"}}
 	}
 	return m.Diagnostics
+}
+
+// SourceDeclaration projects one committed Go source without types: the top-level
+// declaration of src that declares name by the consumers declaration-name forms, as path
+// holds it, with the one normalization of the typed side. No types load here, so its kind
+// is the declaration's syntax form. found is false when src declares no such name, and a
+// source that does not parse is an error.
+func SourceDeclaration(path string, src []byte, name string) (decl Declaration, found bool, err error) {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, path, src, parser.SkipObjectResolution)
+	if err != nil {
+		return Declaration{}, false, err
+	}
+	for _, top := range topLevel(file) {
+		if names, _ := consumers.DeclNames(top.node); !slices.Contains(names, name) {
+			continue
+		}
+		kind := map[token.Token]string{token.FUNC: "func", token.TYPE: "type", token.CONST: "const", token.VAR: "var"}[top.tok]
+		if fn, ok := top.node.(*ast.FuncDecl); ok && fn.Recv != nil {
+			kind = "method"
+		}
+		signature, err := normalize(fset, top.node, top.tok == token.CONST, name)
+		return Declaration{Path: path, Name: name, Kind: kind, Signature: signature}, err == nil, err
+	}
+	return Declaration{}, false, nil
 }

@@ -2,19 +2,18 @@ package ownership
 
 import (
 	"bytes"
+	"cmp"
 	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
 	"go/token"
 	"go/types"
-	"path"
-	"reflect"
 	"slices"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/consumers"
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 // symbolPremises is every symbol and rule premise kind and its collector, which keeps the
@@ -29,21 +28,32 @@ var symbolPremises = map[string]func(*census, PremiseItem) (string, error){
 }
 
 // declared is one owner identity's exact declaration at the source tip: the object, the
-// loaded package whose syntax declares it, and the top-level node that declares it. node is
-// nil when no top-level node declares the object, as for a field.
+// loaded package whose syntax declares it, the top-level node that declares it, and that
+// node's declared spelling. node is nil when no top-level node declares the object, as for
+// a field.
 type declared struct {
 	obj  types.Object
 	pkg  *consumers.Package
 	node ast.Node
+	name string
 }
 
 // symbol grades one symbol premise. Its subject is the owner identity, and its expected
-// kind and signature repeat that identity's values.
-func (c *census) symbol(item PremiseItem) (string, error) {
-	owner, err := ownerSubject(item)
-	if err != nil {
+// kind and signature repeat that identity's values. The census keeps the premise's tip
+// identity, and a fault that names no discrepancy class leaves it unread.
+func (c *census) symbol(item PremiseItem) (reason string, err error) {
+	identity := SymbolIdentity{Premise: item.ID}
+	defer func() {
+		if err != nil {
+			identity.Reason = err.Error()
+			identity.Discrepancy = cmp.Or(identity.Discrepancy, DiscrepancyUnread)
+		}
+		c.symbols = append(c.symbols, identity)
+	}()
+	if identity.Owner, err = ownerSubject(item); err != nil {
 		return "", err
 	}
+	owner := identity.Owner
 	var expected struct {
 		Kind      *string `json:"kind"`
 		Signature *string `json:"signature"`
@@ -54,7 +64,7 @@ func (c *census) symbol(item PremiseItem) (string, error) {
 	if expected.Kind == nil || expected.Signature == nil || *expected.Kind != owner.Kind || *expected.Signature != owner.Signature {
 		return "", errors.New("expected: the kind and signature differ from the subject identity")
 	}
-	if _, err := c.exact(owner); err != nil {
+	if _, identity.Current, identity.Discrepancy, err = c.identify(owner); err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%s resolves in %s as the %s that its signature names at the source tip", owner.Symbol, owner.Path, owner.Kind), nil
@@ -66,53 +76,102 @@ func ownerSubject(item PremiseItem) (Owner, error) {
 	return identity(item.Subject, "subject: ")
 }
 
-// exact resolves one owner identity at the source tip and refuses each part that differs:
-// the one declaration that its symbol names in its exact package, the file that declares
-// it, its consumers declaration kind, and its declaration syntax as the Go formatter
-// prints it. A missing or ambiguous declaration names no owner.
+// exact resolves one owner identity at the source tip and refuses the first part that
+// differs, as identify classifies it.
 func (c *census) exact(owner Owner) (declared, error) {
+	decl, _, _, err := c.identify(owner)
+	return decl, err
+}
+
+// identify resolves one owner identity at the source tip: the one declaration that its
+// symbol names in its exact package, through the consumers origin of an alias, and the
+// file, consumers kind, and normalized syntax that declare it. It answers the current
+// declaration and, as err, the first discrepancy with its class. A bare spelling that names
+// several declarations is ambiguous, because a package filter that selects one proves no
+// cited owner.
+func (c *census) identify(owner Owner) (declared, Declaration, Discrepancy, error) {
 	pkgs, err := c.packages()
 	if err != nil {
-		return declared{}, err
+		return declared{}, Declaration{}, DiscrepancyUnread, err
 	}
 	name := localName(owner)
-	matches, _ := consumers.Resolve(pkgs, owner.Symbol)
-	matches = slices.DeleteFunc(matches, func(m consumers.Match) bool { return m.PkgPath != owner.Package || m.Name != name })
+	all, _ := consumers.Resolve(pkgs, owner.Symbol)
+	matches := slices.DeleteFunc(slices.Clone(all), func(m consumers.Match) bool { return m.PkgPath != owner.Package || m.Name != name })
 	switch {
-	case len(matches) == 0:
-		return declared{}, fmt.Errorf("%s declares no %s at the source tip", owner.Package, name)
+	case name == owner.Symbol && len(all) > 1:
+		return declared{}, Declaration{}, DiscrepancyAmbiguous, fmt.Errorf("the bare name %s names %d declarations at the source tip", owner.Symbol, len(all))
 	case len(matches) > 1:
-		return declared{}, fmt.Errorf("%s names %d declarations of %s at the source tip", owner.Symbol, len(matches), owner.Package)
+		return declared{}, Declaration{}, DiscrepancyAmbiguous, fmt.Errorf("%s names %d declarations of %s at the source tip", owner.Symbol, len(matches), owner.Package)
+	case len(matches) == 0:
+		class, reason := owner.Mismatch(Declaration{}, "source tip")
+		if context, why := c.context(pkgs, owner.Path, name); context != "" {
+			class, reason = context, reason+"; "+why
+		}
+		return declared{}, Declaration{}, class, errors.New(reason)
 	}
 	match := matches[0]
 	file, _, err := c.position(pkgs, match.Obj)
-	switch {
-	case err != nil:
-		return declared{}, err
-	case file != owner.Path:
-		return declared{}, fmt.Errorf("%s is declared in %s, not %s", owner.Symbol, file, owner.Path)
-	case match.Kind != owner.Kind:
-		return declared{}, fmt.Errorf("%s is a %s, not a %s", owner.Symbol, match.Kind, owner.Kind)
-	}
-	decl := declarationNode(pkgs, match.PkgPath, match.Obj, name)
-	signature, err := decl.signature()
 	if err != nil {
-		return declared{}, err
+		return declared{}, Declaration{}, DiscrepancyUnread, err
 	}
-	if signature != owner.Signature {
-		return declared{}, fmt.Errorf("%s declares %q, not %q", owner.Symbol, signature, owner.Signature)
+	pkgPath := match.PkgPath
+	if match.Obj.Pkg() != nil {
+		pkgPath = match.Obj.Pkg().Path()
 	}
-	return decl, nil
+	decl := declarationNode(pkgs, pkgPath, match.Obj, name)
+	signature, signatureErr := decl.signature()
+	current := Declaration{Path: file, Name: decl.name, Kind: match.Kind, Signature: signature}
+	switch class, reason := owner.Mismatch(current, "source tip"); {
+	case signatureErr != nil && (class == "" || class == DiscrepancySignature):
+		return declared{}, current, DiscrepancyUnread, signatureErr
+	case class != "":
+		return declared{}, current, class, errors.New(reason)
+	}
+	return decl, current, "", nil
 }
 
-// declarationNode finds the top-level node of a loaded package that declares obj under
-// name, by the consumers declaration-name forms. Its package is the one whose syntax holds
-// that node, so the type facts of that package describe the node.
+// context classifies an owner path that no loaded package holds but the committed tip
+// holds: a Go source that declares name there sits outside the default build context, and a
+// path that holds no Go source is unread. Any other path answers no class.
+func (c *census) context(pkgs []*consumers.Package, path, name string) (Discrepancy, string) {
+	for _, pkg := range pkgs {
+		for _, file := range pkg.Files {
+			if loaded, err := c.relative(pkg.Fset.Position(file.Pos()).Filename); err == nil && loaded == path {
+				return "", ""
+			}
+		}
+	}
+	src, err := git.ReadTreeFile(c.root, c.source.Tip, path)
+	if err != nil {
+		return "", ""
+	}
+	_, found, err := SourceDeclaration(path, src, name)
+	switch {
+	case err != nil:
+		return DiscrepancyUnread, path + " holds no Go source: " + err.Error()
+	case found:
+		return DiscrepancyContext, path + " declares it only outside the default build context"
+	}
+	return "", ""
+}
+
+// declarationNode finds the top-level node of a loaded package that declares obj, by the
+// consumers declaration-name forms: the node that spans obj's position and declares name or
+// obj's own name, so an alias spelling reaches its origin's declaration. Its package is the
+// one whose syntax holds that node, so the type facts of that package describe the node.
 func declarationNode(pkgs []*consumers.Package, pkgPath string, obj types.Object, name string) declared {
 	at := obj.Pos()
-	holds := func(node ast.Node) bool {
-		names, ok := consumers.DeclNames(node)
-		return ok && node.Pos() <= at && at < node.End() && slices.Contains(names, name)
+	spelling := func(node ast.Node) string {
+		names, _ := consumers.DeclNames(node)
+		if node.Pos() > at || at >= node.End() {
+			return ""
+		}
+		for _, declared := range names {
+			if declared == name || declared == obj.Name() || strings.HasSuffix(declared, "."+obj.Name()) {
+				return declared
+			}
+		}
+		return ""
 	}
 	for _, pkg := range pkgs {
 		if pkg.PkgPath != pkgPath {
@@ -122,18 +181,9 @@ func declarationNode(pkgs []*consumers.Package, pkgPath string, obj types.Object
 			if at < file.Pos() || at >= file.End() {
 				continue
 			}
-			for _, decl := range file.Decls {
-				nodes := []ast.Node{decl}
-				if gen, ok := decl.(*ast.GenDecl); ok {
-					nodes = nodes[:0]
-					for _, spec := range gen.Specs {
-						nodes = append(nodes, spec)
-					}
-				}
-				for _, node := range nodes {
-					if holds(node) {
-						return declared{obj: obj, pkg: pkg, node: node}
-					}
+			for _, top := range topLevel(file) {
+				if name := spelling(top.node); name != "" {
+					return declared{obj: obj, pkg: pkg, node: top.node, name: name}
 				}
 			}
 		}
@@ -141,13 +191,23 @@ func declarationNode(pkgs []*consumers.Package, pkgPath string, obj types.Object
 	return declared{obj: obj}
 }
 
-// signature is the normalized declaration syntax: the Go formatter's print of the
-// declaring node without its comments or a function body. A constant's signature is empty,
-// because its value belongs to a bound premise. A declaration with no top-level node, such
-// as a field, has no supported normalization.
+// signature is the normalized declaration syntax of the declaring node.
 func (d declared) signature() (string, error) {
-	node, prefix := d.node, ""
-	switch n := d.node.(type) {
+	_, isConst := d.obj.(*types.Const)
+	var fset *token.FileSet
+	if d.pkg != nil {
+		fset = d.pkg.Fset
+	}
+	return normalize(fset, d.node, isConst, d.obj.Name())
+}
+
+// normalize is the normalized syntax of one top-level declaring node: the Go formatter's
+// print of the node without its comments or a function body. A constant's syntax is empty,
+// because its value belongs to a bound premise. Any other node, such as a field's, has no
+// supported normalization; name names the declaration in that fault.
+func normalize(fset *token.FileSet, node ast.Node, isConst bool, name string) (string, error) {
+	prefix := ""
+	switch n := node.(type) {
 	case *ast.FuncDecl:
 		trimmed := *n
 		trimmed.Body = nil
@@ -155,22 +215,27 @@ func (d declared) signature() (string, error) {
 	case *ast.TypeSpec:
 		prefix = "type "
 	case *ast.ValueSpec:
-		if _, isConst := d.obj.(*types.Const); isConst {
+		if isConst {
 			return "", nil
 		}
 		prefix = "var "
 	default:
-		return "", fmt.Errorf("%s has no top-level declaration whose syntax normalizes", d.obj.Name())
+		return "", fmt.Errorf("%s has no top-level declaration whose syntax normalizes", name)
 	}
-	text, err := render(d.pkg, node)
+	text, err := printed(fset, node)
 	return prefix + text, err
 }
 
-// render is the Go formatter's print of one node of pkg without its comments. The printer
-// prints each comment group that a node holds, such as a field's doc, so render detaches
-// every group before the print. The loaded syntax is shared, so each group returns to its
-// node before render returns.
+// render is the Go formatter's print of one node of pkg without its comments.
 func render(pkg *consumers.Package, node ast.Node) (string, error) {
+	return printed(pkg.Fset, node)
+}
+
+// printed is the Go formatter's print of one node of fset without its comments. The printer
+// prints each comment group that a node holds, such as a field's doc, so printed detaches
+// every group before the print. The loaded syntax is shared, so each group returns to its
+// node before printed returns.
+func printed(fset *token.FileSet, node ast.Node) (string, error) {
 	var restore []func()
 	defer func() {
 		for _, reattach := range restore {
@@ -202,7 +267,7 @@ func render(pkg *consumers.Package, node ast.Node) (string, error) {
 		return true
 	})
 	var buf bytes.Buffer
-	if err := format.Node(&buf, pkg.Fset, node); err != nil {
+	if err := format.Node(&buf, fset, node); err != nil {
 		return "", fmt.Errorf("the declaration syntax does not format: %w", err)
 	}
 	return buf.String(), nil
@@ -313,73 +378,4 @@ func reaches(pkgs []*consumers.Package, from, to string) bool {
 		}
 	}
 	return false
-}
-
-// anchorKind grades one anchor kind against the anchors kind inventory at the source tip:
-// the constants of the compiled anchors Kind type, read through the typed loader in the
-// package that declares that type. The owner location must be the declaration of the kind
-// constant, so a familiar spelling elsewhere or another constant of the package names no
-// supported kind.
-func (c *census) anchorKind(item PremiseItem) (string, error) {
-	var expected struct {
-		Supported bool `json:"supported"`
-	}
-	subject, err := decodeAnchorSubject(item)
-	if err == nil {
-		_, err = typed(item.Expected, "expected: ", &expected, "supported")
-	}
-	switch {
-	case err != nil:
-	case !expected.Supported:
-		err = errors.New("expected: supported is not true")
-	case subject.Owner.Source != "tip":
-		err = errors.New("subject: the anchor kind inventory is read only at the source tip")
-	default:
-		_, err = c.locate(subject.Owner)
-	}
-	var pkgs []*consumers.Package
-	if err == nil {
-		pkgs, err = c.packages()
-	}
-	if err != nil {
-		return "", err
-	}
-	inventory := reflect.TypeFor[anchors.Kind]()
-	var kind types.Object
-	matches, _ := consumers.Resolve(pkgs, path.Base(inventory.PkgPath())+"."+subject.Kind)
-	for _, match := range matches {
-		named, ok := match.Obj.Type().(*types.Named)
-		if _, isConst := match.Obj.(*types.Const); isConst && ok && match.PkgPath == inventory.PkgPath() && match.Name == subject.Kind &&
-			named.Obj().Pkg() != nil && named.Obj().Pkg().Path() == inventory.PkgPath() && named.Obj().Name() == inventory.Name() {
-			kind = match.Obj
-		}
-	}
-	if kind == nil {
-		return "", fmt.Errorf("%q is no constant of the anchor kind inventory %s.%s at the source tip", subject.Kind, inventory.PkgPath(), inventory.Name())
-	}
-	file, line, err := c.position(pkgs, kind)
-	switch {
-	case err != nil:
-		return "", err
-	case file != subject.Owner.Path || line != subject.Owner.Line:
-		return "", fmt.Errorf("the anchor kind inventory declares %s at %s line %d, not line %d of %s", subject.Kind, file, line, subject.Owner.Line, subject.Owner.Path)
-	}
-	return fmt.Sprintf("the anchor kind inventory declares the anchor kind %s at %s line %d at the source tip", subject.Kind, file, line), nil
-}
-
-// anchorSubject is the decoded subject of one anchor-kind premise: the owner location that
-// declares the kind constant, and the kind name.
-type anchorSubject struct {
-	Owner Location `json:"owner"`
-	Kind  string   `json:"kind"`
-}
-
-// decodeAnchorSubject decodes the subject of one anchor-kind premise.
-func decodeAnchorSubject(item PremiseItem) (anchorSubject, error) {
-	var subject anchorSubject
-	object, err := typed(item.Subject, "subject: ", &subject, "owner", "kind")
-	if err == nil {
-		err = location(object, "owner", "subject: ", true)
-	}
-	return subject, err
 }

@@ -13,14 +13,15 @@ import (
 
 // unsupported names each mechanical check that no collector grades yet. Each one stays a
 // diagnostic, so the audit stays incomplete and manual review stays required.
-var unsupported = []string{CheckCitedSymbols, CheckCitedTests}
+var unsupported = []string{CheckCitedTests}
 
 // Collect reads the audit scope of the committed pair that source names at root. It reads
 // the spec and its planning-facts inventory at both identities from committed objects, never
 // from the checkout. sourceFacts is the closure snapshot of the same pair, whose diagnostics
-// stay open in the audit. An absent or special spec at either identity, an unreadable tree,
-// or a member of the scope that is no regular file refuses the collection with an *Error and
-// no facts.
+// stay open in the audit and whose symbol identities the cited-symbols audit grades. An
+// absent or special spec at either identity, an unreadable tree, a member of the scope that
+// is no regular file, or a cited symbol's baseline object that does not read refuses the
+// collection with an *Error and no facts.
 func Collect(root string, source ownership.Source, sourceFacts ownership.Snapshot) (AuditFacts, error) {
 	baseline, err := readSpec(root, source.Base, source.SpecPath, StageBaselineSpec)
 	if err != nil {
@@ -40,10 +41,15 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 		return AuditFacts{}, err
 	}
 	facts := AuditFacts{Baseline: source.Base, Tip: source.Tip, SpecPath: source.SpecPath, Paths: union(before, after)}
+	cited, undecided, err := symbols(root, facts.Paths, sourceFacts.Symbols)
+	if err != nil {
+		return AuditFacts{}, err
+	}
+	facts.Symbols = cited
 	for _, diagnostic := range sourceFacts.Diagnostics {
 		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: diagnostic.ID, Reason: diagnostic.Reason})
 	}
-	facts.Diagnostics = append(facts.Diagnostics, unread...)
+	facts.Diagnostics = append(append(facts.Diagnostics, unread...), undecided...)
 	for _, check := range unsupported {
 		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: check, Reason: "no " + check + " collector grades this audit"})
 	}

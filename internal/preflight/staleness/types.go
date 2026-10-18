@@ -8,6 +8,8 @@
 // preflight package nor another workflow state owner.
 package staleness
 
+import "github.com/gibbonmi/bench/internal/preflight/ownership"
+
 // Absent is the cell of the side of a drift entry that holds no member. It is never a path
 // or an object ID, so an absent side cannot read as an empty one.
 const Absent = "absent"
@@ -52,12 +54,25 @@ type Diagnostic struct {
 
 // AuditFacts is one immutable collection over one exact committed pair. Paths holds every
 // member of the audit scope at either identity, in path order, so a deleted member keeps its
-// row. Decide grades these values and reads nothing else.
+// row. Symbols holds each cited symbol in inventory order. Decide grades these values and
+// reads nothing else.
 type AuditFacts struct {
 	Baseline, Tip string
 	SpecPath      string
 	Paths         []PathState
+	Symbols       []SymbolState
 	Diagnostics   []Diagnostic
+}
+
+// SymbolState is the audit of one cited symbol: its premise and cited owner, the declaration
+// that the baseline source and the tip types hold, and the first discrepancy with its reason.
+// An empty discrepancy is an exact match at both identities.
+type SymbolState struct {
+	Premise           string
+	Owner             ownership.Owner
+	Baseline, Current ownership.Declaration
+	Discrepancy       ownership.Discrepancy
+	Reason            string
 }
 
 // DriftEntry is one changed member. Before and After are the paths at the two identities,
@@ -94,6 +109,7 @@ const (
 	StageTipSpec      = "tip spec"
 	StageMembers      = "audit members"
 	StageSpecial      = "special source"
+	StageSymbol       = "cited symbol source"
 )
 
 // Error is a collection refusal: the stage that failed, the subject it read, and the cause.
