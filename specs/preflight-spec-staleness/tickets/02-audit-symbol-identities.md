@@ -1,7 +1,7 @@
 # Audit cited symbol identities through the typed loader
 
 Blocked by: 01-audit-source-drift.md
-Writes: internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/ownership/helpers.go, internal/preflight/ownership/ownership.go, internal/preflight/ownership/premises_fixture_test.go, internal/preflight/ownership/source_test.go, internal/preflight/ownership/symbols.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
+Writes: internal/consumers/loader_test.go, internal/consumers/resolve.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/ownership/helpers.go, internal/preflight/ownership/ownership.go, internal/preflight/ownership/premises_fixture_test.go, internal/preflight/ownership/source_test.go, internal/preflight/ownership/symbols.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
 Covers: SS13, SS14, SS15, SS16, SS17, SS18, SS19
 
 ## What to build

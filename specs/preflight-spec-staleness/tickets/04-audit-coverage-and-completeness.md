@@ -1,7 +1,7 @@
 # Audit canonical coverage and complete supported inventory
 
 Blocked by: 03-audit-test-citations.md
-Writes: internal/preflight/completion_plan_test.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
+Writes: internal/preflight/completion_plan_test.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/ownership/charge_fixture_test.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
 Covers: SS28, SS29, SS30, SS31, SS32, SS33, SS34, SS49, SS50, SS57, SS58
 
 ## What to build
