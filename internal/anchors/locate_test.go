@@ -23,7 +23,8 @@ func TestAdmissionClasses(t *testing.T) {
 			t.Errorf("%s needle %q is not admitted: %s", anchor.File, anchor.Needle, strings.Join(faults, "; "))
 		}
 	}
-	const testGuide = "## Roles\n\nRole text.\n\n## Workflow\n\nWorkflow text.\n"
+	// Workflow opens the test guide, so a needle in both sections locates in Workflow.
+	const testGuide = "## Workflow\n\nWorkflow text. Shared text.\n\n## Roles\n\nRole text. Shared text.\n"
 	words := func(n int) string { return strings.TrimSpace(strings.Repeat("word ", n)) }
 	for _, test := range []struct {
 		name   string
@@ -34,17 +35,21 @@ func TestAdmissionClasses(t *testing.T) {
 		{"forbid needs no class", Anchor{File: "a.md", Kind: Forbid, Needle: "retired form"}, true},
 		{"AP12 label with a reader", Anchor{File: "a.md", Kind: Require, Class: Label, Reader: "ticket parser", Needle: "Blocked by:"}, true},
 		{"AP12 label with an empty reader", Anchor{File: "a.md", Kind: Require, Class: Label, Needle: "Blocked by:"}, false},
-		{"AP13 route of six words", Anchor{File: "a.md", Kind: Require, Class: Route, Needle: "route through craft-gate for the gate"}, true},
-		{"AP13 route of seven words", Anchor{File: "a.md", Kind: Require, Class: Route, Needle: "route through craft-gate for the gate now"}, false},
+		{"AP13 route at the word limit", Anchor{File: "a.md", Kind: Require, Class: Route, Needle: "craft-gate " + words(routeMaxWords-1)}, true},
+		{"AP13 route over the word limit", Anchor{File: "a.md", Kind: Require, Class: Route, Needle: "craft-gate " + words(routeMaxWords)}, false},
 		{"route with no route token", Anchor{File: "a.md", Kind: Require, Class: Route, Needle: "the gate"}, false},
 		{"AP14 invariant on another file", Anchor{File: "AGENTS.md", Kind: Require, Class: Invariant, Needle: "Role text."}, false},
 		{"invariant located in Roles", Anchor{File: operatingGuide, Kind: Require, Class: Invariant, Needle: "Role text."}, true},
 		{"AP15 invariant in the Workflow section", Anchor{File: operatingGuide, Kind: RequireInSection, Class: Invariant, Section: "Workflow", Needle: "Workflow text."}, false},
 		{"AP15 invariant located in Workflow", Anchor{File: operatingGuide, Kind: Require, Class: Invariant, Needle: "Workflow text."}, false},
+		{"AP15 invariant located in Workflow and also in Roles", Anchor{File: operatingGuide, Kind: Require, Class: Invariant, Needle: "Shared text."}, false},
 		{"AP09 route row on a Workflow line", Anchor{File: operatingGuide, Kind: Require, Class: Route, Needle: "Workflow text."}, false},
 		{"AP16 command with a flag", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "Run `bench roadmap --flow` once."}, true},
 		{"AP16 command with a placeholder", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "bench coverage <spec>"}, true},
+		{"AP16 command with a quoted value", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "Run `bench idea \"text\"` once."}, true},
+		{"AP16 command with a path", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "Run `bench lint ./docs` once."}, true},
 		{"AP16 command with no bench span", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "Run the gate --full once."}, false},
+		{"AP16 flag after the closing backtick", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "Run `bench maps` before the --full pass."}, false},
 		{"AP17 needle at the bound with a code span", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "`bench test --check a b c d e f` " + words(prose.MaxSentenceWords-1)}, true},
 		{"AP17 needle over the bound", Anchor{File: "a.md", Kind: Require, Class: Command, Needle: "`bench test --check system` " + words(prose.MaxSentenceWords)}, false},
 	} {
@@ -68,6 +73,9 @@ func TestAdmissionClasses(t *testing.T) {
 	}
 }
 
+// routeMaxWords is the word limit of a ROUTE needle.
+const routeMaxWords = 6
+
 // admissionFaults applies the class shape rules to one row. guide is the operating guide
 // text, where a row with no section field locates the H2 of its needle.
 func admissionFaults(anchor Anchor, guide string) []string {
@@ -88,8 +96,8 @@ func admissionFaults(anchor Anchor, guide string) []string {
 			faults = append(faults, "label row names no reader")
 		}
 	case Route:
-		if words > 6 || !slices.ContainsFunc([]string{"/bench-", "$bench-", "craft-", "bench-craft-", "bench "}, func(token string) bool { return strings.Contains(anchor.Needle, token) }) {
-			faults = append(faults, "route needle is over six words or names no route token")
+		if words > routeMaxWords || !slices.ContainsFunc([]string{"/bench-", "$bench-", "craft-", "bench-craft-", "bench "}, func(token string) bool { return strings.Contains(anchor.Needle, token) }) {
+			faults = append(faults, fmt.Sprintf("route needle is over %d words or names no route token", routeMaxWords))
 		}
 	case Invariant:
 		if anchor.File != operatingGuide {
@@ -113,9 +121,9 @@ func inCoreSection(anchor Anchor, guide string) bool {
 	if anchor.Section != "" {
 		return slices.Contains(core, anchor.Section)
 	}
-	return slices.ContainsFunc(core, func(title string) bool {
-		body, count := MarkdownH2Sections(StripHTMLComments(guide), title)
-		return count == 1 && Satisfied(Require, body, anchor.Needle)
+	line := Locate(Require, "", anchor.Needle, guide)
+	return line != 0 && slices.ContainsFunc(core, func(title string) bool {
+		return Locate(RequireInSection, title, anchor.Needle, guide) == line
 	})
 }
 
