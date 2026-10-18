@@ -1,7 +1,7 @@
 # Add bench spec widen
 
 Blocked by: 02-delete-ownership-closure.md
-Writes: internal/spec/spec.go, internal/spec/widen.go (new), internal/spec/widen_test.go (new), internal/spec/retire.go (new), internal/spec/spec_test.go, internal/spec/retire_test.go (new), cmd/bench/main.go, cmd/bench/help_inventory_test.go, cmd/bench/command_registry_test.go, CHANGELOG.md
+Writes: internal/spec/spec.go, internal/spec/widen.go (new), internal/spec/widen_test.go (new), internal/spec/retire.go (new), internal/spec/spec_test.go, internal/spec/retire_test.go (new), cmd/bench/main.go, cmd/bench/help_inventory_test.go, cmd/bench/command_registry_test.go, CHANGELOG.md, tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/command_registry.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go
 Covers: CR23, CR24, CR25, CR26, CR27, CR28, CR29, CR30, CR31, CR32, CR33, CR34, CR35, CR36, CR37, CR38, CR39, CR40, CR41, CR42, CR43, CR44, CR45, CR46, CR47, CR48, CR49, CR50, CR51, CR52, CR53, CR54, CR92
 
 ## What to build
