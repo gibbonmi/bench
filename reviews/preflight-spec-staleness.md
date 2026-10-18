@@ -915,6 +915,72 @@
           "supersedes": [
             "ft375_ss-c1_coverage_r2"
           ]
+        },
+        {
+          "id": "ft375_ss-c1_standards_r4",
+          "performer": "claude:ft375_ss-c1_standards_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c1_standards_r4",
+            "digest": "sha256:28e2817af5d5b7a61c6c169976dc9df6f9500140c7bd0a56ffff06508088bea1",
+            "excerpt": "Standards confirm 3: pass; new: none\n\nEvidence sha256:bcd54a0b… binds. It reports current=true, dirty_record=false, source_tip 80d77348.\n\nFindings: none.\n- internal/preflight/staleness/drift_test.go:209-210. The comment rule in bench-craft-comments allows this comment. It states timelessly why only the baseline fence names the files. It has no narration and no provenance. Disposition: none. Confidence: high.\n- internal/preflight/staleness/drift_test.go:211-222. The one-source rule allows this code. The expectation `fenced` comes from the same fixture constants (`spec`, `member`, `exact`) through `modified`. It does not copy any implementation knowledge, and it makes no new fixture harness. Disposition: none. Confidence: high.\n\nNot verified: I ran no tests and no probes. The red behavior of the new exact-fence case is not shown. I did not read the drift implementation, so I cannot confirm that the expected row order matches `sorted`.\n"
+          },
+          "axis": "Standards",
+          "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
+          "tip": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c1_standards_r3"
+          ]
+        },
+        {
+          "id": "ft375_ss-c1_spec_r4",
+          "performer": "claude:ft375_ss-c1_spec_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c1_spec_r4",
+            "digest": "sha256:2ac76542744d48e103490a991b5ecae66b4cf03818699dfc9baa1a15e6b3e9ff",
+            "excerpt": "Spec confirm 3: pass; new: none\n\nThe evidence binds: current=true, dirty_record=false, source_tip 80d77348.\n\n- spec.md:112 \"Enumerate every exact fence entry and every tracked member of a fence prefix at both identities.\" Met. The new case at internal/preflight/staleness/drift_test.go:209-228 commits a baseline fence with the prefix `outside/fenced/` and the exact entry `outside/exact.txt`, using SpecBody's variadic extra fence lines (preflighttest/fixture.go:121). The tip drops both entries and changes both files. The case asserts that the drift rows are exactly the spec, the member, and the exact file. This closes C1b. Confidence 8.\n- No production change. The delta touches only drift_test.go, reviews/preflight-spec-staleness.md, and the spec's completion-plan JSON. The test edit only widens the existing fence case, and no assertion in SS1–12, SS35–40, SS51, SS52, or SS56 was removed. Confidence 8.\n\nNot verified: I ran no tests or probes and saw no recorded red for the exact-token mutation. I did not check commits c585f9d..80d77348.\n"
+          },
+          "axis": "Spec",
+          "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
+          "tip": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c1_spec_r3"
+          ]
+        },
+        {
+          "id": "ft375_ss-c1_coverage_r4",
+          "performer": "claude:ft375_ss-c1_coverage_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c1_coverage_r4",
+            "digest": "sha256:4178bfcb78946ab3df4e1547b15335a89f259f8ab91b4ac726c073fd84217929",
+            "excerpt": "Coverage confirm 3: C1b closed; new: none\n\nThe evidence check binds (current=true, dirty_record=false, source_tip 80d77348). After the probe, `git status --short` is empty.\n\n**Probe:** bit, restored yes.\n- Site: internal/preflight/staleness/collect.go:136, in `members`. The mutation honours an exact match only for the spec path (`&& (member.Path != entry || entry == entries[0])`).\n- Run: `--package ./internal/preflight/... --run 'TestDrift|TestAudit'`. TestDriftIdentity failed.\n\n**Findings:** none blocking.\n- Advice A1. Input: the probe above. Break: the first failure is the claim-drift assertion at drift_test.go:193, not the new exact-fence case at drift_test.go:209-226. The probe therefore does not show that the new case bites on its own. With the two earlier bites, I judge C1b closed. Disposition: optional advice under the bounded repair policy. Confidence 6.\n\n**Not verified:** a probe aimed only at exact fence tokens through `tickets.WritesPath`, the full package run, and the gate.\n"
+          },
+          "axis": "Coverage",
+          "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
+          "tip": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c1_coverage_r3"
+          ]
         }
       ]
     }
@@ -1038,3 +1104,21 @@ Count: 0. Worst: none.
 Count: 1. Worst: C1b.
 
 - C1b (auto-fix, confidence 7): no test drops an exact fence entry that only the baseline declares. A probe that removes the baseline exact tokens was silent (spec line 112).
+
+## SS-C1 confirming round 3
+
+Repair cycle 3 closed C1b. The coordinator probe made both passes read the tip fence tokens, and TestDriftIdentity failed with restored yes. All three axes pass, and no SS-C1 finding stays open. SS-C1 used three repair cycles, one past the allowance under --auto-approve.
+
+## Standards
+
+Count: 0. Worst: none.
+
+## Spec
+
+Count: 0. Worst: none.
+
+## Coverage
+
+Count: 0. Worst: none.
+
+Advice: the Coverage probe in members failed first at the claim-drift assertion, not at the new exact-fence case.
