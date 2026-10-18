@@ -1,0 +1,33 @@
+# Delete the ownership closure and the charge-premises row
+
+Blocked by: 01-delete-proposal-and-breakdown-forms.md
+Writes: internal/preflight/closure.go, internal/preflight/tree_probe.go (new), internal/preflight/decision.go, internal/preflight/decision_test.go, internal/preflight/gather.go, internal/preflight/system_tag.go, internal/preflight/command_build_test.go, internal/preflight/anchor_closure_test.go (deleted), internal/preflight/charge_cells_test.go, internal/preflight/charge_test.go, internal/preflight/ownership/closure.go (deleted), internal/preflight/ownership/effects.go (deleted), internal/preflight/ownership/ownership.go, internal/preflight/ownership/producers.go, internal/preflight/ownership/arguments.go, internal/preflight/ownership/imports.go, internal/preflight/ownership/helpers.go, internal/preflight/ownership/members.go, internal/preflight/ownership/deletion.go, internal/preflight/ownership/premises.go, internal/preflight/ownership/sizing.go, internal/preflight/ownership/evidence.go, internal/preflight/ownership/authority_test.go, internal/preflight/ownership/premises_test.go, internal/preflight/ownership/effects_test.go, internal/preflight/ownership/source_test.go, internal/preflight/ownership/parameter_grammar_test.go, internal/preflight/ownership/kitrow_test.go, internal/preflight/ownership/charge_fixture_test.go, internal/preflight/ownership/premises_fixture_test.go, internal/preflight/ownership/merge_fixture_test.go, internal/preflight/ownership/fieldwrites_test.go, internal/preflight/ownership/ownershiptest/repo.go, internal/preflight/ownership/inventorytest/inventory.go, internal/systemtest/charge_evidence_test.go, internal/preflight/staleness/completeness_test.go, internal/preflight/staleness/inventory_test.go, internal/tickets/registry_data.go, internal/tickets/registry_data_test.go, internal/tickets/writes.go, internal/tickets/writes_test.go, internal/conformance/ticket_grammar_test.go, internal/canary/pins.go (deleted), internal/anchors/references.go (deleted), internal/anchors/references_test.go (deleted), internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-spec/references/map-discipline.md
+Covers: CR01, CR02, CR03, CR04, CR05, CR06, CR11, CR12, CR13, CR14, CR15, CR16, CR17, CR18, CR19, CR20, CR21, CR22, CR89, CR96
+
+## What to build
+
+Build preflight stops the closure prediction. `Decide` stops calling the closure rows, and the closure kinds, projections, and messages leave the preflight package. The `charge-premises` row goes, so a build charge prepares evidence for an unproved current premise. `Facts.Ownership` and `Facts.KitObligations` go, because ticket 01 removed their last readers outside the closure.
+
+The ownership package loses its closure half: `Requirement`, `Kind`, the collection stages, the closure walk and loader, the grammar-effects chain, the caller and liveness censuses, `OwnedPaths`, and `Owned`. `Collect` keeps the premise collectors, the manifest, `Symbols`, `ChargeReadiness`, and `SubjectPaths` for `--audit-spec`. The audit reports no closure diagnostic. Only the audit kind gathers the snapshot, so a build verdict reads no canary inventory and no anchor registry.
+
+The binding registry in `internal/tickets` goes, and the `ticket-grammar` check loses its binding-table grader and keeps its ticket-folder sweep. `canary.Pins` and `anchors.References` go with the closure loader, their only production caller. The canary inventory and the anchor registry formats stay unchanged, because the pre-FT293 landing broker still parses them.
+
+The clean-path refusal moves into `tickets.ParseWrite`. An entry with a `..` segment, an absolute entry, or an unclean spelling is a grammar error, so `tickets-parse` reds it. The premise collectors that called the closure's clean-path predicate call the grammar's rule.
+
+Kept helpers stay callable: the tree probe and `treeHolds` feed `writes-resolve` and `kit-pin`, and `deletedBefore` and `buildDeletedPaths` feed `writes-resolve`. Move them to `tree_probe.go` if `closure.go` no longer fits its name. `systemTagged` and `newSystemTest` keep their caller in the tree probe.
+
+The guidance drops the `*-closure` clause from the implement-spec staleness route and the fence-closure promise from map discipline. A forbid anchor reds a restored `*-closure` clause.
+
+Contract for ticket 04: this ticket leaves `fence-writes`, `implicitEntries`, `FenceEntries`, and the `ownership fences empty` refusal in place. The row lists that this ticket pins still name `fence-writes`.
+
+## Acceptance
+
+- [ ] The all-green build verdict, the ticket-gated row list, and the build grammar fixture list no closure row.
+- [ ] A build charge exits 0 for a ticket that writes a fixture-pinned path without its fixture.
+- [ ] A build charge exits 0 for an unproved current premise, and its verdict holds no `charge-premises` row.
+- [ ] `--audit-spec` keeps its premise and manual-claim diagnostics and reports no `kit-registry` diagnostic.
+- [ ] `bench preflight build` returns a verdict when the canary inventory does not parse.
+- [ ] `writes-resolve`, `kit-pin`, and `rows-owned` keep their reds.
+- [ ] `tickets.ParseWrite` refuses a `..` entry and an absolute entry, and `bench preflight build` exits 1 for a `../outside.txt` entry whose file exists outside the repository.
+- [ ] The `ticket-grammar` check still reds a dangling `Blocked by:` sibling.
+- [ ] `bench-implement-spec.md` holds no `*-closure` text, and its line count stays at or below its budget row.

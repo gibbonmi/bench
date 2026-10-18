@@ -49,6 +49,7 @@ Harder chunks: CR3.
 11. As a maintainer, I want `writes-resolve`, `kit-pin`, and `rows-owned` to keep their verdicts, so that the removal weakens no kept check.
 12. As a maintainer, I want the ticket grammar to refuse an unclean `Writes:` path, so that the clean-path refusal survives the closure that owned it.
 13. As a maintainer, I want the preflight row-list pins to name the new row order, so that a returned closure row reds a test.
+52. As a maintainer, I want the `ticket-grammar` check to keep its ticket-folder sweep when its binding-table grader goes, so that the gate still grades every staged ticket.
 
 ### A gate-found need widens a ticket's expected writes
 
@@ -101,7 +102,7 @@ Harder chunks: CR3.
 
 ### The removal
 
-The closure family goes as one unit. `Decide` stops calling `closureRows`, and the closure kinds, the missing-closure projection, and the closure messages leave the preflight package. The ownership package loses `Requirement`, `Kind`, the collection stages, the closure walk, the grammar-effects chain, the caller and liveness censuses, `OwnedPaths`, `Owned`, `Unordered`, and the uncited projection. The binding registry in `internal/tickets` goes with it, because only the closure reads `BindingRules` and `BoundFiles`.
+The closure family goes as one unit. `Decide` stops calling `closureRows`, and the closure kinds, the missing-closure projection, and the closure messages leave the preflight package. The ownership package loses `Requirement`, `Kind`, the collection stages, the closure walk, the grammar-effects chain, the caller and liveness censuses, `OwnedPaths`, `Owned`, `Unordered`, and the uncited projection. The binding registry in `internal/tickets` goes with it, because only the closure reads `BindingRules` and `BoundFiles`. The `ticket-grammar` conformance check keeps its ticket-folder sweep and loses its binding-table grader, because that grader only keeps the closure's table valid (`internal/conformance/ticket_grammar_test.go:121-154`). No canary pins the grader. The canary pin reader `canary.Pins` and the anchor reference reader `anchors.References` also go, because the closure loader is their only production caller (`internal/preflight/ownership/closure.go:91`, `:95`). The canary inventory and the anchor registries keep their formats (CR76).
 
 The premise checks mean the `charge-premises` row and its tests. The premise collectors, the planning-facts manifest, `Snapshot.Symbols`, `ChargeReadiness`, and `SubjectPaths` stay, because `--audit-spec` reads them. `Collect` keeps its premise half and loses its closure half and its closure diagnostics. Only the audit kind gathers the snapshot, because no other verdict row reads it after the charge-premises row goes. This call is flagged for reviewer veto.
 
@@ -131,7 +132,7 @@ The ownership fence now names the union of the ticket `Writes:` entries plus the
 
 The gather no longer refuses an empty fence section. An empty union authorizes only the implicit entries, so it stays fail-closed.
 
-The `fence-writes` row goes, because its fence side no longer exists. The charge evidence `fence` block lists the ticket union in ticket and entry order without duplicates. The block keeps its name and field, and its description and the charge evidence format reference name the ticket union.
+The `fence-writes` row goes, because its fence side no longer exists. The charge evidence `fence` block lists the ticket union in ticket and entry order without duplicates. Each block entry is the path that `tickets.WritesPath` projects, so the block drops a trailing `/` and the `(new)` marker, as the authorizing match does. The block keeps its name and field, and its description and the charge evidence format reference name the ticket union.
 
 The staleness audit scope keeps the spec and its tickets folder. It replaces the fence-section entries with the `Writes:` entries of each ticket at the base and at the tip, read from committed objects. The audit already reads ticket objects at both identities for their `Covers:` tokens.
 
@@ -167,7 +168,7 @@ Each retired command sentence gets one forbid anchor. Each edited budgeted file 
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| CR1 / 01-delete-proposal-and-breakdown-forms.md, 02-delete-ownership-closure.md | Preflight predicts no closure, checks no charge premises, and offers no proposal or breakdown form | CR01-CR22, CR80-CR85, CR89, CR91, CR93, CR95 | preflight decision, build, charge, and audit tests, the ticket grammar test, the help inventory, and the ticket-slicing anchors | no |
+| CR1 / 01-delete-proposal-and-breakdown-forms.md, 02-delete-ownership-closure.md | Preflight predicts no closure, checks no charge premises, and offers no proposal or breakdown form | CR01-CR22, CR80-CR85, CR89, CR91, CR93, CR95, CR96 | preflight decision, build, charge, and audit tests, the ticket grammar test, the help inventory, and the ticket-slicing anchors | no |
 | CR2 / 03-add-spec-widen-verb.md | `bench spec widen` widens one ticket inside the signed-off scope | CR23-CR54, CR92 | the spec widen tests, the spec help test, and the help inventory | no |
 | CR3 / 04-derive-fence-from-tickets.md, 05-retire-spec-fence-section.md | The ticket union is the fence, and no code reads a spec fence section | CR55-CR72, CR75-CR77, CR86, CR87, CR90 | landing, preflight, charge, audit, coverage, and refusal route tests, and the ticket-slicing anchors | yes |
 | CR4 / 06-align-writes-guidance.md | The guidance states one `Writes:` rule beside the widening verb | CR78, CR79, CR88, CR94 | the guidance anchors and the budget and prose checks | no |
@@ -314,6 +315,7 @@ The landing rows run through the landing surface tests, which already seed ticke
 | CR93 | 48 | The `[Unreleased]` section holds no entry that adds `--breakdown` | review-owned: the Spec axis reads the entry | Review owns changelog prose |
 | CR94 | 49 | Each budgeted guidance file that the build edits holds a line count at or below its budget row | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | A net addition to a full file exceeds its limit and reds the live-tree budget test |
 | CR95 | 46 | The anchor registry holds no require row for the `--propose-writes` sentence | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A kept require row reds the live check after the sentence goes |
+| CR96 | 52 | The `ticket-grammar` check reds a ticket whose `Blocked by:` names an absent sibling | `internal/conformance/ticket_grammar_test.go` (`TestTicketGrammarSweepRedsDanglingBlocker`) | A deletion of the whole check with its binding grader drops this red |
 
 Not covered: story 50 — reviewed exclusion; the `Fence-expansion evidence` section and the paired slicing readers stay unchanged, and review grades that no ticket touches them.
 Not covered: story 51 — reviewed exclusion; FT380 owns plan-commit grading, and no ticket here changes `bench commit --preflight-build`.
