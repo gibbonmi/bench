@@ -258,16 +258,14 @@ func notApplicable(name string) CheckResult {
 	return CheckResult{Check: name, Verdict: verdictNA}
 }
 
-// exempt marks row as one whose own applicability rule decides whether this mode or source
-// requires it.
+// exempt returns row with its CheckResult.exempt flag set.
 func exempt(row CheckResult) CheckResult {
 	row.exempt = true
 	return row
 }
 
-// requiredGreen reports whether every required row of the verdict is green. A row is
-// required unless it is exempt and not applicable, so a ticket row that an absent tickets
-// folder holds not-applicable keeps the conjunction false. Only this conjunction lets an
+// requiredGreen reports whether every row of the verdict is green or is an exempt
+// not-applicable row; CheckResult.exempt defines exempt. Only this conjunction lets an
 // audit omit manual review.
 func (v Verdict) requiredGreen() bool {
 	for _, c := range v.Checks {

@@ -20,8 +20,9 @@ reviewer approval or the commitment.
 - Partition: one delegate audits the spec body and its decision map. Each other
   delegate audits two or three tickets of one chunk or of adjacent chunks.
 - Inputs: the spec path, the reviewed graph commit, the slice, and each
-  preflight red row that the pass took. The inputs also hold every drift path,
-  red check, and unsupported claim location of the audit response in the slice.
+  preflight red row that the pass took. The inputs also hold the audit items of
+  the slice: every drift path, red check, and unsupported claim location of the
+  audit response.
   Before the charge, the orchestrator resolves each `audit_diagnostics` subject
   to the location of that item in the planning inventory.
 
@@ -29,8 +30,8 @@ Send every delegate in one dispatch, so that the slices run in parallel.
 
 ## Procedure for each delegate
 
-1. List the drift: each drift path, red check, and unsupported claim location
-   of the charge. Add each file that a taken preflight red row names.
+1. List the drift: each audit item of the charge. Add each file that a taken
+   preflight red row names.
 2. If the drift list is empty, return the verdict current and stop.
 3. Examine each current-code claim of the slice against `main`: paths, symbols,
    flags, output shapes, test names, cited lines, and current-behavior premises.
@@ -61,10 +62,10 @@ The amendment corrects stale claims, citations, fences, and line numbers, and
 it removes landed work. A late occurrence that the spec neither covers nor
 excludes gets an `Out of scope` line or an acceptance row. A defect outside the
 spec goes to `bench learning`. A finding outside the plan-expansion scope of
-`.bench/BENCH.md` stops the phase. A material acceptance change returns to the
-reviewer.
+`.bench/BENCH.md`, including a material acceptance change, stops the phase.
 
 A gap in the planning metadata is not an approval. An amendment of that
 metadata moves the reviewed subject, so it takes the enabling plan commit. The
-orchestrator then reruns the audit with that commit as the reviewed graph
-commit. The amendment never marks an unsupported claim green.
+orchestrator then reruns the audit. The reviewed graph commit stays the
+`--base`, and the plan commit is the `--source-tip`, so the audit shows the
+amendment as drift. The amendment never marks an unsupported claim green.
