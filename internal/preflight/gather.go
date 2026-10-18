@@ -107,7 +107,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	}
 	var audited staleness.AuditFacts
 	if audit {
-		if audited, ownershipFailure = collectAudit(root, content, collected, snapshot); ownershipFailure != nil {
+		if audited, ownershipFailure = collectAudit(root, collected, snapshot); ownershipFailure != nil {
 			return Facts{}, ownershipFailure
 		}
 	}
@@ -148,11 +148,11 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	})), nil
 }
 
-// collectAudit reads the staleness facts of the gathered source pair against the spec's
-// planning-facts inventory and the closure snapshot of the same pair. A refused collection
-// refuses the gather, so no partial audit reaches the verdict.
-func collectAudit(root string, content []byte, source ownership.Source, snapshot ownership.Snapshot) (staleness.AuditFacts, *BootstrapFailure) {
-	audited, err := staleness.Collect(root, source, ownership.ParseManifest(content), snapshot)
+// collectAudit reads the staleness facts of the gathered source pair and the closure snapshot
+// of the same pair. A refused collection refuses the gather, so no partial audit reaches the
+// verdict.
+func collectAudit(root string, source ownership.Source, snapshot ownership.Snapshot) (staleness.AuditFacts, *BootstrapFailure) {
+	audited, err := staleness.Collect(root, source, snapshot)
 	var refusal *staleness.Error
 	if errors.As(err, &refusal) {
 		return staleness.AuditFacts{}, &BootstrapFailure{refusal.Stage + " refused", refusal.Error()}

@@ -3,7 +3,6 @@ package staleness
 import (
 	"fmt"
 	"path"
-	"reflect"
 	"slices"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -18,13 +17,11 @@ var unsupported = []string{CheckCitedSymbols, CheckCitedTests}
 
 // Collect reads the audit scope of the committed pair that source names at root. It reads
 // the spec and its planning-facts inventory at both identities from committed objects, never
-// from the checkout. manifest is the inventory that sourceFacts graded, and sourceFacts is the
-// closure snapshot of the same pair, whose diagnostics stay open in the audit. A manifest that
-// is not the committed tip spec's own inventory changes no scope entry; it is one diagnostic,
-// because sourceFacts then grades other bytes. An absent or special spec at either identity,
-// an unreadable tree, or a member of the scope that is no regular file refuses the collection
-// with an *Error and no facts.
-func Collect(root string, source ownership.Source, manifest ownership.Manifest, sourceFacts ownership.Snapshot) (AuditFacts, error) {
+// from the checkout. sourceFacts is the closure snapshot of the same pair, whose diagnostics
+// stay open in the audit. An absent or special spec at either identity, an unreadable tree,
+// or a member of the scope that is no regular file refuses the collection with an *Error and
+// no facts.
+func Collect(root string, source ownership.Source, sourceFacts ownership.Snapshot) (AuditFacts, error) {
 	baseline, err := readSpec(root, source.Base, source.SpecPath, StageBaselineSpec)
 	if err != nil {
 		return AuditFacts{}, err
@@ -33,8 +30,7 @@ func Collect(root string, source ownership.Source, manifest ownership.Manifest, 
 	if err != nil {
 		return AuditFacts{}, err
 	}
-	committed := ownership.ParseManifest(current)
-	entries, unread := scope(source.SpecPath, [][]byte{baseline, current}, []ownership.Manifest{ownership.ParseManifest(baseline), committed})
+	entries, unread := scope(source.SpecPath, [][]byte{baseline, current}, []ownership.Manifest{ownership.ParseManifest(baseline), ownership.ParseManifest(current)})
 	before, err := members(root, source.Base, entries)
 	if err != nil {
 		return AuditFacts{}, err
@@ -46,9 +42,6 @@ func Collect(root string, source ownership.Source, manifest ownership.Manifest, 
 	facts := AuditFacts{Baseline: source.Base, Tip: source.Tip, SpecPath: source.SpecPath, Paths: union(before, after)}
 	for _, diagnostic := range sourceFacts.Diagnostics {
 		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: diagnostic.ID, Reason: diagnostic.Reason})
-	}
-	if !reflect.DeepEqual(manifest, committed) {
-		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: ownership.MetadataLabel, Reason: "the closure facts grade an inventory that is not the committed tip spec's own"})
 	}
 	facts.Diagnostics = append(facts.Diagnostics, unread...)
 	for _, check := range unsupported {

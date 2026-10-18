@@ -31,20 +31,19 @@ func inventorySpec(slug string, premises, seams []string) string {
 }
 
 // TestAuditCommittedInventory covers the committed tip inventory. It calls Collect directly,
-// because the gather refuses a dirty or moved checkout before a checkout inventory can differ
-// from the committed tip spec.
+// because the gather takes the source tip from the head of a clean checkout, so no command
+// input makes a checkout inventory differ from the committed tip spec.
 func TestAuditCommittedInventory(t *testing.T) {
 	root, slug := preflighttest.SeedAdmitted(t)
 	write(t, map[string]string{"outside/claim_test.go": "package outside\n"})
 	base := commitAll(t, "unclaimed source")
 	write(t, map[string]string{"outside/claim_test.go": "package outside\n\n// changed\n"})
 	tip := commitAll(t, "unclaimed source changes")
-	// Only this inventory names the source, and no committed spec holds it.
-	checkout := ownership.ParseManifest([]byte(inventorySpec(slug, nil, []string{seamClaim(slug, "outside/claim_test.go")})))
-	facts, err := staleness.Collect(root, ownership.Source{Base: base, Tip: tip, SpecPath: specPath(slug)}, checkout, ownership.Snapshot{})
-	claimed := slices.ContainsFunc(facts.Paths, func(state staleness.PathState) bool { return state.Path == "outside/claim_test.go" })
-	held := slices.ContainsFunc(facts.Diagnostics, func(d staleness.Diagnostic) bool { return d.Subject == ownership.MetadataLabel })
-	if err != nil || claimed || !held {
-		t.Fatalf("checkout inventory = (%v), scope holds its claim %t, diagnostic %t; want the committed tip scope and a %s diagnostic", err, claimed, held, ownership.MetadataLabel)
+	// The clean checkout moves past the tip to a spec whose inventory alone names the source.
+	write(t, map[string]string{specPath(slug): inventorySpec(slug, nil, []string{seamClaim(slug, "outside/claim_test.go")})})
+	commitAll(t, "checkout claims the source")
+	facts, err := staleness.Collect(root, ownership.Source{Base: base, Tip: tip, SpecPath: specPath(slug)}, ownership.Snapshot{})
+	if claimed := slices.ContainsFunc(facts.Paths, func(state staleness.PathState) bool { return state.Path == "outside/claim_test.go" }); err != nil || claimed {
+		t.Fatalf("checkout inventory = (%v), scope holds its claim %t; want the committed tip scope alone", err, claimed)
 	}
 }
