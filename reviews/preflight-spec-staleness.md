@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/preflight-spec-staleness/spec.md",
-  "plan_digest": "sha256:753536d2bf33d86b3914378d86e0198da619488b6aea34665dc430da494ccf3f",
+  "plan_digest": "sha256:b708c006ba7e6d0fc58292f1959a03abb98700a1ce897eb9259a5e43762c3af0",
   "implementation_session": "",
   "chunks": [
     {
@@ -2097,9 +2097,9 @@
     {
       "id": "SS-C3",
       "base": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
-      "tip": "d7f786c2b6532683fd279982f4ddb8051ee084db",
-      "plan_digest": "sha256:753536d2bf33d86b3914378d86e0198da619488b6aea34665dc430da494ccf3f",
-      "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+      "tip": "31d90dc4d3a76886bf6737dc47b338207441fb09",
+      "plan_digest": "sha256:b708c006ba7e6d0fc58292f1959a03abb98700a1ce897eb9259a5e43762c3af0",
+      "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
       "acceptance_rows": [
         "SS41",
         "SS42",
@@ -2686,6 +2686,197 @@
           "requirement": "ss-native-diagnostic",
           "command": "/bench-implement-spec specs/example/spec.md",
           "exit_code": 0
+        },
+        {
+          "id": "ft375_t05_rep2-ss-05-focused",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t05_rep2",
+            "digest": "sha256:235ce815fb00967d069f645a61700fc1790dea1903caf1806ee3b03ada84234c",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestAuditDecision/SS43_diagnostic_only,11,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestAuditDecision|TestAuditApplicability,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,924\nmutant_report[1]{mutant}:\n  1\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,1526,11\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestAuditDecision/SS43_diagnostic_only,\"decision_test.go:124: diagnostic-only audit = (0), want exit 0, complete false, and manual review:\",19\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-05-focused",
+          "command": "bench test --package ./internal/preflight/... --run 'TestAuditDecision|TestAuditApplicability'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "ss-05-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft375_t05_rep2",
+              "digest": "sha256:235ce815fb00967d069f645a61700fc1790dea1903caf1806ee3b03ada84234c",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestAuditDecision/SS43_diagnostic_only,11,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestAuditDecision|TestAuditApplicability,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,924\nmutant_report[1]{mutant}:\n  1\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,1526,11\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestAuditDecision/SS43_diagnostic_only,\"decision_test.go:124: diagnostic-only audit = (0), want exit 0, complete false, and manual review:\",19\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft375_t05_rep2-ss-05-check-1",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t05_rep2",
+            "digest": "sha256:a5171141a815905341bc20935cc0f64c38e96968bd1d56d25c2a8ccf71eb95f3",
+            "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --package ./internal/preflight/...\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,31d90dc4d3a76886bf6737dc47b338207441fb09,true\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,52342,416\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,29987,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,53729,271\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,6937,67\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-05-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t05_rep2-ss-05-check-2",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t05_rep2",
+            "digest": "sha256:8629942ed84b64a09350ac283ab7971dd3ca2589e1d0cc5029df66faf11deba6",
+            "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,31d90dc4d3a76886bf6737dc47b338207441fb09,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20355,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-05-check-2",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t05_rep2-ss-05-check-3",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t05_rep2",
+            "digest": "sha256:62d56abe3491213d857318afebd6ca3a33f4df31fee1e037e35ccda80ee7f872",
+            "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --check docs-currency-workflow\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,31d90dc4d3a76886bf6737dc47b338207441fb09,true\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5752,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-05-check-3",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t05_rep2-ss-05-check-4",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t05_rep2",
+            "digest": "sha256:3be28db2220ba96d188ff43e93d86e36df72bc0ba5f491992c8c92d0abde15ca",
+            "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --check ticket-grammar\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,31d90dc4d3a76886bf6737dc47b338207441fb09,true\ncheck[1]{name,kind,tests_run,subjects}:\n  ticket-grammar,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5152,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-05-check-4",
+          "command": "bench test --check ticket-grammar",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t05_rep2-ss-05-check-5",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t05_rep2",
+            "digest": "sha256:4475b6835da2c438c50054ed544095ec22f4175a090465c7746fece03a802fef",
+            "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,31d90dc4d3a76886bf6737dc47b338207441fb09,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17929,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-05-check-5",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t05_rep2-ss-05-check-6",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t05_rep2",
+            "digest": "sha256:8a3c4018e3192021c836b4b0399a16b79ba8bdef8c1ac949c1a7a22f8d463b36",
+            "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --package ./internal/anchors\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,31d90dc4d3a76886bf6737dc47b338207441fb09,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,112,128\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-05-check-6",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t05_rep2-ss-05-check-7",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t05_rep2",
+            "digest": "sha256:1d6df89f03b1d159724d85212ab47b1c3cadd400cc816933ddb25f3399f0a149",
+            "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,31d90dc4d3a76886bf6737dc47b338207441fb09,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,41835,1118\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ss-05-check-7",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t05_rep2-ss-native-clean",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_native_clean_rep1",
+            "digest": "sha256:b59231645c29953001992e5768d4bded0b17bf16e9c0350ca8e261d5a57dfa54",
+            "excerpt": "Native session: fresh Claude subagent (opus / medium) following /bench-implement-spec specs/example/spec.md in the approved clean fixture.\nFixture repository: /tmp/claude-1000/-home-mgibs-workspace-bench/cfb50f76-267a-44ad-a650-627a4d292729/scratchpad/ft375-native-clean\nReviewed graph commit and tip: 03ab5a1ae5c2730ce2672d901c4bba1ab877d731\nKit source of the sealed binary and the copied guidance: d7f786c2b6532683fd279982f4ddb8051ee084db\n\n## Result\n**Decision: omit the staleness pass.** The audit response has `staleness{complete=true, manual_required=false}`. The sentence that decided it, from `W/.agents/skills/bench-implement-spec/references/staleness-pass.md` § Omission:\n\n> \"Omit the pass only when the audit response states `complete` true and `manual_required` false.\"\n\nNo pass is charged, so I composed no delegate charge. `audit_diagnostics` was empty, so no subject needed resolving to a planning-inventory location. I stopped before any write, plan amendment, delegate dispatch, or git write.\n\n## 1. Commands, in order\nHere `R` is the wrapper, `W` is the assignment worktree and `H` is the Bench home given in the charge.\n1. `sh $R $W $H preflight build example` exited **0**.\n2. `sh $R $W $H preflight build example --audit-spec --base 03ab5a1ae5c2730ce2672d901c4bba1ab877d731 --source-tip 03ab5a1ae5c2730ce2672d901c4bba1ab877d731` exited **0**.\n\n## 2. Verbatim responses\nCommand 1:\n```\ntree[1]{target,head,dirty}:\n  example,\"03ab5a1ae5c2730ce2672d901c4bba1ab877d731\",false\nphase: build\nspec: specs/example/spec.md\nchecks{green=14,not_applicable=2,red=0}\n```\nCommand 2, spill file content (ft375-native-clean-home/responses/ft375-native-clean-2871351171/d2748d071a312115476223948fbd8a92/1792337734711681940-e057b7e29367d629.out):\n```\nphase: build\nspec: specs/example/spec.md\nsource[1]{base,tip}:\n  \"03ab5a1ae5c2730ce2672d901c4bba1ab877d731\",\"03ab5a1ae5c2730ce2672d901c4bba1ab877d731\"\nchecks{green=15,not_applicable=2,red=0}\nspec_checks[3]{check,state}:\n  spec-drift,green\n  cited-symbols,green\n  cited-tests,green\ndrift[0]{before,after,kind,before_object,after_object}:\naudit_diagnostics[0]{subject,reason}:\nstaleness[1]{complete,manual_required,baseline,tip}:\n  true,false,\"03ab5a1ae5c2730ce2672d901c4bba1ab877d731\",\"03ab5a1ae5c2730ce2672d901c4bba1ab877d731\"\n```\n\n## 3. Decision trace\n- The field that decided it: `staleness{complete,manual_required}` = `true,false`. Under the omission rule, nothing else can permit an omission.\n- drift[0], audit_diagnostics[0] and spec_checks (all green) would only have filled a charge's inputs. checks red=0 meant no red row needed the pass to take it.\n- Exit code: not used. The omission rule says \"An exit zero, an empty table, or the audit result of another consumer does not permit that omission.\"\n- Reviewer approval: I did not treat the audit as reviewer approval or as the commitment. The guidance says \"An audit result never supplies reviewer approval or the commitment.\"\n\n## 4. Next action\nWith no pass there are no amendments, so there is no enabling plan commit or audit rerun. The next step is the version 2 delegate plan amendment with author limit 1, before the first dispatch, then `bench preflight build example --charge --ticket <first ticket> --base 03ab5a1… --source-tip <tip>` and that ticket's fresh author dispatch.\n"
+          },
+          "requirement": "ss-native-clean",
+          "command": "/bench-implement-spec specs/example/spec.md",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t05_rep2-ss-native-diagnostic",
+          "performer": "claude:ft375_t05_rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_native_diagnostic_rep1",
+            "digest": "sha256:daa63c6983a835ef46e6e39fdb2feeee56e484ff9ea2d1f4dbee94db5f2c9478",
+            "excerpt": "Native session: fresh Claude subagent (opus / medium) following /bench-implement-spec specs/example/spec.md in the approved diagnostic fixture.\nFixture repository: /tmp/claude-1000/-home-mgibs-workspace-bench/cfb50f76-267a-44ad-a650-627a4d292729/scratchpad/ft375-native-diagnostic\nReviewed graph commit and tip: 782f0fbb9f0ed55e33cbad17fd7f8b1921347b10\nKit source of the sealed binary and the copied guidance: d7f786c2b6532683fd279982f4ddb8051ee084db\n\n## Result\n**Decision: charge the staleness pass.** The audit response gives `staleness{complete=false, manual_required=true}`, so the omission condition does not hold. The deciding sentence is in `.agents/skills/bench-implement-spec/references/staleness-pass.md`, under \"Omission\":\n> \"Omit the pass only when the audit response states `complete` true and `manual_required` false.\"\n\nThe command file `.agents/commands/bench-implement-spec.md` sets this as the default: \"charge the staleness pass that ... staleness-pass.md states, or omit it only under its omission rule.\"\n\n## 1. Commands, in order\nAll commands ran through `sh .../ft375-t05-run.sh <W> <H> ...`.\n1. `preflight build example`: exit 0\n2. `preflight build example --audit-spec --base 782f0fbb9f0ed55e33cbad17fd7f8b1921347b10 --source-tip 782f0fbb9f0ed55e33cbad17fd7f8b1921347b10`: exit 0\n\n## 2. Verbatim responses\nCommand 1:\n```\ntree[1]{target,head,dirty}:\n  example,782f0fbb9f0ed55e33cbad17fd7f8b1921347b10,false\nphase: build\nspec: specs/example/spec.md\nchecks{green=14,not_applicable=2,red=0}\n```\nCommand 2, spill file content (ft375-native-diagnostic-home/responses/ft375-native-diagnostic-4277617450/71de9d44af177af62a2f14327cc5a6f4/1792337734204553720-18260587c06b7dec.out):\n```\nphase: build\nspec: specs/example/spec.md\nsource[1]{base,tip}:\n  782f0fbb9f0ed55e33cbad17fd7f8b1921347b10,782f0fbb9f0ed55e33cbad17fd7f8b1921347b10\nchecks{green=15,not_applicable=2,red=0}\nspec_checks[3]{check,state}:\n  spec-drift,green\n  cited-symbols,green\n  cited-tests,green\ndrift[0]{before,after,kind,before_object,after_object}:\naudit_diagnostics[1]{subject,reason}:\n  greeting-semantics,\"current-premise manual claim: The order of the prefix and the subject is a semantic claim that no collector grades.\"\nstaleness[1]{complete,manual_required,baseline,tip}:\n  false,true,782f0fbb9f0ed55e33cbad17fd7f8b1921347b10,782f0fbb9f0ed55e33cbad17fd7f8b1921347b10\n```\n\n## 3. Decision trace\n- Fields that decided: `staleness.complete` (false) and `staleness.manual_required` (true).\n- Fields used to build the charge: `audit_diagnostics` (one subject, `greeting-semantics`), `drift` (empty), `spec_checks` (all green, so no red check items), and `checks.red=0`.\n- Exit code: not used to decide. Both commands exited 0, and the guidance says an exit zero does not permit omission.\n- Reviewer approval: I did not treat the audit as approval. The guidance says \"An audit result never supplies reviewer approval or the commitment.\"\n- Subject resolution: `greeting-semantics` resolves through the spec's `bench-planning-facts` inventory to entry `manual_claims[0]`, applicability `current-premise`, at `specs/example/spec.md` line 10. The needle is \"The greeting keeps its current signature. Its subject follows the fixed prefix.\"\n\n## 4. Next action\nSend both delegates in one dispatch (stopped here: no dispatch, no edit, no git write).\n- Shared: read-only; spec path `specs/example/spec.md`; reviewed graph commit 782f0fbb9f0ed55e33cbad17fd7f8b1921347b10; preflight reds taken: none; procedure steps 1-6 of staleness-pass.md.\n- Delegate A (spec body and decision map): unsupported claim `greeting-semantics` at `specs/example/spec.md:10`, with its needle and reason; drift paths: none; red checks: none.\n- Delegate B (chunk c1, ticket 01-greeting.md): no audit items, so step 2 returns current.\n- After the returns: the enabling plan commit if an amendment is needed, then a rerun of `--audit-spec` with `--base 782f0fbb...` and the plan commit as `--source-tip`, then the preflight to green and the version 2 plan amendment.\n"
+          },
+          "requirement": "ss-native-diagnostic",
+          "command": "/bench-implement-spec specs/example/spec.md",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -3079,6 +3270,21 @@
     {
       "from": "sha256:6d03f44dc45b138073b455e589e291a6c44fb340fe2a82d75f6f54e6d448c442",
       "to": "sha256:753536d2bf33d86b3914378d86e0198da619488b6aea34665dc430da494ccf3f",
+      "chunk_ids": {
+        "SS-C1": [
+          "SS-C1"
+        ],
+        "SS-C2": [
+          "SS-C2"
+        ],
+        "SS-C3": [
+          "SS-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:753536d2bf33d86b3914378d86e0198da619488b6aea34665dc430da494ccf3f",
+      "to": "sha256:b708c006ba7e6d0fc58292f1959a03abb98700a1ce897eb9259a5e43762c3af0",
       "chunk_ids": {
         "SS-C1": [
           "SS-C1"
