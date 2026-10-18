@@ -158,8 +158,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT386 (LOW, decision required) — the spec stage proposes a split above a row or ticket threshold.**
 
-**FT396 (LOW) — a phase that moves its work to a new worktree releases the superseded one.**
-
 **FT397 (LOW, decision required) — a phase close names the parallel tracks that write disjoint files and cross disjoint seams.**
 
 **FT400 (MEDIUM, decision required) — a ticket author near 300k context tokens finishes its ticket, and a fresh recorded session takes later work.**
