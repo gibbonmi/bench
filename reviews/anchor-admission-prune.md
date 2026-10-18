@@ -2822,7 +2822,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "apc6-standards-r1",
+          "performer": "claude:aap_apc6_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc6_standards_r1",
+            "digest": "sha256:fbba575a38ad4eb7188adda8c806a7602f31c4aac1670f1265018d1c49398cb0",
+            "excerpt": "Standards axis, AP-C6, frozen pair b53c07e9..84c768ef; check-current current=true.\nS1 | low | .agents/skills/bench-craft-spec/SKILL.md:87 says re-cut a long needle into one row per rule; under the admission rule it is one row per admitted needle | ask-user | confidence 6\nS2 | low | projects/benchkit.md:412-413 repeats the ADR's five-class list (ADR 0012:9-13), so the list has two sources | ask-user | confidence 7\nS3 | low | the review-owns-rule-wording rationale appears in six places as short pointers to the ADR | no-op | confidence 5\nS4 | info | the gate skill removed the last-Require-guard sentence; consistent for rule sentences | no-op | confidence 4\nS5 | info | ADR 0012's Admission section holds no path and no code snippet, and the first paragraph agrees with it | no-op | confidence 8\nEvery edited sentence is within the STE bounds; no edit is outside AP39-AP45.\nCount 5. Worst: S1.\n"
+          },
+          "axis": "Standards",
+          "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "tip": "84c768effbfb25372ee022e8fb46dd790ddaecc7",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc6-spec-r1",
+          "performer": "claude:aap_apc6_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc6_spec_r1",
+            "digest": "sha256:b109bcd92cd53a6d9dcc35c28aa012fafb06b274d38228cabdddf9258086fa10",
+            "excerpt": "Spec axis, AP-C6, frozen pair b53c07e9..84c768ef; check-current current=true; AP39-AP45 met as written.\nP1 | medium | .agents/skills/bench-craft-gate/SKILL.md:73 makes the retired text of every rewritten sentence a stale form, so every prose rewrite still needs a Forbid row, and ticket 8 adds none for its own rewrites | ask-user | confidence 7\nP2 | low | the delta edits spec.md:194 (the ticket 8 assignment) and the review record, which are orchestrator bookkeeping | no-op | confidence 6\nThe ADR states the five classes, COMMAND as interim, review-owned rule wording, and one needle per family; the gate and spec skills add no line; every kept needle in the six files is intact.\nCount 2. Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "tip": "84c768effbfb25372ee022e8fb46dd790ddaecc7",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "apc6-coverage-r1",
+          "performer": "claude:aap_apc6_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dc135c60ff2db7138803272f1fd04a755e498855",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc6_coverage_r1",
+            "digest": "sha256:3281df66998bd16b408af477ab7f34c50c2e7a5769d6c912a36bee097d9ad658",
+            "excerpt": "Coverage axis, AP-C6, frozen pair b53c07e9..84c768ef; check-current current=true.\nC1 | low | delegation-discipline.md:78-79 restricts nothing, because the admission test already refuses every anchor outside the classes | auto-fix | confidence 5\nC2 | info | bench-craft-gate SKILL.md is at 120 of 120 lines and bench-craft-spec SKILL.md at 155 of 155; the delta adds none | no-op | confidence 8\nEvery kept Require needle still matches in its section; no canary copies the edited text; no other guidance asks for a rule-sentence Require row.\nNo test or probe.\nCount 2. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "tip": "84c768effbfb25372ee022e8fb46dd790ddaecc7",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3226,3 +3294,31 @@ AP-C5: 5 findings. The worst issue is C1.
 - C3 (auto-fix, confidence 5): with an empty section field, the section rule admits a needle that any core H2 holds. `specs/anchor-admission-prune/spec.md:121` says that the row uses the located H2 of its needle. The ticket 7 repair applies that rule and adds a case.
 - C4 (auto-fix, confidence 7): the recursion, receiver, and exported guards of `callers` have no test case. The ticket 6a repair adds them.
 - C5 (no-op, confidence 8): the remaining `RequireInStep` strings are a self-contained fixture.
+
+## AP-C6 repair state
+
+AP-C6: repair cycle 1 of 2 starts. Every accepted finding falls on ticket 8, so one combined repair charge carries them all. AP-C6 is the last chunk, so it runs no chunk checkpoint. No reviewer extension exists.
+
+## AP-C6 Standards
+
+AP-C6: 5 findings. The worst issue is S1.
+
+- S1 (auto-fix, confidence 6): `.agents/skills/bench-craft-spec/SKILL.md:87` re-cuts a long needle into one row per rule. Under the admission rule, the repair re-cuts it into one row per admitted needle.
+- S2 (auto-fix, confidence 7): `projects/benchkit.md:412-413` repeats the class list of ADR 0012. Row AP45 asks only for a description by the admitted classes, so the repair names ADR 0012 without a second list.
+- S3 (no-op, confidence 5): the rationale that review owns rule wording appears as short pointers at six sites, and the ADR owns it.
+- S4 (no-op, confidence 4): the gate skill dropped the last-Require-guard sentence, which is consistent with the admission rule.
+- S5 (no-op, confidence 8): the ADR section holds no path and no code snippet.
+
+## AP-C6 Spec
+
+AP-C6: 2 findings. The worst issue is P1.
+
+- P1 (auto-fix, confidence 7): `.agents/skills/bench-craft-gate/SKILL.md:73` makes the retired text of every rewritten sentence a stale form. Every prose rewrite then still needs a Forbid row, which defeats row AP40 and the decision that review owns rule wording. The repair narrows the line to two forms: a sentence that grants a retired behavior, and a rule copy at a former site. This agrees with the slicing retirement pass. Flagged for reviewer veto.
+- P2 (no-op, confidence 6): the spec and review record edits are orchestrator bookkeeping.
+
+## AP-C6 Coverage
+
+AP-C6: 2 findings. The worst issue is C1.
+
+- C1 (auto-fix, confidence 5): `.agents/skills/bench-craft-delegate/references/delegation-discipline.md:78-79` restricts nothing, because the admission test already refuses every anchor outside the classes. The repair says that a charge adds no anchor for rule wording.
+- C2 (no-op, confidence 8): the gate and spec skills are exactly at their line budgets, and the delta adds no line.
