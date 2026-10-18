@@ -128,7 +128,8 @@ func publishSealedBinary(t *testing.T, root string) string {
 // verifier call answer to nothing. This drives binarySealFacts against real
 // trees instead. A dangling dist/bench is the state the two derivations
 // disagreed on: doctor lstats and reds it, so the build preflight grades it
-// too rather than reading a broken link as no binary at all.
+// too rather than reading a broken link as no binary at all. A destination the
+// lstat cannot read is present and refused for the same reason.
 func TestBinarySealFactsGradeARootOnDisk(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -164,6 +165,16 @@ func TestBinarySealFactsGradeARootOnDisk(t *testing.T) {
 				if err := os.Symlink(filepath.Join(root, "absent-bench"), executable); err != nil {
 					t.Fatal(err)
 				}
+			},
+			present: true,
+			refused: true,
+		},
+		{
+			// A regular file at dist makes the lstat fail with a cause other than
+			// absence, without a root privilege or a permission bit.
+			name: "unreadable destination",
+			place: func(t *testing.T, root string) {
+				preflighttest.MustWriteFile(t, filepath.Dir(freshness.PublishedExecutable(root)), "not a directory")
 			},
 			present: true,
 			refused: true,
