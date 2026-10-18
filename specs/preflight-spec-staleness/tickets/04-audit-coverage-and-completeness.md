@@ -56,6 +56,8 @@ Compilation failure supplies no behavioral evidence.
 - `bench test --package ./internal/preflight/...`
 - `bench test --package ./internal/coverage`
 - `bench test --check ticket-grammar`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
 
 Focused producer command: `bench test --package ./internal/preflight/... --run 'TestCoverageIdentity|TestAuditCompleteness'`.
 Named mutation identity: `ss-04-omission`.

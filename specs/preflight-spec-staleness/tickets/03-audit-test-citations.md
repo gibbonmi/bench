@@ -1,7 +1,7 @@
 # Audit existing and planned test functions precisely
 
 Blocked by: 02-audit-symbol-identities.md
-Writes: internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/coverage/citations.go, internal/coverage/citations_test.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
 Covers: SS20, SS21, SS22, SS23, SS24, SS25, SS26, SS27
 
 ## What to build
@@ -10,6 +10,8 @@ The actual audit distinguishes existing evidence from declared future test work.
 Consume the source and symbol values.
 Add tests.go and TestTestIdentity in identity_test.go.
 Reuse the landed coverage file/function and supported named-subtest grammar.
+That grammar is unexported, so export one byte-based seam from internal/coverage/citations.go.
+Keep a single grammar owner; the coverage citation check calls the same seam.
 
 An absent existing file differs from a missing function in a present file.
 A planned function is absent at both requested initial identities; its file may hold unrelated tests.
@@ -47,6 +49,9 @@ Compilation failure supplies no behavioral evidence.
 
 - `bench test --package ./internal/preflight/...`
 - `bench test --package ./internal/coverage`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/conformance`
 
 Focused producer command: `bench test --package ./internal/preflight/... --run TestTestIdentity`.
 Named mutation identity: `ss-03-omission`.

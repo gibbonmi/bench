@@ -76,6 +76,8 @@ Compilation failure supplies no behavioral evidence.
 - `bench test --package ./internal/preflight/...`
 - `bench test --package ./cmd/bench`
 - `bench test --check ticket-grammar`
+- `bench test --check root-conformance`
+- `bench test --package ./internal/conformance`
 
 Focused producer command: `bench test --package ./internal/preflight/... --run 'TestDriftObjects|TestDriftIdentity|TestAuditMovement'`.
 Named mutation identity: `ss-01-omission`.
