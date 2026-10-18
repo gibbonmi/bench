@@ -22,6 +22,8 @@ reviewer approval or the commitment.
 - Inputs: the spec path, the reviewed graph commit, the slice, and each
   preflight red row that the pass took. The inputs also hold every drift path,
   red check, and unsupported claim location of the audit response in the slice.
+  Before the charge, the orchestrator resolves each `audit_diagnostics` subject
+  to the location of that item in the planning inventory.
 
 Send every delegate in one dispatch, so that the slices run in parallel.
 
