@@ -186,6 +186,25 @@ func SeedConformant(t *testing.T) (root, slug string) {
 	return root, slug
 }
 
+// CommitChargeSource writes files on main in the SeedConformant repository at root, binds
+// the spec to the fixture admission, and commits them. It then restarts the feature branch at
+// main with one fenced change and returns the charge arguments over that tip.
+func CommitChargeSource(t *testing.T, root, slug string, files map[string]string) []string {
+	t.Helper()
+	RunGit(t, "checkout", "-q", "main")
+	for path, body := range files {
+		MustWriteFile(t, path, body)
+	}
+	commitmenttest.SeedAdmission(t, root, "specs/"+slug+"/spec.md")
+	RunGit(t, "add", "-A")
+	RunGit(t, "commit", "-q", "-m", "charge source")
+	RunGit(t, "checkout", "-q", "-B", "feature")
+	MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n\nfunc Foo(ctx int) int { return ctx }\n")
+	RunGit(t, "add", "-A")
+	RunGit(t, "commit", "-q", "-m", "fenced change")
+	return ChargeArgs(t, root, slug)
+}
+
 // OwnedAssignment registers one assignment in root's ledger, owning the tree at worktree in
 // the given lifecycle state, and returns its ID. The record goes in through
 // intent.PutAssignment, so the gatherer reads exactly the shape every worktree command

@@ -2,6 +2,7 @@ package ownership_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/responsebound"
@@ -278,4 +280,41 @@ func TestSourceMovement(t *testing.T) {
 		out, code := preflight.Command(args)
 		refused(t, out, code, "tip-current")
 	})
+}
+
+// TestSubjectPaths covers the subject paths that each premise kind names, nested paths
+// included, and the refusal of a kind that no collector reads.
+func TestSubjectPaths(t *testing.T) {
+	owner := func(dir string) string { return ownerJSON("internal/"+dir+"/a.go", dir+".A", "func") }
+	at := func(path string) string { return `{"path":"` + path + `","line":1,"needle":"a","source":"tip"}` }
+	probe := func(path string) string {
+		return `{"path":"` + path + `","function":"TestA","record_spec":"r","source_commit":"s","evidence_commit":"e","chunk":"c","verification":"v","mutation":"m"}`
+	}
+	for _, row := range []struct{ kind, subject, want string }{
+		{"lines", `{"path":"internal/lines/a.go","source":"tip"}`, "internal/lines/a.go"},
+		{"glob-members", `{"pattern":"internal/glob/*.go","scope":"internal/glob/","source":"tip"}`, "internal/glob/"},
+		{"headroom", `{"directory":"internal/room","files":{"create":[],"delete":[]}}`, "internal/room"},
+		{"symbol", owner("symbol"), "internal/symbol/a.go"},
+		{"bound", owner("bound"), "internal/bound/a.go"},
+		{"import", `{"caller":"example.com/caller","target":"example.com/target","owner":` + owner("imported") + `}`, "internal/imported/a.go"},
+		{"anchor-kind", `{"owner":` + at("internal/anchor/a.go") + `,"kind":"FORBID"}`, "internal/anchor/a.go"},
+		{"sentinel", `{"owner":` + owner("sentinel") + `,"producers":[` + owner("producer") + `]}`, "internal/sentinel/a.go internal/producer/a.go"},
+		{"error", `{"owner":` + owner("failure") + `,"producers":[` + owner("raiser") + `]}`, "internal/failure/a.go internal/raiser/a.go"},
+		{"reused-test", probe("internal/reused/a_test.go"), "internal/reused/a_test.go"},
+		{"reused-owner", `{"owner":` + at("internal/rule/a.go") + `}`, "internal/rule/a.go"},
+		{"retirement", `{"owner":` + owner("retired") + `,"consumers":[` + owner("consumer") + `]}`, "internal/retired/a.go internal/consumer/a.go"},
+		{"posture", `{"owner":` + owner("posture") + `,"callers":[` + owner("caller") + `],"writer_probe":` + probe("internal/writer/a_test.go") + `}`,
+			"internal/posture/a.go internal/caller/a.go internal/writer/a_test.go"},
+		{"printed-field", `{"field":` + owner("field") + `,"producers":[` + owner("writer") + `]}`, "internal/field/a.go internal/writer/a.go"},
+		{"fence-exclusion", `{"path":"internal/excluded"}`, "refused"},
+	} {
+		paths, err := ownership.SubjectPaths(ownership.PremiseItem{Kind: row.kind, Subject: json.RawMessage(row.subject)})
+		got := strings.Join(paths, " ")
+		if err != nil {
+			got = "refused"
+		}
+		if got != row.want {
+			t.Errorf("%s subject paths = %q (%v), want %q", row.kind, got, err, row.want)
+		}
+	}
 }

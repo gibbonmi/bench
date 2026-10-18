@@ -1,7 +1,7 @@
 # Audit cited symbol identities through the typed loader
 
 Blocked by: 01-audit-source-drift.md
-Writes: internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/consumers/loader_test.go, internal/consumers/resolve.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/ownership/helpers.go, internal/preflight/ownership/ownership.go, internal/preflight/ownership/premises_fixture_test.go, internal/preflight/ownership/source_test.go, internal/preflight/ownership/symbols.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
 Covers: SS13, SS14, SS15, SS16, SS17, SS18, SS19
 
 ## What to build
@@ -45,6 +45,9 @@ Compilation failure supplies no behavioral evidence.
 
 - `bench test --package ./internal/preflight/...`
 - `bench test --package ./internal/consumers`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/conformance`
 
 Focused producer command: `bench test --package ./internal/preflight/... --run TestSymbolIdentity`.
 Named mutation identity: `ss-02-omission`.

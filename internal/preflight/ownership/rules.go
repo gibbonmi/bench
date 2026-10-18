@@ -26,15 +26,7 @@ func (c *census) errorText(item PremiseItem) (string, error) { return c.rule(ite
 // use of the owner. Exact construction proves no path by which the failure reaches its
 // intended caller; only a reachable producer witness proves that.
 func (c *census) rule(item PremiseItem, construct func(Owner, declared) (string, error)) (string, error) {
-	object, err := fields(item.Subject, "subject: ", "owner", "producers")
-	if err != nil {
-		return "", err
-	}
-	owner, err := identity(object["owner"], "subject: owner: ")
-	if err != nil {
-		return "", err
-	}
-	producers, err := identities(object["producers"], "subject: producers: ")
+	owner, producers, err := ruleSubject(item)
 	if err != nil {
 		return "", err
 	}
@@ -71,6 +63,21 @@ func (c *census) rule(item PremiseItem, construct func(Owner, declared) (string,
 		}
 	}
 	return fmt.Sprintf("%s constructs %s, and its %d named producer(s) use it statically at the source tip; no witness proves that the failure reaches its caller", owner.Symbol, text, len(producers)), nil
+}
+
+// ruleSubject decodes the subject of one sentinel or error premise: its owner and its named
+// producers.
+func ruleSubject(item PremiseItem) (Owner, []Owner, error) {
+	object, err := fields(item.Subject, "subject: ", "owner", "producers")
+	if err != nil {
+		return Owner{}, nil, err
+	}
+	owner, err := identity(object["owner"], "subject: owner: ")
+	if err != nil {
+		return Owner{}, nil, err
+	}
+	producers, err := identities(object["producers"], "subject: producers: ")
+	return owner, producers, err
 }
 
 // sentinelText is the construction text of a sentinel: the one initializer of a
@@ -133,7 +140,7 @@ func constantString(pkg *consumers.Package, expr ast.Expr) bool {
 // static bound. A var, a function, or any other declaration whose value a runtime input can
 // change stays unproved, because no inference turns it into a limit.
 func (c *census) bound(item PremiseItem) (string, error) {
-	owner, err := identity(item.Subject, "subject: ")
+	owner, err := ownerSubject(item)
 	if err != nil {
 		return "", err
 	}

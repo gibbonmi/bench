@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
+	"github.com/gibbonmi/bench/internal/preflight/staleness"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -119,6 +120,10 @@ type Facts struct {
 	// diagnostics. The gatherer collects it; the closure rows grade its requirements.
 	Ownership ownership.Snapshot
 
+	// Audit is the staleness collection of the explicit pair. Only the audit form gathers it.
+	// staleness.Decide grades it, and Decide reads none of it.
+	Audit staleness.AuditFacts
+
 	// KitObligations is every required closure path that is a system-tagged test, with the
 	// file and line that carry the tag. The proposal reports each as a BENCH_KIT obligation.
 	KitObligations []KitObligation
@@ -172,6 +177,9 @@ type Facts struct {
 // no command answers sends the reader down a false path.
 type CheckResult struct {
 	Check, Verdict, Detail, Next string
+	// exempt marks a row whose own applicability rule can exclude it from this mode or
+	// source. A row that a missing input holds not-applicable is not exempt.
+	exempt bool
 }
 
 const (
@@ -222,7 +230,8 @@ func Decide(f Facts) Verdict {
 	)
 	checks = append(append(checks, closureRows(f)...), ticketRow(f, "fence-writes", fenceWritesCheck), ticketRow(f, "kit-pin", kitPinCheck))
 	if f.Mode == modeBuild {
-		checks = append(checks, binarySealCheck(f))
+		// A root that publishes no binary is outside the seal's own scope.
+		checks = append(checks, exempt(binarySealCheck(f)))
 	}
 	checks = append(checks,
 		ticketRow(f, "rows-owned", rowsOwnedCheck),
@@ -249,6 +258,23 @@ func notApplicable(name string) CheckResult {
 	return CheckResult{Check: name, Verdict: verdictNA}
 }
 
+// exempt returns row with its CheckResult.exempt flag set.
+func exempt(row CheckResult) CheckResult {
+	row.exempt = true
+	return row
+}
+
+// requiredGreen reports whether every row of the verdict is green or is an exempt
+// not-applicable row; CheckResult.exempt defines exempt.
+func (v Verdict) requiredGreen() bool {
+	for _, c := range v.Checks {
+		if c.Verdict != verdictGreen && (c.Verdict != verdictNA || !c.exempt) {
+			return false
+		}
+	}
+	return true
+}
+
 // ticketRow gates one ticket-reading check by build-mode ticket-directory
 // applicability: not-applicable when build mode has no tickets/ directory at
 // all, real otherwise. Every row that reads a parsed ticket shares this one
@@ -265,7 +291,7 @@ func ticketRow(f Facts, name string, check func(Facts) CheckResult) CheckResult 
 // review base to require a nonempty diff against.
 func diffNonemptyRow(f Facts) CheckResult {
 	if f.Mode == modeBuild {
-		return notApplicable("diff-nonempty")
+		return exempt(notApplicable("diff-nonempty"))
 	}
 	return diffNonemptyCheck(f)
 }

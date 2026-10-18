@@ -1,14 +1,14 @@
 # Audit canonical coverage and complete supported inventory
 
 Blocked by: 03-audit-test-citations.md
-Writes: internal/preflight/completion_plan_test.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
+Writes: internal/preflight/completion_plan_test.go, internal/preflight/decision.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/ownership/charge_fixture_test.go, internal/preflight/preflighttest/fixture.go, internal/preflight/staleness (new)
 Covers: SS28, SS29, SS30, SS31, SS32, SS33, SS34, SS49, SS50, SS57, SS58
 
 ## What to build
 
 The audit combines source, symbol, test, and canonical coverage collection.
 Consume the reviewed ownership metadata parser and all predecessor collectors.
-Add completeness.go, TestCoverageIdentity, and TestAuditCompleteness in identity_test.go.
+Add completeness.go, TestCoverageIdentity, and TestAuditCompleteness in completeness_test.go.
 Keep canonical rows-owned, rows-membership, duplicate-token, and completion-plan obligations.
 Predicate bytes and changed ticket Covers join exact drift.
 
@@ -56,6 +56,8 @@ Compilation failure supplies no behavioral evidence.
 - `bench test --package ./internal/preflight/...`
 - `bench test --package ./internal/coverage`
 - `bench test --check ticket-grammar`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
 
 Focused producer command: `bench test --package ./internal/preflight/... --run 'TestCoverageIdentity|TestAuditCompleteness'`.
 Named mutation identity: `ss-04-omission`.

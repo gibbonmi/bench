@@ -338,14 +338,13 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT375-spec-staleness
-2. FT380-plan-commit
-3. FT409
-4. FT402
-5. FT411
-6. FT293-closure-removal
-7. FT366-degraded-guard
-8. FT362-process-lifetime
-9. FT360-shared-fixtures
-10. FT125-exact-readers
-11. FT314-gate-reuse
+1. FT380-plan-commit
+2. FT409
+3. FT402
+4. FT411
+5. FT293-closure-removal
+6. FT366-degraded-guard
+7. FT362-process-lifetime
+8. FT360-shared-fixtures
+9. FT125-exact-readers
+10. FT314-gate-reuse

@@ -12,6 +12,8 @@ import (
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
+	"github.com/gibbonmi/bench/internal/preflight/staleness"
 	specref "github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -28,7 +30,7 @@ type BootstrapFailure struct {
 	Kind, Hint string
 }
 
-func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []string, sourceTipPin string, noFollow bool) (Facts, *BootstrapFailure) {
+func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []string, sourceTipPin string, noFollow, audit bool) (Facts, *BootstrapFailure) {
 	pinnedTip, pinErr := resolvePin(root, sourceTipPin)
 	if pinErr != nil {
 		return Facts{}, pinErr
@@ -103,6 +105,12 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	if ownershipFailure != nil {
 		return Facts{}, ownershipFailure
 	}
+	var audited staleness.AuditFacts
+	if audit {
+		if audited, ownershipFailure = collectAudit(root, collected, snapshot); ownershipFailure != nil {
+			return Facts{}, ownershipFailure
+		}
+	}
 
 	return withFoldResolution(root, withCompletionPlan(root, Facts{
 		Mode:                  mode,
@@ -130,6 +138,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		BlockerCycles:         ticketFacts.cycles,
 		WritesPathExists:      ticketFacts.writes,
 		Ownership:             snapshot,
+		Audit:                 audited,
 		KitObligations:        kitObligations(root, snapshot),
 		WritesSystemTagged:    ticketFacts.systemTag,
 		TicketPinsKit:         ticketFacts.kitPinned,
@@ -137,6 +146,21 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		BinarySealPresent:     sealPresent,
 		BinarySealRefusal:     sealRefusal,
 	})), nil
+}
+
+// collectAudit reads the staleness facts of the gathered source pair and the closure snapshot
+// of the same pair. A refused collection refuses the gather, so no partial audit reaches the
+// verdict.
+func collectAudit(root string, source ownership.Source, snapshot ownership.Snapshot) (staleness.AuditFacts, *BootstrapFailure) {
+	audited, err := staleness.Collect(root, source, snapshot)
+	var refusal *staleness.Error
+	if errors.As(err, &refusal) {
+		return staleness.AuditFacts{}, &BootstrapFailure{refusal.Stage + " refused", refusal.Error()}
+	}
+	if err != nil {
+		return staleness.AuditFacts{}, &BootstrapFailure{"audit not readable", err.Error()}
+	}
+	return audited, nil
 }
 
 // resolvePin resolves a --source-tip value to its full commit identity. An

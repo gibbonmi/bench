@@ -1310,6 +1310,14 @@
       "identity": "sha256:648756eb63c9fda693157c958f1966c5d53d8f86ae2b5da3bee0bfed707f8d8f",
       "source": "03ebd20fa233c1948788cad718007371602d10d8",
       "evidence": "0708d62daab902e1219d202e564dbf24f7f5f818"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT375-spec-staleness",
+      "binding": "preflight-spec-staleness",
+      "identity": "sha256:b4f7e8acedc521247a9c59162217379c4b5b4572995f93649e13cacc48ba376d",
+      "source": "fcb5de856a57b6c159f05c72ab7995d2bf444207",
+      "evidence": "7c9d4eb3f59e938f3e21e01ea3b10b05e37e1a02"
     }
   ]
 }

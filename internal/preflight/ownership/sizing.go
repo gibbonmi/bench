@@ -25,14 +25,10 @@ var sizingPremises = map[string]func(*census, PremiseItem) (string, error){
 // through the line rule of the structure engine. A path that the source does not track
 // has no observed count, so an expected count for it stays an estimate.
 func (c *census) lines(item PremiseItem) (string, error) {
-	var subject struct {
-		Path   string `json:"path"`
-		Source string `json:"source"`
-	}
 	var expected struct {
 		Count *int `json:"count"`
 	}
-	_, err := typed(item.Subject, "subject: ", &subject, "path", "source")
+	subject, err := decodeLinesSubject(item)
 	if err == nil {
 		_, err = typed(item.Expected, "expected: ", &expected, "count")
 	}
@@ -73,15 +69,10 @@ func (c *census) lines(item PremiseItem) (string, error) {
 // does not support, and malformed syntax stay unproved. A member is an exact path, never a
 // pattern.
 func (c *census) globMembers(item PremiseItem) (string, error) {
-	var subject struct {
-		Pattern string `json:"pattern"`
-		Scope   string `json:"scope"`
-		Source  string `json:"source"`
-	}
 	var expected struct {
 		Members []string `json:"members"`
 	}
-	_, err := typed(item.Subject, "subject: ", &subject, "pattern", "scope", "source")
+	subject, err := decodeGlobSubject(item)
 	if err == nil {
 		_, err = typed(item.Expected, "expected: ", &expected, "members")
 	}
@@ -132,10 +123,6 @@ func (c *census) globMembers(item PremiseItem) (string, error) {
 // creations and deletions. The checkout must be the source tip with its limit lists
 // unchanged, because the engine reads those lists from the checkout.
 func (c *census) headroom(item PremiseItem) (string, error) {
-	var subject struct {
-		Directory string          `json:"directory"`
-		Files     json.RawMessage `json:"files"`
-	}
 	var plan struct {
 		Create []string `json:"create"`
 		Delete []string `json:"delete"`
@@ -147,7 +134,7 @@ func (c *census) headroom(item PremiseItem) (string, error) {
 		BudgetOwner Location `json:"budget_owner"`
 		GrantOwner  Location `json:"grant_owner"`
 	}
-	_, err := typed(item.Subject, "subject: ", &subject, "directory", "files")
+	subject, err := decodeHeadroomSubject(item)
 	if err == nil {
 		_, err = typed(subject.Files, "subject: files: ", &plan, "create", "delete")
 	}
@@ -213,6 +200,48 @@ func (c *census) headroom(item PremiseItem) (string, error) {
 	return reason, nil
 }
 
+// linesSubject is the decoded subject of one lines premise: one file path and its source.
+type linesSubject struct {
+	Path   string `json:"path"`
+	Source string `json:"source"`
+}
+
+// decodeLinesSubject decodes the subject of one lines premise.
+func decodeLinesSubject(item PremiseItem) (linesSubject, error) {
+	var subject linesSubject
+	_, err := typed(item.Subject, "subject: ", &subject, "path", "source")
+	return subject, err
+}
+
+// globSubject is the decoded subject of one glob-members premise: a pattern, the directory
+// scope that holds every match, and its source.
+type globSubject struct {
+	Pattern string `json:"pattern"`
+	Scope   string `json:"scope"`
+	Source  string `json:"source"`
+}
+
+// decodeGlobSubject decodes the subject of one glob-members premise.
+func decodeGlobSubject(item PremiseItem) (globSubject, error) {
+	var subject globSubject
+	_, err := typed(item.Subject, "subject: ", &subject, "pattern", "scope", "source")
+	return subject, err
+}
+
+// headroomSubject is the decoded subject of one headroom premise: a directory and its
+// authored file plan.
+type headroomSubject struct {
+	Directory string          `json:"directory"`
+	Files     json.RawMessage `json:"files"`
+}
+
+// decodeHeadroomSubject decodes the subject of one headroom premise.
+func decodeHeadroomSubject(item PremiseItem) (headroomSubject, error) {
+	var subject headroomSubject
+	_, err := typed(item.Subject, "subject: ", &subject, "directory", "files")
+	return subject, err
+}
+
 // planned refuses a file plan that the source tip cannot hold: each entry must be one
 // source file that dir's crowding count holds, named once. A creation must be absent from
 // the tip, and a deletion must be one exact tracked path there.
@@ -259,13 +288,13 @@ func (c *census) trackedAt(rev string) ([]string, error) {
 	if paths, ok := c.tracked[rev]; ok {
 		return paths, nil
 	}
-	raw, err := git.Raw("-C", c.root, "ls-tree", "-r", "-z", "--name-only", "--full-tree", rev)
+	listing, err := git.ListTree(c.root, "-r", "--full-tree", rev)
 	if err != nil {
 		return nil, fmt.Errorf("the tracked paths at %s do not read: %w", rev, err)
 	}
 	var paths []string
-	if len(raw) > 0 {
-		paths = strings.Split(strings.TrimSuffix(string(raw), "\x00"), "\x00")
+	for _, entry := range listing {
+		paths = append(paths, entry.Path)
 	}
 	if c.tracked == nil {
 		c.tracked = map[string][]string{}

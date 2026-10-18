@@ -163,27 +163,29 @@ func seedChargeRepo(t *testing.T, specBody, facts string, extra map[string]strin
 	return chargeRepo{spec: specBody, facts: facts, extra: extra}.seed(t)
 }
 
+// seed commits the spec files and extra as the charge source of the shared fixture, which
+// owns every commit step.
 func (c chargeRepo) seed(t *testing.T) (string, []string) {
 	t.Helper()
-	root, _ := preflighttest.SeedConformant(t)
-	preflighttest.RunGit(t, "checkout", "-q", "main")
-	writeSpec(t, c.spec, c.facts, c.plan)
+	files := specFiles(t, c.spec, c.facts, c.plan)
 	for path, body := range c.extra {
-		preflighttest.MustWriteFile(t, path, body)
+		files[path] = body
 	}
-	commitmenttest.SeedAdmission(t, root, specPath)
-	preflighttest.RunGit(t, "add", "-A")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "seed charge premises")
-	preflighttest.RunGit(t, "checkout", "-q", "-B", "feature")
-	preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n\nfunc Foo(ctx int) int { return ctx }\n")
-	preflighttest.RunGit(t, "add", "internal/example/foo.go")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
-	return root, preflighttest.ChargeArgs(t, root, slug)
+	root, _ := preflighttest.SeedConformant(t)
+	return root, preflighttest.CommitChargeSource(t, root, slug, files)
 }
 
-// writeSpec writes the spec of specBody with facts as its inventory and plan as its
-// completion plan, and the test file whose functions the seam cases cite.
+// writeSpec writes the files of specFiles.
 func writeSpec(t *testing.T, specBody, facts, plan string) {
+	t.Helper()
+	for path, body := range specFiles(t, specBody, facts, plan) {
+		preflighttest.MustWriteFile(t, path, body)
+	}
+}
+
+// specFiles is the spec of specBody with facts as its inventory and plan as its completion
+// plan, and the test file whose functions the seam cases cite.
+func specFiles(t *testing.T, specBody, facts, plan string) map[string]string {
 	t.Helper()
 	if specBody == "" {
 		specBody = preflighttest.SpecBody(slug)
@@ -192,8 +194,10 @@ func writeSpec(t *testing.T, specBody, facts, plan string) {
 		plan = preflighttest.PlanFence("one.md")
 	}
 	base := ownershiptest.Cut(t, ownershiptest.Cut(t, specBody, preflighttest.PlanFence("one.md")), fenced(completeEmpty))
-	preflighttest.MustWriteFile(t, specPath, base+fenced(facts)+plan)
-	preflighttest.MustWriteFile(t, "internal/example/foo_test.go", "package example\n\nimport \"testing\"\n\nfunc TestFoo(t *testing.T) {}\nfunc TestBar(t *testing.T) {}\n")
+	return map[string]string{
+		specPath:                       base + fenced(facts) + plan,
+		"internal/example/foo_test.go": "package example\n\nimport \"testing\"\n\nfunc TestFoo(t *testing.T) {}\nfunc TestBar(t *testing.T) {}\n",
+	}
 }
 
 func writePredicateSpec(t *testing.T, root, specBody, facts string) {
