@@ -265,8 +265,7 @@ func exempt(row CheckResult) CheckResult {
 }
 
 // requiredGreen reports whether every row of the verdict is green or is an exempt
-// not-applicable row; CheckResult.exempt defines exempt. Only this conjunction lets an
-// audit omit manual review.
+// not-applicable row; CheckResult.exempt defines exempt.
 func (v Verdict) requiredGreen() bool {
 	for _, c := range v.Checks {
 		if c.Verdict != verdictGreen && (c.Verdict != verdictNA || !c.exempt) {
