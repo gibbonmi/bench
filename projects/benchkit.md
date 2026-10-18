@@ -409,10 +409,10 @@ canary inventory without invoking owners or starting a successor process. Linked
 receive that inventory validation and own planted-reason proof in their native tests. One
 tagged system journey proves the selected executable reaches the production inventory path.
 
-The workflow-guidance family pins only guidance text in the admitted anchor classes of
-ADR 0012: FORBID, LABEL, ROUTE, INVARIANT, and the interim COMMAND class. Review owns
-rule wording, so the family pins no rule sentence. Its auto-discovered mutations keep
-each needle in the section where a fresh agent acts on it.
+The workflow-guidance family pins only guidance text in an anchor class that ADR 0012
+admits. That ADR is the one source of the admitted classes. Review owns rule wording,
+so the family pins no rule sentence. Its auto-discovered mutations keep each needle in
+the section where a fresh agent acts on it.
 
 The conformance registry remains the single source for check order, subject, input
 derivation, implementation, and canary family ownership. This table is the profile's

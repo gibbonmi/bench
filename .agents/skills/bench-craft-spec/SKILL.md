@@ -84,7 +84,7 @@ The round asks six questions:
 
 The degenerate standard is the cheapest plausible wrong implementation — a degenerate that needs deliberate contrivance is the build's mutation-probe target, never a new spec row. A finding blocks only when it changes observable behavior, an ownership fence, or the ticket graph. A round that returns only prose or accounting findings is the acceptance round. Fold those fixes into the acceptance instead of another round. A revision may not add a promise beyond the decision source unless a blocking finding demands it. The review flags an unflagged addition for removal rather than demanding rows for it.
 
-An anchor needle longer than the STE sentence bound is a spec smell. Before the build, drop it when it holds rule wording; otherwise, re-cut it into one row per rule.
+An anchor needle longer than the STE sentence bound is a spec smell. Before the build, drop it when it holds rule wording; otherwise, re-cut it into one row per admitted needle.
 
 ## Template
 
