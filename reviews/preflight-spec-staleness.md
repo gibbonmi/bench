@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/preflight-spec-staleness/spec.md",
-  "plan_digest": "sha256:212429719a60ae5886b1d9e625e5c99fb4bffba99d92bf66a48ea84ea45e78a7",
+  "plan_digest": "sha256:e74aa34bfd73177aca13de8907cef226127cc11275da45fa868160f4cd059831",
   "implementation_session": "",
   "chunks": [
     {
       "id": "SS-C1",
       "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
-      "tip": "c56e4a7f92e37107440b0e3fd4c092f9ed22188c",
-      "plan_digest": "sha256:212429719a60ae5886b1d9e625e5c99fb4bffba99d92bf66a48ea84ea45e78a7",
-      "source_digest": "91d8b3f0e12284e9d598d3a6f4a8f224a91534be",
+      "tip": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+      "plan_digest": "sha256:e74aa34bfd73177aca13de8907cef226127cc11275da45fa868160f4cd059831",
+      "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
       "acceptance_rows": [
         "SS1",
         "SS2",
@@ -566,6 +566,143 @@
           "requirement": "ss-01-check-6",
           "command": "bench test --package ./internal/git",
           "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep3-ss-01-focused",
+          "performer": "claude:ft375_t01_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep3",
+            "digest": "sha256:2378a87fbf4eed6716f9076d78537925b5aa65441e6d01fb4d984dc5857d419b",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,1,TestDriftIdentity,5,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestDriftObjects|TestDriftIdentity|TestAuditMovement,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1061\nmutant_report[1]{mutant}:\n  1\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,632,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftIdentity,\"drift_test.go:221: dropped fence drift = [\\\"outside/fenced/member.txt|outside/fenced/member.txt|modified|5626abf0f72e58d7a153368ba57db4c673c0e171|f719efd430d52bcfc8566a43b2eb655688d38871\\\" \\\"specs/example/spec.md|specs/example/spec.md|modified… (744 bytes)\",20\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-focused",
+          "command": "bench test --package ./internal/preflight/... --run 'TestDriftObjects|TestDriftIdentity|TestAuditMovement'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "ss-01-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft375_t01_rep3",
+              "digest": "sha256:2378a87fbf4eed6716f9076d78537925b5aa65441e6d01fb4d984dc5857d419b",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,1,TestDriftIdentity,5,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestDriftObjects|TestDriftIdentity|TestAuditMovement,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1061\nmutant_report[1]{mutant}:\n  1\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,7,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,632,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestDriftIdentity,\"drift_test.go:221: dropped fence drift = [\\\"outside/fenced/member.txt|outside/fenced/member.txt|modified|5626abf0f72e58d7a153368ba57db4c673c0e171|f719efd430d52bcfc8566a43b2eb655688d38871\\\" \\\"specs/example/spec.md|specs/example/spec.md|modified… (744 bytes)\",20\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft375_t01_rep3-ss-01-check-1",
+          "performer": "claude:ft375_t01_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep3",
+            "digest": "sha256:fd9d84db030f3ac62320115532db777c8a8cc3aea9958ee59386d3745ce259dc",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,38904,416\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,23830,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,41068,271\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,1457,13\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep3-ss-01-check-2",
+          "performer": "claude:ft375_t01_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep3",
+            "digest": "sha256:df823087f65204d8a25dc47f51c4344b4e113acba42102253b85d07721ede41c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14407,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-2",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep3-ss-01-check-3",
+          "performer": "claude:ft375_t01_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep3",
+            "digest": "sha256:64971fdcd754dfaaf3ebb78f1ee4caff44b556154c31cc55d79b4660cc5e3bde",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  ticket-grammar,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,3984,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-3",
+          "command": "bench test --check ticket-grammar",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep3-ss-01-check-4",
+          "performer": "claude:ft375_t01_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep3",
+            "digest": "sha256:7a18506e30b7509815f4b18d316809cc913a5bedf8db54310762998f1f2e036f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14726,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-4",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep3-ss-01-check-5",
+          "performer": "claude:ft375_t01_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep3",
+            "digest": "sha256:d12eed35f2893732f3bafeef92f4197d8c45d603b51b2f2e5e33194ffaf5b537",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,34517,1118\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ss-01-check-5",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t01_rep3-ss-01-check-6",
+          "performer": "claude:ft375_t01_rep3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38a4ca7901fc67f8466ddd176dbeecf8cc084972",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t01_rep3",
+            "digest": "sha256:956999cfe866093f106db36d436625d1ff6fb7f8b9f595c3005f1a43e0741dce",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1299,172\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-01-check-6",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -811,6 +948,15 @@
     {
       "from": "sha256:acbe78295e38ec098e24c56c60e2280c11bc01a9a30a5c1f2223ae14859fbd98",
       "to": "sha256:212429719a60ae5886b1d9e625e5c99fb4bffba99d92bf66a48ea84ea45e78a7",
+      "chunk_ids": {
+        "SS-C1": [
+          "SS-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:212429719a60ae5886b1d9e625e5c99fb4bffba99d92bf66a48ea84ea45e78a7",
+      "to": "sha256:e74aa34bfd73177aca13de8907cef226127cc11275da45fa868160f4cd059831",
       "chunk_ids": {
         "SS-C1": [
           "SS-C1"
