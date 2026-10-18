@@ -140,12 +140,12 @@ var laneClasses = append([]PathClass{
 		},
 		Checks: []string{"vet", "build"},
 	},
-	// The docs-currency check reads Markdown across the tree, so every Markdown change
-	// selects it. The class claims no copy of the check's file list.
+	// The docs-currency and prose-budget checks read Markdown across the tree, so every
+	// Markdown change selects them. The class claims no copy of either check's file list.
 	{
 		Name:   "markdown",
 		Match:  func(path string, _ []string) bool { return strings.HasSuffix(path, ".md") },
-		Checks: []string{"prose", "docs-currency-workflow"},
+		Checks: []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"},
 	},
 	{
 		Name:   "prose-policy",

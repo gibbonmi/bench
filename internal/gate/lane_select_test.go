@@ -170,9 +170,9 @@ func TestSelectLaneByClass(t *testing.T) {
 			classes: []string{"go-build-input"},
 		},
 		{
-			name:    "PL12 a Markdown file",
-			changes: []ComposedChange{laneChange("docs/note.md")},
-			checks:  []string{"prose", "docs-currency-workflow"},
+			name:    "PL12 a guidance Markdown file outside the kit profile",
+			changes: []ComposedChange{laneChange(".agents/commands/x.md")},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"},
 			classes: []string{"markdown"},
 		},
 		{
@@ -184,19 +184,19 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "modified registered anchor path",
 			changes: []ComposedChange{laneChange("AGENTS.md")},
-			checks:  []string{"prose", "docs-currency-workflow"},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"},
 			classes: []string{"markdown", "anchor-registry"},
 		},
 		{
 			name:    "deleted registered anchor path",
 			changes: []ComposedChange{laneDeletion(".bench/BENCH.md")},
-			checks:  []string{"prose", "docs-currency-workflow"},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"},
 			classes: []string{"markdown", "anchor-registry"},
 		},
 		{
 			name:    "PL15 two classes take the union in declared order",
 			changes: []ComposedChange{laneChange("a.go"), laneChange("b.md")},
-			checks:  []string{"gofmt", "prose", "vet", "build", "structure", "docs-currency-workflow"},
+			checks:  []string{"gofmt", "prose", "vet", "build", "structure", "docs-currency-workflow", "guidance-prose-budgets"},
 			classes: []string{"go-source", "markdown"},
 		},
 		{
@@ -239,25 +239,25 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL29 a roadmap detail file",
 			changes: []ComposedChange{laneChange("roadmap/FT1.md")},
-			checks:  []string{"prose", "docs-currency-workflow", "roadmap-detail-integrity"},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets", "roadmap-detail-integrity"},
 			classes: []string{"markdown", "roadmap-board"},
 		},
 		{
 			name:    "PL29 the roadmap index",
 			changes: []ComposedChange{laneChange("ROADMAP.md")},
-			checks:  []string{"prose", "docs-currency-workflow", "roadmap-detail-integrity"},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets", "roadmap-detail-integrity"},
 			classes: []string{"markdown", "roadmap-board"},
 		},
 		{
 			name:    "PL30 a spec-local decision map",
 			changes: []ComposedChange{laneChange("specs/x/decisions/map.md")},
-			checks:  []string{"prose", "docs-currency-workflow", "decision-map-integrity"},
+			checks:  []string{"prose", "docs-currency-workflow", "decision-map-integrity", "guidance-prose-budgets"},
 			classes: []string{"markdown", "decision-documents"},
 		},
 		{
 			name:    "PL31 a pending retro",
 			changes: []ComposedChange{laneChange("capture/retros/x.md")},
-			checks:  []string{"prose", "docs-currency-workflow", "retro-improvement-markers"},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets", "retro-improvement-markers"},
 			classes: []string{"markdown", "capture-retros"},
 		},
 		{
@@ -282,19 +282,19 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "a directory prefix claims no sibling that shares its letters",
 			changes: []ComposedChange{laneChange("roadmapx/a.md")},
-			checks:  []string{"prose", "docs-currency-workflow"},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"},
 			classes: []string{"markdown"},
 		},
 		{
 			name:    "the roadmap index claims the repository root alone",
 			changes: []ComposedChange{laneChange("docs/ROADMAP.md")},
-			checks:  []string{"prose", "docs-currency-workflow"},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"},
 			classes: []string{"markdown"},
 		},
 		{
 			name:    "a decision tree under specs needs a slug between the two names",
 			changes: []ComposedChange{laneChange("specs/decisions/x.md")},
-			checks:  []string{"prose", "docs-currency-workflow"},
+			checks:  []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"},
 			classes: []string{"markdown"},
 		},
 		{
