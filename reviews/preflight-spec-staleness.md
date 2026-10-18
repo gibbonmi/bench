@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/preflight-spec-staleness/spec.md",
-  "plan_digest": "sha256:4be92c9f220cff6e03206483328acc81fd3de1894913f7c9c4df48caa0d0a87b",
+  "plan_digest": "sha256:3d7a9419c25ee44fc5819533678194bffb14a1f331882f53d137842f63793988",
   "implementation_session": "",
   "chunks": [
     {
@@ -2151,6 +2151,18 @@
     {
       "from": "sha256:9073893f67ccb984152307ed0a54ac13ca668f4ad8e750a0c534e524a1dc7ed5",
       "to": "sha256:4be92c9f220cff6e03206483328acc81fd3de1894913f7c9c4df48caa0d0a87b",
+      "chunk_ids": {
+        "SS-C1": [
+          "SS-C1"
+        ],
+        "SS-C2": [
+          "SS-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4be92c9f220cff6e03206483328acc81fd3de1894913f7c9c4df48caa0d0a87b",
+      "to": "sha256:3d7a9419c25ee44fc5819533678194bffb14a1f331882f53d137842f63793988",
       "chunk_ids": {
         "SS-C1": [
           "SS-C1"
