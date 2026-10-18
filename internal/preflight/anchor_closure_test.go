@@ -1,14 +1,12 @@
 package preflight
 
 import (
-	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
-	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 const anchorClosureLead = "Writes: entry names an anchored guidance path without naming every anchor registry file: "
@@ -127,18 +125,4 @@ func TestAnchorClosureCoversDirectoryEntry(t *testing.T) {
 		out, _ := Command([]string{"build", slug})
 		assertAnchorClosureRow(t, out, "one.md: "+entry+" is anchored by internal/anchors/extra.go")
 	}
-}
-
-// TestProposeWritesListsAnchorClosure covers SC9. The proposal lists the missing
-// anchor file with its source and fence state, and the anchor-closure red does not
-// refuse it. The anchor file sits under a bound package, so the fixed point also
-// proposes each file its binding rows require, and nothing else.
-func TestProposeWritesListsAnchorClosure(t *testing.T) {
-	root, slug := seedAnchoredTicket(t, ".agents/x/SKILL.md")
-	out, code := Command(proposalArgs(t, root, slug))
-	header := "writes_proposal[" + strconv.Itoa(1+len(tickets.BoundFiles("internal/anchors/extra.go"))) + "]{path,source,fence}"
-	if code != 0 || !strings.Contains(out, header) {
-		t.Fatalf("proposal = (%d):\n%s", code, out)
-	}
-	assertProposalRow(t, out, "internal/anchors/extra.go", "anchor .agents/x/SKILL.md", "covered")
 }

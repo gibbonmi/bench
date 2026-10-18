@@ -20,7 +20,6 @@ type Kind int
 const (
 	KindVerdict Kind = iota
 	KindPlanOnly
-	KindProposal
 	KindPrepareEvidence
 	KindPrepareReviewEvidence
 	KindReadEvidence
@@ -29,7 +28,6 @@ const (
 	KindExportEvidence
 	KindCleanPlan
 	KindCleanApply
-	KindBreakdown
 	KindAuditSpec
 )
 
@@ -39,8 +37,6 @@ const (
 	FlagTip      = "--source-tip"
 	flagCharge   = "--charge"
 	flagPlanOnly = "--plan-only"
-	flagPropose  = "--propose-writes"
-	flagBreak    = "--breakdown"
 	flagAudit    = "--audit-spec"
 	FlagTicket   = "--ticket"
 	flagQuota    = "--max-store-bytes"
@@ -69,8 +65,6 @@ var flagTable = []flagSpec{
 	{FlagTip, "<commit>"},
 	{flagCharge, ""},
 	{flagPlanOnly, ""},
-	{flagPropose, ""},
-	{flagBreak, ""},
 	{flagAudit, ""},
 	{FlagTicket, "<basename>"},
 	{flagQuota, "<n>"},
@@ -114,10 +108,6 @@ var operations = []Operation{
 		description: "validate the authored spec and tickets without delivery admission or a build charge"},
 	{Mode: ModeBuild, selectors: []string{flagCharge}, required: []string{FlagTicket, FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareEvidence, Bounded: true,
 		description: "prepare one immutable build evidence artifact and print its bounded orientation"},
-	{Mode: ModeBuild, selectors: []string{flagPropose}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindProposal,
-		description: "propose one ticket's Writes: entries from the pinned source"},
-	{Mode: ModeBuild, selectors: []string{flagBreak}, optional: []string{FlagBase, FlagTip}, Kind: KindBreakdown,
-		description: "list each coverage row that no ticket cites, with the closure and the premises, and grant no authority"},
 	{Mode: ModeBuild, selectors: []string{flagAudit}, required: []string{FlagBase, FlagTip}, Kind: KindAuditSpec,
 		description: "audit the spec's exact source drift between the reviewed base and the source tip, and state whether manual review is required"},
 	{Mode: modeEvidence, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,

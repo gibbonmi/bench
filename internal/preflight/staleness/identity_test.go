@@ -9,6 +9,8 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
@@ -35,10 +37,10 @@ func symbolPremise(t *testing.T, slug, id, path, pkg, symbol, kind, signature st
 // them all. Each expected drift row states the declaration syntax of both sides by hand, so
 // a collector that resolves a name to the wrong owner, or that compares no receiver or
 // signature, loses its row. The kind words come from consumers, the one source that both
-// the typed and the syntax readings spell. The breakdown over the same pair gives each
-// premise verdict, which an ambiguous bare spelling does not fail.
+// the typed and the syntax readings spell. The premise collection over the same pair gives
+// each premise verdict, which an ambiguous bare spelling does not fail.
 func TestSymbolIdentity(t *testing.T) {
-	_, slug := preflighttest.SeedAdmitted(t)
+	root, slug := preflighttest.SeedAdmitted(t)
 	const sym, moved, broken = "internal/example/sym.go", "internal/example/moved.go", "internal/example/broken.go"
 	premise := func(id, path, symbol, kind, signature string) string {
 		return symbolPremise(t, slug, id, path, "internal/example", symbol, kind, signature)
@@ -76,13 +78,9 @@ func TestSymbolIdentity(t *testing.T) {
 			"func Change(a string) int { return len(a) }\n\nvar Rule = 1\n\nfunc Dup() {}\n\nfunc Fresh() {}\n",
 	})
 	tip := commitAll(t, "cited symbols change")
-	breakdown, code := preflight.CommandWithVersion("staleness-test")([]string{"build", slug, "--breakdown", "--base", base, "--source-tip", tip})
-	if code != 0 {
-		t.Fatalf("breakdown = (%d), want exit 0:\n%s", code, breakdown)
-	}
 	verdicts := map[string]string{}
-	for _, row := range table(t, breakdown, "premises") {
-		verdicts[fmt.Sprint(row["id"])] = fmt.Sprint(row["state"])
+	for _, row := range ownershiptest.Premises(t, root, ownership.Source{Base: base, Tip: tip, SpecPath: specPath(slug)}) {
+		verdicts[row.ID] = string(row.State)
 	}
 
 	out, code := audit(t, slug, base, tip)

@@ -173,17 +173,3 @@ func TestWritesResolveEarlierChunkDeletion(t *testing.T) {
 		})
 	}
 }
-
-// TestProposeWritesToleratesFenceWrites covers SC21. The proposal reports the fence
-// state the red requires, while a charge still refuses on the same red.
-func TestProposeWritesToleratesFenceWrites(t *testing.T) {
-	root, slug := seedProposalWith(t, "internal/example/foo.go", nil, "- `unowned/`")
-	out, code := Command(proposalArgs(t, root, slug))
-	if code != 0 || !strings.Contains(out, "writes_proposal[") {
-		t.Fatalf("proposal with a fence-writes red = (%d):\n%s", code, out)
-	}
-	charge := []string{"build", slug, "--charge", "--ticket", "one.md", "--base", preflighttest.RunGit(t, "rev-parse", "main"), "--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD")}
-	if chargeOut, chargeCode := Command(charge); chargeCode != 1 || !strings.Contains(chargeOut, "fence-writes") {
-		t.Fatalf("charge with a fence-writes red = (%d):\n%s", chargeCode, chargeOut)
-	}
-}

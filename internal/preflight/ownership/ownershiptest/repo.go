@@ -1,52 +1,18 @@
-// Package ownershiptest owns the committed proposal repository that the proposal command
-// tests of package preflight and of package ownership share. Only tests import it. It does
-// not import package preflight, because that package's own internal tests import it.
+// Package ownershiptest owns the committed build repository and the premise collection that
+// the tests of package ownership and of package staleness share. Only tests import it.
 package ownershiptest
 
 import (
-	"errors"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
-	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
-	"github.com/gibbonmi/bench/internal/tickets"
 )
-
-// kitRegistry is the kit's own binding registry source, read from the module root before
-// any test changes the working directory. A test binary starts in its package directory, so
-// the module root is the nearest ancestor that holds go.mod.
-var kitRegistry, kitRegistryErr = func() ([]byte, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return os.ReadFile(filepath.Join(dir, filepath.FromSlash(tickets.BindingRegistry)))
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return nil, errors.New("no go.mod above the test package directory")
-		}
-		dir = parent
-	}
-}()
-
-// KitRegistry is the kit's own binding registry source. It fails the test when the source
-// is unreadable.
-func KitRegistry(t *testing.T) []byte {
-	t.Helper()
-	if kitRegistryErr != nil {
-		t.Fatalf("kit registry source: %v", kitRegistryErr)
-	}
-	return kitRegistry
-}
 
 // Cut removes the one occurrence of part from s. It fails the test unless s holds part
 // exactly once, so a drifted fixture cannot pass unchanged.
@@ -58,36 +24,24 @@ func Cut(t *testing.T, s, part string) string {
 	return strings.Replace(s, part, "", 1)
 }
 
-// ProposalRepo is one committed proposal repository over the slug example. The selected
-// ticket one.md writes the conformant fence plus Writes, and each Others ticket writes its
-// own list. A nil Fence fences every write, so only an explicit Fence separates the spec
-// from the ticket union. The spec declares the complete-empty inventory unless
-// OwnInventory is set; Tail then closes the spec, so its bytes are part of what the fixture
-// admits. Files are committed in the base; a charge source that Files omits takes a
-// one-line body. A non-nil Seal publishes a verified kit binary over the kit's binding
-// registry, so that registry source is the authenticated kit context; a registry that Files
-// omits takes the kit's own.
-type ProposalRepo struct {
+// Repo is one committed build repository over the slug example. The selected ticket one.md
+// writes the conformant fence plus Writes, and each Others ticket writes its own list. A nil
+// Fence fences every write, so only an explicit Fence separates the spec from the ticket
+// union. The spec declares the complete-empty inventory unless OwnInventory is set; Tail then
+// closes the spec, so its bytes are part of what the fixture admits. Files are committed in
+// the base; a charge source that Files omits takes a one-line body.
+type Repo struct {
 	Writes       []string
 	Others       map[string][]string
 	Files        map[string]string
 	Fence        []string
 	OwnInventory bool
-	Seal         Publisher
 	Tail         string
 }
 
-// KitModule is the module path of a sealed repository, so a sealed fixture's import names a
-// package inside it.
-const KitModule = "example.com/kit"
-
-// Publisher is the sealed run-binary publication that a test file sets as Seal. A test file
-// supplies it, so this non-test package cannot publish a sealed run binary on its own.
-type Publisher func(root, staged, executable, manifestDir, version string) error
-
 // Seed commits the repository as the base on main, then adds one authorized change on a
 // feature branch, and returns the root, which is also the working directory.
-func (r ProposalRepo) Seed(t *testing.T) string {
+func (r Repo) Seed(t *testing.T) string {
 	t.Helper()
 	const slug = "example"
 	root := preflighttest.StartRepo(t)
@@ -125,16 +79,6 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 			preflighttest.MustWriteFile(t, source, body)
 		}
 	}
-	if r.Seal != nil {
-		if _, given := r.Files[tickets.BindingRegistry]; !given {
-			preflighttest.MustWriteFile(t, tickets.BindingRegistry, string(KitRegistry(t)))
-		}
-		preflighttest.MustWriteFile(t, "go.mod", "module "+KitModule+"\n\ngo 1.25\n")
-		preflighttest.MustWriteFile(t, "cmd/bench/main.go", "package main\n\nimport _ \""+KitModule+"/internal/tickets\"\n\nfunc main() {}\n")
-		preflighttest.MustWriteFile(t, "scripts/go-build.sh", "#!/usr/bin/env bash\n")
-		preflighttest.MustWriteFile(t, freshness.BuildInputsManifest, freshness.BuildInputLine("build_script", "scripts/go-build.sh"))
-		preflighttest.MustWriteFile(t, ".gitignore", "dist/\n")
-	}
 	commitmenttest.SeedAdmission(t, root, spec)
 	preflighttest.RunGit(t, "add", ".")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
@@ -142,18 +86,26 @@ func (r ProposalRepo) Seed(t *testing.T) string {
 	preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n")
 	preflighttest.RunGit(t, "add", "internal/example/foo.go")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
-	if r.Seal != nil {
-		staged := filepath.Join(t.TempDir(), "bench")
-		if err := os.WriteFile(staged, []byte("Bench executable"), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		executable := freshness.PublishedExecutable(root)
-		if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := r.Seal(root, staged, executable, filepath.Dir(executable), "1.2.3"); err != nil {
-			t.Fatalf("Publish: %v", err)
-		}
-	}
 	return root
+}
+
+// Premises collects the planning inventory of the spec at source.SpecPath, as the source tip
+// holds it, and answers each premise row, then each diagnostic as an unknown row at the tip,
+// so an incomplete collection never reads as complete proof. A collection refusal fails the
+// test.
+func Premises(t *testing.T, root string, source ownership.Source) []ownership.Premise {
+	t.Helper()
+	content, err := git.ReadTreeFile(root, source.Tip, source.SpecPath)
+	if err != nil {
+		t.Fatalf("spec at the source tip: %v", err)
+	}
+	snapshot, err := ownership.Collect(root, source, ownership.ParseManifest(content), nil, nil)
+	if err != nil {
+		t.Fatalf("Collect: %v", err)
+	}
+	rows := slices.Clone(snapshot.Premises)
+	for _, diagnostic := range snapshot.Diagnostics {
+		rows = append(rows, ownership.Premise{ID: diagnostic.ID, State: ownership.StateUnknown, Source: source.Tip, Reason: diagnostic.Reason})
+	}
+	return rows
 }

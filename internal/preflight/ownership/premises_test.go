@@ -13,9 +13,9 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// TestMetadataGrammar drives each planning-facts grammar case through the actual proposal.
-// A diagnostic case keeps the inventory incomplete, so the premises table names it; a
-// valid inventory reports its own items instead.
+// TestMetadataGrammar drives each planning-facts grammar case through the actual
+// collection. A diagnostic case keeps the inventory incomplete, so a premise row names it;
+// a valid inventory reports its own items instead.
 func TestMetadataGrammar(t *testing.T) {
 	cases := []struct {
 		name, text string
@@ -30,6 +30,7 @@ func TestMetadataGrammar(t *testing.T) {
 		{"OC58 cross-array duplicate id", fenced(strings.Replace(withPremises(linesPremise("p1")), `"scope":[]`, `"scope":[{"id":"p1",`+itemLocation+`,"paths":["internal/example"]}]`, 1)), "metadata", "unknown", `duplicate item id "p1"`},
 		{"OC59 unsupported version", fenced(strings.Replace(completeEmpty, `"version":1`, `"version":2`, 1)), "metadata", "unknown", "unsupported metadata version 2"},
 		{"OC60 invalid enum", fenced(strings.Replace(completeEmpty, `"declared-complete"`, `"Declared-Complete"`, 1)), "metadata", "unknown", `invalid completeness "Declared-Complete"`},
+		{"absent manifest stays diagnostic", "", "metadata", "unknown", "no bench-planning-facts fence"},
 		{"OC91 opener inside another fence", "\n```text\n```bench-planning-facts\n" + completeEmpty + "\n```\n```\n", "metadata", "unknown", "no bench-planning-facts fence"},
 		{"unclosed fence", "\n```bench-planning-facts\n" + completeEmpty + "\n", "metadata", "unknown", "not closed"},
 		{"nested fence", "\n```bench-planning-facts\n" + completeEmpty + "\n```json\n```\n", "metadata", "unknown", "another fence marker"},
@@ -44,9 +45,8 @@ func TestMetadataGrammar(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			out := mustPropose(t, emptyTree(test.text).Seed(t))
-			row := one(t, out, "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, premises(t, emptyTree(test.text).Seed(t)), test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want state %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
 		})
@@ -123,11 +123,11 @@ func TestSizingPremises(t *testing.T) {
 		headroomItem("headroom-over", "internal/sized", `"internal/sized/d.go"`, "", 3, 3, 1),
 		headroomItem("headroom-absent-deletion", "internal/sized", "", `"internal/sized/z.go"`, 3, 3, -1),
 		headroomItem("headroom-granted", "internal/granted", `"internal/granted/n.go"`, "", 1, 1, 1))
-	root := ownershiptest.ProposalRepo{Writes: []string{"internal/sized/a.go"}, Files: sizingBase, OwnInventory: true, Tail: facts}.Seed(t)
+	root := ownershiptest.Repo{Writes: []string{"internal/sized/a.go"}, Files: sizingBase, OwnInventory: true, Tail: facts}.Seed(t)
 	preflighttest.MustWriteFile(t, "internal/sized/a.go", "package sized\n\n")
 	preflighttest.RunGit(t, "add", "-A")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "tip")
-	out := mustPropose(t, root)
+	rows := premises(t, root)
 	for _, test := range []struct{ row, id, state, reason string }{
 		{"OC32", "lines-stale", "unknown", "holds 2 line(s) at the source tip"},
 		{"OC32", "lines-tip", "green", "holds 2 line(s) at the source tip"},
@@ -151,8 +151,8 @@ func TestSizingPremises(t *testing.T) {
 		{"OC38", "lines-planned", "planned", "certifies no current source"},
 	} {
 		t.Run(test.row+" "+test.id, func(t *testing.T) {
-			row := one(t, out, "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, rows, test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
 		})
@@ -200,7 +200,7 @@ func TestSymbolPremises(t *testing.T) {
 		boundItem("bound-local-literal", moved, "32"),
 		boundItem("bound-text", symbolOwner(rules, "rules.maxRows", "const", ""), "2 << 4"),
 		boundItem("bound-runtime", symbolOwner(rules, "rules.limit", "var", "var limit = len(os.Args)"), "1"))
-	out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{rules}, Files: symbolBase, OwnInventory: true, Tail: facts}.Seed(t))
+	rows := premises(t, ownershiptest.Repo{Writes: []string{rules}, Files: symbolBase, OwnInventory: true, Tail: facts}.Seed(t))
 	for _, test := range []struct{ row, id, state, reason string }{
 		{"OC39", "symbol-owner", "green", "rules.Check resolves in internal/rules/rules.go"},
 		{"OC39", "symbol-other-owner", "unknown", "other.Check is declared in internal/other/other.go, not internal/rules/rules.go"},
@@ -228,8 +228,8 @@ func TestSymbolPremises(t *testing.T) {
 		{"OC47", "bound-runtime", "unknown", "rules.limit is a var, so its value is no static bound"},
 	} {
 		t.Run(test.row+" "+test.id, func(t *testing.T) {
-			row := one(t, out, "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, rows, test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
 		})
@@ -244,7 +244,7 @@ func TestEvidencePremises(t *testing.T) {
 	files := map[string]string{
 		evidenceTestPath: "package reused\n\nimport \"testing\"\n\nfunc " + evidenceTestFunc + "(t *testing.T) {}\n",
 	}
-	root := ownershiptest.ProposalRepo{Writes: []string{"internal/example/after.go"}, Files: files}.Seed(t)
+	root := ownershiptest.Repo{Writes: []string{"internal/example/after.go"}, Files: files}.Seed(t)
 	commits := seedEvidenceCommits(t, root)
 	facts := withItems("premises",
 		reusedTestItem("evidence-certified", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.valid, "1", "tests", evidenceMutation, evidenceNeedle),
@@ -260,7 +260,7 @@ func TestEvidencePremises(t *testing.T) {
 		reusedTestItem("evidence-compile-failure", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.compileFailure, "1", "additional", evidenceMutation, evidenceNeedle),
 		reusedTestItem("evidence-forged-compile", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.forgedCompile, "1", "tests", evidenceMutation, evidenceNeedle))
 	writeEvidenceSpec(t, root, facts)
-	out := mustPropose(t, root)
+	rows := premises(t, root)
 	for _, test := range []struct{ row, id, state, reason string }{
 		{"OC48", "evidence-certified", "green", "is certified by specs/prior/spec.md chunk 1 verification tests"},
 		{"OC48", "evidence-missing-record", "unknown", "failed check for source_commit"},
@@ -276,8 +276,8 @@ func TestEvidencePremises(t *testing.T) {
 		{"OC87", "evidence-forged-compile", "unknown", `does not hold red_needle "expected behavioral needle"`},
 	} {
 		t.Run(test.row+" "+test.id, func(t *testing.T) {
-			row := one(t, out, "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, rows, test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
 		})
@@ -303,8 +303,8 @@ func TestPredicatePremises(t *testing.T) {
 			if test.spec != "" {
 				writePredicateSpec(t, root, test.spec, test.facts)
 			}
-			row := one(t, mustPropose(t, root), "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, premises(t, root), test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want state %s and reason %q", test.id, row, test.state, test.reason)
 			}
 		})

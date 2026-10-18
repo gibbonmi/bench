@@ -307,7 +307,7 @@ func TestAuditTrust(t *testing.T) {
 func TestAuditGrammar(t *testing.T) {
 	_, slug := preflighttest.SeedConformant(t)
 	base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
-	for _, selector := range []string{"--charge", "--plan-only", "--propose-writes", "--breakdown", "--check-current", "--verify"} {
+	for _, selector := range []string{"--charge", "--plan-only", "--check-current", "--verify"} {
 		out, code := audit(t, slug, base, tip, selector)
 		if code != 2 || !strings.Contains(out, "cannot be combined") || strings.Contains(out, "staleness[") {
 			t.Errorf("--audit-spec %s = (%d), want exit 2 and no collection:\n%s", selector, code, out)

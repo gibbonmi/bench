@@ -120,6 +120,20 @@ func TestCommandBuildOutOfFenceRed(t *testing.T) {
 	}
 }
 
+// TestPreflightBuildRefusesRemovedForms covers CR07 and CR08. The grammar knows neither
+// removed flag, so each call takes the usage refusal at exit 2 before any gather.
+func TestPreflightBuildRefusesRemovedForms(t *testing.T) {
+	for _, args := range [][]string{
+		{"build", "s", "--propose-writes", "--ticket", "a.md", "--base", "B", "--source-tip", "T"},
+		{"build", "s", "--breakdown"},
+	} {
+		out, code := Command(args)
+		if want := "unknown argument: " + args[2]; code != 2 || !strings.Contains(out, want) {
+			t.Errorf("%v = (%d), want exit 2 naming %q:\n%s", args, code, want, out)
+		}
+	}
+}
+
 // ticketWithoutAcceptance is one ticket file whose Acceptance section is absent,
 // so the rendered tickets-parse row has a fault of its own to name.
 func ticketWithoutAcceptance(blocker, covers string, writes ...string) string {

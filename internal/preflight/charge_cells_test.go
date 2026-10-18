@@ -51,17 +51,6 @@ func TestPreparedFormsIgnoreNestedWorkingDirectory(t *testing.T) {
 		args := preflighttest.ChargeArgs(t, root, slug)
 		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)
 	})
-
-	t.Run("propose writes", func(t *testing.T) {
-		root, slug := preflighttest.SeedConformant(t)
-		preflighttest.ActiveAssignment(t, root, root)
-		args := []string{
-			"build", slug, "--propose-writes", "--ticket", "one.md",
-			"--base", preflighttest.RunGit(t, "rev-parse", "main"),
-			"--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD"),
-		}
-		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)
-	})
 }
 
 func assertNestedRunMatches(t *testing.T, root, nested string, args []string) {

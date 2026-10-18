@@ -74,8 +74,6 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 		return toon.RenderError(err) + "\n", 1
 	}
 	switch op.Kind {
-	case evidencecmd.KindProposal:
-		return proposeWritesCommand(root, op.Kind, op.Mode, slug, base, sourceTip, ticket, args)
 	case evidencecmd.KindPrepareEvidence:
 		return prepareEvidenceCommand(root, op.Kind, slug, base, sourceTip, ticket, quota, args)
 	case evidencecmd.KindPrepareReviewEvidence:
@@ -146,12 +144,12 @@ func boundedVerdict(verdict Verdict) Verdict {
 	return verdict
 }
 
-// verdictCommand renders the ordinary, plan-only, or audit verdict, or the breakdown of the
-// same gathered facts. kind is the operation that the dispatcher selected, and the facts carry
-// it into Decide. The audit form gathers its staleness facts in the same movement-checked
-// attempt and prints their tables after the checks. A supported audit red exits 1 like a
-// readiness red, and a diagnostic-only audit exits 0 with manual review still required. The
-// audit decides only after the commitment check, so its omission needs that row green too.
+// verdictCommand renders the ordinary, plan-only, or audit verdict. kind is the operation
+// that the dispatcher selected, and the facts carry it into Decide. The audit form gathers
+// its staleness facts in the same movement-checked attempt and prints their tables after the
+// checks. A supported audit red exits 1 like a readiness red, and a diagnostic-only audit
+// exits 0 with manual review still required. The audit decides only after the commitment
+// check, so its omission needs that row green too.
 func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip string, args []string) (string, int) {
 	gatherFacts := GatherPinned
 	if kind == evidencecmd.KindAuditSpec {
@@ -168,9 +166,6 @@ func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, source
 		return toon.RenderError(err) + "\n", 1
 	}
 	facts.Operation = kind
-	if kind == evidencecmd.KindBreakdown {
-		return renderBreakdown(facts)
-	}
 
 	verdict := Decide(facts)
 	if mode == modeBuild && kind != evidencecmd.KindPlanOnly && !verdict.Red {

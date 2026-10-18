@@ -70,7 +70,7 @@ acceptance coverage, hostile-input attachment, and gate attachment; shaping sour
 
    After the spec review accepts, one research round charges two read-only readers for each chunk, with every chunk at the same time. Each reader returns each likely fence expansion under the slicing checks' `Fence-expansion evidence` classes. The invoking session merges each pair into one research table: the agreed set and the frontier. If the spec review changes the chunk table, the research reruns for each changed chunk.
 
-   The slicer runs on `craft-line`'s ticket slicing line and slices the tickets one chunk at a time, in the order of the accepted chunk table. For each chunk, the slicer verifies the research table. Charge `craft-tickets` and write the chunk's tickets under `specs/<slug>/tickets/`. Each `Writes:` line keeps every research path under the slicing checks' keep rule. Compare each ticket's `Writes:` line with `bench preflight build <slug> --propose-writes` under the slicing checks.
+   The slicer runs on `craft-line`'s ticket slicing line and slices the tickets one chunk at a time, in the order of the accepted chunk table. For each chunk, the slicer verifies the research table. Charge `craft-tickets` and write the chunk's tickets under `specs/<slug>/tickets/`. Each `Writes:` line keeps every research path under the slicing checks' keep rule.
 
    If the slicing session passes about 300k tokens of context, it compacts or restarts at a chunk boundary, never inside a chunk. It carries a ledger. The ledger holds the accepted tickets, the research table, the deferrals, the ordering edges, the spec flags, and the paths that wait for the fence.
 

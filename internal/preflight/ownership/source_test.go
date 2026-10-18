@@ -1,9 +1,7 @@
 package ownership_test
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,66 +14,21 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
-	"github.com/gibbonmi/bench/internal/responsebound"
-	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
 
-// refused fails the test unless out is a refusal that names want and publishes no table.
-func refused(t *testing.T, out string, code int, want string) {
-	t.Helper()
-	if code == 0 || !strings.Contains(out, want) || strings.Contains(out, "writes_proposal[") || strings.Contains(out, "closure_evidence[") {
-		t.Fatalf("proposal = (%d), want a refusal naming %q and no proposal table:\n%s", code, want, out)
-	}
-}
-
-// table decodes one table of a proposal response through the shared TOON decoder.
-func table(t *testing.T, out, name string) []map[string]any {
-	t.Helper()
-	return preflighttest.TableRows(t, preflighttest.DecodeMap(t, out), name)
-}
-
-func cell(row map[string]any, key string) string { return fmt.Sprint(row[key]) }
-
-// matching is every row of one table whose named cells equal want.
-func matching(t *testing.T, out, name string, want map[string]string) []map[string]any {
-	t.Helper()
-	var found []map[string]any
-	for _, row := range table(t, out, name) {
-		equal := true
-		for key, value := range want {
-			if cell(row, key) != value {
-				equal = false
-			}
-		}
-		if equal {
-			found = append(found, row)
-		}
-	}
-	return found
-}
-
-// one fails the test unless exactly one row of the table matches want, and answers it.
-func one(t *testing.T, out, name string, want map[string]string) map[string]any {
-	t.Helper()
-	found := matching(t, out, name, want)
-	if len(found) != 1 {
-		t.Fatalf("%s rows matching %v = %d, want 1:\n%s", name, want, len(found), out)
-	}
-	return found[0]
-}
-
-// repin points the proposal arguments at the current main and HEAD after a commit.
+// repin points the charge arguments at the current main and HEAD after a commit.
 func repin(t *testing.T, args []string) []string {
 	t.Helper()
 	args[6], args[8] = preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
 	return args
 }
 
-// proposeWithin runs the proposal and fails the test when it does not answer in time, so
-// a special file that the collector opens fails the case rather than hanging the suite.
-func proposeWithin(t *testing.T, args []string) (string, int) {
+// chargeWithin runs the charge and fails the test when it does not answer in time, so a
+// special file that the gather opens fails the case rather than hanging the suite.
+func chargeWithin(t *testing.T, args []string) (string, int) {
 	t.Helper()
 	type answer struct {
 		out  string
@@ -90,15 +43,16 @@ func proposeWithin(t *testing.T, args []string) (string, int) {
 	case got := <-done:
 		return got.out, got.code
 	case <-time.After(bounds.TestDeadline(0)):
-		t.Fatal("proposal blocked on its metadata source")
+		t.Fatal("charge blocked on its metadata source")
 		return "", 0
 	}
 }
 
-// TestSourceSafety covers each special metadata source and each unsafe ownership path.
+// TestSourceSafety covers each special spec source through the actual charge.
 func TestSourceSafety(t *testing.T) {
 	t.Run("OC71 symlink", func(t *testing.T) {
-		args := proposalArgs(t, closureTree().Seed(t))
+		root := coveredTree().Seed(t)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		outside := filepath.Join(t.TempDir(), "spec.md")
 		data, err := os.ReadFile(specPath)
 		if err != nil {
@@ -114,33 +68,35 @@ func TestSourceSafety(t *testing.T) {
 			t.Fatal(err)
 		}
 		commit(t, "linked spec")
-		out, code := preflight.Command(repin(t, args))
-		refused(t, out, code, "spec not readable")
+		assertChargeRefused(t, root, repin(t, args), "spec not readable")
 	})
 	t.Run("OC72 FIFO", func(t *testing.T) {
-		root := closureTree().Seed(t)
-		args := proposalArgs(t, root)
+		root := coveredTree().Seed(t)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		if err := os.Remove(specPath); err != nil {
 			t.Fatal(err)
 		}
 		if err := syscall.Mkfifo(specPath, 0o600); err != nil {
 			t.Fatal(err)
 		}
-		out, code := proposeWithin(t, args)
-		refused(t, out, code, "spec")
+		if out, code := chargeWithin(t, args); code == 0 || !strings.Contains(out, "spec") {
+			t.Fatalf("charge over a FIFO spec = (%d), want a refusal naming the spec:\n%s", code, out)
+		}
+		preflighttest.AssertNothingPublished(t, root)
 	})
 	t.Run("OC73 directory", func(t *testing.T) {
-		args := proposalArgs(t, closureTree().Seed(t))
+		root := coveredTree().Seed(t)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		if err := os.Remove(specPath); err != nil {
 			t.Fatal(err)
 		}
 		preflighttest.MustWriteFile(t, filepath.Join(specPath, "inner.md"), "# inner\n")
 		commit(t, "directory spec")
-		out, code := preflight.Command(repin(t, args))
-		refused(t, out, code, "spec not found")
+		assertChargeRefused(t, root, repin(t, args), "spec not found")
 	})
 	t.Run("OC74 oversized", func(t *testing.T) {
-		args := proposalArgs(t, closureTree().Seed(t))
+		root := coveredTree().Seed(t)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		data, err := os.ReadFile(specPath)
 		if err != nil {
 			t.Fatal(err)
@@ -148,77 +104,53 @@ func TestSourceSafety(t *testing.T) {
 		filler := "\n<!-- " + strings.Repeat("x", 2<<20) + " -->\n"
 		preflighttest.MustWriteFile(t, specPath, string(data)+filler+"\n```bench-planning-facts\n"+completeEmpty+"\n```\n")
 		commit(t, "oversized spec")
-		out, code := preflight.Command(repin(t, args))
-		refused(t, out, code, "spec not readable")
-	})
-	t.Run("OC75 control byte", func(t *testing.T) {
-		tr := closureTree()
-		tr.Files["tests/canary/fam/bad\x1bfixture/BASE"] = "internal/example/pinned.go\n"
-		tr.Files["tests/canary/fam/bad\x1bfixture/EXPECT"] = "red\n"
-		out, code := propose(t, tr.Seed(t))
-		refused(t, out, code, "represent")
-	})
-	t.Run("OC76 escaping path", func(t *testing.T) {
-		for _, entry := range []string{"internal/example/../../../outside.go (new)", "internal/example/../../outside.go (new)"} {
-			tr := closureTree()
-			tr.Writes = append(tr.Writes, entry)
-			tr.Fence = []string{"- `internal/example/pinned.go`", "- `internal/toon/toon.go`", "- `internal/example/cyclic.go`", "- `internal/example/included.go`"}
-			out, code := propose(t, tr.Seed(t))
-			refused(t, out, code, "escapes the repository")
-		}
-	})
-	t.Run("OC77 segment prefix", func(t *testing.T) {
-		tr := closureTree()
-		tr.Fence = []string{"- `internal/example/pinned.go`", "- `internal/toon/toon.go`", "- `internal/example/cyclic.go`", "- `internal/example/included.go`", "- `internal/conformanc`"}
-		out := mustPropose(t, tr.Seed(t))
-		one(t, out, "writes_proposal", map[string]string{"path": "internal/conformance/data_handling_test.go", "fence": "spec fence expansion required"})
+		assertChargeRefused(t, root, repin(t, args), "spec not readable")
 	})
 }
 
-// manyPins is a tree whose one written path thirty fixtures pin, so its closure evidence
-// passes the response bound.
-func manyPins() ownershiptest.ProposalRepo {
-	tr := ownershiptest.ProposalRepo{
-		Writes: []string{"internal/example/pinned.go"},
-		Files:  map[string]string{"internal/example/pinned.go": "package example\n"},
-	}
-	for i := range 30 {
-		dir := "tests/canary/fam/pin-" + string(rune('a'+i/26)) + string(rune('a'+i%26))
-		tr.Files[dir+"/BASE"] = "internal/example/pinned.go\n"
-		tr.Files[dir+"/EXPECT"] = "red\n"
-	}
-	return tr
+const (
+	slug     = "example"
+	specPath = "specs/" + slug + "/spec.md"
+)
+
+// completeEmpty is the declared-complete planning inventory with no item. Each grammar case
+// edits one part of it, so the cases share one valid baseline.
+var completeEmpty = inventorytest.CompleteEmpty
+
+// fenced is one bench-planning-facts section that holds payload.
+var fenced = inventorytest.Section
+
+// commit records every change in the working tree as the new base on main, then adds one
+// authorized change. A later collection reads the change at HEAD, and no fence needs to
+// authorize it.
+func commit(t *testing.T, message string) {
+	t.Helper()
+	preflighttest.RunGit(t, "add", "-A")
+	preflighttest.RunGit(t, "commit", "-q", "-m", message)
+	preflighttest.RunGit(t, "update-ref", "refs/heads/main", "HEAD")
+	preflighttest.MustWriteFile(t, "internal/example/after.go", "package example\n")
+	preflighttest.RunGit(t, "add", "internal/example/after.go")
+	preflighttest.RunGit(t, "commit", "-q", "-m", "advance "+message)
 }
 
-// TestProposalBound grades the bounded route: the response owner spills the long proposal, and the
-// complete spill file still holds every evidence reason.
-func TestProposalBound(t *testing.T) {
-	root := manyPins().Seed(t)
-	out := mustPropose(t, root)
-	var stdout, stderr bytes.Buffer
-	owner := responsebound.New(t.TempDir(), &stdout, &stderr, func() string { return root }, false)
-	if _, err := owner.Stdout().Write([]byte(out)); err != nil {
-		t.Fatal(err)
-	}
-	owner.Finish()
-	spilled, err := os.ReadFile(responseboundtest.Path(t, stdout.String()))
-	if err != nil {
-		t.Fatal(err)
-	}
-	rows := table(t, string(spilled), "closure_evidence")
-	if len(rows) != 30 {
-		t.Fatalf("spilled evidence rows = %d, want 30:\n%s", len(rows), spilled)
-	}
-	for _, row := range rows {
-		if cell(row, "source") == "" || !strings.Contains(cell(row, "reason"), "internal/example/pinned.go") {
-			t.Errorf("spilled evidence row lost its reason: %v", row)
-		}
+// emptyTree is a linked repository with no anchor registry and no fixture inventory, whose
+// ticket writes a guidance path and a source file. tail closes its spec and states its whole
+// planning inventory, so an empty tail declares none.
+func emptyTree(tail string) ownershiptest.Repo {
+	return ownershiptest.Repo{
+		Writes: []string{".agents/x/SKILL.md", "internal/example/pinned.go"},
+		Files: map[string]string{
+			".agents/x/SKILL.md":         "# X\n",
+			"internal/example/pinned.go": "package example\n",
+		},
+		OwnInventory: true,
+		Tail:         tail,
 	}
 }
 
 // coveredTree owns its whole closure, so only a source or checkout refusal can stop it.
-func coveredTree() ownershiptest.ProposalRepo {
-	return ownershiptest.ProposalRepo{
+func coveredTree() ownershiptest.Repo {
+	return ownershiptest.Repo{
 		Writes: []string{"internal/example/pinned.go", "tests/canary/fam/pin-fixture"},
 		Files: map[string]string{
 			"internal/example/pinned.go":          "package example\n",
@@ -232,7 +164,7 @@ func coveredTree() ownershiptest.ProposalRepo {
 func TestSourcePrecedence(t *testing.T) {
 	t.Run("OC79 dirty checkout first", func(t *testing.T) {
 		root := coveredTree().Seed(t)
-		args := proposalArgs(t, root)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		args[4] = "missing.md"
 		preflighttest.MustWriteFile(t, "dirty.txt", "dirty\n")
 		out, code := preflight.Command(args)
@@ -242,8 +174,7 @@ func TestSourcePrecedence(t *testing.T) {
 	})
 	t.Run("OC90 evidence source mismatch", func(t *testing.T) {
 		root := coveredTree().Seed(t)
-		args := proposalArgs(t, root)
-		args[2] = "--charge"
+		args := preflighttest.ChargeArgs(t, root, slug)
 		preflighttest.RunGit(t, "update-index", "--assume-unchanged", chargesource.BuildPhase)
 		preflighttest.MustWriteFile(t, chargesource.BuildPhase, "# live drift\n")
 		out, code := preflight.Command(args)
@@ -258,7 +189,7 @@ func TestSourcePrecedence(t *testing.T) {
 func TestSourceMovement(t *testing.T) {
 	t.Run("OC80 persistent movement", func(t *testing.T) {
 		root := coveredTree().Seed(t)
-		args := proposalArgs(t, root)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		calls := 0
 		restore := diff.SetSnapshotAfterReadForTest(func() {
 			calls++
@@ -268,17 +199,16 @@ func TestSourceMovement(t *testing.T) {
 		})
 		out, code := preflight.Command(args)
 		restore()
-		if calls != 2 {
-			t.Fatalf("movement callbacks = %d, want 2", calls)
+		if calls != 2 || code == 0 || !strings.Contains(out, "snapshot drift") {
+			t.Fatalf("charge under persistent movement = (%d) after %d callbacks, want the drift refusal after 2:\n%s", code, calls, out)
 		}
-		refused(t, out, code, "snapshot drift")
+		preflighttest.AssertNothingPublished(t, root)
 	})
 	t.Run("OC81 stale source tip", func(t *testing.T) {
 		root := coveredTree().Seed(t)
-		args := proposalArgs(t, root)
+		args := preflighttest.ChargeArgs(t, root, slug)
 		args[8] = preflighttest.RunGit(t, "rev-parse", "main")
-		out, code := preflight.Command(args)
-		refused(t, out, code, "tip-current")
+		assertChargeRefused(t, root, args, "tip-current")
 	})
 }
 

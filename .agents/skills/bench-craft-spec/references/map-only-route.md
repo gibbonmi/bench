@@ -20,8 +20,6 @@ The reviewer judges that each decision is an exact predicate, and no check grade
    Each entry takes one class: (a) map discretion, (b) a seam or test choice, (c) a missing fact, or (d) a reviewer decision.
 6. After every ticket exists, the coordinator completes the chunk table and the completion plan under an interim fence that holds only the review pickup.
    The coordinator then commits the thin spec and the tickets.
-   The coordinator runs `--propose-writes` for each ticket on the committed thin spec, with its chunk table and completion plan.
-   The proposal tolerates only the closure-check reds and the `fence-writes` red.
 7. One ticket review runs on `craft-line`'s ticket review line, with an iteration cap of 2.
 8. After the ticket review accepts, the coordinator writes the fence section, runs the plan-only preflight, and presents the approval table.
 9. Each class (d) entry is a decision row in the approval table.
