@@ -2025,6 +2025,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft375_ss-c2_standards_r2",
+          "performer": "claude:ft375_ss-c2_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c2_standards_r2",
+            "digest": "sha256:36558a4274aba484d88c0988b671827a8bc3b96d1c4a8bdfee999deacb08c192",
+            "excerpt": "Standards confirm: S1 closed, S2 closed; new: none\n\nEvidence bound: `--check-current` returned current=true, dirty_record=false, and source_tip 6905f324.\n\n- S1 is closed. `internal/consumers/resolve.go:199-207` now defines the exported constants `KindFunc` through `KindDecl`, and `objKind` returns only those constants (`:211-227`). `ownership.SourceDeclaration` spells the kinds through `consumers.Kind*` (`internal/preflight/ownership/ownership.go:376,378`). A non-test search of `internal/` found no other `\"func\"`/`\"method\"`/`\"type\"`/`\"const\"`/`\"var\"` declaration-kind literals in the preflight/consumers path. The hits in `internal/outline` are a separate regex outliner, outside this seam.\n- S2 is closed. `chargeRepo.seed` (`internal/preflight/ownership/charge_fixture_test.go:60-80`) now builds `specFiles` plus `extra` and calls `preflighttest.CommitChargeSource` (`internal/preflight/preflighttest/fixture.go:192-206`). That function owns all the main and feature commit steps, and `writeSpec` delegates to `specFiles` (`:85-90`). The commit steps now have one source.\n- The new code passes. `overBound()` (`internal/preflight/staleness/identity_test.go:256`) is the only source of the over-bound line, and both `completeness_test.go:228` and the identity tests use it. `census.ambiguity` (`internal/preflight/ownership/symbols.go:203-212`) is now the only owner of the bare-name ambiguity reason, because `identify` no longer carries that branch (`:188-195`). The new comments state the why in the present tense with no provenance, which matches craft-comments.\n\nAdvice (optional, no binding defect):\n- The oversized-baseline refusal block (write the oversized object, commit, shrink it, audit, then assert the refusal and no `staleness[`) appears three times: `completeness_test.go:228-233`, `identity_test.go:385-394`, and `:471-480`. A small helper could collapse it.\n- The comment at `identity_test.go:34-36` says each drift row is stated \"by hand\", but the `rule` row now takes `consumers.KindConst`. The comment's next sentence admits this, but the wording could be tighter.\n- `ownershiptest/repo.go:138-144` still has its own c0/c1 seeding steps. That code is outside the S2 scope.\n\nNot verified: test or gate execution (none was run, per the charge), the `specs`/`reviews` paths, and anything after e0cf7e22.\n"
+          },
+          "axis": "Standards",
+          "base": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+          "tip": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c2_standards_r1"
+          ]
+        },
+        {
+          "id": "ft375_ss-c2_spec_r2",
+          "performer": "claude:ft375_ss-c2_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c2_spec_r2",
+            "digest": "sha256:a94fa2f969fe2685d876d1f78a9db9525e9c2510785bb7c2452092efeb90a0b2",
+            "excerpt": "Spec confirm: P1 closed; new: none\n\nEvidence sha256:f986…5e0b passed the `--check-current` check (current=true, dirty_record=false). The audit ran on a clean tree at 6905f324 and exited 1 with the expected build-in-progress results: cited-symbols green, spec-drift and cited-tests red from drift the build adds itself, Complete false, ManualRequired true.\n\n**P1, first half: `exact` behaves as before.** Spec line 326: \"Consume the landed ownership projections without modifying their policy.\" The repair removed the bare-name `len(all) > 1` branch from `identify` (internal/preflight/ownership/symbols.go:97-134). `exact` (symbols.go:86-89) now filters to the cited package and refuses only zero or several matches, which is what base c585f9d0 did. Every `exact` caller (rules.go:45, 58, 156; symbols.go:315) gets that behavior again. Owner: ticket 02. Disposition: closed. Confidence: high.\n\n**P1, second half: bare-name ambiguity reaches only the audit.** Spec line 412 (SS17): \"An ambiguous bare symbol remains diagnostic.\" `census.ambiguity` (symbols.go:139-148) fires only when `localName == Symbol`. `symbol` (symbols.go:68-75) marks the identity `DiscrepancyAmbiguous` but keeps the verdict that `identify` returns. The witness at identity_test.go row `{\"SS17\",\"bare\",\"green\",…,\"cited symbol Dup is ambiguous\"}` asserts both the green verdict and the diagnostic. Closed, high confidence.\n\n**Regressions and refusal cases.** No regression found in SS13–SS34. The changes there are kind constants, new verdict assertions and new test cases (kept, steady, broken, deep). The new oversized-baseline cases (symbol, test, ticket) check the stage refusal and that no `staleness[` result prints. That matches spec line 127, \"Unreadable before or after objects refuse collection.\" Medium confidence.\n\n## Advice\n- Only the before side has a refusal witness. Consider an oversized after-side (tip) object case.\n- The `broken` case shows that a baseline object which reads but does not parse is classed `unread` and stays diagnostic; it is not refused. That reading is consistent with spec line 144, but the reviewer may want to confirm it.\n\n## Not verified\n- I ran no tests.\n- I did not check whether ambiguity hiding another class (ownership.go:183-184) drops a signature drift row.\n- I did not review SS49, SS50, SS57 or SS58 beyond the fixture refactor in charge_fixture_test.go.\n"
+          },
+          "axis": "Spec",
+          "base": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+          "tip": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c2_spec_r1"
+          ]
+        },
+        {
+          "id": "ft375_ss-c2_coverage_r2",
+          "performer": "claude:ft375_ss-c2_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c2_coverage_r2",
+            "digest": "sha256:9ec4eb61b9931e069f06a8e4c7d1a0939e2a4a5a858aec665ce1859ab82d4728",
+            "excerpt": "Coverage confirm: C1 open; C2, C3, C4 closed. New: CC-C1-tip.\n\nThe evidence check (`--check-current`) bound: current=true, assignment bb87c9fc, tip 6905f324. I read the repair delta 758d350d..e0cf7e22. `git status --short` is empty after all probes.\n\nProbe rows (all mutants passed inline through `--swap`, so no mutant JSON was written):\n\n| ID | File and mutation | Selection | Verdict | Restored |\n|---|---|---|---|---|\n| C1 | `internal/preflight/staleness/tests.go:39`: `if err != nil {` becomes `if err != nil && side.at == \"source base\" {`. A tip-side refusal is swallowed. | Focused run, then all of `./internal/preflight/...` | silent both times (2534/43 and 5186/56 tests pass) | yes |\n| C2 | `internal/coverage/citations.go:249`: `deeper` becomes `deeper && !hasSubtest(subtests, segment)` | Focused | bit at TestTestIdentity/SS26_deep | yes |\n| C3 | `internal/preflight/ownership/ownership.go:377`: the receiver test `fn.Recv != nil` becomes `fn.Recv.NumFields() > 1` | TestSymbolIdentity | bit (7 rows, want 6) | yes |\n| C4 | `internal/preflight/staleness/identity.go:66`: the parse failure returns `\"\"` unread, so it reads as absent | TestSymbolIdentity | bit at SS19_broken plus the row count | yes |\n\nFinding CC-C1-tip:\n- **Input:** a seam whose test file at the tip, not at the baseline, is over `bounds.ControlRecordLimit`.\n- **Break:** all three new refusal tests make only the baseline object oversized (identity_test.go:385-394 and 469-480, completeness_test.go:226-233). `specs/preflight-spec-staleness/spec.md:127` says \"Unreadable before or after objects refuse collection\", so the after-side refusal goes untested. The same gap likely holds for the after read in `coverage.go:46` (not probed).\n- **Owning ticket:** 03-audit-test-citations for the tests stage, 04 for coversAt.\n- **Disposition:** optional advice under the bounded repair policy, because it grades only a check from this hardening cycle. Spec line 127 is a stated requirement, so the reviewer may treat it as blocking.\n- **Confidence:** high.\n\nNot verified: the symbol stage has no after-side blob read (the tip comes from the typed load), so I did not probe it. I did not probe the coversAt after side. I did not run the full gate.\n"
+          },
+          "axis": "Coverage",
+          "base": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
+          "tip": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c2_coverage_r1"
+          ]
         }
       ]
     }
@@ -2216,3 +2282,21 @@ Count: 4. Worst: C1.
 - C2 (auto-fix, confidence 8, ticket 03): no test cites a subtest deeper than one segment, so the unjudged branch has no witness (SS26).
 - C3 (auto-fix, confidence 7, ticket 02): no test holds an unchanged cited method, so the baseline method kind has no witness.
 - C4 (auto-fix, confidence 5, ticket 02): no test holds a baseline owner that does not parse while the tip resolves. The baseline unread branch has no witness.
+
+## SS-C2 confirming round 1
+
+Repair cycle 1 closed every accepted SS-C2 finding: S1 and S2, P1, and C1 to C4. Each repair kept the named omission probe of its ticket in its focused record. Each coordinator probe bit with restored yes.
+
+## Standards
+
+Count: 0. Worst: none.
+
+## Spec
+
+Count: 0. Worst: none.
+
+## Coverage
+
+Count: 0. Worst: none.
+
+Advice: no test refuses an oversized object at the tip side. The refusal path serves both sides, and the axis rated the gap optional under the hardening rule. The drain takes it.
