@@ -165,15 +165,18 @@ func commitCompleteness(t *testing.T, root, slug string, sections ...string) []s
 	})
 }
 
+// inventory is the planning inventory section that declares completeness over seams and the
+// manual claims.
+func inventory(completeness string, seams, manual []string) string {
+	return inventorytest.Section(inventorytest.Manifest(completeness, nil, seams, nil, manual))
+}
+
 // TestAuditCompleteness covers SS32, SS33, SS34, SS49, SS50, SS57, and SS58. Each case seeds
 // one inventory and runs the actual audit-spec form over its unchanged tip, so no drift and
 // no red holds the audit open. The complete case proves that the fixture alone admits a
 // complete audit, so each other case fails only through the inventory fault it names. The
 // expected diagnostics are stated here by hand.
 func TestAuditCompleteness(t *testing.T) {
-	inventory := func(completeness string, seams, manual []string) string {
-		return inventorytest.Section(inventorytest.Manifest(completeness, nil, seams, nil, manual))
-	}
 	for _, test := range []struct {
 		row      string
 		sections func(t *testing.T, slug string) []string

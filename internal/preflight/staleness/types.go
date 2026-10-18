@@ -133,8 +133,8 @@ type Check struct {
 }
 
 // Audit is the decision over one AuditFacts. Complete means that every required collector
-// ran successfully. ManualRequired is false only for a complete audit with empty drift and
-// every check green.
+// ran successfully. ManualRequired is false only for a complete audit with empty drift,
+// every check green, and every required build check green.
 type Audit struct {
 	Baseline, Tip  string
 	Checks         []Check

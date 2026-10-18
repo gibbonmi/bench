@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/diff"
-	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
@@ -271,15 +270,7 @@ func TestAuditMovement(t *testing.T) {
 func TestAuditTrust(t *testing.T) {
 	t.Run("SS38 executable seal", func(t *testing.T) {
 		root, slug := preflighttest.SeedAdmitted(t)
-		write(t, map[string]string{".gitignore": "dist/\n"})
-		tip := commitAll(t, "ignore the published binary")
-		executable := freshness.PublishedExecutable(root)
-		if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Symlink(filepath.Join(root, "absent-bench"), executable); err != nil {
-			t.Fatal(err)
-		}
+		tip := breakSeal(t, root)
 		out, code := audit(t, slug, tip, tip)
 		if code != 1 || !strings.Contains(out, "binary-seal,red") || table(t, out, "staleness")[0]["manual_required"] != true {
 			t.Fatalf("refused seal = (%d), want the red binary-seal row and manual review:\n%s", code, out)

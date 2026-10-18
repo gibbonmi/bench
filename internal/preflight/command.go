@@ -150,7 +150,8 @@ func boundedVerdict(verdict Verdict) Verdict {
 // same gathered facts. kind is the operation that the dispatcher selected, and the facts carry
 // it into Decide. The audit form gathers its staleness facts in the same movement-checked
 // attempt and prints their tables after the checks. A supported audit red exits 1 like a
-// readiness red, and a diagnostic-only audit exits 0 with manual review still required.
+// readiness red, and a diagnostic-only audit exits 0 with manual review still required. The
+// audit decides only after the commitment check, so its omission needs that row green too.
 func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip string, args []string) (string, int) {
 	gatherFacts := GatherPinned
 	if kind == evidencecmd.KindAuditSpec {
@@ -200,7 +201,7 @@ func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, source
 		exit = 1
 	}
 	if kind == evidencecmd.KindAuditSpec {
-		audit := staleness.Decide(facts.Audit)
+		audit := staleness.Decide(facts.Audit, verdict.requiredGreen())
 		tables, err := audit.Render()
 		if err != nil {
 			return toon.RenderError(err) + "\n", 1

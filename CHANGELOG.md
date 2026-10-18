@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Spec staleness audit
+
+- Added `bench preflight build <slug> --audit-spec --base <commit> --source-tip <commit>`. It prints the exact drift of the spec's audit scope between the two commits, the `spec-drift`, `cited-symbols`, and `cited-tests` states, each unsupported claim, and the `staleness` decision. `manual_required` is false only for a complete audit with empty drift, green audit checks, every required build check green, and a ready commitment.
+- Changed `/bench-implement-spec`, which now runs that audit after the build preflight. It omits the staleness pass only when the response states `complete` true and `manual_required` false, and otherwise it charges the pass with the exact drift paths, red checks, and unsupported claim locations. Before, every build charged the staleness pass, and each delegate listed its own drift with `git log`.
+
 ### Anchor step kind
 
 - Removed the `require-in-step` anchor kind and the `step` column of the `bench anchors` table, so the table now reads `anchors[N]{kind,section,needle,line}`. Before, the table carried a `step` cell for each row, and nine registry rows pinned a sentence inside one numbered step of a section.

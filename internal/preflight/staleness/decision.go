@@ -13,8 +13,9 @@ import (
 // discrepancy, and cited-tests is red when any test seam has a supported discrepancy; each
 // such change and discrepancy joins the drift. A check that a diagnostic names, or a check
 // over a symbol or a test whose discrepancy no collector grades, is diagnostic unless it is
-// red, and any diagnostic makes the audit incomplete.
-func Decide(facts AuditFacts) Audit {
+// red, and any diagnostic makes the audit incomplete. ready is the caller's verdict that
+// every required build check is green, and manual review stays required without it.
+func Decide(facts AuditFacts, ready bool) Audit {
 	specDrift := drift(facts.Paths)
 	for _, state := range facts.Coverage {
 		if state.Before != state.After {
@@ -46,7 +47,7 @@ func Decide(facts AuditFacts) Audit {
 		Diagnostics: facts.Diagnostics,
 		Complete:    len(facts.Diagnostics) == 0,
 	}
-	audit.ManualRequired = !audit.Complete
+	audit.ManualRequired = !audit.Complete || !ready
 	red := map[string]bool{CheckSpecDrift: len(specDrift) > 0, CheckCitedSymbols: len(symbolDrift) > 0, CheckCitedTests: len(testDrift) > 0}
 	for _, name := range checkNames {
 		state := StateGreen
