@@ -108,6 +108,37 @@ func TestEvaluatePathRefusesInvalidSubjects(t *testing.T) {
 	}
 }
 
+// Each whole-file anchor on an absent file reports the file as missing, whatever its
+// kind. The test counts one report for each whole-file row, so another kind's row on the
+// same file cannot hide a silent forbid.
+func TestEvaluatePathReportsMissingWholeFileSubjects(t *testing.T) {
+	wholeFile := []Kind{Require, Forbid, ForbidCaseFoldedEmphasis}
+	for _, kind := range wholeFile {
+		t.Run(fmt.Sprint(kind), func(t *testing.T) {
+			anchor := pathTestAnchor(t, kind)
+			rows, got := 0, 0
+			for _, entry := range Entries() {
+				if entry.File == anchor.File && slices.Contains(wholeFile, entry.Kind) {
+					rows++
+				}
+			}
+			result := EvaluatePath(t.TempDir(), anchor.File)
+			want := "acceptance coverage anchor file missing: " + anchor.File
+			for _, diagnostic := range result.Diagnostics {
+				if diagnostic == want {
+					got++
+				}
+			}
+			if got != rows {
+				t.Fatalf("diagnostics = %v, want %q once for each of %d whole-file rows, got %d", result.Diagnostics, want, rows, got)
+			}
+			if slices.Contains(result.Diagnostics, anchor.Diagnostic) {
+				t.Fatalf("absent file raised the needle diagnostic %q", anchor.Diagnostic)
+			}
+		})
+	}
+}
+
 func pathTestAnchor(t *testing.T, kind Kind) Anchor {
 	t.Helper()
 	entries := Entries()
