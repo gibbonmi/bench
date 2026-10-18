@@ -3209,6 +3209,72 @@
           "supersedes": [
             "apc6-coverage-r1"
           ]
+        },
+        {
+          "id": "apc6-standards-r3",
+          "performer": "claude:aap_apc6_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc6_standards_r3",
+            "digest": "sha256:aef0d7c6b20f4f2e2cba9680e9d76cf437828abc99aad86f65d9856bc215a91a",
+            "excerpt": "Standards round 3, AP-C6, repair 2 delta 9eb94548..fc855398; check-current current=true.\nS3 closed, confidence 8: .agents/skills/bench-craft-gate/SKILL.md:75 now says the slicing checks state the retirement-pass form of this rule, which refers to lines 72-73; the link target is unchanged; the file stays at 120 lines.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "tip": "fc85539836cead48626e25acb292e5e298e3f3cf",
+          "finding_ids": [],
+          "supersedes": [
+            "apc6-standards-r2"
+          ]
+        },
+        {
+          "id": "apc6-spec-r3",
+          "performer": "claude:aap_apc6_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc6_spec_r3",
+            "digest": "sha256:edec1238927f9ef414965f23c4d93f384261a59e3a7d83eb573014808ec6a877",
+            "excerpt": "Spec round 3, AP-C6, repair 2 delta 9eb94548..fc855398; check-current current=true at 64ac8d47.\nThe one-line edit at gate SKILL.md:75 keeps AP40 (lines 72-74); AP39 and AP41-AP45 are unaffected; the path is on ticket 8's Writes line.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "tip": "fc85539836cead48626e25acb292e5e298e3f3cf",
+          "finding_ids": [],
+          "supersedes": [
+            "apc6-spec-r2"
+          ]
+        },
+        {
+          "id": "apc6-coverage-r3",
+          "performer": "claude:aap_apc6_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "181181d33da11b0fc1db7d6ecdeac5a2a3eccd13",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc6_coverage_r3",
+            "digest": "sha256:8b3cb9141e1894de81734586766782a0eda2e4ad88acdce4fd3629c76d3bf2d4",
+            "excerpt": "Coverage round 3, AP-C6, repair 2 delta 9eb94548..fc855398; check-current current=true at 64ac8d47.\nThe edit touches no anchor (bench anchors returns 0 rows for the gate skill), adds no line (120 of 120), and no canary holds a copy; all seven t8r2 verifications pass at source digest 181181d3, which matches the AP-C6 refreeze.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "tip": "fc85539836cead48626e25acb292e5e298e3f3cf",
+          "finding_ids": [],
+          "supersedes": [
+            "apc6-coverage-r2"
+          ]
         }
       ]
     }
@@ -3671,7 +3737,9 @@ AP-C5: 5 findings. The worst issue is C1.
 
 ## AP-C6 repair state
 
-AP-C6: repair cycle 1 of 2 is complete at af4a576a (claude:aap_t08_rep1, opus, high), with its refreeze at 503cc76b. Its confirming round passed Spec and Coverage. Standards failed on one new finding, S3 (merged with Spec P3): `.agents/skills/bench-craft-gate/SKILL.md:75` still names "the retired-text rule". Repair cycle 2 of 2 fixes that line in place. AP-C6 is the last chunk, so it runs no chunk checkpoint. No reviewer extension exists.
+AP-C6: repair cycle 1 of 2 is complete at af4a576a (claude:aap_t08_rep1, opus, high), with its refreeze at 503cc76b. Its confirming round passed Spec and Coverage. Standards failed on one new finding, S3 (merged with Spec P3): `.agents/skills/bench-craft-gate/SKILL.md:75` still names "the retired-text rule".
+
+Repair cycle 2 of 2 fixed that line in place at fc855398 (claude:aap_t08_rep2, opus, high), with its refreeze at 64ac8d47. Round 3 of all three axes passed. AP-C6 is the last chunk, so it runs no chunk checkpoint. No reviewer extension exists.
 
 ## AP-C6 Standards
 
