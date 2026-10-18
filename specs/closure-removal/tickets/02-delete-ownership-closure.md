@@ -10,7 +10,7 @@ Build preflight stops the closure prediction. `Decide` stops calling the closure
 
 The ownership package loses its closure half: `Requirement`, `Kind`, the collection stages, the closure walk and loader, the grammar-effects chain, the caller and liveness censuses, `OwnedPaths`, and `Owned`. `Collect` keeps the premise collectors, the manifest, `Symbols`, `ChargeReadiness`, and `SubjectPaths` for `--audit-spec`. The audit reports no closure diagnostic. Only the audit kind gathers the snapshot, so a build verdict reads no canary inventory and no anchor registry.
 
-The binding registry in `internal/tickets` goes, and the `ticket-grammar` check loses its binding-table grader and keeps its ticket-folder sweep. `canary.Pins` and `anchors.References` go with the closure loader, their only production caller. The canary inventory and the anchor registry formats stay unchanged, because the pre-FT293 landing broker still parses them.
+The binding registry in `internal/tickets` goes, and the `ticket-grammar` check loses its binding-table grader and keeps its ticket-folder sweep. `canary.Pins` and `anchors.References` go with the closure loader, their only production caller. The canary inventory and the anchor registry formats stay unchanged, because the pre-FT293 landing broker still parses them. The system-tagged charge evidence test loses its closure inventory fixture, and it runs with `BENCH_KIT` set through `bench test --check system`.
 
 The clean-path refusal moves into `tickets.ParseWrite`. An entry with a `..` segment, an absolute entry, or an unclean spelling is a grammar error, so `tickets-parse` reds it. The premise collectors that called the closure's clean-path predicate call the grammar's rule.
 
