@@ -54,7 +54,7 @@ func TestCoreInvariantAnchorTuples(t *testing.T) {
 func TestInvariantClauseAnchorsRedOnRemoval(t *testing.T) {
 	const bench = ".bench/BENCH.md"
 	anchorHarness{
-		group: AfterSpecAuthorization,
+		group: AfterImplementSpec,
 		rules: []anchorRule{
 			{file: bench, section: coreInvariants, needle: "Never edit, skip, weaken, or delete a test or a check to make it pass.", want: ".bench/BENCH.md invariant 1 dropped the rule that no test or check is edited, skipped, weakened, or deleted to make it pass"},
 			{file: bench, section: coreInvariants, needle: "Before any multi-cycle stage, state the model, the effort, the iteration cap, and a one-clause justification in one line.", want: ".bench/BENCH.md invariant 2 dropped the one-line declaration of the model, the effort, the iteration cap, and the justification before a multi-cycle stage"},
@@ -129,7 +129,7 @@ func TestFastLaneAnchorsRedOnRemoval(t *testing.T) {
 		{file: ".bench/BENCH.md", needle: "Green is the landing's whole-project gate, and a worktree commit requires a lane pass, not a gate run.", want: ".bench/BENCH.md invariant 4 dropped the fast-lane sentence; green is the landing's whole-project gate, and a worktree commit requires a lane pass, not a gate run"},
 	}
 	anchorHarness{
-		group: AfterSpecAuthorization,
+		group: AfterImplementSpec,
 		rules: rules,
 		templates: map[string]string{
 			".bench/BENCH.md": "# Bench Operating Guide\n\n## " + coreInvariants + "\n\n4. Commit on green, never on red.%s\n\n## Workflow\n",
@@ -146,7 +146,7 @@ func TestFastLaneAnchorsRedOnRemoval(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, ".bench", "BENCH.md"), []byte(misplaced), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if diags := EvaluateGroup(root, AfterSpecAuthorization); !slices.Contains(diags, rules[0].want) {
+	if diags := EvaluateGroup(root, AfterImplementSpec); !slices.Contains(diags, rules[0].want) {
 		t.Errorf("guide with the fast-lane sentence under Workflow = %v, want %q", diags, rules[0].want)
 	}
 }
@@ -175,7 +175,7 @@ func TestCensusDutyAnchorsRedOnRemoval(t *testing.T) {
 // so the two rows do not separate by cross-talk.
 func TestHarnessRecordPointerAnchorsRedOnRemoval(t *testing.T) {
 	anchorHarness{
-		group: AfterSpecAuthorization,
+		group: AfterImplementSpec,
 		rules: []anchorRule{
 			{
 				file:   ".bench/BENCH-reference.md",
@@ -371,7 +371,7 @@ func TestDelegateExecOnlyAnchorRedOnRemoval(t *testing.T) {
 // that dropped the route cannot define itself green.
 func TestSystemSuiteRouteAnchorsRedOnRemoval(t *testing.T) {
 	anchorHarness{
-		group: AfterSpecAuthorization,
+		group: AfterImplementSpec,
 		rules: []anchorRule{
 			{
 				file:   "AGENTS.md",
@@ -393,7 +393,7 @@ func TestSystemSuiteRouteAnchorsRedOnRemoval(t *testing.T) {
 // itself green.
 func TestHandoffSectionRuleAnchorRedOnRemoval(t *testing.T) {
 	const rule = "`bench handoff` rewrites only the calling worktree's assignment section."
-	anchorHarness{group: AfterSpecAuthorization, rules: []anchorRule{
+	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
 		{file: "AGENTS.md", needle: rule, want: "AGENTS.md restored its copy of the handoff section rule that .bench/BENCH-reference.md owns", forbidden: true},
 	}}.check(t)
 }

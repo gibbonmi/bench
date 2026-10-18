@@ -34,7 +34,6 @@ func checkWorkflowAnchors(root string) []string {
 	diags = append(diags, checkRoadmapContextQuery(whatNext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterRoadmapContext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterImplementSpec)...)
-	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterSpecAuthorization)...)
 	if strings.Contains(readIfExists(filepath.Join(root, "README.md")), "\u2502   \u2514\u2500\u2500 bench                 #") {
 		diags = append(diags, "README layout still names bin/bench instead of bin/bench.sh")
 	}

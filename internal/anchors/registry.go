@@ -48,7 +48,6 @@ const (
 	AfterStructured
 	AfterRoadmapContext
 	AfterImplementSpec
-	AfterSpecAuthorization
 )
 
 // Entries returns the ordered anchor registry.
