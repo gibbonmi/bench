@@ -32,6 +32,8 @@ Build action requires available required context: a retrieval receipt, a termina
 
 Follow `.bench/BENCH.md`'s ticket authorship and chunk-review policy. `craft-delegate` governs independent review and brief read-only diagnostic consultation. Neither role receives implementation or repair authorship. Before the first dispatch, the orchestrator takes the plan amendment that `.bench/BENCH-reference.md` states. The orchestrator reads manifests, returns, and verdicts, not code, and it refreshes `bench handoff` at each chunk checkpoint and at the final reconciliation.
 
+The orchestrator runs `bench probe` only in a tree where no author runs checks. The probe writes its mutant into the subject until the restore, and an author check in that window can read the mutant.
+
 ## Build
 
 Before each approved slice, identify its acceptance target and existing verification route. At an approved TDD seam, follow `craft-tdd` for its behavioral-red sequence, minimal compiled setup, and row classifications.
