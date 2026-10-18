@@ -50,8 +50,10 @@ func (p *producers) resolve(fn *ast.FuncDecl, arg ast.Expr, key string, visiting
 
 // callers resolves parameter name of fn through each call site of fn in the package: the
 // argument at the parameter's place resolves as resolve states. fn must be an unexported
-// function that the package only calls, so the package holds every call site. A call site
-// that does not resolve, a recursive resolution, or no call site leaves it unresolved.
+// function, not a method, with an unambiguous name that the package only calls, so the
+// package holds every call site. A name that is not a parameter of fn, a recursive
+// resolution, a use of fn as a value, a call site outside a function or with too few
+// arguments, a call site that does not resolve, or no call site leaves it unresolved.
 func (p *producers) callers(fn *ast.FuncDecl, name string, visiting map[*ast.FuncDecl]bool) ([]grammarUnit, bool) {
 	at := paramIndex(fn, name)
 	if at < 0 || fn.Recv != nil || ast.IsExported(fn.Name.Name) || p.ambiguous[fn.Name.Name] || visiting[fn] {
