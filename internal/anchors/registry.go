@@ -131,17 +131,13 @@ func evaluate(root string, group *Group, subject string) PathEvaluation {
 			}
 			continue
 		}
-		if anchor.Kind == Require {
+		// A whole-file row of any kind reports an absent file. A forbid that read an absent
+		// file as clean would let a rename of the guarded file disable the forbid.
+		if !anchor.Kind.sectionScoped() {
 			if !file.exists {
 				result.Diagnostics = append(result.Diagnostics, "acceptance coverage anchor file missing: "+anchor.File)
 				continue
 			}
-			if !Satisfied(anchor.Kind, file.active, anchor.Needle) {
-				result.Diagnostics = append(result.Diagnostics, anchor.Diagnostic)
-			}
-			continue
-		}
-		if anchor.Kind == Forbid || anchor.Kind == ForbidCaseFoldedEmphasis {
 			if !Satisfied(anchor.Kind, file.active, anchor.Needle) {
 				result.Diagnostics = append(result.Diagnostics, anchor.Diagnostic)
 			}

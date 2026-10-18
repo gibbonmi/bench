@@ -134,14 +134,15 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	}
 
 	// An absent file gives 0 on every row, siblings included, and one missing-file
-	// diagnostic for each Require row.
+	// diagnostic for each row. Every AGENTS.md row is a whole-file Require or Forbid row,
+	// and a Forbid row on an absent file reports the file as missing too.
 	empty := newAXIEnvelopeRepo(t)
 	result = runAXICommandAt(t, empty, []string{"anchors", "AGENTS.md"})
 	if result.code != 1 || result.stderr != "" {
 		t.Fatalf("anchors AGENTS.md (absent file) = %#v, want exit 1 and no stderr", result)
 	}
 	want = anchorsFixtureTable(t, rows, make([]int, len(rows)))
-	want += strings.Repeat(toon.Errorf("anchor", "acceptance coverage anchor file missing: AGENTS.md")+"\n", planted)
+	want += strings.Repeat(toon.Errorf("anchor", "acceptance coverage anchor file missing: AGENTS.md")+"\n", len(rows))
 	want += "help[0]{cmd,why}:\n"
 	if result.stdout != want {
 		t.Fatalf("anchors AGENTS.md (absent file) stdout = %q, want %q", result.stdout, want)
