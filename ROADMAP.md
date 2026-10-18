@@ -172,8 +172,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT435 (LOW, decision required) — author and repair returns carry a calibrated claims table.**
 
-**FT436 (LOW) — the coordinator starts no probe while an author runs checks in the same tree.**
-
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
