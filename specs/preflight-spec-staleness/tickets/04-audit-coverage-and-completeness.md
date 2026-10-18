@@ -8,7 +8,7 @@ Covers: SS28, SS29, SS30, SS31, SS32, SS33, SS34, SS49, SS50, SS57, SS58
 
 The audit combines source, symbol, test, and canonical coverage collection.
 Consume the reviewed ownership metadata parser and all predecessor collectors.
-Add completeness.go, TestCoverageIdentity, and TestAuditCompleteness in identity_test.go.
+Add completeness.go, TestCoverageIdentity, and TestAuditCompleteness in completeness_test.go.
 Keep canonical rows-owned, rows-membership, duplicate-token, and completion-plan obligations.
 Predicate bytes and changed ticket Covers join exact drift.
 

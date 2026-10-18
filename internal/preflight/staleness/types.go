@@ -54,15 +54,26 @@ type Diagnostic struct {
 
 // AuditFacts is one immutable collection over one exact committed pair. Paths holds every
 // member of the audit scope at either identity, in path order, so a deleted member keeps its
-// row. Symbols holds each cited symbol and Tests each test seam, both in inventory order.
-// Decide grades these values and reads nothing else.
+// row. Coverage holds each coverage row and then each ticket file. Symbols holds each cited
+// symbol and Tests each test seam, both in inventory order. Decide grades these values and
+// reads nothing else.
 type AuditFacts struct {
 	Baseline, Tip string
 	SpecPath      string
 	Paths         []PathState
+	Coverage      []CoverageState
 	Symbols       []SymbolState
 	Tests         []TestState
 	Diagnostics   []Diagnostic
+}
+
+// CoverageState is one coverage subject at the baseline and at the tip: a coverage row and
+// its predicate bytes, or a ticket file and its Covers tokens. Path is the file that
+// holds the subject, and Kind names the subject in its drift entry. Absent fills the value of
+// a side that holds no such row or file.
+type CoverageState struct {
+	Path, Kind    string
+	Before, After string
 }
 
 // TestState is the audit of one test seam of the tip inventory: its seam ID, its file and
@@ -141,6 +152,7 @@ const (
 	StageSpecial      = "special source"
 	StageSymbol       = "cited symbol source"
 	StageTest         = "cited test source"
+	StageTicket       = "ticket source"
 )
 
 // Error is a collection refusal: the stage that failed, the subject it read, and the cause.

@@ -122,7 +122,7 @@ func TestTestIdentity(t *testing.T) {
 		tagged, untagged    = "internal/example/tagged_test.go", "internal/example/untagged_test.go"
 	)
 	seam := func(id, path, function, state string) string {
-		return seamItem(slug, id, path, "example.com/internal/example", function, state)
+		return seamItem(slug, id, path, "example.com/internal/example", function, state, "PF1")
 	}
 	const header = "package example\n\nimport \"testing\"\n\n"
 	write(t, map[string]string{

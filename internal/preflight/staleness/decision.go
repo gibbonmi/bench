@@ -8,13 +8,19 @@ import (
 )
 
 // Decide classifies one AuditFacts value. It performs no I/O, and the same facts always
-// yield the same audit. spec-drift is red when any audit-scope member changed, cited-symbols
-// is red when any cited symbol has a supported discrepancy, and cited-tests is red when any
-// test seam has a supported discrepancy; each such discrepancy joins the drift. A check that
-// a diagnostic names, or a check over a symbol or a test whose discrepancy no collector
-// grades, is diagnostic unless it is red, and any diagnostic makes the audit incomplete.
+// yield the same audit. spec-drift is red when any audit-scope member, coverage predicate,
+// or ticket Covers set changed, cited-symbols is red when any cited symbol has a supported
+// discrepancy, and cited-tests is red when any test seam has a supported discrepancy; each
+// such change and discrepancy joins the drift. A check that a diagnostic names, or a check
+// over a symbol or a test whose discrepancy no collector grades, is diagnostic unless it is
+// red, and any diagnostic makes the audit incomplete.
 func Decide(facts AuditFacts) Audit {
-	paths := drift(facts.Paths)
+	specDrift := drift(facts.Paths)
+	for _, state := range facts.Coverage {
+		if state.Before != state.After {
+			specDrift = append(specDrift, coverageEntry(state))
+		}
+	}
 	var symbolDrift, testDrift []DriftEntry
 	undecided := map[string]bool{}
 	for _, state := range facts.Symbols {
@@ -36,12 +42,12 @@ func Decide(facts AuditFacts) Audit {
 	audit := Audit{
 		Baseline:    facts.Baseline,
 		Tip:         facts.Tip,
-		Drift:       append(append(paths, symbolDrift...), testDrift...),
+		Drift:       append(append(specDrift, symbolDrift...), testDrift...),
 		Diagnostics: facts.Diagnostics,
 		Complete:    len(facts.Diagnostics) == 0,
 	}
 	audit.ManualRequired = !audit.Complete
-	red := map[string]bool{CheckSpecDrift: len(paths) > 0, CheckCitedSymbols: len(symbolDrift) > 0, CheckCitedTests: len(testDrift) > 0}
+	red := map[string]bool{CheckSpecDrift: len(specDrift) > 0, CheckCitedSymbols: len(symbolDrift) > 0, CheckCitedTests: len(testDrift) > 0}
 	for _, name := range checkNames {
 		state := StateGreen
 		if undecided[name] || slices.ContainsFunc(facts.Diagnostics, func(d Diagnostic) bool { return d.Subject == name }) {

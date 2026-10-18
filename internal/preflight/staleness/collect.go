@@ -2,7 +2,6 @@ package staleness
 
 import (
 	"fmt"
-	"path"
 	"slices"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -11,18 +10,15 @@ import (
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
-// unsupported names each required collector that does not run yet. Each one stays a
-// diagnostic, so the audit stays incomplete and manual review stays required.
-var unsupported = []string{"coverage"}
-
 // Collect reads the audit scope of the committed pair that source names at root. It reads
 // the spec and its planning-facts inventory at both identities from committed objects, never
 // from the checkout. sourceFacts is the closure snapshot of the same pair, whose diagnostics
-// stay open in the audit and whose symbol identities the cited-symbols audit grades. The
-// test seams of the tip inventory are what the cited-tests audit grades. An absent or
-// special spec at either identity, an unreadable tree, a member of the scope that is no
-// regular file, or a cited symbol's or test's object that does not read refuses the
-// collection with an *Error and no facts.
+// and unproved inventory stay open in the audit and whose symbol identities the
+// cited-symbols audit grades. The test seams of the tip inventory are what the cited-tests
+// audit grades, and the coverage rows and ticket Covers of both identities join the
+// spec-drift audit. An absent or special spec at either identity, an unreadable tree, a
+// member of the scope that is no regular file, or a cited symbol's, test's, or ticket's
+// object that does not read refuses the collection with an *Error and no facts.
 func Collect(root string, source ownership.Source, sourceFacts ownership.Snapshot) (AuditFacts, error) {
 	baseline, err := readSpec(root, source.Base, source.SpecPath, StageBaselineSpec)
 	if err != nil {
@@ -43,6 +39,9 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 		return AuditFacts{}, err
 	}
 	facts := AuditFacts{Baseline: source.Base, Tip: source.Tip, SpecPath: source.SpecPath, Paths: union(before, after)}
+	if facts.Coverage, err = coverageStates(root, source.SpecPath, baseline, current, facts.Paths); err != nil {
+		return AuditFacts{}, err
+	}
 	cited, undecided, err := symbols(root, facts.Paths, sourceFacts.Symbols)
 	if err != nil {
 		return AuditFacts{}, err
@@ -56,10 +55,7 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 	for _, diagnostic := range sourceFacts.Diagnostics {
 		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: diagnostic.ID, Reason: diagnostic.Reason})
 	}
-	facts.Diagnostics = append(append(append(facts.Diagnostics, unread...), undecided...), unjudged...)
-	for _, collector := range unsupported {
-		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: collector, Reason: "no " + collector + " collector grades this audit"})
-	}
+	facts.Diagnostics = append(append(append(append(facts.Diagnostics, unread...), undecided...), unjudged...), completeness(tipManifest, sourceFacts)...)
 	return facts, nil
 }
 
@@ -78,7 +74,7 @@ func readSpec(root, commit, specPath, stage string) ([]byte, error) {
 // entry takes the one Writes: split, so a marker or a trailing slash never becomes a path
 // segment. unread holds one diagnostic for each premise whose subject paths do not read.
 func scope(specPath string, specs [][]byte, manifests []ownership.Manifest) (split []string, unread []Diagnostic) {
-	entries := []string{specPath, path.Join(path.Dir(specPath), "tickets")}
+	entries := []string{specPath, ticketsDir(specPath)}
 	for _, content := range specs {
 		fences, _ := specref.FenceTokens(content)
 		entries = append(entries, fences...)
