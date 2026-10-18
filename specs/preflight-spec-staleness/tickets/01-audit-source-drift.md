@@ -12,7 +12,7 @@ A draft or provider chunk is insufficient.
 Reconcile graph pins and claims against that landed source through the existing enabling-plan procedure.
 No FT318 or FT125 delivery is required.
 
-Expose staleness.Collect(root string, source ownership.Source, manifest ownership.Manifest, sourceFacts ownership.Snapshot) (AuditFacts, error) and staleness.Decide(facts AuditFacts) Audit.
+Expose staleness.Collect(root string, source ownership.Source, sourceFacts ownership.Snapshot) (AuditFacts, error) and staleness.Decide(facts AuditFacts) Audit.
 Typed staleness.Error preserves Stage, Subject, Cause, and Unwrap.
 AuditFacts carries baseline, tip, spec identity, path, symbol, test, coverage states, and diagnostics.
 Audit carries three mechanical checks, drift, diagnostics, completeness, and ManualRequired.
