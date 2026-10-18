@@ -2642,7 +2642,98 @@
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "ft375_final-preflight",
+        "performer": "claude:ft375-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ft375-orchestrator-20261017",
+          "digest": "sha256:820319c612712bcaaf08c069ed29cb471d44032554f0fefcfeae3d46d9ed47ca",
+          "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench preflight build preflight-spec-staleness\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,548bcc1c93e8a67ebfc9e667f155de71fedd7331,false\nphase: build\nspec: specs/preflight-spec-staleness/spec.md\nchecks{green=15,not_applicable=1,red=0}\n"
+        },
+        "requirement": "final-preflight",
+        "command": "bench preflight build preflight-spec-staleness",
+        "exit_code": 0
+      },
+      {
+        "id": "ft375_final-focused",
+        "performer": "claude:ft375-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ft375-orchestrator-20261017",
+          "digest": "sha256:d3ccd93390d1e58d19e4826c25e896f30d0807772cd98f353ac2806ca6f9e0ab",
+          "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --package ./internal/preflight/...\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,548bcc1c93e8a67ebfc9e667f155de71fedd7331,false\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,51177,416\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,30116,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,53501,271\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,6849,67\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "final-focused",
+        "command": "bench test --package ./internal/preflight/...",
+        "exit_code": 0
+      },
+      {
+        "id": "ft375_final-registry",
+        "performer": "claude:ft375-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ft375-orchestrator-20261017",
+          "digest": "sha256:a46b59c6bf8eadcb5546cab7b640669c4e2f581286e667b392b0ef4a18b2b979",
+          "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,548bcc1c93e8a67ebfc9e667f155de71fedd7331,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18522,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "final-registry",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "ft375_final-grammar",
+        "performer": "claude:ft375-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ft375-orchestrator-20261017",
+          "digest": "sha256:b39f23bd46949fbd4e97bc5289168076dbd6d3f81c8071beb2fdee9a48c02064",
+          "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --check ticket-grammar\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,548bcc1c93e8a67ebfc9e667f155de71fedd7331,false\ncheck[1]{name,kind,tests_run,subjects}:\n  ticket-grammar,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5257,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "final-grammar",
+        "command": "bench test --check ticket-grammar",
+        "exit_code": 0
+      },
+      {
+        "id": "ft375_final-workflow",
+        "performer": "claude:ft375-orchestrator-20261017",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e033f1d9422c587dfa9cb01cfe5b9276abc1f03a",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ft375-orchestrator-20261017",
+          "digest": "sha256:165ced8dcee2e605e9c9504aa8f2927a99db3983302a0bedf533ca3f41c170aa",
+          "excerpt": "bench worktree exec bb87c9fc56cc0af9f6e84908b2d9a3a6 -- bench test --check docs-currency-workflow\ntree[1]{target,head,dirty}:\n  preflight-spec-staleness,548bcc1c93e8a67ebfc9e667f155de71fedd7331,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5803,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "final-workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
