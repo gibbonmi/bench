@@ -72,7 +72,7 @@ present one as a behavior check.
 A prose rewrite adds an anchor Forbid row only for a stale or wrong form that must not return.
 A sentence that grants a retired behavior and a rule copy at a former site are such forms.
 Review owns the wording of a rule sentence, so a rewrite adds no Require row; ADR 0012 names the admitted classes.
-[The slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules) state the retirement-pass form of the retired-text rule.
+[The slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules) state the retirement-pass form of this rule.
 
 ## Hermetic and fast
 
