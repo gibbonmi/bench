@@ -30,6 +30,7 @@ const (
 	KindCleanPlan
 	KindCleanApply
 	KindBreakdown
+	KindAuditSpec
 )
 
 // Flag spellings and modes the operations share.
@@ -40,6 +41,7 @@ const (
 	flagPlanOnly = "--plan-only"
 	flagPropose  = "--propose-writes"
 	flagBreak    = "--breakdown"
+	flagAudit    = "--audit-spec"
 	FlagTicket   = "--ticket"
 	flagQuota    = "--max-store-bytes"
 	flagCursor   = "--cursor"
@@ -69,6 +71,7 @@ var flagTable = []flagSpec{
 	{flagPlanOnly, ""},
 	{flagPropose, ""},
 	{flagBreak, ""},
+	{flagAudit, ""},
 	{FlagTicket, "<basename>"},
 	{flagQuota, "<n>"},
 	{flagCursor, "<cursor>"},
@@ -115,6 +118,8 @@ var operations = []Operation{
 		description: "propose one ticket's Writes: entries from the pinned source"},
 	{Mode: ModeBuild, selectors: []string{flagBreak}, optional: []string{FlagBase, FlagTip}, Kind: KindBreakdown,
 		description: "list each coverage row that no ticket cites, with the closure and the premises, and grant no authority"},
+	{Mode: ModeBuild, selectors: []string{flagAudit}, required: []string{FlagBase, FlagTip}, Kind: KindAuditSpec,
+		description: "audit the spec's exact source drift between the reviewed base and the source tip, and state whether manual review is required"},
 	{Mode: modeEvidence, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,
 		description: "print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor"},
 	{Mode: modeEvidence, selectors: []string{flagSource}, optional: []string{flagCursor}, Kind: KindReadEvidence, Bounded: true,

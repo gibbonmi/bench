@@ -29,10 +29,21 @@ func GatherPinned(root, mode, slug, explicitBase, sourceTipPin string) (Facts, *
 }
 
 func gatherCharge(root, mode, slug string, source *diff.SourceRange, sourcePaths []string, sourceTipPin string) (Facts, *BootstrapFailure) {
-	return gather(root, mode, slug, source, sourcePaths, sourceTipPin, true)
+	return gather(root, mode, slug, source, sourcePaths, sourceTipPin, true, false)
 }
 
 func gatherPinned(root, mode, slug, explicitBase, sourceTipPin string, noFollow bool) (Facts, *BootstrapFailure) {
+	return gatherSource(root, mode, slug, explicitBase, sourceTipPin, noFollow, false)
+}
+
+// gatherAudit is GatherPinned for the audit form. Its movement-checked attempt refuses a dirty
+// checkout before any read, follows no link, and also collects the staleness facts of the
+// explicit pair, so a persistent movement replaces the whole attempt.
+func gatherAudit(root, mode, slug, explicitBase, sourceTipPin string) (Facts, *BootstrapFailure) {
+	return gatherSource(root, mode, slug, explicitBase, sourceTipPin, true, true)
+}
+
+func gatherSource(root, mode, slug, explicitBase, sourceTipPin string, noFollow, audit bool) (Facts, *BootstrapFailure) {
 	if explicitBase != "" {
 		var gathered Facts
 		var gatherFailure *BootstrapFailure
@@ -47,7 +58,7 @@ func gatherPinned(root, mode, slug, explicitBase, sourceTipPin string, noFollow 
 			if err != nil {
 				return "changed files not readable", err.Error()
 			}
-			if mode == "review" {
+			if mode == "review" || audit {
 				dirty, statusErr := git.WorktreeDirty(root)
 				if statusErr != nil {
 					return "source status unreadable", statusErr.Error()
@@ -56,7 +67,7 @@ func gatherPinned(root, mode, slug, explicitBase, sourceTipPin string, noFollow 
 					return "source not clean", "review source has uncommitted changes"
 				}
 			}
-			gathered, gatherFailure = gather(root, mode, slug, &source, paths, sourceTipPin, noFollow)
+			gathered, gatherFailure = gather(root, mode, slug, &source, paths, sourceTipPin, noFollow, audit)
 			if gatherFailure != nil {
 				return gatherFailure.Kind, gatherFailure.Hint
 			}
@@ -73,7 +84,7 @@ func gatherPinned(root, mode, slug, explicitBase, sourceTipPin string, noFollow 
 		}
 		return gathered, nil
 	}
-	return gather(root, mode, slug, nil, nil, sourceTipPin, noFollow)
+	return gather(root, mode, slug, nil, nil, sourceTipPin, noFollow, audit)
 }
 
 func resolveSpecInput(root, slug string, noFollow bool) ([]byte, string, []string, bool, error) {

@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
+	"github.com/gibbonmi/bench/internal/preflight/staleness"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -118,6 +119,10 @@ type Facts struct {
 	// write requires, with every source reason, and the premise inventory with its
 	// diagnostics. The gatherer collects it; the closure rows grade its requirements.
 	Ownership ownership.Snapshot
+
+	// Audit is the staleness collection of the explicit pair. Only the audit form gathers it.
+	// staleness.Decide grades it, and Decide reads none of it.
+	Audit staleness.AuditFacts
 
 	// KitObligations is every required closure path that is a system-tagged test, with the
 	// file and line that carry the tag. The proposal reports each as a BENCH_KIT obligation.

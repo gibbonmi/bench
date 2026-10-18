@@ -9,6 +9,7 @@ import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
+	"github.com/gibbonmi/bench/internal/preflight/staleness"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -145,11 +146,17 @@ func boundedVerdict(verdict Verdict) Verdict {
 	return verdict
 }
 
-// verdictCommand renders the ordinary or plan-only verdict, or the breakdown of the same
-// gathered facts. kind is the operation that the dispatcher selected, and the facts carry it
-// into Decide.
+// verdictCommand renders the ordinary, plan-only, or audit verdict, or the breakdown of the
+// same gathered facts. kind is the operation that the dispatcher selected, and the facts carry
+// it into Decide. The audit form gathers its staleness facts in the same movement-checked
+// attempt and prints their tables after the checks. A supported audit red exits 1 like a
+// readiness red, and a diagnostic-only audit exits 0 with manual review still required.
 func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip string, args []string) (string, int) {
-	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
+	gatherFacts := GatherPinned
+	if kind == evidencecmd.KindAuditSpec {
+		gatherFacts = gatherAudit
+	}
+	facts, bootErr := gatherFacts(root, mode, slug, base, sourceTip)
 	if bootErr != nil {
 		if bootErr.Kind == "snapshot drift" {
 			return snapshotDriftRefusal(args, bootErr.Hint), 1
@@ -191,6 +198,17 @@ func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, source
 	exit := 0
 	if verdict.Red {
 		exit = 1
+	}
+	if kind == evidencecmd.KindAuditSpec {
+		audit := staleness.Decide(facts.Audit)
+		tables, err := audit.Render()
+		if err != nil {
+			return toon.RenderError(err) + "\n", 1
+		}
+		b.WriteString(tables)
+		if audit.Red() {
+			exit = 1
+		}
 	}
 	return b.String(), exit
 }
