@@ -987,7 +987,7 @@
     {
       "id": "SS-C2",
       "base": "c585f9d08d9f7d320d5e56dfc88c69a09f43733c",
-      "tip": "cae8e1899d03118698f4def3d7915918b481c9d4",
+      "tip": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
       "plan_digest": "sha256:4be92c9f220cff6e03206483328acc81fd3de1894913f7c9c4df48caa0d0a87b",
       "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
       "acceptance_rows": [
@@ -1832,6 +1832,125 @@
           },
           "requirement": "ss-03-check-5",
           "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t04_rep1b-ss-04-focused",
+          "performer": "claude:ft375_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t04_rep1",
+            "digest": "sha256:9fcce2c47be4198fcf5748739d289086024c4dd209394b61133e43c8e2b24f1b",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestAuditCompleteness/SS34_omitted_citation,17,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestCoverageIdentity|TestAuditCompleteness,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1330\nmutant_report[1]{mutant}:\n  1\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,6,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,1136,17\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestAuditCompleteness/SS34_omitted_citation,\"completeness_test.go:224: diagnostics = [], want the prefixes [\\\"metadata|row SS28 seam omits internal/example/kept_test.go (TestOther)\\\"]\",2\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestAuditCompleteness/SS50_present_empty,\"completeness_test.go:224: diagnostics = [\\\"metadata|row SS28 seam omits internal/example/kept_test.go (TestKept) from seams\\\" \\\"bench-planning-facts|the planning inventory declares no claim, so it cannot certify its own scope\\\"], want the prefi… (454 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-04-focused",
+          "command": "bench test --package ./internal/preflight/... --run 'TestCoverageIdentity|TestAuditCompleteness'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "ss-04-omission",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft375_t04_rep1",
+              "digest": "sha256:9fcce2c47be4198fcf5748739d289086024c4dd209394b61133e43c8e2b24f1b",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestAuditCompleteness/SS34_omitted_citation,17,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/...,TestCoverageIdentity|TestAuditCompleteness,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1330\nmutant_report[1]{mutant}:\n  1\npackages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,6,0\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,5,0\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,4,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,fail,1136,17\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestAuditCompleteness/SS34_omitted_citation,\"completeness_test.go:224: diagnostics = [], want the prefixes [\\\"metadata|row SS28 seam omits internal/example/kept_test.go (TestOther)\\\"]\",2\n  github.com/gibbonmi/bench/internal/preflight/staleness,TestAuditCompleteness/SS50_present_empty,\"completeness_test.go:224: diagnostics = [\\\"metadata|row SS28 seam omits internal/example/kept_test.go (TestKept) from seams\\\" \\\"bench-planning-facts|the planning inventory declares no claim, so it cannot certify its own scope\\\"], want the prefi… (454 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft375_t04_rep1b-ss-04-check-1",
+          "performer": "claude:ft375_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t04_rep1",
+            "digest": "sha256:dbf92298d4ac470aad7da7fccb0df80d97e576ed932148663717945601e7808a",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,51059,416\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,30029,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,53145,271\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,5017,56\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-04-check-1",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t04_rep1b-ss-04-check-2",
+          "performer": "claude:ft375_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t04_rep1",
+            "digest": "sha256:6d8d34b93a6414566918f91cc8be4f8279b8d7acb7a98d658fa9ae48faec13a9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,pass,2629,145\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-04-check-2",
+          "command": "bench test --package ./internal/coverage",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t04_rep1b-ss-04-check-3",
+          "performer": "claude:ft375_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t04_rep1",
+            "digest": "sha256:865b179beb72d22ff5ee5a9f1e491dffaae4de130e62d1ff2dd6600d54b64a51",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  ticket-grammar,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5217,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-04-check-3",
+          "command": "bench test --check ticket-grammar",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t04_rep1b-ss-04-check-4",
+          "performer": "claude:ft375_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t04_rep1",
+            "digest": "sha256:02947b2d1c7ac1417cb22078a71c891eeafaed2db408fcc9cdd3e990f841e71b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17740,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-04-check-4",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ft375_t04_rep1b-ss-04-check-5",
+          "performer": "claude:ft375_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "19c1928ba06437a64fb1ff4b5a8bd3150eb7ac53",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_t04_rep1",
+            "digest": "sha256:c411e3da3166db940910b5d51cf0f90ef6de750c2d6a1596d359a21be3d141dd",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18026,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ss-04-check-5",
+          "command": "bench test --package ./cmd/bench",
           "exit_code": 0
         }
       ],
