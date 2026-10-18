@@ -889,6 +889,30 @@
           ]
         },
         {
+          "id": "FT293-closure-removal",
+          "criteria": [
+            {
+              "id": "FT293-closure-removal.remove",
+              "text": "Preflight no longer predicts ownership closure, and the propose-writes, breakdown, and premise forms and their repeated guidance are gone."
+            },
+            {
+              "id": "FT293-closure-removal.widen",
+              "text": "One plan verb adds a gate-found path to a ticket's expected writes, and a path outside the approved scope goes to the reviewer."
+            },
+            {
+              "id": "FT293-closure-removal.scope",
+              "text": "The spec scope derives from the tickets, and the landing still refuses a path outside that scope."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT293",
+              "path": "roadmap/FT293.md",
+              "identity": "sha256:73c4f24b0512ba1254fbf17433f5f8df9253faf2dfbd159417ce9a33095f9896"
+            }
+          ]
+        },
+        {
           "id": "FT380-plan-commit",
           "criteria": [
             {
@@ -906,6 +930,10 @@
             {
               "id": "FT380-plan-commit.open",
               "text": "The delivery closes no roadmap row, and the check before publication and the commit-lane floor stay open on FT380."
+            },
+            {
+              "id": "FT380-plan-commit.moved-tip",
+              "text": "The guidance states that any source change after a chunk freeze moves the chunk tip and needs a refreeze, and that the successor base is the last recorded source tip of its predecessor, never a record commit."
             }
           ],
           "sources": []
@@ -969,7 +997,7 @@
           "criteria": [
             {
               "id": "FT411.cut",
-              "text": "Each test that the reviewer selects from the 2026-10-09 test-efficiency review tables is cut."
+              "text": "Each row of the 2026-10-09 test-efficiency review tables whose probe proves a kept test red on the same mutation is cut, and a whole-test cut in internal/worktree repins its top-level test count in the same ticket."
             },
             {
               "id": "FT411.probe",
@@ -981,30 +1009,6 @@
               "id": "FT411",
               "path": "roadmap/FT411.md",
               "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
-            }
-          ]
-        },
-        {
-          "id": "FT293-closure-removal",
-          "criteria": [
-            {
-              "id": "FT293-closure-removal.remove",
-              "text": "Preflight no longer predicts ownership closure, and the propose-writes, breakdown, and premise forms and their repeated guidance are gone."
-            },
-            {
-              "id": "FT293-closure-removal.widen",
-              "text": "One plan verb adds a gate-found path to a ticket's expected writes, and a path outside the approved scope goes to the reviewer."
-            },
-            {
-              "id": "FT293-closure-removal.scope",
-              "text": "The spec scope derives from the tickets, and the landing still refuses a path outside that scope."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT293",
-              "path": "roadmap/FT293.md",
-              "identity": "sha256:73c4f24b0512ba1254fbf17433f5f8df9253faf2dfbd159417ce9a33095f9896"
             }
           ]
         },
@@ -1098,6 +1102,29 @@
               "path": "roadmap/FT314.md",
               "identity": "sha256:264903c22ff37e51a3e009b46a96a43267b9ad5c38934d96f3af4fd222f662ea"
             }
+          ]
+        },
+        {
+          "id": "FT375-residual",
+          "criteria": [
+            {
+              "id": "FT375-residual.map-sources",
+              "text": "Before the first chunk, the build preflight grades each spec decision map's Sources: against the published tree."
+            },
+            {
+              "id": "FT375-residual.writes-resolve",
+              "text": "The build-entry staleness pass takes a writes-resolve red whose every named path a landed commit deleted, if that check survives FT293-closure-removal."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT375",
+              "path": "roadmap/FT375.md",
+              "identity": "sha256:837124cb6340ce3d9ae84b287b9ac023cd055677b5622382b1ec3ccd4fcae7b6"
+            }
+          ],
+          "dependencies": [
+            "FT293-closure-removal"
           ]
         }
       ]
