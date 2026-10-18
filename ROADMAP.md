@@ -20,7 +20,7 @@ and review cost that recent builds paid.
 
 **FT293 (HIGH) — preflight stops predicting ownership closure, and a gate-found need widens a ticket's expected writes.**
 
-**FT375 (MEDIUM) — the build preflight reports spec staleness, and the staleness pass audits only drift and red rows.**
+**FT375 (MEDIUM) — the build preflight grades each spec decision map's `Sources:`, and the staleness pass takes a `writes-resolve` red from landed deletions.**
 
 **FT369 (MEDIUM) — the delegate charge and the slicing checks close the 2026-09-30 batch's fence and venue gaps.**
 
@@ -170,6 +170,12 @@ and the small cuts. The rows below hold the rest.
 
 **FT420 (HIGH) — a spec-backed build authors independent chunks concurrently by default.**
 
+**FT433 (LOW, decision required) — every kept anchor row has a red route that a test shows, or the admission rule says that review owns it.**
+
+**FT435 (LOW, decision required) — author and repair returns carry a calibrated claims table.**
+
+**FT436 (LOW) — the coordinator starts no probe while an author runs checks in the same tree.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -274,6 +280,8 @@ qualification requirements are met.
 **FT431 (MEDIUM, parked pending a repro) — a spec-stage close binds, folds, and re-plans with no deadlock and no unfenced board write.**
 
 **FT432 (MEDIUM, parked pending a repro) — one line-ending rule serves every spec reader.**
+
+**FT434 (MEDIUM, parked pending a repro) — the landing range of a build never holds a commit from `main`.**
 
 ## Release and bank reassessment gate
 
