@@ -3015,6 +3015,74 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "apc6-standards-r2",
+          "performer": "claude:aap_apc6_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3c70b652e8874a68f520c649ce33a7500e0f7e16",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc6_standards_r2",
+            "digest": "sha256:0c1947ab0f73dcc1d0997ee19f72439aefa8705782d72a97ac760c88b1150be5",
+            "excerpt": "Standards confirming round, AP-C6, repair delta 3985fd53..af4a576a; check-current current=true at 503cc76b.\nS1 closed, confidence 9: .agents/skills/bench-craft-spec/SKILL.md:87 re-cuts into one row per admitted needle.\nS2 closed, confidence 9: projects/benchkit.md:412-415 names ADR 0012 as the one source of the admitted classes and drops the list.\nS3 | minor | .agents/skills/bench-craft-gate/SKILL.md:75 still names \"the retired-text rule\", which line 73 no longer states | auto-fix in place, no added line | confidence 8\nVerdict: fail on S3 only.\n"
+          },
+          "axis": "Standards",
+          "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "tip": "af4a576aaebef3b8069a1767f10a456d4a5f6acc",
+          "finding_ids": [
+            "S3"
+          ],
+          "supersedes": [
+            "apc6-standards-r1"
+          ]
+        },
+        {
+          "id": "apc6-spec-r2",
+          "performer": "claude:aap_apc6_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3c70b652e8874a68f520c649ce33a7500e0f7e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc6_spec_r2",
+            "digest": "sha256:6c46d105e76a71ad7316bd829049abe24043782bc9a38c42d8d4002ba5859237",
+            "excerpt": "Spec confirming round, AP-C6, repair delta 3985fd53..af4a576a; check-current current=true at 503cc76b.\nP1 closed, confidence 8: .agents/skills/bench-craft-gate/SKILL.md:73 names a sentence that grants a retired behavior and agrees with slicing-checks.md:44; line 74 keeps no Require row.\nAP40, AP43, AP44, AP45 hold; every path is on ticket 8's Writes line.\nP3 | low | gate SKILL.md:75 still says \"retired-text rule\" | merged with Standards S3 | confidence 5\nVerdict: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "tip": "af4a576aaebef3b8069a1767f10a456d4a5f6acc",
+          "finding_ids": [],
+          "supersedes": [
+            "apc6-spec-r1"
+          ]
+        },
+        {
+          "id": "apc6-coverage-r2",
+          "performer": "claude:aap_apc6_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3c70b652e8874a68f520c649ce33a7500e0f7e16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:aap_apc6_coverage_r2",
+            "digest": "sha256:7ee38e4fe2d01bf22b3c72479a61d91d4bdb7566951714d6e7e15c494c8871ae",
+            "excerpt": "Coverage confirming round, AP-C6, repair delta 3985fd53..af4a576a; check-current current=true at 503cc76b.\nC1 closed, confidence 8: delegation-discipline.md:78-79 now forbids a rule-wording anchor in a charge.\nEvery needle still resolves (bench anchors on each edited file); line 77 is untouched; the gate and spec skills stay at 120 and 155 lines.\nNew findings: none. Verdict: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "b53c07e9dfe625beb6bd1b216d346f98c207342c",
+          "tip": "af4a576aaebef3b8069a1767f10a456d4a5f6acc",
+          "finding_ids": [],
+          "supersedes": [
+            "apc6-coverage-r1"
+          ]
         }
       ]
     }
@@ -3450,7 +3518,7 @@ AP-C5: 5 findings. The worst issue is C1.
 
 ## AP-C6 repair state
 
-AP-C6: repair cycle 1 of 2 starts. Every accepted finding falls on ticket 8, so one combined repair charge carries them all. AP-C6 is the last chunk, so it runs no chunk checkpoint. No reviewer extension exists.
+AP-C6: repair cycle 1 of 2 is complete at af4a576a (claude:aap_t08_rep1, opus, high), with its refreeze at 503cc76b. Its confirming round passed Spec and Coverage. Standards failed on one new finding, S3 (merged with Spec P3): `.agents/skills/bench-craft-gate/SKILL.md:75` still names "the retired-text rule". Repair cycle 2 of 2 fixes that line in place. AP-C6 is the last chunk, so it runs no chunk checkpoint. No reviewer extension exists.
 
 ## AP-C6 Standards
 
