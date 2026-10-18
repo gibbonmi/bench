@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/capturetx"
 	"github.com/gibbonmi/bench/internal/git"
@@ -88,6 +89,13 @@ func renderCaptureBundle(bundle capturetx.Bundle) (string, int) {
 		return toon.RenderError(err) + "\n", 1
 	}
 	out.WriteString(block)
+	if bundle.Resumed {
+		block, err = toon.Table("resumed", []string{"sealed_at"}, [][]string{{bundle.SealedAt.UTC().Format(time.RFC3339)}})
+		if err != nil {
+			return toon.RenderError(err) + "\n", 1
+		}
+		out.WriteString(block)
+	}
 	rows := make([][]any, len(bundle.Sources))
 	for i, source := range bundle.Sources {
 		rows[i] = []any{source.Name, source.Bytes, "sha256:" + source.Digest}
