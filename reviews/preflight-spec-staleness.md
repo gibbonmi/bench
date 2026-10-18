@@ -710,6 +710,74 @@
           "supersedes": [
             "ft375_ss-c1_coverage_r1"
           ]
+        },
+        {
+          "id": "ft375_ss-c1_standards_r3",
+          "performer": "claude:ft375_ss-c1_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "91d8b3f0e12284e9d598d3a6f4a8f224a91534be",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c1_standards_r3",
+            "digest": "sha256:0b59dd7c6e983efccab9e0c1c2fa6c9606a8077ed73b9362dcba2749818c1690",
+            "excerpt": "Standards confirm 2: N1 closed; new: none\n\nEvidence sha256:4d183986… binds to assignment bb87c9fc… at source tip a0eb0685 (current=true, dirty_record=false).\n\nAdvice: N1 is closed. The false sentence is gone from internal/git/tree.go:151-153. The comment that remains is true of the code: lines 159-170 split on NUL, refuse an unterminated record, and cut at the first tab. The new TestDriftIdentity case (internal/preflight/staleness/drift_test.go:209-218) builds its expected rows through the existing `modified` closure (line 188). It adds no second copy of the drift-row grammar. Its comment states the why in timeless present and carries no provenance. Line 172 still spells that row grammar out by hand, separate from the closure. That line is outside this delta, so I am not grading it here.\n\nNot verified: whether the new case goes red when the dropped-fence handling is removed (I ran no probe), and whether a red was recorded for it. I did not list the other ls-tree parsers.\n"
+          },
+          "axis": "Standards",
+          "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
+          "tip": "c56e4a7f92e37107440b0e3fd4c092f9ed22188c",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c1_standards_r2"
+          ]
+        },
+        {
+          "id": "ft375_ss-c1_spec_r3",
+          "performer": "claude:ft375_ss-c1_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "91d8b3f0e12284e9d598d3a6f4a8f224a91534be",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c1_spec_r3",
+            "digest": "sha256:20b60d597c87bc6919a4e6b6812a094f743b0ab2fea787d3f43fc97df806ff92",
+            "excerpt": "Spec confirm 2: pass; new: none\n\nThe evidence check binds: current=true, dirty_record=false, source_tip a0eb0685. The only commit after c56e4a7f is the record commit a0eb0685.\n\n- \"Enumerate every exact fence entry and every tracked member of a fence prefix at both identities.\" (spec.md:112): met. The new case in drift_test.go:209-218 commits a baseline fence of `outside/fenced/` through `SpecBody(slug, extra fence line)` (preflighttest/fixture.go:121). The tip drops that fence and changes `outside/fenced/member.txt`. The case asserts that the drift rows are exactly the spec and that member. Disposition: closes C1 (fence half). Confidence 8.\n- No SS-C1 row regressed (SS1–12, SS35–40, SS51, SS52, SS56): the delta only adds that test block and trims one comment at internal/git/tree.go:153. It removes no assertion and changes no production logic. Confidence 8.\n\nAdvice: none.\n\nNot verified: no tests or probes were run. I did not confirm a recorded red for the baseline-fence loop mutation (`specs[1:]`). I did not read the a0eb0685 record contents.\n"
+          },
+          "axis": "Spec",
+          "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
+          "tip": "c56e4a7f92e37107440b0e3fd4c092f9ed22188c",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c1_spec_r2"
+          ]
+        },
+        {
+          "id": "ft375_ss-c1_coverage_r3",
+          "performer": "claude:ft375_ss-c1_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "91d8b3f0e12284e9d598d3a6f4a8f224a91534be",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c1_coverage_r3",
+            "digest": "sha256:0ff19e25e9df8e8ba1eee59d791a0b3e3c200b374956cd65006ac5c9ded42e43",
+            "excerpt": "Coverage confirm 2: C1 open; new: C1b\n\nThe evidence binds: `--check-current` returned current=true and dirty_record=false at source_tip a0eb0685. After the probe, `git status --short` is empty.\n\n**Probe**\n- Site: internal/preflight/staleness/collect.go:71. On the baseline pass only (`len(entries) == 2`), the mutation deletes every exact fence token, meaning any token that does not end in `/`. Prefix tokens and the tip tokens stay.\n- Selection: `--package ./internal/preflight/... --run 'TestDrift|TestAudit'`.\n- Result: silent, cause passed, 0 failures, restored yes.\n\n**Finding**\n- C1b. Input: an exact (non-prefix) fence entry that only the baseline spec declares. Break: the new drift_test.go:209-219 case covers only a dropped prefix (`outside/fenced/`), so nothing catches a dropped exact entry. This misses spec line 112 (\"every exact fence entry … at both identities\"). Disposition: blocking. It goes to a fresh repair session for ticket 01. Confidence 7.\n\n**Not verified**\n- Whether the tip side's exact entries have a witness.\n- The full `./internal/preflight/...` run without the `--run` filter.\n- The gate.\n"
+          },
+          "axis": "Coverage",
+          "base": "81b10e749ad6e3b655a3f030d06050e2ef6e0dde",
+          "tip": "c56e4a7f92e37107440b0e3fd4c092f9ed22188c",
+          "finding_ids": [
+            "C1b"
+          ],
+          "supersedes": [
+            "ft375_ss-c1_coverage_r2"
+          ]
         }
       ]
     }
@@ -804,3 +872,23 @@ Count: 0. Worst: none.
 Count: 1. Worst: C1.
 
 - C1 (auto-fix, confidence 8): the fence half stays open. A probe that drops the baseline fence tokens from the scope was silent (spec line 112).
+
+## SS-C1 confirming round 2
+
+Repair cycle 2 closed N1 and the prefix part of C1. The coordinator probe inserted a skip of the baseline fence tokens, and TestDriftIdentity failed with restored yes.
+
+Repair cycle 3 opens past the two-cycle allowance under --auto-approve. It takes C1b only, as a test-only repair on opus/medium.
+
+## Standards
+
+Count: 0. Worst: none.
+
+## Spec
+
+Count: 0. Worst: none.
+
+## Coverage
+
+Count: 1. Worst: C1b.
+
+- C1b (auto-fix, confidence 7): no test drops an exact fence entry that only the baseline declares. A probe that removes the baseline exact tokens was silent (spec line 112).
