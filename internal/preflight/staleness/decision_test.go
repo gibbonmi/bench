@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -11,10 +12,12 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/preflight/staleness"
 )
 
-// Each test in this file drives the actual preflight command. The expected decision of each
-// case is stated here by hand, independently of the staleness renderer.
+// Each test in this file but one drives the actual preflight command, and that one grades
+// Decide alone. The expected decision of each case is stated here by hand, independently of
+// the staleness renderer.
 
 // seedClean commits the complete supported inventory of the completeness fixture, whose audit
 // at its unchanged tip is the clean decision. It returns the root, the slug, and the build
@@ -143,6 +146,20 @@ func TestAuditDecision(t *testing.T) {
 			t.Fatalf("absent tickets = (%d), want exit 0, no red row, green audit checks, and manual review:\n%s", code, out)
 		}
 	})
+}
+
+// TestDecideUndecidedDiscrepancy grades Decide alone over facts whose one test seam holds a
+// discrepancy that no collector grades, with no diagnostic and a ready caller. The audit is
+// complete, and only the diagnostic cited-tests check holds manual review required.
+func TestDecideUndecidedDiscrepancy(t *testing.T) {
+	got := staleness.Decide(staleness.AuditFacts{Tests: []staleness.TestState{
+		{Seam: "computed", Path: "internal/example/computed_test.go", Function: "TestComputed/x", Discrepancy: staleness.TestUnsupported},
+	}}, true)
+	want := []staleness.Check{{Name: staleness.CheckSpecDrift, State: staleness.StateGreen},
+		{Name: staleness.CheckCitedSymbols, State: staleness.StateGreen}, {Name: staleness.CheckCitedTests, State: staleness.StateDiagnostic}}
+	if !got.Complete || !got.ManualRequired || len(got.Drift) != 0 || !slices.Equal(got.Checks, want) {
+		t.Errorf("Decide = %+v, want a complete audit with no drift, only a diagnostic cited-tests check, and manual review", got)
+	}
 }
 
 // TestAuditApplicability covers SS45 and SS46. Only the audit-spec form prints a staleness

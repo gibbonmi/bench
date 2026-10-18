@@ -7,7 +7,9 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/capturetx"
 	"github.com/gibbonmi/bench/internal/learnings"
 )
 
@@ -61,6 +63,27 @@ func TestCaptureDrainKeepsPostSnapshotLearning(t *testing.T) {
 	}
 }
 
+// The fresh fixture is the drain output before the resume marker; only a resumed drain
+// adds the resumed block.
+func TestRenderCaptureBundleMarksOnlyResumedDrain(t *testing.T) {
+	fresh := capturetx.Bundle{ID: "d-0123456789ab", State: "sealed", Sources: []capturetx.SourceFact{{Name: "capture/IDEAS.md", Bytes: 9, Digest: "ab"}}}
+	resumed := fresh
+	resumed.Resumed = true
+	resumed.SealedAt = time.Date(2026, 10, 16, 9, 30, 0, 0, time.FixedZone("EDT", -4*60*60))
+	for _, tc := range []struct {
+		name   string
+		bundle capturetx.Bundle
+		want   string
+	}{
+		{"fresh", fresh, "drain[1]{id,state,sources}:\n  d-0123456789ab,sealed,1\nsources[1]{source,bytes,digest}:\n  capture/IDEAS.md,9,\"sha256:ab\"\n"},
+		{"resumed", resumed, "drain[1]{id,state,sources}:\n  d-0123456789ab,sealed,1\nresumed[1]{sealed_at}:\n  \"2026-10-16T13:30:00Z\"\nsources[1]{source,bytes,digest}:\n  capture/IDEAS.md,9,\"sha256:ab\"\n"},
+	} {
+		if out, code := renderCaptureBundle(tc.bundle); code != 0 || out != tc.want {
+			t.Errorf("%s render = %q/%d, want %q", tc.name, out, code, tc.want)
+		}
+	}
+}
+
 func TestCaptureCommandHelp(t *testing.T) {
 	if out, code := CaptureCommand([]string{"--help"}); code != 0 || out != captureUsage+"\n" {
 		t.Fatalf("help = %q/%d", out, code)
@@ -88,8 +111,11 @@ func TestCaptureDrainAbortRestoresSealedEntriesBeforeNewEntries(t *testing.T) {
 	if idMatch == nil {
 		t.Fatalf("begin output = %q, want sealed drain id", out)
 	}
-	if repeated, repeatedCode := CaptureCommand([]string{"drain"}); repeatedCode != 0 || !strings.Contains(repeated, idMatch[1]) {
-		t.Fatalf("repeated begin = %q/%d, want %s", repeated, repeatedCode, idMatch[1])
+	if strings.Contains(out, "resumed[") {
+		t.Fatalf("begin output = %q, want no resumed block for a fresh drain", out)
+	}
+	if repeated, repeatedCode := CaptureCommand([]string{"drain"}); repeatedCode != 0 || !strings.Contains(repeated, idMatch[1]) || !strings.Contains(repeated, "resumed[1]{sealed_at}:\n") {
+		t.Fatalf("repeated begin = %q/%d, want %s marked resumed", repeated, repeatedCode, idMatch[1])
 	}
 	if out, code := IdeaCommand([]string{"second"}); code != 0 {
 		t.Fatalf("concurrent idea = %q/%d", out, code)
