@@ -910,6 +910,18 @@
               "path": "roadmap/FT293.md",
               "identity": "sha256:73c4f24b0512ba1254fbf17433f5f8df9253faf2dfbd159417ce9a33095f9896"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "closure-removal",
+                "path": "specs/closure-removal/spec.md",
+                "identity": "sha256:4ffdc4af39bd4ea9a4b4c69d80d8a25eb1a3f04475bb230dea66538423189725"
+              },
+              "obligations": [
+                "FT293"
+              ]
+            }
           ]
         },
         {

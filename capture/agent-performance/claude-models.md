@@ -10,6 +10,10 @@ The `anchor-admission-prune` build ran ten tickets in seven chunks on Claude Cod
 
 Provider usage and charges remain unknown. The landing census counted 34 raw calls: rg 20, cat 5, sed 4.
 
+The `closure-removal` spec stage ran on Claude Code for FT293. An Opus coordinator ran eight paired Haiku/high research readers and eight paired Haiku/high slicing readers by reviewer direction, and it sliced the six tickets itself. An Opus fork wrote the spec, and the coordinator dropped the fork's staged-spec sweep before review. Fable/high ran the spec review in 1 iteration and the ticket review in 2, by reviewer direction. The ticket review caught a deleted file whose in-package callers the slicer had not searched.
+
+Provider usage and charges remain unknown. The harness reported about 150k to 270k tokens for each research and slicing reader.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use | calibration |
