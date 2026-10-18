@@ -1,11 +1,10 @@
 package staleness
 
 import (
-	"encoding/json"
 	"fmt"
 	"path"
+	"reflect"
 	"slices"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
@@ -18,11 +17,13 @@ import (
 var unsupported = []string{CheckCitedSymbols, CheckCitedTests}
 
 // Collect reads the audit scope of the committed pair that source names at root. It reads
-// the spec at both identities from committed objects, never from the checkout. manifest is
-// the planning-facts inventory of the tip spec, and sourceFacts is the closure snapshot of the
-// same pair, whose diagnostics stay open in the audit. An absent or special spec at either
-// identity, an unreadable tree, or a member of the scope that is no regular file refuses the
-// collection with an *Error and no facts.
+// the spec and its planning-facts inventory at both identities from committed objects, never
+// from the checkout. manifest is the inventory that sourceFacts graded, and sourceFacts is the
+// closure snapshot of the same pair, whose diagnostics stay open in the audit. A manifest that
+// is not the committed tip spec's own inventory changes no scope entry; it is one diagnostic,
+// because sourceFacts then grades other bytes. An absent or special spec at either identity,
+// an unreadable tree, or a member of the scope that is no regular file refuses the collection
+// with an *Error and no facts.
 func Collect(root string, source ownership.Source, manifest ownership.Manifest, sourceFacts ownership.Snapshot) (AuditFacts, error) {
 	baseline, err := readSpec(root, source.Base, source.SpecPath, StageBaselineSpec)
 	if err != nil {
@@ -32,7 +33,8 @@ func Collect(root string, source ownership.Source, manifest ownership.Manifest, 
 	if err != nil {
 		return AuditFacts{}, err
 	}
-	entries := scope(source.SpecPath, [][]byte{baseline, current}, []ownership.Manifest{ownership.ParseManifest(baseline), manifest})
+	committed := ownership.ParseManifest(current)
+	entries, unread := scope(source.SpecPath, [][]byte{baseline, current}, []ownership.Manifest{ownership.ParseManifest(baseline), committed})
 	before, err := members(root, source.Base, entries)
 	if err != nil {
 		return AuditFacts{}, err
@@ -45,6 +47,10 @@ func Collect(root string, source ownership.Source, manifest ownership.Manifest, 
 	for _, diagnostic := range sourceFacts.Diagnostics {
 		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: diagnostic.ID, Reason: diagnostic.Reason})
 	}
+	if !reflect.DeepEqual(manifest, committed) {
+		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: ownership.MetadataLabel, Reason: "the closure facts grade an inventory that is not the committed tip spec's own"})
+	}
+	facts.Diagnostics = append(facts.Diagnostics, unread...)
 	for _, check := range unsupported {
 		facts.Diagnostics = append(facts.Diagnostics, Diagnostic{Subject: check, Reason: "no " + check + " collector grades this audit"})
 	}
@@ -64,30 +70,37 @@ func readSpec(root, commit, specPath, stage string) ([]byte, error) {
 // scope is every entry the audit enumerates: the active spec and its tickets, the ownership
 // fence entries of both spec identities, and every path that either manifest names. Each
 // entry takes the one Writes: split, so a marker or a trailing slash never becomes a path
-// segment.
-func scope(specPath string, specs [][]byte, manifests []ownership.Manifest) []string {
+// segment. unread holds one diagnostic for each premise whose subject paths do not read.
+func scope(specPath string, specs [][]byte, manifests []ownership.Manifest) (split []string, unread []Diagnostic) {
 	entries := []string{specPath, path.Join(path.Dir(specPath), "tickets")}
 	for _, content := range specs {
 		fences, _ := specref.FenceTokens(content)
 		entries = append(entries, fences...)
 	}
 	for _, manifest := range manifests {
-		entries = append(entries, claimSources(manifest)...)
+		paths, diagnostics := claimSources(manifest)
+		entries = append(entries, paths...)
+		for _, diagnostic := range diagnostics {
+			if !slices.Contains(unread, diagnostic) {
+				unread = append(unread, diagnostic)
+			}
+		}
 	}
-	var split []string
 	for _, entry := range entries {
 		if p, _ := tickets.WritesPath(entry); p != "" && !slices.Contains(split, p) {
 			split = append(split, p)
 		}
 	}
-	return split
+	return split, unread
 }
 
 // claimSources is every path one manifest names: its scope paths, each item location, each
 // declared owner, each test seam, each decision source, each premise subject path, and each
-// native witness phase owner.
-func claimSources(m ownership.Manifest) []string {
+// native witness phase owner. A premise whose subject paths do not read is a diagnostic,
+// because its claim sources then stay outside the audit scope.
+func claimSources(m ownership.Manifest) ([]string, []Diagnostic) {
 	var paths []string
+	var unread []Diagnostic
 	for _, item := range m.Scope {
 		paths = append(append(paths, item.Location.Path), item.Paths...)
 	}
@@ -95,7 +108,11 @@ func claimSources(m ownership.Manifest) []string {
 		paths = append(paths, change.Location.Path, change.Owner.Path)
 	}
 	for _, premise := range m.Premises {
-		paths = append(paths, premise.Location.Path, subjectPath(premise.Subject))
+		subject, err := ownership.SubjectPaths(premise)
+		if err != nil {
+			unread = append(unread, Diagnostic{Subject: premise.ID, Reason: "the premise subject paths stay outside the audit scope: " + err.Error()})
+		}
+		paths = append(append(paths, premise.Location.Path), subject...)
 	}
 	for _, seam := range m.Seams {
 		paths = append(paths, seam.Location.Path, seam.Path)
@@ -109,19 +126,7 @@ func claimSources(m ownership.Manifest) []string {
 			paths = append(paths, claim.NativeWitness.PhaseOwner.Path)
 		}
 	}
-	return paths
-}
-
-// subjectPath is the path that a premise subject names, or empty when its tagged object
-// names no path.
-func subjectPath(subject json.RawMessage) string {
-	var named struct {
-		Path string `json:"path"`
-	}
-	if json.Unmarshal(subject, &named) != nil {
-		return ""
-	}
-	return named.Path
+	return paths, unread
 }
 
 // members is every tracked member of the scope entries at commit, by path. An entry covers
@@ -129,27 +134,19 @@ func subjectPath(subject json.RawMessage) string {
 // listing holds every tracked path, a dot path included. A member that is no regular file
 // refuses the collection, so the audit never reads through a link or a gitlink.
 func members(root, commit string, entries []string) (map[string]Object, error) {
-	raw, err := git.Raw("-C", root, "ls-tree", "-r", "-z", "--full-tree", commit)
+	listing, err := git.ListTree(root, "-r", "--full-tree", commit)
 	if err != nil {
 		return nil, &Error{Stage: StageMembers, Subject: commit, Cause: err}
 	}
 	found := map[string]Object{}
-	for _, record := range strings.Split(string(raw), "\x00") {
-		if record == "" {
+	for _, member := range listing {
+		if !slices.ContainsFunc(entries, func(entry string) bool { return tickets.Covers(entry, member.Path) }) {
 			continue
 		}
-		meta, member, ok := strings.Cut(record, "\t")
-		fields := strings.Fields(meta)
-		if !ok || len(fields) != 3 {
-			return nil, &Error{Stage: StageMembers, Subject: commit, Cause: fmt.Errorf("unreadable tree entry %q", record)}
+		if !member.IsRegularFile() {
+			return nil, &Error{Stage: StageSpecial, Subject: member.Path, Cause: fmt.Errorf("mode %s at %s is no regular file", member.Mode, commit)}
 		}
-		if !slices.ContainsFunc(entries, func(entry string) bool { return tickets.Covers(entry, member) }) {
-			continue
-		}
-		if !(git.IndexEntry{Mode: fields[0]}).IsRegularFile() {
-			return nil, &Error{Stage: StageSpecial, Subject: member, Cause: fmt.Errorf("mode %s at %s is no regular file", fields[0], commit)}
-		}
-		found[member] = Object{Mode: fields[0], ID: fields[2]}
+		found[member.Path] = Object{Mode: member.Mode, ID: member.Object}
 	}
 	return found, nil
 }

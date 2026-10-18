@@ -9,6 +9,8 @@
 package ownership
 
 import (
+	"fmt"
+
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -207,6 +209,82 @@ func (m Manifest) premises(tip string, graded map[string]Premise) []Premise {
 		rows = append(rows, row)
 	}
 	return rows
+}
+
+// SubjectPaths is every repository path that one premise subject names, nested paths
+// included, read through the subject decoder of the kind's collector. A subject that does not
+// decode, or a kind that no collector grades, answers an error and no path.
+func SubjectPaths(item PremiseItem) ([]string, error) {
+	if shape, member := memberCensuses[item.Kind]; member {
+		subject, err := decodeCensusSubject(item, shape)
+		if err != nil {
+			return nil, err
+		}
+		return subject.paths(), nil
+	}
+	project, ok := subjectPaths[item.Kind]
+	if !ok {
+		return nil, fmt.Errorf("no %s premise collector reads its subject", item.Kind)
+	}
+	paths, err := project(item)
+	if err != nil {
+		return nil, err
+	}
+	return paths, nil
+}
+
+// subjectPaths projects the subject of each premise kind outside the member censuses onto
+// its repository paths. An import premise's caller and target are package import paths, so
+// its owner path is its one repository path.
+var subjectPaths = map[string]func(PremiseItem) ([]string, error){
+	"lines": func(item PremiseItem) ([]string, error) {
+		subject, err := decodeLinesSubject(item)
+		return []string{subject.Path}, err
+	},
+	"glob-members": func(item PremiseItem) ([]string, error) {
+		subject, err := decodeGlobSubject(item)
+		return []string{subject.Scope}, err
+	},
+	"headroom": func(item PremiseItem) ([]string, error) {
+		subject, err := decodeHeadroomSubject(item)
+		return []string{subject.Directory}, err
+	},
+	"symbol": ownerSubjectPath,
+	"bound":  ownerSubjectPath,
+	"import": func(item PremiseItem) ([]string, error) {
+		subject, err := decodeImportSubject(item)
+		return []string{subject.Owner.Path}, err
+	},
+	"anchor-kind": func(item PremiseItem) ([]string, error) {
+		subject, err := decodeAnchorSubject(item)
+		return []string{subject.Owner.Path}, err
+	},
+	"sentinel": ruleSubjectPaths,
+	"error":    ruleSubjectPaths,
+	"reused-test": func(item PremiseItem) ([]string, error) {
+		subject, err := testSubject(item.Subject, "subject: ")
+		return []string{subject.Path}, err
+	},
+	"reused-owner": func(item PremiseItem) ([]string, error) {
+		owner, err := reusedOwnerSubject(item)
+		return []string{owner.Path}, err
+	},
+}
+
+// ownerSubjectPath is the owner path of a subject that is one owner identity.
+func ownerSubjectPath(item PremiseItem) ([]string, error) {
+	owner, err := ownerSubject(item)
+	return []string{owner.Path}, err
+}
+
+// ruleSubjectPaths is the owner path and each producer path of a sentinel or error subject.
+func ruleSubjectPaths(item PremiseItem) ([]string, error) {
+	owner, producers, err := ruleSubject(item)
+	paths := []string{owner.Path}
+	for _, producer := range producers {
+		paths = append(paths, producer.Path)
+	}
+	return paths, err
 }
 
 // diagnostics is the inventory's own diagnostic list. An absent fence is one diagnostic,

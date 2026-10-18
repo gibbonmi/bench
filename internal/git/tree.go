@@ -139,13 +139,46 @@ func idxOutput(root, idx string, args ...string) (string, error) {
 	return strings.TrimRight(out.String(), "\n"), err
 }
 
+// TreeEntry is one record of `git ls-tree`: the entry's six-digit mode, its object type,
+// its object ID, and its repository-relative path.
+type TreeEntry struct {
+	Mode, Type, Object, Path string
+}
+
+// IsRegularFile reports whether the entry holds regular-file content.
+func (e TreeEntry) IsRegularFile() bool { return regularFileModes[e.Mode] }
+
+// ListTree runs `git -C root ls-tree -z <args>` and reads its records. Each record is
+// `<mode> <type> <object>\t<path>` and ends at a NUL, so the path is every byte past the
+// first tab and Git quotes none of it. This function is the one reader of that grammar.
+func ListTree(root string, args ...string) ([]TreeEntry, error) {
+	raw, err := Raw(append([]string{"-C", root, "ls-tree", "-z"}, args...)...)
+	if err != nil {
+		return nil, err
+	}
+	records := strings.Split(string(raw), "\x00")
+	if records[len(records)-1] != "" {
+		return nil, fmt.Errorf("git: unterminated tree entry %q", records[len(records)-1])
+	}
+	entries := make([]TreeEntry, 0, len(records)-1)
+	for _, record := range records[:len(records)-1] {
+		meta, path, ok := strings.Cut(record, "\t")
+		fields := strings.Fields(meta)
+		if !ok || len(fields) != 3 {
+			return nil, fmt.Errorf("git: unreadable tree entry %q", record)
+		}
+		entries = append(entries, TreeEntry{Mode: fields[0], Type: fields[1], Object: fields[2], Path: path})
+	}
+	return entries, nil
+}
+
 // TreeWithoutFile returns a tree with one exact file removed through a private index.
 func TreeWithoutFile(root, tree, path string) (string, error) {
-	listing, err := Output("-C", root, "ls-tree", "-z", tree, "--", path)
+	listing, err := ListTree(root, tree, "--", path)
 	if err != nil {
 		return "", err
 	}
-	if strings.HasPrefix(listing, "040000 ") {
+	if len(listing) > 0 && listing[0].Mode == "040000" {
 		return "", fmt.Errorf("tree exclusion names a directory: %s", path)
 	}
 	dir, err := os.MkdirTemp("", "bench-tree-exclusion-")
@@ -162,16 +195,14 @@ func TreeWithoutFile(root, tree, path string) (string, error) {
 
 // ReadTreeFile reads a regular immutable blob under the control-record bound.
 func ReadTreeFile(root, tree, path string) ([]byte, error) {
-	listing, err := Output("-C", root, "ls-tree", "-z", tree, "--", path)
+	listing, err := ListTree(root, tree, "--", path)
 	if err != nil {
 		return nil, err
 	}
-	metadata, listedPath, ok := strings.Cut(strings.TrimSuffix(listing, "\x00"), "\t")
-	fields := strings.Fields(metadata)
-	if !ok || listedPath != path || len(fields) != 3 || !(IndexEntry{Mode: fields[0]}).IsRegularFile() {
+	if len(listing) != 1 || listing[0].Path != path || !listing[0].IsRegularFile() {
 		return nil, fmt.Errorf("missing or nonregular tree file %s", path)
 	}
-	return ReadControlBlob(root, fields[2])
+	return ReadControlBlob(root, listing[0].Object)
 }
 
 // ReadControlBlob bounds an immutable blob read for control-file consumers.

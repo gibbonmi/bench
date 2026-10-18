@@ -219,16 +219,10 @@ func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance
 // reusedOwner verifies one reused owner location at its pinned source and answers the
 // reason that locates the rule source the closure reads.
 func (c *census) reusedOwner(item PremiseItem) (Provenance, string, error) {
-	var subject struct {
-		Owner Location `json:"owner"`
-	}
 	var expected struct {
 		Required bool `json:"required"`
 	}
-	object, err := typed(item.Subject, "subject: ", &subject, "owner")
-	if err == nil {
-		err = location(object, "owner", "subject: ", true)
-	}
+	loc, err := reusedOwnerSubject(item)
 	if err == nil {
 		_, err = typed(item.Expected, "expected: ", &expected, "required")
 	}
@@ -237,16 +231,27 @@ func (c *census) reusedOwner(item PremiseItem) (Provenance, string, error) {
 	}
 	var rev string
 	if err == nil {
-		rev, err = c.locate(subject.Owner)
+		rev, err = c.locate(loc)
 	}
 	if err != nil {
 		return Provenance{}, "", err
 	}
-	loc := subject.Owner
 	at := fmt.Sprintf("%s line %d at the source %s", loc.Path, loc.Line, loc.Source)
 	reason := Provenance{Owner: loc.Path, Line: loc.Line, Rule: "reused owner", Reason: "premise " + item.ID + " reuses the rule that " + at + " holds",
 		Base: c.source.Base, Tip: c.source.Tip, Source: rev, Scope: ScopeTree}
 	return reason, "reused owner " + at + " holds its needle", nil
+}
+
+// reusedOwnerSubject decodes the subject of one reused-owner premise: its owner location.
+func reusedOwnerSubject(item PremiseItem) (Location, error) {
+	var subject struct {
+		Owner Location `json:"owner"`
+	}
+	object, err := typed(item.Subject, "subject: ", &subject, "owner")
+	if err == nil {
+		err = location(object, "owner", "subject: ", true)
+	}
+	return subject.Owner, err
 }
 
 // locate verifies that one owner location's line holds its needle exactly once at its

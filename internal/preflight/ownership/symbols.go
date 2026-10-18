@@ -40,7 +40,7 @@ type declared struct {
 // symbol grades one symbol premise. Its subject is the owner identity, and its expected
 // kind and signature repeat that identity's values.
 func (c *census) symbol(item PremiseItem) (string, error) {
-	owner, err := identity(item.Subject, "subject: ")
+	owner, err := ownerSubject(item)
 	if err != nil {
 		return "", err
 	}
@@ -58,6 +58,12 @@ func (c *census) symbol(item PremiseItem) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%s resolves in %s as the %s that its signature names at the source tip", owner.Symbol, owner.Path, owner.Kind), nil
+}
+
+// ownerSubject decodes the subject of one symbol or bound premise, which is one owner
+// identity.
+func ownerSubject(item PremiseItem) (Owner, error) {
+	return identity(item.Subject, "subject: ")
 }
 
 // exact resolves one owner identity at the source tip and refuses each part that differs:
@@ -207,15 +213,7 @@ func render(pkg *consumers.Package, node ast.Node) (string, error) {
 // must admit the caller, and the target must not already reach the caller through the
 // loaded import graph, tests included, because the edge would then close a cycle.
 func (c *census) importEdge(item PremiseItem) (string, error) {
-	var subject struct {
-		Caller string `json:"caller"`
-		Target string `json:"target"`
-	}
-	object, err := typed(item.Subject, "subject: ", &subject, "caller", "target", "owner")
-	if err != nil {
-		return "", err
-	}
-	owner, err := identity(object["owner"], "subject: owner: ")
+	subject, err := decodeImportSubject(item)
 	if err != nil {
 		return "", err
 	}
@@ -225,7 +223,7 @@ func (c *census) importEdge(item PremiseItem) (string, error) {
 	if _, err := typed(item.Expected, "expected: ", &expected, "reachable"); err != nil {
 		return "", err
 	}
-	caller, target := subject.Caller, subject.Target
+	caller, target, owner := subject.Caller, subject.Target, subject.Owner
 	switch {
 	case !expected.Reachable:
 		return "", errors.New("expected: reachable is not true")
@@ -249,6 +247,24 @@ func (c *census) importEdge(item PremiseItem) (string, error) {
 		return "", fmt.Errorf("%s already imports %s through its own imports, so an edge from %s closes a cycle", target, caller, caller)
 	}
 	return fmt.Sprintf("%s reaches %s through an import of %s with no cycle at the source tip", caller, owner.Symbol, target), nil
+}
+
+// importSubject is the decoded subject of one import premise. Caller and Target are package
+// import paths, and Owner is the declaration identity that the target declares.
+type importSubject struct {
+	Caller string `json:"caller"`
+	Target string `json:"target"`
+	Owner  Owner  `json:"-"`
+}
+
+// decodeImportSubject decodes the subject of one import premise.
+func decodeImportSubject(item PremiseItem) (importSubject, error) {
+	var subject importSubject
+	object, err := typed(item.Subject, "subject: ", &subject, "caller", "target", "owner")
+	if err == nil {
+		subject.Owner, err = identity(object["owner"], "subject: owner: ")
+	}
+	return subject, err
 }
 
 // exported reports whether each part of a declaration spelling is exported.
@@ -305,17 +321,10 @@ func reaches(pkgs []*consumers.Package, from, to string) bool {
 // constant, so a familiar spelling elsewhere or another constant of the package names no
 // supported kind.
 func (c *census) anchorKind(item PremiseItem) (string, error) {
-	var subject struct {
-		Owner Location `json:"owner"`
-		Kind  string   `json:"kind"`
-	}
 	var expected struct {
 		Supported bool `json:"supported"`
 	}
-	object, err := typed(item.Subject, "subject: ", &subject, "owner", "kind")
-	if err == nil {
-		err = location(object, "owner", "subject: ", true)
-	}
+	subject, err := decodeAnchorSubject(item)
 	if err == nil {
 		_, err = typed(item.Expected, "expected: ", &expected, "supported")
 	}
@@ -356,4 +365,21 @@ func (c *census) anchorKind(item PremiseItem) (string, error) {
 		return "", fmt.Errorf("the anchor kind inventory declares %s at %s line %d, not line %d of %s", subject.Kind, file, line, subject.Owner.Line, subject.Owner.Path)
 	}
 	return fmt.Sprintf("the anchor kind inventory declares the anchor kind %s at %s line %d at the source tip", subject.Kind, file, line), nil
+}
+
+// anchorSubject is the decoded subject of one anchor-kind premise: the owner location that
+// declares the kind constant, and the kind name.
+type anchorSubject struct {
+	Owner Location `json:"owner"`
+	Kind  string   `json:"kind"`
+}
+
+// decodeAnchorSubject decodes the subject of one anchor-kind premise.
+func decodeAnchorSubject(item PremiseItem) (anchorSubject, error) {
+	var subject anchorSubject
+	object, err := typed(item.Subject, "subject: ", &subject, "owner", "kind")
+	if err == nil {
+		err = location(object, "owner", "subject: ", true)
+	}
+	return subject, err
 }

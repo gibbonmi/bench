@@ -70,31 +70,20 @@ func callRows(pkgs []*consumers.Package, target types.Object, root string) []con
 // member is no complete census. A complete posture census still waits for its writer probe,
 // which only a reused-test collector certifies.
 func (c *census) memberCensus(item PremiseItem, shape memberShape) (string, error) {
-	subject, err := fields(item.Subject, "subject: ", shape.subject...)
+	subject, err := decodeCensusSubject(item, shape)
 	if err != nil {
 		return "", err
 	}
+	owner, listed := subject.owner, subject.listed
 	expected, err := fields(item.Expected, "expected: ", shape.expected...)
 	if err != nil {
 		return "", err
 	}
-	owner, err := identity(subject[shape.owner], "subject: "+shape.owner+": ")
-	if err != nil {
-		return "", err
-	}
-	listed, err := identities(subject[shape.members], "subject: "+shape.members+": ")
-	if err != nil {
-		return "", err
-	}
 	var decided []Disposition
-	switch item.Kind {
-	case "retirement":
-		decided, err = decodeDispositions(expected["dispositions"])
-	case "posture":
-		_, err = fields(subject["writer_probe"], "subject: writer_probe: ", reusedTestKeys...)
-	}
-	if err != nil {
-		return "", err
+	if item.Kind == "retirement" {
+		if decided, err = decodeDispositions(expected["dispositions"]); err != nil {
+			return "", err
+		}
 	}
 	if slices.Contains(shape.expected, shape.members) {
 		again, err := identities(expected[shape.members], "expected: "+shape.members+": ")
@@ -121,6 +110,50 @@ func (c *census) memberCensus(item PremiseItem, shape memberShape) (string, erro
 		return "", fmt.Errorf("the caller census of %s is complete, but no collector certifies its writer_probe evidence", owner.Symbol)
 	}
 	return fmt.Sprintf("the %s census of %s is complete at the source tip: %d member(s)", item.Kind, owner.Symbol, len(actual)), nil
+}
+
+// censusSubject is the decoded subject of one member census: its owner, its listed members,
+// and the writer probe that a posture subject carries.
+type censusSubject struct {
+	owner  Owner
+	listed []Owner
+	probe  *reusedTestSubject
+}
+
+// decodeCensusSubject decodes the subject of one member census through the shape's keys. A
+// subject whose keys hold writer_probe carries a reused-test subject there.
+func decodeCensusSubject(item PremiseItem, shape memberShape) (censusSubject, error) {
+	object, err := fields(item.Subject, "subject: ", shape.subject...)
+	if err != nil {
+		return censusSubject{}, err
+	}
+	var subject censusSubject
+	if subject.owner, err = identity(object[shape.owner], "subject: "+shape.owner+": "); err != nil {
+		return censusSubject{}, err
+	}
+	if subject.listed, err = identities(object[shape.members], "subject: "+shape.members+": "); err != nil {
+		return censusSubject{}, err
+	}
+	if raw, ok := object["writer_probe"]; ok {
+		probe, err := testSubject(raw, "subject: writer_probe: ")
+		if err != nil {
+			return censusSubject{}, err
+		}
+		subject.probe = &probe
+	}
+	return subject, nil
+}
+
+// paths is the owner path, each listed member path, and the writer probe's test path.
+func (s censusSubject) paths() []string {
+	paths := []string{s.owner.Path}
+	for _, member := range s.listed {
+		paths = append(paths, member.Path)
+	}
+	if s.probe != nil {
+		paths = append(paths, s.probe.Path)
+	}
+	return paths
 }
 
 // members is every declaration that the shape's row reader finds for owner at the source tip.

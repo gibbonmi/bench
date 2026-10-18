@@ -80,12 +80,8 @@ func (c *census) reusedTest(item PremiseItem) (string, error) {
 // decodeReusedTest decodes the subject and expected objects of a reused-test premise and
 // refuses any empty or whitespace-only string cell.
 func decodeReusedTest(item PremiseItem) (reusedTestSubject, reusedTestExpected, error) {
-	var subject reusedTestSubject
 	var expected reusedTestExpected
-	subjectFields, err := typed(item.Subject, "subject: ", &subject, reusedTestKeys...)
-	if err == nil {
-		err = requireNonEmptyStrings(subjectFields, "subject: ", reusedTestKeys...)
-	}
+	subject, err := testSubject(item.Subject, "subject: ")
 	var expectedFields map[string]json.RawMessage
 	if err == nil {
 		expectedFields, err = typed(item.Expected, "expected: ", &expected, "red_needle")
@@ -94,6 +90,17 @@ func decodeReusedTest(item PremiseItem) (reusedTestSubject, reusedTestExpected, 
 		err = requireNonEmptyStrings(expectedFields, "expected: ", "red_needle")
 	}
 	return subject, expected, err
+}
+
+// testSubject decodes one reused-test subject, which a posture premise's writer probe also
+// takes, and refuses any empty or whitespace-only string cell.
+func testSubject(raw json.RawMessage, where string) (reusedTestSubject, error) {
+	var subject reusedTestSubject
+	object, err := typed(raw, where, &subject, reusedTestKeys...)
+	if err == nil {
+		err = requireNonEmptyStrings(object, where, reusedTestKeys...)
+	}
+	return subject, err
 }
 
 func requireNonEmptyStrings(object map[string]json.RawMessage, where string, keys ...string) error {
