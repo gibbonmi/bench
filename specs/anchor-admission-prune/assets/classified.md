@@ -275,7 +275,7 @@ registry_data.go	296	.agents/commands/bench-final-check.md	Require	Capture the i
 registry_data.go	297	.agents/commands/bench-final-check.md	Require	Capture the implementation retro	119	DROP	rule-text
 registry_data.go	298	.agents/commands/bench-final-check.md	Forbid		0	FORBID	kind
 registry_data.go	299	.agents/commands/bench-final-check.md	Forbid		0	FORBID	kind
-registry_data.go	300	.agents/commands/bench-final-check.md	Require	Exit handoff	79	GRAY	sentence-command-with-args
+registry_data.go	300	.agents/commands/bench-final-check.md	Require	Exit handoff	79	DROP	sentence-command-noargs
 registry_data.go	301	.agents/commands/bench-final-check.md	Require	Exit handoff	84	DROP	rule-text
 registry_data.go	302	.agents/skills/bench-craft-delegate/SKILL.md	Require	The charge	63	DROP	rule-text
 registry_data.go	303	.bench/BENCH-reference.md	Require	Files	39	DROP	rule-text

@@ -32,6 +32,29 @@ func Paragraphs(doc string) [][]string {
 	return out
 }
 
+// SentenceWords counts the words of one sentence the way the sentence bound counts them: an
+// inline code span is one word, a link counts its text, and bare punctuation is no word.
+func SentenceWords(sentence string) int {
+	content, spans := foldCodeSpans(sentence)
+	words, _ := countWords(tokenize(content, 0, spans))
+	return words
+}
+
+// countWords is the one word count of the sentence bound. It answers how many tokens are
+// words and the line of the first word, or 0 when no token is a word.
+func countWords(toks []token) (words, line int) {
+	for _, t := range toks {
+		if !isWord(t.text) {
+			continue
+		}
+		if words == 0 {
+			line = t.line
+		}
+		words++
+	}
+	return words, line
+}
+
 // gradeBlocks grades every paragraph of the remaining lines.
 func gradeBlocks(lines []string) []Finding {
 	var out []Finding
@@ -71,16 +94,8 @@ func gradeParagraph(start int, toks []token) []Finding {
 	var starts []SentenceStart
 	spans := sentenceSpans(toks)
 	for _, span := range spans {
-		words, line := 0, span[0].line
-		for _, t := range span {
-			if !isWord(t.text) {
-				continue
-			}
-			if words == 0 {
-				line = t.line
-			}
-			words++
-		}
+		// sentenceSpans gives no span without a word, so the first word sets the line.
+		words, line := countWords(span)
 		if words > MaxSentenceWords {
 			out = append(out, Finding{Kind: KindSentence, Line: line, Count: words})
 		}

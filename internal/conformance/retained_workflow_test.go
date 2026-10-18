@@ -2,21 +2,28 @@ package conformance
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/anchors"
-	"github.com/gibbonmi/bench/internal/lines"
 )
+
+// retainedWorkflowPrefix opens the diagnostic of every retained-workflow registry row.
+const retainedWorkflowPrefix = "retained workflow: "
 
 func TestRetainedWorkflow(t *testing.T) {
 	h := NewHarness(t)
 	if diags := checkRetainedWorkflow(h.Root); len(diags) != 0 {
 		t.Fatalf("retained workflow is incomplete:\n%s", strings.Join(diags, "\n"))
 	}
-	runAnchorBites(t, anchorsWithDiagnosticPrefix("retained workflow: "), func(anchor anchors.Anchor) string { return anchor.Diagnostic })
+	runAnchorBites(t, anchorsWithDiagnosticPrefix(retainedWorkflowPrefix), func(anchor anchors.Anchor) string { return anchor.Diagnostic })
 }
 
 // TestFreshTicketAuthors grades the fresh ticket author rows. Each row bites alone on a
@@ -31,244 +38,98 @@ func TestFreshTicketAuthors(t *testing.T) {
 	requireConformantLiveTree(t, family)
 }
 
+// checkRetainedWorkflow reads the guidance at root for every retained-workflow row. The
+// registry is the one list: the check takes each row's group and diagnostic from the rows
+// whose diagnostic opens with the family prefix, and it holds no expectation of its own.
 func checkRetainedWorkflow(root string) []string {
+	var groups []anchors.Group
+	for _, anchor := range anchorsWithDiagnosticPrefix(retainedWorkflowPrefix) {
+		if !slices.Contains(groups, anchor.Group) {
+			groups = append(groups, anchor.Group)
+		}
+	}
 	var diags []string
-	binding := lines.ParseBinding([]byte(readIfExists(filepath.Join(root, ".bench", "lines.env"))))
-	if got, want := binding.Cell("codex", "mid"), "gpt-5.6-sol"; got != want {
-		diags = append(diags, fmt.Sprintf("Codex mid binding = %q, want %q", got, want))
-	}
-	if got, want := binding.Cell("codex", "top"), "gpt-6-astra"; got != want {
-		diags = append(diags, fmt.Sprintf("Codex top binding = %q, want %q", got, want))
-	}
-	if got, want := binding.Cell("codex", "cheap"), "gpt-5.6-terra"; got != want {
-		diags = append(diags, fmt.Sprintf("Codex cheap binding = %q, want %q", got, want))
-	}
-	wantDiagnostics := []string{
-		"retained workflow: craft-spec dropped the one implementation-line template",
-		"retained workflow: craft-spec dropped the implementation-line reason factors",
-		"retained workflow: craft-spec dropped the harder-chunk annotation",
-		"retained workflow: craft-line dropped the conditional review stage default",
-		"retained workflow: craft-line dropped the Codex mid-to-top review branch",
-		"retained workflow: craft-line dropped the default mid review branch",
-		"retained workflow: review phase dropped the conditional review-line reference",
-		"retained workflow: project profile dropped the conditional review-line reference",
-		"retained workflow: craft-line dropped the user-directed model-switch boundary",
-		"retained workflow: operating guide dropped chunk outcome and review checkpoint",
-		"retained workflow: operating guide dropped serial ticket checkpoint",
-		"retained workflow: operating guide allows advancement before three-axis chunk review",
-		"retained workflow: operating guide restored routine final full review",
-		"retained workflow: operating guide dropped diagnostic-only consultation boundary",
-		"retained workflow: implementation phase dropped the authorship policy reference",
-		"retained workflow: drain restored delegated batch authorship",
-		"retained workflow: craft-spec dropped the canonical plan-expansion owner",
-		"retained workflow: operating guide dropped changed-chunk identity mapping",
-		"retained workflow: operating guide dropped plan-update timing or preserved guarantees",
-		"retained workflow: operating guide dropped the expansion learning deadline or drain ownership",
-		"retained workflow: operating guide restored expansion learning without a dispatch deadline",
-		"retained workflow: implementation phase dropped plan-expansion timing",
-		"retained workflow: craft-gate dropped approved expansion timing",
-		"retained workflow: craft-tickets restored Writes as an approval boundary",
-		"retained workflow: delegation discipline scoped the Writes expectation to a user-directed write delegate",
-		"retained workflow: operating guide dropped the delegated opt-in entry",
-		"retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait",
-		"retained workflow: operating guide dropped the green predecessor dispatch rule",
-		"retained workflow: operating guide dropped the pending-or-red predecessor stop",
-		"retained workflow: craft-line dropped the delegated tier authorization",
-		"retained workflow: craft-line dropped the unbound delegated model stop",
-		"retained workflow: craft-line dropped the active-writer author limit",
-		"retained workflow: craft-line dropped the delegated mid review route",
-		"retained workflow: delegation discipline dropped the no-progress transfer trigger",
-		"retained workflow: delegation discipline dropped the terminal-failure transfer trigger",
-		"retained workflow: delegation discipline dropped the cap-exhaustion transfer trigger",
-		"retained workflow: delegation discipline dropped the lost-session transfer trigger",
-		"retained workflow: delegation discipline dropped the confirmed writer termination",
-		"retained workflow: implementation phase dropped the delegated entry refusals",
-		"retained workflow: implementation phase dropped the delegated dispatch declaration",
-		"retained workflow: implementation phase dropped delegated resumption contents",
-		"retained workflow: operating guide dropped the integrated chunk-tip review fence",
-		"retained workflow: review phase dropped the delegated axis exclusions",
-		"retained workflow: final check dropped the delegated account reconciliation",
-		"retained workflow: final check dropped an account inventory member",
-		"retained workflow: final check dropped the no-paid-comparison boundary",
-		"retained workflow: final check dropped the orchestrator final verification",
-		"retained workflow: craft-tickets dropped the delegated serial ticket checkpoint",
-	}
-	wantPredicates := map[string]struct {
-		file    string
-		section string
-		needle  string
-	}{
-		"retained workflow: craft-spec dropped the implementation-line reason factors": {
-			file:    ".agents/skills/bench-craft-spec/SKILL.md",
-			section: "Template",
-			needle:  "Implementation-line reason: <hardest material chunk, spec precision, seam uncertainty, and test strength>.",
-		},
-		"retained workflow: craft-line dropped the Codex mid-to-top review branch": {
-			file:   ".agents/skills/bench-craft-line/SKILL.md",
-			needle: "A Codex mid implementation sends each axis to the Codex top binding.",
-		},
-		"retained workflow: craft-line dropped the default mid review branch": {
-			file:   ".agents/skills/bench-craft-line/SKILL.md",
-			needle: "Every other implementation sends each axis to the invoking harness's mid binding.",
-		},
-		"retained workflow: craft-line dropped the user-directed model-switch boundary": {
-			file:   ".agents/skills/bench-craft-line/SKILL.md",
-			needle: "A different implementation model, or a session beyond the planned ticket authors, requires user direction. The ticket author can adjust effort in its own session and reports the change.",
-		},
-		"retained workflow: operating guide dropped chunk outcome and review checkpoint": {
-			file:   ".bench/BENCH.md",
-			needle: "An implementation chunk is one coherent behavior outcome with acceptance rows, tests, and a review checkpoint.",
-		},
-		"retained workflow: operating guide dropped serial ticket checkpoint": {
-			file:   ".bench/BENCH.md",
-			needle: "A ticket remains a serial green commit checkpoint.",
-		},
-		"retained workflow: operating guide allows advancement before three-axis chunk review": {
-			file:   ".bench/BENCH.md",
-			needle: "The last ticket's author freezes each chunk's delta, and Standards, Spec, and Coverage run against the whole approved spec before the successor starts.",
-		},
-		"retained workflow: operating guide restored routine final full review": {
-			file:   ".bench/BENCH.md",
-			needle: "Repeat delegated review only for a later delta or a cross-chunk concern that invalidates prior evidence.",
-		},
-		"retained workflow: operating guide dropped diagnostic-only consultation boundary": {
-			file:   ".bench/BENCH.md",
-			needle: "A brief read-only diagnostic consultation can inspect evidence, but it receives no implementation or repair assignment.",
-		},
-		"retained workflow: implementation phase dropped the authorship policy reference": {
-			file:   ".agents/commands/bench-implement-spec.md",
-			needle: "Follow `.bench/BENCH.md`'s ticket authorship and chunk-review policy.",
-		},
-		"retained workflow: drain restored delegated batch authorship": {
-			file:   ".agents/commands/bench-drain.md",
-			needle: "If tracked changes remain, the retained drain session authors the complete tracked batch.",
-		},
-		"retained workflow: craft-spec dropped the canonical plan-expansion owner": {
-			file:    ".agents/skills/bench-craft-spec/SKILL.md",
-			section: "Slicing a build for delegates",
-			needle:  "During a build, `.bench/BENCH.md` owns approved in-scope plan expansion.",
-		},
-		"retained workflow: operating guide dropped changed-chunk identity mapping": {
-			file:   ".bench/BENCH.md",
-			needle: "When chunk boundaries change, record old-to-new stable IDs.",
-		},
-		"retained workflow: operating guide dropped plan-update timing or preserved guarantees": {
-			file:   ".bench/BENCH.md",
-			needle: "Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior.",
-		},
-		"retained workflow: operating guide dropped the expansion learning deadline or drain ownership": {
-			file:   ".bench/BENCH.md",
-			needle: "Before dispatch, record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.",
-		},
-		"retained workflow: operating guide restored expansion learning without a dispatch deadline": {
-			file:   ".bench/BENCH.md",
-			needle: "Record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.",
-		},
-		"retained workflow: implementation phase dropped plan-expansion timing": {
-			file:   ".agents/commands/bench-implement-spec.md",
-			needle: "When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.",
-		},
-		"retained workflow: craft-gate dropped approved expansion timing": {
-			file:   ".agents/skills/bench-craft-gate/SKILL.md",
-			needle: "An in-scope gate addition during implementation follows `.bench/BENCH.md`'s approved plan-expansion policy before the author uses it.",
-		},
-		"retained workflow: craft-tickets restored Writes as an approval boundary": {
-			file:   ".agents/skills/bench-craft-tickets/SKILL.md",
-			needle: "`Writes:` predicts the touched paths; `.bench/BENCH.md` owns how the orchestrator updates that expectation before an approved in-scope expansion is used.",
-		},
-		"retained workflow: delegation discipline scoped the Writes expectation to a user-directed write delegate": {
-			file:   ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
-			needle: "A user-directed write delegate treats `Writes:` as an expectation.",
-		},
-		"retained workflow: operating guide dropped the delegated opt-in entry": {
-			file:   ".bench/BENCH.md",
-			needle: "`--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph.",
-		},
-		"retained workflow: operating guide dropped the delegated prerequisite-checkpoint wait": {
-			file:   ".bench/BENCH.md",
-			needle: "A ticket in a dependent chunk waits for every prerequisite chunk checkpoint.",
-		},
-		"retained workflow: operating guide dropped the green predecessor dispatch rule": {
-			file:   ".bench/BENCH.md",
-			needle: "A same-chunk successor ticket starts after its predecessor ticket commits green.",
-		},
-		"retained workflow: operating guide dropped the pending-or-red predecessor stop": {
-			file:   ".bench/BENCH.md",
-			needle: "A pending or red predecessor commit stops that successor dispatch.",
-		},
-		"retained workflow: operating guide dropped the integrated chunk-tip review fence": {
-			file:   ".bench/BENCH.md",
-			needle: "Every ticket contribution reaches the integrated chunk tip before that chunk's review begins.",
-		},
-		"retained workflow: craft-line dropped the delegated mid review route": {
-			file:   ".agents/skills/bench-craft-line/SKILL.md",
-			needle: "Every delegated review axis uses the invoking harness's configured mid binding at high effort.",
-		},
-		"retained workflow: delegation discipline dropped the confirmed writer termination": {
-			file:    ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
-			section: "Delegated author transfer",
-			needle:  "Every author transfer waits for confirmed termination of the old writer.",
-		},
-	}
-	family := anchorsWithDiagnosticPrefix("retained workflow: ")
-	for _, want := range wantDiagnostics {
-		index := slices.IndexFunc(family, func(anchor anchors.Anchor) bool { return anchor.Diagnostic == want })
-		if index < 0 {
-			diags = append(diags, "retained-workflow anchor is absent: "+want)
-			continue
-		}
-		if predicate, ok := wantPredicates[want]; ok {
-			anchor := family[index]
-			if anchor.File != predicate.file || anchor.Section != predicate.section || anchor.Needle != predicate.needle {
-				diags = append(diags, fmt.Sprintf("retained-workflow predicate drifted for %q: %#v", want, anchor))
-			}
-		}
-	}
-	for file, forbidden := range map[string][]string{
-		".agents/commands/bench-implement-spec.md": {
-			"Every spec-backed run assigns genuine write work to a write subagent",
-		},
-		".agents/commands/bench-write-spec.md": {
-			"A fresh session\nbuilds after ticket approval",
-			"fresh mid-tier build session",
-		},
-		".agents/commands/bench-drain.md": {
-			"one later write delegate authors the complete tracked batch",
-			"one later write delegate to draft the complete tracked pass",
-		},
-		".agents/commands/bench-review-implementation.md": {
-			"Initial review blocks on the full",
-			"repair-scoped re-review",
-		},
-		".agents/skills/bench-craft-tickets/SKILL.md": {
-			"one fresh write-delegate charge",
-		},
-		".agents/skills/bench-craft-delegate/SKILL.md": {
-			"All other code authorship\nruns as a write-delegation",
-			"Otherwise a fresh charge in an isolated worktree carries the finding",
-		},
-		".agents/skills/bench-craft-spec/SKILL.md": {
-			"A build may not edit its own spec's acceptance rows",
-		},
-		".agents/skills/bench-craft-delegate/references/delegation-discipline.md": {
-			"takes a\n  fence extension in a continuation",
-		},
-		"docs/field-guide.html": {
-			"their build starts in a fresh session",
-			"per fresh write-delegate context",
-		},
-		"projects/benchkit.md": {
-			"After ticket approval, a fresh\n  mid-tier session starts the build.",
-		},
-	} {
-		text := readIfExists(filepath.Join(root, filepath.FromSlash(file)))
-		for _, phrase := range forbidden {
-			if strings.Contains(text, phrase) {
-				diags = append(diags, fmt.Sprintf("live workflow reader %s retains stale implementation instruction %q", file, phrase))
+	for _, group := range groups {
+		for _, diag := range anchors.EvaluateGroup(root, group) {
+			if strings.HasPrefix(diag, retainedWorkflowPrefix) {
+				diags = append(diags, diag)
 			}
 		}
 	}
 	return diags
+}
+
+// TestRetainedWorkflowReadsRegistry proves that the retained-workflow check keeps no second
+// list. No string literal of this file equals a registry diagnostic or needle. On a tree that
+// contradicts every family row, the check reports each family row once, and Entries() gives
+// that count, so a registry edit changes no expectation here.
+func TestRetainedWorkflowReadsRegistry(t *testing.T) {
+	t.Run("no registry literal", func(t *testing.T) {
+		registered := map[string]bool{}
+		for _, anchor := range anchors.Entries() {
+			registered[anchor.Diagnostic] = true
+			registered[anchor.Needle] = true
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), "retained_workflow_test.go", nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			literal, ok := node.(*ast.BasicLit)
+			if !ok || literal.Kind != token.STRING {
+				return true
+			}
+			if value, err := strconv.Unquote(literal.Value); err == nil && value != "" && registered[value] {
+				t.Errorf("retained-workflow check holds a literal that the registry also holds: %q", value)
+			}
+			return true
+		})
+	})
+	t.Run("count from registry", func(t *testing.T) {
+		family := anchorsWithDiagnosticPrefix(retainedWorkflowPrefix)
+		if len(family) == 0 {
+			t.Fatal("no retained-workflow row is registered")
+		}
+		root := t.TempDir()
+		bodies := map[string]*strings.Builder{}
+		var files []string
+		for _, anchor := range family {
+			body, ok := bodies[anchor.File]
+			if !ok {
+				body = &strings.Builder{}
+				body.WriteString("# Fixture\n\n" + plantedAnchorContradiction + "\n\n")
+				bodies[anchor.File] = body
+				files = append(files, anchor.File)
+			}
+			if anchor.Section != "" && !strings.Contains(body.String(), "\n## "+anchor.Section+"\n") {
+				body.WriteString("## " + anchor.Section + "\n\n" + plantedAnchorContradiction + "\n\n")
+			}
+		}
+		for _, anchor := range family {
+			if anchor.Kind == anchors.Forbid {
+				bodies[anchor.File].WriteString(anchor.Needle + "\n\n")
+			}
+		}
+		for _, file := range files {
+			path := filepath.Join(root, filepath.FromSlash(file))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(bodies[file].String()), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		var want []string
+		for _, anchor := range family {
+			want = append(want, anchor.Diagnostic)
+		}
+		got := checkRetainedWorkflow(root)
+		slices.Sort(got)
+		slices.Sort(want)
+		if !slices.Equal(got, want) {
+			t.Fatalf("retained-workflow check on a contradicted tree reported %d diagnostics, want the %d registry rows:\ngot:\n%s\nwant:\n%s", len(got), len(want), strings.Join(got, "\n"), strings.Join(want, "\n"))
+		}
+	})
 }
 
 func checkImplementationChunkTable(spec string) []string {

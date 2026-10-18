@@ -12,29 +12,19 @@ import (
 	"github.com/gibbonmi/bench/internal/prose"
 )
 
-// boundedActionFamily is one bounded action guidance family. Each phase states five
-// prerequisites over its own canonical reader, so the rules below are written once and
-// bound to a family rather than copied per phase. Four prerequisites are shared; the
-// delivery prerequisite is the family's own.
+// boundedActionFamily is one bounded action guidance family. Each phase pins its
+// artifact-integrity check and its current-action binding over its own canonical reader, and
+// it forbids the retired full charge form, so the rules below are written once and bound to a
+// family rather than copied per phase.
 type boundedActionFamily struct {
 	// name titles the family's subtests.
 	name string
-	// delivery names the family's delivery prerequisite. A fresh build author reads its
-	// metadata and ticket pages and targeted sources, and a narrow review axis reads only
-	// its delta and targeted sources.
-	delivery string
 	// diagnosticPrefix enumerates the family's registry rows without a second registry.
 	diagnosticPrefix string
-	// sentenceLead opens every sentence that states one prerequisite. A paragraph that
-	// carries the lead is pinned prose.
-	sentenceLead string
 	// preflightCommand is the phase's preparation command. The retired full charge form is
 	// a flag pair, not one spelling: the guidance may name the command, and it may name the
 	// run control, but one sentence may not carry both.
 	preflightCommand string
-	// peer names the other consumer of the same prepared evidence. Its receipt is the
-	// cheapest substitute for a fresh consumer's own retrieval, so each phase names its own.
-	peer string
 }
 
 // retiredFullFlag is the run control both retired charge forms carried.
@@ -46,19 +36,13 @@ func boundedActionFamilies() []boundedActionFamily {
 	return []boundedActionFamily{
 		{
 			name:             "build",
-			delivery:         "a narrow author read",
 			diagnosticPrefix: "bounded build action: ",
-			sentenceLead:     "Build action requires",
 			preflightCommand: "bench preflight build",
-			peer:             "consumer",
 		},
 		{
 			name:             "review",
-			delivery:         "a narrow axis read",
 			diagnosticPrefix: "bounded review action: ",
-			sentenceLead:     "Review action requires",
 			preflightCommand: "bench preflight review",
-			peer:             "axis",
 		},
 	}
 }
@@ -112,31 +96,6 @@ func (f boundedActionFamily) guidance(t *testing.T, family []anchors.Anchor) str
 	return ""
 }
 
-// pinnedParagraphSentences returns every sentence of every paragraph that carries lead. It
-// reads prose.Paragraphs, which is the paragraph rule and the sentence rule the prose gate
-// itself applies, so the pin and the gate cannot disagree about where a paragraph or a
-// sentence ends. Each sentence arrives with its whitespace collapsed.
-func pinnedParagraphSentences(text, lead string) []string {
-	var found []string
-	for _, paragraph := range prose.Paragraphs(text) {
-		if slices.ContainsFunc(paragraph, func(s string) bool { return strings.Contains(s, lead) }) {
-			found = append(found, paragraph...)
-		}
-	}
-	return found
-}
-
-// actionSentences selects the family's bounded action paragraph.
-func (f boundedActionFamily) actionSentences(text string) []string {
-	return pinnedParagraphSentences(text, f.sentenceLead)
-}
-
-// consumerSentences selects the family's consumer-context paragraph. One lead serves both
-// readers, because each paragraph opens with the same reuse clause.
-func (f boundedActionFamily) consumerSentences(text string) []string {
-	return pinnedParagraphSentences(text, consumerContextLead)
-}
-
 // retiredFormPairs returns every sentence that names the family's preparation command and
 // also carries the retired run control. The unit is one sentence of the same parser, so a
 // wrap between the two halves hides nothing and a lawful run control in another sentence
@@ -154,20 +113,17 @@ func (f boundedActionFamily) retiredFormPairs(text string) []string {
 	return found
 }
 
-// wantedRows is the independent half of the registry pair: each family states its five
-// prerequisite diagnostics and the one retired-form refusal, apart from the registry, so a
+// wantedRows is the independent half of the registry pair: each family states its integrity
+// check, its current binding, and the one retired-form refusal, apart from the registry, so a
 // reworded or deleted row bites. A diagnostic names the reader by its base name, as every
 // registered row does, and guidance supplies that reader.
 func (f boundedActionFamily) wantedRows(guidance string) []wantedRow {
 	action := strings.ToLower(f.name)
-	lead := f.diagnosticPrefix + path.Base(guidance) + " permits " + action + " action without "
+	reader := f.diagnosticPrefix + path.Base(guidance)
 	return []wantedRow{
-		{anchors.Require, lead + f.delivery},
-		{anchors.Require, lead + "available required context"},
-		{anchors.Require, lead + "a current binding"},
-		{anchors.Require, lead + "reviewer approval"},
-		{anchors.Require, lead + "the complete task supplement"},
-		{anchors.Forbid, f.diagnosticPrefix + path.Base(guidance) + " re-advertises the retired " + action + " full charge form"},
+		{anchors.Require, reader + " dropped the separate bench preflight evidence --verify integrity check"},
+		{anchors.Require, reader + " permits " + action + " action without a current binding"},
+		{anchors.Forbid, reader + " re-advertises the retired " + action + " full charge form"},
 	}
 }
 
@@ -198,24 +154,6 @@ func TestEvidenceBoundedActionGuidance(t *testing.T) {
 	}
 }
 
-// TestEvidenceBoundedActionSentencesArePinned binds each guidance to its registry. A
-// paragraph that states one prerequisite is pinned prose, so exactly one Require needle
-// covers each of its sentences. A needle that keeps only its lead clause, a needle that
-// repeats another row's text, and an unpinned sentence added to that paragraph all bite
-// here. One parser reads the guidance and the needle, so a reflow that changes no word
-// changes nothing here.
-func TestEvidenceBoundedActionSentencesArePinned(t *testing.T) {
-	for _, family := range boundedActionFamilies() {
-		t.Run(family.name, func(t *testing.T) {
-			rows := family.anchors()
-			guidance := family.guidance(t, rows)
-			h := NewHarness(t)
-			text := guidanceText(t, filepath.Join(h.KitRoot, filepath.FromSlash(guidance)))
-			requirePinnedParagraph(t, rows, guidance, family.actionSentences(text))
-		})
-	}
-}
-
 // TestEvidenceBoundedActionRejectsTheRetiredPair grades the guidance half of CE110 and
 // CE173. The retired form is the pair, so one guidance sentence may not name the phase's
 // preparation command and also carry the run-control flag. Any flag order and any wrap
@@ -235,8 +173,8 @@ func TestEvidenceBoundedActionRejectsTheRetiredPair(t *testing.T) {
 	}
 }
 
-// TestEvidenceBoundedActionRulesBiteOnSyntheticText grades the two rules above apart from
-// the shipped guidance. Each case feeds text through the rule's own predicate, so a rule
+// TestEvidenceBoundedActionRulesBiteOnSyntheticText grades the retired-pair rule above apart
+// from the shipped guidance. Each case feeds text through the rule's own predicate, so a rule
 // that is weakened in place reds here while the shipped guidance still satisfies it. This
 // guard is a case table rather than a canary fixture, because a canary mutates the guidance
 // file and a weakened rule accepts every mutation of it. The name carries the family prefix,
@@ -250,40 +188,6 @@ func TestEvidenceBoundedActionRulesBiteOnSyntheticText(t *testing.T) {
 		text string
 		want []string
 	}{
-		{
-			name: "the lead opens the second sentence of a pinned paragraph",
-			rule: build.actionSentences,
-			text: "The ticket lands first. Build action requires reviewer approval.\n",
-			want: []string{"The ticket lands first.", "Build action requires reviewer approval."},
-		},
-		{
-			name: "a wrap inside a pinned sentence collapses",
-			rule: build.actionSentences,
-			text: "Build action requires verified delivery: act only after\nthis session reads it.\n",
-			want: []string{"Build action requires verified delivery: act only after this session reads it."},
-		},
-		{
-			name: "a neighbouring paragraph stays outside the pin",
-			rule: build.actionSentences,
-			text: "The reviewer may waive it.\n\nBuild action requires reviewer approval.\n",
-			want: []string{"Build action requires reviewer approval."},
-		},
-		{
-			name: "a paragraph with no lead states no prerequisite",
-			rule: build.actionSentences,
-			text: "The ticket lands first. It commits green.\n",
-		},
-		{
-			name: "the review lead pins its own paragraph",
-			rule: review.actionSentences,
-			text: "The axis reads first. Review action requires reviewer approval.\n",
-			want: []string{"The axis reads first.", "Review action requires reviewer approval."},
-		},
-		{
-			name: "the build lead leaves the review paragraph alone",
-			rule: review.actionSentences,
-			text: "Build action requires reviewer approval.\n",
-		},
 		{
 			name: "one sentence names the command and the flag",
 			rule: build.retiredFormPairs,
@@ -331,49 +235,6 @@ func TestEvidenceBoundedActionRulesBiteOnSyntheticText(t *testing.T) {
 	}
 }
 
-// TestEvidenceNeedleTextReadsTheGuidanceProjection grades the needle half of the pin. A
-// needle reaches the comparison through the same projection the guidance reaches it through,
-// so a wrap inside a needle, a run of spaces, and a needle of two sentences all read as the
-// guidance reads them. A needle that skips that projection keeps its own bytes and reds here.
-func TestEvidenceNeedleTextReadsTheGuidanceProjection(t *testing.T) {
-	for _, tt := range []struct {
-		name   string
-		needle string
-		want   string
-	}{
-		{
-			name:   "a wrap inside a needle collapses",
-			needle: "Build action requires reviewer approval: act only after\nthe reviewer approves it.\n",
-			want:   "Build action requires reviewer approval: act only after the reviewer approves it.",
-		},
-		{
-			name:   "a run of spaces collapses",
-			needle: "Build action  requires  reviewer approval.\n",
-			want:   "Build action requires reviewer approval.",
-		},
-		{
-			name:   "two sentences join as the paragraph joins them",
-			needle: "Build action requires reviewer approval. The ticket lands first.\n",
-			want:   "Build action requires reviewer approval. The ticket lands first.",
-		},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := needleText(tt.needle); got != tt.want {
-				t.Errorf("needleText = %q, want %q", got, tt.want)
-			}
-		})
-	}
-}
-
-// liveGuidanceText reads one shipped canonical reader by its repository-relative path. A
-// test that the live-tree classification already names keeps its own kit-root read, because
-// that classification detects the read in the test body. Every other caller reads here.
-func liveGuidanceText(t *testing.T, guidance string) string {
-	t.Helper()
-	h := NewHarness(t)
-	return guidanceText(t, filepath.Join(h.KitRoot, filepath.FromSlash(guidance)))
-}
-
 // guidanceText reads one canonical reader with its line endings normalized.
 func guidanceText(t *testing.T, name string) string {
 	t.Helper()
@@ -382,15 +243,4 @@ func guidanceText(t *testing.T, name string) string {
 		t.Fatalf("read %s: %v", name, err)
 	}
 	return strings.ReplaceAll(string(data), "\r\n", "\n")
-}
-
-// needleText reads one needle through the projection that reads the guidance, so the pin
-// compares two texts that one parser normalized. A needle states whole sentences, and they
-// join here as the guidance paragraph joins them.
-func needleText(needle string) string {
-	var sentences []string
-	for _, paragraph := range prose.Paragraphs(needle) {
-		sentences = append(sentences, paragraph...)
-	}
-	return strings.Join(sentences, " ")
 }

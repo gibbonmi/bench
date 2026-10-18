@@ -17,11 +17,11 @@ type commitmentGuidanceMutation struct {
 	name, file, old, replacement, want string
 }
 
-// TestCommitmentGuidance grades the live guidance against the commitment family. The
-// canonical rule and each phase route must stay: deleting one sentence raises its own
-// diagnostic. Each retired grant must stay out: restoring its old sentence beside the live
-// text raises its own diagnostic and no other. The sentences and diagnostics are written
-// here independently of the registry, so a dropped or weakened row fails its case.
+// TestCommitmentGuidance grades the live guidance against the commitment family. The two
+// spec-stage command lines must stay: deleting one raises its own diagnostic. Each retired
+// grant must stay out: restoring its old sentence beside the live text raises its own
+// diagnostic and no other. The sentences and diagnostics are written here independently of
+// the registry, so a dropped or weakened row fails its case.
 func TestCommitmentGuidance(t *testing.T) {
 	const (
 		guide      = ".bench/BENCH.md"
@@ -41,40 +41,8 @@ func TestCommitmentGuidance(t *testing.T) {
 		return commitmentGuidanceMutation{name: name, file: file, old: after, replacement: after + "\n" + retired, want: prefix + want}
 	}
 	for _, mutation := range []commitmentGuidanceMutation{
-		remove("canonical rule", guide, "**Deliver only the committed outcome.** ", "operating guide dropped the canonical delivery commitment rule"),
-		remove("start route", guide, "A spec implementation starts only through `bench commitment start` for the eligible outcome that `bench status` names. ", "operating guide dropped the spec start route"),
-		remove("uncommitted intake", guide, "Any other finding, idea, learning, or drained item that needs a spec stays uncommitted intake; minimal support for the active outcome stays in it. ", "operating guide dropped uncommitted intake"),
-		remove("explicit displacement", guide, "Only my explicit direction changes the commitment, through `bench commitment plan` and then `bench commitment approve`; no drain, label, score, or count displaces it. ", "operating guide dropped explicit displacement"),
-		remove("purpose priority", guide, "When you propose work, put confirmed defects first, then refactors, then features, by purpose rather than label; dependencies and the approved order govern execution. ", "operating guide dropped purpose-based defect and refactor priority"),
-		remove("blocker report", guide, " When the active outcome cannot continue, run `bench commitment block` with the reason and tell me; the obligation stays.", "operating guide dropped the blocker report"),
-		remove("light-path observable", guide, " It carries one tickets-only folder with exactly one ticket, and it lands with that folder as `--spec`.", "operating guide dropped the light-path observable"),
-		remove("light-path Writes boundary", guide, " Its production paths stay inside that ticket's `Writes:` line.", "operating guide dropped the light-path Writes boundary"),
-		remove("light-path row rule", guide, " It may remove a roadmap row that no committed outcome pins as a source; a pinned row changes only through its outcome.", "operating guide dropped the light-path row rule"),
-		remove("drain light-path dispatch", guide, " `/bench-drain` implements no light-path fix inline: it dispatches every light-path fix in its run, whatever its source and whatever the active commitment is.", "operating guide dropped the drain light-path dispatch"),
-		remove("outside-a-build learning fix", guide, "Outside a build, a `bench learning` entry's light-path fix ships at once only when the active outcome needs it", "operating guide dropped the outside-a-build learning fix"),
-		remove("build rule pointer", guide, " `/bench-implement-spec` states the build rule.", "operating guide dropped the pointer to the build rule"),
-		remove("next-outcome start", guide, " At a phase close, do the preparation and run `bench commitment start` from the outcome's own worktree; never hand me a `bench` command.", "operating guide dropped the next-outcome start"),
-		remove("binding-only limit", guide, " That plan changes only the deliverable binding; a reorder or a new admission still needs my direction.", "operating guide dropped the binding-only limit"),
-		remove("spec-stage binding grant", guide, " A spec-stage close binds its approved spec the same way and cites my sign-off as the decision.", "operating guide dropped the spec-stage binding grant"),
-		remove("drain next-outcome start", drain, "After the landing, the coordinator starts the `commitment_outlook` outcome under the next-outcome rule in `.bench/BENCH.md`.", "drain dropped its next-outcome start"),
-		remove("drain spec intake route", drain, "The commitment rule in `.bench/BENCH.md` decides whether spec intake starts; a drain approval never admits it.", "drain dropped its route to the commitment rule"),
-		remove("drain delegate route", drain, "A drained light-path item needs no commitment: the drain dispatches it under the light-path fix rule in `.bench/BENCH.md`.", "drain dropped the delegate route for a light-path item"),
-		remove("drain sequence owner", drain, sequence, "drain dropped the commitment ownership of the recommended sequence"),
-		remove("drain classification limit", drain, "It informs a commitment proposal and never reorders committed work.", "drain dropped the classification limit"),
-		remove("drain priority review", drain, "After the sealed-generation retirement, the coordinator charges read-only research delegates to review the roadmap priorities.", "drain dropped its closing priority review"),
-		remove("drain unapproved proposal", drain, "The proposal is unapproved input, and the closing exit is its only output.", "drain dropped the unapproved standing of its proposal"),
-		remove("drain ticket triage", drain, "In ticket triage, the coordinator puts each reviewer decision that the proposal depends on to the reviewer as one selection prompt.", "drain dropped its ticket triage prompts"),
-		remove("drain shape-idea exclusion", drain, "Ticket triage excludes a row whose next action is `/bench-shape-idea`.", "drain dropped the shape-idea exclusion from ticket triage"),
-		remove("final-check closure", finalCheck, "Verified closure is part of delivery. ", "final check dropped verified closure from delivery"),
-		remove("implementation start", ".agents/commands/bench-implement-spec.md", "It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams.", "implementation dropped its commitment start"),
-		remove("implementation light-path exemption", ".agents/commands/bench-implement-spec.md", "A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.", "implementation dropped the light-path start exemption"),
 		remove("staged spec", writeSpec, " A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.", "spec authoring dropped the planning-only staged spec"),
-		remove("one-landing close", writeSpec, "After sign-off, close the spec stage in this order, so one spec-less landing carries the staged spec and its binding.", "spec authoring dropped the one-landing close"),
-		remove("binding from the inventory row", writeSpec, "After the last spec edit, copy the spec's `bench commitment inventory` row into one new deliverable binding of the current policy.", "spec authoring dropped the binding from the inventory row after the last spec edit"),
 		remove("start command as the handoff next command", writeSpec, "From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.", "spec authoring dropped the start command as the handoff next command"),
-		remove("debug route", ".agents/commands/bench-debug.md", " Diagnosis needs no commitment start, but each commit of the repro or the fix follows the commitment rule in `.bench/BENCH.md`.", "debug dropped its route to the commitment rule"),
-		remove("router outlook", router, "take its `commitment_outlook` row", "router dropped the commitment outlook"),
-		remove("setup commitment", ".agents/commands/bench-setup-repo.md", "Delivery work waits for the initial commitment. ", "setup dropped the initial commitment"),
 
 		restore("default implementation", drain, ticket, "For a drained item that meets the light-path observables, build the item in this session (\"implement now\") by default.", "drain restored the default implementation of a light-path item"),
 		restore("declined row", drain, ticket, "Open a `ROADMAP.md` row only when the reviewer declines.", "drain restored the roadmap row only for a declined item"),

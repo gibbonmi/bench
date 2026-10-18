@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/visibletree"
@@ -299,10 +298,9 @@ func TestSingleControlEscaperBites(t *testing.T) {
 	}
 }
 
-// TestCommitmentDataInventory is the recorded bite proof for the commitment record listing
-// and its retention statement. The live inventory passes. A dropped row, a row for a field
-// that the ledger lacks, and a missing listing each raise their own diagnostic. Deleting the
-// local-retention sentence or the contents-boundary sentence raises its own anchor.
+// TestCommitmentDataInventory is the recorded bite proof for the commitment record listing.
+// The live inventory passes. A dropped row, a row for a field that the ledger lacks, and a
+// missing listing each raise their own diagnostic.
 func TestCommitmentDataInventory(t *testing.T) {
 	live := readIfExists(filepath.Join(NewHarness(t).KitRoot, "DATA_HANDLING.md"))
 	write := func(t *testing.T, body string) string {
@@ -321,15 +319,13 @@ func TestCommitmentDataInventory(t *testing.T) {
 		{"dropped field", blocker, "", `DATA_HANDLING.md commitment record: ledger field "commitment.blockers.reason" is not documented`},
 		{"unknown field", blocker, blocker + "| `commitment.blockers.transcript` | A copied chat. |\n", `DATA_HANDLING.md commitment record: documented field "commitment.blockers.transcript" is not a ledger field`},
 		{"missing listing", "<!-- commitment-record:begin -->", "", "DATA_HANDLING.md commitment record region missing: expected the field listing between <!-- commitment-record:begin --> and <!-- commitment-record:end -->"},
-		{"local retention", "The records stay on the local machine.", "", "commitment guidance: data inventory dropped the local retention of commitment records"},
-		{"contents boundary", "They hold no transcript, prompt, objective text, environment value, or credential.", "", "commitment guidance: data inventory dropped the record contents boundary"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if count := strings.Count(live, tc.old); count != 1 {
 				t.Fatalf("live inventory holds %q %d times, want once", tc.old, count)
 			}
 			root := write(t, strings.Replace(live, tc.old, tc.replacement, 1))
-			got := append(checkCommitmentRecordInventory(root), anchors.EvaluatePath(root, "DATA_HANDLING.md").Diagnostics...)
+			got := checkCommitmentRecordInventory(root)
 			if len(got) != 1 || got[0] != tc.want {
 				t.Fatalf("diagnostics = %q, want only %q", got, tc.want)
 			}

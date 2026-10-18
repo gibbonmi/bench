@@ -41,7 +41,7 @@ red. Neither form grants write, ordering, or dispatch authority.
 - A posture change that reds a fixture helper makes the slicer list every call site of that helper before the map locks. A posture change for new output also names each stream that the output reaches. An unlisted call site or stream reds at the first gate run of the build.
 - A combined behavior row belongs to the ticket that completes its final consumer. An
   earlier ticket cannot prove a behavior whose consumer does not exist yet.
-- A retirement pass gives each sentence that grants the retired behavior its own forbid row and red-capable check. One forbid row for a family of sentences leaves the others free to return.
+- A retirement pass asks for a Forbid row only for a stale or wrong form. Each sentence that grants the retired behavior is such a form, and it gets its own Forbid row and red-capable check. One Forbid row for a family of sentences leaves the others free to return. The pass adds no Require row for the new rule wording, because review owns rule wording.
 - A cited verifier row names the exact checks it performed. A reviewer can then repeat
   the checks and compare the results.
 - The slicer runs `bench preflight build <slug>` after each change to a ticket or an acceptance row.

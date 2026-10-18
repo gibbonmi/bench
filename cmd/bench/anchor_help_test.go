@@ -58,9 +58,9 @@ func anchorsFixtureTable(t *testing.T, rows []anchors.Anchor, lines []int) strin
 		if !ok {
 			t.Fatalf("AGENTS.md row %q has kind %d, which anchorsFixtureKindNames does not name", anchor.Needle, anchor.Kind)
 		}
-		table[i] = []any{kind, anchor.Section, anchor.Step, anchor.Needle, lines[i]}
+		table[i] = []any{kind, anchor.Section, anchor.Needle, lines[i]}
 	}
-	want, err := toon.TableTyped("anchors", []string{"kind", "section", "step", "needle", "line"}, table)
+	want, err := toon.TableTyped("anchors", []string{"kind", "section", "needle", "line"}, table)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,9 +96,9 @@ func TestAnchorsReportsNeedleLines(t *testing.T) {
 
 func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 	rows := anchorsFixtureRows(t)
-	// Drop every second Require needle's line (and its blank separator) from the on-disk
-	// fixture, so those rows must read 0 while their kept siblings — unmoved by the removal
-	// — close up to lines 3, 5, and 7. A Forbid row reads 0 and raises no diagnostic.
+	// Drop the first Require needle's line (and its blank separator) from the on-disk
+	// fixture, so that row must read 0 while each later Require sibling closes up from
+	// line 3. A Forbid row reads 0 and raises no diagnostic.
 	var drop []string
 	lines := make([]int, len(rows))
 	planted, next := 0, 3
@@ -106,7 +106,7 @@ func TestAnchorsReportsAbsentNeedles(t *testing.T) {
 		if anchor.Kind != anchors.Require {
 			continue
 		}
-		if planted%2 == 1 {
+		if planted == 0 {
 			drop = append(drop, anchor.Needle)
 		} else {
 			lines[i] = next
@@ -199,7 +199,7 @@ func TestAnchorsReportsCaseFoldedEmphasisViolation(t *testing.T) {
 	if !strings.Contains(result.stdout, toon.Errorf("anchor", target.Diagnostic)+"\n") {
 		t.Fatalf("anchors emphasized violation stdout = %q, want diagnostic %q", result.stdout, target.Diagnostic)
 	}
-	want, err := toon.TableTyped("anchors", []string{"kind", "section", "step", "needle", "line"}, [][]any{{"forbid-case-folded-emphasis", "", 0, target.Needle, 3}})
+	want, err := toon.TableTyped("anchors", []string{"kind", "section", "needle", "line"}, [][]any{{"forbid-case-folded-emphasis", "", target.Needle, 3}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +213,7 @@ func TestAnchorsLeavesUnregisteredPathEmpty(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "unregistered.md"), "# An ordinary file\n")
 	result := runAXICommandAt(t, root, []string{"anchors", "unregistered.md"})
-	if result.code != 0 || result.stderr != "" || result.stdout != "anchors[0]{kind,section,step,needle,line}:\nhelp[0]{cmd,why}:\n" {
+	if result.code != 0 || result.stderr != "" || result.stdout != "anchors[0]{kind,section,needle,line}:\nhelp[0]{cmd,why}:\n" {
 		t.Fatalf("unregistered path = %#v, want an empty successful query", result)
 	}
 }

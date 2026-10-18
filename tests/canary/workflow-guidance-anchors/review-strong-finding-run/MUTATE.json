@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/skills/bench-craft-review/references/finding-discipline.md",
-    "old": "For a runnable defect claim, attempt refutation with a real run before reporting a strong finding.",
-    "new": "For a runnable defect claim, report a strong finding without a real run."
-  }
-]

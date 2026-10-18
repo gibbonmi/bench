@@ -1,7 +1,0 @@
-[
-  {
-    "path": "CONTEXT.md",
-    "old": "- **coverage row** — one row of a spec's acceptance coverage map. It ties one\n  story to one observable behavior at a seam, behind an optional leading row\n  ID. It carries four parts: story, behavior, seam, why it catches the\n  failure. Not \"acceptance criterion\", not \"test case\", not \"requirement\" —\n  coverage row.\n",
-    "new": ""
-  }
-]

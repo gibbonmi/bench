@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -159,6 +160,25 @@ func deletedBefore(root, base string, parsed []tickets.Ticket) map[string]bool {
 		}
 	}
 	return before
+}
+
+// buildDeletedPaths is the exact D-status subset of the build's landing range, from
+// landingBase to tip. The landing base is the review base that `bench diff` resolves, so
+// it moves forward with each fold. Only a recorded chunk makes the source a build
+// with earlier chunks, so a record that does not read or holds no chunk answers none, and
+// so does a range that does not resolve.
+func buildDeletedPaths(root, specPath, landingBase, tip string) []string {
+	if landingBase == "" || tip == "" {
+		return nil
+	}
+	if record, err := reviewrecord.ReadTree(root, tip, specPath); err != nil || len(record.Chunks) == 0 {
+		return nil
+	}
+	landing, kind, _ := diff.ResolveSourceRange(root, landingBase, tip)
+	if kind != "" {
+		return nil
+	}
+	return landing.DeletedPaths
 }
 
 // treeHolds reports whether one `Writes:` path names something in the tree.

@@ -5,24 +5,40 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 )
 
-// Anchor describes one ordered conformance prose anchor.
+// Anchor describes one ordered conformance prose anchor. Reader names the Go parser or the
+// template that reads a Label row's needle; it is review text, not a path.
 type Anchor struct {
-	Group   Group
-	File    string
-	Kind    Kind
-	Section string
-	// Step names the numbered step of Section that owns the needle. A zero Step leaves
-	// the anchor unscoped by step.
-	Step       int
+	Group      Group
+	File       string
+	Kind       Kind
+	Class      Class
+	Reader     string
+	Section    string
 	Needle     string
 	Diagnostic string
 }
+
+// Class states why a Require row earns its place in the registry. A Forbid kind implies the
+// forbid class, so a Forbid row declares no class. The zero value is unclassified, and the
+// admission test refuses an unclassified Require row.
+type Class uint8
+
+const (
+	Unclassified Class = iota
+	// Label names a label or a heading that a parser or a template reads.
+	Label
+	// Route names a phase, a skill, or a verb as a routing reference.
+	Route
+	// Invariant carries a platform invariant in a core section of the operating guide.
+	Invariant
+	// Command pins a `bench …` command line with an argument or a flag.
+	Command
+)
 
 // Group places registry evaluations around bespoke conformance checks.
 type Group uint8
@@ -94,7 +110,6 @@ func evaluate(root string, group *Group, subject string) PathEvaluation {
 		result.State, result.Reason = file.classified.State, file.classified.Reason
 	}
 	sections := map[string]scopeResult{}
-	steps := map[string]scopeResult{}
 	// The evaluator reports one refusal per file, not one per anchor. A refused file
 	// fails every anchor it owns, so the report does not repeat the same repair many
 	// times.
@@ -108,7 +123,7 @@ func evaluate(root string, group *Group, subject string) PathEvaluation {
 			file = read(filepath.Join(root, filepath.FromSlash(anchor.File)), anchor.File)
 			files[anchor.File] = file
 		}
-		result.Locations = append(result.Locations, Location{Anchor: anchor, Line: locate(anchor.Kind, anchor.Section, anchor.Step, anchor.Needle, string(file.classified.Data))})
+		result.Locations = append(result.Locations, Location{Anchor: anchor, Line: Locate(anchor.Kind, anchor.Section, anchor.Needle, string(file.classified.Data))})
 		if file.refusal != "" {
 			if !reported[anchor.File] {
 				reported[anchor.File] = true
@@ -144,23 +159,7 @@ func evaluate(root string, group *Group, subject string) PathEvaluation {
 		if section.diagnostic != "" {
 			continue
 		}
-		body := section.body
-		if anchor.Kind.stepScoped() {
-			stepKey := key + "\x00" + strconv.Itoa(anchor.Step)
-			step, stepResolved := steps[stepKey]
-			if !stepResolved {
-				step = resolveStep(anchor.File, anchor.Section, anchor.Step, section.body)
-				steps[stepKey] = step
-				if step.diagnostic != "" {
-					result.Diagnostics = append(result.Diagnostics, step.diagnostic)
-				}
-			}
-			if step.diagnostic != "" {
-				continue
-			}
-			body = step.body
-		}
-		if !Satisfied(anchor.Kind, body, anchor.Needle) {
+		if !Satisfied(anchor.Kind, section.body, anchor.Needle) {
 			result.Diagnostics = append(result.Diagnostics, anchor.Diagnostic)
 		}
 	}
@@ -194,22 +193,6 @@ func resolveSection(file, title, active string, exists bool) scopeResult {
 	}
 	if count > 1 {
 		return scopeResult{diagnostic: fmt.Sprintf("%s carries %d %q sections; a scoped anchor needs exactly one owning section", file, count, title)}
-	}
-	return scopeResult{body: body}
-}
-
-// resolveStep narrows a resolved section body to one numbered step. Its refusals mirror the
-// section's: an unnamed step, no owning step, and more than one line that opens the same step.
-func resolveStep(file, title string, step int, section string) scopeResult {
-	if step == 0 {
-		return scopeResult{diagnostic: fmt.Sprintf("%s carries a step-scoped anchor with no step in the %q section; a step-scoped anchor names one step", file, title)}
-	}
-	body, count := MarkdownNumberedSteps(section, step)
-	if count == 0 {
-		return scopeResult{diagnostic: fmt.Sprintf("%s is missing step %d of the %q section that owns a step-scoped anchor", file, step, title)}
-	}
-	if count > 1 {
-		return scopeResult{diagnostic: fmt.Sprintf("%s carries %d lines that open step %d of the %q section; a step-scoped anchor needs exactly one owning step", file, count, step, title)}
 	}
 	return scopeResult{body: body}
 }

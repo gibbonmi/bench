@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/commands/bench-review-implementation.md",
-    "old": "dismiss. An accepted falsification finding joins the review findings and takes",
-    "new": "dismiss. An accepted falsification finding takes"
-  }
-]

@@ -16,6 +16,7 @@ baseline, and the universal-claim rule.
   from an earlier pass points at bytes that moved.
 - A review-owned row names the artifact that stores its evidence. Evidence that lives
   only in a delegate return is not citable at the landing.
+- Review grades rule wording directly, because no anchor pins it. So a repair of a rule sentence seeks no anchor row.
 - A review of gate-anchored prose names the anchor state of each sentence that it proposes to change. A change to an anchored sentence moves its anchor row, its test expectation, and its canary in the same repair.
 
 ## Where an axis under-reads

@@ -109,18 +109,7 @@ func checkAXIGuidance(guidance string, registryMembers map[string][]string) []st
 	required := []string{
 		"`help[N]{cmd,why}:`",
 		"`help[0]{cmd,why}:`",
-		"per matching row",
-		"one check action per mapped coverage row",
-		"Successful default extraction",
-		"repairable mapped rows",
-		"that exact command is the retry",
 		"`retry after repairing coverage map`",
-		"`coverage --check` and every refusal retain their error contracts and append no disclosure",
-		"state-derived action",
-		"stable source order",
-		"known argument",
-		"unknown future-input slots",
-		"Terminal results offer no busywork",
 		"`--help`, `-h`, and bare `help`",
 		"`bench roadmap --context --row <ID,...>`",
 	}
@@ -191,10 +180,7 @@ func TestAXIGuidanceContractBites(t *testing.T) {
 		{"malformed member", anchorsCell, "| bench anchors |", "row 1 is malformed"},
 		{"forbidden option", "Minimal default schemas", "Minimal default schemas --fields", "forbidden field-selection"},
 		{"missing help contract", "`help[0]{cmd,why}:`", "`help[0]:`", "omits required contract"},
-		{"unchecked coverage classifier", "one check action per mapped coverage row", "one check action per unchecked coverage row", "omits required contract"},
-		{"coverage retry moved to refusal", "Successful default extraction", "`coverage --check` refusal", "omits required contract"},
 		{"coverage retry why changed", "`retry after repairing coverage map`", "`retry after checking coverage map`", "omits required contract"},
-		{"coverage refusal gains disclosure", "`coverage --check` and every refusal retain their error contracts and append no disclosure", "`coverage --check` and every refusal retain their error contracts and append disclosure", "omits required contract"},
 		{"roadmap disclosure omitted", "`bench roadmap --context --row <ID,...>`", "", "omits required contract"},
 	}
 	for _, mutation := range mutations {

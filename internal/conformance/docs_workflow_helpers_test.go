@@ -34,37 +34,17 @@ func checkWorkflowAnchors(root string) []string {
 	diags = append(diags, checkRoadmapContextQuery(whatNext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterRoadmapContext)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterImplementSpec)...)
-	implementSpec := readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md"))
-	reviewImplementation := readIfExists(filepath.Join(root, ".agents", "commands", "bench-review-implementation.md"))
-	diags = append(diags, checkReviewConvergenceContract(implementSpec, reviewImplementation)...)
-	diags = append(diags, checkIntegrationSourceWorkflowCurrency(root)...)
-	diags = append(diags, checkSpecAuthorizationContract(root)...)
 	diags = append(diags, anchors.EvaluateGroup(root, anchors.AfterSpecAuthorization)...)
-	readme := readIfExists(filepath.Join(root, "README.md"))
-	if readme != "" {
-		if !strings.Contains(readme, "session-start.sh") {
-			diags = append(diags, "README layout omits .bench/hooks/session-start.sh")
-		}
-		if !strings.Contains(readme, "bench.sh") {
-			diags = append(diags, "README layout omits the real bin/bench.sh filename")
-		}
-		if !strings.Contains(readme, "benchkit.md") {
-			diags = append(diags, "README layout omits projects/benchkit.md")
-		}
-		if strings.Contains(readme, "\u2502   \u2514\u2500\u2500 bench                 #") {
-			diags = append(diags, "README layout still names bin/bench instead of bin/bench.sh")
-		}
+	if strings.Contains(readIfExists(filepath.Join(root, "README.md")), "\u2502   \u2514\u2500\u2500 bench                 #") {
+		diags = append(diags, "README layout still names bin/bench instead of bin/bench.sh")
 	}
 
-	if text := implementSpec; text != "" && !strings.Contains(text, "craft-line") {
+	if text := readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md")); text != "" && !strings.Contains(text, "craft-line") {
 		diags = append(diags, "bench-implement-spec.md does not reference craft-line")
 	}
 	if text := readIfExists(filepath.Join(root, ".agents", "commands", "bench-write-spec.md")); text != "" {
 		if !strings.Contains(text, "craft-line") {
 			diags = append(diags, "bench-write-spec.md does not reference craft-line")
-		}
-		if !strings.Contains(text, "implementation-line recommendation contract") {
-			diags = append(diags, "bench-write-spec.md does not reference craft-spec's implementation-line recommendation contract")
 		}
 		if strings.Count(text, "`Bootstrap authority before execution` rule") != 2 {
 			diags = append(diags, "bench-write-spec.md does not apply craft-spec's named bootstrap-authority rule during edge walking and falsification")
@@ -73,7 +53,7 @@ func checkWorkflowAnchors(root string) []string {
 	if text := readIfExists(filepath.Join(root, ".agents", "skills", "bench-craft-spec", "SKILL.md")); text != "" {
 		if !strings.Contains(text, "## Bootstrap authority before execution") {
 			diags = append(diags, ".agents/skills/bench-craft-spec/SKILL.md dropped the bootstrap-authority pre-execution trace")
-		} else if !strings.Contains(text, "before launching the next executable") || strings.Contains(text, "after launching the next executable") {
+		} else if strings.Contains(text, "after launching the next executable") {
 			diags = append(diags, ".agents/skills/bench-craft-spec/SKILL.md validates a bootstrap authority after launch")
 		}
 	}
@@ -83,66 +63,6 @@ func checkWorkflowAnchors(root string) []string {
 	return diags
 }
 
-func checkReviewConvergenceContract(implementSpec, reviewImplementation string) []string {
-	if implementSpec == "" || reviewImplementation == "" {
-		return nil
-	}
-	normalize := func(text string) string {
-		text = strings.ToLower(collapseSpace(stripHTMLComments(text)))
-		return strings.NewReplacer("`", "", "<code>", "", "</code>", "").Replace(text)
-	}
-	implementSpec = normalize(implementSpec)
-	reviewImplementation = normalize(reviewImplementation)
-
-	reviewRequirements := []string{
-		"each planned chunk takes one review across standards, spec, and coverage",
-		"the axes read the whole approved spec and focus on the frozen chunk-base..chunk-tip delta",
-		"current repair coverage closes those predicates",
-		"the successor chunk starts only after findings and repair coverage close",
-	}
-	for _, requirement := range reviewRequirements {
-		if !strings.Contains(reviewImplementation, requirement) {
-			return []string{"bench-review-implementation dropped the chunk-review convergence contract: " + requirement}
-		}
-	}
-	for _, requirement := range []string{
-		"after the last ticket in a chunk, freeze the chunk delta and run the three review axes before advancing",
-		"accepted findings go to fresh repair sessions",
-		"after the last chunk, reconcile every acceptance row and the integrated behavior",
-	} {
-		if !strings.Contains(implementSpec, requirement) {
-			return []string{"bench-implement-spec dropped the retained chunk-review loop: " + requirement}
-		}
-	}
-	return nil
-}
-
-func TestReviewConvergenceContractCurrentDocs(t *testing.T) {
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
-	implementSpec := readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md"))
-	reviewImplementation := readIfExists(filepath.Join(root, ".agents", "commands", "bench-review-implementation.md"))
-	if diags := checkReviewConvergenceContract(implementSpec, reviewImplementation); len(diags) != 0 {
-		t.Fatalf("review convergence contract is incomplete:\n%s", strings.Join(diags, "\n"))
-	}
-
-	normalizedReview := strings.ToLower(collapseSpace(reviewImplementation))
-	mutated := strings.Replace(
-		normalizedReview,
-		"the successor chunk starts only after findings and repair coverage close",
-		"the successor chunk starts before findings and repair coverage close",
-		1,
-	)
-	if mutated == normalizedReview {
-		t.Fatal("scope-widening mutation did not apply")
-	}
-	if !containsDiagnostic(checkReviewConvergenceContract(implementSpec, mutated), "chunk-review convergence contract") {
-		t.Fatal("advancing before chunk findings close did not bite")
-	}
-}
-
 func checkRoadmapContextQuery(whatNext string) []string {
 	if whatNext == "" {
 		return nil
@@ -150,20 +70,16 @@ func checkRoadmapContextQuery(whatNext string) []string {
 	indexCall := "`bench roadmap --context`"
 	rowCall := "`bench roadmap --context --row <ids>`"
 	if strings.Count(whatNext, indexCall) != 1 || strings.Count(whatNext, rowCall) != 1 ||
-		strings.Count(whatNext, "bench roadmap --context") != 2 ||
-		!strings.Contains(collapseSpace(whatNext), "If the query fails, stop the phase") ||
-		!strings.Contains(collapseSpace(whatNext), "manual evidence reconstruction") {
+		strings.Count(whatNext, "bench roadmap --context") != 2 {
 		return []string{"bench-drain dropped the roadmap context query"}
 	}
 	return nil
 }
 
 func TestRoadmapContextQueryCheckBites(t *testing.T) {
-	const guidance = "Use `bench roadmap --context` once, then fetch `bench roadmap --context --row <ids>`. If the query fails, stop the phase; manual evidence reconstruction is not a fallback."
+	const guidance = "Use `bench roadmap --context` once, then fetch `bench roadmap --context --row <ids>`."
 	for _, mutation := range []struct{ name, old, replacement string }{
 		{"invocation set", "`bench roadmap --context --row <ids>`", "`bench roadmap --context --full`"},
-		{"query failure", "If the query fails, stop the phase", "If the query fails, continue"},
-		{"manual reconstruction", "manual evidence reconstruction", "ad hoc reconstruction"},
 	} {
 		t.Run(mutation.name, func(t *testing.T) {
 			mutated := strings.Replace(guidance, mutation.old, mutation.replacement, 1)
@@ -317,9 +233,8 @@ func structuredPhaseClauseIsNegated(body string) bool {
 }
 
 var (
-	markdownH2Sections = anchors.MarkdownH2Sections
-	collapseSpace      = anchors.CollapseSpace
-	stripHTMLComments  = anchors.StripHTMLComments
+	collapseSpace     = anchors.CollapseSpace
+	stripHTMLComments = anchors.StripHTMLComments
 )
 
 // TestStructuredPhaseContractPinsTheFixedClauseSet enumerates the four required clause
@@ -492,34 +407,6 @@ func integrationSourceWorkflowAnchors() []anchors.Anchor {
 	return anchorsWithDiagnosticPrefix(integrationSourceDiagnosticPrefix)
 }
 
-func checkIntegrationSourceWorkflowCurrency(root string) []string {
-	var diags []string
-	for _, anchor := range integrationSourceWorkflowAnchors() {
-		if anchor.File == "internal/usage/worktree.go" {
-			continue
-		}
-		text := strings.ToLower(anchors.CollapseSpace(anchors.StripHTMLComments(
-			readIfExists(filepath.Join(root, filepath.FromSlash(anchor.File))),
-		)))
-		text = strings.NewReplacer("`", "", "<code>", "", "</code>", "").Replace(text)
-		for _, stale := range []string{
-			"benchbase",
-			"sole landing path",
-			"path-scoped bench commit is the only",
-			"branch's recorded pre-shift base",
-		} {
-			if strings.Contains(text, stale) {
-				diags = append(diags, fmt.Sprintf("%s retains stale scalar or sole-path workflow claim %q", anchor.File, stale))
-			}
-		}
-	}
-	return diags
-}
-
 func TestIntegrationSourceWorkflowAnchorsBiteIndependently(t *testing.T) {
-	workflowAnchors := integrationSourceWorkflowAnchors()
-	if got, want := len(workflowAnchors), 10; got != want {
-		t.Fatalf("integration-source workflow anchor count = %d, want %d", got, want)
-	}
-	runAnchorBites(t, workflowAnchors, func(anchor anchors.Anchor) string { return anchor.File })
+	runAnchorBites(t, integrationSourceWorkflowAnchors(), func(anchor anchors.Anchor) string { return anchor.File })
 }

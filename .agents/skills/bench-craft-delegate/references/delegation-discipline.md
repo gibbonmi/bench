@@ -75,7 +75,8 @@ Repair context: <fold targets and author context, each read by the coordinator b
 - A charge that moves or reflows an anchor runs the fixture-bite check in the
   focused verification list.
 - A charge that adds an anchor names `bench test --check <owning-check>` as
-  its probe.
+  its probe. A charge adds no anchor for rule wording, because review grades
+  rule wording directly.
 - A write charge names the fence's existing fixture helpers to extend, and it quotes any one-source rule for fixture harnesses that the project's instructions state.
 - A grammar charge enumerates two inventories in its fence:
   the shared fixture owners and the exact-record assertion families.

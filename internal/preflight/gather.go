@@ -75,13 +75,16 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	reviewBase, reviewBaseResolved, reviewBaseHint := "", false, ""
 	changedPaths := append([]string(nil), sourcePaths...)
 	var resolvedSource diff.SourceRange
+	var landingBase string
 	if source != nil {
 		resolvedSource = *source
 		reviewBase, reviewBaseResolved = resolvedSource.Base, true
+		landingBase, _, _ = reviewBaseFacts(root)
 	} else {
 		defaultBranch, defaultBranchResolved, defaultBranchCurrent = baseCurrentFacts(root)
 		resolvedSource.Tip = headTip(root)
 		reviewBase, reviewBaseResolved, reviewBaseHint = reviewBaseFacts(root)
+		landingBase = reviewBase
 		if reviewBaseResolved {
 			changedPaths, err = diff.ChangedFilePathsAt(root, reviewBase)
 			if err != nil {
@@ -117,6 +120,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		ChangedPaths:          changedPaths,
 		DeletedPaths:          resolvedSource.DeletedPaths,
 		DeletedBefore:         deletedBefore(root, reviewBase, ticketFacts.parsed),
+		BuildDeletedPaths:     buildDeletedPaths(root, specPath, landingBase, resolvedSource.Tip),
 		DefaultTipPaths:       defaultTipPaths,
 		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,

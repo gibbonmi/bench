@@ -1302,6 +1302,14 @@
       "identity": "sha256:84d26ede4104181b241626588a6a5faff395de00cd31c459f8ab9dfab2fa3ebb",
       "source": "b0e998195e8ea6e506b057116bc265e574b49cb5",
       "evidence": "4c6a3b832fbfb9088dd143920ccdc6d305af6c35"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "anchor-admission-prune",
+      "binding": "anchor-admission-prune",
+      "identity": "sha256:648756eb63c9fda693157c958f1966c5d53d8f86ae2b5da3bee0bfed707f8d8f",
+      "source": "03ebd20fa233c1948788cad718007371602d10d8",
+      "evidence": "0708d62daab902e1219d202e564dbf24f7f5f818"
     }
   ]
 }

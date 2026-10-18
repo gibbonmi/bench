@@ -1,6 +1,6 @@
 # Admit each anchor by class
 
-Blocked by: 6-retire-step-kind.md
+Blocked by: 6a-root-parameter-grammars.md
 Writes: internal/anchors, internal/prose, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: AP01, AP09, AP11, AP12, AP13, AP14, AP15, AP16, AP17
 

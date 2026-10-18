@@ -1,7 +1,0 @@
-[
-  {
-    "path": ".agents/commands/bench-review-implementation.md",
-    "old": "   Each actionable finding line carries its stated confidence.\n",
-    "new": ""
-  }
-]

@@ -80,8 +80,10 @@ func implicitEntries(f Facts) []string {
 // writesResolveCheck grades each `Writes:` entry against the tree. An entry without a
 // marker must name a path the tree holds, or an exact committed deletion of the explicit
 // source range. A (deleted) entry must name a tracked file at the review base, whatever
-// the tip holds, so no marker gives authority over a path that never existed. An entry
-// that the ticket grammar refuses is tickets-parse's red.
+// the tip holds, so no marker gives authority over a path that never existed. Either
+// entry also resolves through an exact deletion of the build's landing range, from the
+// landing base to the source tip. An entry that the ticket grammar refuses is
+// tickets-parse's red.
 func writesResolveCheck(f Facts) CheckResult {
 	var unresolved, unborn []string
 	seen := map[string]bool{}
@@ -90,7 +92,7 @@ func writesResolveCheck(f Facts) CheckResult {
 			write, err := tickets.ParseWrite(entry)
 			named := ticket.Name + ": " + entry
 			switch {
-			case err != nil || write.Kind == tickets.WriteNew || seen[named]:
+			case err != nil || write.Kind == tickets.WriteNew || seen[named] || slices.Contains(f.BuildDeletedPaths, write.Path):
 			case write.Kind == tickets.WriteDeleted:
 				if !f.DeletedBefore[entry] {
 					unborn = append(unborn, named)

@@ -1,1 +1,0 @@
-[{"path": ".bench/BENCH-reference.md", "old": "`bench handoff` rewrites only the calling worktree's assignment section.", "new": "`bench handoff` rewrites the file."}]
