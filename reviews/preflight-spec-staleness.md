@@ -3083,6 +3083,72 @@
           "supersedes": [
             "ft375_ss-c3_coverage_r2"
           ]
+        },
+        {
+          "id": "ft375_ss-c3_standards_r4",
+          "performer": "claude:ft375_ss-c3_standards_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_standards_r4",
+            "digest": "sha256:4f9f2a75a90effaeb2576094188de51b5539725c4bbd69591ee7bb859209b627",
+            "excerpt": "Standards: 0 findings; worst: none\n\nEvidence binding: `bench preflight evidence sha256:553a8140d5ed55485fb1ee2dc235d4b1d3a2330d1687ece69372ae5b0e9b1ae1 --check-current` reports current=true, dirty_record=false, delivery=unverified; assignment bb87c9fc56cc0af9f6e84908b2d9a3a6, base f791668126e10cb8ed959664b58c0ac0bc7cf953, source_tip b11d8075fadbf77e12ef026f01efd4b5c4e0da5e; head b11d8075, dirty=false.\n\nS1 status: closed at 31d90dc4. `git diff 55dba249 31d90dc4` changes only internal/preflight/decision.go, in one hunk, and removes \"Only this conjunction lets an audit omit manual review.\" The comment at decision.go:267-268 now reads \"requiredGreen reports whether every row of the verdict is green or is an exempt not-applicable row; CheckResult.exempt defines exempt.\" The conjunction now has one owner: the Audit doc comment in staleness/types.go with `audit.ManualRequired = !audit.Complete || !ready` in staleness/decision.go.\n\nRepair delta grading: no new Standards defect. The remaining comment starts with the symbol name, is in the present tense, has no provenance, and points to the definition of exempt.\n\nWhole source delta f7916681..31d90dc4, excluding reviews/: 13 files, +284/-44. Apart from the S1 edit, these are the bytes that rounds 1-3 graded; no Standards finding other than S1 was open.\n\nFindings: none.\n\nAdvice (optional): the verdictCommand doc at command.go:153-154 (\"The audit decides only after the commitment check, so its omission needs that row green too.\") mostly states an ordering constraint; a narrower wording would state only the order. Not binding.\n\nNot verified: the non-Go files of the delta in this pass (rounds 1-3 graded the same bytes); the round 1 pickup body; any gate or test; the delivery=unverified state.\n"
+          },
+          "axis": "Standards",
+          "base": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
+          "tip": "31d90dc4d3a76886bf6737dc47b338207441fb09",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c3_standards_r3"
+          ]
+        },
+        {
+          "id": "ft375_ss-c3_spec_r4",
+          "performer": "claude:ft375_ss-c3_spec_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_spec_r4",
+            "digest": "sha256:8f8079e73dfd3e5f7bb9e298ce851e3d8bc0c1d130a8145bc4af19985f51e0fd",
+            "excerpt": "Spec: 0 findings; worst: none\n\nEvidence binding: `bench preflight evidence sha256:553a8140…1ae1 --check-current` returned current=true, dirty_record=false, delivery=unverified; assignment bb87c9fc56cc0af9f6e84908b2d9a3a6, base f791668126e10cb8ed959664b58c0ac0bc7cf953, source_tip b11d8075fadbf77e12ef026f01efd4b5c4e0da5e; tree at b11d8075, dirty=false.\n\nThe repair (d7f786c2..31d90dc4): the only source change is internal/preflight/decision.go:267-268, which removes the doc-comment sentence \"Only this conjunction lets an audit omit manual review.\" The body of requiredGreen and its one caller at command.go:204 are unchanged. The other files in the range are records only (review record, and the delegate plan line of spec.md). A hidden-file sweep finds no remaining reference to the removed text. The change has no behavioral effect.\n\nRow verdicts (SS-C3, ticket 05):\n- SS41-SS48: hold. No code path, test or guidance byte changed.\n- SS53, SS54, SS55: hold. The native sessions stay current.\n\nNative currency: still current. ft375_t05_rep2-ss-native-clean and ft375_t05_rep2-ss-native-diagnostic name kit source d7f786c2. `git diff --stat d7f786c2 b11d8075` limited to the two guidance owners and internal/ shows only the decision.go comment. No guidance owner byte changed after d7f786c2.\n\nPrior Spec findings: none open. Round 1 findings are closed; round 3 Spec returned 0 findings; repair 31d90dc4 addresses round 3 Standards S1.\n\nFindings: none.\nAdvice: none.\n\nNot verified: the gate and tests at 31d90dc4; a native rerun; ticket 05's body and the SS41-SS46 row text individually; the plan_digest match with the delegate-plan line.\n"
+          },
+          "axis": "Spec",
+          "base": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
+          "tip": "31d90dc4d3a76886bf6737dc47b338207441fb09",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c3_spec_r3"
+          ]
+        },
+        {
+          "id": "ft375_ss-c3_coverage_r4",
+          "performer": "claude:ft375_ss-c3_coverage_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "39d4256ebe380e876540edac681b5be735e06a67",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft375_ss-c3_coverage_r4",
+            "digest": "sha256:f2a57c026039a470c3c473e5182da6ec62fb4e64218ee0dc68d814d42afdf50c",
+            "excerpt": "Coverage: 0 findings; worst: none\n\nEvidence binding: `bench preflight evidence sha256:553a8140...1ae1 --check-current` bound to assignment bb87c9fc56cc0af9f6e84908b2d9a3a6, base f791668126e1, source_tip b11d8075fadb, current=true, dirty_record=false, tree dirty=false, delivery=unverified.\n\nRepair delta: `git diff d7f786c2 31d90dc4 -- internal` touches only the requiredGreen doc comment in internal/preflight/decision.go:267-268. No code changed.\n\nRecord check: pass. The SS-C3 entry has base f791668126e10cb8ed959664b58c0ac0bc7cf953, tip 31d90dc4d3a76886bf6737dc47b338207441fb09, source_digest 39d4256ebe380e876540edac681b5be735e06a67. The latest entry for each of the 10 requirements is the ft375_t05_rep2-* entry, with performer claude:ft375_t05_rep2, state completed, outcome pass, and source_digest 39d4256e. ft375_t05_rep2-ss-05-focused carries probe {mutation: ss-05-omission, outcome: bit, exit_code: 1, restore: pass}. The rep2 native entries reuse the rep1 native refs; the comment-only diff keeps them current.\n\nPrior findings status: none open. C1 closed in confirming round 1; coverage r2 and r3 pass.\n\nFindings: none.\n\n## Probes run\nAll used `--package ./internal/preflight/... --run 'TestAuditDecision|TestAuditApplicability'`; every probe restored=yes; `git status --short` empty afterwards.\n1. decision.go:271 `c.Verdict != verdictNA || !c.exempt` -> `c.Verdict != verdictNA`: bit (SS44_not-applicable_required_row).\n2. command.go:204 `verdict.requiredGreen()` -> `!verdict.Red`: bit (SS44_not-applicable_required_row).\n3. staleness/decision.go:61 omit the non-green check fold: bit (SS42_supported_audit_red; SS45_ordinary_after-ticket_preflight).\n4. decision.go:234 `exempt(binarySealCheck(f))` -> `binarySealCheck(f)`: bit (SS41_complete_clean_evidence; SS46_no_other_operation_decides).\n5. command.go:210 `if audit.Red() {` -> `if false && audit.Red() {`: bit (SS42_supported_audit_red; SS45_ordinary_after-ticket_preflight).\n\n## Advice\nThe confirming-round-1 advice on the diagnostic branch of staleness.Decide stays with the drain.\n\n## Not verified\nA native rerun; a rerun of the seven checks; native_ref artifact contents; the spec.md plan line for coverage impact; delivery=unverified.\n"
+          },
+          "axis": "Coverage",
+          "base": "f791668126e10cb8ed959664b58c0ac0bc7cf953",
+          "tip": "31d90dc4d3a76886bf6737dc47b338207441fb09",
+          "finding_ids": [],
+          "supersedes": [
+            "ft375_ss-c3_coverage_r3"
+          ]
         }
       ]
     }
@@ -3499,6 +3565,22 @@ Count: 1. Worst: S1.
 Count: 0. Worst: none.
 
 Advice: the binary-seal collector treats any read error as an absent binary. The drain takes it.
+
+## Coverage
+
+Count: 0. Worst: none.
+
+## SS-C3 confirming round 2
+
+The frozen pair is f7916681..31d90dc4. The ticket 05 repair 2 removed one comment sentence and closed S1. All three axes ran on opus/medium, and every SS-C3 finding is closed.
+
+## Standards
+
+Count: 0. Worst: none.
+
+## Spec
+
+Count: 0. Worst: none.
 
 ## Coverage
 
