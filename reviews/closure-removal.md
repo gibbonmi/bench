@@ -1,5 +1,37 @@
 # Review outcomes
 
+## CR4 review pickup
+
+The CR4 review ran on the frozen pair `ffee6a38..688d194f`. Each axis ran on opus at high effort. The chunk has used 0 of its 2 repair cycles.
+
+The raw count is 11 findings, and the repair-target count is 9, because P2 and C2 have no repair target. Ticket 06 owns every repair target.
+
+### Standards
+
+Count: 7. Worst issue: S1.
+
+- S1, auto-fix, confidence 7. The craft-review skill and the review command each define the fence as the ticket `Writes:` lines and drop the implicit entries. Point both sentences to the definition in the craft-spec skill.
+- S2, auto-fix, confidence 6. A sentence in `/bench-implement-spec` has 23 words and joins an instruction and a description. Split it.
+- S3, auto-fix, confidence 6. `/bench-implement-spec` restates the widen scope rule that the operating guide owns. Point to the operating guide.
+- S4, auto-fix, confidence 5. The slicing checks name `/bench-implement-spec` as the widening owner, and the other files name the plan-expansion policy. Name one owner.
+- S5, auto-fix, confidence 6. The guidance uses several terms for one widening and for one scope. Use one term for each.
+- S6, auto-fix, confidence 5. The delegate rule uses vague nouns for a path and for the `Writes:` line. Name the path and the line.
+- S7, auto-fix, confidence 3. The plan-expansion paragraph holds a four-item inline list and a garden-path sentence. Use a vertical list.
+
+### Spec
+
+Count: 2. Worst issue: P1.
+
+- P1, auto-fix, confidence 6. The operating guide states only the outside half of the scope rule after the deletion. State that an in-scope widening, a repair's included, takes a plan commit and no stop.
+- P2, no-op, confidence 4. The spec's story 50 exclusion and its upper-bound decision disagree. The build followed the decision.
+
+### Coverage
+
+Count: 2. Worst issue: C1.
+
+- C1, auto-fix, confidence 8. The CR78 forbid anchor keeps case and emphasis, so a bold or recapitalized sentence passes. Use the case-folded emphasis kind, and add a bold case.
+- C2, no-op, confidence 6. The removed-form forbid rows name only the files that the spec rows name.
+
 ## CR3 second confirming-round pickup
 
 The second confirming round read the repair delta `9d26cb3d..ffee6a38`. Each axis ran on opus at high effort. The chunk used 2 of its 2 repair cycles, and the second cycle was its hardening cycle.
@@ -3238,7 +3270,82 @@ Count: 3. Worst issue: C1.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cr4-standards",
+          "performer": "claude:ft293_cr4_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d790f343b3965cfd4d7b497e659303ee4f78de12",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4_standards",
+            "digest": "sha256:9d2596d522b71c671a4592c15313ea911e47b47736ccde513a917931e58edaa1",
+            "excerpt": "Standards axis, FT293 CR4 (ffee6a38..688d194f). check-current current at 12d8d89c.\nS1 repair 7: craft-review SKILL.md:42 \"The fence lives in the ticket Writes: lines\" and bench-review-implementation.md:102 \"the union of the ticket Writes: lines\" restate the fence without the implicit entries that craft-spec SKILL.md:65 owns.\nS2 repair 6: bench-implement-spec.md:54 sentence is 23 tokens and joins an instruction and a description.\nS3 judgment 6: bench-implement-spec.md:87 restates the widen scope rule that BENCH.md:124 owns.\nS4 judgment 5: slicing-checks.md:47 names /bench-implement-spec as the widening owner; other files name BENCH.md's plan-expansion policy.\nS5 judgment 6: \"Writes: expansion\" beside \"ticket fence expansions\"; \"widens the line\" beside \"fence amendment\"; \"directory\" beside \"signed-off prefixes\".\nS6 judgment 5: delegation-discipline.md:36 \"missing need\", \"a need outside Writes:\", and \"the line\" are vague.\nS7 judgment 3: BENCH.md:124 inline four-item list and a garden-path sentence.\nAnchor row clean; paragraphs within six sentences; budgets hold. Count 7. Worst: S1.\n"
+          },
+          "axis": "Standards",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "688d194fa53ca58397bc88636250175f01419041",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6",
+            "S7"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cr4-spec",
+          "performer": "claude:ft293_cr4_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d790f343b3965cfd4d7b497e659303ee4f78de12",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4_spec",
+            "digest": "sha256:42ab733ed6d0d609b6a85450feb5dbf1b7bd9f304607765590697e5df7f90853",
+            "excerpt": "Spec axis, FT293 CR4 (ffee6a38..688d194f). check-current current=true. bench coverage --check: 94 rows valid.\nP1 should-fix 6: BENCH.md:124 states only the outside half of the scope rule; the in-scope no-stop and its plan commit, a repair's included, rest on implication after the clause deletion; BENCH.md:122 shortfall sentence lost its balance.\nP2 advisory 4: spec.md:324 (story 50, section unchanged) conflicts with spec.md:161 (upper-bound sentence becomes an expectation sentence); the build followed :161.\nRows: CR75 pass (223 ticket paths plus the pickup, zero gap); CR76 pass 8; CR78 pass; CR79 pass; CR88 pass with P1; CR94 pass; stories 40-50 pass; commitment.json ticket half kept.\nProcess note: the axis wrote and deleted two temporary files under /dev/shm against its read-only charge; the tree is unchanged.\nCount 2. Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "688d194fa53ca58397bc88636250175f01419041",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cr4-coverage",
+          "performer": "claude:ft293_cr4_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d790f343b3965cfd4d7b497e659303ee4f78de12",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4_coverage",
+            "digest": "sha256:3399dbc6535e79df22bf7e6552537c7691ccb6dea382bf7ccaa9a2148f64b1e2",
+            "excerpt": "Coverage axis, FT293 CR4 (ffee6a38..688d194f). check-current current=true at 12d8d89c; tree clean.\nProbes: line break inside the phrase bit; **refusal boundary** silent; \"Is A Refusal Boundary\" silent; --propose-writes step in bench-implement-spec.md silent; delegation line 92 old wording silent (accepted, rule wording); craft-review reflow bit (123 > 122). All restored=yes.\nC1 advisory 8: the CR78 row uses Forbid, which keeps case and emphasis; ForbidCaseFoldedEmphasis exists (match.go:18).\nC2 advisory 6: --propose-writes forbid rows cover three named files only.\nSweep: no removed form in .agents, README.md, AGENTS.md, CONTEXT.md; docs/research and docs/audits hits are dated evidence; commitment.json hits are record slugs.\nCount 2. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "688d194fa53ca58397bc88636250175f01419041",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
