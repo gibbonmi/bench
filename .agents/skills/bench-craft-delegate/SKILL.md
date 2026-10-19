@@ -60,8 +60,8 @@ Name the mutation that breaks the change's central property. Require the delegat
 own finished work and report the observed result. Require the delegate to add the missing row when
 the mutation comes back silently green. A mutation probe requires a behavioral mutation. A probe
 that fails to compile proves nothing, and a probe of provably redundant code passes by
-construction. Ask the delegate for zero to two Bench CLI improvements derived from its own calls,
-and fold them into the phase close's census account.
+construction. Ask the delegate for its raw non-Bench calls with their purpose, and for zero to two
+Bench CLI improvements from its own calls.
 
 For a defect outside its fence, a delegate follows [debug integration](../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) for the diagnostic handoff.
 A new worktree charge starts after the coordinator runs `git rev-parse HEAD main`.
