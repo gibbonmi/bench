@@ -127,13 +127,16 @@ func (s FieldScan) Scan(content []byte) ([]FieldLine, []string) {
 	return scanned, diagnostics
 }
 
+// FieldSeparator joins the entries of one list field value.
+const FieldSeparator = ", "
+
 // FieldList splits one comma-separated field value into its entries. The none
 // sentinel yields no entry, and itemPrefix is trimmed from each entry.
 func FieldList(value, none, itemPrefix string) []string {
 	if value == none {
 		return nil
 	}
-	entries := strings.Split(value, ", ")
+	entries := strings.Split(value, FieldSeparator)
 	for i := range entries {
 		entries[i] = strings.TrimPrefix(entries[i], itemPrefix)
 	}

@@ -44,10 +44,13 @@ var ticketFields = []maps.FieldSpec{
 	{Name: sectionAccept, Syntax: "## Acceptance", Heading: true},
 	{Name: sectionCharge, Syntax: "## Delegate charge", Heading: true},
 	{Name: fieldBlockedBy, Syntax: "Blocked by:"},
-	{Name: fieldWrites, Syntax: "Writes:"},
+	{Name: fieldWrites, Syntax: WritesSyntax},
 	{Name: fieldCovers, Syntax: "Covers:"},
 	{Name: fieldTitle, Syntax: "# "},
 }
+
+// WritesSyntax is the prefix that introduces the Writes: line of a ticket.
+const WritesSyntax = "Writes:"
 
 // requiredFields names every field a ticket must carry, in diagnostic order.
 var requiredFields = []string{fieldTitle, fieldBlockedBy, fieldWrites, fieldCovers, sectionBuild, sectionAccept}
@@ -138,6 +141,18 @@ func ParseTicket(name string, content []byte, siblings []string, tag string) (Ti
 	}
 	diagnostics = append(diagnostics, coversDiagnostics(ticket, tag)...)
 	return ticket, append(diagnostics, edgeDiagnostics(ticket, siblings)...)
+}
+
+// WritesLine returns the index of the Writes: line that ParseTicket reads, in the LF
+// split of content, and whether content holds one.
+func WritesLine(content []byte) (int, bool) {
+	scanned, _ := fieldScan().Scan(content)
+	for i, line := range scanned {
+		if line.Field == fieldWrites && line.Diagnostic == "" {
+			return i, true
+		}
+	}
+	return 0, false
 }
 
 // list splits one comma-separated field value. An absent or empty value, like

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/git"
@@ -34,20 +35,12 @@ var widenGrammar = usage.Grammar{
 	MaxArgs: -1,
 }
 
-// writesField is the prefix of the ticket's Writes: line. The edit locates that line
-// through it, and tickets.ParseTicket re-reads the result, so a locator that disagrees
-// with the grammar refuses instead of writing.
-const writesField = "Writes:"
-
-// writesSeparator joins the entries of one Writes: value, as maps.FieldList splits them.
-const writesSeparator = ", "
-
 // widenCommand runs `bench spec widen`. It adds each entry inside the signed-off scope to
 // the one Writes: line of specs/<slug>/tickets/<basename> and makes no commit. The scope
 // comes from the default-branch tip, so a build cannot widen the scope that grades its own
-// widening. An entry the ticket already covers reports current; an entry outside the scope
-// refuses unless --decision names the reviewer's admission. Any refusal writes nothing for
-// the whole request.
+// widening. An entry the ticket already covers reports current. An entry outside the scope
+// refuses unless --decision admits it after the reviewer decides; the verb stores no
+// reference. Any refusal writes nothing for the whole request.
 func widenCommand(args []string) (string, int) {
 	parsed, line, code := usage.Parse(widenGrammar, args)
 	if line != "" {
@@ -65,11 +58,12 @@ func widenCommand(args []string) (string, int) {
 		return toon.Errorf(fmt.Sprintf("ticket address is not specs/<slug>/tickets/<basename>%s: %q, %q", tickets.Ext, slug, basename),
 			"pass a slug and a ticket basename without a path") + "\n", 1
 	}
-	entries := parsed.Positionals[1:]
-	for _, entry := range entries {
+	entries := make([]string, 0, len(parsed.Positionals)-1)
+	for _, entry := range parsed.Positionals[1:] {
 		if reason := hostileEntry(entry); reason != "" {
 			return toon.Errorf(fmt.Sprintf("entry %q %s", entry, reason), "pass one clean repository path for each entry") + "\n", 1
 		}
+		entries = append(entries, strings.TrimSpace(entry))
 	}
 	rel := ClosedFolderPath(slug) + "/tickets/" + basename
 	ticketPath := filepath.Join(base, filepath.FromSlash(rel))
@@ -80,7 +74,7 @@ func widenCommand(args []string) (string, int) {
 	if read.State != bounds.StateParsed {
 		return toon.RecordError(rel, read.State, read.Reason) + "\n", 1
 	}
-	at, found := writesLine(read.Data)
+	at, found := tickets.WritesLine(read.Data)
 	if !found {
 		return toon.Errorf(rel+" has no Writes: line", "add the field by hand; widen edits only an existing line") + "\n", 1
 	}
@@ -97,7 +91,6 @@ func widenCommand(args []string) (string, int) {
 	var rows [][]string
 	var added, refused []string
 	for _, entry := range entries {
-		entry = strings.TrimSpace(entry)
 		p, _ := tickets.WritesPath(entry)
 		state := widenAdded
 		switch {
@@ -117,8 +110,12 @@ func widenCommand(args []string) (string, int) {
 		rows = append(rows, []string{rel, entry, state})
 	}
 	if len(refused) > 0 {
-		return toon.Errorf("outside the signed-off scope: "+strings.Join(refused, writesSeparator),
-			fmt.Sprintf("after the reviewer admits the path, rerun %s %s --ticket %s --decision <reference> %s", widenCmd, slug, basename, strings.Join(refused, " "))) + "\n", 1
+		rerun := []string{widenCmd, axi.ShellQuote(slug), "--ticket", axi.ShellQuote(basename), "--decision", "<reference>"}
+		for _, entry := range entries {
+			rerun = append(rerun, axi.ShellQuote(entry))
+		}
+		return toon.Errorf("outside the signed-off scope: "+strings.Join(refused, maps.FieldSeparator),
+			"after the reviewer admits the path, rerun "+strings.Join(rerun, " ")) + "\n", 1
 	}
 	table, err := toon.Table("widen", []string{"ticket", "entry", "state"}, rows)
 	if err != nil {
@@ -163,7 +160,7 @@ func hostileEntry(entry string) string {
 	case strings.ContainsAny(entry, "\r\n"):
 		return "holds a line break"
 	case len(maps.FieldList(entry, "", "")) != 1:
-		return "holds the " + writesSeparator + " separator"
+		return "holds the " + maps.FieldSeparator + " separator"
 	}
 	if _, err := tickets.ParseWrite(entry); err != nil {
 		return "is not a Writes: path: " + err.Error()
@@ -190,7 +187,7 @@ func signedOffScope(root, slug string) ([]string, string) {
 		return nil, toon.Errorf("default branch tip is unreadable: "+branch, err.Error())
 	}
 	folder := ClosedFolderPath(slug) + "/tickets/"
-	listing, err := git.ListTree(root, "-r", tip, "--", folder)
+	listing, err := git.ListTree(root, "-r", tip, "--", ":(literal)"+folder)
 	if err != nil {
 		return nil, toon.Errorf("signed-off tickets are unreadable at "+branch, err.Error())
 	}
@@ -226,7 +223,7 @@ func signedOffScope(root, slug string) ([]string, string) {
 
 // scopePrefix is the directory prefix of one signed-off entry at tip.
 func scopePrefix(root, tip, entry string) (string, error) {
-	listing, err := git.ListTree(root, tip, "--", entry)
+	listing, err := git.ListTree(root, tip, "--", ":(literal)"+entry)
 	if err != nil {
 		return "", err
 	}
@@ -241,18 +238,6 @@ func scopePrefix(root, tip, entry string) (string, error) {
 	return entry, nil
 }
 
-// writesLine returns the index of the first unfenced Writes: line, the one the ticket
-// grammar reads, in the LF split of content.
-func writesLine(content []byte) (int, bool) {
-	scanned, _ := maps.FieldScan{Table: []maps.FieldSpec{{Name: writesField, Syntax: writesField}}}.Scan(content)
-	for i, line := range scanned {
-		if line.Field == writesField && line.Diagnostic == "" {
-			return i, true
-		}
-	}
-	return 0, false
-}
-
 // widenLine appends the added entries to the value of line at and keeps every other
 // byte, including a carriage return and the whitespace after the value. A value with no
 // entry, such as the none sentinel, gives way to the added entries. The result must
@@ -260,15 +245,15 @@ func writesLine(content []byte) (int, bool) {
 func widenLine(content []byte, at int, old, added []string) ([]byte, bool) {
 	lines := strings.Split(string(content), "\n")
 	body, cr := strings.CutSuffix(lines[at], "\r")
-	value := strings.TrimPrefix(body, writesField)
+	value := strings.TrimPrefix(body, tickets.WritesSyntax)
 	kept := strings.TrimRightFunc(value, unicode.IsSpace)
 	tail := value[len(kept):]
 	if len(old) == 0 {
 		kept = " "
 	} else {
-		kept += writesSeparator
+		kept += maps.FieldSeparator
 	}
-	body = writesField + kept + strings.Join(added, writesSeparator) + tail
+	body = tickets.WritesSyntax + kept + strings.Join(added, maps.FieldSeparator) + tail
 	if cr {
 		body += "\r"
 	}

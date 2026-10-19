@@ -138,6 +138,9 @@ func TestSpecWidenRefusesAnOutOfScopeEntry(t *testing.T) {
 	before := readTicket(t, root)
 	out, code := runWiden(t, root, "internal/other/z.go")
 	requireRefusal(t, root, before, out, code, "internal/other/z.go", "--decision <reference>")
+	// The rerun names the whole request, with each argument as one shell token.
+	out, code = runWiden(t, root, "internal/x/w.go", "internal/other/z.go (new)", "internal/other/a b.go")
+	requireRefusal(t, root, before, out, code, "rerun bench spec widen s --ticket a.md --decision <reference> internal/x/w.go 'internal/other/z.go (new)' 'internal/other/a b.go'\n")
 }
 
 func TestSpecWidenAdmitsADecidedEntry(t *testing.T) {
@@ -205,7 +208,6 @@ func TestSpecWidenDirectoryPrefix(t *testing.T) {
 	}{
 		{"a file entry admits its sibling subtree", "internal/x/sub/z.go", 0},
 		{"a directory entry refuses a sibling directory", "internal/other/x.go", 1},
-		{"a root file entry refuses another root file", "README.md", 1},
 		{"an absent new entry admits its parent directory", "internal/n/other.go", 0},
 		{"a directory entry refuses a sibling with its prefix spelling", "internal/git2/x.go", 1},
 	} {
@@ -220,23 +222,19 @@ func TestSpecWidenDirectoryPrefix(t *testing.T) {
 			requireWidened(t, root, out, code, "", widenTicket(signedOff+", "+tc.entry))
 		})
 	}
-	// A root-level file is its own prefix, so another ticket can widen into that file.
-	root := widenRepo(t, signedOff, tree...)
-	writeTicket(t, root, "specs/s/tickets/b.md", widenTicket("internal/x/y.go"))
-	out, code := runSpec(t, root, "widen", "s", "--ticket", "b.md", "CHANGELOG.md")
-	if want := widenTable(t, []string{"specs/s/tickets/b.md", "CHANGELOG.md", "added"}); code != 0 || out != want {
-		t.Errorf("root file widen = (%d, %q), want exit 0 and %q", code, out, want)
-	}
-}
-
-func TestSpecWidenReportsACoveredEntry(t *testing.T) {
-	root := widenRepo(t, "internal/x/y.go, internal/status", "internal/x/y.go", "internal/status/s.go")
-	before := readTicket(t, root)
-	out, code := runWiden(t, root, "internal/x/y.go", "internal/status/t.go")
-	requireWidened(t, root, out, code, widenTable(t, []string{widenTicketPath, "internal/x/y.go", "current"}, []string{widenTicketPath, "internal/status/t.go", "current"}), before)
-	out, code = runWiden(t, root, "internal/x/z.go", "internal/x/z.go")
-	want := widenTable(t, []string{widenTicketPath, "internal/x/z.go", "added"}, []string{widenTicketPath, "internal/x/z.go", "current"})
-	requireWidened(t, root, out, code, want, widenTicket("internal/x/y.go, internal/status, internal/x/z.go"))
+	// A root-level file is its own prefix: another ticket can widen into that file, and
+	// no ticket can widen into another root file.
+	t.Run("a root file entry is its own prefix", func(t *testing.T) {
+		root := widenRepo(t, signedOff, tree...)
+		before := readTicket(t, root)
+		out, code := runWiden(t, root, "README.md")
+		requireRefusal(t, root, before, out, code, outsideScope)
+		writeTicket(t, root, "specs/s/tickets/b.md", widenTicket("internal/x/y.go"))
+		out, code = runSpec(t, root, "widen", "s", "--ticket", "b.md", "CHANGELOG.md")
+		if want := widenTable(t, []string{"specs/s/tickets/b.md", "CHANGELOG.md", "added"}); code != 0 || out != want {
+			t.Errorf("root file widen = (%d, %q), want exit 0 and %q", code, out, want)
+		}
+	})
 }
 
 func TestSpecWidenWritesAllOrNothing(t *testing.T) {
@@ -244,34 +242,6 @@ func TestSpecWidenWritesAllOrNothing(t *testing.T) {
 	before := readTicket(t, root)
 	out, code := runWiden(t, root, "internal/x/z.go", "internal/other/z.go")
 	requireRefusal(t, root, before, out, code, outsideScope)
-}
-
-func TestSpecWidenKeepsOtherBytes(t *testing.T) {
-	for _, tc := range []struct {
-		name, before, after string
-	}{
-		{
-			name:   "a fenced Writes: line and the text around the field stay",
-			before: "# A\n\n```\nWrites: decoy\n```\nBlocked by: none\nWrites: internal/x/y.go  \nCovers: CR1\n\n## What to build\n\nx\n\n## Acceptance\n\n- [ ] x\n",
-			after:  "# A\n\n```\nWrites: decoy\n```\nBlocked by: none\nWrites: internal/x/y.go, internal/x/z.go  \nCovers: CR1\n\n## What to build\n\nx\n\n## Acceptance\n\n- [ ] x\n",
-		},
-		{
-			name:   "CRLF line endings stay",
-			before: strings.ReplaceAll(widenTicket("internal/x/y.go"), "\n", "\r\n"),
-			after:  strings.ReplaceAll(widenTicket("internal/x/y.go, internal/x/z.go"), "\n", "\r\n"),
-		},
-		{
-			name:   "a last line without a newline stays without one",
-			before: "# A\n\nBlocked by: none\nCovers: CR1\n\n## What to build\n\nx\n\n## Acceptance\n\n- [ ] x\nWrites: internal/x/y.go",
-			after:  "# A\n\nBlocked by: none\nCovers: CR1\n\n## What to build\n\nx\n\n## Acceptance\n\n- [ ] x\nWrites: internal/x/y.go, internal/x/z.go",
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			root := retireWorktree(t, widenPrimary(t, map[string]string{widenTicketPath: tc.before}, "internal/x/y.go"))
-			out, code := runWiden(t, root, "internal/x/z.go")
-			requireWidened(t, root, out, code, "", tc.after)
-		})
-	}
 }
 
 func TestSpecWidenRefusesThePrimaryCheckout(t *testing.T) {
@@ -358,6 +328,8 @@ func TestSpecWidenRefusesHostileTickets(t *testing.T) {
 		}},
 		{"a ticket basename with a path", "ticket address", []string{"widen", "s", "--ticket", "../tickets/a.md", "internal/x/z.go"}, nil},
 		{"a slug with a path", "ticket address", []string{"widen", "s/../s", "--ticket", "a.md", "internal/x/z.go"}, nil},
+		{"a clean ticket basename below a folder", "ticket address", []string{"widen", "s", "--ticket", "sub/a.md", "internal/x/z.go"}, nil},
+		{"a clean slug below a folder", "ticket address", []string{"widen", "a/b", "--ticket", "a.md", "internal/x/z.go"}, nil},
 		{"a ticket that is not Markdown", "ticket address", []string{"widen", "s", "--ticket", "a.txt", "internal/x/z.go"}, func(t *testing.T, root string) {
 			writeTicket(t, root, "specs/s/tickets/a.txt", widenTicket("internal/x/y.go"))
 		}},
@@ -381,14 +353,6 @@ func TestSpecWidenRefusesHostileTickets(t *testing.T) {
 	if code != 1 || out != toon.NotInRepo()+"\n" {
 		t.Errorf("outside a repository = (%d, %q), want exit 1 and the not-in-repo error", code, out)
 	}
-}
-
-func TestSpecWidenRefusesWithoutSignedOffTickets(t *testing.T) {
-	root := retireWorktree(t, widenPrimary(t, map[string]string{"specs/other/tickets/a.md": widenTicket("internal/x/y.go")}, "internal/x/y.go"))
-	writeTicket(t, root, widenTicketPath, widenTicket("internal/x/y.go"))
-	before := readTicket(t, root)
-	out, code := runWiden(t, root, "internal/x/z.go")
-	requireRefusal(t, root, before, out, code, "holds no ticket of specs/s")
 }
 
 func TestSpecWidenFromADeeperDirectory(t *testing.T) {

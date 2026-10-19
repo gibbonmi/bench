@@ -26,7 +26,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Ticket widening
 
-- Added `bench spec widen <slug> --ticket <basename> [--decision <reference>] <entry>...`. It adds each entry to the `Writes:` line of one ticket in the current worktree, and it makes no commit. The approved scope is the directory of each `Writes:` entry of the slug's tickets at the default-branch tip. The command refuses an entry outside that scope and names the rerun with `--decision <reference>`, which records the reviewer's admission. It prints one `widen[N]{ticket,entry,state}` table with the states `added`, `decided`, and `current`. A refusal writes nothing. Before, a path that the gate found needed a hand edit of the ticket.
+- Added `bench spec widen <slug> --ticket <basename> [--decision <reference>] <entry>...`. It adds each entry to the `Writes:` line of one ticket in the current worktree, and it makes no commit. The approved scope is the directory of each `Writes:` entry of the slug's tickets at the default-branch tip. The command refuses an entry outside that scope and names the rerun with `--decision <reference>`. That flag admits an out-of-scope path after the reviewer decides, and the command stores no reference. It prints one `widen[N]{ticket,entry,state}` table with the states `added`, `decided`, and `current`. A refusal writes nothing. Before, a path that the gate found needed a hand edit of the ticket.
 
 ### Visible-tree check scope
 
