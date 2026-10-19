@@ -1,5 +1,17 @@
 # Review outcomes
 
+## CR4 confirming-round pickup
+
+The confirming round read the repair delta `688d194f..093b9a75`. Each axis ran on opus at high effort. The chunk has used 1 of its 2 repair cycles, and the next repair is cycle 2.
+
+The round closed S1 to S4, S6, S7, P1, and C1. Three findings stay open, and ticket 06 owns all three.
+
+- S5, auto-fix, confidence 6. The guidance still uses several names for one widening and for one reviewer decision. Use one name for each.
+- S8, auto-fix, confidence 6. The operating guide says "the directory of each signed-off `Writes:` entry", which reads as every entry. The scope is the directory of any one signed-off entry. Correct the scope phrase, and make the repair clause conditional on that scope.
+- S9, auto-fix, confidence 4. The lead-in of the decision list in the operating guide does not match its last item. Make the lead-in fit every item.
+
+Optional advice: `/bench-implement-spec` uses a gerund as a noun in one sentence. The spec decision on where `/bench-implement-spec` names the verb differs from the tree after the S3 repair; the orchestrator flags it for reviewer veto. A code span over part of a forbid needle passes a case-folded forbid by matcher design, and the orchestrator parks it with `bench learning`.
+
 ## CR4 review pickup
 
 The CR4 review ran on the frozen pair `ffee6a38..688d194f`. Each axis ran on opus at high effort. The chunk has used 0 of its 2 repair cycles.
@@ -3445,6 +3457,76 @@ Count: 3. Worst issue: C1.
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cr4c-standards",
+          "performer": "claude:ft293_cr4c_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bc7e5487836f3615df79dfe59687034d95e81e70",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4c_standards",
+            "digest": "sha256:827ae06ff7798cab4e26697c3c1e2baa34b5bd13ca81e000f340d688f9dc6e14",
+            "excerpt": "Standards confirming round, FT293 CR4, repair delta 688d194f..093b9a75. check-current current=true at 942c3980.\nS1 closed 9; S2 closed 8; S3 closed 7; S4 closed 7; S6 closed 8; S7 closed 7.\nS5 open 6: one widening still has several names (BENCH.md:124 \"expand ticket Writes: expectations\" beside :126 \"widens the Writes: line\"; bench-implement-spec.md:93 \"ticket fence expansions\"; delegation-discipline.md:38 \"fence amendment\"; bench-implement-spec.md:87 \"gives to the reviewer\" beside BENCH.md \"requires my decision\").\nS8 auto-fix 6: BENCH.md:126 \"inside the directory of each signed-off Writes: entry\" reads as every entry's directory; the scope is the union (widen.go:38, :227); \"a repair's path does too\" reads as unconditional.\nS9 auto-fix 4: the BENCH.md:126 lead-in \"Each of these changes ... cites for a path:\" does not match list item :131.\nS10 advisory 3: bench-implement-spec.md:54 \"Before using an in-scope plan\" uses a gerund as a noun.\nC1 test side acceptable 6: the DG15 selection predicate appears in two test packages; a needle rename fails loudly.\nOpen: S5, S8, S9. Worst: S8.\n"
+          },
+          "axis": "Standards",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "093b9a758c7ab506db65dc6809d77c65143ebc25",
+          "finding_ids": [
+            "S5",
+            "S8",
+            "S9"
+          ],
+          "supersedes": [
+            "cr4-standards"
+          ]
+        },
+        {
+          "id": "cr4c-spec",
+          "performer": "claude:ft293_cr4c_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bc7e5487836f3615df79dfe59687034d95e81e70",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4c_spec",
+            "digest": "sha256:b3ef505b055946144e924d495aa203f808d2a388675bb13952201c01a0d30f26",
+            "excerpt": "Spec confirming round, FT293 CR4, repair delta 688d194f..093b9a75. check-current current=true at 942c3980. bench coverage --check: 94 rows valid.\nP1 held 9: BENCH.md:126 names bench spec widen and the in-scope plan commit with no stop, a repair's included; :131 lists the outside path; --decision cited.\nCR79 held 9. CR75 held 9 (226 entries equal the union plus the pickup). CR78 held 8. CR94 held 8. No unrequested behavior 8.\nAdvice: spec.md:163 says /bench-implement-spec names the verb at the plan-expansion sentence; after the S3 repair it names the verb at the pause and points to BENCH.md (one route, one hop). Flagged for reviewer veto.\nP3 advisory 3: BENCH.md:126 \"each signed-off entry\" can read as every entry.\nOpen 0.\n"
+          },
+          "axis": "Spec",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "093b9a758c7ab506db65dc6809d77c65143ebc25",
+          "finding_ids": [],
+          "supersedes": [
+            "cr4-spec"
+          ]
+        },
+        {
+          "id": "cr4c-coverage",
+          "performer": "claude:ft293_cr4c_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bc7e5487836f3615df79dfe59687034d95e81e70",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4c_coverage",
+            "digest": "sha256:2d503c42ce58b62b7ccf2e75e85faa19ecd92fe4e063f85a7e7dc429c3600bbd",
+            "excerpt": "Coverage confirming round, FT293 CR4. check-current current=true at 942c3980; tree clean.\nC1 closed 8: probes on delegation-discipline.md under docs-currency-workflow: is a *refusal* _boundary_ bit; IS A REFUSAL BOUNDARY bit; soft line break inside emphasis bit; whole phrase in a code span bit; code span over part of the phrase silent. All restored=yes.\nDG15 needle swapped in registry_debug_loop.go:16: all three DG15-selecting tests red at their lookup; restored.\nC2 advisory 6: a code span over part of a needle passes a case-folded forbid by matcher design (DG15 shares it); park via bench learning.\nOpen 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "093b9a758c7ab506db65dc6809d77c65143ebc25",
+          "finding_ids": [],
+          "supersedes": [
+            "cr4-coverage"
+          ]
         }
       ]
     }
