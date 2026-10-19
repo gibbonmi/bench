@@ -34,8 +34,8 @@ Repair context: <fold targets and author context, each read by the coordinator b
   verification list.
   The root conformance pass is `bench test --check root-conformance`.
 - Every write delegate treats `Writes:` as an expectation, and the gate finds each changed path outside the fence. The delegate reports a path outside the fence before the delegate edits that path. The orchestrator then widens the `Writes:` line with `bench spec widen` under `.bench/BENCH.md`'s plan-expansion policy, or it asks the reviewer. The delegate never writes a second spelling to stay in fence.
-- A charge that exports from a package outside its fence names the fence amendment
-  in its return.
+- A charge that exports from a package outside its fence names the `Writes:`
+  widening in its return.
 - A charge that asks for a commit, a commit sha, or a preflight result makes that request conditional on a committed ticket. A blocked author returns none of them and never creates a commit outside `bench commit`.
 - A charge treats a coverage-row citation in a test doc as a reference to keep.
 - A pure test-addition charge names the production mutation each new test is
