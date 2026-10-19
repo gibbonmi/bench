@@ -109,7 +109,7 @@ Count: 3. Worst issue: C1.
 {
   "version": 2,
   "spec": "specs/closure-removal/spec.md",
-  "plan_digest": "sha256:85f78506160321bb5f2f0b029dcb6ffc622d852931e866e67d0eec733a187e6a",
+  "plan_digest": "sha256:9421a83c29076fbf94debbe657d4e004e894c1ba8c9d4a336c3af0cd6712f7bc",
   "implementation_session": "",
   "chunks": [
     {
@@ -1310,9 +1310,9 @@ Count: 3. Worst issue: C1.
     {
       "id": "CR2",
       "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
-      "tip": "d66a978fbea4282cd30f11f09252802f587f17a1",
-      "plan_digest": "sha256:85f78506160321bb5f2f0b029dcb6ffc622d852931e866e67d0eec733a187e6a",
-      "source_digest": "2a835df0f41c0746f4ce88193f844a38cf52d5f3",
+      "tip": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+      "plan_digest": "sha256:9421a83c29076fbf94debbe657d4e004e894c1ba8c9d4a336c3af0cd6712f7bc",
+      "source_digest": "59dd4fd54fddd3eb9c4c14dacc0846e3d11ea1bb",
       "acceptance_rows": [
         "CR23",
         "CR24",
@@ -1655,6 +1655,118 @@ Count: 3. Worst issue: C1.
           "requirement": "t3-command-routing",
           "command": "bench test --check subcommand-routing",
           "exit_code": 0
+        },
+        {
+          "id": "t3r3-t3-spec-and-help",
+          "performer": "claude:ft293_t3_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "59dd4fd54fddd3eb9c4c14dacc0846e3d11ea1bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t3_r2",
+            "digest": "sha256:d79d53b2dd87219520e835d79649c2fa353af56cd2b029fcf33b6e8fcf68a331",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/widen.go,swap,failed,7,TestSpecWidenAdmitsADecidedEntry,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec ./internal/tickets ./internal/maps ./cmd/bench ./internal/anchors ./internal/conformance,all,passed,1889\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2476\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19265,346\n  github.com/gibbonmi/bench/internal/anchors,pass,128,123\n  github.com/gibbonmi/bench/internal/conformance,pass,36598,1116\n  github.com/gibbonmi/bench/internal/maps,pass,130,97\n  github.com/gibbonmi/bench/internal/spec,fail,2126,162\n  github.com/gibbonmi/bench/internal/tickets,pass,4,45\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenAdmitsADecidedEntry,\"widen_test.go:153: widen = (0, \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/w.go,added\\\\\\\\n  specs/s/tickets/a.md,internal/other/z.go,added\\\\\\\\n\\\"), want exit 0 and \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,intern… (310 bytes)\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenDirectoryPrefix/a_directory_entry_refuses_a_sibling_directory,\"widen_test.go:222: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/other/x.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenDirectoryPrefix/a_directory_entry_refuses_a_sibling_with_its_prefix_spelling,\"widen_test.go:222: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/git2/x.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenDirectoryPrefix/a_root_file_entry_is_its_own_prefix,\"widen_test.go:234: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,README.md,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenReadsTheSignedOffScope,\"widen_test.go:194: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/new/other.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenRefusesAnOutOfScopeEntry,\"widen_test.go:137: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/other/z.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenWritesAllOrNothing,\"widen_test.go:247: code = 0, want 1; out = \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/z.go,added\\\\\\\\n  specs/s/tickets/a.md,internal/other/z.go,added\\\\\\\\n\\\"\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-spec-and-help",
+          "command": "bench test --package ./internal/spec --package ./internal/tickets --package ./internal/maps --package ./cmd/bench --package ./internal/anchors --package ./internal/conformance",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the scope check: make the scope check admit every entry; TestSpecWidenRefusesAnOutOfScopeEntry must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t3_r2",
+              "digest": "sha256:d79d53b2dd87219520e835d79649c2fa353af56cd2b029fcf33b6e8fcf68a331",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/widen.go,swap,failed,7,TestSpecWidenAdmitsADecidedEntry,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec ./internal/tickets ./internal/maps ./cmd/bench ./internal/anchors ./internal/conformance,all,passed,1889\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2476\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19265,346\n  github.com/gibbonmi/bench/internal/anchors,pass,128,123\n  github.com/gibbonmi/bench/internal/conformance,pass,36598,1116\n  github.com/gibbonmi/bench/internal/maps,pass,130,97\n  github.com/gibbonmi/bench/internal/spec,fail,2126,162\n  github.com/gibbonmi/bench/internal/tickets,pass,4,45\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenAdmitsADecidedEntry,\"widen_test.go:153: widen = (0, \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/w.go,added\\\\\\\\n  specs/s/tickets/a.md,internal/other/z.go,added\\\\\\\\n\\\"), want exit 0 and \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,intern… (310 bytes)\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenDirectoryPrefix/a_directory_entry_refuses_a_sibling_directory,\"widen_test.go:222: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/other/x.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenDirectoryPrefix/a_directory_entry_refuses_a_sibling_with_its_prefix_spelling,\"widen_test.go:222: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/git2/x.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenDirectoryPrefix/a_root_file_entry_is_its_own_prefix,\"widen_test.go:234: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,README.md,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenReadsTheSignedOffScope,\"widen_test.go:194: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/new/other.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenRefusesAnOutOfScopeEntry,\"widen_test.go:137: code = 0, want 1; out = \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/other/z.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenWritesAllOrNothing,\"widen_test.go:247: code = 0, want 1; out = \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/z.go,added\\\\\\\\n  specs/s/tickets/a.md,internal/other/z.go,added\\\\\\\\n\\\"\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+            }
+          }
+        },
+        {
+          "id": "t3r3-t3-widen-table",
+          "performer": "claude:ft293_t3_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "59dd4fd54fddd3eb9c4c14dacc0846e3d11ea1bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t3_r2",
+            "digest": "sha256:601fb86a13849978a1b0bb7e4b7b9730d04a1a7b646e9ec32f71c64b62fd29e7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/widen.go,swap,failed,6,TestSpecWidenAddsAnInScopeEntry,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,all,passed,160\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2146\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,1689,160\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenAddsAnInScopeEntry,\"widen_test.go:127: widen = (0, \\\"widen[1]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/y_test.go,added\\\\\\\\n\\\"), want exit 0 and \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/y_test.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenAdmitsADecidedEntry,\"widen_test.go:153: widen = (0, \\\"widen[2]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/w.go,added\\\\\\\\n  specs/s/tickets/a.md,internal/other/z.go,decided\\\\\\\\n\\\"), want exit 0 and \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,int… (313 bytes)\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenDirectoryPrefix/a_root_file_entry_is_its_own_prefix,\"widen_test.go:238: root file widen = (0, \\\"widen[1]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/b.md,CHANGELOG.md,added\\\\\\\\n\\\"), want exit 0 and \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/b.md,CHANGELOG.md,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenReadsSignedOffEntriesLiterally,\"widen_signedoff_test.go:50: widen = (0, \\\"widen[1]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/z.go,added\\\\\\\\n\\\"), want exit 0 and \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/z.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenReadsTheSignedOffScope,\"widen_test.go:201: out = \\\"widen[1]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/b.md,internal/x/z.go,added\\\\\\\\n\\\", want \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/b.md,internal/x/z.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenReportsACoveredEntry,\"widen_line_test.go:12: widen = (0, \\\"widen[2]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/y.go,current\\\\\\\\n  specs/s/tickets/a.md,internal/status/t.go,current\\\\\\\\n\\\"), want exit 0 and \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a… (323 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-widen-table",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap in internal/spec/widen.go: rename the widen table column state to status; TestSpecWidenAddsAnInScopeEntry must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t3_r2",
+              "digest": "sha256:601fb86a13849978a1b0bb7e4b7b9730d04a1a7b646e9ec32f71c64b62fd29e7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/widen.go,swap,failed,6,TestSpecWidenAddsAnInScopeEntry,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,all,passed,160\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2146\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,1689,160\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenAddsAnInScopeEntry,\"widen_test.go:127: widen = (0, \\\"widen[1]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/y_test.go,added\\\\\\\\n\\\"), want exit 0 and \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/y_test.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenAdmitsADecidedEntry,\"widen_test.go:153: widen = (0, \\\"widen[2]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/w.go,added\\\\\\\\n  specs/s/tickets/a.md,internal/other/z.go,decided\\\\\\\\n\\\"), want exit 0 and \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,int… (313 bytes)\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenDirectoryPrefix/a_root_file_entry_is_its_own_prefix,\"widen_test.go:238: root file widen = (0, \\\"widen[1]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/b.md,CHANGELOG.md,added\\\\\\\\n\\\"), want exit 0 and \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/b.md,CHANGELOG.md,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenReadsSignedOffEntriesLiterally,\"widen_signedoff_test.go:50: widen = (0, \\\"widen[1]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/z.go,added\\\\\\\\n\\\"), want exit 0 and \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/z.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenReadsTheSignedOffScope,\"widen_test.go:201: out = \\\"widen[1]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/b.md,internal/x/z.go,added\\\\\\\\n\\\", want \\\"widen[1]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/b.md,internal/x/z.go,added\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/spec,TestSpecWidenReportsACoveredEntry,\"widen_line_test.go:12: widen = (0, \\\"widen[2]{ticket,entry,status}:\\\\\\\\n  specs/s/tickets/a.md,internal/x/y.go,current\\\\\\\\n  specs/s/tickets/a.md,internal/status/t.go,current\\\\\\\\n\\\"), want exit 0 and \\\"widen[2]{ticket,entry,state}:\\\\\\\\n  specs/s/tickets/a… (323 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t3r3-t3-root-conformance",
+          "performer": "claude:ft293_t3_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "59dd4fd54fddd3eb9c4c14dacc0846e3d11ea1bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t3_r2",
+            "digest": "sha256:0796e26a49ee9fef583295b5df771d151a2099f52b18676bdb5583c51c13328a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15012,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r3-t3-axi-registry",
+          "performer": "claude:ft293_t3_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "59dd4fd54fddd3eb9c4c14dacc0846e3d11ea1bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t3_r2",
+            "digest": "sha256:9bb0abdb3205d48eb90e52b735058f8f1eb39c284c726525d8897e6fe96907e6",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  axi-query-registry,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-axi-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r3-t3-command-routing",
+          "performer": "claude:ft293_t3_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "59dd4fd54fddd3eb9c4c14dacc0846e3d11ea1bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t3_r2",
+            "digest": "sha256:af39cc20f715525000234871bf92af20ae8b9a8714a0e5b065d4f13a01fc6f36",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,26,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-command-routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -1866,6 +1978,18 @@ Count: 3. Worst issue: C1.
     {
       "from": "sha256:d9e2bdb101dd34464c7b671c63729eeb0fc18e1f835431a23963c7ef8f1bc8a2",
       "to": "sha256:85f78506160321bb5f2f0b029dcb6ffc622d852931e866e67d0eec733a187e6a",
+      "chunk_ids": {
+        "CR1": [
+          "CR1"
+        ],
+        "CR2": [
+          "CR2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:85f78506160321bb5f2f0b029dcb6ffc622d852931e866e67d0eec733a187e6a",
+      "to": "sha256:9421a83c29076fbf94debbe657d4e004e894c1ba8c9d4a336c3af0cd6712f7bc",
       "chunk_ids": {
         "CR1": [
           "CR1"
