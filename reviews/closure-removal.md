@@ -1,5 +1,17 @@
 # Review outcomes
 
+## CR2 confirming-round pickup
+
+The confirming round read the repair delta `390eb67d..d66a978f`. Each axis ran on opus at high effort. The chunk has used 1 of its 2 repair cycles, and the next repair is cycle 2.
+
+The round closed S1, S2, S4, P1, P2, and C1 to C5. Three findings stay open, and ticket 03 owns all three.
+
+- S5, auto-fix, confidence 4. `ParseTicket` and `WritesLine` in `internal/tickets/tickets.go` each write the rule that selects the live `Writes:` line. Give that rule one helper that both callers use.
+- S6, auto-fix, confidence 5. The Coverage entry `cr2c-coverage` retains the red of the rerun assertion. The refusal text `outsideScope` in `widen_test.go` still has no recorded red. Derive that expectation from the producer's own text in the same package.
+- C6, auto-fix, confidence 4. No witness pins the quoting of a ticket basename or a slug that holds a space. Add that case to `TestSpecWidenRefusesAnOutOfScopeEntry`.
+
+Optional advice: the dogfood record names the two entries without their `(new)` marker.
+
 ## CR2 review pickup
 
 The CR2 review ran on the frozen pair `1ea15b35..390eb67d`. Each axis ran on opus at high effort. The chunk has used 0 of its 2 repair cycles.
@@ -1720,6 +1732,77 @@ Count: 3. Worst issue: C1.
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cr2c-standards",
+          "performer": "claude:ft293_cr2c_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2a835df0f41c0746f4ce88193f844a38cf52d5f3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr2c_standards",
+            "digest": "sha256:3885273b924a89e117c310906b4cccfa2183dcece51a03a128dd6d44226213b4",
+            "excerpt": "Standards confirming round, FT293 CR2, repair delta 390eb67d..d66a978f. check-current current=true, dirty_record=false.\nS1 closed 8: tickets.WritesSyntax (tickets.go:53), maps.FieldSeparator (fields.go:131); local constants deleted.\nS2 closed 9: rerun names every entry, shell-quoted (widen.go:113-118; widen_test.go:331-332).\nS4 closed 7: t3r2-t3-widen-table probe bit, restore pass (reviews/closure-removal.md:1565-1589).\nS5 new 4: the live Writes: line selection is written twice (tickets.go:107-117 ParseTicket, :150-153 WritesLine); one helper could serve both.\nS6 new 5: the rerun-string assertion (widen_test.go:332) and the outsideScope refusal text (:24) have no recorded red.\nOpen: S5, S6. Worst: S6.\n"
+          },
+          "axis": "Standards",
+          "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "tip": "d66a978fbea4282cd30f11f09252802f587f17a1",
+          "finding_ids": [
+            "S5",
+            "S6"
+          ],
+          "supersedes": [
+            "cr2-standards"
+          ]
+        },
+        {
+          "id": "cr2c-spec",
+          "performer": "claude:ft293_cr2c_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2a835df0f41c0746f4ce88193f844a38cf52d5f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr2c_spec",
+            "digest": "sha256:f62a4522680bb0c355a2cbad9b77da35963a3bec73d80fcd454df4ceb9eb648a",
+            "excerpt": "Spec confirming round, FT293 CR2, repair delta 390eb67d..d66a978f. check-current current=true, dirty_record=false.\nP1 closed 9: the b.md widen of CHANGELOG.md (widen_test.go:233-236) reds a root-parent mutant; spec.md:263 states that catch.\nP2 closed 9: spec.md:27 and CHANGELOG.md:29 say --decision admits a path after the reviewer decides and stores no reference.\nCR23-CR54, CR92 held 8; moved cells CR38, CR40-CR42 (widen_line_test.go), CR53 (widen_signedoff_test.go) held 9; no unrequested behavior 8; dogfood record held 7.\nAdvice (not a finding): spec.md:660 names the dogfood entries without their (new) marker.\nOpen 0.\n"
+          },
+          "axis": "Spec",
+          "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "tip": "d66a978fbea4282cd30f11f09252802f587f17a1",
+          "finding_ids": [],
+          "supersedes": [
+            "cr2-spec"
+          ]
+        },
+        {
+          "id": "cr2c-coverage",
+          "performer": "claude:ft293_cr2c_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2a835df0f41c0746f4ce88193f844a38cf52d5f3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr2c_coverage",
+            "digest": "sha256:dfb7379285d7f3da397aed2ef16af8bc31080d28897a81d7ffbb34b923d2ec8a",
+            "excerpt": "Coverage confirming round, FT293 CR2. check-current current at 28d95f2e; 11 probes over ./internal/spec, every restored=yes; tree clean.\nC1 closed 9: added-entry append(covered, entry) bit; ticket-side TrimSuffix only bit; request-side strips markers not slash bit.\nC2 closed 9: pathSegment -> RepositoryPath on basename bit; on slug bit.\nC3 closed 9: IsRegularFile -> Type != \"blob\" bit; signed = len(listing) > 0 bit.\nC4 closed 8: kept = \" \" -> \"\" bit.\nC5 closed 7: drop :(literal) in scopePrefix bit; on the folder call silent (folder always starts with specs/).\nS2 closed 8: rerun loops over refused (widen.go:114) bit TestSpecWidenRefusesAnOutOfScopeEntry at the rerun assertion.\nC6 new 4: ShellQuote(basename) -> basename silent; pathSegment admits a spaced basename or slug; add a witness.\nNested specs/<slug>/tickets/sub/x.md: not a gap; tickets enumeration counts nested tickets.\nOpen: C6. Worst: C6.\n"
+          },
+          "axis": "Coverage",
+          "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "tip": "d66a978fbea4282cd30f11f09252802f587f17a1",
+          "finding_ids": [
+            "C6"
+          ],
+          "supersedes": [
+            "cr2-coverage"
+          ]
         }
       ]
     }
