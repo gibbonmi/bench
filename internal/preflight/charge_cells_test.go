@@ -2,12 +2,51 @@ package preflight
 
 import (
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/consumers"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
+
+// TestDecideChargeRows covers CR06. A build charge and its current-evidence check decide
+// the same rows as a build verdict over the same source pair, so neither charge operation
+// adds a premise row. Each case holds the facts that its real gather holds: both read an
+// explicit source range, and only the charge pins its source tip, which adds tip-current.
+// A prepared charge prints no check row, so the test reads Decide directly.
+func TestDecideChargeRows(t *testing.T) {
+	verdictRows := []string{
+		"paths-authorized",
+		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
+		"kit-pin", "binary-seal",
+		"rows-owned", "rows-membership", "diff-nonempty",
+	}
+	for _, test := range []struct {
+		kind   evidencecmd.Kind
+		pinned string
+		want   []string
+	}{
+		{evidencecmd.KindPrepareEvidence, "beef", append([]string{"base-current", "tip-current"}, verdictRows...)},
+		{evidencecmd.KindCurrentEvidence, "", append([]string{"base-current"}, verdictRows...)},
+	} {
+		f := baseFacts()
+		f.Mode = modeBuild
+		f.TicketsDirExists = true
+		f.ExplicitSourceRange = true
+		f.SourceBase, f.SourceTip, f.PinnedSourceTip = "cafe", "beef", test.pinned
+		f.Operation = test.kind
+		verdict := Decide(f)
+		var got []string
+		for _, c := range verdict.Checks {
+			got = append(got, c.Check)
+		}
+		if verdict.Red || !slices.Equal(got, test.want) {
+			t.Errorf("Decide under operation %d = red %t, checks %v, want green %v", test.kind, verdict.Red, got, test.want)
+		}
+	}
+}
 
 // TestCompleteConsumerEvidenceMatchesLiveConsumerMeta grades the one review refusal
 // branch that guards a live cross-package contract: completeConsumerEvidence reads the
@@ -49,17 +88,6 @@ func TestPreparedFormsIgnoreNestedWorkingDirectory(t *testing.T) {
 	t.Run("build preparation", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
 		args := preflighttest.ChargeArgs(t, root, slug)
-		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)
-	})
-
-	t.Run("propose writes", func(t *testing.T) {
-		root, slug := preflighttest.SeedConformant(t)
-		preflighttest.ActiveAssignment(t, root, root)
-		args := []string{
-			"build", slug, "--propose-writes", "--ticket", "one.md",
-			"--base", preflighttest.RunGit(t, "rev-parse", "main"),
-			"--source-tip", preflighttest.RunGit(t, "rev-parse", "HEAD"),
-		}
 		assertNestedRunMatches(t, root, filepath.Join(root, "internal", slug), args)
 	})
 }

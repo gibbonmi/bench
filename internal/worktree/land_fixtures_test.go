@@ -96,7 +96,7 @@ const reviewedSource = "reviewed bytes\n"
 // seededLandingFixture is landingFixtureWithGateStep with the approved policy that seed
 // writes before the review base. The seed must approve closureSpec for the delivery
 // outcome, because the source assignment starts that outcome. Each fence path joins the
-// spec's ownership fence and the ticket writes, so the source may change that path.
+// ticket writes, so the source may change that path.
 func seededLandingFixture(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string), fence ...string) landingFixture {
 	t.Helper()
 	gateSpec, prospectiveSpec := "", ""
@@ -122,15 +122,14 @@ func seededLandingFixture(t *testing.T, request, ignored, declaration, home stri
 		ignore = strings.Split(ignored, "/")[0] + "/\n"
 		mustWrite(t, filepath.Join(root, ".gitignore"), []byte(ignore), 0o644)
 	}
-	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `owned.txt`\n- `reviews/x.md`\n- `" + siblingReviewPath + "`\n"
+	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n"
 	writes := "owned.txt (new), " + siblingReviewPath + " (new)"
 	for _, path := range fence {
-		specBody += "- `" + path + "`\n"
 		writes += ", " + path
 	}
 	prepared := recordtest.Prepare(t, root, 1, closureSpec, specBody)
-	// The ticket writes the fence less its review pickup, so a landing that grades
-	// fence-writes reads a union-exact spec.
+	// The ticket's `Writes:` line derives the ownership fence, and the review pickup is
+	// an implicit entry, so the ticket names every other path that the source may change.
 	prepared.SetTicketWrites(writes)
 	seed(t, root)
 	prepared.Commit("approve fixture delivery")
@@ -279,5 +278,10 @@ func ticketsOnlyLandArgs(request, base, tip, slug, path string) []string {
 	return append([]string{"--spec", slug}, specLessLandArgs(request, base, tip, path)...)
 }
 
-// withFenceEntry adds one fence entry to a spec the landing fixture prepared.
-func withFenceEntry(spec []byte, entry string) []byte { return recordtest.WithFenceEntry(spec, entry) }
+// landingTicket is the one ticket that the landing fixture prepared.
+const landingTicket = "specs/x/tickets/1.md"
+
+// withTicketWrite adds one entry to the `Writes:` line of the landing fixture's ticket.
+func withTicketWrite(ticket []byte, entry string) []byte {
+	return recordtest.WithTicketWrite(ticket, entry)
+}

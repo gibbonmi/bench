@@ -64,15 +64,10 @@ func citationsIn(cell string) []citation {
 	return out
 }
 
-// reviewPickup renders the review file a folder spec's fences must authorize. The
-// landing carries the review beside the build, so an unauthorized pickup blocks it.
-func reviewPickup(slug string) string { return "reviews/" + slug + ".md" }
-
-// CheckFiles is Check plus the two checks that read the tree the spec sits in: every
-// seam-cell test name must be a citation that resolves to a declared function, and a
-// declared ownership-fence section must authorize the spec's own review pickup. The repo root
-// and the slug both derive from specPath, so no caller can supply an anchor that
-// disagrees with the file it passed.
+// CheckFiles is Check plus the check that reads the tree the spec sits in: every
+// seam-cell test name must be a citation that resolves to a declared function. The repo
+// root derives from specPath, so no caller can supply an anchor that disagrees with the
+// file it passed.
 //
 // A spec that is not mapped — historical, or missing its map — gets Check's answer
 // alone, which keeps the historical opt-out covering every check.
@@ -81,25 +76,21 @@ func CheckFiles(p parsed, specPath string) []string {
 	if State(p) != "mapped" {
 		return v
 	}
-	base, slug := specLocation(specPath)
-	v = append(v, checkCitations(p, base)...)
-	return append(v, checkReviewPickup(p, slug)...)
+	return append(v, checkCitations(p, specBase(specPath))...)
 }
 
-// specLocation splits a spec path into the repo root its citations resolve against
-// and the slug its review pickup is named for. A folder spec, `<base>/specs/<slug>/
-// spec.md`, yields both. Any other shape yields the directory that holds the spec and
-// an empty slug, which leaves the pickup check inapplicable rather than guessing a
-// name.
+// specBase is the repo root a spec's citations resolve against. A folder spec,
+// `<base>/specs/<slug>/spec.md`, and a flat spec under `<base>/specs/` both yield base.
+// Any other shape yields the directory that holds the spec.
 //
 // The root is absolute, because the two consumers downstream both need it that way: the
 // phase census anchors a manifest phase's directory to it, and the package loader answers
 // with absolute directories that a relative root can never match. A working directory
 // that no longer resolves leaves the path as written, which reports a missing file rather
 // than a panic.
-func specLocation(specPath string) (base, slug string) {
+func specBase(specPath string) string {
 	if specPath == "" {
-		return "", ""
+		return ""
 	}
 	clean := filepath.Clean(specPath)
 	if absolute, err := filepath.Abs(clean); err == nil {
@@ -107,12 +98,12 @@ func specLocation(specPath string) (base, slug string) {
 	}
 	dir := filepath.Dir(clean)
 	if filepath.Base(clean) == "spec.md" && filepath.Base(filepath.Dir(dir)) == "specs" {
-		return filepath.Dir(filepath.Dir(dir)), filepath.Base(dir)
+		return filepath.Dir(filepath.Dir(dir))
 	}
 	if filepath.Base(dir) == "specs" {
-		return filepath.Dir(dir), ""
+		return filepath.Dir(dir)
 	}
-	return dir, ""
+	return dir
 }
 
 // checkCitations resolves every seam-cell citation against the tree at base. It holds
@@ -336,23 +327,6 @@ func hasSubtest(names []string, segment string) bool {
 		}
 	}
 	return false
-}
-
-// checkReviewPickup requires the review pickup among the fence tokens of a folder
-// spec that declares an ownership-fence section. A spec with no such section, and a
-// path that names no slug, are both inapplicable rather than red.
-//
-// The fence parser ends the section at any level-2-or-deeper heading, so an entry
-// written under a subsection is outside the section and does not satisfy this check.
-func checkReviewPickup(p parsed, slug string) []string {
-	if slug == "" || !p.fencesDeclared {
-		return nil
-	}
-	want := reviewPickup(slug)
-	if slices.Contains(p.fences, want) {
-		return nil
-	}
-	return []string{fmt.Sprintf("coverage map spec declares ownership fences without the review pickup '%s'", want)}
 }
 
 // reviewOwnedPrefix marks a seam cell whose evidence a review axis owns rather than a

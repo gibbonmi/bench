@@ -3,7 +3,6 @@ package preflight
 import (
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -17,7 +16,6 @@ func baseFacts() Facts {
 		DefaultBranchCurrent:  true,
 		ReviewBaseResolved:    true,
 		ChangedPaths:          []string{"internal/example/foo.go"},
-		FenceEntries:          []string{"internal/example/foo.go"},
 		DeclaredRowIDs:        []string{"PF1", "PF2"},
 		SpecTag:               "PF",
 		Tickets: []tickets.Ticket{{
@@ -56,7 +54,7 @@ func TestDecideAllGreen(t *testing.T) {
 	wantChecks := []string{
 		"base-current", "paths-authorized",
 		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
-		"fixture-closure", "registry-closure", "anchor-closure", "fence-writes", "kit-pin",
+		"kit-pin",
 		"rows-owned", "rows-membership", "diff-nonempty",
 	}
 	if len(first.Checks) != len(wantChecks) {
@@ -99,8 +97,8 @@ func TestDecideAllGreen(t *testing.T) {
 	}
 	// Every row that reads a parsed ticket, plus diff-nonempty, is
 	// not-applicable in a build with no tickets/ directory at all.
-	if naSeen != 13 {
-		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 13", naSeen)
+	if naSeen != 9 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 9", naSeen)
 	}
 }
 
@@ -251,7 +249,7 @@ func TestDecidePathsAuthorized(t *testing.T) {
 	// separator, stays green. A same-string-prefix path that lacks the
 	// separator does not.
 	f = baseFacts()
-	f.FenceEntries = []string{"internal/git"}
+	f.Tickets[0].Writes = []string{"internal/git"}
 	f.ChangedPaths = []string{"internal/git", "internal/git/sub.go"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictGreen {
 		t.Errorf("paths-authorized with exact and prefix matches = %+v, want green", c)
@@ -483,59 +481,17 @@ func TestDecidePathsAuthorizedImplicitSpecFolder(t *testing.T) {
 		t.Errorf("LS10: sibling folder extending the slug = %+v, want red", c)
 	}
 
-	// LS11: declared entries keep their exact semantics. A path authorized
-	// only by a declared fence stays green, and one outside every fence and
+	// LS11: ticket entries keep their exact semantics. A path authorized
+	// only by a ticket entry stays green, and one outside every entry and
 	// the spec folder is red.
 	f = baseFacts()
 	f.ChangedPaths = []string{"internal/example/foo.go"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictGreen {
-		t.Errorf("LS11: declared-fence-only path = %+v, want green", c)
+		t.Errorf("LS11: ticket-entry-only path = %+v, want green", c)
 	}
 	f.ChangedPaths = []string{"unfenced/path.go"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictRed {
 		t.Errorf("LS11: path outside every fence and the spec folder = %+v, want red", c)
-	}
-}
-
-// TestFixtureClosureNamesUnnamedFixture covers TG14. A ticket that writes a
-// fixture-pinned path and does not name the pinning fixture directory reds with
-// both the path and the fixture named.
-func TestFixtureClosureNamesUnnamedFixture(t *testing.T) {
-	f := requiring(baseFacts(), ownership.KindFixture, map[string][]string{
-		"internal/example/foo.go": {"tests/canary/example-family/pinning-fixture"},
-	})
-	c, ok := checkRow(Decide(f), "fixture-closure")
-	const want = "Writes: entry names a fixture-pinned path without naming the fixture: " +
-		"one.md: internal/example/foo.go is pinned by tests/canary/example-family/pinning-fixture"
-	if !ok || c.Verdict != verdictRed || c.Detail != want {
-		t.Fatalf("fixture-closure row = %+v, want the red detailed %q", c, want)
-	}
-
-	// Naming the fixture directory closes the row.
-	f.Tickets[0].Writes = append(f.Tickets[0].Writes, "tests/canary/example-family/pinning-fixture")
-	if c, _ := checkRow(Decide(f), "fixture-closure"); c.Verdict != verdictGreen {
-		t.Errorf("fixture-closure with the fixture named = %+v, want green", c)
-	}
-}
-
-// TestRegistryClosureNamesOmittedRegistry covers TG16. A ticket that writes a
-// bound package and omits a bound file reds with the omitted file named.
-func TestRegistryClosureNamesOmittedRegistry(t *testing.T) {
-	f := baseFacts()
-	f.Tickets[0].Writes = []string{"internal/example/foo.go", "cmd/bench/command_registry.go"}
-	f = requiring(f, ownership.KindRegistry, map[string][]string{
-		"internal/example/foo.go": {"cmd/bench/command_registry.go", "cmd/bench/main_test.go"},
-	})
-	c, ok := checkRow(Decide(f), "registry-closure")
-	const want = "Writes: entry names a bound package without naming every bound file: " +
-		"one.md: internal/example/foo.go requires cmd/bench/main_test.go"
-	if !ok || c.Verdict != verdictRed || c.Detail != want {
-		t.Fatalf("registry-closure row = %+v, want the red detailed %q", c, want)
-	}
-
-	f.Tickets[0].Writes = append(f.Tickets[0].Writes, "cmd/bench/main_test.go")
-	if c, _ := checkRow(Decide(f), "registry-closure"); c.Verdict != verdictGreen {
-		t.Errorf("registry-closure with every bound file named = %+v, want green", c)
 	}
 }
 
@@ -577,7 +533,7 @@ func TestTicketGatedRowsNotApplicableWithoutTickets(t *testing.T) {
 
 	want := []string{
 		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
-		"fixture-closure", "registry-closure", "anchor-closure", "fence-writes", "kit-pin",
+		"kit-pin",
 	}
 	at := -1
 	for i, c := range v.Checks {

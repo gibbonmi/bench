@@ -6,21 +6,12 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/gibbonmi/bench/internal/preflight/ownership"
 )
 
 // kitEnvMarker is the literal a ticket states to pin the kit a system-tagged
 // fixture reads. An ambient value flips such a fixture under composition, so the
 // ticket names the variable rather than inheriting whatever the session holds.
 const kitEnvMarker = "BENCH_KIT"
-
-// KitObligation is one required closure path that is a system-tagged test: the ticket that
-// requires it, the path, and the file and line whose build constraint carries the tag.
-type KitObligation struct {
-	Ticket, Path, Owner string
-	Line                int
-}
 
 // systemTagged reports whether one `Writes:` path names a Go test file whose
 // //go:build expression carries the system tag. The constraint parse is the same
@@ -102,28 +93,4 @@ func newSystemTestSource(root, testPath string) (string, int) {
 		}
 	}
 	return "", 0
-}
-
-// kitObligations is every required closure path that joins the system suite, at each step
-// of the fixed point: a tagged test the tree holds, or a test it does not hold yet whose
-// directory carries the tag. Each such path keeps the BENCH_KIT obligation of the ticket
-// that requires it.
-func kitObligations(root string, snapshot ownership.Snapshot) []KitObligation {
-	var obligations []KitObligation
-	seen := map[string]bool{}
-	for _, requirement := range snapshot.Requirements {
-		key := requirement.Ticket + "\x00" + requirement.Path
-		if seen[key] {
-			continue
-		}
-		seen[key] = true
-		owner, line := requirement.Path, systemTagLine(root, requirement.Path)
-		if line == 0 && !treeHolds(root, requirement.Path) {
-			owner, line = newSystemTestSource(root, requirement.Path)
-		}
-		if line > 0 {
-			obligations = append(obligations, KitObligation{Ticket: requirement.Ticket, Path: requirement.Path, Owner: owner, Line: line})
-		}
-	}
-	return obligations
 }

@@ -29,8 +29,6 @@ func TestChargeRefusesLinkedSpecAndTicketInputs(t *testing.T) {
 func seedLinkedChargeInput(t *testing.T, input string) (root, slug, target string) {
 	t.Helper()
 	root, slug = preflighttest.SeedConformant(t)
-	spec := preflighttest.SpecBody(slug, "- `specs/"+slug+"/` (input fixtures)")
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", spec)
 	outside := t.TempDir()
 	switch input {
 	case "spec":

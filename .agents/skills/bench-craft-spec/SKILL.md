@@ -62,13 +62,13 @@ Price every cut as `<n> edits, <n> gate runs`. A cut must be a separate capabili
 
 ## Slicing a build for delegates
 
-Record **who-writes-where** ownership fences at spec time, checkable at charge time. A fence entry is an exact repo-relative file or path prefix, never a glob or an implementation ticket. An empty or invalid fence section is incomplete. The author writes the fence section after the ticket slice, and [the slicing checks](../bench-craft-tickets/references/slicing-checks.md) state the fence rule that build preflight enforces. The fences include the review pickup and every conformance-pinned consumer of a moved symbol.
+Record **who-writes-where** in the ticket `Writes:` lines at slice time. The ownership fence is those entries plus `capture`, the spec folder, and the review pickup `reviews/<slug>.md`, so a spec holds no fence section. [The slicing checks](../bench-craft-tickets/references/slicing-checks.md) state the `Writes:` rules.
 A Won't handle over an anchored sentence quotes the bytes it keeps.
 
 During a build, `.bench/BENCH.md` owns approved in-scope plan expansion. A material acceptance change, unrelated scope, or weakened guarantee returns to `/bench-write-spec` for a reviewer decision. A budget row equal to its subject's current line count proves nothing, because the check parses only that one source.
 
 Apply `.bench/BENCH.md`'s implementation-chunk contract.
-`craft-tickets` owns the build-time **what-lands-green-next** unit; each ticket receives the spec's fence. Each fence carries value contracts across it. A contract between tickets is stated in the ticket's `What to build` and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.
+`craft-tickets` owns the build-time **what-lands-green-next** unit; each ticket's `Writes:` line is its part of the ownership fence. Each part carries value contracts across its boundary. A contract between tickets is stated in the ticket's `What to build` and `Acceptance`. Review re-derives that contract from the tree; it does not trust the ticket's account.
 
 After a pass that touches many sections, reread the complete artifact end to end and reconcile contradictions before the handoff.
 
@@ -142,14 +142,10 @@ Modules, interfaces, schema or contract changes, and architectural calls. Record
 ### Edge inventory
 Each deliberately excluded edge takes a **Won't handle** line: `<edge> — <one-clause why the exclusion is safe>`.
 
-## Ownership fences
-List each exact repo-relative file or path prefix a writer may edit. `craft-spec`
-owns the fence rules; an empty section is incomplete, not unrestricted authority.
-
 ## Out of scope
 Each genuine separate capability includes its derived `<n> edits, <n> gate runs` estimate.
 
 ## Further notes
 ```
 
-Before a build starts, emit a scannable approval table. The table covers the implementation line, seam diagrams, acceptance coverage including edge dispositions, ownership fences with an explicit reviewer disposition, and out of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.
+Before a build starts, emit a scannable approval table. The table covers the implementation line, seam diagrams, acceptance coverage including edge dispositions, the derived `Writes:` scope with a reviewer disposition, and out of scope. Pause for sign-off. The user stories set breadth, engineering seams place tests, and the gate defines done.

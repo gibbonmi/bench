@@ -63,7 +63,7 @@ var landFaces = []Face{
 		Sentence:  "reviewed source range or ownership fence is invalid",
 		Authority: Agent,
 		Route: []Step{
-			Instruction(Text("take the refusal_paths entries out of the reviewed range, or declare them under the spec's ## Ownership fences")),
+			Instruction(Text("take the refusal_paths entries out of the reviewed range, or add them to a ticket's Writes: line with bench spec widen")),
 			rerun,
 		},
 	},

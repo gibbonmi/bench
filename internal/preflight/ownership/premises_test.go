@@ -7,15 +7,14 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/maps"
-	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// TestMetadataGrammar drives each planning-facts grammar case through the actual proposal.
-// A diagnostic case keeps the inventory incomplete, so the premises table names it; a
-// valid inventory reports its own items instead.
+// TestMetadataGrammar drives each planning-facts grammar case through the actual
+// collection. A diagnostic case keeps the inventory incomplete, so a premise row names it;
+// a valid inventory reports its own items instead.
 func TestMetadataGrammar(t *testing.T) {
 	cases := []struct {
 		name, text string
@@ -30,6 +29,7 @@ func TestMetadataGrammar(t *testing.T) {
 		{"OC58 cross-array duplicate id", fenced(strings.Replace(withPremises(linesPremise("p1")), `"scope":[]`, `"scope":[{"id":"p1",`+itemLocation+`,"paths":["internal/example"]}]`, 1)), "metadata", "unknown", `duplicate item id "p1"`},
 		{"OC59 unsupported version", fenced(strings.Replace(completeEmpty, `"version":1`, `"version":2`, 1)), "metadata", "unknown", "unsupported metadata version 2"},
 		{"OC60 invalid enum", fenced(strings.Replace(completeEmpty, `"declared-complete"`, `"Declared-Complete"`, 1)), "metadata", "unknown", `invalid completeness "Declared-Complete"`},
+		{"absent manifest stays diagnostic", "", "metadata", "unknown", "no bench-planning-facts fence"},
 		{"OC91 opener inside another fence", "\n```text\n```bench-planning-facts\n" + completeEmpty + "\n```\n```\n", "metadata", "unknown", "no bench-planning-facts fence"},
 		{"unclosed fence", "\n```bench-planning-facts\n" + completeEmpty + "\n", "metadata", "unknown", "not closed"},
 		{"nested fence", "\n```bench-planning-facts\n" + completeEmpty + "\n```json\n```\n", "metadata", "unknown", "another fence marker"},
@@ -44,9 +44,8 @@ func TestMetadataGrammar(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			out := mustPropose(t, emptyTree(test.text).Seed(t))
-			row := one(t, out, "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, premises(t, emptyTree(test.text).Seed(t)), test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want state %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
 		})
@@ -60,9 +59,9 @@ func TestMetadataGrammar(t *testing.T) {
 		"manual claim":                      {fenced(manualClaim(`"applicability":"current-premise"`)), false},
 	} {
 		t.Run("Complete "+name, func(t *testing.T) {
-			snapshot, err := ownership.Collect(t.TempDir(), ownership.Source{}, ownership.ParseManifest([]byte(test.text)), nil, nil)
-			if err != nil || snapshot.Complete != test.complete {
-				t.Fatalf("Collect = Complete %t, %v; want Complete %t", snapshot.Complete, err, test.complete)
+			snapshot := ownership.Collect(t.TempDir(), ownership.Source{}, ownership.ParseManifest([]byte(test.text)), nil)
+			if snapshot.Complete != test.complete {
+				t.Fatalf("Collect = Complete %t; want Complete %t", snapshot.Complete, test.complete)
 			}
 		})
 	}
@@ -92,7 +91,7 @@ func TestMetadataGrammarFenceRoles(t *testing.T) {
 }
 
 // TestSizingPremises drives the line-count, glob-member, and headroom collectors through
-// the actual proposal. The tip adds one physical line to a.go, so a count names its source.
+// ownership.Collect over the seeded spec. The tip adds one physical line to a.go, so a count names its source.
 // Each unproved form keeps its premise unknown with the reason the case names.
 func TestSizingPremises(t *testing.T) {
 	lines := func(id, path, source string, count int) string {
@@ -122,12 +121,14 @@ func TestSizingPremises(t *testing.T) {
 		headroomItem("headroom-ignored-deletion", "internal/sized", `"internal/sized/d.go"`, `"internal/sized/b.go"`, 3, 3, 1),
 		headroomItem("headroom-over", "internal/sized", `"internal/sized/d.go"`, "", 3, 3, 1),
 		headroomItem("headroom-absent-deletion", "internal/sized", "", `"internal/sized/z.go"`, 3, 3, -1),
-		headroomItem("headroom-granted", "internal/granted", `"internal/granted/n.go"`, "", 1, 1, 1))
-	root := ownershiptest.ProposalRepo{Writes: []string{"internal/sized/a.go"}, Files: sizingBase, OwnInventory: true, Tail: facts}.Seed(t)
+		headroomItem("headroom-granted", "internal/granted", `"internal/granted/n.go"`, "", 1, 1, 1),
+		headroomItem("headroom-empty-directory", "", "", "", 3, 3, 0),
+		headroomItem("headroom-dot-directory", ".", "", "", 3, 3, 0))
+	root := ownershiptest.Repo{Writes: []string{"internal/sized/a.go"}, Files: sizingBase, OwnInventory: true, Tail: facts}.Seed(t)
 	preflighttest.MustWriteFile(t, "internal/sized/a.go", "package sized\n\n")
 	preflighttest.RunGit(t, "add", "-A")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "tip")
-	out := mustPropose(t, root)
+	rows := premises(t, root)
 	for _, test := range []struct{ row, id, state, reason string }{
 		{"OC32", "lines-stale", "unknown", "holds 2 line(s) at the source tip"},
 		{"OC32", "lines-tip", "green", "holds 2 line(s) at the source tip"},
@@ -144,6 +145,8 @@ func TestSizingPremises(t *testing.T) {
 		{"OC36", "headroom-copied-cap", "unknown", "maximum 12, the canonical limit is 3"},
 		{"OC36", "headroom-over", "unknown", "exceeds"},
 		{"OC36", "headroom-granted", "green", "one cohesive family"},
+		{"OC36", "headroom-empty-directory", "unknown", `subject: directory "" is no clean repository directory`},
+		{"OC36", "headroom-dot-directory", "unknown", `subject: directory "." is no clean repository directory`},
 		{"OC37", "headroom-swap", "green", "net 0"},
 		{"OC37", "headroom-ignored-deletion", "unknown", "net 1, the plan nets 0"},
 		{"OC37", "headroom-absent-deletion", "unknown", "internal/sized/z.go is no tracked source"},
@@ -151,8 +154,8 @@ func TestSizingPremises(t *testing.T) {
 		{"OC38", "lines-planned", "planned", "certifies no current source"},
 	} {
 		t.Run(test.row+" "+test.id, func(t *testing.T) {
-			row := one(t, out, "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, rows, test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
 		})
@@ -160,7 +163,7 @@ func TestSizingPremises(t *testing.T) {
 }
 
 // TestSymbolPremises drives the symbol, import, anchor-kind, sentinel, error, and bound
-// collectors through the actual proposal. Each case names its owner by exact identity, so
+// collectors through ownership.Collect over the seeded spec. Each case names its owner by exact identity, so
 // a familiar name, a same-valued literal, or a same-named declaration of another owner
 // cannot certify it. Each unproved form keeps its premise unknown with the reason the case
 // names.
@@ -200,7 +203,7 @@ func TestSymbolPremises(t *testing.T) {
 		boundItem("bound-local-literal", moved, "32"),
 		boundItem("bound-text", symbolOwner(rules, "rules.maxRows", "const", ""), "2 << 4"),
 		boundItem("bound-runtime", symbolOwner(rules, "rules.limit", "var", "var limit = len(os.Args)"), "1"))
-	out := mustPropose(t, ownershiptest.ProposalRepo{Writes: []string{rules}, Files: symbolBase, OwnInventory: true, Tail: facts}.Seed(t))
+	rows := premises(t, ownershiptest.Repo{Writes: []string{rules}, Files: symbolBase, OwnInventory: true, Tail: facts}.Seed(t))
 	for _, test := range []struct{ row, id, state, reason string }{
 		{"OC39", "symbol-owner", "green", "rules.Check resolves in internal/rules/rules.go"},
 		{"OC39", "symbol-other-owner", "unknown", "other.Check is declared in internal/other/other.go, not internal/rules/rules.go"},
@@ -228,23 +231,23 @@ func TestSymbolPremises(t *testing.T) {
 		{"OC47", "bound-runtime", "unknown", "rules.limit is a var, so its value is no static bound"},
 	} {
 		t.Run(test.row+" "+test.id, func(t *testing.T) {
-			row := one(t, out, "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, rows, test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
 		})
 	}
 }
 
-// TestEvidencePremises drives the reused-test premise collector through the actual
-// proposal over committed review-record fixtures. Only a source-bound record whose named
+// TestEvidencePremises drives the reused-test premise collector through ownership.Collect
+// over committed review-record fixtures. Only a source-bound record whose named
 // verification carries a restored, biting behavioral probe of the named test subject with
 // red_needle turns green; every unproved form stays unknown with a diagnostic reason.
 func TestEvidencePremises(t *testing.T) {
 	files := map[string]string{
 		evidenceTestPath: "package reused\n\nimport \"testing\"\n\nfunc " + evidenceTestFunc + "(t *testing.T) {}\n",
 	}
-	root := ownershiptest.ProposalRepo{Writes: []string{"internal/example/after.go"}, Files: files}.Seed(t)
+	root := ownershiptest.Repo{Writes: []string{"internal/example/after.go"}, Files: files}.Seed(t)
 	commits := seedEvidenceCommits(t, root)
 	facts := withItems("premises",
 		reusedTestItem("evidence-certified", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.valid, "1", "tests", evidenceMutation, evidenceNeedle),
@@ -260,7 +263,7 @@ func TestEvidencePremises(t *testing.T) {
 		reusedTestItem("evidence-compile-failure", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.compileFailure, "1", "additional", evidenceMutation, evidenceNeedle),
 		reusedTestItem("evidence-forged-compile", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.forgedCompile, "1", "tests", evidenceMutation, evidenceNeedle))
 	writeEvidenceSpec(t, root, facts)
-	out := mustPropose(t, root)
+	rows := premises(t, root)
 	for _, test := range []struct{ row, id, state, reason string }{
 		{"OC48", "evidence-certified", "green", "is certified by specs/prior/spec.md chunk 1 verification tests"},
 		{"OC48", "evidence-missing-record", "unknown", "failed check for source_commit"},
@@ -276,8 +279,8 @@ func TestEvidencePremises(t *testing.T) {
 		{"OC87", "evidence-forged-compile", "unknown", `does not hold red_needle "expected behavioral needle"`},
 	} {
 		t.Run(test.row+" "+test.id, func(t *testing.T) {
-			row := one(t, out, "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, rows, test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
 		})
@@ -285,7 +288,7 @@ func TestEvidencePremises(t *testing.T) {
 }
 
 // TestPredicatePremises drives decision predicate-to-row mappings and seam citation checks
-// through the actual proposal.
+// through ownership.Collect over the seeded spec.
 func TestPredicatePremises(t *testing.T) {
 	dupPredSpec := strings.Replace(preflighttest.SpecBody(slug), "| PF2 | 1 | does y |", "| PF2 | 1 | does x |", 1)
 	for _, test := range []struct{ name, spec, facts, id, state, reason string }{
@@ -303,98 +306,70 @@ func TestPredicatePremises(t *testing.T) {
 			if test.spec != "" {
 				writePredicateSpec(t, root, test.spec, test.facts)
 			}
-			row := one(t, mustPropose(t, root), "premises", map[string]string{"id": test.id})
-			if cell(row, "state") != test.state || !strings.Contains(cell(row, "reason"), test.reason) {
+			row := onePremise(t, premises(t, root), test.id)
+			if string(row.State) != test.state || !strings.Contains(row.Reason, test.reason) {
 				t.Fatalf("premise %s = %v, want state %s and reason %q", test.id, row, test.state, test.reason)
 			}
 		})
 	}
 }
 
-// TestChargePremises drives build --charge through the real preflight.Command dispatcher
-// over proved and unproved premise inventories, asserting that every refusal leaves the
-// evidence store empty.
-func TestChargePremises(t *testing.T) {
+// TestChargeReadiness grades the charge readiness of proved and unproved premise inventories
+// through the actual collection. The audit reads the readiness blocker, so each unmet case
+// names its own fault.
+func TestChargeReadiness(t *testing.T) {
 	for name, facts := range map[string]string{
 		"complete decision inventory":           manifestJSON("declared-complete", nil, plannedSeam, rowDecisions, nil),
 		"OC51 decisions need not map every row": manifestJSON("declared-complete", nil, plannedSeam, rowDecisions[:1], nil),
 	} {
 		t.Run(name, func(t *testing.T) {
-			root, args := seedChargeRepo(t, "", facts, nil)
-			assertChargePublished(t, root, args)
+			root, _ := seedChargeRepo(t, "", facts)
+			if ready := collectChargeSnapshot(t, root).ChargeReadiness; !ready.InventoryComplete || ready.Blocker != "" {
+				t.Fatalf("charge readiness = %+v, want met", ready)
+			}
 		})
 	}
 	for _, test := range []struct {
 		name, spec, facts, want string
-		extra                   map[string]string
 	}{
-		{"OC54 partial inventory", "", manifestJSON("partial", nil, nil, nil, nil), "partial", nil},
-		{"OC54 stale current premise", "", withPremises(stalePremise), "p1", nil},
-		{"OC52 changed predicate bytes", "", manifestJSON("declared-complete", nil, plannedSeam, []string{decisionItem("dec-stale", "PF1", "does stale", 11, "does x"), rowDecisions[1]}, nil), "dec-stale", nil},
-		{"OC51 missing coverage row", "", manifestJSON("declared-complete", nil, plannedSeam, []string{decisionItem("dec-missing", "PF9", "does x", 11, "does x")}, nil), "PF9", nil},
-		{"OC53 dynamic caller claim", "", strings.Replace(manifestJSON("declared-complete", nil, plannedSeam, nil, nil), `"changes":[]`, `"changes":[`+dynamicChange+`]`, 1), "caller-census", dynamicCaller},
-		{"OC88 omitted second seam citation", citedSpec("`TestFoo`, `TestBar`"), manifestJSON("declared-complete", nil, plannedSeam, nil, nil), "TestBar", nil},
-		{"OC88 omitted single seam citation", citedSpec("`TestFoo`"), manifestJSON("declared-complete", nil, nil, nil, nil), "TestFoo", nil},
+		{"OC54 partial inventory", "", manifestJSON("partial", nil, nil, nil, nil), "partial"},
+		{"OC54 stale current premise", "", withPremises(stalePremise), "p1"},
+		{"OC52 changed predicate bytes", "", manifestJSON("declared-complete", nil, plannedSeam, []string{decisionItem("dec-stale", "PF1", "does stale", 11, "does x"), rowDecisions[1]}, nil), "dec-stale"},
+		{"OC51 missing coverage row", "", manifestJSON("declared-complete", nil, plannedSeam, []string{decisionItem("dec-missing", "PF9", "does x", 11, "does x")}, nil), "PF9"},
+		{"OC88 omitted second seam citation", citedSpec("`TestFoo`, `TestBar`"), manifestJSON("declared-complete", nil, plannedSeam, nil, nil), "TestBar"},
+		{"OC88 omitted single seam citation", citedSpec("`TestFoo`"), manifestJSON("declared-complete", nil, nil, nil, nil), "TestFoo"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			r, a := seedChargeRepo(t, test.spec, test.facts, test.extra)
-			assertChargeRefused(t, r, a, "charge-premises", test.want)
+			root, _ := seedChargeRepo(t, test.spec, test.facts)
+			assertNotReady(t, root, test.want)
 		})
 	}
 }
 
-// TestChargeManualApplicability drives the actual charge and current-evidence routes over
-// manual claims. A valid native-future claim keeps Snapshot.Complete false and charges with
-// no future execution record. Each manualRefusals case refuses with no prepared handle, and
-// review and ordinary continuation stay unchanged.
+// TestChargeManualApplicability grades manual claims through the actual collection. A valid
+// native-future claim keeps Snapshot.Complete false, and the charge and current-evidence
+// routes still serve it. Each manualRefusals case keeps the charge readiness unmet.
 func TestChargeManualApplicability(t *testing.T) {
 	valid := validNative().json()
 	t.Run("OC89 OC93 native-future claim allows charge and current evidence", func(t *testing.T) {
-		root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", nil, nil, nil, []string{valid}), nil)
+		root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", nil, nil, nil, []string{valid}))
 		snap := collectChargeSnapshot(t, root)
-		if snap.Complete || !snap.ChargeReadiness.InventoryComplete || !snap.ChargeReadiness.CurrentComplete || len(snap.ChargeReadiness.PendingNative) != 1 || snap.ChargeReadiness.PendingNative[0].ID != "manual-native" {
+		if snap.Complete || !snap.ChargeReadiness.InventoryComplete || snap.ChargeReadiness.Blocker != "" {
 			t.Fatalf("native-future snapshot = Complete %t, readiness %+v, premises %+v, diag %+v", snap.Complete, snap.ChargeReadiness, snap.Premises, snap.Diagnostics)
 		}
 		if out, code := checkCurrent(assertChargePublished(t, root, args)); code != 0 || !strings.Contains(out, "current[1]") {
 			t.Fatalf("current evidence = (%d):\n%s", code, out)
 		}
 	})
-	t.Run("OC94 current evidence refuses an unproved current premise", func(t *testing.T) {
-		count3 := strings.Replace(linesPremise("p1"), `"count":1`, `"count":3`, 1)
-		root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", []string{count3}, nil, nil, []string{valid}), nil)
-		identity := assertChargePublished(t, root, args)
-		preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n\n// Foo returns ctx.\nfunc Foo(ctx int) int { return ctx }\n")
-		preflighttest.RunGit(t, "commit", "-q", "-am", "grow foo.go")
-		out, code := checkCurrent(identity)
-		if code == 0 || !strings.Contains(out, "charge-premises") || !strings.Contains(out, "p1") || strings.Contains(out, "current[1]") {
-			t.Fatalf("current evidence over an unproved premise = (%d):\n%s", code, out)
-		}
-		if packs := preflighttest.PublishedPacks(t, root); len(packs) != 1 {
-			t.Fatalf("published packs = %v, want only the prepared one", packs)
-		}
-	})
 	for _, test := range manualRefusals() {
 		t.Run(test.name, func(t *testing.T) {
-			root, args := test.repo.seed(t)
+			root, _ := test.repo.seed(t)
 			if test.pending {
-				if pending := collectChargeSnapshot(t, root).ChargeReadiness.PendingNative; len(pending) != 1 {
-					t.Fatalf("pending native claims = %+v, want the valid claim", pending)
+				if ready := collectChargeSnapshot(t, root).ChargeReadiness; strings.Contains(ready.Blocker, validNative().id) {
+					t.Fatalf("charge readiness = %+v, want the valid native claim pending, not blocking", ready)
 				}
 			}
-			assertChargeRefused(t, root, args, "charge-premises", test.want)
+			assertNotReady(t, root, test.want)
 		})
 	}
-	t.Run("review and ordinary continuation stay unchanged", func(t *testing.T) {
-		root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", nil, nil, nil, []string{currentManualJSON("manual-current", "unproved current assumption")}), nil)
-		for _, verdict := range [][]string{
-			{"build", slug, "--base", args[6], "--source-tip", args[8]},
-			{"build", slug, "--plan-only", "--base", args[6], "--source-tip", args[8]},
-			{"review", slug, "--base", args[6], "--source-tip", args[8]},
-		} {
-			if out, code := preflight.Command(verdict); code != 0 || strings.Contains(out, "charge-premises") {
-				t.Errorf("%v = (%d):\n%s", verdict, code, out)
-			}
-		}
-		preflighttest.AssertNothingPublished(t, root)
-	})
 }

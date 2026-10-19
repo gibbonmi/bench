@@ -231,7 +231,6 @@ func TestEvidenceHostilePaths(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	name := "one [*] $(touch sentinel) 'q' 雪.md"
 	rel := "specs/" + slug + "/tickets/dir /" + name
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug, "- `specs/"+slug+"/` (ticket fixtures)"))
 	preflighttest.MustWriteFile(t, rel, preflighttest.TicketDoc("Hostile path", "PF1", "PF2"))
 	args := preflighttest.LegacyCommitted(t, root, slug, "hostile ticket path")
 	args[4] = name

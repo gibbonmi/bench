@@ -23,7 +23,7 @@ const metadataID = "metadata"
 // the shared FieldScan fence state, so a labeled marker inside another fence opens nothing.
 // The payload is bounded by ControlRecordLimit through the classified byte reader. Every
 // grammar fault is one diagnostic on a present manifest, so it keeps the inventory
-// incomplete without refusing the closure. A spec with no fence answers a manifest that is
+// incomplete without refusing the collection. A spec with no fence answers a manifest that is
 // not present.
 func ParseManifest(content []byte) Manifest {
 	rows := coverage.MapRows(content)

@@ -65,7 +65,7 @@ func prepareBuildPack(root string, facts Facts, selected *tickets.Entry, parsed 
 		return nil, failure, nil
 	}
 	metadata := chargeevidence.Metadata{
-		Fence:    facts.FenceEntries,
+		Fence:    ticketFence(facts),
 		Writes:   parsed.Writes,
 		Coverage: parsed.Covers,
 	}

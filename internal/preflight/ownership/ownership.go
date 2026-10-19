@@ -1,11 +1,9 @@
-// Package ownership collects the canonical ownership facts of a spec's tickets. Each
-// requirement is a path that a ticket's write requires through the fixture, registry, or
-// anchor owner, with every source reason that requires it. The snapshot also carries the
-// authored planning-claim inventory and every diagnostic that keeps proof incomplete.
+// Package ownership collects the authored planning-claim inventory of a spec: each premise
+// with its proof state, and every diagnostic that keeps proof incomplete.
 //
 // The package reads the canonical owners and copies none of their tables. It imports no
-// preflight package: the preflight gatherer calls Collect, and its pure Decide grades the
-// returned Snapshot without I/O.
+// preflight package: the preflight gatherer calls Collect for the staleness audit, which
+// grades the returned Snapshot.
 package ownership
 
 import (
@@ -16,86 +14,14 @@ import (
 	"slices"
 
 	"github.com/gibbonmi/bench/internal/consumers"
-	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // Source is the committed source identity that one collection reads: the explicit base and
-// tip, the spec path from the canonical selected-spec read, the committed path status
-// projection, and the caller's verified kit context.
+// tip, and the spec path from the canonical selected-spec read.
 type Source struct {
 	Base, Tip string
 	SpecPath  string
-	Paths     []PathStatus
-	Kit       Kit
-}
-
-// PathStatus is one committed path of the source range and its change status.
-type PathStatus struct {
-	Path   string
-	Status Status
-}
-
-// Status is the committed change status of one path.
-type Status string
-
-const (
-	StatusChanged Status = "changed"
-	StatusDeleted Status = "deleted"
-)
-
-// Kit is the caller's authenticated kit context. Identity is the verified source digest of
-// the kit build that the caller runs, and it is empty when no verified kit source exists.
-// The collector never discovers or runs a kit of its own.
-type Kit struct {
-	Identity string
-}
-
-// Kind is the canonical owner family that requires a path. A caller requirement is a file
-// that statically uses a declared changed declaration. An owner requirement is the exact
-// rule source that a declared reused owner pins; the ticket reads it and need not own it.
-type Kind string
-
-const (
-	KindFixture  Kind = "fixture"
-	KindRegistry Kind = "registry"
-	KindAnchor   Kind = "anchor"
-	KindCaller   Kind = "caller"
-	KindOwner    Kind = "owner"
-)
-
-// Scope tells tree evidence, which binds committed owner bytes, from kit evidence, which
-// binds the verified kit source of a compiled table.
-type Scope string
-
-const (
-	ScopeTree Scope = "tree"
-	ScopeKit  Scope = "kit"
-)
-
-// Provenance is one source reason for one requirement: the canonical owner file, the line
-// there, the rule it applies, a reason that names the path it was applied to, and the
-// source identity it binds. Line is zero when the owner names the path as a whole, or when
-// no verified source locates it; Source is then empty for kit evidence.
-type Provenance struct {
-	Owner     string
-	Line      int
-	Rule      string
-	Reason    string
-	Base, Tip string
-	Source    string
-	Scope     Scope
-}
-
-// Requirement is one path that a ticket entry requires, directly or through the fixed
-// point, with every independent reason that requires it. Entry is the originating
-// `Writes:` entry, so a transitive requirement names the write that started its chain. An
-// owner requirement appears under each write entry of its ticket, and its reason names the
-// premise that declares it.
-type Requirement struct {
-	Ticket, Entry, Path string
-	Kind                Kind
-	Provenance          []Provenance
 }
 
 // State is the proof state of one premise row. Only StateGreen is complete supported
@@ -125,30 +51,23 @@ type Diagnostic struct {
 
 // ChargeReadiness is the charge-specific projection of the premise inventory.
 // InventoryComplete means a declared-complete inventory passed its structural checks; it
-// is no review and no proof. RequiredCurrent holds every required current-source premise,
-// and CurrentComplete means each one has complete supported proof. PendingNative holds the
-// validated native-future claims. Blocker names the first unmet condition, and it is empty
-// when both completions hold.
+// is no review and no proof. Blocker names the first unmet condition, and it is empty when
+// the inventory is complete and each required current-source premise has complete supported
+// proof. A validated native-future claim is no unmet condition.
 type ChargeReadiness struct {
 	InventoryComplete bool
-	CurrentComplete   bool
-	RequiredCurrent   []string
-	PendingNative     []ManualClaim
 	Blocker           string
 }
 
 // Snapshot is one immutable collection. Complete means full supported premise
 // certification of a declared-complete inventory with no diagnostic; it is never reviewer
-// approval, and a partial inventory or any manual claim keeps it false. Uncited is every
-// declared coverage row that no parsed ticket cites, which the read-only breakdown lists.
-// Symbols holds the tip identity of each current symbol premise, in inventory order.
+// approval, and a partial inventory or any manual claim keeps it false. Symbols holds the
+// tip identity of each current symbol premise, in inventory order.
 type Snapshot struct {
-	Requirements    []Requirement
 	Premises        []Premise
 	Diagnostics     []Diagnostic
 	Complete        bool
 	ChargeReadiness ChargeReadiness
-	Uncited         []coverage.MapRow
 	Symbols         []SymbolIdentity
 }
 
@@ -206,53 +125,27 @@ func (o Owner) Mismatch(d Declaration, at string) (Discrepancy, string) {
 	return "", ""
 }
 
-// The stages a collection refusal names.
-const (
-	StageFixtures = "fixture inventory"
-	StageAnchors  = "anchor registry"
-	StagePath     = "ownership path"
-)
-
-// Error is a collection refusal: the stage that failed, the subject it read, and the cause.
-type Error struct {
-	Stage, Subject string
-	Cause          error
-}
-
-func (e *Error) Error() string { return e.Stage + " " + e.Subject + ": " + e.Cause.Error() }
-
-func (e *Error) Unwrap() error { return e.Cause }
-
-// Collect reads the canonical closure of every parsed ticket at root, with each Grammar
-// binding classified by the committed change it covers and each declared changed
-// declaration's static callers, and grades the manifest's premise inventory. declared is the
-// spec's declared row IDs, the set whose uncited rows the snapshot names. A failed owner
-// read returns an *Error and no snapshot, so a partial collection never reads as a
-// complete one.
-func Collect(root string, source Source, manifest Manifest, declared []string, parsed []tickets.Ticket) (Snapshot, error) {
+// Collect grades the manifest's premise inventory at root against the parsed tickets. A
+// premise that its collector cannot read stays unknown with that fault as its reason, so a
+// failed read never reads as complete proof.
+func Collect(root string, source Source, manifest Manifest, parsed []tickets.Ticket) Snapshot {
 	census := &census{root: root, source: source}
-	graded, owners := census.premises(manifest.Premises)
-	requirements, diagnostics, err := closure(root, source, parsed, manifest.Changes, census, owners)
-	if err != nil {
-		return Snapshot{}, err
-	}
+	graded := census.premises(manifest.Premises)
 	decisionPremises := census.decisions(manifest)
 	manualPremises, pendingNative, nativeValid := census.manualClaims(manifest, parsed)
 	allPremises := append(append(manifest.premises(source.Tip, graded), decisionPremises...), manualPremises...)
-	allDiag := append(append(manifest.diagnostics(), census.checkSeams(manifest)...), diagnostics...)
+	allDiag := append(manifest.diagnostics(), census.checkSeams(manifest)...)
 	snapshot := Snapshot{
-		Requirements: requirements,
-		Premises:     allPremises,
-		Diagnostics:  allDiag,
-		Uncited:      uncited(declared, manifest.rows, parsed),
-		Symbols:      census.symbols,
+		Premises:    allPremises,
+		Diagnostics: allDiag,
+		Symbols:     census.symbols,
 	}
 	snapshot.Complete = manifest.Present && manifest.Completeness == completenessDeclared && len(snapshot.Diagnostics) == 0 && nativeValid
 	for _, premise := range snapshot.Premises {
 		snapshot.Complete = snapshot.Complete && premise.State == StateGreen
 	}
 	snapshot.ChargeReadiness = chargeReadiness(manifest, snapshot.Premises, snapshot.Diagnostics, pendingNative, nativeValid)
-	return snapshot, nil
+	return snapshot
 }
 
 // premises projects the inventory's premise items onto premise rows. graded holds the row
@@ -349,8 +242,8 @@ func ruleSubjectPaths(item PremiseItem) ([]string, error) {
 	return paths, err
 }
 
-// diagnostics is the inventory's own diagnostic list. An absent fence is one diagnostic,
-// because the closure still proposes without an inventory.
+// diagnostics is the inventory's own diagnostic list. An absent fence is one diagnostic, so
+// a spec with no inventory never reads as complete.
 func (m Manifest) diagnostics() []Diagnostic {
 	if !m.Present {
 		return []Diagnostic{{ID: metadataID, Reason: "no " + MetadataLabel + " fence: the premise inventory is incomplete"}}

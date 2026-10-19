@@ -4,8 +4,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	specref "github.com/gibbonmi/bench/internal/spec"
 )
 
 const escSentinel = "\x1c" // stands in for an escaped `\|` across the pipe split
@@ -114,11 +112,6 @@ type parsed struct {
 	storyNums  map[int]bool
 	notCovered map[int]string
 	dataRows   []dataRow
-	// The spec's `## Ownership fences` tokens, read through internal/spec's one fence
-	// parser. fencesDeclared separates a spec that opens the section from one that
-	// never declares it; only the first is graded for the review pickup.
-	fences         []string
-	fencesDeclared bool
 }
 
 // projection is the descriptor Rows reads cells through. A header matching no
@@ -134,7 +127,6 @@ func (p parsed) projection() schema {
 
 func parse(content []byte) parsed {
 	var p parsed
-	p.fences, p.fencesDeclared = specref.FenceTokens(content)
 	inStories, inMap := false, false
 	for n, raw := range strings.Split(string(content), "\n") {
 		line := strings.TrimSuffix(raw, "\r")

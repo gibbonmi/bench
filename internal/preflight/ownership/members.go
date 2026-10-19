@@ -10,28 +10,6 @@ import (
 	"github.com/gibbonmi/bench/internal/consumers"
 )
 
-// livenessID names each diagnostic of an existing liveness change's retirement census.
-const livenessID = "liveness-census"
-
-// liveness grades each existing liveness change's dispositions against the retirement
-// census of its owner. A planned change has no consumers yet, so it reads none.
-func (c *census) liveness(changes []Change) []Diagnostic {
-	var diagnostics []Diagnostic
-	for _, change := range changes {
-		if change.State != "existing" || change.Kind != "liveness" {
-			continue
-		}
-		members, err := c.members(change.Owner, memberCensuses["retirement"])
-		if err == nil {
-			err = c.dispositions(members, change.Dispositions)
-		}
-		if err != nil {
-			diagnostics = append(diagnostics, Diagnostic{ID: livenessID, Reason: "change " + change.ID + ": " + err.Error()})
-		}
-	}
-	return diagnostics
-}
-
 // memberShape is one member census kind: its exact subject and expected keys, the subject
 // key that names its owner, the key that lists its members, the static references that make
 // a member, and the static writes that name no member. A kind whose expected keys hold the
@@ -160,7 +138,7 @@ func (s censusSubject) paths() []string {
 // Each member is a file and its enclosing declaration name. A write that names no member
 // leaves the members unknown.
 func (c *census) members(owner Owner, shape memberShape) ([]Owner, error) {
-	obj, file, _, err := c.declaration(owner)
+	obj, file, err := c.declaration(owner)
 	if err != nil {
 		return nil, err
 	}

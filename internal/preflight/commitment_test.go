@@ -13,8 +13,9 @@ import (
 
 // seedBuildFresh builds the build-mode fresh fixture. A base commit on
 // main carries a bootstrap-conformant spec with no tickets/ directory at
-// all, then a feature branch adds one authorized change. B1 answers
-// not-applicable ticket rows over this tree.
+// all, then a feature branch adds one change. No ticket entry authorizes
+// that change, so paths-authorized reds it. B1 answers not-applicable
+// ticket rows over this tree.
 func seedBuildFresh(t *testing.T) (root, slug string) {
 	t.Helper()
 	slug = "example"

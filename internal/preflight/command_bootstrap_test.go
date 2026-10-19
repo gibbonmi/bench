@@ -159,8 +159,7 @@ func TestCommandInvalidCoverageMapCarriesMessage(t *testing.T) {
 		"### Acceptance coverage map\n" +
 		"| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam |\n" + // 4 cells where 5 are wanted
-		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
+		"| PF1 | 1 | does x | cli seam |\n" // 4 cells where 5 are wanted
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
@@ -185,8 +184,7 @@ func TestCommandNoRowIDMapNamesOptIn(t *testing.T) {
 		"### Acceptance coverage map\n" +
 		"| story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|\n" +
-		"| 1 | does x | cli seam | catches z |\n" +
-		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
+		"| 1 | does x | cli seam | catches z |\n"
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
@@ -198,134 +196,6 @@ func TestCommandNoRowIDMapNamesOptIn(t *testing.T) {
 	}
 	if !strings.Contains(out, "`row`") {
 		t.Errorf("output must name the leading `row` column opt-in:\n%s", out)
-	}
-}
-
-// TestCommandFencesAbsentError is H3's absent half (mutation H3/fences-absent-error):
-// a spec with no `## Ownership fences` section at all answers a structured error,
-// exit 1.
-func TestCommandFencesAbsentError(t *testing.T) {
-	slug := "example"
-	preflighttest.StartRepo(t)
-	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
-		"### Acceptance coverage map\n" +
-		"| row | story | behavior | seam | why it catches the failure |\n" +
-		"|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam | catches z |\n"
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
-
-	out, code := Command([]string{"review", slug})
-	if code != 1 {
-		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
-	}
-	if !strings.HasPrefix(out, "error: ownership fences empty") {
-		t.Errorf("output = %q, want the ownership-fences error", out)
-	}
-}
-
-// TestCommandFencesEmptyError is H3's empty half (mutation
-// H3/fences-empty-error). An `## Ownership fences` section present but
-// holding no entry answers the same structured error as the absent case.
-// Exit is 1.
-func TestCommandFencesEmptyError(t *testing.T) {
-	slug := "example"
-	preflighttest.StartRepo(t)
-	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
-		"### Acceptance coverage map\n" +
-		"| row | story | behavior | seam | why it catches the failure |\n" +
-		"|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam | catches z |\n" +
-		"\n## Ownership fences\n\n## Next section\n"
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
-
-	out, code := Command([]string{"review", slug})
-	if code != 1 {
-		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
-	}
-	if !strings.HasPrefix(out, "error: ownership fences empty") {
-		t.Errorf("output = %q, want the ownership-fences error", out)
-	}
-}
-
-// TestCommandFencesParenTokenNeverAuthorizes is H3's parenthesized-token half
-// (mutation H3/paren-token-never-authorizes). A fences section whose only
-// backticked token sits inside parentheses answers the same structured error
-// as an empty section. Exit is 1. A parenthetical mention is never an
-// authorization.
-func TestCommandFencesParenTokenNeverAuthorizes(t *testing.T) {
-	slug := "example"
-	preflighttest.StartRepo(t)
-	body := "# " + slug + "\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
-		"### Acceptance coverage map\n" +
-		"| row | story | behavior | seam | why it catches the failure |\n" +
-		"|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam | catches z |\n" +
-		"\n## Ownership fences\n\n- see also (`internal/" + slug + "/`)\n"
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
-
-	out, code := Command([]string{"review", slug})
-	if code != 1 {
-		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
-	}
-	if !strings.HasPrefix(out, "error: ownership fences empty") {
-		t.Errorf("a parenthesized backticked token must not authorize: output = %q", out)
-	}
-}
-
-// TestCommandFencesWrappedParenNeverAuthorizes is
-// RG1/wrapped-paren-never-authorizes: a parenthetical that opens on one
-// line and closes on a later one must never authorize the backticked
-// token it wraps. This holds even though the token's own line, read in
-// isolation, starts at depth zero.
-//
-// A tracked change under the wrapped path stays unauthorized:
-// paths-authorized red naming it. The section's other, real entry keeps
-// the section itself non-empty.
-func TestCommandFencesWrappedParenNeverAuthorizes(t *testing.T) {
-	slug := "example"
-	preflighttest.StartRepo(t)
-	body := preflighttest.SpecBody(slug, "- see also (", "  `internal/wrapped/`)")
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
-	preflighttest.RunGit(t, "add", ".")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
-	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
-	preflighttest.MustWriteFile(t, "internal/wrapped/foo.go", "package wrapped\n")
-	preflighttest.RunGit(t, "add", "internal/wrapped/foo.go")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
-
-	out, code := Command([]string{"review", slug})
-	if code != 1 {
-		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
-	}
-	if !strings.Contains(out, "paths-authorized,red") || !strings.Contains(out, "internal/wrapped/foo.go") {
-		t.Errorf("a token wrapped by a cross-line parenthetical must not authorize:\n%s", out)
-	}
-}
-
-// TestCommandFencesEntryAfterClosedParenAuthorizes is
-// RG1/entry-after-closed-paren-authorizes: once a parenthetical that opened
-// across lines closes, depth tracking must return to zero. A real entry on
-// a later line authorizes normally rather than reading as still-nested.
-func TestCommandFencesEntryAfterClosedParenAuthorizes(t *testing.T) {
-	slug := "example"
-	preflighttest.StartRepo(t)
-	body := preflighttest.SpecBody(slug, "- see also (", "  `internal/aside/`)", "- `internal/real/`")
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", preflighttest.FenceWrites(append(preflighttest.ConformantFence, "internal/real/")), "PF1", "PF2"))
-	preflighttest.RunGit(t, "add", ".")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
-	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
-	preflighttest.MustWriteFile(t, "internal/real/foo.go", "package real\n")
-	preflighttest.RunGit(t, "add", "internal/real/foo.go")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
-
-	out, code := Command([]string{"review", slug})
-	if code != 0 {
-		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
-	}
-	if renderedVerdicts(t, out, modeReview, slug)["paths-authorized"] != verdictGreen {
-		t.Errorf("a real entry after a closed cross-line paren must authorize:\n%s", out)
 	}
 }
 

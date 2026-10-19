@@ -118,7 +118,7 @@ func TestCommandFencePrefixBoundary(t *testing.T) {
 		"|---|---|---|---|---|\n| PF1 | 1 | does x | cli seam | catches z |\n\n" +
 		"## Ownership fences\n\n- `internal/git`\n- `reviews/boundary.md`\n"
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1"))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", []string{"internal/git"}, "PF1"))
 	preflighttest.RunGit(t, "add", ".")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
 	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")

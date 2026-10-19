@@ -1357,6 +1357,14 @@
       "identity": "sha256:b4f7e8acedc521247a9c59162217379c4b5b4572995f93649e13cacc48ba376d",
       "source": "fcb5de856a57b6c159f05c72ab7995d2bf444207",
       "evidence": "7c9d4eb3f59e938f3e21e01ea3b10b05e37e1a02"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT293-closure-removal",
+      "binding": "closure-removal",
+      "identity": "sha256:4ffdc4af39bd4ea9a4b4c69d80d8a25eb1a3f04475bb230dea66538423189725",
+      "source": "be01ed0360b7507bb69873d5154f42857fea62f9",
+      "evidence": "f8903f889af9f0fa45ca764f29e7e31a1df489b7"
     }
   ]
 }

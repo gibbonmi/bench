@@ -10,7 +10,7 @@ import (
 // unboundedKinds names every operation kind that produces no evidence response. It is the
 // independent half of the guard: the registry supplies the kinds, this list supplies the
 // exemption, so a kind registered later carries the bound or reds here by itself.
-var unboundedKinds = []Kind{KindVerdict, KindProposal, KindBreakdown, KindAuditSpec}
+var unboundedKinds = []Kind{KindVerdict, KindAuditSpec}
 
 // TestEvidenceFinalGuard proves that every evidence form obeys the shared response bound and
 // that the bound turns an oversized response into one bounded refusal.

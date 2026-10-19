@@ -258,9 +258,14 @@ func TestEvidenceReviewMetadataSchema(t *testing.T) {
 	metadata := pack.Metadata()
 	manifest := pack.Manifest()
 
-	// The fence is graded against the entries the seeded spec declares, so a truncated or
-	// reordered fence reds rather than passing on a non-empty list.
-	if got, want := strings.Join(metadata.Fence, "\n"), strings.Join(preflighttest.ReviewFence(), "\n"); got != want {
+	// The fence is graded against the paths that the seeded ticket writes, each without its
+	// directory slash, so a truncated or reordered fence reds rather than passing on a
+	// non-empty list.
+	var fence []string
+	for _, entry := range preflighttest.ReviewFence() {
+		fence = append(fence, strings.TrimSuffix(entry, "/"))
+	}
+	if got, want := strings.Join(metadata.Fence, "\n"), strings.Join(fence, "\n"); got != want {
 		t.Errorf("metadata fence =\n%s\nwant\n%s", got, want)
 	}
 	if len(metadata.Writes) != 0 || len(metadata.Coverage) != 0 {

@@ -257,7 +257,7 @@ func reviewChargePack(root, version string, facts Facts, verdict Verdict) (*char
 // reviewMetadata binds the complete review facts to the prepared sources. Every axis reads
 // one artifact, so the charge block names each axis against the same frozen captures.
 func reviewMetadata(root string, facts Facts, policy []reviewSourceDescriptor, collected []reviewCollector) (chargeevidence.Metadata, error) {
-	metadata := chargeevidence.Metadata{Fence: facts.FenceEntries}
+	metadata := chargeevidence.Metadata{Fence: ticketFence(facts)}
 	for _, axis := range reviewrecord.Axes() {
 		metadata.Charge = append(metadata.Charge, chargeevidence.ChargeRow{Axis: axis, Access: chargeevidence.AccessReview})
 	}

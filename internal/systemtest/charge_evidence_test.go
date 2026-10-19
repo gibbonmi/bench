@@ -58,7 +58,7 @@ func newEvidenceJourney(t *testing.T) evidenceJourney {
 			t.Fatal(err)
 		}
 	}
-	spec := "# x\n\nStatus: staged\n\n## User stories\n1. Prepare evidence.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | prepares | command | catches failure |\n\n## Ownership fences\n\n- `source.txt`\n- `reviews/x.md`\n" + inventorytest.Section(inventorytest.CompleteEmpty)
+	spec := "# x\n\nStatus: staged\n\n## User stories\n1. Prepare evidence.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | prepares | command | catches failure |\n" + inventorytest.Section(inventorytest.CompleteEmpty)
 	recordtest.Prepare(t, root, 1, "specs/x/spec.md", spec)
 	commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")
 	commitmenttest.Commit(t, root, "approve fixture delivery")

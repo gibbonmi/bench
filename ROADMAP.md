@@ -18,8 +18,6 @@ findings in the owner details.
 The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
 and review cost that recent builds paid.
 
-**FT293 (HIGH) — preflight stops predicting ownership closure, and a gate-found need widens a ticket's expected writes.**
-
 **FT375 (MEDIUM) — the build preflight grades each spec decision map's `Sources:`, and the staleness pass takes a `writes-resolve` red from landed deletions.**
 
 **FT369 (MEDIUM) — the delegate charge and the slicing checks close the 2026-09-30 batch's fence and venue gaps.**
@@ -342,14 +340,13 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT293-closure-removal
-2. FT380-plan-commit
-3. FT409
-4. FT402
-5. FT411
-6. FT366-degraded-guard
-7. FT362-process-lifetime
-8. FT360-shared-fixtures
-9. FT125-exact-readers
-10. FT314-gate-reuse
-11. FT375-residual
+1. FT380-plan-commit
+2. FT409
+3. FT402
+4. FT411
+5. FT366-degraded-guard
+6. FT362-process-lifetime
+7. FT360-shared-fixtures
+8. FT125-exact-readers
+9. FT314-gate-reuse
+10. FT375-residual

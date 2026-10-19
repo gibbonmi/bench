@@ -229,7 +229,7 @@ const (
 var MetadataBlocks = []Block{
 	{blockCharge, []Field{str("axis"), str("ticket"), str("access")},
 		"One build row with empty axis, or the existing review-axis inventory order."},
-	{blockFence, []Field{str("path")}, "Declared spec fence order."},
+	{blockFence, []Field{str("path")}, "Ticket `Writes:` union in ticket and entry order, each path once."},
 	{blockWrites, []Field{str("path")}, "Selected ticket write order. Review has zero rows."},
 	{blockCoverage, []Field{str("row")}, "Selected ticket coverage order. Review has zero rows here."},
 	{blockChecks, []Field{str("source")}, "Existing build check-source order or review skill source."},

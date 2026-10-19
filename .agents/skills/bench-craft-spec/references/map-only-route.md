@@ -18,12 +18,10 @@ The reviewer judges that each decision is an exact predicate, and no check grade
    The slicer does its own tree research under the slicing checks' `Fence-expansion evidence` classes.
 5. The slicer records the gap log in the thin spec's `Further notes`.
    Each entry takes one class: (a) map discretion, (b) a seam or test choice, (c) a missing fact, or (d) a reviewer decision.
-6. After every ticket exists, the coordinator completes the chunk table and the completion plan under an interim fence that holds only the review pickup.
+6. After every ticket exists, the coordinator completes the chunk table and the completion plan.
    The coordinator then commits the thin spec and the tickets.
-   The coordinator runs `--propose-writes` for each ticket on the committed thin spec, with its chunk table and completion plan.
-   The proposal tolerates only the closure-check reds and the `fence-writes` red.
 7. One ticket review runs on `craft-line`'s ticket review line, with an iteration cap of 2.
-8. After the ticket review accepts, the coordinator writes the fence section, runs the plan-only preflight, and presents the approval table.
+8. After the ticket review accepts, the coordinator runs the plan-only preflight and presents the approval table.
 9. Each class (d) entry is a decision row in the approval table.
    These rows are not late clarification questions, so the two-question limit does not apply to them.
 10. The verification log counts only the ticket round, and its note names the map-only route.
@@ -38,14 +36,13 @@ The stop returns to the reviewer with a recommendation for the full route, and t
 
 ## Thin spec
 
-The coverage check and the build preflight read the thin spec's header fields, stories, coverage map, chunk table, `bench-completion-plan` fence, and ownership fences.
+The coverage check and the build preflight read the thin spec's header fields, stories, coverage map, chunk table, and `bench-completion-plan` fence.
 The thin spec also holds the gap log for the sign-off, and no check reads it.
 
 - The header holds `Status: staged`, one `Decision source:` line that names the compiled map, a `Verification log:` line, and the `Line:` fields.
 - `## User stories` holds at least one story for each map decision.
 - `### Acceptance coverage map` includes the `row` column.
 - `## Implementation chunks` holds the chunk table and the `bench-completion-plan` fence.
-- `## Ownership fences` lists `reviews/<slug>.md` until step 8 writes the full fence.
 - `## Further notes` holds the gap log.
 
 `Problem` and `Solution` stay short, and the thin spec omits any section that no check reads and the map already settles.

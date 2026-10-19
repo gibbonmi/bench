@@ -207,24 +207,34 @@ func TestDriftIdentity(t *testing.T) {
 		t.Fatalf("dropped claim drift = %q, want %q:\n%s", driftRows(t, out), dropped, out)
 	}
 
-	// The tip drops a fence prefix and an exact fence entry while their files change, so only
-	// the baseline fence names them.
-	const member, exact = "outside/fenced/member.txt", "outside/exact.txt"
-	write(t, map[string]string{
-		spec:   preflighttest.SpecBody(slug, "- `outside/fenced/` (dropped fence)", "- `"+exact+"` (dropped exact fence)"),
-		member: "one\n", exact: "one\n",
-	})
-	before = commitAll(t, "fence outside the seed")
-	write(t, map[string]string{spec: preflighttest.SpecBody(slug), member: "two\n", exact: "two\n"})
-	tip = commitAll(t, "fence drops while its files change")
-	fenced := sorted(modified(spec), modified(member), modified(exact))
-	if out, _ := audit(t, slug, before, tip); !slices.Equal(driftRows(t, out), fenced) {
-		t.Fatalf("dropped fence drift = %q, want %q:\n%s", driftRows(t, out), fenced, out)
-	}
-
 	base, tip = dropBaselineSpec(t, slug)
 	if out, code := audit(t, slug, base, tip); code != 1 || !strings.Contains(out, "baseline spec refused") || strings.Contains(out, "staleness[") {
 		t.Fatalf("SS8 absent baseline spec = (%d), want a refusal and no staleness result:\n%s", code, out)
+	}
+}
+
+// TestAuditScopeReadsTicketWrites covers CR66 and CR67. Each changed file that only the base
+// ticket, only the tip ticket, or only a nested ticket writes is in scope. A path that only a
+// leftover fence section or a second copy of a ticket basename names stays outside it.
+func TestAuditScopeReadsTicketWrites(t *testing.T) {
+	_, slug := preflighttest.SeedAdmitted(t)
+	ticket, nested, duplicate := "specs/"+slug+"/tickets/one.md", "specs/"+slug+"/tickets/sub/two.md", "specs/"+slug+"/tickets/sub/one.md"
+	const member, exact, added, leftover = "outside/fenced/member.txt", "outside/exact.txt", "outside/added.txt", "outside/leftover.txt"
+	const below, dropped = "outside/nested.txt", "outside/dropped.txt"
+	writes := func(entries ...string) string {
+		return preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), entries...), "PF1", "PF2")
+	}
+	write(t, map[string]string{specPath(slug): preflighttest.WithLeftoverFence(preflighttest.SpecBody(slug), leftover), nested: writes(below), duplicate: writes(dropped),
+		ticket: writes("outside/fenced/", exact), member: "one\n", exact: "one\n", added: "one\n", leftover: "one\n", below: "one\n", dropped: "one\n"})
+	before := commitAll(t, "baseline ticket writes")
+	write(t, map[string]string{ticket: writes(added), member: "two\n", exact: "two\n", added: "two\n", leftover: "two\n", below: "two\n", dropped: "two\n"})
+	tip := commitAll(t, "tip ticket writes")
+	modified := func(path string) string {
+		return path + "|" + path + "|modified|" + object(t, before, path) + "|" + object(t, tip, path)
+	}
+	want := sorted(modified(ticket), modified(member), modified(exact), modified(added), modified(below))
+	if out, _ := audit(t, slug, before, tip); !slices.Equal(driftRows(t, out), want) {
+		t.Fatalf("ticket writes drift = %q, want %q:\n%s", driftRows(t, out), want, out)
 	}
 }
 
@@ -307,7 +317,7 @@ func TestAuditTrust(t *testing.T) {
 func TestAuditGrammar(t *testing.T) {
 	_, slug := preflighttest.SeedConformant(t)
 	base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
-	for _, selector := range []string{"--charge", "--plan-only", "--propose-writes", "--breakdown", "--check-current", "--verify"} {
+	for _, selector := range []string{"--charge", "--plan-only", "--check-current", "--verify"} {
 		out, code := audit(t, slug, base, tip, selector)
 		if code != 2 || !strings.Contains(out, "cannot be combined") || strings.Contains(out, "staleness[") {
 			t.Errorf("--audit-spec %s = (%d), want exit 2 and no collection:\n%s", selector, code, out)

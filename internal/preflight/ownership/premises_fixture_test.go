@@ -244,7 +244,7 @@ func reusedTestItem(id, path, fn, spec, sourceCommit, evidenceCommit, chunk, ver
 
 func writeEvidenceSpec(t *testing.T, root, facts string) {
 	t.Helper()
-	body := strings.ReplaceAll(strings.Replace(preflighttest.SpecBody(slug, "- `internal/example/after.go`"), preflighttest.PlanFence("one.md"), "", 1), fenced(completeEmpty), "")
+	body := strings.ReplaceAll(strings.Replace(preflighttest.SpecBody(slug), preflighttest.PlanFence("one.md"), "", 1), fenced(completeEmpty), "")
 	preflighttest.MustWriteFile(t, specPath, body+facts+preflighttest.PlanFence("one.md"))
 	commitmenttest.SeedAdmission(t, root, specPath)
 	commit(t, "evidence premises")

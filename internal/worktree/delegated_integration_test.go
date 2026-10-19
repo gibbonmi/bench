@@ -21,12 +21,15 @@ import (
 
 const delegatedJourneySpec = "specs/x/spec.md"
 
-// delegatedJourneySpecBody declares the fence the reviewed range must stay inside.
-// Each ticket writes its own file, so the fence names one entry per ticket author.
+// delegatedJourneySpecBody is the staged spec of the run. The ticket `Writes:` lines that
+// delegatedJourneyWrites sets derive the fence.
 const delegatedJourneySpecBody = "# x\n\nStatus: staged\n\n## User stories\n1. Land a delegated run.\n\n" +
 	"### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n" +
-	"| E1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n" +
-	"- `source.txt`\n- `ticket-1.txt`\n- `ticket-2.txt`\n- `ticket-3.txt`\n- `ticket-4.txt`\n- `reviews/x.md`\n\n"
+	"| E1 | 1 | lands | command | catches failure |\n\n"
+
+// delegatedJourneyWrites is the `Writes:` line of every ticket of the run: the shared
+// source and the file that each ticket author writes.
+const delegatedJourneyWrites = "source.txt, ticket-1.txt, ticket-2.txt, ticket-3.txt, ticket-4.txt"
 
 // delegatedJourneyChunks is the run the spec describes: two independent chunks,
 // one of them with two serial tickets under distinct authors, and one dependent
@@ -80,6 +83,7 @@ func delegatedJourneyFixture(t *testing.T) *delegatedJourney {
 	// the integration assignment binds to the approved deliverable.
 	journey.fixture = recordtest.Prepare(t, root, 4, delegatedJourneySpec,
 		delegatedJourneySpecBody, delegatedJourneyChunks, recordtest.Delegate)
+	journey.fixture.SetTicketWrites(delegatedJourneyWrites)
 	commitmenttest.SeedAdmission(t, root, delegatedJourneySpec)
 	commitmenttest.Commit(t, root, "approve the delegated delivery")
 	journey.base = gitOutput(t, root, "rev-parse", "HEAD")

@@ -24,8 +24,7 @@ import (
 //
 // Named failures include the missing or dangling spec path, and the
 // coverage validator's message or the row-ID opt-in hint. They also
-// include the empty fences section, and the found (non-staged) status.
-// Every case fail-closed.
+// include the found (non-staged) status. Every case fail-closed.
 type BootstrapFailure struct {
 	Kind, Hint string
 }
@@ -51,11 +50,6 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		return Facts{}, &BootstrapFailure{"spec not staged", "spec " + slug + " has Status: " + status + " (want staged)"}
 	}
 
-	fenceEntries, _ := specref.FenceTokens(content)
-	if len(fenceEntries) == 0 {
-		return Facts{}, &BootstrapFailure{"ownership fences empty", "## Ownership fences declares no backticked entry outside parentheses"}
-	}
-
 	optIn, ids, violations, cerr := coverage.ParseSpec(resolved)
 	if cerr != nil {
 		return Facts{}, &BootstrapFailure{"coverage map not readable", cerr.Error()}
@@ -65,11 +59,6 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	}
 	if len(violations) > 0 {
 		return Facts{}, &BootstrapFailure{"coverage map invalid", strings.Join(violations, "; ")}
-	}
-
-	ticketFacts, ticketErr := gatherTicketsWithPolicy(root, filepath.Join(filepath.Dir(resolved), "tickets"), mode, specTag(ids), noFollow)
-	if ticketErr != nil {
-		return Facts{}, ticketErr
 	}
 
 	defaultBranch := ""
@@ -94,21 +83,31 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 			}
 		}
 	}
+	// Build mode grades the checkout tickets, because an uncommitted ticket edit counts there.
+	// Review mode grades a clean committed source, so it grades the tickets that the source
+	// tip tracks, and a checkout file that the tip does not hold authorizes nothing.
+	specPath := filepath.ToSlash(specref.RelTo(root, resolved))
+	var tracked func() ([]tickets.Entry, []string, error)
+	if mode == modeReview {
+		tracked = func() ([]tickets.Entry, []string, error) {
+			return staleness.TicketEntriesAt(root, resolvedSource.Tip, specPath)
+		}
+	}
+	ticketFacts, ticketErr := gatherTicketFolder(root, filepath.Join(filepath.Dir(resolved), "tickets"), mode, specTag(ids), noFollow, tracked)
+	if ticketErr != nil {
+		return Facts{}, ticketErr
+	}
 	defaultTipPaths, defaultTipFailure := defaultTipEqualPaths(root, resolvedSource.Tip, changedPaths)
 	if defaultTipFailure != nil {
 		return Facts{}, defaultTipFailure
 	}
 	sealPresent, sealRefusal := binarySealFacts(root)
-	specPath := filepath.ToSlash(specref.RelTo(root, resolved))
-	collected := ownershipSource(root, specPath, resolvedSource, changedPaths, sealPresent, sealRefusal == nil)
-	snapshot, ownershipFailure := collectOwnership(root, content, collected, ids, ticketFacts.parsed)
-	if ownershipFailure != nil {
-		return Facts{}, ownershipFailure
-	}
 	var audited staleness.AuditFacts
 	if audit {
-		if audited, ownershipFailure = collectAudit(root, collected, snapshot); ownershipFailure != nil {
-			return Facts{}, ownershipFailure
+		source := ownership.Source{Base: resolvedSource.Base, Tip: resolvedSource.Tip, SpecPath: specPath}
+		var auditFailure *BootstrapFailure
+		if audited, auditFailure = collectAudit(root, content, source, ticketFacts.parsed); auditFailure != nil {
+			return Facts{}, auditFailure
 		}
 	}
 
@@ -130,16 +129,13 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		DeletedBefore:         deletedBefore(root, reviewBase, ticketFacts.parsed),
 		BuildDeletedPaths:     buildDeletedPaths(root, specPath, landingBase, resolvedSource.Tip),
 		DefaultTipPaths:       defaultTipPaths,
-		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,
 		SpecTag:               specTag(ids),
 		Tickets:               ticketFacts.parsed,
 		TicketDiagnostics:     ticketFacts.diagnostics,
 		BlockerCycles:         ticketFacts.cycles,
 		WritesPathExists:      ticketFacts.writes,
-		Ownership:             snapshot,
 		Audit:                 audited,
-		KitObligations:        kitObligations(root, snapshot),
 		WritesSystemTagged:    ticketFacts.systemTag,
 		TicketPinsKit:         ticketFacts.kitPinned,
 		TicketsDirExists:      ticketFacts.dirExists,
@@ -148,10 +144,12 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	})), nil
 }
 
-// collectAudit reads the staleness facts of the gathered source pair and the closure snapshot
-// of the same pair. A refused collection refuses the gather, so no partial audit reaches the
-// verdict.
-func collectAudit(root string, source ownership.Source, snapshot ownership.Snapshot) (staleness.AuditFacts, *BootstrapFailure) {
+// collectAudit reads the premise snapshot of the spec content against the parsed tickets,
+// then the staleness facts of the gathered source pair. No verdict row reads the snapshot,
+// so only the audit form collects it. A refused collection refuses the gather, so no
+// partial audit reaches the verdict.
+func collectAudit(root string, content []byte, source ownership.Source, parsed []tickets.Ticket) (staleness.AuditFacts, *BootstrapFailure) {
+	snapshot := ownership.Collect(root, source, ownership.ParseManifest(content), parsed)
 	audited, err := staleness.Collect(root, source, snapshot)
 	var refusal *staleness.Error
 	if errors.As(err, &refusal) {
@@ -204,13 +202,17 @@ func (e UnauthorizedPathsError) Error() string { return e.Detail }
 
 // AuthorizeReviewedSource gathers a new review snapshot for root, slug, and
 // base. It returns the source range only when its committed paths pass the
-// staged spec's ownership fences. It returns an error for gather failure, a
-// red authorization row, or an unresolved range. A caller's earlier Facts or
-// range cannot replace this final authorization.
+// ownership fence that the staged spec's tickets derive. The review gather reads
+// the tickets of the source tip from committed objects. It returns an error for
+// gather failure, a red authorization row, or an unresolved range. A caller's
+// earlier Facts or range cannot replace this final authorization.
 func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) {
-	facts, failure := Gather(root, "review", slug, base)
+	facts, failure := Gather(root, modeReview, slug, base)
 	if failure != nil {
 		return diff.SourceRange{}, fmt.Errorf("%s: %s", failure.Kind, failure.Hint)
+	}
+	if facts.SourceBase == "" || facts.SourceTip == "" {
+		return diff.SourceRange{}, errors.New("reviewed source range is unresolved")
 	}
 	check := pathsAuthorizedCheck(facts)
 	if check.Verdict == verdictRed {
@@ -218,9 +220,6 @@ func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) 
 			return diff.SourceRange{}, UnauthorizedPathsError{Detail: check.Detail, Paths: unauthorized}
 		}
 		return diff.SourceRange{}, errors.New(check.Detail)
-	}
-	if facts.SourceBase == "" || facts.SourceTip == "" {
-		return diff.SourceRange{}, errors.New("reviewed source range is unresolved")
 	}
 	return diff.SourceRange{Base: facts.SourceBase, Tip: facts.SourceTip, CommittedPaths: facts.ChangedPaths, DeletedPaths: facts.DeletedPaths}, nil
 }
@@ -280,6 +279,14 @@ type ticketFacts struct {
 // present-but-empty one (row checks run for real, reading as unowned
 // rows).
 func gatherTicketsWithPolicy(root, dir, mode, tag string, noFollow bool) (ticketFacts, *BootstrapFailure) {
+	return gatherTicketFolder(root, dir, mode, tag, noFollow, nil)
+}
+
+// gatherTicketFolder is gatherTicketsWithPolicy with an optional tracked read. The checkout
+// walk keeps its folder policy and its refusals, and a non-nil tracked read then supplies the
+// ticket files that the facts grade. A failed tracked read refuses the gather, and no
+// checkout ticket replaces it.
+func gatherTicketFolder(root, dir, mode, tag string, noFollow bool, tracked func() ([]tickets.Entry, []string, error)) (ticketFacts, *BootstrapFailure) {
 	var d bounds.ClassifiedDir
 	if noFollow {
 		d = bounds.ClassifyDirNoFollow(dir)
@@ -307,6 +314,12 @@ func gatherTicketsWithPolicy(root, dir, mode, tag string, noFollow bool) (ticket
 		files, duplicates, refusal = tickets.EnumerateNoFollow(dir, d.Entries)
 	} else {
 		files, duplicates, refusal = tickets.Enumerate(dir, d.Entries)
+	}
+	if refusal == nil && tracked != nil {
+		var err error
+		if files, duplicates, err = tracked(); err != nil && !errors.As(err, &refusal) {
+			return ticketFacts{}, &BootstrapFailure{"tickets not readable at the source tip", err.Error()}
+		}
 	}
 	if refusal != nil {
 		return ticketFacts{}, &BootstrapFailure{refusal.Kind, refusal.Message(dir)}

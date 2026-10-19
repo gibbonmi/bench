@@ -121,7 +121,14 @@ The last ticket's author freezes each chunk's delta, and Standards, Spec, and Co
 
 A post-review repair goes to a fresh repair session for each affected ticket, and that session reruns the ticket's verification with current repair coverage. The plan records each repair session as a new assignment with the trigger `user-directed`. At final reconciliation, the orchestrator does not repair. A finding there goes to a fresh repair session for the ticket whose `Writes:` line holds the path. A finding on a path that no `Writes:` line holds is a material acceptance shortfall.
 
-**Expand an approved implementation plan in scope.** The orchestrator may split, combine, or reorder chunks and expand ticket `Writes:` expectations or gate coverage within the approved behavior. When chunk boundaries change, record old-to-new stable IDs. Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior. Unrelated scope, a material acceptance change, or a weakened guarantee requires my decision; a repair's in-scope fence expansion takes a plan commit, not a stop. Before dispatch, record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.
+**Expand an approved implementation plan in scope.** The orchestrator may split, combine, or reorder chunks within the approved behavior. It may also widen a ticket's `Writes:` line or expand gate coverage within that behavior. When chunk boundaries change, record old-to-new stable IDs. Before using a plan expansion, update the affected spec and tickets; preserve acceptance coverage, dependencies, review checkpoints, existing checks, pass criteria, and required behavior. Before dispatch, record every plan or gate expansion with `bench learning`, including what changed, why, and verification; `/bench-drain` owns its later disposition.
+
+The orchestrator widens the `Writes:` line with `bench spec widen`. A path inside the directory of a signed-off `Writes:` entry takes a plan commit and no stop. This rule holds for a repair too. A plan expansion that includes one of these items requires my decision, and `bench spec widen --decision <reference>` cites the decision for the path item:
+
+- unrelated scope
+- a material acceptance change
+- a weakened guarantee
+- a path outside the directory of each signed-off `Writes:` entry
 
 One enabling plan commit updates the coverage map, ticket `Covers:`/`Writes:` and later-ticket contracts, chunk table, and any required review-record amendment before dispatch.
 

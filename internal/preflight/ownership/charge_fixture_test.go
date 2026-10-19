@@ -52,17 +52,6 @@ func rowDecision(id, row string) string {
 // stalePremise is a current line-count premise that the seeded foo.go defeats.
 var stalePremise = strings.Replace(linesPremise("p1"), `"count":1`, `"count":9`, 1)
 
-// dynamicChange declares a changed example.Foo, and dynamicCaller holds a module whose caller
-// takes that function as a value, which no static census certifies.
-var (
-	dynamicChange = changeItem("signature", "existing", "internal/example/foo.go", "example.Foo", "")
-	dynamicCaller = map[string]string{
-		"go.mod":                    "module " + module + "\n\ngo 1.25\n",
-		"internal/example/foo.go":   "package example\n\nfunc Foo() int { return 0 }\n",
-		"internal/caller/caller.go": "package caller\n\nimport \"" + module + "/internal/example\"\n\nvar fn = example.Foo\n",
-	}
-)
-
 // citedSpec is the seeded spec whose PF1 seam cell cites the given functions of
 // internal/example/foo_test.go.
 func citedSpec(functions string) string {
@@ -103,8 +92,9 @@ func (c nativeClaim) json() string {
 	})
 }
 
-// manualRefusal is one charge that a manual claim refuses: the repository, the detail the
-// refusal names, and whether the repository also holds a valid pending native claim.
+// manualRefusal is one charge repository whose manual claim keeps the charge readiness
+// unmet: the repository, the detail its blocker names, and whether the repository also holds
+// a valid pending native claim.
 type manualRefusal struct {
 	name    string
 	repo    chargeRepo
@@ -113,8 +103,9 @@ type manualRefusal struct {
 }
 
 // manualRefusals is each current-premise claim, unproved current premise beside pending
-// native work, and invalid native ownership that refuses the charge. A padded row cell keeps
-// its native claim pending, because the coverage parser trims the cell and reports its line.
+// native work, and invalid native ownership that keeps the charge readiness unmet. A padded
+// row cell keeps its native claim pending, because the coverage parser trims the cell and
+// reports its line.
 func manualRefusals() []manualRefusal {
 	inventory := func(premises, seams []string, claim string) string {
 		return manifestJSON("declared-complete", premises, seams, nil, []string{claim})
@@ -156,11 +147,11 @@ type chargeRepo struct {
 	extra             map[string]string
 }
 
-// seedChargeRepo seeds a conformant build repository whose main branch carries specBody,
-// facts, and extra files, and whose feature branch edits internal/example/foo.go.
-func seedChargeRepo(t *testing.T, specBody, facts string, extra map[string]string) (string, []string) {
+// seedChargeRepo seeds a conformant build repository whose main branch carries specBody and
+// facts, and whose feature branch edits internal/example/foo.go.
+func seedChargeRepo(t *testing.T, specBody, facts string) (string, []string) {
 	t.Helper()
-	return chargeRepo{spec: specBody, facts: facts, extra: extra}.seed(t)
+	return chargeRepo{spec: specBody, facts: facts}.seed(t)
 }
 
 // seed commits the spec files and extra as the charge source of the shared fixture, which
@@ -265,21 +256,46 @@ func checkCurrent(identity string) (string, int) {
 	return preflight.Command([]string{"evidence", identity, "--check-current"})
 }
 
+// collectChargeSnapshot collects the premise snapshot of the seeded spec against every
+// seeded ticket, between main and HEAD.
 func collectChargeSnapshot(t *testing.T, root string) ownership.Snapshot {
 	t.Helper()
 	specBytes, err := os.ReadFile(filepath.Join(root, specPath))
 	if err != nil {
 		t.Fatal(err)
 	}
-	parsed := []tickets.Ticket{{Name: "one.md", Covers: []string{"PF1", "PF2"}, Writes: []string{"internal/example/foo.go"}}}
+	dir := filepath.Join(root, "specs", slug, "tickets")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+	var parsed []tickets.Ticket
+	for _, name := range names {
+		data, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		ticket, _ := tickets.ParseTicket(name, data, names, "PF")
+		parsed = append(parsed, ticket)
+	}
 	source := ownership.Source{
 		SpecPath: specPath,
 		Base:     preflighttest.RunGit(t, "rev-parse", "main"),
 		Tip:      preflighttest.RunGit(t, "rev-parse", "HEAD"),
 	}
-	snap, err := ownership.Collect(root, source, ownership.ParseManifest(specBytes), nil, parsed)
-	if err != nil {
-		t.Fatal(err)
+	return ownership.Collect(root, source, ownership.ParseManifest(specBytes), parsed)
+}
+
+// assertNotReady fails the test unless the seeded snapshot's charge readiness is unmet with a
+// blocker that names want.
+func assertNotReady(t *testing.T, root, want string) {
+	t.Helper()
+	ready := collectChargeSnapshot(t, root).ChargeReadiness
+	if !strings.Contains(ready.Blocker, want) {
+		t.Fatalf("charge readiness = %+v, want unmet with a blocker naming %q", ready, want)
 	}
-	return snap
 }

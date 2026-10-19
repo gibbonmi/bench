@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // reusedTestSubject is the decoded subject of one reused-test premise.
@@ -120,7 +121,7 @@ func requireNonEmptyStrings(object map[string]json.RawMessage, where string, key
 // repository and that the named _test.go file declares the top-level test function at
 // source_commit without drifting at the current source tip.
 func (c *census) checkTestSubject(subject reusedTestSubject) error {
-	if !repositoryPath(subject.Path) || !strings.HasSuffix(subject.Path, "_test.go") {
+	if !tickets.RepositoryPath(subject.Path) || !strings.HasSuffix(subject.Path, "_test.go") {
 		return fmt.Errorf("subject: path %q is no clean repository _test.go path", subject.Path)
 	}
 	if !strings.HasPrefix(subject.Function, "Test") {

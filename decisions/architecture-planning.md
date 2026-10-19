@@ -39,9 +39,9 @@ Use craft-cli, craft-spec, and craft-seams for each outcome.
 
 ## Sources
 
-- Path: `roadmap/FT293.md`
+- Path: `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
   Supports: the decision that supersedes ownership-closure prediction.
-  Drift: a change to its expected-writes rule.
+  Drift: a change to its `Writes:` expectation rule.
 - Path: `roadmap/FT375.md`
   Supports: the staleness faces that the shipped audit left open.
   Drift: a change to its residual scope.

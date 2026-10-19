@@ -158,10 +158,16 @@ func nativeClaims(t *testing.T, slug string) []string {
 	return claims
 }
 
-// commitCompleteness commits the seeded spec with sections as its inventory, with the tickets
-// and plan that own every row, as the charge source of the active, admitted fixture.
+// commitCompleteness commits the files of completenessFiles as the charge source of the
+// active, admitted fixture.
 func commitCompleteness(t *testing.T, root, slug string, sections ...string) []string {
 	t.Helper()
+	return preflighttest.CommitChargeSource(t, root, slug, completenessFiles(slug, sections...))
+}
+
+// completenessFiles is the seeded spec with sections as its inventory, with the tickets and
+// plan that own every row.
+func completenessFiles(slug string, sections ...string) map[string]string {
 	plan := reviewrecord.Plan{Version: 1, FinalVerification: []reviewrecord.Requirement{{ID: "acceptance", Command: "go test ./..."}}, Chunks: []reviewrecord.PlannedChunk{
 		{ID: "c1", Tickets: []string{"one.md"}, Verification: []reviewrecord.Requirement{{ID: "tests", Command: preflighttest.PlanCommand}}},
 		{ID: "SS-C3", Tickets: []string{nativeTicket}, Verification: []reviewrecord.Requirement{
@@ -171,12 +177,12 @@ func commitCompleteness(t *testing.T, root, slug string, sections ...string) []s
 	for _, row := range nativeRows {
 		native = append(native, row[0])
 	}
-	return preflighttest.CommitChargeSource(t, root, slug, map[string]string{
+	return map[string]string{
 		specPath(slug):                               completenessBody(slug) + strings.Join(sections, "") + preflighttest.PlanSection(plan),
 		"specs/" + slug + "/tickets/one.md":          preflighttest.TicketDoc("One", "SS28"),
 		"specs/" + slug + "/tickets/" + nativeTicket: preflighttest.WritesTicketDoc("Native", []string{"internal/example/ (new)"}, native...),
 		keptTest: "package example\n\nimport \"testing\"\n\nfunc TestKept(t *testing.T) {}\n\nfunc TestOther(t *testing.T) {}\n",
-	})
+	}
 }
 
 // inventory is the planning inventory section that declares completeness over seams and the
@@ -253,5 +259,21 @@ func TestAuditCompleteness(t *testing.T) {
 				t.Errorf("charge = (%d), want a ready charge beside the pending native entries:\n%s", code, out)
 			}
 		})
+	}
+}
+
+// TestAuditReportsNoClosureDiagnostic covers CR13. The complete case's ticket also writes the
+// bound renderer package, and no verified kit seal exists. The audit stays complete with no
+// diagnostic, because no closure reads the binding registry.
+func TestAuditReportsNoClosureDiagnostic(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	const bound = "internal/toon/toon.go"
+	files := completenessFiles(slug, inventory("declared-complete", keptSeams(slug, true), nil))
+	files["specs/"+slug+"/tickets/one.md"] = preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), bound), "SS28")
+	files[bound] = "package toon\n"
+	tip := preflighttest.CommitChargeSource(t, root, slug, files)[8]
+	out, code := audit(t, slug, tip, tip)
+	if code != 0 || strings.Contains(out, "kit-registry") || table(t, out, "staleness")[0]["complete"] != true {
+		t.Fatalf("audit over a bound-package write = (%d), want a complete audit with no kit-registry diagnostic:\n%s", code, out)
 	}
 }

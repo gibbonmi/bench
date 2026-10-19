@@ -6,13 +6,12 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
-	specref "github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // Collect reads the audit scope of the committed pair that source names at root. It reads
 // the spec and its planning-facts inventory at both identities from committed objects, never
-// from the checkout. sourceFacts is the closure snapshot of the same pair, whose diagnostics
+// from the checkout. sourceFacts is the premise snapshot of the same pair, whose diagnostics
 // and unproved inventory stay open in the audit and whose symbol identities the
 // cited-symbols audit grades. The test seams of the tip inventory are what the cited-tests
 // audit grades, and the coverage rows and ticket Covers of both identities join the
@@ -29,7 +28,15 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 		return AuditFacts{}, err
 	}
 	tipManifest := ownership.ParseManifest(current)
-	entries, unread := scope(source.SpecPath, [][]byte{baseline, current}, []ownership.Manifest{ownership.ParseManifest(baseline), tipManifest})
+	baseTickets, err := TicketsAt(root, source.Base, source.SpecPath)
+	if err != nil {
+		return AuditFacts{}, err
+	}
+	tipTickets, err := TicketsAt(root, source.Tip, source.SpecPath)
+	if err != nil {
+		return AuditFacts{}, err
+	}
+	entries, unread := scope(source.SpecPath, ticketWrites(baseTickets, tipTickets), []ownership.Manifest{ownership.ParseManifest(baseline), tipManifest})
 	before, err := members(root, source.Base, entries)
 	if err != nil {
 		return AuditFacts{}, err
@@ -39,9 +46,7 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 		return AuditFacts{}, err
 	}
 	facts := AuditFacts{Baseline: source.Base, Tip: source.Tip, SpecPath: source.SpecPath, Paths: union(before, after)}
-	if facts.Coverage, err = coverageStates(root, source.SpecPath, baseline, current, facts.Paths); err != nil {
-		return AuditFacts{}, err
-	}
+	facts.Coverage = coverageStates(source.SpecPath, baseline, current, facts.Paths, baseTickets, tipTickets)
 	cited, undecided, err := symbols(root, facts.Paths, sourceFacts.Symbols)
 	if err != nil {
 		return AuditFacts{}, err
@@ -69,16 +74,23 @@ func readSpec(root, commit, specPath, stage string) ([]byte, error) {
 	return content, nil
 }
 
-// scope is every entry the audit enumerates: the active spec and its tickets, the ownership
-// fence entries of both spec identities, and every path that either manifest names. Each
-// entry takes the one Writes: split, so a marker or a trailing slash never becomes a path
-// segment. unread holds one diagnostic for each premise whose subject paths do not read.
-func scope(specPath string, specs [][]byte, manifests []ownership.Manifest) (split []string, unread []Diagnostic) {
-	entries := []string{specPath, ticketsDir(specPath)}
-	for _, content := range specs {
-		fences, _ := specref.FenceTokens(content)
-		entries = append(entries, fences...)
+// ticketWrites is the `Writes:` entries of each ticket in the base set and then in the tip
+// set, in ticket and entry order.
+func ticketWrites(base, tip []CommittedTicket) []string {
+	var writes []string
+	for _, ticket := range append(slices.Clone(base), tip...) {
+		writes = append(writes, ticket.Parsed.Writes...)
 	}
+	return writes
+}
+
+// scope is every entry the audit enumerates: the active spec and its tickets, the `Writes:`
+// entries of every ticket at both identities, which derive the ownership fence, and every
+// path that either manifest names. Each entry takes the one Writes: split, so a marker or a
+// trailing slash never becomes a path segment. unread holds one diagnostic for each premise
+// whose subject paths do not read.
+func scope(specPath string, writes []string, manifests []ownership.Manifest) (split []string, unread []Diagnostic) {
+	entries := append([]string{specPath, ticketsDir(specPath)}, writes...)
 	for _, manifest := range manifests {
 		paths, diagnostics := claimSources(manifest)
 		entries = append(entries, paths...)

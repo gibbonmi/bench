@@ -93,16 +93,20 @@ func TestChargeDistinguishesAbsentAndEmptyRequiredInputs(t *testing.T) {
 			emptyWant:  "Status:  (want staged)",
 		},
 		{
+			// No ticket remains to authorize the seeded change, so each state also takes the
+			// change out of the reviewed range, and paths-authorized stays green.
 			name: "tickets directory",
 			absent: func(t *testing.T, slug string) {
 				if err := os.RemoveAll("specs/" + slug + "/tickets"); err != nil {
 					t.Fatal(err)
 				}
+				preflighttest.RunGit(t, "rm", "-q", "internal/"+slug+"/foo.go")
 			},
 			empty: func(t *testing.T, slug string) {
 				if err := os.Remove("specs/" + slug + "/tickets/one.md"); err != nil {
 					t.Fatal(err)
 				}
+				preflighttest.RunGit(t, "rm", "-q", "internal/"+slug+"/foo.go")
 			},
 			absentWant: "tickets directory is absent",
 			// With every ticket gone, the completion plan names a file the tree no
@@ -118,8 +122,11 @@ func TestChargeDistinguishesAbsentAndEmptyRequiredInputs(t *testing.T) {
 				}
 				replanSpec(t, slug, "two.md")
 			},
+			// The empty selected ticket writes nothing, so a sibling ticket's entry authorizes
+			// the seeded change.
 			empty: func(t *testing.T, slug string) {
 				preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", "")
+				preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/two.md", preflighttest.TicketDoc("Two", "PF1", "PF2"))
 			},
 			absentWant: "selected ticket",
 			emptyWant:  "tickets-parse",

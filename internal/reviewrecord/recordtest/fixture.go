@@ -81,7 +81,7 @@ func (f *Fixture) WritePlan() {
 	f.Write(f.spec, planDocument(f.body, data))
 }
 
-// planHeading closes the ownership-fence section, so no plan byte reads as a fence token.
+// planHeading opens the completion plan section that follows the fixture body.
 const planHeading = "\n## Completion plan\n\n"
 
 func planDocument(body string, data []byte) string {
@@ -109,9 +109,11 @@ func (f *Fixture) SetTicketWrites(writes string) {
 	f.loadPlan(f.spec)
 }
 
-// WithFenceEntry adds one fence entry to a spec this package wrote, before its plan heading.
-func WithFenceEntry(spec []byte, entry string) []byte {
-	return []byte(strings.Replace(string(spec), planHeading, "- `"+entry+"`\n"+planHeading, 1))
+// WithTicketWrite appends one entry to the `Writes:` line of a ticket this package wrote.
+func WithTicketWrite(ticket []byte, entry string) []byte {
+	head, rest, _ := strings.Cut(string(ticket), "\nWrites: ")
+	line, tail, _ := strings.Cut(rest, "\n")
+	return []byte(head + "\nWrites: " + line + ", " + entry + "\n" + tail)
 }
 
 // RewritePlan writes the fixture's current plan back into its spec, commits it,

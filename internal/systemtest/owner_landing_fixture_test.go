@@ -54,11 +54,11 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	if err := f.Write(root, gate, gate); err != nil {
 		t.Fatal(err)
 	}
-	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `loser.txt`\n- `winner.txt`\n- `reviews/x.md`\n"
+	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n"
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("retained-output\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// The race writes the fenced files, so the ticket writes them too and the fence stays union-exact.
+	// The race writes these files, so the ticket `Writes:` line names them and derives the fence.
 	recordtest.Prepare(t, root, 1, "specs/x/spec.md", specBody).SetTicketWrites("loser.txt (new), winner.txt (new)")
 	// Each landing worktree publishes production files, so the race delivers an approved spec.
 	commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")

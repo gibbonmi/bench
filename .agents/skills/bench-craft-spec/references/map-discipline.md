@@ -2,8 +2,8 @@
 
 Charged from `craft-spec` when the author writes or audits an acceptance coverage
 map. Each rule below settles one question the map must answer. `craft-spec` keeps
-the explore reads, the fence rules, and the review rubric. The claims section also
-governs each current-code claim in the spec prose.
+the explore reads, the fence definition, and the review rubric. The claims
+section also governs each current-code claim in the spec prose.
 
 ## Before the map locks
 
@@ -140,7 +140,7 @@ governs each current-code claim in the spec prose.
 - A seam that names two concurrent gate runs in one repository first checks the
   gate execution lock, because the lock refuses the second authorization.
 - A transaction-shaped spec gives three rows for its verification failures. The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.
-- Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.
+- Each in-scope edge-inventory promise and source promise takes one red-capable row.
 - An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.
 - Each named diagnostic state is addable or mutable in a fixture.
 - A row that names a refusal state cites the fixture path that reaches the state.
@@ -165,8 +165,8 @@ governs each current-code claim in the spec prose.
 - Before the first review charge, the author walks each coverage row's seam path
   against the ticket `Writes:` lines. The author moves the row to the ticket that
   writes that path.
-- Before the graph review, the author does the breakdown, proposal, amendment, and
-  independent review steps of [the slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules).
+- Before the graph review, the author does the build preflight steps of
+  [the slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules).
 - A golden-file row states its exact predicate, and the old-versus-new diff stays
   review-owned.
 - A build-time rewrite scope excludes `specs/*/spec.md` and the tickets by name.

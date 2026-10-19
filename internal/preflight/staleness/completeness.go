@@ -7,7 +7,7 @@ import (
 )
 
 // completeness is each diagnostic that keeps the audit incomplete although no collector of
-// the audit names it. manifest is the tip inventory and snapshot its closure collection.
+// the audit names it. manifest is the tip inventory and snapshot its premise collection.
 //
 // A premise that the snapshot holds unproved stays open with its own reason, unless the
 // cited-symbols audit grades it. So a manual claim, a planned premise, and a premise that no

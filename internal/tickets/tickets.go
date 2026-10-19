@@ -44,10 +44,13 @@ var ticketFields = []maps.FieldSpec{
 	{Name: sectionAccept, Syntax: "## Acceptance", Heading: true},
 	{Name: sectionCharge, Syntax: "## Delegate charge", Heading: true},
 	{Name: fieldBlockedBy, Syntax: "Blocked by:"},
-	{Name: fieldWrites, Syntax: "Writes:"},
+	{Name: fieldWrites, Syntax: WritesSyntax},
 	{Name: fieldCovers, Syntax: "Covers:"},
 	{Name: fieldTitle, Syntax: "# "},
 }
+
+// WritesSyntax is the prefix that introduces the Writes: line of a ticket.
+const WritesSyntax = "Writes:"
 
 // requiredFields names every field a ticket must carry, in diagnostic order.
 var requiredFields = []string{fieldTitle, fieldBlockedBy, fieldWrites, fieldCovers, sectionBuild, sectionAccept}
@@ -98,19 +101,15 @@ func ParseTicket(name string, content []byte, siblings []string, tag string) (Ti
 	ticket := Ticket{Name: name}
 	scanned, diagnostics := fieldScan().Scan(content)
 
-	values := make(map[string]string, len(ticketFields))
-	present := make(map[string]bool, len(ticketFields))
+	live := liveLines(scanned)
+	values := make(map[string]string, len(live))
+	for field, at := range live {
+		values[field] = scanned[at].Value
+	}
 	fences := 0
 	for _, entry := range scanned {
 		if strings.HasPrefix(entry.Text, fenceMarker) {
 			fences++
-		}
-		if entry.Fenced || entry.Field == "" || entry.Diagnostic != "" {
-			continue
-		}
-		present[entry.Field] = true
-		if _, seen := values[entry.Field]; !seen {
-			values[entry.Field] = entry.Value
 		}
 	}
 	if fences%2 == 1 {
@@ -123,7 +122,7 @@ func ParseTicket(name string, content []byte, siblings []string, tag string) (Ti
 	ticket.Covers = list(values[fieldCovers])
 
 	for _, required := range requiredFields {
-		if !present[required] {
+		if _, present := live[required]; !present {
 			diagnostics = append(diagnostics, missingMessage(required))
 			continue
 		}
@@ -138,6 +137,27 @@ func ParseTicket(name string, content []byte, siblings []string, tag string) (Ti
 	}
 	diagnostics = append(diagnostics, coversDiagnostics(ticket, tag)...)
 	return ticket, append(diagnostics, edgeDiagnostics(ticket, siblings)...)
+}
+
+// WritesLine returns the index of the Writes: line that ParseTicket reads, in the LF
+// split of content, and whether content holds one.
+func WritesLine(content []byte) (int, bool) {
+	scanned, _ := fieldScan().Scan(content)
+	at, found := liveLines(scanned)[fieldWrites]
+	return at, found
+}
+
+// liveLines maps each field to the index of the one line that ParseTicket reads for it:
+// the unfenced occurrence without a diagnostic. The scan marks every later occurrence of
+// a field with its duplicate diagnostic, so the first occurrence is the live one.
+func liveLines(scanned []maps.FieldLine) map[string]int {
+	live := make(map[string]int, len(ticketFields))
+	for i, line := range scanned {
+		if !line.Fenced && line.Field != "" && line.Diagnostic == "" {
+			live[line.Field] = i
+		}
+	}
+	return live
 }
 
 // list splits one comma-separated field value. An absent or empty value, like

@@ -19,12 +19,14 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Removed the `require-in-step` anchor kind and the `step` column of the `bench anchors` table, so the table now reads `anchors[N]{kind,section,needle,line}`. Before, the table carried a `step` cell for each row, and nine registry rows pinned a sentence inside one numbered step of a section.
 
-### Preflight ownership closure
+### Preflight planning facts
 
-- Added `bench preflight build <slug> --breakdown [--base <commit>] [--source-tip <commit>]`. It lists each coverage row that no ticket cites, with its seam cell, and the closure and premises of each ticket. It shows each red of an unfinished ticket graph as a diagnostic, refuses each other red, and grants no authority. The ordinary build still reds each uncited row.
-- Changed `bench preflight build --propose-writes`, which now also prints the `closure`, `closure_evidence`, `source`, and `premises` tables. Each closure path names its canonical owner, source line, and reason.
-- Added the `bench-planning-facts` spec fence. A build charge refuses until its declared-complete inventory and each required current premise have proof. A `Writes:` entry can carry the `(deleted)` marker for a path that the source base tracks.
-- Before, a proposal named each missing path without its reason, and a slicer saw no uncited row until each row had a ticket.
+- Removed the closure rows, the `charge-premises` row, and the `--propose-writes` and `--breakdown` forms of `bench preflight build`. A call with either flag now gets the usage refusal at exit 2. A build charge does not refuse for an unproved premise. The `rows-owned` check of the ordinary build still reds each uncited row, and the gate finds each missing `Writes:` path. Before, a closure red or an unproved premise stopped a build charge, the proposal predicted the missing `Writes:` paths of one ticket, and the breakdown listed each uncited row with the closure and premises of each ticket.
+- Added the `bench-planning-facts` spec fence. The premise collectors read it for `--audit-spec`, and an unproved premise keeps manual review required. A `Writes:` entry can carry the `(deleted)` marker for a path that the source base tracks.
+
+### Ticket widening
+
+- Added `bench spec widen <slug> --ticket <basename> [--decision <reference>] <entry>...`. It adds each entry to the `Writes:` line of one ticket in the current worktree, and it makes no commit. The approved scope is the directory of each `Writes:` entry of the slug's tickets at the default-branch tip. The command refuses an entry outside that scope and names the rerun with `--decision <reference>`. That flag admits an out-of-scope path after the reviewer decides, and the command stores no reference. It prints one `widen[N]{ticket,entry,state}` table with the states `added`, `decided`, and `current`. A refusal writes nothing. Before, a path that the gate found needed a hand edit of the ticket.
 
 ### Visible-tree check scope
 

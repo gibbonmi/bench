@@ -109,8 +109,6 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight [--in <label|primary>] build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
   bench preflight [--in <label|primary>] build <slug> --plan-only [--base <commit>] [--source-tip <commit>]  validate the authored spec and tickets without delivery admission or a build charge
   bench preflight [--in <label|primary>] build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
-  bench preflight [--in <label|primary>] build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
-  bench preflight [--in <label|primary>] build <slug> --breakdown [--base <commit>] [--source-tip <commit>]  list each coverage row that no ticket cites, with the closure and the premises, and grant no authority
   bench preflight [--in <label|primary>] build <slug> --audit-spec --base <commit> --source-tip <commit>  audit the spec's exact source drift between the reviewed base and the source tip, and state whether manual review is required
   bench preflight [--in <label|primary>] evidence <id> [--cursor <cursor>]  print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor
   bench preflight [--in <label|primary>] evidence <id> --source <source-id> [--cursor <cursor>]  print one bounded fragment of one declared source stream and its exact successor
@@ -158,6 +156,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench spec [--in <label|primary>] retire <slug>  delete a merged spec + its review pickup (validated)
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
+  bench spec [--in <label|primary>] widen <slug> --ticket <basename> [--decision <reference>] <entry>...  add paths inside the signed-off scope to one ticket's Writes: line (no commit)
   bench version              print the installed Bench version (os/arch)
 `
 

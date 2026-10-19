@@ -7,22 +7,10 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 )
-
-// preparedCommand renders one writes proposal inside the movement-checked attempts. Both
-// charge forms now publish immutable evidence through the store, so the proposal is the one
-// preparation that still answers from the attempt itself. kind is the operation that the
-// dispatcher selected, and the facts carry it into Decide.
-func preparedCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip, name string, args []string) (string, int) {
-	return preparedAttempts(root, mode, slug, base, sourceTip, "proposal", args, func(facts Facts) (string, int) {
-		facts.Operation = kind
-		return renderWritesProposal(root, facts, name)
-	})
-}
 
 // preparedAttempts gathers the pinned facts inside the movement-checked retry and renders
 // each attempt through render. A drift or read failure replaces the attempt's output, so

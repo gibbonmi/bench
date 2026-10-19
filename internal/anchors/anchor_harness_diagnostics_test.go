@@ -53,7 +53,7 @@ func TestEvaluatePathAnchorKinds(t *testing.T) {
 }
 
 func TestEvaluatePathIgnoresCaseFoldedEmphasisInsideHTMLComment(t *testing.T) {
-	anchor := pathTestAnchor(t, ForbidCaseFoldedEmphasis)
+	anchor := dg15EmphasisAnchor(t)
 	root := t.TempDir()
 	path := filepath.Join(root, filepath.FromSlash(anchor.File))
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -152,6 +152,20 @@ func pathTestAnchor(t *testing.T, kind Kind) Anchor {
 		}
 	}
 	t.Fatalf("registry has no anchor of kind %d", kind)
+	return Anchor{}
+}
+
+// dg15EmphasisAnchor is the registered DG15 row that forbids mandatory executable-red
+// variants. The emphasis tests write that phrase, so they select the row by its needle
+// rather than by registry order.
+func dg15EmphasisAnchor(t *testing.T) Anchor {
+	t.Helper()
+	for _, anchor := range Entries() {
+		if anchor.Kind == ForbidCaseFoldedEmphasis && anchor.Needle == "executable red is mandatory" {
+			return anchor
+		}
+	}
+	t.Fatal("registry has no DG15 mandatory executable-red anchor")
 	return Anchor{}
 }
 
