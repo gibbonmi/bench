@@ -66,9 +66,9 @@ The hook mutants ran with `--check system --run 'TestDegradedGuard|TestGitGuard'
     {
       "id": "GR1",
       "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
-      "tip": "6ed1c5c8ce32be58812856ac041352ea9074d63e",
-      "plan_digest": "sha256:2285fac66e746e275c8f6bb86fc17965b2b776050d4d2b9c38ae443da5ec6f19",
-      "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+      "tip": "6a59c2ea6c955f3b82d38ebb924fa726cdb4d213",
+      "plan_digest": "sha256:89c6418712ffe99044f82b2e9905c0ad8a77e6e3e5e7c703e9d54f4ec69aad47",
+      "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
       "acceptance_rows": [
         "GR01",
         "GR02",
