@@ -99,7 +99,7 @@ The confirming-round findings cluster in the open families, where each repair ex
 | Missing edge in an open family | partly | a rule that a row promising completeness over an open family states a fail-closed bound or a Won't handle |
 | Missing edge that needs contrivance | no, by design | the build's mutation probe, as `SKILL.md:85` states |
 | Spec text defect | yes, and the rules require it | mechanical support: a trace from each prose clause to a row, and derived seam and chunk cells |
-| Clear row missed by the code or the test | no | this is `delegate-error` or `check-gap` |
+| Clear row missed by the code or the test | no | this is `delegate-error` |
 | Review-added scope | no | this is plan expansion, which `.bench/BENCH.md` permits |
 
 ## 5. Trend
@@ -128,7 +128,7 @@ The doubling of all rounds per ticket from August to October is the larger signa
 
 ## 6. Proposals
 
-- **S1. Define and split the label.** In the repair-attribution paragraph of `/bench-final-check`, define `spec-row` as a defect in the spec text: a wrong, ambiguous, or unowned row, a stale premise, or an incomplete sweep. Add one term for an edge that a build review found and no row decided, for example `edge-found`. Send a silent test to `check-gap` and a missed clear row to `delegate-error`. The paragraph is the single source of the vocabulary, and its anchors-registry needle changes with it. The table then shows which of the three fixes each round needs.
+- **S1. Define and split the label.** In the repair-attribution paragraph of `/bench-final-check`, define `spec-row` as a defect in the spec text: a wrong, ambiguous, or unowned row, a stale premise, or an incomplete sweep. Add one term for an edge that a build review found and no row decided, for example `edge-found`. Send a missed clear row to `delegate-error`, and include a test that stays silent under a probe, because `check-gap` covers only a ticket check that omitted a package or a check. The paragraph is the single source of the vocabulary, and its anchors-registry needle changes with it. The table then shows which of the three fixes each round needs.
 - **S2. Decide where edges belong.** The reviewer decides between two options. The first option keeps `SKILL.md:85` and accepts edge rounds as the designed cost: about one round for every eight tickets. The second option makes the spec review grade a recorded checklist walk for each surface, so that checklist-class edges become rows or Won't-handle lines before the build. The first option costs nothing now. The second option adds spec-stage work but targets the misses that the checklist already names.
 - **S3. Bound open families at spec time.** Add one rubric question: a row that promises completeness over an open family of inputs, such as syntax forms or ref shapes, states a fail-closed rule or a Won't-handle bound. That bound stops the chain of confirming rounds that preflight-ownership-closure and ref-inventory paid.
 - **S4. Give mechanical support to spec text checks.** The rules for spec text defects exist and were in force, so another rule is unlikely to help. Candidates are a trace from each quantified prose clause to a row, and seam and chunk cells derived from one source. Each candidate needs a spec.
