@@ -3885,7 +3885,7 @@ Count: 3. Worst issue: C1.
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "3c16fb6b9dd0fa1f5eaeb445ab00f41f892c058b",
+    "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
     "performer": "claude:ft293-orchestrator-20261018",
     "reconciliation": {
       "CR01": "covered",
@@ -4172,6 +4172,197 @@ Count: 3. Worst issue: C1.
             "ref": "claude:ft293-orchestrator-20261018",
             "digest": "sha256:6c548146e7b5c7bef68e9a2635c56543683864e2ffcd94e426588666a5258b62",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/paths_authorized.go,swap,failed,2,TestCommandBuildIgnoresAFenceSection,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,369\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,878\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,25008,369\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCommandBuildIgnoresAFenceSection,\"command_fence_test.go:129: build = (1) with paths-authorized {Check:paths-authorized Verdict:red Detail:not authorized by any ownership fence: reviews/other.md Next: exempt:false}, want the red \\\"not authorized by any ownership fence: intern… (276 bytes)\",6\n  github.com/gibbonmi/bench/internal/preflight,TestCommandReviewAuthorizesFromTicketWrites,\"command_fence_test.go:139: review = (1) with paths-authorized {Check:paths-authorized Verdict:red Detail:not authorized by any ownership fence: reviews/other.md Next: exempt:false}, want the red \\\"not authorized by any ownership fence: inter… (277 bytes)\",6\nskips[0]{package,test,reason}:\n"
+          }
+        }
+      },
+      {
+        "id": "final2-coverage",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:11b073182e6f49a61e989a9b42e0ccbe928c2d5e07e40b4f2c962bd4c38a9ded",
+          "excerpt": "tree[1]{target,head,dirty}:\n  closure-removal,fd53683dad817a02a39bf73e3b3e5bb8c1ebbfa3,false\nok: coverage map valid — 94 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/closure-removal/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-preflight-packages",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:804837eee38d0a0bb25447701cfc391333269704f016d5cb70735f1015d73b20",
+          "excerpt": "tree[1]{target,head,dirty}:\n  closure-removal,fd53683dad817a02a39bf73e3b3e5bb8c1ebbfa3,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,pass,7019,101\n  github.com/gibbonmi/bench/internal/preflight,pass,28968,369\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,21097,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,11682,177\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,5428,70\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "preflight-packages",
+        "command": "bench test --package ./internal/preflight --package ./internal/preflight/preflighttest --package ./internal/preflight/ownership --package ./internal/preflight/ownership/ownershiptest --package ./internal/preflight/staleness --package ./internal/preflight/evidencecmd --package ./internal/diff",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-fence-readers",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:074a41142c6c143ee303a12678f9fe2b7dead9ce2e446f4b00e06ae108b29eb8",
+          "excerpt": "tree[1]{target,head,dirty}:\n  closure-removal,fd53683dad817a02a39bf73e3b3e5bb8c1ebbfa3,true\npackages[10]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16669,346\n  github.com/gibbonmi/bench/internal/anchors,pass,120,123\n  github.com/gibbonmi/bench/internal/canary,pass,8,32\nspilled{lines=15,bytes=1093,omitted_lines=6,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/ade8f4556745da60d1dc6299d63291b4/1792402099024162553-17ae04ea798630d5.out}\n  github.com/gibbonmi/bench/internal/tickets,pass,3,45\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/chargeevidence,TestEvidenceStoreKinds/CE94_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+        },
+        "requirement": "fence-readers",
+        "command": "bench test --package ./internal/coverage --package ./internal/spec --package ./internal/chargeevidence --package ./internal/refusalroute --package ./internal/reviewrecord/recordtest --package ./internal/tickets --package ./internal/anchors --package ./internal/canary --package ./internal/conformance --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-landing",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:db14de271e44c68de29e925a7b1b63318dfd121fed7f1a7f60daf9e3b31a25ae",
+          "excerpt": "tree[1]{target,head,dirty}:\n  closure-removal,fd53683dad817a02a39bf73e3b3e5bb8c1ebbfa3,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,66939,1439\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "landing",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-system",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:87a620b1a4a12d7c81e0c7e6d1b4b58e63f93dd4d1a29ff0b5036fef7ef25505",
+          "excerpt": "tree[1]{target,head,dirty}:\n  closure-removal,fd53683dad817a02a39bf73e3b3e5bb8c1ebbfa3,true\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,170,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,69402,170\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-guidance-anchors",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:962afa8d725f18ea81934862a0799e75d7cdc617a11e857aa563fe6a2bfa7aae",
+          "excerpt": "tree[1]{target,head,dirty}:\n  closure-removal,fd53683dad817a02a39bf73e3b3e5bb8c1ebbfa3,true\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4741,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "guidance-anchors",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-guidance-budgets",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:2ddb52614f05b3122100aca1136f1f472ae1a2b942df1a2f845e58047d56a63a",
+          "excerpt": "tree[1]{target,head,dirty}:\n  closure-removal,fd53683dad817a02a39bf73e3b3e5bb8c1ebbfa3,true\ncheck[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "guidance-budgets",
+        "command": "bench test --check guidance-prose-budgets",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-prose",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:d67102995d4f7138be80e59b663be3c3c3853f0548f9beb89ab06d769250afd4",
+          "excerpt": "tree[1]{target,head,dirty}:\n  closure-removal,fd53683dad817a02a39bf73e3b3e5bb8c1ebbfa3,true\ncheck[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,102,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "prose",
+        "command": "bench test --check prose-mechanics",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-root-conformance",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:f88c3896fc7bd53a5b4869343b95b3239602eb060534710d369e6f0e1083a148",
+          "excerpt": "tree[1]{target,head,dirty}:\n  closure-removal,fd53683dad817a02a39bf73e3b3e5bb8c1ebbfa3,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14971,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-coordinator-section-reader",
+        "performer": "claude:ft293-orchestrator-20261018",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft293-orchestrator-20261018",
+          "digest": "sha256:96d74324fa2bcc1bd04d6f96b08fae6bfc1c5b0af9585d3aeac95087bf74ff1e",
+          "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/paths_authorized.go,swap,failed,2,TestCommandBuildIgnoresAFenceSection,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,369\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,878\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,24528,369\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCommandBuildIgnoresAFenceSection,\"command_fence_test.go:129: build = (1) with paths-authorized {Check:paths-authorized Verdict:red Detail:not authorized by any ownership fence: reviews/other.md Next: exempt:false}, want the red \\\"not authorized by any ownership fence: intern… (276 bytes)\",6\n  github.com/gibbonmi/bench/internal/preflight,TestCommandReviewAuthorizesFromTicketWrites,\"command_fence_test.go:139: review = (1) with paths-authorized {Check:paths-authorized Verdict:red Detail:not authorized by any ownership fence: reviews/other.md Next: exempt:false}, want the red \\\"not authorized by any ownership fence: inter… (277 bytes)\",6\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "coordinator-section-reader",
+        "command": "bench test --package ./internal/preflight",
+        "exit_code": 0,
+        "probe": {
+          "mutation": "append the leftover fence-section tokens to the authorizing entries; TestCommandBuildIgnoresAFenceSection must fail",
+          "outcome": "bit",
+          "exit_code": 1,
+          "restore": "pass",
+          "native_ref": {
+            "ref": "claude:ft293-orchestrator-20261018",
+            "digest": "sha256:96d74324fa2bcc1bd04d6f96b08fae6bfc1c5b0af9585d3aeac95087bf74ff1e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/paths_authorized.go,swap,failed,2,TestCommandBuildIgnoresAFenceSection,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,369\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,878\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,24528,369\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCommandBuildIgnoresAFenceSection,\"command_fence_test.go:129: build = (1) with paths-authorized {Check:paths-authorized Verdict:red Detail:not authorized by any ownership fence: reviews/other.md Next: exempt:false}, want the red \\\"not authorized by any ownership fence: intern… (276 bytes)\",6\n  github.com/gibbonmi/bench/internal/preflight,TestCommandReviewAuthorizesFromTicketWrites,\"command_fence_test.go:139: review = (1) with paths-authorized {Check:paths-authorized Verdict:red Detail:not authorized by any ownership fence: reviews/other.md Next: exempt:false}, want the red \\\"not authorized by any ownership fence: inter… (277 bytes)\",6\nskips[0]{package,test,reason}:\n"
           }
         }
       }
