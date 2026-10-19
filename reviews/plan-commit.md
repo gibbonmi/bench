@@ -341,6 +341,179 @@
           "requirement": "t2-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "r1-t1-coverage-package",
+          "performer": "claude:ft380-t01-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+            "digest": "sha256:d5976b963c429939cd0a4365df4d43e2958f354e9e7b3186e84ff4b259dd6590",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,pass,3098,153\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-coverage-package",
+          "command": "bench test --package ./internal/coverage",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-preflight-packages",
+          "performer": "claude:ft380-t01-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+            "digest": "sha256:a49596c81576b94eceaa25f158fde88174b8a0a5d96ab9ab5d75cb57e049e0f3",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,41543,379\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,27658,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,15303,177\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,7247,70\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-preflight-packages",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-command-package",
+          "performer": "claude:ft380-t01-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+            "digest": "sha256:054404da3585715a33960e0ba32806e68e207cb8b70b9fdb33ffd66245e0bde9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20256,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-gate-package",
+          "performer": "claude:ft380-t01-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+            "digest": "sha256:7a6eda621123b02e77cac1d7003e7582d9aa5ea7557c23688d661d771ee7f9ef",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,33059,490\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-diff-package",
+          "performer": "claude:ft380-t01-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+            "digest": "sha256:63d2d7e17a34074ec5c698b9d94c08663f115a37a1f9aba7eed0bd2f8a095c70",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,pass,8345,101\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-diff-package",
+          "command": "bench test --package ./internal/diff",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-recordtest-package",
+          "performer": "claude:ft380-t01-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-recordtest-package",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-system",
+          "performer": "claude:ft380-t01-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+            "digest": "sha256:90df7adca990d688d2d1ade29c57e47ae82d402aec61ca7496a4aa6d2a673f40",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,175,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,93508,175\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-root-conformance",
+          "performer": "claude:ft380-t01-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+            "digest": "sha256:ad743a79353a52fa14a1890133ca04a76baf6d6ec838d54c60cf044a14936564",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18303,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-unlisted-row-omission",
+          "performer": "claude:ft380-t01-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+            "digest": "sha256:d10050ab9bde021a6189a9bae7eb7ce4850c88bbd59ed4e48caa700465fa1d95",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/chunk_rows.go,omit,failed,2,TestChunkRowsRedsAnUnlistedRow,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,498\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,37935,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestChunkRowsRedsAnUnlistedRow,\"chunk_rows_test.go:43: chunk-rows = {Check:chunk-rows Verdict:green Detail: Next: exempt:false}, want red\",1\n  github.com/gibbonmi/bench/internal/preflight,TestChunkRowsRefusesTheBuildCharge,\"chunk_rows_test.go:93: build charge = (0):\",4\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-unlisted-row-omission",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the declared-row-to-cell direction in chunkRowsCheck; TestChunkRowsRedsAnUnlistedRow must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft380-t01-author-20261019",
+              "digest": "sha256:d10050ab9bde021a6189a9bae7eb7ce4850c88bbd59ed4e48caa700465fa1d95",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/chunk_rows.go,omit,failed,2,TestChunkRowsRedsAnUnlistedRow,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,498\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,37935,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestChunkRowsRedsAnUnlistedRow,\"chunk_rows_test.go:43: chunk-rows = {Check:chunk-rows Verdict:green Detail: Next: exempt:false}, want red\",1\n  github.com/gibbonmi/bench/internal/preflight,TestChunkRowsRefusesTheBuildCharge,\"chunk_rows_test.go:93: build charge = (0):\",4\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
