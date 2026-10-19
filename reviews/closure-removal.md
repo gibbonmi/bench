@@ -1,5 +1,19 @@
 # Review outcomes
 
+## CR3 second confirming-round pickup
+
+The second confirming round read the repair delta `9d26cb3d..ffee6a38`. Each axis ran on opus at high effort. The chunk used 2 of its 2 repair cycles, and the second cycle was its hardening cycle.
+
+The round closed C3, C4, and P1, and no finding stays open. The CR75 section still equals the ticket union plus the pickup.
+
+Optional advice, because each item grades only a check from the hardening cycle or is a non-blocking judgment call:
+
+- `gatherTicketsWithPolicy` is a one-line pass-through that keeps the walk's doc.
+- No test pins checkout and tracked parity for `a/b/z.md` beside `a-b/z.md`.
+- No test pins the representable refusal of a tracked non-`.md` entry.
+
+The Spec axis wrote and deleted two temporary files outside the repository against its read-only charge. The tree did not change.
+
 ## CR3 confirming-round pickup
 
 The confirming round read the repair delta `82309770..9d26cb3d`. Each axis ran on opus at high effort. The chunk has used 1 of its 2 repair cycles, and the next repair is cycle 2.
@@ -3037,6 +3051,72 @@ Count: 3. Worst issue: C1.
           ],
           "supersedes": [
             "cr3-coverage"
+          ]
+        },
+        {
+          "id": "cr3c2-standards",
+          "performer": "claude:ft293_cr3c2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "682ada7998b7ee53beb77d62d59493820d93994f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr3c2_standards",
+            "digest": "sha256:f6d24bb40af3d855df9843922544d5a34b3e55c3130ac73fbe11962216970361",
+            "excerpt": "Standards second confirming round, FT293 CR3, repair delta 9d26cb3d..ffee6a38. check-current current=true, dirty_record=false.\nTracked-ticket reader one source (staleness.TicketEntriesAt; TicketsAt parses it); review mode reads it (gather.go:91-95); the AuthorizeReviewedSource override is removed. Duplicate rule one source (uniqueNames). Representable check one source (unrepresentable, enumerate.go:66). Refusal conversion once (gather.go:320-326). Comments current. Test-count pin 798.\nAdvice (judgment, non-blocking): gatherTicketsWithPolicy is a one-line pass-through (gather.go:281-283) that keeps the walk's doc.\nOpen 0.\n"
+          },
+          "axis": "Standards",
+          "base": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "tip": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "finding_ids": [],
+          "supersedes": [
+            "cr3c-standards"
+          ]
+        },
+        {
+          "id": "cr3c2-spec",
+          "performer": "claude:ft293_cr3c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "682ada7998b7ee53beb77d62d59493820d93994f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr3c2_spec",
+            "digest": "sha256:6fdb7e7fcdb6471339ceb19ed9668aba6fd80240b3e85d294e9aac3ee2f5d94c",
+            "excerpt": "Spec second confirming round, FT293 CR3, repair delta 9d26cb3d..ffee6a38. check-current current=true. bench coverage --check: 94 rows valid.\nspec.md:131 matches review mode, the landing, and build mode held 9; P1 closed. CR3 rows held 8; CR64 and CR77 read the same tracked tickets. No unrequested behavior held 8. CR75: 224 section entries equal the 223 ticket paths plus the pickup held 9.\nProcess note: the axis wrote and deleted two temporary files under /dev/shm against its read-only charge; the tree is unchanged.\nNew findings: none. Open 0.\n"
+          },
+          "axis": "Spec",
+          "base": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "tip": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "finding_ids": [],
+          "supersedes": [
+            "cr3c-spec"
+          ]
+        },
+        {
+          "id": "cr3c2-coverage",
+          "performer": "claude:ft293_cr3c2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "682ada7998b7ee53beb77d62d59493820d93994f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr3c2_coverage",
+            "digest": "sha256:12731283fb7d009a953a58632fa68d367c4a040ce3b9cb705574fb07e32e8a43",
+            "excerpt": "Coverage second confirming round, FT293 CR3. check-current current at 99e3bfc9; every probe restored=yes; tree clean.\nC3 closed 7: failed tracked read becomes an empty set bit TestLandCommandRefusesAnUnreadableTicketSet; skip a symlinked member bit.\nC4/P1 closed 8: review reads checkout tickets for every row while only the landing re-reads bit TestCommandReviewReadsOnlyTrackedTickets and TestCommandReviewRefusesAnUnrepresentableTrackedTicket.\nAdvice (hardening-cycle checks, code correct): byte-order sort in EnumerateTracked silent (a/b/z.md versus a-b/z.md parity has no test); representable check limited to .md entries silent (no non-.md case).\nOpen 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "tip": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "finding_ids": [],
+          "supersedes": [
+            "cr3c-coverage"
           ]
         }
       ]
