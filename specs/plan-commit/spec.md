@@ -166,43 +166,7 @@ Each chunk is one behavior outcome with one review checkpoint.
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "PC-C1",
-      "tickets": ["01-grade-the-chunk-table-against-the-map.md", "02-refuse-the-review-charge-on-a-red-floor.md"],
-      "verification": [
-        {"id": "coverage-package", "command": "bench test --package ./internal/coverage"},
-        {"id": "preflight-packages", "command": "bench test --package ./internal/preflight/..."},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "gate-package", "command": "bench test --package ./internal/gate"},
-        {"id": "diff-package", "command": "bench test --package ./internal/diff"},
-        {"id": "recordtest-package", "command": "bench test --package ./internal/reviewrecord/recordtest"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "PC-C2",
-      "tickets": ["03-state-the-plan-commit-rules.md"],
-      "verification": [
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "reviewrecord-package", "command": "bench test --package ./internal/reviewrecord/..."},
-        {"id": "gate-package", "command": "bench test --package ./internal/gate"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
-        {"id": "prose", "command": "bench test --check prose-mechanics"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-    {"id": "root-conformance", "command": "bench test --check root-conformance"}
-  ]
-}
+{"version":2,"chunks":[{"id":"PC-C1","tickets":["01-grade-the-chunk-table-against-the-map.md","02-refuse-the-review-charge-on-a-red-floor.md"],"verification":[{"id":"t1-coverage-package","command":"bench test --package ./internal/coverage","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-preflight-packages","command":"bench test --package ./internal/preflight/...","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-command-package","command":"bench test --package ./cmd/bench","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-gate-package","command":"bench test --package ./internal/gate","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-diff-package","command":"bench test --package ./internal/diff","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-recordtest-package","command":"bench test --package ./internal/reviewrecord/recordtest","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-system","command":"bench test --check system","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-root-conformance","command":"bench test --check root-conformance","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-unlisted-row-omission","command":"bench test --package ./internal/preflight","probe":"drop the declared-row-to-cell direction in chunkRowsCheck; TestChunkRowsRedsAnUnlistedRow must fail","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t2-preflight-packages","command":"bench test --package ./internal/preflight/...","ticket":"02-refuse-the-review-charge-on-a-red-floor.md"},{"id":"t2-review-charge-omission","command":"bench test --package ./internal/preflight","probe":"remove the verdict.Red refusal of the review charge; TestCheckFloorRefusesTheReviewCharge must fail","ticket":"02-refuse-the-review-charge-on-a-red-floor.md"},{"id":"t2-root-conformance","command":"bench test --check root-conformance","ticket":"02-refuse-the-review-charge-on-a-red-floor.md"}]},{"id":"PC-C2","tickets":["03-state-the-plan-commit-rules.md"],"verification":[{"id":"t3-anchors-package","command":"bench test --package ./internal/anchors","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-reviewrecord-package","command":"bench test --package ./internal/reviewrecord/...","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-gate-package","command":"bench test --package ./internal/gate","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-command-package","command":"bench test --package ./cmd/bench","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-guidance","command":"bench test --check docs-currency-workflow","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-budgets","command":"bench test --check guidance-prose-budgets","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-prose","command":"bench test --check prose-mechanics","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-root-conformance","command":"bench test --check root-conformance","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-forbid-clause-restore","command":"bench test --check docs-currency-workflow","probe":"restore the clause comment-only corrections follow the chunk tip in the implement phase; the new Forbid row must fail","ticket":"03-state-the-plan-commit-rules.md"}]}],"final_verification":[{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"root-conformance","command":"bench test --check root-conformance"}],"execution":{"mode":"delegate","run_id":"ft380-plan-commit-full-20261019","orchestrator_session":"claude:ft380-orchestrator-20261019","author_limit":1,"assignments":{"01-grade-the-chunk-table-against-the-map.md":[],"02-refuse-the-review-charge-on-a-red-floor.md":[],"03-state-the-plan-commit-rules.md":[]}}}
 ```
 
 ## Testing decisions
