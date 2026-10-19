@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Census purpose classes
+
+- Changed `/bench-final-check`, whose phase close now classifies each raw call by purpose: a missed form, a Bench-owned gap, a sanctioned read, or unknown. Each class routes to one kind of proposal, and a sanctioned read such as `rg` gets no Bench wrapper. `craft-delegate` now asks each delegate for its raw calls with their purpose. Before, the close named a Bench form or `none` for each command head, which gave no sincere improvement for a read.
+
 ### Resumed capture drain
 
 - Changed `bench capture drain`, which now prints a `resumed[1]{sealed_at}:` block after the `drain` block when it resumes a drain that is already open. The `sealed_at` cell is the UTC time that the drain was sealed. Before, a resumed drain printed the same output as a fresh drain, so a session could read an old snapshot as a new one. The output of a fresh drain and of `bench capture drain show` does not change.
