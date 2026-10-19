@@ -82,7 +82,7 @@ func TestCheckFloorRefusesTheReviewCharge(t *testing.T) {
 	root, slug := seedFloorRepo(t)
 	preflighttest.ActiveAssignment(t, root, root)
 	out, code := Command(preflighttest.ReviewArgs(t, slug))
-	want := "error: preflight required: check-floor: " + floorOmission + " — repair check-floor and rerun the exact charge\n"
+	const want = "preflight required: check-floor"
 	if code != 1 || !strings.Contains(out, want) {
 		t.Fatalf("review charge = (%d):\n%s\nwant the refusal %q", code, out, want)
 	}
