@@ -157,8 +157,8 @@ The guidance ticket raises the budget row to 95 in the same commit and states th
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
-| PC-C1 / 01-grade-the-chunk-table-against-the-map.md, 02-refuse-the-review-charge-on-a-red-floor.md | The build preflight grades the chunk table against the coverage map, and a red floor refuses both charges | PC1–PC21, PC37, PC38 | coverage and preflight package tests, the commit-chain tests, the system suite, and root conformance | yes |
-| PC-C2 / 03-state-the-plan-commit-rules.md | The implement and review phases, the repair policy, the completion-plan reference, and the chain-gap refusal state the plan-commit rules | PC22–PC36, PC39 | anchors, reviewrecord, and gate package tests, `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and root conformance | no |
+| PC-C1 / 01-grade-the-chunk-table-against-the-map.md, 02-refuse-the-review-charge-on-a-red-floor.md | The build preflight grades the chunk table against the coverage map, and a red floor refuses both charges | PC1–PC21, PC37, PC38 | coverage, preflight, gate, and diff package tests, the command tests, the system suite, and root conformance | yes |
+| PC-C2 / 03-state-the-plan-commit-rules.md | The implement and review phases, the repair policy, the completion-plan reference, and the chain-gap refusal state the plan-commit rules | PC22–PC36, PC39 | anchors, reviewrecord, gate, and command package tests, `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and root conformance | no |
 
 PC-C2 follows PC-C1, because the completion-plan reference names the row that PC-C1 adds.
 Each chunk is one behavior outcome with one review checkpoint.
@@ -176,6 +176,8 @@ Each chunk is one behavior outcome with one review checkpoint.
         {"id": "coverage-package", "command": "bench test --package ./internal/coverage"},
         {"id": "preflight-packages", "command": "bench test --package ./internal/preflight/..."},
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "gate-package", "command": "bench test --package ./internal/gate"},
+        {"id": "diff-package", "command": "bench test --package ./internal/diff"},
         {"id": "system", "command": "bench test --check system"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
@@ -187,6 +189,7 @@ Each chunk is one behavior outcome with one review checkpoint.
         {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
         {"id": "reviewrecord-package", "command": "bench test --package ./internal/reviewrecord/..."},
         {"id": "gate-package", "command": "bench test --package ./internal/gate"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
         {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
         {"id": "prose", "command": "bench test --check prose-mechanics"},
