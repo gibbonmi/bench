@@ -1,5 +1,9 @@
 # Review outcomes
 
+## GR1 second confirming-round pickup
+
+A fresh Spec session read the plan correction `565caced..e4e0e3e6` and closed P3. The issuing Coverage session reaffirmed C3 as advice with no finding ID, so its result passes. No finding stays open. The chunk used 2 of its 2 repair cycles: the test-only repair session and the orchestrator's P3 plan correction.
+
 ## GR1 confirming-round pickup
 
 The confirming round read the repair delta `6610036f..565caced`. Each axis ran on opus at medium effort. The round closed S1 to S4, P1, P2, C1, and C2.
@@ -669,6 +673,50 @@ The hook mutants ran with `--check system --run 'TestDegradedGuard|TestGitGuard'
           ],
           "supersedes": [
             "gr1-coverage-1"
+          ]
+        },
+        {
+          "id": "gr1-coverage-3",
+          "performer": "claude:ft366-gr1-coverage-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-coverage-c1-20261019:reaffirm",
+            "digest": "sha256:ead01c043595286b9d6f29f30814262c7650f2a77b32783d86ea1da487b007c7",
+            "excerpt": "## Coverage (confirming round reaffirmation, repair delta 6610036f..565caced)\nC1 closed: GR42 fixture at guard_refusal_test.go:59 uses assertCoarseGitRefusal (lines 206-216).\nC2 closed: Won't-handle line at spec.md:184 matches lex_command, which has no comment or heredoc branch.\nProbes: swap break to return 1 at block-dangerous-git.sh:153, bit (GR42), restored yes; swap the coarse text at block-dangerous-git.sh:104, bit (GR14, H20), restored yes.\nThe issuing axis reaffirms C3 as advice with no finding ID: the refactor made bench_follow_on_test.go:167 send the intended envelopes, so nothing needs repair. The Coverage result passes.\nAdvice: note in the review record that the line-167 inputs changed.\n"
+          },
+          "axis": "Coverage",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "6ed1c5c8ce32be58812856ac041352ea9074d63e",
+          "finding_ids": [],
+          "supersedes": [
+            "gr1-coverage-2"
+          ]
+        },
+        {
+          "id": "gr1-spec-3",
+          "performer": "claude:ft366-gr1-spec-c2-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-spec-c2-20261019",
+            "digest": "sha256:7ed2392d899940ca50f1b56f1005363bd7b5da89276a05dc7f96c9430929b826",
+            "excerpt": "## Spec (second confirming round, delta 565caced..e4e0e3e6 under specs/)\nP3 closed: the ticket Writes: line (ticket line 4) holds six paths; the spec fence list (spec.md:196-202) holds the same six plus the review pickup; spec.md:204 reads \"The ticket owns four implementation paths and two shared system-test helper paths.\"; the approval-table row (spec.md:346) reads six ticket paths plus the review pickup. spec.md:207 and spec.md:208 still hold.\nNo new finding.\n"
+          },
+          "axis": "Spec",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "6ed1c5c8ce32be58812856ac041352ea9074d63e",
+          "finding_ids": [],
+          "supersedes": [
+            "gr1-spec-2"
           ]
         }
       ]
