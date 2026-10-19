@@ -1187,6 +1187,50 @@ Count: 3. Worst issue: C1.
           "supersedes": [
             "cr1c-coverage"
           ]
+        },
+        {
+          "id": "cr1c3-spec",
+          "performer": "claude:ft293_cr1c3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f1debd11ebddd7a617aa148b96f5074b6c2e3a2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr1c3_spec",
+            "digest": "sha256:2770708ac168ddd3a14a0d955f3e570186028e4e460f07e4037f8bb2cfa77ffd",
+            "excerpt": "Spec third confirming round, FT293 CR1, delta bad08290..1ea15b35. check-current current=true.\nNo production code in the delta: held 10. spec.md change is only the claude:ft293_t2_r3 assignment: held 10.\nCR1 rows stay closed: held 8. New TestSizingPremises cases pin the decided refusal (spec line 111): held 9.\nNew findings: none. Open 0.\n"
+          },
+          "axis": "Spec",
+          "base": "36b1fafc45426299b27b68f26fe627cadf000639",
+          "tip": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "finding_ids": [],
+          "supersedes": [
+            "cr1c2-spec"
+          ]
+        },
+        {
+          "id": "cr1c3-coverage",
+          "performer": "claude:ft293_cr1c3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f1debd11ebddd7a617aa148b96f5074b6c2e3a2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr1c3_coverage",
+            "digest": "sha256:7df789e8ca37cade09ebbd9ceff570b6962079072ba9828dfe2510621022fa89",
+            "excerpt": "Coverage third confirming round, FT293 CR1, delta bad08290..1ea15b35. check-current current=true; tree clean.\nC5 closed 9. Probes, none repeating the author or coordinator mutation:\n1. writes.go:73 RepositoryPath admits \"\" (prepend p == \"\" ||): bit, OC36_headroom-empty-directory failed, restored yes.\n2. sizing.go:156 check RepositoryPath(strings.TrimLeft(dir+\"/x\", \"./\")): bit, OC36_headroom-dot-directory and OC36_headroom-empty-directory failed, restored yes.\n3. writes.go:73 path.Clean(p) == p swapped to path.Clean(p) != \"\": bit, TestParseWriteRefusesAnUncleanPath failed, restored yes.\n\"./\" and \"x/..\" are refused by the one clean-spelling rule that TestParseWriteRefusesAnUncleanPath pins.\nNew findings: 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "36b1fafc45426299b27b68f26fe627cadf000639",
+          "tip": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "finding_ids": [],
+          "supersedes": [
+            "cr1c2-coverage"
+          ]
         }
       ]
     }
