@@ -1,5 +1,9 @@
 # Review outcomes
 
+## GR1 current-pair pickup
+
+The P3 plan correction moved the chunk tip, so GR1 refroze at the correction. The repair session reran the eleven GR1 verifications at the refrozen source, and each passed. Three fresh axes then read the later delta `565caced..003a0e34`, which changes only two spec prose lines, and each passed. No finding stays open.
+
 ## GR1 second confirming-round pickup
 
 A fresh Spec session read the plan correction `565caced..e4e0e3e6` and closed P3. The issuing Coverage session reaffirmed C3 as advice with no finding ID, so its result passes. No finding stays open. The chunk used 2 of its 2 repair cycles: the test-only repair session and the orchestrator's P3 plan correction.
@@ -1135,6 +1139,72 @@ The hook mutants ran with `--check system --run 'TestDegradedGuard|TestGitGuard'
           "finding_ids": [],
           "supersedes": [
             "gr1-spec-2"
+          ]
+        },
+        {
+          "id": "gr1-coverage-4",
+          "performer": "claude:ft366-gr1-coverage-c4-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-coverage-c4-20261019",
+            "digest": "sha256:7403c2f7f8c348bc14e80f8b00b3e3dc7aad40062af18955857be24d34aa3cd0",
+            "excerpt": "## Coverage (current frozen pair, later delta 565caced..003a0e34 excluding reviews)\npass\nThe delta changes two lines of specs/degraded-guard-refusal/spec.md: line 204 (ownership sentence) and line 346 (approval-table ownership row). It changes no input, code path, test, acceptance row (GR01-GR42), or Won't-handle line. No new input or state is exposed, and earlier coverage evidence stays valid.\n"
+          },
+          "axis": "Coverage",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "8d2cfbc325bc3b6e52ad6933b72d2a62e6ac0f6c",
+          "finding_ids": [],
+          "supersedes": [
+            "gr1-coverage-3"
+          ]
+        },
+        {
+          "id": "gr1-standards-3",
+          "performer": "claude:ft366-gr1-standards-c3-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-standards-c3-20261019",
+            "digest": "sha256:97b5db684495108f1226b99250827206d50cd599f5eb2aee510607ede9b39fd8",
+            "excerpt": "## Standards (current frozen pair, later delta 565caced..003a0e34 excluding reviews)\npass\nThe delta changes only specs/degraded-guard-refusal/spec.md at lines 204 and 346 and touches no code or test. Both sentences follow STE. The counts match the six-path fence list at spec.md:196-201 and the ticket 01 Writes: line 4; the restated count is not a second derivation that could drift unseen.\n"
+          },
+          "axis": "Standards",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "8d2cfbc325bc3b6e52ad6933b72d2a62e6ac0f6c",
+          "finding_ids": [],
+          "supersedes": [
+            "gr1-standards-2"
+          ]
+        },
+        {
+          "id": "gr1-spec-4",
+          "performer": "claude:ft366-gr1-spec-c4-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-spec-c4-20261019",
+            "digest": "sha256:08e728da51f9e08b634a6daeb7760ac362f0727dd5516d6babc3872ddb975e90",
+            "excerpt": "## Spec (current frozen pair, later delta 565caced..003a0e34 excluding reviews)\npass\nThe delta changes two prose lines of specs/degraded-guard-refusal/spec.md: the ownership sentence and the approval-table row. No behavior, acceptance row, or coverage cell changes. The ticket Writes: line (ticket line 4) lists six paths, and the spec fence list holds those six plus the review pickup. bench coverage reports 42 mapped rows.\n"
+          },
+          "axis": "Spec",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "8d2cfbc325bc3b6e52ad6933b72d2a62e6ac0f6c",
+          "finding_ids": [],
+          "supersedes": [
+            "gr1-spec-3"
           ]
         }
       ]
