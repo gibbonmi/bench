@@ -44,4 +44,4 @@ research of each ticket chunk returns, and the rule that keeps each research pat
 
 Each entry cites its evidence as a `path:line` or as a command and its result.
 
-Each path that a research return names goes into the ticket's `Writes:` line. The slicer drops such a path only with `path:line` evidence that the path cannot change under any design. `Writes:` is the expected write set of the ticket, not an upper bound or a task list. `/bench-implement-spec` owns how the build narrows it and widens it.
+Each path that a research return names goes into the ticket's `Writes:` line. The slicer drops such a path only with `path:line` evidence that the path cannot change under any design. `Writes:` is the expected write set of the ticket, not an upper bound or a task list. `/bench-implement-spec` owns how the author narrows it, and `.bench/BENCH.md`'s plan-expansion policy owns how the build widens it.

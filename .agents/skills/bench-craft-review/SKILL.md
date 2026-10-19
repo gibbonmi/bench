@@ -39,7 +39,7 @@ A merge of the axes lets one mask another. Report findings under separate headin
   derivations of one fact is the code-standard defect review exists to grade. When
   the diff lands as delegate slices, hunt duplication at fence boundaries
   specifically, since a shared primitive no slice owned arrives derived once per
-  fence. The fence lives in the ticket `Writes:` lines. `craft-tickets` owns the
+  fence. `craft-spec` defines the ownership fence. `craft-tickets` owns the
   independently-green tracer grouping and the advisory `Writes:` disjointness note;
   the smell baseline below applies here. A false disjointness claim across two
   tickets' `Writes:` notes is a Standards finding; separate hard violations from
