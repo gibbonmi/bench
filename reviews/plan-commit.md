@@ -587,6 +587,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "pc-c1-standards-2",
+          "performer": "claude:ft380-pc-c1-standards-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c1-standards-c1-20261019",
+            "digest": "sha256:9548bb0dfa87f8f7d917c7a66aa531114b45e4f8ea280d7fcc24cd7f92bd6973",
+            "excerpt": "Standards confirming round 1, PC-C1 repair delta 5daa190..7036994. S2 closed (conf 9): check_floor_command_test.go:85 asserts only the spec-pinned \"preflight required: check-floor\"; the producer-suffix copy is gone. No new finding.\n"
+          },
+          "axis": "Standards",
+          "base": "7b45186c91c875273fb4866096d8977b235c2bc5",
+          "tip": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "finding_ids": [],
+          "supersedes": [
+            "pc-c1-standards-1"
+          ]
+        },
+        {
+          "id": "pc-c1-spec-2",
+          "performer": "claude:ft380-pc-c1-spec-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c1-spec-c1-20261019",
+            "digest": "sha256:537fdd803fcd5dff85b43ae6c37398acb7f41b8e9184b6864bd59668348fa402",
+            "excerpt": "Spec confirming round 1, PC-C1 repair delta 5daa190..7036994. PC19 holds (check_floor_command_test.go:85 asserts exit 1 and \"preflight required: check-floor\"); PC20 holds (TestCheckFloorRefusesTheBuildCharge byte-identical); the assignment record changes no plan requirement. No new finding (conf 8).\n"
+          },
+          "axis": "Spec",
+          "base": "7b45186c91c875273fb4866096d8977b235c2bc5",
+          "tip": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "finding_ids": [],
+          "supersedes": [
+            "pc-c1-spec-1"
+          ]
+        },
+        {
+          "id": "pc-c1-coverage-2",
+          "performer": "claude:ft380-pc-c1-coverage-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c1-coverage-c1-20261019",
+            "digest": "sha256:e9aee16f962c0541a087d88fb54f9f9843d543bacbbdddb96bc4bdd16f3a0fe5",
+            "excerpt": "Coverage confirming round 1, PC-C1 repair delta 5daa190..7036994. The narrowed assertion keeps red-capability: a zero exit and a different red row both still fail it (charge.go:83-90). No new finding (conf 8).\n"
+          },
+          "axis": "Coverage",
+          "base": "7b45186c91c875273fb4866096d8977b235c2bc5",
+          "tip": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "finding_ids": [],
+          "supersedes": [
+            "pc-c1-coverage-1"
+          ]
         }
       ]
     }
@@ -642,3 +708,7 @@ Count: 4. Worst issue: C2.
 ### PC18 evidence
 
 The ticket 01 author ran `bench preflight build <slug> --plan-only` for each ticketed staged spec at the ticket tip 2e97bcf15. Each `chunk-rows` cell read green: plan-commit, cleanup-member-traversal, conformance-observation-follow-on, exact-planning-readers, guard-scan-loop, guidance-weight, independent-expectation-audit, landing-test-efficiency, markdown-block-reader, process-lifetime, production-test-seam-policy, release-evidence-forwards, session-context-overflow, shared-guard-projection, shared-test-fixtures, shell-argument-ownership, and strict-json-ownership.
+
+## PC-C1 confirming round 1
+
+Repair cycle 1 of 2 repaired S2 at 7036994e0. The repair delta holds the repair-assignment plan commit, so the test-only confirmation refused and all three axes confirmed instead. Standards closed S2, and Spec and Coverage found no new finding. The C1 Won't-handle line goes into the chunk-gap plan commit before the ticket 03 dispatch.
