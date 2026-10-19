@@ -91,7 +91,7 @@ func TestMetadataGrammarFenceRoles(t *testing.T) {
 }
 
 // TestSizingPremises drives the line-count, glob-member, and headroom collectors through
-// the actual proposal. The tip adds one physical line to a.go, so a count names its source.
+// ownership.Collect over the seeded spec. The tip adds one physical line to a.go, so a count names its source.
 // Each unproved form keeps its premise unknown with the reason the case names.
 func TestSizingPremises(t *testing.T) {
 	lines := func(id, path, source string, count int) string {
@@ -159,7 +159,7 @@ func TestSizingPremises(t *testing.T) {
 }
 
 // TestSymbolPremises drives the symbol, import, anchor-kind, sentinel, error, and bound
-// collectors through the actual proposal. Each case names its owner by exact identity, so
+// collectors through ownership.Collect over the seeded spec. Each case names its owner by exact identity, so
 // a familiar name, a same-valued literal, or a same-named declaration of another owner
 // cannot certify it. Each unproved form keeps its premise unknown with the reason the case
 // names.
@@ -235,8 +235,8 @@ func TestSymbolPremises(t *testing.T) {
 	}
 }
 
-// TestEvidencePremises drives the reused-test premise collector through the actual
-// proposal over committed review-record fixtures. Only a source-bound record whose named
+// TestEvidencePremises drives the reused-test premise collector through ownership.Collect
+// over committed review-record fixtures. Only a source-bound record whose named
 // verification carries a restored, biting behavioral probe of the named test subject with
 // red_needle turns green; every unproved form stays unknown with a diagnostic reason.
 func TestEvidencePremises(t *testing.T) {
@@ -284,7 +284,7 @@ func TestEvidencePremises(t *testing.T) {
 }
 
 // TestPredicatePremises drives decision predicate-to-row mappings and seam citation checks
-// through the actual proposal.
+// through ownership.Collect over the seeded spec.
 func TestPredicatePremises(t *testing.T) {
 	dupPredSpec := strings.Replace(preflighttest.SpecBody(slug), "| PF2 | 1 | does y |", "| PF2 | 1 | does x |", 1)
 	for _, test := range []struct{ name, spec, facts, id, state, reason string }{

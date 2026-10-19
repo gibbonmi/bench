@@ -19,10 +19,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Removed the `require-in-step` anchor kind and the `step` column of the `bench anchors` table, so the table now reads `anchors[N]{kind,section,needle,line}`. Before, the table carried a `step` cell for each row, and nine registry rows pinned a sentence inside one numbered step of a section.
 
-### Preflight ownership closure
+### Preflight planning facts
 
-- Removed the `--propose-writes` and `--breakdown` forms of `bench preflight build`. A call with either flag now gets the usage refusal at exit 2. The `rows-owned` check of the ordinary build still reds each uncited row, and the gate finds each missing `Writes:` path. Before, the proposal predicted the missing `Writes:` paths of one ticket, and the breakdown listed each uncited row with the closure and premises of each ticket.
-- Added the `bench-planning-facts` spec fence. A build charge refuses until its declared-complete inventory and each required current premise have proof. A `Writes:` entry can carry the `(deleted)` marker for a path that the source base tracks.
+- Removed the closure rows, the `charge-premises` row, and the `--propose-writes` and `--breakdown` forms of `bench preflight build`. A call with either flag now gets the usage refusal at exit 2. A build charge does not refuse for an unproved premise. The `rows-owned` check of the ordinary build still reds each uncited row, and the gate finds each missing `Writes:` path. Before, a closure red or an unproved premise stopped a build charge, the proposal predicted the missing `Writes:` paths of one ticket, and the breakdown listed each uncited row with the closure and premises of each ticket.
+- Added the `bench-planning-facts` spec fence. The premise collectors read it for `--audit-spec`, and an unproved premise keeps manual review required. A `Writes:` entry can carry the `(deleted)` marker for a path that the source base tracks.
 
 ### Visible-tree check scope
 
