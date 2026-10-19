@@ -3,6 +3,7 @@
 package systemtest
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -18,6 +19,10 @@ const occurrenceCommand = "printf hi;git push --force\necho 'x"
 // parseRepairWant is the repair sentence of a malformed-command refusal, written here
 // independently of the hook and the core that each emit it.
 const parseRepairWant = "Close every quote and escape in the command, then run it again."
+
+// coarseGitWant is the degraded rim's refusal of a parsed git invocation, written here
+// independently of the hook that emits it.
+const coarseGitWant = "can't classify commands, refusing anything that invokes git"
 
 // coreMissingMarker is the degraded rim's own refusal text. Only the hook emits it, and
 // only when no core answers, so a verdict that carries it did not come from the core.
@@ -51,32 +56,16 @@ func TestDegradedGuardRefusesMalformedCommands(t *testing.T) {
 	for _, tc := range []struct{ name, command string }{
 		{"GR14 well-formed read-only git", "git status"},
 		{"GR31 git after an attached separator", "printf hi;git status"},
+		{"GR42 git after a clean wrapper child", "bash -c 'echo hi'; git push --force"},
 	} {
-		result := runGitGuardHook(t, gitGuardHookPath(), outside, path, tc.command)
-		if result.code != 2 || !strings.HasPrefix(result.stderr, coreMissingMarker) {
-			t.Errorf("%s = (%d, %q, %q), want exit 2 and the degraded rim's refusal", tc.name, result.code, result.stdout, result.stderr)
-		}
+		assertCoarseGitRefusal(t, tc.name, runGitGuardHook(t, gitGuardHookPath(), outside, path, tc.command))
 	}
 }
 
 // TestGitGuardMissingLibraryRefuses runs a copy of the hook whose adjacent shared library
 // is absent. The hook cannot read the envelope, so it refuses.
 func TestGitGuardMissingLibraryRefuses(t *testing.T) {
-	layout, err := os.MkdirTemp(owner.root, "hook layout [no library]-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	hook := filepath.Join(layout, "hooks", "block-dangerous-git.sh")
-	data, err := os.ReadFile(gitGuardHookPath())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Dir(hook), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(hook, data, 0o755); err != nil {
-		t.Fatal(err)
-	}
+	hook := hookWithoutLibrary(t, gitGuardHookPath())
 	result := runGitGuardHook(t, hook, t.TempDir(), []string{"PATH=" + privateToolPath(t, "git", "cat")}, occurrenceCommand)
 	if result.code != 2 || !strings.Contains(result.stderr, "BLOCKED: guard degraded (shared library missing)") {
 		t.Errorf("GR20 missing library = (%d, %q, %q), want exit 2 and the missing-library refusal", result.code, result.stdout, result.stderr)
@@ -119,7 +108,7 @@ func TestGitGuardHookAndCoreParseRefusal(t *testing.T) {
 	if err := owner.observeSelected(); err != nil {
 		t.Fatal(err)
 	}
-	direct := owner.runWithInput(repo, live, bashEnvelope(t, occurrenceCommand), owner.selected.path, "guard-git")
+	direct := owner.runWithInput(repo, live, hookEnvelope(t, "Bash", occurrenceCommand), owner.selected.path, "guard-git")
 	assertParseRefusal(t, "GR27 guard-git entry", direct)
 	if hooked.stderr != direct.stderr {
 		t.Errorf("GR26 hook stderr = %q, want the core's refusal %q", hooked.stderr, direct.stderr)
@@ -130,6 +119,28 @@ func gitGuardHookPath() string {
 	return filepath.Join(owner.kit, ".bench", "hooks", "block-dangerous-git.sh")
 }
 
+// hookWithoutLibrary copies hook into a fresh layout under the owner's root and leaves
+// out the shared library the hook sources from beside it.
+func hookWithoutLibrary(t *testing.T, hook string) string {
+	t.Helper()
+	layout, err := os.MkdirTemp(owner.root, "hook layout [no library]-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	copied := filepath.Join(layout, "hooks", filepath.Base(hook))
+	data, err := os.ReadFile(hook)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(copied), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(copied, data, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return copied
+}
+
 // runGitGuardHook feeds hook one Bash envelope for command through the owner's process
 // ledger.
 func runGitGuardHook(t *testing.T, hook, dir string, overrides []string, command string) processResult {
@@ -137,16 +148,41 @@ func runGitGuardHook(t *testing.T, hook, dir string, overrides []string, command
 	if err := owner.observeSelected(); err != nil {
 		t.Fatal(err)
 	}
-	return owner.runWithInput(dir, overrides, bashEnvelope(t, command), shellPath(t), hook)
+	return owner.runWithInput(dir, overrides, hookEnvelope(t, "Bash", command), shellPath(t), hook)
 }
 
-func bashEnvelope(t *testing.T, command string) string {
+// hookEnvelope builds the PreToolUse envelope of command. An empty toolName omits the
+// tool_name field. Shell operators stay literal, so a hook reads their literal spelling;
+// the escaped spelling has its own hand-written envelopes.
+func hookEnvelope(t *testing.T, toolName, command string) string {
 	t.Helper()
-	data, err := json.Marshal(map[string]any{"tool_name": "Bash", "tool_input": map[string]string{"command": command}})
-	if err != nil {
+	var envelope struct {
+		ToolName  string `json:"tool_name,omitempty"`
+		ToolInput struct {
+			Command string `json:"command"`
+		} `json:"tool_input"`
+	}
+	envelope.ToolName = toolName
+	envelope.ToolInput.Command = command
+	var out bytes.Buffer
+	encoder := json.NewEncoder(&out)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(envelope); err != nil {
 		t.Fatal(err)
 	}
-	return string(data)
+	return strings.TrimSuffix(out.String(), "\n")
+}
+
+// assertCoarseGitRefusal requires exit 2 and the degraded rim's coarse git refusal, with
+// no parse repair sentence.
+func assertCoarseGitRefusal(t *testing.T, name string, result processResult) {
+	t.Helper()
+	if result.code != 2 || !strings.HasPrefix(result.stderr, coreMissingMarker) || !strings.Contains(result.stderr, coarseGitWant) {
+		t.Errorf("%s = (%d, %q, %q), want exit 2 and the degraded rim's coarse git refusal", name, result.code, result.stdout, result.stderr)
+	}
+	if strings.Contains(result.stderr, parseRepairWant) {
+		t.Errorf("%s stderr = %q, carries the parse repair sentence", name, result.stderr)
+	}
 }
 
 // assertParseRefusal requires exit 2 and a refusal that names the parse failure after

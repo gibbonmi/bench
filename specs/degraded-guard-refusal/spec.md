@@ -162,7 +162,7 @@ The shell owns its repair text because it must work without the core.
 | GR39 | 15 | The core classifies the exec-child push as unresolved | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | The target checkout cannot inherit the current checkout's push facts |
 | GR40 | 7 | The core refuses `bash -c 'git push'` | `internal/gitguard/scan_test.go` (`TestScanWrapperDepthAndGlobalOpts`) | A removed wrapper branch loses the supported first level |
 | GR41 | 7 | The core permits `bash -c 'sh -c "git push"'` | `internal/gitguard/scan_test.go` (`TestScanWrapperDepthAndGlobalOpts`) | Deeper recursion changes the core's pinned uncertainty rule |
-| GR42 | 4, 7 | The missing-core hook exits 2 with the coarse Git refusal for `bash -c 'echo hi'; git push --force` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | A scan that stops after a clean wrapper child permits the later Git command |
+| GR42 | 4, 7 | The missing-core hook exits 2 with the coarse Git refusal for `bash -c 'echo hi'; git push --force` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | A scan that stops after a clean wrapper child permits the later Git command |
 
 ### Edge inventory
 
