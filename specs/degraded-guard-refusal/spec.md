@@ -201,7 +201,7 @@ The prospective build owns these exact paths:
 - `internal/systemtest/bench_follow_on_test.go`
 - `reviews/degraded-guard-refusal.md`
 
-The ticket owns four implementation paths.
+The ticket owns four implementation paths and two shared system-test helper paths.
 The coordinator owns the review pickup.
 The planning author owns this spec folder during the spec phase.
 The spec fence equals the ticket write expectation plus the review pickup.
@@ -343,7 +343,7 @@ It also refreshed five drifted line citations.
 | implementation line | Sol 6.1 at high effort | spec and ticket accepted |
 | seam | the real degraded hook and selected core entry | spec and ticket accepted |
 | coverage and edges | GR01-GR42 plus the named exclusions | GR42 and the comment exclusion added by the GR1 review |
-| ownership fences | four ticket paths plus the review pickup | narrowed by the build-entry staleness pass |
+| ownership fences | six ticket paths plus the review pickup | narrowed by the build-entry staleness pass and widened by the GR1 review |
 | scope | malformed degraded refusal and parse-only Git diagnostics | spec and ticket accepted |
 | residuals | grammar, scan, and `rg` outcomes remain separate | retained |
 | ticket breakdown | 1. Refuse malformed guard commands with repair advice, blocked by none, complete GR1 outcome | independently accepted |
