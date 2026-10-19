@@ -14,6 +14,10 @@ The `closure-removal` spec stage ran on Claude Code for FT293. An Opus coordinat
 
 Provider usage and charges remain unknown. The harness reported about 150k to 270k tokens for each research and slicing reader.
 
+The `plan-commit` spec stage ran on Claude Code for FT380. An Opus coordinator ran four Sonnet/medium and Haiku/high research pairs and two slicing pairs, and it sliced the three tickets itself. An Opus fork wrote the spec. Opus/high and Sonnet/high reviewed both rounds by reviewer direction. In the spec round, Opus/high rejected iteration 1 with three blocking gaps, and Sonnet/high accepted it. Both accepted iteration 2 and the ticket round in 1.
+
+The research pairs disagreed twice, and a targeted read closed each disagreement. A Sonnet reader denied that the Markdown lane runs the coverage parser, and the code showed that it does. A Haiku reader found the `./cmd/bench` floor element that its Sonnet pair missed. Provider usage and charges remain unknown. The harness reported about 110k to 290k tokens for each reader.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use | calibration |

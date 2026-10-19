@@ -6,7 +6,7 @@ Decision source: named reviewed artifact `roadmap/FT380.md` with the five approv
 
 Audience: this repository, and every repository that links the kit, because the guidance and the build preflight ship in the kit payload
 
-Verification log: <n> iteration(s) to accept — <note>
+Verification log: 3 iteration(s) to accept — the spec round took 2 iterations: Opus/high found a range-gap row, an existing-test seam that could not red, and a system fixture outside the PC-C1 plan; the ticket round accepted in 1
 
 ## Problem
 
