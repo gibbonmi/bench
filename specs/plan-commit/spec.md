@@ -178,6 +178,7 @@ Each chunk is one behavior outcome with one review checkpoint.
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "gate-package", "command": "bench test --package ./internal/gate"},
         {"id": "diff-package", "command": "bench test --package ./internal/diff"},
+        {"id": "recordtest-package", "command": "bench test --package ./internal/reviewrecord/recordtest"},
         {"id": "system", "command": "bench test --check system"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
