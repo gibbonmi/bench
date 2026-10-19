@@ -179,15 +179,17 @@ func TestAnchorsReportsForbiddenNeedles(t *testing.T) {
 }
 
 func TestAnchorsReportsCaseFoldedEmphasisViolation(t *testing.T) {
+	// The fixture writes the DG15 phrase, so the test selects DG15 by its needle rather
+	// than by registry order.
 	var target anchors.Anchor
 	for _, anchor := range anchors.Entries() {
-		if anchor.Kind == anchors.ForbidCaseFoldedEmphasis {
+		if anchor.Kind == anchors.ForbidCaseFoldedEmphasis && anchor.Needle == "executable red is mandatory" {
 			target = anchor
 			break
 		}
 	}
 	if target.File == "" {
-		t.Fatal("registry has no case-folded emphasis anchor")
+		t.Fatal("registry has no DG15 mandatory executable-red anchor")
 	}
 	root := newAXIEnvelopeRepo(t)
 	body := "<!-- hidden violation -->\nKELVIN before the match\nAn EXECUTABLE **RED** IS MANDATORY before specification.\n"
