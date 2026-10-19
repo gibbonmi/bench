@@ -21,9 +21,6 @@ var helperBase = map[string]string{
 	"internal/policy/render.go":    "package policy\n\nfunc renderA() row { return row{Reason: \"a\"} }\n\nfunc renderB() row {\n\tvar r row\n\tr.Reason = \"b\"\n\treturn r\n}\n\nfunc printRow(r row) string { return r.Reason }\n",
 }
 
-// helperFence authorizes every fixture path that a tip edits.
-var helperFence = []string{"- `internal/policy/`"}
-
 // ownerJSON is the exact identity of symbol, declared in path.
 func ownerJSON(path, symbol, kind string) string {
 	return `{"path":"` + path + `","package":"` + module + "/" + filepath.ToSlash(filepath.Dir(path)) + `","symbol":"` + symbol + `","kind":"` + kind + `","signature":""}`

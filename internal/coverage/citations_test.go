@@ -1,5 +1,4 @@
-// Tests for the two file-resolving checks: seam-cell test citations and the
-// review-pickup fence member.
+// Tests for the file-resolving check: seam-cell test citations.
 package coverage
 
 import (
@@ -14,16 +13,16 @@ import (
 )
 
 // citedSpec writes a folder spec at <root>/specs/<slug>/spec.md whose single mapped
-// row carries seam as its seam cell, and returns that spec's path. fences, when
-// non-empty, is appended verbatim so a test can shape the section it grades.
-func citedSpec(t *testing.T, slug, seam, fences string) (root, specPath string) {
+// row carries seam as its seam cell, and returns that spec's path. tail, when
+// non-empty, is appended verbatim after the map so a test can add a section.
+func citedSpec(t *testing.T, slug, seam, tail string) (root, specPath string) {
 	t.Helper()
-	return citedCellSpec(t, slug, seam, "w", fences)
+	return citedCellSpec(t, slug, seam, "w", tail)
 }
 
 // citedCellSpec is citedSpec with the why cell under the test's control, so a test can
 // prove which cell the grammar reads.
-func citedCellSpec(t *testing.T, slug, seam, why, fences string) (root, specPath string) {
+func citedCellSpec(t *testing.T, slug, seam, why, tail string) (root, specPath string) {
 	t.Helper()
 	// A synthetic fixture root is not the kit. Without this pin the fixture becomes its
 	// own kit whenever the ambient one is unset, which materializes the system phase and
@@ -33,7 +32,7 @@ func citedCellSpec(t *testing.T, slug, seam, why, fences string) (root, specPath
 	t.Setenv("BENCH_KIT", t.TempDir())
 	root = t.TempDir()
 	body := "# " + slug + "\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced +
-		"| 1 | b | " + seam + " | " + why + " |\n" + fences
+		"| 1 | b | " + seam + " | " + why + " |\n" + tail
 	specPath = filepath.Join(root, "specs", slug, "spec.md")
 	writeUnder(t, specPath, body)
 	return root, specPath
@@ -123,55 +122,12 @@ func TestCheckFilesIgnoreARowThatCitesNoTestFile(t *testing.T) {
 	}
 }
 
-// TestCheckFilesRequireTheReviewPickupFenceMember pins the pickup rule: a folder spec
-// that declares ownership fences must authorize its own review file, or the review
-// cannot land with the build.
-func TestCheckFilesRequireTheReviewPickupFenceMember(t *testing.T) {
-	_, specPath := citedSpec(t, "s", "cli seam", "\n## Ownership fences\n\n- `internal/x/`\n")
-
-	v := checkFilesOf(t, specPath)
-	if !hasViolation(v, "reviews/s.md") {
-		t.Fatalf("CheckFiles = %#v, want a violation naming reviews/s.md", v)
-	}
-}
-
-// TestCheckFilesAcceptTheReviewPickupFenceMember is the pickup check's green case.
-func TestCheckFilesAcceptTheReviewPickupFenceMember(t *testing.T) {
-	_, specPath := citedSpec(t, "s", "cli seam", "\n## Ownership fences\n\n- `internal/x/`\n- `reviews/s.md`\n")
-
-	if v := checkFilesOf(t, specPath); len(v) != 0 {
-		t.Fatalf("CheckFiles = %#v, want no violation", v)
-	}
-}
-
-// TestCheckFilesRejectAPickupBelowASubsection pins the shared parser's section bound
-// at this check. The fence section ends at any level-2-or-deeper heading, so a pickup
-// written under a subsection is outside the section and authorizes nothing.
-func TestCheckFilesRejectAPickupBelowASubsection(t *testing.T) {
-	_, specPath := citedSpec(t, "s", "cli seam", "\n## Ownership fences\n\n### Paths\n\n- `internal/x/`\n- `reviews/s.md`\n")
-
-	v := checkFilesOf(t, specPath)
-	if !hasViolation(v, "reviews/s.md") {
-		t.Fatalf("CheckFiles = %#v, want a violation naming reviews/s.md", v)
-	}
-}
-
-// TestCheckFilesSkipASpecWithNoFenceSection pins that the pickup rule grades only a
-// declared section. A spec that declares no fences is not yet at that stage.
-func TestCheckFilesSkipASpecWithNoFenceSection(t *testing.T) {
-	_, specPath := citedSpec(t, "s", "cli seam", "")
-
-	if v := checkFilesOf(t, specPath); len(v) != 0 {
-		t.Fatalf("CheckFiles = %#v, want no violation", v)
-	}
-}
-
-// TestCheckFilesExemptAHistoricalSpec pins the historical opt-out over both new
-// checks, exactly as it covers every other one.
+// TestCheckFilesExemptAHistoricalSpec pins the historical opt-out over the citation
+// check, exactly as it covers every other one.
 func TestCheckFilesExemptAHistoricalSpec(t *testing.T) {
 	root := t.TempDir()
 	body := "# s\n\n" + historicalMarker + "\n\n" + stories + "\n### Acceptance coverage map\n" + hdrReduced +
-		"| 1 | b | `internal/x/gone_test.go` (`TestAbsent`) | w |\n\n## Ownership fences\n\n- `internal/x/`\n"
+		"| 1 | b | `internal/x/gone_test.go` (`TestAbsent`) | w |\n"
 	specPath := filepath.Join(root, "specs", "s", "spec.md")
 	writeUnder(t, specPath, body)
 
@@ -191,18 +147,6 @@ func TestCommandCheckExitsOneOnAnUnresolvedCitation(t *testing.T) {
 	out, code := Command([]string{"--check", "specs/s/spec.md"})
 	if code != 1 || !strings.Contains(out, "row 1") || !strings.Contains(out, "TestAbsent") {
 		t.Fatalf("Command = (%d, %q), want exit 1 naming row 1 and TestAbsent", code, out)
-	}
-}
-
-// TestCommandCheckExitsOneOnAMissingReviewPickup pins the pickup check at the same
-// surface, naming the fence member the spec omits.
-func TestCommandCheckExitsOneOnAMissingReviewPickup(t *testing.T) {
-	root, _ := citedSpec(t, "s", "cli seam", "\n## Ownership fences\n\n- `internal/x/`\n")
-	t.Chdir(root)
-
-	out, code := Command([]string{"--check", "specs/s/spec.md"})
-	if code != 1 || !strings.Contains(out, "reviews/s.md") {
-		t.Fatalf("Command = (%d, %q), want exit 1 naming reviews/s.md", code, out)
 	}
 }
 

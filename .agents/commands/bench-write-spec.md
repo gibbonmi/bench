@@ -64,7 +64,7 @@ acceptance coverage, hostile-input attachment, and gate attachment; shaping sour
    `Bootstrap authority before execution` rule. A spec that inherits a closed decision about a bench signal quotes that signal's current value in its first status update.
 2. **Retire superseded work by promotion then deletion.** Leave no `Superseded by` marker: promote durable decisions, delete the old spec under a `spec-retire: <name>` commit, repair references. The same promote-then-delete commit removes the spec's `ROADMAP.md` row and that row's `roadmap/FT<n>.md` detail file. Whole-folder retirement removes the compiled topic folders, their tickets and assets included. It removes each compiled index file too.
 3. **Review the spec alone.** After the spec fork returns, one independent review round grades the spec alone under `craft-spec`'s review rubric, its chunk table included.
-   The round runs on `craft-line`'s spec review line. It returns accept or reject, and slicing starts only after it accepts. The fence section stays empty until the slicing writes it.
+   The round runs on `craft-line`'s spec review line. It returns accept or reject, and slicing starts only after it accepts.
 4. **Slice one chunk at a time.** Where the stories partition into disjoint package or fence sets, could a narrower
    capability ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule. The ticket graph splits where a consumer branch lands green alone.
 
@@ -72,11 +72,11 @@ acceptance coverage, hostile-input attachment, and gate attachment; shaping sour
 
    The slicer runs on `craft-line`'s ticket slicing line and slices the tickets one chunk at a time, in the order of the accepted chunk table. For each chunk, the slicer verifies the research table. Charge `craft-tickets` and write the chunk's tickets under `specs/<slug>/tickets/`. Each `Writes:` line keeps every research path under the slicing checks' keep rule.
 
-   If the slicing session passes about 300k tokens of context, it compacts or restarts at a chunk boundary, never inside a chunk. It carries a ledger. The ledger holds the accepted tickets, the research table, the deferrals, the ordering edges, the spec flags, and the paths that wait for the fence.
+   If the slicing session passes about 300k tokens of context, it compacts or restarts at a chunk boundary, never inside a chunk. It carries a ledger. The ledger holds the accepted tickets, the research table, the deferrals, the ordering edges, and the spec flags.
 
    After the last chunk, one review round on `craft-line`'s ticket review line grades the whole ticket set under `craft-tickets`' granularity, edge, and merge-or-split quiz. Its iteration cap is 2. The round returns accept or reject.
 
-   After the ticket review accepts, write the fence section. `bench preflight build <slug> --plan-only` then grades the whole ticket graph. Carry
+   After the ticket review accepts, `bench preflight build <slug> --plan-only` grades the whole ticket graph. Carry
    its numbered title, `Blocked by:`, and delivered outcome list into the approval table. The spec and tickets
    receive one sign-off.
 

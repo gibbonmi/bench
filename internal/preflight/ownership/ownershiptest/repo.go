@@ -25,16 +25,14 @@ func Cut(t *testing.T, s, part string) string {
 }
 
 // Repo is one committed build repository over the slug example. The selected ticket one.md
-// writes the conformant fence plus Writes, and each Others ticket writes its own list. A nil
-// Fence fences every write, so only an explicit Fence separates the spec from the ticket
-// union. The spec declares the complete-empty inventory unless OwnInventory is set; Tail then
-// closes the spec, so its bytes are part of what the fixture admits. Files are committed in
-// the base; a charge source that Files omits takes a one-line body.
+// writes the conformant fence plus Writes, and each Others ticket writes its own list. The
+// spec declares the complete-empty inventory unless OwnInventory is set; Tail then closes the
+// spec, so its bytes are part of what the fixture admits. Files are committed in the base; a
+// charge source that Files omits takes a one-line body.
 type Repo struct {
 	Writes       []string
 	Others       map[string][]string
 	Files        map[string]string
-	Fence        []string
 	OwnInventory bool
 	Tail         string
 }
@@ -50,21 +48,10 @@ func (r Repo) Seed(t *testing.T) string {
 		others = append(others, name)
 	}
 	slices.Sort(others)
-	fence := r.Fence
-	if fence == nil {
-		for _, write := range r.Writes {
-			fence = append(fence, "- `"+write+"`")
-		}
-		for _, name := range others {
-			for _, write := range r.Others[name] {
-				fence = append(fence, "- `"+write+"`")
-			}
-		}
-	}
 	spec := "specs/" + slug + "/spec.md"
-	body := preflighttest.SpecBody(slug, fence...)
+	body := preflighttest.SpecBody(slug)
 	if r.OwnInventory {
-		body = preflighttest.SpecBodyNoInventory(slug, fence...)
+		body = preflighttest.SpecBodyNoInventory(slug)
 	}
 	preflighttest.MustWriteFile(t, spec, body+r.Tail)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), r.Writes...), "PF1", "PF2"))

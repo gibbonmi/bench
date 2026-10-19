@@ -68,7 +68,7 @@ func printedFieldWrites(t *testing.T, subject, renderers string) {
 		t.Run(name, func(t *testing.T) {
 			files := merged(helperBase, map[string]string{"internal/policy/positional.go": "package policy\n\n" + form.code})
 			files = merged(files, form.base)
-			rows := premises(t, ownershiptest.Repo{Writes: []string{"internal/policy/render.go"}, Files: files, Fence: helperFence,
+			rows := premises(t, ownershiptest.Repo{Writes: []string{"internal/policy/render.go"}, Files: files,
 				OwnInventory: true, Tail: withItems("premises", premiseItem("positional-field", "printed-field", subject, `{"producers":`+renderers+`}`))}.Seed(t))
 			row := onePremise(t, rows, "positional-field")
 			if string(row.State) != form.state || !strings.Contains(row.Reason, form.reason) {

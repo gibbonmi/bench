@@ -70,12 +70,10 @@ func seedDeletionReview(t *testing.T, missing string, commitDeletion bool) (root
 	slug = "example"
 	root = preflighttest.StartRepo(t)
 	fence := append([]string{"internal/example/gone.go"}, preflighttest.ConformantFence[1:]...)
-	extraFence := []string{}
 	if missing != "" {
 		fence = append(fence, missing)
-		extraFence = append(extraFence, "- `"+missing+"` (missing-path control)")
 	}
-	spec := strings.Replace(preflighttest.SpecBody(slug, extraFence...), "`internal/example/`", "`internal/example/gone.go`", 1)
+	spec := preflighttest.SpecBody(slug)
 	writes := preflighttest.FenceWrites(fence)
 	writes[0] = "internal/example/gone.go"
 	if missing != "" {

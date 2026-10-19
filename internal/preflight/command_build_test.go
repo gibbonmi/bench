@@ -162,7 +162,7 @@ func TestCommandBuildRefusesAnUncleanWritesEntry(t *testing.T) {
 			root, slug := preflighttest.SeedConformant(t)
 			preflighttest.MustWriteFile(t, filepath.Join(filepath.Dir(root), "outside.txt"), "outside\n")
 			preflighttest.CommitChargeSource(t, root, slug, map[string]string{
-				"specs/" + slug + "/spec.md":        preflighttest.SpecBody(slug, "- `"+entry+"`"),
+				"specs/" + slug + "/spec.md":        preflighttest.SpecBody(slug),
 				"specs/" + slug + "/tickets/one.md": preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), entry), "PF1", "PF2"),
 			})
 			out, code := Command([]string{"build", slug})

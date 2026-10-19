@@ -165,7 +165,7 @@ func TestChargePreparesWithoutClosure(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	const pinned = "internal/example/pinned.go"
 	args := preflighttest.CommitChargeSource(t, root, slug, map[string]string{
-		"specs/" + slug + "/spec.md":             preflighttest.SpecBody(slug, "- `"+pinned+"`"),
+		"specs/" + slug + "/spec.md":             preflighttest.SpecBody(slug),
 		"specs/" + slug + "/tickets/one.md":      preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), pinned), "PF1", "PF2"),
 		pinned:                                   "package example\n",
 		"tests/canary/example-family/pin/BASE":   pinned + "\n",

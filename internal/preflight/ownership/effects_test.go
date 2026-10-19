@@ -80,7 +80,7 @@ func TestOwnerPremises(t *testing.T) {
 		premiseItem("partial-field", "printed-field", field(list("internal/policy/render.go", "policy.renderA")), `{"producers":`+list("internal/policy/render.go", "policy.renderA")+`}`),
 		premiseItem("complete-field", "printed-field", field(renderers), `{"producers":`+renderers+`}`),
 		premiseItem("mismatched-field", "printed-field", field(renderers), `{"producers":`+list("internal/policy/render.go", "policy.renderA")+`}`))
-	rows := premises(t, ownershiptest.Repo{Writes: []string{"internal/policy/render.go"}, Files: helperBase, Fence: helperFence, OwnInventory: true, Tail: facts}.Seed(t))
+	rows := premises(t, ownershiptest.Repo{Writes: []string{"internal/policy/render.go"}, Files: helperBase, OwnInventory: true, Tail: facts}.Seed(t))
 	for id, want := range map[string][2]string{
 		"home-owner":          {"green", "holds its needle"},
 		"moved-owner":         {"unknown", "line 4 does not hold its needle exactly once"},

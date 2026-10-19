@@ -1,10 +1,9 @@
 # Slicing checks
 
-Charged from `craft-tickets` when the slicer writes each ticket's `Writes:` line and
-the spec's ownership fence. The first section states the slicing rules that no check
-enforces, each from a repair round that a retrospective recorded. The second section lists
-the evidence classes that the research of each ticket chunk returns, and the rule that
-keeps each research path.
+Charged from `craft-tickets` when the slicer writes each ticket's `Writes:` line. The
+first section states the slicing rules that no check enforces, each from a repair round
+that a retrospective recorded. The second section lists the evidence classes that the
+research of each ticket chunk returns, and the rule that keeps each research path.
 
 ## Slicing rules
 
@@ -21,7 +20,6 @@ keeps each research path.
   Sign-off then grades the final fence, not an earlier one.
 - Each row that the `rows-owned` red names goes to the ticket that writes the seam path of that row.
 - A plan commit that renames a spec symbol runs one `rg` for the old symbol across every ticket, and it corrects each hit.
-- A fence expansion reads the fence section of the spec and corrects each sentence that names the added package.
 - Each acceptance claim names an available producer and an executable check at its ticket checkpoint. A claim whose producer lands in a later ticket has no evidence at that checkpoint.
 - A ticket that preserves or moves a ref names a check for each of the head, the tip, and the checked-out-ref shapes. A check on one shape leaves the other shapes free to fail.
 - A rule for one member of an enumerated family goes on its declaration row, and `Writes:` names the declaration table and its dispatch test.
@@ -29,9 +27,9 @@ keeps each research path.
 - A ticket that changes a rendered output shape runs one `rg` for the old text, and each hit joins that ticket's own `Writes:` line.
   A rendered output shape is a block name, a row kind, a table header, a line format, or a help line.
   The search covers the tests, the help inventories, the generated references, and their anchor registry files.
-  The spec-wide fence masks a hit that is absent from one ticket's `Writes:` line, so the fence alone does not close the gap.
+  The ticket union masks a hit that is absent from one ticket's `Writes:` line, so the union alone does not close the gap.
 - A ticket that moves a test expectation names the file that holds the old expectation in its own `Writes:` line. Otherwise the old expectation stays behind as a second copy.
-- The ownership fence and exactly one ticket's `Writes:` line name `.bench/commitment.json`. The spec-stage close commits the binding inside the range that the plan-only preflight grades.
+- Exactly one ticket's `Writes:` line names `.bench/commitment.json`. The spec-stage close commits the binding inside the range that the plan-only preflight grades.
 
 ## Fence-expansion evidence
 

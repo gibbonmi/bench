@@ -159,8 +159,7 @@ func TestCommandInvalidCoverageMapCarriesMessage(t *testing.T) {
 		"### Acceptance coverage map\n" +
 		"| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n" +
-		"| PF1 | 1 | does x | cli seam |\n" + // 4 cells where 5 are wanted
-		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
+		"| PF1 | 1 | does x | cli seam |\n" // 4 cells where 5 are wanted
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
@@ -185,8 +184,7 @@ func TestCommandNoRowIDMapNamesOptIn(t *testing.T) {
 		"### Acceptance coverage map\n" +
 		"| story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|\n" +
-		"| 1 | does x | cli seam | catches z |\n" +
-		"\n## Ownership fences\n\n- `internal/" + slug + "/`\n"
+		"| 1 | does x | cli seam | catches z |\n"
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 
 	out, code := Command([]string{"review", slug})
@@ -198,63 +196,6 @@ func TestCommandNoRowIDMapNamesOptIn(t *testing.T) {
 	}
 	if !strings.Contains(out, "`row`") {
 		t.Errorf("output must name the leading `row` column opt-in:\n%s", out)
-	}
-}
-
-// TestCommandFencesWrappedParenNeverAuthorizes is
-// RG1/wrapped-paren-never-authorizes: a parenthetical that opens on one
-// line and closes on a later one must never authorize the backticked
-// token it wraps. This holds even though the token's own line, read in
-// isolation, starts at depth zero.
-//
-// A tracked change under the wrapped path stays unauthorized:
-// paths-authorized red naming it. The section's other, real entry keeps
-// the section itself non-empty.
-func TestCommandFencesWrappedParenNeverAuthorizes(t *testing.T) {
-	slug := "example"
-	preflighttest.StartRepo(t)
-	body := preflighttest.SpecBody(slug, "- see also (", "  `internal/wrapped/`)")
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
-	preflighttest.RunGit(t, "add", ".")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
-	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
-	preflighttest.MustWriteFile(t, "internal/wrapped/foo.go", "package wrapped\n")
-	preflighttest.RunGit(t, "add", "internal/wrapped/foo.go")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
-
-	out, code := Command([]string{"review", slug})
-	if code != 1 {
-		t.Fatalf("Command exit = %d, want 1; output:\n%s", code, out)
-	}
-	if !strings.Contains(out, "paths-authorized,red") || !strings.Contains(out, "internal/wrapped/foo.go") {
-		t.Errorf("a token wrapped by a cross-line parenthetical must not authorize:\n%s", out)
-	}
-}
-
-// TestCommandFencesEntryAfterClosedParenAuthorizes is
-// RG1/entry-after-closed-paren-authorizes: once a parenthetical that opened
-// across lines closes, depth tracking must return to zero. A real entry on
-// a later line authorizes normally rather than reading as still-nested.
-func TestCommandFencesEntryAfterClosedParenAuthorizes(t *testing.T) {
-	slug := "example"
-	preflighttest.StartRepo(t)
-	body := preflighttest.SpecBody(slug, "- see also (", "  `internal/aside/`)", "- `internal/real/`")
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", preflighttest.FenceWrites(append(preflighttest.ConformantFence, "internal/real/")), "PF1", "PF2"))
-	preflighttest.RunGit(t, "add", ".")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
-	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
-	preflighttest.MustWriteFile(t, "internal/real/foo.go", "package real\n")
-	preflighttest.RunGit(t, "add", "internal/real/foo.go")
-	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
-
-	out, code := Command([]string{"review", slug})
-	if code != 0 {
-		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
-	}
-	if renderedVerdicts(t, out, modeReview, slug)["paths-authorized"] != verdictGreen {
-		t.Errorf("a real entry after a closed cross-line paren must authorize:\n%s", out)
 	}
 }
 

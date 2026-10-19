@@ -2,13 +2,13 @@ package anchors
 
 // ticketSlicingAnchors pin the preflight and coverage command lines of ticket slicing and the
 // map seam cell, and they forbid the retired chunk ticket review, the known-issues copies,
-// each retired step of the writes proposal and the breakdown, and the retired closure and
-// fence-writes rows.
+// each retired step of the writes proposal and the breakdown, the retired closure and
+// fence-writes rows, and the retired spec fence section.
 var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: slicingChecks, Kind: RequireInSection, Class: Command, Section: "Slicing rules", Needle: "The slicer runs `bench preflight build <slug>` after each change to a ticket or an acceptance row.", Diagnostic: "ticket slicing: build preflight reruns after each ticket or acceptance row change"},
 	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Class: Command, Section: "Per row", Needle: "The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.", Diagnostic: "map discipline: an existing test seam cites its function in the resolvable form"},
 	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: Forbid, Section: "", Needle: "chunk ticket review line", Diagnostic: "write-spec slicing: the retired review of each chunk returned"},
-	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Class: Command, Section: "Process", Needle: "After the ticket review accepts, write the fence section. `bench preflight build <slug> --plan-only` then grades the whole ticket graph.", Diagnostic: "write-spec slicing: the plan-only preflight grades the whole ticket graph after the ticket review"},
+	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Class: Command, Section: "Process", Needle: "After the ticket review accepts, `bench preflight build <slug> --plan-only` grades the whole ticket graph.", Diagnostic: "write-spec slicing: the plan-only preflight grades the whole ticket graph after the ticket review"},
 	{Group: AfterImplementSpec, File: craftLineSkill, Kind: Forbid, Section: "", Needle: "| Chunk ticket review (`/bench-write-spec`)", Diagnostic: "write-spec slicing: craft-line kept the retired chunk ticket review row"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "Cap the witnesses in a charge", Diagnostic: "witness cap: the known-issues row kept a copy of the cap"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "FT405", Diagnostic: "record ticket: the known-issues file kept a row that FT405 retires"},
@@ -21,6 +21,7 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "writes proposal", Diagnostic: "closure removal: the known-issues file kept a row that names the writes proposal"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Section: "", Needle: "-closure", Diagnostic: "closure removal: the implement-spec staleness route kept a closure row"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Section: "", Needle: "fence-writes", Diagnostic: "closure removal: the implement-spec staleness route kept the fence-writes row"},
+	{Group: AfterImplementSpec, File: craftSpecSkill, Kind: Forbid, Section: "", Needle: "## Ownership fences", Diagnostic: "closure removal: the craft-spec template kept the spec fence section"},
 }
 
 // slicingChecks is the craft-tickets reference that states the slicing rules.
@@ -31,6 +32,9 @@ const writeSpecCommand = ".agents/commands/bench-write-spec.md"
 
 // craftLineSkill is the skill whose stage defaults route the write-spec review rounds.
 const craftLineSkill = ".agents/skills/bench-craft-line/SKILL.md"
+
+// craftSpecSkill is the craft-spec skill whose template holds no spec fence section.
+const craftSpecSkill = ".agents/skills/bench-craft-spec/SKILL.md"
 
 // mapDiscipline is the craft-spec reference that states how a seam cell cites its test.
 const mapDiscipline = ".agents/skills/bench-craft-spec/references/map-discipline.md"

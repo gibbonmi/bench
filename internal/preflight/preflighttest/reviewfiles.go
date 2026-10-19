@@ -15,40 +15,21 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 )
 
-// reviewFenceExtra are the fence entries SeedReviewEvidence's spec adds to ConformantFence,
-// each beside the annotation its line carries. The seeded spec lines and ReviewFence both
-// derive from this table, so the fixture states its own fence once.
-var reviewFenceExtra = []struct{ path, annotation string }{
-	{"target/", "review fixture"},
-	{"edited/", "review fixture"},
-	{"outside/", "review fixture"},
-	{"notes/", "review fixture"},
-	{".agents/skills/bench-craft-review/", "review instructions"},
-	{".agents/commands/bench-review-implementation.md", "review phase"},
+// reviewFenceExtra are the entries that SeedReviewEvidence's ticket writes beyond
+// ConformantFence.
+var reviewFenceExtra = []string{
+	"target/",
+	"edited/",
+	"outside/",
+	"notes/",
+	".agents/skills/bench-craft-review/",
+	".agents/commands/bench-review-implementation.md",
 }
 
-// ReviewFence is the complete ownership fence SeedReviewEvidence's spec declares, in
-// document order.
+// ReviewFence is the complete ownership fence that SeedReviewEvidence's ticket `Writes:`
+// line derives, in entry order.
 func ReviewFence() []string {
-	fence := append([]string{}, ConformantFence...)
-	for _, entry := range reviewFenceExtra {
-		fence = append(fence, entry.path)
-	}
-	return fence
-}
-
-// reviewFenceLines renders the extra fence entries as the spec's own document lines.
-func reviewFenceLines() []string {
-	lines := make([]string, len(reviewFenceExtra))
-	for i, entry := range reviewFenceExtra {
-		lines[i] = fenceLine(entry.path, entry.annotation)
-	}
-	return lines
-}
-
-// fenceLine renders one fence entry as the spec's own document line.
-func fenceLine(path, annotation string) string {
-	return "- `" + path + "` (" + annotation + ")"
+	return append(append([]string{}, ConformantFence...), reviewFenceExtra...)
 }
 
 // fixtureFile is one repository file of a seeded review tree.
@@ -57,15 +38,11 @@ type fixtureFile struct{ path, body string }
 // reviewCanonical is the canonical review tree every review fixture seeds: the module, the
 // conformant spec and ticket, and each charge source. SeedReviewEvidence writes it into the
 // worktree, and SeedReviewPair commits it into a pinned base, so both fixtures state it once.
-// Extra fence paths join both the spec fence and the ticket's Writes line.
+// Extra fence paths join the ticket's Writes line.
 func reviewCanonical(slug string, extraFence ...string) []fixtureFile {
-	fenceLines := reviewFenceLines()
-	for _, path := range extraFence {
-		fenceLines = append(fenceLines, fenceLine(path, "review fixture"))
-	}
 	return []fixtureFile{
 		{"go.mod", "module example.com/review\n\ngo 1.25\n"},
-		{"specs/" + slug + "/spec.md", SpecBodyNoInventory(slug, fenceLines...)},
+		{"specs/" + slug + "/spec.md", SpecBodyNoInventory(slug)},
 		{"specs/" + slug + "/tickets/one.md", WritesTicketDoc("One", FenceWrites(append(ReviewFence(), extraFence...)), "PF1", "PF2")},
 		{chargesource.DelegateSkill, "# Delegation skill\n"},
 		{chargesource.DelegateProcedure, "# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n"},
@@ -83,7 +60,7 @@ const (
 
 // ReviewFenceWith is the canonical review tree of a pinned pair with extra fence paths, for
 // a pair whose changed paths lie outside the canonical fence. A pair sets it in Base, so both
-// commits declare the same fence. SeedReviewPair seeds every base from it.
+// commits derive the same fence. SeedReviewPair seeds every base from it.
 func ReviewFenceWith(paths ...string) map[string]TreeEntry {
 	entries := map[string]TreeEntry{}
 	for _, file := range reviewCanonical(pairSlug, paths...) {

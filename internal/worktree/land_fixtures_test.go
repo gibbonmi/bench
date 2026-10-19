@@ -96,7 +96,7 @@ const reviewedSource = "reviewed bytes\n"
 // seededLandingFixture is landingFixtureWithGateStep with the approved policy that seed
 // writes before the review base. The seed must approve closureSpec for the delivery
 // outcome, because the source assignment starts that outcome. Each fence path joins the
-// spec's ownership fence and the ticket writes, so the source may change that path.
+// ticket writes, so the source may change that path.
 func seededLandingFixture(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string), fence ...string) landingFixture {
 	t.Helper()
 	gateSpec, prospectiveSpec := "", ""
@@ -122,10 +122,9 @@ func seededLandingFixture(t *testing.T, request, ignored, declaration, home stri
 		ignore = strings.Split(ignored, "/")[0] + "/\n"
 		mustWrite(t, filepath.Join(root, ".gitignore"), []byte(ignore), 0o644)
 	}
-	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `owned.txt`\n- `reviews/x.md`\n- `" + siblingReviewPath + "`\n"
+	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n"
 	writes := "owned.txt (new), " + siblingReviewPath + " (new)"
 	for _, path := range fence {
-		specBody += "- `" + path + "`\n"
 		writes += ", " + path
 	}
 	prepared := recordtest.Prepare(t, root, 1, closureSpec, specBody)

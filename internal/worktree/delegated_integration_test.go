@@ -21,12 +21,11 @@ import (
 
 const delegatedJourneySpec = "specs/x/spec.md"
 
-// delegatedJourneySpecBody is the staged spec of the run. Its fence section authorizes
-// nothing, so the ticket `Writes:` lines that delegatedJourneyWrites sets derive the fence.
+// delegatedJourneySpecBody is the staged spec of the run. The ticket `Writes:` lines that
+// delegatedJourneyWrites sets derive the fence.
 const delegatedJourneySpecBody = "# x\n\nStatus: staged\n\n## User stories\n1. Land a delegated run.\n\n" +
 	"### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n" +
-	"| E1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n" +
-	"- `source.txt`\n- `ticket-1.txt`\n- `ticket-2.txt`\n- `ticket-3.txt`\n- `ticket-4.txt`\n- `reviews/x.md`\n\n"
+	"| E1 | 1 | lands | command | catches failure |\n\n"
 
 // delegatedJourneyWrites is the `Writes:` line of every ticket of the run: the shared
 // source and the file that each ticket author writes.

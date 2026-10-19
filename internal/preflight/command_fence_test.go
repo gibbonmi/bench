@@ -39,18 +39,6 @@ func seedFence(t *testing.T, spec string, tickets map[string]string, changes ...
 	preflighttest.ActiveAssignment(t, root, root)
 }
 
-// withoutFenceSection removes the `## Ownership fences` section from a spec that
-// preflighttest wrote, up to the next level-2 heading.
-func withoutFenceSection(t *testing.T, spec string) string {
-	t.Helper()
-	head, rest, found := strings.Cut(spec, "\n## Ownership fences\n")
-	_, tail, closed := strings.Cut(rest, "\n## ")
-	if !found || !closed {
-		t.Fatalf("spec holds no closed fence section:\n%s", spec)
-	}
-	return head + "\n## " + tail
-}
-
 // authorizedRow is the paths-authorized row that Decide grades over the working tree.
 func authorizedRow(t *testing.T, mode string) CheckResult {
 	t.Helper()
@@ -85,7 +73,7 @@ func TestCommandSpecWithoutFenceSection(t *testing.T) {
 		{name: "absent tickets folder", wantRed: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			seedFence(t, withoutFenceSection(t, preflighttest.SpecBody(fenceSlug)), tc.tickets, change)
+			seedFence(t, preflighttest.SpecBody(fenceSlug), tc.tickets, change)
 			if tc.empty {
 				if err := os.MkdirAll("specs/"+fenceSlug+"/tickets", 0o755); err != nil {
 					t.Fatal(err)
@@ -114,7 +102,7 @@ func TestCommandSpecWithoutFenceSection(t *testing.T) {
 // each, the review pickup, and another review record.
 func leftoverFence(t *testing.T) {
 	t.Helper()
-	spec := preflighttest.SpecBody(fenceSlug, "- `internal/leftover/`")
+	spec := preflighttest.WithLeftoverFence(preflighttest.SpecBody(fenceSlug), "internal/leftover/")
 	ticket := preflighttest.WritesTicketDoc("One", []string{"internal/ticketonly/ (new)"}, "PF1", "PF2")
 	seedFence(t, spec, map[string]string{"one.md": ticket},
 		"internal/ticketonly/a.go", "internal/leftover/b.go", "reviews/example.md", "reviews/other.md")

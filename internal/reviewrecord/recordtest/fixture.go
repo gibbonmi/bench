@@ -81,7 +81,7 @@ func (f *Fixture) WritePlan() {
 	f.Write(f.spec, planDocument(f.body, data))
 }
 
-// planHeading closes the ownership-fence section, so no plan byte reads as a fence token.
+// planHeading opens the completion plan section that follows the fixture body.
 const planHeading = "\n## Completion plan\n\n"
 
 func planDocument(body string, data []byte) string {

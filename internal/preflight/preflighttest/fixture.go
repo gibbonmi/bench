@@ -33,7 +33,8 @@ const ResponseBudget = 48000
 // ChargeFixtureAssignment is the assignment ID OwnedAssignment registers.
 const ChargeFixtureAssignment = "00000000000000000000000000000001"
 
-// ConformantFence is the ownership fence SeedConformant's spec declares, in document order.
+// ConformantFence is the ownership fence that SeedConformant's ticket `Writes:` line
+// derives, in entry order.
 var ConformantFence = []string{
 	"internal/example/",
 	"reviews/example.md",
@@ -66,7 +67,7 @@ func MustWriteFile(t *testing.T, path, body string) {
 }
 
 // TicketDoc renders a grammar-conformant ticket citing rows. Its `Writes:` values derive
-// from ConformantFence, so the fence and the ticket union stay equal.
+// from ConformantFence.
 func TicketDoc(title string, covers ...string) string {
 	return WritesTicketDoc(title, FenceWrites(ConformantFence), covers...)
 }
@@ -91,8 +92,7 @@ const PlanCommand = "bench test --package ./..."
 
 // PlanFence renders the bench-completion-plan section the checkpoint reader parses, as one
 // chunk over tickets. Every seeded spec carries it, so a green fixture states the plan the
-// landing later requires. The section heading closes the ownership-fence section above it,
-// so no payload byte reads as a fence token.
+// landing later requires.
 func PlanFence(tickets ...string) string {
 	return PlanSection(reviewrecord.Plan{
 		Version: 1,
@@ -115,19 +115,31 @@ func PlanSection(plan reviewrecord.Plan) string {
 }
 
 // SpecBody renders a bootstrap-conformant spec for slug. It has staged status, a valid
-// opted-in coverage map declaring rows PF1 and PF2, the ConformantFence entries plus
-// extraFenceLines, the complete-empty inventory, and the completion plan over the
-// tickets/one.md that every seed writes.
-func SpecBody(slug string, extraFenceLines ...string) string {
-	return specBody(slug, true, extraFenceLines)
+// opted-in coverage map declaring rows PF1 and PF2, the complete-empty inventory, and the
+// completion plan over the tickets/one.md that every seed writes. It holds no fence
+// section, because the ticket `Writes:` lines derive the ownership fence.
+func SpecBody(slug string) string {
+	return specBody(slug, true)
 }
 
 // SpecBodyNoInventory is SpecBody with no planning inventory section.
-func SpecBodyNoInventory(slug string, extraFenceLines ...string) string {
-	return specBody(slug, false, extraFenceLines)
+func SpecBodyNoInventory(slug string) string {
+	return specBody(slug, false)
 }
 
-func specBody(slug string, inventory bool, extraFenceLines []string) string {
+// WithLeftoverFence appends a leftover `## Ownership fences` section that lists each
+// entry to spec. No reader grades the section, so a test uses it to prove that the
+// section authorizes nothing.
+func WithLeftoverFence(spec string, entries ...string) string {
+	var b strings.Builder
+	b.WriteString(spec + "\n## Ownership fences\n\n")
+	for _, entry := range entries {
+		b.WriteString("- `" + entry + "`\n")
+	}
+	return b.String()
+}
+
+func specBody(slug string, inventory bool) string {
 	var b strings.Builder
 	b.WriteString("# " + slug + "\n\nStatus: staged\n\n")
 	b.WriteString("## User stories\n1. As a, I want b, so c.\n\n")
@@ -136,14 +148,6 @@ func specBody(slug string, inventory bool, extraFenceLines []string) string {
 	b.WriteString("|---|---|---|---|---|\n")
 	b.WriteString("| PF1 | 1 | does x | cli seam | catches z |\n")
 	b.WriteString("| PF2 | 1 | does y | cli seam | catches w |\n")
-	b.WriteString("\n## Ownership fences\n\n")
-	b.WriteString("- `internal/" + slug + "/` (implementation)\n")
-	b.WriteString("- `reviews/" + slug + ".md` (review pickup)\n")
-	b.WriteString("- `.agents/skills/bench-craft-delegate/` (delegation instructions)\n")
-	b.WriteString("- `.agents/commands/bench-implement-spec.md` (build instructions)\n")
-	for _, line := range extraFenceLines {
-		b.WriteString(line + "\n")
-	}
 	if inventory {
 		b.WriteString(inventorytest.Section(inventorytest.CompleteEmpty))
 	}

@@ -269,7 +269,6 @@ func TestAuditReportsNoClosureDiagnostic(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	const bound = "internal/toon/toon.go"
 	files := completenessFiles(slug, inventory("declared-complete", keptSeams(slug, true), nil))
-	files[specPath(slug)] = strings.Replace(files[specPath(slug)], "## Ownership fences\n\n", "## Ownership fences\n\n- `"+bound+"`\n", 1)
 	files["specs/"+slug+"/tickets/one.md"] = preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), bound), "SS28")
 	files[bound] = "package toon\n"
 	tip := preflighttest.CommitChargeSource(t, root, slug, files)[8]

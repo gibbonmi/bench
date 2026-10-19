@@ -223,7 +223,7 @@ func TestAuditScopeReadsTicketWrites(t *testing.T) {
 	writes := func(entries ...string) string {
 		return preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), entries...), "PF1", "PF2")
 	}
-	write(t, map[string]string{specPath(slug): preflighttest.SpecBody(slug, "- `"+leftover+"` (leftover fence)"),
+	write(t, map[string]string{specPath(slug): preflighttest.WithLeftoverFence(preflighttest.SpecBody(slug), leftover),
 		ticket: writes("outside/fenced/", exact), member: "one\n", exact: "one\n", added: "one\n", leftover: "one\n"})
 	before := commitAll(t, "baseline ticket writes")
 	write(t, map[string]string{ticket: writes(added), member: "two\n", exact: "two\n", added: "two\n", leftover: "two\n"})

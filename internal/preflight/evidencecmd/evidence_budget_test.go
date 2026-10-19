@@ -14,22 +14,14 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// seedLargeEvidence builds the expansion fixture: a 40 KB spec with 5000 fence entries, a
-// ticket above the response bound, and escaped and multibyte text.
+// seedLargeEvidence builds the expansion fixture: a ticket above the response bound whose
+// `Writes:` line holds 5000 fence entries, with escaped and multibyte text.
 func seedLargeEvidence(t *testing.T) (root string, args []string, fence []string, ticket string) {
 	t.Helper()
 	root, slug := preflighttest.SeedConformant(t)
-	var lines []string
 	for i := 0; i < 5000; i++ {
-		entry := fmt.Sprintf("internal/example/generated/%04d \"q\" 雪/", i)
-		fence = append(fence, entry)
-		lines = append(lines, "- `"+entry+"` (generated fence)")
+		fence = append(fence, fmt.Sprintf("internal/example/generated/%04d \"q\" 雪/", i))
 	}
-	spec := preflighttest.SpecBody(slug, lines...)
-	if len(spec) < 40000 {
-		t.Fatalf("spec fixture holds %d bytes, want at least 40 KB", len(spec))
-	}
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", spec)
 	ticket = preflighttest.WritesTicketDoc("One", preflighttest.FenceWrites(append(append([]string{}, preflighttest.ConformantFence...), fence...)), "PF1", "PF2") + strings.Repeat("tab\there \"quote\" back\\slash 雪🚀\n", 2000)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", ticket)
 	return root, preflighttest.LegacyCommitted(t, root, slug, "large evidence"), fence, ticket

@@ -13,7 +13,7 @@ func TestTicketSlicingAnchors(t *testing.T) {
 		{file: slicing, section: "Slicing rules", needle: "The slicer runs `bench preflight build <slug>` after each change to a ticket or an acceptance row.", want: "ticket slicing: build preflight reruns after each ticket or acceptance row change"},
 		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", section: "Per row", needle: "The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.", want: "map discipline: an existing test seam cites its function in the resolvable form"},
 		{file: writeSpec, needle: "A delegate on `craft-line`'s chunk ticket review line grades the chunk's tickets.", want: "write-spec slicing: the retired review of each chunk returned", forbidden: true},
-		{file: writeSpec, section: "Process", needle: "After the ticket review accepts, write the fence section. `bench preflight build <slug> --plan-only` then grades the whole ticket graph.", want: "write-spec slicing: the plan-only preflight grades the whole ticket graph after the ticket review"},
+		{file: writeSpec, section: "Process", needle: "After the ticket review accepts, `bench preflight build <slug> --plan-only` grades the whole ticket graph.", want: "write-spec slicing: the plan-only preflight grades the whole ticket graph after the ticket review"},
 		{file: ".agents/skills/bench-craft-line/SKILL.md", needle: "| Chunk ticket review (`/bench-write-spec`) | cheap + high |", want: "write-spec slicing: craft-line kept the retired chunk ticket review row", forbidden: true},
 		{file: issues, needle: "Cap the witnesses in a charge", want: "witness cap: the known-issues row kept a copy of the cap", forbidden: true},
 		{file: issues, needle: "| FT405: the record verb reads an excerpt from the last response of the worktree. |", want: "record ticket: the known-issues file kept a row that FT405 retires", forbidden: true},
@@ -26,5 +26,6 @@ func TestTicketSlicingAnchors(t *testing.T) {
 		{file: issues, needle: "writes proposal", want: "closure removal: the known-issues file kept a row that names the writes proposal", forbidden: true},
 		{file: ".agents/commands/bench-implement-spec.md", needle: "-closure", want: "closure removal: the implement-spec staleness route kept a closure row", forbidden: true},
 		{file: ".agents/commands/bench-implement-spec.md", needle: "If every red row is `fence-writes`, `completion-plan`, or `check-floor`, the staleness pass below takes the red.", want: "closure removal: the implement-spec staleness route kept the fence-writes row", forbidden: true},
+		{file: ".agents/skills/bench-craft-spec/SKILL.md", needle: "## Ownership fences", want: "closure removal: the craft-spec template kept the spec fence section", forbidden: true},
 	}}.check(t)
 }
