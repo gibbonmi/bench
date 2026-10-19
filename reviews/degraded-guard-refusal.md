@@ -27,19 +27,37 @@ The axis found 2 findings. The worst issue is C1, because a mutation at the new 
 - C1, auto-fix, confidence 8. Add row GR42: the missing-core hook exits 2 with the coarse Git refusal for `bash -c 'echo hi'; git push --force`.
 - C2, auto-fix, confidence 4. A lone apostrophe in a comment or a heredoc body now refuses as an unclosed quote. The approved decision refuses an unclosed single quote, so the code stays. The orchestrator adds a Won't-handle line and flags it for reviewer veto.
 
+## Ticket 01 red-to-green evidence
+
+Each row below is a `bench probe` mutant at the repair tip `6ed1c5c8`. Each mutant read `bit`, its `restored` cell read `yes`, and the unmutated run passed.
+The hook mutants ran with `--check system --run 'TestDegradedGuard|TestGitGuard'`. The core mutants ran with `--package ./internal/gitguard`.
+
+- GR06. Input: `printf hi;git push --force\necho 'x` with no core. Mutation: an omission of the repair sentence from the parse refusal in `fail_closed_no_core`. Red: `TestDegradedGuardRefusesMalformedCommands` (GR01, no repair sentence) and `TestGitGuardMissingBinaryPreservesRecovery`. Restored: yes.
+- GR07. Input: the GR06 input. Mutation: a swap of the parse refusal clause for `you don't have authority over this` in `fail_closed_no_core`. Red: `TestDegradedGuardRefusesMalformedCommands` (GR01, authority advice). Restored: yes.
+- GR08. Input: the GR06 input. Mutation: a swap that adds `Stop and hand back.` to the parse refusal in `fail_closed_no_core`. Red: `TestDegradedGuardRefusesMalformedCommands` (GR01, authority advice). Restored: yes.
+- GR09. Input: the GR06 input. Mutation: a swap that adds the history-rewrite sentence to the parse refusal in `fail_closed_no_core`. Red: `TestDegradedGuardRefusesMalformedCommands` (GR01, authority advice). Restored: yes.
+- GR10. Input: the GR06 input. Mutation: a swap of `cannot parse` for `rejects` in the parse refusal in `fail_closed_no_core`. Red: `TestDegradedGuardRefusesMalformedCommands` (GR01, no parse failure after `BLOCKED:`). Restored: yes.
+- GR12. Input: `BlockMessage` of the unlexed label. Mutation: a swap that adds `you don't have authority over this.` to the unlexed branch of `BlockMessage`. Red: `TestBlockMessageSeparatesParseRefusal` (`unlexed_test.go:54`). Restored: yes.
+- GR25. Input: `BlockMessage("git push --force")`. Mutation: an omission of `you don't have authority over this.` from the general branch of `BlockMessage`. Red: `TestBlockMessageSeparatesParseRefusal` (`unlexed_test.go:57`). Restored: yes.
+- GR32. Input: `BlockMessage` of the unlexed label. Mutation: a swap that adds `Stop and hand back.` to the unlexed branch of `BlockMessage`. Red: `TestBlockMessageSeparatesParseRefusal` (`unlexed_test.go:54`). Restored: yes.
+- GR33. Input: `BlockMessage` of the unlexed label. Mutation: a swap that adds a history-rewrite sentence to the unlexed branch of `BlockMessage`. Red: `TestBlockMessageSeparatesParseRefusal` (`unlexed_test.go:54`). Restored: yes.
+- GR34. Input: `BlockMessage` of the unlexed label. Mutation: a swap of the label for `parse failure` in the unlexed branch of `BlockMessage`. Red: `TestBlockMessageSeparatesParseRefusal` (`unlexed_test.go:49`). Restored: yes.
+- GR42. Input: `bash -c 'echo hi'; git push --force` with no core. Mutation: a swap of `(( child != 1 )) && return "$child"` for `return "$child"` in `invokes_git`. Red: `TestDegradedGuardRefusesMalformedCommands` (GR42 exits 0). Restored: yes.
+- P2. Inputs: `git reset --hard HEAD~1` (GR13), `git status` (GR14), and `printf hi;git status` (GR31) with no core. Mutation: a swap of the `0)` case label for `9)` in `fail_closed_no_core`, so verdict 0 gets the parse refusal. Red: `TestDegradedGuardRimDecidesFromTheCommandField` (GR13) and `TestDegradedGuardRefusesMalformedCommands` (GR14, GR31, GR42). Restored: yes.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/degraded-guard-refusal/spec.md",
-  "plan_digest": "sha256:a4fb59f184d65ef47e3267596181bcbb65d8e91935385d4eba7a3659b62497e5",
+  "plan_digest": "sha256:2285fac66e746e275c8f6bb86fc17965b2b776050d4d2b9c38ae443da5ec6f19",
   "implementation_session": "",
   "chunks": [
     {
       "id": "GR1",
       "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
-      "tip": "a9324deb788d6de6d04313a79aad653246df064c",
-      "plan_digest": "sha256:a4fb59f184d65ef47e3267596181bcbb65d8e91935385d4eba7a3659b62497e5",
-      "source_digest": "9f6b558c91eb76ac2970a4edb5899bad31ab26ca",
+      "tip": "6ed1c5c8ce32be58812856ac041352ea9074d63e",
+      "plan_digest": "sha256:2285fac66e746e275c8f6bb86fc17965b2b776050d4d2b9c38ae443da5ec6f19",
+      "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
       "acceptance_rows": [
         "GR01",
         "GR02",
@@ -81,7 +99,8 @@ The axis found 2 findings. The worst issue is C1, because a mutation at the new 
         "GR38",
         "GR39",
         "GR40",
-        "GR41"
+        "GR41",
+        "GR42"
       ],
       "verification": [
         {
@@ -292,6 +311,215 @@ The axis found 2 findings. The worst issue is C1, because a mutation at the new 
           "requirement": "t1-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "r1-t1-gitguard",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:b4d873ebb80633fa76e56a71be874b3f8f2eb12b3d55cc56d3628a6813cb30df",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gitguard,pass,15210,230\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-gitguard",
+          "command": "bench test --package ./internal/gitguard",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-core-entry",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:18128bd3b656004474db8a28d3cc4b28cbc187cbc6ce9cb0d4996d9c676cae87",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19163,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-core-entry",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-hook-entries",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:e19e214e2b104de27d3f7804c49696b785b1fd1ea1cd6342d40bfcd8552ffa6f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,175,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,84997,175\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-hook-entries",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-hook-contracts",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:0b0c9268f37d355edd76b4c81295fbf01a3b2269cac07b9322ee00a868d9aedd",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2541,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-hook-contracts",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-author-parse-success-omission",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:5bc379a247dc4aa46a898acfb839ef171986522f07ad53a128eea07d7ff6edae",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.bench/hooks/block-dangerous-git.sh,swap,failed,1,TestDegradedGuardRefusesMalformedCommands,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,175\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,597\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,175,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,84022,175\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestDegradedGuardRefusesMalformedCommands,\"guard_refusal_test.go:51: GR03 trailing escape after an attached separator stderr = \\\"BLOCKED: guard degraded (bench core missing) — can't classify commands, refusing anything that invokes git. Restore the bench core (bench link) or hand bac… (284 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-author-parse-success-omission",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore permissive malformed success at the trailing-escape branch; GR03 must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+              "digest": "sha256:5bc379a247dc4aa46a898acfb839ef171986522f07ad53a128eea07d7ff6edae",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.bench/hooks/block-dangerous-git.sh,swap,failed,1,TestDegradedGuardRefusesMalformedCommands,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,175\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,597\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,175,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,84022,175\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestDegradedGuardRefusesMalformedCommands,\"guard_refusal_test.go:51: GR03 trailing escape after an attached separator stderr = \\\"BLOCKED: guard degraded (bench core missing) — can't classify commands, refusing anything that invokes git. Restore the bench core (bench link) or hand bac… (284 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r1-t1-canonical-path-policy",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:86139d736db4e9e74a33c656cfc449526aa31945ce89790998e34a6b73b4394a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  canonical-path-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,116,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-canonical-path-policy",
+          "command": "bench test --check canonical-path-owner",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-injected-port-policy",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:9a49626b0abd49fcae76c5e872ceff75e9558cbd53a3c2777967bc1f92d1f32f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  injected-port-registry,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,25,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-injected-port-policy",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-guard-anchors",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:3b86f4657addc78fb9fd6fe69a759f29716f598fdcfe5885572d163740707a1c",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5199,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-guard-anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-axi-registry",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:1b3f6c4d890c7f5a7e4a087b8053cdd44e7a965d10afaff6b3f981686b6fce89",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  axi-query-registry,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-axi-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-command-routing",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:5f31975f6976fd1476a5cae53a7c426194874510d089b2fb2bfcc648371acd30",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,28,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-command-routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-root-conformance",
+          "performer": "claude:ft366-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
+            "digest": "sha256:c06930db58800b42bc6036cdb06ab8a3416974b3141890d0312c70f18a8c1231",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17334,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -375,6 +603,17 @@ The axis found 2 findings. The worst issue is C1, because a mutation at the new 
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:a4fb59f184d65ef47e3267596181bcbb65d8e91935385d4eba7a3659b62497e5",
+      "to": "sha256:2285fac66e746e275c8f6bb86fc17965b2b776050d4d2b9c38ae443da5ec6f19",
+      "chunk_ids": {
+        "GR1": [
+          "GR1"
+        ]
+      }
+    }
+  ]
 }
 ```
