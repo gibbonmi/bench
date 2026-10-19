@@ -121,7 +121,9 @@ func TestSizingPremises(t *testing.T) {
 		headroomItem("headroom-ignored-deletion", "internal/sized", `"internal/sized/d.go"`, `"internal/sized/b.go"`, 3, 3, 1),
 		headroomItem("headroom-over", "internal/sized", `"internal/sized/d.go"`, "", 3, 3, 1),
 		headroomItem("headroom-absent-deletion", "internal/sized", "", `"internal/sized/z.go"`, 3, 3, -1),
-		headroomItem("headroom-granted", "internal/granted", `"internal/granted/n.go"`, "", 1, 1, 1))
+		headroomItem("headroom-granted", "internal/granted", `"internal/granted/n.go"`, "", 1, 1, 1),
+		headroomItem("headroom-empty-directory", "", "", "", 3, 3, 0),
+		headroomItem("headroom-dot-directory", ".", "", "", 3, 3, 0))
 	root := ownershiptest.Repo{Writes: []string{"internal/sized/a.go"}, Files: sizingBase, OwnInventory: true, Tail: facts}.Seed(t)
 	preflighttest.MustWriteFile(t, "internal/sized/a.go", "package sized\n\n")
 	preflighttest.RunGit(t, "add", "-A")
@@ -143,6 +145,8 @@ func TestSizingPremises(t *testing.T) {
 		{"OC36", "headroom-copied-cap", "unknown", "maximum 12, the canonical limit is 3"},
 		{"OC36", "headroom-over", "unknown", "exceeds"},
 		{"OC36", "headroom-granted", "green", "one cohesive family"},
+		{"OC36", "headroom-empty-directory", "unknown", `subject: directory "" is no clean repository directory`},
+		{"OC36", "headroom-dot-directory", "unknown", `subject: directory "." is no clean repository directory`},
 		{"OC37", "headroom-swap", "green", "net 0"},
 		{"OC37", "headroom-ignored-deletion", "unknown", "net 1, the plan nets 0"},
 		{"OC37", "headroom-absent-deletion", "unknown", "internal/sized/z.go is no tracked source"},
