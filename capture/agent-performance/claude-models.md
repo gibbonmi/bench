@@ -1,14 +1,14 @@
 # Claude model scorecard
 
-Last incorporated landing: `preflight-spec-staleness` build (landing `5371131b256d701b85df54de62361541de9d4c74`, 2026-10-18).
+Last incorporated landing: `closure-removal` build (landing `4d547d73b51e9f73edd49badfb0d7441bf0ba0d8`, 2026-10-19).
 
 The `preflight-spec-staleness` build ran five tickets in three chunks on Claude Code as a `--full --auto-approve` run with an author limit of 1. An Opus orchestrator dispatched an Opus/high author for ticket 01 and Opus/medium authors and repairs after it, by reviewer direction. Opus/medium ran every review axis, and Fable/high and Sonnet/high consultant pairs answered each reviewer question by consensus. Fresh Opus/medium subagents ran the native rows, and the chunks used 3, 1, and 2 repair cycles.
 
 Provider usage and charges remain unknown. The landing census counted 27 raw calls: rg 14, python3 6.
 
-The `anchor-admission-prune` build ran ten tickets in seven chunks on Claude Code as a `--full --auto-approve` run with an author limit of 1. An Opus orchestrator dispatched fresh Opus/medium authors and repairs, with Opus/high for ticket 8 and its repairs. Opus/medium ran every review axis, and one Fable/high and one Opus/high consultation judged the per-ticket verification rule. The chunks used 0, 1, 0, 1, 1, 2, and 2 repair cycles, and two in-build preflight fixes added a ticket and a chunk.
+The `closure-removal` build (FT293) ran six tickets in four chunks on Claude Code as a `--full --auto-approve` run with an author limit of 1. An Opus orchestrator dispatched fresh Opus/high authors and eleven Opus/high repair sessions, and Opus/high ran every review axis by reviewer direction. Four Sonnet staleness slices opened the build, and one Fable/medium and Sonnet/high consultation pair agreed on the only judgment question. The chunks used 3, 2, 2, and 3 repair cycles, and `--auto-approve` covered the third cycles.
 
-Provider usage and charges remain unknown. The landing census counted 34 raw calls: rg 20, cat 5, sed 4.
+Provider usage and charges remain unknown. The landing census counted 24 raw calls: rg 16, cp 4, cat 2, cd 1, sed 1.
 
 The `closure-removal` spec stage ran on Claude Code for FT293. An Opus coordinator ran eight paired Haiku/high research readers and eight paired Haiku/high slicing readers by reviewer direction, and it sliced the six tickets itself. An Opus fork wrote the spec, and the coordinator dropped the fork's staged-spec sweep before review. Fable/high ran the spec review in 1 iteration and the ticket review in 2, by reviewer direction. The ticket review caught a deleted file whose in-package callers the slicer had not searched.
 
@@ -19,10 +19,10 @@ Provider usage and charges remain unknown. The harness reported about 150k to 27
 | model / effort | role and sample | observed quality | current use | calibration |
 | --- | --- | --- | --- | --- |
 | Fable / low–high | orchestrator, 42 landings + implementer, 10 charges + reviewer, 48 axes | On `repair-confirmation` Fable/high orchestrated four chunks under `--auto-approve` and added four spec guarantees, each flagged for veto. It retried a stale-digest refusal three times and a `check-floor` red three times before each plan commit closed it. | Coordination of a delegated build and adversarial spec review; review axes in parallel by reviewer direction; it implements only when the reviewer names it | orchestrator 0.36 over 3 pairs, 1 abstained; medium reviewer 0.256 over 20 pairs, 1 abstained |
-| Fable / high, xhigh | reviewer, 124 axes + 4 blind comparisons + spec reviewer, 10 passes + ticket reviewer, 4 passes + verifier, 3 light-path checks + control, 1 full-retrieval run + decider, 25 consultations + debug, 2 charges | On `preflight-spec-staleness` four Fable/high consultations answered the reviewer questions with Sonnet/high. The pair agreed on each question except SS-C3 P2, where they split twice and the reviewer decided. | Review axes, spec review, and ticket review by reviewer direction; consultations whenever the coordinator is uncertain; the RE2-style full control | reviewer: 0.168 over 32 pairs, 1 abstained |
-| Opus / high, xhigh, max | implementer, latest 10 of 97 current attempts, 3 of them max shadows, 1 a max light-path fix, and 2 xhigh light-path fixes; reviewer, 319 earlier axes + the `record-ticket` axes + 3 consultations; researcher, 20 paired charges; repair, latest 10 of 79 current attempts; orchestrator, 5 builds and 4 spec stages; spec author, slicer, and reviewer, latest 10 passes, 7 of them xhigh slicers | On `preflight-spec-staleness` the Opus/high ticket 01 author met its drift rows, and an Opus/high repair closed the one-source findings of SS-C1 round 1. Two later Opus/medium repairs added the witnesses that coordinator probes and a new Coverage finding asked for. | High for first-round review axes, orchestration, consultations, and debug runs; xhigh for a code ticket where a repair round costs more than about 100k tokens, or that crosses owner seams; repairs at the ticket's effort. | implementation: 0.097 over 82 pairs, 3 abstained, and 0.01 over 8 xhigh pairs; orchestrator 0.26 over 3 pairs; reviewer: 0.162 over 74 pairs, 9 abstained; repair: 0.029 over 29 pairs; consultant 0.01 over 1 pair |
+| Fable / high, xhigh, medium | reviewer, 124 axes + 4 blind comparisons + spec reviewer, 10 passes + ticket reviewer, 4 passes + verifier, 3 light-path checks + control, 1 full-retrieval run + decider, 26 consultations + debug, 2 charges | On `closure-removal` one Fable/medium consultation agreed with Sonnet/high to accept the refusal of a root headroom premise, so no tie-breaker ran. It cited the structure engine's root spelling as the reason. | Review axes, spec review, and ticket review by reviewer direction; consultations whenever the coordinator is uncertain; the RE2-style full control | reviewer: 0.168 over 32 pairs, 1 abstained |
+| Opus / high, xhigh, max | implementer, latest 10 of 103 current attempts, 3 of them max shadows, 1 a max light-path fix, and 2 xhigh light-path fixes; reviewer, 319 earlier axes + 42 `closure-removal` axes + 3 consultations; researcher, 20 paired charges; repair, latest 10 of 91 current attempts; orchestrator, 6 builds and 4 spec stages; spec author, slicer, and reviewer, latest 10 passes, 7 of them xhigh slicers | On `closure-removal` the six Opus/high authors met their rows, but five of fourteen labeled claims failed review, and four of six tickets needed `Writes:` widenings before the commit. Opus/high review axes found the filesystem-read landing authority and a stale decision-map source that the authors missed. | High for first-round review axes, orchestration, consultations, and debug runs; xhigh for a code ticket where a repair round costs more than about 100k tokens, or that crosses owner seams; repairs at the ticket's effort. | implementation: 0.126 over 96 pairs, 3 abstained, and 0.01 over 8 xhigh pairs; orchestrator 0.26 over 3 pairs; reviewer: 0.162 over 74 pairs, 9 abstained; repair: 0.029 over 29 pairs; consultant 0.01 over 1 pair |
 | Opus / medium, low | implementer, latest 10 of 23 tickets + 5 benchmark shadows; repair, latest 10 of 35 sessions; orchestrator, 8 builds; reviewer, latest 10 of 88 axes | On `preflight-spec-staleness` four Opus/medium authors held their fences, and six Opus/medium repairs closed every accepted finding, mostly one-source defects. Fresh Opus/medium native sessions omitted and charged the staleness pass exactly as the fixtures required, and the orchestrator caused two record refusals and one extra review round. | Low for an exact-spec guidance ticket; medium as the default for a code ticket, for review axes by reviewer direction, and for a mechanical test migration; a repair keeps the ticket's declared effort. | 0.087 over 116 pairs; 28 abstained; reviewer 0.156 over 45 pairs; orchestrator 0.287 over 3 pairs |
-| Sonnet / high | orchestrator, 3 landings + reviewer, 132 axes + spec reviewer, 5 passes + researcher, 3 charges + implementer, 9 comparison tickets | On `preflight-spec-staleness` four Sonnet staleness slices supplied the items of the entry amendment, and four Sonnet/high consultations agreed with Fable/high on every question but one. Each return named what it did not verify. | First-round and confirming review axes, consultations, and fix reviews by reviewer direction, and orchestration; not fresh ticket authorship | high 0.145 over 2 pairs; xhigh 0.40 over 2 pairs; reviewer 0.203 over 4 pairs; consultant 0.09 over 1 pair |
+| Sonnet / high | orchestrator, 3 landings + reviewer, 132 axes + spec reviewer, 5 passes + researcher, 3 charges + implementer, 9 comparison tickets + staleness, 4 slices | On `closure-removal` four Sonnet staleness slices found two drifted citations and named what they did not verify. One Sonnet/high consultation agreed with Fable/medium on the only judgment question. | First-round and confirming review axes, consultations, staleness slices, and fix reviews by reviewer direction, and orchestration; not fresh ticket authorship | high 0.145 over 2 pairs; xhigh 0.40 over 2 pairs; reviewer 0.203 over 4 pairs; consultant 0.09 over 1 pair |
 | Sonnet / high (research and polish) | researcher, 10 paired charges + 5 single charges + 15 slicing-research charges + polish, 1 session | On `repair-confirmation` Sonnet delegates ran the build research by reviewer direction. The build record keeps no result for each slice, so this landing adds no quality evidence. | Default research reader at medium effort, paired with Haiku/high by reviewer direction on 2026-10-11; polish of a cheap draft when the reviewer names it | research 6 of 6 earlier slices clean; slicing research missed the closure classes in 6 of 6 uncharged slices and in 0 of 3 charged slices |
 | Haiku / default–xhigh | researcher, 16 charges + 8 slicing-research charges + implementer, 2 comparison tickets + auditor, 3 charges | On `guidance-weight` the Haiku/xhigh readers matched the Sonnet closure sets in each slice. They also found the B42 drain duplicate and the renamed canary EXPECT of an unmoved row. | Research reader at high effort by default, paired with Sonnet/medium; staleness audits; not ticket authorship | research 10 of 12 slices clean; slicing research agreed with Sonnet in 3 of 3 chunks; authorship 0 landings |
 | Sonnet / low–medium | implementer, latest 10 of 79 ticket-sized charges | On `ft311-diagnostics` one low charge landed after two corrections: its case-fold fixture was not red-capable for the row's named mutation, and its fixture left the fenced directory. On `craft-research-skill` one low review repair closed five findings first-pass with a biting omission probe. | Low for a prose or exact-spec repair at a known seam under a covering gate when the reviewer names it; the coordinator probes every return and runs the whole-tree gate before the landing | unknown |
@@ -40,70 +40,45 @@ Provider usage and charges remain unknown. The harness reported about 150k to 27
 ## Current decisions
 
 - Read this scorecard before each line declaration, because its decisions carry the orchestration rules that a build repeats.
-- Declare the expected repair rounds for each chunk with a confidence, so the orchestrator claim gets a label. Expect zero to two repair cycles per chunk; the three chunks of `preflight-spec-staleness` used 3, 1, and 2.
-- Route every coding delegate to Opus/high and every small-fix delegate to Opus/low, by reviewer direction on 2026-10-12. The reviewer can name another line for one run. On `preflight-ownership-closure` the reviewer named Opus/medium for the later authors and repairs.
+- Declare the expected repair rounds for each chunk with a confidence, so the orchestrator claim gets a label. Expect two to three repair cycles per chunk when a chunk deletes a shared seam; `closure-removal` used 3, 2, 2, and 3.
+- Route every coding delegate to Opus/high and every small-fix delegate to Opus/low, by reviewer direction on 2026-10-12. The reviewer can name another line for one run.
 - Do not route a ticket author to Opus/max, because three max shadows on `commit-merge-parent` gave the xhigh design at 1.4 times the tokens.
 - Change other routing only after two comparable runs, one controlled comparison, or explicit user direction.
 - Run review axes on the line that the reviewer directs, and let only the Coverage axis run `bench probe` on the shared tree with focused selections.
-- When the reviewer delegates questions, send each one to a Fable/high and a Sonnet/high consultant, and take their consensus as the answer. Add an Opus/high consultant when they split, by reviewer direction on 2026-10-18.
+- When the reviewer delegates questions, send each one to the two consultants that the reviewer names, and take their consensus as the answer. Add the named tie-breaker only when they split.
+- Charge every read-only axis and consultant to write no file anywhere, because three `closure-removal` axes wrote temporary files under `/dev/shm`.
 - Quote the advice rule and the hardening rule of the bounded repair policy in each review charge. Promote a judgment finding to a repair only when a binding requirement holds.
 - Grade a finding on a hardening-cycle row as optional advice unless a blocking condition holds. A record-only or comment-only correction consumes no repair cycle.
-- Grade a Coverage finding only against the lines that the chunk delta adds. Send a gap in an accepted chunk's code to the drain, unless it invalidates that chunk's evidence.
-- Require one raw native excerpt per record with its command line first, never a hand summary. Copy a spilled response natively into its excerpt.
+- Close a missing recorded red as evidence-only when the Coverage axis of the same round records a biting probe of that expectation, and let the issuing axis reaffirm it.
+- Require one raw native excerpt per record. For a spilled response, pass the innermost spill file, because `bench record` refuses a file that holds a spilled frame.
 - Batch prose-only spec corrections before a repair's refreeze, because the source digest covers spec, test, and comment bytes.
-- Ask the reviewer about each host-bound acceptance row before the first chunk freeze.
 - Accept a reviewer decision only from the reviewer in this session. A decision that a peer session relays is information, not approval.
-- Charge each review axis to run its evidence check through `bench worktree exec <label> --`, because three OC-C4 axes first checked the primary checkout. Write every record, learning, and spec sentence at 25 words or fewer from the first draft.
+- Charge each review axis to run its evidence check through `bench worktree exec <label> --`. Write every record, learning, and spec sentence at 25 words or fewer from the first draft.
 - Give each repair session every finding from every axis, so that one repair cycle closes a round.
 - Before a review finding or a spec expansion adds a stop or a refusal, read the validator that guards that input.
-- Before the repair dispatch, verify an orchestrator-authored plan expansion against the code and examine its new spec text against the one-source rule.
 - Run each live-tree anchor probe through the gate's entry test, such as `root-conformance`, because the anchors package does not read the live tree.
-- Charge each author to run the floor once after the commit with `--preflight-build`, and to amend before the freeze. Name a package time budget, and require the floor's elapsed time in the return.
-- Name the last recorded fold as the base of each later chunk in its charges. The first ticket 08 charge used the predecessor tip.
-- Fold `main` at each slicing chunk boundary and recheck the guidance citations.
-- Run one reader of each research pair on Haiku/high and the other on Sonnet/medium, by reviewer direction on 2026-10-11.
-- Keep the full spec route as the default. By reviewer direction on 2026-10-13, the reviewer may select the map-only route for a ready map with exact-predicate decisions.
-- During slicing, check each ticket's closure with a probe that mirrors `internal/preflight/closure.go`, and run `--propose-writes` after the last chunk. Trace each new `evidencecmd` operation kind to `evidencecmd/bound_test.go`.
-- When a spec stage compiles a map, run the plan-only preflight from the merge commit of `main`.
-- Name the binding registry and the canary pins of each path in a slicing research charge.
-- Before the ticket review, give each ticket that creates a seam for a sibling its own review chunk. Name each test helper that the spec reuses in its consumer's `Writes:` line.
+- Run `bench worktree build` at the build entry, before the first charge, and after each Go commit, because the charge reads the worktree seal.
+- Widen a ticket with the built `bench spec widen`, keep this spec's fence section in step while the installed broker reads it, and record each run as dogfood.
+- Name the first chunk base as the `main` tip, and each later chunk base as the accepted tip of its predecessor.
 - Name the existing owners, seams, fixture helpers, and the recurring review lessons in each author charge, including the comment sentence bound and the one-source rule.
-- Name the exact mutation kind, site, and red test of the plan probe in each author charge. Write tab and newline bytes in a probe text with `$'...'`, because `bench probe` reads the text literally.
-- Before dispatch, put every symbol-move file, every package test-count pin, and every owner that the ticket reads on the ticket `Writes:` line.
-- Scope a repair fence to every ticket whose files hold a finding. Route a defect in a frozen chunk's ticket to the open chunk's ticket that holds the path, and flag that route for reviewer veto.
+- Name the exact mutation kind, site, and red test of the plan probe in each author charge, and keep a probe token in the projected spelling that the code compares.
+- Before dispatch, list on the ticket `Writes:` line every caller of a changed helper, every test that counts or pins a removed row, and every decision-map source that the landing deletes.
 - Keep each author session open until its chunk closes, and resume it to re-record at the chunk tip after a refreeze.
 - In a multi-ticket chunk, let the last author freeze without a commit, let each earlier author record at that tip, and then commit the record once.
-- Make every fix delegate follow `bench-debug` from its command file, and require per-phase evidence in its return. From a chunk's second repair round, prose repairs run it too, by reviewer direction on 2026-10-16.
-- Charge each author with root conformance, every package it writes, and `cmd/bench` for a public response change, in one `bench test` call.
+- Make every fix delegate follow `bench-debug` from its command file, and require per-phase evidence in its return.
 - Charge each author and repair with the duplicated-facts sweep and its comment sweep. A derived expectation needs no red, and only a kept literal needs a recorded red.
-- Retain each orchestrator probe run in the review record when it runs.
-- Run `bench worktree build` and create the build log at the build entry, then rebuild after each Go commit and each `main` fold.
 - Commit each plan edit before you read `check-floor`, because that check reads the committed plan.
-- After a repair commit, refreeze the chunk at the repair tip, never at a later record commit. Open the successor chunk on the recorded tip of its predecessor, because a successor base that is not a descendant of that tip fails the completion entry.
-- Charge each repair session to record its own ticket verifications under its session identity, because the completion entry grades each chunk obligation against the latest assignment of its ticket.
-- Expect a full confirming round after a test-only repair while `bench record confirmation` refuses the delegate-plan record inside its range.
-- Land a build-time known-issues row through the fence of its owning ticket.
+- After a repair commit, refreeze the chunk at the repair tip, never at a later record commit.
+- Charge each repair session to record its own ticket verifications under its session identity.
+- Expect a full confirming round after a test-only repair while `bench record confirmation` refuses the assignment plan commit inside its range.
 - Record a no-op-only review round with no finding ID, because a `no-op` finding records as a fail and costs a confirming entry.
 - Treat `--auto-approve` as approval for fence expansions, spec and ticket expansions, and repair rounds, and flag each judgment call.
 - Keep declared confidence unchanged, and separate unknown or abstained evidence from labeled claims. Require a claims table with integer confidences in every author and repair return.
 - Preserve exact terminal provider costs separately from token counts, and keep unavailable usage unknown.
-- Name in the author charge each call site that a shared predicate must reach.
-- In a build that adds a ledger field, run every shared-ledger write on the installed binary until the landing.
+- Give each landing authority the committed objects of the reviewed tip, never the working tree.
 - When a repair reports a defect outside its fence, expand the fence once in a plan commit. Add its floor check in that commit.
-- In a `--delegate` run, reorder the plan to the merge order before the first concurrent dispatch.
-- Before a retry of a red checkpoint, send one read-only consultation to decide whether the build owns the red.
-- Give each author charge a default of one central-property probe, and require a named witness for each extra probe, by reviewer direction on 2026-10-12.
-- Commit a spec change that adds a coverage row before the chunk freeze, or re-freeze the chunk at that plan commit.
 - Dispatch fresh axis sessions for each later review round, and resume an issuing axis only for an evidence-only reaffirmation.
-- Charge each guidance author to fix every sentence that the change makes false.
-- Record a consultant's decision on spec behavior as a reviewer-decision line that the reviewer can veto, and capture its learning before the repair dispatch.
+- Charge each guidance author to fix every sentence that the change makes false, and to point to one owner rather than restate a rule.
 - Never revert a plan file to earlier bytes, because the earlier digest blocks every later amendment.
-- Land a kit build that adds a review-record field on its candidate binary from the primary checkout, after the doctor rehearsal and a reviewer decision.
-- After a source correction to a frozen chunk, refreeze that chunk at the correction before its checkpoint, because the chain check compares source digests by equality. On `anchor-admission-prune` a comment-only correction without a refreeze cost AP-C7 a refreeze and a third review round.
 - Start no coordinator probe while an author or a recorder runs checks in the same tree.
-- Run a native workflow row as a fresh Claude subagent on an approved fixture, and run it again after each guidance owner-byte change. A Go comment edit keeps that evidence current.
-- When a preflight check refuses the charge of the ticket that fixes it, prepare that charge at an earlier base that the check accepts. Record the deviation, and keep the chunk base for the freeze.
-- Probe the value of each constant that a repair puts into a test, because a test case built from its own constant pins nothing.
-- Record a probe entry with exit code 0 and a nonzero probe exit code, and name both in each author charge.
-- Write each completion-plan probe as a mutation of the spec's declared API.
-- When a repair moves code across packages or out of a `_test.go` file, add the checks that police that code to its floor.
+- Run the complete checkpoint before the final verification rows, because a published-tree red forces a repair and a rerun of every final row.
