@@ -967,7 +967,16 @@
               "text": "The guidance states that any source change after a chunk freeze moves the chunk tip and needs a refreeze, and that the successor base is the last recorded source tip of its predecessor, never a record commit."
             }
           ],
-          "sources": []
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "plan-commit",
+                "path": "specs/plan-commit/spec.md",
+                "identity": "sha256:d7cef4e864219e01ec1568bae03372e07b49b9c1892cbbb56b4ba22789cdcf6e"
+              }
+            }
+          ]
         },
         {
           "id": "FT335",
