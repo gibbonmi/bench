@@ -2,12 +2,39 @@ package preflight
 
 import (
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/consumers"
+	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
+
+// TestDecideChargeRows covers CR06. A build charge and its current-evidence check decide
+// the same rows as the build verdict, so neither charge operation adds a premise row. A
+// prepared charge prints no check row, so the test reads Decide directly.
+func TestDecideChargeRows(t *testing.T) {
+	wantChecks := []string{
+		"base-current", "paths-authorized",
+		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
+		"fence-writes", "kit-pin", "binary-seal",
+		"rows-owned", "rows-membership", "diff-nonempty",
+	}
+	for _, kind := range []evidencecmd.Kind{evidencecmd.KindPrepareEvidence, evidencecmd.KindCurrentEvidence} {
+		f := baseFacts()
+		f.Mode = modeBuild
+		f.TicketsDirExists = true
+		f.Operation = kind
+		var got []string
+		for _, c := range Decide(f).Checks {
+			got = append(got, c.Check)
+		}
+		if !slices.Equal(got, wantChecks) {
+			t.Errorf("Decide under operation %d checks = %v, want %v", kind, got, wantChecks)
+		}
+	}
+}
 
 // TestCompleteConsumerEvidenceMatchesLiveConsumerMeta grades the one review refusal
 // branch that guards a live cross-package contract: completeConsumerEvidence reads the

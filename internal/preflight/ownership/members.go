@@ -138,7 +138,7 @@ func (s censusSubject) paths() []string {
 // Each member is a file and its enclosing declaration name. A write that names no member
 // leaves the members unknown.
 func (c *census) members(owner Owner, shape memberShape) ([]Owner, error) {
-	obj, file, _, err := c.declaration(owner)
+	obj, file, err := c.declaration(owner)
 	if err != nil {
 		return nil, err
 	}

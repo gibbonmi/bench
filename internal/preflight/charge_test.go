@@ -178,9 +178,10 @@ func TestChargePreparesWithoutClosure(t *testing.T) {
 	preparedIdentity(t, out)
 }
 
-// TestChargePreparesWithUnprovedPremise covers CR05 and CR06. The declared-complete
-// inventory holds a current line-count premise that the seeded foo.go defeats, and the
-// charge prepares its evidence with no charge-premises row in its verdict.
+// TestChargePreparesWithUnprovedPremise covers CR05. The declared-complete inventory holds
+// a current line-count premise that the seeded foo.go defeats, and the charge still prepares
+// its evidence. A prepared charge prints no check row, so TestDecideChargeRows pins the
+// charge verdict's rows.
 func TestChargePreparesWithUnprovedPremise(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	const stale = `{"id":"p1","location":{"path":"specs/example/spec.md","line":1,"needle":"# example","source":"spec"},` +
@@ -190,8 +191,8 @@ func TestChargePreparesWithUnprovedPremise(t *testing.T) {
 		"specs/" + slug + "/spec.md": preflighttest.SpecBodyNoInventory(slug) + inventory,
 	})
 	out, code := Command(args)
-	if code != 0 || strings.Contains(out, "charge-premises") {
-		t.Fatalf("charge over an unproved premise = (%d), want 0 with no charge-premises row:\n%s", code, out)
+	if code != 0 {
+		t.Fatalf("charge over an unproved premise = (%d), want 0:\n%s", code, out)
 	}
 	preparedIdentity(t, out)
 }

@@ -298,23 +298,22 @@ func chargeReadiness(m Manifest, premises []Premise, diagnostics []Diagnostic, p
 			block(claim.ID, byID[claim.ID].Reason)
 		}
 	}
+	var requiredCurrent []string
 	for _, item := range m.Premises {
 		if item.State == "current" {
-			ready.RequiredCurrent = append(ready.RequiredCurrent, item.ID)
+			requiredCurrent = append(requiredCurrent, item.ID)
 		}
 	}
 	for _, d := range m.Decisions {
-		ready.RequiredCurrent = append(ready.RequiredCurrent, d.ID)
+		requiredCurrent = append(requiredCurrent, d.ID)
 	}
 	for _, claim := range m.ManualClaims {
 		if claim.Applicability == CurrentPremise {
-			ready.RequiredCurrent = append(ready.RequiredCurrent, claim.ID)
+			requiredCurrent = append(requiredCurrent, claim.ID)
 		}
 	}
-	ready.CurrentComplete = ready.InventoryComplete
-	for _, id := range ready.RequiredCurrent {
+	for _, id := range requiredCurrent {
 		if byID[id].State != StateGreen {
-			ready.CurrentComplete = false
 			block(id, byID[id].Reason)
 		}
 	}

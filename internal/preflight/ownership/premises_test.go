@@ -319,8 +319,8 @@ func TestChargeReadiness(t *testing.T) {
 		"OC51 decisions need not map every row": manifestJSON("declared-complete", nil, plannedSeam, rowDecisions[:1], nil),
 	} {
 		t.Run(name, func(t *testing.T) {
-			root, _ := seedChargeRepo(t, "", facts, nil)
-			if ready := collectChargeSnapshot(t, root).ChargeReadiness; !ready.InventoryComplete || !ready.CurrentComplete {
+			root, _ := seedChargeRepo(t, "", facts)
+			if ready := collectChargeSnapshot(t, root).ChargeReadiness; !ready.InventoryComplete || ready.Blocker != "" {
 				t.Fatalf("charge readiness = %+v, want met", ready)
 			}
 		})
@@ -336,7 +336,7 @@ func TestChargeReadiness(t *testing.T) {
 		{"OC88 omitted single seam citation", citedSpec("`TestFoo`"), manifestJSON("declared-complete", nil, nil, nil, nil), "TestFoo"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			root, _ := seedChargeRepo(t, test.spec, test.facts, nil)
+			root, _ := seedChargeRepo(t, test.spec, test.facts)
 			assertNotReady(t, root, test.want)
 		})
 	}
@@ -348,9 +348,9 @@ func TestChargeReadiness(t *testing.T) {
 func TestChargeManualApplicability(t *testing.T) {
 	valid := validNative().json()
 	t.Run("OC89 OC93 native-future claim allows charge and current evidence", func(t *testing.T) {
-		root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", nil, nil, nil, []string{valid}), nil)
+		root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", nil, nil, nil, []string{valid}))
 		snap := collectChargeSnapshot(t, root)
-		if snap.Complete || !snap.ChargeReadiness.InventoryComplete || !snap.ChargeReadiness.CurrentComplete || len(snap.ChargeReadiness.PendingNative) != 1 || snap.ChargeReadiness.PendingNative[0].ID != "manual-native" {
+		if snap.Complete || !snap.ChargeReadiness.InventoryComplete || snap.ChargeReadiness.Blocker != "" || len(snap.ChargeReadiness.PendingNative) != 1 || snap.ChargeReadiness.PendingNative[0].ID != "manual-native" {
 			t.Fatalf("native-future snapshot = Complete %t, readiness %+v, premises %+v, diag %+v", snap.Complete, snap.ChargeReadiness, snap.Premises, snap.Diagnostics)
 		}
 		if out, code := checkCurrent(assertChargePublished(t, root, args)); code != 0 || !strings.Contains(out, "current[1]") {

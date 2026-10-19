@@ -57,24 +57,24 @@ func (c *census) atTip() error {
 }
 
 // declaration resolves one owner identity at the source tip: the declaration that its
-// symbol names in its exact package, and the repository path and line that declare it. An
-// absent declaration answers a nil object and no error.
-func (c *census) declaration(owner Owner) (types.Object, string, int, error) {
+// symbol names in its exact package, and the repository path that declares it. An absent
+// declaration answers a nil object and no error.
+func (c *census) declaration(owner Owner) (types.Object, string, error) {
 	pkgs, err := c.packages()
 	if err != nil {
-		return nil, "", 0, err
+		return nil, "", err
 	}
 	matches, err := consumers.Resolve(pkgs, owner.Symbol)
 	if err != nil {
-		return nil, "", 0, nil
+		return nil, "", nil
 	}
 	for _, match := range matches {
 		if match.PkgPath == owner.Package {
-			file, line, err := c.position(pkgs, match.Obj)
-			return match.Obj, file, line, err
+			file, _, err := c.position(pkgs, match.Obj)
+			return match.Obj, file, err
 		}
 	}
-	return nil, "", 0, nil
+	return nil, "", nil
 }
 
 // position is the repository path and line that declare one loaded object.

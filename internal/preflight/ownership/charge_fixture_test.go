@@ -147,11 +147,11 @@ type chargeRepo struct {
 	extra             map[string]string
 }
 
-// seedChargeRepo seeds a conformant build repository whose main branch carries specBody,
-// facts, and extra files, and whose feature branch edits internal/example/foo.go.
-func seedChargeRepo(t *testing.T, specBody, facts string, extra map[string]string) (string, []string) {
+// seedChargeRepo seeds a conformant build repository whose main branch carries specBody and
+// facts, and whose feature branch edits internal/example/foo.go.
+func seedChargeRepo(t *testing.T, specBody, facts string) (string, []string) {
 	t.Helper()
-	return chargeRepo{spec: specBody, facts: facts, extra: extra}.seed(t)
+	return chargeRepo{spec: specBody, facts: facts}.seed(t)
 }
 
 // seed commits the spec files and extra as the charge source of the shared fixture, which
@@ -295,7 +295,7 @@ func collectChargeSnapshot(t *testing.T, root string) ownership.Snapshot {
 func assertNotReady(t *testing.T, root, want string) {
 	t.Helper()
 	ready := collectChargeSnapshot(t, root).ChargeReadiness
-	if ready.InventoryComplete && ready.CurrentComplete || !strings.Contains(ready.Blocker, want) {
+	if !strings.Contains(ready.Blocker, want) {
 		t.Fatalf("charge readiness = %+v, want unmet with a blocker naming %q", ready, want)
 	}
 }

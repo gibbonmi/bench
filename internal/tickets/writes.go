@@ -37,7 +37,8 @@ type Write struct {
 // ParseWrite is the one `Writes:` entry grammar. It strips one trailing marker and a
 // trailing `/` directory spelling. An entry cannot carry both markers, because a created
 // path and a removed file are contradictory authority. A deletion names an exact file, so
-// a directory spelling refuses. The path must be a RepositoryPath.
+// a directory spelling refuses. The path must be a RepositoryPath other than the repository
+// root, because an entry that names the root covers every path.
 func ParseWrite(entry string) (Write, error) {
 	write := Write{Path: strings.TrimSpace(entry)}
 	markers := []struct {
@@ -59,6 +60,9 @@ func ParseWrite(entry string) (Write, error) {
 		return Write{}, errors.New("a " + deletedMarker + " entry names one exact file, not a directory")
 	}
 	write.Path = strings.TrimSuffix(write.Path, "/")
+	if write.Path == "" || write.Path == "." {
+		return Write{}, errors.New("the path names the repository root")
+	}
 	if !RepositoryPath(write.Path) {
 		return Write{}, errors.New("the path escapes the repository or is not clean")
 	}
