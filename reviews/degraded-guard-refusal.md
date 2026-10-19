@@ -66,7 +66,7 @@ The hook mutants ran with `--check system --run 'TestDegradedGuard|TestGitGuard'
     {
       "id": "GR1",
       "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
-      "tip": "6a59c2ea6c955f3b82d38ebb924fa726cdb4d213",
+      "tip": "3eaa205c591bcd4961df2db5ad05c6b43caefae0",
       "plan_digest": "sha256:89c6418712ffe99044f82b2e9905c0ad8a77e6e3e5e7c703e9d54f4ec69aad47",
       "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
       "acceptance_rows": [
@@ -527,6 +527,215 @@ The hook mutants ran with `--check system --run 'TestDegradedGuard|TestGitGuard'
             "ref": "claude-agent:bench-writer-high:ft366-t01-repair1-20261019",
             "digest": "sha256:c06930db58800b42bc6036cdb06ab8a3416974b3141890d0312c70f18a8c1231",
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17334,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-gitguard",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:a64c17742128e5a39e16bc6be3c45a039ea5a702e4abca3906eaed6bfb3ecb2f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gitguard,pass,15201,230\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-gitguard",
+          "command": "bench test --package ./internal/gitguard",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-core-entry",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:8b3db669c9cb3b3150f1d05d94502b4a6b9e2e36bd9664c7925823ecaa271f94",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15290,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-core-entry",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-hook-entries",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:c53971486ccf2df209debc99782d1d0cd3687aeb3381582f96de9b04836f09bb",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,175,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,71699,175\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-hook-entries",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-hook-contracts",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:be048166a82e055e47afdd04ec597ec3bdd8060f2604b257dcb02743e85a8259",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2546,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-hook-contracts",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-author-parse-success-omission",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:33b146a8af9a9acaf0236a4e22567517b59a9c6555f64040a9eda119279a685e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.bench/hooks/block-dangerous-git.sh,swap,failed,1,TestDegradedGuardRefusesMalformedCommands,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,175\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,597\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,175,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,72524,175\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestDegradedGuardRefusesMalformedCommands,\"guard_refusal_test.go:51: GR03 trailing escape after an attached separator stderr = \\\"BLOCKED: guard degraded (bench core missing) — can't classify commands, refusing anything that invokes git. Restore the bench core (bench link) or hand bac… (284 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-author-parse-success-omission",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore permissive malformed success at the trailing-escape branch; GR03 must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+              "digest": "sha256:33b146a8af9a9acaf0236a4e22567517b59a9c6555f64040a9eda119279a685e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.bench/hooks/block-dangerous-git.sh,swap,failed,1,TestDegradedGuardRefusesMalformedCommands,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,175\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,597\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,175,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,72524,175\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestDegradedGuardRefusesMalformedCommands,\"guard_refusal_test.go:51: GR03 trailing escape after an attached separator stderr = \\\"BLOCKED: guard degraded (bench core missing) — can't classify commands, refusing anything that invokes git. Restore the bench core (bench link) or hand bac… (284 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "o1-t1-canonical-path-policy",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:5314e95e1f2adce495af737d1ef0e9f542e54b7bfb4a289c023e16d8842a799c",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  canonical-path-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,106,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-canonical-path-policy",
+          "command": "bench test --check canonical-path-owner",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-injected-port-policy",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:05de70e60c0d28c861368fb5ec36860c129549de09564d656cc8daa912db4ce2",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  injected-port-registry,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,21,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-injected-port-policy",
+          "command": "bench test --check injected-port-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-guard-anchors",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:1779a3924e9cbe0bdf4abf8b507ac009e854fe29772e56c92ee25ccabff73f68",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4337,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-guard-anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-axi-registry",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:9bb0abdb3205d48eb90e52b735058f8f1eb39c284c726525d8897e6fe96907e6",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  axi-query-registry,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-axi-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-command-routing",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:af39cc20f715525000234871bf92af20ae8b9a8714a0e5b065d4f13a01fc6f36",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,26,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-command-routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "o1-t1-root-conformance",
+          "performer": "claude:ft366-orchestrator-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9d72dcf84c7d1d285f1b5bfc2aead6bb0c2d8c6c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft366-orchestrator-20261019:p3-reverify",
+            "digest": "sha256:a3036f908b7148824120aab9ff0eb015b69c42d2f31fcbaa8ac2f1d5b69268d9",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14816,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "t1-root-conformance",
           "command": "bench test --check root-conformance",
