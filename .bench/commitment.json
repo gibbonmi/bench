@@ -925,6 +925,25 @@
           ]
         },
         {
+          "id": "FT366-degraded-guard",
+          "criteria": [
+            {
+              "id": "FT366-degraded-guard.refuse",
+              "text": "The degraded Git guard refuses a malformed command, such as a joined word or an unclosed quote, before it classifies the command."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "degraded-guard-refusal",
+                "path": "specs/degraded-guard-refusal/spec.md",
+                "identity": "sha256:bc480b11202f47e3c680c6c2fada00d26f20c2cb0ed5476028c55db4ce978100"
+              }
+            }
+          ]
+        },
+        {
           "id": "FT380-plan-commit",
           "criteria": [
             {
@@ -949,6 +968,71 @@
             }
           ],
           "sources": []
+        },
+        {
+          "id": "FT335",
+          "criteria": [
+            {
+              "id": "FT335.lane",
+              "text": "A bench worktree merge from the primary checkout grades the composed tree with the target's declared lane."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT335",
+              "path": "roadmap/FT335.md",
+              "identity": "sha256:4797c01552df0d5f52cc3620bca015e76a298bb96bab6c9d65999816fbb794b1"
+            }
+          ]
+        },
+        {
+          "id": "FT419",
+          "criteria": [
+            {
+              "id": "FT419.reader",
+              "text": "A build that adds a persisted ledger or review-record field writes and lands through a binary that reads that field."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT419",
+              "path": "roadmap/FT419.md",
+              "identity": "sha256:51770caf94fc53b93e5701036d1b6eba2e4e544daca83f491eff1c40359ddd92"
+            }
+          ]
+        },
+        {
+          "id": "FT366-guard-residual",
+          "criteria": [
+            {
+              "id": "FT366-guard-residual.projection",
+              "text": "The guards share one command projection and one set of envelope facts."
+            },
+            {
+              "id": "FT366-guard-residual.scan",
+              "text": "The guard inventory scan runs as one synchronous loop."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "shared-guard-projection",
+                "path": "specs/shared-guard-projection/spec.md",
+                "identity": "sha256:5d386bccdfbee434c44667d78f0a7ad7781c39cb2079dec979e09252a60a9315"
+              }
+            },
+            {
+              "source": {
+                "id": "guard-scan-loop",
+                "path": "specs/guard-scan-loop/spec.md",
+                "identity": "sha256:ae29c95b9c5fc5979969bd2923c0b5163020dcc7a6af694e027b87735b0878b0"
+              }
+            }
+          ],
+          "dependencies": [
+            "FT366-degraded-guard"
+          ]
         },
         {
           "id": "FT409",
@@ -1005,45 +1089,6 @@
           ]
         },
         {
-          "id": "FT411",
-          "criteria": [
-            {
-              "id": "FT411.cut",
-              "text": "Each row of the 2026-10-09 test-efficiency review tables whose probe proves a kept test red on the same mutation is cut, and a whole-test cut in internal/worktree repins its top-level test count in the same ticket."
-            },
-            {
-              "id": "FT411.probe",
-              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT411",
-              "path": "roadmap/FT411.md",
-              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
-            }
-          ]
-        },
-        {
-          "id": "FT366-degraded-guard",
-          "criteria": [
-            {
-              "id": "FT366-degraded-guard.refuse",
-              "text": "The degraded Git guard refuses a malformed command, such as a joined word or an unclosed quote, before it classifies the command."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "degraded-guard-refusal",
-                "path": "specs/degraded-guard-refusal/spec.md",
-                "identity": "sha256:bc480b11202f47e3c680c6c2fada00d26f20c2cb0ed5476028c55db4ce978100"
-              }
-            }
-          ]
-        },
-        {
           "id": "FT362-process-lifetime",
           "criteria": [
             {
@@ -1082,21 +1127,22 @@
           ]
         },
         {
-          "id": "FT125-exact-readers",
+          "id": "FT411",
           "criteria": [
             {
-              "id": "FT125-exact-readers.slices",
-              "text": "The section, story, symbol, and worktree readers return precise slices under the output budget."
+              "id": "FT411.cut",
+              "text": "Each row of the 2026-10-09 test-efficiency review tables whose probe proves a kept test red on the same mutation is cut, and a whole-test cut in internal/worktree repins its top-level test count in the same ticket."
+            },
+            {
+              "id": "FT411.probe",
+              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
             }
           ],
-          "sources": [],
-          "deliverables": [
+          "sources": [
             {
-              "source": {
-                "id": "exact-planning-readers",
-                "path": "specs/exact-planning-readers/spec.md",
-                "identity": "sha256:b4f5d534bc72a368e67e9c81420743238d819d40e2dbd6c223e0aac85c60ab2f"
-              }
+              "id": "FT411",
+              "path": "roadmap/FT411.md",
+              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
             }
           ]
         },
@@ -1113,6 +1159,25 @@
               "id": "FT314",
               "path": "roadmap/FT314.md",
               "identity": "sha256:264903c22ff37e51a3e009b46a96a43267b9ad5c38934d96f3af4fd222f662ea"
+            }
+          ]
+        },
+        {
+          "id": "FT125-exact-readers",
+          "criteria": [
+            {
+              "id": "FT125-exact-readers.slices",
+              "text": "The section, story, symbol, and worktree readers return precise slices under the output budget."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "exact-planning-readers",
+                "path": "specs/exact-planning-readers/spec.md",
+                "identity": "sha256:b4f5d534bc72a368e67e9c81420743238d819d40e2dbd6c223e0aac85c60ab2f"
+              }
             }
           ]
         },
