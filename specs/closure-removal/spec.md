@@ -454,6 +454,8 @@ The kit audience is every repository that links the kit. A linked repository wit
 - `internal/maps/fields.go`
 - `internal/spec/widen.go`
 - `internal/spec/widen_test.go`
+- `internal/spec/widen_line_test.go`
+- `internal/spec/widen_signedoff_test.go`
 - `internal/spec/retire.go`
 - `internal/spec/spec_test.go`
 - `internal/spec/retire_test.go`
