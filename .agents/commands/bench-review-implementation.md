@@ -99,7 +99,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
 
    Merge `main` into the source before the first chunk. `/bench-implement-spec` owns each later fold point and its `bench record fold` step. The review chain accepts a recorded fold between two chunks and after the last chunk. The fold record lists each resolution path, where the fold commit differs from the automatic merge. A fold with an empty resolution needs no review. A fold with a resolution takes the three axes over its own pair.
 
-   The review preflight authorizes each path that a fold brings in unchanged from the `main` tip. It also authorizes a recorded resolution path while that path keeps its bytes and mode from the fold commit. It counts each path that the build changed against the ownership fences.
+   The review preflight authorizes each path that a fold brings in unchanged from the `main` tip. It also authorizes a recorded resolution path while that path keeps its bytes and mode from the fold commit. It counts each path that the build changed against the union of the ticket `Writes:` lines.
 
 2. **Find the sources.** The spec source is `specs/<feature>/spec.md` for this
    work, or the path I give you. The standards sources are `AGENTS.md` and

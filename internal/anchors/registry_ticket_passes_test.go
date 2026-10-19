@@ -27,5 +27,6 @@ func TestTicketSlicingAnchors(t *testing.T) {
 		{file: ".agents/commands/bench-implement-spec.md", needle: "-closure", want: "closure removal: the implement-spec staleness route kept a closure row", forbidden: true},
 		{file: ".agents/commands/bench-implement-spec.md", needle: "If every red row is `fence-writes`, `completion-plan`, or `check-floor`, the staleness pass below takes the red.", want: "closure removal: the implement-spec staleness route kept the fence-writes row", forbidden: true},
 		{file: ".agents/skills/bench-craft-spec/SKILL.md", needle: "## Ownership fences", want: "closure removal: the craft-spec template kept the spec fence section", forbidden: true},
+		{file: ".agents/skills/bench-craft-delegate/references/delegation-discipline.md", needle: "A write charge states that its ownership fence is a refusal boundary above any mirror-every-registry instruction.", want: "closure removal: the delegate guidance called the fence a refusal boundary", forbidden: true},
 	}}.check(t)
 }

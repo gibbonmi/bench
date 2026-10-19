@@ -2,8 +2,8 @@
 
 Charged from `craft-spec` when the author writes or audits an acceptance coverage
 map. Each rule below settles one question the map must answer. `craft-spec` keeps
-the explore reads, the fence rules, and the review rubric. The claims section also
-governs each current-code claim in the spec prose.
+the explore reads, the fence definition, and the review rubric. The claims
+section also governs each current-code claim in the spec prose.
 
 ## Before the map locks
 

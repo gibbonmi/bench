@@ -33,10 +33,7 @@ Repair context: <fold targets and author context, each read by the coordinator b
 - A write charge names the root conformance pass and the file's wrap width in its
   verification list.
   The root conformance pass is `bench test --check root-conformance`.
-- A write charge states that its ownership fence is a refusal boundary above any
-  mirror-every-registry instruction. The delegate reports an out-of-fence write
-  before the delegate edits.
-- Every write delegate treats `Writes:` as an expectation. When evidence requires an approved in-scope expansion, the orchestrator applies `.bench/BENCH.md`'s plan-expansion policy before continuing. The delegate never writes a second spelling to stay in fence.
+- Every write delegate treats `Writes:` as an expectation, and the gate finds each missing need. The delegate reports a need outside `Writes:` before the delegate edits. The orchestrator then widens the line with `bench spec widen` under `.bench/BENCH.md`'s plan-expansion policy, or it asks the reviewer. The delegate never writes a second spelling to stay in fence.
 - A charge that exports from a package outside its fence names the fence amendment
   in its return.
 - A charge that asks for a commit, a commit sha, or a preflight result makes that request conditional on a committed ticket. A blocked author returns none of them and never creates a commit outside `bench commit`.
@@ -92,7 +89,7 @@ Repair context: <fold targets and author context, each read by the coordinator b
   directory that the fence names stays in the tree.
 - Before a write charge dispatches, the coordinator ticks each item of this list against the ticket's `Writes:` line.
 - A test that guards on a root privilege routes through the capability seam, never through a bare `t.Skip`.
-- A repair fence is the affected ticket's `Writes:` line. Only `.bench/BENCH.md`'s plan-expansion policy widens it.
+- A repair fence is the affected ticket's `Writes:` line, and the `Writes:` expectation rule above governs it.
 - A repair based on a frozen sibling uses an integration assignment from `main`. The integration assignment merges the sibling before the landing.
 - Every author charge and every repair charge requires two results before the ticket commit. The first is a duplicated-facts sweep of the delegate's own delta. The sweep gives one source to each fact, such as a helper, a fixture harness, a derived count, or an expectation copied from the implementation. The sweep also examines each comment that the delta adds or changes against `craft-comments`. Each such comment states the current code and repeats no fact that another source owns. The second is one recorded red for each independent test expectation.
 
