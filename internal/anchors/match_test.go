@@ -7,7 +7,7 @@ import (
 )
 
 func TestEvaluatePathRejectsMixedNestedEmphasis(t *testing.T) {
-	anchor := pathTestAnchor(t, ForbidCaseFoldedEmphasis)
+	anchor := dg15EmphasisAnchor(t)
 	for _, test := range []struct {
 		name string
 		text string
