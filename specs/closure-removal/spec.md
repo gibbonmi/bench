@@ -526,6 +526,7 @@ The kit audience is every repository that links the kit. A linked repository wit
 - `tests/canary/workflow-guidance-anchors/write-spec-identified-coverage-default`
 - `tests/canary/workflow-guidance-anchors/write-spec-unique-row-id`
 - `internal/anchors/anchor_harness_diagnostics_test.go`
+- `internal/anchors/match_test.go`
 - `internal/anchors/registry_debug_loop.go`
 - `internal/anchors/registry_ft311_review_dispatch.go`
 - `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
@@ -675,3 +676,4 @@ The final landing runs under the pre-FT293 broker. Before the landing, the orche
 - CR3 ticket 05, 2026-10-19: the orchestrator ran the built `bench spec widen` again for the four review baselines under `internal/preflight/preflighttest/testdata`. The verb reported each entry as `added` and made no commit (plan commit a9591ce3).
 - CR3 repair, 2026-10-19: the orchestrator ran the built `bench spec widen closure-removal --ticket 04-derive-fence-from-tickets.md` for `internal/preflight/staleness/coverage.go`, `internal/tickets/enumerate.go`, and `internal/worktree/land_identity.go`. The verb reported each entry as `added` and made no commit.
 - CR4 ticket 06, 2026-10-19: the orchestrator ran the built `bench spec widen closure-removal --ticket 06-align-writes-guidance.md` for `.agents/skills/bench-craft-spec/references/map-discipline.md`. The verb reported the entry as `added` and made no commit.
+- CR4 repair, 2026-10-19: the orchestrator ran the built `bench spec widen closure-removal --ticket 06-align-writes-guidance.md` for `internal/anchors/match_test.go`. The verb reported the entry as `added` and made no commit.
