@@ -114,7 +114,7 @@ func widenCommand(args []string) (string, int) {
 		for _, entry := range entries {
 			rerun = append(rerun, axi.ShellQuote(entry))
 		}
-		return toon.Errorf("outside the signed-off scope: "+strings.Join(refused, maps.FieldSeparator),
+		return toon.Errorf(outsideScope+": "+strings.Join(refused, maps.FieldSeparator),
 			"after the reviewer admits the path, rerun "+strings.Join(rerun, " ")) + "\n", 1
 	}
 	table, err := toon.Table("widen", []string{"ticket", "entry", "state"}, rows)
@@ -144,6 +144,9 @@ const (
 	widenDecided = "decided"
 	widenCurrent = "current"
 )
+
+// outsideScope opens the refusal of an entry outside the signed-off scope.
+const outsideScope = "outside the signed-off scope"
 
 // pathSegment reports whether name is one representable path element below a folder.
 func pathSegment(name string) bool {

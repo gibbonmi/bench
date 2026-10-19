@@ -19,11 +19,8 @@ import (
 // widenTicketPath is the repository-relative ticket that the widen fixtures edit.
 const widenTicketPath = "specs/s/tickets/a.md"
 
-// The refusal kinds that the widen tests tell apart.
-const (
-	outsideScope = "outside the signed-off scope"
-	wrongType    = "is wrong-type"
-)
+// wrongType is the refusal kind of a ticket that is not a regular file.
+const wrongType = "is wrong-type"
 
 // widenTicket is a complete ticket whose Writes: value is writes.
 func widenTicket(writes string) string {
@@ -141,6 +138,12 @@ func TestSpecWidenRefusesAnOutOfScopeEntry(t *testing.T) {
 	// The rerun names the whole request, with each argument as one shell token.
 	out, code = runWiden(t, root, "internal/x/w.go", "internal/other/z.go (new)", "internal/other/a b.go")
 	requireRefusal(t, root, before, out, code, "rerun bench spec widen s --ticket a.md --decision <reference> internal/x/w.go 'internal/other/z.go (new)' 'internal/other/a b.go'\n")
+	// A slug and a ticket basename with a space each stay one shell token.
+	spaced := retireWorktree(t, retirePrimary(t, "s t", "Status: staged\n", map[string]string{"specs/s t/tickets/a b.md": widenTicket("internal/x/y.go")}))
+	out, code = runSpec(t, spaced, "widen", "s t", "--ticket", "a b.md", "internal/other/z.go")
+	if want := "rerun bench spec widen 's t' --ticket 'a b.md' --decision <reference> internal/other/z.go\n"; code != 1 || !strings.Contains(out, want) {
+		t.Errorf("spaced widen = (%d, %q), want exit 1 and %q", code, out, want)
+	}
 }
 
 func TestSpecWidenAdmitsADecidedEntry(t *testing.T) {

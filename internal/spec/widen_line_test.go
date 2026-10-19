@@ -49,6 +49,11 @@ func TestSpecWidenKeepsOtherBytes(t *testing.T) {
 			after:  "# A\n\n```\nWrites: decoy\n```\nBlocked by: none\nWrites: internal/x/y.go, internal/x/z.go  \nCovers: CR1\n\n## What to build\n\nx\n\n## Acceptance\n\n- [ ] x\n",
 		},
 		{
+			name:   "a duplicate Writes: line stays",
+			before: widenTicket("internal/x/y.go") + "Writes: internal/x/dup.go\n",
+			after:  widenTicket("internal/x/y.go, internal/x/z.go") + "Writes: internal/x/dup.go\n",
+		},
+		{
 			name:   "CRLF line endings stay",
 			before: strings.ReplaceAll(widenTicket("internal/x/y.go"), "\n", "\r\n"),
 			after:  strings.ReplaceAll(widenTicket("internal/x/y.go, internal/x/z.go"), "\n", "\r\n"),
