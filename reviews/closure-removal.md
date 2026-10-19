@@ -178,7 +178,7 @@ Count: 3. Worst issue: C1.
 {
   "version": 2,
   "spec": "specs/closure-removal/spec.md",
-  "plan_digest": "sha256:6c7a65800371afdd0e0250f01b0d90b912a017eb591baca4f30a76d7407ee411",
+  "plan_digest": "sha256:4f5ce59424ab22825cec7bcbe7cdba51aa3a1b9492032e7425a380b332e9921b",
   "implementation_session": "",
   "chunks": [
     {
@@ -3120,6 +3120,125 @@ Count: 3. Worst issue: C1.
           ]
         }
       ]
+    },
+    {
+      "id": "CR4",
+      "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+      "tip": "688d194fa53ca58397bc88636250175f01419041",
+      "plan_digest": "sha256:4f5ce59424ab22825cec7bcbe7cdba51aa3a1b9492032e7425a380b332e9921b",
+      "source_digest": "d790f343b3965cfd4d7b497e659303ee4f78de12",
+      "acceptance_rows": [
+        "CR75",
+        "CR76",
+        "CR78",
+        "CR79",
+        "CR88",
+        "CR94"
+      ],
+      "verification": [
+        {
+          "id": "t6-t6-anchors-and-help",
+          "performer": "claude:ft293_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d790f343b3965cfd4d7b497e659303ee4f78de12",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t6",
+            "digest": "sha256:d4b50b19971536b961aa43b79b9eb31b02a4d77e342cd02ac4b3221c65fbc204",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16077,346\n  github.com/gibbonmi/bench/internal/anchors,pass,120,123\n  github.com/gibbonmi/bench/internal/conformance,pass,35534,1116\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t6-anchors-and-help",
+          "command": "bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-root-conformance",
+          "performer": "claude:ft293_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d790f343b3965cfd4d7b497e659303ee4f78de12",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t6",
+            "digest": "sha256:760e7c97fbb57c430cff39f7018f7696a5dfd9f69cad47a89a1cd6fdb9a62b92",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14580,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-guidance-anchors",
+          "performer": "claude:ft293_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d790f343b3965cfd4d7b497e659303ee4f78de12",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t6",
+            "digest": "sha256:26da588d9dc794fe7952cf6a0ce637528c3fd7202b4f7563f49418ff545420a7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/skills/bench-craft-delegate/references/delegation-discipline.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,438\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,4509,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: closure removal: the delegate guidance called the fence a refusal boundary\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-guidance-anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Insertion: restore the refusal-boundary sentence in delegation-discipline.md; the forbid anchor must red docs-currency-workflow, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t6",
+              "digest": "sha256:26da588d9dc794fe7952cf6a0ce637528c3fd7202b4f7563f49418ff545420a7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/skills/bench-craft-delegate/references/delegation-discipline.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,438\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,4509,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: closure removal: the delegate guidance called the fence a refusal boundary\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t6-t6-guidance-budgets",
+          "performer": "claude:ft293_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d790f343b3965cfd4d7b497e659303ee4f78de12",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t6",
+            "digest": "sha256:b682aaa6a2f3a10908927cd53ce11e0bf9cf598d196444453baf84591b6728d5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-guidance-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-prose",
+          "performer": "claude:ft293_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d790f343b3965cfd4d7b497e659303ee4f78de12",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t6",
+            "digest": "sha256:03e28f3a13489358121dd031f36d36810717eec5bf538347fab4655af99549d0",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,107,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -3232,6 +3351,21 @@ Count: 3. Worst issue: C1.
     {
       "from": "sha256:966368af4476a968b87a85ea361a5a016d608290d3dcd83c99abe2ecf60e065c",
       "to": "sha256:6c7a65800371afdd0e0250f01b0d90b912a017eb591baca4f30a76d7407ee411",
+      "chunk_ids": {
+        "CR1": [
+          "CR1"
+        ],
+        "CR2": [
+          "CR2"
+        ],
+        "CR3": [
+          "CR3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6c7a65800371afdd0e0250f01b0d90b912a017eb591baca4f30a76d7407ee411",
+      "to": "sha256:4f5ce59424ab22825cec7bcbe7cdba51aa3a1b9492032e7425a380b332e9921b",
       "chunk_ids": {
         "CR1": [
           "CR1"
