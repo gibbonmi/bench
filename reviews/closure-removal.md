@@ -1,5 +1,13 @@
 # Review outcomes
 
+## CR1 second confirming-round pickup
+
+The second confirming round read the repair delta `25863380..bad08290`. Each axis ran on opus at high effort. The chunk has used 2 of its 2 repair cycles. The reviewer's `--auto-approve` covers one more cycle, and the build log records that use.
+
+The round closed S5, S9, C1, and C4 at the rule. One finding stays open, and ticket 02 owns it.
+
+- C5, auto-fix, confidence 6. The sizing collector refuses a headroom premise whose directory is `""` or `.`, but no test pins that refusal. The orchestrator accepted the refusal on two consultations and flagged it for reviewer veto. Add a headroom case for each directory in the ownership package. This repair is test-only, so a coordinator confirmation closes it.
+
 ## CR1 confirming-round pickup
 
 The confirming round read the repair delta `1e8846bb..25863380`. Each axis ran on opus at high effort. The chunk has used 1 of its 2 repair cycles, and the next repair is cycle 2.
@@ -879,6 +887,74 @@ Count: 3. Worst issue: C1.
           ],
           "supersedes": [
             "cr1-coverage"
+          ]
+        },
+        {
+          "id": "cr1c2-standards",
+          "performer": "claude:ft293_cr1c2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr1c2_standards",
+            "digest": "sha256:e65087045e9724a76a07fba6966ffe0a983ac6c26336912fae03ec18714f86d9",
+            "excerpt": "Standards second confirming round, FT293 CR1, repair delta 25863380..bad08290. check-current passed.\nS5 closed 9: PendingNative gone (ownership.go:52-59, premises.go:277-279); tests read Blocker.\nS9 closed 9: t2-charge-rows plan row (spec.md:208); record entry t2r2-t2-charge-rows probe bit, restore pass.\nC4 closed 8: one root rule at writes.go:72-73, pinned by writes_test.go:67-75; no second root rule in ParseWrite or sizing.go.\nNew findings: none. Open 0.\n"
+          },
+          "axis": "Standards",
+          "base": "36b1fafc45426299b27b68f26fe627cadf000639",
+          "tip": "bad08290250ed94ac3d1fc5c37c309db8e90cbd3",
+          "finding_ids": [],
+          "supersedes": [
+            "cr1c-standards"
+          ]
+        },
+        {
+          "id": "cr1c2-spec",
+          "performer": "claude:ft293_cr1c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr1c2_spec",
+            "digest": "sha256:d69b67c5291c1355cb644bf7c0dc9f76b124045be64796152b6543a786fd6bf6",
+            "excerpt": "Spec second confirming round, FT293 CR1, repair delta 2586338..bad08290. check-current current=true.\nCR06 held 9; CR11, CR12 held 8; CR19-CR22 held 9.\nRoot headroom refusal: no contradiction 8; spec line 111 says the premise collectors call the grammar's rule.\nNew findings: none. Open 0.\n"
+          },
+          "axis": "Spec",
+          "base": "36b1fafc45426299b27b68f26fe627cadf000639",
+          "tip": "bad08290250ed94ac3d1fc5c37c309db8e90cbd3",
+          "finding_ids": [],
+          "supersedes": [
+            "cr1c-spec"
+          ]
+        },
+        {
+          "id": "cr1c2-coverage",
+          "performer": "claude:ft293_cr1c2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr1c2_coverage",
+            "digest": "sha256:1fdb71f33f6d2068b65b30aec1f379cf9d6e17ca90a547a36115639c368179f7",
+            "excerpt": "Coverage second confirming round, FT293 CR1. check-current current=true; 6 probes, all restored=yes; tree clean.\nC1 closed 9: unpinned KindCurrentEvidence green row and n/a row between base-current and tip-current both bit TestDecideChargeRows.\nC4 closed at the rule, open at one caller 7: sizing.go:156 guard insertion silent (ownership, 175 tests); the headroom caller has no \"\" or \".\" test.\nS5 closed 8: completeness.go:22 skip bit TestAuditCompleteness/SS57_SS58; premises.go:199 green bit TestChargeManualApplicability/OC89_OC93.\nC5 new 6: the \".\" headroom refusal changed with no test or spec row; add a headroom row for \".\" and \"\" in the ownership package.\nOpen: C5 (with the C4 caller gap). Worst: C5.\n"
+          },
+          "axis": "Coverage",
+          "base": "36b1fafc45426299b27b68f26fe627cadf000639",
+          "tip": "bad08290250ed94ac3d1fc5c37c309db8e90cbd3",
+          "finding_ids": [
+            "C5"
+          ],
+          "supersedes": [
+            "cr1c-coverage"
           ]
         }
       ]
