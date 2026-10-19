@@ -194,6 +194,32 @@ func TestCommandReviewKeepsTheCheckoutDuplicate(t *testing.T) {
 	}
 }
 
+// TestCommandReviewRefusesAnUnrepresentableTrackedTicket checks that the tracked ticket walk
+// of review preflight refuses a ticket path that spec-TOON cannot render, as the checkout
+// walk of build preflight refuses it. The checkout no longer holds the tracked file, so only
+// the tracked walk reads it.
+func TestCommandReviewRefusesAnUnrepresentableTrackedTicket(t *testing.T) {
+	const bad = "bad\x01.md"
+	seedFence(t, preflighttest.SpecBody(fenceSlug), map[string]string{
+		"one.md": preflighttest.TicketDoc("One", "PF1", "PF2"),
+		bad:      preflighttest.TicketDoc("Bad", "PF1"),
+	}, "internal/example/foo.go")
+	root, err := git.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, build := Gather(root, modeBuild, fenceSlug, "")
+	if build == nil || build.Kind != "ticket path not representable" {
+		t.Fatalf("build gather failure = %+v, want the unrepresentable path refused", build)
+	}
+	if err := os.Remove("specs/" + fenceSlug + "/tickets/" + bad); err != nil {
+		t.Fatal(err)
+	}
+	if _, review := Gather(root, modeReview, fenceSlug, ""); review == nil || *review != *build {
+		t.Fatalf("review gather failure = %+v, want the build refusal %+v", review, build)
+	}
+}
+
 // twoTicketSpec is spec with its completion plan over one.md and two.md.
 func twoTicketSpec(t *testing.T, spec string) string {
 	t.Helper()

@@ -57,6 +57,19 @@ func (r Refusal) Message(dir string) string {
 	return path + " is " + r.State + ": " + r.Reason
 }
 
+// Error is the refusal named by its base-relative path.
+func (r *Refusal) Error() string { return r.Message("") }
+
+// unrepresentable refuses a base-relative entry path that spec-TOON cannot render, before
+// any verdict row or diagnostic can carry it. Both enumerations grade each file entry
+// through it, before the extension test, so the refusal does not depend on the venue.
+func unrepresentable(rel string) *Refusal {
+	if toon.Representable(rel) {
+		return nil
+	}
+	return &Refusal{Kind: "ticket path not representable", Path: rel}
+}
+
 // Enumerate walks one already-classified tickets directory and returns the
 // ticket files below it. Every venue that grades ticket grammar reads through
 // this one seam, so the enumeration semantics cannot drift between them.
@@ -93,14 +106,21 @@ func enumerate(base string, entries []fs.DirEntry, noFollow bool) ([]Entry, []st
 // commit does not hold is never a ticket. tracked holds each tracked regular file below the
 // tickets directory dir, slash-spelled from the root that dir is spelled from, and read
 // returns the bytes of one of them. The paths take the order of the directory walk, so the
-// duplicate rule keeps the copy that Enumerate keeps.
+// duplicate rule keeps the copy that Enumerate keeps. A path that Enumerate refuses as
+// unrepresentable refuses here with the same *Refusal.
 func EnumerateTracked(dir string, tracked []string, read func(string) ([]byte, error)) ([]Entry, []string, error) {
 	walk := slices.Clone(tracked)
 	slices.SortFunc(walk, func(a, b string) int { return slices.Compare(strings.Split(a, "/"), strings.Split(b, "/")) })
 	var found []Entry
 	for _, file := range walk {
 		rel, below := strings.CutPrefix(file, dir+"/")
-		if !below || path.Ext(file) != Ext {
+		if !below {
+			continue
+		}
+		if refusal := unrepresentable(rel); refusal != nil {
+			return nil, nil, refusal
+		}
+		if path.Ext(file) != Ext {
 			continue
 		}
 		data, err := read(file)
@@ -157,8 +177,8 @@ func scan(base, dir string, entries []fs.DirEntry, noFollow bool) ([]Entry, *Ref
 			continue
 		}
 		rel := filepath.ToSlash(relTo(base, path))
-		if !toon.Representable(rel) {
-			return nil, &Refusal{Kind: "ticket path not representable", Path: rel}
+		if refusal := unrepresentable(rel); refusal != nil {
+			return nil, refusal
 		}
 		var classified bounds.Classified
 		if noFollow {

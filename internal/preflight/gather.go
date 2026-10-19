@@ -315,14 +315,14 @@ func gatherTicketFolder(root, dir, mode, tag string, noFollow bool, tracked func
 	} else {
 		files, duplicates, refusal = tickets.Enumerate(dir, d.Entries)
 	}
-	if refusal != nil {
-		return ticketFacts{}, &BootstrapFailure{refusal.Kind, refusal.Message(dir)}
-	}
-	if tracked != nil {
+	if refusal == nil && tracked != nil {
 		var err error
-		if files, duplicates, err = tracked(); err != nil {
+		if files, duplicates, err = tracked(); err != nil && !errors.As(err, &refusal) {
 			return ticketFacts{}, &BootstrapFailure{"tickets not readable at the source tip", err.Error()}
 		}
+	}
+	if refusal != nil {
+		return ticketFacts{}, &BootstrapFailure{refusal.Kind, refusal.Message(dir)}
 	}
 	facts, gradeErr := gradeTickets(root, files, duplicates, tag)
 	if gradeErr != nil {
