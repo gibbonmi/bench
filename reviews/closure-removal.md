@@ -1,5 +1,38 @@
 # Review outcomes
 
+## CR3 review pickup
+
+The CR3 review ran on the frozen pair `a883604f..82309770`. Each axis ran on opus at high effort. The chunk has used 0 of its 2 repair cycles.
+
+The raw count is 10 findings, and the repair-target count is 7. S2 and C2 share the S1 fix, and S5, P1, and P2 have no CR3 repair target. Ticket 04 owns S1, S2, C1, C2, and C3. Ticket 05 owns S3 and S4. Ticket 06 owns P2.
+
+### Standards
+
+Count: 5. Worst issue: S1.
+
+- S1, auto-fix, confidence 7. `internal/preflight/staleness/collect.go` repeats the ticket read and parse of `coversAt` in `internal/preflight/staleness/coverage.go`. Give the ticket set of a commit one source that both audit faces read.
+- S2, auto-fix, confidence 4. The audit's ticket set does not apply the duplicate-basename rule of `tickets.Enumerate`. The S1 fix closes it.
+- S3, auto-fix, confidence 5. The craft-spec skill says "plus the implicit entries" and does not name them. Name `capture`, the spec folder, and the review pickup.
+- S4, auto-fix, confidence 4. The craft-spec skill says "Each fence" after the build leaves one derived fence. Correct the term.
+- S5, no-op, confidence 3. A rename of `fence_writes.go` is outside the acceptance.
+
+### Spec
+
+Count: 2. Worst issue: P2.
+
+- P1, no-op, confidence 3. The `fence` block lists the ticket union, as the spec decision states.
+- P2, no-op for CR3, confidence 8. The craft-review skill still says that the ownership fence lives in craft-spec. Ticket 06 owns that sentence.
+
+The section of this spec covers the whole ticket union plus `reviews/closure-removal.md`, with no gap (CR75).
+
+### Coverage
+
+Count: 3. Worst issue: C1.
+
+- C1, auto-fix, confidence 8. No test pins that a `(deleted)` entry authorizes its own deletion. Add a landing or build case.
+- C2, auto-fix, confidence 7. The audit scope drops a ticket under `tickets/sub/`, but the gather authorizes it. The S1 fix closes it, and a nested case pins it.
+- C3, auto-fix, confidence 6. The landing gathers its tickets from the filesystem, so a git-ignored ticket-shaped file can authorize paths. The landing fence must read only the tracked tickets at the source tip. The orchestrator flags this call for reviewer veto.
+
 ## CR2 second confirming-round pickup
 
 The second confirming round read the repair delta `d66a978f..a883604f`. Each axis ran on opus at high effort. The chunk used 2 of its 2 repair cycles, and the second cycle was its hardening cycle.
@@ -2302,7 +2335,81 @@ Count: 3. Worst issue: C1.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cr3-standards",
+          "performer": "claude:ft293_cr3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d9bc8d7cd35aeeea1516f1ed9082f8776e601067",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr3_standards",
+            "digest": "sha256:ee83ac9a58ef44a2414d0d6f8f0f028b7983f2eb95939fce4378d87520e5eec3",
+            "excerpt": "Standards axis, FT293 CR3 (a883604f..82309770). check-current current=true, dirty_record=false.\nS1 auto-fix 7: staleness/collect.go:84-96 copies coversAt (staleness/coverage.go:73-82): ReadControlBlob, the StageTicket wrap, ParseTicket args, and the ticket-file test (collect.go:89, coverage.go:38).\nS2 ask-user 4: ticketWrites lists tickets from git objects without the duplicate-basename rule of tickets.Enumerate, which ticketFence reads (enumerate.go:57-59).\nS3 auto-fix 5: craft-spec SKILL.md:65 says \"plus the implicit entries\" without naming them.\nS4 auto-fix 4: craft-spec SKILL.md:70 \"Each fence\" is ambiguous after one derived fence.\nS5 no-op 3: fence_writes.go keeps the retired check's file name.\nImplicit-entry set one source; CR65 generated from MetadataBlocks; no dead code; budgets hold. Count 5. Worst: S1.\n"
+          },
+          "axis": "Standards",
+          "base": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "tip": "8230977099a3702443b965c5af3f5f24b6859173",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cr3-spec",
+          "performer": "claude:ft293_cr3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d9bc8d7cd35aeeea1516f1ed9082f8776e601067",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr3_spec",
+            "digest": "sha256:7569a3b9cc91d6a16770021c89b3121b85ec122dc414db3d18c0a94e83740f32",
+            "excerpt": "Spec axis, FT293 CR3 (a883604f..82309770). check-current current=true, dirty_record=false. bench coverage --check: 94 rows valid.\nP1 no-op 3: story 32 is looser than decision spec.md:135; the fence block lists the ticket union as decided.\nP2 no-op for CR3 8: craft-review SKILL.md:42 \"The ownership fence lives in craft-spec\" is stale; ticket 06 owns it.\nRows CR55-CR72, CR77, CR86, CR87, CR90 closed; CR65 byte-equal; CR71 FenceTokens absent.\nCR75: union 220 paths, section 221; the only extra is reviews/closure-removal.md; no gap; every changed path since 36b1fafc is covered.\nCR76: no canary file changed; anchor rows keep the literal shape. Story 38 holds.\nCount 2 non-blocking. Worst: P2.\n"
+          },
+          "axis": "Spec",
+          "base": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "tip": "8230977099a3702443b965c5af3f5f24b6859173",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cr3-coverage",
+          "performer": "claude:ft293_cr3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d9bc8d7cd35aeeea1516f1ed9082f8776e601067",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr3_coverage",
+            "digest": "sha256:8c849a39c54bdf32b08107c7f1730b7b846d6235bfb670150004837260bba244",
+            "excerpt": "Coverage axis, FT293 CR3. check-current current=true at 96e49cc4; 5 probes, all restored=yes; tree clean.\nP1 required: pickup widened to reviews: bit (TestCommandBuildIgnoresAFenceSection, TestCommandReviewAuthorizesFromTicketWrites, TestLandCommandAuthorizesTheReviewPickup/another_review_record).\nP2 spec-folder entry becomes specs: bit (LS9). P3 plain string prefix in fenceAuthorizes: bit (TestCommandFencePrefixBoundary, TestDecidePathsAuthorized, LS10).\nP4 ticketFence drops (deleted) entries: silent. P5 audit ticketWrites drops nested tickets: silent.\nC1 fix 8: no test pins that a (deleted) entry authorizes its own deletion.\nC2 fix 7: the audit scope drops tickets under tickets/sub/ while the gather authorizes them.\nC3 decision 6: AuthorizeReviewedSource gathers tickets from the filesystem, scan does not skip dot files, and the landing dirty check leaves out ignored files, so an ignored ticket-shaped file can authorize paths; the audit reads committed objects.\nCount 3. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "tip": "8230977099a3702443b965c5af3f5f24b6859173",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
