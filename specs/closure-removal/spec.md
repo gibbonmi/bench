@@ -498,6 +498,7 @@ The kit audience is every repository that links the kit. A linked repository wit
 - `internal/spec/fences.go`
 - `internal/spec/fences_test.go`
 - `internal/preflight/preflighttest/reviewfiles.go`
+- `internal/preflight/preflighttest/reviewcases.go`
 - `internal/preflight/deletion_preflight_test.go`
 - `internal/preflight/charge_file_kinds_test.go`
 - `internal/preflight/kit_pin_new_test.go`
@@ -663,3 +664,4 @@ The final landing runs under the pre-FT293 broker. Before the landing, the orche
 
 - CR2 repair, 2026-10-18: the ticket 03 repair session ran the built `bench spec widen closure-removal --ticket 03-add-spec-widen-verb.md` for `internal/spec/widen_line_test.go` and `internal/spec/widen_signedoff_test.go`. The verb reported both entries as `added` inside the signed-off `internal/spec` prefix, changed only the `Writes:` value, and made no commit (repair commit aa7a35c4).
 - CR3 ticket 04, 2026-10-19: the orchestrator ran the built `bench spec widen closure-removal --ticket 04-derive-fence-from-tickets.md` for seven test files under `internal/preflight` and `internal/worktree`. The verb reported each entry as `added` inside the signed-off prefixes, changed only the `Writes:` value, and made no commit (plan commit e6ea15f0).
+- CR3 ticket 05, 2026-10-19: the orchestrator ran the built `bench spec widen closure-removal --ticket 05-retire-spec-fence-section.md` for eleven fixture callers under `internal/preflight`. The verb reported each entry as `added` inside the signed-off prefixes, changed only the `Writes:` value, and made no commit.
