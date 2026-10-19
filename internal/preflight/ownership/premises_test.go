@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/maps"
-	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
@@ -60,9 +59,9 @@ func TestMetadataGrammar(t *testing.T) {
 		"manual claim":                      {fenced(manualClaim(`"applicability":"current-premise"`)), false},
 	} {
 		t.Run("Complete "+name, func(t *testing.T) {
-			snapshot, err := ownership.Collect(t.TempDir(), ownership.Source{}, ownership.ParseManifest([]byte(test.text)), nil, nil)
-			if err != nil || snapshot.Complete != test.complete {
-				t.Fatalf("Collect = Complete %t, %v; want Complete %t", snapshot.Complete, err, test.complete)
+			snapshot := ownership.Collect(t.TempDir(), ownership.Source{}, ownership.ParseManifest([]byte(test.text)), nil)
+			if snapshot.Complete != test.complete {
+				t.Fatalf("Collect = Complete %t; want Complete %t", snapshot.Complete, test.complete)
 			}
 		})
 	}
@@ -311,42 +310,41 @@ func TestPredicatePremises(t *testing.T) {
 	}
 }
 
-// TestChargePremises drives build --charge through the real preflight.Command dispatcher
-// over proved and unproved premise inventories, asserting that every refusal leaves the
-// evidence store empty.
-func TestChargePremises(t *testing.T) {
+// TestChargeReadiness grades the charge readiness of proved and unproved premise inventories
+// through the actual collection. The audit reads the readiness blocker, so each unmet case
+// names its own fault.
+func TestChargeReadiness(t *testing.T) {
 	for name, facts := range map[string]string{
 		"complete decision inventory":           manifestJSON("declared-complete", nil, plannedSeam, rowDecisions, nil),
 		"OC51 decisions need not map every row": manifestJSON("declared-complete", nil, plannedSeam, rowDecisions[:1], nil),
 	} {
 		t.Run(name, func(t *testing.T) {
-			root, args := seedChargeRepo(t, "", facts, nil)
-			assertChargePublished(t, root, args)
+			root, _ := seedChargeRepo(t, "", facts, nil)
+			if ready := collectChargeSnapshot(t, root).ChargeReadiness; !ready.InventoryComplete || !ready.CurrentComplete {
+				t.Fatalf("charge readiness = %+v, want met", ready)
+			}
 		})
 	}
 	for _, test := range []struct {
 		name, spec, facts, want string
-		extra                   map[string]string
 	}{
-		{"OC54 partial inventory", "", manifestJSON("partial", nil, nil, nil, nil), "partial", nil},
-		{"OC54 stale current premise", "", withPremises(stalePremise), "p1", nil},
-		{"OC52 changed predicate bytes", "", manifestJSON("declared-complete", nil, plannedSeam, []string{decisionItem("dec-stale", "PF1", "does stale", 11, "does x"), rowDecisions[1]}, nil), "dec-stale", nil},
-		{"OC51 missing coverage row", "", manifestJSON("declared-complete", nil, plannedSeam, []string{decisionItem("dec-missing", "PF9", "does x", 11, "does x")}, nil), "PF9", nil},
-		{"OC53 dynamic caller claim", "", strings.Replace(manifestJSON("declared-complete", nil, plannedSeam, nil, nil), `"changes":[]`, `"changes":[`+dynamicChange+`]`, 1), "caller-census", dynamicCaller},
-		{"OC88 omitted second seam citation", citedSpec("`TestFoo`, `TestBar`"), manifestJSON("declared-complete", nil, plannedSeam, nil, nil), "TestBar", nil},
-		{"OC88 omitted single seam citation", citedSpec("`TestFoo`"), manifestJSON("declared-complete", nil, nil, nil, nil), "TestFoo", nil},
+		{"OC54 partial inventory", "", manifestJSON("partial", nil, nil, nil, nil), "partial"},
+		{"OC54 stale current premise", "", withPremises(stalePremise), "p1"},
+		{"OC52 changed predicate bytes", "", manifestJSON("declared-complete", nil, plannedSeam, []string{decisionItem("dec-stale", "PF1", "does stale", 11, "does x"), rowDecisions[1]}, nil), "dec-stale"},
+		{"OC51 missing coverage row", "", manifestJSON("declared-complete", nil, plannedSeam, []string{decisionItem("dec-missing", "PF9", "does x", 11, "does x")}, nil), "PF9"},
+		{"OC88 omitted second seam citation", citedSpec("`TestFoo`, `TestBar`"), manifestJSON("declared-complete", nil, plannedSeam, nil, nil), "TestBar"},
+		{"OC88 omitted single seam citation", citedSpec("`TestFoo`"), manifestJSON("declared-complete", nil, nil, nil, nil), "TestFoo"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			r, a := seedChargeRepo(t, test.spec, test.facts, test.extra)
-			assertChargeRefused(t, r, a, "charge-premises", test.want)
+			root, _ := seedChargeRepo(t, test.spec, test.facts, nil)
+			assertNotReady(t, root, test.want)
 		})
 	}
 }
 
-// TestChargeManualApplicability drives the actual charge and current-evidence routes over
-// manual claims. A valid native-future claim keeps Snapshot.Complete false and charges with
-// no future execution record. Each manualRefusals case refuses with no prepared handle, and
-// review and ordinary continuation stay unchanged.
+// TestChargeManualApplicability grades manual claims through the actual collection. A valid
+// native-future claim keeps Snapshot.Complete false, and the charge and current-evidence
+// routes still serve it. Each manualRefusals case keeps the charge readiness unmet.
 func TestChargeManualApplicability(t *testing.T) {
 	valid := validNative().json()
 	t.Run("OC89 OC93 native-future claim allows charge and current evidence", func(t *testing.T) {
@@ -359,42 +357,15 @@ func TestChargeManualApplicability(t *testing.T) {
 			t.Fatalf("current evidence = (%d):\n%s", code, out)
 		}
 	})
-	t.Run("OC94 current evidence refuses an unproved current premise", func(t *testing.T) {
-		count3 := strings.Replace(linesPremise("p1"), `"count":1`, `"count":3`, 1)
-		root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", []string{count3}, nil, nil, []string{valid}), nil)
-		identity := assertChargePublished(t, root, args)
-		preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n\n// Foo returns ctx.\nfunc Foo(ctx int) int { return ctx }\n")
-		preflighttest.RunGit(t, "commit", "-q", "-am", "grow foo.go")
-		out, code := checkCurrent(identity)
-		if code == 0 || !strings.Contains(out, "charge-premises") || !strings.Contains(out, "p1") || strings.Contains(out, "current[1]") {
-			t.Fatalf("current evidence over an unproved premise = (%d):\n%s", code, out)
-		}
-		if packs := preflighttest.PublishedPacks(t, root); len(packs) != 1 {
-			t.Fatalf("published packs = %v, want only the prepared one", packs)
-		}
-	})
 	for _, test := range manualRefusals() {
 		t.Run(test.name, func(t *testing.T) {
-			root, args := test.repo.seed(t)
+			root, _ := test.repo.seed(t)
 			if test.pending {
 				if pending := collectChargeSnapshot(t, root).ChargeReadiness.PendingNative; len(pending) != 1 {
 					t.Fatalf("pending native claims = %+v, want the valid claim", pending)
 				}
 			}
-			assertChargeRefused(t, root, args, "charge-premises", test.want)
+			assertNotReady(t, root, test.want)
 		})
 	}
-	t.Run("review and ordinary continuation stay unchanged", func(t *testing.T) {
-		root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", nil, nil, nil, []string{currentManualJSON("manual-current", "unproved current assumption")}), nil)
-		for _, verdict := range [][]string{
-			{"build", slug, "--base", args[6], "--source-tip", args[8]},
-			{"build", slug, "--plan-only", "--base", args[6], "--source-tip", args[8]},
-			{"review", slug, "--base", args[6], "--source-tip", args[8]},
-		} {
-			if out, code := preflight.Command(verdict); code != 0 || strings.Contains(out, "charge-premises") {
-				t.Errorf("%v = (%d):\n%s", verdict, code, out)
-			}
-		}
-		preflighttest.AssertNothingPublished(t, root)
-	})
 }

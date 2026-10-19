@@ -2,6 +2,8 @@ package tickets
 
 import (
 	"errors"
+	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -35,7 +37,7 @@ type Write struct {
 // ParseWrite is the one `Writes:` entry grammar. It strips one trailing marker and a
 // trailing `/` directory spelling. An entry cannot carry both markers, because a created
 // path and a removed file are contradictory authority. A deletion names an exact file, so
-// a directory spelling refuses.
+// a directory spelling refuses. The path must be a RepositoryPath.
 func ParseWrite(entry string) (Write, error) {
 	write := Write{Path: strings.TrimSpace(entry)}
 	markers := []struct {
@@ -57,7 +59,18 @@ func ParseWrite(entry string) (Write, error) {
 		return Write{}, errors.New("a " + deletedMarker + " entry names one exact file, not a directory")
 	}
 	write.Path = strings.TrimSuffix(write.Path, "/")
+	if !RepositoryPath(write.Path) {
+		return Write{}, errors.New("the path escapes the repository or is not clean")
+	}
 	return write, nil
+}
+
+// RepositoryPath reports whether one slash-spelled path names a place inside the repository
+// by its clean spelling. Covers matches an entry by its spelling, so a ".." segment would let
+// the entry cover a file outside the fence or the repository. The empty path names the
+// repository root.
+func RepositoryPath(p string) bool {
+	return p == "" || filepath.IsLocal(filepath.FromSlash(p)) && path.Clean(p) == p
 }
 
 // WritesPath projects ParseWrite onto the tree path one entry names and whether it

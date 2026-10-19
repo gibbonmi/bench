@@ -9,17 +9,12 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/consumers"
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/tickets"
 )
-
-// callersID names each diagnostic of a changed declaration's caller census.
-const callersID = "caller-census"
 
 // census reads the static references of declared owners. Its tip side is the typed
 // packages of the checkout, which must be clean and at the source tip, loaded once on first
@@ -35,32 +30,6 @@ type census struct {
 	err     error
 	tracked map[string][]string
 	symbols []SymbolIdentity
-}
-
-// use is one file that statically uses one changed declaration: the file and the line of
-// its first use, the revision that holds that use, and the change with the file and line
-// that declare it there.
-type use struct {
-	change         Change
-	file           string
-	line           int
-	rev, side      string
-	declared       string
-	declaredAtLine int
-}
-
-// declares reports whether subject covers the declaration that the use names: the owner
-// path before the change, or its declared destination.
-func (u use) declares(subject string) bool {
-	return tickets.Covers(subject, u.change.Owner.Path) || u.change.Destination != nil && tickets.Covers(subject, *u.change.Destination)
-}
-
-// reason is the source reason of one use. The use file and line are the evidence, and the
-// reason names the declaration that the change changes.
-func (u use) reason(source Source) Provenance {
-	return Provenance{Owner: u.file, Line: u.line, Rule: "caller " + u.change.Owner.Symbol,
-		Reason: fmt.Sprintf("%s uses %s, which change %s changes, declared in %s line %d at the source %s", u.file, u.change.Owner.Symbol, u.change.ID, u.declared, u.declaredAtLine, u.side),
-		Base:   source.Base, Tip: source.Tip, Source: u.rev, Scope: ScopeTree}
 }
 
 // packages is the typed tip side, which reads the checkout at the source tip.
@@ -124,62 +93,6 @@ func (c *census) relative(filename string) (string, error) {
 	return filepath.ToSlash(rel), err
 }
 
-// callers is every static use of each existing signature or fixture-helper change, in
-// production and test code: the typed references at the source tip and the lexical uses at
-// the source base. The base side keeps the former users of a relocated or deleted
-// declaration. A planned change declares a helper that has no callers yet, so it reads
-// none. Each census that cannot read stays diagnostic.
-func (c *census) callers(changes []Change) ([]use, []Diagnostic) {
-	var uses []use
-	var diagnostics []Diagnostic
-	diagnose := func(change Change, format string, args ...any) {
-		diagnostics = append(diagnostics, Diagnostic{ID: callersID, Reason: "change " + change.ID + ": " + fmt.Sprintf(format, args...)})
-	}
-	for _, change := range changes {
-		if change.State != "existing" || change.Kind != "signature" && change.Kind != "fixture-helper" {
-			continue
-		}
-		obj, file, line, err := c.declaration(change.Owner)
-		if err != nil {
-			diagnose(change, "the tip census does not read: %v", err)
-		}
-		if obj != nil {
-			if file != change.Owner.Path && (change.Destination == nil || file != *change.Destination) {
-				diagnose(change, "%s is declared in %s, which is neither its owner path nor its declared destination", change.Owner.Symbol, file)
-			}
-			for _, row := range consumers.Rows(c.pkgs, obj, c.root) {
-				if row.Via != consumers.ViaCall {
-					diagnose(change, "%s line %d uses %s as a non-call %s, so its dynamic callers are not a complete static census", row.File, row.Line, change.Owner.Symbol, row.Via)
-				}
-				uses = appendUse(uses, use{change: change, file: row.File, line: row.Line, rev: c.source.Tip, side: "tip", declared: file, declaredAtLine: line})
-			}
-		}
-		before, err := c.before(change)
-		switch {
-		case c.source.Base == "":
-			diagnose(change, "no explicit source base, so the former callers of %s are not read", change.Owner.Symbol)
-		case err != nil:
-			diagnose(change, "the base census does not read: %v", err)
-		case before.line == 0:
-			diagnose(change, "%s declares no %s at the source base", change.Owner.Path, change.Owner.Symbol)
-		case strings.Contains(localName(change.Owner), "."):
-			diagnose(change, "%s is a method, whose former callers need the types that the source base does not load", change.Owner.Symbol)
-		}
-		for _, found := range before.uses {
-			uses = appendUse(uses, use{change: change, file: found.File, line: found.Line, rev: c.source.Base, side: "base", declared: change.Owner.Path, declaredAtLine: before.line})
-		}
-	}
-	return uses, diagnostics
-}
-
-// appendUse keeps the first use of each file for each change and revision.
-func appendUse(uses []use, next use) []use {
-	if slices.ContainsFunc(uses, func(u use) bool { return u.change.ID == next.change.ID && u.file == next.file && u.rev == next.rev }) {
-		return uses
-	}
-	return append(uses, next)
-}
-
 // localName is an owner's declaration spelling inside its package, by the consumers query
 // grammar. Owner decoding refuses a symbol with no such spelling, so that read cannot fail
 // here.
@@ -190,12 +103,10 @@ func localName(owner Owner) string {
 
 // premises grades each current premise of a kind this census owns: a reused owner, a reused
 // test, the retirement, posture, and printed-field member censuses, the sizing premises, and
-// the symbol and rule premises. It answers the graded row of each such premise by ID, and
-// the reason that locates each verified reused owner's rule source, which the closure reads.
-// A fault leaves its premise unknown with that fault as the reason.
-func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance) {
+// the symbol and rule premises. It answers the graded row of each such premise by ID. A
+// fault leaves its premise unknown with that fault as the reason.
+func (c *census) premises(items []PremiseItem) map[string]Premise {
 	graded := map[string]Premise{}
-	var owners []Provenance
 	for _, item := range items {
 		var reason string
 		var err error
@@ -208,10 +119,7 @@ func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance
 		case item.State != "current":
 			continue
 		case item.Kind == "reused-owner":
-			var owner Provenance
-			if owner, reason, err = c.reusedOwner(item); err == nil {
-				owners = append(owners, owner)
-			}
+			reason, err = c.reusedOwner(item)
 		case item.Kind == "reused-test":
 			reason, err = c.reusedTest(item)
 		case member:
@@ -227,12 +135,12 @@ func (c *census) premises(items []PremiseItem) (map[string]Premise, []Provenance
 		}
 		graded[item.ID] = row
 	}
-	return graded, owners
+	return graded
 }
 
 // reusedOwner verifies one reused owner location at its pinned source and answers the
-// reason that locates the rule source the closure reads.
-func (c *census) reusedOwner(item PremiseItem) (Provenance, string, error) {
+// reason that locates its rule source.
+func (c *census) reusedOwner(item PremiseItem) (string, error) {
 	var expected struct {
 		Required bool `json:"required"`
 	}
@@ -243,17 +151,13 @@ func (c *census) reusedOwner(item PremiseItem) (Provenance, string, error) {
 	if err == nil && !expected.Required {
 		err = fmt.Errorf("expected: required is not true")
 	}
-	var rev string
 	if err == nil {
-		rev, err = c.locate(loc)
+		_, err = c.locate(loc)
 	}
 	if err != nil {
-		return Provenance{}, "", err
+		return "", err
 	}
-	at := fmt.Sprintf("%s line %d at the source %s", loc.Path, loc.Line, loc.Source)
-	reason := Provenance{Owner: loc.Path, Line: loc.Line, Rule: "reused owner", Reason: "premise " + item.ID + " reuses the rule that " + at + " holds",
-		Base: c.source.Base, Tip: c.source.Tip, Source: rev, Scope: ScopeTree}
-	return reason, "reused owner " + at + " holds its needle", nil
+	return fmt.Sprintf("reused owner %s line %d at the source %s holds its needle", loc.Path, loc.Line, loc.Source), nil
 }
 
 // reusedOwnerSubject decodes the subject of one reused-owner premise: its owner location.

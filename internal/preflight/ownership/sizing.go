@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/structure"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // sizingPremises is every sizing premise kind and its collector. A collector answers a
@@ -35,7 +36,7 @@ func (c *census) lines(item PremiseItem) (string, error) {
 	if err == nil && (expected.Count == nil || *expected.Count < 0) {
 		err = errors.New("expected: count is not a nonnegative integer")
 	}
-	if err == nil && (subject.Path == "" || !repositoryPath(subject.Path)) {
+	if err == nil && (subject.Path == "" || !tickets.RepositoryPath(subject.Path)) {
 		err = fmt.Errorf("subject: path %q is no clean repository path", subject.Path)
 	}
 	var rev string
@@ -88,9 +89,9 @@ func (c *census) globMembers(item PremiseItem) (string, error) {
 	case strings.Contains(pattern, "**"):
 		err = fmt.Errorf("pattern %q uses recursive ** syntax, which filepath.Match does not support", pattern)
 	case err != nil:
-	case !cut || dir == "" || !repositoryPath(dir) || strings.ContainsAny(dir, `*?[\`):
+	case !cut || dir == "" || !tickets.RepositoryPath(dir) || strings.ContainsAny(dir, `*?[\`):
 		err = fmt.Errorf("scope %q is no clean directory prefix free of pattern metacharacters", scope)
-	case !strings.HasPrefix(pattern, scope) || !repositoryPath(pattern):
+	case !strings.HasPrefix(pattern, scope) || !tickets.RepositoryPath(pattern):
 		err = fmt.Errorf("pattern %q escapes its scope %q", pattern, scope)
 	case expected.Members == nil || !slices.IsSorted(expected.Members) || len(slices.Compact(slices.Clone(expected.Members))) != len(expected.Members):
 		err = errors.New("expected: members is no complete sorted list of exact paths")
@@ -152,7 +153,7 @@ func (c *census) headroom(item PremiseItem) (string, error) {
 		err = errors.New("subject: files: create and delete are not JSON arrays")
 	case expected.Maximum == nil || expected.Current == nil || expected.Net == nil:
 		err = errors.New("expected: maximum, current, and net are not integers")
-	case dir == "" || !repositoryPath(dir):
+	case dir == "" || !tickets.RepositoryPath(dir):
 		err = fmt.Errorf("subject: directory %q is no clean repository directory", dir)
 	}
 	if err == nil {
@@ -250,7 +251,7 @@ func planned(dir string, tracked, create, remove []string) error {
 	for _, entry := range slices.Concat(create, remove) {
 		in, source := structure.SourceDirectory(entry)
 		switch {
-		case !repositoryPath(entry) || !source || in != dir:
+		case !tickets.RepositoryPath(entry) || !source || in != dir:
 			return fmt.Errorf("subject: files: %q is no source file of %s", entry, dir)
 		case slices.Contains(named, entry):
 			return fmt.Errorf("subject: files: %s is named more than once", entry)

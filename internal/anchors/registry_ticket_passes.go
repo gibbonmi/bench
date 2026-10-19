@@ -1,8 +1,8 @@
 package anchors
 
 // ticketSlicingAnchors pin the preflight and coverage command lines of ticket slicing and the
-// map seam cell, and they forbid the retired chunk ticket review, the known-issues copies, and
-// each retired step of the writes proposal and the breakdown.
+// map seam cell, and they forbid the retired chunk ticket review, the known-issues copies,
+// each retired step of the writes proposal and the breakdown, and the retired closure rows.
 var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: slicingChecks, Kind: RequireInSection, Class: Command, Section: "Slicing rules", Needle: "The slicer runs `bench preflight build <slug>` after each change to a ticket or an acceptance row.", Diagnostic: "ticket slicing: build preflight reruns after each ticket or acceptance row change"},
 	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Class: Command, Section: "Per row", Needle: "The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.", Diagnostic: "map discipline: an existing test seam cites its function in the resolvable form"},
@@ -18,6 +18,7 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: mapOnlyRoute, Kind: Forbid, Section: "", Needle: "--propose-writes", Diagnostic: "closure removal: the map-only route kept a writes-proposal step"},
 	{Group: AfterImplementSpec, File: mapDiscipline, Kind: Forbid, Section: "", Needle: "breakdown, proposal", Diagnostic: "closure removal: map discipline kept the breakdown and proposal steps"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "writes proposal", Diagnostic: "closure removal: the known-issues file kept a row that names the writes proposal"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Section: "", Needle: "-closure", Diagnostic: "closure removal: the implement-spec staleness route kept a closure row"},
 }
 
 // slicingChecks is the craft-tickets reference that states the slicing rules.

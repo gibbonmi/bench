@@ -227,27 +227,27 @@ The landing rows run through the landing surface tests, which already seed ticke
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
 | CR01 | 1, 13 | The all-green build verdict lists no `fixture-closure`, `registry-closure`, or `anchor-closure` row | `internal/preflight/decision_test.go` (`TestDecideAllGreen`) | The exact row list reds a returned closure row |
-| CR02 | 1, 13 | The build verdict renders no closure row for a ticket that writes a fixture-pinned path and a bound package | planned TestCommandBuildRendersFourGrammarRows in internal/preflight/command_build_test.go | The seeded pin and binding red a surviving closure row |
+| CR02 | 1, 13 | The build verdict renders no closure row for a ticket that writes a fixture-pinned path and a bound package | `internal/preflight/command_build_test.go` (`TestCommandBuildRendersFourGrammarRows`) | The seeded pin and binding red a surviving closure row |
 | CR03 | 13 | The build-mode verdict without a tickets folder lists its ticket-gated rows with no closure row | `internal/preflight/decision_test.go` (`TestTicketGatedRowsNotApplicableWithoutTickets`) | The exact ticket-gated list reds a returned closure row |
-| CR04 | 2 | A build charge exits 0 for a ticket whose `Writes:` names a fixture-pinned path without its fixture | planned TestChargePreparesWithoutClosure in internal/preflight/charge_test.go | The current closure row refuses this charge |
-| CR05 | 3 | A build charge exits 0 for a declared-complete inventory with an unproved current premise | planned TestChargePreparesWithUnprovedPremise in internal/preflight/charge_test.go | The current `charge-premises` row refuses this charge |
-| CR06 | 3 | The build charge verdict holds no `charge-premises` row | planned TestChargePreparesWithUnprovedPremise in internal/preflight/charge_test.go | A kept premise row prints in the charge verdict |
+| CR04 | 2 | A build charge exits 0 for a ticket whose `Writes:` names a fixture-pinned path without its fixture | `internal/preflight/charge_test.go` (`TestChargePreparesWithoutClosure`) | The current closure row refuses this charge |
+| CR05 | 3 | A build charge exits 0 for a declared-complete inventory with an unproved current premise | `internal/preflight/charge_test.go` (`TestChargePreparesWithUnprovedPremise`) | The current `charge-premises` row refuses this charge |
+| CR06 | 3 | The build charge verdict holds no `charge-premises` row | `internal/preflight/charge_test.go` (`TestChargePreparesWithUnprovedPremise`) | A kept premise row prints in the charge verdict |
 | CR07 | 4 | `bench preflight build s --propose-writes --ticket a.md --base B --source-tip T` exits 2 with a usage refusal | `internal/preflight/command_build_test.go` (`TestPreflightBuildRefusesRemovedForms`) | A kept proposal form exits 0 |
 | CR08 | 5 | `bench preflight build s --breakdown` exits 2 with a usage refusal | `internal/preflight/command_build_test.go` (`TestPreflightBuildRefusesRemovedForms`) | A kept breakdown form exits 0 |
 | CR09 | 6 | `bench help` prints no `--propose-writes` row | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | The complete inventory expectation reds a kept help row |
 | CR10 | 6 | `bench help` prints no `--breakdown` row | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | The complete inventory expectation reds a kept help row |
 | CR11 | 7 | `--audit-spec` reports an open diagnostic for a partial planning inventory | `internal/preflight/staleness/completeness_test.go` (`TestAuditCompleteness`) | A deleted premise collector drops this diagnostic |
 | CR12 | 7 | `--audit-spec` reports each pending native-future claim | `internal/preflight/staleness/completeness_test.go` (`TestAuditCompleteness`) | A deleted manual-claim collector drops these diagnostics |
-| CR13 | 8 | `--audit-spec` reports no `kit-registry` diagnostic for a ticket that writes a bound package without a verified seal | planned TestAuditReportsNoClosureDiagnostic in internal/preflight/staleness/completeness_test.go | The current closure adds this diagnostic and keeps manual review required |
-| CR14 | 9 | `bench preflight build` returns a verdict when the canary inventory does not parse | planned TestBuildVerdictReadsNoClosureInventory in internal/preflight/command_build_test.go | The current gather refuses with `fixture inventory refused` |
+| CR13 | 8 | `--audit-spec` reports no `kit-registry` diagnostic for a ticket that writes a bound package without a verified seal | `internal/preflight/staleness/completeness_test.go` (`TestAuditReportsNoClosureDiagnostic`) | The current closure adds this diagnostic and keeps manual review required |
+| CR14 | 9 | `bench preflight build` returns a verdict when the canary inventory does not parse | `internal/preflight/command_build_test.go` (`TestBuildVerdictReadsNoClosureInventory`) | The current gather refuses with `fixture inventory refused` |
 | CR15 | 10 | `internal/tickets` declares no `BindingRules` or `BoundFiles` function | review-owned: the Standards axis confirms the deletion of the binding table and its tests | A surviving registry compiles silently with no reader |
-| CR16 | 11 | `writes-resolve` reds a `Writes:` entry that names no tree path | planned TestCommandBuildRendersFourGrammarRows in internal/preflight/command_build_test.go | A deleted shared tree probe drops this red |
-| CR17 | 11 | `kit-pin` reds a system-tagged test file that a ticket writes without `BENCH_KIT` | planned TestCommandBuildRendersFourGrammarRows in internal/preflight/command_build_test.go | A deleted system-tag probe drops this red |
+| CR16 | 11 | `writes-resolve` reds a `Writes:` entry that names no tree path | `internal/preflight/command_build_test.go` (`TestCommandBuildRendersFourGrammarRows`) | A deleted shared tree probe drops this red |
+| CR17 | 11 | `kit-pin` reds a system-tagged test file that a ticket writes without `BENCH_KIT` | `internal/preflight/command_build_test.go` (`TestCommandBuildRendersFourGrammarRows`) | A deleted system-tag probe drops this red |
 | CR18 | 11 | `rows-owned` reds a declared row that no ticket cites | `internal/preflight/decision_test.go` (`TestDecideRowsOwned`) | A deleted `UncitedIDs` drops this red |
-| CR19 | 12 | `tickets.ParseWrite` refuses an entry with a `..` segment | planned TestParseWriteRefusesAnUncleanPath in internal/tickets/writes_test.go | The closure's clean-path refusal leaves with the closure |
-| CR20 | 12 | `tickets.ParseWrite` refuses an absolute entry | planned TestParseWriteRefusesAnUncleanPath in internal/tickets/writes_test.go | A rule that checks only `..` admits an absolute path |
-| CR21 | 12 | `tickets-parse` reds a ticket whose `Writes:` holds `internal/x/../../cmd/y.go` | planned TestCommandBuildRefusesAnUncleanWritesEntry in internal/preflight/command_build_test.go | A grammar rule that the ticket parser skips leaves the entry green |
-| CR22 | 12 | `bench preflight build` exits 1 for a ticket whose `Writes:` names `../outside.txt` while that file exists outside the repository | planned TestCommandBuildRefusesAnUncleanWritesEntry in internal/preflight/command_build_test.go | Without the grammar rule the tree probe finds the outside file and every row stays green |
+| CR19 | 12 | `tickets.ParseWrite` refuses an entry with a `..` segment | `internal/tickets/writes_test.go` (`TestParseWriteRefusesAnUncleanPath`) | The closure's clean-path refusal leaves with the closure |
+| CR20 | 12 | `tickets.ParseWrite` refuses an absolute entry | `internal/tickets/writes_test.go` (`TestParseWriteRefusesAnUncleanPath`) | A rule that checks only `..` admits an absolute path |
+| CR21 | 12 | `tickets-parse` reds a ticket whose `Writes:` holds `internal/x/../../cmd/y.go` | `internal/preflight/command_build_test.go` (`TestCommandBuildRefusesAnUncleanWritesEntry`) | A grammar rule that the ticket parser skips leaves the entry green |
+| CR22 | 12 | `bench preflight build` exits 1 for a ticket whose `Writes:` names `../outside.txt` while that file exists outside the repository | `internal/preflight/command_build_test.go` (`TestCommandBuildRefusesAnUncleanWritesEntry`) | Without the grammar rule the tree probe finds the outside file and every row stays green |
 | CR23 | 14 | `bench spec widen s --ticket a.md internal/x/y_test.go` appends `, internal/x/y_test.go` to the `Writes:` value when a signed-off entry names `internal/x/y.go` | planned TestSpecWidenAddsAnInScopeEntry in internal/spec/widen_test.go | A verb that writes nothing leaves the line unchanged |
 | CR24 | 14 | The in-scope widening prints one `widen[1]{ticket,entry,state}` row with state `added` at exit 0 | planned TestSpecWidenAddsAnInScopeEntry in internal/spec/widen_test.go | A silent write gives the caller no evidence |
 | CR25 | 25 | The in-scope widening leaves `HEAD` unchanged | planned TestSpecWidenAddsAnInScopeEntry in internal/spec/widen_test.go | A committing verb moves `HEAD` |
@@ -312,7 +312,7 @@ The landing rows run through the landing surface tests, which already seed ticke
 | CR86 | 43 | The craft-spec skill holds no `## Ownership fences` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored template section reds the forbid anchor |
 | CR87 | 43 | `bench-write-spec.md` holds the needle "After the ticket review accepts, `bench preflight build <slug> --plan-only` grades the whole ticket graph." in its Process section | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A sentence that keeps the fence step fails the exact needle |
 | CR88 | 44 | The operating guide names `bench spec widen` in its plan-expansion paragraph | review-owned: the Spec axis reads the paragraph against story 44 | Review owns rule wording, so no require anchor pins it |
-| CR89 | 45 | `bench-implement-spec.md` holds no `*-closure` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored closure route reds the forbid anchor |
+| CR89 | 45 | `bench-implement-spec.md` holds no `*-closure` text | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored closure route reds the forbid anchor |
 | CR90 | 45 | `bench-implement-spec.md` holds no `fence-writes` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored fence route reds the forbid anchor |
 | CR91 | 47 | `docs/known-issues.md` holds no `writes proposal` text | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored row reds the forbid anchor |
 | CR92 | 48 | The `[Unreleased]` section of `CHANGELOG.md` names `bench spec widen` | review-owned: the Spec axis reads the entry | Review owns changelog prose |
@@ -425,6 +425,9 @@ The kit audience is every repository that links the kit. A linked repository wit
 - `internal/preflight/ownership/premises.go`
 - `internal/preflight/ownership/sizing.go`
 - `internal/preflight/ownership/evidence.go`
+- `internal/preflight/ownership/metadata.go`
+- `internal/preflight/source_tip_test.go`
+- `internal/preflight/staleness/completeness.go`
 - `internal/preflight/ownership/parameter_grammar_test.go`
 - `internal/preflight/ownership/charge_fixture_test.go`
 - `internal/preflight/ownership/premises_fixture_test.go`

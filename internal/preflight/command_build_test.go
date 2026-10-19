@@ -134,6 +134,42 @@ func TestPreflightBuildRefusesRemovedForms(t *testing.T) {
 	}
 }
 
+// TestBuildVerdictReadsNoClosureInventory covers CR14. The committed canary inventory
+// holds a fixture whose MUTATE.json does not parse, and the build verdict still renders,
+// because no verdict row reads the fixture inventory.
+func TestBuildVerdictReadsNoClosureInventory(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	preflighttest.CommitChargeSource(t, root, slug, map[string]string{
+		"tests/canary/example-family/broken/EXPECT":      "planted diagnostic\n",
+		"tests/canary/example-family/broken/MUTATE.json": "{",
+	})
+	out, code := Command([]string{"build", slug})
+	if code != 0 || !strings.HasPrefix(out, "phase: build\n") {
+		t.Fatalf("build over an unparsable canary inventory = (%d), want a green verdict:\n%s", code, out)
+	}
+}
+
+// TestCommandBuildRefusesAnUncleanWritesEntry covers CR21 and CR22. The ticket grammar
+// refuses a `Writes:` entry that escapes the repository or is not clean, so tickets-parse
+// reds it. The fence names each entry, so no other row reds, and the outside file exists, so
+// the tree probe alone would find it.
+func TestCommandBuildRefusesAnUncleanWritesEntry(t *testing.T) {
+	for _, entry := range []string{"internal/x/../../cmd/y.go", "../outside.txt"} {
+		t.Run(entry, func(t *testing.T) {
+			root, slug := preflighttest.SeedConformant(t)
+			preflighttest.MustWriteFile(t, filepath.Join(filepath.Dir(root), "outside.txt"), "outside\n")
+			preflighttest.CommitChargeSource(t, root, slug, map[string]string{
+				"specs/" + slug + "/spec.md":        preflighttest.SpecBody(slug, "- `"+entry+"`"),
+				"specs/" + slug + "/tickets/one.md": preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), entry), "PF1", "PF2"),
+			})
+			out, code := Command([]string{"build", slug})
+			if code != 1 || !strings.Contains(out, "  tickets-parse,red,") || !strings.Contains(out, entry) {
+				t.Fatalf("build over the Writes: entry %s = (%d), want exit 1 with a tickets-parse red naming it:\n%s", entry, code, out)
+			}
+		})
+	}
+}
+
 // ticketWithoutAcceptance is one ticket file whose Acceptance section is absent,
 // so the rendered tickets-parse row has a fault of its own to name.
 func ticketWithoutAcceptance(blocker, covers string, writes ...string) string {
@@ -141,10 +177,11 @@ func ticketWithoutAcceptance(blocker, covers string, writes ...string) string {
 		"\nCovers: " + covers + "\n\n## What to build\n\nOne thing.\n"
 }
 
-// seedSixGrammarReds plants one tree in which each of the six grammar rows reds
-// on its own fact: an absent section, a blocker cycle, a typo path, a
-// fixture-pinned path, a bound package, and a system-tagged test file.
-func seedSixGrammarReds(t *testing.T) (root, slug string) {
+// seedGrammarReds plants one tree in which each of the four grammar rows reds on its own
+// fact: an absent section, a blocker cycle, a typo path, and a system-tagged test file. The
+// ticket also writes a fixture-pinned path and a bound package without naming the fixture
+// or the bound files, which a closure row would red.
+func seedGrammarReds(t *testing.T) (root, slug string) {
 	t.Helper()
 	slug = "example"
 	root = preflighttest.StartRepo(t)
@@ -170,11 +207,12 @@ func seedSixGrammarReds(t *testing.T) (root, slug string) {
 	return root, slug
 }
 
-// TestCommandBuildRendersSixGrammarRows covers TG26. `bench preflight build`
-// renders the six grammar rows in their fixed order, each red with its own
-// detail, so one red never hides another.
-func TestCommandBuildRendersSixGrammarRows(t *testing.T) {
-	_, slug := seedSixGrammarReds(t)
+// TestCommandBuildRendersFourGrammarRows covers TG26, CR02, CR16, and CR17. `bench
+// preflight build` renders the four grammar rows in their fixed order, each red with its
+// own detail, so one red never hides another. The red table holds no closure row for the
+// pinned path or the bound package.
+func TestCommandBuildRendersFourGrammarRows(t *testing.T) {
+	_, slug := seedGrammarReds(t)
 
 	out, code := Command([]string{"build", slug})
 	if code != 1 {
@@ -184,9 +222,10 @@ func TestCommandBuildRendersSixGrammarRows(t *testing.T) {
 		{"tickets-parse", "ticket grammar fault(s): a.md: missing Acceptance section"},
 		{"blockers-resolve", "blocker cycle(s): cycle edge b.md -> a.md"},
 		{"writes-resolve", "Writes: entry names no tree path and carries no (new) marker: a.md: gone.go"},
-		{"fixture-closure", "Writes: entry names a fixture-pinned path without naming the fixture: a.md: internal/example/pinned.go is pinned by tests/canary/example-family/pinning-fixture"},
-		{"registry-closure", "Writes: entry names a bound package without naming every bound file: a.md: internal/toon/toon_test.go requires internal/conformance/data_handling_test.go"},
 		{"kit-pin", "ticket writes a system-tagged test file without stating BENCH_KIT: a.md: internal/example/sys_test.go"},
+	}
+	if strings.Contains(out, "-closure,") {
+		t.Errorf("output renders a closure row:\n%s", out)
 	}
 	at := -1
 	for i, row := range rows {

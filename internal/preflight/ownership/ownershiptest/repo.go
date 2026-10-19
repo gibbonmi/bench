@@ -91,18 +91,14 @@ func (r Repo) Seed(t *testing.T) string {
 
 // Premises collects the planning inventory of the spec at source.SpecPath, as the source tip
 // holds it, and answers each premise row, then each diagnostic as an unknown row at the tip,
-// so an incomplete collection never reads as complete proof. A collection refusal fails the
-// test.
+// so an incomplete collection never reads as complete proof.
 func Premises(t *testing.T, root string, source ownership.Source) []ownership.Premise {
 	t.Helper()
 	content, err := git.ReadTreeFile(root, source.Tip, source.SpecPath)
 	if err != nil {
 		t.Fatalf("spec at the source tip: %v", err)
 	}
-	snapshot, err := ownership.Collect(root, source, ownership.ParseManifest(content), nil, nil)
-	if err != nil {
-		t.Fatalf("Collect: %v", err)
-	}
+	snapshot := ownership.Collect(root, source, ownership.ParseManifest(content), nil)
 	rows := slices.Clone(snapshot.Premises)
 	for _, diagnostic := range snapshot.Diagnostics {
 		rows = append(rows, ownership.Premise{ID: diagnostic.ID, State: ownership.StateUnknown, Source: source.Tip, Reason: diagnostic.Reason})

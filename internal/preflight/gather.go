@@ -100,15 +100,12 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	}
 	sealPresent, sealRefusal := binarySealFacts(root)
 	specPath := filepath.ToSlash(specref.RelTo(root, resolved))
-	collected := ownershipSource(root, specPath, resolvedSource, changedPaths, sealPresent, sealRefusal == nil)
-	snapshot, ownershipFailure := collectOwnership(root, content, collected, ids, ticketFacts.parsed)
-	if ownershipFailure != nil {
-		return Facts{}, ownershipFailure
-	}
 	var audited staleness.AuditFacts
 	if audit {
-		if audited, ownershipFailure = collectAudit(root, collected, snapshot); ownershipFailure != nil {
-			return Facts{}, ownershipFailure
+		source := ownership.Source{Base: resolvedSource.Base, Tip: resolvedSource.Tip, SpecPath: specPath}
+		var auditFailure *BootstrapFailure
+		if audited, auditFailure = collectAudit(root, content, source, ticketFacts.parsed); auditFailure != nil {
+			return Facts{}, auditFailure
 		}
 	}
 
@@ -137,9 +134,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		TicketDiagnostics:     ticketFacts.diagnostics,
 		BlockerCycles:         ticketFacts.cycles,
 		WritesPathExists:      ticketFacts.writes,
-		Ownership:             snapshot,
 		Audit:                 audited,
-		KitObligations:        kitObligations(root, snapshot),
 		WritesSystemTagged:    ticketFacts.systemTag,
 		TicketPinsKit:         ticketFacts.kitPinned,
 		TicketsDirExists:      ticketFacts.dirExists,
@@ -148,10 +143,12 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	})), nil
 }
 
-// collectAudit reads the staleness facts of the gathered source pair and the closure snapshot
-// of the same pair. A refused collection refuses the gather, so no partial audit reaches the
-// verdict.
-func collectAudit(root string, source ownership.Source, snapshot ownership.Snapshot) (staleness.AuditFacts, *BootstrapFailure) {
+// collectAudit reads the premise snapshot of the spec content against the parsed tickets,
+// then the staleness facts of the gathered source pair. No verdict row reads the snapshot,
+// so only the audit form collects it. A refused collection refuses the gather, so no
+// partial audit reaches the verdict.
+func collectAudit(root string, content []byte, source ownership.Source, parsed []tickets.Ticket) (staleness.AuditFacts, *BootstrapFailure) {
+	snapshot := ownership.Collect(root, source, ownership.ParseManifest(content), parsed)
 	audited, err := staleness.Collect(root, source, snapshot)
 	var refusal *staleness.Error
 	if errors.As(err, &refusal) {

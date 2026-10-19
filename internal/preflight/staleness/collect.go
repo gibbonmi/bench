@@ -12,7 +12,7 @@ import (
 
 // Collect reads the audit scope of the committed pair that source names at root. It reads
 // the spec and its planning-facts inventory at both identities from committed objects, never
-// from the checkout. sourceFacts is the closure snapshot of the same pair, whose diagnostics
+// from the checkout. sourceFacts is the premise snapshot of the same pair, whose diagnostics
 // and unproved inventory stay open in the audit and whose symbol identities the
 // cited-symbols audit grades. The test seams of the tip inventory are what the cited-tests
 // audit grades, and the coverage rows and ticket Covers of both identities join the

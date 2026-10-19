@@ -148,7 +148,8 @@ func emptyTree(tail string) ownershiptest.Repo {
 	}
 }
 
-// coveredTree owns its whole closure, so only a source or checkout refusal can stop it.
+// coveredTree is a conformant charge repository, so only a source or checkout refusal can
+// stop it.
 func coveredTree() ownershiptest.Repo {
 	return ownershiptest.Repo{
 		Writes: []string{"internal/example/pinned.go", "tests/canary/fam/pin-fixture"},

@@ -14,7 +14,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
-	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/staleness"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
@@ -115,18 +114,9 @@ type Facts struct {
 	// probe; whether an absent path is a fault is Decide's.
 	WritesPathExists map[string]bool
 
-	// Ownership is the canonical closure snapshot of the parsed tickets: every path each
-	// write requires, with every source reason, and the premise inventory with its
-	// diagnostics. The gatherer collects it; the closure rows grade its requirements.
-	Ownership ownership.Snapshot
-
 	// Audit is the staleness collection of the explicit pair. Only the audit form gathers it.
 	// staleness.Decide grades it, and Decide reads none of it.
 	Audit staleness.AuditFacts
-
-	// KitObligations is every required closure path that is a system-tagged test, with the
-	// file and line that carry the tag. The proposal reports each as a BENCH_KIT obligation.
-	KitObligations []KitObligation
 
 	// WritesSystemTagged reports, for each `Writes:` entry, whether it names a Go
 	// test file whose build constraint carries the system tag.
@@ -228,7 +218,7 @@ func Decide(f Facts) Verdict {
 		ticketRow(f, "blockers-resolve", blockersResolveCheck),
 		ticketRow(f, "writes-resolve", writesResolveCheck),
 	)
-	checks = append(append(checks, closureRows(f)...), ticketRow(f, "fence-writes", fenceWritesCheck), ticketRow(f, "kit-pin", kitPinCheck))
+	checks = append(checks, ticketRow(f, "fence-writes", fenceWritesCheck), ticketRow(f, "kit-pin", kitPinCheck))
 	if f.Mode == modeBuild {
 		// A root that publishes no binary is outside the seal's own scope.
 		checks = append(checks, exempt(binarySealCheck(f)))
@@ -238,9 +228,6 @@ func Decide(f Facts) Verdict {
 		ticketRow(f, "rows-membership", rowsMembershipCheck),
 		diffNonemptyRow(f),
 	)
-	if f.Mode == modeBuild && (f.Operation == evidencecmd.KindPrepareEvidence || f.Operation == evidencecmd.KindCurrentEvidence) {
-		checks = append(checks, chargePremisesCheck(f))
-	}
 	red := false
 	for _, c := range checks {
 		if c.Verdict == verdictRed {
@@ -370,15 +357,4 @@ func diffNonemptyCheck(f Facts) CheckResult {
 		return red("diff-nonempty", "no changed files since the resolved review base")
 	}
 	return green("diff-nonempty")
-}
-
-// chargePremisesCheck refuses build charge preparation and current-evidence binding unless
-// the planning-facts inventory and every required current premise are proved. Its detail is
-// the blocker that the charge readiness names.
-func chargePremisesCheck(f Facts) CheckResult {
-	ready := f.Ownership.ChargeReadiness
-	if ready.InventoryComplete && ready.CurrentComplete {
-		return green("charge-premises")
-	}
-	return red("charge-premises", ready.Blocker)
 }

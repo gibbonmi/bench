@@ -18,18 +18,29 @@ import (
 // grade the same files at phase entry.
 const ticketGrammarPrefix = "ticket-grammar: "
 
-// ticketGrammarOwners are the binding rows the table must always carry: the
-// dispatcher, the renderer, and the terminal-lifecycle owner. The list is
-// stated here rather than read from the registry, so a deleted owner row reds
-// the gate instead of quietly shrinking the expectation with it.
-var ticketGrammarOwners = []string{"cmd/bench", "internal/toon", "internal/terminal"}
-
-// checkTicketGrammar grades every staged spec's ticket files and the binding
-// table the ownership closure reads. The gate owns this sweep, so a malformed
-// ticket cannot land green behind a phase that never re-ran preflight.
+// checkTicketGrammar grades every staged spec's ticket files and the command-package list
+// that check-floor reads. The gate owns this sweep, so a malformed ticket cannot land green
+// behind a phase that never re-ran preflight.
 func checkTicketGrammar(root string) []string {
-	diags := sweepTicketFolders(root)
-	return append(diags, gradeTicketBindings(root, tickets.Bindings(), approvedAXIQueries)...)
+	return append(sweepTicketFolders(root), gradeCommandPackages(approvedAXIQueries, tickets.CommandPackage)...)
+}
+
+// gradeCommandPackages reds each approved AXI query command whose package the
+// command-package predicate does not hold. The approved query set is the AXI check's own
+// inventory, so a new verb cannot ship outside the list that check-floor reads.
+func gradeCommandPackages(approved map[string][]string, commandPackage func(string) bool) []string {
+	commands := make([]string, 0, len(approved))
+	for command := range approved {
+		commands = append(commands, command)
+	}
+	sort.Strings(commands)
+	var diags []string
+	for _, command := range commands {
+		if pkg := "internal/" + command; !commandPackage(pkg) {
+			diags = append(diags, fmt.Sprintf("%sAXI query command %q has no command-package entry for %s", ticketGrammarPrefix, command, pkg))
+		}
+	}
+	return diags
 }
 
 // sweepTicketFolders grades specs/<slug>/tickets/ for every spec folder. An
@@ -118,56 +129,15 @@ func ticketGrammarSpecTag(specPath string) string {
 	return tickets.TagOf(ids[0])
 }
 
-// gradeTicketBindings grades the command-to-registry binding table the
-// ownership closure reads. It proves three things: every bound file exists,
-// every approved AXI query command's package carries a row, and the three owner
-// rows are present. The approved query set is the AXI check's own inventory, so
-// a new verb cannot ship with no registry closure at all.
-func gradeTicketBindings(root string, rows []tickets.BindingRow, approved map[string][]string) []string {
-	bound := make(map[string]bool, len(rows))
-	var diags []string
-	for _, row := range rows {
-		bound[row.Prefix] = true
-		for _, file := range row.Files {
-			if !exists(filepath.Join(root, filepath.FromSlash(file))) {
-				diags = append(diags, fmt.Sprintf("%sbinding row %s names %s, which the tree does not hold", ticketGrammarPrefix, row.Prefix, file))
-			}
-		}
-	}
-	commands := make([]string, 0, len(approved))
-	for command := range approved {
-		commands = append(commands, command)
-	}
-	sort.Strings(commands)
-	for _, command := range commands {
-		pkg := "internal/" + command
-		if !bound[pkg] {
-			diags = append(diags, fmt.Sprintf("%sAXI query command %q has no binding row for %s", ticketGrammarPrefix, command, pkg))
-		}
-	}
-	for _, owner := range ticketGrammarOwners {
-		if !bound[owner] {
-			diags = append(diags, fmt.Sprintf("%sbinding table has no owner row for %s", ticketGrammarPrefix, owner))
-		}
-	}
-	return diags
-}
-
 func ticketGrammarUnreadable(rel string, state bounds.FileState, reason string) string {
 	return fmt.Sprintf("%s%s is %s: %s", ticketGrammarPrefix, rel, state, reason)
 }
 
-// ticketGrammarRoot builds a synthetic root that carries every file the binding
-// table names, so a sweep test observes the sweep's diagnostics alone.
+// ticketGrammarRoot builds an empty synthetic root, so a sweep test observes the
+// sweep's diagnostics alone.
 func ticketGrammarRoot(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	for _, row := range tickets.Bindings() {
-		for _, file := range row.Files {
-			writeTicketGrammarFile(t, root, file, "package placeholder\n")
-		}
-	}
-	return root
+	return t.TempDir()
 }
 
 func writeTicketGrammarFile(t *testing.T, root, rel, body string) {
@@ -243,47 +213,12 @@ func TestTicketGrammarSweepSkipsCoversWithoutSpec(t *testing.T) {
 	}
 }
 
-// TestTicketGrammarRedsMissingRegistryFile pins TG17.
-func TestTicketGrammarRedsMissingRegistryFile(t *testing.T) {
-	root := ticketGrammarRoot(t)
-	if err := os.Remove(filepath.Join(root, filepath.FromSlash("internal/toon/toon_test.go"))); err != nil {
-		t.Fatal(err)
-	}
-	want := "ticket-grammar: binding row internal/toon names internal/toon/toon_test.go, which the tree does not hold"
-	if diags := checkTicketGrammar(root); len(diags) != 1 || diags[0] != want {
-		t.Fatalf("absent bound file = %v, want exactly [%q]", diags, want)
-	}
-}
-
-// TestTicketGrammarRedsUnboundQueryPackage pins TG18.
-func TestTicketGrammarRedsUnboundQueryPackage(t *testing.T) {
-	root := ticketGrammarRoot(t)
-	var rows []tickets.BindingRow
-	for _, row := range tickets.Bindings() {
-		if row.Prefix != "internal/anchors" {
-			rows = append(rows, row)
-		}
-	}
-	want := `ticket-grammar: AXI query command "anchors" has no binding row for internal/anchors`
-	diags := gradeTicketBindings(root, rows, approvedAXIQueries)
-	if len(diags) != 1 || diags[0] != want {
-		t.Fatalf("dropped anchors row = %v, want exactly [%q]", diags, want)
-	}
-}
-
-// TestTicketGrammarRedsMissingOwnerRow pins TG36. The terminal row binds no AXI
-// query command, so only the owner rule can name its absence.
-func TestTicketGrammarRedsMissingOwnerRow(t *testing.T) {
-	root := ticketGrammarRoot(t)
-	var rows []tickets.BindingRow
-	for _, row := range tickets.Bindings() {
-		if row.Prefix != "internal/terminal" {
-			rows = append(rows, row)
-		}
-	}
-	want := "ticket-grammar: binding table has no owner row for internal/terminal"
-	diags := gradeTicketBindings(root, rows, approvedAXIQueries)
-	if len(diags) != 1 || diags[0] != want {
-		t.Fatalf("dropped terminal row = %v, want exactly [%q]", diags, want)
+// TestTicketGrammarRedsUnlistedQueryPackage pins TG18 over the command-package list. A list
+// that drops the anchors package reds the approved anchors query command.
+func TestTicketGrammarRedsUnlistedQueryPackage(t *testing.T) {
+	dropped := func(path string) bool { return path != "internal/anchors" && tickets.CommandPackage(path) }
+	want := `ticket-grammar: AXI query command "anchors" has no command-package entry for internal/anchors`
+	if diags := gradeCommandPackages(approvedAXIQueries, dropped); len(diags) != 1 || diags[0] != want {
+		t.Fatalf("dropped anchors package = %v, want exactly [%q]", diags, want)
 	}
 }

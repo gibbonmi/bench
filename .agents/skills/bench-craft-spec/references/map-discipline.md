@@ -140,7 +140,7 @@ governs each current-code claim in the spec prose.
 - A seam that names two concurrent gate runs in one repository first checks the
   gate execution lock, because the lock refuses the second authorization.
 - A transaction-shaped spec gives three rows for its verification failures. The rows are persistence before the oracle runs, interruption inside the oracle, and persistence at the terminal step.
-- Each in-scope edge-inventory promise, source promise, and fence-closure promise takes one red-capable row.
+- Each in-scope edge-inventory promise and source promise takes one red-capable row.
 - An either-side predicate takes two rows, one side per row. One row that names both sides is not sufficient.
 - Each named diagnostic state is addable or mutable in a fixture.
 - A row that names a refusal state cites the fixture path that reaches the state.

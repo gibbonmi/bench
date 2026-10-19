@@ -31,3 +31,28 @@ func TestWritesEntryCover(t *testing.T) {
 		}
 	}
 }
+
+// TestParseWriteRefusesAnUncleanPath covers CR19 and CR20. An entry whose path has a ".."
+// segment, an absolute path, or an unclean spelling is a grammar error, because a lexical
+// cover of such a spelling can authorize a file outside the fence or the repository. A clean
+// entry still parses with its markers and directory spelling.
+func TestParseWriteRefusesAnUncleanPath(t *testing.T) {
+	for _, entry := range []string{
+		"internal/x/../../cmd/y.go",
+		"../outside.txt",
+		"internal/a.go/.. (deleted)",
+		"/etc/passwd",
+		"/abs/dir/",
+		"internal//x.go",
+		"./internal/x.go (new)",
+	} {
+		if write, err := ParseWrite(entry); err == nil {
+			t.Errorf("ParseWrite(%q) = %+v, want an unclean-path refusal", entry, write)
+		}
+	}
+	for _, entry := range []string{"internal/x.go", "internal/d/", "internal/x.go (new)", "internal/gone.go (deleted)"} {
+		if _, err := ParseWrite(entry); err != nil {
+			t.Errorf("ParseWrite(%q) = %v, want a clean entry to parse", entry, err)
+		}
+	}
+}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -155,6 +156,44 @@ func TestChargeRefusesSpecialRequiredSource(t *testing.T) {
 			t.Fatalf("fifo source = (%d):\n%s", code, out)
 		}
 	})
+}
+
+// TestChargePreparesWithoutClosure covers CR04. The ticket writes a fixture-pinned path and
+// does not name the fixture, and the charge still prepares its evidence, because no
+// verdict row predicts the files that a write requires.
+func TestChargePreparesWithoutClosure(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	const pinned = "internal/example/pinned.go"
+	args := preflighttest.CommitChargeSource(t, root, slug, map[string]string{
+		"specs/" + slug + "/spec.md":             preflighttest.SpecBody(slug, "- `"+pinned+"`"),
+		"specs/" + slug + "/tickets/one.md":      preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), pinned), "PF1", "PF2"),
+		pinned:                                   "package example\n",
+		"tests/canary/example-family/pin/BASE":   pinned + "\n",
+		"tests/canary/example-family/pin/EXPECT": "planted diagnostic\n",
+	})
+	out, code := Command(args)
+	if code != 0 {
+		t.Fatalf("charge for a fixture-pinned write = (%d), want 0:\n%s", code, out)
+	}
+	preparedIdentity(t, out)
+}
+
+// TestChargePreparesWithUnprovedPremise covers CR05 and CR06. The declared-complete
+// inventory holds a current line-count premise that the seeded foo.go defeats, and the
+// charge prepares its evidence with no charge-premises row in its verdict.
+func TestChargePreparesWithUnprovedPremise(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	const stale = `{"id":"p1","location":{"path":"specs/example/spec.md","line":1,"needle":"# example","source":"spec"},` +
+		`"kind":"lines","state":"current","subject":{"path":"internal/example/foo.go","source":"tip"},"expected":{"count":9}}`
+	inventory := inventorytest.Section(inventorytest.Manifest("declared-complete", []string{stale}, nil, nil, nil))
+	args := preflighttest.CommitChargeSource(t, root, slug, map[string]string{
+		"specs/" + slug + "/spec.md": preflighttest.SpecBodyNoInventory(slug) + inventory,
+	})
+	out, code := Command(args)
+	if code != 0 || strings.Contains(out, "charge-premises") {
+		t.Fatalf("charge over an unproved premise = (%d), want 0 with no charge-premises row:\n%s", code, out)
+	}
+	preparedIdentity(t, out)
 }
 
 func TestLegacyPreflightDifferential(t *testing.T) {
