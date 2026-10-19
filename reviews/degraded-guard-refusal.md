@@ -1,5 +1,32 @@
 # Review outcomes
 
+## GR1 initial review pickup
+
+The initial review read the frozen pair `8ce8934d..6610036f`. Each axis ran on opus at medium effort. The axes found 8 findings, and 7 of them are repair targets. Ticket 01 owns every repair target, so one combined repair charge carries them. The chunk has used 0 of its 2 repair cycles, and the next repair is cycle 1.
+
+## Standards
+
+The axis found 4 findings. The worst issue is S1, because the delta records a red for only one of its independent test expectations.
+
+- S1, auto-fix, confidence 7. The test-expectation exception of `AGENTS.md` requires a recorded red. Record the red-to-green evidence of GR06-GR10, GR12, GR25, and GR32-GR34 in this pickup.
+- S2, auto-fix, confidence 8. The copied hook layout in `internal/systemtest/guard_refusal_test.go` repeats the layout in `internal/systemtest/bench_follow_on_test.go`. Use one helper for both tests.
+- S3, auto-fix, confidence 7. `gitGuardHookPath` repeats the inline hook-path join in `internal/systemtest/guard_rim_test.go`. Use one source for that path.
+- S4, auto-fix, confidence 6. `bashEnvelope` is a second envelope builder beside the defective `shellQuoteJSON`. Route every caller through one `encoding/json` builder. The orchestrator changed the axis disposition from ask-user to auto-fix, because `--auto-approve` directs it to fix a found defect at once.
+
+## Spec
+
+The axis found 2 findings. The worst issue is P2, because no test pins the coarse Git message for valid Git.
+
+- P1, no-op, confidence 7. The ticket commit rewrote the planned seam cells of the coverage map. `/bench-implement-spec` requires that rewrite in the ticket commit, so no repair target remains.
+- P2, auto-fix, confidence 6. GR13, GR14, and GR31 assert only the shared degraded prefix. Assert the coarse Git message too.
+
+## Coverage
+
+The axis found 2 findings. The worst issue is C1, because a mutation at the new wrapper-child status branch stays silent.
+
+- C1, auto-fix, confidence 8. Add row GR42: the missing-core hook exits 2 with the coarse Git refusal for `bash -c 'echo hi'; git push --force`.
+- C2, auto-fix, confidence 4. A lone apostrophe in a comment or a heredoc body now refuses as an unclosed quote. The approved decision refuses an unclosed single quote, so the code stays. The orchestrator adds a Won't-handle line and flags it for reviewer veto.
+
 ```bench-review-record
 {
   "version": 2,
@@ -267,7 +294,79 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gr1-standards-1",
+          "performer": "claude:ft366-gr1-standards-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9f6b558c91eb76ac2970a4edb5899bad31ab26ca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-standards-20261019",
+            "digest": "sha256:94b4dc0b2d4f351eccfa000eed4b1751a309be4dd5bc9e4962177f07ef35f0d3",
+            "excerpt": "## Standards\n4 findings. Worst: S1, independent test expectations with only one recorded red.\n- S1 auto-fix conf 7: AGENTS.md test-expectation exception requires a recorded red; parseRepairWant (guard_refusal_test.go:20) and the authority-phrase lists (guard_refusal_test.go:166, unlexed_test.go:52) have no recorded red for GR06-GR10, GR12, GR25, GR32-GR34; reviews/degraded-guard-refusal.md:133-160 holds only the GR03 probe. Fix: record a named mutation red for each row.\n- S2 auto-fix conf 8: \"a fixture harness pasted N times\"; the copy-hook-without-library harness at guard_refusal_test.go:64-79 repeats bench_follow_on_test.go:247-258. Fix: one systemtest helper for both.\n- S3 auto-fix conf 7: gitGuardHookPath at guard_refusal_test.go:129-131 derives the inline join at guard_rim_test.go:22 a second time. Fix: guard_rim_test.go calls gitGuardHookPath().\n- S4 ask-user conf 6: bashEnvelope at guard_refusal_test.go:143 is a second envelope builder beside the defective shellQuoteJSON at bench_follow_on_test.go:348-351. Fix: route all shellQuoteJSON callers through one encoding/json builder.\nAdvice: guard_refusal_test.go:65 names a directory with a space and brackets without a comment.\nImplementation command contributed to S2-S4: the Writes: line excluded the helper files.\n"
+          },
+          "axis": "Standards",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "a9324deb788d6de6d04313a79aad653246df064c",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr1-spec-1",
+          "performer": "claude:ft366-gr1-spec-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9f6b558c91eb76ac2970a4edb5899bad31ab26ca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-spec-20261019",
+            "digest": "sha256:6a655b0533daa4f574149f09026751d3fcff1bcebb29d46faef69302839a38b2",
+            "excerpt": "## Spec\n2 findings. Worst: P2, no test pins the coarse Git message for valid Git.\n- P1 ask-user conf 7: spec lines 202-203 give the spec folder to the planning author; the ticket commit edits 25 coverage-map seam cells from planned to citation form, outside the ticket Writes: line. No behavior change.\n- P2 auto-fix conf 6: spec line 20 \"Retain the coarse Git refusal\" and line 48 \"distinguishes recognized Git, supported non-Git, and an unparseable command\"; GR13, GR14, and GR31 assert only exit 2 and the shared \"BLOCKED: guard degraded\" prefix, so routing verdict 0 to the parse message stays green. Fix: assert \"can't classify commands\" or the absence of the repair sentence.\nAll 41 rows audited; each cited test exists and runs through its seam. All 10 Won't-handle lines hold. Advice: assertParseRefusal uses strings.Cut, so GR30 cannot confirm that the whole stderr stream starts with BLOCKED:.\nImplementation command contributed to P1.\n"
+          },
+          "axis": "Spec",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "a9324deb788d6de6d04313a79aad653246df064c",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr1-coverage-1",
+          "performer": "claude:ft366-gr1-coverage-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9f6b558c91eb76ac2970a4edb5899bad31ab26ca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-coverage-20261019",
+            "digest": "sha256:54609c92a3415abd46d6b6ede67bfa7546bbca73d0862740554c8c377bd27649",
+            "excerpt": "## Coverage\n2 findings. Worst: C1, a silent bypass at the new wrapper-child status branch.\n- C1 auto-fix conf 8: input `bash -c 'echo hi'; git push --force` to the missing-core hook; swapping `(( child != 1 )) && return \"$child\"` (block-dangerous-git.sh:151) for `return \"$child\"` exits 0 and every system guard test stays green. Missing: a row in TestDegradedGuardRefusesMalformedCommands that requires exit 2 and the degraded Git refusal.\n- C2 ask-user conf 4: a valid non-git recovery command with a lone apostrophe in a comment or heredoc body (`ls # don't`) now refuses as an unclosed quote; the removed lex_fallback allowed it. The Won't-handle \"full shell syntax validation\" (spec.md:182) may cover it.\nProbe: swap at block-dangerous-git.sh:151 to `return \"$child\"`, --check system --run 'TestDegradedGuard|TestGitGuard', silent, restored yes.\nImplementation command did not contribute.\n"
+          },
+          "axis": "Coverage",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "a9324deb788d6de6d04313a79aad653246df064c",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
