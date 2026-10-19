@@ -15,7 +15,7 @@ Build preflight gains the `chunk-rows` row. It compares the spec's `## Implement
 - A range with an undeclared endpoint, two tags, or a first number above its last number is a fault that names the token. Any other token that is not a row ID is a fault that names the token.
 - An absent table gives the detail `no Implementation chunks table`. An absent column gives the detail `chunk table has no acceptance rows column`.
 
-Extract the pipe-cell splitter inside `processMapLine` (`internal/coverage/rows.go`) into one function. The coverage-map reader and the new chunk-table reader in `internal/coverage/chunk_table.go` both call it. Write no second Markdown splitter. `coverage.ParseSpec` keeps its signature and its own read. The gatherer passes the spec bytes that it already holds (`content`, `internal/preflight/gather.go:37`) to the chunk-table reader, and `Facts` carries the listed row IDs and the faults.
+Extract the pipe-cell splitter inside `processMapLine` (`internal/coverage/rows.go`) into one function. The coverage-map reader and the new chunk-table reader in `internal/coverage/chunk_table.go` both call it. Write no second Markdown splitter. `coverage.ParseSpec` keeps its signature and its own read. The gatherer passes the spec bytes that it already holds (`content`, `internal/preflight/gather.go:37`) to the chunk-table reader, and `Facts` carries the listed row IDs and the faults. The reader never fails `Gather`: an absent table, an absent column, and each token fault reach `Facts` and show as a red row. The landing path runs `Gather` and only `paths-authorized` (`internal/preflight/gather.go:209-224`), so this rule keeps every landing unchanged.
 
 `Decide` appends `ticketRow(f, "chunk-rows", chunkRowsCheck)` directly after `rows-membership`. Put the check in `internal/preflight/chunk_rows.go` beside the pattern of `rowsMembershipCheck`. Add no charge code: the build and review charges already refuse on `verdict.Red`.
 
@@ -23,7 +23,7 @@ Make every spec fixture that reaches a graded verdict render a chunk table. Put 
 
 The canonical review spec in `reviewfiles.go:45` renders `SpecBodyNoInventory`, so the four stored `.toon` review baselines change with it. Regenerate each baseline once through its owner, and compare the old and new files in the commit message. The readers `internal/diff/patches_test.go` and `internal/preflight/evidencecmd/evidence_file_reconstruction_test.go` must stay green.
 
-`internal/preflight/decision_test.go` is over the 400-line structure ceiling with no grant, so its net line growth is zero. Put each new test in `chunk_rows_test.go` and extend `baseFacts` and the row-order lists in place. Update the row-order lists and counts in `decision_test.go` (`TestDecideAllGreen`), `charge_cells_test.go` (`TestDecideChargeRows`), and `source_tip_test.go` (`bareRowCount`). `internal/systemtest/charge_evidence_test.go` has 1 line of headroom, so edit its inline spec at line 61 in place.
+`internal/preflight/decision_test.go` (557 lines) and `internal/preflight/command_review_test.go` (480 lines) are over the 400-line structure ceiling with no grant, so the net line growth of each is zero. `internal/preflight/gather.go` has 8 lines of headroom and `internal/reviewrecord/recordtest/fixture.go` has 3. Put each new test in `chunk_rows_test.go` and extend `baseFacts` and the row-order lists in place. Each inline spec body calls the shared table renderer; paste no table. The plan writer of `internal/reviewrecord/recordtest/fixture.go` stays unchanged, and only the inline bodies of its two system callers gain a table. Update the row-order lists and counts in `decision_test.go` (`TestDecideAllGreen`), `charge_cells_test.go` (`TestDecideChargeRows`), and `source_tip_test.go` (`bareRowCount`). `internal/systemtest/charge_evidence_test.go` has 1 line of headroom, so edit its inline spec at line 61 in place.
 
 This ticket writes the system-tagged files `internal/systemtest/charge_evidence_test.go` and `internal/systemtest/owner_landing_fixture_test.go`, so run them through `bench test --check system`, which sets `BENCH_KIT` to the kit root.
 
@@ -36,6 +36,7 @@ Contract for ticket 03: this ticket names the row `chunk-rows`, and the completi
 ## Acceptance
 
 - [ ] `bench preflight build <slug>` prints a `chunk-rows` row directly after `rows-membership`.
+- [ ] The coverage-map reader and the chunk-table reader call one cell-split function.
 - [ ] A declared row that no acceptance cell lists reds `chunk-rows`, and the detail names that row.
 - [ ] An acceptance-cell ID that the map does not declare reds `chunk-rows`, and the detail names that ID.
 - [ ] `PF2-PF4` and `PF2–PF4` list PF2, PF3, and PF4 when the map declares all three, and they list exactly PF2 and PF4 when the map omits PF3.
