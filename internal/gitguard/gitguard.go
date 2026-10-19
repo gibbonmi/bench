@@ -137,8 +137,13 @@ func Classify(command string, chk Checker) string {
 
 // BlockMessage is the actionable refusal the guard returns to the agent for a blocked
 // command, naming the deny label and appending that label's advice sentence when the
-// table carries one. One source for the message the hook emits.
+// table carries one. One source for the message the hook emits. The unlexed refusal
+// carries only its repair advice, because the guard has not classified that command as
+// destructive, so the authority explanation does not apply to it.
 func BlockMessage(label string) string {
+	if label == denyLabels["unlexed"] {
+		return "BLOCKED: `" + label + "`. " + denyAdvice[label]
+	}
 	msg := "BLOCKED: `" + label + "` — you don't have authority over this. " +
 		"The merge and any history rewrite are the user's, and discarding work leaves a " +
 		"gate verdict answering for something other than what is " +

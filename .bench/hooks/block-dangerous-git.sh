@@ -86,30 +86,37 @@ input="$(cat)"
 # during the recovery session. An envelope with no readable command field is refused,
 # so the fail-closed posture survives the narrowing.
 #
+# Only a parsed command with no git invocation passes. A command the scan cannot parse
+# is refused with a parse diagnostic, which owns its repair sentence because the core
+# is unreachable.
+#
 # The threat model stays unchanged: honest mistakes, with the pre-push hook and the
 # pooled-worktree isolation as the backstops.
 fail_closed_no_core() {
-  local command_text
+  local command_text verdict=0
   if ! command_text="$(bench_envelope_command "$input")"; then
     echo "BLOCKED: guard degraded (bench core missing) — no readable command in this tool call, so refusing it. Restore the bench core (bench link) or hand back." >&2
     exit 2
   fi
-  if invokes_git "$command_text" 1; then
-    echo "BLOCKED: guard degraded (bench core missing) — can't classify commands, refusing anything that invokes git. Restore the bench core (bench link) or hand back." >&2
-    exit 2
-  fi
-  exit 0
+  invokes_git "$command_text" 1 || verdict=$?
+  case "$verdict" in
+    1) exit 0 ;;
+    0) echo "BLOCKED: guard degraded (bench core missing) — can't classify commands, refusing anything that invokes git. Restore the bench core (bench link) or hand back." >&2 ;;
+    *) echo "BLOCKED: guard degraded (bench core missing) — the guard cannot parse this command, so it refuses it. Close every quote and escape in the command, then run it again." >&2 ;;
+  esac
+  exit 2
 }
 
-# invokes_git succeeds when the command text runs `git` in command position. Argument $2
-# enables wrapper recursion, which goes exactly one level deep — the depth
-# internal/gitguard documents. The scan walks command by command and skips the
-# honest-mistake prefixes an agent types by reflex, so `git` as an argument or a path
-# component is not a match.
+# invokes_git returns 0 when the command text runs `git` in command position, 1 when it
+# runs no git, and 2 when lex_command cannot parse it. Argument $2 enables wrapper
+# recursion, which goes exactly one level deep — the depth internal/gitguard documents.
+# A wrapper child that cannot be parsed returns 2 for the whole command. The scan walks
+# command by command and skips the honest-mistake prefixes an agent types by reflex, so
+# `git` as an argument or a path component is not a match.
 invokes_git() {
-  local allow_wrapper=$2 flag
+  local allow_wrapper=$2 flag child
   local -a tok
-  lex_command "$1"
+  lex_command "$1" || return 2
   tok=()
   (( ${#LEXED[@]} )) && tok=("${LEXED[@]}")
   local n=${#tok[@]} i=0 expect=1 word base end j k
@@ -138,7 +145,11 @@ invokes_git() {
           while (( k < end )); do
             flag=${tok[$k]}
             if [[ "$flag" == -* && "${flag#-}" == *c* && "${flag#-}" != *[!A-Za-z]* ]]; then
-              (( k + 1 < end )) && invokes_git "${tok[$(( k + 1 ))]}" 0 && return 0
+              if (( k + 1 < end )); then
+                child=0
+                invokes_git "${tok[$(( k + 1 ))]}" 0 || child=$?
+                (( child != 1 )) && return "$child"
+              fi
               break
             fi
             k=$(( k + 1 ))
@@ -216,8 +227,9 @@ resolve_prefixes() {
 # lex_command splits a command line into LEXED, an array of words. Quotes and escapes
 # fold in, so a wrapper's `-c` string survives as one token. Runs of shell operator
 # characters form their own tokens, and a bare newline lexes as an operator, so a
-# multi-line block scans as separate commands. Unbalanced quoting falls back to a plain
-# split that still honors newline boundaries.
+# multi-line block scans as separate commands. It fails on an unclosed quote or a
+# trailing escape. A whitespace split of such a command joins an attached separator to
+# its neighbors, so it can hide a git word in command position.
 lex_command() {
   local text=$1 cur='' active=0 i=0 start n ch
   LEXED=()
@@ -247,7 +259,7 @@ lex_command() {
           cur="$cur${text:i:1}"
           i=$(( i + 1 ))
         done
-        (( i >= n )) && { lex_fallback "$text"; return 0; }
+        (( i >= n )) && return 1
         i=$(( i + 1 ))
         ;;
       '"')
@@ -262,11 +274,11 @@ lex_command() {
           cur="$cur${text:i:1}"
           i=$(( i + 1 ))
         done
-        (( i >= n )) && { lex_fallback "$text"; return 0; }
+        (( i >= n )) && return 1
         i=$(( i + 1 ))
         ;;
       '\')
-        (( i + 1 >= n )) && { lex_fallback "$text"; return 0; }
+        (( i + 1 >= n )) && return 1
         active=1
         cur="$cur${text:i+1:1}"
         i=$(( i + 2 ))
@@ -289,22 +301,6 @@ collapse_operator() {
   local op=${1//$'\n'/}
   [[ -z "$op" ]] && op=';'
   printf '%s' "$op"
-}
-
-# lex_fallback is the unbalanced-quoting path. It splits each line on whitespace and
-# keeps every newline as a command boundary, so a multi-line block still scans command
-# by command. It drops quote folding, exactly as internal/gitguard's tokenizer does.
-lex_fallback() {
-  local line first=1
-  local -a words
-  LEXED=()
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    (( first )) || LEXED+=(';')
-    first=0
-    words=()
-    read -r -a words <<< "$line"
-    (( ${#words[@]} )) && LEXED+=("${words[@]}")
-  done <<< "$1"
 }
 
 # Rim 1: the core is unresolvable. No wrapper exists on disk or PATH, so the guard

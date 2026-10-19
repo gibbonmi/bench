@@ -1439,6 +1439,14 @@
       "identity": "sha256:4ffdc4af39bd4ea9a4b4c69d80d8a25eb1a3f04475bb230dea66538423189725",
       "source": "be01ed0360b7507bb69873d5154f42857fea62f9",
       "evidence": "f8903f889af9f0fa45ca764f29e7e31a1df489b7"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT366-degraded-guard",
+      "binding": "degraded-guard-refusal",
+      "identity": "sha256:bc480b11202f47e3c680c6c2fada00d26f20c2cb0ed5476028c55db4ce978100",
+      "source": "1878ec6ce9c818357e2c36f8aa84d3005a5f87c7",
+      "evidence": "e8388886f1f48877dfeb13e25218dfa5b1203a2e"
     }
   ]
 }

@@ -55,8 +55,7 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		if err := owner.observeSelected(); err != nil {
 			t.Fatal(err)
 		}
-		envelope := `{"tool_name":"Bash","tool_input":{"command":` + shellQuoteJSON(command) + `}}`
-		return owner.runWithInput(dir, []string{"BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}, envelope, shell, hook)
+		return owner.runWithInput(dir, []string{"BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}, hookEnvelope(t, "Bash", command), shell, hook)
 	}
 	// blocked asserts the fixed refusal sentence on every refusal. (Coverage row G11.)
 	blocked := func(name, dir, command string) {
@@ -157,8 +156,7 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		{"FOG46 git --work-tree into the pool", "git --work-tree " + target + " status"},
 		{"FOG47 export of the pool path", "export W=" + target},
 	} {
-		envelope := `{"tool_name":"Bash","tool_input":{"command":` + shellQuoteJSON(tc.command) + `}}`
-		result := owner.runWithInput(repo, poolEnv, envelope, shellPath(t), hook)
+		result := owner.runWithInput(repo, poolEnv, hookEnvelope(t, "Bash", tc.command), shellPath(t), hook)
 		if result.code != 2 || !strings.Contains(result.stderr, `never cd, assign, or git -C into the pool path. target=`+target) {
 			t.Errorf("%s = (%d, %q, %q), want the pool refusal naming the target", tc.name, result.code, result.stdout, result.stderr)
 		}
@@ -167,8 +165,7 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 		}
 	}
 	for _, command := range []string{"cd /tmp", `cd "$W"`, "bench worktree exec \"x\" -- sh -c 'cd sub && go test ./...'", "cat " + target + "/x", "bench worktree release --request r " + target} {
-		envelope := `{"tool_name":"Bash","tool_input":{"command":` + shellQuoteJSON(command) + `}}`
-		if result := owner.runWithInput(repo, poolEnv, envelope, shellPath(t), hook); result.code != 0 || strings.Contains(result.stderr, "BLOCKED:") {
+		if result := owner.runWithInput(repo, poolEnv, hookEnvelope(t, "Bash", command), shellPath(t), hook); result.code != 0 || strings.Contains(result.stderr, "BLOCKED:") {
 			t.Errorf("allowed command %q = (%d, %q, %q)", command, result.code, result.stdout, result.stderr)
 		}
 	}
@@ -244,19 +241,7 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 			t.Errorf("FOG28-32 %q = (%d, %q, %q), want warning allow", envelope, result.code, result.stdout, result.stderr)
 		}
 	}
-	missingRoot := t.TempDir()
-	missingHook := filepath.Join(missingRoot, "hooks", "block-bench-follow-on.sh")
-	data, err := os.ReadFile(hook)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Dir(missingHook), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(missingHook, data, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	result := run(missingHook, t.TempDir(), []string{"PATH=" + privateToolPath(t, "git", "cat")}, `{"tool_input":{"command":"bench help | cat"}}`)
+	result := run(hookWithoutLibrary(t, hook), t.TempDir(), []string{"PATH=" + privateToolPath(t, "git", "cat")}, `{"tool_input":{"command":"bench help | cat"}}`)
 	if result.code != 0 || !strings.Contains(result.stderr, "wrapper resolver missing") {
 		t.Errorf("FOG19 missing resolver = (%d, %q, %q)", result.code, result.stdout, result.stderr)
 	}
@@ -304,8 +289,7 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 		{"BF23 stale core refuses a Bench call", "bench gate", 2, true},
 		{"BF23 stale core refuses a quoted Bench call", "'bench' gate", 2, true},
 	} {
-		envelope := `{"tool_input":{"command":` + shellQuoteJSON(tc.command) + `}}`
-		result := run(hook, staleRepo, []string{"BENCH_KIT=" + owner.kit}, envelope)
+		result := run(hook, staleRepo, []string{"BENCH_KIT=" + owner.kit}, hookEnvelope(t, "", tc.command))
 		if result.code != tc.code || !strings.Contains(result.stderr, action) {
 			t.Errorf("%s = (%d, %q, %q), want exit %d and the rebuild sentence %q", tc.row, result.code, result.stdout, result.stderr, tc.code, action)
 		}
@@ -343,9 +327,4 @@ func shellPath(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return shell
-}
-
-func shellQuoteJSON(value string) string {
-	replacer := strings.NewReplacer("\\", "\\\\", `"`, `\\"`, "\n", "\\n")
-	return `"` + replacer.Replace(value) + `"`
 }
