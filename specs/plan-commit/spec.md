@@ -331,7 +331,7 @@ All 17 specs with tickets passed with no unlisted row, no undeclared ID, and no 
 
 ### Pre-review proof checklist
 
-- `Cited symbols`: `processMapLine`, `coverage.ParseSpec`, `tickets.RowIDPattern`, `ticketRow`, `Decide`, `verdict.Red`, `seedFloorRepo`, `TestCheckFloorRefusesTheBuildCharge`, `TestDecideAllGreen`, `TestTicketGatedRowsNotApplicableWithoutTickets`, `TestCommandBuildCoversAcceptsEveryMapRowID`, `TestCommitChainReportsRedPreflight`, `TestReviewCheckpointChainGapNamesTheExpectedBase`, and `checkCoverageMaps` each resolve at commit 781706f19.
+- `Cited symbols`: `processMapLine`, `coverage.ParseSpec`, `tickets.RowIDPattern`, `ticketRow`, `Decide`, `verdict.Red`, `seedFloorRepo`, `TestCheckFloorRefusesTheBuildCharge`, `TestDecideAllGreen`, `TestCommitChainReportsRedPreflight`, `TestReviewCheckpointChainGapNamesTheExpectedBase`, and `checkCoverageMaps` each resolve at commit 781706f19.
 - `Import edges`: none new; `internal/preflight` already imports `internal/coverage`, and `internal/coverage` already imports `internal/tickets`.
 - `Source-row clauses and occurrences`: the source-sentence table above quotes each clause; the 17 occurrences map to PC1 (GT-C1), PC21 and PC22 (the DC-C8 plan commit), PC23 and PC30 (TF-C3, D-C4, AP-C7), PC24 (the DC-C8 seam correction, RT-CURRENT, durable-caller-migration), PC25 (BD-C4), PC26 (BD-C3, SS-C2), PC27 (FT370, build-directions), PC28 (SB1), and PC29 (PS-D, FT379); DC-C9 belongs to the closure that FT293 removed.
 - `Promised field labels`: the row name `chunk-rows` and the refusal prefix `preflight required: chunk-rows`.
