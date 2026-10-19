@@ -2,8 +2,6 @@ package staleness
 
 import (
 	"fmt"
-	"maps"
-	"path"
 	"slices"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -30,11 +28,15 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 		return AuditFacts{}, err
 	}
 	tipManifest := ownership.ParseManifest(current)
-	writes, err := ticketWrites(root, source)
+	baseTickets, err := TicketsAt(root, source.Base, source.SpecPath)
 	if err != nil {
 		return AuditFacts{}, err
 	}
-	entries, unread := scope(source.SpecPath, writes, []ownership.Manifest{ownership.ParseManifest(baseline), tipManifest})
+	tipTickets, err := TicketsAt(root, source.Tip, source.SpecPath)
+	if err != nil {
+		return AuditFacts{}, err
+	}
+	entries, unread := scope(source.SpecPath, ticketWrites(baseTickets, tipTickets), []ownership.Manifest{ownership.ParseManifest(baseline), tipManifest})
 	before, err := members(root, source.Base, entries)
 	if err != nil {
 		return AuditFacts{}, err
@@ -44,9 +46,7 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 		return AuditFacts{}, err
 	}
 	facts := AuditFacts{Baseline: source.Base, Tip: source.Tip, SpecPath: source.SpecPath, Paths: union(before, after)}
-	if facts.Coverage, err = coverageStates(root, source.SpecPath, baseline, current, facts.Paths); err != nil {
-		return AuditFacts{}, err
-	}
+	facts.Coverage = coverageStates(source.SpecPath, baseline, current, facts.Paths, baseTickets, tipTickets)
 	cited, undecided, err := symbols(root, facts.Paths, sourceFacts.Symbols)
 	if err != nil {
 		return AuditFacts{}, err
@@ -74,30 +74,14 @@ func readSpec(root, commit, specPath, stage string) ([]byte, error) {
 	return content, nil
 }
 
-// ticketWrites is the `Writes:` entries of each ticket in the spec's tickets folder at the
-// base and then at the tip, read from committed objects, in path order. Another file in the
-// tickets folder is an asset that the ticket grammar ignores. A ticket object that does not
-// read refuses the collection.
-func ticketWrites(root string, source ownership.Source) ([]string, error) {
+// ticketWrites is the `Writes:` entries of each ticket in the base set and then in the tip
+// set, in ticket and entry order.
+func ticketWrites(base, tip []CommittedTicket) []string {
 	var writes []string
-	for _, commit := range []string{source.Base, source.Tip} {
-		found, err := members(root, commit, []string{ticketsDir(source.SpecPath)})
-		if err != nil {
-			return nil, err
-		}
-		for _, ticketPath := range slices.Sorted(maps.Keys(found)) {
-			if path.Ext(ticketPath) != tickets.Ext {
-				continue
-			}
-			content, err := git.ReadControlBlob(root, found[ticketPath].ID)
-			if err != nil {
-				return nil, &Error{Stage: StageTicket, Subject: ticketPath, Cause: err}
-			}
-			parsed, _ := tickets.ParseTicket(path.Base(ticketPath), content, nil, "")
-			writes = append(writes, parsed.Writes...)
-		}
+	for _, ticket := range append(slices.Clone(base), tip...) {
+		writes = append(writes, ticket.Parsed.Writes...)
 	}
-	return writes, nil
+	return writes
 }
 
 // scope is every entry the audit enumerates: the active spec and its tickets, the `Writes:`

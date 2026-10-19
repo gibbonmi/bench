@@ -214,24 +214,25 @@ func TestDriftIdentity(t *testing.T) {
 }
 
 // TestAuditScopeReadsTicketWrites covers CR66 and CR67. Each changed file that only the base
-// ticket or only the tip ticket writes is in scope, and a path that only a leftover fence
-// section lists stays outside it.
+// ticket, only the tip ticket, or only a nested ticket writes is in scope. A path that only a
+// leftover fence section or a second copy of a ticket basename names stays outside it.
 func TestAuditScopeReadsTicketWrites(t *testing.T) {
 	_, slug := preflighttest.SeedAdmitted(t)
-	ticket := "specs/" + slug + "/tickets/one.md"
+	ticket, nested, duplicate := "specs/"+slug+"/tickets/one.md", "specs/"+slug+"/tickets/sub/two.md", "specs/"+slug+"/tickets/sub/one.md"
 	const member, exact, added, leftover = "outside/fenced/member.txt", "outside/exact.txt", "outside/added.txt", "outside/leftover.txt"
+	const below, dropped = "outside/nested.txt", "outside/dropped.txt"
 	writes := func(entries ...string) string {
 		return preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), entries...), "PF1", "PF2")
 	}
-	write(t, map[string]string{specPath(slug): preflighttest.WithLeftoverFence(preflighttest.SpecBody(slug), leftover),
-		ticket: writes("outside/fenced/", exact), member: "one\n", exact: "one\n", added: "one\n", leftover: "one\n"})
+	write(t, map[string]string{specPath(slug): preflighttest.WithLeftoverFence(preflighttest.SpecBody(slug), leftover), nested: writes(below), duplicate: writes(dropped),
+		ticket: writes("outside/fenced/", exact), member: "one\n", exact: "one\n", added: "one\n", leftover: "one\n", below: "one\n", dropped: "one\n"})
 	before := commitAll(t, "baseline ticket writes")
-	write(t, map[string]string{ticket: writes(added), member: "two\n", exact: "two\n", added: "two\n", leftover: "two\n"})
+	write(t, map[string]string{ticket: writes(added), member: "two\n", exact: "two\n", added: "two\n", leftover: "two\n", below: "two\n", dropped: "two\n"})
 	tip := commitAll(t, "tip ticket writes")
 	modified := func(path string) string {
 		return path + "|" + path + "|modified|" + object(t, before, path) + "|" + object(t, tip, path)
 	}
-	want := sorted(modified(ticket), modified(member), modified(exact), modified(added))
+	want := sorted(modified(ticket), modified(member), modified(exact), modified(added), modified(below))
 	if out, _ := audit(t, slug, before, tip); !slices.Equal(driftRows(t, out), want) {
 		t.Fatalf("ticket writes drift = %q, want %q:\n%s", driftRows(t, out), want, out)
 	}

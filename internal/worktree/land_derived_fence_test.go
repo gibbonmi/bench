@@ -4,6 +4,7 @@ package worktree
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -34,6 +35,30 @@ func TestLandCommandAuthorizesFromTicketWrites(t *testing.T) {
 	}
 	if got := gitOutput(t, f.root, "show", "main:ticket-only.txt"); got != "ticket bytes" {
 		t.Fatalf("published ticket-only path = %q", got)
+	}
+}
+
+// TestLandCommandReadsOnlyTrackedTickets checks that the fence reads only the tickets of the
+// source tip. A git-ignored ticket-shaped file in the clean source checkout names a committed
+// path, and the landing refuses that path.
+func TestLandCommandReadsOnlyTrackedTickets(t *testing.T) {
+	t.Parallel()
+	request := "land-derived-fence-ignored-ticket"
+	f := landSurface(t, request)
+	const notes = ".notes.md"
+	exclude := gitOutput(t, f.creation.Path, "rev-parse", "--path-format=absolute", "--git-path", "info/exclude")
+	mustMkdirAll(t, filepath.Dir(exclude), 0o755)
+	mustWrite(t, exclude, []byte(notes+"\n"), 0o644)
+	ignored := path.Join(path.Dir(landingTicket), notes)
+	mustWrite(t, filepath.Join(f.creation.Path, filepath.FromSlash(ignored)), []byte("Writes: ignored-only.txt\n"), 0o644)
+	if status := gitOutput(t, f.creation.Path, "status", "--porcelain", "--ignored", path.Dir(ignored)); status != "!! "+ignored {
+		t.Fatalf("ticket-shaped file status = %q, want it ignored", status)
+	}
+	commitInWorktree(t, f.creation.Path, "ignored-only.txt", "ignored bytes\n", "write named only by an ignored file")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	r := runVerb(t, verbLand, f.processHomeCall(landArgs(request, f.base, tip, f.creation.Path)...))
+	if r.exit != 1 || !strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:\n  ignored-only.txt\n") {
+		t.Fatalf("ignored-ticket landing = (%d, %q, %q), want ignored-only.txt refused", r.exit, r.stdout, r.stderr)
 	}
 }
 

@@ -97,6 +97,20 @@ func TestCommandSpecWithoutFenceSection(t *testing.T) {
 	}
 }
 
+// TestCommandAuthorizesADeletedEntry checks that a ticket entry `x (deleted)` authorizes the
+// deletion of x, which no other entry and no fence section covers.
+func TestCommandAuthorizesADeletedEntry(t *testing.T) {
+	const gone = "internal/gone.go"
+	ticket := preflighttest.WritesTicketDoc("One", []string{gone + " (deleted)"}, "PF1", "PF2")
+	seedFence(t, preflighttest.SpecBody(fenceSlug), map[string]string{"one.md": ticket}, gone)
+	preflighttest.RunGit(t, "branch", "-f", "main", "HEAD")
+	preflighttest.RunGit(t, "rm", "-q", gone)
+	preflighttest.RunGit(t, "commit", "-q", "-m", "c2")
+	if row := authorizedRow(t, modeBuild); row.Verdict != verdictGreen {
+		t.Fatalf("paths-authorized = %+v, want green for the deletion of %s", row, gone)
+	}
+}
+
 // leftoverFence seeds a spec whose leftover fence section lists internal/leftover/ and a
 // ticket that writes only internal/ticketonly/. The feature branch changes a path under
 // each, the review pickup, and another review record.

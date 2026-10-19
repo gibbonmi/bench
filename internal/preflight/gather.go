@@ -194,13 +194,27 @@ func (e UnauthorizedPathsError) Error() string { return e.Detail }
 
 // AuthorizeReviewedSource gathers a new review snapshot for root, slug, and
 // base. It returns the source range only when its committed paths pass the
-// ownership fence that the staged spec's tickets derive. It returns an error
-// for gather failure, a red authorization row, or an unresolved range. A
-// caller's earlier Facts or range cannot replace this final authorization.
+// ownership fence that the staged spec's tickets derive. The fence reads the
+// tickets of the source tip from committed objects, so a checkout file that the
+// tip does not hold, such as an ignored one, authorizes nothing. It returns an
+// error for gather failure, an unreadable ticket set, a red authorization row,
+// or an unresolved range. A caller's earlier Facts or range cannot replace this
+// final authorization.
 func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) {
 	facts, failure := Gather(root, "review", slug, base)
 	if failure != nil {
 		return diff.SourceRange{}, fmt.Errorf("%s: %s", failure.Kind, failure.Hint)
+	}
+	if facts.SourceBase == "" || facts.SourceTip == "" {
+		return diff.SourceRange{}, errors.New("reviewed source range is unresolved")
+	}
+	committed, err := staleness.TicketsAt(root, facts.SourceTip, facts.SpecPath)
+	if err != nil {
+		return diff.SourceRange{}, err
+	}
+	facts.Tickets = nil
+	for _, ticket := range committed {
+		facts.Tickets = append(facts.Tickets, ticket.Parsed)
 	}
 	check := pathsAuthorizedCheck(facts)
 	if check.Verdict == verdictRed {
@@ -208,9 +222,6 @@ func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) 
 			return diff.SourceRange{}, UnauthorizedPathsError{Detail: check.Detail, Paths: unauthorized}
 		}
 		return diff.SourceRange{}, errors.New(check.Detail)
-	}
-	if facts.SourceBase == "" || facts.SourceTip == "" {
-		return diff.SourceRange{}, errors.New("reviewed source range is unresolved")
 	}
 	return diff.SourceRange{Base: facts.SourceBase, Tip: facts.SourceTip, CommittedPaths: facts.ChangedPaths, DeletedPaths: facts.DeletedPaths}, nil
 }
