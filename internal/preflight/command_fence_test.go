@@ -2,6 +2,7 @@ package preflight
 
 import (
 	"os"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -42,15 +43,8 @@ func seedFence(t *testing.T, spec string, tickets map[string]string, changes ...
 // authorizedRow is the paths-authorized row that Decide grades over the working tree.
 func authorizedRow(t *testing.T, mode string) CheckResult {
 	t.Helper()
-	root, err := git.Root()
-	if err != nil {
-		t.Fatal(err)
-	}
-	facts, failure := Gather(root, mode, fenceSlug, "")
-	if failure != nil {
-		t.Fatalf("gather %s: %s: %s", mode, failure.Kind, failure.Hint)
-	}
-	row, ok := checkRow(Decide(facts), "paths-authorized")
+	_, checks := gatherOver(t, mode)
+	row, ok := checkRow(Verdict{Checks: checks}, "paths-authorized")
 	if !ok {
 		t.Fatal("verdict holds no paths-authorized row")
 	}
@@ -143,6 +137,60 @@ func TestCommandReviewAuthorizesFromTicketWrites(t *testing.T) {
 	out, code := Command([]string{"review", fenceSlug})
 	if row := authorizedRow(t, modeReview); code != 1 || row.Verdict != verdictRed || row.Detail != unauthorizedLeftover {
 		t.Fatalf("review = (%d) with paths-authorized %+v, want the red %q:\n%s", code, row, unauthorizedLeftover, out)
+	}
+}
+
+// gatherOver is the facts of mode over the working tree and the verdict rows that Decide
+// grades over them.
+func gatherOver(t *testing.T, mode string) (Facts, []CheckResult) {
+	t.Helper()
+	root, err := git.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	facts, failure := Gather(root, mode, fenceSlug, "")
+	if failure != nil {
+		t.Fatalf("gather %s: %s: %s", mode, failure.Kind, failure.Hint)
+	}
+	return facts, Decide(facts).Checks
+}
+
+// TestCommandReviewReadsOnlyTrackedTickets checks that review preflight grades the tickets of
+// the source tip. A git-ignored ticket-shaped file names a committed path and cites the rows,
+// and the review verdict equals the verdict without that file.
+func TestCommandReviewReadsOnlyTrackedTickets(t *testing.T) {
+	const change = "internal/ignored/x.go"
+	seedFence(t, preflighttest.SpecBody(fenceSlug), map[string]string{"one.md": preflighttest.TicketDoc("One", "PF1")}, change)
+	trackedFacts, tracked := gatherOver(t, modeReview)
+	preflighttest.MustWriteFile(t, preflighttest.RunGit(t, "rev-parse", "--git-path", "info/exclude"), ".notes.md\n")
+	preflighttest.MustWriteFile(t, "specs/"+fenceSlug+"/tickets/.notes.md", preflighttest.WritesTicketDoc("Notes", []string{"internal/ignored/ (new)"}, "PF2"))
+	if status := preflighttest.RunGit(t, "status", "--porcelain", "--ignored", "specs"); status != "!! specs/"+fenceSlug+"/tickets/.notes.md" {
+		t.Fatalf("ticket-shaped file status = %q, want it ignored", status)
+	}
+	facts, got := gatherOver(t, modeReview)
+	if !reflect.DeepEqual(got, tracked) || !reflect.DeepEqual(facts.Tickets, trackedFacts.Tickets) {
+		t.Fatalf("review verdict with an ignored ticket =\n%+v\nwant the tracked-only verdict\n%+v", got, tracked)
+	}
+	if row, _ := checkRow(Verdict{Checks: got}, "paths-authorized"); row.Verdict != verdictRed || row.Detail != "not authorized by any ownership fence: "+change {
+		t.Fatalf("paths-authorized = %+v, want red for %s", row, change)
+	}
+}
+
+// TestCommandReviewKeepsTheCheckoutDuplicate checks that the tracked ticket walk of review
+// preflight keeps the copy of a duplicate basename that the checkout walk of build preflight
+// keeps, when a nested copy sorts first.
+func TestCommandReviewKeepsTheCheckoutDuplicate(t *testing.T) {
+	seedFence(t, preflighttest.SpecBody(fenceSlug), map[string]string{
+		"z.md":   preflighttest.WritesTicketDoc("Top", []string{"internal/top/ (new)"}, "PF1", "PF2"),
+		"a/z.md": preflighttest.WritesTicketDoc("Nested", []string{"internal/nested/ (new)"}, "PF1", "PF2"),
+	}, "internal/nested/a.go")
+	build, _ := gatherOver(t, modeBuild)
+	review, _ := gatherOver(t, modeReview)
+	if !slices.ContainsFunc(build.TicketDiagnostics, func(d string) bool { return strings.HasPrefix(d, "duplicate ticket basename z.md") }) {
+		t.Fatalf("build diagnostics = %q, want the duplicate z.md named", build.TicketDiagnostics)
+	}
+	if !reflect.DeepEqual(review.Tickets, build.Tickets) || !slices.Equal(review.TicketDiagnostics, build.TicketDiagnostics) {
+		t.Fatalf("review tickets =\n%+v %q\nwant the build tickets\n%+v %q", review.Tickets, review.TicketDiagnostics, build.Tickets, build.TicketDiagnostics)
 	}
 }
 

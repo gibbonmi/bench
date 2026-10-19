@@ -23,27 +23,34 @@ type CommittedTicket struct {
 	Parsed tickets.Ticket
 }
 
-// TicketsAt is the tickets of the spec's tickets folder at commit, read from committed objects
-// through the one tracked-ticket enumeration. A nested ticket counts, and a later copy of a
-// basename does not, as in the checkout enumeration. Each reader of the ticket set of one
-// commit reads this one answer. A tickets-folder member that is no regular file, or a ticket
-// object that does not read, refuses with an *Error.
-func TicketsAt(root, commit, specPath string) ([]CommittedTicket, error) {
+// TicketEntriesAt is the ticket files of the spec's tickets folder at commit, read from
+// committed objects through the one tracked-ticket enumeration, with its duplicate-basename
+// diagnostics. A nested ticket counts, and a later copy of a basename does not, as in the
+// checkout enumeration. Each reader of the ticket set of one commit reads this one answer. A
+// tickets-folder member that is no regular file, or a ticket object that does not read,
+// refuses with an *Error.
+func TicketEntriesAt(root, commit, specPath string) ([]tickets.Entry, []string, error) {
 	dir := ticketsDir(specPath)
 	found, err := members(root, commit, []string{dir})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	entries, _, err := tickets.EnumerateTracked(dir, slices.Collect(maps.Keys(found)), func(file string) ([]byte, error) {
+	return tickets.EnumerateTracked(dir, slices.Collect(maps.Keys(found)), func(file string) ([]byte, error) {
 		content, err := git.ReadControlBlob(root, found[file].ID)
 		if err != nil {
 			return nil, &Error{Stage: StageTicket, Subject: file, Cause: err}
 		}
 		return content, nil
 	})
+}
+
+// TicketsAt is TicketEntriesAt parsed, with each ticket at its repository path.
+func TicketsAt(root, commit, specPath string) ([]CommittedTicket, error) {
+	entries, _, err := TicketEntriesAt(root, commit, specPath)
 	if err != nil {
 		return nil, err
 	}
+	dir := ticketsDir(specPath)
 	set := make([]CommittedTicket, 0, len(entries))
 	for _, entry := range entries {
 		parsed, _ := tickets.ParseTicket(entry.Name, entry.Data, nil, "")

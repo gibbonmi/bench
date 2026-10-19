@@ -62,6 +62,28 @@ func TestLandCommandReadsOnlyTrackedTickets(t *testing.T) {
 	}
 }
 
+// TestLandCommandRefusesAnUnreadableTicketSet checks that a tracked ticket read that fails
+// refuses the landing, and no checkout ticket replaces it. The tip commits a ticket as a
+// symbolic link to a ticket-shaped file whose `Writes:` line names a committed path.
+func TestLandCommandRefusesAnUnreadableTicketSet(t *testing.T) {
+	t.Parallel()
+	request := "land-derived-fence-linked-ticket"
+	f := landSurface(t, request)
+	linked := path.Join(path.Dir(landingTicket), "x.md")
+	mustWrite(t, filepath.Join(f.creation.Path, "specs", "x", "linked.md"), []byte("Writes: linked-only.txt\n"), 0o644)
+	if err := os.Symlink("../linked.md", filepath.Join(f.creation.Path, filepath.FromSlash(linked))); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, f.creation.Path, "add", "specs/x")
+	commitInWorktree(t, f.creation.Path, "linked-only.txt", "linked bytes\n", "write named only by a linked ticket")
+	refreshLandingEvidence(t, f.creation.Path, f.base)
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	r := runVerb(t, verbLand, f.processHomeCall(landArgs(request, f.base, tip, f.creation.Path)...))
+	if r.exit != 1 || !strings.Contains(r.stdout, "special source "+linked) {
+		t.Fatalf("linked-ticket landing = (%d, %q, %q), want the link refused", r.exit, r.stdout, r.stderr)
+	}
+}
+
 // TestLandCommandAuthorizesTheReviewPickup covers CR58. The landing's own review record is
 // an implicit entry that no ticket names, and another review record stays outside the fence.
 func TestLandCommandAuthorizesTheReviewPickup(t *testing.T) {
