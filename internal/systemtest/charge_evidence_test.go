@@ -19,6 +19,7 @@ import (
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 )
@@ -58,7 +59,7 @@ func newEvidenceJourney(t *testing.T) evidenceJourney {
 			t.Fatal(err)
 		}
 	}
-	spec := "# x\n\nStatus: staged\n\n## User stories\n1. Prepare evidence.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | prepares | command | catches failure |\n" + inventorytest.Section(inventorytest.CompleteEmpty)
+	spec := "# x\n\nStatus: staged\n\n## User stories\n1. Prepare evidence.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | prepares | command | catches failure |\n" + inventorytest.Section(inventorytest.CompleteEmpty) + preflighttest.ChunkTable("E1")
 	recordtest.Prepare(t, root, 1, "specs/x/spec.md", spec)
 	commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")
 	commitmenttest.Commit(t, root, "approve fixture delivery")
