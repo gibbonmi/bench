@@ -1,8 +1,8 @@
 # Refuse malformed guard commands with repair advice
 
 Blocked by: none
-Writes: .bench/hooks/block-dangerous-git.sh, internal/gitguard/gitguard.go, internal/gitguard/unlexed_test.go, internal/systemtest/guard_refusal_test.go (new)
-Covers: GR01, GR02, GR03, GR04, GR05, GR06, GR07, GR08, GR09, GR10, GR11, GR12, GR13, GR14, GR15, GR16, GR17, GR18, GR19, GR20, GR21, GR22, GR23, GR24, GR25, GR26, GR27, GR28, GR29, GR30, GR31, GR32, GR33, GR34, GR35, GR36, GR37, GR38, GR39, GR40, GR41
+Writes: .bench/hooks/block-dangerous-git.sh, internal/gitguard/gitguard.go, internal/gitguard/unlexed_test.go, internal/systemtest/guard_refusal_test.go (new), internal/systemtest/guard_rim_test.go, internal/systemtest/bench_follow_on_test.go
+Covers: GR01, GR02, GR03, GR04, GR05, GR06, GR07, GR08, GR09, GR10, GR11, GR12, GR13, GR14, GR15, GR16, GR17, GR18, GR19, GR20, GR21, GR22, GR23, GR24, GR25, GR26, GR27, GR28, GR29, GR30, GR31, GR32, GR33, GR34, GR35, GR36, GR37, GR38, GR39, GR40, GR41, GR42
 
 ## What to build
 
@@ -75,6 +75,7 @@ Do not start an unsealed system binary.
 - [ ] The core classifies the exec-child push as unresolved (GR39).
 - [ ] The core refuses `bash -c 'git push'` (GR40).
 - [ ] The core permits `bash -c 'sh -c "git push"'` (GR41).
+- [ ] The missing-core hook exits 2 with the coarse Git refusal for `bash -c 'echo hi'; git push --force` (GR42).
 
 ## Checkpoint verification
 
@@ -134,6 +135,6 @@ The coordinator owns any approved plan expansion.
 
 This ticket is the sole member of GR1.
 Freeze its predecessor and committed tip for Standards, Spec, and Coverage review.
-Reconcile GR01-GR41 against the complete approved spec after that checkpoint.
+Reconcile GR01-GR42 against the complete approved spec after that checkpoint.
 The review pickup is `reviews/degraded-guard-refusal.md`.
 The coordinator owns that pickup and the final acceptance record.

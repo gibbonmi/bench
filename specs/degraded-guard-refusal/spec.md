@@ -63,7 +63,7 @@ This repair adds no shared parser, command, or runtime dependency.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
-| GR1 / 01-refuse-malformed-guard-commands.md | The Git guard refuses malformed degraded input with parse-repair diagnostics | GR01-GR41 | The real hook, core entry, and Git message tests | yes |
+| GR1 / 01-refuse-malformed-guard-commands.md | The Git guard refuses malformed degraded input with parse-repair diagnostics | GR01-GR42 | The real hook, core entry, and Git message tests | yes |
 
 This is one behavior outcome with one independent implementation review checkpoint.
 Independent spec acceptance precedes this one-ticket slice.
@@ -162,6 +162,7 @@ The shell owns its repair text because it must work without the core.
 | GR39 | 15 | The core classifies the exec-child push as unresolved | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | The target checkout cannot inherit the current checkout's push facts |
 | GR40 | 7 | The core refuses `bash -c 'git push'` | `internal/gitguard/scan_test.go` (`TestScanWrapperDepthAndGlobalOpts`) | A removed wrapper branch loses the supported first level |
 | GR41 | 7 | The core permits `bash -c 'sh -c "git push"'` | `internal/gitguard/scan_test.go` (`TestScanWrapperDepthAndGlobalOpts`) | Deeper recursion changes the core's pinned uncertainty rule |
+| GR42 | 4, 7 | The missing-core hook exits 2 with the coarse Git refusal for `bash -c 'echo hi'; git push --force` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | A scan that stops after a clean wrapper child permits the later Git command |
 
 ### Edge inventory
 
@@ -180,6 +181,7 @@ This outcome changes neither cleanup behavior nor durable records.
 - **Won't handle**: a second wrapper level retains the depth fixture in `TestDegradedGuardRimDecidesFromTheCommandField`.
 - **Won't handle**: shell expansions and arbitrary executable aliases remain outside `gitguard.scanWords` and `invokes_git`.
 - **Won't handle**: full shell syntax validation remains outside the supported subset in `lex_command`.
+- **Won't handle**: comment and heredoc syntax remain outside `lex_command`, so a lone apostrophe there refuses as an unclosed quote in the degraded hook.
 - **Won't handle**: common envelope validation remains with `CommandFromEnvelope` and `bench_envelope_command` until the separate grammar outcome.
 - **Won't handle**: the core retains its current unreadable-envelope allow case in `TestGuardGitBlockAllow`.
 - **Won't handle**: new Git-option or worktree-child recognition remains outside this repair of `gitguard.scanWords`.
@@ -195,6 +197,8 @@ The prospective build owns these exact paths:
 - `internal/gitguard/gitguard.go`
 - `internal/gitguard/unlexed_test.go`
 - `internal/systemtest/guard_refusal_test.go`
+- `internal/systemtest/guard_rim_test.go`
+- `internal/systemtest/bench_follow_on_test.go`
 - `reviews/degraded-guard-refusal.md`
 
 The ticket owns four implementation paths.
@@ -338,7 +342,7 @@ It also refreshed five drifted line citations.
 |---|---|---|
 | implementation line | Sol 6.1 at high effort | spec and ticket accepted |
 | seam | the real degraded hook and selected core entry | spec and ticket accepted |
-| coverage and edges | GR01-GR41 plus the named exclusions | spec and ticket accepted |
+| coverage and edges | GR01-GR42 plus the named exclusions | GR42 and the comment exclusion added by the GR1 review |
 | ownership fences | four ticket paths plus the review pickup | narrowed by the build-entry staleness pass |
 | scope | malformed degraded refusal and parse-only Git diagnostics | spec and ticket accepted |
 | residuals | grammar, scan, and `rg` outcomes remain separate | retained |
