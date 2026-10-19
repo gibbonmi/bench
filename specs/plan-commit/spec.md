@@ -295,6 +295,8 @@ No test in this spec swaps a package variable.
 
 A read-only census on 2026-10-19 applied the two-way predicate with the range rule above to each staged spec at commit 781706f19.
 All 17 specs with tickets passed with no unlisted row, no undeclared ID, and no fault.
+That census included `degraded-guard-refusal`, which retired before this build, and it did not include this spec.
+At build entry (commit 7b45186c9), 16 other staged specs have tickets, and the PC18 plan-only verdicts of ticket 01 grade them and this spec.
 `session-context-efficiency` has no tickets and no chunk table, so the ticket gate keeps the row not-applicable for it.
 
 ### Flagged additions
