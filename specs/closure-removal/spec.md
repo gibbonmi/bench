@@ -654,3 +654,7 @@ At 658ba0dbb, `bench-write-spec.md` holds 87 of 87 lines, `bench-implement-spec.
 Each ticket author observes each independent new expectation red before the production edit, or through a named `bench probe`. The author probes in CR1 remove the clean-path refusal, in CR2 admit every entry, in CR3 drop the implicit pickup, and in CR4 restore the refusal-boundary sentence. The coordinator probe appends the leftover section tokens to the authorizing entries. A CR3 review probe widens the pickup entry to the `reviews` folder and expects `reviews/<other>.md` to red `paths-authorized`. Each probe must report a restored subject.
 
 The final landing runs under the pre-FT293 broker. Before the landing, the orchestrator compares this spec's fence section with its ticket union plus the pickup. After the landing, `/bench-final-check` runs the broker install step that the landing names.
+
+### Dogfood runs
+
+- CR2 repair, 2026-10-18: the ticket 03 repair session ran the built `bench spec widen closure-removal --ticket 03-add-spec-widen-verb.md` for `internal/spec/widen_line_test.go` and `internal/spec/widen_signedoff_test.go`. The verb reported both entries as `added` inside the signed-off `internal/spec` prefix, changed only the `Writes:` value, and made no commit (repair commit aa7a35c4).
