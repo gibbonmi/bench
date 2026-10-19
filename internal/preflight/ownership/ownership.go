@@ -51,12 +51,11 @@ type Diagnostic struct {
 
 // ChargeReadiness is the charge-specific projection of the premise inventory.
 // InventoryComplete means a declared-complete inventory passed its structural checks; it
-// is no review and no proof. PendingNative holds the validated native-future claims.
-// Blocker names the first unmet condition, and it is empty when the inventory is complete
-// and each required current-source premise has complete supported proof.
+// is no review and no proof. Blocker names the first unmet condition, and it is empty when
+// the inventory is complete and each required current-source premise has complete supported
+// proof. A validated native-future claim is no unmet condition.
 type ChargeReadiness struct {
 	InventoryComplete bool
-	PendingNative     []ManualClaim
 	Blocker           string
 }
 

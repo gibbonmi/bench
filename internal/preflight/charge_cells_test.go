@@ -12,26 +12,38 @@ import (
 )
 
 // TestDecideChargeRows covers CR06. A build charge and its current-evidence check decide
-// the same rows as the build verdict, so neither charge operation adds a premise row. A
-// prepared charge prints no check row, so the test reads Decide directly.
+// the same rows as a build verdict over the same source pair, so neither charge operation
+// adds a premise row. Each case holds the facts that its real gather holds: both read an
+// explicit source range, and only the charge pins its source tip, which adds tip-current.
+// A prepared charge prints no check row, so the test reads Decide directly.
 func TestDecideChargeRows(t *testing.T) {
-	wantChecks := []string{
-		"base-current", "paths-authorized",
+	verdictRows := []string{
+		"paths-authorized",
 		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
 		"fence-writes", "kit-pin", "binary-seal",
 		"rows-owned", "rows-membership", "diff-nonempty",
 	}
-	for _, kind := range []evidencecmd.Kind{evidencecmd.KindPrepareEvidence, evidencecmd.KindCurrentEvidence} {
+	for _, test := range []struct {
+		kind   evidencecmd.Kind
+		pinned string
+		want   []string
+	}{
+		{evidencecmd.KindPrepareEvidence, "beef", append([]string{"base-current", "tip-current"}, verdictRows...)},
+		{evidencecmd.KindCurrentEvidence, "", append([]string{"base-current"}, verdictRows...)},
+	} {
 		f := baseFacts()
 		f.Mode = modeBuild
 		f.TicketsDirExists = true
-		f.Operation = kind
+		f.ExplicitSourceRange = true
+		f.SourceBase, f.SourceTip, f.PinnedSourceTip = "cafe", "beef", test.pinned
+		f.Operation = test.kind
+		verdict := Decide(f)
 		var got []string
-		for _, c := range Decide(f).Checks {
+		for _, c := range verdict.Checks {
 			got = append(got, c.Check)
 		}
-		if !slices.Equal(got, wantChecks) {
-			t.Errorf("Decide under operation %d checks = %v, want %v", kind, got, wantChecks)
+		if verdict.Red || !slices.Equal(got, test.want) {
+			t.Errorf("Decide under operation %d = red %t, checks %v, want green %v", test.kind, verdict.Red, got, test.want)
 		}
 	}
 }

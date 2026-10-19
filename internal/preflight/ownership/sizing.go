@@ -36,7 +36,7 @@ func (c *census) lines(item PremiseItem) (string, error) {
 	if err == nil && (expected.Count == nil || *expected.Count < 0) {
 		err = errors.New("expected: count is not a nonnegative integer")
 	}
-	if err == nil && (subject.Path == "" || !tickets.RepositoryPath(subject.Path)) {
+	if err == nil && !tickets.RepositoryPath(subject.Path) {
 		err = fmt.Errorf("subject: path %q is no clean repository path", subject.Path)
 	}
 	var rev string
@@ -89,7 +89,7 @@ func (c *census) globMembers(item PremiseItem) (string, error) {
 	case strings.Contains(pattern, "**"):
 		err = fmt.Errorf("pattern %q uses recursive ** syntax, which filepath.Match does not support", pattern)
 	case err != nil:
-	case !cut || dir == "" || !tickets.RepositoryPath(dir) || strings.ContainsAny(dir, `*?[\`):
+	case !cut || !tickets.RepositoryPath(dir) || strings.ContainsAny(dir, `*?[\`):
 		err = fmt.Errorf("scope %q is no clean directory prefix free of pattern metacharacters", scope)
 	case !strings.HasPrefix(pattern, scope) || !tickets.RepositoryPath(pattern):
 		err = fmt.Errorf("pattern %q escapes its scope %q", pattern, scope)
@@ -153,7 +153,7 @@ func (c *census) headroom(item PremiseItem) (string, error) {
 		err = errors.New("subject: files: create and delete are not JSON arrays")
 	case expected.Maximum == nil || expected.Current == nil || expected.Net == nil:
 		err = errors.New("expected: maximum, current, and net are not integers")
-	case dir == "" || !tickets.RepositoryPath(dir):
+	case !tickets.RepositoryPath(dir):
 		err = fmt.Errorf("subject: directory %q is no clean repository directory", dir)
 	}
 	if err == nil {

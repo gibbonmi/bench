@@ -276,7 +276,6 @@ func (c *census) locateSpec(m Manifest, loc Location) error {
 func chargeReadiness(m Manifest, premises []Premise, diagnostics []Diagnostic, pending []ManualClaim, nativeValid bool) ChargeReadiness {
 	ready := ChargeReadiness{
 		InventoryComplete: m.Present && m.Completeness == completenessDeclared && len(diagnostics) == 0 && nativeValid,
-		PendingNative:     pending,
 	}
 	byID := make(map[string]Premise, len(premises))
 	for _, p := range premises {

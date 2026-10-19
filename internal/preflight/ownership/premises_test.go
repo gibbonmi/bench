@@ -350,7 +350,7 @@ func TestChargeManualApplicability(t *testing.T) {
 	t.Run("OC89 OC93 native-future claim allows charge and current evidence", func(t *testing.T) {
 		root, args := seedChargeRepo(t, "", manifestJSON("declared-complete", nil, nil, nil, []string{valid}))
 		snap := collectChargeSnapshot(t, root)
-		if snap.Complete || !snap.ChargeReadiness.InventoryComplete || snap.ChargeReadiness.Blocker != "" || len(snap.ChargeReadiness.PendingNative) != 1 || snap.ChargeReadiness.PendingNative[0].ID != "manual-native" {
+		if snap.Complete || !snap.ChargeReadiness.InventoryComplete || snap.ChargeReadiness.Blocker != "" {
 			t.Fatalf("native-future snapshot = Complete %t, readiness %+v, premises %+v, diag %+v", snap.Complete, snap.ChargeReadiness, snap.Premises, snap.Diagnostics)
 		}
 		if out, code := checkCurrent(assertChargePublished(t, root, args)); code != 0 || !strings.Contains(out, "current[1]") {
@@ -361,8 +361,8 @@ func TestChargeManualApplicability(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			root, _ := test.repo.seed(t)
 			if test.pending {
-				if pending := collectChargeSnapshot(t, root).ChargeReadiness.PendingNative; len(pending) != 1 {
-					t.Fatalf("pending native claims = %+v, want the valid claim", pending)
+				if ready := collectChargeSnapshot(t, root).ChargeReadiness; strings.Contains(ready.Blocker, validNative().id) {
+					t.Fatalf("charge readiness = %+v, want the valid native claim pending, not blocking", ready)
 				}
 			}
 			assertNotReady(t, root, test.want)

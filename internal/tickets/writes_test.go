@@ -63,3 +63,13 @@ func TestParseWriteRefusesAnUncleanPath(t *testing.T) {
 		}
 	}
 }
+
+// TestRepositoryPathRefusesTheRoot pins the root rule: neither spelling of the repository root
+// names a path below it.
+func TestRepositoryPathRefusesTheRoot(t *testing.T) {
+	for p, want := range map[string]bool{"": false, ".": false, "internal": true} {
+		if got := RepositoryPath(p); got != want {
+			t.Errorf("RepositoryPath(%q) = %t, want %t", p, got, want)
+		}
+	}
+}
