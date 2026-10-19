@@ -1,5 +1,16 @@
 # Review outcomes
 
+## CR1 confirming-round pickup
+
+The confirming round read the repair delta `1e8846bb..25863380`. Each axis ran on opus at high effort. The chunk has used 1 of its 2 repair cycles, and the next repair is cycle 2.
+
+The round closed S1, S2, S3, S4, P1, P2, P3, C2, and C3. Four findings stay open, and ticket 02 owns all four. The orchestrator adds the plan requirement `t2-charge-rows` for S9.
+
+- S5, auto-fix, confidence 5. `PendingNative` in `internal/preflight/ownership/ownership.go` has no production reader. Remove the field, and let the tests read `Blocker`.
+- S9, auto-fix, confidence 5. `TestDecideChargeRows` holds an independent row list with no recorded red. The `t2-charge-rows` probe records that red.
+- C1, auto-fix, confidence 8. `TestDecideChargeRows` starts from facts with no pinned source tip, but a real prepare charge always pins it. Pin the tip in the prepare case, and expect the `tip-current` row.
+- C4, auto-fix, confidence 7. The empty-path exemption of `tickets.RepositoryPath` is dead, and `ParseWrite` holds a second root rule. Give the root rule one source in `RepositoryPath`, and pin it with a test.
+
 ## CR1 review pickup
 
 The CR1 review ran on the frozen pair `36b1fafc..1e8846bb`. Each axis ran on opus at high effort, by the reviewer's direction. The chunk has used 0 of its 2 repair cycles.
@@ -566,6 +577,78 @@ Count: 3. Worst issue: C1.
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cr1c-standards",
+          "performer": "claude:ft293_cr1c_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e9bf7a93e3580fe323fbfb7d0591344b8de789a9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr1c_standards",
+            "digest": "sha256:4be3f52a87ccf1b4cc2598c4c23c5da1eec81b659b2b3c92b4d75b790319e797",
+            "excerpt": "Standards confirming round, FT293 CR1, repair delta 1e8846bb..25863380. check-current passed.\nS1 closed 9; S2 closed 9; S3 closed 9; S4 closed 9.\nS5 open 5: PendingNative kept, read only by premises_test.go:353,:364; the Blocker checks already prove a pending claim.\nS9 new 5: TestDecideChargeRows (charge_cells_test.go:40-45) hand-lists 13 check names with no recorded red (AGENTS.md independent-expectation exception).\nOpen: S5, S9. Worst: S5.\n"
+          },
+          "axis": "Standards",
+          "base": "36b1fafc45426299b27b68f26fe627cadf000639",
+          "tip": "2586338063a1fd52e1b4ef10f8e1a7c2effe1131",
+          "finding_ids": [
+            "S5",
+            "S9"
+          ],
+          "supersedes": [
+            "cr1-standards"
+          ]
+        },
+        {
+          "id": "cr1c-spec",
+          "performer": "claude:ft293_cr1c_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e9bf7a93e3580fe323fbfb7d0591344b8de789a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr1c_spec",
+            "digest": "sha256:6671ae6f19eff9c1e9cf00d64d0d93744dc281ca4b9e2387c38b80b5fa1f3ed0",
+            "excerpt": "Spec confirming round, FT293 CR1, repair delta 1e8846bb..25863380. check-current passed.\nP1 closed 9: TestDecideChargeRows pins the exact charge row list under KindPrepareEvidence and KindCurrentEvidence; CR05 holds.\nP2 closed 8: CHANGELOG.md:22-25 matches the tree; CR93 holds.\nP3 closed 9: spec line 105 matches ticket 02 and ticket_grammar_test.go:24-25.\nCR19, CR20 hold 9. No new finding. Open: 0.\n"
+          },
+          "axis": "Spec",
+          "base": "36b1fafc45426299b27b68f26fe627cadf000639",
+          "tip": "2586338063a1fd52e1b4ef10f8e1a7c2effe1131",
+          "finding_ids": [],
+          "supersedes": [
+            "cr1-spec"
+          ]
+        },
+        {
+          "id": "cr1c-coverage",
+          "performer": "claude:ft293_cr1c_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e9bf7a93e3580fe323fbfb7d0591344b8de789a9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr1c_coverage",
+            "digest": "sha256:5b265735598b259a3701764018a9541c3ef7930a6c2761b4fe0eb992d80bfc99",
+            "excerpt": "Coverage confirming round, FT293 CR1. check-current current=true; 8 probes, all restored=yes; tree clean.\nC1 open 8: a green charge-premises row gated on KindPrepareEvidence && PinnedSourceTip != \"\" is silent across ./internal/preflight/...; TestDecideChargeRows uses baseFacts() with no pinned tip and omits tip-current.\nC2 closed 9: guard swaps bit on \"/\" and \"./\".\nC3 closed 9: Clean-without-IsLocal and contains-\"..\" predicates both bit.\nC4 new 7: RepositoryPath empty-path exemption (writes.go:75-77) is dead; removing it keeps all tests green; the root rule has two sources.\nOpen: C1, C4. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "36b1fafc45426299b27b68f26fe627cadf000639",
+          "tip": "2586338063a1fd52e1b4ef10f8e1a7c2effe1131",
+          "finding_ids": [
+            "C1",
+            "C4"
+          ],
+          "supersedes": [
+            "cr1-coverage"
+          ]
         }
       ]
     }
