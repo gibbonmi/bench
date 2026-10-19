@@ -50,15 +50,15 @@ Count: 3. Worst issue: C1.
 {
   "version": 2,
   "spec": "specs/closure-removal/spec.md",
-  "plan_digest": "sha256:de5b65bac4b9d2078432cc702595272db14ab766d6242737453782ad7a94ef81",
+  "plan_digest": "sha256:a557d522d03dc16e5ca4556972eeb2565c2ac5c644e5d770046705ce338f6a6c",
   "implementation_session": "",
   "chunks": [
     {
       "id": "CR1",
       "base": "36b1fafc45426299b27b68f26fe627cadf000639",
-      "tip": "2586338063a1fd52e1b4ef10f8e1a7c2effe1131",
-      "plan_digest": "sha256:de5b65bac4b9d2078432cc702595272db14ab766d6242737453782ad7a94ef81",
-      "source_digest": "e9bf7a93e3580fe323fbfb7d0591344b8de789a9",
+      "tip": "bad08290250ed94ac3d1fc5c37c309db8e90cbd3",
+      "plan_digest": "sha256:a557d522d03dc16e5ca4556972eeb2565c2ac5c644e5d770046705ce338f6a6c",
+      "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
       "acceptance_rows": [
         "CR07",
         "CR08",
@@ -498,6 +498,237 @@ Count: 3. Worst issue: C1.
           "requirement": "t1-guidance-budgets",
           "command": "bench test --check guidance-prose-budgets",
           "exit_code": 0
+        },
+        {
+          "id": "t2r2-t2-preflight-packages",
+          "performer": "claude:ft293_t2_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t2_r2",
+            "digest": "sha256:cd5f2be318a392d368cfccbab7eafbaaefed010ec3e68b4e5cfc1e88a40059ba",
+            "excerpt": "packages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,24803,370\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,17698,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,9842,175\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,4858,69\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-preflight-packages",
+          "command": "bench test --package ./internal/preflight --package ./internal/preflight/ownership --package ./internal/preflight/ownership/ownershiptest --package ./internal/preflight/staleness --package ./internal/preflight/evidencecmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-t2-tickets-help-anchors",
+          "performer": "claude:ft293_t2_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t2_r2",
+            "digest": "sha256:ed791bcf2b0a6b68e905e4e69f68d242c637d4994ec3aefabbe681f75229047f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/tickets/writes.go,omit,failed,1,TestParseWriteRefusesAnUncleanPath,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/tickets ./cmd/bench ./internal/anchors ./internal/canary ./internal/conformance,all,passed,1662\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,826\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17520,346\n  github.com/gibbonmi/bench/internal/anchors,pass,112,123\n  github.com/gibbonmi/bench/internal/canary,pass,9,32\n  github.com/gibbonmi/bench/internal/conformance,pass,33525,1116\n  github.com/gibbonmi/bench/internal/tickets,fail,3,45\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/tickets,TestParseWriteRefusesAnUncleanPath,\"writes_test.go:57: ParseWrite(\\\"internal/x/../../cmd/y.go\\\") = {Path:internal/x/../../cmd/y.go Kind:0}, want an unclean-path refusal\",13\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t2-tickets-help-anchors",
+          "command": "bench test --package ./internal/tickets --package ./cmd/bench --package ./internal/anchors --package ./internal/canary --package ./internal/conformance",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omission: remove the clean-path refusal from tickets.ParseWrite; TestParseWriteRefusesAnUncleanPath must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t2_r2",
+              "digest": "sha256:ed791bcf2b0a6b68e905e4e69f68d242c637d4994ec3aefabbe681f75229047f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/tickets/writes.go,omit,failed,1,TestParseWriteRefusesAnUncleanPath,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/tickets ./cmd/bench ./internal/anchors ./internal/canary ./internal/conformance,all,passed,1662\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,826\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17520,346\n  github.com/gibbonmi/bench/internal/anchors,pass,112,123\n  github.com/gibbonmi/bench/internal/canary,pass,9,32\n  github.com/gibbonmi/bench/internal/conformance,pass,33525,1116\n  github.com/gibbonmi/bench/internal/tickets,fail,3,45\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/tickets,TestParseWriteRefusesAnUncleanPath,\"writes_test.go:57: ParseWrite(\\\"internal/x/../../cmd/y.go\\\") = {Path:internal/x/../../cmd/y.go Kind:0}, want an unclean-path refusal\",13\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+            }
+          }
+        },
+        {
+          "id": "t2r2-t2-root-conformance",
+          "performer": "claude:ft293_t2_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t2_r2",
+            "digest": "sha256:962316a1c14d2adf6f2303c8178c7e1ba1cb53b226766cb451faee92f0e9f2d4",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14139,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-t2-guidance-anchors",
+          "performer": "claude:ft293_t2_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t2_r2",
+            "digest": "sha256:0fe2c9e54a8165dd9a90c5c9351886ddaf6d6dd19d9dee6155dc375717c08e69",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4303,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-guidance-anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-t2-guidance-budgets",
+          "performer": "claude:ft293_t2_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t2_r2",
+            "digest": "sha256:7833b79d87da4342e711cb9d6c0cdd75b6c3afdfca28d197838c202bd9080c37",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-guidance-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-t2-charge-rows",
+          "performer": "claude:ft293_t2_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t2_r2",
+            "digest": "sha256:f3cc1ea27002e4f7cdacb5a5b69c7b520c9c161555e45ac6b7103cb78ee6dc9f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/decision.go,insert,failed,1,TestDecideChargeRows,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,370\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,509\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,21785,370\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestDecideChargeRows,\"charge_cells_test.go:46: Decide under operation 2 = red false, checks [base-current tip-current paths-authorized tickets-parse completion-plan check-floor blockers-resolve writes-resolve charge-premises fence-writes kit-pin binary-seal rows… (481 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-charge-rows",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Insertion in Decide: append a green charge-premises row under KindPrepareEvidence when the source tip is pinned; TestDecideChargeRows must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t2_r2",
+              "digest": "sha256:f3cc1ea27002e4f7cdacb5a5b69c7b520c9c161555e45ac6b7103cb78ee6dc9f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/decision.go,insert,failed,1,TestDecideChargeRows,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,370\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,509\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,21785,370\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestDecideChargeRows,\"charge_cells_test.go:46: Decide under operation 2 = red false, checks [base-current tip-current paths-authorized tickets-parse completion-plan check-floor blockers-resolve writes-resolve charge-premises fence-writes kit-pin binary-seal rows… (481 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1r2-t1-preflight-packages",
+          "performer": "claude:ft293_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t1_r1",
+            "digest": "sha256:4584bf9d7cab6ba943f6f9ff22e8cdf797182a1a9f739298ef2b4df403aa72ec",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/evidencecmd/operations.go,swap+swap,failed,2,TestPreflightBuildRefusesRemovedForms,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight ./internal/preflight/ownership ./internal/preflight/ownership/ownershiptest ./internal/preflight/staleness ./internal/preflight/evidencecmd,all,passed,846\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,980\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,24443,370\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,fail,17410,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,9930,175\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,5018,69\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestPreflightBuildRefusesRemovedForms,\"command_build_test.go:132: [build s --propose-writes --ticket a.md --base B --source-tip T] = (1), want exit 2 naming \\\"unknown argument: --propose-writes\\\":\",2\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,TestEvidenceFinalGuard,\"bound_test.go:26: operation \\\"build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>\\\" declares Bounded=false, want true for its kind\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-preflight-packages",
+          "command": "bench test --package ./internal/preflight --package ./internal/preflight/ownership --package ./internal/preflight/ownership/ownershiptest --package ./internal/preflight/staleness --package ./internal/preflight/evidencecmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omission at the removed-form refusal: restore the --propose-writes flag in the preflight build grammar so it parses again; TestPreflightBuildRefusesRemovedForms must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft293_t1_r1",
+              "digest": "sha256:4584bf9d7cab6ba943f6f9ff22e8cdf797182a1a9f739298ef2b4df403aa72ec",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/evidencecmd/operations.go,swap+swap,failed,2,TestPreflightBuildRefusesRemovedForms,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight ./internal/preflight/ownership ./internal/preflight/ownership/ownershiptest ./internal/preflight/staleness ./internal/preflight/evidencecmd,all,passed,846\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,980\npackages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,24443,370\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,fail,17410,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,9930,175\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,5018,69\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestPreflightBuildRefusesRemovedForms,\"command_build_test.go:132: [build s --propose-writes --ticket a.md --base B --source-tip T] = (1), want exit 2 naming \\\"unknown argument: --propose-writes\\\":\",2\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,TestEvidenceFinalGuard,\"bound_test.go:26: operation \\\"build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>\\\" declares Bounded=false, want true for its kind\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1r2-t1-tickets-help-anchors",
+          "performer": "claude:ft293_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t1_r1",
+            "digest": "sha256:241da0f18d71121947bf93c97d293553e18c8e8fb8ed31037a959e5631aae375",
+            "excerpt": "packages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14818,346\n  github.com/gibbonmi/bench/internal/anchors,pass,116,123\n  github.com/gibbonmi/bench/internal/canary,pass,7,32\n  github.com/gibbonmi/bench/internal/conformance,pass,32973,1116\n  github.com/gibbonmi/bench/internal/tickets,pass,3,45\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t1-tickets-help-anchors",
+          "command": "bench test --package ./internal/tickets --package ./cmd/bench --package ./internal/anchors --package ./internal/canary --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-t1-root-conformance",
+          "performer": "claude:ft293_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t1_r1",
+            "digest": "sha256:abce10c7b8eb038d9fc7cb4428bc7dc19e8084814a02f13950e3b0f642f49032",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13890,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-t1-guidance-anchors",
+          "performer": "claude:ft293_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t1_r1",
+            "digest": "sha256:8b8f7f72e6e2e89dea01853e7f782a5467e93be3b263799092e29a0b12b9ee02",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4021,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-guidance-anchors",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-t1-guidance-budgets",
+          "performer": "claude:ft293_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dc40802a6e6296ad8747dd0de5618101e560a47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_t1_r1",
+            "digest": "sha256:b682aaa6a2f3a10908927cd53ce11e0bf9cf598d196444453baf84591b6728d5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-guidance-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -664,6 +895,15 @@ Count: 3. Worst issue: C1.
     {
       "from": "sha256:28c270ec1eed58e47fed9261ef9ff6d80486340f37c637856ac33111d7dcf7ec",
       "to": "sha256:de5b65bac4b9d2078432cc702595272db14ab766d6242737453782ad7a94ef81",
+      "chunk_ids": {
+        "CR1": [
+          "CR1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:de5b65bac4b9d2078432cc702595272db14ab766d6242737453782ad7a94ef81",
+      "to": "sha256:a557d522d03dc16e5ca4556972eeb2565c2ac5c644e5d770046705ce338f6a6c",
       "chunk_ids": {
         "CR1": [
           "CR1"
