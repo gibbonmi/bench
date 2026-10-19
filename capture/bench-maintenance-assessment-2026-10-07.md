@@ -480,7 +480,7 @@ Broader experiments do not block small correctness repairs.
 | [FT327](../roadmap/FT327.md:1) | Require a current landing refusal on doctor-published output. |
 | [FT328](../roadmap/FT328.md:1) | Require the evidence-store read refusal under the declared read-only sandbox. |
 | [FT330](../roadmap/FT330.md:1) | Require the checkpoint to emit the wrong recovery command for the named failure. |
-| [FT355](../roadmap/FT355.md:1) | Require a leftover tied to the crash test or its gate process before assigning cause. |
+| [FT372](../roadmap/FT372.md:1) | Require a leftover tied to the crash test or its gate process before assigning cause. |
 | [FT372](../roadmap/FT372.md:1) | Require the local-capture test failure again before treating shared state as its cause. |
 | [FT385](../roadmap/FT385.md:1) | Require a recorded ambiguous-prefix refusal; do not infer that cause from any test retry. |
 | [FT331](../roadmap/FT331.md:1) | Keep paused with FT347; no advisor adoption or paid resumption is authorized. |
