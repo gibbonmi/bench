@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/plan-commit/spec.md",
-  "plan_digest": "sha256:e58e068c33f002cf04c2e560f13931b7ea46e5951ad50b6021fdc72f29c97a32",
+  "plan_digest": "sha256:f9d92987e51c6e874e6eca2d1fdbac5237366766279a767e8b6309be52b31c65",
   "implementation_session": "",
   "chunks": [
     {
       "id": "PC-C1",
       "base": "7b45186c91c875273fb4866096d8977b235c2bc5",
-      "tip": "5daa190037d8cc2503ff1e3d01802c9e7cf886f5",
-      "plan_digest": "sha256:e58e068c33f002cf04c2e560f13931b7ea46e5951ad50b6021fdc72f29c97a32",
-      "source_digest": "90f8a4ec255c9007eb7128a71347f0ffbebd2b21",
+      "tip": "7036994e0902944c76b976389cbc059a15f8ec7f",
+      "plan_digest": "sha256:f9d92987e51c6e874e6eca2d1fdbac5237366766279a767e8b6309be52b31c65",
+      "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
       "acceptance_rows": [
         "PC1",
         "PC2",
@@ -276,6 +276,71 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/chunk_rows.go,omit,failed,2,TestChunkRowsRedsAnUnlistedRow,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,498\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,35968,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestChunkRowsRedsAnUnlistedRow,\"chunk_rows_test.go:43: chunk-rows = {Check:chunk-rows Verdict:green Detail: Next: exempt:false}, want red\",1\n  github.com/gibbonmi/bench/internal/preflight,TestChunkRowsRefusesTheBuildCharge,\"chunk_rows_test.go:93: build charge = (0):\",4\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "r1-t2-preflight-packages",
+          "performer": "claude:ft380-t02-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t02-repair1-20261019",
+            "digest": "sha256:ed12983fa76c54c04b02ea6695cc4c645de0876c95de0d6f6ddaa8d42ca9a5a3",
+            "excerpt": "packages[8]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,40380,379\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,27442,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,15389,177\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,7152,70\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-preflight-packages",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t2-review-charge-omission",
+          "performer": "claude:ft380-t02-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t02-repair1-20261019",
+            "digest": "sha256:d15b881b9ce0aaf80fe2ece8004316967a80bd94d5d7ffde9a2581c94e6d92d2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/review.go,swap,failed,2,TestCheckFloorRefusesTheReviewCharge,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,514\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,37282,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorRefusesTheReviewCharge,\"check_floor_command_test.go:87: review charge = (1):\",3\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceReviewRefusals/mismatched_pair,\"review_charge_test.go:260: review refusal = (0), want \\\"tip-current\\\" without a published handle:\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-review-charge-omission",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "remove the verdict.Red refusal of the review charge; TestCheckFloorRefusesTheReviewCharge must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft380-t02-repair1-20261019",
+              "digest": "sha256:d15b881b9ce0aaf80fe2ece8004316967a80bd94d5d7ffde9a2581c94e6d92d2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/review.go,swap,failed,2,TestCheckFloorRefusesTheReviewCharge,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,514\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,37282,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorRefusesTheReviewCharge,\"check_floor_command_test.go:87: review charge = (1):\",3\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceReviewRefusals/mismatched_pair,\"review_charge_test.go:260: review refusal = (0), want \\\"tip-current\\\" without a published handle:\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r1-t2-root-conformance",
+          "performer": "claude:ft380-t02-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5be1f469f8f5abed29b96e8088ad1952d4d96bd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t02-repair1-20261019",
+            "digest": "sha256:1d01e9379dd82d4a03f6aaabd94b556a202ac5ab09c629626ce28f479e426841",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17862,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -359,7 +424,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:e58e068c33f002cf04c2e560f13931b7ea46e5951ad50b6021fdc72f29c97a32",
+      "to": "sha256:f9d92987e51c6e874e6eca2d1fdbac5237366766279a767e8b6309be52b31c65",
+      "chunk_ids": {
+        "PC-C1": [
+          "PC-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
