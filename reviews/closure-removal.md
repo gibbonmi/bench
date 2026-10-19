@@ -1,5 +1,38 @@
 # Review outcomes
 
+## CR2 review pickup
+
+The CR2 review ran on the frozen pair `1ea15b35..390eb67d`. Each axis ran on opus at high effort. The chunk has used 0 of its 2 repair cycles.
+
+The raw count is 12 findings, and the repair-target count is 10, because S3 and S5 have no repair target. Ticket 03 owns every repair target. The orchestrator widens ticket 03 for S1, adds the plan requirement `t3-widen-table` for S4, and corrects the spec sentence of P2.
+
+### Standards
+
+Count: 5. Worst issue: S2.
+
+- S1, auto-fix, confidence 7. `internal/spec/widen.go` restates the `Writes:` field name and the `, ` separator that `internal/tickets` and `internal/maps` own. Export each fact from its owner, and read it in the verb.
+- S2, auto-fix, confidence 7. The out-of-scope refusal joins the refused entries without quotes, so a `(new)` entry breaks the rerun, and the rerun drops the in-scope entries. Quote each entry, and name the whole request.
+- S3, no-op, confidence 4. The git error text in the hint slot follows the tree convention.
+- S4, auto-fix, confidence 3. The table columns and the refusal text in `widen_test.go` are independent expectations with no recorded red. The `t3-widen-table` probe records that red.
+- S5, no-op, confidence 3. The placement of `checkoutRefusal` follows the structure budget of `spec.go`.
+
+### Spec
+
+Count: 2. Worst issue: P1.
+
+- P1, auto-fix, confidence 6. The CR35 catch does not hold, because `tickets.Covers` covers no path for a root prefix. Make the CR35 case red under a root-parent mutant, and correct the row's cell.
+- P2, auto-fix, confidence 5. The spec and the changelog say that `--decision` records the reviewer's admission, but the verb stores no reference. Correct both sentences.
+
+### Coverage
+
+Count: 5. Worst issue: C1.
+
+- C1, auto-fix, confidence 8. A marked or slash-spelled entry on either side reports `added` and appends a duplicate path. Add those cases to `TestSpecWidenReportsACoveredEntry`.
+- C2, auto-fix, confidence 7. No witness pins the slash refusal of `--ticket sub/a.md` or of the slug `a/b`. Add both cases.
+- C3, auto-fix, confidence 6. A default tip with only a non-ticket file or only a symbolic-link ticket counts as signed off. Add both cases to the CR53 test.
+- C4, auto-fix, confidence 6. A ticket with `Writes: none` refuses a legal widening. Replace the sentinel, and add the case.
+- C5, auto-fix, confidence 5. A signed-off entry with pathspec magic makes the scope read fail for the whole slug. Read the tree with literal pathspecs.
+
 ## CR1 third confirming-round pickup
 
 The third confirming round read the delta `bad08290..1ea15b35`, which holds the test-only repair and its assignment. Each axis ran on opus at high effort. The chunk used 3 repair cycles, and the reviewer's `--auto-approve` covers the third.
@@ -1388,7 +1421,83 @@ Count: 3. Worst issue: C1.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cr2-standards",
+          "performer": "claude:ft293_cr2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6b9636ad28b76a8ace91461a3ef6b2542a9cf341",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr2_standards",
+            "digest": "sha256:af93306804b531c7a120a343e9d8dd49e10d85fee343f9d4da41c49093726e79",
+            "excerpt": "Standards axis, FT293 CR2 (base 1ea15b35, tip 390eb67d). check-current current=true, dirty_record=false.\nS1 auto-fix 7: widen.go:40 writesField, :43 writesSeparator, :247 FieldScan table restate the Writes: syntax (tickets/tickets.go:47) and the \", \" separator (maps/fields.go:136); one-source-per-fact. Route: plan expansion of ticket 03 Writes.\nS2 auto-fix 7: widen.go:121 joins refused entries with \" \" unquoted; a (new) entry breaks the rerun, and the rerun drops in-scope entries; axi.ShellQuote exists (axi/action.go:284).\nS3 no-op 4: widen.go:190,195,205,216 pass git err text into the hint slot.\nS4 no-op unless no recorded red 3: widen_test.go:74 repeats the column list; :24 repeats the refusal text.\nS5 no-op 3: checkoutRefusal lives in retire.go.\nRetire move preserves behavior; WidenUsage is one source. Count 5. Worst: S2.\n"
+          },
+          "axis": "Standards",
+          "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "tip": "390eb67dc1eea75dee6d9c63b8a3d8c40ceed185",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cr2-spec",
+          "performer": "claude:ft293_cr2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6b9636ad28b76a8ace91461a3ef6b2542a9cf341",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr2_spec",
+            "digest": "sha256:ec18edab980ef08aff7eefc2c8dc8110289c5690166ef3a3dd18c1b42eb915b7",
+            "excerpt": "Spec axis, FT293 CR2 (base 1ea15b35, tip 390eb67d). check-current current, not dirty.\nP1 non-blocking 6: CR35 \"A root parent rule admits every path\" does not hold; Covers(\".\", p) covers nothing, so the CR35 subcase stays green under a root-parent mutant (writes.go:89-91, widen_test.go:208).\nP2 non-behavioral contradiction 5: spec.md:27 and CHANGELOG.md:29 say --decision \"records the reviewer's admission\"; the verb stores or prints no reference (widen.go:56, :107; spec.md:337 won't-handle).\nRows: CR35 partial; CR23-CR34, CR36-CR54, CR92 closed. All \"The plan verb\" decisions implemented; no won't-handle scope creep.\nCount 2. Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "tip": "390eb67dc1eea75dee6d9c63b8a3d8c40ceed185",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cr2-coverage",
+          "performer": "claude:ft293_cr2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6b9636ad28b76a8ace91461a3ef6b2542a9cf341",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr2_coverage",
+            "digest": "sha256:290cbe41161ed3025a88ea301cfac6eb6c4d45413c8f5f36328878bcd55b7640",
+            "excerpt": "Coverage axis, FT293 CR2 (1ea15b35..390eb67d). check-current current=true, dirty=false; tree clean before and after.\nProbes (./internal/spec, 152 tests, each restored=yes): P1 widen.go:95 append(covered, entry) silent; P2 :153 omit slash check silent; P3 :200 omit Ext check silent; P4 :266 if false silent; P5 :101 p := entry silent; P6 :200 omit IsRegularFile silent.\nC1 fix 8: marked or slash-spelled entries on either side report added and append a duplicate (CR38).\nC2 fix 7: --ticket sub/a.md and slug a/b have no witness for the slash check.\nC3 fix 6: a tip with only a non-.md file or only a symlink ticket counts as signed off (CR53).\nC4 fix 6: a Writes: none ticket refuses a legal widening.\nC5 flag 5: a :(glob) signed-off entry makes git ls-tree exit 128 and refuses every widening for the slug.\nCount 5. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "tip": "390eb67dc1eea75dee6d9c63b8a3d8c40ceed185",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
