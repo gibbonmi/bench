@@ -1,5 +1,17 @@
 # Review outcomes
 
+## CR2 second confirming-round pickup
+
+The second confirming round read the repair delta `d66a978f..a883604f`. Each axis ran on opus at high effort. The chunk used 2 of its 2 repair cycles, and the second cycle was its hardening cycle.
+
+The round closed S5, S6, and C6, and no finding stays open.
+
+Optional advice, because each item grades only a check from the hardening cycle and no item shows a defect:
+
+- The `wrongType` test constant copies the producer's state text with no recorded red.
+- No rerun witness holds a slug or a basename with `'` or `$`.
+- No `ParseTicket` test pins the first `Writes:` value of a ticket with a duplicate line.
+
 ## CR2 confirming-round pickup
 
 The confirming round read the repair delta `390eb67d..d66a978f`. Each axis ran on opus at high effort. The chunk has used 1 of its 2 repair cycles, and the next repair is cycle 2.
@@ -1914,6 +1926,72 @@ Count: 3. Worst issue: C1.
           ],
           "supersedes": [
             "cr2-coverage"
+          ]
+        },
+        {
+          "id": "cr2c2-standards",
+          "performer": "claude:ft293_cr2c2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "59dd4fd54fddd3eb9c4c14dacc0846e3d11ea1bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr2c2_standards",
+            "digest": "sha256:ff722d77fc47a28b5d8566f5ef13518d15d494ba1571f3f448cd8d9488635f1d",
+            "excerpt": "Standards second confirming round, FT293 CR2, delta d66a978f..a883604f. check-current current=true, dirty_record=false.\nS5 closed 9: liveLines (tickets.go:153-159) is the one selection rule for ParseTicket and WritesLine; behavior unchanged.\nS6 closed 8: outsideScope lives in widen.go:149; tests read it; the rerun red is recorded in cr2c-coverage.\nAdvice (hardening-cycle check, no defect): the wrongType test constant copies the producer state text with no recorded red.\nOpen 0.\n"
+          },
+          "axis": "Standards",
+          "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "tip": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "finding_ids": [],
+          "supersedes": [
+            "cr2c-standards"
+          ]
+        },
+        {
+          "id": "cr2c2-spec",
+          "performer": "claude:ft293_cr2c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "59dd4fd54fddd3eb9c4c14dacc0846e3d11ea1bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr2c2_spec",
+            "digest": "sha256:5f58490d25de4bb50723ae2b173cc747a975bf32548219b5e7eaeed343d0eb47",
+            "excerpt": "Spec second confirming round, FT293 CR2, delta d66a978f..a883604f. check-current current=true.\nCR23-CR54 held 10; no ticket-grammar change held 9 (one live line per field); no unrequested behavior held 10; CR92 held 9.\nNew findings: none. Open 0.\n"
+          },
+          "axis": "Spec",
+          "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "tip": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "finding_ids": [],
+          "supersedes": [
+            "cr2c-spec"
+          ]
+        },
+        {
+          "id": "cr2c2-coverage",
+          "performer": "claude:ft293_cr2c2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "59dd4fd54fddd3eb9c4c14dacc0846e3d11ea1bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr2c2_coverage",
+            "digest": "sha256:1594dab0e56c58c0b594c3a48168324545b05a20f61e79dc91a42f4ac7d93d69",
+            "excerpt": "Coverage second confirming round, FT293 CR2. Evidence current at a14573820; probes one at a time, every restored=yes; tree clean.\nC6 closed 8: raw slug when spaced bit; plain double quotes on basename bit (widen_test.go:145).\nS5 closed 7: last Writes: line bit TestSpecWidenKeepsOtherBytes/a_duplicate_Writes:_line_stays; last line for other fields bit TestParseTicketFieldMechanics/a_second_Blocked_by_line_is_a_duplicate_field; drop !line.Fenced silent and equivalent.\nAdvice (hardening-cycle checks, no defect): a slug or basename with ' or $ has no rerun witness; no ParseTicket test pins the first Writes: value for a duplicate line.\ninternal/tickets 45 tests and internal/maps 97 tests pass. Open 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "tip": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "finding_ids": [],
+          "supersedes": [
+            "cr2c-coverage"
           ]
         }
       ]
