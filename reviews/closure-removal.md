@@ -1,5 +1,11 @@
 # Review outcomes
 
+## CR1 third confirming-round pickup
+
+The third confirming round read the delta `bad08290..1ea15b35`, which holds the test-only repair and its assignment. Each axis ran on opus at high effort. The chunk used 3 repair cycles, and the reviewer's `--auto-approve` covers the third.
+
+The round closed C5, and no finding stays open. S10, no-op, confidence 7: the Coverage entry `cr1c3-coverage` retains two bypass probes that red the copied reason text, so the record now holds that red. The Standards axis reaffirmed this evidence-only disposition.
+
 ## CR1 second confirming-round pickup
 
 The second confirming round read the repair delta `25863380..bad08290`. Each axis ran on opus at high effort. The chunk has used 2 of its 2 repair cycles. The reviewer's `--auto-approve` covers one more cycle, and the build log records that use.
@@ -1230,6 +1236,28 @@ Count: 3. Worst issue: C1.
           "finding_ids": [],
           "supersedes": [
             "cr1c2-coverage"
+          ]
+        },
+        {
+          "id": "cr1c3-standards",
+          "performer": "claude:ft293_cr1c3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f1debd11ebddd7a617aa148b96f5074b6c2e3a2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr1c3_standards",
+            "digest": "sha256:e2ddae1d3b4db0004ed077f9fa8ea2bafc5f0f8b3e52270e60491c6c034b8a55",
+            "excerpt": "Standards third confirming round, FT293 CR1, delta bad08290..1ea15b35. check-current current=true.\nC5 closed 8: two cases through headroomItem (premises_test.go:125-126, :148-149) hit sizing.go:156-157; doc comment :93-95 accurate.\nspec.md change is only the claude:ft293_t2_r3 assignment (line 185).\nS10 raised 5 (copied reason text with no in-tree red), then reaffirmed closed 7 as evidence-only after record commit bafcdf413 retained the cr1c3-coverage bypass probes (reviews/closure-removal.md:1214-1225).\nOpen 0.\n"
+          },
+          "axis": "Standards",
+          "base": "36b1fafc45426299b27b68f26fe627cadf000639",
+          "tip": "1ea15b3595545d8a829e52b82f0753b64b4327f9",
+          "finding_ids": [],
+          "supersedes": [
+            "cr1c2-standards"
           ]
         }
       ]
