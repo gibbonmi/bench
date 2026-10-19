@@ -1,5 +1,11 @@
 # Review outcomes
 
+## CR4 third confirming-round pickup
+
+The final reconciliation found that the landing deletes `roadmap/FT293.md`, which `decisions/architecture-planning.md` cites as a source. A fresh ticket 06 session moved that source to the delegate guidance, and the third confirming round read that delta. The chunk used 3 repair cycles, and the reviewer's `--auto-approve` covers the third.
+
+The round passed on all three axes, and no finding stays open. The widening of the decision map cites the advance approval, and the orchestrator flags it for reviewer veto.
+
 ## CR4 second confirming-round pickup
 
 The second confirming round read the repair delta `093b9a75..b0d84d87`. Each axis ran on opus at high effort. The chunk used 2 of its 2 repair cycles.
@@ -3806,6 +3812,72 @@ Count: 3. Worst issue: C1.
           "finding_ids": [],
           "supersedes": [
             "cr4c-coverage"
+          ]
+        },
+        {
+          "id": "cr4c3-standards",
+          "performer": "claude:ft293_cr4c3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4c3_standards",
+            "digest": "sha256:afa38a3894b8e0fcb86a0ca5d3f798824ebdfb56b76f1cdc455cd6e5ce0ea734",
+            "excerpt": "Standards third confirming round, FT293 CR4, delta b0d84d87..1b79d041 (decision-map source). check-current current.\nClosed 8: the new source delegation-discipline.md:36 states the Writes: expectation rule that the entry supports; the entry keeps the Path/Supports/Drift shape; no live citation of roadmap/FT293 remains outside the outcome pin and dated research.\nFindings: none.\n"
+          },
+          "axis": "Standards",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "1b79d041f615d1e7e8f322c98245c0de6ad7def7",
+          "finding_ids": [],
+          "supersedes": [
+            "cr4c2-standards"
+          ]
+        },
+        {
+          "id": "cr4c3-spec",
+          "performer": "claude:ft293_cr4c3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4c3_spec",
+            "digest": "sha256:91788c84c527fba6ddb4e1ed6f5867f7ff7334fd612140919f71165d09acbd39",
+            "excerpt": "Spec third confirming round, FT293 CR4, delta b0d84d87..1b79d041. check-current current at 4cd12990. bench coverage --check: 94 rows valid.\nNo story, decision, or coverage row changed held 9; CR75 section equals the union plus the pickup (227 paths) held 9; the decision-map edit stays in scope held 8.\nAdvice: the widening of decisions/architecture-planning.md cites auto-approve:ft293-full-20261018; flagged for reviewer veto.\nProcess note: the axis wrote and deleted two temporary files under /dev/shm against its read-only charge; the tree is unchanged.\nOpen 0.\n"
+          },
+          "axis": "Spec",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "1b79d041f615d1e7e8f322c98245c0de6ad7def7",
+          "finding_ids": [],
+          "supersedes": [
+            "cr4c2-spec"
+          ]
+        },
+        {
+          "id": "cr4c3-coverage",
+          "performer": "claude:ft293_cr4c3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "268b808950fbf7fe79c783f91d7a64f110e719c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4c3_coverage",
+            "digest": "sha256:b282cf71796f5b41336d586a5b124bea08e140b2aa850e78b4084ffe3f07eeb1",
+            "excerpt": "Coverage third confirming round, FT293 CR4. check-current current at 4cd129908.\nProbe: decisions/architecture-planning.md source swapped to roadmap/FT293-missing.md, check decision-map-integrity: bit (TestRootConformance, \"Sources Path roadmap/FT293-missing.md must name an existing regular file\"); restored yes; tree clean.\nFindings: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "1b79d041f615d1e7e8f322c98245c0de6ad7def7",
+          "finding_ids": [],
+          "supersedes": [
+            "cr4c2-coverage"
           ]
         }
       ]
