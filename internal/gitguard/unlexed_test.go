@@ -39,3 +39,22 @@ func TestBlockMessageCarriesUnlexedAdvice(t *testing.T) {
 		t.Errorf("BlockMessage(%q) did not end with the advice: %q", unlexedLabelWant, msg)
 	}
 }
+
+// TestBlockMessageSeparatesParseRefusal proves the unlexed refusal is a parse refusal. It
+// keeps its label after BLOCKED: and carries none of the destructive-command authority
+// advice, and the force-push refusal keeps all of that advice.
+func TestBlockMessageSeparatesParseRefusal(t *testing.T) {
+	unlexed := BlockMessage(unlexedLabelWant)
+	if !strings.HasPrefix(unlexed, "BLOCKED: `"+unlexedLabelWant+"`") {
+		t.Errorf("BlockMessage(%q) did not lead with BLOCKED + label: %q", unlexedLabelWant, unlexed)
+	}
+	force := BlockMessage("git push --force")
+	for _, advice := range []string{"you don't have authority", "Stop and hand back", "history rewrite"} {
+		if strings.Contains(unlexed, advice) {
+			t.Errorf("BlockMessage(%q) carries the authority advice %q: %q", unlexedLabelWant, advice, unlexed)
+		}
+		if !strings.Contains(force, advice) {
+			t.Errorf("BlockMessage(%q) lost the authority advice %q: %q", "git push --force", advice, force)
+		}
+	}
+}

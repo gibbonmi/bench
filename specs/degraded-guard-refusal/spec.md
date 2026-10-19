@@ -1,6 +1,6 @@
 # Refuse malformed commands in the degraded Git guard
 
-Status: staged
+Status: implemented
 Decision source: `decisions/architecture-guards/tickets/2.md` in `ft362-process-lifetime-map`
 Subject: `37ac80b8adeff4ecbd57f3d813ff8937f2bcbc68`
 Audience: every repository that links the kit
@@ -63,7 +63,7 @@ This repair adds no shared parser, command, or runtime dependency.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
-| GR1 / 01-refuse-malformed-guard-commands.md | The Git guard refuses malformed degraded input with parse-repair diagnostics | GR01-GR41 | The real hook, core entry, and Git message tests | yes |
+| GR1 / 01-refuse-malformed-guard-commands.md | The Git guard refuses malformed degraded input with parse-repair diagnostics | GR01-GR42 | The real hook, core entry, and Git message tests | yes |
 
 This is one behavior outcome with one independent implementation review checkpoint.
 Independent spec acceptance precedes this one-ticket slice.
@@ -121,47 +121,48 @@ The shell owns its repair text because it must work without the core.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| GR01 | 1, 14 | The missing-core hook exits 2 for `printf hi;git push --force\necho 'x` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | The current fallback permits the occurrence input |
-| GR02 | 1 | The missing-core hook exits 2 for `printf hi;git push --force\necho "x` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | A single-quote-only repair permits this input |
-| GR03 | 1 | The missing-core hook exits 2 for `printf hi;git push --force\nprintf x\` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | The current trailing-escape fallback succeeds |
-| GR04 | 1, 5 | The missing-core hook exits 2 for `echo 'x` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | A Git-word-only check permits this malformed recovery command |
-| GR05 | 3, 7 | The missing-core hook exits 2 for `bash -c "echo 'x"` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | A discarded child parse status permits this supported wrapper |
-| GR06 | 2 | The malformed degraded refusal contains the quote-and-escape repair sentence | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | A generic degraded refusal omits the actionable repair |
-| GR07 | 2 | The malformed degraded refusal excludes the authority preamble | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | Appending syntax advice to the old authority message fails |
-| GR08 | 2 | The malformed degraded refusal excludes `Stop and hand back` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | The authority termination cannot survive the parse diagnostic |
-| GR09 | 2 | The malformed degraded refusal excludes the history-rewrite explanation | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | A partial preamble edit leaves unrelated policy advice |
-| GR10 | 2 | The malformed degraded refusal identifies the parse failure after `BLOCKED:` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | Advice alone cannot identify the refusal class |
+| GR01 | 1, 14 | The missing-core hook exits 2 for `printf hi;git push --force\necho 'x` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | The current fallback permits the occurrence input |
+| GR02 | 1 | The missing-core hook exits 2 for `printf hi;git push --force\necho "x` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | A single-quote-only repair permits this input |
+| GR03 | 1 | The missing-core hook exits 2 for `printf hi;git push --force\nprintf x\` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | The current trailing-escape fallback succeeds |
+| GR04 | 1, 5 | The missing-core hook exits 2 for `echo 'x` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | A Git-word-only check permits this malformed recovery command |
+| GR05 | 3, 7 | The missing-core hook exits 2 for `bash -c "echo 'x"` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | A discarded child parse status permits this supported wrapper |
+| GR06 | 2 | The malformed degraded refusal contains the quote-and-escape repair sentence | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | A generic degraded refusal omits the actionable repair |
+| GR07 | 2 | The malformed degraded refusal excludes the authority preamble | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | Appending syntax advice to the old authority message fails |
+| GR08 | 2 | The malformed degraded refusal excludes `Stop and hand back` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | The authority termination cannot survive the parse diagnostic |
+| GR09 | 2 | The malformed degraded refusal excludes the history-rewrite explanation | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | A partial preamble edit leaves unrelated policy advice |
+| GR10 | 2 | The malformed degraded refusal identifies the parse failure after `BLOCKED:` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | Advice alone cannot identify the refusal class |
 | GR11 | 2, 11 | The core unlexed refusal contains the existing quote-and-escape repair sentence | `internal/gitguard/unlexed_test.go` (`TestBlockMessageCarriesUnlexedAdvice`) | The test detects advice removal |
-| GR12 | 2, 11 | The core unlexed refusal excludes the authority preamble | planned TestBlockMessageSeparatesParseRefusal in internal/gitguard/unlexed_test.go | The current uniform BlockMessage prefix fails |
+| GR12 | 2, 11 | The core unlexed refusal excludes the authority preamble | `internal/gitguard/unlexed_test.go` (`TestBlockMessageSeparatesParseRefusal`) | The current uniform BlockMessage prefix fails |
 | GR13 | 4 | The missing-core hook refuses the existing recognized Git fixtures | `internal/systemtest/guard_rim_test.go` (`TestDegradedGuardRimDecidesFromTheCommandField`) | The existing destructive and wrapper cases detect a removed Git branch |
-| GR14 | 4 | The missing-core hook exits 2 for well-formed `git status` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | A destructive-only degraded policy permits read-only Git |
+| GR14 | 4 | The missing-core hook exits 2 for well-formed `git status` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | A destructive-only degraded policy permits read-only Git |
 | GR15 | 5, 6 | The missing-core hook permits the existing non-Git recovery fixtures | `internal/systemtest/guard_rim_test.go` (`TestDegradedGuardRimDecidesFromTheCommandField`) | Blanket degraded refusal breaks recovery reads |
 | GR16 | 7 | The missing-core hook preserves the existing nested-wrapper exit 0 | `internal/systemtest/guard_rim_test.go` (`TestDegradedGuardRimDecidesFromTheCommandField`) | Deeper automatic recursion changes the pinned depth |
 | GR17 | 4, 6 | The missing-core hook preserves the existing operator-run verdicts | `internal/systemtest/guard_rim_test.go` (`TestDegradedGuardRimDecidesFromTheCommandField`) | Collapsing operators into words loses command boundaries |
 | GR18 | 5, 6 | The missing-core hook preserves the existing escaped-envelope verdicts | `internal/systemtest/guard_rim_test.go` (`TestDegradedGuardRimDecidesFromTheCommandField`) | Bypassing the decoder changes literal and escaped operators |
 | GR19 | 8 | The missing-core hook refuses each existing unreadable-envelope fixture | `internal/systemtest/guard_rim_test.go` (`TestDegradedGuardRimDecidesFromTheCommandField`) | Treating unreadable as empty permits these fixtures |
-| GR20 | 9 | The missing-library hook exits 2 with its existing missing-library diagnostic | planned TestGitGuardMissingLibraryRefuses in internal/systemtest/guard_refusal_test.go | Sourcing a missing library without refusal grants access |
-| GR21 | 10 | The hook exits 2 when its reachable core returns exit 3 | planned TestGitGuardCoreErrorRefuses in internal/systemtest/guard_refusal_test.go | Reinterpreting a core error as a parse result or permission fails |
-| GR22 | 10 | The core-error refusal retains the analyzer-error diagnostic | planned TestGitGuardCoreErrorRefuses in internal/systemtest/guard_refusal_test.go | The parse diagnostic cannot replace an analyzer failure |
+| GR20 | 9 | The missing-library hook exits 2 with its existing missing-library diagnostic | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardMissingLibraryRefuses`) | Sourcing a missing library without refusal grants access |
+| GR21 | 10 | The hook exits 2 when its reachable core returns exit 3 | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardCoreErrorRefuses`) | Reinterpreting a core error as a parse result or permission fails |
+| GR22 | 10 | The core-error refusal retains the analyzer-error diagnostic | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardCoreErrorRefuses`) | The parse diagnostic cannot replace an analyzer failure |
 | GR23 | 11 | The core preserves the existing unlexable-Git labels | `internal/gitguard/unlexed_test.go` (`TestClassifyRefusesAnUnlexableGitCommand`) | Removing the existing fail-closed classification fails |
 | GR24 | 13 | The core permits the existing malformed non-Git fixtures | `internal/gitguard/unlexed_test.go` (`TestClassifyRefusesAnUnlexableGitCommand`) | Applying the degraded policy to the core fails |
-| GR25 | 12 | The core force-push message retains its authority advice | planned TestBlockMessageSeparatesParseRefusal in internal/gitguard/unlexed_test.go | A global prefix replacement weakens a destructive refusal |
-| GR26 | 14 | The live-core hook returns a parse-only refusal for the occurrence envelope | planned TestGitGuardHookAndCoreParseRefusal in internal/systemtest/guard_refusal_test.go | A helper-only fix cannot mask stale entry wiring |
-| GR27 | 14 | The selected binary returns a parse-only refusal through `guard-git` | planned TestGitGuardHookAndCoreParseRefusal in internal/systemtest/guard_refusal_test.go | A shell-only diagnostic fix leaves the direct core entry wrong |
+| GR25 | 12 | The core force-push message retains its authority advice | `internal/gitguard/unlexed_test.go` (`TestBlockMessageSeparatesParseRefusal`) | A global prefix replacement weakens a destructive refusal |
+| GR26 | 14 | The live-core hook returns a parse-only refusal for the occurrence envelope | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardHookAndCoreParseRefusal`) | A helper-only fix cannot mask stale entry wiring |
+| GR27 | 14 | The selected binary returns a parse-only refusal through `guard-git` | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardHookAndCoreParseRefusal`) | A shell-only diagnostic fix leaves the direct core entry wrong |
 | GR28 | 15 | The core retains the existing normal push allow and block verdicts | `cmd/bench/main_test.go` (`TestGuardGitBlockAllow`) | Changing classification while changing advice fails the old entry cases |
-| GR29 | 16 | The real missing-core fixture observes its verdict without a reachable Bench executable | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | Accidentally reaching the core cannot prove the degraded repair |
-| GR30 | 1 | The hook exits 2 for the occurrence envelope when its wrapper returns exit 127 | planned TestGitGuardMissingBinaryPreservesRecovery in internal/systemtest/guard_refusal_test.go | Fixing only unresolved-wrapper dispatch misses the missing-binary rim |
-| GR31 | 4 | The missing-core hook exits 2 for well-formed `printf hi;git status` | planned TestDegradedGuardRefusesMalformedCommands in internal/systemtest/guard_refusal_test.go | Rejecting only malformed text loses the attached-separator Git case |
-| GR32 | 2 | The core unlexed refusal excludes `Stop and hand back` | planned TestBlockMessageSeparatesParseRefusal in internal/gitguard/unlexed_test.go | Removing only the first authority clause leaves the old termination |
-| GR33 | 2 | The core unlexed refusal excludes the history-rewrite explanation | planned TestBlockMessageSeparatesParseRefusal in internal/gitguard/unlexed_test.go | A partial prefix edit leaves unrelated policy advice |
-| GR34 | 11 | The core unlexed refusal retains its existing parse label after `BLOCKED:` | planned TestBlockMessageSeparatesParseRefusal in internal/gitguard/unlexed_test.go | A generic syntax message loses the existing refusal identity |
-| GR35 | 5 | The hook permits `cat .github/workflows/gate.yml` when its wrapper returns exit 127 | planned TestGitGuardMissingBinaryPreservesRecovery in internal/systemtest/guard_refusal_test.go | Blanket refusal at the missing-binary rim breaks the recovery path |
+| GR29 | 16 | The real missing-core fixture observes its verdict without a reachable Bench executable | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | Accidentally reaching the core cannot prove the degraded repair |
+| GR30 | 1 | The hook exits 2 for the occurrence envelope when its wrapper returns exit 127 | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardMissingBinaryPreservesRecovery`) | Fixing only unresolved-wrapper dispatch misses the missing-binary rim |
+| GR31 | 4 | The missing-core hook exits 2 for well-formed `printf hi;git status` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | Rejecting only malformed text loses the attached-separator Git case |
+| GR32 | 2 | The core unlexed refusal excludes `Stop and hand back` | `internal/gitguard/unlexed_test.go` (`TestBlockMessageSeparatesParseRefusal`) | Removing only the first authority clause leaves the old termination |
+| GR33 | 2 | The core unlexed refusal excludes the history-rewrite explanation | `internal/gitguard/unlexed_test.go` (`TestBlockMessageSeparatesParseRefusal`) | A partial prefix edit leaves unrelated policy advice |
+| GR34 | 11 | The core unlexed refusal retains its existing parse label after `BLOCKED:` | `internal/gitguard/unlexed_test.go` (`TestBlockMessageSeparatesParseRefusal`) | A generic syntax message loses the existing refusal identity |
+| GR35 | 5 | The hook permits `cat .github/workflows/gate.yml` when its wrapper returns exit 127 | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardMissingBinaryPreservesRecovery`) | Blanket refusal at the missing-binary rim breaks the recovery path |
 | GR36 | 15 | The core classifies `git -C /tmp reset --hard` as `git reset` | `internal/gitguard/scan_test.go` (`TestScanWrapperDepthAndGlobalOpts`) | A global option value cannot hide the destructive verb |
 | GR37 | 15 | The core refuses `bench worktree exec X -- git commit -m x` | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | A diagnostic change cannot discard the exec-child classification |
 | GR38 | 15 | The core permits `bench worktree exec X -- git status` | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | Blanket exec-child refusal loses ordinary recovery reads |
 | GR39 | 15 | The core classifies the exec-child push as unresolved | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | The target checkout cannot inherit the current checkout's push facts |
 | GR40 | 7 | The core refuses `bash -c 'git push'` | `internal/gitguard/scan_test.go` (`TestScanWrapperDepthAndGlobalOpts`) | A removed wrapper branch loses the supported first level |
 | GR41 | 7 | The core permits `bash -c 'sh -c "git push"'` | `internal/gitguard/scan_test.go` (`TestScanWrapperDepthAndGlobalOpts`) | Deeper recursion changes the core's pinned uncertainty rule |
+| GR42 | 4, 7 | The missing-core hook exits 2 with the coarse Git refusal for `bash -c 'echo hi'; git push --force` | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`) | A scan that stops after a clean wrapper child permits the later Git command |
 
 ### Edge inventory
 
@@ -180,6 +181,7 @@ This outcome changes neither cleanup behavior nor durable records.
 - **Won't handle**: a second wrapper level retains the depth fixture in `TestDegradedGuardRimDecidesFromTheCommandField`.
 - **Won't handle**: shell expansions and arbitrary executable aliases remain outside `gitguard.scanWords` and `invokes_git`.
 - **Won't handle**: full shell syntax validation remains outside the supported subset in `lex_command`.
+- **Won't handle**: comment and heredoc syntax remain outside `lex_command`, so a lone apostrophe there refuses as an unclosed quote in the degraded hook.
 - **Won't handle**: common envelope validation remains with `CommandFromEnvelope` and `bench_envelope_command` until the separate grammar outcome.
 - **Won't handle**: the core retains its current unreadable-envelope allow case in `TestGuardGitBlockAllow`.
 - **Won't handle**: new Git-option or worktree-child recognition remains outside this repair of `gitguard.scanWords`.
@@ -195,24 +197,15 @@ The prospective build owns these exact paths:
 - `internal/gitguard/gitguard.go`
 - `internal/gitguard/unlexed_test.go`
 - `internal/systemtest/guard_refusal_test.go`
-- `tests/canary/package-core-guard/guard-describe-boundary-dropped`
-- `tests/canary/package-core-guard/guard-resolver-order-drift`
-- `tests/canary/canonical-path-owner/second-derivation`
-- `tests/canary/injected-ports/unregistered-port`
-- `internal/anchors/registry_data.go`
-- `cmd/bench/command_registry.go`
-- `cmd/bench/command_registry_test.go`
-- `cmd/bench/help_inventory_test.go`
-- `internal/conformance/axi_query_registry_test.go`
-- `internal/conformance/subcommand_routing_table_test.go`
+- `internal/systemtest/guard_rim_test.go`
+- `internal/systemtest/bench_follow_on_test.go`
 - `reviews/degraded-guard-refusal.md`
 
-The ticket owns four implementation paths and ten closure paths.
+The ticket owns four implementation paths and two shared system-test helper paths.
 The coordinator owns the review pickup.
 The planning author owns this spec folder during the spec phase.
 The spec fence equals the ticket write expectation plus the review pickup.
-The closure paths join because their existing declarations pin the production paths.
-The author keeps their fixture and anchor assertions intact.
+No anchor row, command registry, or ownership-closure fixture pins the two production paths.
 
 ## Out of scope
 
@@ -240,11 +233,10 @@ Remaining uncertainty: future red-to-green evidence and the independent reviewer
 
 The build does not add a command, hook path, injected port, or fixture family.
 The existing invocation registrations consume the same paths and exit codes.
-The ten closure paths retain their current rules and assertion meanings.
 
 The registry sweep includes these unchanged consumers:
 
-- `cmd/bench/main.go:134`: the `guard-git` command registration.
+- `cmd/bench/main.go:136`: the `guard-git` command registration.
 - `.claude/settings.json:68`: the Claude hook invocation.
 - `.codex/hooks.json`: the Codex hook invocation.
 - `internal/conformance/entry_point_parity_test.go:56-58`: the hook/core parity registration.
@@ -255,11 +247,9 @@ The registry sweep includes these unchanged consumers:
 The build retains the existing system fixture helper and the core repair-sentence owner.
 The future build must preserve each registry path listed above.
 
-The fixture closure sources are the two hook overlay files and the two Git guard BASE records.
-The anchor closure source is `internal/anchors/registry_data.go:403-405`.
-The anchor package requires five command registries through `internal/tickets/registry_data.go:20-26` and line 45.
-Those entries pin the threat model, wrapper depth, and named backstops.
-The author read the fixture overlays, BASE records, mutation records, and EXPECT records before the fence amendment.
+Two canary fixtures read BASE copies of `internal/gitguard/gitguard.go`.
+Their mutations match the import block and the `Checker` struct, which this outcome does not change.
+Two other canaries overlay their own hook copies, so a real hook edit does not reach them.
 
 ### Source coverage
 
@@ -280,15 +270,15 @@ That future permissive rule cannot relax this malformed-command refusal.
 
 The primary sources below establish the current behavior at the subject commit:
 
-- `roadmap/FT366.md:12-17`: the degraded occurrence and incorrect core authority preamble.
+- `roadmap/FT366.md:11-15`: the degraded occurrence and incorrect core authority preamble.
 - `.bench/hooks/block-dangerous-git.sh:91-102`: the coarse recovery verdict.
-- `.bench/hooks/block-dangerous-git.sh:109-153`: the supported one-level child scan.
-- `.bench/hooks/block-dangerous-git.sh:250-310`: the malformed-input fallback.
-- `.bench/hooks/block-dangerous-git.sh:313-323`: the core dispatch and error rim.
-- `internal/gitguard/gitguard.go:125-149`: the unchanged classifier and uniform message prefix.
+- `.bench/hooks/block-dangerous-git.sh:109-155`: the supported one-level child scan.
+- `.bench/hooks/block-dangerous-git.sh:250-308`: the malformed-input fallback.
+- `.bench/hooks/block-dangerous-git.sh:312-323`: the core dispatch and error rim.
+- `internal/gitguard/gitguard.go:126-150`: the unchanged classifier and uniform message prefix.
 - `internal/shellcommand/unlexed.go:5-7`: the core repair sentence.
 - `internal/systemtest/guard_rim_test.go:21-169`: the actual degraded seam and its single fixture helper.
-- `cmd/bench/guards.go:99-131`: the direct core entry and exit contract.
+- `cmd/bench/guards.go:100-132`: the direct core entry and exit contract.
 - `internal/gitguard/scan.go:11-101`: the existing depth, options, and worktree-child ownership.
 
 A source edit to those functions invalidates these current-code claims.
@@ -319,7 +309,7 @@ An approved implementation records its fresh author in a version 2 amendment bef
 System verification uses BENCH_KIT and the sealed selected binary supplied by `bench test`.
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"GR1","tickets":["01-refuse-malformed-guard-commands.md"],"verification":[{"id":"gitguard","command":"bench test --package ./internal/gitguard"},{"id":"core-entry","command":"bench test --package ./cmd/bench"},{"id":"hook-entries","command":"bench test --check system"},{"id":"hook-contracts","command":"bench test --check package-core-guard"},{"id":"author-parse-success-omission","command":"bench test --check system","probe":"restore permissive malformed success at the trailing-escape branch; GR03 must fail"},{"id":"canonical-path-policy","command":"bench test --check canonical-path-owner"},{"id":"injected-port-policy","command":"bench test --check injected-port-registry"},{"id":"guard-anchors","command":"bench test --check docs-currency-workflow"},{"id":"axi-registry","command":"bench test --check axi-query-registry"},{"id":"command-routing","command":"bench test --check subcommand-routing"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/degraded-guard-refusal/spec.md"},{"id":"gitguard","command":"bench test --package ./internal/gitguard"},{"id":"core-entry","command":"bench test --package ./cmd/bench"},{"id":"hook-entries","command":"bench test --check system"},{"id":"hook-contracts","command":"bench test --check package-core-guard"},{"id":"coordinator-child-status-omission","command":"bench test --check system","probe":"discard malformed-child status at wrapper recursion; GR05 must fail"},{"id":"canonical-path-policy","command":"bench test --check canonical-path-owner"},{"id":"injected-port-policy","command":"bench test --check injected-port-registry"},{"id":"guard-anchors","command":"bench test --check docs-currency-workflow"},{"id":"axi-registry","command":"bench test --check axi-query-registry"},{"id":"command-routing","command":"bench test --check subcommand-routing"}]}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft366-degraded-guard-full-20261019","orchestrator_session":"claude:ft366-orchestrator-20261019","author_limit":1,"assignments":{"01-refuse-malformed-guard-commands.md":[{"session":"claude:ft366-t01-author-20261019","assignment":"256a48ca65eea767e3fe44b8da53f044","model":"opus","effort":"high","source":"42bfdcf4150f64d98142469d4aecc5369f53020d","native_ref":"claude-agent:bench-writer-high:ft366-t01-author-20261019"},{"session":"claude:ft366-t01-repair1-20261019","assignment":"256a48ca65eea767e3fe44b8da53f044","model":"opus","effort":"high","source":"9d30b27c3d1d86cd1bc4888bb4cfe1ddd6e6815f","native_ref":"claude-agent:bench-writer-high:ft366-t01-repair1-20261019","predecessor":"claude:ft366-t01-author-20261019","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:ft366-t01-author-20261019","preserved":"6610036ff815e55d4646e8e0fb232687a1bb13b6"}]}},"chunks":[{"id":"GR1","tickets":["01-refuse-malformed-guard-commands.md"],"verification":[{"id":"t1-gitguard","command":"bench test --package ./internal/gitguard","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-core-entry","command":"bench test --package ./cmd/bench","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-hook-entries","command":"bench test --check system","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-hook-contracts","command":"bench test --check package-core-guard","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-author-parse-success-omission","command":"bench test --check system","probe":"restore permissive malformed success at the trailing-escape branch; GR03 must fail","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-canonical-path-policy","command":"bench test --check canonical-path-owner","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-injected-port-policy","command":"bench test --check injected-port-registry","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-guard-anchors","command":"bench test --check docs-currency-workflow","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-axi-registry","command":"bench test --check axi-query-registry","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-command-routing","command":"bench test --check subcommand-routing","ticket":"01-refuse-malformed-guard-commands.md"},{"id":"t1-root-conformance","command":"bench test --check root-conformance","ticket":"01-refuse-malformed-guard-commands.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/degraded-guard-refusal/spec.md"},{"id":"gitguard","command":"bench test --package ./internal/gitguard"},{"id":"core-entry","command":"bench test --package ./cmd/bench"},{"id":"hook-entries","command":"bench test --check system"},{"id":"hook-contracts","command":"bench test --check package-core-guard"},{"id":"coordinator-child-status-omission","command":"bench test --check system","probe":"discard malformed-child status at wrapper recursion; GR05 must fail"},{"id":"canonical-path-policy","command":"bench test --check canonical-path-owner"},{"id":"injected-port-policy","command":"bench test --check injected-port-registry"},{"id":"guard-anchors","command":"bench test --check docs-currency-workflow"},{"id":"axi-registry","command":"bench test --check axi-query-registry"},{"id":"command-routing","command":"bench test --check subcommand-routing"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}
 ```
 
 ### Review chronology
@@ -341,14 +331,19 @@ Clean-source preflight passed with fourteen green checks and two not-applicable 
 The ticket write proposal found no missing paths or ordering requirements.
 No implementation check or benchmark ran during this planning phase.
 
+The build-entry staleness pass on 2026-10-19 found the spec and ticket current in behavior.
+The closure-removal outcome deleted the ownership closure that pinned the ten closure paths.
+The pass therefore removed those paths from the fence and added the root conformance floor check.
+It also refreshed five drifted line citations.
+
 ### Spec approval table
 
 | subject | proposal | disposition |
 |---|---|---|
 | implementation line | Sol 6.1 at high effort | spec and ticket accepted |
 | seam | the real degraded hook and selected core entry | spec and ticket accepted |
-| coverage and edges | GR01-GR41 plus the named exclusions | spec and ticket accepted |
-| ownership fences | fourteen ticket paths plus the review pickup | closure proposal and independent review passed |
+| coverage and edges | GR01-GR42 plus the named exclusions | GR42 and the comment exclusion added by the GR1 review |
+| ownership fences | six ticket paths plus the review pickup | narrowed by the build-entry staleness pass and widened by the GR1 review |
 | scope | malformed degraded refusal and parse-only Git diagnostics | spec and ticket accepted |
 | residuals | grammar, scan, and `rg` outcomes remain separate | retained |
 | ticket breakdown | 1. Refuse malformed guard commands with repair advice, blocked by none, complete GR1 outcome | independently accepted |
