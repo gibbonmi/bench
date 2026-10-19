@@ -278,7 +278,79 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "pc-c1-standards-1",
+          "performer": "claude:ft380-pc-c1-standards-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "90f8a4ec255c9007eb7128a71347f0ffbebd2b21",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c1-standards-20261019",
+            "digest": "sha256:f9d26a52721b961fa23aad8764bf2896a29615edad7ec5df6a51cb3bc439bec8",
+            "excerpt": "Standards, PC-C1 (base 7b45186c9, tip 5daa190). PC16 holds: pipeCells (internal/coverage/rows.go:288-301) is the one split; processMapLine and ReadChunkTable both call it.\nS1 (ask-user, conf 6): internal/conformance/retained_workflow_test.go:135-179 checkImplementationChunkTable is a second chunk-table reader with its own split and section end.\nS2 (auto-fix, conf 7): internal/preflight/check_floor_command_test.go:85 repeats the producer suffix \" — repair check-floor and rerun the exact charge\" from charge.go:88; the recorded red needs only \"preflight required: check-floor\".\nS3 (no-op, conf 4): hand-kept row counts and orders in source_tip_test.go, decision_test.go, charge_cells_test.go restate Decide; pre-existing pattern.\nCount 3. Worst S2.\n"
+          },
+          "axis": "Standards",
+          "base": "7b45186c91c875273fb4866096d8977b235c2bc5",
+          "tip": "5daa190037d8cc2503ff1e3d01802c9e7cf886f5",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pc-c1-spec-1",
+          "performer": "claude:ft380-pc-c1-spec-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "90f8a4ec255c9007eb7128a71347f0ffbebd2b21",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c1-spec-20261019",
+            "digest": "sha256:35c7aa767ed64a40584e877636ecb9382158c89548855f75cc4505864975f648",
+            "excerpt": "Spec, PC-C1 (base 7b45186c9, tip 5daa190). Every PC-C1 row matches the decision \"The chunk-rows row\"; every seam cell cites a real test; PC18 spot-check plan-commit --plan-only green; no scope creep.\nP1 (no-op, conf 3): chunk_table.go:60 opens the section only on an exact heading line; a trailing-space heading reds with \"no Implementation chunks table\" (fails closed).\nCount 1. Worst P1.\n"
+          },
+          "axis": "Spec",
+          "base": "7b45186c91c875273fb4866096d8977b235c2bc5",
+          "tip": "5daa190037d8cc2503ff1e3d01802c9e7cf886f5",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pc-c1-coverage-1",
+          "performer": "claude:ft380-pc-c1-coverage-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "90f8a4ec255c9007eb7128a71347f0ffbebd2b21",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c1-coverage-20261019",
+            "digest": "sha256:dbabc91967e0d96ed0d5862d1283588292bda78ba8e06432e9455ee73799a794",
+            "excerpt": "Coverage, PC-C1 (base 7b45186c9, tip 5daa190).\nC1 (ask-user, conf 8): ReadChunkTable does not see code fences; a fenced \"## Implementation chunks\" heading or fenced table is read as live (chunk_table.go:57-85); the coverage-map parse has the same rule (rows.go:163); no row or Won't-handle line decides it.\nC2 (ask-user, conf 7): PC18 is review-owned but no plan-only verdict per ticketed staged spec is recorded in the tree.\nC3 (no-op, conf 9): NBSP in header or token is kept by the trims; fails closed with a misleading detail.\nC4 (no-op, conf 8): a colon-aligned separator row (|:---|) is read as data and faults; no staged spec uses it; fails closed.\nCount 4. Worst C2. CRLF, missing trailing newline, escaped pipes, and absent versus empty are handled.\n"
+          },
+          "axis": "Coverage",
+          "base": "7b45186c91c875273fb4866096d8977b235c2bc5",
+          "tip": "5daa190037d8cc2503ff1e3d01802c9e7cf886f5",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -290,3 +362,34 @@
   }
 }
 ```
+
+## PC-C1 initial review pickup
+
+Frozen pair: 7b45186c9..5daa190. Repair cycles used: 0 of 2.
+
+## Standards
+
+Count: 3. Worst issue: S2.
+
+- S1, no-op, confidence 6: `internal/conformance/retained_workflow_test.go:135-179` is a second chunk-table reader. The spec decision "The `chunk-rows` row" keeps that test-only check as a fixture check until the staged `markdown-block-reader` spec moves both readers.
+- S2, auto-fix on ticket 02, confidence 7: `internal/preflight/check_floor_command_test.go:85` repeats the producer suffix from `internal/preflight/charge.go:88`. The recorded red needs only `preflight required: check-floor`.
+- S3, no-op, confidence 4: the hand-kept row counts and orders predate the diff, and the diff only extends them.
+
+## Spec
+
+Count: 1. Worst issue: P1.
+
+- P1, no-op, confidence 3: `internal/coverage/chunk_table.go:60` opens the section only on an exact heading line. A heading with trailing spaces reds the row, so the check fails closed.
+
+## Coverage
+
+Count: 4. Worst issue: C2.
+
+- C1, auto-fix on the spec, confidence 8: the chunk-table reader does not see code fences, and the coverage-map reader has the same rule. The spec gets a Won't-handle line that defers fence awareness to the staged `markdown-block-reader` spec.
+- C2, auto-fix as evidence only, confidence 7: the PC18 verdicts were in the author return and not in the tree. The table below records them.
+- C3, no-op, confidence 9: an NBSP in a header or a token fails closed.
+- C4, no-op, confidence 8: a colon-aligned separator row fails closed, and no staged spec uses it.
+
+### PC18 evidence
+
+The ticket 01 author ran `bench preflight build <slug> --plan-only` for each ticketed staged spec at the ticket tip 2e97bcf15. Each `chunk-rows` cell read green: plan-commit, cleanup-member-traversal, conformance-observation-follow-on, exact-planning-readers, guard-scan-loop, guidance-weight, independent-expectation-audit, landing-test-efficiency, markdown-block-reader, process-lifetime, production-test-seam-policy, release-evidence-forwards, session-context-overflow, shared-guard-projection, shared-test-fixtures, shell-argument-ownership, and strict-json-ownership.
