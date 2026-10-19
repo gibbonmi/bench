@@ -224,7 +224,10 @@ func TestEvidenceLargeMetadata(t *testing.T) {
 	for _, row := range preflighttest.TableRows(t, preflighttest.DecodeMap(t, sources["s1"]), "fence") {
 		got = append(got, row["path"].(string))
 	}
-	want := append(append([]string{}, preflighttest.ConformantFence...), fence...)
+	var want []string
+	for _, entry := range append(append([]string{}, preflighttest.ConformantFence...), fence...) {
+		want = append(want, strings.TrimSuffix(entry, "/"))
+	}
 	if strings.Join(got, "\n") != strings.Join(want, "\n") || sources["s2"] != ticket {
 		t.Fatalf("metadata fence holds %d of %d entries; ticket equal=%t", len(got), len(want), sources["s2"] == ticket)
 	}

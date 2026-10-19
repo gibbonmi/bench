@@ -207,24 +207,33 @@ func TestDriftIdentity(t *testing.T) {
 		t.Fatalf("dropped claim drift = %q, want %q:\n%s", driftRows(t, out), dropped, out)
 	}
 
-	// The tip drops a fence prefix and an exact fence entry while their files change, so only
-	// the baseline fence names them.
-	const member, exact = "outside/fenced/member.txt", "outside/exact.txt"
-	write(t, map[string]string{
-		spec:   preflighttest.SpecBody(slug, "- `outside/fenced/` (dropped fence)", "- `"+exact+"` (dropped exact fence)"),
-		member: "one\n", exact: "one\n",
-	})
-	before = commitAll(t, "fence outside the seed")
-	write(t, map[string]string{spec: preflighttest.SpecBody(slug), member: "two\n", exact: "two\n"})
-	tip = commitAll(t, "fence drops while its files change")
-	fenced := sorted(modified(spec), modified(member), modified(exact))
-	if out, _ := audit(t, slug, before, tip); !slices.Equal(driftRows(t, out), fenced) {
-		t.Fatalf("dropped fence drift = %q, want %q:\n%s", driftRows(t, out), fenced, out)
-	}
-
 	base, tip = dropBaselineSpec(t, slug)
 	if out, code := audit(t, slug, base, tip); code != 1 || !strings.Contains(out, "baseline spec refused") || strings.Contains(out, "staleness[") {
 		t.Fatalf("SS8 absent baseline spec = (%d), want a refusal and no staleness result:\n%s", code, out)
+	}
+}
+
+// TestAuditScopeReadsTicketWrites covers CR66 and CR67. Each changed file that only the base
+// ticket or only the tip ticket writes is in scope, and a path that only a leftover fence
+// section lists stays outside it.
+func TestAuditScopeReadsTicketWrites(t *testing.T) {
+	_, slug := preflighttest.SeedAdmitted(t)
+	ticket := "specs/" + slug + "/tickets/one.md"
+	const member, exact, added, leftover = "outside/fenced/member.txt", "outside/exact.txt", "outside/added.txt", "outside/leftover.txt"
+	writes := func(entries ...string) string {
+		return preflighttest.WritesTicketDoc("One", append(preflighttest.FenceWrites(preflighttest.ConformantFence), entries...), "PF1", "PF2")
+	}
+	write(t, map[string]string{specPath(slug): preflighttest.SpecBody(slug, "- `"+leftover+"` (leftover fence)"),
+		ticket: writes("outside/fenced/", exact), member: "one\n", exact: "one\n", added: "one\n", leftover: "one\n"})
+	before := commitAll(t, "baseline ticket writes")
+	write(t, map[string]string{ticket: writes(added), member: "two\n", exact: "two\n", added: "two\n", leftover: "two\n"})
+	tip := commitAll(t, "tip ticket writes")
+	modified := func(path string) string {
+		return path + "|" + path + "|modified|" + object(t, before, path) + "|" + object(t, tip, path)
+	}
+	want := sorted(modified(ticket), modified(member), modified(exact), modified(added))
+	if out, _ := audit(t, slug, before, tip); !slices.Equal(driftRows(t, out), want) {
+		t.Fatalf("ticket writes drift = %q, want %q:\n%s", driftRows(t, out), want, out)
 	}
 }
 

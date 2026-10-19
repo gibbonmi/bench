@@ -25,5 +25,6 @@ func TestTicketSlicingAnchors(t *testing.T) {
 		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", needle: "breakdown, proposal", want: "closure removal: map discipline kept the breakdown and proposal steps", forbidden: true},
 		{file: issues, needle: "writes proposal", want: "closure removal: the known-issues file kept a row that names the writes proposal", forbidden: true},
 		{file: ".agents/commands/bench-implement-spec.md", needle: "-closure", want: "closure removal: the implement-spec staleness route kept a closure row", forbidden: true},
+		{file: ".agents/commands/bench-implement-spec.md", needle: "If every red row is `fence-writes`, `completion-plan`, or `check-floor`, the staleness pass below takes the red.", want: "closure removal: the implement-spec staleness route kept the fence-writes row", forbidden: true},
 	}}.check(t)
 }

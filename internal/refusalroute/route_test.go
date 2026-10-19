@@ -1,6 +1,18 @@
 package refusalroute
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+// TestSourceNotFencedRouteNamesWiden covers CR68 and CR69. The landing's fence refusal
+// routes a gate-found path to the one widening verb and names no spec fence section.
+func TestSourceNotFencedRouteNamesWiden(t *testing.T) {
+	route := New("source-not-fenced", Facts{}).Route
+	if !strings.Contains(route, "bench spec widen") || strings.Contains(route, "## Ownership fences") {
+		t.Fatalf("source-not-fenced route = %q, want bench spec widen and no fence section", route)
+	}
+}
 
 // TestRouteRendering pins the rendered route of injected faces, so each case controls its
 // own steps and facts. Each expectation spells the route from the declared steps and the

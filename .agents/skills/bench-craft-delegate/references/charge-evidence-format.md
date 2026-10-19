@@ -63,7 +63,7 @@ A review charge row uses access `read-only` and names the spec source in its tic
 | Table | Ordered fields | Rows |
 | --- | --- | --- |
 | `charge` | `axis` (string), `ticket` (string), `access` (string) | One build row with empty axis, or the existing review-axis inventory order. |
-| `fence` | `path` (string) | Declared spec fence order. |
+| `fence` | `path` (string) | Ticket `Writes:` union in ticket and entry order, each path once. |
 | `writes` | `path` (string) | Selected ticket write order. Review has zero rows. |
 | `coverage` | `row` (string) | Selected ticket coverage order. Review has zero rows here. |
 | `checks` | `source` (string) | Existing build check-source order or review skill source. |

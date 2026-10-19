@@ -129,8 +129,8 @@ func seededLandingFixture(t *testing.T, request, ignored, declaration, home stri
 		writes += ", " + path
 	}
 	prepared := recordtest.Prepare(t, root, 1, closureSpec, specBody)
-	// The ticket writes the fence less its review pickup, so a landing that grades
-	// fence-writes reads a union-exact spec.
+	// The ticket's `Writes:` line derives the ownership fence, and the review pickup is
+	// an implicit entry, so the ticket names every other path that the source may change.
 	prepared.SetTicketWrites(writes)
 	seed(t, root)
 	prepared.Commit("approve fixture delivery")
@@ -279,5 +279,10 @@ func ticketsOnlyLandArgs(request, base, tip, slug, path string) []string {
 	return append([]string{"--spec", slug}, specLessLandArgs(request, base, tip, path)...)
 }
 
-// withFenceEntry adds one fence entry to a spec the landing fixture prepared.
-func withFenceEntry(spec []byte, entry string) []byte { return recordtest.WithFenceEntry(spec, entry) }
+// landingTicket is the one ticket that the landing fixture prepared.
+const landingTicket = "specs/x/tickets/1.md"
+
+// withTicketWrite adds one entry to the `Writes:` line of the landing fixture's ticket.
+func withTicketWrite(ticket []byte, entry string) []byte {
+	return recordtest.WithTicketWrite(ticket, entry)
+}

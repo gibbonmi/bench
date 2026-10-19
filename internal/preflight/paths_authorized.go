@@ -34,16 +34,16 @@ func unauthorizedPaths(f Facts) []string {
 
 // captureEntry is the phase-owned capture folder. Every phase close writes the
 // handoff, the learnings, or the ideas there, so a reviewed range always carries it,
-// and no spec fences it. It is authorized for every range.
+// and no ticket names it. It is authorized for every range.
 const captureEntry = "capture"
 
-// authorizingEntries is every entry paths-authorized consults: the spec's
-// declared fence entries plus the implicit entries. They are appended to a
-// copy so the gathered FenceEntries slice is never mutated. Mode is
-// deliberately not consulted: build preflight, review preflight, and the
-// landing's final source authorization all get the same answer.
+// authorizingEntries is every entry paths-authorized consults: the ticket fence
+// plus the implicit entries. A spec fence section authorizes nothing, so an empty
+// ticket fence authorizes only the implicit entries. Mode is deliberately not
+// consulted: build preflight, review preflight, and the landing's final source
+// authorization all get the same answer.
 func authorizingEntries(f Facts) []string {
-	return append(append([]string{}, f.FenceEntries...), implicitEntries(f)...)
+	return append(ticketFence(f), implicitEntries(f)...)
 }
 
 // specFolder is the directory containing the resolved spec, empty when the
@@ -57,14 +57,9 @@ func specFolder(specPath string) string {
 	return specPath[:i]
 }
 
-// fenceAuthorizes reports whether one of the spec's declared fence entries
-// covers path. Each fence entry takes the one `Writes:` split, so a trailing
-// directory slash is never itself an extra path segment.
-func fenceAuthorizes(path string, fences []string) bool {
-	for _, fence := range fences {
-		if entry, _ := tickets.WritesPath(fence); tickets.Covers(entry, path) {
-			return true
-		}
-	}
-	return false
+// fenceAuthorizes reports whether one authorizing entry covers path. Each entry is
+// already a tree path, so a second `Writes:` split never strips a marker that the
+// path itself spells.
+func fenceAuthorizes(path string, entries []string) bool {
+	return slices.ContainsFunc(entries, func(entry string) bool { return tickets.Covers(entry, path) })
 }

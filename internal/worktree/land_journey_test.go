@@ -218,13 +218,13 @@ func TestLandCommandRetainsJustInTimeOverlappingDestinationEdit(t *testing.T) {
 	gitRun(t, f.creation.Path, "rebase", "main")
 	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
 	mustWrite(t, filepath.Join(f.creation.Path, "victim.txt"), []byte("reviewed bytes\n"), 0o600)
-	specPath := filepath.Join(f.creation.Path, "specs", "x", "spec.md")
-	specBytes, err := os.ReadFile(specPath)
+	ticketPath := filepath.Join(f.creation.Path, filepath.FromSlash(landingTicket))
+	ticketBytes, err := os.ReadFile(ticketPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	mustWrite(t, specPath, withFenceEntry(specBytes, "victim.txt"), 0o644)
-	gitRun(t, f.creation.Path, "add", "victim.txt", "specs/x/spec.md")
+	mustWrite(t, ticketPath, withTicketWrite(ticketBytes, "victim.txt"), 0o644)
+	gitRun(t, f.creation.Path, "add", "victim.txt", landingTicket)
 	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "review victim change")
 	refreshLandingEvidence(t, f.creation.Path, base)
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")

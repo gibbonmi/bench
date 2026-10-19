@@ -2,11 +2,12 @@ package staleness
 
 import (
 	"fmt"
+	"maps"
+	"path"
 	"slices"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
-	specref "github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -29,7 +30,11 @@ func Collect(root string, source ownership.Source, sourceFacts ownership.Snapsho
 		return AuditFacts{}, err
 	}
 	tipManifest := ownership.ParseManifest(current)
-	entries, unread := scope(source.SpecPath, [][]byte{baseline, current}, []ownership.Manifest{ownership.ParseManifest(baseline), tipManifest})
+	writes, err := ticketWrites(root, source)
+	if err != nil {
+		return AuditFacts{}, err
+	}
+	entries, unread := scope(source.SpecPath, writes, []ownership.Manifest{ownership.ParseManifest(baseline), tipManifest})
 	before, err := members(root, source.Base, entries)
 	if err != nil {
 		return AuditFacts{}, err
@@ -69,16 +74,39 @@ func readSpec(root, commit, specPath, stage string) ([]byte, error) {
 	return content, nil
 }
 
-// scope is every entry the audit enumerates: the active spec and its tickets, the ownership
-// fence entries of both spec identities, and every path that either manifest names. Each
-// entry takes the one Writes: split, so a marker or a trailing slash never becomes a path
-// segment. unread holds one diagnostic for each premise whose subject paths do not read.
-func scope(specPath string, specs [][]byte, manifests []ownership.Manifest) (split []string, unread []Diagnostic) {
-	entries := []string{specPath, ticketsDir(specPath)}
-	for _, content := range specs {
-		fences, _ := specref.FenceTokens(content)
-		entries = append(entries, fences...)
+// ticketWrites is the `Writes:` entries of each ticket in the spec's tickets folder at the
+// base and then at the tip, read from committed objects, in path order. Another file in the
+// tickets folder is an asset that the ticket grammar ignores. A ticket object that does not
+// read refuses the collection.
+func ticketWrites(root string, source ownership.Source) ([]string, error) {
+	var writes []string
+	for _, commit := range []string{source.Base, source.Tip} {
+		found, err := members(root, commit, []string{ticketsDir(source.SpecPath)})
+		if err != nil {
+			return nil, err
+		}
+		for _, ticketPath := range slices.Sorted(maps.Keys(found)) {
+			if path.Ext(ticketPath) != tickets.Ext {
+				continue
+			}
+			content, err := git.ReadControlBlob(root, found[ticketPath].ID)
+			if err != nil {
+				return nil, &Error{Stage: StageTicket, Subject: ticketPath, Cause: err}
+			}
+			parsed, _ := tickets.ParseTicket(path.Base(ticketPath), content, nil, "")
+			writes = append(writes, parsed.Writes...)
+		}
 	}
+	return writes, nil
+}
+
+// scope is every entry the audit enumerates: the active spec and its tickets, the `Writes:`
+// entries of every ticket at both identities, which derive the ownership fence, and every
+// path that either manifest names. Each entry takes the one Writes: split, so a marker or a
+// trailing slash never becomes a path segment. unread holds one diagnostic for each premise
+// whose subject paths do not read.
+func scope(specPath string, writes []string, manifests []ownership.Manifest) (split []string, unread []Diagnostic) {
+	entries := append([]string{specPath, ticketsDir(specPath)}, writes...)
 	for _, manifest := range manifests {
 		paths, diagnostics := claimSources(manifest)
 		entries = append(entries, paths...)

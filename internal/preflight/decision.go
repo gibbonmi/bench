@@ -76,9 +76,6 @@ type Facts struct {
 	// lists in its resolution. Each path keeps its bytes and mode from the newest such fold.
 	// The fold review grades such a path, so no fence names it.
 	FoldResolutionPaths []string
-	// FenceEntries is the spec's declared `## Ownership fences` tokens: backticked,
-	// outside parentheses. paths-authorized checks every changed path against these.
-	FenceEntries []string
 
 	// DeclaredRowIDs is the spec's coverage map row IDs, in map order.
 	DeclaredRowIDs []string
@@ -217,8 +214,8 @@ func Decide(f Facts) Verdict {
 		ticketRow(f, checkFloorName, checkFloorCheck),
 		ticketRow(f, "blockers-resolve", blockersResolveCheck),
 		ticketRow(f, "writes-resolve", writesResolveCheck),
+		ticketRow(f, "kit-pin", kitPinCheck),
 	)
-	checks = append(checks, ticketRow(f, "fence-writes", fenceWritesCheck), ticketRow(f, "kit-pin", kitPinCheck))
 	if f.Mode == modeBuild {
 		// A root that publishes no binary is outside the seal's own scope.
 		checks = append(checks, exempt(binarySealCheck(f)))

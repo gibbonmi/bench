@@ -145,8 +145,8 @@ func TestExplicitBasePreflightMovementChecksWholeGather(t *testing.T) {
 		restore := diff.SetSnapshotAfterReadForTest(func() {
 			calls++
 			if calls == 1 {
-				body := strings.Replace(preflighttest.SpecBody(slug), "`internal/"+slug+"/`", "`specs/"+slug+"/`", 1)
-				preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
+				body := strings.Replace(preflighttest.TicketDoc("One", "PF1", "PF2"), "internal/"+slug+"/", "moved/"+slug+"/", 1)
+				preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", body)
 			}
 		})
 		defer restore()
@@ -155,7 +155,7 @@ func TestExplicitBasePreflightMovementChecksWholeGather(t *testing.T) {
 		if failure != nil || calls != 2 {
 			t.Fatalf("post-gather fence movement = (%#v, %d)", failure, calls)
 		}
-		if !containsPath(facts.ChangedPaths, "specs/"+slug+"/spec.md") || !containsPath(facts.FenceEntries, "specs/"+slug+"/") || containsPath(facts.FenceEntries, "internal/"+slug+"/") {
+		if !containsPath(facts.ChangedPaths, "specs/"+slug+"/tickets/one.md") || !containsPath(ticketFence(facts), "moved/"+slug) || containsPath(ticketFence(facts), "internal/"+slug) {
 			t.Fatalf("converged gather facts mixed snapshots: %#v", facts)
 		}
 	})

@@ -20,7 +20,7 @@ func TestDecideChargeRows(t *testing.T) {
 	verdictRows := []string{
 		"paths-authorized",
 		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
-		"fence-writes", "kit-pin", "binary-seal",
+		"kit-pin", "binary-seal",
 		"rows-owned", "rows-membership", "diff-nonempty",
 	}
 	for _, test := range []struct {

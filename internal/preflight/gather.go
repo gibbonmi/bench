@@ -24,8 +24,7 @@ import (
 //
 // Named failures include the missing or dangling spec path, and the
 // coverage validator's message or the row-ID opt-in hint. They also
-// include the empty fences section, and the found (non-staged) status.
-// Every case fail-closed.
+// include the found (non-staged) status. Every case fail-closed.
 type BootstrapFailure struct {
 	Kind, Hint string
 }
@@ -49,11 +48,6 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	}
 	if status != "staged" {
 		return Facts{}, &BootstrapFailure{"spec not staged", "spec " + slug + " has Status: " + status + " (want staged)"}
-	}
-
-	fenceEntries, _ := specref.FenceTokens(content)
-	if len(fenceEntries) == 0 {
-		return Facts{}, &BootstrapFailure{"ownership fences empty", "## Ownership fences declares no backticked entry outside parentheses"}
 	}
 
 	optIn, ids, violations, cerr := coverage.ParseSpec(resolved)
@@ -127,7 +121,6 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		DeletedBefore:         deletedBefore(root, reviewBase, ticketFacts.parsed),
 		BuildDeletedPaths:     buildDeletedPaths(root, specPath, landingBase, resolvedSource.Tip),
 		DefaultTipPaths:       defaultTipPaths,
-		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,
 		SpecTag:               specTag(ids),
 		Tickets:               ticketFacts.parsed,
@@ -201,9 +194,9 @@ func (e UnauthorizedPathsError) Error() string { return e.Detail }
 
 // AuthorizeReviewedSource gathers a new review snapshot for root, slug, and
 // base. It returns the source range only when its committed paths pass the
-// staged spec's ownership fences. It returns an error for gather failure, a
-// red authorization row, or an unresolved range. A caller's earlier Facts or
-// range cannot replace this final authorization.
+// ownership fence that the staged spec's tickets derive. It returns an error
+// for gather failure, a red authorization row, or an unresolved range. A
+// caller's earlier Facts or range cannot replace this final authorization.
 func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) {
 	facts, failure := Gather(root, "review", slug, base)
 	if failure != nil {

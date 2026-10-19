@@ -13,9 +13,12 @@ import (
 // TestCommandBuildFresh is B1 (the fresh-build contract test). With no
 // tickets/ directory at all, `build` counts a not-applicable verdict for each
 // of rows-owned, rows-membership, and diff-nonempty, individually
-// asserted. It runs the rest for real, and exits 0 when they are green.
+// asserted. It runs the rest for real, and exits 0 when they are green. A
+// fresh build runs before its first edit, and with no ticket no entry
+// authorizes a change, so the feature branch returns to the base.
 func TestCommandBuildFresh(t *testing.T) {
 	_, slug := seedBuildFresh(t)
+	preflighttest.RunGit(t, "reset", "-q", "--hard", "main")
 
 	out, code := Command([]string{"build", slug})
 	if code != 0 {
@@ -39,7 +42,7 @@ func TestCommandBuildResumedTicketsRunForReal(t *testing.T) {
 		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
 	}
 	verdicts := renderedVerdicts(t, out, modeBuild, slug)
-	requireVerdict(t, verdicts, verdictGreen, "rows-owned", "rows-membership", "fence-writes")
+	requireVerdict(t, verdicts, verdictGreen, "rows-owned", "rows-membership")
 	requireVerdict(t, verdicts, verdictNA, "diff-nonempty")
 }
 

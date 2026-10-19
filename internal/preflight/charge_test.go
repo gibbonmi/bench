@@ -350,14 +350,17 @@ func legacyBaseline(name string, counts verdictCounts) (string, int) {
 	const oneRed = "checks[1]{check,verdict,detail,next}:\n"
 	summary := counts.line()
 	switch name {
-	case "valid-build", "absent-tickets":
+	case "valid-build":
 		return build + summary, 0
+	case "absent-tickets":
+		return build + summary + oneRed +
+			"  paths-authorized,red,\"not authorized by any ownership fence: internal/example/foo.go\",\"\"\n", 1
 	case "valid-review":
 		return review + summary, 0
 	case "empty-tickets":
 		return build + summary + "checks[3]{check,verdict,detail,next}:\n" +
+			"  paths-authorized,red,\"not authorized by any ownership fence: internal/example/foo.go\",\"\"\n" +
 			"  completion-plan,red,\"spec carries no valid bench-completion-plan fence at <tip>: missing or nonregular tree file specs/example/tickets/one.md; see .bench/BENCH-reference.md, bench gate --checkpoint\",\"\"\n" +
-			"  fence-writes,red,\"spec fence and ticket Writes: union differ: fence only: .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-delegate, internal/example\",\"\"\n" +
 			"  rows-owned,red,\"declared row(s) cited by no ticket file: PF1, PF2\",\"\"\n", 1
 	case "stale-base":
 		return build + summary + oneRed +

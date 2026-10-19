@@ -3,6 +3,7 @@ package preflight
 import (
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
@@ -25,16 +26,18 @@ func TestCommandBuildKitPinGradesNewSystemTest(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			slug := "example"
-			preflighttest.StartRepo(t)
+			root := preflighttest.StartRepo(t)
 			preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug))
 			preflighttest.MustWriteFile(t, "internal/sys/old_test.go", "//go:build system\n\npackage sys\n")
 			preflighttest.MustWriteFile(t, "internal/sys/landed_test.go", "package sys\n")
 			preflighttest.MustWriteFile(t, "internal/plain/old_test.go", "package plain\n")
 			preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md",
 				preflighttest.WritesTicketDoc("One", []string{tc.entry}, "PF1", "PF2"))
+			commitmenttest.SeedAdmission(t, root, "specs/"+slug+"/spec.md")
 			preflighttest.RunGit(t, "add", ".")
 			preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
 			preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+			preflighttest.ActiveAssignment(t, root, root)
 
 			out, _ := Command([]string{"build", slug})
 			if row, _ := rowOf(t, out, "kit-pin"); row != tc.wantRed {

@@ -280,27 +280,27 @@ The landing rows run through the landing surface tests, which already seed ticke
 | CR52 | 24 | `bench spec --help` lists the `widen` subcommand | `internal/spec/spec_test.go` (`TestSpecHelpPrintsThePublicSubcommandInventory`) | The exact help text reds a missing subcommand |
 | CR53 | 26 | A default-branch tip that holds no ticket of the slug exits 1 | `internal/spec/widen_signedoff_test.go` (`TestSpecWidenRefusesWithoutSignedOffTickets`) | A worktree fallback admits a scope that nobody signed off |
 | CR54 | 27 | The verb run from `internal/x` below the root widens `specs/s/tickets/a.md` | `internal/spec/widen_test.go` (`TestSpecWidenFromADeeperDirectory`) | A working-directory-relative path misses the ticket |
-| CR55 | 28 | The landing publishes a changed path that a ticket's `Writes:` names and no fence section lists | planned TestLandCommandAuthorizesFromTicketWrites in internal/worktree/land_derived_fence_test.go | A fence-section reader refuses this path |
+| CR55 | 28 | The landing publishes a changed path that a ticket's `Writes:` names and no fence section lists | `internal/worktree/land_derived_fence_test.go` (`TestLandCommandAuthorizesFromTicketWrites`) | A fence-section reader refuses this path |
 | CR56 | 28 | The landing refuses a changed path that no ticket `Writes:` entry covers | `internal/worktree/land_surface_test.go` (`TestLandCommandFenceRefusalNamesThePath`) | A widened authority publishes the stray path |
 | CR57 | 28 | `bench preflight build` reds `paths-authorized` for a change outside every ticket `Writes:` entry | `internal/preflight/command_build_test.go` (`TestCommandBuildOutOfFenceRed`) | A widened authority greens the out-of-scope change |
-| CR58 | 29 | The landing publishes `reviews/<slug>.md` that no ticket names | planned TestLandCommandAuthorizesTheReviewPickup in internal/worktree/land_derived_fence_test.go | Without the implicit pickup the landing refuses the review record |
+| CR58 | 29 | The landing publishes `reviews/<slug>.md` that no ticket names | `internal/worktree/land_derived_fence_test.go` (`TestLandCommandAuthorizesTheReviewPickup`) | Without the implicit pickup the landing refuses the review record |
 | CR59 | 28 | The landing publishes a `capture/` path that no ticket names | `internal/worktree/land_surface_test.go` (`TestLandCommandAuthorizesCaptureOutsideTheFence`) | A union that drops the implicit entries refuses the capture path |
 | CR60 | 30 | The all-green build verdict lists no `fence-writes` row | `internal/preflight/decision_test.go` (`TestDecideAllGreen`) | The exact row list reds a returned row |
-| CR61 | 31 | `bench preflight build` on a spec with no fence section returns a verdict | planned TestCommandSpecWithoutFenceSection in internal/preflight/command_fence_test.go | The current gather refuses with `ownership fences empty` |
-| CR62 | 31 | With an empty tickets folder, `paths-authorized` reds a changed production path | planned TestCommandSpecWithoutFenceSection in internal/preflight/command_fence_test.go | An empty union read as unrestricted greens the path |
-| CR63 | 32 | The build charge `fence` block lists each projected `Writes:` path of every ticket once | planned TestChargeFenceListsTheTicketUnion in internal/preflight/command_fence_test.go | A fence-section reader prints an empty block |
-| CR64 | 32 | The review charge `fence` block lists each projected `Writes:` path of every ticket once | planned TestReviewChargeFenceListsTheTicketUnion in internal/preflight/command_fence_test.go | A review path left on the section prints an empty block |
+| CR61 | 31 | `bench preflight build` on a spec with no fence section returns a verdict | `internal/preflight/command_fence_test.go` (`TestCommandSpecWithoutFenceSection`) | The current gather refuses with `ownership fences empty` |
+| CR62 | 31 | With an empty tickets folder, `paths-authorized` reds a changed production path | `internal/preflight/command_fence_test.go` (`TestCommandSpecWithoutFenceSection`) | An empty union read as unrestricted greens the path |
+| CR63 | 32 | The build charge `fence` block lists each projected `Writes:` path of every ticket once | `internal/preflight/command_fence_test.go` (`TestChargeFenceListsTheTicketUnion`) | A fence-section reader prints an empty block |
+| CR64 | 32 | The review charge `fence` block lists each projected `Writes:` path of every ticket once | `internal/preflight/command_fence_test.go` (`TestReviewChargeFenceListsTheTicketUnion`) | A review path left on the section prints an empty block |
 | CR65 | 32 | The charge evidence format reference states the `fence` block description that the schema holds | review-owned: the Standards axis compares the reference row with the schema row | A schema edit without the reference leaves the old description |
-| CR66 | 33 | `--audit-spec` reports drift for a path that a base ticket's `Writes:` names | planned TestAuditScopeReadsTicketWrites in internal/preflight/staleness/drift_test.go | A fence-section scope omits this path |
-| CR67 | 33 | `--audit-spec` reports drift for a path that only a tip ticket's `Writes:` names | planned TestAuditScopeReadsTicketWrites in internal/preflight/staleness/drift_test.go | A base-only reader omits this path |
-| CR68 | 34 | The `source-not-fenced` route names `bench spec widen` | planned TestSourceNotFencedRouteNamesWiden in internal/refusalroute/route_test.go | A stale route names the retired fence section |
-| CR69 | 34 | The `source-not-fenced` route holds no `## Ownership fences` text | planned TestSourceNotFencedRouteNamesWiden in internal/refusalroute/route_test.go | A partial edit keeps the old instruction beside the new one |
+| CR66 | 33 | `--audit-spec` reports drift for a path that a base ticket's `Writes:` names | `internal/preflight/staleness/drift_test.go` (`TestAuditScopeReadsTicketWrites`) | A fence-section scope omits this path |
+| CR67 | 33 | `--audit-spec` reports drift for a path that only a tip ticket's `Writes:` names | `internal/preflight/staleness/drift_test.go` (`TestAuditScopeReadsTicketWrites`) | A base-only reader omits this path |
+| CR68 | 34 | The `source-not-fenced` route names `bench spec widen` | `internal/refusalroute/route_test.go` (`TestSourceNotFencedRouteNamesWiden`) | A stale route names the retired fence section |
+| CR69 | 34 | The `source-not-fenced` route holds no `## Ownership fences` text | `internal/refusalroute/route_test.go` (`TestSourceNotFencedRouteNamesWiden`) | A partial edit keeps the old instruction beside the new one |
 | CR70 | 35 | `bench coverage --check` exits 0 for a spec whose fence section omits the review pickup | planned TestCommandCheckIgnoresAFenceSection in internal/coverage/fence_section_test.go | The current pickup rule exits 1 |
 | CR71 | 36 | `internal/spec` declares no `FenceTokens` function | review-owned: the Standards axis confirms the deletion of the parser and its tests | A surviving parser invites a new reader |
-| CR72 | 37 | `paths-authorized` reds a changed path that only a leftover fence section lists | planned TestCommandBuildIgnoresAFenceSection in internal/preflight/command_fence_test.go | A surviving section reader authorizes the listed path |
+| CR72 | 37 | `paths-authorized` reds a changed path that only a leftover fence section lists | `internal/preflight/command_fence_test.go` (`TestCommandBuildIgnoresAFenceSection`) | A surviving section reader authorizes the listed path |
 | CR75 | 39 | This spec declares a fence section equal to its ticket `Writes:` union plus `reviews/closure-removal.md` at the landing | review-owned: the pre-FT293 broker refuses a gap as `source-not-fenced` | A missing path stops the landing |
 | CR76 | 39 | The build keeps the canary inventory and anchor registry formats that the pre-FT293 closure loader parses | review-owned: the old broker refuses an unparsable inventory as `fixture inventory refused` or `anchor registry refused` | A format change stops the landing |
-| CR77 | 31 | `bench preflight review` reds `paths-authorized` for a change outside every ticket `Writes:` entry | planned TestCommandReviewAuthorizesFromTicketWrites in internal/preflight/command_fence_test.go | A review path left on the section authorizes nothing or everything |
+| CR77 | 31 | `bench preflight review` reds `paths-authorized` for a change outside every ticket `Writes:` entry | `internal/preflight/command_fence_test.go` (`TestCommandReviewAuthorizesFromTicketWrites`) | A review path left on the section authorizes nothing or everything |
 | CR78 | 40 | `delegation-discipline.md` holds no `is a refusal boundary` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored sentence reds the forbid anchor |
 | CR79 | 40 | `delegation-discipline.md` names `bench spec widen` beside the expectation rule | review-owned: the Spec axis reads the sentence against story 40 | Review owns rule wording |
 | CR80 | 41 | `slicing-checks.md` holds no `## Enforced rules` heading | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored section reds the forbid anchor |
@@ -313,7 +313,7 @@ The landing rows run through the landing surface tests, which already seed ticke
 | CR87 | 43 | `bench-write-spec.md` holds the needle "After the ticket review accepts, `bench preflight build <slug> --plan-only` grades the whole ticket graph." in its Process section | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A sentence that keeps the fence step fails the exact needle |
 | CR88 | 44 | The operating guide names `bench spec widen` in its plan-expansion paragraph | review-owned: the Spec axis reads the paragraph against story 44 | Review owns rule wording, so no require anchor pins it |
 | CR89 | 45 | `bench-implement-spec.md` holds no `*-closure` text | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored closure route reds the forbid anchor |
-| CR90 | 45 | `bench-implement-spec.md` holds no `fence-writes` text | planned forbid row in `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored fence route reds the forbid anchor |
+| CR90 | 45 | `bench-implement-spec.md` holds no `fence-writes` text | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored fence route reds the forbid anchor |
 | CR91 | 47 | `docs/known-issues.md` holds no `writes proposal` text | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A restored row reds the forbid anchor |
 | CR92 | 48 | The `[Unreleased]` section of `CHANGELOG.md` names `bench spec widen` | review-owned: the Spec axis reads the entry | Review owns changelog prose |
 | CR93 | 48 | The `[Unreleased]` section holds no entry that adds `--breakdown` | review-owned: the Spec axis reads the entry | Review owns changelog prose |
@@ -428,6 +428,10 @@ The kit audience is every repository that links the kit. A linked repository wit
 - `internal/preflight/ownership/metadata.go`
 - `internal/preflight/source_tip_test.go`
 - `internal/preflight/staleness/completeness.go`
+- `internal/preflight/charge_evidence_test.go`
+- `internal/preflight/charge_edges_test.go`
+- `internal/preflight/commitment_test.go`
+- `internal/worktree/parallel_census_test.go`
 - `internal/preflight/ownership/parameter_grammar_test.go`
 - `internal/preflight/ownership/charge_fixture_test.go`
 - `internal/preflight/ownership/premises_fixture_test.go`
@@ -658,3 +662,4 @@ The final landing runs under the pre-FT293 broker. Before the landing, the orche
 ### Dogfood runs
 
 - CR2 repair, 2026-10-18: the ticket 03 repair session ran the built `bench spec widen closure-removal --ticket 03-add-spec-widen-verb.md` for `internal/spec/widen_line_test.go` and `internal/spec/widen_signedoff_test.go`. The verb reported both entries as `added` inside the signed-off `internal/spec` prefix, changed only the `Writes:` value, and made no commit (repair commit aa7a35c4).
+- CR3 ticket 04, 2026-10-19: the orchestrator ran the built `bench spec widen closure-removal --ticket 04-derive-fence-from-tickets.md` for seven test files under `internal/preflight` and `internal/worktree`. The verb reported each entry as `added` inside the signed-off prefixes, changed only the `Writes:` value, and made no commit (plan commit e6ea15f0).

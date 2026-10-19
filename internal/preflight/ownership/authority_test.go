@@ -61,8 +61,8 @@ func TestUncitedRows(t *testing.T) {
 	})
 }
 
-// TestExplicitAuthority grades that the ticket Writes: line grants no authority beyond the
-// spec fence: a path that the fence omits refuses the charge.
+// TestExplicitAuthority grades that the ticket Writes: line is the ownership fence: a path
+// that a leftover spec fence section omits still prepares the charge.
 func TestExplicitAuthority(t *testing.T) {
 	t.Run("OC86 ticket path outside the spec fence", func(t *testing.T) {
 		tr := coveredTree()
@@ -73,6 +73,8 @@ func TestExplicitAuthority(t *testing.T) {
 		tr.Writes = append(tr.Writes, "internal/other/extra.go")
 		tr.Files["internal/other/extra.go"] = "package other\n"
 		root := tr.Seed(t)
-		assertChargeRefused(t, root, preflighttest.ChargeArgs(t, root, slug), "fence-writes", "Writes only: internal/other/extra.go")
+		if out, code := preflight.Command(preflighttest.ChargeArgs(t, root, slug)); code != 0 {
+			t.Fatalf("charge for a ticket path outside the spec fence = (%d), want 0:\n%s", code, out)
+		}
 	})
 }

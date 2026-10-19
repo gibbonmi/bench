@@ -16,7 +16,6 @@ func baseFacts() Facts {
 		DefaultBranchCurrent:  true,
 		ReviewBaseResolved:    true,
 		ChangedPaths:          []string{"internal/example/foo.go"},
-		FenceEntries:          []string{"internal/example/foo.go"},
 		DeclaredRowIDs:        []string{"PF1", "PF2"},
 		SpecTag:               "PF",
 		Tickets: []tickets.Ticket{{
@@ -55,7 +54,7 @@ func TestDecideAllGreen(t *testing.T) {
 	wantChecks := []string{
 		"base-current", "paths-authorized",
 		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
-		"fence-writes", "kit-pin",
+		"kit-pin",
 		"rows-owned", "rows-membership", "diff-nonempty",
 	}
 	if len(first.Checks) != len(wantChecks) {
@@ -98,8 +97,8 @@ func TestDecideAllGreen(t *testing.T) {
 	}
 	// Every row that reads a parsed ticket, plus diff-nonempty, is
 	// not-applicable in a build with no tickets/ directory at all.
-	if naSeen != 10 {
-		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 10", naSeen)
+	if naSeen != 9 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 9", naSeen)
 	}
 }
 
@@ -250,7 +249,7 @@ func TestDecidePathsAuthorized(t *testing.T) {
 	// separator, stays green. A same-string-prefix path that lacks the
 	// separator does not.
 	f = baseFacts()
-	f.FenceEntries = []string{"internal/git"}
+	f.Tickets[0].Writes = []string{"internal/git"}
 	f.ChangedPaths = []string{"internal/git", "internal/git/sub.go"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictGreen {
 		t.Errorf("paths-authorized with exact and prefix matches = %+v, want green", c)
@@ -482,13 +481,13 @@ func TestDecidePathsAuthorizedImplicitSpecFolder(t *testing.T) {
 		t.Errorf("LS10: sibling folder extending the slug = %+v, want red", c)
 	}
 
-	// LS11: declared entries keep their exact semantics. A path authorized
-	// only by a declared fence stays green, and one outside every fence and
+	// LS11: ticket entries keep their exact semantics. A path authorized
+	// only by a ticket entry stays green, and one outside every entry and
 	// the spec folder is red.
 	f = baseFacts()
 	f.ChangedPaths = []string{"internal/example/foo.go"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictGreen {
-		t.Errorf("LS11: declared-fence-only path = %+v, want green", c)
+		t.Errorf("LS11: ticket-entry-only path = %+v, want green", c)
 	}
 	f.ChangedPaths = []string{"unfenced/path.go"}
 	if c, _ := checkRow(Decide(f), "paths-authorized"); c.Verdict != verdictRed {
@@ -534,7 +533,7 @@ func TestTicketGatedRowsNotApplicableWithoutTickets(t *testing.T) {
 
 	want := []string{
 		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
-		"fence-writes", "kit-pin",
+		"kit-pin",
 	}
 	at := -1
 	for i, c := range v.Checks {
