@@ -1,5 +1,15 @@
 # Review outcomes
 
+## CR3 confirming-round pickup
+
+The confirming round read the repair delta `82309770..9d26cb3d`. Each axis ran on opus at high effort. The chunk has used 1 of its 2 repair cycles, and the next repair is cycle 2.
+
+The round closed S1 to S4 and C1, and the CR75 section still equals the ticket union plus the pickup. Three findings stay open, and ticket 04 owns all three.
+
+- C3, auto-fix, confidence 8. No test pins that a failed read of the tracked tickets refuses the landing. A fallback to the checkout tickets survives every test, and a committed symbolic link in the tickets folder reaches that path. Add a landing case for that link.
+- C4 and P1, auto-fix, confidence 6. `bench preflight review` reads the checkout tickets, so an ignored ticket-shaped file can turn its coverage and `paths-authorized` verdicts green. The review preflight grades a clean committed source, so it reads the tracked tickets of the source tip, as the landing does. The orchestrator corrects the spec sentence and flags this call for reviewer veto.
+- C2, auto-fix, confidence 7. No test pins that the tracked ticket walk keeps the copy that `tickets.Enumerate` keeps when a nested duplicate sorts first. Add a parity case.
+
 ## CR3 review pickup
 
 The CR3 review ran on the frozen pair `a883604f..82309770`. Each axis ran on opus at high effort. The chunk has used 0 of its 2 repair cycles.
@@ -2682,6 +2692,78 @@ Count: 3. Worst issue: C1.
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cr3c-standards",
+          "performer": "claude:ft293_cr3c_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2a40470ea22be7ddef48a2fb3c0314e35422ece2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr3c_standards",
+            "digest": "sha256:dcb8345b628badc17af1f9f701eee3d4b479a1f62ace541cdc5bd025449cda80",
+            "excerpt": "Standards confirming round, FT293 CR3, repair delta 82309770..9d26cb3d. check-current current=true.\nS1 closed 9: staleness.TicketsAt (coverage.go:29-51) is the one reader of a commit's ticket set for the Writes: face, the Covers: face, and AuthorizeReviewedSource; no coversAt copy remains.\nS2 closed 8: uniqueNames (enumerate.go:118) is the one duplicate-basename rule for Enumerate and EnumerateTracked.\nS3 closed 6: craft-spec SKILL.md:65 names the three implicit entries; the only guidance list of them.\nS4 closed 8: SKILL.md:71 uses \"ownership fence\" and \"part\".\nticketsDir: not made worse 8. Outside the delta: internal/spec/widen.go:192-208 reads tracked tickets with its own rule.\nOpen 0.\n"
+          },
+          "axis": "Standards",
+          "base": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "tip": "9d26cb3d4e5ee01d1e401d26d727fda2821e2230",
+          "finding_ids": [],
+          "supersedes": [
+            "cr3-standards"
+          ]
+        },
+        {
+          "id": "cr3c-spec",
+          "performer": "claude:ft293_cr3c_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2a40470ea22be7ddef48a2fb3c0314e35422ece2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr3c_spec",
+            "digest": "sha256:68d7871ea50fbb6a773fade9fe7c8f76846c20baf27059659c094e7a2474d6d3",
+            "excerpt": "Spec confirming round, FT293 CR3, repair delta 82309770..9d26cb3d. check-current current=true at 4e2fe40a. bench coverage --check: 94 rows valid.\nLanding and build readers match spec.md:131 held 9; CR3 rows closed, CR66/CR67 cover nested and duplicate tickets held 8; no unrequested behavior held 8; CR75 section equals the union plus the pickup held 9.\nP1 flag 6: spec.md:131 says bench preflight review reads that one set, but review preflight reads the worktree tickets (gather.go:310), so an ignored ticket-shaped file can turn its paths-authorized green while the landing refuses.\nCount 1. Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "tip": "9d26cb3d4e5ee01d1e401d26d727fda2821e2230",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": [
+            "cr3-spec"
+          ]
+        },
+        {
+          "id": "cr3c-coverage",
+          "performer": "claude:ft293_cr3c_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2a40470ea22be7ddef48a2fb3c0314e35422ece2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr3c_coverage",
+            "digest": "sha256:12927ccf72fed22755668d651dd37b6f922a8f316021ec24b42ff9120293628d",
+            "excerpt": "Coverage confirming round, FT293 CR3. check-current current at 4e2fe40a; 7 probes, all restored=yes; tree clean.\nC3 open 8: gather.go:211-218 omit facts.Tickets = nil bit TestLandCommandReadsOnlyTrackedTickets; keep checkout tickets on a TicketsAt error silent; read TicketsAt at HEAD silent (equivalent in practice). A committed symlink in the tickets folder reaches the error path.\nC2/S2 closed for the stated cases 7: slices.Reverse(walk) bit; depth-first sort silent; no test pins parity when a nested duplicate sorts first.\nC1 closed 9: (deleted) authorizes only a still-held path bit TestCommandAuthorizesADeletedEntry.\nC4 new 6: bench preflight review reads checkout tickets, and the clean check passes ignored files, so an ignored ticket-shaped file can turn rows-membership, paths-authorized, and the charge fence block green; the landing re-checks only paths.\nOpen: C3, C4. Worst: C3.\n"
+          },
+          "axis": "Coverage",
+          "base": "a883604feb1171d1ae1c43159f1e0b4377b13a22",
+          "tip": "9d26cb3d4e5ee01d1e401d26d727fda2821e2230",
+          "finding_ids": [
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": [
+            "cr3-coverage"
+          ]
         }
       ]
     }
