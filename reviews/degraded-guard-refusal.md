@@ -1,5 +1,12 @@
 # Review outcomes
 
+## GR1 confirming-round pickup
+
+The confirming round read the repair delta `6610036f..565caced`. Each axis ran on opus at medium effort. The round closed S1 to S4, P1, P2, C1, and C2.
+
+- P3, auto-fix, confidence 8. The spec still says that the ticket owns four implementation paths, but the widened `Writes:` line holds six paths. The orchestrator corrects that count and the approval-table row in a plan commit. The chunk then uses 2 of its 2 repair cycles.
+- C3, advice. The envelope refactor changed two follow-on inputs. The allowed commands `cd "$W"` and `bench worktree exec "x" -- sh -c '...'` used to send an unreadable envelope, and now they send the intended command. The test is stronger, and no repair target remains.
+
 ## GR1 initial review pickup
 
 The initial review read the frozen pair `8ce8934d..6610036f`. Each axis ran on opus at medium effort. The axes found 8 findings, and 7 of them are repair targets. Ticket 01 owns every repair target, so one combined repair charge carries them. The chunk has used 0 of its 2 repair cycles, and the next repair is cycle 1.
@@ -593,6 +600,76 @@ The hook mutants ran with `--check system --run 'TestDegradedGuard|TestGitGuard'
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gr1-standards-2",
+          "performer": "claude:ft366-gr1-standards-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-standards-c1-20261019",
+            "digest": "sha256:daedb72a4a3a8c7546eb854475038ebd20f674b0d8dcd687c8e930b0de0a2d21",
+            "excerpt": "## Standards (confirming round, repair delta 6610036f..565caced)\nS1 closed: reviews/degraded-guard-refusal.md:30-46 records a named mutation, failing test, and restored state for GR06-GR10, GR12, GR25, GR32-GR34, GR42, and P2.\nS2 closed: hookWithoutLibrary at guard_refusal_test.go:124, called at guard_refusal_test.go:68 and bench_follow_on_test.go:244.\nS3 closed: gitGuardHookPath at guard_refusal_test.go:118-119; guard_rim_test.go:22 calls it.\nS4 closed: hookEnvelope at guard_refusal_test.go:157 serves every caller; shellQuoteJSON and bashEnvelope are gone.\nNo new finding. coarseGitWant meets the test-expectation exception through the recorded P2 red.\nAdvice: the H20 rows in guard_rim_test.go stay hand-written envelopes.\n"
+          },
+          "axis": "Standards",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "6ed1c5c8ce32be58812856ac041352ea9074d63e",
+          "finding_ids": [],
+          "supersedes": [
+            "gr1-standards-1"
+          ]
+        },
+        {
+          "id": "gr1-spec-2",
+          "performer": "claude:ft366-gr1-spec-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-spec-c1-20261019",
+            "digest": "sha256:64e910ee2fe78f590df82a581792c20615f1321934f92d4cd7eeceb6d28fb777",
+            "excerpt": "## Spec (confirming round, repair delta 6610036f..565caced)\nP1 closed: bench-implement-spec.md:52 requires the ticket commit to rewrite planned seam cells.\nP2 closed: assertCoarseGitRefusal (guard_refusal_test.go:178) serves GR14, GR31, GR42 and GR13 through the H20 loop (guard_rim_test.go:43-50).\nPlan expansion consistent: GR42 matches the map, chunk table, Covers:, acceptance list, and reconcile line; bench coverage reports 42 mapped rows; the Won't-handle line at spec.md:184 agrees with spec.md:50.\n- P3 auto-fix conf 8: \"The ticket owns four implementation paths.\" (spec.md:204) is stale; the widened Writes: line holds six paths.\nAdvice: the approval-table row \"four ticket paths plus the review pickup\" is stale in the same way.\n"
+          },
+          "axis": "Spec",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "6ed1c5c8ce32be58812856ac041352ea9074d63e",
+          "finding_ids": [
+            "P3"
+          ],
+          "supersedes": [
+            "gr1-spec-1"
+          ]
+        },
+        {
+          "id": "gr1-coverage-2",
+          "performer": "claude:ft366-gr1-coverage-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04661ee74056b2a0fb3deda78b77580963681750",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-gr1-coverage-c1-20261019",
+            "digest": "sha256:5e8bca64401afa3681da02e206c6f1cd7ede38e58fc8fce5aa574ef95732252d",
+            "excerpt": "## Coverage (confirming round, repair delta 6610036f..565caced)\nC1 closed: GR42 fixture at guard_refusal_test.go:59 uses assertCoarseGitRefusal (lines 206-216).\nC2 closed: Won't-handle line at spec.md:184; lex_command has no comment or heredoc branch, so a lone apostrophe refuses.\nProbes: swap break to return 1 at block-dangerous-git.sh:153, bit (GR42), restored yes; swap the coarse text at block-dangerous-git.sh:104, bit (GR14, H20), restored yes.\n- C3 no-op conf 7: the envelope refactor changed what bench_follow_on_test.go:167 sends; cd \"$W\" and bench worktree exec \"x\" now send valid JSON instead of an unreadable envelope. The test is stronger; record the input change.\n"
+          },
+          "axis": "Coverage",
+          "base": "8ce8934d629efacb52a3b0c714afbebacf5f3435",
+          "tip": "6ed1c5c8ce32be58812856ac041352ea9074d63e",
+          "finding_ids": [
+            "C3"
+          ],
+          "supersedes": [
+            "gr1-coverage-1"
+          ]
         }
       ]
     }
