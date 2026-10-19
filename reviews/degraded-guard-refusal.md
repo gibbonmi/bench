@@ -56,7 +56,7 @@ The hook mutants ran with `--check system --run 'TestDegradedGuard|TestGitGuard'
 {
   "version": 2,
   "spec": "specs/degraded-guard-refusal/spec.md",
-  "plan_digest": "sha256:2285fac66e746e275c8f6bb86fc17965b2b776050d4d2b9c38ae443da5ec6f19",
+  "plan_digest": "sha256:89c6418712ffe99044f82b2e9905c0ad8a77e6e3e5e7c703e9d54f4ec69aad47",
   "implementation_session": "",
   "chunks": [
     {
@@ -685,6 +685,15 @@ The hook mutants ran with `--check system --run 'TestDegradedGuard|TestGitGuard'
     {
       "from": "sha256:a4fb59f184d65ef47e3267596181bcbb65d8e91935385d4eba7a3659b62497e5",
       "to": "sha256:2285fac66e746e275c8f6bb86fc17965b2b776050d4d2b9c38ae443da5ec6f19",
+      "chunk_ids": {
+        "GR1": [
+          "GR1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2285fac66e746e275c8f6bb86fc17965b2b776050d4d2b9c38ae443da5ec6f19",
+      "to": "sha256:89c6418712ffe99044f82b2e9905c0ad8a77e6e3e5e7c703e9d54f4ec69aad47",
       "chunk_ids": {
         "GR1": [
           "GR1"
