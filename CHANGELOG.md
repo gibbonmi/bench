@@ -24,6 +24,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 - Removed the closure rows, the `charge-premises` row, and the `--propose-writes` and `--breakdown` forms of `bench preflight build`. A call with either flag now gets the usage refusal at exit 2. A build charge does not refuse for an unproved premise. The `rows-owned` check of the ordinary build still reds each uncited row, and the gate finds each missing `Writes:` path. Before, a closure red or an unproved premise stopped a build charge, the proposal predicted the missing `Writes:` paths of one ticket, and the breakdown listed each uncited row with the closure and premises of each ticket.
 - Added the `bench-planning-facts` spec fence. The premise collectors read it for `--audit-spec`, and an unproved premise keeps manual review required. A `Writes:` entry can carry the `(deleted)` marker for a path that the source base tracks.
 
+### Ticket widening
+
+- Added `bench spec widen <slug> --ticket <basename> [--decision <reference>] <entry>...`. It adds each entry to the `Writes:` line of one ticket in the current worktree, and it makes no commit. The approved scope is the directory of each `Writes:` entry of the slug's tickets at the default-branch tip. The command refuses an entry outside that scope and names the rerun with `--decision <reference>`, which records the reviewer's admission. It prints one `widen[N]{ticket,entry,state}` table with the states `added`, `decided`, and `current`. A refusal writes nothing. Before, a path that the gate found needed a hand edit of the ticket.
+
 ### Visible-tree check scope
 
 - Fixed the gofmt step and the in-place checks that grade the tree, so that they read only the visible tree: tracked files and untracked files that git does not ignore. The checks are the leaf-ledger import census, the freshness publication topology, the control-rune escaper census, the prose and skill-description budgets, and the skills index. Before, an ordinary `bench gate` in a checkout that held ignored copies of Go source, such as files under `.logs/`, or a locally installed ignored skill went red on content that no commit can carry.

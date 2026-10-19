@@ -156,6 +156,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench spec [--in <label|primary>] retire <slug>  delete a merged spec + its review pickup (validated)
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
+  bench spec [--in <label|primary>] widen <slug> --ticket <basename> [--decision <reference>] <entry>...  add paths inside the signed-off scope to one ticket's Writes: line (no commit)
   bench version              print the installed Bench version (os/arch)
 `
 

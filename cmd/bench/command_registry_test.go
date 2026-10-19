@@ -698,14 +698,14 @@ func TestSkillsIndexDistinguishesMissingGitFromOutsideRepository(t *testing.T) {
 	}
 }
 
-// TestHelpSpecRowsNameRetireAndHistoryOnly pins FA9: the retired subcommand keeps no
-// help row, while the two surviving spec rows stay advertised.
-func TestHelpSpecRowsNameRetireAndHistoryOnly(t *testing.T) {
+// TestHelpSpecRowsNameRetireHistoryAndWidenOnly pins FA9: the retired subcommand keeps no
+// help row, while the three live spec rows stay advertised.
+func TestHelpSpecRowsNameRetireHistoryAndWidenOnly(t *testing.T) {
 	help := renderCommandHelp()
 	if strings.Contains(help, "bench spec implemented") {
 		t.Errorf("bench help still advertises a retired subcommand:\n%s", help)
 	}
-	for _, want := range []string{"bench spec [--in <label|primary>] retire <slug>", "bench spec [--in <label|primary>] history <slug>"} {
+	for _, want := range []string{"bench spec [--in <label|primary>] retire <slug>", "bench spec [--in <label|primary>] history <slug>", "bench spec [--in <label|primary>] widen <slug>"} {
 		if !strings.Contains(help, want) {
 			t.Errorf("bench help is missing %q:\n%s", want, help)
 		}
