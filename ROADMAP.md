@@ -170,6 +170,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT435 (LOW, decision required) — author and repair returns carry a calibrated claims table.**
 
+**FT437 (MEDIUM, decision required) — a settled decision on a commitment-pinned row reaches its row file.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -249,9 +251,7 @@ qualification requirements are met.
 
 **FT328 (MEDIUM, parked pending a repro) — a sandboxed evidence reader takes its shared lock without store write access.**
 
-**FT355 (MEDIUM, parked pending a repro) — the OTel crash system test reaps its child and removes its own home.**
-
-**FT372 (MEDIUM, parked pending a repro) — the local-capture landing tests isolate their handoff state.**
+**FT372 (MEDIUM, parked pending a repro) — system and landing tests isolate their shared home, capture, and fixture state.**
 
 **FT385 (LOW, parked pending a repro) — the abbreviated source-tip landing test uses a prefix that is unique in its fixture.**
 
