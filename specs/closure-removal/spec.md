@@ -128,7 +128,7 @@ The plan commit stays with `bench commit`. A widened ticket moves the plan diges
 
 ### The derived fence
 
-The ownership fence now names the union of the ticket `Writes:` entries plus the implicit entries. The implicit entries are `capture`, the spec folder, and the review pickup `reviews/<slug>.md`, which the review-record owner derives. `paths-authorized`, `bench preflight review`, and the landing's source authorization all read that one set.
+The ownership fence now names the union of the ticket `Writes:` entries plus the implicit entries. The implicit entries are `capture`, the spec folder, and the review pickup `reviews/<slug>.md`, which the review-record owner derives. `paths-authorized`, `bench preflight review`, and the landing's source authorization all read that one set. The landing reads the tickets that the source tip tracks, from committed objects, so an untracked or ignored file in the worktree authorizes nothing. Build preflight reads the worktree tickets, because an uncommitted ticket edit counts there.
 
 The gather no longer refuses an empty fence section. An empty union authorizes only the implicit entries, so it stays fail-closed.
 
