@@ -1,7 +1,7 @@
 # Refuse malformed guard commands with repair advice
 
 Blocked by: none
-Writes: .bench/hooks/block-dangerous-git.sh, internal/gitguard/gitguard.go, internal/gitguard/unlexed_test.go, internal/systemtest/guard_refusal_test.go (new), tests/canary/package-core-guard/guard-describe-boundary-dropped, tests/canary/package-core-guard/guard-resolver-order-drift, tests/canary/canonical-path-owner/second-derivation, tests/canary/injected-ports/unregistered-port, internal/anchors/registry_data.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: .bench/hooks/block-dangerous-git.sh, internal/gitguard/gitguard.go, internal/gitguard/unlexed_test.go, internal/systemtest/guard_refusal_test.go (new)
 Covers: GR01, GR02, GR03, GR04, GR05, GR06, GR07, GR08, GR09, GR10, GR11, GR12, GR13, GR14, GR15, GR16, GR17, GR18, GR19, GR20, GR21, GR22, GR23, GR24, GR25, GR26, GR27, GR28, GR29, GR30, GR31, GR32, GR33, GR34, GR35, GR36, GR37, GR38, GR39, GR40, GR41
 
 ## What to build
@@ -95,6 +95,7 @@ Run these future checks from the candidate integration source:
 - `bench test --check docs-currency-workflow`
 - `bench test --check axi-query-registry`
 - `bench test --check subcommand-routing`
+- `bench test --check root-conformance`
 - `bench coverage --check specs/degraded-guard-refusal/spec.md`
 
 The system fixtures prove missing core, missing binary, missing library, core error, and reachable-core entries.
@@ -117,10 +118,9 @@ Keep the core repair sentence in its existing shared owner.
 Keep the shell repair sentence only in its independent degraded implementation.
 Preserve the fixture helpers and the invocation registries outside this ticket's write expectation.
 
-The four canary directories and anchor registry join because their existing declarations pin this ticket's production paths.
-Keep their fixture and anchor assertions intact.
-The anchor package binds five command registries through the existing ticket binding table.
-Their entries join the write expectation without a command or help change.
+Two canary fixtures mutate the import block and the `Checker` struct of `internal/gitguard/gitguard.go`.
+Do not change those bytes.
+Preserve these hook header strings; no anchor pins them:
 
 - Preserve `this is an honest-mistake layer, not an evasion-resistant`.
 - Preserve `exactly one level deep by design (see internal/gitguard)`.

@@ -195,24 +195,13 @@ The prospective build owns these exact paths:
 - `internal/gitguard/gitguard.go`
 - `internal/gitguard/unlexed_test.go`
 - `internal/systemtest/guard_refusal_test.go`
-- `tests/canary/package-core-guard/guard-describe-boundary-dropped`
-- `tests/canary/package-core-guard/guard-resolver-order-drift`
-- `tests/canary/canonical-path-owner/second-derivation`
-- `tests/canary/injected-ports/unregistered-port`
-- `internal/anchors/registry_data.go`
-- `cmd/bench/command_registry.go`
-- `cmd/bench/command_registry_test.go`
-- `cmd/bench/help_inventory_test.go`
-- `internal/conformance/axi_query_registry_test.go`
-- `internal/conformance/subcommand_routing_table_test.go`
 - `reviews/degraded-guard-refusal.md`
 
-The ticket owns four implementation paths and ten closure paths.
+The ticket owns four implementation paths.
 The coordinator owns the review pickup.
 The planning author owns this spec folder during the spec phase.
 The spec fence equals the ticket write expectation plus the review pickup.
-The closure paths join because their existing declarations pin the production paths.
-The author keeps their fixture and anchor assertions intact.
+No anchor row, command registry, or ownership-closure fixture pins the two production paths.
 
 ## Out of scope
 
@@ -240,11 +229,10 @@ Remaining uncertainty: future red-to-green evidence and the independent reviewer
 
 The build does not add a command, hook path, injected port, or fixture family.
 The existing invocation registrations consume the same paths and exit codes.
-The ten closure paths retain their current rules and assertion meanings.
 
 The registry sweep includes these unchanged consumers:
 
-- `cmd/bench/main.go:134`: the `guard-git` command registration.
+- `cmd/bench/main.go:136`: the `guard-git` command registration.
 - `.claude/settings.json:68`: the Claude hook invocation.
 - `.codex/hooks.json`: the Codex hook invocation.
 - `internal/conformance/entry_point_parity_test.go:56-58`: the hook/core parity registration.
@@ -255,11 +243,9 @@ The registry sweep includes these unchanged consumers:
 The build retains the existing system fixture helper and the core repair-sentence owner.
 The future build must preserve each registry path listed above.
 
-The fixture closure sources are the two hook overlay files and the two Git guard BASE records.
-The anchor closure source is `internal/anchors/registry_data.go:403-405`.
-The anchor package requires five command registries through `internal/tickets/registry_data.go:20-26` and line 45.
-Those entries pin the threat model, wrapper depth, and named backstops.
-The author read the fixture overlays, BASE records, mutation records, and EXPECT records before the fence amendment.
+Two canary fixtures read BASE copies of `internal/gitguard/gitguard.go`.
+Their mutations match the import block and the `Checker` struct, which this outcome does not change.
+Two other canaries overlay their own hook copies, so a real hook edit does not reach them.
 
 ### Source coverage
 
@@ -280,15 +266,15 @@ That future permissive rule cannot relax this malformed-command refusal.
 
 The primary sources below establish the current behavior at the subject commit:
 
-- `roadmap/FT366.md:12-17`: the degraded occurrence and incorrect core authority preamble.
+- `roadmap/FT366.md:11-15`: the degraded occurrence and incorrect core authority preamble.
 - `.bench/hooks/block-dangerous-git.sh:91-102`: the coarse recovery verdict.
-- `.bench/hooks/block-dangerous-git.sh:109-153`: the supported one-level child scan.
-- `.bench/hooks/block-dangerous-git.sh:250-310`: the malformed-input fallback.
-- `.bench/hooks/block-dangerous-git.sh:313-323`: the core dispatch and error rim.
-- `internal/gitguard/gitguard.go:125-149`: the unchanged classifier and uniform message prefix.
+- `.bench/hooks/block-dangerous-git.sh:109-155`: the supported one-level child scan.
+- `.bench/hooks/block-dangerous-git.sh:250-308`: the malformed-input fallback.
+- `.bench/hooks/block-dangerous-git.sh:312-323`: the core dispatch and error rim.
+- `internal/gitguard/gitguard.go:126-150`: the unchanged classifier and uniform message prefix.
 - `internal/shellcommand/unlexed.go:5-7`: the core repair sentence.
 - `internal/systemtest/guard_rim_test.go:21-169`: the actual degraded seam and its single fixture helper.
-- `cmd/bench/guards.go:99-131`: the direct core entry and exit contract.
+- `cmd/bench/guards.go:100-132`: the direct core entry and exit contract.
 - `internal/gitguard/scan.go:11-101`: the existing depth, options, and worktree-child ownership.
 
 A source edit to those functions invalidates these current-code claims.
@@ -319,7 +305,7 @@ An approved implementation records its fresh author in a version 2 amendment bef
 System verification uses BENCH_KIT and the sealed selected binary supplied by `bench test`.
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"GR1","tickets":["01-refuse-malformed-guard-commands.md"],"verification":[{"id":"gitguard","command":"bench test --package ./internal/gitguard"},{"id":"core-entry","command":"bench test --package ./cmd/bench"},{"id":"hook-entries","command":"bench test --check system"},{"id":"hook-contracts","command":"bench test --check package-core-guard"},{"id":"author-parse-success-omission","command":"bench test --check system","probe":"restore permissive malformed success at the trailing-escape branch; GR03 must fail"},{"id":"canonical-path-policy","command":"bench test --check canonical-path-owner"},{"id":"injected-port-policy","command":"bench test --check injected-port-registry"},{"id":"guard-anchors","command":"bench test --check docs-currency-workflow"},{"id":"axi-registry","command":"bench test --check axi-query-registry"},{"id":"command-routing","command":"bench test --check subcommand-routing"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/degraded-guard-refusal/spec.md"},{"id":"gitguard","command":"bench test --package ./internal/gitguard"},{"id":"core-entry","command":"bench test --package ./cmd/bench"},{"id":"hook-entries","command":"bench test --check system"},{"id":"hook-contracts","command":"bench test --check package-core-guard"},{"id":"coordinator-child-status-omission","command":"bench test --check system","probe":"discard malformed-child status at wrapper recursion; GR05 must fail"},{"id":"canonical-path-policy","command":"bench test --check canonical-path-owner"},{"id":"injected-port-policy","command":"bench test --check injected-port-registry"},{"id":"guard-anchors","command":"bench test --check docs-currency-workflow"},{"id":"axi-registry","command":"bench test --check axi-query-registry"},{"id":"command-routing","command":"bench test --check subcommand-routing"}]}
+{"version":1,"chunks":[{"id":"GR1","tickets":["01-refuse-malformed-guard-commands.md"],"verification":[{"id":"gitguard","command":"bench test --package ./internal/gitguard"},{"id":"core-entry","command":"bench test --package ./cmd/bench"},{"id":"hook-entries","command":"bench test --check system"},{"id":"hook-contracts","command":"bench test --check package-core-guard"},{"id":"author-parse-success-omission","command":"bench test --check system","probe":"restore permissive malformed success at the trailing-escape branch; GR03 must fail"},{"id":"canonical-path-policy","command":"bench test --check canonical-path-owner"},{"id":"injected-port-policy","command":"bench test --check injected-port-registry"},{"id":"guard-anchors","command":"bench test --check docs-currency-workflow"},{"id":"axi-registry","command":"bench test --check axi-query-registry"},{"id":"command-routing","command":"bench test --check subcommand-routing"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/degraded-guard-refusal/spec.md"},{"id":"gitguard","command":"bench test --package ./internal/gitguard"},{"id":"core-entry","command":"bench test --package ./cmd/bench"},{"id":"hook-entries","command":"bench test --check system"},{"id":"hook-contracts","command":"bench test --check package-core-guard"},{"id":"coordinator-child-status-omission","command":"bench test --check system","probe":"discard malformed-child status at wrapper recursion; GR05 must fail"},{"id":"canonical-path-policy","command":"bench test --check canonical-path-owner"},{"id":"injected-port-policy","command":"bench test --check injected-port-registry"},{"id":"guard-anchors","command":"bench test --check docs-currency-workflow"},{"id":"axi-registry","command":"bench test --check axi-query-registry"},{"id":"command-routing","command":"bench test --check subcommand-routing"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}
 ```
 
 ### Review chronology
@@ -341,6 +327,11 @@ Clean-source preflight passed with fourteen green checks and two not-applicable 
 The ticket write proposal found no missing paths or ordering requirements.
 No implementation check or benchmark ran during this planning phase.
 
+The build-entry staleness pass on 2026-10-19 found the spec and ticket current in behavior.
+The closure-removal outcome deleted the ownership closure that pinned the ten closure paths.
+The pass therefore removed those paths from the fence and added the root conformance floor check.
+It also refreshed five drifted line citations.
+
 ### Spec approval table
 
 | subject | proposal | disposition |
@@ -348,7 +339,7 @@ No implementation check or benchmark ran during this planning phase.
 | implementation line | Sol 6.1 at high effort | spec and ticket accepted |
 | seam | the real degraded hook and selected core entry | spec and ticket accepted |
 | coverage and edges | GR01-GR41 plus the named exclusions | spec and ticket accepted |
-| ownership fences | fourteen ticket paths plus the review pickup | closure proposal and independent review passed |
+| ownership fences | four ticket paths plus the review pickup | narrowed by the build-entry staleness pass |
 | scope | malformed degraded refusal and parse-only Git diagnostics | spec and ticket accepted |
 | residuals | grammar, scan, and `rg` outcomes remain separate | retained |
 | ticket breakdown | 1. Refuse malformed guard commands with repair advice, blocked by none, complete GR1 outcome | independently accepted |
