@@ -1,5 +1,17 @@
 # Review outcomes
 
+## CR4 second confirming-round pickup
+
+The second confirming round read the repair delta `093b9a75..b0d84d87`. Each axis ran on opus at high effort. The chunk used 2 of its 2 repair cycles.
+
+The round closed S5, S8, and S9, and no finding stays open. The gate still reds a budget overrun, the restored forbidden plan-expansion sentence, and an over-long sentence.
+
+Optional advice:
+
+- The operating guide keeps one gerund used as a noun.
+- `/bench-write-spec` and the slicing checks keep "fence expansion" outside this delta.
+- The spec's solution and story 18 keep "the directory of each signed-off entry".
+
 ## CR4 confirming-round pickup
 
 The confirming round read the repair delta `688d194f..093b9a75`. Each axis ran on opus at high effort. The chunk has used 1 of its 2 repair cycles, and the next repair is cycle 2.
@@ -3627,6 +3639,72 @@ Count: 3. Worst issue: C1.
           "finding_ids": [],
           "supersedes": [
             "cr4-coverage"
+          ]
+        },
+        {
+          "id": "cr4c2-standards",
+          "performer": "claude:ft293_cr4c2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3c16fb6b9dd0fa1f5eaeb445ab00f41f892c058b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4c2_standards",
+            "digest": "sha256:f2da5db5f437a3c0bd6e70888325f5dc1251c6b5bc44bcb4b3840c273a209ef5",
+            "excerpt": "Standards second confirming round, FT293 CR4, repair delta 093b9a75..b0d84d87. check-current current=true, dirty_record=false.\nS5 closed 7: one name \"widen the Writes: line\" / \"Writes: widening\" (BENCH.md:124, :126; bench-implement-spec.md:54, :87, :93; delegation-discipline.md:36, :38); the decision reads \"requires my decision\" / \"requires the reviewer's decision\".\nS8 closed 7: BENCH.md:126 \"a signed-off Writes: entry\"; \"This rule holds for a repair too.\" keeps the condition.\nS9 closed 7: the lead-in fits items :128-:131 (21 words).\nAdvice: BENCH.md:124 \"Before using a plan expansion\" uses a gerund as a noun; bench-write-spec.md:71 and slicing-checks.md:36 keep \"fence expansion\" (outside the delta).\nOpen 0.\n"
+          },
+          "axis": "Standards",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "b0d84d879e53da93cf2cdac833efb395629fc316",
+          "finding_ids": [],
+          "supersedes": [
+            "cr4c-standards"
+          ]
+        },
+        {
+          "id": "cr4c2-spec",
+          "performer": "claude:ft293_cr4c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3c16fb6b9dd0fa1f5eaeb445ab00f41f892c058b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4c2_spec",
+            "digest": "sha256:0f9cdf65bd7f780c476758c456a010befc76c2cee411f179e37be3a8075793ad",
+            "excerpt": "Spec second confirming round, FT293 CR4, repair delta 093b9a75..b0d84d87. check-current current at fb7d0ffe. bench coverage --check: 94 rows valid.\nCR79 held 9; CR88 held 9; scope wording matches spec.md:121 held 9; CR94 held 9 (net zero lines); CR75 held 7; no rule change beyond the three wordings 8.\nAdvice: spec.md:27 and story 18 keep \"the directory of each signed-off entry\".\nOpen 0.\n"
+          },
+          "axis": "Spec",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "b0d84d879e53da93cf2cdac833efb395629fc316",
+          "finding_ids": [],
+          "supersedes": [
+            "cr4c-spec"
+          ]
+        },
+        {
+          "id": "cr4c2-coverage",
+          "performer": "claude:ft293_cr4c2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3c16fb6b9dd0fa1f5eaeb445ab00f41f892c058b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft293_cr4c2_coverage",
+            "digest": "sha256:7e3532b04bf0bf1810fd82b5adc89312f347d47d3fc0223d9f870f49e6ab8a1b",
+            "excerpt": "Coverage second confirming round, FT293 CR4. check-current current at fb7d0ffec; tree clean.\nProbes: one added line in bench-implement-spec.md, guidance-prose-budgets: red (94 over 93), restored yes; line plus blank line: red (95), restored yes; restore the BENCH.md forbid needle (anchor row 32), docs-currency-workflow: red, restored yes; lengthen BENCH.md:126 sentence to 27 words, prose-mechanics: red, restored yes.\nNo new gap; no guard removed. Open 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffee6a38c248bb4299ed5cbc6ff634a0e4ee5de4",
+          "tip": "b0d84d879e53da93cf2cdac833efb395629fc316",
+          "finding_ids": [],
+          "supersedes": [
+            "cr4c-coverage"
           ]
         }
       ]
