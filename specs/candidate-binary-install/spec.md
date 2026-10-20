@@ -98,6 +98,7 @@ Harder chunks: CB-C2.
 43. As an orchestrator, I want the install to publish the executable, the seal, and the manifest as one transaction, so that an interrupt leaves the earlier set in place.
 44. As an orchestrator, I want each refusal route to name the bound integration target of the open declared build, so that a refusal in an author worktree names the right target.
 45. As an orchestrator, I want `/bench-implement-spec` to rerun the install after each Go change or fold of a declared build, so that a rebuilt copy never meets a stale manifest.
+46. As an orchestrator, I want each guarded entry to refuse while two declared builds are open, so that one build's installed candidate never writes the other build's ledger fields.
 
 ## Implementation decisions
 
@@ -129,7 +130,7 @@ No production code tests whether an executable knows a declared field, so the sp
 
 One check owner serves the three ledger writers of a declared build. It lives beside the open-build derivation, which both writer packages already import. It takes the declaration, the running executable's path, and the caller's checkout root as arguments. The check itself locates the primary broker manifest from that root through the Git common directory, never beside `BENCH_WRAPPER`, because a worktree's own `bin/` can hold a manifest of the worktree executable. It applies only where the repository declares Bench build inputs. It refuses with the face `candidate-not-installed` when the running executable's SHA-256 digest differs from the digest in the primary broker manifest, and when that manifest is missing or does not read.
 
-One primary executable serves one candidate. So when more than one declared build is open, the check refuses with the face `declared-builds-overlap` before the digest test. Its route names `bench commitment block` for one of the builds, then the rerun of the refused command. When the ledger does not read, the check skips this count and runs the digest test.
+One primary executable serves one candidate. So when more than one declared build is open, the check refuses with the face `declared-builds-overlap` before the digest test. Its route names `bench commitment block` for one of the builds, then the rerun of the refused command. When the open declared builds do not read, the check skips this count and runs the digest test.
 
 The check does not test whether the running executable knows a declared field. Before the ticket that adds a field commits, the installed candidate cannot know that field, and it also cannot write it. The digest test alone stops an uninstalled or rebuilt executable from writing the shared ledger. After the field's ticket commits, the orchestrator reinstalls, because a rebuilt worktree copy no longer matches the manifest digest.
 
@@ -216,7 +217,7 @@ Every chunk follows its predecessor's green checkpoint and its independent seman
 | --- | --- | --- | --- | --- |
 | CB-C1 / 1-declare-persisted-fields.md | A spec declares its persisted fields on one header line | CB1–CB7, CB66, CB67 | TestPersistedFieldsHeader | no |
 | CB-C2 / 2-install-the-candidate.md, 3-hold-the-refresh.md | One verb installs the candidate as executable and broker, the refresh holds it, and the candidate lands its build | CB13–CB21, CB23–CB25, CB50–CB56, CB59, CB62, CB63, CB68 | TestBuildInstall, TestRefreshHoldsAnInstalledCandidate, TestCandidateInstallPublishesTheCandidate, TestCandidateInstallLandsItsNewFields, TestCandidateInstallSurvivesAGapLanding | yes |
-| CB-C3 / 5-refuse-an-uninstalled-writer.md | Each guarded entry refuses on an executable that is not the installed candidate | CB26–CB36, CB57, CB60, CB61, CB65, CB69 | TestCandidateCheck, TestCheckpointPersistedFields, TestAssignmentPersistedFields, TestCandidateNotInstalledRoute | no |
+| CB-C3 / 5-refuse-an-uninstalled-writer.md | Each guarded entry refuses on an executable that is not the installed candidate | CB26–CB36, CB57, CB60, CB61, CB65, CB69 | TestCandidateCheck, TestCheckpointPersistedFields, TestAssignmentPersistedFields, TestCandidateNotInstalledRoute, TestDeclaredBuildsOverlapRoute | no |
 | CB-C4 / 6-restore-after-a-stopped-build.md | One verb restores `main` after a stopped build | CB37–CB43, CB49, CB64 | TestBuildRestore | no |
 | CB-C5 / 7-document-the-install-route.md | The ADR, the spec discipline, and the build phase name the install route | CB44–CB47, CB58 | prose check, guidance-prose-budgets, review-owned rows | no |
 
@@ -327,7 +328,7 @@ The system test is the gate seam that observes both incidents end to end. Its fi
 | CB66 | 4 | The parser refuses `intent-ledger:commitment. gaps` and `intent-ledger:a:b` with `persisted-fields-invalid` | `internal/spec/persisted_test.go` (`TestPersistedFieldsHeader`) | A parser without a segment character check accepts a segment that no JSON tag matches, and the restore then removes nothing |
 | CB67 | 4 | The parser refuses a spec with two unfenced `Persisted fields:` lines with `persisted-fields-invalid` | `internal/spec/persisted_test.go` (`TestPersistedFieldsHeader`) | A last-wins scan lets a body line replace the reviewed header declaration |
 | CB68 | 41 | With two open builds whose first build declares no field and whose second build declares one, and the manifest digest equal to the primary digest, the refresh reports `held` | `internal/worktree/land_effects_test.go` (`TestRefreshHoldsAnInstalledCandidate`) | A predicate that reads only the first open build rebuilds `main` over the installed candidate |
-| CB69 | 44 | With two open declared builds, the candidate check refuses with `declared-builds-overlap` before the digest test, and its route names `bench commitment block` | `internal/commitment/repository/install_check_test.go` (`TestCandidateCheck`) | A check without the count lets one build's installed candidate pass the other build's guarded write |
+| CB69 | 46 | With two open declared builds, the candidate check refuses with `declared-builds-overlap` before the digest test, and its route names `bench commitment block` | `internal/commitment/repository/install_check_test.go` (`TestCandidateCheck`) | A check without the count lets one build's installed candidate pass the other build's guarded write |
 
 Not covered: story 38 — review-owned exclusion; FT140 owns the tolerant purge read.
 Not covered: story 39 — review-owned exclusion; `docs/known-issues.md` states the one-version-at-a-time rule.
