@@ -71,7 +71,8 @@ func (store Store) declaredBuilds() ([]openBuild, error) {
 
 // CheckEntry is the candidate check of a guarded entry in the checkout at root, over the
 // declaration of the spec at path in the commit that HEAD names and the running executable.
-// A spec that does not read, and a declaration that does not parse, refuse with their cause.
+// Where the repository declares Bench build inputs, a spec that does not read and a
+// declaration that does not parse refuse with their cause.
 func CheckEntry(root, path string) error {
 	// An executable that does not resolve leaves no path, which no digest reads, so the
 	// check refuses it.

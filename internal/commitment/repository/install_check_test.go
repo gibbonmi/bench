@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
@@ -80,7 +81,9 @@ func writeExecutable(t *testing.T, path, content string) {
 // TestCandidateCheck is CB26, CB27, CB28, CB60, CB65, and CB69, with one row for each other
 // refusal of the check and for a repository without Bench build inputs. The declared path is
 // one that no ledger type holds, so a check that tested field knowledge would refuse the
-// installed candidate. An empty face is a pass.
+// installed candidate. One row publishes the manifest through the adoption writer beside the
+// primary checkout's wrapper, so a check that reads another location refuses that row. An
+// empty face is a pass.
 func TestCandidateCheck(t *testing.T) {
 	declared := []spec.PersistedField{{Record: "intent-ledger", Path: []string{"commitment", "fieldnoledgerholds"}}}
 	const (
@@ -95,6 +98,17 @@ func TestCandidateCheck(t *testing.T) {
 		face        string
 	}{
 		{name: "the installed candidate passes", declaration: declared, call: func(_ *testing.T, r installedRepository) (string, string) { return r.installed, r.primary }},
+		{name: "the manifest of the production writer binds the candidate", declaration: declared, call: func(t *testing.T, r installedRepository) (string, string) {
+			t.Setenv("BENCH_WRAPPER", filepath.Join(r.primary, "bin", "bench.sh"))
+			if _, _, err := adopt.WriteBrokerManifest("0.0.0"); err != nil {
+				t.Fatal(err)
+			}
+			executable, err := os.Executable()
+			if err != nil {
+				t.Fatal(err)
+			}
+			return executable, r.primary
+		}},
 		{name: "another digest refuses", declaration: declared, face: notInstalled, call: func(_ *testing.T, r installedRepository) (string, string) { return r.worktreeBuild, r.primary }},
 		{name: "an undeclared spec passes any digest", call: func(_ *testing.T, r installedRepository) (string, string) { return r.worktreeBuild, r.primary }},
 		{name: "a worktree root reads the primary manifest", declaration: declared, face: notInstalled, call: func(_ *testing.T, r installedRepository) (string, string) { return r.worktreeBuild, r.worktree }},
