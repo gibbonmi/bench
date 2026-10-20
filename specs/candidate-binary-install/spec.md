@@ -101,7 +101,7 @@ Harder chunks: CB-C2.
 42. As an operator, I want the install to find the bound assignment when the ledger holds a field that the running executable does not know, so that the install can recover a lost candidate.
 43. As an orchestrator, I want the install to publish the executable, the seal, and the manifest as one transaction, so that an interrupt leaves the earlier set in place.
 44. As an orchestrator, I want each refusal route to name the bound integration target of the open declared build, so that a refusal in an author worktree names the right target.
-45. As an orchestrator, I want `/bench-implement-spec` to rerun the install after each Go commit of a declared build, so that a rebuilt copy never meets a stale manifest.
+45. As an orchestrator, I want `/bench-implement-spec` to rerun the install after each Go change or fold of a declared build, so that a rebuilt copy never meets a stale manifest.
 
 ## Implementation decisions
 
@@ -117,7 +117,7 @@ Harder chunks: CB-C2.
 - **Open build:** a claimed outcome with an active bound assignment whose deliverable is a staged spec, as the landing-window derivation computes it. Its chunk-gap state does not matter, and the restore refuses on an open build of any outcome.
 - **Declared build:** an open build whose default-branch bound spec declares a persisted field.
 - **Integration target:** the first bound assignment of the declared build in the open-build derivation.
-- **Held install:** a declared build exists, and the primary broker manifest digest equals the primary executable's digest.
+- **Held install:** a declared build exists, and the primary broker manifest digest equals the primary executable's digest. This predicate also holds from `bench commitment start` until the install, while the manifest still binds `main`, because no cheap predicate tells an installed candidate from a stale `main`.
 
 ### Declaration and field knowledge
 
@@ -157,7 +157,7 @@ The verb refuses before any write in this order:
 
 Then the verb builds the target's tree into the target's `dist/bench` through the existing build owner. The worktree copy stays in place. The verb publishes a copy of that executable, its seal, and the broker manifest at the primary checkout through the existing freshness publication owner. That owner locks the directory, keeps backups, and restores the earlier set on a failure or a signal. Last, the verb runs the primary checkout's `bin/bench.sh doctor --fix` as a child process. The child runs with the primary checkout as its working directory. Its environment unsets `BENCH_KIT` and `BENCH_WRAPPER` and sets `BENCH_RUN_BINARY` to the primary executable. `doctor --fix` writes the PATH shim and the pre-push hook and binds that executable in the broker manifest again. A failed child leaves the published set in place, and the verb reports the child's refusal; a rerun of the install repeats both steps.
 
-After each Go commit of a declared build, the orchestrator reruns the install before the next dispatch or checkpoint. A plain `bench worktree build` of the integration worktree changes its digest, so the next guarded entry refuses and names the install.
+After each commit that changes Go sources in a declared build, including a fold of `main`, the orchestrator reruns the install before the next dispatch or checkpoint. A plain `bench worktree build` of the integration worktree changes its digest, so the next guarded entry refuses and names the install.
 
 The verb prints one table with the worktree, the executable digest, and the manifest path. Its `next` line names the first ticket dispatch.
 
@@ -180,9 +180,9 @@ The land route, the manifest authentication, and the landing owner stay unchange
 
 The post-landing refresh verifies the primary seal against the primary sources. An installed candidate's seal records the candidate tree's sources, so it never verifies there. Without a hold, any landing during a chunk gap of a declared build would rebuild `main` over the candidate. The ledger would then hold a field that the new primary executable refuses.
 
-The refresh therefore reads the held-install predicate first. When it holds, the refresh writes nothing, and its effect result is `held`. A `held` result exits 0. When the predicate does not hold, the refresh runs as today.
+The refresh therefore reads the held-install predicate first. When it holds, the refresh writes nothing, and its effect result is `held`. A `held` result exits 0. When the ledger does not read, the predicate reads as held, so the refresh never rebuilds over a ledger that it cannot read. When the predicate does not hold, the refresh runs as today.
 
-The build's own completion landing reconciles the delivered outcome before its effects run. At its refresh, the build is no longer open, so the refresh rebuilds `main` and rebinds the manifest.
+The build's own completion landing reconciles the delivered outcome and releases the build's assignment before its effects run. At its refresh, the build is no longer open, so the refresh rebuilds `main` and rebinds the manifest.
 
 ### The restore
 
@@ -193,7 +193,7 @@ The verb refuses before any write in this order:
 1. The repository declares no Bench build inputs.
 2. The default-branch copy of the spec declares no persisted field.
 3. The running executable's strict ledger read fails. This refusal comes before the open-build test, because that test reads the ledger too.
-4. The ledger holds an open build of any outcome, because the clear is ledger-wide. The refusal names `bench commitment block` and `bench worktree release` as the routes that end the build.
+4. The ledger holds an open build of any outcome, because the clear is ledger-wide. The refusal names `bench commitment block` as the route that ends the build. It also tells the operator to run the restore before `bench worktree release`, because a recovery install needs the target worktree.
 
 Then the verb copies the ledger to `$BENCH_HOME/restore/<repo-key>/` and refuses when the copy fails. One strict ledger transaction then removes each declared field that the ledger holds. A declared field that the ledger does not hold needs no change, because the build stopped before any writer wrote it. For a nested path such as `commitment.gaps.chunk`, the transaction removes the last segment from each element along the path. Then the verb rebuilds the primary `dist/bench` from the primary sources through the existing rebuild owner. Last, it runs `doctor --fix` under the rebuilt executable with the install's child environment, so `main` code authors the broker manifest, the shim, and the pre-push hook again.
 
@@ -325,7 +325,7 @@ The system test is the gate seam that observes both incidents end to end. Its fi
 | CB55 | 42 | The install leaves the ledger bytes unchanged | planned TestBuildInstall in internal/worktree/build_install_test.go | A tolerant read that also writes would drop the unknown field |
 | CB56 | 43 | When the publication fails after the executable write, the primary executable, seal, and manifest keep their earlier bytes | planned TestBuildInstall in internal/worktree/build_install_test.go | A rename sequence without the publication owner leaves a candidate beside the old manifest |
 | CB57 | 44 | A refusal from an author worktree prints `bench worktree build --install` followed by the integration target label and not the author label | planned TestCandidateNotInstalledRoute in internal/refusalroute/route_test.go | A route that takes the caller's own owner lookup names a target that the install refuses |
-| CB58 | 45 | `/bench-implement-spec` holds the anchored sentence "After each Go commit of a declared build, rerun `bench worktree build --install <target>` before the next dispatch." | planned TestCandidateInstallAnchors in internal/anchors/registry_candidate_install_test.go | Removal of the reinstall step reds the anchor |
+| CB58 | 45 | `/bench-implement-spec` holds the anchored sentence "After a Go change or a fold reaches a declared build, rerun `bench worktree build --install <target>`." | planned TestCandidateInstallAnchors in internal/anchors/registry_candidate_install_test.go | Removal of the reinstall step reds the anchor |
 | CB59 | 41 | `.bench/BENCH-reference.md` holds the anchored sentence "A `held` refresh keeps an installed candidate while its declared build is open." | planned TestCandidateInstallAnchors in internal/anchors/registry_candidate_install_test.go | Removal of the effect note reds the anchor |
 
 Not covered: story 38 — review-owned exclusion; FT140 owns the tolerant purge read.
@@ -371,6 +371,9 @@ The edges and their dispositions are:
 - A reinstall while a chunk checkpoint runs — the orchestrator runs the install and the checkpoint in sequence in one session, and the check runs at the checkpoint's entry only.
 - The preflight `binary-seal` row names a plain `bench worktree build` as its remedy — after that build, the next guarded entry refuses and names the install, and FT344 owns the remedy wording.
 - A malformed `Persisted fields:` line passes the spec stage — the install refuses it with `persisted-fields-invalid`, and a preflight row for the line is out of scope.
+- The refresh holds a stale `main` between `bench commitment start` and the install — that `main` reads the ledger, and the install replaces it before the first dispatch.
+- An author worktree with its own built `dist/bench` refuses again after the named install — the orchestrator runs the guarded entries in the integration worktree, and the author's executable never writes the declared field.
+- An unrelated landing between the release of a blocked build's worktree and its restore — the restore refusal tells the operator to restore before the release, and a hand key removal remains the last route.
 
 ## Out of scope
 
@@ -424,6 +427,8 @@ These items go beyond the literal decision source, and each one serves the decid
 - The restore verb handles a build that stops before its landing.
 
 Flag for reviewer veto: the 2026-10-20 answer placed the install before the build's first checkpoint. The gap close of `bench record assignment` writes the ledger at the first dispatch, before any checkpoint. This spec therefore places the install before the first ticket dispatch, which follows the source's "writes through a binary that reads that field". The route is unchanged.
+
+Flag for reviewer veto: the 2026-10-20 hold decision names a manifest that "binds the installed candidate". The held-install predicate cannot tell an installed candidate from a stale `main`, so it also holds before the install. No ledger is at risk in that window.
 
 Flag for reviewer veto: `projects/benchkit.md` claims that the landing refuses a stale dev executable, and the current code has no such refusal. This spec does not change the claim.
 
