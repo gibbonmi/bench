@@ -71,8 +71,10 @@ func (store Store) declaredBuilds() ([]openBuild, error) {
 
 // CheckEntry is the candidate check of a guarded entry in the checkout at root, over the
 // declaration of the spec at path in the commit that HEAD names and the running executable.
-// Where the repository declares Bench build inputs, a spec that does not read and a
-// declaration that does not parse refuse with their cause.
+// Where the repository declares Bench build inputs, or where its primary checkout does not
+// resolve, a spec that does not read and a declaration that does not parse refuse with their
+// cause. A declaration with a field then refuses with candidate-not-installed when the primary
+// checkout does not resolve.
 func CheckEntry(root, path string) error {
 	// An executable that does not resolve leaves no path, which no digest reads, so the
 	// check refuses it.
@@ -114,8 +116,9 @@ func checkCandidate(executable, root string, declare func() ([]spec.PersistedFie
 	if len(declaration) == 0 {
 		return nil
 	}
-	// A ledger that does not read lists no build, so the count passes and the digest test
-	// runs.
+	// Declared builds that do not read, whatever the cause, list no build: the ledger, the
+	// default-branch tip, or a bound spec can fail. The count then passes, the digest test
+	// runs, and a refusal prints the target slot.
 	builds, _ := Store{Root: root}.declaredBuilds()
 	if located != nil {
 		return candidateNotInstalled(builds, fmt.Errorf("the primary checkout does not resolve: %w", located))

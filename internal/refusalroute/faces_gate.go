@@ -29,6 +29,17 @@ const DeclaredBuildsOverlap = "declared-builds-overlap"
 // fact fills.
 var installForm = strings.TrimSuffix(usage.WorktreeBuildInstall, " "+placeholder(FactTarget))
 
+// blockOutcome ends an open outcome with a blocker. The operator names the outcome and the
+// reason.
+var blockOutcome = Command(Text("bench commitment block --outcome"), Operator("id"), Text("--reason"), Operator("text"))
+
+// BlockRoute is the route that ends an open build with blockOutcome and then runs command,
+// the printing verb's own re-run. The build verb's restore prints it while the ledger holds
+// an open build.
+func BlockRoute(command string) string {
+	return Face{Route: []Step{blockOutcome, rerun}}.Render(Facts{Values: map[string]string{FactRerun: command}})
+}
+
 // gateFaces are the gate checkpoint's refusal faces, in registry order. The raising site
 // supplies each sentence: the checkpoint names the cause it observed.
 var gateFaces = []Face{
@@ -104,6 +115,6 @@ var gateFaces = []Face{
 		Verb:      Gate,
 		Name:      DeclaredBuildsOverlap,
 		Authority: Reviewer,
-		Route:     []Step{Command(Text("bench commitment block --outcome"), Operator("id"), Text("--reason"), Operator("text")), rerun},
+		Route:     []Step{blockOutcome, rerun},
 	},
 }

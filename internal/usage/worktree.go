@@ -66,6 +66,16 @@ func WorktreeBuildInstallFor(target string) string {
 	return withTarget(WorktreeBuildInstall, target)
 }
 
+// WorktreeBuildRestore is the restore form of the build verb, whose operand is the spec slug
+// of a stopped build. The build verb's help prints it after WorktreeBuildInstall.
+const WorktreeBuildRestore = "bench worktree build --restore <slug>"
+
+// WorktreeBuildRestoreFor is WorktreeBuildRestore with slug in its `<slug>` slot, under the
+// quoting rule of WorktreeBuildFor.
+func WorktreeBuildRestoreFor(slug string) string {
+	return strings.Replace(WorktreeBuildRestore, "<slug>", slug, 1)
+}
+
 // withTarget fills the `<target>` slot of one build grammar.
 func withTarget(grammar, target string) string {
 	return strings.Replace(grammar, "<target>", target, 1)

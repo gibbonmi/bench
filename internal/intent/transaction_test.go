@@ -336,3 +336,28 @@ func TestReadTolerantRecoversPastAnUnknownCommitmentField(t *testing.T) {
 		t.Fatalf("lock stat = %v, want no lock file", err)
 	}
 }
+
+// TestRemoveFieldsRefusesAResultThatDoesNotDecode proves the raw-field removal runs the
+// strict decode on its result before the replace: a ledger whose field this schema does not
+// know keeps its bytes when a removal elsewhere would write it, and the preserved copy holds
+// the bytes that the removal read.
+func TestRemoveFieldsRefusesAResultThatDoesNotDecode(t *testing.T) {
+	root := newRepo(t)
+	path, err := Address(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored := `{"schema":2,"entries":[` + seedEntryJSON + `],"added":1}` + "\n"
+	if err := os.WriteFile(path, []byte(stored), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	preserve := filepath.Join(t.TempDir(), "restore", "copy.json")
+	if err := RemoveFields(root, preserve, [][]string{{"entries"}}); err == nil || !strings.Contains(err.Error(), `"added"`) {
+		t.Fatalf("removal = %v, want the strict decode refusal of the unknown field", err)
+	}
+	for _, file := range []string{path, preserve} {
+		if data, err := os.ReadFile(file); err != nil || string(data) != stored {
+			t.Fatalf("%s = %q, %v; want the stored bytes", file, data, err)
+		}
+	}
+}

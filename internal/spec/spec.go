@@ -104,8 +104,15 @@ func metadata(content []byte) (status, roadmapID string) {
 // ErrPersistedFieldsInvalid is the sentinel that each PersistedFields refusal wraps.
 var ErrPersistedFieldsInvalid = errors.New("persisted-fields-invalid")
 
+// RecordIntentLedger and RecordReviewRecord are the record names that a declaration item can
+// name: the shared intent ledger and the review record.
+const (
+	RecordIntentLedger = "intent-ledger"
+	RecordReviewRecord = "review-record"
+)
+
 // persistedRecords is the closed set of record names that a declaration item can name.
-var persistedRecords = map[string]bool{"intent-ledger": true, "review-record": true}
+var persistedRecords = map[string]bool{RecordIntentLedger: true, RecordReviewRecord: true}
 
 // PersistedField is one `<record>:<path>` item of the `Persisted fields:` declaration. Path
 // holds the dot-separated JSON tag names from the record root.
