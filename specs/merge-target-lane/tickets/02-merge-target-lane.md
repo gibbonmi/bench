@@ -10,8 +10,14 @@ A `bench worktree merge` from any checkout of the kit repository grades the comp
 An adopted kit, a foreign kit, and an unknown repository keep their current grade.
 
 Ticket 01 supplies `func KitForRoot(kit, root string) string` in the gate package.
-It answers `root` only when `kit` is not empty, `kit` is the top level of its own tree, and `kit` and `root` share one git common directory.
-Every other input and every git failure answers `kit` unchanged.
+It answers `root`, unchanged as the caller spelled it, only when each of these conditions holds:
+
+- `kit` is not empty.
+- The canonical spelling of the git top level of `kit` is the canonical spelling of `kit`.
+- The canonical spelling of the git common directory of `kit` is the canonical spelling of the git common directory of `root`.
+
+Every other input answers `kit`, unchanged as the caller spelled it.
+A git failure or a canonical-path failure at any step answers `kit`.
 
 In `mergeOwner` (`internal/worktree/merge.go`), pass `gate.KitForRoot(kit, target)` to `gate.LaneForCommitAtKit`.
 Change only that one line, so the fold (`merge.go:95`) and the target-alone grade (`merge_refusal.go:84`) use one derivation.
@@ -37,6 +43,7 @@ Drive the merge verb through `runVerb` and the `mergeSet.kit` override.
 Run git through the package harness (`gitRun` and its peers), because `TestSerialJourneyHarnessCensus` refuses `exec.Command`, `gittest.`, `Setenv`, and `Chdir` in other test files.
 Set no environment variable, so the four tests stay parallel and the serial ceiling of 45 stays.
 Reuse `commitWholeGate`, `wholeGateMergeFixture`, `foldRedFixture`, and `mergeRefusalFixture` where they fit; add a fixture variant beside its owner when one does not fit.
+Put a variant of `mergeFixture` in `merge_target_lane_test.go`, because its owner `merge_test.go` must not grow.
 The spec rates the embed-target scan and the build cache lock in this fixture as uncertain.
 If the real built-in lane cannot run in the fixture, stop and report a material acceptance shortfall; do not stub the lane resolution.
 
@@ -49,6 +56,7 @@ Add one `CHANGELOG.md` entry under `[Unreleased]`.
 The entry states that a merge from any checkout of the kit repository now grades with the target's lane.
 It also states that before, such a merge ran the whole-project gate.
 The research note `docs/research/ft311-session-orchestration.md` cites `merge.go:383` in its link table; no gate reads that link, and no edit is planned.
+That link was already stale at the base commit, where `merge.go` has 378 lines, so this build does not cause the drift.
 
 ## Acceptance
 

@@ -43,7 +43,7 @@ This spec makes that sentence true for a primary-checkout caller.
 
 Line: opus / medium.
 Implementation-line reason: the hardest chunk is the verb fixture that runs the real built-in lane with the Go toolchain. The spec gives exact predicates, and planned rows cover each wrong answer. The mid tier comes from the seam uncertainty of that fixture, which no probe has run yet. The medium effort comes from the project route for gate and conformance logic.
-Harder chunks: C1.
+Harder chunks: C2.
 
 ### The merge grades with the target's lane
 
@@ -84,8 +84,8 @@ It answers `root` only when each of these conditions holds:
 - The git top level of `kit` is the same directory as `kit`.
 - The git common directory of `kit` is the same directory as the git common directory of `root`.
 
-Every other input answers `kit` unchanged.
-A git failure at any step answers `kit`, so an unknown repository falls back to the caller's kit.
+The answer `root` keeps the caller's spelling of `root`, and every other input answers `kit` as the caller spelled it.
+A git failure or a canonical-path failure at any step answers `kit`, so an unknown repository falls back to the caller's kit.
 The comparison uses canonical spellings through the existing path owner, as [KitSourceCheckoutAtKit](../../internal/gate/kit_source.go:53) does.
 It uses the existing git adapter queries [RootAt](../../internal/git/git.go:96) and [CommonDir](../../internal/git/worktree_admin.go:193).
 The gate package already imports both owners, so the spec adds no import edge.
@@ -112,11 +112,12 @@ Reviewer decision D1 accepts the Bash form and the Go form as an exception to th
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| C1 / 01-kit-for-root.md, 02-merge-target-lane.md | A merge from any checkout of the kit repository grades with the target's selective lane, and the adopted, foreign, and unknown kits keep their current grade | R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21 | KitForRoot unit tests, wrapper differential, merge verb lane and fallback witnesses, single-read census, effect census, plumbing owner check | yes |
+| C1 / 01-kit-for-root.md | The gate package answers the kit for a root by the wrapper's rule, and the Go form and the Bash form agree over the wrapper's repository shapes | R01, R02, R03, R04, R05, R06, R07, R08, R09, R17, R18 | KitForRoot unit tests, wrapper differential, BENCH_KIT read check, plumbing owner check | no |
+| C2 / 02-merge-target-lane.md | A merge from any checkout of the kit repository grades with the target's selective lane, and the adopted, foreign, and unknown kits keep their current grade | R10, R11, R12, R13, R14, R15, R16, R19, R20, R21 | merge verb lane and fallback witnesses, single-read census, effect census, existing merge lane tests | yes |
 
-Ticket 01 adds `KitForRoot` with its unit rows and the differential row.
-Ticket 02 makes `mergeOwner` consume it and adds the merge verb rows.
-Ticket 02 waits for ticket 01's green commit.
+Ticket 01 creates the `KitForRoot` seam with its unit rows and the differential row, so it is its own review chunk.
+Ticket 02 makes `mergeOwner` consume the seam and adds the merge verb rows.
+C2 starts after the C1 chunk review closes.
 
 ### Completion plan
 
@@ -127,19 +128,13 @@ Ticket 02 waits for ticket 01's green commit.
     {
       "id": "C1",
       "tickets": [
-        "01-kit-for-root.md",
-        "02-merge-target-lane.md"
+        "01-kit-for-root.md"
       ],
       "verification": [
         {
           "id": "kit-rule",
           "command": "bench test --package ./internal/gate --run 'KitForRoot|LaneForCommit|LaneFor|KitValue|KitSourceCheckout'",
           "probe": "Remove the top-level condition from KitForRoot and record the R03 red, the restore, and the green."
-        },
-        {
-          "id": "merge-lane",
-          "command": "bench test --package ./internal/worktree --run 'Merge|SingleReadCensus|EffectBoundaryCensus'",
-          "probe": "Resolve the kit at the fold call site only and record the R12 red, the restore, and the green."
         },
         {
           "id": "wrapper-differential",
@@ -157,6 +152,27 @@ Ticket 02 waits for ticket 01's green commit.
         {
           "id": "gate-package",
           "command": "bench test --package ./internal/gate"
+        },
+        {
+          "id": "cmd-package",
+          "command": "bench test --package ./cmd/bench"
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "tickets": [
+        "02-merge-target-lane.md"
+      ],
+      "verification": [
+        {
+          "id": "merge-lane",
+          "command": "bench test --package ./internal/worktree --run 'Merge|SingleReadCensus|EffectBoundaryCensus'",
+          "probe": "Resolve the kit at the fold call site only and record the R12 red, the restore, and the green."
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance"
         },
         {
           "id": "worktree-package",

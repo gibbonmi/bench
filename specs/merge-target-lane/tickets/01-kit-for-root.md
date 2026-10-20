@@ -39,6 +39,7 @@ It then requires `gate.KitForRoot(<wrapper tree>, <working directory>)` to give 
 The five shapes are the linked worktree, the adopted `.bench` kit, the main checkout, the different repository, and the plain directory.
 Move the repository fixture and the wrapper call of the existing test out of `cmd/bench/main_test.go` into one shared helper, so one fixture serves both tests.
 `cmd/bench/main_test.go` is 779 lines against a 400-line budget with no grant, so its line count only goes down.
+If `t.TempDir()` sits under a symbolic link, the wrapper exports the physical path and `KitForRoot` answers `root` as spelled. The existing test has the same exposure, so compare canonical spellings in R09 only if that host case appears.
 
 Keep the Bash rule in `bin/bench.sh` as it is, because reviewer decision D1 accepts the Bash form and the Go form.
 The file is 538 lines with no grant, so an edit to the `kit_dir` comment must add no net line.
