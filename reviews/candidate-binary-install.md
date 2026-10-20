@@ -2879,6 +2879,72 @@
           "supersedes": [
             "cbc3-coverage-confirm"
           ]
+        },
+        {
+          "id": "cbc3-standards-r3",
+          "performer": "claude:ft419-cbc3-standards-r3-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "45ad78a20b7966f109b621de105c1034bde1fbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-standards-r3-20261020",
+            "digest": "sha256:669b08ac22306c0451daee0d82a1340b12406109b1cc6574b579e81b9f8648d2",
+            "excerpt": "## Standards (CB-C3 repair cycle 3, delta 7972fc64..e1f2dfdd, opus/medium)\nNo finding ID. Evidence for the new row's independent expectation: three demonstrated reds, each restored=yes. The author's insertion of a wrapper-relative read before brokermanifest.Read in window.go bit it during the debug loop. The orchestrator's swap of manifest := brokermanifest.Path(primary) with a wrapper-suffix read bit it. The orchestrator's swap of \"bin\" to \"dist\" in brokermanifest.Path bit it.\nwrapperAt has one source, and the comments meet craft-comments.\n"
+          },
+          "axis": "Standards",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc3-standards-r2"
+          ]
+        },
+        {
+          "id": "cbc3-spec-r3",
+          "performer": "claude:ft419-cbc3-spec-r3-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "45ad78a20b7966f109b621de105c1034bde1fbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-spec-r3-20261020",
+            "digest": "sha256:7dc24b66b3192b5acdc9915480d78474e7ab4ba5cbeb5f89e68d58e814713d3e",
+            "excerpt": "## Spec (CB-C3 repair cycle 3, delta 7972fc64..e1f2dfdd, opus/medium)\nCB60 met, the clause \"never beside BENCH_WRAPPER\" met, the plan change only appends the cycle 3 assignment, and the delta adds no behavior. No finding.\n"
+          },
+          "axis": "Spec",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc3-spec-r2"
+          ]
+        },
+        {
+          "id": "cbc3-coverage-r3",
+          "performer": "claude:ft419-cbc3-coverage-r3-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "45ad78a20b7966f109b621de105c1034bde1fbef",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-coverage-r3-20261020",
+            "digest": "sha256:77952ae35bdf8e1bca229fa1ad465a0205fedb8ad48ddca73f87c78887b71b51",
+            "excerpt": "## Coverage (CB-C3 repair cycle 3, delta 7972fc64..e1f2dfdd, opus/medium)\nC1 closed: a read beside the caller root when BENCH_WRAPPER is set bit the new row, restored=yes.\nAdvice (no finding ID; the bounded repair policy makes a finding that grades only the extension's check optional advice, and the production code never reads beside BENCH_WRAPPER): a read beside BENCH_WRAPPER only when the root is the primary checkout stays silent (15 tests, restored=yes).\n"
+          },
+          "axis": "Coverage",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc3-coverage-r2"
+          ]
         }
       ]
     }
@@ -3136,3 +3202,7 @@ Cycle 2 of 2 closed Coverage N1, Standards N2, and Spec N1 and N2. Its round rai
 Repair extension: the bounded allowance is spent. The run's --auto-approve option is the reviewer's advance approval of repair rounds past the allowance. It permits one test-only cycle 3 for C1, with one `TestCandidateCheck` row. The extension adds a repair round to the implementation retro.
 
 Advice for the ticket 6 charge: two `window.go` comments are narrower than the code.
+
+Cycle 3 closed C1. The round passed on all three axes. Three demonstrated reds, each with a restored subject, record the new row's independent expectation.
+
+Advice (CB-C3 cycle 3, no finding ID): a read beside `BENCH_WRAPPER` only when the root is the primary checkout stays silent. The production code never reads beside `BENCH_WRAPPER`. The bounded repair policy makes this optional advice, because it grades only the extension's check.
