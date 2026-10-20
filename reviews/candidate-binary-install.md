@@ -224,6 +224,74 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cbc1-standards-confirm",
+          "performer": "claude:ft419-cbc1-standards-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "14b0fa583c14ebe9802594de774433d8e92afc3e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc1-standards-confirm-20261020",
+            "digest": "sha256:2d1e018c787c5e88763877722444983308fb02bf8842e0fd2f12fb969afe32fb",
+            "excerpt": "## Standards (CB-C1 confirming round, repair delta 90c9f2f75..e479d3763, opus/medium)\nS1 closed: internal/spec/spec.go:104 now names ErrPersistedFieldsInvalid as the sentinel that each PersistedFields refusal wraps.\nS2 closed: internal/spec/spec.go:117-121 now names headerLines, the shared fence-aware line view.\nNew findings: 0. Advice only (wording \"reviewed header declaration\", 2/10).\n"
+          },
+          "axis": "Standards",
+          "base": "97a979263a299429d187efcf6d1845ef93199ea5",
+          "tip": "057ee735bc394f4fe97e96f989972d476838f1e2",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc1-standards"
+          ]
+        },
+        {
+          "id": "cbc1-spec-confirm",
+          "performer": "claude:ft419-cbc1-spec-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "14b0fa583c14ebe9802594de774433d8e92afc3e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc1-spec-confirm-20261020",
+            "digest": "sha256:3402df8abfa91938761a7046d5140f440876c4e8888f35bd74d433bec7b99178",
+            "excerpt": "## Spec (CB-C1 confirming round, repair delta 90c9f2f75..e479d3763, opus/medium)\nCB66 met: spec.md:325 and :124; spec.go:150-151; persisted_test.go refusal table.\nCB67 met: spec.md:326 and :124; spec.go:129-131.\nSeam cells cited; headerLines and metadata unchanged; no scope beyond S1, S2, C1-C4.\nNew findings: 0.\n"
+          },
+          "axis": "Spec",
+          "base": "97a979263a299429d187efcf6d1845ef93199ea5",
+          "tip": "057ee735bc394f4fe97e96f989972d476838f1e2",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc1-spec"
+          ]
+        },
+        {
+          "id": "cbc1-coverage-confirm",
+          "performer": "claude:ft419-cbc1-coverage-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "14b0fa583c14ebe9802594de774433d8e92afc3e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc1-coverage-confirm-20261020",
+            "digest": "sha256:7bfac9e33ba79b2cce1af88f09237b8682df1a1e5ab65aaf63d8ee4c4be76171",
+            "excerpt": "## Coverage (CB-C1 confirming round, repair delta 90c9f2f75..e479d3763, opus/medium)\nC1/CB66, C2, C3, C4/CB67 closed; each named mutant bit, restored=yes.\nN1 auto-fix conf 7: mutant unicode.IsSpace(r) && r == ' ' at spec.go:150 stays silent; add a tab case and a U+00A0 case to the CB66 refusal list (persisted_test.go:27-40).\nN2 no-op conf 4: an identical second line is untested, but the code refuses every second line and the CB67 harm cannot occur.\n"
+          },
+          "axis": "Coverage",
+          "base": "97a979263a299429d187efcf6d1845ef93199ea5",
+          "tip": "057ee735bc394f4fe97e96f989972d476838f1e2",
+          "finding_ids": [
+            "N1"
+          ],
+          "supersedes": [
+            "cbc1-coverage"
+          ]
         }
       ]
     }
@@ -278,4 +346,9 @@ CB-C1: 4 findings. Worst: C1.
 - C3 (auto-fix, confidence 7): CB5 bites only `gate-evidence`; add a second unknown record name (`internal/spec/persisted_test.go:35`).
 - C4 (auto-fix after consultation, confidence 7): a second unfenced `Persisted fields:` line replaces the first (`internal/spec/spec.go:115-119`). The consultants agreed on a refusal of a second line with `persisted-fields-invalid`; new row CB67.
 
-Repair state: CB-C1 repair cycle 1 of 2 starts after this record commit. The `--auto-approve` option of the run approves the CB66 and CB67 expansion.
+Confirming round (repair delta 90c9f2f75..e479d3763): S1, S2, C1, C2, C3, and C4 are closed.
+
+- N1 (auto-fix, confidence 7): a space-only mutant at `internal/spec/spec.go:150` stays silent, because the CB66 refusal list holds only a plain space. Add a tab case and a U+00A0 case (`internal/spec/persisted_test.go:27-40`).
+- N2 (no-op, confidence 4): an identical second line is untested, but the code refuses every second line, so the CB67 harm cannot occur.
+
+Repair state: CB-C1 repair cycle 1 of 2 closed S1, S2, and C1 to C4. Cycle 2 of 2 is a test-only repair of N1, and it closes through a coordinator confirmation. The `--auto-approve` option of the run approves the CB66 and CB67 expansion.
