@@ -1467,6 +1467,14 @@
       "identity": "sha256:d7cef4e864219e01ec1568bae03372e07b49b9c1892cbbb56b4ba22789cdcf6e",
       "source": "f1bb7f0ebcd430ae7b8b30381faa6daf3f06ac3a",
       "evidence": "12ec5f5c66bc3c7a2dfc84142bd66a46d19ba776"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT335",
+      "binding": "merge-target-lane",
+      "identity": "sha256:8f6724b61e08d439cb88f8d6d2dc794d986c7e3cd5c09dae44e95ecf70ca0a38",
+      "source": "ef5c8ccfa3246d99b2ccdfa1914444360e797421",
+      "evidence": "6b5e253d4d0845b171f6a836819e979fea3e216b"
     }
   ]
 }

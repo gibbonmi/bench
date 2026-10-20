@@ -1,6 +1,6 @@
 # Grade a merge with the target's lane from any checkout
 
-Status: staged
+Status: implemented
 Roadmap: FT335
 Decision source: named reviewed artifact — roadmap/FT335.md (drained 2026-10-07 in d-6259cc0d8421) with capture/ft335-maintenance-merge-observation-2026-10-07.md.
 Verification log: 4 iteration(s) to accept — the spec round took 2: iteration 1 rejected a second production owner of the kit rule, and reviewer decisions D1 and D2 closed it. The ticket round took 2: iteration 1 rejected one chunk for the seam ticket and its consumer, and the split into C1 and C2 closed it. Slicing research moved R09 to a new file and removed the toolchain environment variable.
@@ -122,84 +122,7 @@ C2 starts after the C1 chunk review closes.
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "C1",
-      "tickets": [
-        "01-kit-for-root.md"
-      ],
-      "verification": [
-        {
-          "id": "kit-rule",
-          "command": "bench test --package ./internal/gate --run 'KitForRoot|LaneForCommit|LaneFor|KitValue|KitSourceCheckout'",
-          "probe": "Remove the top-level condition from KitForRoot and record the R03 red, the restore, and the green."
-        },
-        {
-          "id": "wrapper-differential",
-          "command": "bench test --package ./cmd/bench --run 'ShellWrapper'",
-          "probe": "Remove the top-level condition from KitForRoot and record the R09 red, the restore, and the green."
-        },
-        {
-          "id": "plumbing-owner",
-          "command": "bench test --check git-plumbing-owner"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        },
-        {
-          "id": "gate-package",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "cmd-package",
-          "command": "bench test --package ./cmd/bench"
-        }
-      ]
-    },
-    {
-      "id": "C2",
-      "tickets": [
-        "02-merge-target-lane.md"
-      ],
-      "verification": [
-        {
-          "id": "merge-lane",
-          "command": "bench test --package ./internal/worktree --run 'Merge|SingleReadCensus|EffectBoundaryCensus'",
-          "probe": "Resolve the kit at the fold call site only and record the R12 red, the restore, and the green."
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        },
-        {
-          "id": "worktree-package",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "cmd-package",
-          "command": "bench test --package ./cmd/bench"
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "worktree",
-      "command": "bench test --package ./internal/worktree"
-    },
-    {
-      "id": "gate",
-      "command": "bench test --package ./internal/gate"
-    },
-    {
-      "id": "coverage",
-      "command": "bench coverage --check merge-target-lane"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft335-merge-target-lane-full-20261019","orchestrator_session":"claude:ft335-orchestrator-20261019","author_limit":1,"assignments":{"01-kit-for-root.md":[{"session":"claude:ft335-t01-author-20261019","assignment":"8ef5866f9492f2fc9d870172e0aac8d2","model":"opus","effort":"medium","source":"04ee12d5dd582d7f6e567c6d3ab156ea7608ff5c","native_ref":"claude-agent:bench-writer-medium:ft335-t01-author-20261019"},{"session":"claude:ft335-t01-repair1-20261019","assignment":"8ef5866f9492f2fc9d870172e0aac8d2","model":"opus","effort":"medium","source":"6cde7864d77526dffdb139d76fc5979e9bfce730","native_ref":"claude-agent:bench-writer-medium:ft335-t01-repair1-20261019","predecessor":"claude:ft335-t01-author-20261019","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ft335-t01-author-20261019","preserved":"03bec7089b851acf9865fd84b62493624e3970b7"}],"02-merge-target-lane.md":[{"session":"claude:ft335-t02-author-20261019","assignment":"8ef5866f9492f2fc9d870172e0aac8d2","model":"opus","effort":"high","source":"06159e08a68f3c040746053e2b79a2da98b99e0d","native_ref":"claude-agent:bench-writer-high:ft335-t02-author-20261019"},{"session":"claude:ft335-t02-repair1-20261019","assignment":"8ef5866f9492f2fc9d870172e0aac8d2","model":"opus","effort":"high","source":"120c6a2e9aebb45f84432aca0190439c87dd3eca","native_ref":"claude-agent:bench-writer-high:ft335-t02-repair1-20261019","predecessor":"claude:ft335-t02-author-20261019","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:ft335-t02-author-20261019","preserved":"3519feb7552fe0eb0e064cd0bea4c71bc6415e65"}]}},"chunks":[{"id":"C1","tickets":["01-kit-for-root.md"],"verification":[{"id":"t1-kit-rule","command":"bench test --package ./internal/gate --run 'KitForRoot|LaneForCommit|LaneFor|KitValue|KitSourceCheckout'","probe":"Remove the top-level condition from KitForRoot and record the R03 red, the restore, and the green.","ticket":"01-kit-for-root.md"},{"id":"t1-wrapper-differential","command":"bench test --package ./cmd/bench --run 'ShellWrapper'","probe":"Remove the top-level condition from KitForRoot and record the R09 red, the restore, and the green.","ticket":"01-kit-for-root.md"},{"id":"t1-plumbing-owner","command":"bench test --check git-plumbing-owner","ticket":"01-kit-for-root.md"},{"id":"t1-root-conformance","command":"bench test --check root-conformance","ticket":"01-kit-for-root.md"},{"id":"t1-gate-package","command":"bench test --package ./internal/gate","ticket":"01-kit-for-root.md"},{"id":"t1-cmd-package","command":"bench test --package ./cmd/bench","ticket":"01-kit-for-root.md"}]},{"id":"C2","tickets":["02-merge-target-lane.md"],"verification":[{"id":"t2-merge-lane","command":"bench test --package ./internal/worktree --run 'Merge|SingleReadCensus|EffectBoundaryCensus'","probe":"Resolve the kit at the fold call site only and record the R12 red, the restore, and the green.","ticket":"02-merge-target-lane.md"},{"id":"t2-root-conformance","command":"bench test --check root-conformance","ticket":"02-merge-target-lane.md"},{"id":"t2-worktree-package","command":"bench test --package ./internal/worktree","ticket":"02-merge-target-lane.md"},{"id":"t2-cmd-package","command":"bench test --package ./cmd/bench","ticket":"02-merge-target-lane.md"}]}],"final_verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"coverage","command":"bench coverage --check merge-target-lane"}]}
 ```
 
 ## Testing decisions
@@ -216,7 +139,7 @@ The R06 test sets its working directory to the primary checkout of the root's re
 Do not mark the R06 test parallel, because `t.Chdir` refuses a parallel test.
 The gate fixtures run git through the package's `runGitIn` helper, because the ordinary-build census refuses a `worktree` literal in a `gittest` call or an `os/exec` process in a gate test.
 
-The verb seam is the merge verb through the existing `runVerb` harness and the `mergeSet.kit` override ([verb_fixture_test.go](../../internal/worktree/verb_fixture_test.go:52)).
+The verb seam is the merge verb through the existing `runVerb` harness and the `mergeSet.kit` override ([verb_fixture_test.go](../../internal/worktree/verb_fixture_test.go:58)).
 The precedent for a kit that is the fixture's primary checkout is [land_broker_notice_test.go](../../internal/worktree/land_broker_notice_test.go:50).
 The fixture commits `go.mod`, one trivial Go package, and a whole gate that writes a tally, before the assignment exists.
 The incoming change edits only `go.mod`, so the built-in lane selects only the class that runs `go vet` and `go build`.
@@ -255,21 +178,21 @@ One wrapper fixture serves both tests, so the existing test's fixture moves out 
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| R01 | 1, 11 | A linked worktree of the kit's repository answers that worktree, under a parent directory whose name holds a space | planned TestKitForRootNamesALinkedWorktreeOfThePrimaryKit in internal/gate/kit_root_test.go | A form that keeps the kit answers the primary checkout |
-| R02 | 3 | A kit that is another linked worktree of the same repository answers the target worktree | planned TestKitForRootNamesALinkedWorktreeOfASiblingKit in internal/gate/kit_root_test.go | A form that matches only the primary checkout keeps the sibling kit |
-| R03 | 6 | An adopted kit at `<repo>/.bench` stays the kit for a linked worktree of that repository | planned TestKitForRootKeepsAnAdoptedSubdirectoryKit in internal/gate/kit_root_test.go | A form without the top-level condition answers the worktree |
-| R04 | 7 | A kit from a different repository stays the kit | planned TestKitForRootKeepsAKitFromAnotherRepository in internal/gate/kit_root_test.go | A form that skips the common-directory comparison answers the root |
-| R05 | 8 | A root outside any repository keeps the kit | planned TestKitForRootKeepsTheKitOutsideARepository in internal/gate/kit_root_test.go | A form that treats a git failure as a match answers the root |
-| R06 | 9 | An empty kit answers the empty kit when the working directory is the primary checkout of the root's repository | planned TestKitForRootKeepsAnEmptyKit in internal/gate/kit_root_test.go | A form without the empty-kit guard resolves the empty kit to the working directory and answers the root |
-| R07 | 10 | A kit spelled through a symbolic link to the primary checkout answers the linked worktree | planned TestKitForRootMatchesASymlinkedKitSpelling in internal/gate/kit_root_test.go | A raw string comparison of the top level keeps the kit |
-| R08 | 12 | A kit path that does not exist stays the kit | planned TestKitForRootKeepsAnAbsentKit in internal/gate/kit_root_test.go | A form that treats an unreadable kit as a match answers the root |
-| R09 | 5, 13 | For each repository shape of the wrapper test without an environment override, `gate.KitForRoot` gives the kit the wrapper exports | planned TestShellWrapperKitMatchesKitForRoot in cmd/bench/wrapper_kit_test.go | A Go rule that drops either wrapper condition disagrees on the adopted or the project shape |
-| R10 | 1 | A merge from the primary checkout prints a lane line that starts `lane{outcome=pass,` and carries `classes=` | planned TestMergeFromThePrimaryGradesWithTheTargetLane in internal/worktree/merge_target_lane_test.go | Today the nil lane runs the whole gate, which prints no lane line |
-| R11 | 2 | The same merge leaves the whole-gate tally file absent | planned TestMergeFromThePrimaryGradesWithTheTargetLane in internal/worktree/merge_target_lane_test.go | Today the whole gate runs and writes the tally |
-| R12 | 4 | A fold that the lane grades red refuses with face `merge-fold-red` when the target alone passes its lane | planned TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane in internal/worktree/merge_target_lane_test.go | A target-alone grade under the caller's kit runs the whole gate, whose `exit 1` body picks `merge-target-red` |
-| R13 | 4 | The same refused merge leaves the whole-gate tally file absent | planned TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane in internal/worktree/merge_target_lane_test.go | A whole-gate grade of either the fold or the target writes the tally |
-| R14 | 3 | A merge whose kit is another linked worktree prints a lane line that carries `classes=` | planned TestMergeFromASiblingWorktreeGradesWithTheTargetLane in internal/worktree/merge_target_lane_test.go | A resolution that only matches the primary checkout runs the whole gate |
-| R15 | 6 | A merge under an adopted `<root>/.bench` kit on a target with no declared lane writes the whole-gate tally and prints no `lane{` line | planned TestMergeUnderAnAdoptedKitKeepsTheWholeGate in internal/worktree/merge_target_lane_test.go | A resolution without the top-level condition runs the built-in lane |
+| R01 | 1, 11 | A linked worktree of the kit's repository answers that worktree, under a parent directory whose name holds a space | `internal/gate/kit_root_test.go` (`TestKitForRootNamesALinkedWorktreeOfThePrimaryKit`) | A form that keeps the kit answers the primary checkout |
+| R02 | 3 | A kit that is another linked worktree of the same repository answers the target worktree | `internal/gate/kit_root_test.go` (`TestKitForRootNamesALinkedWorktreeOfASiblingKit`) | A form that matches only the primary checkout keeps the sibling kit |
+| R03 | 6 | An adopted kit at `<repo>/.bench` stays the kit for a linked worktree of that repository | `internal/gate/kit_root_test.go` (`TestKitForRootKeepsAnAdoptedSubdirectoryKit`) | A form without the top-level condition answers the worktree |
+| R04 | 7 | A kit from a different repository stays the kit | `internal/gate/kit_root_test.go` (`TestKitForRootKeepsAKitFromAnotherRepository`, `TestKitForRootKeepsASymlinkedKitFromAnotherRepository`) | A form that skips the common-directory comparison answers the root, and a form that answers the canonical kit loses the link |
+| R05 | 8 | A root outside any repository keeps the kit | `internal/gate/kit_root_test.go` (`TestKitForRootKeepsTheKitOutsideARepository`) | A form that treats a git failure as a match answers the root |
+| R06 | 9 | An empty kit answers the empty kit when the working directory is the primary checkout of the root's repository | `internal/gate/kit_root_test.go` (`TestKitForRootKeepsAnEmptyKit`) | A form without the empty-kit guard resolves the empty kit to the working directory and answers the root |
+| R07 | 10 | A kit spelled through a symbolic link to the primary checkout answers the linked worktree | `internal/gate/kit_root_test.go` (`TestKitForRootMatchesASymlinkedKitSpelling`, `TestKitForRootKeepsASymlinkedRootSpelling`) | A raw string comparison of the top level keeps the kit, and a form that answers the canonical root loses the link |
+| R08 | 12 | A kit path that does not exist stays the kit | `internal/gate/kit_root_test.go` (`TestKitForRootKeepsAnAbsentKit`) | A form that treats an unreadable kit as a match answers the root |
+| R09 | 5, 13 | For each repository shape of the wrapper test without an environment override, `gate.KitForRoot` gives the kit the wrapper exports | `cmd/bench/wrapper_kit_test.go` (`TestShellWrapperKitMatchesKitForRoot`) | A Go rule that drops either wrapper condition disagrees on the adopted or the project shape |
+| R10 | 1 | A merge from the primary checkout prints a lane line that starts `lane{outcome=pass,` and carries `classes=` | `internal/worktree/merge_target_lane_test.go` (`TestMergeFromThePrimaryGradesWithTheTargetLane`) | Today the nil lane runs the whole gate, which prints no lane line |
+| R11 | 2 | The same merge leaves the whole-gate tally file absent | `internal/worktree/merge_target_lane_test.go` (`TestMergeFromThePrimaryGradesWithTheTargetLane`) | Today the whole gate runs and writes the tally |
+| R12 | 4 | A fold that the lane grades red refuses with face `merge-fold-red` when the target alone passes its lane | `internal/worktree/merge_target_lane_test.go` (`TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane`) | A target-alone grade under the caller's kit runs the whole gate, whose `exit 1` body picks `merge-target-red` |
+| R13 | 4 | The same refused merge leaves the whole-gate tally file absent | `internal/worktree/merge_target_lane_test.go` (`TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane`) | A whole-gate grade of either the fold or the target writes the tally |
+| R14 | 3 | A merge whose kit is another linked worktree prints a lane line that carries `classes=` | `internal/worktree/merge_target_lane_test.go` (`TestMergeFromASiblingWorktreeGradesWithTheTargetLane`) | A resolution that only matches the primary checkout runs the whole gate |
+| R15 | 6 | A merge under an adopted `<root>/.bench` kit on a target with no declared lane writes the whole-gate tally and prints no `lane{` line | `internal/worktree/merge_target_lane_test.go` (`TestMergeUnderAnAdoptedKitKeepsTheWholeGate`) | A resolution without the top-level condition runs the built-in lane |
 | R16 | 14 | Each `KitValue` read in the worktree package stays at a verb entry | `internal/worktree/single_read_census_cases_test.go` (`TestSingleReadCensusOnTheLiveTree`) | A `KitValue` call inside `KitForRoot` or below the merge entry turns the census red |
 | R17 | 14 | `KitValue` stays the one read of `BENCH_KIT` in the gate package | `internal/gate/kit_value_test.go` (`TestKitValueIsTheOneBenchKitRead`) | A `BENCH_KIT` read inside the new form turns the check red |
 | R18 | 15 | No production file outside `internal/git` spells `--git-common-dir` in a `rev-parse` call | conformance check `git-plumbing-owner`, run by `bench test --check git-plumbing-owner` | An inline common-directory query in the gate package turns the check red |

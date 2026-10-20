@@ -1,7 +1,7 @@
 # Grade a merge with the target's lane from any checkout
 
 Blocked by: 01-kit-for-root.md
-Writes: internal/worktree/merge.go, internal/worktree/merge_refusal.go, internal/worktree/merge_target_lane_test.go (new), internal/worktree/parallel_census_test.go, internal/worktree/journey_test.go, internal/worktree/merge_caller_root_test.go, internal/worktree/refusal_route_follow_test.go, internal/worktree/merge_target_grade_test.go, internal/worktree/merge_route_test.go, internal/worktree/merge_fold_red_test.go, internal/worktree/verb_fixture_test.go, internal/worktree/merge_test.go, internal/worktree/single_read_census_cases_test.go, internal/worktree/effect_census_test.go, docs/research/ft311-session-orchestration.md, CHANGELOG.md
+Writes: internal/worktree/merge.go, internal/worktree/merge_refusal.go, internal/worktree/merge_target_lane_test.go (new), internal/worktree/parallel_census_test.go, internal/worktree/journey_test.go, internal/worktree/merge_caller_root_test.go, internal/worktree/refusal_route_follow_test.go, internal/worktree/merge_target_grade_test.go, internal/worktree/merge_route_test.go, internal/worktree/merge_fold_red_test.go, internal/worktree/verb_fixture_test.go, internal/worktree/merge_test.go, internal/worktree/single_read_census_cases_test.go, internal/worktree/effect_census_test.go, docs/research/ft311-session-orchestration.md, CHANGELOG.md, internal/worktree/land_effects_test.go
 Covers: R10, R11, R12, R13, R14, R15, R16, R19, R20, R21
 
 ## What to build
