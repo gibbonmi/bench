@@ -1,12 +1,32 @@
 package refusalroute
 
+import (
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/usage"
+)
+
 // gateRerun re-runs the caller's own gate in the worktree that the label fact addresses.
 // The raising site composes the arguments from the run it refuses, and a face whose
 // recovery forces a fresh run gets them with --fresh.
 var gateRerun = TreeCommand("bench gate", Fact(FactLabel), Composed(FactArguments))
 
+// GateRerun renders the caller's own gate re-run over values: the label and the arguments
+// that the checkpoint composed. A face whose route ends with the printing verb's re-run
+// reads it.
+func GateRerun(values map[string]string) string { return gateRerun.render(factsFill(values)) }
+
 // FactForm is the record form that writes the entry a checkpoint refusal lacks.
 const FactForm = "form"
+
+// CandidateNotInstalled is the face of a declared build's guarded write whose running
+// executable is not the installed candidate. The candidate check raises it, and the gate
+// checkpoint and the record verb print it.
+const CandidateNotInstalled = "candidate-not-installed"
+
+// installForm is the install form of the build verb up to its target slot, which the target
+// fact fills.
+var installForm = strings.TrimSuffix(usage.WorktreeBuildInstall, " "+placeholder(FactTarget))
 
 // gateFaces are the gate checkpoint's refusal faces, in registry order. The raising site
 // supplies each sentence: the checkpoint names the cause it observed.
@@ -67,5 +87,13 @@ var gateFaces = []Face{
 		Name:      "gate-handback",
 		Authority: Reviewer,
 		Route:     []Step{clearCause, gateRerun},
+	},
+	{
+		// The install runs from the primary checkout, which no step addressed at a worktree
+		// reaches, so it is an instruction. The printing verb supplies its own re-run.
+		Verb:      Gate,
+		Name:      CandidateNotInstalled,
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("from the primary checkout, run"), Text(installForm), Fact(FactTarget)), rerun},
 	},
 }

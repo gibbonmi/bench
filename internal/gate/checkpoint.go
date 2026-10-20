@@ -8,12 +8,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"strings"
 
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/spec"
 )
 
 // Checkpoint names an explicit evidence obligation; its zero value is ordinary work.
@@ -163,6 +166,13 @@ func funnelFace(err error) checkpointFace {
 // its own next= line. The route reruns the caller's gate in the worktree of the active
 // assignment that owns root; with no owner, the label prints its slot.
 func refuse(ctx context.Context, root string, stderr io.Writer, mode runMode, face checkpointFace, reason string) Result {
+	return refuseWith(ctx, root, stderr, mode, face, reason, nil)
+}
+
+// refuseWith is refuse with the values that the raising policy observed, which join the
+// checkpoint's own. The caller's gate re-run is one of the checkpoint's values, for a face
+// whose route ends with the printing verb's re-run.
+func refuseWith(ctx context.Context, root string, stderr io.Writer, mode runMode, face checkpointFace, reason string, raised map[string]string) Result {
 	if verb, _ := ctx.Value(verbKey{}).(bool); !verb {
 		result := operational(root, 0, stderr, reason)
 		result.Face = face.name
@@ -171,15 +181,41 @@ func refuse(ctx context.Context, root string, stderr io.Writer, mode runMode, fa
 	checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint)
 	owner, _ := intent.AssignmentForWorktree(root)
 	slug, _ := reviewrecord.Slug(checkpoint.Spec)
-	refusal := refusalroute.New(face.name, refusalroute.Facts{Sentence: reason, Values: map[string]string{
+	values := map[string]string{
 		refusalroute.FactLabel:     owner.Label,
 		refusalroute.FactSlug:      slug,
 		refusalroute.FactForm:      face.form,
 		refusalroute.FactArguments: rerunArguments(checkpoint, mode == forceRun || face == faceSubjectUnavailable),
-	}})
+	}
+	values[refusalroute.FactRerun] = refusalroute.GateRerun(values)
+	maps.Copy(values, raised)
+	refusal := refusalroute.New(face.name, refusalroute.Facts{Sentence: reason, Values: values})
 	result := operational(root, 0, stderr, refusal.Sentence)
 	fmt.Fprintln(stderr, refusalroute.NextField+"="+refusal.Route)
 	return result
+}
+
+// refuseUninstalled runs the candidate check of a checkpoint of a declared build, before
+// any ledger read or write. The declaration comes from the spec in the checkpoint source
+// tree, the commit that HEAD names. It answers whether the check refused, and the refusal.
+// The reviewer signs off a declaration, so a declaration that does not parse hands back,
+// and a spec that does not read leaves the checkpoint no subject.
+func refuseUninstalled(ctx context.Context, root string, checkpoint Checkpoint, stderr io.Writer, mode runMode) (Result, bool) {
+	if checkpoint.Spec == "" {
+		return Result{}, false
+	}
+	err := commitrepo.CheckEntry(root, checkpoint.Spec)
+	var raised refusalroute.Raised
+	face := faceSubjectUnavailable
+	switch {
+	case err == nil:
+		return Result{}, false
+	case errors.As(err, &raised):
+		face = checkpointFace{name: raised.Name}
+	case errors.Is(err, spec.ErrPersistedFieldsInvalid):
+		face = faceHandback
+	}
+	return refuseWith(ctx, root, stderr, mode, face, err.Error(), raised.Values), true
 }
 
 // rerunArguments composes the caller's gate arguments, each value rendered by Arg. A fresh

@@ -180,18 +180,42 @@ func (f form) together(values map[string]string) bool {
 	return slices.Contains(sets, present)
 }
 
-// usage is the flag's usage term. A nonempty value replaces the placeholder of a value
-// flag, rendered by the one composed-command value rule.
+// usage is the flag's usage term: its term, which a repeated flag shows as [<term>]....
 func (fl flag) usage(value string) string {
-	placeholder := fl.placeholder
-	if value != "" && placeholder != "" {
-		placeholder = refusalroute.Arg(strings.Trim(placeholder, "<>"), value)
-	}
-	term := strings.TrimSpace(fl.name + " " + placeholder)
+	term := fl.term(value)
 	if fl.occurs == repeated {
 		term = "[" + term + "]..."
 	}
 	return term
+}
+
+// term is the flag's name and its value. A nonempty value replaces the placeholder of a
+// value flag, rendered by the one composed-command value rule.
+func (fl flag) term(value string) string {
+	placeholder := fl.placeholder
+	if value != "" && placeholder != "" {
+		placeholder = refusalroute.Arg(strings.Trim(placeholder, "<>"), value)
+	}
+	return strings.TrimSpace(fl.name + " " + placeholder)
+}
+
+// arguments composes the caller's call of f after `bench record`: the form, the slug, and
+// each value of each flag that the caller passed, in the layout order.
+func (f form) arguments(slug string, parsed usage.Result) string {
+	words := []string{f.name, refusalroute.Arg(refusalroute.FactSlug, slug)}
+	for _, term := range f.terms() {
+		if !strings.HasPrefix(term, "--") {
+			continue
+		}
+		values := parsed.Repeated[term]
+		if value, present := parsed.Flags[term]; present && len(values) == 0 {
+			values = []string{value}
+		}
+		for _, value := range values {
+			words = append(words, f.flag(term).term(value))
+		}
+	}
+	return strings.Join(words, " ")
 }
 
 func (f form) grammar() usage.Grammar {

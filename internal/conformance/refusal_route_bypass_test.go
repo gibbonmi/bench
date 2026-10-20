@@ -28,6 +28,7 @@ var routeBypassPackages = []string{
 	"internal/gate",
 	"internal/gate/authorization",
 	"internal/landing",
+	"internal/reviewrecord/recordcmd",
 	"internal/worktree",
 	"internal/worktree/landingpolicy",
 }
@@ -142,6 +143,7 @@ func TestRouteBypassCheckBites(t *testing.T) {
 			"internal/gate":                   notLineSafe,
 			"internal/gate/authorization":     joined,
 			"internal/landing":                bareLabel,
+			"internal/reviewrecord/recordcmd": nextField,
 			"internal/worktree":               nextField,
 			"internal/worktree/landingpolicy": nextTable,
 		}

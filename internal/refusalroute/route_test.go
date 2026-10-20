@@ -14,6 +14,17 @@ func TestSourceNotFencedRouteNamesWiden(t *testing.T) {
 	}
 }
 
+// TestCandidateNotInstalledRoute is CB34 and CB35. With no target, which a ledger that does
+// not read leaves, the install prints the build grammar's literal slot. The caller's re-run
+// follows the install as the last step.
+func TestCandidateNotInstalledRoute(t *testing.T) {
+	const rerun = "bench gate --in 'build' --checkpoint 'specs/example/spec.md' --chunk '1'"
+	route := New(CandidateNotInstalled, Facts{Values: map[string]string{FactRerun: rerun}}).Route
+	if want := "from the primary checkout, run bench worktree build --install <target>; then " + rerun; route != want {
+		t.Fatalf("candidate-not-installed route:\n got %q\nwant %q", route, want)
+	}
+}
+
 // TestRouteRendering pins the rendered route of injected faces, so each case controls its
 // own steps and facts. Each expectation spells the route from the declared steps and the
 // fixture facts. It covers RR05, RR06, and RR13.

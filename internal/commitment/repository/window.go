@@ -3,9 +3,14 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 
+	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/commitment"
+	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -51,6 +56,68 @@ func (store Store) DeclaredBuild() (intent.Assignment, bool, error) {
 		}
 	}
 	return intent.Assignment{}, false, nil
+}
+
+// CheckEntry is the candidate check of a guarded entry in the checkout at root, over the
+// declaration of the spec at path in the commit that HEAD names and the running executable.
+// A spec that does not read, and a declaration that does not parse, refuse with their cause.
+func CheckEntry(root, path string) error {
+	data, err := git.ReadTreeFile(root, "HEAD", path)
+	if err != nil {
+		return fmt.Errorf("read the declaration of %s at HEAD: %w", path, err)
+	}
+	declaration, err := spec.PersistedFields(data)
+	if err != nil {
+		return err
+	}
+	// An executable that does not resolve leaves no path, which no digest reads, so the
+	// check refuses it.
+	executable, _ := os.Executable()
+	return CheckCandidate(declaration, executable, root)
+}
+
+// CheckCandidate refuses a guarded write of a declared build unless executable is the
+// installed candidate: its digest must equal the digest that the primary checkout's broker
+// manifest binds. The primary checkout comes from the Git common directory of root, never
+// from root itself, because a worktree's own wrapper directory can hold a manifest of the
+// worktree executable. An undeclared spec, and a repository that declares no Bench build
+// inputs, pass. The check compares digests only: an executable that knows a declared field
+// but is not the installed bytes still refuses.
+func CheckCandidate(declaration []spec.PersistedField, executable, root string) error {
+	if len(declaration) == 0 {
+		return nil
+	}
+	primary, err := git.PrimaryCheckout(root)
+	if err != nil {
+		return candidateNotInstalled(root, fmt.Errorf("the primary checkout does not resolve: %w", err))
+	}
+	if !freshness.DeclaresBuildInputs(primary) {
+		return nil
+	}
+	manifest := filepath.Join(primary, "bin", brokermanifest.Name)
+	fields, err := brokermanifest.Read(manifest)
+	if err != nil {
+		return candidateNotInstalled(root, fmt.Errorf("the primary broker manifest does not read: %w", err))
+	}
+	digest, err := brokermanifest.Digest(executable)
+	if err != nil {
+		return candidateNotInstalled(root, fmt.Errorf("the running executable %q does not digest: %w", executable, err))
+	}
+	if digest != fields[brokermanifest.DigestField] {
+		return candidateNotInstalled(root, fmt.Errorf("the running executable %q has digest %s, and the primary broker manifest %s binds %s", executable, digest, manifest, fields[brokermanifest.DigestField]))
+	}
+	return nil
+}
+
+// candidateNotInstalled raises the candidate refusal for cause. The route names the
+// integration target of the declared build, whatever checkout root is. A ledger that does
+// not read names no target, so the route prints its slot.
+func candidateNotInstalled(root string, cause error) error {
+	values := map[string]string{}
+	if target, declared, err := (Store{Root: root}).DeclaredBuild(); err == nil && declared {
+		values[refusalroute.FactTarget] = target.Label
+	}
+	return refusalroute.Raised{Name: refusalroute.CandidateNotInstalled, Err: fmt.Errorf("%s: %w", refusalroute.CandidateNotInstalled, cause), Values: values}
 }
 
 // readOpenBuilds derives the open builds from one strict read of the ledger at the store

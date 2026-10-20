@@ -27,8 +27,12 @@ const Name = "bench-broker.manifest"
 // A replacement test pins the value against the staging name.
 const TemporaryPrefix = "." + Name + "."
 
+// DigestField is the manifest field that binds the broker's executable digest, the value
+// that Digest computes.
+const DigestField = "sha256"
+
 // boundFields are the four values one manifest carries.
-var boundFields = []string{"path", "version", "platform", "sha256"}
+var boundFields = []string{"path", "version", "platform", DigestField}
 
 // Write publishes the manifest in dir, binding broker as the promotion broker for
 // version. It returns the manifest path and the symlink-resolved broker it bound.
@@ -49,7 +53,7 @@ func write(replacer durablefile.Replacer, dir, broker, version string) (string, 
 	content := "path\t" + broker + "\n" +
 		"version\t" + version + "\n" +
 		"platform\t" + Platform() + "\n" +
-		"sha256\t" + digest + "\n"
+		DigestField + "\t" + digest + "\n"
 	if err := replacer.Replace(path, []byte(content), 0o644); err != nil {
 		return "", "", fmt.Errorf("publish broker manifest at %s: %w", path, err)
 	}
