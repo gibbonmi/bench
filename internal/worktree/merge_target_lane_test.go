@@ -6,12 +6,10 @@ package worktree
 import (
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/refusalroute"
-	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
@@ -81,7 +79,8 @@ func TestMergeFromThePrimaryGradesWithTheTargetLane(t *testing.T) {
 // The fold's lane runs go vet on an unknown go.mod directive and fails. The target tip alone
 // passes that lane, so the face names the fold. A grade of the target alone under the
 // caller's kit runs the whole gate, which fails and names the target. The two faces share a
-// sentence, so the printed route tells them apart against the registry.
+// sentence, so the printed route must equal the route that the registry renders for the
+// fold face over the merge's own facts.
 func TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane(t *testing.T) {
 	t.Parallel()
 	produced := produceMergeFace(t, mergeRefusalFixture{face: faceMergeFoldRed, exit: 1,
@@ -91,12 +90,12 @@ func TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane(t *testing.T) {
 			return f, mergeGoModLine(t, f, "unknowndirective x").args
 		}})
 	requireNoWholeGate(t, produced.f)
-	faces := refusalroute.Faces(refusalroute.Merge)
-	found := slices.IndexFunc(faces, func(face refusalroute.Face) bool { return face.Name == faceMergeFoldRed })
-	if found < 0 {
-		t.Fatalf("the registry declares no %s face", faceMergeFoldRed)
+	from, target := produced.args[1], produced.f.created[0].Assignment
+	facts := conflictFacts(from, target.ID, target.Worktree)
+	facts[refusalroute.FactLabel], facts[refusalroute.FactFrom] = target.Label, from
+	if want := landingRoute(faceMergeFoldRed, mergeRerun(from, target.ID), facts); produced.next != want {
+		t.Fatalf("fold red next = %q, want the %s route %q", produced.next, faceMergeFoldRed, want)
 	}
-	routetest.Steps(t, faces[found], produced.next, "", nil)
 }
 
 // A merge whose kit is another linked worktree of the target's repository grades with

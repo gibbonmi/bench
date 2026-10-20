@@ -13,10 +13,10 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 )
 
-// writeGoMainFixture writes the resolvable Go main package and build script a broker
-// fixture's destination stands on. The seal's source digest is the build-input closure of
-// that package, so a destination without it reports an unresolvable tree rather than the
-// broker state the row is about.
+// writeGoMainFixture writes a resolvable Go main package and its build script, for a
+// fixture whose root must hold Go code. A broker fixture's destination stands on it,
+// because the seal's source digest is the build-input closure of that package. A merge
+// fixture's target stands on it too, because the built-in lane needs a Go package to grade.
 func writeGoMainFixture(t *testing.T, root string) {
 	t.Helper()
 	mustWrite(t, filepath.Join(root, "go.mod"), []byte("module benchfixture\n\ngo 1.22\n"), 0o644)
