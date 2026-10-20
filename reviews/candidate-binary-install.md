@@ -357,6 +357,72 @@
           "supersedes": [
             "cbc1-coverage"
           ]
+        },
+        {
+          "id": "cbc1-standards-r2",
+          "performer": "claude:ft419-cbc1-standards-r2-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "358f56d009d7b99e814b812c1a1c0af953cb870c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc1-standards-r2-20261020",
+            "digest": "sha256:e4869591c019a91a3616235d101efe6503d905ba141d71caf3d03c231072f325",
+            "excerpt": "## Standards (CB-C1 repair cycle 2, delta 057ee735b..704a040fd, opus/medium)\nNo finding. The plan assignment record follows the repair1 shape.\nAdvice (no finding ID; the bounded repair policy makes a finding that grades only the N1 hardening check optional advice): the U+00A0 row at internal/spec/persisted_test.go:37 uses an invisible literal; an escape would show it. The three whitespace rows share one subtest base name.\n"
+          },
+          "axis": "Standards",
+          "base": "97a979263a299429d187efcf6d1845ef93199ea5",
+          "tip": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc1-standards-confirm"
+          ]
+        },
+        {
+          "id": "cbc1-spec-r2",
+          "performer": "claude:ft419-cbc1-spec-r2-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "358f56d009d7b99e814b812c1a1c0af953cb870c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc1-spec-r2-20261020",
+            "digest": "sha256:c706ad5a52703dcfcf12e4d6a949ce5378142c02a440a39bcdaf8ebf46854887",
+            "excerpt": "## Spec (CB-C1 repair cycle 2, delta 057ee735b..704a040fd, opus/medium)\nNo finding. The tab and U+00A0 rows serve CB66 (spec.md:124, :325). The plan JSON change only appends the repair2 assignment; with it removed, both plans canonicalize to one digest.\n"
+          },
+          "axis": "Spec",
+          "base": "97a979263a299429d187efcf6d1845ef93199ea5",
+          "tip": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc1-spec-confirm"
+          ]
+        },
+        {
+          "id": "cbc1-coverage-r2",
+          "performer": "claude:ft419-cbc1-coverage-r2-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "358f56d009d7b99e814b812c1a1c0af953cb870c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc1-coverage-r2-20261020",
+            "digest": "sha256:16ba8bd1d36cc3aa68328665d6eb592bfe470da1f41271b5395f90658985333e",
+            "excerpt": "## Coverage (CB-C1 repair cycle 2, delta 057ee735b..704a040fd, opus/medium)\nN1 closed. Swap to a space-only test bit 2 (tab, U+00A0); bypass to ASCII-only whitespace bit 1 (U+00A0); restored=yes each. No new finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "97a979263a299429d187efcf6d1845ef93199ea5",
+          "tip": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc1-coverage-confirm"
+          ]
         }
       ]
     }
@@ -425,4 +491,6 @@ Confirming round (repair delta 90c9f2f75..e479d3763): S1, S2, C1, C2, C3, and C4
 - N1 (auto-fix, confidence 7): a space-only mutant at `internal/spec/spec.go:150` stays silent, because the CB66 refusal list holds only a plain space. Add a tab case and a U+00A0 case (`internal/spec/persisted_test.go:27-40`).
 - N2 (no-op, confidence 4): an identical second line is untested, but the code refuses every second line, so the CB67 harm cannot occur.
 
-Repair state: CB-C1 repair cycle 1 of 2 closed S1, S2, and C1 to C4. Cycle 2 of 2 is a test-only repair of N1, and it closes through a coordinator confirmation. The `--auto-approve` option of the run approves the CB66 and CB67 expansion.
+Repair state: CB-C1 repair cycle 1 of 2 closed S1, S2, and C1 to C4. Cycle 2 of 2 closed N1 with a test-only change. The repair-assignment plan commit put the spec in the delta, so the three axes reviewed it again, and each passed. The `--auto-approve` option of the run approves the CB66 and CB67 expansion.
+
+Advice (CB-C1 cycle 2, no finding ID): the U+00A0 row at `internal/spec/persisted_test.go:37` uses an invisible literal. The three whitespace rows share one subtest base name. The bounded repair policy makes these optional advice, because they grade only the N1 hardening check.
