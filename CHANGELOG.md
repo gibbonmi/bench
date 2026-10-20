@@ -9,7 +9,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 ### Plan-commit rules
 
 - Added the `chunk-rows` row of `bench preflight build`. It compares the Implementation chunks table with the coverage map in both directions. It reds each declared row that no acceptance cell lists, each listed ID that the map does not declare, and each token fault. Before, no check graded the chunk table against the map.
-- Changed the chain-gap refusal of `bench gate --checkpoint`, which now states that only record commits and recorded folds follow a chunk tip until its checkpoint. Before, the refusal also named comment-only corrections. `/bench-implement-spec` now states the plan-commit rules of a build.
+- Changed the chain-gap refusal of `bench gate --checkpoint`, which now states that only record commits and recorded folds follow a chunk tip until its checkpoint. Before, the refusal also named comment-only corrections.
+- Changed `/bench-implement-spec`, which now states the plan-commit rules of a build. Before, the phase let a comment-only correction follow a chunk tip without a refreeze.
 
 ### Census purpose classes
 

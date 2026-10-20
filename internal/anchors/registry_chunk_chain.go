@@ -4,9 +4,9 @@ package anchors
 // build preflight, the main fold, and the chunk checkpoint gate. They forbid the retired
 // sentences of the chain: the review charge before the author record, the unscoped light-path
 // dispatch in ADR 0023, the main fold at the start of the last chunk and its refreeze, the
-// comment-only correction after a chunk tip, the review as the chunk freezer, the orchestrator's chunk record, the checkpoint gate for every
-// chunk, the README checkpoint edges, the review chain's refusal of a fold, the widened
-// confirming round, and the hand-recording sentences.
+// comment-only correction after a chunk tip, the review as the chunk freezer, the orchestrator's
+// chunk record, the checkpoint gate for every chunk, the README checkpoint edges, the review
+// chain's refusal of a fold, the widened confirming round, and the hand-recording sentences.
 var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Class: Command, Section: "Build", Needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`.", Diagnostic: "chunk chain: build preflight runs through the worktree with the chunk's --base and --source-tip after each ticket commit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Build", Needle: "review charge before the author record commit", Diagnostic: "chunk chain: the Build section puts the review charge before the author record commit"},
