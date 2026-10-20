@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/merge-target-lane/spec.md",
-  "plan_digest": "sha256:322c86ff89de964810f82061879d5aa054f5d0e695e4bab97c9f0286471f655c",
+  "plan_digest": "sha256:898ee9a75d9d7be11df624ad80aa2b39ca891ed92a45b0a65e928d303d4128c8",
   "implementation_session": "",
   "chunks": [
     {
       "id": "C1",
       "base": "d9dd9650cd42c277ae733c522a881b322d50e9e2",
-      "tip": "03bec7089b851acf9865fd84b62493624e3970b7",
-      "plan_digest": "sha256:322c86ff89de964810f82061879d5aa054f5d0e695e4bab97c9f0286471f655c",
-      "source_digest": "bb27090aa8a633522f3c1e05b70672a72890b5a4",
+      "tip": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+      "plan_digest": "sha256:898ee9a75d9d7be11df624ad80aa2b39ca891ed92a45b0a65e928d303d4128c8",
+      "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
       "acceptance_rows": [
         "R01",
         "R02",
@@ -156,6 +156,136 @@
           "requirement": "t1-cmd-package",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "t1-repair1-t1-kit-rule",
+          "performer": "claude:ft335-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft335-t01-repair1-20261019",
+            "digest": "sha256:3fc3e7d68bf599af6d8528fa30084ce5f2a856a8cfff78d5d0dbbecaa708b990",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,28,1,0,null,yes\n  2,bit,swap,failed,2,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,28,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate ./cmd/bench,KitForRoot|ShellWrapper,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1965\nmutant_report[1]{mutant}:\n  1\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1033,18\n  github.com/gibbonmi/bench/internal/gate,fail,60,10\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,\"wrapper_kit_test.go:117: gate.KitForRoot(\\\"/dev/shm/24N355/t/TestShellWrapperKitMatchesKitForRoot1867244960/001/adopted/.bench\\\", \\\"/dev/shm/24N355/t/TestShellWrapperKitMatchesKitForRoot1867244960/001/adopted\\\") = \\\"/dev/shm/24N355/t/TestShellWr… (398 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestKitForRootKeepsAnAdoptedSubdirectoryKit,\"kit_root_test.go:58: KitForRoot(\\\"/dev/shm/24N355/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit21467728/001/.bench\\\", \\\"/dev/shm/24N355/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit21467728/002/with space/linked\\\") = \\\"/dev/shm/24N355/t/TestKitF… (395 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,999,18\n  github.com/gibbonmi/bench/internal/gate,fail,63,10\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,\"wrapper_kit_test.go:117: gate.KitForRoot(\\\"/dev/shm/UWTS3R/t/TestShellWrapperKitMatchesKitForRoot1210030096/001/adopted/.bench\\\", \\\"/dev/shm/UWTS3R/t/TestShellWrapperKitMatchesKitForRoot1210030096/001/adopted\\\") = \\\"/dev/shm/UWTS3R/t/TestShellWr… (398 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestKitForRootKeepsAnAdoptedSubdirectoryKit,\"kit_root_test.go:58: KitForRoot(\\\"/dev/shm/UWTS3R/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit180560746/001/.bench\\\", \\\"/dev/shm/UWTS3R/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit180560746/002/with space/linked\\\") = \\\"/dev/shm/UWTS3R/t/TestKi… (399 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-kit-rule",
+          "command": "bench test --package ./internal/gate --run 'KitForRoot|LaneForCommit|LaneFor|KitValue|KitSourceCheckout'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the top-level condition from KitForRoot and record the R03 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft335-t01-repair1-20261019",
+              "digest": "sha256:3fc3e7d68bf599af6d8528fa30084ce5f2a856a8cfff78d5d0dbbecaa708b990",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,28,1,0,null,yes\n  2,bit,swap,failed,2,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,28,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate ./cmd/bench,KitForRoot|ShellWrapper,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1965\nmutant_report[1]{mutant}:\n  1\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1033,18\n  github.com/gibbonmi/bench/internal/gate,fail,60,10\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,\"wrapper_kit_test.go:117: gate.KitForRoot(\\\"/dev/shm/24N355/t/TestShellWrapperKitMatchesKitForRoot1867244960/001/adopted/.bench\\\", \\\"/dev/shm/24N355/t/TestShellWrapperKitMatchesKitForRoot1867244960/001/adopted\\\") = \\\"/dev/shm/24N355/t/TestShellWr… (398 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestKitForRootKeepsAnAdoptedSubdirectoryKit,\"kit_root_test.go:58: KitForRoot(\\\"/dev/shm/24N355/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit21467728/001/.bench\\\", \\\"/dev/shm/24N355/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit21467728/002/with space/linked\\\") = \\\"/dev/shm/24N355/t/TestKitF… (395 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,999,18\n  github.com/gibbonmi/bench/internal/gate,fail,63,10\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,\"wrapper_kit_test.go:117: gate.KitForRoot(\\\"/dev/shm/UWTS3R/t/TestShellWrapperKitMatchesKitForRoot1210030096/001/adopted/.bench\\\", \\\"/dev/shm/UWTS3R/t/TestShellWrapperKitMatchesKitForRoot1210030096/001/adopted\\\") = \\\"/dev/shm/UWTS3R/t/TestShellWr… (398 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestKitForRootKeepsAnAdoptedSubdirectoryKit,\"kit_root_test.go:58: KitForRoot(\\\"/dev/shm/UWTS3R/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit180560746/001/.bench\\\", \\\"/dev/shm/UWTS3R/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit180560746/002/with space/linked\\\") = \\\"/dev/shm/UWTS3R/t/TestKi… (399 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1-repair1-t1-wrapper-differential",
+          "performer": "claude:ft335-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft335-t01-repair1-20261019",
+            "digest": "sha256:3fc3e7d68bf599af6d8528fa30084ce5f2a856a8cfff78d5d0dbbecaa708b990",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,28,1,0,null,yes\n  2,bit,swap,failed,2,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,28,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate ./cmd/bench,KitForRoot|ShellWrapper,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1965\nmutant_report[1]{mutant}:\n  1\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1033,18\n  github.com/gibbonmi/bench/internal/gate,fail,60,10\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,\"wrapper_kit_test.go:117: gate.KitForRoot(\\\"/dev/shm/24N355/t/TestShellWrapperKitMatchesKitForRoot1867244960/001/adopted/.bench\\\", \\\"/dev/shm/24N355/t/TestShellWrapperKitMatchesKitForRoot1867244960/001/adopted\\\") = \\\"/dev/shm/24N355/t/TestShellWr… (398 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestKitForRootKeepsAnAdoptedSubdirectoryKit,\"kit_root_test.go:58: KitForRoot(\\\"/dev/shm/24N355/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit21467728/001/.bench\\\", \\\"/dev/shm/24N355/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit21467728/002/with space/linked\\\") = \\\"/dev/shm/24N355/t/TestKitF… (395 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,999,18\n  github.com/gibbonmi/bench/internal/gate,fail,63,10\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,\"wrapper_kit_test.go:117: gate.KitForRoot(\\\"/dev/shm/UWTS3R/t/TestShellWrapperKitMatchesKitForRoot1210030096/001/adopted/.bench\\\", \\\"/dev/shm/UWTS3R/t/TestShellWrapperKitMatchesKitForRoot1210030096/001/adopted\\\") = \\\"/dev/shm/UWTS3R/t/TestShellWr… (398 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestKitForRootKeepsAnAdoptedSubdirectoryKit,\"kit_root_test.go:58: KitForRoot(\\\"/dev/shm/UWTS3R/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit180560746/001/.bench\\\", \\\"/dev/shm/UWTS3R/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit180560746/002/with space/linked\\\") = \\\"/dev/shm/UWTS3R/t/TestKi… (399 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-wrapper-differential",
+          "command": "bench test --package ./cmd/bench --run 'ShellWrapper'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the top-level condition from KitForRoot and record the R09 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft335-t01-repair1-20261019",
+              "digest": "sha256:3fc3e7d68bf599af6d8528fa30084ce5f2a856a8cfff78d5d0dbbecaa708b990",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,28,1,0,null,yes\n  2,bit,swap,failed,2,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,28,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate ./cmd/bench,KitForRoot|ShellWrapper,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1965\nmutant_report[1]{mutant}:\n  1\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1033,18\n  github.com/gibbonmi/bench/internal/gate,fail,60,10\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,\"wrapper_kit_test.go:117: gate.KitForRoot(\\\"/dev/shm/24N355/t/TestShellWrapperKitMatchesKitForRoot1867244960/001/adopted/.bench\\\", \\\"/dev/shm/24N355/t/TestShellWrapperKitMatchesKitForRoot1867244960/001/adopted\\\") = \\\"/dev/shm/24N355/t/TestShellWr… (398 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestKitForRootKeepsAnAdoptedSubdirectoryKit,\"kit_root_test.go:58: KitForRoot(\\\"/dev/shm/24N355/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit21467728/001/.bench\\\", \\\"/dev/shm/24N355/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit21467728/002/with space/linked\\\") = \\\"/dev/shm/24N355/t/TestKitF… (395 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,999,18\n  github.com/gibbonmi/bench/internal/gate,fail,63,10\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestShellWrapperKitMatchesKitForRoot/an_adopted_repo's_own_kit_subdirectory,\"wrapper_kit_test.go:117: gate.KitForRoot(\\\"/dev/shm/UWTS3R/t/TestShellWrapperKitMatchesKitForRoot1210030096/001/adopted/.bench\\\", \\\"/dev/shm/UWTS3R/t/TestShellWrapperKitMatchesKitForRoot1210030096/001/adopted\\\") = \\\"/dev/shm/UWTS3R/t/TestShellWr… (398 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestKitForRootKeepsAnAdoptedSubdirectoryKit,\"kit_root_test.go:58: KitForRoot(\\\"/dev/shm/UWTS3R/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit180560746/001/.bench\\\", \\\"/dev/shm/UWTS3R/t/TestKitForRootKeepsAnAdoptedSubdirectoryKit180560746/002/with space/linked\\\") = \\\"/dev/shm/UWTS3R/t/TestKi… (399 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1-repair1-t1-plumbing-owner",
+          "performer": "claude:ft335-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft335-t01-repair1-20261019",
+            "digest": "sha256:eaaec0be9ae2101bc2c15129d2d6b89249305caa8bb56169e32fbfba03fb503a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,117,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-plumbing-owner",
+          "command": "bench test --check git-plumbing-owner",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-repair1-t1-root-conformance",
+          "performer": "claude:ft335-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft335-t01-repair1-20261019",
+            "digest": "sha256:08cd0be6f56473dde558cb62ed5a64c51912c7cd09cbb46dd162e0cf579477b4",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17401,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-repair1-t1-gate-package",
+          "performer": "claude:ft335-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft335-t01-repair1-20261019",
+            "digest": "sha256:36c441284c0d3beb6d8b5e5fa4ada53558962b5ba131be628f00326616a35c61",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,32180,500\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-repair1-t1-cmd-package",
+          "performer": "claude:ft335-t01-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft335-t01-repair1-20261019",
+            "digest": "sha256:3346bd97d5b8fe3ce079649a823ed5fc3be464031c032c3827be420ceab7dd8b",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19311,352\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-cmd-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -234,7 +364,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:322c86ff89de964810f82061879d5aa054f5d0e695e4bab97c9f0286471f655c",
+      "to": "sha256:898ee9a75d9d7be11df624ad80aa2b39ca891ed92a45b0a65e928d303d4128c8",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
