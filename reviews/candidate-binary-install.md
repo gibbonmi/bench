@@ -3771,6 +3771,72 @@
           "supersedes": [
             "cbc4-coverage"
           ]
+        },
+        {
+          "id": "cbc4-standards-r2",
+          "performer": "claude:ft419-cbc4-standards-r2-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a2d83db5acc711b62e8f5a0b72ba1e3fc39b4f8b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc4-standards-r2-20261020",
+            "digest": "sha256:1a1c43fcb9c0130968e2e069231e4bc1713ab149c687fbc92c17a9f3f318f758",
+            "excerpt": "## Standards (CB-C4 repair cycle 2, delta cf9ef09d..41825363, opus/medium)\nN1 closed: build_restore.go:85-87 states only what the branch establishes. N2 closed: restore test routes derive from refusalroute.New(...).Route. The test move duplicates nothing. No new finding.\n"
+          },
+          "axis": "Standards",
+          "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "tip": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc4-standards-confirm"
+          ]
+        },
+        {
+          "id": "cbc4-spec-r2",
+          "performer": "claude:ft419-cbc4-spec-r2-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a2d83db5acc711b62e8f5a0b72ba1e3fc39b4f8b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc4-spec-r2-20261020",
+            "digest": "sha256:47a1d316b9006e99ff13b9795794c7ec91bc72b9b57cd453a6daa834363b63a2",
+            "excerpt": "## Spec (CB-C4 repair cycle 2, delta cf9ef09d..41825363, opus/medium)\nNo new behavior; the new tests serve \"runs under the ledger lock\" and \"A ledger file that does not exist holds no declared field\"; CB37, CB49, and every other CB-C4 row hold. No finding.\n"
+          },
+          "axis": "Spec",
+          "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "tip": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc4-spec-confirm"
+          ]
+        },
+        {
+          "id": "cbc4-coverage-r2",
+          "performer": "claude:ft419-cbc4-coverage-r2-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a2d83db5acc711b62e8f5a0b72ba1e3fc39b4f8b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc4-coverage-r2-20261020",
+            "digest": "sha256:63cf6701657bb813cc48ecdd331eabeac0ee0c3a9087382b65d39ac5cef70a72",
+            "excerpt": "## Coverage (CB-C4 repair cycle 2, delta cf9ef09d..41825363, opus/medium)\nN1 closed: absent ledger reports no copy and an empty ledger_copy.\nAdvice (no finding ID; the bounded repair policy makes a finding that grades only the hardening cycle's lock test optional advice, and the code holds the lock with defer release()): moving release() to just after the read stays silent (intent 82, worktree 1490 tests, restored=yes). Parked with bench learning.\n"
+          },
+          "axis": "Coverage",
+          "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "tip": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc4-coverage-confirm"
+          ]
         }
       ]
     }
@@ -4157,3 +4223,7 @@ Repair state: CB-C4 repair cycle 1 of 2 closed all ten findings. The confirming 
 - Coverage N2 (auto-fix, confidence 4): no test shows that the removal holds the ledger lock through its write.
 
 The install refusal route in `build.go` is out of this chunk's reach and goes to bench learning.
+
+Cycle 2 of 2 closed all four items. The round passed on all three axes.
+
+Advice (CB-C4 cycle 2, no finding ID): the lock test proves the lock through the read, not through the replace. The code holds the lock with a deferred release. The bounded repair policy makes this optional advice, because it grades only the hardening cycle's lock test. A bench learning entry keeps it.
