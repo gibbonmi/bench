@@ -3963,7 +3963,84 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cbc5-standards",
+          "performer": "claude:ft419-cbc5-standards-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc5-standards-20261020",
+            "digest": "sha256:48ad1f10a0af8c1b85588c71d90b9d3e5a18291f09f8be463ac3f86b3eb75258",
+            "excerpt": "## Standards (CB-C5, pair 6fb390c6..fb9ece9a, opus/medium)\nF1 auto-fix conf 6: the install instruction appears in bench-implement-spec.md:46 and BENCH-reference.md:400-401.\nF2 auto-fix conf 5: bench-implement-spec.md:44 joins two topics in one paragraph to stay at 95 lines.\nF3 auto-fix conf 5: BENCH-reference.md:408-409 version-cache sentence refers to nothing.\nF4 auto-fix conf 5: ADR 0016 lines 9-12 state the broker rule without the exception the Decision now holds.\nF5 auto-fix conf 8: ADR 0016 line 37 breaks the wrap width.\nF6 no-op conf 3: the qualifier repeats at each reader site, as spec line 206 requires.\nCount 6. Worst: F1.\n"
+          },
+          "axis": "Standards",
+          "base": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+          "tip": "f0459b8405559d41eabce74ec4b28095f45f5320",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4",
+            "F5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cbc5-spec",
+          "performer": "claude:ft419-cbc5-spec-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc5-spec-20261020",
+            "digest": "sha256:93fce85a9f933b634c0cefab24a07624cbc53b1a1ffc9546442384cff7bdbfc8",
+            "excerpt": "## Spec (CB-C5, pair 6fb390c6..fb9ece9a, opus/medium)\nCB44, CB45, CB46, CB58, CB47, and the reader sweep pass.\nS1 auto-fix conf 5: BENCH-reference.md:409 says a version-cache selection clears only when the operator removes that entry; bin/bench.sh also skips the entry on a version change, and node_modules wins first.\nS2 auto-fix conf 3: BENCH-reference.md:428-429 says the restore rebuilds from main; the code builds the primary checkout's sources.\nCount 2. Worst: S1.\n"
+          },
+          "axis": "Spec",
+          "base": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+          "tip": "f0459b8405559d41eabce74ec4b28095f45f5320",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cbc5-coverage",
+          "performer": "claude:ft419-cbc5-coverage-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc5-coverage-20261020",
+            "digest": "sha256:a8314b5f5b19ab8c71bf8bd7bdf03db387f31c4903102ec073fc4e388b7a8d0a",
+            "excerpt": "## Coverage (CB-C5, pair 6fb390c6..fb9ece9a, opus/medium)\nC1 auto-fix conf 8: no guidance gives the Persisted fields: item grammar or when to declare.\nC2 auto-fix conf 7: When the build stops short names no declared-build route to the restore.\nC3 auto-fix conf 7: projects/benchkit.md:60-61 keeps an absolute only that the install route contradicts.\nC4 auto-fix conf 6: declared-builds-overlap has no route in the command notes.\nC5 auto-fix conf 5: recovery install is undefined at BENCH-reference.md:423-424.\nC6 auto-fix conf 4: the version-cache sentence names no refusal or location.\nMechanical: prose and guidance-prose-budgets pass; one prose probe bit, restored=yes.\nCount 6. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+          "tip": "f0459b8405559d41eabce74ec4b28095f45f5320",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -4283,6 +4360,14 @@ CB-C4: 5 findings. Worst: F1. The ticket 6 repair takes all five.
 - F3 (auto-fix, confidence 6): `routeWord`, `targetSlot`, and `slugSlot` copy the registry quoting rule and the usage placeholders.
 - F4 and F5 (auto-fix, confidence 6 and 4): two `window.go` comments still do not match the code.
 
+CB-C5: 6 findings. Worst: F1. The ticket 7 repair takes F1 to F5. F6 is a no-op, because the spec requires the qualifier at each reader site.
+
+- F1 (auto-fix, confidence 6): the install instruction appears in the build command and again in the command notes.
+- F2 (auto-fix, confidence 5): the build command joins two topics in one paragraph to stay within its budget. The repair splits them and trims elsewhere, or stops and asks for a budget raise.
+- F3 (auto-fix, confidence 5): the version-cache sentence in the command notes refers to nothing.
+- F4 (auto-fix, confidence 5): the earlier ADR 0016 Decision lines state the broker rule without the exception.
+- F5 (auto-fix, confidence 8): one ADR line breaks the wrap width.
+
 ## Spec
 
 CB-C1: 0 findings. Worst: none.
@@ -4296,6 +4381,11 @@ CB-C3: 1 finding. Worst: F1.
 - F1 (auto-fix, confidence 6): `CheckEntry` reads and parses the declaration before its build-inputs test. A linked repository then refuses on a malformed or unreadable spec, but the spec keeps the declaration inert there.
 
 CB-C4: 0 findings. Advice: a prose correction says that the ledger owner takes the copy under the lock.
+
+CB-C5: 2 findings. Worst: S1. The ticket 7 repair takes both.
+
+- S1 (auto-fix, confidence 5): the version-cache sentence states a behavior the wrapper does not have. A prose correction in the spec and the ticket goes with the repair.
+- S2 (auto-fix, confidence 3): the restore note says it rebuilds from `main`, but the code builds the primary checkout's sources.
 
 ## Coverage
 
@@ -4370,3 +4460,14 @@ The install refusal route in `build.go` is out of this chunk's reach and goes to
 Cycle 2 of 2 closed all four items. The round passed on all three axes.
 
 Advice (CB-C4 cycle 2, no finding ID): the lock test proves the lock through the read, not through the replace. The code holds the lock with a deferred release. The bounded repair policy makes this optional advice, because it grades only the hardening cycle's lock test. A bench learning entry keeps it.
+
+CB-C5: 6 findings. Worst: C1. The ticket 7 repair takes all six.
+
+- C1 (auto-fix, confidence 8): no guidance gives the `Persisted fields:` item grammar or says when to declare a field.
+- C2 (auto-fix, confidence 7): the stop-short section of the build command names no route to the restore.
+- C3 (auto-fix, confidence 7): a broker sentence in the project profile keeps an absolute claim that the install route contradicts.
+- C4 (auto-fix, confidence 6): the command notes give no route for `declared-builds-overlap`.
+- C5 (auto-fix, confidence 5): the term recovery install is undefined.
+- C6 (auto-fix, confidence 4): the version-cache sentence names no refusal. The S1 fix closes it.
+
+Repair state: CB-C5 repair cycle 1 of 2 runs one ticket 7 session.
