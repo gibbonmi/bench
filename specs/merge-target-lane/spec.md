@@ -149,6 +149,22 @@ Ticket 02 waits for ticket 01's green commit.
         {
           "id": "plumbing-owner",
           "command": "bench test --check git-plumbing-owner"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "gate-package",
+          "command": "bench test --package ./internal/gate"
+        },
+        {
+          "id": "worktree-package",
+          "command": "bench test --package ./internal/worktree"
+        },
+        {
+          "id": "cmd-package",
+          "command": "bench test --package ./cmd/bench"
         }
       ]
     }
