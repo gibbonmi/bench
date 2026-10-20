@@ -3,7 +3,7 @@
 Status: staged
 Roadmap: FT335
 Decision source: named reviewed artifact — roadmap/FT335.md (drained 2026-10-07 in d-6259cc0d8421) with capture/ft335-maintenance-merge-observation-2026-10-07.md.
-Verification log: <n> iteration(s) to accept — <note>
+Verification log: 4 iteration(s) to accept — the spec round took 2: iteration 1 rejected a second production owner of the kit rule, and reviewer decisions D1 and D2 closed it. The ticket round took 2: iteration 1 rejected one chunk for the seam ticket and its consumer, and the split into C1 and C2 closed it. Slicing research moved R09 to a new file and removed the toolchain environment variable.
 
 ## Problem
 
@@ -112,7 +112,7 @@ Reviewer decision D1 accepts the Bash form and the Go form as an exception to th
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| C1 / 01-kit-for-root.md | The gate package answers the kit for a root by the wrapper's rule, and the Go form and the Bash form agree over the wrapper's repository shapes | R01, R02, R03, R04, R05, R06, R07, R08, R09, R17, R18 | KitForRoot unit tests, wrapper differential, BENCH_KIT read check, plumbing owner check | no |
+| C1 / 01-kit-for-root.md | The gate package answers the kit for a root by the wrapper's rule, and the Go form and the Bash form agree over the wrapper's repository shapes | R01, R02, R03, R04, R05, R06, R07, R08, R09, R17, R18 | KitForRoot unit tests, wrapper differential, BENCH_KIT read check, plumbing owner check, root conformance, gate and cmd package runs | no |
 | C2 / 02-merge-target-lane.md | A merge from any checkout of the kit repository grades with the target's selective lane, and the adopted, foreign, and unknown kits keep their current grade | R10, R11, R12, R13, R14, R15, R16, R19, R20, R21 | merge verb lane and fallback witnesses, single-read census, effect census, existing merge lane tests | yes |
 
 Ticket 01 creates the `KitForRoot` seam with its unit rows and the differential row, so it is its own review chunk.
