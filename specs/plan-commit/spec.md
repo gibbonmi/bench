@@ -1,6 +1,6 @@
 # Grade each plan commit before the next dispatch
 
-Status: staged
+Status: implemented
 
 Decision source: named reviewed artifact `roadmap/FT380.md` with the five approved `FT380-plan-commit` criteria in `.bench/commitment.json` (reviewer decision 2026-10-18, commit 66a3da81d), plus the reviewer-confirmed late answer of 2026-10-19 that splits the plan-commit rule at the chunk checkpoint
 
@@ -166,43 +166,7 @@ Each chunk is one behavior outcome with one review checkpoint.
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "PC-C1",
-      "tickets": ["01-grade-the-chunk-table-against-the-map.md", "02-refuse-the-review-charge-on-a-red-floor.md"],
-      "verification": [
-        {"id": "coverage-package", "command": "bench test --package ./internal/coverage"},
-        {"id": "preflight-packages", "command": "bench test --package ./internal/preflight/..."},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "gate-package", "command": "bench test --package ./internal/gate"},
-        {"id": "diff-package", "command": "bench test --package ./internal/diff"},
-        {"id": "recordtest-package", "command": "bench test --package ./internal/reviewrecord/recordtest"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "PC-C2",
-      "tickets": ["03-state-the-plan-commit-rules.md"],
-      "verification": [
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "reviewrecord-package", "command": "bench test --package ./internal/reviewrecord/..."},
-        {"id": "gate-package", "command": "bench test --package ./internal/gate"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
-        {"id": "prose", "command": "bench test --check prose-mechanics"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-    {"id": "root-conformance", "command": "bench test --check root-conformance"}
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft380-plan-commit-full-20261019","orchestrator_session":"claude:ft380-orchestrator-20261019","author_limit":1,"assignments":{"01-grade-the-chunk-table-against-the-map.md":[{"session":"claude:ft380-t01-author-20261019","assignment":"41d892992aff31a551f2052e3cae8f6d","model":"opus","effort":"high","source":"8e6a8b2c94ed3b53bd376d1d7d2e36500c1efb53","native_ref":"claude-agent:bench-writer-high:ft380-t01-author-20261019"}],"02-refuse-the-review-charge-on-a-red-floor.md":[{"session":"claude:ft380-t02-author-20261019","assignment":"41d892992aff31a551f2052e3cae8f6d","model":"opus","effort":"high","source":"2e97bcf1590e16d425a46168b0455a416e32b98c","native_ref":"claude-agent:bench-writer-high:ft380-t02-author-20261019"},{"session":"claude:ft380-t02-repair1-20261019","assignment":"41d892992aff31a551f2052e3cae8f6d","model":"opus","effort":"high","source":"148b02da29b37fe4949e984e4ab4d15ba84455f7","native_ref":"claude-agent:bench-writer-high:ft380-t02-repair1-20261019","predecessor":"claude:ft380-t02-author-20261019","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:ft380-t02-author-20261019","preserved":"5daa190037d8cc2503ff1e3d01802c9e7cf886f5"}],"03-state-the-plan-commit-rules.md":[{"session":"claude:ft380-t03-author-20261019","assignment":"41d892992aff31a551f2052e3cae8f6d","model":"opus","effort":"high","source":"d48c3489c4f8b58cdb0f02a1b71dd4d19c8c4764","native_ref":"claude-agent:bench-writer-high:ft380-t03-author-20261019"},{"session":"claude:ft380-t03-repair1-20261019","assignment":"41d892992aff31a551f2052e3cae8f6d","model":"opus","effort":"high","source":"d5a94a4587069f6e838b3cfd096fc876baa3855a","native_ref":"claude-agent:bench-writer-high:ft380-t03-repair1-20261019","predecessor":"claude:ft380-t03-author-20261019","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:ft380-t03-author-20261019","preserved":"f17f4b6c906929bde29b710917338bfae3895e02"},{"session":"claude:ft380-t03-repair2-20261019","assignment":"41d892992aff31a551f2052e3cae8f6d","model":"opus","effort":"high","source":"3f2bdd64a95aaf916a4630ec61beaf77e9fee4ed","native_ref":"claude-agent:bench-writer-high:ft380-t03-repair2-20261019","predecessor":"claude:ft380-t03-repair1-20261019","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:ft380-t03-repair1-20261019","preserved":"384f96caee92e8636c2085db93966167397fdff7"}]}},"chunks":[{"id":"PC-C1","tickets":["01-grade-the-chunk-table-against-the-map.md","02-refuse-the-review-charge-on-a-red-floor.md"],"verification":[{"id":"t1-coverage-package","command":"bench test --package ./internal/coverage","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-preflight-packages","command":"bench test --package ./internal/preflight/...","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-command-package","command":"bench test --package ./cmd/bench","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-gate-package","command":"bench test --package ./internal/gate","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-diff-package","command":"bench test --package ./internal/diff","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-recordtest-package","command":"bench test --package ./internal/reviewrecord/recordtest","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-system","command":"bench test --check system","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-root-conformance","command":"bench test --check root-conformance","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t1-unlisted-row-omission","command":"bench test --package ./internal/preflight","probe":"drop the declared-row-to-cell direction in chunkRowsCheck; TestChunkRowsRedsAnUnlistedRow must fail","ticket":"01-grade-the-chunk-table-against-the-map.md"},{"id":"t2-preflight-packages","command":"bench test --package ./internal/preflight/...","ticket":"02-refuse-the-review-charge-on-a-red-floor.md"},{"id":"t2-review-charge-omission","command":"bench test --package ./internal/preflight","probe":"remove the verdict.Red refusal of the review charge; TestCheckFloorRefusesTheReviewCharge must fail","ticket":"02-refuse-the-review-charge-on-a-red-floor.md"},{"id":"t2-root-conformance","command":"bench test --check root-conformance","ticket":"02-refuse-the-review-charge-on-a-red-floor.md"}]},{"id":"PC-C2","tickets":["03-state-the-plan-commit-rules.md"],"verification":[{"id":"t3-anchors-package","command":"bench test --package ./internal/anchors","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-reviewrecord-package","command":"bench test --package ./internal/reviewrecord/...","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-gate-package","command":"bench test --package ./internal/gate","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-command-package","command":"bench test --package ./cmd/bench","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-guidance","command":"bench test --check docs-currency-workflow","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-budgets","command":"bench test --check guidance-prose-budgets","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-prose","command":"bench test --check prose-mechanics","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-root-conformance","command":"bench test --check root-conformance","ticket":"03-state-the-plan-commit-rules.md"},{"id":"t3-forbid-clause-restore","command":"bench test --check docs-currency-workflow","probe":"restore the clause comment-only corrections follow the chunk tip in the implement phase; the new Forbid row must fail","ticket":"03-state-the-plan-commit-rules.md"}]}],"final_verification":[{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}
 ```
 
 ## Testing decisions
@@ -229,25 +193,25 @@ Each chunk is one behavior outcome with one review checkpoint.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| PC1 | 1 | A declared row that no acceptance cell lists reds `chunk-rows`, and the detail names that row | planned TestChunkRowsRedsAnUnlistedRow in internal/preflight/chunk_rows_test.go | A check of only the cell-to-map direction stays green on this fixture |
-| PC2 | 2 | An acceptance-cell ID that the map does not declare reds `chunk-rows`, and the detail names that ID | planned TestChunkRowsRedsAnUndeclaredID in internal/preflight/chunk_rows_test.go | A check of only the map-to-cell direction stays green on this fixture |
-| PC3 | 3 | The reader expands the hyphen range `PF2-PF4` to PF2, PF3, and PF4 when the map declares all three | planned TestChunkTableExpandsRanges in internal/coverage/chunk_table_test.go | A reader that keeps only the endpoints leaves PF3 unlisted |
-| PC4 | 3 | The reader expands the en dash range `PF2–PF4` to PF2, PF3, and PF4 | planned TestChunkTableExpandsRanges in internal/coverage/chunk_table_test.go | A reader that splits only on the hyphen reads the en dash range as one bad token |
-| PC5 | 4 | A range whose endpoint the map does not declare gives a fault that names that endpoint | planned TestChunkTableRangeFaults in internal/coverage/chunk_table_test.go | A reader that expands against the declared set alone hides the missing endpoint |
-| PC6 | 4 | A range whose two endpoints carry different tags gives a fault that names the token | planned TestChunkTableRangeFaults in internal/coverage/chunk_table_test.go | A reader that compares only the numbers accepts a range across two specs' tags |
-| PC7 | 4 | A range whose first number is above its last number gives a fault that names the token | planned TestChunkTableRangeFaults in internal/coverage/chunk_table_test.go | A reader that expands an empty interval lists only the endpoints and hides the error |
-| PC8 | 5 | An acceptance-cell token that is neither a row ID nor a range gives a fault that names the token | planned TestChunkTableTokenFaults in internal/coverage/chunk_table_test.go | A reader that skips unknown tokens lets free text pass as coverage |
-| PC9 | 6 | A row ID that two chunk rows list reads `chunk-rows` green | planned TestChunkRowsAcceptsARepeatedRow in internal/preflight/chunk_rows_test.go | A check that refuses duplicates reds the cross-chunk rows of staged specs |
-| PC10 | 7 | A header `Acceptance rows` at the fifth position after a `blocked by` column gives the acceptance cells | planned TestChunkTableFindsTheAcceptanceColumn in internal/coverage/chunk_table_test.go | A reader with a fixed column index or a case-sensitive header reads the wrong cell |
-| PC11 | 8 | A spec with no chunk table reds `chunk-rows` with the detail `no Implementation chunks table` | planned TestChunkRowsRedsAnAbsentTable in internal/preflight/chunk_rows_test.go | A row that treats an absent table as empty and green passes every spec |
-| PC12 | 8 | A chunk table with no acceptance column reds `chunk-rows` with the detail `chunk table has no acceptance rows column` | planned TestChunkRowsRedsAnAbsentTable in internal/preflight/chunk_rows_test.go | A row that reads a missing column as empty cells reds every row with a misleading detail |
-| PC13 | 9 | Build mode without a tickets folder reads `chunk-rows` not-applicable with no detail | planned TestChunkRowsNotApplicableWithoutTickets in internal/preflight/chunk_rows_test.go | A row that calls its check without the `ticketRow` gate reds a fresh spec before its tickets exist |
+| PC1 | 1 | A declared row that no acceptance cell lists reds `chunk-rows`, and the detail names that row | `internal/preflight/chunk_rows_test.go` (`TestChunkRowsRedsAnUnlistedRow`) | A check of only the cell-to-map direction stays green on this fixture |
+| PC2 | 2 | An acceptance-cell ID that the map does not declare reds `chunk-rows`, and the detail names that ID | `internal/preflight/chunk_rows_test.go` (`TestChunkRowsRedsAnUndeclaredID`) | A check of only the map-to-cell direction stays green on this fixture |
+| PC3 | 3 | The reader expands the hyphen range `PF2-PF4` to PF2, PF3, and PF4 when the map declares all three | `internal/coverage/chunk_table_test.go` (`TestChunkTableExpandsRanges`) | A reader that keeps only the endpoints leaves PF3 unlisted |
+| PC4 | 3 | The reader expands the en dash range `PF2–PF4` to PF2, PF3, and PF4 | `internal/coverage/chunk_table_test.go` (`TestChunkTableExpandsRanges`) | A reader that splits only on the hyphen reads the en dash range as one bad token |
+| PC5 | 4 | A range whose endpoint the map does not declare gives a fault that names that endpoint | `internal/coverage/chunk_table_test.go` (`TestChunkTableRangeFaults`) | A reader that expands against the declared set alone hides the missing endpoint |
+| PC6 | 4 | A range whose two endpoints carry different tags gives a fault that names the token | `internal/coverage/chunk_table_test.go` (`TestChunkTableRangeFaults`) | A reader that compares only the numbers accepts a range across two specs' tags |
+| PC7 | 4 | A range whose first number is above its last number gives a fault that names the token | `internal/coverage/chunk_table_test.go` (`TestChunkTableRangeFaults`) | A reader that expands an empty interval lists only the endpoints and hides the error |
+| PC8 | 5 | An acceptance-cell token that is neither a row ID nor a range gives a fault that names the token | `internal/coverage/chunk_table_test.go` (`TestChunkTableTokenFaults`) | A reader that skips unknown tokens lets free text pass as coverage |
+| PC9 | 6 | A row ID that two chunk rows list reads `chunk-rows` green | `internal/preflight/chunk_rows_test.go` (`TestChunkRowsAcceptsARepeatedRow`) | A check that refuses duplicates reds the cross-chunk rows of staged specs |
+| PC10 | 7 | A header `Acceptance rows` at the fifth position after a `blocked by` column gives the acceptance cells | `internal/coverage/chunk_table_test.go` (`TestChunkTableFindsTheAcceptanceColumn`) | A reader with a fixed column index or a case-sensitive header reads the wrong cell |
+| PC11 | 8 | A spec with no chunk table reds `chunk-rows` with the detail `no Implementation chunks table` | `internal/preflight/chunk_rows_test.go` (`TestChunkRowsRedsAnAbsentTable`) | A row that treats an absent table as empty and green passes every spec |
+| PC12 | 8 | A chunk table with no acceptance column reds `chunk-rows` with the detail `chunk table has no acceptance rows column` | `internal/preflight/chunk_rows_test.go` (`TestChunkRowsRedsAnAbsentTable`) | A row that reads a missing column as empty cells reds every row with a misleading detail |
+| PC13 | 9 | Build mode without a tickets folder reads `chunk-rows` not-applicable with no detail | `internal/preflight/chunk_rows_test.go` (`TestChunkRowsNotApplicableWithoutTickets`) | A row that calls its check without the `ticketRow` gate reds a fresh spec before its tickets exist |
 | PC14 | 9 | `Decide` lists `chunk-rows` directly after `rows-membership` in a green verdict | `internal/preflight/decision_test.go` (`TestDecideAllGreen`) | A missing or misplaced row breaks the pinned row order |
-| PC15 | 10 | A red `chunk-rows` row refuses the build charge with `preflight required: chunk-rows` | planned TestChunkRowsRefusesTheBuildCharge in internal/preflight/chunk_rows_test.go | A row outside `Decide` or marked exempt lets the charge pass |
+| PC15 | 10 | A red `chunk-rows` row refuses the build charge with `preflight required: chunk-rows` | `internal/preflight/chunk_rows_test.go` (`TestChunkRowsRefusesTheBuildCharge`) | A row outside `Decide` or marked exempt lets the charge pass |
 | PC16 | 11 | The chunk-table reader and the coverage-map reader call one cell-split function | review-owned: the Standards axis compares the two readers in the frozen delta | A second splitter is a duplicated parse that the knowledge rule refuses |
-| PC17 | 12 | The shared `specBody` fixture renders its chunk table from its declared rows, and the seeded build verdict reads `chunk-rows` green | planned TestCommandBuildSeedsAGreenChunkTable in internal/preflight/command_build_test.go | A fixture without a table, or a table that keeps a row ID that a test rewrites, reds the seeded build verdict |
+| PC17 | 12 | The shared `specBody` fixture renders its chunk table from its declared rows, and the seeded build verdict reads `chunk-rows` green | `internal/preflight/command_build_test.go` (`TestCommandBuildSeedsAGreenChunkTable`) | A fixture without a table, or a table that keeps a row ID that a test rewrites, reds the seeded build verdict |
 | PC18 | 13 | Each ticketed staged spec reads `chunk-rows` green in its plan-only preflight at the ticket tip | review-owned: the ticket author records one plan-only verdict for each ticketed staged spec | A stricter grammar than the staged tables use stops a queued build at entry |
-| PC19 | 14 | A red `check-floor` row refuses the review charge with `preflight required: check-floor` | planned TestCheckFloorRefusesTheReviewCharge in internal/preflight/check_floor_command_test.go | A review charge that skips the verdict lets a review start on a plan without its floor |
+| PC19 | 14 | A red `check-floor` row refuses the review charge with `preflight required: check-floor` | `internal/preflight/check_floor_command_test.go` (`TestCheckFloorRefusesTheReviewCharge`) | A review charge that skips the verdict lets a review start on a plan without its floor |
 | PC20 | 15 | A red `check-floor` row refuses the build charge with `preflight required: check-floor` | `internal/preflight/check_floor_command_test.go` (`TestCheckFloorRefusesTheBuildCharge`) | A build charge that skips the verdict lets an author start on a plan without its floor |
 | PC21 | 16 | A red preflight after a published commit exits 4 and the chain line names the commit | `cmd/bench/commit_chain_test.go` (`TestCommitChainReportsRedPreflight`) | A chain that returns exit 1 claims that nothing was committed |
 | PC22 | 17 | The Land section requires `bench commit --preflight-build <slug>` for each plan commit before the next dispatch | review-owned: the Spec axis reads the Land section of the implement phase | A phase without the form lets a plan commit reach an author ungraded |
@@ -265,8 +229,8 @@ Each chunk is one behavior outcome with one review checkpoint.
 | PC34 | 28 | The implement phase line count stays inside its profile budget row of 95 lines | `bench test --check guidance-prose-budgets` grades the phase against the profile table | A paragraph added without the budget edit reds the budget check |
 | PC35 | 29 | The spec carries no `Roadmap:` line, and `roadmap/FT380.md` keeps its open clauses after the landing | review-owned: the Spec axis reads the spec header and the roadmap detail file | A `Roadmap:` line lets the spec retirement delete the open FT380 row |
 | PC36 | 30 | The Land section keeps the recorded-fold sentence that begins `A build folds` | the existing Require row in `internal/anchors/registry_chunk_chain.go`, graded by `bench test --check docs-currency-workflow` | A rewrite that drops the fold sentence reds the docs-currency check |
-| PC37 | 3 | The range `PF2–PF4` over a map that declares PF2 and PF4 and omits PF3 lists exactly PF2 and PF4, with no fault | planned TestChunkTableExpandsRanges in internal/coverage/chunk_table_test.go | A reader that lists every number between the endpoints names the undeclared PF3 |
-| PC38 | 5 | The cell `` `PF1`, PF2, `` lists PF1 and PF2 with no fault | planned TestChunkTableTokenFaults in internal/coverage/chunk_table_test.go | A reader that keeps backticks or faults an empty token reds a staged cell form |
+| PC37 | 3 | The range `PF2–PF4` over a map that declares PF2 and PF4 and omits PF3 lists exactly PF2 and PF4, with no fault | `internal/coverage/chunk_table_test.go` (`TestChunkTableExpandsRanges`) | A reader that lists every number between the endpoints names the undeclared PF3 |
+| PC38 | 5 | The cell `` `PF1`, PF2, `` lists PF1 and PF2 with no fault | `internal/coverage/chunk_table_test.go` (`TestChunkTableTokenFaults`) | A reader that keeps backticks or faults an empty token reds a staged cell form |
 | PC39 | 19 | The Land section states that a plan commit in the chunk gap comes after the chunk-gap fold of `main` | review-owned: the Spec axis reads the Land section of the implement phase | A plan commit before the fold meets a moved default tip and reds `base-current` in the chained preflight |
 
 ### Edge inventory
@@ -281,6 +245,7 @@ No test in this spec swaps a package variable.
 - **Won't handle:** a linked repository's staged spec with no chunk table reds `chunk-rows` at build entry and stops the phase — the `craft-spec` template already requires the chunk table, so the spec author who adds the table is the in-scope caller.
 - **Won't handle:** a chunk-table acceptance cell that names a row of another spec's tag — the reader reds it as undeclared, and no staged spec does it.
 - **Won't handle:** a check that the chunk-table chunk IDs and tickets equal the completion-plan fence — `completion-plan` and `rows-owned` keep their current grading, and the criteria do not ask for it.
+- **Won't handle:** a `## Implementation chunks` heading or a pipe table inside a code fence — the coverage-map reader reads fenced lines the same way, so the staged `markdown-block-reader` spec is the in-scope caller for fence awareness in both readers.
 - **Won't handle:** a code admission of plan commits after a chunk tip — the reviewer answer of 2026-10-19 keeps the chain code unchanged, and the guidance routes such a commit to a refreeze or to the chunk gap.
 
 ## Out of scope
@@ -295,6 +260,8 @@ No test in this spec swaps a package variable.
 
 A read-only census on 2026-10-19 applied the two-way predicate with the range rule above to each staged spec at commit 781706f19.
 All 17 specs with tickets passed with no unlisted row, no undeclared ID, and no fault.
+That census included `degraded-guard-refusal`, which retired before this build, and it did not include this spec.
+At build entry (commit 7b45186c9), 16 other staged specs have tickets, and the PC18 plan-only verdicts of ticket 01 grade them and this spec.
 `session-context-efficiency` has no tickets and no chunk table, so the ticket gate keeps the row not-applicable for it.
 
 ### Flagged additions

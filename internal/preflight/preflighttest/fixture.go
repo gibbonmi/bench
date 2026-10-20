@@ -115,9 +115,10 @@ func PlanSection(plan reviewrecord.Plan) string {
 }
 
 // SpecBody renders a bootstrap-conformant spec for slug. It has staged status, a valid
-// opted-in coverage map declaring rows PF1 and PF2, the complete-empty inventory, and the
-// completion plan over the tickets/one.md that every seed writes. It holds no fence
-// section, because the ticket `Writes:` lines derive the ownership fence.
+// opted-in coverage map declaring rows PF1 and PF2, the complete-empty inventory, a chunk
+// table that lists both rows, and the completion plan over the tickets/one.md that every seed
+// writes. It holds no fence section, because the ticket `Writes:` lines derive the ownership
+// fence.
 func SpecBody(slug string) string {
 	return specBody(slug, true)
 }
@@ -146,11 +147,13 @@ func specBody(slug string, inventory bool) string {
 	b.WriteString("### Acceptance coverage map\n")
 	b.WriteString("| row | story | behavior | seam | why it catches the failure |\n")
 	b.WriteString("|---|---|---|---|---|\n")
-	b.WriteString("| PF1 | 1 | does x | cli seam | catches z |\n")
-	b.WriteString("| PF2 | 1 | does y | cli seam | catches w |\n")
+	for _, row := range specRows {
+		b.WriteString("| " + row[0] + " | 1 | " + row[1] + " | cli seam | " + row[2] + " |\n")
+	}
 	if inventory {
 		b.WriteString(inventorytest.Section(inventorytest.CompleteEmpty))
 	}
+	b.WriteString(ChunkTable(specRowIDs()...))
 	b.WriteString(PlanFence("one.md"))
 	return b.String()
 }

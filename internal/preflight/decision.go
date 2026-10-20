@@ -12,6 +12,7 @@ package preflight
 import (
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/staleness"
@@ -79,6 +80,11 @@ type Facts struct {
 
 	// DeclaredRowIDs is the spec's coverage map row IDs, in map order.
 	DeclaredRowIDs []string
+
+	// ChunkTable is the acceptance column of the spec's Implementation chunks table: the
+	// listed row IDs, the token faults, and the detail of an absent table or column.
+	// chunk-rows grades it against DeclaredRowIDs.
+	ChunkTable coverage.ChunkTable
 
 	// Tickets is every `.md` ticket file under specs/<slug>/tickets/, parsed
 	// through the ticket grammar, in enumeration order. Its `Covers:` tokens are
@@ -223,6 +229,7 @@ func Decide(f Facts) Verdict {
 	checks = append(checks,
 		ticketRow(f, "rows-owned", rowsOwnedCheck),
 		ticketRow(f, "rows-membership", rowsMembershipCheck),
+		ticketRow(f, chunkRowsName, chunkRowsCheck),
 		diffNonemptyRow(f),
 	)
 	red := false

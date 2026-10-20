@@ -1,12 +1,12 @@
 revision[1]{commit,base,method}:
-  87aab485a96d9eb1a3a238e6efa39ac01cd0e480,48cef9079d1e6883a3b12dee8d969ee191ad76a4,explicit pair
+  a449d79878ae783cda064adcda06a7225d54f76b,8bebf71446b57577f8622b50d24937c396cf3df0,explicit pair
 aggregate[1]{commits,files,insertions,deletions}:
   "1","2","5","0"
 files[2]{status,path,kind}:
   A,reviews/example.md,""
   M,specs/example/spec.md,""
 log[1]{sha,subject}:
-  87aab485a96d,review source
+  a449d79878ae,review source
 diff_body:
 diff --git a/reviews/example.md b/reviews/example.md
 new file mode 100644
@@ -16,10 +16,10 @@ index 000000000000..462239c9bd83
 @@ -0,0 +1 @@
 +# Review record
 diff --git a/specs/example/spec.md b/specs/example/spec.md
-index 735dee197df9..fef4e8c4c8c5 100644
+index 6963cabe576e..efb9b78b0313 100644
 --- a/specs/example/spec.md
 +++ b/specs/example/spec.md
-@@ -16,3 +16,7 @@ Status: staged
+@@ -22,3 +22,7 @@ Status: staged
  ```bench-completion-plan
  {"version":1,"chunks":[{"id":"c1","tickets":["one.md"],"verification":[{"id":"tests","command":"bench test --package ./..."}]}],"final_verification":[{"id":"acceptance","command":"go test ./..."}]}
  ```

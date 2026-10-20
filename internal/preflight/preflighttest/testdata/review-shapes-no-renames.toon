@@ -1,5 +1,5 @@
 revision[1]{commit,base,method}:
-  945b5872de4bb9fa7d4f9903e52a3ed587a1eed6,3f84b29cff8a5cc9a839894976abe94dcb1ca035,explicit pair
+  "08399b3da7396b4f99ab53fbd938effc6dee73ac",ad6fa7d0ea6b1bfe98b999afe85b66b5ebf7b74e,explicit pair
 aggregate[1]{commits,files,insertions,deletions}:
   "1","23","31","17"
 files[23]{status,path,kind}:
@@ -27,7 +27,7 @@ files[23]{status,path,kind}:
   A,"notes/tab\there.txt",""
   T,notes/type-change,""
 log[1]{sha,subject}:
-  945b5872de4b,review source
+  "08399b3da739",review source
 diff_body:
 diff --git a/notes/add.txt b/notes/add.txt
 new file mode 100644

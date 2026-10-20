@@ -28,8 +28,8 @@ func TestCoverageIdentity(t *testing.T) {
 	spec, one, two, asset := specPath(slug), "specs/"+slug+"/tickets/one.md", "specs/"+slug+"/tickets/two.md", "specs/"+slug+"/tickets/notes.txt"
 	base := preflighttest.RunGit(t, "rev-parse", "HEAD")
 	write(t, map[string]string{
-		spec: strings.Replace(preflighttest.SpecBody(slug), "| PF1 | 1 | does x | cli seam | catches z |\n| PF2 | 1 | does y | cli seam | catches w |\n",
-			"| PF1 | 1 | does x again | cli seam | catches z |\n| PF4 | 1 | does z | cli seam | catches v |\n", 1),
+		spec: preflighttest.WithChunkTable(strings.Replace(preflighttest.SpecBody(slug), "| PF1 | 1 | does x | cli seam | catches z |\n| PF2 | 1 | does y | cli seam | catches w |\n",
+			"| PF1 | 1 | does x again | cli seam | catches z |\n| PF4 | 1 | does z | cli seam | catches v |\n", 1), preflighttest.ChunkTable("PF1", "PF4")),
 		one:   preflighttest.TicketDoc("One", "PF1", "PF3"),
 		two:   preflighttest.TicketDoc("Two", "PF1"),
 		asset: "Covers: PF9\n",
@@ -117,11 +117,13 @@ const keptTest = "internal/example/kept_test.go"
 // completenessBody is the seeded spec before its inventory and plan. Its coverage map holds
 // SS28, whose seam cell cites two tests, and the native rows, whose cells cite none.
 func completenessBody(slug string) string {
-	rows := "| SS28 | 1 | does x | `" + keptTest + "` (`TestKept`, `TestOther`) | catches z |\n"
+	rows, ids := "| SS28 | 1 | does x | `"+keptTest+"` (`TestKept`, `TestOther`) | catches z |\n", []string{"SS28"}
 	for _, row := range nativeRows {
 		rows += "| " + row[0] + " | 1 | native " + row[0] + " | fresh-session adoption | catches w |\n"
+		ids = append(ids, row[0])
 	}
 	body := strings.TrimSuffix(preflighttest.SpecBodyNoInventory(slug), preflighttest.PlanFence("one.md"))
+	body = preflighttest.WithChunkTable(body, preflighttest.ChunkTable(ids...))
 	return strings.Replace(body, "| PF1 | 1 | does x | cli seam | catches z |\n| PF2 | 1 | does y | cli seam | catches w |\n", rows, 1)
 }
 

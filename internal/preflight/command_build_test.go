@@ -52,7 +52,7 @@ func TestCommandBuildResumedTicketsRunForReal(t *testing.T) {
 func TestCommandBuildCoversAcceptsEveryMapRowID(t *testing.T) {
 	slug := "example"
 	root := preflighttest.StartRepo(t)
-	spec := strings.Replace(preflighttest.SpecBody(slug), "| PF2 |", "| PF02 |", 1)
+	spec := preflighttest.WithChunkTable(strings.Replace(preflighttest.SpecBody(slug), "| PF2 |", "| PF02 |", 1), preflighttest.ChunkTable("PF1", "PF02"))
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", spec)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF02"))
 	commitmenttest.SeedAdmission(t, root, "specs/"+slug+"/spec.md")
@@ -62,7 +62,19 @@ func TestCommandBuildCoversAcceptsEveryMapRowID(t *testing.T) {
 	preflighttest.ActiveAssignment(t, root, root)
 	out, _ := Command([]string{"build", slug})
 	verdicts := renderedVerdicts(t, out, modeBuild, slug)
-	requireVerdict(t, verdicts, verdictGreen, "tickets-parse", "rows-owned", "rows-membership")
+	requireVerdict(t, verdicts, verdictGreen, "tickets-parse", "rows-owned", "rows-membership", chunkRowsName)
+}
+
+// TestCommandBuildSeedsAGreenChunkTable covers PC17: the shared spec renders its chunk table
+// from its declared rows, so the seeded build verdict reads chunk-rows green.
+func TestCommandBuildSeedsAGreenChunkTable(t *testing.T) {
+	root, slug := preflighttest.SeedConformant(t)
+	preflighttest.ActiveAssignment(t, root, root)
+	out, code := Command([]string{"build", slug})
+	if code != 0 {
+		t.Fatalf("Command exit = %d, want 0; output:\n%s", code, out)
+	}
+	requireVerdict(t, renderedVerdicts(t, out, modeBuild, slug), verdictGreen, chunkRowsName)
 }
 
 // TestCommandBuildEmptyTicketsRed is B2's empty-tickets half (the empty-tickets

@@ -21,7 +21,7 @@ func TestDecideChargeRows(t *testing.T) {
 		"paths-authorized",
 		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
 		"kit-pin", "binary-seal",
-		"rows-owned", "rows-membership", "diff-nonempty",
+		"rows-owned", "rows-membership", "chunk-rows", "diff-nonempty",
 	}
 	for _, test := range []struct {
 		kind   evidencecmd.Kind

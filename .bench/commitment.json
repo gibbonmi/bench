@@ -1447,6 +1447,14 @@
       "identity": "sha256:bc480b11202f47e3c680c6c2fada00d26f20c2cb0ed5476028c55db4ce978100",
       "source": "1878ec6ce9c818357e2c36f8aa84d3005a5f87c7",
       "evidence": "e8388886f1f48877dfeb13e25218dfa5b1203a2e"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT380-plan-commit",
+      "binding": "plan-commit",
+      "identity": "sha256:d7cef4e864219e01ec1568bae03372e07b49b9c1892cbbb56b4ba22789cdcf6e",
+      "source": "f1bb7f0ebcd430ae7b8b30381faa6daf3f06ac3a",
+      "evidence": "12ec5f5c66bc3c7a2dfc84142bd66a46d19ba776"
     }
   ]
 }

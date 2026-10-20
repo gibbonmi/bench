@@ -115,7 +115,7 @@ func TestCommandFencePrefixBoundary(t *testing.T) {
 	preflighttest.StartRepo(t)
 	body := "# boundary\n\nStatus: staged\n\n## User stories\n1. As a, I want b, so c.\n\n" +
 		"### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n" +
-		"|---|---|---|---|---|\n| PF1 | 1 | does x | cli seam | catches z |\n\n" +
+		"|---|---|---|---|---|\n| PF1 | 1 | does x | cli seam | catches z |\n" + preflighttest.ChunkTable("PF1") + "\n" +
 		"## Ownership fences\n\n- `internal/git`\n- `reviews/boundary.md`\n"
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", body)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.WritesTicketDoc("One", []string{"internal/git"}, "PF1"))

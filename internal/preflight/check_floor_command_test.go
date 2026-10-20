@@ -76,6 +76,18 @@ func TestCheckFloorRefusesTheBuildCharge(t *testing.T) {
 	}
 }
 
+// TestCheckFloorRefusesTheReviewCharge needs no review sources: the red verdict refuses
+// before the sources load.
+func TestCheckFloorRefusesTheReviewCharge(t *testing.T) {
+	root, slug := seedFloorRepo(t)
+	preflighttest.ActiveAssignment(t, root, root)
+	out, code := Command(preflighttest.ReviewArgs(t, slug))
+	const want = "preflight required: check-floor"
+	if code != 1 || !strings.Contains(out, want) {
+		t.Fatalf("review charge = (%d):\n%s\nwant the refusal %q", code, out, want)
+	}
+}
+
 // TestCheckFloorDetailRendersEscaped reads the rendered red row whole: it stays on one line,
 // and it holds no raw control byte.
 func TestCheckFloorDetailRendersEscaped(t *testing.T) {

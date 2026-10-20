@@ -21,7 +21,7 @@ func TestPreflightReviewChargeUsesCurrentVersion(t *testing.T) {
 		"### Acceptance coverage map\n\n" +
 		"| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n" +
-		"| PF1 | 1 | evidence is complete | command | catches omitted evidence |\n" +
+		"| PF1 | 1 | evidence is complete | command | catches omitted evidence |\n" + preflighttest.ChunkTable("PF1") +
 		// The review charge grades the completion plan the checkpoint later reads,
 		// so a staged spec states it.
 		preflighttest.PlanFence("one.md")

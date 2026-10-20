@@ -176,32 +176,48 @@ func parse(content []byte) parsed {
 }
 
 func (p *parsed) processMapLine(raw string, lineNum int) {
-	line := trimSpaceTab(raw)
-	if !strings.HasPrefix(line, "|") {
+	cells, ok := pipeCells(raw)
+	if !ok {
 		return
-	}
-	line = strings.TrimPrefix(line, "|")
-	line = strings.TrimSuffix(line, "|")
-	line = strings.ReplaceAll(line, `\|`, escSentinel)
-	cells := strings.Split(line, "|")
-	allSep := true
-	for i, c := range cells {
-		c = strings.ReplaceAll(c, escSentinel, `\|`)
-		c = trimSpaceTab(c)
-		cells[i] = c
-		if !isDashes(c) {
-			allSep = false
-		}
 	}
 	if !p.gotHeader {
 		p.gotHeader = true
 		p.sch = schemaFor(strings.ToLower(strings.Join(cells, "|")))
 		return
 	}
-	if allSep {
+	if separatorRow(cells) {
 		return
 	}
 	p.dataRows = append(p.dataRows, dataRow{cells: cells, line: lineNum})
+}
+
+// pipeCells is the one pipe-table cell splitter: it splits one Markdown table line into
+// its trimmed cells, and an escaped `\|` stays inside its cell. A line that does not open
+// with a pipe is no table line, so ok is false.
+func pipeCells(raw string) (cells []string, ok bool) {
+	line := trimSpaceTab(raw)
+	if !strings.HasPrefix(line, "|") {
+		return nil, false
+	}
+	line = strings.TrimPrefix(line, "|")
+	line = strings.TrimSuffix(line, "|")
+	line = strings.ReplaceAll(line, `\|`, escSentinel)
+	cells = strings.Split(line, "|")
+	for i, c := range cells {
+		cells[i] = trimSpaceTab(strings.ReplaceAll(c, escSentinel, `\|`))
+	}
+	return cells, true
+}
+
+// separatorRow reports whether every cell of a table line is dashes only, which is the
+// header separator.
+func separatorRow(cells []string) bool {
+	for _, c := range cells {
+		if !isDashes(c) {
+			return false
+		}
+	}
+	return true
 }
 
 // State classifies the spec: no-map (no coverage header), historical (opted out), or
