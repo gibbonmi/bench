@@ -826,7 +826,83 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cbc2-standards",
+          "performer": "claude:ft419-cbc2-standards-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "60add18bbfab6ed169fea56e9ffeb226aaff3071",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc2-standards-20261020",
+            "digest": "sha256:7ade91d3896956da41750e2d3e63b39cef993c60827b2d079978f74ecdff2a56",
+            "excerpt": "## Standards (CB-C2, pair 704a040f..74648d83, opus/medium)\nS1 ask-user conf 8: raw ledger-field plant duplicated (build_install_test.go:114, candidate_install_test.go:142); one owner in internal/commitment/commitmenttest.\nS2 auto-fix conf 7: landable spec text repeated (candidate_install_test.go:60, owner_landing_fixture_test.go:58).\nS3 auto-fix conf 7: installAssignment (build.go:227) repeats resolveAssignmentIn (path.go:67) and drops missingTreeRefusal.\nS4 auto-fix conf 5: manifest path composed at build.go:260, :333, land_effects.go:135.\nS5 auto-fix conf 6: wrapper path spelled at build.go:161 and exec.go:204.\nS6 auto-fix conf 6: window_test.go:194-196 names a restore that does not exist.\nS7 auto-fix conf 5: window.go readOpenBuilds comment argues its own design.\nS8 auto-fix conf 7: candidate_install_test.go:49-50 comment does not parse.\nS9 no-op conf 8: HoldsOpenBuild has no production caller; ticket 3 asks for it.\nCount 9. Worst: S3.\n"
+          },
+          "axis": "Standards",
+          "base": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+          "tip": "cd364bb6a77549e627ddbe9c406641bf12e8706c",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6",
+            "S7",
+            "S8"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cbc2-spec",
+          "performer": "claude:ft419-cbc2-spec-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "60add18bbfab6ed169fea56e9ffeb226aaff3071",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc2-spec-20261020",
+            "digest": "sha256:1063d42fc3f9b99b8cded24572da1e2007c3d86819ddf161940dd090e902d11d",
+            "excerpt": "## Spec (CB-C2, pair 704a040f..74648d83, opus/medium)\nF1 auto-fix conf 7: CB56 is partial at its seam; the TestBuildInstall case starts with no earlier manifest. Amend the seam cell to also cite TestPublishRestoresPriorPairWhenSealPromotionFails.\nEvery other CB-C2 row met. Refusal order, next line, help placement, fail-closed hold, invalid-as-none, CB59 wording graded no-op.\nCount 1. Worst: F1.\n"
+          },
+          "axis": "Spec",
+          "base": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+          "tip": "cd364bb6a77549e627ddbe9c406641bf12e8706c",
+          "finding_ids": [
+            "F1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cbc2-coverage",
+          "performer": "claude:ft419-cbc2-coverage-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "60add18bbfab6ed169fea56e9ffeb226aaff3071",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc2-coverage-20261020",
+            "digest": "sha256:8c26ddcb2f2d64d0faf7b5f265c321a272bd901cd6612db7398ce4701c540aec",
+            "excerpt": "## Coverage (CB-C2, pair 704a040f..74648d83, opus/medium)\nF1 auto-fix conf 8: no row or test has two open builds; mutant \"first build only\" in window.go DeclaredBuild stays silent (257 tests), restored=yes.\nF2 auto-fix conf 6: canonical physical path compare untested; mutant plain string compare at build.go:212-222 silent, restored=yes.\nF3 auto-fix conf 6: CB56 never checks an earlier manifest; mutant removing the manifest on the publishCandidate error path silent, restored=yes.\nCount 3. Worst: F1.\n"
+          },
+          "axis": "Coverage",
+          "base": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+          "tip": "cd364bb6a77549e627ddbe9c406641bf12e8706c",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -893,9 +969,23 @@ CB-C1: 2 findings. Worst: S1.
 - S1 (auto-fix, confidence 7): `internal/spec/spec.go:103-104` calls `ErrPersistedFieldsInvalid` a refusal face; that term names a registered `internal/refusalroute` face, and ticket 1 adds none.
 - S2 (auto-fix, confidence 5): `internal/spec/spec.go:117-118` names the `Status:`/`Roadmap:` scan as the shared seam; the shared seam is `headerLines`.
 
+CB-C2: 9 findings. Worst: S3. Repair owners: ticket 2 takes S1, S3, S4, and S5. Ticket 3 takes S2, S6, S7, and S8.
+
+- S1 (auto-fix under the run's --auto-approve widening, confidence 8): the raw ledger-field plant has two copies. One helper in `internal/commitment/commitmenttest` owns it.
+- S2 (auto-fix, confidence 7): the landable spec text repeats in `internal/systemtest/candidate_install_test.go`. One `landableSpec` helper owns it.
+- S3 (auto-fix, confidence 7): `installAssignment` repeats `resolveAssignmentIn` and drops the missing-tree refusal. One shared resolver body owns it.
+- S4 (auto-fix, confidence 5): three sites compose the broker manifest path. One `manifestPath` helper owns it.
+- S5 (auto-fix, confidence 6): `build.go` and `exec.go` each spell the wrapper path. One `wrapperPath` helper owns it.
+- S6, S7, S8 (auto-fix, confidence 5 to 7): three comments name a missing restore, argue their own design, or do not parse.
+- S9 (no-op, confidence 8): ticket 3 asks for `HoldsOpenBuild`, and ticket 6 consumes it.
+
 ## Spec
 
 CB-C1: 0 findings. Worst: none.
+
+CB-C2: 1 finding. Worst: F1.
+
+- F1 (auto-fix, confidence 7): CB56 is partial at its seam, because its case starts with no earlier manifest. The ticket 2 repair cites the owner test in the CB56 cell.
 
 ## Coverage
 
@@ -914,3 +1004,11 @@ Confirming round (repair delta 90c9f2f75..e479d3763): S1, S2, C1, C2, C3, and C4
 Repair state: CB-C1 repair cycle 1 of 2 closed S1, S2, and C1 to C4. Cycle 2 of 2 closed N1 with a test-only change. The repair-assignment plan commit put the spec in the delta, so the three axes reviewed it again, and each passed. The `--auto-approve` option of the run approves the CB66 and CB67 expansion.
 
 Advice (CB-C1 cycle 2, no finding ID): the U+00A0 row at `internal/spec/persisted_test.go:37` uses an invisible literal. The three whitespace rows share one subtest base name. The bounded repair policy makes these optional advice, because they grade only the N1 hardening check.
+
+CB-C2: 3 findings. Worst: F1. Ticket 3 takes F1, and ticket 2 takes F2 and F3.
+
+- F1 (auto-fix, confidence 8): no test has two open builds. New row CB68 pins the hold when only the second build declares.
+- F2 (auto-fix, confidence 6): no test reaches the running executable through a symlinked alias of the primary path.
+- F3 (auto-fix, confidence 6): no test seeds an earlier manifest before a failed publication.
+
+Repair state: CB-C2 repair cycle 1 of 2 runs a ticket 2 session, then a ticket 3 session.
