@@ -151,7 +151,7 @@ The three entries call the check before any ledger read or write. The chunk chec
 The verb refuses before any write in this order:
 
 1. The repository declares no Bench build inputs.
-2. The running executable's canonical physical path is not the primary executable. The refusal names the running executable's path, which shows a worktree or version-cache selection, and its route names the primary checkout as the directory to run from. The command notes say that a version-cache selection clears only when the operator removes that cache entry; no Go code derives the cache path.
+2. The running executable's canonical physical path is not the primary executable. The refusal names the running executable's path, which shows a worktree or version-cache selection, and its route names the primary checkout as the directory to run from. The command notes say that the install refuses a version-cache executable and names its path; the wrapper owns its own resolution order, and no Go code derives the cache path.
 3. The target has no bound assignment in the ledger. The verb reads the assignments and the commitment bindings through the existing tolerant read mode and writes no ledger byte. Thus an unknown commitment field does not stop the lookup, and the install can recover a lost candidate. The tolerant read drops an assignment record that it cannot decode, so a declaration under `assignments` is out of this recovery.
 4. The default-branch tip holds no copy of the bound spec, or that copy declares no persisted field.
 
