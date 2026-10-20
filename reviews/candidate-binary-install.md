@@ -2087,6 +2087,80 @@
             "F3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cbc3-standards-confirm",
+          "performer": "claude:ft419-cbc3-standards-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-standards-confirm-20261020",
+            "digest": "sha256:8f63027d353c4cce693b46793d20c4fc0c0ff188f4b482add7207a5b0c31cd5b",
+            "excerpt": "## Standards (CB-C3 confirming round, repair delta 7b8ca752..dd995111, opus/medium)\nF1 to F5 closed. The declared-builds-overlap face matches its siblings, and its Reviewer authority follows the CommitmentDecision precedent.\nN1 auto-fix conf 7: internal/worktree/build.go:289,295 still derive the manifest path beside brokermanifest.Path; routed to the ticket 6 charge, whose Writes line holds build.go.\nN2 auto-fix conf 7: window.go:74 doc comment is stale after the build-inputs reorder.\nCount 2 new.\n"
+          },
+          "axis": "Standards",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "9df8de96038e542a88bc0366e003376bc9ce904f",
+          "finding_ids": [
+            "N1",
+            "N2"
+          ],
+          "supersedes": [
+            "cbc3-standards"
+          ]
+        },
+        {
+          "id": "cbc3-spec-confirm",
+          "performer": "claude:ft419-cbc3-spec-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-spec-confirm-20261020",
+            "digest": "sha256:e4f059bc98515b1f82b0c4691df659faddb0bc08a9f251733a050a5d6b86dbd4",
+            "excerpt": "## Spec (CB-C3 confirming round, repair delta 7b8ca752..dd995111, opus/medium)\nSpec F1, CB69 and its paragraph, DeclaredBuild first-of-list, and repair scope met. The --in disposition under the existing Won't handle line is sound.\nN1 auto-fix conf 5: the overlap count is skipped on any declared-build read error, but the spec scopes the skip to an unreadable ledger; prose correction.\nN2 auto-fix conf 4: CB69 traces to story 44, which names the target, not the overlap refusal; prose correction adds a story.\nCount 2 new.\n"
+          },
+          "axis": "Spec",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "9df8de96038e542a88bc0366e003376bc9ce904f",
+          "finding_ids": [
+            "N1",
+            "N2"
+          ],
+          "supersedes": [
+            "cbc3-spec"
+          ]
+        },
+        {
+          "id": "cbc3-coverage-confirm",
+          "performer": "claude:ft419-cbc3-coverage-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-coverage-confirm-20261020",
+            "digest": "sha256:08b003b73a0f026444e9756581630389f69f77c62acb38745e01498e91acf8a1",
+            "excerpt": "## Coverage (CB-C3 confirming round, repair delta 7b8ca752..dd995111, opus/medium)\nF1, F2, F3/CB69, and Spec F1 closed; each independent mutant bit, restored=yes.\nN1 auto-fix conf 7: a wrong location in brokermanifest.Path stays silent over unit, adopt, cmd, and system runs, because the fixtures bind through the same Path. Add a case that binds through adopt.WriteBrokerManifest and expects the check to pass.\nCount 1 new.\n"
+          },
+          "axis": "Coverage",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "9df8de96038e542a88bc0366e003376bc9ce904f",
+          "finding_ids": [
+            "N1"
+          ],
+          "supersedes": [
+            "cbc3-coverage"
+          ]
         }
       ]
     }
@@ -2285,4 +2359,9 @@ CB-C3: 3 findings. Worst: F1. The ticket 5 repair takes all three.
 - F2 (auto-fix, confidence 7): no CB61 case has a hostile slug or flag value, so a hand-quoted rerun stays silent.
 - F3 (auto-fix after consultation, confidence 5): with two open declared builds, the route names the first build's target. The opus high and sonnet high consultants agreed on a refusal with its own face. New row CB69 pins it.
 
-Repair state: CB-C3 repair cycle 1 of 2 runs one ticket 5 session.
+Repair state: CB-C3 repair cycle 1 of 2 closed all nine findings. The confirming round accepted four new items, and cycle 2 of 2 takes them:
+
+- Coverage N1 (auto-fix, confidence 7): no test binds the manifest through a production writer. A wrong location in `brokermanifest.Path` stays silent. The ticket 5 repair adds that case.
+- Standards N2 (auto-fix, confidence 7): a `window.go` doc comment is stale after the reorder. The ticket 5 repair fixes it.
+- Spec N1 and N2 (auto-fix, confidence 5 and 4): two prose-only spec corrections go in the cycle 2 plan commit.
+- Standards N1 (auto-fix, confidence 7): `internal/worktree/build.go` still derives the manifest path. The ticket 6 charge takes it, because its Writes line holds that file.
