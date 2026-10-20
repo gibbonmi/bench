@@ -22,7 +22,7 @@ Then build the target through the existing build owner, and keep the worktree co
 
 The verb prints one table with the worktree, the executable digest, and the manifest path; put its table name beside the existing table names in `list.go`. Its `next` line names the first ticket dispatch. Each refusal route literal stays in `build.go` or composes through the refusal-route registry. Raise the package test-count pin by one for each new top-level test.
 
-Add the system test file with the `system` build tag. It builds the `main` executable and a candidate tree that adds one ledger field and one review-record field, binds the build on the fixture's default branch, and runs the install through the real wrapper. Run the suite only through `bench test --check system --run TestCandidateInstall`, which sets `BENCH_KIT` to the tree under test. Never set `BENCH_KIT` to the primary checkout. Shared fixture helpers may go in `owner_test.go`, which has 75 lines of headroom. Ticket 3 extends this file with the landing proofs.
+Add the system test file with the `system` build tag. It builds the `main` executable and a candidate tree that adds one ledger field and one review-record field, binds the build on the fixture's default branch, and runs the install through the real wrapper. Run the suite only through `bench test --check system --run TestCandidateInstall`, which sets `BENCH_KIT` to the tree under test. Never set `BENCH_KIT` to the primary checkout. Shared fixture helpers may go in `owner_test.go`, which has 75 lines of headroom. This ticket's test function is `TestCandidateInstallPublishesTheCandidate`. Ticket 3 adds its own landing test functions to this file and does not edit this one.
 
 Tickets 3, 5, and 6 consume the install constant, the child environment, and the tolerant read entry.
 
@@ -34,9 +34,9 @@ Tickets 3, 5, and 6 consume the install constant, the child environment, and the
 - [ ] With `$BENCH_HOME/cache/bin/<version>` holding an executable for this platform, the install refuses and names that path (CB22).
 - [ ] With a ledger that holds an unknown commitment field, an install run by the `main` executable finds the bound assignment and publishes, and the ledger bytes stay unchanged (CB54, CB55).
 - [ ] When the publication fails after the executable write, the primary executable, seal, and manifest keep their earlier bytes (CB56).
-- [ ] `TestCandidateInstallLandsANewLedgerField` shows the manifest `path` is the primary executable with that executable's digest after a child that starts beside a built worktree `dist/bench` (CB15).
+- [ ] `TestCandidateInstallPublishesTheCandidate` shows the manifest `path` is the primary executable with that executable's digest after a child that starts beside a built worktree `dist/bench` (CB15).
 - [ ] An install whose running executable is a worktree `dist/bench` refuses before its build and writes no file (CB21).
-- [ ] After the install, `bench status` from the primary checkout exits 0 with a ledger that holds a `gaps` key (CB23).
+- [ ] After the install, `bench status` from the primary checkout exits 0 with a ledger that holds the fixture's new ledger field, which the `main` executable does not know (CB23).
 - [ ] The help inventory and every existing `bench worktree build <target>` remedy string stay unchanged.
 
 ## Checkpoint verification

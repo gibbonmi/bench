@@ -10,13 +10,15 @@ Deliver the hold half of CB-C2 and its end-to-end proof: while a declared build 
 
 Export two answers from `internal/commitment/repository/window.go` over the unexported open-build derivation. The first answer reports whether any open build exists, of any outcome. The second answer reports whether a declared build is open, and it names the build's integration target: the first bound assignment of the declared build. Store that assignment in the open-build value when the derivation selects it. A declared build is an open build whose default-branch bound spec declares a persisted field; use the ticket 1 scan for the declaration. Derive the second answer from the first, so the open-build derivation keeps one source. Tickets 5 and 6 consume these answers.
 
-In `refreshBroker`, read the held-install predicate before the seal verification. The predicate holds when a declared build is open and the primary manifest digest equals the primary executable's digest. It also holds when the ledger does not read. When it holds, the refresh writes nothing, and the effect result is a new `held` constant beside `complete`, `failed`, `pending`, and `not-applicable`. A `held` result exits 0. When the predicate does not hold, the refresh runs as today.
+In `refreshBroker`, read the held-install predicate before the seal verification. The predicate holds when a declared build is open and the primary manifest digest equals the primary executable's digest. It also holds when the ledger does not read. A bound spec whose declaration does not parse counts as no declaration, because the install refuses that spec and no candidate can be installed for it. When it holds, the refresh writes nothing, and the effect result is a new `held` constant beside `complete`, `failed`, `pending`, and `not-applicable`. A `held` result exits 0. When the predicate does not hold, the refresh runs as today.
 
 Reach the predicate through a `joins.go` seam so `landedAfterEffects` keeps its signature. `land.go` has 3 lines of headroom, so the author keeps any change there inside that headroom. `brokerChangeNotice` keeps its current behavior for a `held` refresh.
 
+Raise the package test-count pin in `parallel_census_test.go` by one for `TestRefreshHoldsAnInstalledCandidate`.
+
 Add `held` to the effects result list in `.bench/BENCH-reference.md`, which is the one guidance copy of the result set, with one sentence that says when the refresh holds (CB59, review-owned).
 
-Extend ticket 2's system test file with two landing proofs. `TestCandidateInstallLandsANewLedgerField` writes the new ledger key through the candidate, lands the build through the unchanged land route, and reads the manifest and the primary executable after the landing. `TestCandidateInstallSurvivesAGapLanding` opens a chunk gap, lands an unrelated change through the broker, and reads the primary digest and `bench status` after that landing. Run the suite only through `bench test --check system --run TestCandidateInstall`, which sets `BENCH_KIT` to the tree under test.
+Ticket 2 creates the system test file; the `(new)` marker on this ticket's line only lets the preflight resolve the path before ticket 2 lands. Add two new test functions to that file, and do not edit ticket 2's function. `TestCandidateInstallLandsANewLedgerField` writes the new ledger key through the candidate, lands the build through the unchanged land route, and reads the manifest and the primary executable after the landing. `TestCandidateInstallSurvivesAGapLanding` opens a chunk gap, lands an unrelated change through the broker, and reads the primary digest and `bench status` after that landing. Run the suite only through `bench test --check system --run TestCandidateInstall`, which sets `BENCH_KIT` to the tree under test.
 
 ## Acceptance
 
@@ -24,7 +26,7 @@ Extend ticket 2's system test file with two landing proofs. `TestCandidateInstal
 - [ ] With a declared build open and different digests, the refresh rebuilds and reports `complete` (CB52).
 - [ ] With no declared build open and an unverified seal, the refresh rebuilds and reports `complete` (CB53).
 - [ ] With an unreadable ledger, the refresh reports `held`.
-- [ ] The installed candidate lands a build whose published tree holds a review record with a `folds` key (CB24).
+- [ ] The installed candidate lands a build whose published tree holds a review record with the fixture's new review-record field, which the `main` broker does not know (CB24).
 - [ ] After that landing, the primary manifest digest equals the primary `dist/bench` digest (CB25).
 - [ ] After an unrelated landing during an open gap, the primary digest is unchanged and `bench status` exits 0 (CB50).
 - [ ] Every existing effects-row test keeps its current result.
