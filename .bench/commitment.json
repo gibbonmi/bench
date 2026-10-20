@@ -992,6 +992,18 @@
               "path": "roadmap/FT335.md",
               "identity": "sha256:4797c01552df0d5f52cc3620bca015e76a298bb96bab6c9d65999816fbb794b1"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "merge-target-lane",
+                "path": "specs/merge-target-lane/spec.md",
+                "identity": "sha256:8f6724b61e08d439cb88f8d6d2dc794d986c7e3cd5c09dae44e95ecf70ca0a38"
+              },
+              "obligations": [
+                "FT335"
+              ]
+            }
           ]
         },
         {
