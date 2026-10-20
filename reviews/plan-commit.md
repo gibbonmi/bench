@@ -1414,11 +1414,88 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "9e9784e7f2e9176cf10df61a4eeb70bd2c9c0cf7",
+    "performer": "claude:ft380-orchestrator-20261019",
+    "reconciliation": {
+      "PC1": "covered",
+      "PC10": "covered",
+      "PC11": "covered",
+      "PC12": "covered",
+      "PC13": "covered",
+      "PC14": "covered",
+      "PC15": "covered",
+      "PC16": "covered",
+      "PC17": "covered",
+      "PC18": "covered",
+      "PC19": "covered",
+      "PC2": "covered",
+      "PC20": "covered",
+      "PC21": "covered",
+      "PC22": "covered",
+      "PC23": "covered",
+      "PC24": "covered",
+      "PC25": "covered",
+      "PC26": "covered",
+      "PC27": "covered",
+      "PC28": "covered",
+      "PC29": "covered",
+      "PC3": "covered",
+      "PC30": "covered",
+      "PC31": "covered",
+      "PC32": "covered",
+      "PC33": "covered",
+      "PC34": "covered",
+      "PC35": "covered",
+      "PC36": "covered",
+      "PC37": "covered",
+      "PC38": "covered",
+      "PC39": "covered",
+      "PC4": "covered",
+      "PC5": "covered",
+      "PC6": "covered",
+      "PC7": "covered",
+      "PC8": "covered",
+      "PC9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-guidance",
+        "performer": "claude:ft380-orchestrator-20261019",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "9e9784e7f2e9176cf10df61a4eeb70bd2c9c0cf7",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft380-orchestrator-20261019",
+          "digest": "sha256:e3b229ab185a328ef4551df48acd89bd32be07bfe75b422cb9f58280a8f36657",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4435,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "guidance",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "final-root-conformance",
+        "performer": "claude:ft380-orchestrator-20261019",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "9e9784e7f2e9176cf10df61a4eeb70bd2c9c0cf7",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft380-orchestrator-20261019",
+          "digest": "sha256:6867fe99a748aa501c640efc5e58680ff288dd318840d91df4ec83a70f7fe106",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16523,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
