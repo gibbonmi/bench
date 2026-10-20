@@ -680,6 +680,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2-r1-standards",
+          "performer": "claude:ft335-c2-standards-r1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "632e4604cc5d1769be094ba62a47f26f573e2c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c2-standards-r1-20261019",
+            "digest": "sha256:30f688f920b7218b19380b10927a2ad8e00289ae39752adc8f35e508f51f804e",
+            "excerpt": "## Standards (confirming round, delta 6cdf3755c..35dff656c)\nS3 closed: the writeGoMainFixture comment (land_effects_test.go:16-19) names its purpose and both consumers.\n- S5, judgment, confidence 6: merge_target_lane_test.go:94-95 rebuilds the facts that merge_refusal.go:74-75 assembles. Orchestrator disposition no-op under the AGENTS.md test-expectation exception: the coordinator probe that swapped the conflictFacts arguments at merge_refusal.go:74 went red alone at merge_target_lane_test.go:97, and a shared helper would hide that mutation.\n- S6, no-op, confidence 3: the landingRoute doc comment (refusal_route_test.go:20) says \"a land face\"; outside the fence and older than this build.\n"
+          },
+          "axis": "Standards",
+          "base": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+          "tip": "105f0140468b92af13a0fcc6d2de680843c8d987",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-r0-standards"
+          ]
+        },
+        {
+          "id": "c2-r1-spec",
+          "performer": "claude:ft335-c2-spec-r1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "632e4604cc5d1769be094ba62a47f26f573e2c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c2-spec-r1-20261019",
+            "digest": "sha256:20cd61fc8f0c0d73ad8c2e35b66ae5f0db38d9361885390aefc6c7d340cd7003",
+            "excerpt": "## Spec (confirming round, delta 6cdf3755c..35dff656c)\nP1 closed: merge_target_lane_test.go:93-98 requires the printed next route to equal the merge-fold-red route from the registry; the two routes differ from their first step, so route equality is face equality (spec line 274). The plan commits change no acceptance.\n- P3, no-op, confidence 3: the plan-probe excerpt names only the tally line; the face-swap and conflictFacts-swap probes show line 97 red alone.\n"
+          },
+          "axis": "Spec",
+          "base": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+          "tip": "105f0140468b92af13a0fcc6d2de680843c8d987",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-r0-spec"
+          ]
+        },
+        {
+          "id": "c2-r1-coverage",
+          "performer": "claude:ft335-c2-coverage-r1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "632e4604cc5d1769be094ba62a47f26f573e2c55",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c2-coverage-r1-20261019",
+            "digest": "sha256:b9f8663c4b4fd3b0a5e599619b5ad4dff5311f80cb9741ed07393f5ada0b2759",
+            "excerpt": "## Coverage (confirming round, delta 6cdf3755c..35dff656c)\nP1 and S3 closed. Probe: omit the bench record fold step from the merge-fold-red route (internal/refusalroute/faces_merge.go:29), bit (TestMergeFacesFollowTheirRoutes/merge-fold-red, merge_route_test.go:120), restored yes; the R12 test stays green by construction, and R12 pins the face choice, not its text.\n- C3, no-op, confidence 3: the R12 fixture's from spelling equals the incoming commit, so the test cannot tell spelling from incoming; TestMergeFacesFollowTheirRoutes spells --from main.\n"
+          },
+          "axis": "Coverage",
+          "base": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+          "tip": "105f0140468b92af13a0fcc6d2de680843c8d987",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-r0-coverage"
+          ]
         }
       ]
     }
@@ -788,3 +854,14 @@ Count: 2. Worst issue: C1.
 
 - C1, no-op, confidence 3: no merge-level row covers an adopted kit on a target with a manifest lane. Row R03 covers the rule, and both callers share one derivation.
 - C2, no-op, confidence 2: no merge-level row covers a kit from another repository. The C1 unit rows cover the rule.
+
+## C2 confirming round 1 pickup
+
+Repair delta: 6cdf3755c..35dff656c, repair commit 105f01404. Repair cycles used: 1 of 2. S3 and P1 are closed.
+
+The test-only confirmation refused, because the repair's assignment plan commit sits in the delta. A confirming round of the three axes ran instead.
+
+- S5, no-op under the test-expectation exception of `AGENTS.md`, confidence 6: the R12 test rebuilds the facts that `mergeRedRefusal` assembles. The coordinator probe swapped the `conflictFacts` arguments in `internal/worktree/merge_refusal.go`, and only `internal/worktree/merge_target_lane_test.go:97` went red. A shared helper would hide that mutation, so the independent expectation is necessary.
+- S6, no-op, confidence 3: the `landingRoute` doc comment says "a land face". The file is outside the fence, and the text predates this build.
+- P3, no-op, confidence 3: the face-swap probe and the coordinator probe each show line 97 red alone.
+- C3, no-op, confidence 3: the R12 fixture spells `--from` as the incoming commit. `TestMergeFacesFollowTheirRoutes` spells `--from main` and covers that difference.
