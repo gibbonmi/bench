@@ -6,7 +6,7 @@ Roadmap: FT419
 
 Decision source: named reviewed artifact `roadmap/FT419.md` (drain d-f9b840c3b468, reviewer approval 2026-10-13), with the reviewer-confirmed conversation answers of 2026-10-20 that select the install route and the held refresh
 
-Verification log: pending
+Verification log: 8 iteration(s) to accept — the spec round took 3 iterations plus two design consultations (fable medium, sonnet high) before acceptance; the ticket round took 5 iterations, the last three graded by fable high and opus high under the reviewer's delegated sign-off, which approved by consensus at 762828b8.
 
 ## Problem
 
@@ -148,7 +148,7 @@ The three entries call the check before any ledger read or write. The chunk chec
 The verb refuses before any write in this order:
 
 1. The repository declares no Bench build inputs.
-2. The running executable's canonical physical path is not the primary executable. The refusal names the running executable's path, which shows a worktree or version-cache selection, and its route names the primary checkout as the directory to run from. A version-cache path clears only when the operator removes that cache entry; the refusal says so when the path is under `$BENCH_HOME/cache/`.
+2. The running executable's canonical physical path is not the primary executable. The refusal names the running executable's path, which shows a worktree or version-cache selection, and its route names the primary checkout as the directory to run from. The command notes say that a version-cache selection clears only when the operator removes that cache entry; no Go code derives the cache path.
 3. The target has no bound assignment in the ledger. The verb reads the assignments and the commitment bindings through the existing tolerant read mode and writes no ledger byte. Thus an unknown commitment field does not stop the lookup, and the install can recover a lost candidate. The tolerant read drops an assignment record that it cannot decode, so a declaration under `assignments` is out of this recovery.
 4. The default-branch tip holds no copy of the bound spec, or that copy declares no persisted field.
 
@@ -189,7 +189,7 @@ The verb refuses before any write in this order:
 
 1. The repository declares no Bench build inputs.
 2. The default-branch copy of the spec declares no persisted field.
-3. The running executable's strict ledger read fails. This refusal comes before the open-build test, because that test reads the ledger too. Its route is `bench worktree build --install <target>` while the target worktree exists, then a rerun of the restore.
+3. The running executable's strict ledger read fails. This refusal comes before the open-build test, because that test reads the ledger too. Its route is `bench worktree build --install <target>` while the target worktree exists, then a rerun of the restore. The restore looks the label up through the install's tolerant read entry and prints the literal `<target>` slot only when that lookup fails.
 4. The ledger holds an open build of any outcome, because the clear is ledger-wide. The refusal names `bench commitment block` as the route that ends the build. It also tells the operator to run the restore before `bench worktree release`, because a recovery install needs the target worktree.
 
 Then the verb copies the ledger to `$BENCH_HOME/restore/<repo-key>/` and refuses when the copy fails. One raw-field removal in the ledger owner then removes each declared field that the ledger holds, under the ledger lock, and it runs the strict decode on the result before the replace. A declared field that the ledger does not hold needs no change, because the build stopped before any writer wrote it. For a nested path such as `commitment.gaps.chunk`, the removal deletes the last segment from each element along the path. One removal serves every path, so no second path-to-field mapping exists. Then the verb rebuilds the primary `dist/bench` from the primary sources through the existing rebuild owner. Last, it runs `doctor --fix` under the rebuilt executable with the install's child environment, so `main` code authors the broker manifest, the shim, and the pre-push hook again.
