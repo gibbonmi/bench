@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/candidate-binary-install/spec.md",
-  "plan_digest": "sha256:11740dde07e548048c06e174cbae4b13dbf2f9c97ab28592da7ffce6ed524e6e",
+  "plan_digest": "sha256:90738f167f2b1ec19be414edfd1c6feb7cfeee86402486076859080b943cc922",
   "implementation_session": "",
   "chunks": [
     {
       "id": "CB-C1",
       "base": "97a979263a299429d187efcf6d1845ef93199ea5",
-      "tip": "057ee735bc394f4fe97e96f989972d476838f1e2",
-      "plan_digest": "sha256:11740dde07e548048c06e174cbae4b13dbf2f9c97ab28592da7ffce6ed524e6e",
-      "source_digest": "14b0fa583c14ebe9802594de774433d8e92afc3e",
+      "tip": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+      "plan_digest": "sha256:90738f167f2b1ec19be414edfd1c6feb7cfeee86402486076859080b943cc922",
+      "source_digest": "358f56d009d7b99e814b812c1a1c0af953cb870c",
       "acceptance_rows": [
         "CB1",
         "CB2",
@@ -152,6 +152,71 @@
               "ref": "claude-agent:bench-writer-high:ft419-t1-repair1-20261020",
               "digest": "sha256:a4339bdc64a5f3c919b14586423a08a529d9e631cfbd8ea97aec2f6dd9efc893",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/spec.go,omit,failed,2,TestPersistedFieldsHeader/a_fenced_line,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,all,passed,173\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,829\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,1672,173\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestPersistedFieldsHeader/a_fenced_line,\"persisted_test.go:22: PersistedFields = []spec.PersistedField{spec.PersistedField{Record:\\\"review-record\\\", Path:[]string{\\\"folds\\\"}}}, <nil>; want []spec.PersistedField(nil), nil\",1\n  github.com/gibbonmi/bench/internal/spec,\"TestRetireNextLineNamesTheBoardRemainder/FC6:_fenced_Roadmap_line_is_not_read\",\"retire_test.go:159: next line = \\\"next: promote durable content, remove the ROADMAP row FT7 and its roadmap/FT7.md detail file, commit as `spec-retire: s`\\\\\\\\n\\\", want \\\"next: promote durable content, remove the ROADMAP row FT<n> and its roadmap/… (291 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1r2-spec",
+          "performer": "claude:ft419-t1-repair2-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "358f56d009d7b99e814b812c1a1c0af953cb870c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t1-repair2-20261020",
+            "digest": "sha256:ef7b223a8420e83f43f2301865ae5e77724aa3d5735ccacff486adde71448c01",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,pass,1726,175\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "spec",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-root-conformance",
+          "performer": "claude:ft419-t1-repair2-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "358f56d009d7b99e814b812c1a1c0af953cb870c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t1-repair2-20261020",
+            "digest": "sha256:0d70282d8f49254a3c35d85c71ec5c0f695da923ec71c7b38c388629cbcfafb3",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13577,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-t1-fence-probe",
+          "performer": "claude:ft419-t1-repair2-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "358f56d009d7b99e814b812c1a1c0af953cb870c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t1-repair2-20261020",
+            "digest": "sha256:7bd08470952aeb549083574e2bdb3777edc154acc62ac0ec69f05397121e2b33",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/spec.go,omit,failed,1,TestPersistedFieldsHeader/a_fenced_line,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestPersistedFieldsHeader,passed,18\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,437\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,2,18\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestPersistedFieldsHeader/a_fenced_line,\"persisted_test.go:22: PersistedFields = []spec.PersistedField{spec.PersistedField{Record:\\\"review-record\\\", Path:[]string{\\\"folds\\\"}}}, <nil>; want []spec.PersistedField(nil), nil\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-fence-probe",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the code-fence state in the Persisted fields header scan; TestPersistedFieldsHeader must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft419-t1-repair2-20261020",
+              "digest": "sha256:7bd08470952aeb549083574e2bdb3777edc154acc62ac0ec69f05397121e2b33",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/spec.go,omit,failed,1,TestPersistedFieldsHeader/a_fenced_line,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestPersistedFieldsHeader,passed,18\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,437\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,2,18\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestPersistedFieldsHeader/a_fenced_line,\"persisted_test.go:22: PersistedFields = []spec.PersistedField{spec.PersistedField{Record:\\\"review-record\\\", Path:[]string{\\\"folds\\\"}}}, <nil>; want []spec.PersistedField(nil), nil\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -316,6 +381,15 @@
     {
       "from": "sha256:f61261f1ce4bc05e292c015b9a144c132d8610eed2d6316998c1b0492bfa7ad9",
       "to": "sha256:11740dde07e548048c06e174cbae4b13dbf2f9c97ab28592da7ffce6ed524e6e",
+      "chunk_ids": {
+        "CB-C1": [
+          "CB-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:11740dde07e548048c06e174cbae4b13dbf2f9c97ab28592da7ffce6ed524e6e",
+      "to": "sha256:90738f167f2b1ec19be414edfd1c6feb7cfeee86402486076859080b943cc922",
       "chunk_ids": {
         "CB-C1": [
           "CB-C1"
