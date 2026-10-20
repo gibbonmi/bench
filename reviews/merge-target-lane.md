@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/merge-target-lane/spec.md",
-  "plan_digest": "sha256:898ee9a75d9d7be11df624ad80aa2b39ca891ed92a45b0a65e928d303d4128c8",
+  "plan_digest": "sha256:a54597482275ece30c8372a28a2923be6deef737f518884203bab741dce6dc09",
   "implementation_session": "",
   "chunks": [
     {
@@ -422,6 +422,111 @@
           ]
         }
       ]
+    },
+    {
+      "id": "C2",
+      "base": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+      "tip": "3519feb7552fe0eb0e064cd0bea4c71bc6415e65",
+      "plan_digest": "sha256:a54597482275ece30c8372a28a2923be6deef737f518884203bab741dce6dc09",
+      "source_digest": "5bb467add4fcdcb06aa12eec3e8e303ab8b261e9",
+      "acceptance_rows": [
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21"
+      ],
+      "verification": [
+        {
+          "id": "t2-author-t2-merge-lane",
+          "performer": "claude:ft335-t02-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5bb467add4fcdcb06aa12eec3e8e303ab8b261e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft335-t02-author-20261019",
+            "digest": "sha256:cc36e3344c1274459dd9c6bd4f19b2395145eccdfb75e73cedb3da2c88f3a00e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/merge.go,swap+swap,failed,1,TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,Merge|SingleReadCensus|EffectBoundaryCensus,passed,108\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,367\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5240,108\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane,\"merge_target_lane_test.go:93: whole-gate tally = <nil>, want no whole-gate run\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-merge-lane",
+          "command": "bench test --package ./internal/worktree --run 'Merge|SingleReadCensus|EffectBoundaryCensus'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Resolve the kit at the fold call site only and record the R12 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft335-t02-author-20261019",
+              "digest": "sha256:cc36e3344c1274459dd9c6bd4f19b2395145eccdfb75e73cedb3da2c88f3a00e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/merge.go,swap+swap,failed,1,TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,Merge|SingleReadCensus|EffectBoundaryCensus,passed,108\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,367\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5240,108\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestMergeFromThePrimaryGradesTheTargetAloneWithTheFoldLane,\"merge_target_lane_test.go:93: whole-gate tally = <nil>, want no whole-gate run\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t2-author-t2-root-conformance",
+          "performer": "claude:ft335-t02-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5bb467add4fcdcb06aa12eec3e8e303ab8b261e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft335-t02-author-20261019",
+            "digest": "sha256:5855d1dd7921b96a49b886c3144a91414576f7b1577ac455588588ea94466373",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17611,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-author-t2-worktree-package",
+          "performer": "claude:ft335-t02-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5bb467add4fcdcb06aa12eec3e8e303ab8b261e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft335-t02-author-20261019",
+            "digest": "sha256:99715f33771d941e0051ffeb4e6c11ea12f927888dc2fdf7f08e59a52d03da03",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,88689,1443\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-author-t2-cmd-package",
+          "performer": "claude:ft335-t02-author-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5bb467add4fcdcb06aa12eec3e8e303ab8b261e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft335-t02-author-20261019",
+            "digest": "sha256:a5e89f75817aa804e0c0b878dbb2e17e7998f49775ded1e4c47819c9ced31520",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19263,352\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-cmd-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -435,6 +540,15 @@
     {
       "from": "sha256:322c86ff89de964810f82061879d5aa054f5d0e695e4bab97c9f0286471f655c",
       "to": "sha256:898ee9a75d9d7be11df624ad80aa2b39ca891ed92a45b0a65e928d303d4128c8",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:898ee9a75d9d7be11df624ad80aa2b39ca891ed92a45b0a65e928d303d4128c8",
+      "to": "sha256:a54597482275ece30c8372a28a2923be6deef737f518884203bab741dce6dc09",
       "chunk_ids": {
         "C1": [
           "C1"
