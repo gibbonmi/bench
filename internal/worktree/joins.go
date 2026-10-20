@@ -47,6 +47,10 @@ type joins struct {
 	// is a seam because the default reaches a build script and a Go toolchain, and a
 	// fixture for that pair would make every output row wait on a real compile.
 	buildSubject func(context.Context, string, string) error
+	// heldInstall is the held-install predicate that the post-landing refresh reads at a
+	// destination root. It is a seam so a landing test can hold the refresh without an
+	// installed candidate.
+	heldInstall func(string) bool
 	// publishCandidate is the install's publication owner. Its operands are the seal
 	// root, the staged executable, the published executable, the manifest directory, and
 	// the version.
@@ -79,6 +83,7 @@ func defaultJoins() joins {
 		resetLayers:              restoreResetLayers,
 		resetEnvelope:            writeResetEnvelope,
 		buildSubject:             runbinary.BuildSubject,
+		heldInstall:              readHeldInstall,
 		publishCandidate:         freshness.Publish,
 		doctorChild:              runDoctorChild,
 	}

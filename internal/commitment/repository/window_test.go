@@ -200,6 +200,38 @@ func TestClosersDropTheGapRecord(t *testing.T) {
 	}
 }
 
+// TestDeclaredBuildNamesItsIntegrationTarget proves the two open-build answers. An open
+// build whose spec declares no field is an open build but not a declared build. A declared
+// build answers its first bound assignment as its integration target.
+func TestDeclaredBuildNamesItsIntegrationTarget(t *testing.T) {
+	t.Run("undeclared", func(t *testing.T) {
+		root := commitmenttest.Staged(t, "A")
+		startBuild(t, root, "build", "A", approvedSpec(t, root, "A"))
+		store := commitrepo.Store{Root: root}
+		open, err := store.HoldsOpenBuild()
+		_, declared, declaredErr := store.DeclaredBuild()
+		if err != nil || !open || declaredErr != nil || declared {
+			t.Fatalf("answers = open %t (%v), declared %t (%v); want an open build that is not declared", open, err, declared, declaredErr)
+		}
+	})
+	t.Run("declared", func(t *testing.T) {
+		root := commitmenttest.Staged(t, "A")
+		path := approvedSpec(t, root, "A")
+		body := commitmenttest.StagedBody + "Persisted fields: intent-ledger:commitment.gaps\n"
+		commitmenttest.Write(t, root, path, body)
+		commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
+			policy.Milestones[0].Outcomes[0].Deliverables[0].Source.Identity = commitment.Identity([]byte(body))
+		})
+		commitmenttest.Commit(t, root, "declare a persisted field")
+		first := startBuild(t, root, "first", "A", path)
+		startBuild(t, root, "second", "A", path)
+		target, declared, err := commitrepo.Store{Root: root}.DeclaredBuild()
+		if err != nil || !declared || target.ID != first.Assignment {
+			t.Fatalf("declared build = %+v, %t, %v; want the first bound assignment %s", target, declared, err, first.Assignment)
+		}
+	})
+}
+
 // TestDefaultDeclarationReadsTheDefaultBranchCopy proves the one declaration reader reads
 // the default-branch tip and not the checkout, and that a missing copy and a malformed line
 // both refuse. The install, the held refresh, and the restore all read through it.

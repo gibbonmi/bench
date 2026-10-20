@@ -10,10 +10,16 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/brokermanifest"
+	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	rr "github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
+	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // candidateSpec is the spec that the candidate build binds. Its default-branch copy declares
@@ -33,16 +39,35 @@ type candidateInstall struct {
 	primary, home, shims, worktree string
 }
 
+// gapChange is the unrelated Go file that a light-path landing publishes during the
+// build's open chunk gap, and gapSlug names that landing's request and tickets-only folder.
+const (
+	gapChange = "internal/sanitize/gap_change.go"
+	gapSlug   = "gap"
+)
+
 // newCandidateInstall builds the fixture with the main executable, which binds the build as
-// a start of the declared outcome records it.
+// a start of the declared outcome records it. The policy approves the declared spec for
+// that outcome, the spec's one ticket fences the candidate's sources and gapChange, and the
+// gate is a plain green script, so a landing grades the broker and not the kit's checks.
 func newCandidateInstall(t *testing.T) candidateInstall {
 	t.Helper()
 	declaration := "Persisted fields: intent-ledger:commitment." + candidateField + ", review-record:" + candidateField + "\n"
 	primary := copyKitRepository(t, "candidate-install [primary]-")
-	if err := os.MkdirAll(filepath.Join(primary, filepath.Dir(candidateSpec)), 0o755); err != nil {
+	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
+		systemGit(t, primary, "config", identity[0], identity[1])
+	}
+	body := "# Candidate\n\nStatus: staged\n" + declaration + "\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n" + preflighttest.ChunkTable("E1")
+	recordtest.Prepare(t, primary, 1, candidateSpec, body).SetTicketWrites("source.txt, internal/intent/ledger/commitment.go, internal/reviewrecord/record.go, " + gapChange + " (new)")
+	staged, err := os.ReadFile(filepath.Join(primary, candidateSpec))
+	if err != nil {
 		t.Fatal(err)
 	}
-	systemCommit(t, primary, candidateSpec, "# Candidate\n\nStatus: staged\n"+declaration, "stage the declared spec")
+	approved := commitment.Outcome{ID: candidateLabel, Criteria: []commitment.Criterion{{ID: "candidate.done", Text: "The candidate build lands."}}, Deliverables: []commitment.DeliveryBinding{{Source: commitment.SourceBinding{ID: "spec", Path: candidateSpec, Identity: commitment.Identity(staged)}}}}
+	commitmenttest.WritePolicy(t, primary, commitment.Policy{Version: 1, ActiveMilestone: "fixture", Milestones: []commitment.Milestone{{ID: "fixture", Outcomes: []commitment.Outcome{approved}}}})
+	testrepo.NewGateFixture(t.TempDir()).MustWrite(t, primary, "exit 0\n", "exit 0\n")
+	commitmenttest.Commit(t, primary, "approve the declared spec under a green gate")
+	systemGit(t, primary, "update-ref", "refs/bench/green/main", systemGitOutput(t, primary, "rev-parse", "HEAD"))
 	c := candidateInstall{primary: primary}
 	for _, dir := range []*string{&c.home, &c.shims} {
 		created, err := os.MkdirTemp(owner.root, "candidate-install [private]-")
@@ -135,6 +160,107 @@ func (c candidateInstall) plantLedgerField(t *testing.T) {
 	}
 	if err := os.WriteFile(path, append(data, '\n'), 0o600); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// plantRecordField writes candidateField into the build's review record, as the candidate's
+// own writer would, and commits it. The record's JSON object opens on the document's first
+// brace line.
+func (c candidateInstall) plantRecordField(t *testing.T) {
+	t.Helper()
+	path, err := rr.RecordPath(candidateSpec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := os.ReadFile(filepath.Join(c.worktree, path))
+	if err != nil || !strings.Contains(string(document), "{\n") {
+		t.Fatalf("review record %s = %v, want a JSON object", path, err)
+	}
+	systemCommit(t, c.worktree, path, strings.Replace(string(document), "{\n", "{\n  \""+candidateField+"\": \"planted\",\n", 1), "record "+candidateField)
+	if _, err := rr.Read(c.worktree, candidateSpec); err == nil {
+		t.Fatal("the strict record read accepts the planted field, so the row grades nothing")
+	}
+}
+
+// landGapChange opens a chunk gap of the build, plants candidateField in the ledger, and
+// lands gapChange from an unbound assignment through the installed broker. The assignment
+// is created before the plant, because this test process cannot read the planted ledger.
+func (c candidateInstall) landGapChange(t *testing.T) processResult {
+	t.Helper()
+	commitmenttest.OpenChunkGaps(t, c.primary)
+	c.require(t, c.primary, "worktree", "create", "--request", gapSlug, "--label", gapSlug)
+	gap, found, err := intent.FindAssignmentForRequest(c.primary, gapSlug)
+	if err != nil || !found {
+		t.Fatalf("gap assignment = %t, %v", found, err)
+	}
+	base := systemGitOutput(t, c.primary, "rev-parse", "main")
+	commitmenttest.WriteLightTicket(t, gap.Worktree, spec.ClosedFolderPath(gapSlug)+"/tickets/one.md", gapChange+" (new)")
+	commitmenttest.Write(t, gap.Worktree, gapChange, "package sanitize\n\n// gapChange marks an unrelated landing.\nconst gapChange = true\n")
+	systemGit(t, gap.Worktree, "add", "-A")
+	systemGit(t, gap.Worktree, "commit", "-qm", "an unrelated change")
+	c.plantLedgerField(t)
+	return c.run(t, c.primary, "worktree", "land", "--request", gapSlug, "--base", base, "--source-tip", systemGitOutput(t, gap.Worktree, "rev-parse", "HEAD"), "--spec", gapSlug, "-m", "land an unrelated change", gap.Worktree)
+}
+
+// TestCandidateInstallSurvivesAGapLanding is CB50. An unrelated landing during the open
+// chunk gap of the declared build holds the installed candidate, so the primary executable
+// keeps its digest and still reads the ledger that holds the candidate's field.
+func TestCandidateInstallSurvivesAGapLanding(t *testing.T) {
+	c := newCandidateInstall(t)
+	c.require(t, c.primary, "worktree", "build", "--install", candidateLabel)
+	primary := freshness.PublishedExecutable(c.primary)
+	installed := fileDigest(t, primary)
+
+	landed := c.landGapChange(t)
+	if landed.code != 0 || !strings.Contains(landed.stdout, "  refresh,held\n") {
+		t.Fatalf("gap landing = (%d, %q, %q), want a held refresh at exit 0", landed.code, landed.stdout, landed.stderr)
+	}
+	if got := fileDigest(t, primary); got != installed {
+		t.Fatalf("primary digest after the gap landing = %s, want the installed candidate %s", got, installed)
+	}
+	if status := c.run(t, c.primary, "status"); status.code != 0 {
+		t.Fatalf("status after the gap landing = (%d, %q, %q), want exit 0", status.code, status.stdout, status.stderr)
+	}
+}
+
+// TestCandidateInstallLandsItsNewFields is CB24 and CB25. The build folds the gap landing's
+// unrelated Go change and records the review-record field that the main broker refuses.
+// The installed candidate lands it through the unchanged land route. The landed tree is not
+// the installed candidate's source, so the refresh rebuilds the primary executable from the
+// landed sources and binds it in the manifest.
+func TestCandidateInstallLandsItsNewFields(t *testing.T) {
+	c := newCandidateInstall(t)
+	start := systemGitOutput(t, c.worktree, "merge-base", "HEAD", "main")
+	c.require(t, c.primary, "worktree", "build", "--install", candidateLabel)
+	primary := freshness.PublishedExecutable(c.primary)
+	installed := fileDigest(t, primary)
+	if gap := c.landGapChange(t); gap.code != 0 {
+		t.Fatalf("gap landing = (%d, %q, %q)", gap.code, gap.stdout, gap.stderr)
+	}
+	systemGit(t, c.worktree, "merge", "-q", "--no-edit", "main")
+	recordtest.RetainSingleChunk(t, c.worktree, candidateSpec, start)
+	c.plantRecordField(t)
+
+	landed := c.run(t, c.primary, "worktree", "land", "--request", candidateLabel, "--base", start, "--source-tip", systemGitOutput(t, c.worktree, "rev-parse", "HEAD"), "--spec", spec.LiveSpecSlug(candidateSpec), "-m", "land the candidate build", c.worktree)
+	if landed.code != 0 || !strings.Contains(landed.stdout, "  refresh,complete\n") {
+		t.Fatalf("build landing = (%d, %q, %q), want a complete refresh at exit 0", landed.code, landed.stdout, landed.stderr)
+	}
+	path, err := rr.RecordPath(candidateSpec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if published := systemGitOutput(t, c.primary, "show", "main:"+path); !strings.Contains(published, `"`+candidateField+`"`) {
+		t.Fatalf("published review record = %q, want %s", published, candidateField)
+	}
+	if err := freshness.Verify(c.primary, primary); err != nil {
+		t.Fatalf("the primary seal after the landing does not verify against the primary sources: %v", err)
+	}
+	fields, err := brokermanifest.Read(c.manifest())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if digest := fileDigest(t, primary); fields["sha256"] != digest || digest == installed {
+		t.Fatalf("manifest after the landing = %v, primary digest %s; want the rebuilt digest, not the installed %s", fields, digest, installed)
 	}
 }
 

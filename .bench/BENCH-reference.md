@@ -413,11 +413,15 @@ After publication and source release, the landing runs two effects: the broker
 refresh and the eligible-sibling cleanup. The landing prints one
 `effects[2]{effect,result}` row on stdout before the `landed{...}` record, which
 stays the last stdout line. A result cell reads `complete`, `failed`, `pending`,
-or `not-applicable`. `pending` names an effect an earlier failure stopped. The
-refresh republishes the destination's own Bench executable, and it applies only
-where the destination declares Bench build inputs. The cleanup retires the
-sibling worktrees whose work this landing carries, and it prints its plan rows on
-stderr.
+`not-applicable`, or `held`. `pending` names an effect an earlier failure
+stopped.
+
+The refresh republishes the destination's own Bench executable, and it applies
+only where the destination declares Bench build inputs. The refresh holds while
+a declared build is open and the broker manifest binds the primary executable's
+digest, or while the ledger does not read. A held refresh writes nothing. The
+cleanup retires the sibling worktrees whose work this landing carries, and it
+prints its plan rows on stderr.
 
 A failed effect exits 3 with `incomplete:refresh` or `incomplete:cleanup` in the
 `worktree` cell. That record carries the same `next=` resume every other

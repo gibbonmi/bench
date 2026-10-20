@@ -6,7 +6,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path/filepath"
 
+	"github.com/gibbonmi/bench/internal/brokermanifest"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -19,6 +22,7 @@ const (
 	effectFailed        = "failed"
 	effectPending       = "pending"
 	effectNotApplicable = "not-applicable"
+	effectHeld          = "held"
 )
 
 // refreshEffect and cleanupEffect name the two effects in the effects row and in the
@@ -81,9 +85,16 @@ func landedAfterEffects(j joins, a ambient, root string, result landing.Reviewed
 // promotes the seal last and installs the manifest with it, so a verified seal also
 // proves the manifest of that same transaction landed. A resume therefore needs no
 // journal, and an interrupted refresh finishes on the next call.
+//
+// An installed candidate never verifies against the destination's sources, so a rebuild
+// would replace it with an executable that refuses its build's ledger. The refresh therefore
+// reads the held-install predicate first, and a held refresh writes nothing.
 func refreshBroker(j joins, root string, stderr io.Writer) string {
 	if !freshness.DeclaresBuildInputs(root) {
 		return effectNotApplicable
+	}
+	if j.heldInstall(root) {
+		return effectHeld
 	}
 	executable := freshness.PublishedExecutable(root)
 	if freshness.Verify(root, executable) == nil {
@@ -104,6 +115,29 @@ func refreshBroker(j joins, root string, stderr io.Writer) string {
 		return effectFailed
 	}
 	return effectComplete
+}
+
+// readHeldInstall is the held-install predicate at root. It holds while a declared build is
+// open and the broker manifest beside root's wrapper binds the digest of root's published
+// executable. It also holds when the open builds do not read, so the refresh never
+// rebuilds over a ledger that it cannot read.
+func readHeldInstall(root string) bool {
+	_, declared, err := commitrepo.Store{Root: root}.DeclaredBuild()
+	if err != nil {
+		return true
+	}
+	return declared && manifestBindsExecutable(root)
+}
+
+// manifestBindsExecutable reports whether the broker manifest beside root's wrapper binds
+// the digest of root's published executable.
+func manifestBindsExecutable(root string) bool {
+	fields, err := brokermanifest.Read(filepath.Join(wrapperDir(root), brokermanifest.Name))
+	if err != nil {
+		return false
+	}
+	digest, err := brokermanifest.Digest(freshness.PublishedExecutable(root))
+	return err == nil && digest == fields["sha256"]
 }
 
 // cleanLandedSiblings retires the sibling worktrees whose work this landing carries. The
