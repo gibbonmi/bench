@@ -2486,6 +2486,74 @@
           "supersedes": [
             "cbc3-coverage"
           ]
+        },
+        {
+          "id": "cbc3-standards-r2",
+          "performer": "claude:ft419-cbc3-standards-r2-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d67adea4d1da24470d407189925f5d5ca7a5fec7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-standards-r2-20261020",
+            "digest": "sha256:89ee5abfbf24c919209e5fcc59b4859629dc2097ca1e568431f1e27e2598e5be",
+            "excerpt": "## Standards (CB-C3 repair cycle 2, delta dd995111..7972fc64, opus/medium)\nN2 closed: window.go:74-75 now scopes the refusals to a repository that declares Bench build inputs.\nNo finding ID. S2 evidence: the new case's independent bin expectation has two demonstrated reds, the author's swap of \"bin\" to \"dist\" in brokermanifest.Path and the orchestrator's move of the writer dest in internal/adopt/broker.go; both bit with restored=yes.\nAdvice routed to the ticket 6 charge: the window.go:74 comment omits the unresolved-primary case.\n"
+          },
+          "axis": "Standards",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "d0c62cc4413621aff8e8124a65b9f72a069555d2",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc3-standards-confirm"
+          ]
+        },
+        {
+          "id": "cbc3-spec-r2",
+          "performer": "claude:ft419-cbc3-spec-r2-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d67adea4d1da24470d407189925f5d5ca7a5fec7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-spec-r2-20261020",
+            "digest": "sha256:57e899ca1a2b7659368e0ca41f59d45c1d0d93a2f177ca9868511c6f01cd0214",
+            "excerpt": "## Spec (CB-C3 repair cycle 2, delta dd995111..7972fc64, opus/medium)\nSpec N1, N2, the chunk test list, and the new case met; the diff adds no behavior.\nAdvice routed to the ticket 6 charge: window.go:117-118 still says a ledger that does not read lists no build, narrower than the code.\n"
+          },
+          "axis": "Spec",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "d0c62cc4413621aff8e8124a65b9f72a069555d2",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc3-spec-confirm"
+          ]
+        },
+        {
+          "id": "cbc3-coverage-r2",
+          "performer": "claude:ft419-cbc3-coverage-r2-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d67adea4d1da24470d407189925f5d5ca7a5fec7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-coverage-r2-20261020",
+            "digest": "sha256:67fd7d50461b45ab855ea1c66fe48f926c95c691d6e27834e4e780951e599fcf",
+            "excerpt": "## Coverage (CB-C3 repair cycle 2, delta dd995111..7972fc64, opus/medium)\nN1 closed: the production-writer case refuses on a moved reader or writer location.\nC1 auto-fix conf 7: a check that reads the manifest beside BENCH_WRAPPER stays silent (14 tests, restored=yes). No row sets BENCH_WRAPPER to a worktree bin/ with the worktree build as the executable. CB60's catch clause names that bypass.\nCount 1.\n"
+          },
+          "axis": "Coverage",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "d0c62cc4413621aff8e8124a65b9f72a069555d2",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": [
+            "cbc3-coverage-confirm"
+          ]
         }
       ]
     }
@@ -2720,3 +2788,11 @@ Repair state: CB-C3 repair cycle 1 of 2 closed all nine findings. The confirming
 - Standards N2 (auto-fix, confidence 7): a `window.go` doc comment is stale after the reorder. The ticket 5 repair fixes it.
 - Spec N1 and N2 (auto-fix, confidence 5 and 4): two prose-only spec corrections go in the cycle 2 plan commit.
 - Standards N1 (auto-fix, confidence 7): `internal/worktree/build.go` still derives the manifest path. The ticket 6 charge takes it, because its Writes line holds that file.
+
+Cycle 2 of 2 closed Coverage N1, Standards N2, and Spec N1 and N2. Its round raised one blocking item:
+
+- C1 (auto-fix, confidence 7): a check that reads the manifest beside `BENCH_WRAPPER` passes every test. Row CB60 names that bypass, so CB60 is only partly met.
+
+Repair extension: the bounded allowance is spent. The run's --auto-approve option is the reviewer's advance approval of repair rounds past the allowance. It permits one test-only cycle 3 for C1, with one `TestCandidateCheck` row. The extension adds a repair round to the implementation retro.
+
+Advice for the ticket 6 charge: two `window.go` comments are narrower than the code.
