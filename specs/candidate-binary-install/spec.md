@@ -41,9 +41,6 @@ Harder chunks: CB-C2.
 3. As a spec author, I want a spec with no declaration to keep today's behavior, so that most builds pay nothing.
 4. As an orchestrator, I want a malformed declaration to refuse with a named face, so that a typing error does not disable the guard.
 5. As an orchestrator, I want an unknown record name to refuse, so that only the two strictly decoded shared records take the obligation.
-6. As a maintainer, I want each record owner to answer whether its own decoder knows a field path, so that the answer has one source.
-7. As a maintainer, I want that answer to come from the record's own struct tags, so that a new field needs no second registration.
-8. As a maintainer, I want a path through a list field to resolve through the list element, so that a nested field such as `commitment.gaps.chunk` resolves.
 
 ### Install the candidate
 
@@ -119,13 +116,13 @@ Harder chunks: CB-C2.
 - **Integration target:** the first bound assignment of the declared build in the open-build derivation.
 - **Held install:** a declared build exists, and the primary broker manifest digest equals the primary executable's digest. This predicate also holds from `bench commitment start` until the install, while the manifest still binds `main`, because no cheap predicate tells an installed candidate from a stale `main`.
 
-### Declaration and field knowledge
+### The declaration
 
 The `internal/spec` header scan owns the declaration, beside `Status:` and `Roadmap:`. It returns the parsed items or a parse error. A spec with no line returns an empty list.
 
 The parser refuses an empty item, an unknown record name, an empty path segment, and a duplicate item. The refusal face is `persisted-fields-invalid`, and each consumer prints it.
 
-Each record owner exports one predicate that reports whether a field path resolves through its root type. `internal/intent/ledger` answers for `intent-ledger`, and `internal/reviewrecord` answers for `review-record`. The predicate walks the `json` struct tags by reflection, descends through pointers and slice elements, and refuses a path through a non-struct. The struct tags are the one source.
+No production code tests whether an executable knows a declared field, so the spec adds no field predicate. The record structs stay the one source of their fields.
 
 ### The candidate check
 
@@ -133,7 +130,7 @@ One check owner serves the three ledger writers of a declared build. It lives be
 
 The check does not test whether the running executable knows a declared field. Before the ticket that adds a field commits, the installed candidate cannot know that field, and it also cannot write it. The digest test alone stops an uninstalled or rebuilt executable from writing the shared ledger. After the field's ticket commits, the orchestrator reinstalls, because a rebuilt worktree copy no longer matches the manifest digest.
 
-The face's route is `bench worktree build --install <target>` from the primary checkout, then a rerun of the refused command. When the ledger reads, the target label is the integration target of the declared build, whatever worktree the caller runs in. When the ledger does not read, the route prints the literal slot `<target>`.
+The face's route is an instruction to run `bench worktree build --install <target>` from the primary checkout, then the rerun of the refused command. When the ledger reads, the target label is the integration target of the declared build, whatever worktree the caller runs in. When the ledger does not read, the route prints the literal slot `<target>`.
 
 Before the install, the `main` executable is the manifest-bound broker, so the check passes on it. That pass is safe, because `main` code cannot write a field that it does not know. The guidance step owns the install before the first dispatch.
 
@@ -195,7 +192,7 @@ The verb refuses before any write in this order:
 3. The running executable's strict ledger read fails. This refusal comes before the open-build test, because that test reads the ledger too.
 4. The ledger holds an open build of any outcome, because the clear is ledger-wide. The refusal names `bench commitment block` as the route that ends the build. It also tells the operator to run the restore before `bench worktree release`, because a recovery install needs the target worktree.
 
-Then the verb copies the ledger to `$BENCH_HOME/restore/<repo-key>/` and refuses when the copy fails. One strict ledger transaction then removes each declared field that the ledger holds. A declared field that the ledger does not hold needs no change, because the build stopped before any writer wrote it. For a nested path such as `commitment.gaps.chunk`, the transaction removes the last segment from each element along the path. Then the verb rebuilds the primary `dist/bench` from the primary sources through the existing rebuild owner. Last, it runs `doctor --fix` under the rebuilt executable with the install's child environment, so `main` code authors the broker manifest, the shim, and the pre-push hook again.
+Then the verb copies the ledger to `$BENCH_HOME/restore/<repo-key>/` and refuses when the copy fails. One raw-field removal in the ledger owner then removes each declared field that the ledger holds, under the ledger lock, and it runs the strict decode on the result before the replace. A declared field that the ledger does not hold needs no change, because the build stopped before any writer wrote it. For a nested path such as `commitment.gaps.chunk`, the removal deletes the last segment from each element along the path. One removal serves every path, so no second path-to-field mapping exists. Then the verb rebuilds the primary `dist/bench` from the primary sources through the existing rebuild owner. Last, it runs `doctor --fix` under the rebuilt executable with the install's child environment, so `main` code authors the broker manifest, the shim, and the pre-push hook again.
 
 ### The ADR 0016 exception
 
@@ -215,8 +212,8 @@ Every chunk follows its predecessor's green checkpoint and its independent seman
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| CB-C1 / 1-declare-persisted-fields.md | A spec declaration resolves against the running executable's decoders | CB1–CB12 | TestPersistedFieldsHeader, TestLedgerKnownField, TestReviewRecordKnownField | no |
-| CB-C2 / 2-install-the-candidate.md, 3-hold-the-refresh.md, 4-land-through-the-installed-candidate.md | One verb installs the candidate as executable and broker, the refresh holds it, and the candidate lands its build | CB13–CB25, CB50–CB56, CB59 | TestBuildInstall, TestRefreshHoldsAnInstalledCandidate, TestCandidateInstallLandsANewLedgerField, TestCandidateInstallSurvivesAGapLanding | yes |
+| CB-C1 / 1-declare-persisted-fields.md | A spec declares its persisted fields on one header line | CB1–CB7 | TestPersistedFieldsHeader | no |
+| CB-C2 / 2-install-the-candidate.md, 3-hold-the-refresh.md | One verb installs the candidate as executable and broker, the refresh holds it, and the candidate lands its build | CB13–CB25, CB50–CB56, CB59 | TestBuildInstall, TestRefreshHoldsAnInstalledCandidate, TestCandidateInstallLandsANewLedgerField, TestCandidateInstallSurvivesAGapLanding | yes |
 | CB-C3 / 5-refuse-an-uninstalled-writer.md | Each guarded entry refuses on an executable that is not the installed candidate | CB26–CB36, CB57, CB60 | TestCandidateCheck, TestCheckpointPersistedFields, TestAssignmentPersistedFields, TestCandidateNotInstalledRoute | no |
 | CB-C4 / 6-restore-after-a-stopped-build.md | One verb restores `main` after a stopped build | CB37–CB43, CB49 | TestBuildRestore | no |
 | CB-C5 / 7-document-the-install-route.md | The ADR, the spec discipline, and the build phase name the install route | CB44–CB48, CB58 | prose check, guidance-prose-budgets, review-owned rows | no |
@@ -226,7 +223,7 @@ CB-C2 precedes CB-C3 and CB-C4, because the refusal route and the restore name t
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"CB-C1","tickets":["1-declare-persisted-fields.md"],"verification":[{"id":"spec","command":"bench test --package ./internal/spec"},{"id":"ledger","command":"bench test --package ./internal/intent/ledger"},{"id":"review","command":"bench test --package ./internal/reviewrecord"},{"id":"root-conformance","command":"bench test --check root-conformance"}]},{"id":"CB-C2","tickets":["2-install-the-candidate.md","3-hold-the-refresh.md","4-land-through-the-installed-candidate.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"system","command":"bench test --check system --run TestCandidateInstall"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"internal-conformance","command":"bench test --package ./internal/conformance"},{"id":"internal-intent","command":"bench test --package ./internal/intent"},{"id":"internal-usage","command":"bench test --package ./internal/usage"},{"id":"internal-commitment-repository","command":"bench test --package ./internal/commitment/repository"},{"id":"root-conformance","command":"bench test --check root-conformance"}]},{"id":"CB-C3","tickets":["5-refuse-an-uninstalled-writer.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/commitment/repository"},{"id":"manifest","command":"bench test --package ./internal/brokermanifest"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"record","command":"bench test --package ./internal/reviewrecord/..."},{"id":"routes","command":"bench test --package ./internal/refusalroute"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"internal-conformance","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"}]},{"id":"CB-C4","tickets":["6-restore-after-a-stopped-build.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"internal-commitment-repository","command":"bench test --package ./internal/commitment/repository"},{"id":"internal-conformance","command":"bench test --package ./internal/conformance"},{"id":"internal-intent","command":"bench test --package ./internal/intent"},{"id":"internal-usage","command":"bench test --package ./internal/usage"},{"id":"root-conformance","command":"bench test --check root-conformance"}]},{"id":"CB-C5","tickets":["7-document-the-install-route.md"],"verification":[{"id":"prose","command":"bench test --check prose"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}],"final_verification":[{"id":"system","command":"bench test --check system"},{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/candidate-binary-install/spec.md"}]}
+{"version":1,"chunks":[{"id":"CB-C1","tickets":["1-declare-persisted-fields.md"],"verification":[{"id":"spec","command":"bench test --package ./internal/spec"},{"id":"root-conformance","command":"bench test --check root-conformance"}]},{"id":"CB-C2","tickets":["2-install-the-candidate.md","3-hold-the-refresh.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"system","command":"bench test --check system --run TestCandidateInstall"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"internal-conformance","command":"bench test --package ./internal/conformance"},{"id":"internal-intent","command":"bench test --package ./internal/intent"},{"id":"internal-usage","command":"bench test --package ./internal/usage"},{"id":"internal-commitment-repository","command":"bench test --package ./internal/commitment/repository"},{"id":"root-conformance","command":"bench test --check root-conformance"}]},{"id":"CB-C3","tickets":["5-refuse-an-uninstalled-writer.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/commitment/repository"},{"id":"manifest","command":"bench test --package ./internal/brokermanifest"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"record","command":"bench test --package ./internal/reviewrecord/..."},{"id":"routes","command":"bench test --package ./internal/refusalroute"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"internal-conformance","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"}]},{"id":"CB-C4","tickets":["6-restore-after-a-stopped-build.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"internal-commitment-repository","command":"bench test --package ./internal/commitment/repository"},{"id":"internal-conformance","command":"bench test --package ./internal/conformance"},{"id":"internal-intent","command":"bench test --package ./internal/intent"},{"id":"internal-usage","command":"bench test --package ./internal/usage"},{"id":"root-conformance","command":"bench test --check root-conformance"}]},{"id":"CB-C5","tickets":["7-document-the-install-route.md"],"verification":[{"id":"prose","command":"bench test --check prose"},{"id":"budgets","command":"bench test --check guidance-prose-budgets"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}],"final_verification":[{"id":"system","command":"bench test --check system"},{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/candidate-binary-install/spec.md"}]}
 ```
 
 ## Testing decisions
@@ -236,7 +233,6 @@ A good test drives a real verb or a real exported predicate and observes its pri
 The engineering seams are:
 
 - the `internal/spec` header scan, with `Facts` and `metadata` as prior art;
-- the two record-owner predicates, with the strict decoders in `internal/intent/intent.go` and `internal/reviewrecord/parse.go` as prior art;
 - the one candidate check, which takes the executable path and the manifest as arguments;
 - the build verb in `internal/worktree/build.go`, with `TestExecRunsTheWorktreeDistBench` as prior art for a real worktree executable;
 - the checkpoint entry in `internal/gate/checkpoint.go` and the assignment entry in `internal/reviewrecord/recordcmd/assignment.go`, with the face registry in `internal/refusalroute`;
@@ -275,11 +271,6 @@ The system test is the gate seam that observes both incidents end to end. Its fi
 | CB5 | 5 | The parser refuses the record name `gate-evidence` with `persisted-fields-invalid` | planned TestPersistedFieldsHeader in internal/spec/persisted_test.go | A parser without the closed name set accepts any record |
 | CB6 | 4 | The parser refuses `intent-ledger:commitment..gaps` with `persisted-fields-invalid` | planned TestPersistedFieldsHeader in internal/spec/persisted_test.go | A parser that splits without a segment check accepts an empty segment |
 | CB7 | 4 | The parser refuses a duplicate item with `persisted-fields-invalid` | planned TestPersistedFieldsHeader in internal/spec/persisted_test.go | A parser that keeps duplicates passes this row |
-| CB8 | 6 | The ledger predicate resolves `commitment.gaps` | planned TestLedgerKnownField in internal/intent/ledger/fields_test.go | A predicate with a hand list omits the field |
-| CB9 | 8 | The ledger predicate resolves `commitment.gaps.chunk` through the slice element | planned TestLedgerKnownField in internal/intent/ledger/fields_test.go | A walker that stops at a slice refuses the nested path |
-| CB10 | 7 | The ledger predicate refuses `commitment.unknown` | planned TestLedgerKnownField in internal/intent/ledger/fields_test.go | A predicate that answers true for every path passes nothing here |
-| CB11 | 7 | The ledger predicate refuses `schema.extra` because `schema` is not a struct | planned TestLedgerKnownField in internal/intent/ledger/fields_test.go | A walker that ignores the field kind accepts the path |
-| CB12 | 6 | The review-record predicate resolves `folds` and refuses `foldz` | planned TestReviewRecordKnownField in internal/reviewrecord/fields_test.go | A predicate wired to the ledger type answers the wrong record |
 | CB13 | 9 | The install publishes the target's sealed executable bytes at the primary executable path | planned TestBuildInstall in internal/worktree/build_install_test.go | A verb that only builds the worktree leaves the primary bytes unchanged |
 | CB14 | 14 | The install leaves the worktree `dist/bench` and the primary `dist/bench` with one SHA-256 digest | planned TestBuildInstall in internal/worktree/build_install_test.go | Two separate builds can differ and break the digest match |
 | CB15 | 15 | After an install whose `doctor --fix` child starts beside a built worktree `dist/bench`, the manifest `path` is the primary executable and its digest is that executable's digest | planned TestCandidateInstallLandsANewLedgerField in internal/systemtest/candidate_install_test.go | A child that resolves the worktree copy binds a worktree path with the same digest |
@@ -293,7 +284,7 @@ The system test is the gate seam that observes both incidents end to end. Its fi
 | CB23 | 9 | After the install, `bench status` from the primary checkout exits 0 with a ledger that holds a `gaps` key | planned TestCandidateInstallLandsANewLedgerField in internal/systemtest/candidate_install_test.go | Without the install, the older primary executable refuses the ledger as in incident 1 |
 | CB24 | 27 | The installed candidate lands a build whose published tree holds a review record with a `folds` key | planned TestCandidateInstallLandsANewLedgerField in internal/systemtest/candidate_install_test.go | Without the install, the installed broker refuses the review record as in incident 2 |
 | CB25 | 28 | After that landing, the primary broker manifest digest equals the primary `dist/bench` digest | planned TestCandidateInstallLandsANewLedgerField in internal/systemtest/candidate_install_test.go | A refresh that rebuilds without the manifest leaves the next landing unauthenticated |
-| CB26 | 19 | The candidate check passes when the running digest equals the manifest digest and the running predicate does not resolve a declared path | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check that also tests field knowledge refuses every first dispatch of a declared build |
+| CB26 | 19 | The candidate check passes when the running digest equals the manifest digest and the declaration names a path that the current ledger type does not hold | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check that also tests field knowledge refuses every first dispatch of a declared build |
 | CB27 | 20 | The candidate check refuses with `candidate-not-installed` when the running digest differs from the manifest digest | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check without the digest test lets an uninstalled candidate write the shared ledger |
 | CB28 | 3 | The candidate check passes a spec with no declaration and an unrelated manifest digest | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check that always compares digests breaks every undeclared build |
 | CB29 | 20 | A declared chunk checkpoint on a mismatched digest refuses with `candidate-not-installed` and leaves the ledger bytes unchanged | planned TestCheckpointPersistedFields in internal/gate/checkpoint_persisted_test.go | A check placed after the gap write still writes the new key |
@@ -344,7 +335,7 @@ This spec adds no persisted field of its own, so its own build declares none.
 
 The audience is this repository only. A linked repository declares no Bench build inputs, so CB16 refuses the install there, and the declaration stays inert.
 
-Hostile inputs of the declaration attach to CB4–CB7: an empty item, an unknown record name, an empty segment, and a duplicate item. A path through a non-struct attaches to CB11.
+Hostile inputs of the declaration attach to CB4–CB7: an empty item, an unknown record name, an empty segment, and a duplicate item.
 
 The edges and their dispositions are:
 
@@ -400,7 +391,7 @@ The edges and their dispositions are:
 - New result labels: `held`.
 - Pin operators: digest rows compare exact SHA-256 strings; path rows compare canonical physical paths; refusal rows compare the exact face name.
 - Entry reads: each writer entry reads the primary manifest and the running executable; the check takes both values as injected arguments behind its entry.
-- Derived expectations: the field predicates answer from the struct tags, and the tests assert literal paths that the test author writes.
+- Derived expectations: the tests assert literal paths and digests that the test author writes.
 - Consolidated rules: one candidate check serves the three writer entries.
 - Quantified obligations: "each declared field that the ledger holds" applies at CB38, CB39, and CB49.
 - Workflow-step writes: the install writes the primary executable, its seal, the manifest, the shim, and the pre-push hook; the restore writes the ledger copy, the ledger, and the same five paths. No checkpoint digest reads these paths.
@@ -410,7 +401,7 @@ The edges and their dispositions are:
 | source clause | occurrence | rows or disposition |
 | --- | --- | --- |
 | A build that adds a persisted ledger or review-record field writes and lands through a binary that reads that field | `roadmap/FT419.md:1` | CB13–CB15, CB24, CB26–CB31 |
-| The strict decoder stays | `roadmap/FT419.md:8` | No decoder change; CB8–CB12 read the same struct tags |
+| The strict decoder stays | `roadmap/FT419.md:8` | No decoder change and no record version marker |
 | The checkpoints and the landing of a kit build run through the build's own candidate binary | `roadmap/FT419.md:8-9` | CB15, CB23, CB24, CB29, CB30 |
 | The spec names the pre-landing writer and the landing binary in its edge inventory | `roadmap/FT419.md:10-11` | Edge inventory above; CB45 |
 | BW-D checkpoint wrote `commitment.gaps`, and the `main` binary refused the ledger | `roadmap/FT419.md:16` | CB23, CB29, CB31, CB32 |
@@ -430,6 +421,10 @@ These items go beyond the literal decision source, and each one serves the decid
 Flag for reviewer veto: the 2026-10-20 answer placed the install before the build's first checkpoint. The gap close of `bench record assignment` writes the ledger at the first dispatch, before any checkpoint. This spec therefore places the install before the first ticket dispatch, which follows the source's "writes through a binary that reads that field". The route is unchanged.
 
 Flag for reviewer veto: the accepted spec anchored six rule sentences (CB44–CB47, CB58, CB59). The profile states that review owns rule wording and that the workflow-guidance family pins no rule sentence. These rows are therefore review-owned, and the build adds no anchor file. `.agents/commands/bench-implement-spec.md` sits at its prose budget of 95 lines, so its ticket keeps the file at 95 lines or asks the reviewer for a raise.
+
+Flag for reviewer veto: the accepted spec added a field predicate to each record owner (former stories 6–8 and rows CB8–CB12). After the digest-only repair, no production code consumed the predicates, so the slicing removed them as dead code.
+
+Flag for reviewer veto: the install's third refusal reproduces the wrapper's executable-resolution order in Go. `bin/bench.sh` is the one source of that order, so this refusal is a second copy of that knowledge. Without the refusal, CB36 still refuses every guarded write from a cache executable.
 
 Flag for reviewer veto: the 2026-10-20 hold decision names a manifest that "binds the installed candidate". The held-install predicate cannot tell an installed candidate from a stale `main`, so it also holds before the install. No ledger is at risk in that window.
 
