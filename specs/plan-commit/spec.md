@@ -245,6 +245,7 @@ No test in this spec swaps a package variable.
 - **Won't handle:** a linked repository's staged spec with no chunk table reds `chunk-rows` at build entry and stops the phase — the `craft-spec` template already requires the chunk table, so the spec author who adds the table is the in-scope caller.
 - **Won't handle:** a chunk-table acceptance cell that names a row of another spec's tag — the reader reds it as undeclared, and no staged spec does it.
 - **Won't handle:** a check that the chunk-table chunk IDs and tickets equal the completion-plan fence — `completion-plan` and `rows-owned` keep their current grading, and the criteria do not ask for it.
+- **Won't handle:** a `## Implementation chunks` heading or a pipe table inside a code fence — the coverage-map reader reads fenced lines the same way, so the staged `markdown-block-reader` spec is the in-scope caller for fence awareness in both readers.
 - **Won't handle:** a code admission of plan commits after a chunk tip — the reviewer answer of 2026-10-19 keeps the chain code unchanged, and the guidance routes such a commit to a refreeze or to the chunk gap.
 
 ## Out of scope
