@@ -12,6 +12,8 @@ The fixture copies the kit source and adds one new ledger field and one new revi
 
 `TestCandidateInstallLandsANewLedgerField` installs, writes the new ledger key through the candidate, lands the build through the unchanged land route, and reads the manifest and the primary executable after the landing. `TestCandidateInstallSurvivesAGapLanding` opens a chunk gap, lands an unrelated change through the broker, and reads the primary digest and `bench status` after that landing.
 
+Run the suite only through `bench test --check system --run TestCandidateInstall`, which sets `BENCH_KIT` to the tree under test and supplies the sealed run binary. Never set `BENCH_KIT` to the primary checkout, because that drops the system phase from the coverage census.
+
 This ticket adds no production code. A failure here that needs a production change goes back to ticket 2 or ticket 3 as a repair.
 
 ## Acceptance
