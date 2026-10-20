@@ -33,6 +33,8 @@ func TestPersistedFieldsHeader(t *testing.T) {
 		"intent-ledger:.gaps",
 		"intent-ledger:gaps.",
 		"intent-ledger:commitment. gaps",
+		"intent-ledger:commitment.\tgaps",
+		"intent-ledger:commitment. gaps",
 		"intent-ledger:a:b",
 		"intent-ledger:a b",
 		"intent-ledger:a, review-record:folds, intent-ledger:a",
