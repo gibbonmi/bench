@@ -121,7 +121,7 @@ The `internal/spec` header scan owns the declaration, beside `Status:` and `Road
 
 One exported reader in `internal/commitment/repository` reads the declaration of a bound spec at the default-branch tip, over the existing default-branch source read. The install, the held refresh, and the restore consume that one reader.
 
-The parser refuses an empty item, an unknown record name, an empty path segment, and a duplicate item. The refusal face is `persisted-fields-invalid`, and each consumer prints it.
+The parser refuses an empty item, an unknown record name, an empty path segment, a path segment that holds whitespace or a colon, a duplicate item, and a second unfenced `Persisted fields:` line. The refusal face is `persisted-fields-invalid`, and each consumer prints it.
 
 No production code tests whether an executable knows a declared field, so the spec adds no field predicate. The record structs stay the one source of their fields.
 
@@ -212,7 +212,7 @@ Every chunk follows its predecessor's green checkpoint and its independent seman
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| CB-C1 / 1-declare-persisted-fields.md | A spec declares its persisted fields on one header line | CB1–CB7 | TestPersistedFieldsHeader | no |
+| CB-C1 / 1-declare-persisted-fields.md | A spec declares its persisted fields on one header line | CB1–CB7, CB66, CB67 | TestPersistedFieldsHeader | no |
 | CB-C2 / 2-install-the-candidate.md, 3-hold-the-refresh.md | One verb installs the candidate as executable and broker, the refresh holds it, and the candidate lands its build | CB13–CB21, CB23–CB25, CB50–CB56, CB59, CB62, CB63 | TestBuildInstall, TestRefreshHoldsAnInstalledCandidate, TestCandidateInstallPublishesTheCandidate, TestCandidateInstallLandsItsNewFields, TestCandidateInstallSurvivesAGapLanding | yes |
 | CB-C3 / 5-refuse-an-uninstalled-writer.md | Each guarded entry refuses on an executable that is not the installed candidate | CB26–CB36, CB57, CB60, CB61, CB65 | TestCandidateCheck, TestCheckpointPersistedFields, TestAssignmentPersistedFields, TestCandidateNotInstalledRoute | no |
 | CB-C4 / 6-restore-after-a-stopped-build.md | One verb restores `main` after a stopped build | CB37–CB43, CB49, CB64 | TestBuildRestore | no |
@@ -322,6 +322,8 @@ The system test is the gate seam that observes both incidents end to end. Its fi
 | CB63 | 15 | After the publication, the install calls its child seam once with argv `<primary>/bin/bench.sh doctor --fix`, working directory the primary checkout, an environment without `BENCH_KIT` and `BENCH_WRAPPER`, and `BENCH_RUN_BINARY` set to the primary executable, and a failing child makes the install exit non-zero while the published set keeps the candidate bytes | planned TestBuildInstall in internal/worktree/build_install_test.go | The publication already writes a complete manifest, so a verb that omits the child or pins the wrong environment passes every other row |
 | CB64 | 31 | After the rebuild, the restore calls the same child seam once with the same argv, working directory, and environment, under the rebuilt executable | planned TestBuildRestore in internal/worktree/build_restore_test.go | The rebuild already rebinds the manifest, so a restore that omits the child leaves the candidate's shim and pre-push hook in place unseen |
 | CB65 | 20 | With no primary broker manifest, or one that does not read, the candidate check refuses with `candidate-not-installed` | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check that treats a missing manifest as a pass lets any executable write the shared ledger |
+| CB66 | 4 | The parser refuses `intent-ledger:commitment. gaps` and `intent-ledger:a:b` with `persisted-fields-invalid` | planned TestPersistedFieldsHeader in internal/spec/persisted_test.go | A parser without a segment character check accepts a segment that no JSON tag matches, and the restore then removes nothing |
+| CB67 | 4 | The parser refuses a spec with two unfenced `Persisted fields:` lines with `persisted-fields-invalid` | planned TestPersistedFieldsHeader in internal/spec/persisted_test.go | A last-wins scan lets a body line replace the reviewed header declaration |
 
 Not covered: story 38 — review-owned exclusion; FT140 owns the tolerant purge read.
 Not covered: story 39 — review-owned exclusion; `docs/known-issues.md` states the one-version-at-a-time rule.
@@ -338,7 +340,7 @@ This spec adds no persisted field of its own, so its own build declares none.
 
 The audience is this repository only. A linked repository declares no Bench build inputs, so CB16 refuses the install there, and the declaration stays inert.
 
-Hostile inputs of the declaration attach to CB4–CB7: an empty item, an unknown record name, an empty segment, and a duplicate item.
+Hostile inputs of the declaration attach to CB4–CB7, CB66, and CB67: an empty item, an unknown record name, an empty segment, a segment with whitespace or a colon, a duplicate item, and a second unfenced declaration line.
 
 The edges and their dispositions are:
 
