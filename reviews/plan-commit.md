@@ -855,7 +855,79 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "pc-c2-standards-1",
+          "performer": "claude:ft380-pc-c2-standards-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "98848e2a5a838b04e4faf261b386aaf772227292",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c2-standards-20261019",
+            "digest": "sha256:59838e55277d60c576e506082aa25ad4b561ea5fb8092d42ee516f8cd31e94ba",
+            "excerpt": "Standards, PC-C2 (base 7036994e0, tip f17f4b6c9).\nS1 (auto-fix, conf 7): bench-implement-spec.md:60 sentence 5 and :62 sentence 4 both state \"each source change except a record commit or a recorded fold ... takes a refreeze\"; collapse to one sentence naming both windows.\nS2 (ask-user, conf 5): bounded-repair-policy.md:48 \"and still takes a refreeze\" restates the implement-phase rule.\nS3 (auto-fix, conf 6): bench-review-implementation.md:97 names the base as the last recorded source tip, then \"that tip\" ambiguously.\nS4 (ask-user, conf 5): review_checkpoint_commits_test.go:49 copies the clause of reviewrecord/coverage.go:102 word for word.\nS5 (auto-fix, conf 6): registry_chunk_chain.go:79 comment line at about 150 columns.\nS6 (auto-fix, conf 4): CHANGELOG.md \"Plan-commit rules\" second bullet adds a change after its Before clause.\nCount 6. Worst S1.\n"
+          },
+          "axis": "Standards",
+          "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "tip": "f17f4b6c906929bde29b710917338bfae3895e02",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pc-c2-spec-1",
+          "performer": "claude:ft380-pc-c2-spec-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "98848e2a5a838b04e4faf261b386aaf772227292",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c2-spec-20261019",
+            "digest": "sha256:6fbfbe5959eb592fbd8e560b0ded7f7b58505b4fa274e1afe907f0d32c8fc83d",
+            "excerpt": "Spec, PC-C2 (base 7036994e0, tip f17f4b6c9). All 16 rows PC22-PC36, PC39 met; PC24 split across L60 and L62 still reads as one rule; the Writes: line holds every changed path.\nP1 (ask-user, conf 5): spec.md:248 names markdown-block-reader as the caller for fence awareness \"in both readers\", but that staged spec names no row for the new chunk-table reader.\nCount 1. Worst P1.\n"
+          },
+          "axis": "Spec",
+          "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "tip": "f17f4b6c906929bde29b710917338bfae3895e02",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pc-c2-coverage-1",
+          "performer": "claude:ft380-pc-c2-coverage-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "98848e2a5a838b04e4faf261b386aaf772227292",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c2-coverage-20261019",
+            "digest": "sha256:514bab850cbe942ea47fe651e81fc4e4727fd2610b9cf126d5165199f10ef8ac",
+            "excerpt": "Coverage, PC-C2 (base 7036994e0, tip f17f4b6c9). No gate-graded row has a needle-preserving bypass; no shipped text still states the retired clause.\nC1 (ask-user, conf 6): the red of the new mirror rule (registry_chunk_chain_test.go:18) is demonstrated but not recorded. Axis probe: omit the Forbid row at registry_chunk_chain.go:19; TestChunkChainAnchors failed at registry_chunk_chain_test.go:33; restored=yes.\nCount 1. Worst C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "tip": "f17f4b6c906929bde29b710917338bfae3895e02",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -922,3 +994,30 @@ The ticket 01 author ran `bench preflight build <slug> --plan-only` for each tic
 ## PC-C1 confirming round 1
 
 Repair cycle 1 of 2 repaired S2 at 7036994e0. The repair delta holds the repair-assignment plan commit, so the test-only confirmation refused and all three axes confirmed instead. Standards closed S2, and Spec and Coverage found no new finding. The C1 Won't-handle line goes into the chunk-gap plan commit before the ticket 03 dispatch.
+
+## PC-C2 initial review pickup
+
+Frozen pair: 7036994e0..f17f4b6c9. Repair cycles used: 0 of 2.
+
+## Standards
+
+Count: 6. Worst issue: S1.
+
+- S1, auto-fix on ticket 03, confidence 7: `.agents/commands/bench-implement-spec.md:60` and `:62` state the same refreeze rule for two windows. One sentence names both windows.
+- S2, no-op, confidence 5: spec row PC32 requires the repair-policy sentence.
+- S3, auto-fix on ticket 03, confidence 6: `.agents/commands/bench-review-implementation.md:97` uses "that tip" ambiguously.
+- S4, no-op, confidence 5: spec row PC31 moves the one exact-text test with the clause, and the ticket 03 author showed its red.
+- S5, auto-fix on ticket 03, confidence 6: `internal/anchors/registry_chunk_chain.go:79` holds a comment line of about 150 columns.
+- S6, auto-fix on ticket 03, confidence 4: the `CHANGELOG.md` "Plan-commit rules" second bullet adds a change after its Before clause.
+
+## Spec
+
+Count: 1. Worst issue: P1.
+
+- P1, no-op with a learning, confidence 5: `specs/markdown-block-reader/spec.md` names no row for the new chunk-table reader. A `bench learning` entry asks its staleness pass to add one.
+
+## Coverage
+
+Count: 1. Worst issue: C1.
+
+- C1, no-op, confidence 6: the axis probe recorded the red of the new mirror rule. With the Forbid row omitted, `TestChunkChainAnchors` failed, and the restore read yes.
