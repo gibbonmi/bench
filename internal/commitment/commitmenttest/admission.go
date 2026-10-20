@@ -192,6 +192,37 @@ func LedgerPath(t testing.TB, root string) string {
 	return path
 }
 
+// PlantCommitmentField writes field into the commitment object of the ledger at root,
+// through the raw JSON, as a writer whose schema adds field leaves the shared ledger. The
+// ledger keeps its file mode.
+func PlantCommitmentField(t testing.TB, root, field string) {
+	t.Helper()
+	path := LedgerPath(t, root)
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ledger map[string]any
+	if err := json.Unmarshal(data, &ledger); err != nil {
+		t.Fatal(err)
+	}
+	state, ok := ledger["commitment"].(map[string]any)
+	if !ok {
+		t.Fatalf("ledger %s holds no commitment object", data)
+	}
+	state[field] = "planted"
+	if data, err = json.Marshal(ledger); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, append(data, '\n'), info.Mode().Perm()); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // RequireLedgerKept runs act and fails unless the ledger at root keeps its exact bytes.
 func RequireLedgerKept(t testing.TB, root string, act func()) {
 	t.Helper()

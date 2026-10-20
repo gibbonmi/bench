@@ -1,7 +1,7 @@
 package worktree
 
 import (
-	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -46,7 +47,7 @@ func newInstallAssignment(t *testing.T, request string, shape installShape) owne
 	root := newWorktreeRepo(t)
 	writeGoMainFixture(t, root)
 	mustMkdirAll(t, wrapperDir(root), 0o755)
-	mustWrite(t, filepath.Join(wrapperDir(root), "bench.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
+	mustWrite(t, wrapperPath(root), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 	mustMkdirAll(t, filepath.Dir(filepath.Join(root, installSpec)), 0o755)
 	mustWrite(t, filepath.Join(root, installSpec), []byte("# install\n\nStatus: staged\n"+shape.declaration), 0o644)
 	gitRun(t, root, "add", "go.mod", "cmd", "scripts", "bin", installSpec)
@@ -85,12 +86,16 @@ func (r *doctorRecorder) join(dir string, argv, env []string, _ io.Writer) int {
 }
 
 // install runs the install form of the build verb on f's assignment, with the build and
-// the repair recorded, and with running as the executable that this process runs.
-func install(t *testing.T, f ownedAssignment, build *buildRecorder, doctor *doctorRecorder, running string) verbResult {
+// the repair recorded, and with running as the executable that this process runs. Each
+// edit then changes one more seam.
+func install(t *testing.T, f ownedAssignment, build *buildRecorder, doctor *doctorRecorder, running string, edits ...func(*joins)) verbResult {
 	t.Helper()
 	j := buildJoins(build)
 	j.resolveRunningBinary = func() (string, error) { return running, nil }
 	j.doctorChild = doctor.join
+	for _, edit := range edits {
+		edit(&j)
+	}
 	return runVerb(t, verbBuild, f.callWith(j, "--install", f.creation.Assignment.Label))
 }
 
@@ -105,7 +110,7 @@ func requireInstalled(t *testing.T, f ownedAssignment, body string) string {
 	builtDigest, err := brokermanifest.Digest(built)
 	mustNoError(t, err)
 	requireTest(t, digest == builtDigest, "primary digest %s, worktree digest %s; want one digest", digest, builtDigest)
-	fields, err := brokermanifest.Read(filepath.Join(wrapperDir(f.root), brokermanifest.Name))
+	fields, err := brokermanifest.Read(manifestPath(f.root))
 	mustNoError(t, err)
 	requireTest(t, fields["path"] == primary && fields["sha256"] == digest, "primary manifest = %v, want path %s and digest %s", fields, primary, digest)
 	return digest
@@ -115,22 +120,12 @@ func requireInstalled(t *testing.T, f ownedAssignment, body string) string {
 // ledger at root, as a build that adds a ledger field leaves the shared ledger.
 func plantCommitmentField(t *testing.T, root string) {
 	t.Helper()
-	path := commitmenttest.LedgerPath(t, root)
-	info, err := os.Stat(path)
-	mustNoError(t, err)
-	var ledger map[string]any
-	mustNoError(t, json.Unmarshal([]byte(fixtureFileText(t, path)), &ledger))
-	commitment, ok := ledger["commitment"].(map[string]any)
-	requireTest(t, ok, "ledger %v holds no commitment object", ledger)
-	commitment["fixture"] = "planted"
-	encoded, err := json.Marshal(ledger)
-	mustNoError(t, err)
-	mustWrite(t, path, append(encoded, '\n'), info.Mode().Perm())
+	commitmenttest.PlantCommitmentField(t, root, "fixture")
 	_, strict := intent.Read(root)
 	requireTest(t, strict != nil, "the strict read accepts the planted field, so the row grades nothing")
 }
 
-// TestBuildInstall is CB13, CB14, CB16 to CB20, CB54 to CB56, and CB63. The install form
+// TestBuildInstall is CB13, CB14, CB16 to CB21, CB54 to CB56, and CB63. The install form
 // builds the target, publishes its sealed bytes as the primary executable, and then runs
 // the doctor repair. Each refusal comes before the build and writes no file.
 func TestBuildInstall(t *testing.T) {
@@ -152,12 +147,12 @@ func TestBuildInstall(t *testing.T) {
 		digest := requireInstalled(t, f, candidate)
 		requireTest(t, freshness.Verify(f.creation.Path, primary) == nil, "the primary seal does not verify against the target tree: %v", freshness.Verify(f.creation.Path, primary))
 		requireTest(t, freshness.Verify(f.root, primary) != nil, "the primary seal verifies against the primary sources, want the target tree's sources")
-		table, err := toon.Table(installTable, []string{"worktree", "sha256", "manifest"}, [][]string{{f.creation.Assignment.ID, digest, filepath.Join(wrapperDir(f.root), brokermanifest.Name)}})
+		table, err := toon.Table(installTable, []string{"worktree", "sha256", "manifest"}, [][]string{{f.creation.Assignment.ID, digest, manifestPath(f.root)}})
 		mustNoError(t, err)
 		requireTest(t, r.stdout == table+"next[1]:\n  bench record assignment 'install' --help\n", "install printed %q, want the table %q and the dispatch of the bound spec", r.stdout, table)
 		requireTest(t, len(doctor.calls) == 1, "doctor calls = %d, want 1", len(doctor.calls))
 		call := doctor.calls[0]
-		wantArgv := []string{filepath.Join(f.root, "bin", "bench.sh"), "doctor", "--fix"}
+		wantArgv := []string{wrapperPath(f.root), "doctor", "--fix"}
 		requireTest(t, call.dir == f.root && slices.Equal(call.argv, wantArgv) && call.published == candidate, "doctor call = %+v, want %v in %s after the publication", call, wantArgv, f.root)
 		var selected []string
 		for _, entry := range call.env {
@@ -208,6 +203,9 @@ func TestBuildInstall(t *testing.T) {
 			}, want: func(ownedAssignment) string { return "declares no persisted field" }},
 			{name: "no default-branch copy", shape: installShape{inputs: true, deliverable: "specs/absent/spec.md"}, want: func(ownedAssignment) string { return "default-branch copy of specs/absent/spec.md" }},
 			{name: "an invalid declaration", shape: installShape{inputs: true, declaration: "Persisted fields: gate-evidence:x\n", deliverable: installSpec}, want: func(ownedAssignment) string { return spec.ErrPersistedFieldsInvalid.Error() }},
+			{name: "a retained assignment whose tree is gone", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) {
+				mustNoError(t, os.RemoveAll(f.creation.Path))
+			}, want: func(ownedAssignment) string { return refusalroute.Sentence(faceResetTreeMissing) }},
 		} {
 			t.Run(row.name, func(t *testing.T) {
 				t.Parallel()
@@ -223,7 +221,7 @@ func TestBuildInstall(t *testing.T) {
 				r := install(t, f, build, doctor, running)
 				requireTest(t, r.exit == 1 && strings.Contains(r.stderr, row.want(f)), "install = (%d, %q), want exit 1 naming %q", r.exit, r.stderr, row.want(f))
 				requireTest(t, len(build.calls) == 0 && len(doctor.calls) == 0, "build calls %d, doctor calls %d; want none", len(build.calls), len(doctor.calls))
-				for _, path := range []string{filepath.Dir(freshness.PublishedExecutable(f.root)), filepath.Join(wrapperDir(f.root), brokermanifest.Name)} {
+				for _, path := range []string{filepath.Dir(freshness.PublishedExecutable(f.root)), manifestPath(f.root)} {
 					_, err := os.Lstat(path)
 					requireTest(t, os.IsNotExist(err), "refused install left %s: %v", path, err)
 				}
@@ -260,13 +258,51 @@ func TestBuildInstall(t *testing.T) {
 		r := install(t, f, &buildRecorder{body: candidate, version: "1.2.3"}, doctor, primary)
 		requireTest(t, r.exit == 1 && strings.Contains(r.stderr, "publication refused"), "install = (%d, %q), want the publication refusal", r.exit, r.stderr)
 		requireTest(t, fixtureFileText(t, primary) == "earlier-executable" && fixtureFileText(t, primary+".seal") == "earlier-seal", "the failed publication left %q and seal %q", fixtureFileText(t, primary), fixtureFileText(t, primary+".seal"))
-		_, err := os.Lstat(filepath.Join(wrapperDir(f.root), brokermanifest.Name))
+		_, err := os.Lstat(manifestPath(f.root))
 		requireTest(t, os.IsNotExist(err) && len(doctor.calls) == 0, "manifest stat %v, doctor calls %d; want no manifest and no repair", err, len(doctor.calls))
 		entries, err := os.ReadDir(filepath.Dir(primary))
 		mustNoError(t, err)
 		for _, entry := range entries {
 			requireTest(t, entry.Name() == "bench" || entry.Name() == "bench.seal", "the failed publication left %s", entry.Name())
 		}
+	})
+	t.Run("a failed publication keeps an earlier manifest", func(t *testing.T) {
+		t.Parallel()
+		f := newInstallAssignment(t, "install-publication-keeps", declaredInstall)
+		primary := freshness.PublishedExecutable(f.root)
+		mustMkdirAll(t, filepath.Dir(primary), 0o755)
+		earlier := map[string]string{primary: "earlier-executable", primary + ".seal": "earlier-seal", manifestPath(f.root): "earlier-manifest"}
+		for path, body := range earlier {
+			mustWrite(t, path, []byte(body), 0o644)
+		}
+		doctor := &doctorRecorder{}
+		published := false
+		// The seam answers as the owner answers a failure after its executable write: the
+		// owner has already restored the earlier set, so only the install can change it.
+		failAfterWrite := func(j *joins) {
+			j.publishCandidate = func(string, string, string, string, string) error {
+				published = true
+				return errors.New("seal promotion failed after the executable write")
+			}
+		}
+		r := install(t, f, &buildRecorder{body: candidate, version: "1.2.3"}, doctor, primary, failAfterWrite)
+		requireTest(t, published && r.exit == 1 && strings.Contains(r.stderr, "publication refused"), "install = (%d, %q), want the publication refusal", r.exit, r.stderr)
+		for path, body := range earlier {
+			requireTest(t, fixtureFileText(t, path) == body, "the failed publication left %s = %q, want %q", path, fixtureFileText(t, path), body)
+		}
+		requireTest(t, len(doctor.calls) == 0, "doctor calls = %d, want no repair", len(doctor.calls))
+	})
+	t.Run("accepts a symlinked alias of the primary executable", func(t *testing.T) {
+		t.Parallel()
+		f := newInstallAssignment(t, "install-alias", declaredInstall)
+		primary := freshness.PublishedExecutable(f.root)
+		mustMkdirAll(t, filepath.Dir(primary), 0o755)
+		mustWrite(t, primary, []byte("earlier-executable"), 0o755)
+		alias := filepath.Join(t.TempDir(), "bench")
+		mustNoError(t, os.Symlink(primary, alias))
+		r := install(t, f, &buildRecorder{body: candidate, version: "1.2.3"}, &doctorRecorder{}, alias)
+		requireTest(t, r.exit == 0, "install under the alias %s = (%d, %q), want exit 0", alias, r.exit, r.stderr)
+		requireInstalled(t, f, candidate)
 	})
 	t.Run("a failed repair keeps the candidate published", func(t *testing.T) {
 		t.Parallel()

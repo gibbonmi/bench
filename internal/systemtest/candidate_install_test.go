@@ -3,7 +3,6 @@
 package systemtest
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -137,32 +136,6 @@ func (c candidateInstall) require(t *testing.T, dir string, args ...string) proc
 	return result
 }
 
-// plantLedgerField writes candidateField into the commitment state of the shared ledger, as
-// the candidate's own writer would.
-func (c candidateInstall) plantLedgerField(t *testing.T) {
-	t.Helper()
-	path := commitmenttest.LedgerPath(t, c.primary)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var ledger map[string]any
-	if err := json.Unmarshal(data, &ledger); err != nil {
-		t.Fatal(err)
-	}
-	commitment, ok := ledger["commitment"].(map[string]any)
-	if !ok {
-		t.Fatalf("ledger %s holds no commitment object", data)
-	}
-	commitment[candidateField] = "planted"
-	if data, err = json.Marshal(ledger); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, append(data, '\n'), 0o600); err != nil {
-		t.Fatal(err)
-	}
-}
-
 // plantRecordField writes candidateField into the build's review record, as the candidate's
 // own writer would, and commits it. The record's JSON object opens on the document's first
 // brace line.
@@ -198,7 +171,7 @@ func (c candidateInstall) landGapChange(t *testing.T) processResult {
 	commitmenttest.Write(t, gap.Worktree, gapChange, "package sanitize\n\n// gapChange marks an unrelated landing.\nconst gapChange = true\n")
 	systemGit(t, gap.Worktree, "add", "-A")
 	systemGit(t, gap.Worktree, "commit", "-qm", "an unrelated change")
-	c.plantLedgerField(t)
+	commitmenttest.PlantCommitmentField(t, c.primary, candidateField)
 	return c.run(t, c.primary, "worktree", "land", "--request", gapSlug, "--base", base, "--source-tip", systemGitOutput(t, gap.Worktree, "rev-parse", "HEAD"), "--spec", gapSlug, "-m", "land an unrelated change", gap.Worktree)
 }
 
@@ -292,7 +265,7 @@ func TestCandidateInstallPublishesTheCandidate(t *testing.T) {
 	if status := c.require(t, c.primary, "status"); strings.Contains(status.stdout, refusedLedger) {
 		t.Fatalf("main status before the plant = %q, want a ledger that reads", status.stdout)
 	}
-	c.plantLedgerField(t)
+	commitmenttest.PlantCommitmentField(t, c.primary, candidateField)
 	if status := c.run(t, c.primary, "status"); !strings.Contains(status.stdout, refusedLedger) {
 		t.Fatalf("main status over the candidate field = (%d, %q), want the main executable to refuse the ledger", status.code, status.stdout)
 	}

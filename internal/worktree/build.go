@@ -158,7 +158,7 @@ func installAttributed(attributed *string, j joins, root, target string, stdout,
 	if err != nil {
 		return printTargetRefusal(stderr, buildVerb, refusalError{refusal{detail: "publication refused: " + err.Error(), next: usage.WorktreeBuildInstallFor(targetAddress(target))}})
 	}
-	argv := []string{filepath.Join(wrapperDir(authority.primary), "bench.sh"), "doctor", "--fix"}
+	argv := []string{wrapperPath(authority.primary), "doctor", "--fix"}
 	if code := j.doctorChild(authority.primary, argv, installChildEnv(os.Environ(), executable), stderr); code != 0 {
 		detail := fmt.Sprintf("the doctor repair of the primary checkout exited %d; the candidate stays published", code)
 		return printTargetRefusal(stderr, buildVerb, refusalError{refusal{detail: detail, next: usage.WorktreeBuildInstallFor(targetAddress(target))}})
@@ -187,7 +187,7 @@ func installAuthority(j joins, root, target string) (installTarget, error) {
 	if err != nil {
 		return installTarget{}, refusalError{refusal{detail: "the intent ledger does not read: " + err.Error(), next: "bench status"}}
 	}
-	assignment, err := installAssignment(root, ledger.Assignments, target)
+	assignment, err := resolveAmong(root, ledger.Assignments, target, landingActiveState)
 	if err != nil {
 		return installTarget{}, err
 	}
@@ -222,22 +222,6 @@ func runsExecutable(j joins, executable string) (string, bool) {
 	return physical, err == nil && physical == want
 }
 
-// installAssignment resolves target among the assignments of the tolerant ledger read and
-// proves its identity bundle, as the strict resolution proves the bundle of a plain build.
-func installAssignment(root string, assignments []intent.Assignment, target string) (intent.Assignment, error) {
-	if !lineSafe(target) {
-		return intent.Assignment{}, errTargetControls
-	}
-	selected, err := selectAssignment(assignments, target)
-	if err != nil {
-		return intent.Assignment{}, err
-	}
-	if err := identityBundleRefusal(root, selected.Worktree, selected, landingActiveState); err != nil {
-		return intent.Assignment{}, err
-	}
-	return selected, nil
-}
-
 // boundDelivery is the delivery binding of the assignment id in ledger, if one exists.
 func boundDelivery(ledger intent.Ledger, id string) (intent.DeliveryBinding, bool) {
 	if ledger.Commitment == nil {
@@ -257,7 +241,7 @@ func boundDelivery(ledger intent.Ledger, id string) (intent.DeliveryBinding, boo
 // the target's own build bound in its manifest. The owner restores the earlier set on a
 // failure, so the staged copy is the only file that this step removes itself.
 func publishInstall(j joins, target installTarget, built string) (string, error) {
-	manifest, err := brokermanifest.Read(filepath.Join(wrapperDir(target.assignment.Worktree), brokermanifest.Name))
+	manifest, err := brokermanifest.Read(manifestPath(target.assignment.Worktree))
 	if err != nil {
 		return "", err
 	}
@@ -304,6 +288,12 @@ func stageCopy(source, executable string) (string, error) {
 // wrapperDir is the directory of a checkout's wrapper, which holds its broker manifest.
 func wrapperDir(root string) string { return filepath.Join(root, "bin") }
 
+// wrapperPath is a checkout's wrapper.
+func wrapperPath(root string) string { return filepath.Join(wrapperDir(root), "bench.sh") }
+
+// manifestPath is a checkout's broker manifest.
+func manifestPath(root string) string { return filepath.Join(wrapperDir(root), brokermanifest.Name) }
+
 // installChildEnv is the environment of the doctor repair that follows an install: base
 // without the wrapper routing, with executable selected. The child then resolves the
 // primary checkout's own kit, and the repair binds the executable that it runs.
@@ -330,7 +320,7 @@ func printInstalled(stdout, stderr io.Writer, target installTarget, executable s
 		fmt.Fprintf(stderr, "%s: digest the primary executable: %v\n", buildVerb, err)
 		return 1
 	}
-	manifest := filepath.Join(wrapperDir(target.primary), brokermanifest.Name)
+	manifest := manifestPath(target.primary)
 	table, err := toon.Table(installTable, []string{"worktree", "sha256", "manifest"}, [][]string{{target.assignment.ID, digest, manifest}})
 	if err != nil {
 		fmt.Fprintln(stderr, toon.RenderError(err))

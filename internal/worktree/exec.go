@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -201,7 +200,7 @@ func nameWorktree(stderr io.Writer, dir string, code int) int {
 func execEnv(dir, home string, extra []string) []string {
 	base := withHome(env.WithoutWrapperRouting(append(os.Environ(), extra...), runbinary.Env, "PWD"), home)
 	base = append(base, "PWD="+dir)
-	wrapper := filepath.Join(dir, "bin", "bench.sh")
+	wrapper := wrapperPath(dir)
 	if !isRegularFile(wrapper) {
 		return base
 	}
