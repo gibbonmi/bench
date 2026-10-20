@@ -396,6 +396,46 @@ func systemGitOutput(t *testing.T, repo string, args ...string) string {
 	return strings.TrimSpace(result.stdout)
 }
 
+// copyKitRepository copies every tracked and unignored file of the kit under test into a
+// new repository below the owner's root, and commits the copy on main. A fixture that
+// builds a real executable stands on it, because the copy holds the kit's own wrapper,
+// build script, and Go sources, and none of its build outputs.
+func copyKitRepository(t *testing.T, pattern string) string {
+	t.Helper()
+	listed := owner.runAt(owner.kit, nil, "git", "ls-files", "-z", "--cached", "--others", "--exclude-standard")
+	if listed.code != 0 {
+		t.Fatalf("list the kit files = (%d, %q)", listed.code, listed.stderr)
+	}
+	repo := landRouteRepo(t, pattern)
+	for _, name := range strings.Split(strings.TrimSuffix(listed.stdout, "\x00"), "\x00") {
+		source, target := filepath.Join(owner.kit, name), filepath.Join(repo, name)
+		info, err := os.Lstat(source)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err == nil {
+			err = os.MkdirAll(filepath.Dir(target), 0o755)
+		}
+		if err == nil && info.Mode()&os.ModeSymlink != 0 {
+			var link string
+			if link, err = os.Readlink(source); err == nil {
+				err = os.Symlink(link, target)
+			}
+		} else if err == nil {
+			var data []byte
+			if data, err = os.ReadFile(source); err == nil {
+				err = os.WriteFile(target, data, info.Mode().Perm())
+			}
+		}
+		if err != nil {
+			t.Fatalf("copy kit file %s: %v", name, err)
+		}
+	}
+	systemGit(t, repo, "add", "-A")
+	systemGit(t, repo, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "kit copy")
+	return repo
+}
+
 func systemTOONCell(value string) (string, error) {
 	value = strings.TrimSpace(value)
 	if strings.HasPrefix(value, `"`) {

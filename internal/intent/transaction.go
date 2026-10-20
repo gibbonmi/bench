@@ -90,6 +90,19 @@ func published(err error) bool {
 	return errors.As(err, &replaceErr) && replaceErr.Published
 }
 
+// ReadTolerant reads the ledger at root in the tolerant mode, outside a transaction, and
+// writes no byte. A field that this schema does not know therefore stops no lookup. The
+// mode drops each assignment record that it cannot decode, so a record that holds such a
+// field is absent from the answer.
+func ReadTolerant(root string) (Ledger, error) {
+	path, err := Address(root)
+	if err != nil {
+		return Ledger{}, err
+	}
+	ledger, _, err := readMode(path, TolerantRead)
+	return ledger, err
+}
+
 func readMode(path string, mode ReadMode) (Ledger, int, error) {
 	if mode == TolerantRead {
 		return readPathTolerant(path)

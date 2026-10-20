@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/spec"
 )
 
 // approvedSpec is the staged spec that the policy at root approves for outcome.
@@ -196,5 +197,29 @@ func TestClosersDropTheGapRecord(t *testing.T) {
 				t.Fatalf("gap records after the %s = %+v, want none", row.name, ledger.Commitment.Gaps)
 			}
 		})
+	}
+}
+
+// TestDefaultDeclarationReadsTheDefaultBranchCopy proves the one declaration reader reads
+// the default-branch tip and not the checkout, and that a missing copy and a malformed line
+// both refuse. The install, the held refresh, and the restore all read through it.
+func TestDefaultDeclarationReadsTheDefaultBranchCopy(t *testing.T) {
+	t.Parallel()
+	const path = "specs/declared/spec.md"
+	root := gittest.RepoOnBranch(t, "main")
+	commitmenttest.Write(t, root, path, "# declared\n\nStatus: staged\nPersisted fields: intent-ledger:commitment.gaps\n")
+	commitmenttest.Write(t, root, "specs/invalid/spec.md", "# invalid\n\nStatus: staged\nPersisted fields: gate-evidence:x\n")
+	commitmenttest.Commit(t, root, "declare")
+	commitmenttest.Write(t, root, path, "# declared\n\nStatus: staged\n")
+	store := commitrepo.Store{Root: root}
+	fields, err := store.DefaultDeclaration(path)
+	if err != nil || len(fields) != 1 || fields[0].Record != "intent-ledger" || strings.Join(fields[0].Path, ".") != "commitment.gaps" {
+		t.Fatalf("declaration = %+v, %v; want the default-branch item intent-ledger:commitment.gaps", fields, err)
+	}
+	if fields, err := store.DefaultDeclaration("specs/absent/spec.md"); err == nil {
+		t.Fatalf("declaration of an absent copy = %+v, want an error", fields)
+	}
+	if fields, err := store.DefaultDeclaration("specs/invalid/spec.md"); !errors.Is(err, spec.ErrPersistedFieldsInvalid) {
+		t.Fatalf("declaration of a malformed line = %+v, %v; want %v", fields, err, spec.ErrPersistedFieldsInvalid)
 	}
 }

@@ -51,11 +51,24 @@ func WorktreeUsage() string {
 	return "usage: bench worktree [--refresh] [objective...]\n       " + strings.Join(worktreeCommands, "\n       ") + "\n       " + WorktreeExecGate + "\n"
 }
 
+// WorktreeBuildInstall is the install form of the build verb. The build verb's help prints
+// it after WorktreeBuild, and WorktreeBuild stays the one form that each rebuild remedy fills.
+const WorktreeBuildInstall = "bench worktree build --install <target>"
+
 // WorktreeBuildFor is WorktreeBuild with target in its `<target>` slot, so each remedy that
 // names the build of one worktree fills the grammar one way. The caller quotes target when
 // its sink needs a shell word.
-func WorktreeBuildFor(target string) string {
-	return strings.Replace(WorktreeBuild, "<target>", target, 1)
+func WorktreeBuildFor(target string) string { return withTarget(WorktreeBuild, target) }
+
+// WorktreeBuildInstallFor is WorktreeBuildInstall with target in its `<target>` slot, under
+// the quoting rule of WorktreeBuildFor.
+func WorktreeBuildInstallFor(target string) string {
+	return withTarget(WorktreeBuildInstall, target)
+}
+
+// withTarget fills the `<target>` slot of one build grammar.
+func withTarget(grammar, target string) string {
+	return strings.Replace(grammar, "<target>", target, 1)
 }
 
 // PrimaryCheckoutRefusal is the one refusal a Bench write verb prints from the primary

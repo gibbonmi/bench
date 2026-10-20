@@ -306,3 +306,33 @@ func TestReauthorizeCompensatesOnTheTerminalWriteFailure(t *testing.T) {
 		}
 	})
 }
+
+// TestReadTolerantRecoversPastAnUnknownCommitmentField proves the tolerant read entry
+// answers the readable assignment and the delivery binding of a ledger that the strict read
+// refuses, drops the assignment record that it cannot decode, and takes no lock and writes no
+// byte. The install looks its bound assignment up through it.
+func TestReadTolerantRecoversPastAnUnknownCommitmentField(t *testing.T) {
+	root := newRepo(t)
+	path, err := Address(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	binding := `{"assignment":"` + strings.Repeat("b", 32) + `","request":"` + strings.Repeat("c", 64) + `","milestone":"m","outcome":"o","deliverable":"specs/x/spec.md","identity":"i"}`
+	stored := `{"schema":2,"entries":[` + seedEntryJSON + `],"assignments":[` + firstJSON + `,{"schema":"bench-assignment/v1","id":"x","added":1}],"commitment":{"bindings":[` + binding + `],"added":true}}` + "\n"
+	if err := os.WriteFile(path, []byte(stored), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Read(root); err == nil {
+		t.Fatal("the strict read accepts the added fields, so the row grades nothing")
+	}
+	ledger, err := ReadTolerant(root)
+	if err != nil || len(ledger.Assignments) != 1 || ledger.Assignments[0].ID != strings.Repeat("b", 32) || ledger.Commitment == nil || len(ledger.Commitment.Bindings) != 1 || ledger.Commitment.Bindings[0].Deliverable != "specs/x/spec.md" {
+		t.Fatalf("tolerant read = %+v, %v; want the readable assignment and the binding", ledger, err)
+	}
+	if after, err := os.ReadFile(path); err != nil || string(after) != stored {
+		t.Fatalf("ledger after the tolerant read = %q, %v; want the stored bytes", after, err)
+	}
+	if _, err := os.Lstat(lockOf(path)); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("lock stat = %v, want no lock file", err)
+	}
+}

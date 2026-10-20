@@ -22,6 +22,7 @@ const (
 	createTable               = "worktree_create"
 	releaseTable              = "worktree_release"
 	buildTable                = "worktree_build"
+	installTable              = "worktree_install"
 	cleanupTable              = "worktree_cleanup"
 	ignoredPathsTable         = "ignored_paths"
 	refusalPathsTable         = "refusal_paths"

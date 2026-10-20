@@ -10,17 +10,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // buildRecorder is the `buildSubject` join a row drives instead of a real compile. It records
 // every call and writes body at the output path, so a row can grade the arguments, the
-// artifact, or the failure without a Go toolchain.
+// artifact, or the failure without a Go toolchain. A recorder with a version also binds the
+// output in a broker manifest beside the worktree's wrapper, as the real build script does.
 type buildRecorder struct {
-	calls  [][2]string
-	body   string
-	result error
+	calls   [][2]string
+	body    string
+	version string
+	result  error
 }
 
 func (r *buildRecorder) join(_ context.Context, worktree, output string) error {
@@ -32,9 +35,18 @@ func (r *buildRecorder) join(_ context.Context, worktree, output string) error {
 		if err := os.MkdirAll(filepath.Dir(output), 0o755); err != nil {
 			return err
 		}
-		return os.WriteFile(output, []byte(r.body), 0o755)
+		if err := os.WriteFile(output, []byte(r.body), 0o755); err != nil {
+			return err
+		}
 	}
-	return nil
+	if r.version == "" {
+		return nil
+	}
+	if err := os.MkdirAll(wrapperDir(worktree), 0o755); err != nil {
+		return err
+	}
+	_, _, err := brokermanifest.Write(wrapperDir(worktree), output, r.version)
+	return err
 }
 
 // buildJoins is the seam set a row drives, with the recorder standing in for the build.

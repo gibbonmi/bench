@@ -6,6 +6,7 @@ import (
 	"os"
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -45,7 +46,14 @@ type joins struct {
 	// directory the build owner defaults to, so the manifest lands beside the wrapper. It
 	// is a seam because the default reaches a build script and a Go toolchain, and a
 	// fixture for that pair would make every output row wait on a real compile.
-	buildSubject  func(context.Context, string, string) error
+	buildSubject func(context.Context, string, string) error
+	// publishCandidate is the install's publication owner. Its operands are the seal
+	// root, the staged executable, the published executable, the manifest directory, and
+	// the version.
+	publishCandidate func(root, staged, executable, manifestDir, version string) error
+	// doctorChild runs the doctor repair that follows an install, with argv in dir under
+	// env, and answers its exit code. It is a seam because the default starts a process.
+	doctorChild   func(dir string, argv, env []string, stderr io.Writer) int
 	resetLayers   func(string, recoveryManifest) error
 	resetEnvelope func(string, resetPlan) (intent.Recovery, error)
 }
@@ -71,5 +79,7 @@ func defaultJoins() joins {
 		resetLayers:              restoreResetLayers,
 		resetEnvelope:            writeResetEnvelope,
 		buildSubject:             runbinary.BuildSubject,
+		publishCandidate:         freshness.Publish,
+		doctorChild:              runDoctorChild,
 	}
 }
