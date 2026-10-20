@@ -23,9 +23,17 @@ the phases. Green evidence keys to the prospective tree and the baseline
 runner identity. Only the broker validates evidence and performs the
 destination compare-and-swap; resume stays under the same owner.
 
+One exception applies. A kit build whose reviewer-approved spec declares a
+persisted-record field installs its own candidate as the repository executable
+and broker before its first ticket dispatch. The installed candidate then owns
+that build's landing, and the post-landing refresh holds it while that build is
+open. The reviewer's approval of the declaration is the trust root of this
+exception. The install is the only route by which candidate code gains landing
+authority.
+
 ## Consequence
 
-Candidate code cannot authorize its own publication, and a landing never
-rebuilds and re-runs itself. A broker-changing diff publishes as source
+Candidate code cannot authorize its own publication except through the install
+exception above, and a landing never rebuilds and re-runs itself. A broker-changing diff publishes as source
 only; the new broker takes authority at the next package install or repair,
 and the landing names that step.

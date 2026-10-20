@@ -53,6 +53,7 @@ Three checks run before the first review charge. Walk each restore or copy promi
 
 `craft-tdd` walks the canonical edge classes at the seam. Attach the profile's hostile-input checklist to that walk.
 Give each edge the reviewer deliberately excludes a one-line **Won't handle** with a surviving in-scope caller.
+When the `Persisted fields:` header declares a field, name each pre-landing writer, its guard, and the landing binary.
 ## Bootstrap authority before execution
 
 A trusted-execution or refusal-before-execution claim traces every executable hop, naming how each validator authenticates the next executable before launching the next executable. A path, record, digest, or executable cannot authenticate itself. Without an independent trust root the design is incomplete; see `references/bootstrap-authority.md`.
