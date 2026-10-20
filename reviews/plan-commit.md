@@ -1099,6 +1099,77 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "pc-c2-standards-2",
+          "performer": "claude:ft380-pc-c2-standards-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c2-standards-c1-20261019",
+            "digest": "sha256:8c42b67fe464f7ed9a56c9ab2c682f91c0b6f5601d272bdc87df5566cf1744fc",
+            "excerpt": "Standards confirming round 1, PC-C2 repair delta f17f4b6c9..384f96cae (check-current current=true in the worktree). S1, S3, S5, S6 closed. S7 (no-op, conf 3): bench-review-implementation.md:97 states the predecessor tip, then the fold override; same structure as before.\n"
+          },
+          "axis": "Standards",
+          "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "tip": "384f96caee92e8636c2085db93966167397fdff7",
+          "finding_ids": [
+            "S7"
+          ],
+          "supersedes": [
+            "pc-c2-standards-1"
+          ]
+        },
+        {
+          "id": "pc-c2-spec-2",
+          "performer": "claude:ft380-pc-c2-spec-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c2-spec-c1-20261019",
+            "digest": "sha256:b57c503579958d5397f5195be9d28d5e0f6a37eea88cec3b920c9c22d188631c",
+            "excerpt": "Spec confirming round 1, PC-C2 repair delta f17f4b6c9..384f96cae. PC24 and PC26 met.\nP2 (auto-fix on ticket 03, conf 7): bench-implement-spec.md:60 \"Before a chunk's green checkpoint or after the last chunk's freeze, each source change except a record commit or a recorded fold takes a refreeze.\" drops PC23 \"moves the chunk tip\" and PC25 \"of that chunk\".\nP3 (no-op, conf 3): bench-review-implementation.md:97 base wording slightly loose but correct.\n"
+          },
+          "axis": "Spec",
+          "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "tip": "384f96caee92e8636c2085db93966167397fdff7",
+          "finding_ids": [
+            "P2",
+            "P3"
+          ],
+          "supersedes": [
+            "pc-c2-spec-1"
+          ]
+        },
+        {
+          "id": "pc-c2-coverage-2",
+          "performer": "claude:ft380-pc-c2-coverage-c1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c2-coverage-c1-20261019",
+            "digest": "sha256:5e6cef52dafea1078f3df6a87e44964917c5972c9312b06e89acdbf1d5e1bde4",
+            "excerpt": "Coverage confirming round 1, PC-C2 repair delta f17f4b6c9..384f96cae. PC30, PC31, PC34 (95 of 95 lines), PC36 hold; the comment rewrap changes no needle or row. No new finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "tip": "384f96caee92e8636c2085db93966167397fdff7",
+          "finding_ids": [],
+          "supersedes": [
+            "pc-c2-coverage-1"
+          ]
         }
       ]
     }
@@ -1206,3 +1277,7 @@ Count: 1. Worst issue: P1.
 Count: 1. Worst issue: C1.
 
 - C1, no-op, confidence 6: the axis probe recorded the red of the new mirror rule. With the Forbid row omitted, `TestChunkChainAnchors` failed, and the restore read yes.
+
+## PC-C2 confirming round 1
+
+Repair cycle 1 of 2 closed S1, S3, S5, and S6 at 384f96cae. Coverage found no new finding. Spec found P2, an auto-fix on ticket 03 for repair cycle 2. The merged refreeze sentence at `.agents/commands/bench-implement-spec.md:60` drops two row phrases. These are "moves the chunk tip" (PC23) and "of that chunk" (PC25). S7 and P3 are no-ops about the review step 1 base wording.
