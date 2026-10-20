@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/candidate-binary-install/spec.md",
-  "plan_digest": "sha256:0c508811425128eb96494093745f4074bfedd49a4b0941685db08436845bf193",
+  "plan_digest": "sha256:a89a46a8cd89fac2ba14e0b4e4a22376282c6b7fd0fb1a2df12ff2fc13a967fc",
   "implementation_session": "",
   "chunks": [
     {
@@ -3101,6 +3101,21 @@
     {
       "from": "sha256:2938a66ff05b5a6ab30332163ab39e2477b3f2c39a0989f089687b0f0ad93bb5",
       "to": "sha256:0c508811425128eb96494093745f4074bfedd49a4b0941685db08436845bf193",
+      "chunk_ids": {
+        "CB-C1": [
+          "CB-C1"
+        ],
+        "CB-C2": [
+          "CB-C2"
+        ],
+        "CB-C3": [
+          "CB-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0c508811425128eb96494093745f4074bfedd49a4b0941685db08436845bf193",
+      "to": "sha256:a89a46a8cd89fac2ba14e0b4e4a22376282c6b7fd0fb1a2df12ff2fc13a967fc",
       "chunk_ids": {
         "CB-C1": [
           "CB-C1"
