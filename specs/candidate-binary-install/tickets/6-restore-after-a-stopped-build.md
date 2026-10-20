@@ -23,6 +23,8 @@ Then copy the ledger to `$BENCH_HOME/restore/<repo-key>/`, with `poolkey.Key` as
 
 Last, rebuild the primary `dist/bench` through the existing `buildSubject` seam, and run `doctor --fix` under the rebuilt executable with ticket 2's child environment. Raise the package test-count pin by one for each new top-level test.
 
+Two items from the CB-C3 review also land here, because this ticket writes both files. First, collapse `wrapperDir` and `manifestPath` in `internal/worktree/build.go` onto `brokermanifest.Path`, so one source owns the primary manifest location. Second, correct two `internal/commitment/repository/window.go` comments. The `CheckEntry` doc omits the case where the primary checkout does not resolve. The declared-build count comment says only that an unreadable ledger lists no build.
+
 ## Acceptance
 
 - [ ] `TestBuildRestore` shows the ledger copy under `$BENCH_HOME/restore/<repo-key>/` before the ledger changes (CB37).
@@ -31,6 +33,7 @@ Last, rebuild the primary `dist/bench` through the existing `buildSubject` seam,
 - [ ] The restore refuses before any write on a failed strict ledger read, on an open build whose chunk gap is open, and on a spec with no declaration (CB41, CB42, CB43).
 - [ ] After the rebuild, the restore calls the same child seam once with ticket 2's argv, working directory, and environment, under the rebuilt executable (CB64).
 - [ ] The restore of a spec whose declared field the ledger does not hold completes and leaves a verified primary executable (CB49).
+- [ ] `build.go` derives the primary manifest location only through `brokermanifest.Path`, and the two `window.go` comments match the code.
 
 ## Checkpoint verification
 
