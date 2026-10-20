@@ -25,6 +25,16 @@ func TestCandidateNotInstalledRoute(t *testing.T) {
 	}
 }
 
+// TestDeclaredBuildsOverlapRoute is the route of CB69. The reviewer ends one of the open
+// declared builds, and the caller's re-run follows.
+func TestDeclaredBuildsOverlapRoute(t *testing.T) {
+	const rerun = "bench record --in 'build' assignment 'example'"
+	route := New(DeclaredBuildsOverlap, Facts{Values: map[string]string{FactRerun: rerun}}).Route
+	if want := "reviewer: bench commitment block --outcome <id> --reason <text>; then " + rerun; route != want {
+		t.Fatalf("declared-builds-overlap route:\n got %q\nwant %q", route, want)
+	}
+}
+
 // TestRouteRendering pins the rendered route of injected faces, so each case controls its
 // own steps and facts. Each expectation spells the route from the declared steps and the
 // fixture facts. It covers RR05, RR06, and RR13.

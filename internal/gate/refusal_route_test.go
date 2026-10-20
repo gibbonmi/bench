@@ -221,6 +221,7 @@ func gateFaceFixtures() []gateFaceFixture {
 		repairFixture(record),
 		dirtyFixture(record),
 		candidateFixture(),
+		overlapFixture(),
 		{
 			// The spec drops its staged status, which only the reviewer restores.
 			face:     "checkpoint-composition",

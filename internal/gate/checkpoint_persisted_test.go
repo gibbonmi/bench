@@ -5,12 +5,12 @@ package gate_test
 import (
 	"bytes"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/brokermanifest"
+	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -23,11 +23,11 @@ import (
 // holds.
 const declaredBody = recordtest.Body + "Persisted fields: intent-ledger:commitment.fixture\n"
 
-// declaredBuild is the recorded first chunk of a plan of chunks chunks whose spec declares a
-// persisted field, in the checkout of the assignment of label, which binds the build. The
-// primary checkout declares Bench build inputs, and its broker manifest binds an installed
-// candidate that is not this test binary. It answers the build fixture and the primary
-// checkout.
+// declaredBuild is a recorded first chunk in the checkout of the assignment of label, which
+// binds the build. The plan holds as many chunks as the chunks argument states, and its spec
+// declares a persisted field. The primary checkout declares Bench build inputs, and its
+// broker manifest binds an installed candidate that is not this test binary. It answers the
+// build fixture and the primary checkout.
 func declaredBuild(t *testing.T, label string, chunks int) (*recordtest.Fixture, string) {
 	t.Helper()
 	t.Setenv("BENCH_HOME", t.TempDir())
@@ -40,20 +40,64 @@ func declaredBuild(t *testing.T, label string, chunks int) (*recordtest.Fixture,
 	build.Root = commitmenttest.BindBuild(t, f.Root, label, recordtest.Spec)
 	commitmenttest.Write(t, primary, freshness.BuildInputsManifest, "cmd\n")
 	commitmenttest.Write(t, primary, "dist/bench", "installed candidate\n")
-	install(t, primary, freshness.PublishedExecutable(primary))
+	commitmenttest.BindManifest(t, primary, freshness.PublishedExecutable(primary))
 	return &build, primary
 }
 
-// install binds executable in the broker manifest of the primary checkout, as the install's
-// doctor repair does.
-func install(t *testing.T, primary, executable string) {
+// installRunning binds this test binary in the broker manifest of the primary checkout, as
+// the operator's install binds the running executable.
+func installRunning(t *testing.T, primary string) {
 	t.Helper()
-	dir := filepath.Join(primary, "bin")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	running, err := os.Executable()
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := brokermanifest.Write(dir, executable, "0.0.0"); err != nil {
+	commitmenttest.BindManifest(t, primary, running)
+}
+
+// openSecondDeclaredBuild approves a second outcome in parallel with the build of the
+// fixture, with a spec that declares a persisted field, and starts it in the checkout of a
+// new assignment. It answers the second outcome.
+func openSecondDeclaredBuild(t *testing.T, primary string) string {
+	t.Helper()
+	const outcome, path = "second", "specs/second/spec.md"
+	commitmenttest.Write(t, primary, path, declaredBody)
+	commitmenttest.EditPolicy(t, primary, func(policy *commitment.Policy) {
+		source := commitment.SourceBinding{ID: "second-spec", Path: path, Identity: commitment.Identity([]byte(declaredBody))}
+		policy.Milestones[0].Outcomes = append(policy.Milestones[0].Outcomes, commitment.Outcome{ID: outcome,
+			Criteria: []commitment.Criterion{{ID: "second.done", Text: "The second delivery is accepted."}}, Deliverables: []commitment.DeliveryBinding{{Source: source}}})
+		policy.ParallelGrants = []commitment.ParallelGrant{{Outcomes: []string{commitmenttest.DeliveryOutcome, outcome}}}
+	})
+	commitmenttest.Commit(t, primary, "approve a second declared build")
+	checkout := commitmenttest.Assignment(t, primary, "gate-overlap-second")
+	if err := (commitrepo.Store{Root: checkout}).Start(outcome, "gate-overlap-second", path); err != nil {
 		t.Fatal(err)
+	}
+	return outcome
+}
+
+// overlapFixture is the gate face walk's overlap fixture: the build of the fixture runs the
+// installed candidate, and a second declared build is open. The reviewer ends the second
+// build, which the fixture carries out by blocking its outcome.
+func overlapFixture() gateFaceFixture {
+	const label = "gate-overlap"
+	var primary, second string
+	return gateFaceFixture{
+		face:     "declared-builds-overlap",
+		args:     chunkArgs,
+		contains: routetest.ReviewerMarker + "bench commitment block --outcome ",
+		build: func(t *testing.T) gateSet {
+			var f *recordtest.Fixture
+			f, primary = declaredBuild(t, label, 2)
+			installRunning(t, primary)
+			second = openSecondDeclaredBuild(t, primary)
+			return gateSet{f: f, label: label}
+		},
+		carry: map[int]func(*testing.T, gateSet){0: func(t *testing.T, _ gateSet) {
+			if err := (commitrepo.Store{Root: primary}).Block(second, "one primary executable serves one candidate"); err != nil {
+				t.Fatal(err)
+			}
+		}},
 	}
 }
 
@@ -73,13 +117,7 @@ func candidateFixture() gateFaceFixture {
 			f, primary = declaredBuild(t, label, 2)
 			return gateSet{f: f, label: label}
 		},
-		carry: map[int]func(*testing.T, gateSet){0: func(t *testing.T, _ gateSet) {
-			running, err := os.Executable()
-			if err != nil {
-				t.Fatal(err)
-			}
-			install(t, primary, running)
-		}},
+		carry: map[int]func(*testing.T, gateSet){0: func(t *testing.T, _ gateSet) { installRunning(t, primary) }},
 	}
 }
 

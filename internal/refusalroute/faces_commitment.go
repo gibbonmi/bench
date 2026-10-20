@@ -106,7 +106,7 @@ var commitmentFaces = []Face{
 	},
 }
 
-// CommitRerun renders the caller's own commit re-run over values: the label and the
-// arguments that the commit composed. A commitment face whose route ends with the printing
-// verb's re-run reads it, so the commit supplies its own in the form its own faces print.
-func CommitRerun(values map[string]string) string { return commitRerun.render(factsFill(values)) }
+// CommitRerun renders the caller's own commit re-run over values. A commitment face whose
+// route ends with the printing verb's re-run reads it, so the commit supplies its own in the
+// form its own faces print.
+func CommitRerun(values map[string]string) string { return renderRerun(commitRerun, values) }

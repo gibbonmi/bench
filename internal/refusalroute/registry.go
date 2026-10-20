@@ -170,15 +170,25 @@ func Arg(slot, value string) string { return quoted(slot, value) }
 // rerun ends a route with the caller's own command, so one paste finishes the recovery.
 var rerun = Command(Composed(FactRerun))
 
-// recordRerun re-runs the caller's own record form in the worktree that the label fact
-// addresses. The record grammar puts the form first, so the raising site composes the
-// arguments from the form, the slug, and the caller's flags.
-var recordRerun = TreeCommand("bench record", Fact(FactLabel), Composed(FactArguments))
+// callerRerun re-runs the caller's own call of verb in the worktree that the label fact
+// addresses. The raising site composes the arguments, because only it holds the caller's
+// flags and paths.
+func callerRerun(verb string) Step {
+	return TreeCommand(verb, Fact(FactLabel), Composed(FactArguments))
+}
 
-// RecordRerun renders the caller's own record re-run over values: the label and the
-// arguments that the record verb composed. A face whose route ends with the printing verb's
-// re-run reads it, so a refused record form re-runs itself and never names another verb.
-func RecordRerun(values map[string]string) string { return recordRerun.render(factsFill(values)) }
+// renderRerun renders the caller's re-run step over values: the label and the arguments
+// that the printing verb composed. A face whose route ends with the printing verb's re-run
+// reads the result.
+func renderRerun(step Step, values map[string]string) string { return step.render(factsFill(values)) }
+
+// recordRerun re-runs the caller's own record form. The record grammar puts the form first,
+// so the raising site composes the arguments from the form, the slug, and the caller's flags.
+var recordRerun = callerRerun("bench record")
+
+// RecordRerun renders the caller's own record re-run over values, so a refused record form
+// re-runs itself and never names another verb.
+func RecordRerun(values map[string]string) string { return renderRerun(recordRerun, values) }
 
 // commitAt commits the operator's repair in the worktree that the named label fact
 // addresses. Every face whose repair is the agent's own commit names this one step.

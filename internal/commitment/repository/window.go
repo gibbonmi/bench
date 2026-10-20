@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/commitment"
@@ -34,46 +34,55 @@ func (store Store) HoldsOpenBuild() (bool, error) {
 	return len(builds) > 0, err
 }
 
-// DeclaredBuild reports whether the ledger at the store root holds a declared build, which
-// is an open build whose bound spec declares a persisted field at the default-branch tip. It
-// answers that build's integration target. A declaration that does not parse counts as
-// none, because the install refuses that spec, so no candidate can be installed for it.
+// DeclaredBuild reports whether the ledger at the store root holds a declared build, and
+// answers the integration target of the first one.
 func (store Store) DeclaredBuild() (intent.Assignment, bool, error) {
-	builds, err := store.readOpenBuilds()
-	if err != nil {
+	builds, err := store.declaredBuilds()
+	if err != nil || len(builds) == 0 {
 		return intent.Assignment{}, false, err
 	}
+	return builds[0].target, true, nil
+}
+
+// declaredBuilds lists the declared builds of the ledger at the store root, in claim order.
+// A declared build is an open build whose bound spec declares a persisted field at the
+// default-branch tip. A declaration that does not parse counts as none, because the install
+// refuses that spec, so no candidate can be installed for it.
+func (store Store) declaredBuilds() ([]openBuild, error) {
+	builds, err := store.readOpenBuilds()
+	if err != nil {
+		return nil, err
+	}
+	var declared []openBuild
 	for _, build := range builds {
 		fields, err := store.DefaultDeclaration(build.deliverable)
 		if errors.Is(err, spec.ErrPersistedFieldsInvalid) {
 			continue
 		}
 		if err != nil {
-			return intent.Assignment{}, false, err
+			return nil, err
 		}
 		if len(fields) > 0 {
-			return build.target, true, nil
+			declared = append(declared, build)
 		}
 	}
-	return intent.Assignment{}, false, nil
+	return declared, nil
 }
 
 // CheckEntry is the candidate check of a guarded entry in the checkout at root, over the
 // declaration of the spec at path in the commit that HEAD names and the running executable.
 // A spec that does not read, and a declaration that does not parse, refuse with their cause.
 func CheckEntry(root, path string) error {
-	data, err := git.ReadTreeFile(root, "HEAD", path)
-	if err != nil {
-		return fmt.Errorf("read the declaration of %s at HEAD: %w", path, err)
-	}
-	declaration, err := spec.PersistedFields(data)
-	if err != nil {
-		return err
-	}
 	// An executable that does not resolve leaves no path, which no digest reads, so the
 	// check refuses it.
 	executable, _ := os.Executable()
-	return CheckCandidate(declaration, executable, root)
+	return checkCandidate(executable, root, func() ([]spec.PersistedField, error) {
+		data, err := git.ReadTreeFile(root, "HEAD", path)
+		if err != nil {
+			return nil, fmt.Errorf("read the declaration of %s at HEAD: %w", path, err)
+		}
+		return spec.PersistedFields(data)
+	})
 }
 
 // CheckCandidate refuses a guarded write of a declared build unless executable is the
@@ -82,42 +91,72 @@ func CheckEntry(root, path string) error {
 // from root itself, because a worktree's own wrapper directory can hold a manifest of the
 // worktree executable. An undeclared spec, and a repository that declares no Bench build
 // inputs, pass. The check compares digests only: an executable that knows a declared field
-// but is not the installed bytes still refuses.
+// but is not the installed bytes still refuses. While more than one declared build is open,
+// no executable is the installed candidate of each, so the check refuses before the digest
+// test.
 func CheckCandidate(declaration []spec.PersistedField, executable, root string) error {
+	return checkCandidate(executable, root, func() ([]spec.PersistedField, error) { return declaration, nil })
+}
+
+// checkCandidate is CheckCandidate over the declaration that declare reads. A repository
+// without Bench build inputs keeps the declaration inert, so the check calls declare only
+// after the build-inputs test.
+func checkCandidate(executable, root string, declare func() ([]spec.PersistedField, error)) error {
+	primary, located := git.PrimaryCheckout(root)
+	if located == nil && !freshness.DeclaresBuildInputs(primary) {
+		return nil
+	}
+	declaration, err := declare()
+	if err != nil {
+		return err
+	}
 	if len(declaration) == 0 {
 		return nil
 	}
-	primary, err := git.PrimaryCheckout(root)
-	if err != nil {
-		return candidateNotInstalled(root, fmt.Errorf("the primary checkout does not resolve: %w", err))
+	// A ledger that does not read lists no build, so the count passes and the digest test
+	// runs.
+	builds, _ := Store{Root: root}.declaredBuilds()
+	if located != nil {
+		return candidateNotInstalled(builds, fmt.Errorf("the primary checkout does not resolve: %w", located))
 	}
-	if !freshness.DeclaresBuildInputs(primary) {
-		return nil
+	if len(builds) > 1 {
+		return declaredBuildsOverlap(builds)
 	}
-	manifest := filepath.Join(primary, "bin", brokermanifest.Name)
+	manifest := brokermanifest.Path(primary)
 	fields, err := brokermanifest.Read(manifest)
 	if err != nil {
-		return candidateNotInstalled(root, fmt.Errorf("the primary broker manifest does not read: %w", err))
+		return candidateNotInstalled(builds, fmt.Errorf("the primary broker manifest does not read: %w", err))
 	}
 	digest, err := brokermanifest.Digest(executable)
 	if err != nil {
-		return candidateNotInstalled(root, fmt.Errorf("the running executable %q does not digest: %w", executable, err))
+		return candidateNotInstalled(builds, fmt.Errorf("the running executable %q does not digest: %w", executable, err))
 	}
 	if digest != fields[brokermanifest.DigestField] {
-		return candidateNotInstalled(root, fmt.Errorf("the running executable %q has digest %s, and the primary broker manifest %s binds %s", executable, digest, manifest, fields[brokermanifest.DigestField]))
+		return candidateNotInstalled(builds, fmt.Errorf("the running executable %q has digest %s, and the primary broker manifest %s binds %s", executable, digest, manifest, fields[brokermanifest.DigestField]))
 	}
 	return nil
 }
 
 // candidateNotInstalled raises the candidate refusal for cause. The route names the
-// integration target of the declared build, whatever checkout root is. A ledger that does
-// not read names no target, so the route prints its slot.
-func candidateNotInstalled(root string, cause error) error {
+// integration target of the first declared build of builds, whatever checkout the caller
+// runs in. With no build, which a ledger that does not read leaves, the route prints the
+// target slot.
+func candidateNotInstalled(builds []openBuild, cause error) error {
 	values := map[string]string{}
-	if target, declared, err := (Store{Root: root}).DeclaredBuild(); err == nil && declared {
-		values[refusalroute.FactTarget] = target.Label
+	if len(builds) > 0 {
+		values[refusalroute.FactTarget] = builds[0].target.Label
 	}
 	return refusalroute.Raised{Name: refusalroute.CandidateNotInstalled, Err: fmt.Errorf("%s: %w", refusalroute.CandidateNotInstalled, cause), Values: values}
+}
+
+// declaredBuildsOverlap raises the overlap refusal, which names the outcome and the spec of
+// each open declared build of builds.
+func declaredBuildsOverlap(builds []openBuild) error {
+	open := make([]string, 0, len(builds))
+	for _, build := range builds {
+		open = append(open, build.claim.Outcome+" ("+build.deliverable+")")
+	}
+	return refusalroute.Raised{Name: refusalroute.DeclaredBuildsOverlap, Err: fmt.Errorf("%s: the declared builds %s are open, and one primary executable serves one installed candidate", refusalroute.DeclaredBuildsOverlap, strings.Join(open, ", "))}
 }
 
 // readOpenBuilds derives the open builds from one strict read of the ledger at the store

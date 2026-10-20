@@ -6,15 +6,12 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// gateRerun re-runs the caller's own gate in the worktree that the label fact addresses.
-// The raising site composes the arguments from the run it refuses, and a face whose
-// recovery forces a fresh run gets them with --fresh.
-var gateRerun = TreeCommand("bench gate", Fact(FactLabel), Composed(FactArguments))
+// gateRerun re-runs the caller's own gate. The raising site composes the arguments from the
+// run it refuses, and a face whose recovery forces a fresh run gets them with --fresh.
+var gateRerun = callerRerun("bench gate")
 
-// GateRerun renders the caller's own gate re-run over values: the label and the arguments
-// that the checkpoint composed. A face whose route ends with the printing verb's re-run
-// reads it.
-func GateRerun(values map[string]string) string { return gateRerun.render(factsFill(values)) }
+// GateRerun renders the caller's own gate re-run over values.
+func GateRerun(values map[string]string) string { return renderRerun(gateRerun, values) }
 
 // FactForm is the record form that writes the entry a checkpoint refusal lacks.
 const FactForm = "form"
@@ -23,6 +20,10 @@ const FactForm = "form"
 // executable is not the installed candidate. The candidate check raises it, and the gate
 // checkpoint and the record verb print it.
 const CandidateNotInstalled = "candidate-not-installed"
+
+// DeclaredBuildsOverlap is the face of a guarded write while more than one declared build is
+// open. The candidate check raises it, and the gate checkpoint and the record verb print it.
+const DeclaredBuildsOverlap = "declared-builds-overlap"
 
 // installForm is the install form of the build verb up to its target slot, which the target
 // fact fills.
@@ -95,5 +96,14 @@ var gateFaces = []Face{
 		Name:      CandidateNotInstalled,
 		Authority: Agent,
 		Route:     []Step{Instruction(Text("from the primary checkout, run"), Text(installForm), Fact(FactTarget)), rerun},
+	},
+	{
+		// One primary executable serves one installed candidate, so one of the open declared
+		// builds must end. The choice of the build to end is the reviewer's. The printing verb
+		// supplies its own re-run.
+		Verb:      Gate,
+		Name:      DeclaredBuildsOverlap,
+		Authority: Reviewer,
+		Route:     []Step{Command(Text("bench commitment block --outcome"), Operator("id"), Text("--reason"), Operator("text")), rerun},
 	},
 }

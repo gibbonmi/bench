@@ -22,6 +22,10 @@ import (
 // land route trusts only what it binds: path, version, platform, and executable digest.
 const Name = "bench-broker.manifest"
 
+// Path is the broker manifest of the checkout at root, in the wrapper directory of that
+// checkout.
+func Path(root string) string { return filepath.Join(root, "bin", Name) }
+
 // TemporaryPrefix matches the start of the staging file name that the durable replacement
 // creates for Name, so a sweep of a publication's leftovers can find a leaked staging file.
 // A replacement test pins the value against the staging name.

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/commitment"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gittest"
@@ -219,6 +220,19 @@ func PlantCommitmentField(t testing.TB, root, field string) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(path, append(data, '\n'), info.Mode().Perm()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// BindManifest writes the broker manifest of the checkout at root so that it binds
+// executable, as the doctor repair of an install does.
+func BindManifest(t testing.TB, root, executable string) {
+	t.Helper()
+	dir := filepath.Dir(brokermanifest.Path(root))
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := brokermanifest.Write(dir, executable, "0.0.0"); err != nil {
 		t.Fatal(err)
 	}
 }
