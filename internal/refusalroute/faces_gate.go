@@ -18,27 +18,19 @@ const FactForm = "form"
 
 // CandidateNotInstalled is the face of a declared build's guarded write whose running
 // executable is not the installed candidate. The candidate check raises it, and the gate
-// checkpoint and the record verb print it.
+// checkpoint and the record verb print it. The build verb's restore prints its route when the
+// running executable cannot read the ledger.
 const CandidateNotInstalled = "candidate-not-installed"
 
 // DeclaredBuildsOverlap is the face of a guarded write while more than one declared build is
 // open. The candidate check raises it, and the gate checkpoint and the record verb print it.
+// The build verb's restore prints its route while the ledger holds an open build of any
+// outcome.
 const DeclaredBuildsOverlap = "declared-builds-overlap"
 
 // installForm is the install form of the build verb up to its target slot, which the target
 // fact fills.
 var installForm = strings.TrimSuffix(usage.WorktreeBuildInstall, " "+placeholder(FactTarget))
-
-// blockOutcome ends an open outcome with a blocker. The operator names the outcome and the
-// reason.
-var blockOutcome = Command(Text("bench commitment block --outcome"), Operator("id"), Text("--reason"), Operator("text"))
-
-// BlockRoute is the route that ends an open build with blockOutcome and then runs command,
-// the printing verb's own re-run. The build verb's restore prints it while the ledger holds
-// an open build.
-func BlockRoute(command string) string {
-	return Face{Route: []Step{blockOutcome, rerun}}.Render(Facts{Values: map[string]string{FactRerun: command}})
-}
 
 // gateFaces are the gate checkpoint's refusal faces, in registry order. The raising site
 // supplies each sentence: the checkpoint names the cause it observed.
@@ -115,6 +107,6 @@ var gateFaces = []Face{
 		Verb:      Gate,
 		Name:      DeclaredBuildsOverlap,
 		Authority: Reviewer,
-		Route:     []Step{blockOutcome, rerun},
+		Route:     []Step{Command(Text("bench commitment block --outcome"), Operator("id"), Text("--reason"), Operator("text")), rerun},
 	},
 }

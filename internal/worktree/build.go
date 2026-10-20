@@ -356,25 +356,10 @@ func printInstalled(stdout, stderr io.Writer, target installTarget, executable s
 		return 1
 	}
 	fmt.Fprint(stdout, table)
-	fmt.Fprintf(stdout, "next[1]:\n  bench record assignment %s --help\n", routeWord(spec.LiveSpecSlug(target.deliverable), slugSlot))
+	fmt.Fprintf(stdout, "next[1]:\n  bench record assignment %s --help\n", refusalroute.Arg(refusalroute.FactSlug, spec.LiveSpecSlug(target.deliverable)))
 	return 0
 }
 
-// targetSlot and slugSlot are the grammar slots that a route prints for a value that no line
-// can carry.
-const (
-	targetSlot = "<target>"
-	slugSlot   = "<slug>"
-)
-
 // targetAddress is the operator's target as a shell word for a route, or the target slot
-// when no line can carry it.
-func targetAddress(target string) string { return routeWord(target, targetSlot) }
-
-// routeWord is value as a shell word for a route, or slot when no line can carry it.
-func routeWord(value, slot string) string {
-	if lineSafe(value) {
-		return sanitize.ShellQuote(value)
-	}
-	return slot
-}
+// when the target is empty or no line can carry it.
+func targetAddress(target string) string { return refusalroute.Arg(refusalroute.FactTarget, target) }

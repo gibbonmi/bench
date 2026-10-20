@@ -24,16 +24,21 @@ import (
 // at slug. It copies the ledger under the Bench home and removes each intent-ledger field
 // that the default-branch copy of the spec declares. Then it rebuilds the primary executable
 // from the primary sources and runs the doctor repair under it, so `main` code binds the
-// broker manifest again. Each authority refusal comes before any write.
+// broker manifest again. Each authority refusal comes before any write. A ledger file that
+// does not exist leaves no copy, so the table then names none.
 func restoreAttributed(j joins, a ambient, root, slug string, stdout, stderr io.Writer) int {
-	rerun := usage.WorktreeBuildRestoreFor(routeWord(slug, slugSlot))
+	rerun := usage.WorktreeBuildRestoreFor(refusalroute.Arg(refusalroute.FactSlug, slug))
 	primary, paths, err := restoreAuthority(root, spec.LiveSpecPath(slug), rerun)
 	if err != nil {
 		return printTargetRefusal(stderr, buildVerb, err)
 	}
 	preserved := filepath.Join(a.home, "restore", poolkey.Key(primary), fmt.Sprintf("%s.%d", intent.Filename, a.now.UnixNano()))
-	if err := intent.RemoveFields(primary, preserved, paths); err != nil {
+	copied, err := intent.RemoveFields(primary, preserved, paths)
+	if err != nil {
 		return printTargetRefusal(stderr, buildVerb, refusalError{refusal{detail: "the ledger clear refused: " + err.Error(), next: rerun}})
+	}
+	if !copied {
+		preserved = ""
 	}
 	executable := freshness.PublishedExecutable(primary)
 	ctx, stop := subprocess.NotifyCancel(context.Background())
@@ -43,7 +48,10 @@ func restoreAttributed(j joins, a ambient, root, slug string, stdout, stderr io.
 		return nameWorktree(stderr, primary, buildExitCode(buildErr))
 	}
 	if code := repairPrimary(j, primary, executable, stderr); code != 0 {
-		detail := fmt.Sprintf("the doctor repair of the primary checkout exited %d; the ledger copy is %s", code, preserved)
+		detail := fmt.Sprintf("the doctor repair of the primary checkout exited %d", code)
+		if copied {
+			detail += "; the ledger copy is " + preserved
+		}
 		return printTargetRefusal(stderr, buildVerb, refusalError{refusal{detail: detail, next: rerun}})
 	}
 	table, err := toon.Table(restoreTable, []string{"ledger_copy", "executable"}, [][]string{{preserved, executable}})
@@ -74,7 +82,10 @@ func restoreAuthority(root, deliverable, rerun string) (string, [][]string, erro
 		return "", nil, refusalError{refusal{detail: "the default-branch copy of " + deliverable + " declares no persisted field, so the restore has no field to clear", next: "bench status"}}
 	}
 	if _, err := intent.Read(primary); err != nil {
-		next := usage.WorktreeBuildInstallFor(restoreTarget(primary, deliverable)) + refusalroute.StepJoiner + rerun
+		// An executable that cannot read the ledger is not the installed candidate, so the
+		// route is the install of the candidate and then the restore.
+		values := map[string]string{refusalroute.FactTarget: restoreTarget(primary, deliverable), refusalroute.FactRerun: rerun}
+		next := refusalroute.New(refusalroute.CandidateNotInstalled, refusalroute.Facts{Values: values}).Route
 		return "", nil, refusalError{refusal{detail: "this executable cannot read the intent ledger: " + err.Error(), next: next}}
 	}
 	open, err := store.HoldsOpenBuild()
@@ -83,7 +94,9 @@ func restoreAuthority(root, deliverable, rerun string) (string, [][]string, erro
 	}
 	if open {
 		detail := "the ledger holds an open build, and the clear is ledger-wide; end the build, then run the restore before bench worktree release, because a recovery install needs the target worktree"
-		return "", nil, refusalError{refusal{detail: detail, next: refusalroute.BlockRoute(rerun)}}
+		// The overlap face owns the route that ends an open build and then runs the restore.
+		next := refusalroute.New(refusalroute.DeclaredBuildsOverlap, refusalroute.Facts{Values: map[string]string{refusalroute.FactRerun: rerun}}).Route
+		return "", nil, refusalError{refusal{detail: detail, next: next}}
 	}
 	var paths [][]string
 	for _, field := range fields {
@@ -94,21 +107,21 @@ func restoreAuthority(root, deliverable, rerun string) (string, [][]string, erro
 	return primary, paths, nil
 }
 
-// restoreTarget is the install target of the stopped build of deliverable, as a route word:
-// the label of the first bound assignment that the tolerant read finds with its tree, or the
-// target slot when that lookup fails.
+// restoreTarget is the install target of the stopped build of deliverable: the label of the
+// first bound assignment that the tolerant read finds with its tree, or empty when that lookup
+// fails, so the route prints the target slot.
 func restoreTarget(root, deliverable string) string {
 	ledger, err := intent.ReadTolerant(root)
 	if err != nil || ledger.Commitment == nil {
-		return targetSlot
+		return ""
 	}
 	for _, binding := range ledger.Commitment.Bindings {
 		if binding.Deliverable != deliverable {
 			continue
 		}
 		if assignment, err := resolveAmong(root, ledger.Assignments, binding.Assignment, landingActiveState); err == nil {
-			return targetAddress(assignment.Label)
+			return assignment.Label
 		}
 	}
-	return targetSlot
+	return ""
 }

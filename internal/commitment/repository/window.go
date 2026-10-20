@@ -117,8 +117,9 @@ func checkCandidate(executable, root string, declare func() ([]spec.PersistedFie
 		return nil
 	}
 	// Declared builds that do not read, whatever the cause, list no build: the ledger, the
-	// default-branch tip, or a bound spec can fail. The count then passes, the digest test
-	// runs, and a refusal prints the target slot.
+	// default-branch tip, or a bound spec can fail. A refusal with no build prints the target
+	// slot. With no build, the overlap count passes, so the digest test runs when the primary
+	// checkout resolves.
 	builds, _ := Store{Root: root}.declaredBuilds()
 	if located != nil {
 		return candidateNotInstalled(builds, fmt.Errorf("the primary checkout does not resolve: %w", located))
@@ -143,8 +144,8 @@ func checkCandidate(executable, root string, declare func() ([]spec.PersistedFie
 
 // candidateNotInstalled raises the candidate refusal for cause. The route names the
 // integration target of the first declared build of builds, whatever checkout the caller
-// runs in. With no build, which a ledger that does not read leaves, the route prints the
-// target slot.
+// runs in. With no build, the route prints the target slot. A ledger that holds no open
+// declared build leaves no build, and so does a declared-build read that fails.
 func candidateNotInstalled(builds []openBuild, cause error) error {
 	values := map[string]string{}
 	if len(builds) > 0 {

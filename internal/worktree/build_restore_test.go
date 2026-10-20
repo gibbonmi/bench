@@ -95,6 +95,7 @@ func TestBuildRestore(t *testing.T) {
 	t.Parallel()
 	const gapsDeclared = "Persisted fields: intent-ledger:commitment.gaps\n"
 	rerun := "bench worktree build --restore 'install'"
+	install := "next=from the primary checkout, run bench worktree build --install "
 	t.Run("help names the restore form", func(t *testing.T) {
 		t.Parallel()
 		r := runVerb(t, verbBuild, verbCall{root: t.TempDir(), home: t.TempDir(), args: []string{"--help"}})
@@ -149,6 +150,24 @@ func TestBuildRestore(t *testing.T) {
 			requireTest(t, !chunk && outcome, "gap = %v, want no chunk and the outcome kept", gap)
 		}
 	})
+	t.Run("clears each declared ledger path and no review-record path", func(t *testing.T) {
+		t.Parallel()
+		f, doctor := installedRestore(t, "restore-several", "Persisted fields: intent-ledger:commitment.gaps.chunk, intent-ledger:commitment.claims, review-record:commitment.bindings\n")
+		putGaps(t, f.root, "install")
+		commitmenttest.EditCommitment(t, f.root, func(state *intent.CommitmentState) {
+			state.Claims = append(state.Claims, intent.OutcomeClaim{Milestone: "fixture", Outcome: "ended"})
+		})
+		r := restore(t, f, "install", &rebuildRecorder{t: t}, doctor)
+		requireTest(t, r.exit == 0, "restore = (%d, %q), want exit 0", r.exit, r.stderr)
+		state := ledgerCommitment(t, f.root)
+		gaps, _ := state["gaps"].([]any)
+		requireTest(t, len(gaps) == 1, "gaps = %v, want the one gap kept", gaps)
+		gap, _ := gaps[0].(map[string]any)
+		_, chunk := gap["chunk"]
+		_, claims := state["claims"]
+		_, bindings := state["bindings"]
+		requireTest(t, !chunk && !claims && bindings, "commitment = %v, want no gap chunk, no claims key, and the bindings kept", state)
+	})
 	t.Run("a declared field that the ledger does not hold needs no change", func(t *testing.T) {
 		t.Parallel()
 		f, doctor := installedRestore(t, "restore-absent-field", installDeclared)
@@ -156,6 +175,18 @@ func TestBuildRestore(t *testing.T) {
 			r := restore(t, f, "install", &rebuildRecorder{t: t}, doctor)
 			requireTest(t, r.exit == 0, "restore = (%d, %q), want exit 0", r.exit, r.stderr)
 		})
+		primary := freshness.PublishedExecutable(f.root)
+		requireTest(t, fixtureFileText(t, primary) == rebuiltMain && freshness.Verify(f.root, primary) == nil, "primary = %q, verify %v; want the verified rebuild", fixtureFileText(t, primary), freshness.Verify(f.root, primary))
+	})
+	t.Run("a ledger file that does not exist holds no declared field", func(t *testing.T) {
+		t.Parallel()
+		f, doctor := installedRestore(t, "restore-no-ledger", gapsDeclared)
+		ledger := commitmenttest.LedgerPath(t, f.root)
+		mustNoError(t, os.Remove(ledger))
+		r := restore(t, f, "install", &rebuildRecorder{t: t}, doctor)
+		requireTest(t, r.exit == 0, "restore = (%d, %q, %q), want exit 0", r.exit, r.stdout, r.stderr)
+		_, err := os.Lstat(ledger)
+		requireTest(t, os.IsNotExist(err) && len(restoreCopies(t, f)) == 0, "ledger stat %v, copies %v; want no ledger and no copy", err, restoreCopies(t, f))
 		primary := freshness.PublishedExecutable(f.root)
 		requireTest(t, fixtureFileText(t, primary) == rebuiltMain && freshness.Verify(f.root, primary) == nil, "primary = %q, verify %v; want the verified rebuild", fixtureFileText(t, primary), freshness.Verify(f.root, primary))
 	})
@@ -171,24 +202,27 @@ func TestBuildRestore(t *testing.T) {
 			{name: "an undeclared default-branch spec", shape: installShape{inputs: true, deliverable: installSpec}, want: func(ownedAssignment) []string { return []string{"declares no persisted field"} }},
 			{name: "an invalid declaration", shape: installShape{inputs: true, declaration: "Persisted fields: gate-evidence:x\n", deliverable: installSpec}, want: func(ownedAssignment) []string { return []string{spec.ErrPersistedFieldsInvalid.Error()} }},
 			{name: "a ledger that the strict read refuses", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) { plantCommitmentField(t, f.root) }, want: func(f ownedAssignment) []string {
-				return []string{"cannot read the intent ledger", "next=bench worktree build --install '" + f.creation.Assignment.Label + "'; then " + rerun}
+				return []string{"cannot read the intent ledger", install + "'" + f.creation.Assignment.Label + "'; then " + rerun}
 			}},
 			{name: "a refused ledger whose target tree is gone", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) {
 				plantCommitmentField(t, f.root)
 				mustNoError(t, os.RemoveAll(f.creation.Path))
 			}, want: func(ownedAssignment) []string {
-				return []string{"next=bench worktree build --install <target>; then " + rerun}
+				return []string{install + "<target>; then " + rerun}
 			}},
 			{name: "a ledger that is not JSON", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) {
 				mustWrite(t, commitmenttest.LedgerPath(t, f.root), []byte("{\n"), 0o600)
 			}, want: func(ownedAssignment) []string {
-				return []string{"next=bench worktree build --install <target>; then " + rerun}
+				return []string{install + "<target>; then " + rerun}
 			}},
 			{name: "an open build between chunks", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) {
 				openInstallBuild(t, f.root)
 				putGaps(t, f.root, "install")
 			}, want: func(ownedAssignment) []string {
-				return []string{"holds an open build", "before bench worktree release", "next=bench commitment block --outcome <id> --reason <text>; then " + rerun}
+				return []string{"holds an open build", "before bench worktree release", "next=reviewer: bench commitment block --outcome <id> --reason <text>; then " + rerun}
+			}},
+			{name: "an open build of an undeclared outcome", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) { openUndeclaredBuild(t, f) }, want: func(ownedAssignment) []string {
+				return []string{"holds an open build", "next=reviewer: bench commitment block"}
 			}},
 		} {
 			t.Run(row.name, func(t *testing.T) {
