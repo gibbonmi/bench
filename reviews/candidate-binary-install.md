@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/candidate-binary-install/spec.md",
-  "plan_digest": "sha256:3ede70a4f3cbb8792467937b82b5f3f091ad3e9dcc0a18fc953f66a4521adeae",
+  "plan_digest": "sha256:9aada2a977c8775e0d4132cd56d98e965741fef22865668ffad99bc3a577a390",
   "implementation_session": "",
   "chunks": [
     {
@@ -2947,6 +2947,247 @@
           ]
         }
       ]
+    },
+    {
+      "id": "CB-C4",
+      "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+      "tip": "6c74df34ab340683bfb1ed07ef1fbcdf4d4a2642",
+      "plan_digest": "sha256:9aada2a977c8775e0d4132cd56d98e965741fef22865668ffad99bc3a577a390",
+      "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+      "acceptance_rows": [
+        "CB37",
+        "CB38",
+        "CB39",
+        "CB40",
+        "CB41",
+        "CB42",
+        "CB43",
+        "CB49",
+        "CB64"
+      ],
+      "verification": [
+        {
+          "id": "t6-worktree",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:ed9d46e8d3b7c6c1eddde94efcdffdca3ca88d2c1096911550414c6a2d20e4f1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,66240,1487\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-cmd-bench",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:3c6d7d8f313579eda152b91125a3ac72b97060b52272f0f2f5fe5398dad34431",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14562,352\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-internal-commitment-repository",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:1b4d4abce6156ce5fcff8bc0b3528f5c0dd445c94b54203becbebe4ecd845c64",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,6328,181\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "internal-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-internal-conformance",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:7763ca5c76dac1952214180dd1b0e9f3b94681c7adf27eb06dbdabb68680934a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,33230,1116\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "internal-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-internal-intent",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:ffa2d26ccc236f5c2714a95c3bb902472f284f81dcfe9c7a101afb1283dfe6a5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,pass,1097,79\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "internal-intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-internal-usage",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:9dc3a2106ba5d02c9c72884fc4cdb6f759767003b2ad7ad20a784047d4059575",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/usage,pass,2,31\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "internal-usage",
+          "command": "bench test --package ./internal/usage",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-spec",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:cd06fa53765b00758e292a25b80060ed9155667c608251d5524d34cd506b7032",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,pass,1734,175\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "spec",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-refusalroute",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:083201dbdeffa4beaddc7caec9539221723505998f67c6ee5a7c07652c31da24",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "refusalroute",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-root-conformance",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:529a23dcabf3b1f960d7803e4d1c060e3bf55d323e0f944fce5717005d5a0399",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13792,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-t6-order-probe",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:77bb1f7b73b88637942dd679764d32bbeff387d82d389f01fbc5741e691163f4",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,3,TestBuildRestore/refuses_before_any_write/a_ledger_that_is_not_JSON,1487,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1387\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,69628,1487\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/refuses_before_any_write/a_ledger_that_is_not_JSON,\"build_restore_test.go:204: restore = (1, \\\"bench worktree build: read intent ledger: malformed JSON: decode persisted JSON: EOF\\\\\\\\nnext=bench worktree list\\\\\\\\n\\\"), want exit 1 naming \\\"next=bench worktree build --install <target>; then bench workt… (270 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/refuses_before_any_write/a_ledger_that_the_strict_read_refuses,\"build_restore_test.go:204: restore = (1, \\\"bench worktree build: read intent ledger: malformed JSON: decode persisted JSON: json: unknown field \\\\\\\\\\\"fixture\\\\\\\\\\\"\\\\\\\\nnext=bench worktree list\\\\\\\\n\\\"), want exit 1 naming \\\"cannot read the intent ledger\\\"\",1\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/refuses_before_any_write/a_refused_ledger_whose_target_tree_is_gone,\"build_restore_test.go:204: restore = (1, \\\"bench worktree build: read intent ledger: malformed JSON: decode persisted JSON: json: unknown field \\\\\\\\\\\"fixture\\\\\\\\\\\"\\\\\\\\nnext=bench worktree list\\\\\\\\n\\\"), want exit 1 naming \\\"next=bench worktree build --instal… (298 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-order-probe",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "run the open-build test before the strict ledger read in the restore; TestBuildRestore must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+              "digest": "sha256:77bb1f7b73b88637942dd679764d32bbeff387d82d389f01fbc5741e691163f4",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,3,TestBuildRestore/refuses_before_any_write/a_ledger_that_is_not_JSON,1487,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1387\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,69628,1487\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/refuses_before_any_write/a_ledger_that_is_not_JSON,\"build_restore_test.go:204: restore = (1, \\\"bench worktree build: read intent ledger: malformed JSON: decode persisted JSON: EOF\\\\\\\\nnext=bench worktree list\\\\\\\\n\\\"), want exit 1 naming \\\"next=bench worktree build --install <target>; then bench workt… (270 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/refuses_before_any_write/a_ledger_that_the_strict_read_refuses,\"build_restore_test.go:204: restore = (1, \\\"bench worktree build: read intent ledger: malformed JSON: decode persisted JSON: json: unknown field \\\\\\\\\\\"fixture\\\\\\\\\\\"\\\\\\\\nnext=bench worktree list\\\\\\\\n\\\"), want exit 1 naming \\\"cannot read the intent ledger\\\"\",1\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/refuses_before_any_write/a_refused_ledger_whose_target_tree_is_gone,\"build_restore_test.go:204: restore = (1, \\\"bench worktree build: read intent ledger: malformed JSON: decode persisted JSON: json: unknown field \\\\\\\\\\\"fixture\\\\\\\\\\\"\\\\\\\\nnext=bench worktree list\\\\\\\\n\\\"), want exit 1 naming \\\"next=bench worktree build --instal… (298 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t6-t6-nested-probe",
+          "performer": "claude:ft419-t6-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+            "digest": "sha256:58462a7c5ccf51307d4ff619771b8698e08984971eabded33735d52108b802b3",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestBuildRestore/a_declared_field_that_the_ledger_does_not_hold_needs_no_change,1487,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1361\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,67439,1487\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/a_declared_field_that_the_ledger_does_not_hold_needs_no_change,\"build_restore_test.go:155: ledger = {\\\"assignments\\\":[{\\\"branch\\\":\\\"refs/heads/bench/assign/d3f0fe6e8404202530aa19578188e1b9/82552e9fa0dfeac5b27ae75f1d7d1e0f\\\",\\\"created_at\\\":\\\"2026-10-20T22:06:26Z\\\",\\\"id\\\":\\\"82552e9fa0dfeac5b27ae75f1d7d1e0f\\\",\\\"label\\\":\\\"r… (774 bytes)\",3\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/clears_a_nested_field_from_each_element,\"build_restore_test.go:143: ledger holds no commitment object: map[assignments:[map[branch:refs/heads/bench/assign/fc17310c7126b1c788d4e6ec914bc4ad/599bff6ed9a0496bd0c4fba3dac7a5ec created_at:2026-10-20T22:06:24Z id:599bff6ed9a0496bd0c4fba3d… (734 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,\"TestBuildRestore/copies_the_ledger,_clears_the_field,_rebuilds,_and_repairs\",\"build_restore_test.go:122: ledger holds no commitment object: map[assignments:[map[branch:refs/heads/bench/assign/d67fd841972013eb987ab4aaac1217b3/d0b93df1d5bde2175079d0ca896edfce created_at:2026-10-20T22:06:26Z id:d0b93df1d5bde2175079d0ca8… (748 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-nested-probe",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "delete only the top-level key in the raw-field removal; TestBuildRestore must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft419-t6-author-20261020",
+              "digest": "sha256:58462a7c5ccf51307d4ff619771b8698e08984971eabded33735d52108b802b3",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestBuildRestore/a_declared_field_that_the_ledger_does_not_hold_needs_no_change,1487,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1361\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,67439,1487\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/a_declared_field_that_the_ledger_does_not_hold_needs_no_change,\"build_restore_test.go:155: ledger = {\\\"assignments\\\":[{\\\"branch\\\":\\\"refs/heads/bench/assign/d3f0fe6e8404202530aa19578188e1b9/82552e9fa0dfeac5b27ae75f1d7d1e0f\\\",\\\"created_at\\\":\\\"2026-10-20T22:06:26Z\\\",\\\"id\\\":\\\"82552e9fa0dfeac5b27ae75f1d7d1e0f\\\",\\\"label\\\":\\\"r… (774 bytes)\",3\n  github.com/gibbonmi/bench/internal/worktree,TestBuildRestore/clears_a_nested_field_from_each_element,\"build_restore_test.go:143: ledger holds no commitment object: map[assignments:[map[branch:refs/heads/bench/assign/fc17310c7126b1c788d4e6ec914bc4ad/599bff6ed9a0496bd0c4fba3dac7a5ec created_at:2026-10-20T22:06:24Z id:599bff6ed9a0496bd0c4fba3d… (734 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,\"TestBuildRestore/copies_the_ledger,_clears_the_field,_rebuilds,_and_repairs\",\"build_restore_test.go:122: ledger holds no commitment object: map[assignments:[map[branch:refs/heads/bench/assign/d67fd841972013eb987ab4aaac1217b3/d0b93df1d5bde2175079d0ca896edfce created_at:2026-10-20T22:06:26Z id:d0b93df1d5bde2175079d0ca8… (748 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -3131,6 +3372,21 @@
     {
       "from": "sha256:a89a46a8cd89fac2ba14e0b4e4a22376282c6b7fd0fb1a2df12ff2fc13a967fc",
       "to": "sha256:3ede70a4f3cbb8792467937b82b5f3f091ad3e9dcc0a18fc953f66a4521adeae",
+      "chunk_ids": {
+        "CB-C1": [
+          "CB-C1"
+        ],
+        "CB-C2": [
+          "CB-C2"
+        ],
+        "CB-C3": [
+          "CB-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3ede70a4f3cbb8792467937b82b5f3f091ad3e9dcc0a18fc953f66a4521adeae",
+      "to": "sha256:9aada2a977c8775e0d4132cd56d98e965741fef22865668ffad99bc3a577a390",
       "chunk_ids": {
         "CB-C1": [
           "CB-C1"
