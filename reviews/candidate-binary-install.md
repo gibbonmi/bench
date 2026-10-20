@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/candidate-binary-install/spec.md",
-  "plan_digest": "sha256:4333de2593d7167b64eba95841fcbe4868d8e26e8bc5936f9005879a34ae4738",
+  "plan_digest": "sha256:f61261f1ce4bc05e292c015b9a144c132d8610eed2d6316998c1b0492bfa7ad9",
   "implementation_session": "",
   "chunks": [
     {
@@ -167,7 +167,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:4333de2593d7167b64eba95841fcbe4868d8e26e8bc5936f9005879a34ae4738",
+      "to": "sha256:f61261f1ce4bc05e292c015b9a144c132d8610eed2d6316998c1b0492bfa7ad9",
+      "chunk_ids": {
+        "CB-C1": [
+          "CB-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
