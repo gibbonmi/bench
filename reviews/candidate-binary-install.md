@@ -89,7 +89,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cbc1-standards",
+          "performer": "claude:ft419-cbc1-standards-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a6d0a3153fa7dfbb6584fb8a50c2d93f2ce2b249",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc1-standards-20261020",
+            "digest": "sha256:2d6366266cfa70c0e7000ce5ca96f7702b2a4fc73fa9a8faf41c5fdc25ddbd5e",
+            "excerpt": "## Standards (CB-C1, pair 97a979263..3a5878479, opus/medium)\nS1 auto-fix conf 7: internal/spec/spec.go:103-104 calls ErrPersistedFieldsInvalid \"the refusal face\"; \"refusal face\" is a registered internal/refusalroute term and ticket 1 adds no face (bench-craft-comments: accurate terms).\nS2 auto-fix conf 5: internal/spec/spec.go:117-118 says the declaration reads \"through the header scan of Status: and Roadmap:\"; the shared seam is headerLines, which the AwaitsRetirement comment names.\nCount 2. Worst: S1. Advice kept separate (nil vs empty list assertion; last-wins unpinned; LiveSpecSlugs own fence scan).\n"
+          },
+          "axis": "Standards",
+          "base": "97a979263a299429d187efcf6d1845ef93199ea5",
+          "tip": "2465ab5cb31f0f579fded76b9e6fc1143767aa5d",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cbc1-spec",
+          "performer": "claude:ft419-cbc1-spec-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a6d0a3153fa7dfbb6584fb8a50c2d93f2ce2b249",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc1-spec-20261020",
+            "digest": "sha256:ecac3b62582592a9ccfb6eaaf63f034bc1b7aa34aafd86f98bb9e47fb632e573",
+            "excerpt": "## Spec (CB-C1, pair 97a979263..3a5878479, opus/medium)\nNo finding. CB1-CB7 met (spec.go:122-152, persisted_test.go); seam cells cited; API fits tickets 2, 3, 5, 6; no scope creep. Author choices last-wins and no segment character rule graded acceptable against spec.md:120,124,126.\nCount 0. Worst: none. Advice: untrimmed path segments; unrecorded plan-expansion learning.\n"
+          },
+          "axis": "Spec",
+          "base": "97a979263a299429d187efcf6d1845ef93199ea5",
+          "tip": "2465ab5cb31f0f579fded76b9e6fc1143767aa5d",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cbc1-coverage",
+          "performer": "claude:ft419-cbc1-coverage-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a6d0a3153fa7dfbb6584fb8a50c2d93f2ce2b249",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc1-coverage-20261020",
+            "digest": "sha256:296d0a43f2765f1265c55b539c4a17830603709b0f208cdfed40dc9fe3733548",
+            "excerpt": "## Coverage (CB-C1, pair 97a979263..3a5878479, opus/medium)\nC1 ask-user conf 8: path segments with whitespace or a colon parse (intent-ledger: commitment.gaps, commitment. gaps, a b, a:b); restore would remove nothing; spec.go:126-134.\nC2 auto-fix conf 7: CB6 bites only interior \"..\"; mutant strings.Contains(path,\"..\") silent; add empty path, leading dot, trailing dot cases; persisted_test.go:36.\nC3 auto-fix conf 7: CB5 bites only gate-evidence; denylist mutant silent; add a second unknown name; persisted_test.go:35.\nC4 ask-user conf 7: a second unfenced or ~~~-fenced Persisted fields: line replaces the header declaration (last wins) untested and undecided; spec.go:115-119, headerLines spec.go:79.\nProbes: CB6 swap silent; CB5 denylist silent; CR strip omit silent (equivalent); first-wins silent; hostile insert bit; ~~~ insert bit; all restored=yes.\nCount 4. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "97a979263a299429d187efcf6d1845ef93199ea5",
+          "tip": "2465ab5cb31f0f579fded76b9e6fc1143767aa5d",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -101,3 +170,25 @@
   }
 }
 ```
+
+## Standards
+
+CB-C1: 2 findings. Worst: S1.
+
+- S1 (auto-fix, confidence 7): `internal/spec/spec.go:103-104` calls `ErrPersistedFieldsInvalid` a refusal face; that term names a registered `internal/refusalroute` face, and ticket 1 adds none.
+- S2 (auto-fix, confidence 5): `internal/spec/spec.go:117-118` names the `Status:`/`Roadmap:` scan as the shared seam; the shared seam is `headerLines`.
+
+## Spec
+
+CB-C1: 0 findings. Worst: none.
+
+## Coverage
+
+CB-C1: 4 findings. Worst: C1.
+
+- C1 (auto-fix after consultation, confidence 8): a path segment with whitespace or a colon parses (`internal/spec/spec.go:126-134`). The opus high and sonnet high consultants agreed on a refusal with `persisted-fields-invalid`; new row CB66.
+- C2 (auto-fix, confidence 7): CB6 bites only an interior `..`; add an empty path, a leading dot, and a trailing dot (`internal/spec/persisted_test.go:36`).
+- C3 (auto-fix, confidence 7): CB5 bites only `gate-evidence`; add a second unknown record name (`internal/spec/persisted_test.go:35`).
+- C4 (auto-fix after consultation, confidence 7): a second unfenced `Persisted fields:` line replaces the first (`internal/spec/spec.go:115-119`). The consultants agreed on a refusal of a second line with `persisted-fields-invalid`; new row CB67.
+
+Repair state: CB-C1 repair cycle 1 of 2 starts after this record commit. The `--auto-approve` option of the run approves the CB66 and CB67 expansion.
