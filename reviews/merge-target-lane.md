@@ -526,7 +526,79 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-r0-standards",
+          "performer": "claude:ft335-c2-standards-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5bb467add4fcdcb06aa12eec3e8e303ab8b261e9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c2-standards-20261019",
+            "digest": "sha256:ee76cc5050c8d92853f7e20b300ea69c5887d69037505204a0262e0350df9c0c",
+            "excerpt": "## Standards\nCount 4, all judgment, worst S1.\n- S1, no-op, confidence 5: merge_target_lane_test.go:94-98 inlines a registry face lookup that repeats refusalroute faceNamed; the pattern predates this chunk.\n- S2, no-op, confidence 4: requireNoWholeGate adds a named tally check beside older inline copies.\n- S3, auto-fix, confidence 5: writeGoMainFixture's doc comment (land_effects_test.go:16-19) still scopes it to a broker fixture, and it now also serves goLaneMergeFixture.\n- S4, ask-user, confidence 3: two test doc comments restate the mutant's behavior from the spec's why column.\n"
+          },
+          "axis": "Standards",
+          "base": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+          "tip": "3519feb7552fe0eb0e064cd0bea4c71bc6415e65",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-r0-spec",
+          "performer": "claude:ft335-c2-spec-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5bb467add4fcdcb06aa12eec3e8e303ab8b261e9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c2-spec-20261019",
+            "digest": "sha256:1bb373a7c6de1edfae2fddfd0526c97317d0a1a172a6a511d9e2e94e64e955a8",
+            "excerpt": "## Spec\nCount 2, worst P1. Core contract met; R10, R11, R13, R14, R15 met; R16, R19, R20, R21 unchanged tests.\n- P1, judgment, confidence 3: spec line 274 says \"R12 asserts face equality\"; merge_target_lane_test.go:94-100 tells the faces apart by authority and step count only, and the author's probe showed only the R13 tally assertion red.\n- P2, no-op, confidence 2: the ticket commit rewrites coverage cells outside the Writes line; bookkeeping only.\n"
+          },
+          "axis": "Spec",
+          "base": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+          "tip": "3519feb7552fe0eb0e064cd0bea4c71bc6415e65",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-r0-coverage",
+          "performer": "claude:ft335-c2-coverage-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5bb467add4fcdcb06aa12eec3e8e303ab8b261e9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c2-coverage-20261019",
+            "digest": "sha256:f4464b936db12a27059ba637a51cb70551c61c7ddc88948684346510680759a4",
+            "excerpt": "## Coverage\nCount 2, worst C1. Both production callers of mergeOwner are pinned.\n- C1, no-op, confidence 3: no merge-level row for an adopted .bench kit on a target with a manifest lane; R03 covers the rule.\n- C2, no-op, confidence 2: no merge-level row for a foreign-repository kit; the C1 unit rows cover it.\nProbes: KitForRoot arguments swapped in mergeOwner, bit (5 tests), restored yes; target-alone caller passes \"\" kit, bit (TestMergeFacesFollowTheirRoutes subtests), restored yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+          "tip": "3519feb7552fe0eb0e064cd0bea4c71bc6415e65",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -594,3 +666,30 @@ The C2 code claim was wrong. The committed fallback at 03bec7089 already answere
 - S3, no-op, confidence 3: four doc comments restate the no-canonical-spelling contract, and each caller states its own contract.
 - P1, no-op, confidence 2: the R07 cell now also holds the root-spelling test, which still covers spec line 87.
 - C3, no-op, confidence 3: no test passes an empty root to `KitSourceCheckoutAtKit`. The guard predates this build, and the repair delta opens no new input.
+
+## C2 initial review pickup
+
+Frozen pair: 5af8cebc5..6cdf3755c. Repair cycles used: 0 of 2. S3 and P1 fall on ticket 02 and go to one repair session. Both change test files only, so the repair closes through a coordinator probe and a confirmation.
+
+## Standards
+
+Count: 4. Worst issue: S3.
+
+- S1, no-op, confidence 5: the inline face lookup in `internal/worktree/merge_target_lane_test.go` repeats a pattern that predates this chunk.
+- S2, no-op, confidence 4: `requireNoWholeGate` names a tally check, and its older inline copies predate this chunk.
+- S3, auto-fix on ticket 02, confidence 5: the `writeGoMainFixture` doc comment in `internal/worktree/land_effects_test.go` still names only a broker fixture. The repair widens the comment to its purpose, so the ticket's `Writes:` line takes that file.
+- S4, no-op, confidence 3: the two test comments follow the package convention that the C1 review kept as S2.
+
+## Spec
+
+Count: 2. Worst issue: P1.
+
+- P1, auto-fix on ticket 02, confidence 3: spec line 274 says "R12 asserts face equality". The test tells the faces apart only by authority and step count, and no recorded red shows that check. The repair compares the printed route with the `merge-fold-red` route and records its red.
+- P2, no-op, confidence 2: the coverage-cell citations land with their tests, as the build requires.
+
+## Coverage
+
+Count: 2. Worst issue: C1.
+
+- C1, no-op, confidence 3: no merge-level row covers an adopted kit on a target with a manifest lane. Row R03 covers the rule, and both callers share one derivation.
+- C2, no-op, confidence 2: no merge-level row covers a kit from another repository. The C1 unit rows cover the rule.
