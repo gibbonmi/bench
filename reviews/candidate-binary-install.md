@@ -4147,6 +4147,72 @@
             "C6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cbc5-standards-confirm",
+          "performer": "claude:ft419-cbc5-standards-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ce0ec230003c15ff43934ab60694b7d089ea7e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc5-standards-confirm-20261020",
+            "digest": "sha256:b15426489130d9fe79bf67d2c81fabf46656c230430071d9ad82f351e6536865",
+            "excerpt": "## Standards (CB-C5 confirm, pair fb9ece9a..b100bce6, opus/medium)\nF1-F5 closed. guidance-prose-budgets, prose, and root-conformance pass at b100bce6.\nAdvice N1: craft-spec SKILL.md:56 states the declare trigger that BENCH-reference.md:68-73 also states.\nAdvice N2: bench-implement-spec.md:9 joins the light-path sentence to the ticket-directory paragraph; both are entry routing.\nAdvice: build_restore.go:97 refusal detail still says recovery install; outside this delta.\nCount 0.\n"
+          },
+          "axis": "Standards",
+          "base": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+          "tip": "45b9698e17263553c6cef5ddd22213a63c2d8b6b",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc5-standards"
+          ]
+        },
+        {
+          "id": "cbc5-spec-confirm",
+          "performer": "claude:ft419-cbc5-spec-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ce0ec230003c15ff43934ab60694b7d089ea7e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc5-spec-confirm-20261020",
+            "digest": "sha256:9c642e348d469f85babc1dcb78712898a8909a1eb43eee43eaada1298680115a",
+            "excerpt": "## Spec (CB-C5 confirm, pair fb9ece9a..b100bce6, opus/medium)\nS1, S2 closed. CB44, CB45, CB46, CB47, CB58 met; overlap route, restore-before-release, and declaration grammar agree with the spec.\nAdvice S7: ADR 0016 line 38-40 does not name the declared-build install; the spec does not require it.\nAdvice S8: spec.md lines 29, 77, 263 say the restore rebuilds from main; spec line 198 says the primary sources.\nCount 0.\n"
+          },
+          "axis": "Spec",
+          "base": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+          "tip": "45b9698e17263553c6cef5ddd22213a63c2d8b6b",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc5-spec"
+          ]
+        },
+        {
+          "id": "cbc5-coverage-confirm",
+          "performer": "claude:ft419-cbc5-coverage-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ce0ec230003c15ff43934ab60694b7d089ea7e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc5-coverage-confirm-20261020",
+            "digest": "sha256:63b772c8dc910685455263aa75e9af0c5eba6b4addff839fe6f9e8800adc3fcd",
+            "excerpt": "## Coverage (CB-C5 confirm, pair fb9ece9a..b100bce6, opus/medium)\nC1-C6 closed. The six t7r1 rows match the six CB-C5 floor checks and cover the eight edited files; prose and guidance-prose-budgets pass at b100bce6.\nAdvice A1: the record holds no CB-C5 mutation probe; the plan requires none.\nAdvice A2: source_digest is the recorder's own digest scheme, consistent with earlier rows.\nCount 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+          "tip": "45b9698e17263553c6cef5ddd22213a63c2d8b6b",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc5-coverage"
+          ]
         }
       ]
     }
@@ -4620,4 +4686,12 @@ CB-C5: 6 findings. Worst: C1. The ticket 7 repair takes all six.
 - C5 (auto-fix, confidence 5): the term recovery install is undefined.
 - C6 (auto-fix, confidence 4): the version-cache sentence names no refusal. The S1 fix closes it.
 
-Repair state: CB-C5 repair cycle 1 of 2 runs one ticket 7 session.
+Repair state: CB-C5 repair cycle 1 of 2 closed all thirteen findings. The confirming round (repair delta fb9ece9a..b100bce6) passed on all three axes.
+
+Advice (CB-C5 confirming round, no finding ID):
+
+- The craft-spec edge inventory states the declare trigger that the command notes also state.
+- The restore refusal detail in `build_restore.go` still says recovery install. That line is outside this delta.
+- The ADR 0016 sentence about the next package install or repair does not name the install of a declared build. The spec does not require it.
+- Three spec lines say that the restore rebuilds from `main`. The repaired note says the primary checkout's sources, which hold `main`.
+- The record holds no CB-C5 mutation probe. The plan requires none.
