@@ -354,6 +354,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1-r1-standards",
+          "performer": "claude:ft335-c1-standards-r1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c1-standards-r1-20261019",
+            "digest": "sha256:3be879259648ceb67abec2fcd3c93879f9d3ecd83923ad1bf6c66433540f5560",
+            "excerpt": "## Standards (confirming round, repair delta 6263b8fb3..f2a77f885)\nS1 closed: sameResolvedPath at internal/gate/kit_source.go:67-71 serves kit_root.go:29, kit_root.go:43, kit_source.go:57; KitSourceCheckoutAtKit keeps every answer.\n- S3, judgment, no-op, confidence 3: four doc comments restate the no-canonical-spelling contract; each caller states its own contract.\nCount 1, worst S3.\n"
+          },
+          "axis": "Standards",
+          "base": "d9dd9650cd42c277ae733c522a881b322d50e9e2",
+          "tip": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-r0-standards"
+          ]
+        },
+        {
+          "id": "c1-r1-spec",
+          "performer": "claude:ft335-c1-spec-r1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c1-spec-r1-20261019",
+            "digest": "sha256:11d11ff9407f478ecdaf5dd1f4bf2793d671e853aab55624dcbe2b49e0129f26",
+            "excerpt": "## Spec (confirming round, repair delta 6263b8fb3..f2a77f885)\nS1 closed: the refactor keeps every answer of KitSourceCheckoutAtKit (empty root, either resolve failure, equal and unequal spellings); a non-behavioral contradiction with spec line 101, flagged for reviewer veto.\nC1 closed: TestKitForRootKeepsASymlinkedRootSpelling (kit_root_test.go:113-121). C2 closed: TestKitForRootKeepsASymlinkedKitFromAnotherRepository (kit_root_test.go:72-79).\n- P1, no-op, confidence 2: the R07 cell now also holds the root-spelling test.\nCount 1, worst P1.\n"
+          },
+          "axis": "Spec",
+          "base": "d9dd9650cd42c277ae733c522a881b322d50e9e2",
+          "tip": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-r0-spec"
+          ]
+        },
+        {
+          "id": "c1-r1-coverage",
+          "performer": "claude:ft335-c1-coverage-r1-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e78f593a0df5cce6e5c51d45147bff52f41de0aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c1-coverage-r1-20261019",
+            "digest": "sha256:a77099927a169d9bd4ada30b81bd475a68878151a7e04af8e5f80be5aa7fb98a",
+            "excerpt": "## Coverage (confirming round, repair delta 6263b8fb3..f2a77f885)\nC1, C2, S1 closed. Probe: if root == \"\" -> if false && root == \"\" in KitSourceCheckoutAtKit, silent, restored yes.\n- C3, no-op, confidence 3: KitSourceCheckoutAtKit(\"\", <working directory>) has no test; the guard predates the repair, and the delta opens no new input.\nCount 1, worst C3.\n"
+          },
+          "axis": "Coverage",
+          "base": "d9dd9650cd42c277ae733c522a881b322d50e9e2",
+          "tip": "5af8cebc5392b31eb80413df2601c1b7caf33ddc",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-r0-coverage"
+          ]
         }
       ]
     }
@@ -404,3 +470,13 @@ Count: 2. Worst issue: C2.
 ## Advice
 
 - An empty root makes `CommonDir` run git in the process working directory. No planned caller passes an empty root.
+
+## C1 confirming round 1 pickup
+
+Repair delta: 6263b8fb3..f2a77f885, repair commit 5af8cebc5. Repair cycles used: 1 of 2. S1, C1, and C2 are closed.
+
+The C2 code claim was wrong. The committed fallback at 03bec7089 already answered `kit` as spelled, and the orchestrator had read a live probe mutant. The repair added the pin test only.
+
+- S3, no-op, confidence 3: four doc comments restate the no-canonical-spelling contract, and each caller states its own contract.
+- P1, no-op, confidence 2: the R07 cell now also holds the root-spelling test, which still covers spec line 87.
+- C3, no-op, confidence 3: no test passes an empty root to `KitSourceCheckoutAtKit`. The guard predates this build, and the repair delta opens no new input.
