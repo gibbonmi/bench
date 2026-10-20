@@ -3479,6 +3479,78 @@
             "F5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cbc4-standards-confirm",
+          "performer": "claude:ft419-cbc4-standards-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8f6e5fa76f18c32453a1a7db8877ac47c8651443",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc4-standards-confirm-20261020",
+            "digest": "sha256:c965e0644ae627ee00db6f0a3266c96518090bff3c147962f126a936b89237b9",
+            "excerpt": "## Standards (CB-C4 confirming round, repair delta cca32bd6..cf9ef09d, opus/medium)\nF1 to F5 closed.\nN1 auto-fix conf 5: build_restore.go:85-86 why-comment claims an executable that cannot read the ledger is not the installed candidate; a non-JSON ledger refutes it.\nN2 auto-fix conf 5: build_restore_test.go:98, :222, :225 hand-type registry route text; derive the expectation from refusalroute.New(...).Route.\nCount 2 new.\n"
+          },
+          "axis": "Standards",
+          "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "tip": "66e2e67463dc1b6b14f7c81711089fde94e2d804",
+          "finding_ids": [
+            "N1",
+            "N2"
+          ],
+          "supersedes": [
+            "cbc4-standards"
+          ]
+        },
+        {
+          "id": "cbc4-spec-confirm",
+          "performer": "claude:ft419-cbc4-spec-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8f6e5fa76f18c32453a1a7db8877ac47c8651443",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc4-spec-confirm-20261020",
+            "digest": "sha256:980a8b8b6e466b9056c2f117b05411f07a2a03330c5dd83c39aee53bd3388eeb",
+            "excerpt": "## Spec (CB-C4 confirming round, repair delta cca32bd6..cf9ef09d, opus/medium)\nThe amended restore paragraph, the refusal 3 route, the Reviewer block route, every CB-C4 row, and the repair scope met. No finding.\n"
+          },
+          "axis": "Spec",
+          "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "tip": "66e2e67463dc1b6b14f7c81711089fde94e2d804",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc4-spec"
+          ]
+        },
+        {
+          "id": "cbc4-coverage-confirm",
+          "performer": "claude:ft419-cbc4-coverage-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8f6e5fa76f18c32453a1a7db8877ac47c8651443",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc4-coverage-confirm-20261020",
+            "digest": "sha256:b818db49dedae0dafcc82247b0b850df4ace2ef97a39f5f748b0f63e68ed5d3c",
+            "excerpt": "## Coverage (CB-C4 confirming round, repair delta cca32bd6..cf9ef09d, opus/medium)\nF1 to F5 closed; each independent mutant bit, restored=yes.\nN1 auto-fix conf 5: RemoveFields returning true on an absent ledger stays silent; assert an empty ledger_copy and test the copied return in internal/intent.\nN2 auto-fix conf 4: release() in place of defer release() stays silent; add a concurrent-writer test that shows the lock holds through the write.\nCount 2 new.\n"
+          },
+          "axis": "Coverage",
+          "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "tip": "66e2e67463dc1b6b14f7c81711089fde94e2d804",
+          "finding_ids": [
+            "N1",
+            "N2"
+          ],
+          "supersedes": [
+            "cbc4-coverage"
+          ]
         }
       ]
     }
@@ -3839,4 +3911,11 @@ CB-C4: 5 findings. Worst: F1. The ticket 6 repair takes all five.
 - F4 (auto-fix, confidence 8): no test declares a review-record path, so a filter that accepts any record stays silent.
 - F5 (auto-fix after bench-debug, confidence 6): with no ledger file, the restore refuses with a rerun that cannot succeed. The rule of CB49 says it completes.
 
-Repair state: CB-C4 repair cycle 1 of 2 runs one ticket 6 session.
+Repair state: CB-C4 repair cycle 1 of 2 closed all ten findings. The confirming round accepted four new items, and cycle 2 of 2 takes them:
+
+- Standards N1 (auto-fix, confidence 5): a `build_restore.go` why-comment claims a fact that the code does not establish.
+- Standards N2 (auto-fix, confidence 5): two restore test expectations re-spell registry route text. They must derive from the registry.
+- Coverage N1 (auto-fix, confidence 5): no test asserts an empty `ledger_copy` for an absent ledger.
+- Coverage N2 (auto-fix, confidence 4): no test shows that the removal holds the ledger lock through its write.
+
+The install refusal route in `build.go` is out of this chunk's reach and goes to bench learning.
