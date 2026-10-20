@@ -50,8 +50,8 @@ type reauthorizeSet struct {
 }
 
 // mergeSet is a repository, one owned registration for each label, the seam set that the
-// merge verb runs with, a kit directory apart from each registration, and the file that
-// the manifest lane appends to.
+// merge verb runs with, the kit that the verb entry reads, and the file that the set's
+// grade appends to.
 type mergeSet struct {
 	repoHome
 	joins   joins

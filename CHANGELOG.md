@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Merge target lane
+
+- Changed `bench worktree merge`, which now grades the composed tree with the target's lane when the merge runs from any checkout of the kit repository. Before, a merge from the primary checkout or from another worktree ran the whole-project gate.
+
 ### Plan-commit rules
 
 - Added the `chunk-rows` row of `bench preflight build`. It compares the Implementation chunks table with the coverage map in both directions. It reds each declared row that no acceptance cell lists, each listed ID that the map does not declare, and each token fault. Before, no check graded the chunk table against the map.

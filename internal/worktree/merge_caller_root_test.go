@@ -23,9 +23,9 @@ func mergeSetAt(t *testing.T, root, home string) mergeSet {
 	return f
 }
 
-// mergeSetOver answers the merge set over root and commits nothing. The merge resolves its
-// lane from the target's manifest only under a kit apart from the target, so the set holds
-// its own kit.
+// mergeSetOver answers the merge set over root and commits nothing. The merge takes the
+// target's manifest lane only under a kit apart from the target's repository, so the set
+// holds its own kit.
 func mergeSetOver(t *testing.T, root, home string) mergeSet {
 	return mergeSet{repoHome: repoHome{root: root, home: home}, joins: defaultJoins(), kit: t.TempDir()}
 }
