@@ -68,6 +68,12 @@ func newOverlappingBuilds(t *testing.T) installedRepository {
 	return r
 }
 
+// wrapperAt is the wrapper of the checkout at root, which shares the directory of that
+// checkout's broker manifest.
+func wrapperAt(root string) string {
+	return filepath.Join(filepath.Dir(brokermanifest.Path(root)), "bench.sh")
+}
+
 func writeExecutable(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -82,8 +88,9 @@ func writeExecutable(t *testing.T, path, content string) {
 // refusal of the check and for a repository without Bench build inputs. The declared path is
 // one that no ledger type holds, so a check that tested field knowledge would refuse the
 // installed candidate. One row publishes the manifest through the adoption writer beside the
-// primary checkout's wrapper, so a check that reads another location refuses that row. An
-// empty face is a pass.
+// primary checkout's wrapper, so a check that reads another location refuses that row. One
+// row points BENCH_WRAPPER into the worktree, whose manifest binds the running build, so a
+// check that reads the manifest beside BENCH_WRAPPER passes that row. An empty face is a pass.
 func TestCandidateCheck(t *testing.T) {
 	declared := []spec.PersistedField{{Record: "intent-ledger", Path: []string{"commitment", "fieldnoledgerholds"}}}
 	const (
@@ -99,7 +106,7 @@ func TestCandidateCheck(t *testing.T) {
 	}{
 		{name: "the installed candidate passes", declaration: declared, call: func(_ *testing.T, r installedRepository) (string, string) { return r.installed, r.primary }},
 		{name: "the manifest of the production writer binds the candidate", declaration: declared, call: func(t *testing.T, r installedRepository) (string, string) {
-			t.Setenv("BENCH_WRAPPER", filepath.Join(r.primary, "bin", "bench.sh"))
+			t.Setenv("BENCH_WRAPPER", wrapperAt(r.primary))
 			if _, _, err := adopt.WriteBrokerManifest("0.0.0"); err != nil {
 				t.Fatal(err)
 			}
@@ -112,6 +119,10 @@ func TestCandidateCheck(t *testing.T) {
 		{name: "another digest refuses", declaration: declared, face: notInstalled, call: func(_ *testing.T, r installedRepository) (string, string) { return r.worktreeBuild, r.primary }},
 		{name: "an undeclared spec passes any digest", call: func(_ *testing.T, r installedRepository) (string, string) { return r.worktreeBuild, r.primary }},
 		{name: "a worktree root reads the primary manifest", declaration: declared, face: notInstalled, call: func(_ *testing.T, r installedRepository) (string, string) { return r.worktreeBuild, r.worktree }},
+		{name: "a worktree wrapper does not move the manifest", declaration: declared, face: notInstalled, call: func(t *testing.T, r installedRepository) (string, string) {
+			t.Setenv("BENCH_WRAPPER", wrapperAt(r.worktree))
+			return r.worktreeBuild, r.worktree
+		}},
 		{name: "no primary manifest refuses", declaration: declared, face: notInstalled, call: func(t *testing.T, r installedRepository) (string, string) {
 			if err := os.Remove(brokermanifest.Path(r.primary)); err != nil {
 				t.Fatal(err)
