@@ -1,8 +1,8 @@
 # Hold the post-landing refresh and land through the installed candidate
 
 Blocked by: 1-declare-persisted-fields.md, 2-install-the-candidate.md
-Writes: internal/worktree/land_effects.go, internal/worktree/land_effects_test.go, internal/worktree/land_broker_notice_test.go, internal/worktree/land.go, internal/worktree/land_resume.go, internal/worktree/joins.go, internal/worktree/parallel_census_test.go, internal/commitment/repository/window.go, internal/commitment/repository/window_test.go, .bench/BENCH-reference.md, internal/systemtest/candidate_install_test.go (new), internal/systemtest/owner_test.go
-Covers: CB24, CB25, CB50, CB51, CB52, CB53, CB59, CB62
+Writes: internal/worktree/land_effects.go, internal/worktree/land_effects_test.go, internal/worktree/land_broker_notice_test.go, internal/worktree/land.go, internal/worktree/land_resume.go, internal/worktree/joins.go, internal/worktree/parallel_census_test.go, internal/commitment/repository/window.go, internal/commitment/repository/window_test.go, .bench/BENCH-reference.md, internal/systemtest/candidate_install_test.go (new), internal/systemtest/owner_test.go, internal/systemtest/owner_landing_fixture_test.go
+Covers: CB24, CB25, CB50, CB51, CB52, CB53, CB59, CB62, CB68
 
 ## What to build
 
@@ -26,6 +26,7 @@ Ticket 2 creates the system test file; the `(new)` marker on this ticket's line 
 - [ ] With a declared build open and different digests, the refresh rebuilds and reports `complete` (CB52).
 - [ ] With no declared build open and an unverified seal, the refresh rebuilds and reports `complete` (CB53).
 - [ ] With a declared build bound and an unreadable ledger, the refresh reports `held` and writes no file (CB62).
+- [ ] With two open builds where only the second declares a field, the refresh reports `held` (CB68).
 - [ ] The installed candidate lands a build whose published tree holds a review record with the fixture's new review-record field, which the `main` broker does not know (CB24).
 - [ ] After that landing, the primary seal verifies against the primary sources, and the primary manifest digest equals the primary `dist/bench` digest (CB25).
 - [ ] After an unrelated landing during an open gap, the primary digest is unchanged and `bench status` exits 0 (CB50).

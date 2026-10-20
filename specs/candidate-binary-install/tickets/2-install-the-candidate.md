@@ -1,7 +1,7 @@
 # Install a declared build's candidate as the repository executable and broker
 
 Blocked by: 1-declare-persisted-fields.md
-Writes: internal/worktree/build.go, internal/worktree/build_install_test.go (new), internal/worktree/build_test.go, internal/worktree/joins.go, internal/worktree/list.go, internal/worktree/journey_test.go, internal/worktree/verb_runner_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/parallel_census_test.go, internal/usage/worktree.go, internal/intent/transaction.go, internal/intent/transaction_test.go, internal/commitment/repository/sources.go, internal/commitment/repository/window_test.go, cmd/bench/help_inventory_test.go, internal/conformance/refusal_route_bypass_test.go, internal/systemtest/candidate_install_test.go (new), internal/systemtest/owner_test.go
+Writes: internal/worktree/build.go, internal/worktree/build_install_test.go (new), internal/worktree/build_test.go, internal/worktree/joins.go, internal/worktree/list.go, internal/worktree/journey_test.go, internal/worktree/verb_runner_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/parallel_census_test.go, internal/usage/worktree.go, internal/intent/transaction.go, internal/intent/transaction_test.go, internal/commitment/repository/sources.go, internal/commitment/repository/window_test.go, cmd/bench/help_inventory_test.go, internal/conformance/refusal_route_bypass_test.go, internal/systemtest/candidate_install_test.go (new), internal/systemtest/owner_test.go, internal/commitment/commitmenttest/admission.go, internal/worktree/path.go, internal/worktree/exec.go
 Covers: CB13, CB14, CB15, CB16, CB17, CB18, CB19, CB20, CB21, CB23, CB54, CB55, CB56, CB63
 
 ## What to build
