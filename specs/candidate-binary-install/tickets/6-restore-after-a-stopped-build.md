@@ -1,7 +1,7 @@
 # Restore the main executable after a declared build stops
 
 Blocked by: 2-install-the-candidate.md, 3-hold-the-refresh.md, 5-refuse-an-uninstalled-writer.md
-Writes: internal/worktree/build.go, internal/worktree/build_restore_test.go (new), internal/worktree/joins.go, internal/worktree/list.go, internal/worktree/journey_test.go, internal/worktree/parallel_census_test.go, internal/usage/worktree.go, internal/commitment/repository/window.go, internal/intent/intent.go, internal/intent/transaction.go, internal/intent/transaction_test.go, cmd/bench/help_inventory_test.go, internal/conformance/refusal_route_bypass_test.go, internal/worktree/build_restore.go, internal/spec/spec.go, internal/refusalroute/faces_gate.go
+Writes: internal/worktree/build.go, internal/worktree/build_restore_test.go (new), internal/worktree/joins.go, internal/worktree/list.go, internal/worktree/journey_test.go, internal/worktree/parallel_census_test.go, internal/usage/worktree.go, internal/commitment/repository/window.go, internal/intent/intent.go, internal/intent/transaction.go, internal/intent/transaction_test.go, cmd/bench/help_inventory_test.go, internal/conformance/refusal_route_bypass_test.go, internal/worktree/build_restore.go (new), internal/spec/spec.go, internal/refusalroute/faces_gate.go
 Covers: CB37, CB38, CB39, CB40, CB41, CB42, CB43, CB49, CB64
 
 ## What to build
