@@ -1,8 +1,8 @@
 # Refuse a declared build's guarded entries on an uninstalled executable
 
 Blocked by: 1-declare-persisted-fields.md, 2-install-the-candidate.md, 3-hold-the-refresh.md
-Writes: internal/commitment/repository/window.go, internal/commitment/repository/install_check_test.go (new), internal/brokermanifest/brokermanifest.go, internal/refusalroute/faces_gate.go, internal/refusalroute/registry.go, internal/refusalroute/route_test.go, internal/gate/gate.go, internal/gate/checkpoint.go, internal/gate/complete_checkpoint.go, internal/gate/refusal_route_test.go, internal/gate/checkpoint_persisted_test.go (new), internal/reviewrecord/recordcmd/assignment.go, internal/reviewrecord/recordcmd/command.go, internal/reviewrecord/recordcmd/refusal.go, internal/reviewrecord/recordcmd/assignment_persisted_test.go (new), internal/conformance/refusal_route_bypass_test.go, internal/conformance/refusal_route_guard_test.go
-Covers: CB26, CB27, CB28, CB29, CB30, CB31, CB32, CB33, CB34, CB35, CB36, CB57, CB60, CB61, CB65
+Writes: internal/commitment/repository/window.go, internal/commitment/repository/install_check_test.go (new), internal/brokermanifest/brokermanifest.go, internal/refusalroute/faces_gate.go, internal/refusalroute/registry.go, internal/refusalroute/route_test.go, internal/gate/gate.go, internal/gate/checkpoint.go, internal/gate/complete_checkpoint.go, internal/gate/refusal_route_test.go, internal/gate/checkpoint_persisted_test.go (new), internal/reviewrecord/recordcmd/assignment.go, internal/reviewrecord/recordcmd/command.go, internal/reviewrecord/recordcmd/refusal.go, internal/reviewrecord/recordcmd/assignment_persisted_test.go (new), internal/conformance/refusal_route_bypass_test.go, internal/conformance/refusal_route_guard_test.go, internal/commitment/commitmenttest/admission.go, internal/refusalroute/faces_commit.go, internal/refusalroute/faces_commitment.go
+Covers: CB26, CB27, CB28, CB29, CB30, CB31, CB32, CB33, CB34, CB35, CB36, CB57, CB60, CB61, CB65, CB69
 
 ## What to build
 
@@ -33,6 +33,7 @@ An undeclared spec makes the check a no-op, so every existing gate and record fi
 - [ ] `TestAssignmentPersistedFields` shows that the last step of the refused record command's `next=` line is exactly `bench record --in <label> assignment <slug>` with the caller's flags, and that the line holds no `bench gate` (CB61).
 - [ ] `TestCheckpointPersistedFields`, from an author worktree with two bound assignments, shows the route names the first bound assignment's label and not the caller's (CB33, CB57).
 - [ ] A checkpoint that runs a version-cache executable after an install refuses (CB36).
+- [ ] With two open declared builds, the check refuses with `declared-builds-overlap` and names `bench commitment block` (CB69).
 
 ## Checkpoint verification
 
