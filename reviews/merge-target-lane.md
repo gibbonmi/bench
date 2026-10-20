@@ -158,7 +158,74 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1-r0-standards",
+          "performer": "claude:ft335-c1-standards-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb27090aa8a633522f3c1e05b70672a72890b5a4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c1-standards-20261019",
+            "digest": "sha256:cdc4ec55091272193d737de255f880d6155225e72d0060a1cf1d756af4459c37",
+            "excerpt": "## Standards\nCount 2, worst S1, no hard violations.\n- S1, judgment (Duplicated Code; AGENTS.md one source per fact): isTopLevel and sameCommonDir in internal/gate/kit_root.go each inline resolvedPath(x), resolvedPath(y), ok && ok && x == y; the same compare is in KitSourceCheckoutAtKit (internal/gate/kit_source.go:57-62). Disposition ask-user. Confidence 5.\n- S2, judgment (craft-comments: the spec owns the red record): kit_root_test.go comments restate the spec's why-it-catches column; the idiom already exists in kit_value_test.go. Disposition no-op. Confidence 3.\n"
+          },
+          "axis": "Standards",
+          "base": "d9dd9650cd42c277ae733c522a881b322d50e9e2",
+          "tip": "03bec7089b851acf9865fd84b62493624e3970b7",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c1-r0-spec",
+          "performer": "claude:ft335-c1-spec-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb27090aa8a633522f3c1e05b70672a72890b5a4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c1-spec-20261019",
+            "digest": "sha256:0e1013fc2772a7399e93676bfd43834fe65b5048af66cf5e2816d6374adab70e",
+            "excerpt": "## Spec\nCount 0. The C1 delta matches the approved spec and ticket 01. Rows R01-R09, R17, R18 pass; KitForRoot contract at internal/gate/kit_root.go:12-48 checked; main_test.go shrinks; TestShellWrapperResolvesKitForTheInvocation keeps seven shapes.\nAdvice: an empty root makes CommonDir run git -C \"\" in the process working directory; no planned caller passes an empty root.\n"
+          },
+          "axis": "Spec",
+          "base": "d9dd9650cd42c277ae733c522a881b322d50e9e2",
+          "tip": "03bec7089b851acf9865fd84b62493624e3970b7",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1-r0-coverage",
+          "performer": "claude:ft335-c1-coverage-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb27090aa8a633522f3c1e05b70672a72890b5a4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft335-c1-coverage-20261019",
+            "digest": "sha256:46b005969c9f46c34b409c4fca2d72ee470cd7cd62c1e1ff0261dd3031a54f78",
+            "excerpt": "## Coverage\nCount 2, worst C1. Spec line 87 (answer root and kit as the caller spelled them) is not pinned.\n- C1: a matching root spelled through a symbolic link; a mutant that returns the canonical root passes every test (probe silent, restored yes). Missing: a KitForRoot case with a symlinked linked root expecting that spelling. Disposition auto-fix. Confidence 6.\n- C2: a foreign top-level kit spelled through a symbolic link answers its canonical spelling (kit_root.go fallback); R04's kit is canonical, and R09 compares canonical forms. Missing: an R04 variant with a symlinked foreign kit expecting that spelling. Disposition auto-fix if spec line 87 binds. Confidence 4.\nProbes: root canonicalized at the return root site, silent, restored yes; kit canonicalized at the final return, silent, restored yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "d9dd9650cd42c277ae733c522a881b322d50e9e2",
+          "tip": "03bec7089b851acf9865fd84b62493624e3970b7",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -170,3 +237,29 @@
   }
 }
 ```
+
+## C1 initial review pickup
+
+Frozen pair: d9dd9650c..6263b8fb3. Repair cycles used: 0 of 2. All accepted findings fall on ticket 01, so one combined repair charge carries them.
+
+## Standards
+
+Count: 2. Worst issue: S1.
+
+- S1, auto-fix on ticket 01, confidence 5: `isTopLevel` and `sameCommonDir` in `internal/gate/kit_root.go` each write the canonical-path equality inline. `KitSourceCheckoutAtKit` in `internal/gate/kit_source.go:57-62` writes it a third time. One `sameResolvedPath` helper beside `resolvedPath` serves all three. The ticket's "do not change `KitSourceCheckoutAtKit`" guards its answers, and this refactor keeps every answer. The orchestrator follows the one-source rule and flags the call for reviewer veto.
+- S2, no-op, confidence 3: the test comments restate the spec's why-it-catches column, and the package convention in `internal/gate/kit_value_test.go` uses the same form.
+
+## Spec
+
+Count: 0. Worst issue: none.
+
+## Coverage
+
+Count: 2. Worst issue: C2.
+
+- C1, auto-fix on ticket 01, confidence 6: spec line 87 says the matched answer is `root` as the caller spelled it. No test passes a root spelled through a symbolic link, so a mutant that returns the canonical root stays green.
+- C2, auto-fix on ticket 01, confidence 4: spec line 87 says every other input answers `kit` as the caller spelled it. `internal/gate/kit_root.go:19-21` answers the canonical kit for a top-level kit of another repository, and the R04 fixture spells its kit canonically.
+
+## Advice
+
+- An empty root makes `CommonDir` run git in the process working directory. No planned caller passes an empty root.
