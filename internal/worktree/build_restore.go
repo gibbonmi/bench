@@ -82,8 +82,9 @@ func restoreAuthority(root, deliverable, rerun string) (string, [][]string, erro
 		return "", nil, refusalError{refusal{detail: "the default-branch copy of " + deliverable + " declares no persisted field, so the restore has no field to clear", next: "bench status"}}
 	}
 	if _, err := intent.Read(primary); err != nil {
-		// An executable that cannot read the ledger is not the installed candidate, so the
-		// route is the install of the candidate and then the restore.
+		// The strict read of this executable refuses the ledger. A field that only the
+		// candidate knows is one cause, so the route installs the candidate and then reruns
+		// the restore.
 		values := map[string]string{refusalroute.FactTarget: restoreTarget(primary, deliverable), refusalroute.FactRerun: rerun}
 		next := refusalroute.New(refusalroute.CandidateNotInstalled, refusalroute.Facts{Values: values}).Route
 		return "", nil, refusalError{refusal{detail: "this executable cannot read the intent ledger: " + err.Error(), next: next}}

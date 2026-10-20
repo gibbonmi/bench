@@ -15,7 +15,9 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -95,7 +97,13 @@ func TestBuildRestore(t *testing.T) {
 	t.Parallel()
 	const gapsDeclared = "Persisted fields: intent-ledger:commitment.gaps\n"
 	rerun := "bench worktree build --restore 'install'"
-	install := "next=from the primary checkout, run bench worktree build --install "
+	// installRoute is the candidate install route over the restore's facts. An empty target
+	// prints the target slot.
+	installRoute := func(target string) string {
+		values := map[string]string{refusalroute.FactTarget: target, refusalroute.FactRerun: rerun}
+		return "next=" + refusalroute.New(refusalroute.CandidateNotInstalled, refusalroute.Facts{Values: values}).Route
+	}
+	blockRoute := "next=" + refusalroute.New(refusalroute.DeclaredBuildsOverlap, refusalroute.Facts{Values: map[string]string{refusalroute.FactRerun: rerun}}).Route
 	t.Run("help names the restore form", func(t *testing.T) {
 		t.Parallel()
 		r := runVerb(t, verbBuild, verbCall{root: t.TempDir(), home: t.TempDir(), args: []string{"--help"}})
@@ -188,6 +196,9 @@ func TestBuildRestore(t *testing.T) {
 		_, err := os.Lstat(ledger)
 		requireTest(t, os.IsNotExist(err) && len(restoreCopies(t, f)) == 0, "ledger stat %v, copies %v; want no ledger and no copy", err, restoreCopies(t, f))
 		primary := freshness.PublishedExecutable(f.root)
+		table, err := toon.Table(restoreTable, []string{"ledger_copy", "executable"}, [][]string{{"", primary}})
+		mustNoError(t, err)
+		requireTest(t, r.stdout == table, "stdout = %q, want %q with an empty ledger copy", r.stdout, table)
 		requireTest(t, fixtureFileText(t, primary) == rebuiltMain && freshness.Verify(f.root, primary) == nil, "primary = %q, verify %v; want the verified rebuild", fixtureFileText(t, primary), freshness.Verify(f.root, primary))
 	})
 	t.Run("refuses before any write", func(t *testing.T) {
@@ -202,27 +213,27 @@ func TestBuildRestore(t *testing.T) {
 			{name: "an undeclared default-branch spec", shape: installShape{inputs: true, deliverable: installSpec}, want: func(ownedAssignment) []string { return []string{"declares no persisted field"} }},
 			{name: "an invalid declaration", shape: installShape{inputs: true, declaration: "Persisted fields: gate-evidence:x\n", deliverable: installSpec}, want: func(ownedAssignment) []string { return []string{spec.ErrPersistedFieldsInvalid.Error()} }},
 			{name: "a ledger that the strict read refuses", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) { plantCommitmentField(t, f.root) }, want: func(f ownedAssignment) []string {
-				return []string{"cannot read the intent ledger", install + "'" + f.creation.Assignment.Label + "'; then " + rerun}
+				return []string{"cannot read the intent ledger", installRoute(f.creation.Assignment.Label)}
 			}},
 			{name: "a refused ledger whose target tree is gone", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) {
 				plantCommitmentField(t, f.root)
 				mustNoError(t, os.RemoveAll(f.creation.Path))
 			}, want: func(ownedAssignment) []string {
-				return []string{install + "<target>; then " + rerun}
+				return []string{installRoute("")}
 			}},
 			{name: "a ledger that is not JSON", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) {
 				mustWrite(t, commitmenttest.LedgerPath(t, f.root), []byte("{\n"), 0o600)
 			}, want: func(ownedAssignment) []string {
-				return []string{install + "<target>; then " + rerun}
+				return []string{installRoute("")}
 			}},
 			{name: "an open build between chunks", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) {
 				openInstallBuild(t, f.root)
 				putGaps(t, f.root, "install")
 			}, want: func(ownedAssignment) []string {
-				return []string{"holds an open build", "before bench worktree release", "next=reviewer: bench commitment block --outcome <id> --reason <text>; then " + rerun}
+				return []string{"holds an open build", "before bench worktree release", blockRoute}
 			}},
 			{name: "an open build of an undeclared outcome", shape: declaredInstall, prepare: func(t *testing.T, f ownedAssignment) { openUndeclaredBuild(t, f) }, want: func(ownedAssignment) []string {
-				return []string{"holds an open build", "next=reviewer: bench commitment block"}
+				return []string{"holds an open build", blockRoute}
 			}},
 		} {
 			t.Run(row.name, func(t *testing.T) {
