@@ -1020,6 +1020,18 @@
               "path": "roadmap/FT419.md",
               "identity": "sha256:51770caf94fc53b93e5701036d1b6eba2e4e544daca83f491eff1c40359ddd92"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "candidate-binary-install",
+                "path": "specs/candidate-binary-install/spec.md",
+                "identity": "sha256:6878989aae708ee957cb77aeb9685947fa57fd3ab88e853fe9a4dc553fec99ea"
+              },
+              "obligations": [
+                "FT419"
+              ]
+            }
           ]
         },
         {

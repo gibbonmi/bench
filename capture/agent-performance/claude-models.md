@@ -26,6 +26,10 @@ The `merge-target-lane` spec stage ran on Claude Code for FT335. An Opus coordin
 
 The research pairs disagreed once, about the root of the whole-gate run log, and a targeted read closed it. The slicing pair found a structure budget and a serial-ceiling pin that the spec had missed. Provider usage and charges remain unknown. The harness reported about 40k to 130k tokens for each reader, 250k for the fork, and 170k to 185k for the spec reviewer.
 
+The `candidate-binary-install` spec stage ran on Claude Code for FT419. An Opus coordinator ran four Opus/medium research pairs and five Haiku/high slicing pairs, and it sliced seven tickets itself, six after the review merged one. An Opus/high fork wrote the spec. Opus/medium reviewed the spec round, which took 3 iterations. Two consultations between iterations 2 and 3 (Fable/medium and Sonnet/high) both found the same lifecycle deadlock, an unrelated landing whose refresh uninstalled the candidate. The ticket round took 5 iterations. Opus/medium graded the first two, and Fable/high and Opus/high graded the last three under the reviewer's delegated sign-off. In those three, the two graders found different blockers twice and agreed to approve at the fifth.
+
+Two of the four rejected re-reviews found a blocker that the coordinator's own previous repair had introduced. A consensus diagnosis by Fable/high and Opus/high attributed most misses to three causes: a fork that wrote claims without re-reading the code, no lifecycle walk across the actors, and re-reviews that graded only the repair. The Haiku slicing readers found the directory caps, the census pin, and the rule-sentence anchor conflict that the accepted spec had missed. Provider usage and charges remain unknown. The harness reported about 40k to 280k tokens for each reader, 260k for the fork, and 75k to 300k for each grader.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use | calibration |
