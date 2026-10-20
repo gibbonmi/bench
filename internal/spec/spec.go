@@ -23,6 +23,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
@@ -100,8 +101,7 @@ func metadata(content []byte) (status, roadmapID string) {
 	return status, roadmapID
 }
 
-// ErrPersistedFieldsInvalid is the refusal face of a malformed `Persisted fields:` line.
-// Each PersistedFields refusal wraps it, so the error text starts with the face.
+// ErrPersistedFieldsInvalid is the sentinel that each PersistedFields refusal wraps.
 var ErrPersistedFieldsInvalid = errors.New("persisted-fields-invalid")
 
 // persistedRecords is the closed set of record names that a declaration item can name.
@@ -114,17 +114,22 @@ type PersistedField struct {
 	Path   []string
 }
 
-// PersistedFields reads the `Persisted fields:` declaration through the header scan of
-// `Status:` and `Roadmap:`, so a fenced line declares nothing, and the last line wins. A
-// spec with no line returns an empty list. The value is a comma-separated item list. An
-// empty item, a record name outside persistedRecords, an empty path segment, or a duplicate
-// item refuses with ErrPersistedFieldsInvalid.
+// PersistedFields reads the `Persisted fields:` declaration through headerLines, the shared
+// fence-aware line view, so a fenced line declares nothing. A spec with no line returns an
+// empty list. The value is a comma-separated item list. A malformed item or a second
+// unfenced line refuses with ErrPersistedFieldsInvalid; the second-line refusal keeps a body
+// line from replacing the reviewed header declaration.
 func PersistedFields(content []byte) ([]PersistedField, error) {
 	value, declared := "", false
 	for _, line := range headerLines(content) {
-		if v, ok := strings.CutPrefix(line, "Persisted fields:"); ok {
-			value, declared = v, true
+		v, ok := strings.CutPrefix(line, "Persisted fields:")
+		if !ok {
+			continue
 		}
+		if declared {
+			return nil, fmt.Errorf("%w: a second Persisted fields: line", ErrPersistedFieldsInvalid)
+		}
+		value, declared = v, true
 	}
 	if !declared {
 		return []PersistedField{}, nil
@@ -142,6 +147,8 @@ func PersistedFields(content []byte) ([]PersistedField, error) {
 			return nil, fmt.Errorf("%w: unknown record %q in %q", ErrPersistedFieldsInvalid, record, item)
 		case slices.Contains(segments, ""):
 			return nil, fmt.Errorf("%w: empty path segment in %q", ErrPersistedFieldsInvalid, item)
+		case strings.ContainsFunc(path, func(r rune) bool { return r == ':' || unicode.IsSpace(r) }):
+			return nil, fmt.Errorf("%w: whitespace or a colon in the path of %q", ErrPersistedFieldsInvalid, item)
 		case seen[item]:
 			return nil, fmt.Errorf("%w: duplicate item %q", ErrPersistedFieldsInvalid, item)
 		}

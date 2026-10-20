@@ -27,8 +27,16 @@ func TestPersistedFieldsHeader(t *testing.T) {
 	for _, value := range []string{
 		"intent-ledger:a,,",
 		"gate-evidence:x",
+		"Intent-Ledger:x",
 		"intent-ledger:commitment..gaps",
+		"intent-ledger:",
+		"intent-ledger:.gaps",
+		"intent-ledger:gaps.",
+		"intent-ledger:commitment. gaps",
+		"intent-ledger:a:b",
+		"intent-ledger:a b",
 		"intent-ledger:a, review-record:folds, intent-ledger:a",
+		"review-record:folds\n\nBody.\n\nPersisted fields: intent-ledger:commitment.gaps",
 	} {
 		t.Run("refuses "+value, func(t *testing.T) {
 			_, err := PersistedFields([]byte("# S\n\nPersisted fields: " + value + "\n"))
