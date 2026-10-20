@@ -123,7 +123,7 @@ C2 starts after the C1 chunk review closes.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
   "chunks": [
     {
       "id": "C1",
@@ -132,30 +132,36 @@ C2 starts after the C1 chunk review closes.
       ],
       "verification": [
         {
-          "id": "kit-rule",
+          "id": "t1-kit-rule",
           "command": "bench test --package ./internal/gate --run 'KitForRoot|LaneForCommit|LaneFor|KitValue|KitSourceCheckout'",
-          "probe": "Remove the top-level condition from KitForRoot and record the R03 red, the restore, and the green."
+          "probe": "Remove the top-level condition from KitForRoot and record the R03 red, the restore, and the green.",
+          "ticket": "01-kit-for-root.md"
         },
         {
-          "id": "wrapper-differential",
+          "id": "t1-wrapper-differential",
           "command": "bench test --package ./cmd/bench --run 'ShellWrapper'",
-          "probe": "Remove the top-level condition from KitForRoot and record the R09 red, the restore, and the green."
+          "probe": "Remove the top-level condition from KitForRoot and record the R09 red, the restore, and the green.",
+          "ticket": "01-kit-for-root.md"
         },
         {
-          "id": "plumbing-owner",
-          "command": "bench test --check git-plumbing-owner"
+          "id": "t1-plumbing-owner",
+          "command": "bench test --check git-plumbing-owner",
+          "ticket": "01-kit-for-root.md"
         },
         {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
+          "id": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "01-kit-for-root.md"
         },
         {
-          "id": "gate-package",
-          "command": "bench test --package ./internal/gate"
+          "id": "t1-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "ticket": "01-kit-for-root.md"
         },
         {
-          "id": "cmd-package",
-          "command": "bench test --package ./cmd/bench"
+          "id": "t1-cmd-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "01-kit-for-root.md"
         }
       ]
     },
@@ -166,21 +172,25 @@ C2 starts after the C1 chunk review closes.
       ],
       "verification": [
         {
-          "id": "merge-lane",
+          "id": "t2-merge-lane",
           "command": "bench test --package ./internal/worktree --run 'Merge|SingleReadCensus|EffectBoundaryCensus'",
-          "probe": "Resolve the kit at the fold call site only and record the R12 red, the restore, and the green."
+          "probe": "Resolve the kit at the fold call site only and record the R12 red, the restore, and the green.",
+          "ticket": "02-merge-target-lane.md"
         },
         {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
+          "id": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "02-merge-target-lane.md"
         },
         {
-          "id": "worktree-package",
-          "command": "bench test --package ./internal/worktree"
+          "id": "t2-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "02-merge-target-lane.md"
         },
         {
-          "id": "cmd-package",
-          "command": "bench test --package ./cmd/bench"
+          "id": "t2-cmd-package",
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "02-merge-target-lane.md"
         }
       ]
     }
@@ -198,7 +208,17 @@ C2 starts after the C1 chunk review closes.
       "id": "coverage",
       "command": "bench coverage --check merge-target-lane"
     }
-  ]
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft335-merge-target-lane-full-20261019",
+    "orchestrator_session": "claude:ft335-orchestrator-20261019",
+    "author_limit": 1,
+    "assignments": {
+      "01-kit-for-root.md": [],
+      "02-merge-target-lane.md": []
+    }
+  }
 }
 ```
 
@@ -216,7 +236,7 @@ The R06 test sets its working directory to the primary checkout of the root's re
 Do not mark the R06 test parallel, because `t.Chdir` refuses a parallel test.
 The gate fixtures run git through the package's `runGitIn` helper, because the ordinary-build census refuses a `worktree` literal in a `gittest` call or an `os/exec` process in a gate test.
 
-The verb seam is the merge verb through the existing `runVerb` harness and the `mergeSet.kit` override ([verb_fixture_test.go](../../internal/worktree/verb_fixture_test.go:52)).
+The verb seam is the merge verb through the existing `runVerb` harness and the `mergeSet.kit` override ([verb_fixture_test.go](../../internal/worktree/verb_fixture_test.go:58)).
 The precedent for a kit that is the fixture's primary checkout is [land_broker_notice_test.go](../../internal/worktree/land_broker_notice_test.go:50).
 The fixture commits `go.mod`, one trivial Go package, and a whole gate that writes a tally, before the assignment exists.
 The incoming change edits only `go.mod`, so the built-in lane selects only the class that runs `go vet` and `go build`.
