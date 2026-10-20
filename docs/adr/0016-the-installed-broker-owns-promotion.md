@@ -6,10 +6,10 @@ Status: accepted (2026-08-25)
 
 One installed promotion broker owns the complete landing command. The
 installation manifest authenticates the broker by path, version, and
-executable digest. The wrapper selects the broker from the installed
-distribution only. It refuses inherited routing overrides for this public
-command before any repository read, and it ignores repository binaries and
-their seals.
+executable digest. Except under the install exception below, the wrapper
+selects the broker from the installed distribution only, and it ignores
+repository binaries and their seals. It refuses inherited routing overrides
+for this public command before any repository read.
 
 The broker resolves the destination and the registered assignment as
 separate subjects. It binds the request, the review base, the source tip,
@@ -33,7 +33,8 @@ authority.
 
 ## Consequence
 
-Candidate code cannot authorize its own publication except through the install
-exception above, and a landing never rebuilds and re-runs itself. A broker-changing diff publishes as source
-only; the new broker takes authority at the next package install or repair,
-and the landing names that step.
+Candidate code cannot authorize its own publication except through the
+install exception above, and a landing never rebuilds and re-runs itself.
+A broker-changing diff publishes as source only; the new broker takes
+authority at the next package install or repair, and the landing names
+that step.

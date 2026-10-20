@@ -57,8 +57,8 @@ The pre-push hook guards the default branch. This line only states the binding.)
 
   Prospective gate evidence keys to the graded tree and to the baseline runner
   identity, so a retry reuses green evidence only when both are unchanged. A
-  broker source change becomes active only after `bench repair` or a release
-  install publishes the new broker.
+  broker source change becomes active only after `bench repair`, a release
+  install, or the install of a declared build publishes the new broker.
 
   `bench commit` formats changed Go files inside its named ownership fence
   before it composes and gates the prospective tree. It leaves unnamed files

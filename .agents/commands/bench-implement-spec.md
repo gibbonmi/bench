@@ -5,10 +5,8 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 # /bench-implement-spec — do the work at the seams
 
 ## Entry orientation
-This is the implementation phase. It starts from an approved spec, or from a change small enough for the light path. It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams. If there is no spec, the change must fit the light path in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fit the light path, route to `/bench-write-spec` first.
-If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
-
-A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.
+This implementation phase starts from an approved spec, or from a change small enough for the light path. It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams. If there is no spec, the change must fit the light path in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fit the light path, route to `/bench-write-spec` first.
+If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there. A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.
 
 ## Exit handoff
 
@@ -41,7 +39,9 @@ A material action changes behavior, a verification target, or a premise that det
 Work approved tickets in dependency order inside their planned chunks. Use TDD only where `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
 harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row. The spec and the ticket are final. Do not evaluate another approach. Implement the ticket as written, run its focused checks, then continue to the commit below.
 
-Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph. At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md). A prose-only owner edit is an implementation write. Before another session edits it, follow `craft-delegate`'s recorded user-directed author-transfer rules. Run fresh-session adoption after the final committed owner-byte change. A later owner-byte edit invalidates that evidence; rerun it against the new committed tip before review.
+Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph. At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).
+
+A prose-only owner edit is an implementation write. Before another session edits it, follow `craft-delegate`'s recorded user-directed author-transfer rules. Run fresh-session adoption after the final committed owner-byte change. A later owner-byte edit invalidates that evidence; rerun it against the new committed tip before review.
 
 Before the first ticket dispatch of a declared build, run `bench worktree build --install <target>` from the primary checkout. After a Go change or a fold reaches that build, run the install again before the next dispatch or checkpoint. The Command Notes of `.bench/BENCH-reference.md` define a declared build and describe the install.
 
@@ -75,7 +75,7 @@ The orchestrator keeps one build log at the primary checkout's `capture/build-lo
 
 ## When the build stops short
 
-Report the state: what is done, what remains, the coverage table, and what consumed the cap. Keep landed work landed. Then route by cause:
+Report the state: what is done, what remains, the coverage table, and what consumed the cap. Keep landed work landed. For a declared build, follow the restore steps in the Command Notes of `.bench/BENCH-reference.md`. Then route by cause:
 
 - Wrong tier: apply `craft-line`'s ladder.
 - Wrong spec: route to `/bench-write-spec` with the finding quoted.
