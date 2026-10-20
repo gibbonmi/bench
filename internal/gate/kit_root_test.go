@@ -67,6 +67,18 @@ func TestKitForRootKeepsAKitFromAnotherRepository(t *testing.T) {
 	requireKitForRoot(t, other, linked, other)
 }
 
+// TestKitForRootKeepsASymlinkedKitFromAnotherRepository pins the kit spelling. A form that
+// answers the canonical kit loses the link.
+func TestKitForRootKeepsASymlinkedKitFromAnotherRepository(t *testing.T) {
+	t.Parallel()
+	_, linked := kitRootRepo(t)
+	link := filepath.Join(t.TempDir(), "other-link")
+	if err := os.Symlink(gittest.RepoOnBranch(t, "main"), link); err != nil {
+		t.Fatal(err)
+	}
+	requireKitForRoot(t, link, linked, link)
+}
+
 // TestKitForRootKeepsTheKitOutsideARepository pins the git-failure fallback. A form that
 // treats a git failure as a match answers the root.
 func TestKitForRootKeepsTheKitOutsideARepository(t *testing.T) {
@@ -94,6 +106,18 @@ func TestKitForRootMatchesASymlinkedKitSpelling(t *testing.T) {
 		t.Fatal(err)
 	}
 	requireKitForRoot(t, link, linked, linked)
+}
+
+// TestKitForRootKeepsASymlinkedRootSpelling pins the root spelling. A form that answers the
+// canonical root loses the link.
+func TestKitForRootKeepsASymlinkedRootSpelling(t *testing.T) {
+	t.Parallel()
+	primary, linked := kitRootRepo(t)
+	link := filepath.Join(t.TempDir(), "root-link")
+	if err := os.Symlink(linked, link); err != nil {
+		t.Fatal(err)
+	}
+	requireKitForRoot(t, primary, link, link)
 }
 
 // TestKitForRootKeepsAnAbsentKit pins the absent-kit fallback. A form that treats an

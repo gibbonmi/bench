@@ -54,17 +54,20 @@ func KitSourceCheckoutAtKit(root, kit string) bool {
 	if root == "" {
 		return false
 	}
-	resolvedRoot, ok := resolvedPath(root)
-	if !ok {
-		return false
-	}
-	resolvedKit, ok := resolvedPath(kitDirAt(kit))
-	return ok && resolvedRoot == resolvedKit
+	return sameResolvedPath(root, kitDirAt(kit))
 }
 
 func resolvedPath(path string) (string, bool) {
 	resolved, err := canonicalpath.Resolve(path)
 	return resolved, err == nil
+}
+
+// sameResolvedPath reports whether a and b have one canonical spelling. A path with no
+// canonical spelling matches nothing.
+func sameResolvedPath(a, b string) bool {
+	resolvedA, okA := resolvedPath(a)
+	resolvedB, okB := resolvedPath(b)
+	return okA && okB && resolvedA == resolvedB
 }
 
 // LaneForCommit resolves the lane a worktree commit at root runs under the process kit.

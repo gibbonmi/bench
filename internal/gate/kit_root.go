@@ -26,9 +26,7 @@ func isTopLevel(dir string) bool {
 	if err != nil {
 		return false
 	}
-	resolvedTop, okTop := resolvedPath(top)
-	resolvedDir, okDir := resolvedPath(dir)
-	return okTop && okDir && resolvedTop == resolvedDir
+	return sameResolvedPath(top, dir)
 }
 
 // sameCommonDir reports whether a and b share one git common directory under canonical
@@ -42,7 +40,5 @@ func sameCommonDir(a, b string) bool {
 	if err != nil {
 		return false
 	}
-	resolvedA, okA := resolvedPath(commonA)
-	resolvedB, okB := resolvedPath(commonB)
-	return okA && okB && resolvedA == resolvedB
+	return sameResolvedPath(commonA, commonB)
 }
