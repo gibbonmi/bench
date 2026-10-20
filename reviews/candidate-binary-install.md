@@ -1288,6 +1288,72 @@
             "F3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cbc2-standards-confirm",
+          "performer": "claude:ft419-cbc2-standards-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e443b2673f804c8cb95cecd333658eae36e8524c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc2-standards-confirm-20261020",
+            "digest": "sha256:593dcc99df3e8208b2cebd065cdbb9588c34da8433309d7ff9ee57c64fb4531c",
+            "excerpt": "## Standards (CB-C2 confirming round, repair delta 74648d83..5ca3a61d, opus/medium)\nS1 to S8 closed: one ledger-field plant (commitmenttest/admission.go:195-224), landableSpec, resolveAmong with the missing-tree refusal, manifestPath, wrapperPath, three comment fixes.\nJudgment calls graded acceptable: ledger read before the target-control check; the install gains the branch-checked-out check.\nNew findings: 0.\n"
+          },
+          "axis": "Standards",
+          "base": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+          "tip": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc2-standards"
+          ]
+        },
+        {
+          "id": "cbc2-spec-confirm",
+          "performer": "claude:ft419-cbc2-spec-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e443b2673f804c8cb95cecd333658eae36e8524c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc2-spec-confirm-20261020",
+            "digest": "sha256:ab3ce3ee49c10a1f5d162f377f5a0be03d9a09debf3498507937ce5b71411b76",
+            "excerpt": "## Spec (CB-C2 confirming round, repair delta 74648d83..5ca3a61d, opus/medium)\nCB56 met (seam cites TestBuildInstall and TestPublishRestoresPriorPairWhenSealPromotionFails). CB68 met and cited. No behavior beyond S1-S8 and F1-F3; plan changes are only the widenings, CB68, t2-commitmenttest, and repair assignments.\nNew findings: 0.\n"
+          },
+          "axis": "Spec",
+          "base": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+          "tip": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc2-spec"
+          ]
+        },
+        {
+          "id": "cbc2-coverage-confirm",
+          "performer": "claude:ft419-cbc2-coverage-confirm-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e443b2673f804c8cb95cecd333658eae36e8524c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc2-coverage-confirm-20261020",
+            "digest": "sha256:8a5aabb02245f76d11c7036d084910e03e899d8d553a3dea84a2a27a9b69b93f",
+            "excerpt": "## Coverage (CB-C2 confirming round, repair delta 74648d83..5ca3a61d, opus/medium)\nF1/CB68, F2, F3, and the S3 missing-tree case closed; each independent mutant bit, restored=yes.\nAdvice (no finding ID; the bounded repair policy makes a finding that grades only the CB68 hardening check optional advice): no row has the declared build first and an undeclared build second; a last-build-only mutant in DeclaredBuild stays silent. The production loop checks every build.\nThe resolveAmong lineSafe gap is inherited and goes to bench learning.\n"
+          },
+          "axis": "Coverage",
+          "base": "704a040fda0c0c5a3f50798252ffb638aa978ab5",
+          "tip": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "finding_ids": [],
+          "supersedes": [
+            "cbc2-coverage"
+          ]
         }
       ]
     }
@@ -1422,4 +1488,6 @@ CB-C2: 3 findings. Worst: F1. Ticket 3 takes F1, and ticket 2 takes F2 and F3.
 - F2 (auto-fix, confidence 6): no test reaches the running executable through a symlinked alias of the primary path.
 - F3 (auto-fix, confidence 6): no test seeds an earlier manifest before a failed publication.
 
-Repair state: CB-C2 repair cycle 1 of 2 runs a ticket 2 session, then a ticket 3 session.
+Repair state: CB-C2 repair cycle 1 of 2 closed every accepted finding. The confirming round passed on all three axes.
+
+Advice (CB-C2 confirming round, no finding ID): no row has the declared build first and an undeclared build second. The bounded repair policy makes this optional advice, because it grades only the CB68 hardening check.
