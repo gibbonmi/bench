@@ -3187,7 +3187,80 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cbc4-standards",
+          "performer": "claude:ft419-cbc4-standards-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc4-standards-20261020",
+            "digest": "sha256:9afeba2583741b6262c0096ba2816510c3bcfb17a30915b6134e2fc625bc20d2",
+            "excerpt": "## Standards (CB-C4, pair cee87305..cca32bd6, opus/medium)\nF1 ask-user conf 6: BlockRoute (faces_gate.go:39-41) renders the shared blockOutcome step with no Reviewer authority, while the overlap face marks the same step Reviewer.\nF2 auto-fix conf 6: build_restore.go:77 builds the install-then-rerun route by hand with StepJoiner, which only the registry spells.\nF3 auto-fix conf 6: routeWord, targetSlot, slugSlot (build.go:362-375) copy the registry quoting rule and the usage placeholders.\nF4 auto-fix conf 6: window.go:119-121 comment does not match the located != nil branch.\nF5 auto-fix conf 4: window.go:146-147 comment keeps the narrowness the ticket corrected.\nCount 5. Worst: F1.\n"
+          },
+          "axis": "Standards",
+          "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "tip": "6c74df34ab340683bfb1ed07ef1fbcdf4d4a2642",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4",
+            "F5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cbc4-spec",
+          "performer": "claude:ft419-cbc4-spec-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc4-spec-20261020",
+            "digest": "sha256:f57ccc5f3cbd36b64b90ae6c600356aa1649d3fba2edd41014e1f283755d47f7",
+            "excerpt": "## Spec (CB-C4, pair cee87305..cca32bd6, opus/medium)\nNo finding. CB37-CB43, CB49, CB64 met; the copy folded into the removal and the decode-only check meet the spec's strict decode; refusal order, routes, rebuild owner, child environment, and carried items met.\nAdvice: spec line 198 attributes the copy to the verb; the ledger owner takes it under the lock.\n"
+          },
+          "axis": "Spec",
+          "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "tip": "6c74df34ab340683bfb1ed07ef1fbcdf4d4a2642",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cbc4-coverage",
+          "performer": "claude:ft419-cbc4-coverage-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "30a32e8ce625a8375416a4670fa987de49a8198f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc4-coverage-20261020",
+            "digest": "sha256:38083a6256c886a0238acf1000db7ea7a6362f9ff1b50508d79b4e0a67bf6442",
+            "excerpt": "## Coverage (CB-C4, pair cee87305..cca32bd6, opus/medium)\nF1 auto-fix conf 9: no test has an open build of an undeclared outcome; DeclaredBuild in place of HoldsOpenBuild stays silent, restored=yes.\nF2 auto-fix conf 9: no test declares several ledger paths; a short-circuit removal loop stays silent, restored=yes.\nF3 auto-fix conf 8: no test runs the removal while another holder has the ledger lock; a no-op lock stays silent, restored=yes.\nF4 auto-fix conf 8: no test declares a review-record path; a filter that accepts any record stays silent, restored=yes.\nF5 auto-fix conf 6: with no ledger file, RemoveFields fails on its read and the restore refuses with an endless rerun; CB49's rule says it should complete.\nCount 5. Worst: F1.\n"
+          },
+          "axis": "Coverage",
+          "base": "cee87305b25de0e474628722a3936eed0c3e41a5",
+          "tip": "6c74df34ab340683bfb1ed07ef1fbcdf4d4a2642",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4",
+            "F5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3428,6 +3501,13 @@ CB-C3: 5 findings. Worst: F3. The ticket 5 repair takes all five.
 - F4 (auto-fix, confidence 5): three caller-rerun steps repeat one shape. One constructor and one renderer own it.
 - F5 (auto-fix, confidence 6): a test comment in `checkpoint_persisted_test.go` does not parse.
 
+CB-C4: 5 findings. Worst: F1. The ticket 6 repair takes all five.
+
+- F1 (auto-fix after decision, confidence 6): `BlockRoute` renders the shared `bench commitment block` step with no Reviewer authority. The CB-C3 review set that step to Reviewer, so the restore route takes Reviewer too.
+- F2 (auto-fix, confidence 6): the restore builds its install-then-rerun route by hand. The registry owns that route shape.
+- F3 (auto-fix, confidence 6): `routeWord`, `targetSlot`, and `slugSlot` copy the registry quoting rule and the usage placeholders.
+- F4 and F5 (auto-fix, confidence 6 and 4): two `window.go` comments still do not match the code.
+
 ## Spec
 
 CB-C1: 0 findings. Worst: none.
@@ -3439,6 +3519,8 @@ CB-C2: 1 finding. Worst: F1.
 CB-C3: 1 finding. Worst: F1.
 
 - F1 (auto-fix, confidence 6): `CheckEntry` reads and parses the declaration before its build-inputs test. A linked repository then refuses on a malformed or unreadable spec, but the spec keeps the declaration inert there.
+
+CB-C4: 0 findings. Advice: a prose correction says that the ledger owner takes the copy under the lock.
 
 ## Coverage
 
@@ -3492,3 +3574,13 @@ Advice for the ticket 6 charge: two `window.go` comments are narrower than the c
 Cycle 3 closed C1. The round passed on all three axes. Three demonstrated reds, each with a restored subject, record the new row's independent expectation.
 
 Advice (CB-C3 cycle 3, no finding ID): a read beside `BENCH_WRAPPER` only when the root is the primary checkout stays silent. The production code never reads beside `BENCH_WRAPPER`. The bounded repair policy makes this optional advice, because it grades only the extension's check.
+
+CB-C4: 5 findings. Worst: F1. The ticket 6 repair takes all five.
+
+- F1 (auto-fix, confidence 9): no test has an open build of an undeclared outcome. A swap to the declared-build answer stays silent.
+- F2 (auto-fix, confidence 9): no test declares several ledger paths, so a short-circuit removal loop stays silent.
+- F3 (auto-fix, confidence 8): no test runs the removal while another holder has the ledger lock.
+- F4 (auto-fix, confidence 8): no test declares a review-record path, so a filter that accepts any record stays silent.
+- F5 (auto-fix after bench-debug, confidence 6): with no ledger file, the restore refuses with a rerun that cannot succeed. The rule of CB49 says it completes.
+
+Repair state: CB-C4 repair cycle 1 of 2 runs one ticket 6 session.
