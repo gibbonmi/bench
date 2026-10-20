@@ -1,7 +1,7 @@
 # Hold the post-landing refresh and land through the installed candidate
 
 Blocked by: 1-declare-persisted-fields.md, 2-install-the-candidate.md
-Writes: internal/worktree/land_effects.go, internal/worktree/land_effects_test.go, internal/worktree/land_broker_notice_test.go, internal/worktree/land.go, internal/worktree/land_resume.go, internal/worktree/joins.go, internal/worktree/parallel_census_test.go, internal/commitment/repository/window.go, internal/commitment/repository/window_test.go, .bench/BENCH-reference.md, internal/systemtest/candidate_install_test.go, internal/systemtest/owner_test.go
+Writes: internal/worktree/land_effects.go, internal/worktree/land_effects_test.go, internal/worktree/land_broker_notice_test.go, internal/worktree/land.go, internal/worktree/land_resume.go, internal/worktree/joins.go, internal/worktree/parallel_census_test.go, internal/commitment/repository/window.go, internal/commitment/repository/window_test.go, .bench/BENCH-reference.md, internal/systemtest/candidate_install_test.go (new), internal/systemtest/owner_test.go
 Covers: CB24, CB25, CB50, CB51, CB52, CB53, CB59
 
 ## What to build
