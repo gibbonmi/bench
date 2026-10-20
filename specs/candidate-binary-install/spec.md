@@ -53,7 +53,6 @@ Harder chunks: CB-C2.
 15. As a reviewer, I want the broker manifest to bind the primary `dist/bench` path through the existing `doctor --fix` route, so that the wrapper's land route stays unchanged.
 16. As an orchestrator, I want to run the install again after a later Go commit, so that the installed candidate holds every field that the build adds.
 17. As a reviewer, I want the install to refuse unless the running executable is the primary checkout's `dist/bench`, so that an uninstalled candidate never runs the install.
-18. As an orchestrator, I want the install to refuse when a package or version-cache executable comes before the primary `dist/bench` in the wrapper's order, so that an install never leaves a second executable in charge.
 
 ### Refuse a ledger write on the wrong executable
 
@@ -126,7 +125,7 @@ No production code tests whether an executable knows a declared field, so the sp
 
 ### The candidate check
 
-One check owner serves the three ledger writers of a declared build. It lives beside the open-build derivation, which both writer packages already import. It takes the declaration, the running executable's path, and the primary broker manifest as arguments. The caller locates that manifest from the primary checkout's root, never beside `BENCH_WRAPPER`, because a worktree's own `bin/` can hold a manifest of the worktree executable. It applies only where the repository declares Bench build inputs. It refuses with the face `candidate-not-installed` when the running executable's SHA-256 digest differs from the digest in the primary broker manifest.
+One check owner serves the three ledger writers of a declared build. It lives beside the open-build derivation, which both writer packages already import. It takes the declaration, the running executable's path, and the caller's checkout root as arguments. The check itself locates the primary broker manifest from that root through the Git common directory, never beside `BENCH_WRAPPER`, because a worktree's own `bin/` can hold a manifest of the worktree executable. It applies only where the repository declares Bench build inputs. It refuses with the face `candidate-not-installed` when the running executable's SHA-256 digest differs from the digest in the primary broker manifest.
 
 The check does not test whether the running executable knows a declared field. Before the ticket that adds a field commits, the installed candidate cannot know that field, and it also cannot write it. The digest test alone stops an uninstalled or rebuilt executable from writing the shared ledger. After the field's ticket commits, the orchestrator reinstalls, because a rebuilt worktree copy no longer matches the manifest digest.
 
@@ -147,10 +146,9 @@ The three entries call the check before any ledger read or write. The chunk chec
 The verb refuses before any write in this order:
 
 1. The repository declares no Bench build inputs.
-2. The running executable's canonical physical path is not the primary executable. The route names the primary checkout as the directory to run from.
-3. The wrapper's order selects a package or version-cache executable before the primary `dist/bench`. The refusal names that executable's path.
-4. The target has no bound assignment in the ledger. The verb reads the assignments and the commitment bindings through the existing tolerant read mode and writes no ledger byte. Thus an unknown field elsewhere in the ledger does not stop the lookup, and the install can recover a lost candidate.
-5. The default-branch tip holds no copy of the bound spec, or that copy declares no persisted field.
+2. The running executable's canonical physical path is not the primary executable. The refusal names the running executable's path, which shows a worktree or version-cache selection, and its route names the primary checkout as the directory to run from.
+3. The target has no bound assignment in the ledger. The verb reads the assignments and the commitment bindings through the existing tolerant read mode and writes no ledger byte. Thus an unknown field elsewhere in the ledger does not stop the lookup, and the install can recover a lost candidate.
+4. The default-branch tip holds no copy of the bound spec, or that copy declares no persisted field.
 
 Then the verb builds the target's tree into the target's `dist/bench` through the existing build owner. The worktree copy stays in place. The verb publishes a copy of that executable, its seal, and the broker manifest at the primary checkout through the existing freshness publication owner. That owner locks the directory, keeps backups, and restores the earlier set on a failure or a signal. Last, the verb runs the primary checkout's `bin/bench.sh doctor --fix` as a child process. The child runs with the primary checkout as its working directory. Its environment unsets `BENCH_KIT` and `BENCH_WRAPPER` and sets `BENCH_RUN_BINARY` to the primary executable. `doctor --fix` writes the PATH shim and the pre-push hook and binds that executable in the broker manifest again. A failed child leaves the published set in place, and the verb reports the child's refusal; a rerun of the install repeats both steps.
 
@@ -162,7 +160,7 @@ The verb prints one table with the worktree, the executable digest, and the mani
 
 The trace has four hops:
 
-1. The operator's shell runs the PATH shim from the primary checkout. The shim runs the primary checkout's tracked `bin/bench.sh`, which is `main` code. The wrapper resolves the primary `dist/bench`. When the wrapper resolves a worktree executable or a cache executable instead, the install's second and third refusals stop the install before any write.
+1. The operator's shell runs the PATH shim from the primary checkout. The shim runs the primary checkout's tracked `bin/bench.sh`, which is `main` code. The wrapper resolves the primary `dist/bench`. When the wrapper resolves a worktree executable or a cache executable instead, the install's second refusal stops the install before any write and names that executable's path.
 2. That trusted executable reads the authority: the bound assignment in the ledger and the `Persisted fields:` line of the default-branch copy of the bound spec. A reviewer-approved spec-stage landing wrote that copy. The candidate tree's spec copy is never the authority. On a reinstall, the running executable is the earlier installed candidate, which the same declaration already authorized.
 3. The trusted executable runs the candidate tree's build script and then runs the candidate executable as the `doctor --fix` child. That child writes the broker manifest, the PATH shim, and the pre-push hook. No validator authenticates the candidate bytes. This is the reviewer-visible trust assumption: the reviewer's sign-off of the declaration authorizes candidate code to become the broker.
 4. At the landing, the wrapper's unchanged `land_route` authenticates the broker by the manifest path, digest, version, and platform before it runs it.
@@ -179,7 +177,7 @@ The post-landing refresh verifies the primary seal against the primary sources. 
 
 The refresh therefore reads the held-install predicate first. When it holds, the refresh writes nothing, and its effect result is `held`. A `held` result exits 0. When the ledger does not read, the predicate reads as held, so the refresh never rebuilds over a ledger that it cannot read. A bound spec whose declaration does not parse counts as no declaration, because the install refuses that spec. When the predicate does not hold, the refresh runs as today.
 
-The build's own completion landing reconciles the delivered outcome and releases the build's assignment before its effects run. At its refresh, the build is no longer open, so the refresh rebuilds `main` and rebinds the manifest.
+At the build's own completion landing, the published spec reads `Status: implemented`, so the open-build derivation no longer qualifies its binding, and the landing also reconciles the delivered outcome and releases the build's assignment before its effects run. At its refresh, the build is no longer open, so the refresh rebuilds `main` and rebinds the manifest.
 
 ### The restore
 
@@ -213,10 +211,10 @@ Every chunk follows its predecessor's green checkpoint and its independent seman
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | CB-C1 / 1-declare-persisted-fields.md | A spec declares its persisted fields on one header line | CB1–CB7 | TestPersistedFieldsHeader | no |
-| CB-C2 / 2-install-the-candidate.md, 3-hold-the-refresh.md | One verb installs the candidate as executable and broker, the refresh holds it, and the candidate lands its build | CB13–CB25, CB50–CB56, CB59 | TestBuildInstall, TestRefreshHoldsAnInstalledCandidate, TestCandidateInstallPublishesTheCandidate, TestCandidateInstallLandsANewLedgerField, TestCandidateInstallSurvivesAGapLanding | yes |
-| CB-C3 / 5-refuse-an-uninstalled-writer.md | Each guarded entry refuses on an executable that is not the installed candidate | CB26–CB36, CB57, CB60 | TestCandidateCheck, TestCheckpointPersistedFields, TestAssignmentPersistedFields, TestCandidateNotInstalledRoute | no |
+| CB-C2 / 2-install-the-candidate.md, 3-hold-the-refresh.md | One verb installs the candidate as executable and broker, the refresh holds it, and the candidate lands its build | CB13–CB21, CB23–CB25, CB50–CB56, CB59, CB62 | TestBuildInstall, TestRefreshHoldsAnInstalledCandidate, TestCandidateInstallPublishesTheCandidate, TestCandidateInstallLandsItsNewFields, TestCandidateInstallSurvivesAGapLanding | yes |
+| CB-C3 / 5-refuse-an-uninstalled-writer.md | Each guarded entry refuses on an executable that is not the installed candidate | CB26–CB36, CB57, CB60, CB61 | TestCandidateCheck, TestCheckpointPersistedFields, TestAssignmentPersistedFields, TestCandidateNotInstalledRoute | no |
 | CB-C4 / 6-restore-after-a-stopped-build.md | One verb restores `main` after a stopped build | CB37–CB43, CB49 | TestBuildRestore | no |
-| CB-C5 / 7-document-the-install-route.md | The ADR, the spec discipline, and the build phase name the install route | CB44–CB48, CB58 | prose check, guidance-prose-budgets, review-owned rows | no |
+| CB-C5 / 7-document-the-install-route.md | The ADR, the spec discipline, and the build phase name the install route | CB44–CB47, CB58 | prose check, guidance-prose-budgets, review-owned rows | no |
 
 CB-C2 precedes CB-C3 and CB-C4, because the refusal route and the restore name the install verb and reuse its child environment.
 
@@ -280,10 +278,9 @@ The system test is the gate seam that observes both incidents end to end. Its fi
 | CB19 | 10 | The install refuses when only the target tree's copy of the spec declares a field | planned TestBuildInstall in internal/worktree/build_install_test.go | A verb that reads the candidate's spec copy lets candidate code authorize itself |
 | CB20 | 16 | A second install after a new Go commit replaces both copies with the new digest | planned TestBuildInstall in internal/worktree/build_install_test.go | A verb that skips an existing install keeps the stale candidate |
 | CB21 | 17 | An install whose running executable is a worktree `dist/bench` refuses before its build and writes no file | planned TestCandidateInstallPublishesTheCandidate in internal/systemtest/candidate_install_test.go | A verb without the path check lets an uninstalled candidate read its own authority |
-| CB22 | 18 | An install refuses and names the cache path when `$BENCH_HOME/cache/bin/<version>` holds an executable for this platform | planned TestBuildInstall in internal/worktree/build_install_test.go | A verb without the order check installs a candidate that the cache then hides |
 | CB23 | 9 | After the install, `bench status` from the primary checkout exits 0 with a ledger that holds the fixture's new ledger field | planned TestCandidateInstallPublishesTheCandidate in internal/systemtest/candidate_install_test.go | The fixture field is unknown to the `main` executable, so without the install `main` refuses the ledger as in incident 1 |
-| CB24 | 27 | The installed candidate lands a build whose published tree holds a review record with the fixture's new review-record field | planned TestCandidateInstallLandsANewLedgerField in internal/systemtest/candidate_install_test.go | The fixture field is unknown to the `main` broker, so without the install the broker refuses the review record as in incident 2 |
-| CB25 | 28 | After that landing, the primary broker manifest digest equals the primary `dist/bench` digest | planned TestCandidateInstallLandsANewLedgerField in internal/systemtest/candidate_install_test.go | A refresh that rebuilds without the manifest leaves the next landing unauthenticated |
+| CB24 | 27 | The installed candidate lands a build whose published tree holds a review record with the fixture's new review-record field | planned TestCandidateInstallLandsItsNewFields in internal/systemtest/candidate_install_test.go | The fixture field is unknown to the `main` broker, so without the install the broker refuses the review record as in incident 2 |
+| CB25 | 28 | After the build's own landing, whose composed tree holds an unrelated Go change that landed during a chunk gap, the primary seal verifies against the primary sources and the primary manifest digest equals the primary `dist/bench` digest | planned TestCandidateInstallLandsItsNewFields in internal/systemtest/candidate_install_test.go | A refresh that skips the rebuild leaves an unverified seal, and one that rebuilds without the manifest leaves the next landing unauthenticated |
 | CB26 | 19 | The candidate check passes when the running digest equals the manifest digest and the declaration names a path that the current ledger type does not hold | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check that also tests field knowledge refuses every first dispatch of a declared build |
 | CB27 | 20 | The candidate check refuses with `candidate-not-installed` when the running digest differs from the manifest digest | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check without the digest test lets an uninstalled candidate write the shared ledger |
 | CB28 | 3 | The candidate check passes a spec with no declaration and an unrelated manifest digest | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check that always compares digests breaks every undeclared build |
@@ -291,7 +288,7 @@ The system test is the gate seam that observes both incidents end to end. Its fi
 | CB30 | 21 | A declared `--complete` checkpoint on a mismatched digest refuses with `candidate-not-installed` and leaves the ledger bytes unchanged | planned TestCheckpointPersistedFields in internal/gate/checkpoint_persisted_test.go | A check wired only into the chunk path lets the complete path decode with the wrong executable |
 | CB31 | 22 | A declared `bench record <spec> assignment` on a mismatched digest refuses with `candidate-not-installed` and leaves the ledger bytes unchanged | planned TestAssignmentPersistedFields in internal/reviewrecord/recordcmd/assignment_persisted_test.go | A gap close without the check writes the new key at the first dispatch |
 | CB32 | 23 | With an unreadable ledger, the declared chunk checkpoint prints `candidate-not-installed` and not the decode error | planned TestCheckpointPersistedFields in internal/gate/checkpoint_persisted_test.go | A check placed after the owner lookup prints the decode error first |
-| CB33 | 24 | With a readable ledger, the `candidate-not-installed` route prints `bench worktree build --install` followed by the integration target label | planned TestCandidateNotInstalledRoute in internal/refusalroute/route_test.go | A route that names only a family gives no exact next command |
+| CB33 | 24 | From an author worktree of a declared build with a readable ledger, a refused chunk checkpoint prints `bench worktree build --install` followed by the integration target label | planned TestCheckpointPersistedFields in internal/gate/checkpoint_persisted_test.go | A route that copies the caller's own owner lookup names the author label, which the install refuses |
 | CB34 | 25 | With an unreadable ledger, the `candidate-not-installed` route prints `bench worktree build --install <target>` with the literal slot | planned TestCandidateNotInstalledRoute in internal/refusalroute/route_test.go | A route that reads the label from a failed lookup prints an empty or wrong target |
 | CB35 | 24 | The `candidate-not-installed` route prints the rerun of the refused command after the install command | planned TestCandidateNotInstalledRoute in internal/refusalroute/route_test.go | A route without the rerun leaves the refused write undone |
 | CB36 | 26 | A declared checkpoint that runs a version-cache executable after an install refuses with `candidate-not-installed` | planned TestCheckpointPersistedFields in internal/gate/checkpoint_persisted_test.go | A check that trusts any executable with the field lets the cache bypass the install |
@@ -306,7 +303,6 @@ The system test is the gate seam that observes both incidents end to end. Its fi
 | CB45 | 35 | The edge-inventory section of `craft-spec` requires a spec that declares a persisted field to name each pre-landing writer and the landing binary | review-owned: the Spec axis grades the skill text | Review owns rule wording, so no anchor pins this sentence |
 | CB46 | 36 | The Build section of `/bench-implement-spec` names the install from the primary checkout before the first ticket dispatch of a declared build | review-owned: the Spec axis grades the command text | Review owns rule wording, so no anchor pins this sentence |
 | CB47 | 37 | `.bench/BENCH-reference.md` describes the install and the restore of a declared build | review-owned: the Spec axis grades the command notes | Review owns rule wording, so no anchor pins this sentence |
-| CB48 | 34 | The edited skill, command, and reference files pass the prose check and stay inside their guidance prose budgets | `bench test --check prose` and the guidance-prose-budgets check | A sentence over the STE bound or a line over a budget reds the check |
 | CB49 | 30 | The restore of a spec whose declared ledger field the ledger does not hold completes and leaves the primary `dist/bench` verified against the primary sources | planned TestBuildRestore in internal/worktree/build_restore_test.go | A restore that requires each declared field to exist cannot restore a build that stopped before its field ticket |
 | CB50 | 40 | After an unrelated landing during an open chunk gap of a declared build, the primary `dist/bench` digest is unchanged and `bench status` from the primary checkout exits 0 | planned TestCandidateInstallSurvivesAGapLanding in internal/systemtest/candidate_install_test.go | A refresh without the hold rebuilds `main` over the candidate, and `main` refuses the ledger |
 | CB51 | 41 | With a declared build open and the manifest digest equal to the primary digest, the refresh reports `held` and writes no file | planned TestRefreshHoldsAnInstalledCandidate in internal/worktree/land_effects_test.go | A refresh without the predicate rebuilds the candidate away |
@@ -315,10 +311,12 @@ The system test is the gate seam that observes both incidents end to end. Its fi
 | CB54 | 42 | With a ledger that holds an unknown commitment field, an install run by the `main` executable finds the bound assignment and publishes the candidate | planned TestBuildInstall in internal/worktree/build_install_test.go | A strict ledger read in the install leaves a lost candidate with no recovery |
 | CB55 | 42 | The install leaves the ledger bytes unchanged | planned TestBuildInstall in internal/worktree/build_install_test.go | A tolerant read that also writes would drop the unknown field |
 | CB56 | 43 | When the publication fails after the executable write, the primary executable, seal, and manifest keep their earlier bytes | planned TestBuildInstall in internal/worktree/build_install_test.go | A rename sequence without the publication owner leaves a candidate beside the old manifest |
-| CB57 | 44 | A refusal from an author worktree prints `bench worktree build --install` followed by the integration target label and not the author label | planned TestCandidateNotInstalledRoute in internal/refusalroute/route_test.go | A route that takes the caller's own owner lookup names a target that the install refuses |
+| CB57 | 44 | With two bound assignments of one declared build, a refusal raised in the second assignment's worktree names the first bound assignment's label and not the caller's label | planned TestCheckpointPersistedFields in internal/gate/checkpoint_persisted_test.go | A route that takes the caller's own owner lookup names a target that the install refuses |
 | CB58 | 45 | The Build section of `/bench-implement-spec` names the reinstall after a Go change or a fold reaches a declared build | review-owned: the Spec axis grades the command text | Review owns rule wording, so no anchor pins this sentence |
 | CB59 | 41 | The effects paragraph of `.bench/BENCH-reference.md` lists `held` among the effect results and says when the refresh holds | review-owned: the Spec axis grades the command notes | Review owns rule wording, so no anchor pins this sentence |
-| CB60 | 20 | With `BENCH_WRAPPER` naming a worktree wrapper whose `bin/` holds a manifest of the worktree executable, the candidate check still compares against the primary checkout's manifest and refuses a mismatched digest | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check that locates the manifest beside `BENCH_WRAPPER` compares the worktree executable with its own manifest and always passes |
+| CB60 | 20 | Called with a worktree root whose `bin/` holds a manifest of the worktree executable, the candidate check reads the primary checkout's manifest and refuses a mismatched digest | planned TestCandidateCheck in internal/commitment/repository/install_check_test.go | A check that reads the manifest beside the caller's root or `BENCH_WRAPPER` compares the worktree executable with its own manifest and always passes |
+| CB61 | 24 | A refused `bench record --in <label> assignment <slug>` prints a `next=` line whose last step is `bench record --in <label> assignment <slug>` with the caller's flags, and the line holds no `bench gate` | planned TestAssignmentPersistedFields in internal/reviewrecord/recordcmd/assignment_persisted_test.go | A record entry that passes the gate rerun or the wrong argument order prints a command that refuses or runs the wrong verb |
+| CB62 | 41 | With a declared build bound and an unreadable ledger, the refresh reports `held` and writes no file | planned TestRefreshHoldsAnInstalledCandidate in internal/worktree/land_effects_test.go | A refresh that treats an unreadable ledger as no open build rebuilds `main` over the candidate |
 
 Not covered: story 38 — review-owned exclusion; FT140 owns the tolerant purge read.
 Not covered: story 39 — review-owned exclusion; `docs/known-issues.md` states the one-version-at-a-time rule.
@@ -340,7 +338,7 @@ Hostile inputs of the declaration attach to CB4–CB7: an empty item, an unknown
 The edges and their dispositions are:
 
 - A worktree working directory selects the worktree `dist/bench`. CB21 refuses that executable, and CB15 proves the manifest path.
-- The version cache precedes the primary `dist/bench` in the wrapper. CB22 refuses the install, and CB36 refuses a later checkpoint.
+- The version cache precedes the primary `dist/bench` in the wrapper. The install's second refusal names the cache path, and CB36 refuses every guarded write from a cache executable.
 - A Go commit after the install leaves the installed candidate stale, as FT406's known issue states. A stale candidate cannot write a field that it does not know. After a rebuild of the worktree copy, CB27 refuses the new digest, and CB20 reinstalls.
 - The owner lookup fails open to "no owner" on a strict-decode refusal. CB32 places the check before that lookup, and CB34 pins the route without it.
 - An open build between chunks does not refuse other landings. CB42 keys the restore guard to the open build, not to the window refusal.
@@ -365,7 +363,7 @@ The edges and their dispositions are:
 - A malformed `Persisted fields:` line passes the spec stage — the install refuses it with `persisted-fields-invalid`, and a preflight row for the line is out of scope.
 - The refresh holds a stale `main` between `bench commitment start` and the install — that `main` reads the ledger, and the install replaces it before the first dispatch.
 - An author worktree with its own built `dist/bench` refuses again after the named install — the orchestrator runs the guarded entries in the integration worktree, and the author's executable never writes the declared field.
-- An unrelated landing between the release of a blocked build's worktree and its restore — the restore refusal tells the operator to restore before the release, and a hand key removal remains the last route.
+- An unrelated landing between `bench commitment block` and the restore — the block ends the hold, so the guidance tells the operator to restore at once after the block and before `bench worktree release`, and a hand key removal remains the last route.
 
 ## Out of scope
 
@@ -424,7 +422,7 @@ Flag for reviewer veto: the accepted spec anchored six rule sentences (CB44–CB
 
 Flag for reviewer veto: the accepted spec added a field predicate to each record owner (former stories 6–8 and rows CB8–CB12). After the digest-only repair, no production code consumed the predicates, so the slicing removed them as dead code.
 
-Flag for reviewer veto: the install's third refusal reproduces the wrapper's executable-resolution order in Go. `bin/bench.sh` is the one source of that order, so this refusal is a second copy of that knowledge. Without the refusal, CB36 still refuses every guarded write from a cache executable.
+Resolved by the delegated sign-off consensus (fable and opus, 2026-10-20): the install no longer reproduces the wrapper's executable-resolution order in Go. `bin/bench.sh` stays its one source, the second refusal names the running executable's path, and CB36 refuses every guarded write from a cache executable.
 
 Flag for reviewer veto: the 2026-10-20 hold decision names a manifest that "binds the installed candidate". The held-install predicate cannot tell an installed candidate from a stale `main`, so it also holds before the install. No ledger is at risk in that window.
 
