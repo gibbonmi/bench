@@ -1689,7 +1689,80 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cbc3-standards",
+          "performer": "claude:ft419-cbc3-standards-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fddc4550375bf3ad450a3b035949b00dbfbfc7e0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-standards-20261020",
+            "digest": "sha256:de44da6c7fa4c13a3d5cebdea61cec713d31a160f3f9239114bc36c57696852c",
+            "excerpt": "## Standards (CB-C3, pair ec4144c3..7b8ca752, opus/medium)\nF1 auto-fix conf 9: install_check_test.go:95 spells the build-inputs path that freshness.BuildInputsManifest owns.\nF2 auto-fix conf 7: window.go:97 spells \"bin\" again; one exported brokermanifest path helper owns it.\nF3 ask-user conf 8: the manifest-binding fixture repeats in three test packages; one commitmenttest helper owns it (widening).\nF4 auto-fix conf 5: GateRerun, RecordRerun, and CommitRerun repeat one caller-rerun step; one constructor and renderer own it.\nF5 auto-fix conf 6: checkpoint_persisted_test.go:26 comment does not parse.\nR1-R4 no-op (intent import, DigestField, flag.term split, GateRerun step).\nCount 5. Worst: F3.\n"
+          },
+          "axis": "Standards",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "b1385cae54d4ef6e33317580b734784813b4b489",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4",
+            "F5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cbc3-spec",
+          "performer": "claude:ft419-cbc3-spec-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fddc4550375bf3ad450a3b035949b00dbfbfc7e0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-spec-20261020",
+            "digest": "sha256:ff7f8b8b0127ff79843531f12857ddf61983a0478480b933a05be0c3522696bd",
+            "excerpt": "## Spec (CB-C3, pair ec4144c3..7b8ca752, opus/medium)\nF1 auto-fix conf 6: CheckEntry (window.go:169-182) reads and parses the declaration before the build-inputs test (window.go:199), so a linked repository refuses on a malformed or unreadable spec; the spec says the declaration stays inert there.\nEvery CB-C3 row met and cited. Count 1. Worst: F1.\n"
+          },
+          "axis": "Spec",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "b1385cae54d4ef6e33317580b734784813b4b489",
+          "finding_ids": [
+            "F1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cbc3-coverage",
+          "performer": "claude:ft419-cbc3-coverage-20261020",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fddc4550375bf3ad450a3b035949b00dbfbfc7e0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft419-cbc3-coverage-20261020",
+            "digest": "sha256:3db54bbbd566071da3e10cc84b5bb3e317301709e1dfbfecd05af12dbffd4dba",
+            "excerpt": "## Coverage (CB-C3, pair ec4144c3..7b8ca752, opus/medium)\nF1 auto-fix conf 8: no test has a working-tree spec that differs from HEAD; mutant os.ReadFile at window.go:170 silent, restored=yes.\nF2 auto-fix conf 7: no CB61 case with a hostile slug or flag value; hand-quote mutants at command.go:761 and :750 silent, restored=yes.\nF3 ask-user conf 5: with two open declared builds the route names the first build's target, even for a caller in the second.\nCount 3. Worst: F1.\n"
+          },
+          "axis": "Coverage",
+          "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
+          "tip": "b1385cae54d4ef6e33317580b734784813b4b489",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1802,6 +1875,14 @@ CB-C2: 9 findings. Worst: S3. Repair owners: ticket 2 takes S1, S3, S4, and S5. 
 - S6, S7, S8 (auto-fix, confidence 5 to 7): three comments name a missing restore, argue their own design, or do not parse.
 - S9 (no-op, confidence 8): ticket 3 asks for `HoldsOpenBuild`, and ticket 6 consumes it.
 
+CB-C3: 5 findings. Worst: F3. The ticket 5 repair takes all five.
+
+- F1 (auto-fix, confidence 9): a test spells the build-inputs path that `freshness.BuildInputsManifest` owns.
+- F2 (auto-fix, confidence 7): `window.go` spells the `bin` directory again. One exported path helper in `brokermanifest` owns it.
+- F3 (auto-fix under the run's --auto-approve widening, confidence 8): the manifest-binding fixture repeats in three test packages. One `commitmenttest` helper owns it.
+- F4 (auto-fix, confidence 5): three caller-rerun steps repeat one shape. One constructor and one renderer own it.
+- F5 (auto-fix, confidence 6): a test comment in `checkpoint_persisted_test.go` does not parse.
+
 ## Spec
 
 CB-C1: 0 findings. Worst: none.
@@ -1809,6 +1890,10 @@ CB-C1: 0 findings. Worst: none.
 CB-C2: 1 finding. Worst: F1.
 
 - F1 (auto-fix, confidence 7): CB56 is partial at its seam, because its case starts with no earlier manifest. The ticket 2 repair cites the owner test in the CB56 cell.
+
+CB-C3: 1 finding. Worst: F1.
+
+- F1 (auto-fix, confidence 6): `CheckEntry` reads and parses the declaration before its build-inputs test. A linked repository then refuses on a malformed or unreadable spec, but the spec keeps the declaration inert there.
 
 ## Coverage
 
@@ -1837,3 +1922,11 @@ CB-C2: 3 findings. Worst: F1. Ticket 3 takes F1, and ticket 2 takes F2 and F3.
 Repair state: CB-C2 repair cycle 1 of 2 closed every accepted finding. The confirming round passed on all three axes.
 
 Advice (CB-C2 confirming round, no finding ID): no row has the declared build first and an undeclared build second. The bounded repair policy makes this optional advice, because it grades only the CB68 hardening check.
+
+CB-C3: 3 findings. Worst: F1. The ticket 5 repair takes all three.
+
+- F1 (auto-fix, confidence 8): no test has a working-tree spec that differs from HEAD, so a working-tree read stays silent.
+- F2 (auto-fix, confidence 7): no CB61 case has a hostile slug or flag value, so a hand-quoted rerun stays silent.
+- F3 (auto-fix after consultation, confidence 5): with two open declared builds, the route names the first build's target. The opus high and sonnet high consultants agreed on a refusal with its own face. New row CB69 pins it.
+
+Repair state: CB-C3 repair cycle 1 of 2 runs one ticket 5 session.
