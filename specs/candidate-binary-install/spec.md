@@ -216,10 +216,10 @@ Every chunk follows its predecessor's green checkpoint and its independent seman
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | CB-C1 / 1-declare-persisted-fields.md | A spec declaration resolves against the running executable's decoders | CB1–CB12 | TestPersistedFieldsHeader, TestLedgerKnownField, TestReviewRecordKnownField | no |
-| CB-C2 / 2-install-the-candidate.md, 3-hold-the-refresh.md, 4-land-through-the-installed-candidate.md | One verb installs the candidate as executable and broker, the refresh holds it, and the candidate lands its build | CB13–CB25, CB50–CB56 | TestBuildInstall, TestRefreshHoldsAnInstalledCandidate, TestCandidateInstallLandsANewLedgerField, TestCandidateInstallSurvivesAGapLanding | yes |
+| CB-C2 / 2-install-the-candidate.md, 3-hold-the-refresh.md, 4-land-through-the-installed-candidate.md | One verb installs the candidate as executable and broker, the refresh holds it, and the candidate lands its build | CB13–CB25, CB50–CB56, CB59 | TestBuildInstall, TestRefreshHoldsAnInstalledCandidate, TestCandidateInstallLandsANewLedgerField, TestCandidateInstallSurvivesAGapLanding | yes |
 | CB-C3 / 5-refuse-an-uninstalled-writer.md | Each guarded entry refuses on an executable that is not the installed candidate | CB26–CB36, CB57, CB60 | TestCandidateCheck, TestCheckpointPersistedFields, TestAssignmentPersistedFields, TestCandidateNotInstalledRoute | no |
 | CB-C4 / 6-restore-after-a-stopped-build.md | One verb restores `main` after a stopped build | CB37–CB43, CB49 | TestBuildRestore | no |
-| CB-C5 / 7-document-the-install-route.md | The ADR, the spec discipline, and the build phase name the install route | CB44–CB48, CB58, CB59 | prose check, guidance-prose-budgets, review-owned rows | no |
+| CB-C5 / 7-document-the-install-route.md | The ADR, the spec discipline, and the build phase name the install route | CB44–CB48, CB58 | prose check, guidance-prose-budgets, review-owned rows | no |
 
 CB-C2 precedes CB-C3 and CB-C4, because the refusal route and the restore name the install verb and reuse its child environment.
 
