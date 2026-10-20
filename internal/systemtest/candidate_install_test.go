@@ -14,7 +14,6 @@ import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -45,10 +44,11 @@ const (
 	gapSlug   = "gap"
 )
 
-// newCandidateInstall builds the fixture with the main executable, which binds the build as
-// a start of the declared outcome records it. The policy approves the declared spec for
-// that outcome, the spec's one ticket fences the candidate's sources and gapChange, and the
-// gate is a plain green script, so a landing grades the broker and not the kit's checks.
+// newCandidateInstall builds the fixture with the main executable. It binds the candidate
+// assignment to the declared outcome and claims that outcome, as a start records them. The
+// policy approves the declared spec for that outcome, the spec's one ticket fences the
+// candidate's sources and gapChange, and the gate is a plain green script, so a landing
+// grades the broker and not the kit's checks.
 func newCandidateInstall(t *testing.T) candidateInstall {
 	t.Helper()
 	declaration := "Persisted fields: intent-ledger:commitment." + candidateField + ", review-record:" + candidateField + "\n"
@@ -56,7 +56,7 @@ func newCandidateInstall(t *testing.T) candidateInstall {
 	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
 		systemGit(t, primary, "config", identity[0], identity[1])
 	}
-	body := "# Candidate\n\nStatus: staged\n" + declaration + "\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n" + preflighttest.ChunkTable("E1")
+	body := landableSpec("Candidate", declaration)
 	recordtest.Prepare(t, primary, 1, candidateSpec, body).SetTicketWrites("source.txt, internal/intent/ledger/commitment.go, internal/reviewrecord/record.go, " + gapChange + " (new)")
 	staged, err := os.ReadFile(filepath.Join(primary, candidateSpec))
 	if err != nil {

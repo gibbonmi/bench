@@ -18,6 +18,12 @@ import (
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
+// landableSpec is the smallest staged spec that a landing accepts: one story, one coverage
+// row, and one chunk. header holds any header lines after the status line.
+func landableSpec(title, header string) string {
+	return "# " + title + "\n\nStatus: staged\n" + header + "\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n" + preflighttest.ChunkTable("E1")
+}
+
 func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, release string) {
 	t.Helper()
 	var err error
@@ -55,7 +61,7 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	if err := f.Write(root, gate, gate); err != nil {
 		t.Fatal(err)
 	}
-	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n" + preflighttest.ChunkTable("E1")
+	specBody := landableSpec("x", "")
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("retained-output\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}

@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
@@ -132,7 +131,7 @@ func readHeldInstall(root string) bool {
 // manifestBindsExecutable reports whether the broker manifest beside root's wrapper binds
 // the digest of root's published executable.
 func manifestBindsExecutable(root string) bool {
-	fields, err := brokermanifest.Read(filepath.Join(wrapperDir(root), brokermanifest.Name))
+	fields, err := brokermanifest.Read(manifestPath(root))
 	if err != nil {
 		return false
 	}

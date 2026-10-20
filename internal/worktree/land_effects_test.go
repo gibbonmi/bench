@@ -241,22 +241,38 @@ func openInstallBuild(t *testing.T, root string) {
 	})
 }
 
-// TestRefreshHoldsAnInstalledCandidate is CB51, CB52, CB53, and CB62. The primary executable
-// carries no seal, so it never verifies against the primary sources, as an installed
-// candidate does not. The refresh holds it only while a declared build is open and the
-// primary manifest binds its digest, or while the ledger does not read. Every other row
-// rebuilds as before.
+// openUndeclaredBuild claims a second outcome of the install fixture, and binds it to a new
+// assignment whose default-branch spec declares no persisted field.
+func openUndeclaredBuild(t *testing.T, f ownedAssignment) {
+	t.Helper()
+	const plain = "specs/plain/spec.md"
+	mustMkdirAll(t, filepath.Join(f.root, filepath.Dir(plain)), 0o755)
+	commitInWorktree(t, f.root, plain, "# plain\n\nStatus: staged\n", "an undeclared spec")
+	identity, err := commitrepo.SourceIdentity(f.root, "main", plain)
+	mustNoError(t, err)
+	other := mustCreate(t, f.root, f.home, "undeclared-build", "undeclared-build")
+	commitmenttest.EditCommitment(t, f.root, func(state *intent.CommitmentState) {
+		state.Bindings = append(state.Bindings, intent.DeliveryBinding{Assignment: other.Assignment.ID, Request: other.Assignment.Request, Milestone: "fixture", Outcome: "plain", Deliverable: plain, Identity: identity})
+		state.Claims = append(state.Claims, intent.OutcomeClaim{Milestone: "fixture", Outcome: "plain"})
+	})
+}
+
+// TestRefreshHoldsAnInstalledCandidate is CB51 to CB53, CB62, and CB68. The primary
+// executable has no seal, so, like an installed candidate, it never verifies against the
+// primary sources. The refresh holds it only while a declared build is open and the primary
+// manifest binds its digest, or while the ledger does not read. Other rows rebuild as before.
 func TestRefreshHoldsAnInstalledCandidate(t *testing.T) {
 	t.Parallel()
 	undeclared := installShape{inputs: true, deliverable: installSpec}
 	invalid := installShape{inputs: true, declaration: "Persisted fields: gate-evidence:x\n", deliverable: installSpec}
 	for _, row := range []struct {
-		name                    string
-		shape                   installShape
-		open, bound, unreadable bool
-		want                    string
+		name                             string
+		shape                            installShape
+		earlier, open, bound, unreadable bool
+		want                             string
 	}{
 		{name: "a declared build with the manifest bound holds", shape: declaredInstall, open: true, bound: true, want: effectHeld},
+		{name: "a declared build after an undeclared build holds", shape: declaredInstall, earlier: true, open: true, bound: true, want: effectHeld},
 		{name: "a declared build with another manifest digest rebuilds", shape: declaredInstall, open: true, want: effectComplete},
 		{name: "an undeclared open build rebuilds", shape: undeclared, open: true, bound: true, want: effectComplete},
 		{name: "an invalid declaration counts as none", shape: invalid, open: true, bound: true, want: effectComplete},
@@ -265,13 +281,16 @@ func TestRefreshHoldsAnInstalledCandidate(t *testing.T) {
 		t.Run(row.name, func(t *testing.T) {
 			t.Parallel()
 			f := newInstallAssignment(t, "refresh-hold-"+strings.ReplaceAll(row.name, " ", "-"), row.shape)
+			if row.earlier {
+				openUndeclaredBuild(t, f)
+			}
 			if row.open {
 				openInstallBuild(t, f.root)
 			}
 			if row.unreadable {
 				plantCommitmentField(t, f.root)
 			}
-			primary, manifest := freshness.PublishedExecutable(f.root), filepath.Join(wrapperDir(f.root), brokermanifest.Name)
+			primary, manifest := freshness.PublishedExecutable(f.root), manifestPath(f.root)
 			mustMkdirAll(t, filepath.Dir(primary), 0o755)
 			mustWrite(t, primary, []byte("installed-candidate"), 0o755)
 			_, _, err := brokermanifest.Write(wrapperDir(f.root), primary, "1.2.3")

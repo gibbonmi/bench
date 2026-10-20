@@ -54,7 +54,7 @@ func (store Store) DeclaredBuild() (intent.Assignment, bool, error) {
 }
 
 // readOpenBuilds derives the open builds from one strict read of the ledger at the store
-// root. Both exported answers read through it, so they share one derivation.
+// root.
 func (store Store) readOpenBuilds() ([]openBuild, error) {
 	ledger, err := intent.Read(store.Root)
 	if err != nil {

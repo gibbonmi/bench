@@ -234,7 +234,7 @@ func TestDeclaredBuildNamesItsIntegrationTarget(t *testing.T) {
 
 // TestDefaultDeclarationReadsTheDefaultBranchCopy proves the one declaration reader reads
 // the default-branch tip and not the checkout, and that a missing copy and a malformed line
-// both refuse. The install, the held refresh, and the restore all read through it.
+// both refuse. The install and the held refresh both read through it.
 func TestDefaultDeclarationReadsTheDefaultBranchCopy(t *testing.T) {
 	t.Parallel()
 	const path = "specs/declared/spec.md"
