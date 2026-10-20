@@ -1343,6 +1343,72 @@
           "supersedes": [
             "pc-c2-coverage-1"
           ]
+        },
+        {
+          "id": "pc-c2-standards-3",
+          "performer": "claude:ft380-pc-c2-standards-c2-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9e9784e7f2e9176cf10df61a4eeb70bd2c9c0cf7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c2-standards-c2-20261019",
+            "digest": "sha256:dcb63b3e5e6cd122b0e01d402e46e2341bb4c5cb4df3828ef02b53f4039927c3",
+            "excerpt": "Standards confirming round 2, PC-C2 repair delta a59a8327..e783e467 (check-current current=true). Pass: the refreeze rule is stated once; both Land paragraphs hold 6 sentences, the longest 24 words; no new duplicated fact.\n"
+          },
+          "axis": "Standards",
+          "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "tip": "e783e467cfc1ca35a83c27211b00e7a1b6389ab4",
+          "finding_ids": [],
+          "supersedes": [
+            "pc-c2-standards-2"
+          ]
+        },
+        {
+          "id": "pc-c2-spec-3",
+          "performer": "claude:ft380-pc-c2-spec-c2-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9e9784e7f2e9176cf10df61a4eeb70bd2c9c0cf7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c2-spec-c2-20261019",
+            "digest": "sha256:927433d5240be945efcacbd0910d77f54f9fb041007ef1ba0c11d48c832a2849",
+            "excerpt": "Spec confirming round 2, PC-C2 repair delta a59a8327..e783e467 (check-current current=true). Pass: PC22, PC23, PC24, PC25, PC27, PC28, PC29, PC39 met; P2 closed; the moved sentence changes no approved behavior.\n"
+          },
+          "axis": "Spec",
+          "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "tip": "e783e467cfc1ca35a83c27211b00e7a1b6389ab4",
+          "finding_ids": [],
+          "supersedes": [
+            "pc-c2-spec-2"
+          ]
+        },
+        {
+          "id": "pc-c2-coverage-3",
+          "performer": "claude:ft380-pc-c2-coverage-c2-20261019",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9e9784e7f2e9176cf10df61a4eeb70bd2c9c0cf7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft380-pc-c2-coverage-c2-20261019",
+            "digest": "sha256:20d3906cf944227590ddf0915479e42f76e47265457f4e9a949e63fb16526112",
+            "excerpt": "Coverage confirming round 2, PC-C2 repair delta a59a8327..e783e467 (check-current current=true). Pass: PC30, PC34 (95 lines), PC36 hold; every implement-phase Require row holds and no Forbid needle matches.\n"
+          },
+          "axis": "Coverage",
+          "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
+          "tip": "e783e467cfc1ca35a83c27211b00e7a1b6389ab4",
+          "finding_ids": [],
+          "supersedes": [
+            "pc-c2-coverage-2"
+          ]
         }
       ]
     }
@@ -1466,3 +1532,7 @@ Count: 1. Worst issue: C1.
 ## PC-C2 confirming round 1
 
 Repair cycle 1 of 2 closed S1, S3, S5, and S6 at 384f96cae. Coverage found no new finding. Spec found P2, an auto-fix on ticket 03 for repair cycle 2. The merged refreeze sentence at `.agents/commands/bench-implement-spec.md:60` drops two row phrases. These are "moves the chunk tip" (PC23) and "of that chunk" (PC25). S7 and P3 are no-ops about the review step 1 base wording.
+
+## PC-C2 confirming round 2
+
+Repair cycle 2 of 2 closed P2 at e783e467c. All three axes passed with no new finding. Both chunks now carry current verification and passing axis results.
