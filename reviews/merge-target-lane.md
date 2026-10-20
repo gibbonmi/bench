@@ -751,11 +751,88 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "632e4604cc5d1769be094ba62a47f26f573e2c55",
+    "performer": "claude:ft335-orchestrator-20261019",
+    "reconciliation": {
+      "R01": "covered",
+      "R02": "covered",
+      "R03": "covered",
+      "R04": "covered",
+      "R05": "covered",
+      "R06": "covered",
+      "R07": "covered",
+      "R08": "covered",
+      "R09": "covered",
+      "R10": "covered",
+      "R11": "covered",
+      "R12": "covered",
+      "R13": "covered",
+      "R14": "covered",
+      "R15": "covered",
+      "R16": "covered",
+      "R17": "covered",
+      "R18": "covered",
+      "R19": "covered",
+      "R20": "covered",
+      "R21": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-worktree",
+        "performer": "claude:ft335-orchestrator-20261019",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "632e4604cc5d1769be094ba62a47f26f573e2c55",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft335-orchestrator-20261019:final-worktree",
+          "digest": "sha256:68597af4897aca7d3f180fb5f08a06cc047f9bb23e9ff3cac735aaa7063c25ad",
+          "excerpt": "bench test --package ./internal/worktree at 4a7618da18e2a9d773a7f28cfb6e77c1361cbe27\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,85390,1443\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "final-gate",
+        "performer": "claude:ft335-orchestrator-20261019",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "632e4604cc5d1769be094ba62a47f26f573e2c55",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft335-orchestrator-20261019:final-gate",
+          "digest": "sha256:ce2bbb7bab4eab2d9a753f1472d937775caa1789f81b8da2b70be906d1e53ff5",
+          "excerpt": "bench test --package ./internal/gate at 4a7618da18e2a9d773a7f28cfb6e77c1361cbe27\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,32278,500\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "gate",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-coverage",
+        "performer": "claude:ft335-orchestrator-20261019",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "632e4604cc5d1769be094ba62a47f26f573e2c55",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft335-orchestrator-20261019:final-coverage",
+          "digest": "sha256:58c3534fbcfcda3314614e6a1a78895621ee6f5875ee1b4cf542529d9d572c55",
+          "excerpt": "bench coverage --check merge-target-lane at 4a7618da18e2a9d773a7f28cfb6e77c1361cbe27\nok: coverage map valid — 21 row(s)\nuncited: 1 row(s) with no seam-cell citation — R18\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check merge-target-lane",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
