@@ -20,6 +20,10 @@ The `plan-commit` spec stage ran on Claude Code for FT380. An Opus coordinator r
 
 The research pairs disagreed twice, and a targeted read closed each disagreement. A Sonnet reader denied that the Markdown lane runs the coverage parser, and the code showed that it does. A Haiku reader found the `./cmd/bench` floor element that its Sonnet pair missed. Provider usage and charges remain unknown. The harness reported about 110k to 290k tokens for each reader.
 
+The `merge-target-lane` spec stage ran on Claude Code for FT335. An Opus coordinator ran four Opus/medium research pairs and one Opus/medium slicing pair. A fresh Opus/high writer sliced the two tickets. An Opus fork wrote the spec. Opus/medium reviewed both rounds by reviewer direction, and each round took 2 iterations. The spec round rejected a second production owner of the wrapper's kit rule, and the reviewer recorded two decisions. The ticket round rejected one chunk that held a seam ticket and its consumer.
+
+The research pairs disagreed once, about the root of the whole-gate run log, and a targeted read closed it. The slicing pair found a structure budget and a serial-ceiling pin that the spec had missed. Provider usage and charges remain unknown. The harness reported about 40k to 130k tokens for each reader, 250k for the fork, and 170k to 185k for the spec reviewer.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use | calibration |
