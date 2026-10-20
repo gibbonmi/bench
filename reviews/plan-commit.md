@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/plan-commit/spec.md",
-  "plan_digest": "sha256:460790fcc564ce9461224d1b2caae5f9161bcb19150fa73190cbf2090ecbcc6e",
+  "plan_digest": "sha256:44ef8f8dc1410610bc9406ce424c3036d785da52bd2c07325c6c08ec1f0bd198",
   "implementation_session": "",
   "chunks": [
     {
@@ -659,9 +659,9 @@
     {
       "id": "PC-C2",
       "base": "7036994e0902944c76b976389cbc059a15f8ec7f",
-      "tip": "f17f4b6c906929bde29b710917338bfae3895e02",
-      "plan_digest": "sha256:460790fcc564ce9461224d1b2caae5f9161bcb19150fa73190cbf2090ecbcc6e",
-      "source_digest": "98848e2a5a838b04e4faf261b386aaf772227292",
+      "tip": "384f96caee92e8636c2085db93966167397fdff7",
+      "plan_digest": "sha256:44ef8f8dc1410610bc9406ce424c3036d785da52bd2c07325c6c08ec1f0bd198",
+      "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
       "acceptance_rows": [
         "PC22",
         "PC23",
@@ -853,6 +853,179 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,453\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,4721,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: chunk chain: the implement phase restored the comment-only correction after the chunk tip\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "r1-t3-anchors-package",
+          "performer": "claude:ft380-t03-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+            "digest": "sha256:cd0e9b774e42f21f6c124f5c654a3051d0f79fc99b238db96d5bd65d63f52048",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,117,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-anchors-package",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t3-reviewrecord-package",
+          "performer": "claude:ft380-t03-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+            "digest": "sha256:f5abdbbef51d92c69de081422c38c1a674b5557672d6873ee548ca3c1763ff2b",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3139,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,18475,254\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-reviewrecord-package",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t3-gate-package",
+          "performer": "claude:ft380-t03-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+            "digest": "sha256:10dcbb06ece273b397b81da4048c628f6e2b27858eb13fe80d47feb13e2aa683",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,27432,490\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t3-command-package",
+          "performer": "claude:ft380-t03-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+            "digest": "sha256:9d2b322f879e162eaca13b5d6846cd42daa61b9446bf6d534faf76805f11f93d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16631,346\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t3-guidance",
+          "performer": "claude:ft380-t03-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+            "digest": "sha256:b20c82e20863a8fcd9a3985f0b1fd7c20aac3e2c1dab3b24f21fbbb40b261004",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4737,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t3-budgets",
+          "performer": "claude:ft380-t03-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+            "digest": "sha256:fbf0743f054cb4b0d68a4d8413962229827b36280b0ee2bb3c5508f4df5dcd7f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t3-prose",
+          "performer": "claude:ft380-t03-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+            "digest": "sha256:03e28f3a13489358121dd031f36d36810717eec5bf538347fab4655af99549d0",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,107,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t3-root-conformance",
+          "performer": "claude:ft380-t03-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+            "digest": "sha256:489478ffff854ec2a2836f7197658adf88a85bb525bdc4295a657f507c48e491",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15561,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t3-forbid-clause-restore",
+          "performer": "claude:ft380-t03-repair1-20261019",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c5d0ec5f42c49f952c4d5208df2e611803aa0cfb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+            "digest": "sha256:9e1f6d169ba44259aebdf7dfbf4c616ace318cefec1cb572a0cc579a8d757816",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,453\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,4864,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: chunk chain: the implement phase restored the comment-only correction after the chunk tip\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-forbid-clause-restore",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore the clause comment-only corrections follow the chunk tip in the implement phase; the new Forbid row must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft380-t03-repair1-20261019",
+              "digest": "sha256:9e1f6d169ba44259aebdf7dfbf4c616ace318cefec1cb572a0cc579a8d757816",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,453\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,4864,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: chunk chain: the implement phase restored the comment-only correction after the chunk tip\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -953,6 +1126,18 @@
       "chunk_ids": {
         "PC-C1": [
           "PC-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:460790fcc564ce9461224d1b2caae5f9161bcb19150fa73190cbf2090ecbcc6e",
+      "to": "sha256:44ef8f8dc1410610bc9406ce424c3036d785da52bd2c07325c6c08ec1f0bd198",
+      "chunk_ids": {
+        "PC-C1": [
+          "PC-C1"
+        ],
+        "PC-C2": [
+          "PC-C2"
         ]
       }
     }
