@@ -8,7 +8,7 @@ Covers: CB13, CB14, CB15, CB16, CB17, CB18, CB19, CB20, CB21, CB23, CB54, CB55, 
 
 Deliver the install half of CB-C2: `bench worktree build --install <target>` installs a declared build's candidate as the primary checkout's executable and broker.
 
-Add the `--install` flag to the build grammar in `build.go`. Keep the existing `usage.WorktreeBuild` text unchanged, because `WorktreeBuildFor` derives every rebuild remedy from it. Put the install form in a separate constant in `internal/usage/worktree.go`; the leaf help test reads `buildGrammar.Help` with a contains match. The help row in `cmd/bench/main.go` must not grow, because that file is over its line cap.
+Add the `--install` flag to the build grammar in `build.go`. Keep the existing `usage.WorktreeBuild` text unchanged, because `WorktreeBuildFor` derives every rebuild remedy from it. Put the install form in a separate constant in `internal/usage/worktree.go`; add it to `buildGrammar.Help`, which prints the `--help` output. The leaf help test in `cmd/bench/worktree_leaves_test.go` matches `"usage: " + usage.WorktreeBuild` in that output with a contains match, so the added form keeps it green. The help row in `cmd/bench/main.go` must not grow, because that file is over its line cap.
 
 The verb refuses before any write, in the spec's order:
 
