@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/candidate-binary-install/spec.md",
-  "plan_digest": "sha256:2bfce79ff100ea966faba7279d981e406958c557ab6c1343c422074803a82e13",
+  "plan_digest": "sha256:3ce3a54891bf8f86892e152a2582ea4b9edcee1cb93ad581350fa513e330870f",
   "implementation_session": "",
   "chunks": [
     {
@@ -1360,9 +1360,9 @@
     {
       "id": "CB-C3",
       "base": "ec4144c30be12b9b823b66ee38c29ee83c9d8fdb",
-      "tip": "b1385cae54d4ef6e33317580b734784813b4b489",
-      "plan_digest": "sha256:0cdd9a879f1b8bed408506623917fe20b0c17bacdca3f2da193684e477f8f07d",
-      "source_digest": "fddc4550375bf3ad450a3b035949b00dbfbfc7e0",
+      "tip": "9df8de96038e542a88bc0366e003376bc9ce904f",
+      "plan_digest": "sha256:3ce3a54891bf8f86892e152a2582ea4b9edcee1cb93ad581350fa513e330870f",
+      "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
       "acceptance_rows": [
         "CB26",
         "CB27",
@@ -1378,7 +1378,8 @@
         "CB57",
         "CB60",
         "CB61",
-        "CB65"
+        "CB65",
+        "CB69"
       ],
       "verification": [
         {
@@ -1687,6 +1688,331 @@
               "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestAssignmentPersistedFields/malformed_declaration,257,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/reviewrecord/recordcmd,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1007\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,16170,257\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/malformed_declaration,\"assignment_persisted_test.go:62: assignment = (0, \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",f0bf8e48d7f9008edbeabff37ba94d568c5d5784\\\\\\\\n\\\"), want the persisted-fields-invalid error and… (249 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/uninstalled,\"assignment_persisted_test.go:48: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",6ad7669c5a7a2556d9cf97623edf4fccb21b9cde\\\\\\\\n\\\"; want exit 1 naming \\\"candidate-not… (251 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t5r1-owner",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:322828ee1486e14b755fedaa600553ddba6f80ac12463bf93c42293ff7fed524",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,6137,179\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-manifest",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:a8ae0a8515973657d26dbd7a8f80c05ff01ad65ae10d8183358ad0c79e71228f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/brokermanifest,pass,2,5\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "manifest",
+          "command": "bench test --package ./internal/brokermanifest",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-gate",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:ca9e2a5718e3b408a0917be6cc5b7787e8bf78de35f9c0cb359942b5102e4fc6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,28413,508\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-record",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:306b3d71c6fb39c0674e01df3653ce028357bbb1b111ee28bef99b6b5034fac5",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3061,110\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17549,260\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-routes",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:083201dbdeffa4beaddc7caec9539221723505998f67c6ee5a7c07652c31da24",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "routes",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-cmd-bench",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:d3908f673ab524f4cab530d772efe91eca1a717749edd93bac318396b4ea9a7f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17795,352\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-internal-conformance",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:44671fa36f35c4657f2fabad186aa459b21dce82c43a029c078344ec83c9250b",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,33293,1116\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "internal-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-commitmenttest",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:a6bd8772a7701bb2c44799879209bac9ed4990f39d308bf4f8adc700372e3ab1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commitmenttest",
+          "command": "bench test --package ./internal/commitment/commitmenttest",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-root-conformance",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:dccb3fefd353b2244a55ba3faae56612de2ef6a8529e06fb0ff67a12ae3cfc24",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13924,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-system",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:b1d2b5e80382cbf2a9f38fdf9152347355aa001b45d6a8e82e073854153c4420",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,3,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,34754,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system --run TestCandidateInstall",
+          "exit_code": 0
+        },
+        {
+          "id": "t5r1-t5-digest-probe",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:b46ef4ff875d1954a63a0ba7f4eefecf875f2aab1aeceaa29e9298cdc3af67b2",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,179,1,0,null,yes\n  2,bit,swap,failed,1,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commitment/repository,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1159\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,6298,179\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/another_digest_refuses,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,6186,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-digest-probe",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the digest comparison of the candidate check; TestCandidateCheck must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+              "digest": "sha256:b46ef4ff875d1954a63a0ba7f4eefecf875f2aab1aeceaa29e9298cdc3af67b2",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,179,1,0,null,yes\n  2,bit,swap,failed,1,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commitment/repository,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1159\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,6298,179\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/another_digest_refuses,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,6186,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t5r1-t5-locator-probe",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:b46ef4ff875d1954a63a0ba7f4eefecf875f2aab1aeceaa29e9298cdc3af67b2",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,179,1,0,null,yes\n  2,bit,swap,failed,1,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commitment/repository,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1159\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,6298,179\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/another_digest_refuses,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,6186,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-locator-probe",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "read the broker manifest beside the caller root instead of the primary checkout; TestCandidateCheck must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+              "digest": "sha256:b46ef4ff875d1954a63a0ba7f4eefecf875f2aab1aeceaa29e9298cdc3af67b2",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,179,1,0,null,yes\n  2,bit,swap,failed,1,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commitment/repository,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1159\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,6298,179\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/another_digest_refuses,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,6186,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCandidateCheck/a_worktree_root_reads_the_primary_manifest,\"install_check_test.go:142: check = <nil>; want the refusal face \\\"candidate-not-installed\\\", or a pass when it is empty\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t5r1-t5-chunk-order-probe",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:130b68231d9e1648a455381350d96fbcef7152e79888675be4f4b7495d03c987",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,2,TestCheckpointPersistedFields/chunk,508,1,0,null,yes\n  2,bit,swap,failed,1,TestCheckpointPersistedFields/complete,508,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1348\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,28946,508\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/chunk,\"checkpoint_persisted_test.go:149: checkpoint = (1, \\\"\\\", \\\"gate subject unavailable: completion evidence: chunk 1: missing Coverage; record the native review result\\\\\\\\nnext=bench record 'review' --help\\\\\\\\ncandidate-not-installed: the running execu… (808 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/malformed_declaration,\"checkpoint_persisted_test.go:183: checkpoint = (1, \\\"gate subject unavailable: completion evidence: stale plan digest; review and record the plan delta\\\\\\\\nnext=bench record 'amendment' --help\\\\\\\\npersisted-fields-invalid: unknown record \\\\\\\\\\\"gate-ev… (477 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,28927,508\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/complete,\"checkpoint_persisted_test.go:154: checkpoint = (0, \\\"\\\", \\\"\\\"), want a candidate-not-installed refusal with one route and no oracle output\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-chunk-order-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "move the candidate check of the chunk checkpoint after its execute path; TestCheckpointPersistedFields must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+              "digest": "sha256:130b68231d9e1648a455381350d96fbcef7152e79888675be4f4b7495d03c987",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,2,TestCheckpointPersistedFields/chunk,508,1,0,null,yes\n  2,bit,swap,failed,1,TestCheckpointPersistedFields/complete,508,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1348\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,28946,508\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/chunk,\"checkpoint_persisted_test.go:149: checkpoint = (1, \\\"\\\", \\\"gate subject unavailable: completion evidence: chunk 1: missing Coverage; record the native review result\\\\\\\\nnext=bench record 'review' --help\\\\\\\\ncandidate-not-installed: the running execu… (808 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/malformed_declaration,\"checkpoint_persisted_test.go:183: checkpoint = (1, \\\"gate subject unavailable: completion evidence: stale plan digest; review and record the plan delta\\\\\\\\nnext=bench record 'amendment' --help\\\\\\\\npersisted-fields-invalid: unknown record \\\\\\\\\\\"gate-ev… (477 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,28927,508\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/complete,\"checkpoint_persisted_test.go:154: checkpoint = (0, \\\"\\\", \\\"\\\"), want a candidate-not-installed refusal with one route and no oracle output\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t5r1-t5-complete-order-probe",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:130b68231d9e1648a455381350d96fbcef7152e79888675be4f4b7495d03c987",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,2,TestCheckpointPersistedFields/chunk,508,1,0,null,yes\n  2,bit,swap,failed,1,TestCheckpointPersistedFields/complete,508,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1348\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,28946,508\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/chunk,\"checkpoint_persisted_test.go:149: checkpoint = (1, \\\"\\\", \\\"gate subject unavailable: completion evidence: chunk 1: missing Coverage; record the native review result\\\\\\\\nnext=bench record 'review' --help\\\\\\\\ncandidate-not-installed: the running execu… (808 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/malformed_declaration,\"checkpoint_persisted_test.go:183: checkpoint = (1, \\\"gate subject unavailable: completion evidence: stale plan digest; review and record the plan delta\\\\\\\\nnext=bench record 'amendment' --help\\\\\\\\npersisted-fields-invalid: unknown record \\\\\\\\\\\"gate-ev… (477 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,28927,508\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/complete,\"checkpoint_persisted_test.go:154: checkpoint = (0, \\\"\\\", \\\"\\\"), want a candidate-not-installed refusal with one route and no oracle output\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-complete-order-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the candidate check of the complete checkpoint; TestCheckpointPersistedFields must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+              "digest": "sha256:130b68231d9e1648a455381350d96fbcef7152e79888675be4f4b7495d03c987",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,2,TestCheckpointPersistedFields/chunk,508,1,0,null,yes\n  2,bit,swap,failed,1,TestCheckpointPersistedFields/complete,508,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1348\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,28946,508\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/chunk,\"checkpoint_persisted_test.go:149: checkpoint = (1, \\\"\\\", \\\"gate subject unavailable: completion evidence: chunk 1: missing Coverage; record the native review result\\\\\\\\nnext=bench record 'review' --help\\\\\\\\ncandidate-not-installed: the running execu… (808 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/malformed_declaration,\"checkpoint_persisted_test.go:183: checkpoint = (1, \\\"gate subject unavailable: completion evidence: stale plan digest; review and record the plan delta\\\\\\\\nnext=bench record 'amendment' --help\\\\\\\\npersisted-fields-invalid: unknown record \\\\\\\\\\\"gate-ev… (477 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,28927,508\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPersistedFields/complete,\"checkpoint_persisted_test.go:154: checkpoint = (0, \\\"\\\", \\\"\\\"), want a candidate-not-installed refusal with one route and no oracle output\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t5r1-t5-record-order-probe",
+          "performer": "claude:ft419-t5-repair1-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bd178419cbbfddaa3622986f9f75001aca1692d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+            "digest": "sha256:719e2c2409a301cde72e4cc0ce3b1c585e4bd45e87a2c79a1436f211a6a63d68",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,4,TestAssignmentPersistedFields/an_undeclared_working_tree,260,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/reviewrecord/recordcmd,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1714\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,17069,260\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/an_undeclared_working_tree,\"assignment_persisted_test.go:86: assignment = exit 1, output \\\"error: bench record assignment refused — working specs/example/spec.md differs from its source; commit or discard the change first\\\\\\\\n\\\"; want exit 1 naming \\\"candidate-not-installed… (243 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/hostile_slug_and_flag_value,\"assignment_persisted_test.go:78: assignment = \\\"error: bench record assignment refused — missing or nonregular tree file specs/it's here/tickets/1.md\\\\\\\\n\\\", want one next= route that names no gate\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/malformed_declaration,\"assignment_persisted_test.go:92: assignment = (0, \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",6baf3a023d69264fc733f6ae153afaa37b9cdb80\\\\\\\\n\\\"), want the persisted-fields-invalid error and… (249 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/uninstalled,\"assignment_persisted_test.go:63: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",e071ed1aefe3034f3b736bf0c770548f7a533c1c\\\\\\\\n\\\"; want exit 1 naming \\\"candidate-not… (251 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-record-order-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the candidate check of the assignment entry; TestAssignmentPersistedFields must fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft419-t5-repair1-20261020",
+              "digest": "sha256:719e2c2409a301cde72e4cc0ce3b1c585e4bd45e87a2c79a1436f211a6a63d68",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,4,TestAssignmentPersistedFields/an_undeclared_working_tree,260,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/reviewrecord/recordcmd,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1714\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,17069,260\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/an_undeclared_working_tree,\"assignment_persisted_test.go:86: assignment = exit 1, output \\\"error: bench record assignment refused — working specs/example/spec.md differs from its source; commit or discard the change first\\\\\\\\n\\\"; want exit 1 naming \\\"candidate-not-installed… (243 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/hostile_slug_and_flag_value,\"assignment_persisted_test.go:78: assignment = \\\"error: bench record assignment refused — missing or nonregular tree file specs/it's here/tickets/1.md\\\\\\\\n\\\", want one next= route that names no gate\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/malformed_declaration,\"assignment_persisted_test.go:92: assignment = (0, \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",6baf3a023d69264fc733f6ae153afaa37b9cdb80\\\\\\\\n\\\"), want the persisted-fields-invalid error and… (249 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentPersistedFields/uninstalled,\"assignment_persisted_test.go:63: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",e071ed1aefe3034f3b736bf0c770548f7a533c1c\\\\\\\\n\\\"; want exit 1 naming \\\"candidate-not… (251 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1857,6 +2183,21 @@
     {
       "from": "sha256:0cdd9a879f1b8bed408506623917fe20b0c17bacdca3f2da193684e477f8f07d",
       "to": "sha256:2bfce79ff100ea966faba7279d981e406958c557ab6c1343c422074803a82e13",
+      "chunk_ids": {
+        "CB-C1": [
+          "CB-C1"
+        ],
+        "CB-C2": [
+          "CB-C2"
+        ],
+        "CB-C3": [
+          "CB-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2bfce79ff100ea966faba7279d981e406958c557ab6c1343c422074803a82e13",
+      "to": "sha256:3ce3a54891bf8f86892e152a2582ea4b9edcee1cb93ad581350fa513e330870f",
       "chunk_ids": {
         "CB-C1": [
           "CB-C1"
