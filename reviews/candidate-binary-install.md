@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/candidate-binary-install/spec.md",
-  "plan_digest": "sha256:7834f7e8f825f873ec4461c900f06c0a60b20077e173ba504d8db1a011224c41",
+  "plan_digest": "sha256:36347bf3335e996fd30c3c3cb08eccc28d62e1084a23678a0780ccfcad9c107b",
   "implementation_session": "",
   "chunks": [
     {
@@ -3839,6 +3839,131 @@
           ]
         }
       ]
+    },
+    {
+      "id": "CB-C5",
+      "base": "6fb390c67d0c4e12c323966c3e2e6c8a0b41443a",
+      "tip": "f0459b8405559d41eabce74ec4b28095f45f5320",
+      "plan_digest": "sha256:36347bf3335e996fd30c3c3cb08eccc28d62e1084a23678a0780ccfcad9c107b",
+      "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+      "acceptance_rows": [
+        "CB44",
+        "CB45",
+        "CB46",
+        "CB47",
+        "CB58"
+      ],
+      "verification": [
+        {
+          "id": "t7-prose",
+          "performer": "claude:ft419-t7-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t7-author-20261020",
+            "digest": "sha256:f643359e24c69d79a36cb582133d6c7a99ad25c36ca16a8362bbeca50336cef3",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,173\n"
+          },
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-budgets",
+          "performer": "claude:ft419-t7-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t7-author-20261020",
+            "digest": "sha256:7833b79d87da4342e711cb9d6c0cdd75b6c3afdfca28d197838c202bd9080c37",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-root-conformance",
+          "performer": "claude:ft419-t7-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t7-author-20261020",
+            "digest": "sha256:bb9ff08b28552b3891a9b0eb3a93d2ffed4e5590da61d8eaa4fc9358acc61d2d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13260,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-internal-adopt",
+          "performer": "claude:ft419-t7-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t7-author-20261020",
+            "digest": "sha256:1f18914041bb28b788e5fb48144b9e5407476ad8c996b42c8b3d7fbda94ac405",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,pass,17472,244\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "internal-adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-internal-worktree",
+          "performer": "claude:ft419-t7-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t7-author-20261020",
+            "digest": "sha256:c25a41dab9e70d75fe971490d9cce9c52b4715573d9fa1b849c5f14fa8d5a937",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,65045,1490\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "internal-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-cmd-bench",
+          "performer": "claude:ft419-t7-author-20261020",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b41ff842db2e9426f54eff6eb3ea9d2159df36ed",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft419-t7-author-20261020",
+            "digest": "sha256:040c5bd67f931d46e67edf639e4ffc770e9f650e1fde370e3f87d962392c99e4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15229,352\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -4089,6 +4214,24 @@
     {
       "from": "sha256:e8e866d10eee628975d4d178a91a96af55a564473242977fd88d8a468a50fa3a",
       "to": "sha256:7834f7e8f825f873ec4461c900f06c0a60b20077e173ba504d8db1a011224c41",
+      "chunk_ids": {
+        "CB-C1": [
+          "CB-C1"
+        ],
+        "CB-C2": [
+          "CB-C2"
+        ],
+        "CB-C3": [
+          "CB-C3"
+        ],
+        "CB-C4": [
+          "CB-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:7834f7e8f825f873ec4461c900f06c0a60b20077e173ba504d8db1a011224c41",
+      "to": "sha256:36347bf3335e996fd30c3c3cb08eccc28d62e1084a23678a0780ccfcad9c107b",
       "chunk_ids": {
         "CB-C1": [
           "CB-C1"
