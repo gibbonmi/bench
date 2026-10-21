@@ -511,6 +511,74 @@
           "supersedes": [
             "c2-coverage-r0"
           ]
+        },
+        {
+          "id": "c2-standards-r2",
+          "performer": "claude:tcs-c2-standards-r2-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "3b90591aac1d7ac27cb5ac499be470956ed3fe68",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-standards-r2-20261021",
+            "digest": "sha256:c45d922576cba174736aa7596d3454d695087833dd52895a84101d922c716674",
+            "excerpt": "Standards axis, TC-C2 confirming round 2 (cycle 2 delta 14b320f6a..49eb64960): 0 findings. Both tests reuse wantSlowest and testTerminal; no duplicated knowledge, parser, harness, or registry. The rounding test pairs 0.0026 -> 3 with 0.0024 -> 2; the last-terminal test sends the smaller value last.\n"
+          },
+          "axis": "Standards",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "49eb64960a455b6ca0443269c644081c07c22806",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r1"
+          ]
+        },
+        {
+          "id": "c2-spec-r2",
+          "performer": "claude:tcs-c2-spec-r2-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "3b90591aac1d7ac27cb5ac499be470956ed3fe68",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-spec-r2-20261021",
+            "digest": "sha256:62189f0bc02c1d09443586528301eb5ca905f852707342f95c2723293b5742c7",
+            "excerpt": "Spec axis, TC-C2 confirming round 2: 0 findings. TestSlowestRoundsToNearestMillisecond (0.0026 -> 3, 0.0024 -> 2) matches math.Round to whole milliseconds; TestSlowestLastTerminalEventWins (pass 0.5 then fail 0.3, expects 300) matches the last terminal event rule, and fail is an admitted last action. No conflict with rows TC12-TC26.\n"
+          },
+          "axis": "Spec",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "49eb64960a455b6ca0443269c644081c07c22806",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r1"
+          ]
+        },
+        {
+          "id": "c2-coverage-r2",
+          "performer": "claude:tcs-c2-coverage-r2-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "3b90591aac1d7ac27cb5ac499be470956ed3fe68",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-coverage-r2-20261021",
+            "digest": "sha256:14dc7a804d17702246b8b916ca728a5f4e7f168161ad314f7f3edfa1a0827153",
+            "excerpt": "Coverage axis, TC-C2 confirming round 2: 1 finding. C4 (auto-fix, confidence 9): internal/testreport/test_cost_test.go:60-66 TestSlowestLastTerminalEventWins does not kill min-wins, because its one two-event case sends the smaller value last; probe at internal/testreport/testreport.go:101 with a min-of-terminals assignment read silent, restored yes. Fix: add the other order (smaller first, larger last) beside the existing case. The rounding residual is closed: the test separates round, truncate, and ceiling.\n"
+          },
+          "axis": "Coverage",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "49eb64960a455b6ca0443269c644081c07c22806",
+          "finding_ids": [
+            "C4"
+          ],
+          "supersedes": [
+            "c2-coverage-r1"
+          ]
         }
       ]
     }
