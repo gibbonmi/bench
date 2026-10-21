@@ -184,7 +184,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1-standards-r0",
+          "performer": "claude:tcs-c1-standards-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "ccc1785aef4112d6c998d2d9849bffdd7fdc8d11",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c1-standards-20261021",
+            "digest": "sha256:01e90a7edeb1761bcd126472671bc4161cbaf94d06d0aefec34d561118ed2dca",
+            "excerpt": "Standards axis, TC-C1 (ticket 1-timeout-owner): 0 findings. Worst issue: none. One source per fact holds: BaseTestArgv in internal/gate/phases.go is the only production reader of bounds.GoTestTimeout for the argv; each exact-argv test builds the token by its own expression; the only literal timeout is the TestProductionPolicyValues pin (bounds_test.go:86). Every edited path is in Writes:, and .bench/commitment.json is not in the delta. Unknown (not a finding): the recorded red of the 5-minute mutation was outside the read set; the coordinator confirmed it in the ticket commit message and the t1-policy-pin record entry.\n"
+          },
+          "axis": "Standards",
+          "base": "7ed6d10a5fa7d0fefde556c10487f050a9df17a7",
+          "tip": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1-spec-r0",
+          "performer": "claude:tcs-c1-spec-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "ccc1785aef4112d6c998d2d9849bffdd7fdc8d11",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c1-spec-20261021",
+            "digest": "sha256:a15fbf25ae2dba839de7104ed7ea514354ddee933a78c1e0bdb758dfbf90964e",
+            "excerpt": "Spec axis, TC-C1: 1 finding, 0 actionable. P1 (ask-user, confidence 5): the recorded red of GoTestTimeout = 5 * time.Minute was not in the code delta (reviews/ excluded). Coordinator disposition: no-op; the ticket commit 6ba2c0406 message records the red 'duration policy changed: ... go_test=5m0s', and reviews/test-cost-signal.md holds the t1-policy-pin probe entry (bit, restored yes). Clean: the six BaseTestArgv callers inherit the token right after -count=1; acceptance rows 1-5 hold; TC11 projects/benchkit.md:345-347 shows -timeout=10m0s in the test, race, and system rows.\n"
+          },
+          "axis": "Spec",
+          "base": "7ed6d10a5fa7d0fefde556c10487f050a9df17a7",
+          "tip": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1-coverage-r0",
+          "performer": "claude:tcs-c1-coverage-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "ccc1785aef4112d6c998d2d9849bffdd7fdc8d11",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c1-coverage-20261021",
+            "digest": "sha256:31c67fd0b89e8d942077c59d50de4cdb82627ee0c21bc038ce084e50d395fb24",
+            "excerpt": "Coverage axis, TC-C1 (TC1-TC10, TC38): 0 findings. Worst issue: none. Every BaseTestArgv caller is pinned: system TC3, core TC1, race TC4 census prefix, preprelease TC5, focused TC6, check children TC7-TC9. No expectation calls BaseTestArgv; no 10m0s literal in a Go test. Probe: swap in internal/preprelease/preprelease.go replacing gate.BaseTestArgv(kit, \"-tags\" with a literal argv without the token: bit at TestShipConformanceStepArgvPrefix, restored yes. Residual unknown: the GOFLAGS precedence claim in the BaseTestArgv comment is not graded by a row.\n"
+          },
+          "axis": "Coverage",
+          "base": "7ed6d10a5fa7d0fefde556c10487f050a9df17a7",
+          "tip": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
