@@ -6,7 +6,9 @@ Roadmap: FT402
 
 Decision source: Reviewer-confirmed current conversation, 2026-10-21.
 
-Verification log: pending.
+Verification log: 6 iteration(s) to accept — the spec round took 4 iterations, because unswept quantified sets produced NB1, NB2, and two sweep corrections; the ticket round took 2, because the slicer skipped written slicing rules and one ticket passed the context limit.
+
+Implementation approval: approved by the reviewer on 2026-10-21, including the 16-ticket breakdown and the declared implementation line.
 
 ## Problem
 
