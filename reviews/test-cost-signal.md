@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/test-cost-signal/spec.md",
-  "plan_digest": "sha256:a030a302362c213d596f53bf8de12a525abc5ee5de38c4ee5d1129e3aaaf1407",
+  "plan_digest": "sha256:321f4c6febbf4d188806e04290462c6ad9c3af218c9a23a4c831f8fce926e34d",
   "implementation_session": "",
   "chunks": [
     {
@@ -246,6 +246,69 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "TC-C2",
+      "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+      "tip": "e214d5647273fc31eb3ac4884d70438c014125f4",
+      "plan_digest": "sha256:321f4c6febbf4d188806e04290462c6ad9c3af218c9a23a4c831f8fce926e34d",
+      "source_digest": "bd4d0e07d53386e9678bb22ae282c164e7949229",
+      "acceptance_rows": [
+        "TC12",
+        "TC13",
+        "TC14",
+        "TC15",
+        "TC16",
+        "TC17",
+        "TC18",
+        "TC19",
+        "TC20",
+        "TC21",
+        "TC22",
+        "TC23",
+        "TC24",
+        "TC25",
+        "TC26"
+      ],
+      "verification": [
+        {
+          "id": "t2-testreport",
+          "performer": "claude:tcs-t2-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd4d0e07d53386e9678bb22ae282c164e7949229",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t2-author-20261021",
+            "digest": "sha256:74bb0eea0f1560dcb27bb3f6ce33818b5697aa7809236eff78e2f89d66db9ba3",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,59028,253\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nslowest[3]{package,test,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,TestRootConformanceCheckPrintsFailures,20600\n  github.com/gibbonmi/bench/internal/testreport,TestNamedCheckRunsOnlyRegisteredDevScope,15000\n  github.com/gibbonmi/bench/internal/testreport,TestCommandDrainsBuilderGroupOnCancelSignal,6050\n"
+          },
+          "requirement": "t2-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-root-conformance",
+          "performer": "claude:tcs-t2-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd4d0e07d53386e9678bb22ae282c164e7949229",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t2-author-20261021",
+            "digest": "sha256:7ba1849b212ae216bfa227e14565c96661ec21139577e8ac9f389b4e8adf639f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13537,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nslowest[1]{package,test,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,13520\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -254,6 +317,17 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:a030a302362c213d596f53bf8de12a525abc5ee5de38c4ee5d1129e3aaaf1407",
+      "to": "sha256:321f4c6febbf4d188806e04290462c6ad9c3af218c9a23a4c831f8fce926e34d",
+      "chunk_ids": {
+        "TC-C1": [
+          "TC-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
