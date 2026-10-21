@@ -24,6 +24,10 @@ The confirming round read the repair delta `eee73331..cdeaf570` on sonnet at hig
 
 Repair cycle 2 closed N1, so the chunk has used 2 of its 2 repair cycles. The ticket 2 repair `2461ab1f` adds the witness `TestGuardScanLoopOwnerReportsAnUnreadableSubdir`, and the repair changes a test file only. The chunk is refrozen at `e4db0d2e..2461ab1f`, and both tickets recorded their verifications at that tip. The orchestrator's insertion probe, which drops the walk error before the switch, bit. A confirming round of all three axes reads the repair delta `cdeaf570..2461ab1f`.
 
+## GS1 confirming round 2
+
+The confirming round read the repair delta `cdeaf570..2461ab1f` on sonnet at high effort. All three axes passed with 0 findings, and Coverage closed N1. GS1 has no open finding, and the chunk goes to the final reconciliation.
+
 ## Standards
 
 The axis found 4 findings. The worst issue is F2, because the test respells the diagnostic text that the check spells.
@@ -1022,6 +1026,72 @@ The axis found 8 findings. The worst issue is C1, because a pipeline in a subdir
           ],
           "supersedes": [
             "gs1-r1-coverage"
+          ]
+        },
+        {
+          "id": "gs1-r3-standards",
+          "performer": "claude:gsl-review-standards-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gsl-review-standards-r3",
+            "digest": "sha256:f552ba2b8fd02c49966e00ef208bd1d6c3aa274538dc3e47bc4c60f791f977c5",
+            "excerpt": "STANDARDS confirming round 2, GS1, repair delta cdeaf570..2461ab1f. check-current: current=true.\nFindings: 0. The new test TestGuardScanLoopOwnerReportsAnUnreadableSubdir (guard_scan_owner_test.go:291-312) reuses the shared constants and helpers, adds no literal expectation, matches the idiom of its sibling, and its comment states the why.\nAdvice: the chmod-strip, cleanup, and capability-skip block now appears in two tests; a third copy should extract a helper.\n"
+          },
+          "axis": "Standards",
+          "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
+          "tip": "2461ab1f5d246ddd59307d74cecc45bb55dbdb3e",
+          "finding_ids": [],
+          "supersedes": [
+            "gs1-r2-standards"
+          ]
+        },
+        {
+          "id": "gs1-r3-spec",
+          "performer": "claude:gsl-review-spec-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gsl-review-spec-r3",
+            "digest": "sha256:4aa9ef302e80e0c14a19400cb62b6711bf8d7b75c07227b56c9a4c0ae4fa3308",
+            "excerpt": "SPEC confirming round 2, GS1, repair delta cdeaf570..2461ab1f. check-current: current=true.\nFindings: 0. The Go change is one added test in internal/conformance/guard_scan_owner_test.go, which ticket 2's Writes line holds. checkGuardScanLoopOwner (:48-76) is untouched, so no production behavior changed. The test pins the documented unreadable-subdirectory diagnostic and does not contradict spec \"Single loop enforcement\" (spec.md:127-142).\nAdvice: the spec could add \"or unreadable subdirectory\" at :138 to align with the check's doc comment.\n"
+          },
+          "axis": "Spec",
+          "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
+          "tip": "2461ab1f5d246ddd59307d74cecc45bb55dbdb3e",
+          "finding_ids": [],
+          "supersedes": [
+            "gs1-r2-spec"
+          ]
+        },
+        {
+          "id": "gs1-r3-coverage",
+          "performer": "claude:gsl-review-coverage-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gsl-review-coverage-r3",
+            "digest": "sha256:8aa6495fb73e442886f1d22784ea2fc82dedba2870b0a6538fdd1d5f3464e889",
+            "excerpt": "COVERAGE confirming round 2, GS1, repair delta cdeaf570..2461ab1f. check-current: current=true.\nN1: closed, confidence 8. TestGuardScanLoopOwnerReportsAnUnreadableSubdir makes internal/guards/inner unreadable and requires the guardScanOwnerUnreadable diagnostic, which only the WalkDir error branch can produce. Cleanup restores the mode before the strip; a Privilege capability covers a still-readable directory. The test passed and did not skip.\nThe axis probe read invalid (substring-miss on a multi-line anchor, restored untouched); the author's swap probe and the orchestrator's insertion probe on that branch both read bit.\nNew findings: 0.\nAdvice: a later probe should use a single-line anchor.\n"
+          },
+          "axis": "Coverage",
+          "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
+          "tip": "2461ab1f5d246ddd59307d74cecc45bb55dbdb3e",
+          "finding_ids": [],
+          "supersedes": [
+            "gs1-r2-coverage"
           ]
         }
       ]
