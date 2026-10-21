@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 func TestSpecWidenRefusesWithoutSignedOffTickets(t *testing.T) {
@@ -38,6 +39,25 @@ func TestSpecWidenRefusesWithoutSignedOffTickets(t *testing.T) {
 			before := readTicket(t, root)
 			out, code := runWiden(t, root, "internal/x/z.go")
 			requireRefusal(t, root, before, out, code, "holds no ticket of specs/s")
+		})
+	}
+}
+
+// The signed-off ticket set is the tracked-ticket enumeration of the tip, so a later copy
+// of a basename grants no scope and a path that spec-TOON cannot represent refuses.
+func TestSpecWidenReadsSignedOffTicketsThroughTheOwner(t *testing.T) {
+	for _, tc := range []struct {
+		name, path, want string
+	}{
+		{"a duplicate basename", "specs/s/tickets/sub/a.md", outsideScope},
+		{"an unrepresentable path", "specs/s/tickets/b\x1b.md", tickets.Refusal{Path: "b\x1b.md"}.Message("")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			files := map[string]string{widenTicketPath: widenTicket("internal/x/y.go"), tc.path: widenTicket("internal/other/o.go")}
+			root := retireWorktree(t, widenPrimary(t, files, "internal/x/y.go", "internal/other/o.go"))
+			before := readTicket(t, root)
+			out, code := runWiden(t, root, "internal/other/z.go")
+			requireRefusal(t, root, before, out, code, tc.want)
 		})
 	}
 }

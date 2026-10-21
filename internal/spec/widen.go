@@ -178,8 +178,10 @@ func coveredBy(entries []string, p string) bool {
 
 // signedOffScope reads the directory prefix of every Writes: entry of the slug's tickets
 // at the default-branch tip. The prefix of an entry is the entry when the tip holds it as
-// a directory, else its parent directory; a root-level file is its own prefix. A tip
-// without a ticket of the slug refuses, so an absent scope never reads as an open one.
+// a directory, else its parent directory; a root-level file is its own prefix. The tickets
+// are the tracked-ticket enumeration of the regular files below the tickets folder, so a
+// symbolic link is no ticket. A tip without a ticket of the slug refuses, so an absent
+// scope never reads as an open one.
 func signedOffScope(root, slug string) ([]string, string) {
 	branch, ok := git.ResolvedDefault(root)
 	if !ok {
@@ -189,23 +191,32 @@ func signedOffScope(root, slug string) ([]string, string) {
 	if err != nil {
 		return nil, toon.Errorf("default branch tip is unreadable: "+branch, err.Error())
 	}
-	folder := ClosedFolderPath(slug) + "/tickets/"
-	listing, err := git.ListTree(root, "-r", tip, "--", ":(literal)"+folder)
+	dir := ClosedFolderPath(slug) + "/tickets"
+	listing, err := git.ListTree(root, "-r", tip, "--", ":(literal)"+dir+"/")
+	if err != nil {
+		return nil, toon.Errorf("signed-off tickets are unreadable at "+branch, err.Error())
+	}
+	var tracked []string
+	objects := make(map[string]string, len(listing))
+	for _, entry := range listing {
+		if entry.IsRegularFile() {
+			tracked = append(tracked, entry.Path)
+			objects[entry.Path] = entry.Object
+		}
+	}
+	signed, _, err := tickets.EnumerateTracked(dir, tracked, func(file string) ([]byte, error) {
+		data, err := git.ReadControlBlob(root, objects[file])
+		if err != nil {
+			return nil, fmt.Errorf("signed-off ticket %s is unreadable: %w", file, err)
+		}
+		return data, nil
+	})
 	if err != nil {
 		return nil, toon.Errorf("signed-off tickets are unreadable at "+branch, err.Error())
 	}
 	var scope []string
-	signed := false
-	for _, entry := range listing {
-		if !entry.IsRegularFile() || !strings.HasPrefix(entry.Path, folder) || path.Ext(entry.Path) != tickets.Ext {
-			continue
-		}
-		data, err := git.ReadControlBlob(root, entry.Object)
-		if err != nil {
-			return nil, toon.Errorf("signed-off ticket is unreadable: "+entry.Path, err.Error())
-		}
-		signed = true
-		ticket, _ := tickets.ParseTicket(path.Base(entry.Path), data, nil, "")
+	for _, entry := range signed {
+		ticket, _ := tickets.ParseTicket(entry.Name, entry.Data, nil, "")
 		for _, raw := range ticket.Writes {
 			write, err := tickets.ParseWrite(raw)
 			if err != nil {
@@ -218,7 +229,7 @@ func signedOffScope(root, slug string) ([]string, string) {
 			scope = append(scope, prefix)
 		}
 	}
-	if !signed {
+	if len(signed) == 0 {
 		return nil, toon.Errorf(branch+" holds no ticket of "+ClosedFolderPath(slug), "land the signed-off tickets before a widening")
 	}
 	return scope, ""
