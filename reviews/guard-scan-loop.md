@@ -1098,11 +1098,151 @@ The axis found 8 findings. The worst issue is C1, because a pipeline in a subdir
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+    "performer": "claude:gsl-orchestrator-20261020",
+    "reconciliation": {
+      "GS01": "covered",
+      "GS02": "covered",
+      "GS03": "covered",
+      "GS04": "covered",
+      "GS05": "covered",
+      "GS06": "covered",
+      "GS07": "covered",
+      "GS08": "covered",
+      "GS09": "covered",
+      "GS10": "covered",
+      "GS11": "covered",
+      "GS12": "covered",
+      "GS13": "covered",
+      "GS14": "covered",
+      "GS15": "covered",
+      "GS16": "covered",
+      "GS17": "covered",
+      "GS18": "covered",
+      "GS19": "covered",
+      "GS20": "covered",
+      "GS21": "covered",
+      "GS22": "covered",
+      "GS23": "covered",
+      "GS24": "covered",
+      "GS25": "covered",
+      "GS26": "covered",
+      "GS27": "covered",
+      "GS28": "covered",
+      "GS29": "covered",
+      "GS30": "covered"
+    },
+    "verification": [
+      {
+        "id": "f-coverage",
+        "performer": "claude:gsl-orchestrator-20261020",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:gsl-orchestrator-20261020:f-coverage",
+          "digest": "sha256:09b2ffb6f6e76dace985260d20e876c3e1b51b85db8999c531fe519bfca47ebe",
+          "excerpt": "ok: coverage map valid — 30 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check guard-scan-loop",
+        "exit_code": 0
+      },
+      {
+        "id": "f-scan-and-command",
+        "performer": "claude:gsl-orchestrator-20261020",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:gsl-orchestrator-20261020:f-scan-and-command",
+          "digest": "sha256:0682ced8968cf60a413aac062e8e4f9dc0eec0b099883594b4af267654bee926",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,pass,6344,54\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "scan-and-command",
+        "command": "bench test --package ./internal/guards",
+        "exit_code": 0
+      },
+      {
+        "id": "f-command-closure",
+        "performer": "claude:gsl-orchestrator-20261020",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:gsl-orchestrator-20261020:f-command-closure",
+          "digest": "sha256:c62f4ca3da033011404b68c6cc45068f1fe771eb1f42b75364f69bb17fb666b3",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15387,352\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "command-closure",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "f-registered-owner",
+        "performer": "claude:gsl-orchestrator-20261020",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:gsl-orchestrator-20261020:f-registered-owner",
+          "digest": "sha256:4cf95f9178378ce6ed5c6803a0fd90b56dea1b9ab24ea46c1c6a6fb560909dae",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2594,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "registered-owner",
+        "command": "bench test --check package-core-guard",
+        "exit_code": 0
+      },
+      {
+        "id": "f-conformance-closure",
+        "performer": "claude:gsl-orchestrator-20261020",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:gsl-orchestrator-20261020:f-conformance-closure",
+          "digest": "sha256:adeadac50dfec0dcc5ed4f30a1f0d2df749e25a6b7ed04a8ddd14100653f6ac7",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,36632,1127\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+        },
+        "requirement": "conformance-closure",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "f-root-conformance",
+        "performer": "claude:gsl-orchestrator-20261020",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:gsl-orchestrator-20261020:f-root-conformance",
+          "digest": "sha256:2ae94972f4fb5f3b9f7b8e4e3726c0bcb540081344b03e1c76a936d5a2c4c392",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14150,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
