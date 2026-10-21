@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/test-cost-signal/spec.md",
-  "plan_digest": "sha256:7235841b50c687080fb3e991ceeb10d9137a671a9f6274b9a190b5a6038941df",
+  "plan_digest": "sha256:11f891ae58901a2217867f2bcc653246fc6ee06a85da20fee822a3d0ede0ec54",
   "implementation_session": "",
   "chunks": [
     {
@@ -893,9 +893,9 @@
     {
       "id": "TC-C3",
       "base": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
-      "tip": "7a554e12e44555f4553631eebc974765463287bc",
-      "plan_digest": "sha256:7235841b50c687080fb3e991ceeb10d9137a671a9f6274b9a190b5a6038941df",
-      "source_digest": "886346e22913f236e8a7ec8c309b8d8a1d47bdb6",
+      "tip": "63d97956227bbe55db78767bd7f72bcc8b9a84ac",
+      "plan_digest": "sha256:11f891ae58901a2217867f2bcc653246fc6ee06a85da20fee822a3d0ede0ec54",
+      "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
       "acceptance_rows": [
         "TC27",
         "TC28",
@@ -977,6 +977,78 @@
             "ref": "claude-agent:bench-writer-medium:tcs-t3-author-20261021",
             "digest": "sha256:5e85121e7e75de9f57b6c55079e646019517425d2603c196c18fb1bd6ce3625d",
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16093,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-r1-t3-testreport",
+          "performer": "claude:tcs-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t3-repair1-20261021",
+            "digest": "sha256:5fb3938566fdb755040906f66c9357079c5b64006f84a89d9d118eec341ae9a4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,77867,265\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-r1-t3-conformance",
+          "performer": "claude:tcs-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t3-repair1-20261021",
+            "digest": "sha256:dacb23d7a4f464649008c12d53e2d27cd8206b261fa606ffdef603674674a27e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,44780,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-r1-t3-bounds-policy",
+          "performer": "claude:tcs-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t3-repair1-20261021",
+            "digest": "sha256:b4007c6ea12ab07ac0733fa70d50fc44280e6d164444df1a16a9416b98b62fad",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  bounds-policy,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,252,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-bounds-policy",
+          "command": "bench test --check bounds-policy",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-r1-t3-root-conformance",
+          "performer": "claude:tcs-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t3-repair1-20261021",
+            "digest": "sha256:b1d257555360a5c37607eafb256291efcbbe04a9e2f904f935d5dd284f5d9466",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15838,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "t3-root-conformance",
           "command": "bench test --check root-conformance",
@@ -1139,6 +1211,21 @@
         ],
         "TC-C2": [
           "TC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:7235841b50c687080fb3e991ceeb10d9137a671a9f6274b9a190b5a6038941df",
+      "to": "sha256:11f891ae58901a2217867f2bcc653246fc6ee06a85da20fee822a3d0ede0ec54",
+      "chunk_ids": {
+        "TC-C1": [
+          "TC-C1"
+        ],
+        "TC-C2": [
+          "TC-C2"
+        ],
+        "TC-C3": [
+          "TC-C3"
         ]
       }
     }
