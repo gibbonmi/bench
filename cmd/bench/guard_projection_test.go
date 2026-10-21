@@ -8,19 +8,25 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/benchguard"
+	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
+	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
 // guardEnvelopeCase is one raw stdin envelope and the exit a guard entry keeps for it.
 // warn marks an exit-0 case whose stderr carries the entry's unreadable-input warning.
+// A nonempty message is the one refusal line that stderr must hold.
 type guardEnvelopeCase struct {
-	name string
-	in   string
-	want int
-	warn bool
+	name    string
+	in      string
+	want    int
+	warn    bool
+	message string
 }
 
 // checkGuardEnvelope runs each case through the actual guard entry and grades its exit and streams.
-// Exit 2 carries BLOCKED, a warned exit 0 carries WARNING, and any other exit 0 writes nothing.
+// Exit 2 carries BLOCKED or the case's exact message, a warned exit 0 carries WARNING, and any other exit 0 writes nothing.
 func checkGuardEnvelope(t *testing.T, entry func([]string, io.Reader, io.Writer, io.Writer) int, cases []guardEnvelopeCase) {
 	t.Helper()
 	for _, tc := range cases {
@@ -35,6 +41,8 @@ func checkGuardEnvelope(t *testing.T, entry func([]string, io.Reader, io.Writer,
 			}
 			got := stderr.String()
 			switch {
+			case tc.message != "" && got != tc.message+"\n":
+				t.Errorf("entry(%q) stderr = %q, want %q", tc.in, got, tc.message+"\n")
 			case tc.want == 2 && !strings.HasPrefix(got, "BLOCKED:"):
 				t.Errorf("entry(%q) stderr = %q, want BLOCKED", tc.in, got)
 			case tc.want == 0 && tc.warn && !strings.HasPrefix(got, "WARNING: "):
@@ -109,5 +117,32 @@ func TestGuardWriteEnvelopePolicy(t *testing.T) {
 		{name: "unreadable root fact", in: `{"tool_input":{"file_path":` + quote(filepath.Join(t.TempDir(), "notes.md")) + `}}`},
 		{name: "duplicate cwd null", in: at(`{"cwd":"/repo","cwd":null,"tool_input":{"file_path":"README.md"}}`), want: 2},
 		{name: "write root key casing", in: at(`{"CWD":"/repo","TOOL_INPUT":{"file_path":"README.md"}}`), want: 2},
+	})
+}
+
+// poolTarget sets a fresh Bench home and returns a path under its worktree pool.
+func poolTarget(t *testing.T) string {
+	t.Helper()
+	t.Chdir(t.TempDir())
+	home := filepath.Join(t.TempDir(), "home")
+	t.Setenv("BENCH_HOME", home)
+	return filepath.Join(poolkey.Pools(home), "repository", "assignment")
+}
+
+// TestGuardProjectionPoolPrecedence is GP13: a pool reference with a follow-on emits the pool refusal.
+func TestGuardProjectionPoolPrecedence(t *testing.T) {
+	target := poolTarget(t)
+	checkGuardEnvelope(t, guardBenchFollowOn, []guardEnvelopeCase{
+		{name: "pool then follow-on", in: bashEnvelope("cd " + target + " && bench status | cat"), want: 2, message: benchguard.PoolReferenceMessage(target)},
+	})
+}
+
+// TestGuardProjectionReviewerPrecedence is GP65 and GP66. The pool refusal wins over the
+// reviewer verb, and the reviewer-verb refusal wins over a shell follow-on.
+func TestGuardProjectionReviewerPrecedence(t *testing.T) {
+	target := poolTarget(t)
+	checkGuardEnvelope(t, guardBenchFollowOn, []guardEnvelopeCase{
+		{name: "pool then reviewer verb", in: bashEnvelope("cd " + target + " && bench commitment override --assignment x --reason y"), want: 2, message: benchguard.PoolReferenceMessage(target)},
+		{name: "reviewer verb then follow-on", in: bashEnvelope("bench commitment override --assignment x --reason y | cat"), want: 2, message: benchguard.ReviewerVerbMessage(commitcmd.ReviewerVerb)},
 	})
 }

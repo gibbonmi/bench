@@ -53,3 +53,40 @@ func TestBenchEnvelopeValue(t *testing.T) {
 		{name: "NUL command", in: `{"tool_input":{"command":"git\u0000status"}}`, err: "command field has control byte"},
 	})
 }
+
+// TestGuardWrapperSelection is GP04. Classify searches every matching `-c` child of one
+// wrapper, so a follow-on in the second child refuses, and a nested wrapper stays unread.
+func TestGuardWrapperSelection(t *testing.T) {
+	for _, tc := range []struct {
+		command, operator string
+		blocked           bool
+	}{
+		{command: "bash -c 'echo ok' -c 'bench status && echo hi'", operator: "&&", blocked: true},
+		{command: "bash -c 'bench status | cat' -c 'echo ok'", operator: "|", blocked: true},
+		{command: `bash -c "sh -c 'bench status && echo hi'"`},
+	} {
+		got := Classify(tc.command, notBenchResolver())
+		if got.Blocked != tc.blocked || got.Operator != tc.operator {
+			t.Errorf("Classify(%q) = (%t, %q), want (%t, %q)", tc.command, got.Blocked, got.Operator, tc.blocked, tc.operator)
+		}
+	}
+}
+
+// TestReviewerVerbKeepsRecursiveReach is GP62, GP63, and GP73 with edge family R. The reviewer
+// walk recurses through every wrapper and exec child, and it reads an exec child only under a Bench head.
+func TestReviewerVerbKeepsRecursiveReach(t *testing.T) {
+	for _, tc := range []struct {
+		command string
+		denied  bool
+	}{
+		{`bash -c "sh -c 'bench commitment override --assignment x --reason y'"`, true},
+		{"bench worktree exec t -- bench worktree exec u -- bench commitment override", true},
+		{`bench worktree exec t -- bash -c "bench worktree exec u -- sh -c 'bench commitment override'"`, true},
+		{"bench worktree exec t bench commitment override", false},
+		{"x worktree exec t -- bench commitment override", false},
+	} {
+		if got := ReviewerVerb(tc.command, [2]string{"commitment", "override"}, notBenchResolver()); got != tc.denied {
+			t.Errorf("ReviewerVerb(%q) = %t, want %t", tc.command, got, tc.denied)
+		}
+	}
+}
