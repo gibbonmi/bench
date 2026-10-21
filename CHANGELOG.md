@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Repair-cause vocabulary
+
+- Changed the repair-attribution vocabulary of the `/bench-final-check` retro. It adds `edge-found` for a round where a review found an input, a state, or a refusal that no row decided. It defines `spec-row` as a defect in the spec text, and `delegate-error` as a clear row that the code or its test missed. Before, `spec-row` had no definition, and retros used it for all three kinds of round.
+
 ### Merge target lane
 
 - Changed `bench worktree merge`, which now grades the composed tree with the target's lane when the merge runs from any checkout of the kit repository. Before, a merge from the primary checkout or from another worktree ran the whole-project gate.
