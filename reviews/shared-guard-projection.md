@@ -904,7 +904,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gp2-r1-standards",
+          "performer": "claude:sgp-review-standards-gp2-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6818978d77749d4c28f43936b62fe37236394b19",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-standards-gp2-r1",
+            "digest": "sha256:e17fc41882f924b05b7d3735262a9987a927e0e10c8dfabc39b700c140185ff1",
+            "excerpt": "STANDARDS axis, chunk GP2 (base 6183e1e43, code tip 813efeb55, evidence tip 9f83ef35). The axis has 1 finding, low confidence; the worst issue is the unrecorded \"respelled error text turns this row red\" claim in two new tests.\n\nFindings\n- F1 | auto-fix | ticket 3 | confidence 5\n  - Where: internal/writeguard/envelope_contract_test.go:29-31 (the \"duplicate input null\" row compares err.Error() to \"file_path field missing\"). The claim is repeated at internal/benchguard/projection_contract_test.go:12-13.\n  - Binding requirement: AGENTS.md says an independently authored expectation counts as duplicated implementation knowledge unless the independence is necessary for a named mutation to turn the gate red and that red is recorded and demonstrated.\n  - Evidence: the review record at 9f83ef35 holds only two ticket 3 mutation probes (the Bench InputMap to CommandStruct swap and the Write CwdInputMap to InputMap swap). No respelled-text mutant appears.\n  - Benchguard: the recorded swap does redden TestBenchEnvelopeValue through the expected-text mismatch, so the benchguard rows arguably meet the exception.\n  - Writeguard: the recorded Write probe reddens TestGuardWriteEnvelopePolicy, not this row. The text comparison is not shown to be necessary.\n  - Repair: record the respell red, or drop the text compare in the writeguard row and reword the comment.\n  - The six error-text rows in benchguard (projection_contract_test.go:30-53) pin texts that acceptance rows GP22-GP24 say to keep, so no separate finding.\n\nAnswers to the named questions\n1. Duplicated E0 expectations in gitguard_test.go TestCommandFromEnvelope (lines 10-29) and main_test.go TestGuardGitBlockAllow (lines 524-545): not a defect this chunk must fix. Neither test is in the diff, both pass unchanged, no ticket's Writes: covers them, and main_test.go is 719 lines. Optional advice.\n2. Spec caller-sweep lines (spec.md:630-638): no prose correction is owed. Line 630 ties the sweep to f07508b2add49469d686614c70f575531e8ea445, the pre-migration subject. The retirement is graded by ticket 4's acceptance, which the delta satisfies.\n\nGraded and clean\n- One source per fact: gitguard, benchguard and writeguard have no json.Unmarshal on an envelope; benchguard has no isWrapper, isExecHead, wrapperFlag, \"--\", \"worktree\" or \"exec\" literals; reviewer.go reads children only through WorktreeExec and ShellChildren; GP69 holds (runsBenchUnderExec reads the child only through WorktreeExec(...).Child).\n- Behavior preservation in moved code: CommandFromEnvelope and PathFromEnvelope keep their error order and texts; the reviewer walk returns false for an exec head with no --; judge and spanInvokesBench search every matching -c child one level deep.\n- Shared harness: one checkGuardEnvelope in cmd/bench/guard_projection_test.go (lines 30-55).\n- Pool and reviewer-verb expectations come from benchguard.PoolReferenceMessage and ReviewerVerbMessage.\n- Stdlib reimplementation: none. Comments: no narrated history; longest sentences 22-23 words.\n- MUTATE.json re-anchor: old anchor matches the gitguard.go import block at 813efeb55; EXPECT unchanged.\n- Line limits: benchguard.go 363, reviewer.go 60, guard_projection_test.go 148.\n- Fence: every changed path is in its ticket's Writes:.\n\nAdvice (no finding ID, no disposition)\n- Run bench learning to record that TestCommandFromEnvelope and TestGuardGitBlockAllow repeat the E0 rows now owned by GP20 and GP21.\n- Envelope carries all three fields behind one type, so Command() on an InputMap envelope silently returns \"\". The spec fixes this shape.\n- Ticket 3 and 4 Writes: lines mark shared test files \"(new)\" although an earlier ticket creates them.\n\nCount: 1 finding (F1, ticket 3).\n\nCommands, all through bench worktree exec shared-guard-projection-build --: bench preflight evidence sha256:31f00ef8... --check-current returned current=true, dirty_record=false; git diff --stat, git diff, git show, git log; rg for retired names and error texts. No tests, no bench probe.\n"
+          },
+          "axis": "Standards",
+          "base": "6183e1e43df713b5dbbe2c58dc86df7106b78507",
+          "tip": "813efeb55dbbf65cdd3777178012391c4e241039",
+          "finding_ids": [
+            "F1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gp2-r1-spec",
+          "performer": "claude:sgp-review-spec-gp2-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6818978d77749d4c28f43936b62fe37236394b19",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-spec-gp2-r1",
+            "digest": "sha256:2d3a8c2b4377367e0e534b5b2e912701969d238235a9133df650233cb0b18410",
+            "excerpt": "SPEC axis, chunk GP2 (tickets 2-4), base 6183e1e43 to code tip 813efeb55.\n\nFindings: 0 (no finding survived refutation). Worst issue: none.\n\nAdvice (optional, no finding ID):\n- Commit 813efeb55 is titled \"migrate Bench projection consumers onto ShellChildren and WorktreeExec\"; tickets 2 and 3 use the \"FT366 shared-guard-projection tN:\" prefix. No rule binds the prefix.\n\nWhat the diff matches in the spec:\n- Envelope API: each form decodes through one json.Unmarshal into the exact anonymous target and tags the form table lists. Root keys fold in all three forms; the nested command key folds only in CommandStruct. InputString reads exact map keys; missing gives present=false; a type error gives present=true with the error; a null raw value gives \"\" with present=true and no error. The owner chooses no exit, resolves no path, and validates no field. The extra unknown-form error branch is harmless.\n- Caller policy: Git is string-only and returns \"\" on any decode error. Bench keeps its signature and error texts. Write decodes the outer cwd before file_path and path handling, so a bad cwd errors even for an absolute path (envelope_contract_test.go:13-18). Git and Bench targets contain no cwd field.\n- Decoder matrix, row by row: Git actual entry guard_projection_test.go:57-77 (GP47, 49, 51, 54, 57); Bench value reader projection_contract_test.go:27-55 (GP48, 50, 52, 55, 58); Write reader envelope_contract_test.go:27-33 (GP53) and :17 (GP61); Write actual entry guard_projection_test.go:98-121 (GP56, 59, GP29); owner merge rows envelope_test.go:59-79 (GP60, GP16); owner rows GP14-19 envelope_test.go:26-132; Git and Bench E0 guard_projection_test.go:57-94 (GP21, GP25); Git reader rows gitguard/projection_contract_test.go:28-55 (GP20).\n- Bench policy: judge searches every matching -c child one level and calls WorktreeExec(...).Head only after isBench; spanInvokesBench uses ShellChildren; ReviewerVerb recurses at every level through ShellChildren and WorktreeExec with isBench first; an exec head with no -- gives a nil Child; cmd/bench/guards.go is not in the diff, so the entry order is unchanged (GP13, 65, 66 at guard_projection_test.go:132-148).\n- runsBenchUnderExec keeps its Bench identity test and reads the exec child only through shellcommand.WorktreeExec; RR12 untouched.\n- Preserved closure: MUTATE.json re-anchored on the shellcommand import block with no change to the diagnostic; type Checker struct byte-identical; hook shims not in the diff.\n- Retired copies: git grep of isWrapper, isExecHead, wrapperFlag, and encoding/json in guard production files at 813efeb55 returns no hit.\n- Structure and exclusions: benchguard.go 363 lines; cmd/bench/main.go, internal/lines/lines.go, cmd/bench/guards.go, projection.go, scan.go and .bench/hooks unchanged.\n- Spec cell rewrites: each rewritten cell sits in the commit of the ticket that covers the row, and each cited test lands in that commit.\n- Diff scope: every changed file is in the GP2 Writes: scope; no edit outside acceptance reach.\n\nCommands run (all through bench worktree exec shared-guard-projection-build --): bench preflight evidence sha256:31f00ef8...e2c6 --check-current returned current=true, dirty_record=false; git diff --stat and git diff 6183e1e43 813efeb55; git log; git show -U0 --word-diff=porcelain on the three code commits; git show of the spec, tickets, and changed files; git grep for test names, retired symbols, and imports. No tests.\n"
+          },
+          "axis": "Spec",
+          "base": "6183e1e43df713b5dbbe2c58dc86df7106b78507",
+          "tip": "813efeb55dbbf65cdd3777178012391c4e241039",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gp2-r1-coverage",
+          "performer": "claude:sgp-review-coverage-gp2-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6818978d77749d4c28f43936b62fe37236394b19",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-coverage-gp2-r1",
+            "digest": "sha256:96993c8ee1f4663af47a377bc0ff9bfc0dd04e156a659f0a588c662f8c130989",
+            "excerpt": "COVERAGE, chunk GP2 (base 6183e1e43, code tip 813efeb55, evidence tip 9f83ef35). Findings: 3, all test-only auto-fix. Worst: C1.\n\nFindings (disposition | cite | binding requirement | ticket | confidence)\n- C1 | auto-fix | internal/benchguard/benchguard.go:138 (invokes(child.Stream, resolver, false) in judge) and :305 (same call in spanInvokesBench, reached by Classify through judgeExec at :175); tests internal/benchguard/projection_contract_test.go:66 and benchguard_test.go:72-84 | spec \"Git and Bench Classify limit traversal to one level across shell and worktree child forms\", edge W4 \"neither recurses twice\", and GP04's why-clause \"A universal first-child or recursive policy changes the Bench verdict\" | ticket 4 | 7\n  - Probe 1 swapped :138 false for true. It read SILENT: benchguard 28 tests and cmd/bench 397 tests passed, restored.\n  - Derived, not run: bash -c \"sh -c 'bench status'\" && echo hi is unblocked on the tip and blocked under the :138 mutant. bench worktree exec L -- true; bash -c \"sh -c 'bench status'\" is allowed on the tip and refused under the coordinator's :305 mutant.\n  - The test gap predates this diff, but ticket 4 rewrote both lines, and the :305 flag is Classify-reachable.\n  - Fix: add a two-level negative to TestGuardWrapperSelection (an outer-syntax case and an exec-later-segment case) and to TestInvokesBenchWalksOneWrapperLevel.\n- C2 | auto-fix | internal/benchguard/benchguard.go:26 (DecodeEnvelope(data, shellcommand.InputMap)) and internal/benchguard/projection_contract_test.go:27-55 | spec \"Neither Git nor Bench begins to validate an unrelated cwd field\"; GP18 \"Eager sibling validation changes Git and Bench posture\" | ticket 3 | 6\n  - GP18 is witnessed only at the owner (TestEnvelopeIndependentFields). No caller test passes a wrong-typed cwd.\n  - Probe 2 swapped Bench's InputMap for CwdInputMap. It read SILENT (benchguard and cmd/bench passed, restored).\n  - Fix: add a {\"cwd\":7,\"tool_input\":{\"command\":\"git reset --hard\"}} row to TestBenchEnvelopeType (command readable, no error) and to TestGuardGitEnvelopePolicy (exit 2).\n- C3 | auto-fix | internal/benchguard/benchguard.go:127 (outer && shellcommand.WorktreeExec(...).Head); tests benchguard_test.go TestClassifySpanScopedFollowOns | spec GP12 \"outer exec follow-on and heredoc exceptions retain verdicts\"; judge doc \"the exec exception covers a direct head only, so it never applies inside that string\" | ticket 4 | 5\n  - Probe 3 dropped outer &&. It read SILENT (both packages passed, restored). No test puts a bench worktree exec follow-on inside a wrapper string.\n  - Derived, not run: bash -c 'bench worktree exec L -- cp a b; cp b a' is blocked on the tip; without outer it reaches judgeExec and is allowed. The gap predates the diff; ticket 4 rewrote the line.\n  - Fix: add that command as a refuse row.\n\nNamed gaps cleared\n- Decoder matrix: every row has a witness at its stated seam (Git entry rows through guardGit; Write entry rows through guardFileWrite against a real primary checkout with a tracked README.md; Bench and Write contract rows; GP60 in TestEnvelopeInputShape for all three forms).\n- GP17, GP19: covered for all three forms. GP18: owner level only (see C2).\n- GP04: first-child and last-child mutants bite cases 1 and 2; the depth half is C1.\n- GP63: nested exec bites through the plan probe set.\n- GP68: RR12 bites loss of exec-child detection; rg '\"--\"|\"worktree\"|\"exec\"' over refusal_route_guard_test.go, reviewer.go and benchguard.go found no match.\n- GP43: relies on the recorded t2-canary-bites verification.\n\nRows that pass on old and new code with no demonstrated red: GP11, GP12 (except C3), GP26, GP27 (the coordinator NUL probe bit), GP64, GP70, GP13, GP65, GP66, GP68.\n\nAdvice (no ID)\n1. The GP63 no-separator case is weak: namesVerb would return false for any exec head. It is the spec's named input, so keep it.\n2. runsBenchUnderExec keeps its Bench identity test with no negative witness; predates the diff.\n3. A first cwd:null has no entry-level case.\n\nPolicy: all three findings are checks beyond the approved acceptance rows. They fit GP2's single hardening cycle, and no blocking condition holds.\n\nCommands run, all through bench worktree exec shared-guard-projection-build --: bench preflight evidence sha256:31f00ef8... --check-current: current=true, dirty_record=false; git diff, git show, git log, git grep, rg (read-only); 3 probes (3 of 3 used), each silent and restored yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "6183e1e43df713b5dbbe2c58dc86df7106b78507",
+          "tip": "813efeb55dbbf65cdd3777178012391c4e241039",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
