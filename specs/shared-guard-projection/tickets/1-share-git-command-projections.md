@@ -1,7 +1,7 @@
 # Share Git command projections
 
 Blocked by: none
-Writes: internal/shellcommand/projection.go (new), internal/shellcommand/projection_test.go (new), internal/gitguard/scan.go, internal/gitguard/projection_contract_test.go (new)
+Writes: internal/shellcommand/projection.go (new), internal/shellcommand/projection_test.go (new), internal/gitguard/scan.go, internal/gitguard/projection_contract_test.go (new), .bench/commitment.json
 Covers: GP01, GP02, GP03, GP05, GP06, GP07, GP08, GP09, GP10, GP72, GP74
 
 ## What to build
@@ -22,6 +22,7 @@ Before this ticket changes source, the coordinator creates a Bench worktree at t
 Ticket 7 records the GP46 golden from that worktree's executable with that worktree as its kit, because the system owner verifies a run binary against its kit source.
 GP2 receives the reviewed projection API with all Git rows green, while its own consumers are still unbuilt.
 `internal/gitguard` holds 10 of its 12 allowed files; this ticket adds one, so add no other new file there.
+The `.bench/commitment.json` path is on this line for the spec-stage close, which commits the deliverable binding inside the range that the plan-only preflight grades. The author makes no other change to it.
 
 ## Acceptance
 

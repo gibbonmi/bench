@@ -1,7 +1,7 @@
 # Replace the scan pipeline with a synchronous loop
 
 Blocked by: none
-Writes: internal/guards/guards.go, internal/guards/scan_loop_test.go (new), internal/guards/testdata/scan-family-s.golden (new)
+Writes: internal/guards/guards.go, internal/guards/scan_loop_test.go (new), internal/guards/testdata/scan-family-s.golden (new), .bench/commitment.json
 Covers: GS01, GS02, GS03, GS04, GS05, GS06, GS07, GS08, GS09, GS10, GS11, GS12, GS13, GS14, GS15, GS16, GS17, GS18, GS19, GS20, GS21, GS22, GS27, GS28, GS29, GS30
 
 ## What to build
@@ -29,6 +29,7 @@ GS27 then compares the candidate Command tuples with the golden over the same co
 Keep guards_test.go, guards_cleanup_test.go, and the four testdata stdout fixtures unchanged.
 Keep the test names `TestScanTimeoutPreservesPartialRowsAndHonestCounts` and `TestScanEnumerationTimeoutUsesUnknownCounts`, because the race phase names them (`internal/gate/gate_go.go:36-37`).
 guards.go stays within 400 lines, and each new file stays within 400 lines. Ticket 2 adds the ownership check after this loop lands.
+The `.bench/commitment.json` path is on this line for the spec-stage close, which commits the deliverable binding inside the range that the plan-only preflight grades. The author makes no other change to it.
 
 ## Acceptance
 
