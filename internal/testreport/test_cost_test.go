@@ -48,6 +48,17 @@ func TestSlowestCarriesTestElapsed(t *testing.T) {
 	}, "canned,TestA,1500")
 }
 
+func TestSlowestRoundsToNearestMillisecond(t *testing.T) {
+	wantSlowest(t, []string{testTerminal("pass", "canned", "TestA", 0.0026)}, "canned,TestA,3")
+}
+
+func TestSlowestLastTerminalEventWins(t *testing.T) {
+	wantSlowest(t, []string{
+		testTerminal("fail", "canned", "TestA", 0.3),
+		testTerminal("pass", "canned", "TestA", 0.5),
+	}, "canned,TestA,500")
+}
+
 func TestSlowestKeepsThreePerPackage(t *testing.T) {
 	wantSlowest(t, []string{
 		testTerminal("pass", "canned", "TestD", 0.1),
