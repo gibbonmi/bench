@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/test-cost-signal/spec.md",
-  "plan_digest": "sha256:5c96c02f9ab8638951e0718696430d4ff0b135fc44b59b2a5c51f53cb4ed1b75",
+  "plan_digest": "sha256:10fc6009bec677b4a1c75ff2ea3342ce81eeab5262feb7b6d04db55342f4b834",
   "implementation_session": "",
   "chunks": [
     {
@@ -795,6 +795,18 @@
     {
       "from": "sha256:5d79c8012ea0883ed2194af97f5c65fd7f5e75d471531192d2e9a485bc892ee0",
       "to": "sha256:5c96c02f9ab8638951e0718696430d4ff0b135fc44b59b2a5c51f53cb4ed1b75",
+      "chunk_ids": {
+        "TC-C1": [
+          "TC-C1"
+        ],
+        "TC-C2": [
+          "TC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:5c96c02f9ab8638951e0718696430d4ff0b135fc44b59b2a5c51f53cb4ed1b75",
+      "to": "sha256:10fc6009bec677b4a1c75ff2ea3342ce81eeab5262feb7b6d04db55342f4b834",
       "chunk_ids": {
         "TC-C1": [
           "TC-C1"
