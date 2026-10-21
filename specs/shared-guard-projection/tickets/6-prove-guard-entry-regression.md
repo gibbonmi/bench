@@ -1,7 +1,7 @@
 # Prove guard entry regression
 
 Blocked by: 1-share-git-command-projections.md, 2-add-envelope-owner-for-git.md, 3-migrate-bench-and-write-readers.md, 4-migrate-bench-projection-consumers.md
-Writes: internal/systemtest/guard_projection_test.go (new), cmd/bench/guard_projection_test.go
+Writes: internal/systemtest/guard_projection_test.go (new), cmd/bench/guard_projection_test.go (new)
 Covers: GP34, GP35, GP36, GP37, GP38, GP39, GP40, GP41, GP44, GP45, GP71
 
 ## What to build

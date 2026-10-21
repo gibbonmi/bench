@@ -1,7 +1,7 @@
 # Migrate Bench projection consumers
 
 Blocked by: 1-share-git-command-projections.md, 3-migrate-bench-and-write-readers.md
-Writes: internal/benchguard/benchguard.go, internal/benchguard/reviewer.go, internal/benchguard/projection_contract_test.go, internal/conformance/refusal_route_guard_test.go, cmd/bench/guard_projection_test.go
+Writes: internal/benchguard/benchguard.go, internal/benchguard/reviewer.go, internal/benchguard/projection_contract_test.go (new), internal/conformance/refusal_route_guard_test.go, cmd/bench/guard_projection_test.go (new)
 Covers: GP04, GP11, GP12, GP13, GP62, GP63, GP64, GP65, GP66, GP68, GP69, GP70, GP73
 
 ## What to build

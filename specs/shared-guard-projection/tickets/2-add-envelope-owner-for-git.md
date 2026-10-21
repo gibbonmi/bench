@@ -1,7 +1,7 @@
 # Add the envelope owner and migrate the Git reader
 
 Blocked by: 1-share-git-command-projections.md
-Writes: internal/shellcommand/envelope.go (new), internal/shellcommand/envelope_test.go (new), internal/gitguard/gitguard.go, internal/gitguard/projection_contract_test.go, cmd/bench/guard_projection_test.go (new), tests/canary/canonical-path-owner/second-derivation/
+Writes: internal/shellcommand/envelope.go (new), internal/shellcommand/envelope_test.go (new), internal/gitguard/gitguard.go, internal/gitguard/projection_contract_test.go (new), cmd/bench/guard_projection_test.go (new), tests/canary/canonical-path-owner/second-derivation/
 Covers: GP14, GP15, GP16, GP17, GP18, GP19, GP20, GP21, GP43, GP47, GP49, GP51, GP54, GP57, GP60
 
 ## What to build
