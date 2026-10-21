@@ -2065,6 +2065,72 @@
           "tip": "77b26ed917e12641e55846bb96ce57dcc1172c97",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "gp3-r2-standards",
+          "performer": "claude:sgp-review-standards-gp3-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-standards-gp3-r2",
+            "digest": "sha256:ef412652214594291943e478acecc17f533533199b836a6d1a321e65086a6fb2",
+            "excerpt": "STANDARDS confirming round 1, GP3 (code tip 1c9a5fa2, evidence 1d03b9e4). Verdict: S1, S2, S3 closed. S4 closed by the tie-break decision, with no code change. The repair adds no new finding.\n\nEvidence preflight: --check-current returned current=true, dirty_record=false, source_tip 1d03b9e4, base 3d4b0707.\n\nInitial findings\n- S1 closed. The WalkDir switch is now one guardOwnerSources (internal/conformance/guard_owner_walk_test.go:26-44), called at guard_projection_owner_test.go:90 and guard_scan_owner_test.go:54. The parse loop is now one guardOwnerParse (guard_owner_walk_test.go:48-60), called at guard_projection_owner_test.go:72 and guard_scan_owner_test.go:58. The old loops are gone from both files. Parse behaviour is unchanged.\n- S2 closed. The registered-diagnostic filter is now one guardOwnerDiags (guard_owner_walk_test.go:64-77), with t.Helper() and the \"not bound\" Fatal. Both wrappers delegate.\n- S3 closed. The \"unstatable package\" plant now calls capability.Capability(t, capability.Symlink, fmt.Sprintf(\"symlinks unavailable on this filesystem: %v\", err)) and then returns nil, matching internal/bounds/classify_test.go:275, internal/prose/walk_test.go:318 and internal/git/worktree_admin_hostile_test.go:49.\n- S4 closed by the tie-break decision (advice, captured as a learning). The repair makes no code change for it.\n\nNew-defect checks (none found)\n- Alias constants are honest naming, not a second source: each holds one literal in guard_owner_walk_test.go:16-20; each check keeps its own prefix and diagnostics.\n- Imports are clean by reading. Comments are consistent; the FIFO and testdata rationale moved into the guardOwnerSources doc. The new helpers are _test.go-only, unexported, one fact each.\n\nOptional advice (no ID, not blocking)\n- The six alias constants could be dropped in favour of the shared names; that would touch every assertion, which the repair avoided on purpose.\n- The Mkfifo plant is still repeated in both test files (the S4 family, already advice).\n\nCommands run (all through bench worktree exec shared-guard-projection-build --): bench preflight evidence sha256:36cfbb70... --check-current; git diff 77b26ed9 1c9a5fa2 --stat; git diff of the two owner test files; git show 1c9a5fa2 of the three files; rg for capability.Capability and Symlink under internal/. No test, no file written.\n"
+          },
+          "axis": "Standards",
+          "base": "3d4b0707a0ac8cd7988e769586410f53f70b55a1",
+          "tip": "1c9a5fa2e1caaa7951763f740e6e8cc603a72ce6",
+          "finding_ids": [],
+          "supersedes": [
+            "gp3-r1-standards"
+          ]
+        },
+        {
+          "id": "gp3-r2-spec",
+          "performer": "claude:sgp-review-spec-gp3-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-spec-gp3-r2",
+            "digest": "sha256:c67bb46e6c83fecdcc177b1d5015a7ef07d4ea2fb93d0af947b89e43f6685bdd",
+            "excerpt": "SPEC axis, GP3 round 1 confirming (repair delta 77b26ed9..1c9a5fa2, refrozen record 1d03b9e4): PASS, 0 findings.\n\nEvidence: bench preflight evidence sha256:36cfbb70... --check-current returned current=true, dirty_record=false, base 3d4b0707, source_tip 1d03b9e4.\n\nWhat I checked:\n- GP30-GP33, GP42, GP67 and the checkGuardProjectionOwner contract are intact. The repair only moves the source walk, the parse loop and the registered-diagnostic filter into internal/conformance/guard_owner_walk_test.go:32-83. The projection check keeps its own surface rule, its owner/production parse order and its owner-dir skip. The spec rows still name the same test functions.\n- The guard-scan-loop check keeps its behavior: the same code moved, parameterized by prefix; diagnostic order and text unchanged; the \"guards.go missing\" early return unchanged (guard_scan_owner_test.go:54-67); constants keep their old values through aliases (:32-34); the file's tests are untouched.\n- The symlink fixture now skips through capability.Capability when symlinks are unavailable; a host-capability skip, not a weakened expectation.\n- Widened paths guard_scan_owner_test.go and guard_owner_walk_test.go (new) sit inside internal/conformance, the directory of signed-off Writes entries (ticket 5 line 4).\n- Plan: the t5-repair1 assignment follows the earlier repair-assignment shape (predecessor, trigger user-directed, source 05343358, preserved 01ae9dcf). GP3 verification ids and probes are unchanged.\n- Record 1d03b9e4: GP3 base 3d4b0707 and tip 1c9a5fa2; plan_digest moves 58be... to e72a... with a migration entry; source_digest d0836674 on every new row; new rows r5-t5-* (5, including the omission probe with outcome bit and restore pass), b6-t6-* (3), b7-t7-* (3, including the golden-bite probe) match the plan ids one for one. Earlier history and the gp3-r1 reviews are retained.\n\nUnknown (not a finding): compile and test pass claims are record claims; no test run here.\n\nAdvice (no ID): S4 has no change in the repair delta; its disposition belongs to the Standards axis.\n\nCommands run (all through bench worktree exec shared-guard-projection-build --): bench preflight evidence ... --check-current; git diff 77b26ed9 1c9a5fa2 and --stat; git diff 1789b94bb 1d03b9e44; git log 3d4b0707..1d03b9e4; git show --stat 05343358e 5a4ce44f5; git show 1c9a5fa2e:internal/conformance/guard_scan_owner_test.go; git grep. No tests, no probes, no writes.\n"
+          },
+          "axis": "Spec",
+          "base": "3d4b0707a0ac8cd7988e769586410f53f70b55a1",
+          "tip": "1c9a5fa2e1caaa7951763f740e6e8cc603a72ce6",
+          "finding_ids": [],
+          "supersedes": [
+            "gp3-r1-spec"
+          ]
+        },
+        {
+          "id": "gp3-r2-coverage",
+          "performer": "claude:sgp-review-coverage-gp3-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-coverage-gp3-r2",
+            "digest": "sha256:7ffdc30668ef17607b393c5f08353621df889f58f4d61fefed20a80dec318b49",
+            "excerpt": "COVERAGE axis, GP3 round 1 confirmation (code tip 1c9a5fa2, evidence tip 1d03b9e4): PASS. 0 findings, 1 advice item, 1 unknown.\n\nCommands and probes\n- bench preflight evidence sha256:36cfbb70... --check-current returned current=true, dirty_record=false, source_tip 1d03b9e4, base 3d4b0707.\n- bench test --package ./internal/conformance --run '^(TestGuardScanLoopOwner|TestGuardProjectionOwner)' passed: 21 tests run, 0 failures, 0 skips.\n- 1 bench probe: --omit '!strings.HasSuffix(entry.Name(), \".go\") || ' in guard_owner_walk_test.go:41; verdict silent (21 pass), restored yes.\n\nSaved answer re-derived (sgp-t5-r1-walk.out and sgp-t5-r1-walk.json)\n- Mutants 1 and 2 omit the unreadable-entry diagnostic at guard_owner_walk_test.go:38. Both bit: TestGuardProjectionOwnerMissingOwner/unreadable_subdirectory and TestGuardScanLoopOwnerReportsAnUnreadableSubdir. Restored yes.\n- Mutants 3 and 4 make the walker skip nested directories. Both bit: TestGuardScanLoopOwnerGradesNestedProductionFiles, TestGuardProjectionOwnerBitesOnPrivateCopies, and the two unreadable-subdirectory tests. Restored yes.\n\nBranch inventory of the shared helpers\n- Unreadable entry, testdata skip, _test.go skip, IsDir pass-through, irregular file, parse-error diagnostic, absent-owner exit, and the prefix filter each have witnesses in both owner test sets.\n- Symlink capability path: the symlink succeeds here; the Capability call fires only if Symlink fails.\n- No branch was witnessed by only one pre-repair check and is now witnessed by no test.\n\nAdvice (no ID)\n- The .go suffix filter at guard_owner_walk_test.go:41 has no witness in either owner test set (probe silent). A stray non-Go file would give a spurious \"cannot parse\" diagnostic, so the failure mode is fail-closed. Both owner checks carried this gap before the repair.\n\nUnknown\n- The plan probe copy-check-omission at the new tip: no saved output found in the scratchpad; by reading, the path still bites.\n"
+          },
+          "axis": "Coverage",
+          "base": "3d4b0707a0ac8cd7988e769586410f53f70b55a1",
+          "tip": "1c9a5fa2e1caaa7951763f740e6e8cc603a72ce6",
+          "finding_ids": [],
+          "supersedes": [
+            "gp3-r1-coverage"
+          ]
         }
       ]
     }
