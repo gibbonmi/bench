@@ -315,8 +315,10 @@ var hardenedProducerRe = regexp.MustCompile(`(^|/)(\.agents/skills/[^/]+/SKILL\.
 // readIfExists returns a file's text, or "" for anything a caller may not trust. A
 // producer path goes through the no-follow classifier first. A link is refused rather
 // than followed, a FIFO cannot block the check in open(2), and oversized or non-UTF-8
-// bytes never reach a parser. Every other path keeps the plain read. This helper is
-// shared by checks whose subjects are ordinary tracked sources.
+// bytes never reach a parser. Every other path follows a link and keeps the plain read,
+// but only of a regular file: a graded tree can hold a FIFO under any source name, and
+// open(2) on it blocks until a writer arrives. This helper is shared by checks whose
+// subjects are ordinary tracked sources.
 func readIfExists(path string) string {
 	if hardenedProducerRe.MatchString(filepath.ToSlash(path)) {
 		classified := bounds.ClassifyNoFollow(path)
@@ -324,6 +326,9 @@ func readIfExists(path string) string {
 			return ""
 		}
 		return string(classified.Data)
+	}
+	if info, err := os.Stat(path); err != nil || !info.Mode().IsRegular() {
+		return ""
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
