@@ -407,6 +407,74 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2-standards-r1",
+          "performer": "claude:tcs-c2-standards-r1-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "aaf7ffde7e3059c73ac481b2fb34e993a3a7b3f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-standards-r1-20261021",
+            "digest": "sha256:c221a1515f53c78ef643846de5b269b804f5e18e97f9fac843703c9707d8a755",
+            "excerpt": "Standards axis, TC-C2 confirming round 1 (repair delta e214d5647..14b320f6a): 0 findings. Both new tests reuse the existing wantSlowest and testTerminal helpers; each pins one fact (0.0026 s renders 3 ms; the last terminal event renders 500 ms); no pasted harness and no duplicated fact.\n"
+          },
+          "axis": "Standards",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "14b320f6a981e20b6b8b5e7f8a7d5603f2ef23e6",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r0"
+          ]
+        },
+        {
+          "id": "c2-spec-r1",
+          "performer": "claude:tcs-c2-spec-r1-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "aaf7ffde7e3059c73ac481b2fb34e993a3a7b3f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-spec-r1-20261021",
+            "digest": "sha256:a7f6be4143023111fbf7fb5c4276242bcaedfdcdaa84e720ef4d2376574dba05",
+            "excerpt": "Spec axis, TC-C2 confirming round 1: 0 findings. C1 closed by spec: TestSlowestRoundsToNearestMillisecond feeds 0.0026 s and expects canned,TestA,3, which matches the math.Round decision. C2 closed by spec: TestSlowestLastTerminalEventWins sends fail 0.3 then pass 0.5 and expects 500, which matches \"the last terminal event of a test wins\". The repair contradicts no row TC12-TC26.\n"
+          },
+          "axis": "Spec",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "14b320f6a981e20b6b8b5e7f8a7d5603f2ef23e6",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r0"
+          ]
+        },
+        {
+          "id": "c2-coverage-r1",
+          "performer": "claude:tcs-c2-coverage-r1-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "aaf7ffde7e3059c73ac481b2fb34e993a3a7b3f2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-coverage-r1-20261021",
+            "digest": "sha256:72039b3f5ffdc408827ffd17eb188cc7c815395452112ba6545264a09fab5b7d",
+            "excerpt": "Coverage axis, TC-C2 confirming round 1: 1 finding. C3 (auto-fix, confidence 9): internal/testreport/test_cost_test.go TestSlowestLastTerminalEventWins does not close C2, because its last terminal value 0.5 is also the maximum; probe at internal/testreport/testreport.go:101 swapping to a max-of-terminals assignment read silent, restored yes. Fix: make the last terminal event the smaller value. C1 closed for truncation (K1 bit). Advice, not a finding: a ceiling helper still passes 0.0026 -> 3.\n"
+          },
+          "axis": "Coverage",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "14b320f6a981e20b6b8b5e7f8a7d5603f2ef23e6",
+          "finding_ids": [
+            "C3"
+          ],
+          "supersedes": [
+            "c2-coverage-r0"
+          ]
         }
       ]
     }
