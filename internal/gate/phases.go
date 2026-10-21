@@ -16,6 +16,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/env"
@@ -219,14 +220,16 @@ func declaresTest(dir, name string) bool {
 }
 
 // BaseTestArgv selects a Bench-owned go test command. It adds -C for a named kit and
-// always adds -trimpath and -count=1 before the caller's operands. The flags prevent
-// checkout paths and cached test results from changing execution evidence.
+// always adds -trimpath, -count=1, and the go test timeout before the caller's operands.
+// The first two flags prevent checkout paths and cached test results from changing
+// execution evidence. The timeout flag takes precedence over a GOFLAGS value, so the
+// per-binary limit does not depend on the environment.
 func BaseTestArgv(kit string, args ...string) []string {
 	argv := []string{"go"}
 	if kit != "" {
 		argv = append(argv, "-C", kit)
 	}
-	return append(append(argv, "test", trimPath, "-count=1"), args...)
+	return append(append(argv, "test", trimPath, "-count=1", "-timeout="+bounds.GoTestTimeout.String()), args...)
 }
 
 // kitRoot resolves the wrapper-selected kit before an exported entry starts its work.

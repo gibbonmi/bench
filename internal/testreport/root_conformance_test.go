@@ -68,7 +68,7 @@ func TestRootConformanceCheckRunsUnscoped(t *testing.T) {
 	}
 	lines := strings.Split(child, "\n")
 	for _, want := range []string{
-		"argv=test -trimpath -count=1 -json ./internal/conformance -run " + namedCheckRunPattern(),
+		"argv=test -trimpath -count=1 " + timeoutFlag() + " -json ./internal/conformance -run " + namedCheckRunPattern(),
 		registry.ConformanceRootEnv + "=" + root,
 		registry.ConformanceTierEnv + "=" + string(registry.Dev),
 		registry.ConformanceScopeEnv + "=",

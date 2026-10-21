@@ -201,8 +201,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT402 (MEDIUM) — the landing gate costs less time and keeps its failure detection.**
 
-**FT409 (MEDIUM) — `bench test` reports the slowest tests and warns when a package nears the go test timeout.**
-
 **FT411 (MEDIUM, decision required) — tests that add no value are cut, and their coverage stays with the tests that subsume them.**
 
 **FT412 (LOW) — a production seam that does I/O per item has a test that pins how its cost grows.**
@@ -345,21 +343,20 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT409
-2. FT402
-3. FT362-process-lifetime
-4. FT360-shared-fixtures
-5. FT411
-6. FT314-gate-reuse
-7. FT125-exact-readers
-8. FT375-residual
-9. FT438-test-only
-10. FT344-remedy
-11. FT406-rebuild
-12. FT366-rg-guard
-13. FT380-residual
-14. FT354-strict-json
-15. FT363-member-set
-16. FT358-block-reader
-17. FT365-conformance
-18. FT414-preconditions
+1. FT402
+2. FT362-process-lifetime
+3. FT360-shared-fixtures
+4. FT411
+5. FT314-gate-reuse
+6. FT125-exact-readers
+7. FT375-residual
+8. FT438-test-only
+9. FT344-remedy
+10. FT406-rebuild
+11. FT366-rg-guard
+12. FT380-residual
+13. FT354-strict-json
+14. FT363-member-set
+15. FT358-block-reader
+16. FT365-conformance
+17. FT414-preconditions

@@ -14,7 +14,7 @@ A warning changes no `Outcome` field and no exit code. A passing warned run exit
 
 The ticket consumes `bounds.GoTestTimeout` from `1-timeout-owner.md` and the `test_cost.go` helpers and render order from `2-slowest-tests.md`. Put the warning tests in `timeout_warning_test.go`, and drive them through `commandOverEvents` with canned events. Build each threshold value from the constant: the fixture at the threshold uses half of the timeout, and the fixture below it uses one millisecond less.
 
-The bounds policy owners map gains the entry `internal/testreport/test_cost.go` with the token `bounds.GoTestTimeout`. The `CHANGELOG.md` Unreleased section states the timeout flag and its effect on a linked repository that sets a `GOFLAGS` timeout. It also states the `slowest` table and the `timeout_warnings` table. The comment in `check_row_test.go` says that the packages table follows the check row. Change it to state that a warned run puts `timeout_warnings` between the two. Keep `testreport.go` under 400 lines, because this ticket grows it after ticket 2.
+The bounds policy owners map gains the entry `internal/testreport/test_cost.go` with the token `bounds.GoTestTimeout`. The `CHANGELOG.md` Unreleased section states the timeout flag and its effect on a linked repository that sets a `GOFLAGS` timeout. It also states the `slowest` table of `bench test --full` and the `timeout_warnings` table. The comment in `check_row_test.go` says that the packages table follows the check row. Change it to state that a warned run puts `timeout_warnings` between the two. Keep `testreport.go` under 400 lines, because this ticket grows it after ticket 2.
 
 ## Acceptance
 

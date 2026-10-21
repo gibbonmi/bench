@@ -41,6 +41,9 @@ const (
 	WorktreeListTimeout = 15 * time.Second
 	GuardScanTimeout    = 5 * time.Second
 	GateTimeout         = 45 * time.Minute
+	// GoTestTimeout is the -timeout of each test binary in a Bench-owned go test command.
+	// GateTimeout bounds the whole gate, which is a different fact.
+	GoTestTimeout = 10 * time.Minute
 	// RecordClockSkew is how far a gate record time may sit after the reader's now. A
 	// host wall clock can step back by up to a second under load, between the write and
 	// a later read.

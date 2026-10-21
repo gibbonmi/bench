@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -372,10 +373,14 @@ func writeFocusedArgumentGo(t *testing.T, path, marker string) {
 	writeGoStub(t, path, source)
 }
 
-// T04: the focused `bench test` argv carries -trimpath and -count=1, so a focused run
-// warms the same cache entries the gate reads instead of writing a path-keyed set.
+// timeoutFlag is the go test timeout token that each expected child argv carries.
+func timeoutFlag() string { return "-timeout=" + bounds.GoTestTimeout.String() }
+
+// T04: the focused `bench test` argv carries -trimpath, -count=1, and the go test
+// timeout, so a focused run warms the same cache entries the gate reads instead of
+// writing a path-keyed set.
 func TestFocusedTestArgvCarriesTrimPathAndCountOne(t *testing.T) {
-	want := []string{"go", "test", "-trimpath", "-count=1", "-json", "./internal/gate"}
+	want := []string{"go", "test", "-trimpath", "-count=1", timeoutFlag(), "-json", "./internal/gate"}
 	if got := focusedTestArgv("./internal/gate"); !reflect.DeepEqual(got, want) {
 		t.Fatalf("focused test argv = %#v, want %#v", got, want)
 	}
