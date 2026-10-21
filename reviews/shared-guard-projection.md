@@ -2131,6 +2131,72 @@
           "supersedes": [
             "gp3-r1-coverage"
           ]
+        },
+        {
+          "id": "gp3-r3-standards",
+          "performer": "claude:sgp-review-standards-gp3-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-standards-gp3-r3",
+            "digest": "sha256:227200eb29e40c5644ef634db41a5fd8e4b18857a016f989d6e635328960102f",
+            "excerpt": "STANDARDS, GP3 at moved base: PASS. No finding. Scope: the delta against the reviewed GP3 range is only the comment-only commit 01781196 plus record commits. Confidence 9.\n\n- Evidence: bench preflight evidence sha256:da687e30... --check-current reports current=true, base 743b1919, source_tip 1e3382de, dirty_record=false. The tree head is 1e3382de and the tree is clean.\n- The base move adds only 01781196. git diff 743b1919 3d4b0707 --stat lists internal/benchguard/projection_contract_test.go (4 lines changed) and reviews/shared-guard-projection.md (record). git show 01781196 touches only projection_contract_test.go.\n- Comment check on 01781196 (projection_contract_test.go:60-61): it splits one 33-word comment sentence into two sentences of 17-18 and 15 words; the words and meaning are unchanged, and no code line changed; it adds no duplicated source and no unstated constraint. Under bounded-repair-policy.md:47-50 it is evidence-only and was reaffirmed by the GP2 Standards axis (F2).\n- The rest of the delta is the reviewed GP3 code: git diff 743b1919 1c9a5fa2 --stat lists 13 files; git diff 3d4b0707 1c9a5fa2 --stat lists the same 12 minus projection_contract_test.go.\n- Prior rounds closed S1-S3 by repair and S4 as advice (gp3-standards-r1.txt and gp3-standards-r2.txt), and the code is unchanged since that review, so the result carries forward. No GP3 Standards finding is open.\n\nAdvice: none.\n\nCommands run (all through bench worktree exec shared-guard-projection-build --): bench preflight evidence sha256:da687e30d5eaaee191135d8aec3cc4b4436121edeb26f1db5af1bda438f1d3e3 --check-current; git diff 743b1919 1c9a5fa2 --stat; git diff 743b1919 3d4b0707 --stat; git show 01781196; git diff 3d4b0707 1c9a5fa2 --stat. No test, no probe, no file written.\n"
+          },
+          "axis": "Standards",
+          "base": "743b19190a6ab51a6c7a1d65f4071659223ff53a",
+          "tip": "1c9a5fa2e1caaa7951763f740e6e8cc603a72ce6",
+          "finding_ids": [],
+          "supersedes": [
+            "gp3-r2-standards"
+          ]
+        },
+        {
+          "id": "gp3-r3-spec",
+          "performer": "claude:sgp-review-spec-gp3-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-spec-gp3-r3",
+            "digest": "sha256:f29889632fe31b944b80aba5598ac7a5fb2cdd4d989e1ada939fd9fbe685222a",
+            "excerpt": "SPEC axis, GP3 at the moved base (base 743b1919, code tip 1c9a5fa2, evidence tip 1e3382de): PASS. 0 findings.\n\nEvidence: bench preflight evidence sha256:da687e30... --check-current returned current=true, dirty_record=false, base 743b1919, source_tip 1e3382de.\n\nAdded range 743b1919..3d4b0707: it changes no behavior and no acceptance row. git diff --stat shows internal/benchguard/projection_contract_test.go (2 insertions, 2 deletions) and reviews/shared-guard-projection.md; spec.md and the tickets are untouched in this range. git show 01781196 splits one comment sentence above TestGuardWrapperSelection; no code line and no test body changes. bounded-repair-policy.md:47 and :49 treat it as evidence-only.\n\nGP30-GP46, GP67, GP71 at 1c9a5fa2 hold. The 3d4b0707..1c9a5fa2 GP3 delta is the one the prior rounds passed, and the added range does not touch it. git grep at 1c9a5fa2 finds every spec-cited test function: TestGuardProjectionOwner{BitesOnPrivateCopies, OptionalSurface, MissingOwner, HoldsOnTheLiveTree}, TestGuardProjectionPreservesIndependentChecks (checks_test.go:670), TestGuardProjectionCensusExclusion, TestGuardProjectionNeverExecutes, TestGuardProjectionWriteHookDegraded, TestGuardProjectionDifferentialFamilies. GP34-37, GP39-41 and GP71 cite existing tests that this chunk does not edit.\n\nRefrozen GP3 chunk entry (reviews/shared-guard-projection.md:1471-1475) is consistent: base 743b1919 equals GP2's recorded tip at :451; tip 1c9a5fa2; plan_digest e72a5e2e; source_digest d0836674 unchanged. git diff 1d03b9e4 1e3382de changes only the GP3 base line and the three gp3-r2 review rows; the verification rows and probes are untouched.\n\nNot verified: the d0836674 digest was not recomputed; no test or probe was rerun.\n\nAdvice, no ID:\n- The gp3-r1 and gp3-r2 review rows carry base 3d4b0707 as historical evidence for the older pair; the new round's rows should carry 743b1919.\n- The GP3 range now includes the 01781196 comment edit to a GP2 path; acceptable as an evidence-only correction.\n\nCommands run (all via bench worktree exec shared-guard-projection-build --): bench preflight evidence ... --check-current; git diff 743b1919 3d4b0707 --stat; git show 01781196; git diff 3d4b0707 1c9a5fa2 --stat; git diff 743b1919 1c9a5fa2 --stat; git log --oneline --graph 743b1919^..1e3382de; git show 1e3382dee:reviews/shared-guard-projection.md; git diff 1d03b9e44 1e3382dee; git grep; rg. No tests, no probes, no files written.\n"
+          },
+          "axis": "Spec",
+          "base": "743b19190a6ab51a6c7a1d65f4071659223ff53a",
+          "tip": "1c9a5fa2e1caaa7951763f740e6e8cc603a72ce6",
+          "finding_ids": [],
+          "supersedes": [
+            "gp3-r2-spec"
+          ]
+        },
+        {
+          "id": "gp3-r3-coverage",
+          "performer": "claude:sgp-review-coverage-gp3-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-coverage-gp3-r3",
+            "digest": "sha256:a56d0ef2d1355470545cc9c6e9d165006d4765cd65cabb23cfffba46610a6eaa",
+            "excerpt": "COVERAGE axis, GP3 at moved base 743b1919 (code tip 1c9a5fa2, evidence tip 1e3382de): PASS, 0 findings, confidence 9/10.\n\nWhat I checked:\n- The added range changes no tested behavior. git diff 743b1919 3d4b0707 --stat shows internal/benchguard/projection_contract_test.go (4 lines changed) and reviews/shared-guard-projection.md. git show 01781196 shows only two comment lines replaced by two comment lines at projection_contract_test.go:60-61, above func TestGuardWrapperSelection. No code line, identifier or table row changed.\n- Ancestry is linear: 743b1919, 2d9f6479, 47a569e2, 01781196, 3d4b0707, then the GP3 commits up to 1c9a5fa2.\n- GP3 rows still hold at 1c9a5fa2. The GP3 chunk entry pins tip 1c9a5fa2, base 743b1919 and source_digest d0836674. The r5 rows (registered-owner, conformance-closure, registry-closure, root-conformance, copy-check-omission bite), b6 rows (./cmd/bench 403 tests, system 181 tests, root-conformance) and b7 rows (system 181 tests, differential golden bite on W4, root-conformance) carry the same digest and all pass.\n- No coverage gap found, so no probe spent.\n\nCommands and results:\n1. bench preflight evidence sha256:da687e30... --check-current: current=true, dirty_record=false, base 743b1919, source_tip 1e3382de.\n2. git diff 743b1919 3d4b0707 --stat, git show 01781196, git diff 3d4b0707 1c9a5fa2 --stat, git diff 743b1919 1c9a5fa2 --stat, git log, rg over the record: read-only.\n3. bench test --package ./internal/benchguard --run '^TestGuardWrapperSelection$': pass, 1 test, 0 failures, 0 skips.\n4. bench probe: 0 of 1 used.\n\nNot verified: the r5, b6 and b7 commands were not rerun; the recorded excerpts and their source_digest were read.\n\nAdvice: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "743b19190a6ab51a6c7a1d65f4071659223ff53a",
+          "tip": "1c9a5fa2e1caaa7951763f740e6e8cc603a72ce6",
+          "finding_ids": [],
+          "supersedes": [
+            "gp3-r2-coverage"
+          ]
         }
       ]
     }
