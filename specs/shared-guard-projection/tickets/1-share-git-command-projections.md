@@ -1,50 +1,37 @@
 # Share Git command projections
 
 Blocked by: none
-Writes: internal/gitguard/projection_contract_test.go (new), internal/gitguard/scan.go, internal/shellcommand/projection.go (new), internal/shellcommand/projection_test.go (new)
-Covers: GP01, GP02, GP03, GP05, GP06, GP07, GP08, GP09, GP10
+Writes: internal/shellcommand/projection.go (new), internal/shellcommand/projection_test.go (new), internal/gitguard/scan.go, internal/gitguard/projection_contract_test.go (new), .bench/commitment.json
+Covers: GP01, GP02, GP03, GP05, GP06, GP07, GP08, GP09, GP10, GP72, GP74
 
 ## What to build
 
-Deliver shared shell-wrapper and worktree-child facts through the existing Git classifier with its current verdicts.
-Add ShellChildren and WorktreeExec in shellcommand, preserving Parse, ProjectCommandWords, and ResolveRoutinePrefix.
-ShellChildren returns matching c-flag children in argv order without recursion.
-WorktreeExec preserves the direct child argv and reports head, delimiter, and nonempty-child context separately.
-Git retains keyword trimming, its first matching shell child, one-level traversal, executable recognition, global-option interpretation, and repository authority.
-Remove its private wrapper and exec-child recognizers once these actual callers migrate.
+Add the shared wrapper and worktree-child projection, and move the Git guard onto it with its current verdicts.
+Add `ShellChildren` and `WorktreeExec` in a new `internal/shellcommand/projection.go`, as the spec's Projection API states.
+Keep `Parse`, `ProjectCommandWords`, and `ResolveRoutinePrefix` unchanged. Do not edit `shellcommand.go`, which has 3 lines of headroom.
+`ShellChildren` returns the matching `-c` children of `sh`, `bash`, or `zsh` in argv order, reads each argv position independently, and does not recurse.
+New shellcommand code must pass the `stdlib-reimplementation` check; do not hand-write a loop that a standard-library function replaces.
+`WorktreeExec` trusts the caller's Bench identity, returns the child argv after the first later `--` unchanged, and sets `DifferentCheckout` only for a nonempty child.
 
-Before this ticket starts, the complete accepted degraded-guard-refusal outcome must have landed.
-Independently review and preserve that pre-migration executable after the repair and before GP1 changes source.
-The coordinator retains its identity and exact observable reference tuples for GP3's final differential witness.
-This prerequisite and reference capture are future implementation work, not observed evidence in this plan.
+Migrate `scanWords` and `worktreeExecChild` in `internal/gitguard/scan.go` to these facts, then remove the private `wrappers`, `wrapperCFlagRe`, and exec-child grammar.
+The Git guard keeps its shell-keyword trim, its first matching shell child, its one-level traversal, its Bench basename test before `WorktreeExec`, `FindSubcommand`, option parsing, and repository authority.
+It passes `DifferentCheckout` into its existing `elsewhere` decision.
+Keep the `scan` signature, so `gitguard.go:135` needs no edit.
 
-The Git-only W4 selection witness closes now: a first benign shell child followed by a dangerous Git child retains the current first-child result.
-Nested wrapper and exec combinations remain one level deep, and child push facts cannot use the parent's checkout.
-GP04's complete Git-and-Bench predicate closes in GP2 after its Bench consumer migrates.
-GP2 receives a reviewed shared projection API with all Git-side tests green while its own consumer remains unbuilt.
-
-Keep all existing assertions and independently authored expectations effective.
-Do not rewrite old tests to match the new owner or derive expected results from the candidate producer.
-For each required omission, pin the landed source and exact diagnostic before running it.
-Accept only a compiling behavioral red, byte-identical restoration, and the same focused green afterward.
-Invalid, compilation-only, skipped, or restore-failed proof closes no obligation.
-
-Every first-use caller, fixture, registry, and headroom obligation closes in its introducing checkpoint.
-A final family audit cannot supply a missing earlier test or repair.
-Co-owned registry files may stay unchanged when their existing bindings and assertions suffice.
-No new scanner, injected port, count expectation, structure grant, or policy authority enters this slice.
+Before this ticket changes source, the coordinator creates a Bench worktree at the build-entry commit, builds it with `bench worktree build`, and records the commit in the build plan.
+Ticket 7 records the GP46 golden from that worktree's executable with that worktree as its kit, because the system owner verifies a run binary against its kit source.
+GP2 receives the reviewed projection API with all Git rows green, while its own consumers are still unbuilt.
+`internal/gitguard` holds 10 of its 12 allowed files; this ticket adds one, so add no other new file there.
+The `.bench/commitment.json` path is on this line for the spec-stage close, which commits the deliverable binding inside the range that the plan-only preflight grades. The author makes no other change to it.
 
 ## Acceptance
 
-- [ ] Existing routine-prefix tests retain executable indexes and nonexecuting query forms.
-- [ ] ShellChildren preserves sh/bash/zsh basenames, supported c flags, argv order, invalid indexes, and missing operands without recursion or panic.
-- [ ] WorktreeExec preserves quoted child elements byte-for-byte and separates missing delimiter, empty child, and nonempty DifferentCheckout.
-- [ ] The actual Git classifier preserves its first matching wrapper child, including the benign-first W4 case, before Bench migration exists.
-- [ ] Existing nested wrapper/exec verdicts and Git option forms retain the one-level contract and unresolved child or redirected push destination.
-- [ ] Omitting DifferentCheckout propagation at the Git consumer compiles and reds TestGitProjectionAuthority without changing the shared fact owner.
-- [ ] Omitting a supported wrapper basename or c-flag projection separately reds TestShellChildren; exact restoration returns the same focused green.
-- [ ] No private Git wrapper or exec-child derivation remains after its callers migrate; final all-package enforcement waits for GP3.
-- [ ] Existing Git policy, lexer failure, parse advice, and guard core entry assertions remain effective.
-- [ ] New files stay within 400 lines and the modified scan file retains headroom in this checkpoint.
-- [ ] The source-backed reference is captured after degraded repair and before migration, without candidate-derived expectations.
-- [ ] Git and projection obligations pass while tickets 2 and 3 remain unbuilt.
+- [ ] `TestResolveRoutinePrefix` keeps its executable indexes (GP01).
+- [ ] `ShellChildren` returns one ordered child for each supported flag in family W, including `bash -c -c 'git status'`, and gives no child for an invalid index or a missing operand (GP02, GP03).
+- [ ] `WorktreeExec` returns quoted child argv byte for byte, gives no child without `--`, and sets `DifferentCheckout` only for a nonempty child (GP05–GP08).
+- [ ] `TestClassifyVerdicts` keeps its one-level nested wrapper and exec verdicts (GP09).
+- [ ] A child push and a redirected push keep the unresolved-destination label, and omitting `DifferentCheckout` propagation makes `TestGitProjectionAuthority` red (GP10).
+- [ ] `mybench worktree exec X -- git reset --hard` keeps the empty Git label (GP72).
+- [ ] `bash -c 'echo ok' -c 'git reset --hard'` keeps the Git allow verdict, because Git reads only the first matching child (GP74).
+- [ ] Omitting a supported shell basename or flag form makes `TestShellChildren` red, and byte-identical restoration returns the same green.
+- [ ] No private wrapper or exec-child grammar remains in `internal/gitguard`, and each new file stays within 400 lines.
