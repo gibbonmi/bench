@@ -615,6 +615,72 @@
           "supersedes": [
             "c2-coverage-r1"
           ]
+        },
+        {
+          "id": "c2-standards-r3",
+          "performer": "claude:tcs-c2-standards-r3-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "9be17cb51fd80fb5567656b3ebfd8a142f0213c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-standards-r3-20261021",
+            "digest": "sha256:5c329c99fdee1c8d87783b60f4277c23894689eea3202830649af47e6e001aa2",
+            "excerpt": "Standards axis, TC-C2 confirming round 3 (cycle 3 delta 49eb64960..849d606f3): 0 findings. The second case of TestSlowestLastTerminalEventWins reuses wantSlowest and testTerminal; the doc comment states the current two cases and holds no history.\n"
+          },
+          "axis": "Standards",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "849d606f3d57dc5321d847ba8076ebe3620d90a8",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r2"
+          ]
+        },
+        {
+          "id": "c2-spec-r3",
+          "performer": "claude:tcs-c2-spec-r3-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "9be17cb51fd80fb5567656b3ebfd8a142f0213c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-spec-r3-20261021",
+            "digest": "sha256:2f8ca0380e232f793834a5eb0563763c7d0a03c18edbed14326978e136c17ed8",
+            "excerpt": "Spec axis, TC-C2 confirming round 3: 0 findings. The new case (fail 0.2 then pass 0.6, expects canned,TestA,600) matches \"the last terminal event of a test wins\" and the candidate rule; with the first case (300), first-wins, max-wins, and min-wins each go red. No contradiction with rows TC12-TC26.\n"
+          },
+          "axis": "Spec",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "849d606f3d57dc5321d847ba8076ebe3620d90a8",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r2"
+          ]
+        },
+        {
+          "id": "c2-coverage-r3",
+          "performer": "claude:tcs-c2-coverage-r3-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "9be17cb51fd80fb5567656b3ebfd8a142f0213c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-coverage-r3-20261021",
+            "digest": "sha256:f2d52a3b9a3b621d95c20fb8d8b4b07e03a65826ab05e3540c49c5cea2167fd8",
+            "excerpt": "Coverage axis, TC-C2 confirming round 3: 0 findings. C4 closed (confidence 9): the added case kills min-wins (200 against 600), and the first case still kills first-wins and max-wins; this matches the K2, K4, and K5 probes that bit at this tip. Advice: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "849d606f3d57dc5321d847ba8076ebe3620d90a8",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-r2"
+          ]
         }
       ]
     }
