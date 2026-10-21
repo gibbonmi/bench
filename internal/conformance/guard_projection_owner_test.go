@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"go/token"
 	"io/fs"
 	"os"
@@ -19,7 +18,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/shellcommand"
 )
 
@@ -32,12 +30,12 @@ var (
 )
 
 // guardProjectionDiagPrefix starts each diagnostic of checkGuardProjectionOwner. The other constants
-// spell the diagnostic pieces that the check and its tests share.
+// name the diagnostic pieces for the check and its tests.
 const (
 	guardProjectionDiagPrefix  = "guard projection owner "
-	guardProjectionUnreadable  = " is missing or unreadable"
-	guardProjectionIrregular   = " is not a regular file"
-	guardProjectionUnparsed    = "cannot parse "
+	guardProjectionUnreadable  = guardOwnerUnreadable
+	guardProjectionIrregular   = guardOwnerIrregular
+	guardProjectionUnparsed    = guardOwnerUnparsed
 	guardProjectionEnvelope    = "hook envelope JSON decoding"
 	guardProjectionShellName   = "shell-name predicate"
 	guardProjectionWrapperFlag = "wrapper -c flag recognizer"
@@ -71,21 +69,16 @@ func checkGuardProjectionOwner(root string) []string {
 			diags = append(diags, guardProjectionDiagPrefix+rel+guardProjectionUnreadable)
 		}
 	}
-	fset := token.NewFileSet()
-	for _, rel := range append(owned, production...) {
-		file, err := parser.ParseFile(fset, filepath.Join(root, filepath.FromSlash(rel)), nil, 0)
-		if err != nil {
-			diags = append(diags, guardProjectionDiagPrefix+guardProjectionUnparsed+rel)
-		} else if !strings.HasPrefix(rel, guardProjectionOwnerDir+"/") {
-			diags = append(diags, guardProjectionCopies(fset, rel, file)...)
+	return append(diags, guardOwnerParse(root, guardProjectionDiagPrefix, append(owned, production...), func(fset *token.FileSet, rel string, file *ast.File) []string {
+		if strings.HasPrefix(rel, guardProjectionOwnerDir+"/") {
+			return nil
 		}
-	}
-	return diags
+		return guardProjectionCopies(fset, rel, file)
+	})...)
 }
 
 // guardProjectionSources lists the production Go files beneath one governed package. Only an absent
-// path, or a path that is not a directory, marks the package absent. It names a Go file that is not a
-// regular file before any open, because a FIFO open can block.
+// path, or a path that is not a directory, marks the package absent.
 func guardProjectionSources(root, dir string) (production, diags []string, present bool) {
 	info, err := os.Stat(filepath.Join(root, filepath.FromSlash(dir)))
 	if errors.Is(err, fs.ErrNotExist) || (err == nil && !info.IsDir()) {
@@ -94,22 +87,7 @@ func guardProjectionSources(root, dir string) (production, diags []string, prese
 	if err != nil {
 		return nil, []string{guardProjectionDiagPrefix + dir + guardProjectionUnreadable}, true
 	}
-	_ = filepath.WalkDir(filepath.Join(root, filepath.FromSlash(dir)), func(path string, entry fs.DirEntry, err error) error {
-		relPath, relErr := filepath.Rel(root, path)
-		rel := filepath.ToSlash(relPath)
-		switch {
-		case err != nil || relErr != nil:
-			diags = append(diags, guardProjectionDiagPrefix+rel+guardProjectionUnreadable)
-		case entry.IsDir() && entry.Name() == "testdata":
-			return fs.SkipDir
-		case entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go"):
-		case !entry.Type().IsRegular():
-			diags = append(diags, guardProjectionDiagPrefix+rel+guardProjectionIrregular)
-		default:
-			production = append(production, rel)
-		}
-		return nil
-	})
+	production, diags = guardOwnerSources(root, dir, guardProjectionDiagPrefix)
 	return production, diags, true
 }
 
@@ -230,17 +208,7 @@ func guardProjectionDiags(t *testing.T, root string, sources map[string]string) 
 	for rel, source := range sources {
 		writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(rel)), source)
 	}
-	binding, bound := conformanceChecks["package-core-guard"]
-	if !bound {
-		t.Fatal("package-core-guard conformance owner is not bound")
-	}
-	var owned []string
-	for _, diag := range binding.run(root, root, registry.Dev) {
-		if strings.HasPrefix(diag, guardProjectionDiagPrefix) {
-			owned = append(owned, diag)
-		}
-	}
-	return owned
+	return guardOwnerDiags(t, root, guardProjectionDiagPrefix)
 }
 
 // guardProjectionKit gives the sources of a kit root that engages the subcheck.
@@ -354,7 +322,12 @@ func TestGuardProjectionOwnerMissingOwner(t *testing.T) {
 		{"absent owner", owner, owner + guardProjectionUnreadable, func(t *testing.T, path string) error { return os.Remove(path) }},
 		{"unreadable owner", owner, guardProjectionUnparsed + owner, guardProjectionStrip},
 		{"unparseable source", git + "verdict.go", guardProjectionUnparsed + git + "verdict.go", func(t *testing.T, path string) error { return os.WriteFile(path, []byte("func ("), 0o644) }},
-		{"unstatable package", "internal/writeguard", "internal/writeguard" + guardProjectionUnreadable, func(t *testing.T, path string) error { return os.Symlink("writeguard", path) }},
+		{"unstatable package", "internal/writeguard", "internal/writeguard" + guardProjectionUnreadable, func(t *testing.T, path string) error {
+			if err := os.Symlink("writeguard", path); err != nil {
+				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+			}
+			return nil
+		}},
 		{"unreadable subdirectory", git + "inner", git + "inner" + guardProjectionUnreadable, guardProjectionStrip},
 		{"special source", git + "x.go", git + "x.go" + guardProjectionIrregular, func(t *testing.T, path string) error {
 			if err := syscall.Mkfifo(path, 0o644); err != nil {

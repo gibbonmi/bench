@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"go/token"
 	"io/fs"
 	"os"
@@ -17,7 +16,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 // guardScanOwnerDir holds the production Go source that owns the guard scan, and
@@ -28,20 +26,19 @@ const (
 )
 
 // guardScanOwnerDiagPrefix starts each diagnostic of checkGuardScanLoopOwner. The other three
-// constants spell the diagnostic pieces that the check and its tests share.
+// constants name the shared diagnostic pieces for the check and its tests.
 const (
 	guardScanOwnerDiagPrefix = "guard scan loop owner "
-	guardScanOwnerUnreadable = " is missing or unreadable"
-	guardScanOwnerIrregular  = " is not a regular file"
-	guardScanOwnerUnparsed   = "cannot parse "
+	guardScanOwnerUnreadable = guardOwnerUnreadable
+	guardScanOwnerIrregular  = guardOwnerIrregular
+	guardScanOwnerUnparsed   = guardOwnerUnparsed
 )
 
 // checkGuardScanLoopOwner keeps the guard scan one synchronous loop. It parses each production
 // Go file beneath internal/guards, unused function bodies included, and reports each go
 // statement, select statement, channel construction, channel send, and channel receive. It reads
-// syntax nodes, so a comment or a string literal never matches. It skips test files and testdata
-// directories, so a test goroutine stays legal. It names a Go file that is not a regular file
-// before any open, because an open of a FIFO can block the gate. A root without internal/guards,
+// syntax nodes, so a comment or a string literal never matches. The source walk skips test files
+// and testdata directories, so a test goroutine stays legal. A root without internal/guards,
 // such as a linked consumer, holds no scan source and gets no diagnostic; any other stat error is
 // a diagnostic. Inside that directory, a missing or unreadable guards.go or subdirectory is a
 // diagnostic, because an absent owner would otherwise read as a clean pass.
@@ -54,41 +51,20 @@ func checkGuardScanLoopOwner(root string) []string {
 	if err != nil {
 		return []string{guardScanOwnerDiagPrefix + guardScanOwnerDir + guardScanOwnerUnreadable}
 	}
-	var production, diags []string
-	_ = filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
-		relPath, relErr := filepath.Rel(root, path)
-		rel := filepath.ToSlash(relPath)
-		switch {
-		case err != nil || relErr != nil:
-			diags = append(diags, guardScanOwnerDiagPrefix+rel+guardScanOwnerUnreadable)
-		case entry.IsDir() && entry.Name() == "testdata":
-			return fs.SkipDir
-		case entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go"):
-		case !entry.Type().IsRegular():
-			diags = append(diags, guardScanOwnerDiagPrefix+rel+guardScanOwnerIrregular)
-		default:
-			production = append(production, rel)
-		}
-		return nil
-	})
+	production, diags := guardOwnerSources(root, guardScanOwnerDir, guardScanOwnerDiagPrefix)
 	if !slices.Contains(production, guardScanOwnerFile) {
 		return append(diags, guardScanOwnerDiagPrefix+guardScanOwnerFile+guardScanOwnerUnreadable)
 	}
-	fset := token.NewFileSet()
-	for _, rel := range production {
-		file, err := parser.ParseFile(fset, filepath.Join(root, filepath.FromSlash(rel)), nil, 0)
-		if err != nil {
-			diags = append(diags, guardScanOwnerDiagPrefix+guardScanOwnerUnparsed+rel)
-			continue
-		}
+	return append(diags, guardOwnerParse(root, guardScanOwnerDiagPrefix, production, func(fset *token.FileSet, rel string, file *ast.File) []string {
+		var found []string
 		ast.Inspect(file, func(node ast.Node) bool {
 			if construct := scanPipelineConstruct(node); construct != "" {
-				diags = append(diags, fmt.Sprintf("%s%s:%d: %s", guardScanOwnerDiagPrefix, rel, fset.Position(node.Pos()).Line, construct))
+				found = append(found, fmt.Sprintf("%s%s:%d: %s", guardScanOwnerDiagPrefix, rel, fset.Position(node.Pos()).Line, construct))
 			}
 			return true
 		})
-	}
-	return diags
+		return found
+	})...)
 }
 
 // scanPipelineConstruct names the concurrent pipeline construct that node is, or gives "".
@@ -120,17 +96,7 @@ func scanPipelineConstruct(node ast.Node) string {
 // scan loop owner diagnostics, so each test grades the subcheck through its registered owner.
 func guardScanOwnerDiags(t *testing.T, root string) []string {
 	t.Helper()
-	binding, bound := conformanceChecks["package-core-guard"]
-	if !bound {
-		t.Fatal("package-core-guard conformance owner is not bound")
-	}
-	var owned []string
-	for _, diag := range binding.run(root, root, registry.Dev) {
-		if strings.HasPrefix(diag, guardScanOwnerDiagPrefix) {
-			owned = append(owned, diag)
-		}
-	}
-	return owned
+	return guardOwnerDiags(t, root, guardScanOwnerDiagPrefix)
 }
 
 // guardScanPipelineCopy is the retired worker pipeline of Scan under a new name. No caller
