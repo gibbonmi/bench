@@ -175,7 +175,8 @@ The three `t.Setenv("TMPDIR", ...)` calls (`internal/systemtest/owner_artifact_r
 A new census test in `internal/systemtest` parses the package's test files. It refuses a top-level test that neither calls `t.Parallel` nor appears in a serial table with a reason.
 It also refuses a parallel test that reaches `owner.repos` through its body or a test-file helper. The precedent is the worktree census walk (`internal/worktree/parallel_census_test.go:326-360`).
 It refuses a parallel test whose body, or a non-owner helper, names a ledger field. The ledger rule is direct, and the walk does not follow owner writers.
-The owner writers take the owner mutex, and the census names them: `runWithInput`, `observeSelected`, `markTerminal`, `startProcessGroup` (`internal/systemtest/owner_test.go:153-344`), and `systemStartSelected` (`owner_land_race_test.go:282`).
+An owner writer is a function whose every ledger-field write sits between `owner.mu.Lock()` and `owner.mu.Unlock()`. The census derives this set by that rule, and LGP28 grades the same mutex fact.
+Today the rule admits eight writers. Examples are `runWithInput` (`internal/systemtest/owner_test.go:171`), `timeoutProcessGroup` (`:244`), and `startArtifactLand` (`owner_artifact_recovery_test.go:165`).
 Every bench child shares one `owner.home` by default (`internal/systemtest/owner_environment_test.go:56-60`). The build runs the parallel set under the default `-parallel` and records any conflict on that home as a serial reason.
 The gate argv, the phase table, the `projects/benchkit.md` system sentences, and ADR 0024 stay unchanged.
 
@@ -270,7 +271,7 @@ The gate observes the result through `bench test --check system`, the package te
 | LGP26 | 26 | The package keeps one `TestMain` and three owner repositories. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A second owner or a fourth repository changes the parsed facts. |
 | LGP27 | 27 | The unfiltered run still names each missing terminal outcome. | `internal/systemtest/owner_selection_test.go` (`TestUnfilteredRunVerifiesLedger`) | A ledger that skips a terminal outcome loses its diagnostic. |
 | LGP28 | 28 | Every ledger write outside `TestOwnerSelectionChild` takes the owner mutex. | planned TestLedgerWritesHoldTheOwnerLock in internal/systemtest/parallel_census_test.go | An unguarded write to `starts`, `seen`, or `terminal` reds by name. |
-| LGP29 | 29 | A parallel test that reaches `owner.repos`, or names a ledger field outside the owner writers, reds the census. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A parallel test that shares a repository or writes the ledger unguarded passes with no refusal. |
+| LGP29 | 29 | A parallel test that reaches `owner.repos`, or names a ledger field outside a mutex-guarded owner writer, reds the census. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A parallel test that shares a repository or writes the ledger unguarded passes with no refusal. |
 | LGP30 | 30 | No `t.Setenv("TMPDIR"` call remains in the package. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | Each remaining TMPDIR binding reds by test name. |
 | LGP31 | 31 | Each serial table row names a test that exists and a reason. | planned TestSystemSerialTableIsExact in internal/systemtest/parallel_census_test.go | A stale row or a row with no reason reds. |
 | LGP32 | 32 | A test listed as serial for an owner repository does reach `owner.repos`. | planned TestSystemSerialTableIsExact in internal/systemtest/parallel_census_test.go | A wrong reason keeps a free test serial. |
