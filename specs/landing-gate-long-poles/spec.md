@@ -166,15 +166,17 @@ That test plants the negative controls in a child process, where every other tes
 A system test calls `t.Parallel` unless it holds a serial reason. A serial reason is one of these:
 
 - The test reaches `owner.repos` through its body or a test-file helper.
-- The test reaches a ledger field (`starts`, `seen`, or `terminal`) directly.
+- The test body, or a test-file helper that is not an owner writer, names a ledger field (`starts`, `seen`, or `terminal`).
 - The test binds process state, such as `t.Setenv`.
 
 `TestRedTimeoutAndDescendantTeardown` stays whole. Go runs the serial tests first and the parallel tests after them, so a serial mutator never overlaps a parallel test.
 The three `t.Setenv("TMPDIR", ...)` calls (`internal/systemtest/owner_artifact_recovery_test.go:24`, `:280`, `:301`) become explicit child environment values. Those children already take an explicit environment, such as `mergeEnvironment(systemBaseEnvironment(), artifactLandEnv(...))` at `:172`.
 
 A new census test in `internal/systemtest` parses the package's test files. It refuses a top-level test that neither calls `t.Parallel` nor appears in a serial table with a reason.
-It also refuses a parallel test that reaches `owner.repos` or a ledger field through its body or a test-file helper. The precedent is the worktree census walk (`internal/worktree/parallel_census_test.go:326-360`).
-Every bench child shares one `owner.home` by default (`internal/systemtest/owner_environment_test.go:56-60`). The build runs the parallel set under the gate's `-parallel` and records any conflict on that home as a serial reason.
+It also refuses a parallel test that reaches `owner.repos` through its body or a test-file helper. The precedent is the worktree census walk (`internal/worktree/parallel_census_test.go:326-360`).
+It refuses a parallel test whose body, or a non-owner helper, names a ledger field. The ledger rule is direct, and the walk does not follow owner writers.
+The owner writers take the owner mutex, and the census names them: `runWithInput`, `observeSelected`, `markTerminal`, `startProcessGroup` (`internal/systemtest/owner_test.go:153-344`), and `systemStartSelected` (`owner_land_race_test.go:282`).
+Every bench child shares one `owner.home` by default (`internal/systemtest/owner_environment_test.go:56-60`). The build runs the parallel set under the default `-parallel` and records any conflict on that home as a serial reason.
 The gate argv, the phase table, the `projects/benchkit.md` system sentences, and ADR 0024 stay unchanged.
 
 ### Measurement
@@ -187,7 +189,7 @@ The final reconciliation pairs the package and phase timings of the landing gate
 | Stable chunk ID / tickets | Delivered outcome | Acceptance rows | Tests | Harder chunk |
 |---|---|---|---|---|
 | LGP-C1 / pending | Probe and testreport fixtures built once for each package run, with every witness kept | LGP1–LGP8, LGP37, LGP34 | probe and testreport package tests | no |
-| LGP-C2 / pending | Stable git location answers cached for one command run, and direct duplicates removed | LGP9–LGP17, LGP22, LGP34 | git and worktree package tests | yes |
+| LGP-C2 / pending | Stable git location answers cached for one command run, and direct duplicates removed | LGP9–LGP17, LGP21, LGP22, LGP34 | git and worktree package tests | yes |
 | LGP-C3 / pending | Working-directory and child-environment worktree tests in the parallel set | LGP18–LGP24, LGP34 | worktree census and moved tests | no |
 | LGP-C4 / pending | System tests in parallel inside one process, with a serial-reason census | LGP25–LGP36 | system suite and its census | yes |
 
@@ -268,7 +270,7 @@ The gate observes the result through `bench test --check system`, the package te
 | LGP26 | 26 | The package keeps one `TestMain` and three owner repositories. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A second owner or a fourth repository changes the parsed facts. |
 | LGP27 | 27 | The unfiltered run still names each missing terminal outcome. | `internal/systemtest/owner_selection_test.go` (`TestUnfilteredRunVerifiesLedger`) | A ledger that skips a terminal outcome loses its diagnostic. |
 | LGP28 | 28 | Every ledger write outside `TestOwnerSelectionChild` takes the owner mutex. | planned TestLedgerWritesHoldTheOwnerLock in internal/systemtest/parallel_census_test.go | An unguarded write to `starts`, `seen`, or `terminal` reds by name. |
-| LGP29 | 29 | A parallel test that reaches `owner.repos` or a ledger field reds the census. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A parallel test that shares a repository passes with no refusal. |
+| LGP29 | 29 | A parallel test that reaches `owner.repos`, or names a ledger field outside the owner writers, reds the census. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A parallel test that shares a repository or writes the ledger unguarded passes with no refusal. |
 | LGP30 | 30 | No `t.Setenv("TMPDIR"` call remains in the package. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | Each remaining TMPDIR binding reds by test name. |
 | LGP31 | 31 | Each serial table row names a test that exists and a reason. | planned TestSystemSerialTableIsExact in internal/systemtest/parallel_census_test.go | A stale row or a row with no reason reds. |
 | LGP32 | 32 | A test listed as serial for an owner repository does reach `owner.repos`. | planned TestSystemSerialTableIsExact in internal/systemtest/parallel_census_test.go | A wrong reason keeps a free test serial. |
@@ -282,7 +284,7 @@ The gate observes the result through `bench test --check system`, the package te
 
 - Fixture edges: a write in one copy (LGP2), and a copy's seal (LGP3).
 - Git edges: a hostile common directory after a cached read (LGP11, LGP13), a ref write inside the run (LGP12), and two run values in one process (LGP14).
-- Worktree edges: a relative operand (LGP18), a removed process directory (LGP23), a process-only environment value (LGP19), and a PATH stub (LGP23 serial set).
+- Worktree edges: a relative operand (LGP18), a removed process directory (LGP23), a process-only environment value (LGP19), and a PATH stub (LGP21 serial-set arithmetic).
 - System edges: a test that reaches an owner repository (LGP29, LGP32), a test that binds process state (LGP30), and an unfiltered run that misses one terminal outcome (LGP27).
 
 **Won't handle:** A failed golden build. `clampFixture` fails the test with the build error, as `probetest.Repository` does today, and that remains the surviving caller.
@@ -358,7 +360,7 @@ These promises go beyond the literal decision source. Each one is the structural
 - `Changed-function callers`: `canonicalpath.Resolve` keeps its signature. The callers of the four `os.Environ` sites and of `planExplicitWith` and `validateOwnerMarker` are listed under Implementation decisions. The slicer runs `bench consumers` for each.
 - `Copy survival`: LGP1 and LGP6 fail when a per-test build survives.
 - `Rendered-shape readers`: none. No rendered output changes.
-- `Pin operators`: `TestPackageTestCountPin` compares with `!=` in both directions, and `TestSerialSetStaysBelowTheCeiling` requires equality (`internal/worktree/parallel_census_test.go:1043-1078`).
+- `Pin operators`: `TestPackageTestCountPin` refuses a count below and a count above the pin, and `TestSerialSetStaysBelowTheCeiling` requires equality (`internal/worktree/parallel_census_test.go:1043-1078`).
 - `Entry reads`: the process directory and `os.Environ` move into `effects.go` (LGP18, LGP19, LGP24).
 - `Derived expectations`: none. Each count is an independent literal or a recorded sum.
 - `Consolidated rules`: none.
