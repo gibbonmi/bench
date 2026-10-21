@@ -1780,7 +1780,73 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gp3-r1-standards",
+          "performer": "claude:sgp-review-standards-gp3-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7a4bb0f29eb0c00646735eb0bc97a1812fa4080a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-standards-gp3-r1",
+            "digest": "sha256:0bca642f9519310aa9b6ba92007d6bed9b215224fb3baacb148372b96ede2593",
+            "excerpt": "STANDARDS axis, chunk GP3 (base 3d4b0707, code tip 77b26ed9, evidence tip 01ae9dcf). Line: sonnet / high / 1 iteration.\n\nFindings (disposition | cite | binding requirement | ticket | confidence):\n- S1 | auto-fix | internal/conformance/guard_projection_owner_test.go:97-112 (and the parse loop at :75-82) repeat internal/conformance/guard_scan_owner_test.go:58-73 (and :77-90). The code is the same WalkDir switch (skip testdata, skip _test.go, name a non-regular file before any open, unreadable entry diagnostic) with a renamed diagnostic-constant quartet (:36-39 vs scan :32-37) | AGENTS.md code standard \"one source per fact\" (parsers and fixture harnesses pasted N times) | ticket 5 | 8\n- S2 | auto-fix | guard_projection_owner_test.go:228-244 (guardProjectionDiags) repeats guard_scan_owner_test.go:121-134 (guardScanOwnerDiags). Both look up conformanceChecks[\"package-core-guard\"], run it, and filter by diagnostic prefix | same rule | ticket 5 | 7\n- S3 | auto-fix | guard_projection_owner_test.go:357 returns the os.Symlink error, so a host without symlinks reds through t.Fatal(err) at :372. The sibling tests route that error to capability.Capability(t, capability.Symlink, ...) (checks_test.go:515-516, bounds_policy_test.go:317-318, skill_description_budgets_test.go:507-508). The surrounding tests also use Capability for Mkfifo and chmod at :336-340 and :361 | local idiom plus internal/capability/capability.go:39-53 (a host-dependent class gets a classified skip) | ticket 5 | 5\n- S4 | auto-fix | internal/systemtest/guard_projection_test.go:19-25 (projectionRunHook) repeats runGitGuardHook (guard_refusal_test.go:146-152) and the closures at bench_follow_on_test.go:55-58 and :225-228. Each does observeSelected, then runWithInput(shellPath(t), hook). projectionRunHook is the raw-envelope generalisation, so runGitGuardHook could call it | AGENTS.md one source per fact; BENCH.md invariant 4 \"compose an existing seam\" | ticket 6 | 5\n\nRouting note for S1, S2 and S4: the edit lands in guard_scan_owner_test.go or guard_refusal_test.go. Both sit in a directory of a signed-off Writes entry, so bench spec widen takes a plan commit with no stop. S1 and S2 also free about 30 lines in the 400-line file.\n\nNamed questions:\n1. Packed fixtures (guard_projection_owner_test.go:257-278): not a defect. The fixtures are inert syntax inputs, no written rule bans packing, and the comment at :255-256 states the packing. Fixing S1 and S2 leaves room to unpack. Optional advice only.\n2. WalkDir and diagnostic harness: duplicated knowledge, not incidental text. See S1 and S2.\n3. GP42 witness in checks_test.go: not a defect. Ticket 5 lists checks_test.go in Writes and covers GP42. checks_test.go is 703 lines, within the 739 grant.\n4. Ticket 6 projectionRunHook: the third copy is S4. The warning texts at guard_projection_test.go:33-34 are not a defect; they are shell literals in .bench/hooks/block-primary-file-write.sh:10,14, and no Go constant owns them.\n\nAdvice (no finding ID):\n- cmd/bench/guard_projection_test.go:29-32 builds the wrapped envelope by nested strings.Replace; a command-returning helper in main_test.go would single-source it.\n- guard_projection_owner_test.go:304-305 parses diagnostics with literal \":\" and \": \" separators; the format is defined at :136.\n- Ticket 7's file calls projectionRunHook and projectionWriteHookPath from ticket 6; its Blocked by line omits ticket 6. The order is serial and green, so no finding.\n- differentialTuples (guard_projection_differential_test.go:166-229) is a long function.\n- checks_test.go:93 dereferences packages[\"conformance\"] without a nil check; harmless on the live tree.\n\nComments: no narrated history. Every sentence checked is 25 words or fewer.\n\nCount: 4 findings (ticket 5: S1, S2, S3; ticket 6: S4; ticket 7: none). Worst: S1.\n\nCommands (all through bench worktree exec shared-guard-projection-build --): bench preflight evidence sha256:145c613b... --check-current returned current=true, dirty_record=false; git diff --stat 3d4b0707 77b26ed9; git diff of four files; git show of the files read; git grep for GP tags, runWithInput and observeSelected, hook warning texts, Symlink/capability use, and parser.ParseDir. No tests and no bench probe.\n"
+          },
+          "axis": "Standards",
+          "base": "3d4b0707a0ac8cd7988e769586410f53f70b55a1",
+          "tip": "77b26ed917e12641e55846bb96ce57dcc1172c97",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gp3-r1-spec",
+          "performer": "claude:sgp-review-spec-gp3-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7a4bb0f29eb0c00646735eb0bc97a1812fa4080a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-spec-gp3-r1",
+            "digest": "sha256:85f512b3629ed2fd818fc2952598b036e776880ccea415c54c5c0a875c65219f",
+            "excerpt": "SPEC axis, GP3 (tickets 5-7), base 3d4b0707, code tip 77b26ed9, evidence tip 01ae9dcf.\n\nRESULT: 0 findings. One item reported as unknown (GP46 golden provenance), not a finding.\n\nFindings: none. Every candidate failed refutation:\n- Ticket 5 (checkGuardProjectionOwner) matches the spec. It is called right after checkGuardScanLoopOwner in the sole checkPackageCoreAndGuards (checks_test.go:101). The registry, package_core_checks_test.go (453 lines) and .bench/structure.budgets are untouched. checks_test.go 703 (limit 739), guard_projection_owner_test.go 400 (limit 400). Live-tree classification at tier_live_tree_test.go:32-33. The check walks every AST node, so unused bodies are included, and it keeps shadowed names clean. The surface rule is at lines 53-73; missing, unreadable, unparseable or FIFO sources get a named diagnostic. Each retired form at 1228eedff has a matching fixture. GP42 test at checks_test.go:75-112. GP30/GP67 red is recorded (a5-t5-copy-check-omission bit).\n- Ticket 6 matches the spec. GP34-37, 39-41 and 71 cite landed witnesses that are untouched. GP38 and GP45 use owner.observeSelected and owner.runWithInput, with no second process-start path. No redeclared constants. GP44 reuses followOnEnvelope and checkGuardEnvelope and covers exec, routine-prefix and wrapper forms with a raw-read control.\n- Ticket 7 / GP46 meets the spec text. The test only compares, with no update flag; temp roots are tokenized; raw envelopes are placed with strings.Replace only; exit, stdout and stderr are compared exactly. Family D has 111 members covering P, W, W4, X, X3, R, A, G, E0, F, H, all 11 EP decoder rows, alias, pool conflict, heredoc, redirect and quoted operator. The golden W/W4 lines match the first-child policy. The bite is recorded.\n- Coverage-cell citations land with their tests in 5ea264ad7, 10463382 and 38096a54.\n- Stale a7-* rows beside a7r1-* do not break a record contract found; they are retained supersession history. Disposition: no-op.\n\nUnknown (not a finding): GP46 golden provenance cannot be verified from the tree or the record alone. The capture used a temporary, uncommitted env branch. The reference worktree is at 1228eedff818c5190beca9ed5ea3acc438dcaf7f with dist/bench present. The golden was captured twice (38096a54 and 77b26ed9); the word-diff is consistent with a format-only recapture. Suggested discriminator: run the landed test against the reference pair.\n\nAdvice (no ID):\n- The shell-name rule flags any string literal equal to a shell name in a governed production file; it could false-positive on a future exec.Command(\"bash\"). The live tree has no match.\n- Re-expressed copies (const-held regexp pattern, split worktree/exec chain, strings.HasPrefix flag recognizers) pass; all are outside the spec's \"renamed copies\".\n- The GP42 expectation list (checks_test.go:107) is a hand-listed expectation with no recorded red.\n- Family F has no explicit unreadable tracked-fact member.\n- projectionRunHook is a raw-envelope twin of runGitGuardHook.\n- GP42's seam moved to checks_test.go; non-behavioral, within Writes.\n\nCount: 0 findings, 1 unknown, 6 advice items.\n\nCommands run: bench worktree exec shared-guard-projection-build -- bench preflight evidence sha256:145c613b... --check-current returned current=true, dirty_record=false; git diff --stat and git diff; git log --stat 3d4b0707..01ae9dcf; git show; git grep across 77b26ed9, 1228eedff and 01ae9dcf; git diff --word-diff=porcelain 38096a54 77b26ed9 on the golden; bench worktree exec shared-guard-projection-ref -- git rev-parse HEAD. No tests, no bench probe.\n"
+          },
+          "axis": "Spec",
+          "base": "3d4b0707a0ac8cd7988e769586410f53f70b55a1",
+          "tip": "77b26ed917e12641e55846bb96ce57dcc1172c97",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gp3-r1-coverage",
+          "performer": "claude:sgp-review-coverage-gp3-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7a4bb0f29eb0c00646735eb0bc97a1812fa4080a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-coverage-gp3-r1",
+            "digest": "sha256:8fd735b0124a84e40a902cd061de219bb9c1c080d9ff48fd5a252c74e3e4615a",
+            "excerpt": "COVERAGE axis, chunk GP3 (base 3d4b0707, code tip 77b26ed9, evidence tip 01ae9dcf). Line: sonnet / high / 1 iteration.\n\nPreflight: bench preflight evidence sha256:145c613b... --check-current returned current=true, dirty_record=false, source_tip 01ae9dcf.\n\nFINDINGS: none. Count: 0 findings. Worst issue: advice A1.\n\nGap-by-gap verdicts\n- GP46 independence: HOLDS. internal/systemtest/testdata/guard-projection-family-d.golden has sha256 9c885d57..., the same as sgp-t7-reference.golden in the scratchpad, captured from worktree shared-guard-projection-ref at HEAD 1228eedff (before GP1), clean tree, dist/bench built 2026-10-21 03:01. The earlier 498-line capture differs in shape and is not committed. The plan probe (every-child swap, W4) and the coordinator reviewer-walk probe both bit. Member coverage: P, W, W4, X, X3, R, EP (all 11 matrix rows, byte-equal to spec.md:698-708), E0, D, G (equals forms), A (;, &&, newline, unclosed quotes, trailing escape), F (cwd null, wrong type, missing, relative, absolute, outside), H (missing library, missing core, core error, stale core, missing binary, recovery). Not in the golden: F unreadable tracked fact (GP29 owns it), H recovery only for the missing-binary rim, G -c foo=bar stash pop. Advice A3.\n- GP30/GP67 copy forms: HOLDS for the retired forms. Base-tree originals are planted in each governed file, reviewer.go included; the want set is exact. Git's own worktree case, comments, _test.go, testdata and a shadowed json name stay clean.\n- GP31/GP32: HOLDS. Probe 3 bit all five sites.\n- GP33: HOLDS by reading.\n- GP38/GP44/GP45: held by the author and coordinator probes.\n- GP42: the registered call set is checked by AST name presence; a dead-branch call would satisfy it (advice A2).\n- GP34-37, GP39-41, GP71: existing tests that pass on old and new code by design; cited as preserved regressions.\n- Sizes: checks_test.go 703 (limit 739); guard_projection_owner_test.go 400 (limit 400); other new files 88, 180, 282.\n\nAdvice (no finding ID, no disposition)\n- A1 (ticket 5): checkGuardProjectionOwner matches the retired code shapes. Six respelled copies were undetected: a const-indirected -c regexp pattern; a nested-if exec head; slices.Equal(w[1:3], []string{\"worktree\",\"exec\"}); strings.Contains(\" sh bash zsh \", ...); a hand-written -c flag test; var decode = json.Unmarshal. The binding text says \"renamed ... copy\" (ticket 5 lines 29-30, spec.md:224), not \"any re-expression\", so this is hardening.\n- A2 (ticket 5): the GP42 test passes when a subcheck call sits in a dead branch.\n- A3 (ticket 7): the three golden member gaps above.\n\nCommands and results\n- Preflight: current=true.\n- bench test --package ./internal/conformance --run '^(TestGuardProjection.*|TestEveryRetainedFixtureBitesThroughRegisteredOwner)$' passed, 299 tests, no skips.\n- bench test --check package-core-guard passed.\n- git status clean after the probes. Read-only: bench worktree list, sha256sum, diff, ls -la on dist/bench, git log in the ref worktree, wc -l, rg.\n- Probes: 1. six respelled copies in the private-copies map: silent (evidence for A1). 2. multi-swap for GP31/GP32: invalid, build-failed (mutation error). 3. corrected: walk-error diagnostic disabled, parse diagnostic omitted, unstatable-package diagnostic returned as absent, file-at-package-path branch disabled, conformance-tree gate disabled: bit, 5 failures. FIFO branch not probed.\n"
+          },
+          "axis": "Coverage",
+          "base": "3d4b0707a0ac8cd7988e769586410f53f70b55a1",
+          "tip": "77b26ed917e12641e55846bb96ce57dcc1172c97",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
