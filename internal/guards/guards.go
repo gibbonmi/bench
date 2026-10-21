@@ -164,42 +164,43 @@ func Rows(root string) [][]string {
 	return Scan(context.Background(), root).Rows
 }
 
+// Scan enumerates the guards once and inspects them in order on the caller's goroutine. It
+// checks ctx before and after enumeration and before and after each inspection, and it
+// counts an inspection only when the check after it sees an active context. Cancellation
+// cannot interrupt an operation in flight, so Scan returns only after that operation
+// returns. An enumeration error under an active context keeps the returned candidates.
 func Scan(ctx context.Context, root string) ScanResult {
-	type enumeration struct {
-		candidates []candidate
-		err        error
+	if ctx.Err() != nil {
+		return enumerationCancelled()
 	}
-	enumerated := make(chan enumeration, 1)
-	go func() {
-		candidates, err := enumerateGuards(ctx, root)
-		enumerated <- enumeration{candidates: candidates, err: err}
-	}()
-	var candidates []candidate
-	select {
-	case result := <-enumerated:
-		if result.err != nil && ctx.Err() != nil {
-			return ScanResult{Status: "incomplete", Inspected: "0", Total: "unknown", Omitted: "unknown", Reason: "timeout"}
-		}
-		candidates = result.candidates
-	case <-ctx.Done():
-		<-enumerated
-		return ScanResult{Status: "incomplete", Inspected: "0", Total: "unknown", Omitted: "unknown", Reason: "timeout"}
+	candidates, _ := enumerateGuards(ctx, root)
+	if ctx.Err() != nil {
+		return enumerationCancelled()
 	}
 	var rows [][]string
-	inspected := 0
-	for _, c := range candidates {
-		finished := make(chan [][]string, 1)
-		go func(candidate candidate) { finished <- inspectGuard(ctx, root, candidate) }(c)
-		select {
-		case candidateRows := <-finished:
-			inspected++
-			rows = append(rows, candidateRows...)
-		case <-ctx.Done():
-			<-finished
-			return ScanResult{Rows: rows, Status: "incomplete", Inspected: strconv.Itoa(inspected), Total: strconv.Itoa(len(candidates)), Omitted: strconv.Itoa(len(candidates) - inspected), Reason: "timeout"}
+	for inspected, c := range candidates {
+		if ctx.Err() != nil {
+			return inspectionCancelled(rows, inspected, len(candidates))
 		}
+		candidateRows := inspectGuard(ctx, root, c)
+		if ctx.Err() != nil {
+			return inspectionCancelled(rows, inspected, len(candidates))
+		}
+		rows = append(rows, candidateRows...)
 	}
-	return ScanResult{Rows: rows, Status: "complete", Inspected: strconv.Itoa(inspected), Total: strconv.Itoa(len(candidates)), Omitted: "0", Reason: "none"}
+	return ScanResult{Rows: rows, Status: "complete", Inspected: strconv.Itoa(len(candidates)), Total: strconv.Itoa(len(candidates)), Omitted: "0", Reason: "none"}
+}
+
+// enumerationCancelled reports a scan that cancellation stopped before it knew its
+// candidates.
+func enumerationCancelled() ScanResult {
+	return ScanResult{Status: "incomplete", Inspected: "0", Total: "unknown", Omitted: "unknown", Reason: "timeout"}
+}
+
+// inspectionCancelled reports a scan that cancellation stopped after inspected of total
+// candidates, with the rows of those inspected candidates.
+func inspectionCancelled(rows [][]string, inspected, total int) ScanResult {
+	return ScanResult{Rows: rows, Status: "incomplete", Inspected: strconv.Itoa(inspected), Total: strconv.Itoa(total), Omitted: strconv.Itoa(total - inspected), Reason: "timeout"}
 }
 
 // WiresScript reports whether a harness hook config wires the script at script, its

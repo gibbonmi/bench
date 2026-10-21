@@ -9,7 +9,9 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -18,31 +20,25 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
-// familySGolden is the reference capture of scan family S. It was taken on the worker
-// pipeline before the synchronous loop replaced it, and it is reviewed apart from the
-// candidate code, so the candidate is never its oracle.
-const familySGolden = "testdata/scan-family-s.golden"
+const (
+	// familySGolden is the reference capture of scan family S. It was taken on the worker
+	// pipeline before the synchronous loop replaced it, and it is reviewed apart from the
+	// candidate code, so the candidate is never its oracle.
+	familySGolden = "testdata/scan-family-s.golden"
+	familySHeader = "=== member: "
+	// cancelTick is the scan window of a member whose operation waits for cancellation.
+	cancelTick = 10 * time.Millisecond
+	// operationHold is how long an injected operation ignores cancellation before it returns.
+	operationHold = 20 * time.Millisecond
+)
 
-const familySHeader = "=== member: "
-
-// cancelTick is the scan window of a member whose operation waits for cancellation.
-const cancelTick = 10 * time.Millisecond
-
-// operationHold is how long an injected operation ignores cancellation before it returns.
-const operationHold = 20 * time.Millisecond
-
-// stubSeams replaces the scan seams for one test; a nil seam keeps the production one.
-// Cleanup restores both seams and the scan window, so a test can also set the window.
+// stubSeams replaces the scan seams for one test. Cleanup restores both seams and the scan
+// window, so a test can also set the window.
 func stubSeams(t *testing.T, enumerate func(context.Context, string) ([]candidate, error), inspect func(context.Context, string, candidate) [][]string) {
 	t.Helper()
 	oldEnumerate, oldInspect, oldTimeout := enumerateGuards, inspectGuard, guardScanTimeout
 	t.Cleanup(func() { enumerateGuards, inspectGuard, guardScanTimeout = oldEnumerate, oldInspect, oldTimeout })
-	if enumerate != nil {
-		enumerateGuards = enumerate
-	}
-	if inspect != nil {
-		inspectGuard = inspect
-	}
+	enumerateGuards, inspectGuard = enumerate, inspect
 }
 
 func cannedRow(name, currency, wired string) []string {
@@ -51,10 +47,9 @@ func cannedRow(name, currency, wired string) []string {
 
 func rowsOf(name string) [][]string { return [][]string{cannedRow(name, "current", "claude")} }
 
-func candidatesNamed(names ...string) []candidate {
-	candidates := make([]candidate, len(names))
-	for i, name := range names {
-		candidates[i] = candidate{fallback: name}
+func candidatesNamed(names ...string) (candidates []candidate) {
+	for _, name := range names {
+		candidates = append(candidates, candidate{fallback: name})
 	}
 	return candidates
 }
@@ -63,9 +58,8 @@ func enumerateNames(names ...string) func(context.Context, string) ([]candidate,
 	return func(context.Context, string) ([]candidate, error) { return candidatesNamed(names...), nil }
 }
 
-// inspectByName answers a canned candidate by its name. "zero" has no rows, and "multi" has
-// a stale row and an unwired row. A "blocked-" candidate waits for cancellation, and
-// "blocked-holding" then ignores it for operationHold. Every other name has one row.
+// inspectByName answers by name: "zero" has no rows, "multi" a stale and an unwired row, a
+// "blocked-" name waits for cancellation, and "blocked-holding" then ignores it for operationHold.
 func inspectByName(ctx context.Context, _ string, c candidate) [][]string {
 	switch c.fallback {
 	case "zero":
@@ -102,9 +96,8 @@ func plantFiles(t *testing.T, root string, files map[string]string) {
 	}
 }
 
-// familyMember is one family S event script. arrange prepares the seams, the scan window,
-// and a working directory, and returns that directory. Each argv in args runs through
-// Command there, and a member with scan set also records Scan over the same window.
+// familyMember is one family S event script. arrange returns the working directory where each
+// argv in args runs through Command; scan also records Scan over the same window.
 type familyMember struct {
 	name    string
 	args    [][]string
@@ -114,35 +107,29 @@ type familyMember struct {
 
 var commandForms = [][]string{nil, {"--brief"}}
 
-// seamMember drives Command through controlled seams in a fresh repository. A nonzero
-// window replaces the scan window.
+// seamMember drives Command through controlled seams and window in a fresh repository.
 func seamMember(name string, window time.Duration, enumerate func(context.Context, string) ([]candidate, error)) familyMember {
 	return familyMember{name: name, args: commandForms, scan: true, arrange: func(t *testing.T) string {
 		stubSeams(t, enumerate, inspectByName)
-		if window != 0 {
-			guardScanTimeout = window
-		}
+		guardScanTimeout = window
 		return gittest.Repo(t)
 	}}
 }
 
-// realMember drives Command through the production seams over a repository that plant
-// prepares.
+// realMember drives Command through the production seams over a repository that plant prepares.
 func realMember(name string, plant func(t *testing.T, root string)) familyMember {
 	return familyMember{name: name, args: commandForms, scan: true, arrange: func(t *testing.T) string {
-		stubSeams(t, nil, nil)
+		stubSeams(t, enumerateGuards, inspectGuard)
 		root := gittest.Repo(t)
 		plant(t, root)
 		return root
 	}}
 }
 
-// familyS lists the deterministic scan states. A cancellation member makes its operation
-// wait for the scan window, so the event order is fixed. Cancellation between two
-// candidates is not here, because no Command event places it there; a direct Scan test
-// owns it.
+// familyS lists the deterministic scan states; each cancellation waits for the scan window.
+// No Command event places cancellation between two candidates, so a direct Scan test owns it.
 var familyS = []familyMember{
-	seamMember("complete", 0, enumerateNames("zero", "one", "multi")),
+	seamMember("complete", guardScanTimeout, enumerateNames("zero", "one", "multi")),
 	realMember("pre-cancelled", func(*testing.T, string) { guardScanTimeout = 0 }),
 	seamMember("enumeration-cancelled-error", cancelTick, func(ctx context.Context, _ string) ([]candidate, error) {
 		<-ctx.Done()
@@ -155,10 +142,10 @@ var familyS = []familyMember{
 	seamMember("inspection-cancelled-empty", cancelTick, enumerateNames("one", "blocked-empty")),
 	seamMember("inspection-cancelled-rows", cancelTick, enumerateNames("one", "blocked-rows")),
 	seamMember("blocking-operation", cancelTick, enumerateNames("blocked-holding")),
-	seamMember("enumeration-error-candidates", 0, func(context.Context, string) ([]candidate, error) {
+	seamMember("enumeration-error-candidates", guardScanTimeout, func(context.Context, string) ([]candidate, error) {
 		return candidatesNamed("one"), errors.New("enumeration failed")
 	}),
-	seamMember("enumeration-error-empty", 0, func(context.Context, string) ([]candidate, error) {
+	seamMember("enumeration-error-empty", guardScanTimeout, func(context.Context, string) ([]candidate, error) {
 		return nil, errors.New("enumeration failed")
 	}),
 	realMember("hooks-absent", func(*testing.T, string) {}),
@@ -215,8 +202,7 @@ var familyS = []familyMember{
 	{name: "outside-repository", args: commandForms, arrange: func(t *testing.T) string { return t.TempDir() }},
 }
 
-// commandCapturingStderr runs Command and returns its stdout, its exit, and the bytes it
-// wrote to the process stderr.
+// commandCapturingStderr runs Command and returns its stdout, its exit, and its stderr bytes.
 func commandCapturingStderr(t *testing.T, args []string) (string, int, string) {
 	t.Helper()
 	sink, err := os.CreateTemp(t.TempDir(), "stderr")
@@ -235,8 +221,7 @@ func commandCapturingStderr(t *testing.T, args []string) (string, int, string) {
 	return out, code, string(written)
 }
 
-// captureMember renders one member's Command tuples and ScanResult. It records no elapsed
-// time.
+// captureMember renders one member's Command tuples and ScanResult, with no elapsed time.
 func captureMember(t *testing.T, member familyMember) string {
 	dir := member.arrange(t)
 	t.Chdir(dir)
@@ -253,8 +238,7 @@ func captureMember(t *testing.T, member familyMember) string {
 	return b.String()
 }
 
-// TestScanLoopDifferentialCommandFamilies compares the candidate's family S tuples with the
-// reference capture, member by member, through the real Command formatter.
+// TestScanLoopDifferentialCommandFamilies compares family S Command tuples with the reference.
 func TestScanLoopDifferentialCommandFamilies(t *testing.T) {
 	body, err := os.ReadFile(familySGolden)
 	if err != nil {
@@ -279,5 +263,137 @@ func TestScanLoopDifferentialCommandFamilies(t *testing.T) {
 				t.Errorf("member %s differs from %s\ngot:\n%s\nwant:\n%s", member.name, familySGolden, got, want[member.name])
 			}
 		})
+	}
+}
+
+// checkpointContext cancels itself at its cancelAt-th Err read (never when zero). Scan reads
+// ctx before and after enumeration and before and after each inspection.
+type checkpointContext struct {
+	context.Context
+	cancel          context.CancelFunc
+	reads, cancelAt int
+}
+
+func (c *checkpointContext) Err() error {
+	c.reads++
+	if c.reads == c.cancelAt {
+		c.cancel()
+	}
+	return c.Context.Err()
+}
+
+// scanCase scripts one direct Scan over inspectByName candidates. cancelOn names the operation
+// that cancels as it runs ("start" cancels before Scan); ops lists the operations Scan starts.
+type scanCase struct {
+	names, ops []string
+	enumErr    error
+	cancelOn   string
+	cancelAt   int
+	want       ScanResult
+}
+
+func runScan(t *testing.T, c scanCase) {
+	t.Helper()
+	parent, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var ops []string
+	stubSeams(t, func(context.Context, string) ([]candidate, error) {
+		ops = append(ops, "enumerate")
+		if c.cancelOn == "enumerate" {
+			cancel()
+		}
+		return candidatesNamed(c.names...), c.enumErr
+	}, func(ctx context.Context, root string, candidate candidate) [][]string {
+		ops = append(ops, "inspect "+candidate.fallback)
+		if c.cancelOn == "inspect "+candidate.fallback {
+			cancel()
+		}
+		return inspectByName(ctx, root, candidate)
+	})
+	if c.cancelOn == "start" {
+		cancel()
+	}
+	got := Scan(&checkpointContext{Context: parent, cancel: cancel, cancelAt: c.cancelAt}, "/repo")
+	if !reflect.DeepEqual(got, c.want) || !reflect.DeepEqual(ops, c.ops) {
+		t.Fatalf("Scan = %#v after operations %q\nwant %#v after %q", got, ops, c.want, c.ops)
+	}
+}
+
+var enumerationInterrupted = ScanResult{Status: "incomplete", Inspected: "0", Total: "unknown", Omitted: "unknown", Reason: "timeout"}
+
+func TestScanLoopCompleteOrder(t *testing.T) {
+	multi := inspectByName(context.Background(), "", candidate{fallback: "multi"})
+	runScan(t, scanCase{names: []string{"a", "multi", "b"}, ops: []string{"enumerate", "inspect a", "inspect multi", "inspect b"},
+		want: ScanResult{Rows: slices.Concat(rowsOf("a"), multi, rowsOf("b")), Status: "complete", Inspected: "3", Total: "3", Omitted: "0", Reason: "none"}})
+}
+
+func TestScanLoopPreCancelled(t *testing.T) {
+	runScan(t, scanCase{names: []string{"a"}, cancelOn: "start", want: enumerationInterrupted})
+}
+
+func TestScanLoopEnumerationReturnsAfterCancellation(t *testing.T) {
+	runScan(t, scanCase{names: []string{"a", "b"}, cancelOn: "enumerate", ops: []string{"enumerate"}, want: enumerationInterrupted})
+}
+
+// The fifth context read is the checkpoint before the second inspection.
+func TestScanLoopBetweenCandidates(t *testing.T) {
+	runScan(t, scanCase{names: []string{"a", "b"}, cancelAt: 5, ops: []string{"enumerate", "inspect a"},
+		want: ScanResult{Rows: rowsOf("a"), Status: "incomplete", Inspected: "1", Total: "2", Omitted: "1", Reason: "timeout"}})
+}
+
+func TestScanLoopEmptyInspectionCounts(t *testing.T) {
+	runScan(t, scanCase{names: []string{"zero"}, ops: []string{"enumerate", "inspect zero"},
+		want: ScanResult{Status: "complete", Inspected: "1", Total: "1", Omitted: "0", Reason: "none"}})
+	runScan(t, scanCase{names: []string{"zero", "b"}, cancelOn: "inspect b", ops: []string{"enumerate", "inspect zero", "inspect b"},
+		want: ScanResult{Status: "incomplete", Inspected: "1", Total: "2", Omitted: "1", Reason: "timeout"}})
+}
+
+func TestScanLoopPostInspectionCancellation(t *testing.T) {
+	runScan(t, scanCase{names: []string{"a", "b"}, cancelOn: "inspect b", ops: []string{"enumerate", "inspect a", "inspect b"},
+		want: ScanResult{Rows: rowsOf("a"), Status: "incomplete", Inspected: "1", Total: "2", Omitted: "1", Reason: "timeout"}})
+}
+
+// Every field of a complete, an enumeration-cancelled, and an inspection-cancelled result.
+func TestScanLoopResultMetadata(t *testing.T) {
+	runScan(t, scanCase{names: []string{"a"}, ops: []string{"enumerate", "inspect a"},
+		want: ScanResult{Rows: rowsOf("a"), Status: "complete", Inspected: "1", Total: "1", Omitted: "0", Reason: "none"}})
+	runScan(t, scanCase{names: []string{"a"}, enumErr: context.Canceled, cancelOn: "enumerate", ops: []string{"enumerate"}, want: enumerationInterrupted})
+	runScan(t, scanCase{names: []string{"a"}, cancelOn: "inspect a", ops: []string{"enumerate", "inspect a"},
+		want: ScanResult{Status: "incomplete", Inspected: "0", Total: "1", Omitted: "1", Reason: "timeout"}})
+}
+
+func TestScanLoopEnumerationError(t *testing.T) {
+	failed := errors.New("enumeration failed")
+	runScan(t, scanCase{names: []string{"a"}, enumErr: failed, ops: []string{"enumerate", "inspect a"},
+		want: ScanResult{Rows: rowsOf("a"), Status: "complete", Inspected: "1", Total: "1", Omitted: "0", Reason: "none"}})
+	runScan(t, scanCase{enumErr: failed, ops: []string{"enumerate"}, want: ScanResult{Status: "complete", Inspected: "0", Total: "0", Omitted: "0", Reason: "none"}})
+}
+
+// Two candidates make six checkpoint reads, so only a seventh read sees cancellation.
+func TestScanLoopAfterFullCompletion(t *testing.T) {
+	runScan(t, scanCase{names: []string{"a", "b"}, cancelAt: 7, ops: []string{"enumerate", "inspect a", "inspect b"},
+		want: ScanResult{Rows: slices.Concat(rowsOf("a"), rowsOf("b")), Status: "complete", Inspected: "2", Total: "2", Omitted: "0", Reason: "none"}})
+}
+
+// The inspection ignores the expired window for operationHold; Scan must return after it.
+func TestScanLoopBlockingOperationHasNoHardDeadline(t *testing.T) {
+	var returned atomic.Bool
+	stubSeams(t, enumerateNames("blocked-holding"), func(ctx context.Context, root string, c candidate) [][]string {
+		defer returned.Store(true)
+		return inspectByName(ctx, root, c)
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), cancelTick)
+	defer cancel()
+	got := Scan(ctx, "/repo")
+	if !returned.Load() || !reflect.DeepEqual(got, ScanResult{Status: "incomplete", Inspected: "0", Total: "1", Omitted: "1", Reason: "timeout"}) {
+		t.Fatalf("Scan = %#v, operation returned first = %v; want an incomplete scan after the operation returns", got, returned.Load())
+	}
+}
+
+func TestScanLoopRowsAdapter(t *testing.T) {
+	stubSeams(t, enumerateNames("a", "multi"), inspectByName)
+	want := Scan(context.Background(), "/repo").Rows
+	if got := Rows("/repo"); len(want) != 3 || !reflect.DeepEqual(got, want) {
+		t.Fatalf("Rows = %q, want Scan(background).Rows %q", got, want)
 	}
 }
