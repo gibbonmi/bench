@@ -1085,6 +1085,18 @@
               "path": "roadmap/FT409.md",
               "identity": "sha256:94e9d492c4862e15271ee301fe3a03216dc218ba7c00c22f40d930f7a21c65c8"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "test-cost-signal",
+                "path": "specs/test-cost-signal/spec.md",
+                "identity": "sha256:94a04f99b46ab979b53d1ff78424e3ab9747994268c5d4613de8da538e0555fe"
+              },
+              "obligations": [
+                "FT409"
+              ]
+            }
           ]
         },
         {
