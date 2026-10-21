@@ -20,6 +20,10 @@ The confirming round read the repair delta `eee73331..cdeaf570` on sonnet at hig
 - Spec N1, no-op, confidence 5. The fable tie-break of the initial round decided that "real import bindings" bans text matching, so `spec.md` line 135 stays.
 - Spec N2 and Coverage N2-N4, no-op. They name hardening that the spec permits, a symlinked directory that the repair did not widen, and pre-repair behavior.
 
+## GS1 repair cycle 2
+
+Repair cycle 2 closed N1, so the chunk has used 2 of its 2 repair cycles. The ticket 2 repair `2461ab1f` adds the witness `TestGuardScanLoopOwnerReportsAnUnreadableSubdir`, and the repair changes a test file only. The chunk is refrozen at `e4db0d2e..2461ab1f`, and both tickets recorded their verifications at that tip. The orchestrator's insertion probe, which drops the walk error before the switch, bit. A confirming round of all three axes reads the repair delta `cdeaf570..2461ab1f`.
+
 ## Standards
 
 The axis found 4 findings. The worst issue is F2, because the test respells the diagnostic text that the check spells.
@@ -54,15 +58,15 @@ The axis found 8 findings. The worst issue is C1, because a pipeline in a subdir
 {
   "version": 2,
   "spec": "specs/guard-scan-loop/spec.md",
-  "plan_digest": "sha256:accf0d321caa04266e1927a4e654e5a04c4eec6af9019f85ac0fda07ae04341f",
+  "plan_digest": "sha256:552f0b3d19b40a0481174b21ae276df18c64cfbc7270fc30f94b0b66660045cd",
   "implementation_session": "",
   "chunks": [
     {
       "id": "GS1",
       "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
-      "tip": "cdeaf570831bad3feee048c7bc74922e570ee3a9",
-      "plan_digest": "sha256:accf0d321caa04266e1927a4e654e5a04c4eec6af9019f85ac0fda07ae04341f",
-      "source_digest": "748b0101d016df166d50a31f68f4df1f475c8edc",
+      "tip": "2461ab1f5d246ddd59307d74cecc45bb55dbdb3e",
+      "plan_digest": "sha256:552f0b3d19b40a0481174b21ae276df18c64cfbc7270fc30f94b0b66660045cd",
+      "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
       "acceptance_rows": [
         "GS01",
         "GS02",
@@ -615,6 +619,266 @@ The axis found 8 findings. The worst issue is C1, because a pipeline in a subdir
               "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestScanLoopPostInspectionCancellation,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/guards,^TestScanLoopPostInspectionCancellation$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,575\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,4,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopPostInspectionCancellation,\"scan_loop_test.go:352: Scan = guards.ScanResult{Rows:[][]string{[]string{\\\"a\\\", \\\"boundary of a\\\", \\\"denies of a\\\", \\\"\\\", \\\"\\\", \\\"current\\\", \\\"claude\\\"}, []string{\\\"b\\\", \\\"boundary of b\\\", \\\"denies of b\\\", \\\"\\\", \\\"\\\", \\\"current\\\", \\\"claude\\\"}}, Status:\\\"complete\\\", Insp… (344 bytes)\",2\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t2r2-t2-registered-owner",
+          "performer": "claude:gsl-t2-repair2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t2-repair2-20261021",
+            "digest": "sha256:11486b9fd4572df5d059e2a9c84fd5c0604eaaabcefcedf32be86e5da34ab94e",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2567,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-registered-owner",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-t2-conformance-closure",
+          "performer": "claude:gsl-t2-repair2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t2-repair2-20261021",
+            "digest": "sha256:ccdb457c5e2638eb980d098586797e6dbc3d662f0eb949b352c50607ca92ff51",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,35503,1127\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t2-conformance-closure",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-t2-root-conformance",
+          "performer": "claude:gsl-t2-repair2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t2-repair2-20261021",
+            "digest": "sha256:025ae3c01947cdf49ccb8776e3f5fdc6c746aae74c4d6f4ad67192cda694ddd2",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13269,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-t2-copy-check-omission",
+          "performer": "claude:gsl-t2-repair2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t2-repair2-20261021",
+            "digest": "sha256:3f226d7e5510b67dbb40090d2ec3ce9a53b6592d9e9668f5f04a28c4080ed0b4",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGuardScanLoopOwnerBitesOnPrivateCopy,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/conformance,^TestGuardScanLoopOwnerBitesOnPrivateCopy$,passed,1\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,400\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,10,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuardScanLoopOwnerBitesOnPrivateCopy,\"guard_scan_owner_test.go:182: want a go statement diagnostic on the private pipeline copy, got []\",5\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-copy-check-omission",
+          "command": "bench test --package ./internal/conformance --run '^TestGuardScanLoopOwnerBitesOnPrivateCopy$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit only the registered checkGuardScanLoopOwner call while retaining its function and tests; an unused old worker pipeline must stop producing the expected registered diagnostic and red this witness.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gsl-t2-repair2-20261021",
+              "digest": "sha256:3f226d7e5510b67dbb40090d2ec3ce9a53b6592d9e9668f5f04a28c4080ed0b4",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGuardScanLoopOwnerBitesOnPrivateCopy,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/conformance,^TestGuardScanLoopOwnerBitesOnPrivateCopy$,passed,1\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,400\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,10,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuardScanLoopOwnerBitesOnPrivateCopy,\"guard_scan_owner_test.go:182: want a go statement diagnostic on the private pipeline copy, got []\",5\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1r2-t1-scan-and-command",
+          "performer": "claude:gsl-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+            "digest": "sha256:b23fda31b41a1bb13c96b55d6272e92f07ee10f001695f4a797fc53e1b33612c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,pass,6353,54\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-scan-and-command",
+          "command": "bench test --package ./internal/guards",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-t1-bounds-policy",
+          "performer": "claude:gsl-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+            "digest": "sha256:858bc235c25cf5a7055131d9c9924765c9d039285fb3a28843bf1c0b1ed8b71a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  bounds-policy,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,229,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-bounds-policy",
+          "command": "bench test --check bounds-policy",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-t1-conformance-closure",
+          "performer": "claude:gsl-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+            "digest": "sha256:5e2fb05c71c1fd728ee99f1a07aa74e7830d773d7efc9c9af2915d087489beec",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,35593,1127\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t1-conformance-closure",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-t1-root-conformance",
+          "performer": "claude:gsl-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+            "digest": "sha256:7435777686970920ec1e0f80feddf180c668c4cc281bb2485b49342884f0aa6d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13438,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-t1-command-closure",
+          "performer": "claude:gsl-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+            "digest": "sha256:66d6bbc2aa2b5d1862cd2e4100e13cfb6e61da98a62cfbdbfa194bc5e670ed95",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14787,352\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-command-closure",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-t1-enumeration-return-omission",
+          "performer": "claude:gsl-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+            "digest": "sha256:27cabe066002fefad126b797e9fda0d5ed74748bd5d51b5ddd0b795f68f78691",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestScanLoopEnumerationReturnsAfterCancellation,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/guards,^TestScanLoopEnumerationReturnsAfterCancellation$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,489\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopEnumerationReturnsAfterCancellation,\"scan_loop_test.go:335: Scan = guards.ScanResult{Rows:[][]string(nil), Status:\\\"incomplete\\\", Inspected:\\\"0\\\", Total:\\\"2\\\", Omitted:\\\"2\\\", Reason:\\\"timeout\\\"} after operations [\\\"enumerate\\\"]\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-enumeration-return-omission",
+          "command": "bench test --package ./internal/guards --run '^TestScanLoopEnumerationReturnsAfterCancellation$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Gate the post-enumeration checkpoint on a non-nil enumeration error only; a nil-error candidate slice returned after cancellation must report known counts and red this witness.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+              "digest": "sha256:27cabe066002fefad126b797e9fda0d5ed74748bd5d51b5ddd0b795f68f78691",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestScanLoopEnumerationReturnsAfterCancellation,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/guards,^TestScanLoopEnumerationReturnsAfterCancellation$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,489\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopEnumerationReturnsAfterCancellation,\"scan_loop_test.go:335: Scan = guards.ScanResult{Rows:[][]string(nil), Status:\\\"incomplete\\\", Inspected:\\\"0\\\", Total:\\\"2\\\", Omitted:\\\"2\\\", Reason:\\\"timeout\\\"} after operations [\\\"enumerate\\\"]\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1r2-t1-differential-golden-bite",
+          "performer": "claude:gsl-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+            "digest": "sha256:5840b00f59052a1f4d03f98b35940a7b10df774e374f23a3bbf64c69082b74c4",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,8,TestScanLoopDifferentialCommandFamilies/complete,19,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/guards,^TestScanLoopDifferentialCommandFamilies$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1834\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,6262,19\nfailures[8]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/complete,\"scan_loop_test.go:263: member complete differs from testdata/scan-family-s.golden\",43\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/fifo-header,\"scan_loop_test.go:263: member fifo-header differs from testdata/scan-family-s.golden\",37\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/inspection-cancelled-empty,\"scan_loop_test.go:263: member inspection-cancelled-empty differs from testdata/scan-family-s.golden\",29\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/inspection-cancelled-rows,\"scan_loop_test.go:263: member inspection-cancelled-rows differs from testdata/scan-family-s.golden\",29\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/static-headers,\"scan_loop_test.go:263: member static-headers differs from testdata/scan-family-s.golden\",49\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/symlink-and-missing-headers,\"scan_loop_test.go:263: member symlink-and-missing-headers differs from testdata/scan-family-s.golden\",47\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/wiring-claude-and-codex,\"scan_loop_test.go:263: member wiring-claude-and-codex differs from testdata/scan-family-s.golden\",41\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/wiring-empty-and-invalid,\"scan_loop_test.go:263: member wiring-empty-and-invalid differs from testdata/scan-family-s.golden\",37\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-differential-golden-bite",
+          "command": "bench test --package ./internal/guards --run '^TestScanLoopDifferentialCommandFamilies$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Reverse the candidate inspection order in the candidate loop; the independently captured scan-family-s.golden expectation must red this witness on the complete member.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+              "digest": "sha256:5840b00f59052a1f4d03f98b35940a7b10df774e374f23a3bbf64c69082b74c4",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,8,TestScanLoopDifferentialCommandFamilies/complete,19,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/guards,^TestScanLoopDifferentialCommandFamilies$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1834\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,6262,19\nfailures[8]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/complete,\"scan_loop_test.go:263: member complete differs from testdata/scan-family-s.golden\",43\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/fifo-header,\"scan_loop_test.go:263: member fifo-header differs from testdata/scan-family-s.golden\",37\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/inspection-cancelled-empty,\"scan_loop_test.go:263: member inspection-cancelled-empty differs from testdata/scan-family-s.golden\",29\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/inspection-cancelled-rows,\"scan_loop_test.go:263: member inspection-cancelled-rows differs from testdata/scan-family-s.golden\",29\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/static-headers,\"scan_loop_test.go:263: member static-headers differs from testdata/scan-family-s.golden\",49\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/symlink-and-missing-headers,\"scan_loop_test.go:263: member symlink-and-missing-headers differs from testdata/scan-family-s.golden\",47\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/wiring-claude-and-codex,\"scan_loop_test.go:263: member wiring-claude-and-codex differs from testdata/scan-family-s.golden\",41\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopDifferentialCommandFamilies/wiring-empty-and-invalid,\"scan_loop_test.go:263: member wiring-empty-and-invalid differs from testdata/scan-family-s.golden\",37\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1r2-t1-post-inspection-omission",
+          "performer": "claude:gsl-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "364c4867dce31d62207fb8a1be27a9ac4774b2fb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+            "digest": "sha256:300bdbf931805075606e97f7e8adcb7f8d8f21377766c1c2acc8002781594119",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestScanLoopPostInspectionCancellation,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/guards,^TestScanLoopPostInspectionCancellation$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,575\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopPostInspectionCancellation,\"scan_loop_test.go:352: Scan = guards.ScanResult{Rows:[][]string{[]string{\\\"a\\\", \\\"boundary of a\\\", \\\"denies of a\\\", \\\"\\\", \\\"\\\", \\\"current\\\", \\\"claude\\\"}, []string{\\\"b\\\", \\\"boundary of b\\\", \\\"denies of b\\\", \\\"\\\", \\\"\\\", \\\"current\\\", \\\"claude\\\"}}, Status:\\\"complete\\\", Insp… (344 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-post-inspection-omission",
+          "command": "bench test --package ./internal/guards --run '^TestScanLoopPostInspectionCancellation$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit only the post-inspection context checkpoint; a returned interrupted candidate must publish rows and red the completed-prefix contract.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gsl-t1-repair1-20261021",
+              "digest": "sha256:300bdbf931805075606e97f7e8adcb7f8d8f21377766c1c2acc8002781594119",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestScanLoopPostInspectionCancellation,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/guards,^TestScanLoopPostInspectionCancellation$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,575\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanLoopPostInspectionCancellation,\"scan_loop_test.go:352: Scan = guards.ScanResult{Rows:[][]string{[]string{\\\"a\\\", \\\"boundary of a\\\", \\\"denies of a\\\", \\\"\\\", \\\"\\\", \\\"current\\\", \\\"claude\\\"}, []string{\\\"b\\\", \\\"boundary of b\\\", \\\"denies of b\\\", \\\"\\\", \\\"\\\", \\\"current\\\", \\\"claude\\\"}}, Status:\\\"complete\\\", Insp… (344 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -774,6 +1038,15 @@ The axis found 8 findings. The worst issue is C1, because a pipeline in a subdir
     {
       "from": "sha256:08e457bec47256e4119881f481cd37ea8d054b3070bd8602c6cd7b5c61443dce",
       "to": "sha256:accf0d321caa04266e1927a4e654e5a04c4eec6af9019f85ac0fda07ae04341f",
+      "chunk_ids": {
+        "GS1": [
+          "GS1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:accf0d321caa04266e1927a4e654e5a04c4eec6af9019f85ac0fda07ae04341f",
+      "to": "sha256:552f0b3d19b40a0481174b21ae276df18c64cfbc7270fc30f94b0b66660045cd",
       "chunk_ids": {
         "GS1": [
           "GS1"
