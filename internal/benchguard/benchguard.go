@@ -2,7 +2,6 @@
 package benchguard
 
 import (
-	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
@@ -27,18 +26,15 @@ func DefaultResolver() Resolver {
 }
 
 func CommandFromEnvelope(data []byte) (string, error) {
-	var envelope struct {
-		ToolInput map[string]json.RawMessage `json:"tool_input"`
-	}
-	if err := json.Unmarshal(data, &envelope); err != nil {
+	envelope, err := shellcommand.DecodeEnvelope(data, shellcommand.InputMap)
+	if err != nil {
 		return "", err
 	}
-	raw, ok := envelope.ToolInput["command"]
+	command, ok, err := envelope.InputString("command")
 	if !ok {
 		return "", errors.New("command field missing")
 	}
-	var command string
-	if err := json.Unmarshal(raw, &command); err != nil {
+	if err != nil {
 		return "", err
 	}
 	if command == "" {
