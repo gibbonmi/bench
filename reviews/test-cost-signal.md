@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/test-cost-signal/spec.md",
-  "plan_digest": "sha256:10fc6009bec677b4a1c75ff2ea3342ce81eeab5262feb7b6d04db55342f4b834",
+  "plan_digest": "sha256:073860a0a02894a62a0f2a8cde55044b870e1588ff27390dc6320ca13f44ecb7",
   "implementation_session": "",
   "chunks": [
     {
@@ -250,9 +250,9 @@
     {
       "id": "TC-C2",
       "base": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
-      "tip": "849d606f3d57dc5321d847ba8076ebe3620d90a8",
-      "plan_digest": "sha256:5c96c02f9ab8638951e0718696430d4ff0b135fc44b59b2a5c51f53cb4ed1b75",
-      "source_digest": "9be17cb51fd80fb5567656b3ebfd8a142f0213c2",
+      "tip": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+      "plan_digest": "sha256:073860a0a02894a62a0f2a8cde55044b870e1588ff27390dc6320ca13f44ecb7",
+      "source_digest": "b604b56d6c000230b4a9b8238003fb8e1f8927ac",
       "acceptance_rows": [
         "TC12",
         "TC13",
@@ -268,7 +268,9 @@
         "TC23",
         "TC24",
         "TC25",
-        "TC26"
+        "TC26",
+        "TC39",
+        "TC40"
       ],
       "verification": [
         {
@@ -413,6 +415,78 @@
           },
           "requirement": "t2-root-conformance",
           "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-r4-t2-testreport",
+          "performer": "claude:tcs-t2-repair4-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b604b56d6c000230b4a9b8238003fb8e1f8927ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t2-repair4-20261021",
+            "digest": "sha256:0328a31cb5eb8b683119cafa7fbe6977639a46ea8359f1e14e00a1c468270b2b",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,59260,257\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-r4-t2-root-conformance",
+          "performer": "claude:tcs-t2-repair4-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b604b56d6c000230b4a9b8238003fb8e1f8927ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t2-repair4-20261021",
+            "digest": "sha256:e3580680ba59b6e9b0597f4f9f4529c832cdf61b4e62a517d49aef5d59d3a085",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13463,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-r4-t2-record-journey",
+          "performer": "claude:tcs-t2-repair4-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b604b56d6c000230b4a9b8238003fb8e1f8927ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t2-repair4-20261021",
+            "digest": "sha256:f7b8773c18f5ac538d7f3b641767001315f55e7ae87ad9a1626325e5ba1f1e08",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,1068,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-record-journey",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-r4-t2-adoption-smoke",
+          "performer": "claude:tcs-t2-repair4-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b604b56d6c000230b4a9b8238003fb8e1f8927ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t2-repair4-20261021",
+            "digest": "sha256:c37282e58159cc63e504c0ee1a240c52870f9385768f92c7f5826fa11c1f1fe3",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,12188,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-adoption-smoke",
+          "command": "bench test --check system --run '^TestAdoptionSmokeJourney$'",
           "exit_code": 0
         }
       ],
@@ -807,6 +881,18 @@
     {
       "from": "sha256:5c96c02f9ab8638951e0718696430d4ff0b135fc44b59b2a5c51f53cb4ed1b75",
       "to": "sha256:10fc6009bec677b4a1c75ff2ea3342ce81eeab5262feb7b6d04db55342f4b834",
+      "chunk_ids": {
+        "TC-C1": [
+          "TC-C1"
+        ],
+        "TC-C2": [
+          "TC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:10fc6009bec677b4a1c75ff2ea3342ce81eeab5262feb7b6d04db55342f4b834",
+      "to": "sha256:073860a0a02894a62a0f2a8cde55044b870e1588ff27390dc6320ca13f44ecb7",
       "chunk_ids": {
         "TC-C1": [
           "TC-C1"
