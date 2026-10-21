@@ -288,6 +288,29 @@ func TestGuardScanLoopOwnerReportsAnUnstatableOwnerDir(t *testing.T) {
 	}
 }
 
+// TestGuardScanLoopOwnerReportsAnUnreadableSubdir strips the permissions of a subdirectory of
+// internal/guards. The walk cannot list it, so it must get a named diagnostic, because an unlisted
+// subdirectory would otherwise hide its production files from the check.
+func TestGuardScanLoopOwnerReportsAnUnreadableSubdir(t *testing.T) {
+	root := t.TempDir()
+	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(guardScanOwnerFile)), "package guards\n")
+	rel := guardScanOwnerDir + "/inner"
+	nested := filepath.Join(root, filepath.FromSlash(rel))
+	writeFixtureFile(t, filepath.Join(nested, "inner.go"), "package inner\n")
+	// The restore is registered before the strip, so TempDir's removal can descend again.
+	t.Cleanup(func() { _ = os.Chmod(nested, 0o755) })
+	if err := os.Chmod(nested, 0o000); err != nil {
+		capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot strip directory permissions: %v", err))
+	}
+	if _, err := os.ReadDir(nested); err == nil {
+		capability.Capability(t, capability.Privilege, "mode 0o000 directory is still readable by this user")
+	}
+	want := guardScanOwnerDiagPrefix + rel + guardScanOwnerUnreadable
+	if diags := guardScanOwnerDiags(t, root); !slices.Contains(diags, want) {
+		t.Fatalf("want %q, got %v", want, diags)
+	}
+}
+
 // TestGuardScanLoopOwnerHoldsOnTheLiveTree runs the registered package-core-guard binding on the
 // kit root, which holds the guard scan source, and requires no scan loop owner diagnostic.
 func TestGuardScanLoopOwnerHoldsOnTheLiveTree(t *testing.T) {
