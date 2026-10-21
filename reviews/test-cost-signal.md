@@ -1192,11 +1192,125 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+    "performer": "claude:tcs-orchestrator-20261021",
+    "reconciliation": {
+      "TC1": "covered",
+      "TC10": "covered",
+      "TC11": "covered",
+      "TC12": "covered",
+      "TC13": "covered",
+      "TC14": "covered",
+      "TC15": "covered",
+      "TC16": "covered",
+      "TC17": "covered",
+      "TC18": "covered",
+      "TC19": "covered",
+      "TC2": "covered",
+      "TC20": "covered",
+      "TC21": "covered",
+      "TC22": "covered",
+      "TC23": "covered",
+      "TC24": "covered",
+      "TC25": "covered",
+      "TC26": "covered",
+      "TC27": "covered",
+      "TC28": "covered",
+      "TC29": "covered",
+      "TC3": "covered",
+      "TC30": "covered",
+      "TC31": "covered",
+      "TC32": "covered",
+      "TC33": "covered",
+      "TC34": "covered",
+      "TC35": "covered",
+      "TC36": "covered",
+      "TC37": "covered",
+      "TC38": "covered",
+      "TC39": "covered",
+      "TC4": "covered",
+      "TC40": "covered",
+      "TC5": "covered",
+      "TC6": "covered",
+      "TC7": "covered",
+      "TC8": "covered",
+      "TC9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-testreport",
+        "performer": "claude:tcs-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:tcs-orchestrator-20261021:final-testreport",
+          "digest": "sha256:6fb5e5d888c165ae7ffd6b668807c8e0648907beeae58196b7d78bbc59393ec8",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT409,7b2eeef60393b8696e93be6f03c59b20e599a769,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,63113,265\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "testreport",
+        "command": "bench test --package ./internal/testreport",
+        "exit_code": 0
+      },
+      {
+        "id": "final-gate-package",
+        "performer": "claude:tcs-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:tcs-orchestrator-20261021:final-gate-package",
+          "digest": "sha256:4e849c20ad104d79ecb3dd25d7388bc770e64914edd7bebe47c84f45e198d059",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT409,7b2eeef60393b8696e93be6f03c59b20e599a769,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,37523,508\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "gate-package",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-whole-project",
+        "performer": "claude:tcs-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:tcs-orchestrator-20261021:gate-20261021T190036",
+          "digest": "sha256:010cf4abc72dbf63aab2625589bf352959b01749c474367232f315339963fefe",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT409,7b2eeef60393b8696e93be6f03c59b20e599a769,false\n  system,green,102546\n  shellcheck,green,529\ncapability-skips: 4 (capability=4 environment=0; privilege=4)\ngate: green\n"
+        },
+        "requirement": "whole-project",
+        "command": "bench gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-coverage",
+        "performer": "claude:tcs-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:tcs-orchestrator-20261021:final-coverage",
+          "digest": "sha256:4007aff823cc916700ab27ddc958f528aef6387261e5eef216a7578147ce2583",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT409,7b2eeef60393b8696e93be6f03c59b20e599a769,false\nok: coverage map valid — 40 row(s)\nuncited: 5 row(s) with no seam-cell citation — TC10, TC11, TC35, TC36, TC37\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/test-cost-signal/spec.md",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
