@@ -198,7 +198,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gp1-r1-standards",
+          "performer": "claude:sgp-review-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9176090363f3e82572626823207983480c37cc54",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-standards-r1",
+            "digest": "sha256:252191d6a3410a14261398c5304a9b2d263060a9ff0b5369f4b77fc3daf63444",
+            "excerpt": "STANDARDS axis, GP1 (base f86203658, code tip a4053ed70, evidence tip f29f599e2). 2 findings. Worst: F2, a redirected-push test row that repeats an existing row and has no recorded red.\n\nFindings\n- F1 | auto-fix | internal/gitguard/projection_contract_test.go:11-13 | The doc comment of TestGitProjectionAuthority is one 29-word sentence. Binding: craft-comments (SKILL.md:12) requires ASD-STE100 prose, and your charge sets a limit of 25 words per sentence. Fix: split it into two sentences. This is a comment-only change, so it needs no repair cycle. | confidence 8\n- F2 | ask-user | internal/gitguard/projection_contract_test.go:22 (the \"redirected push\" row) | The row is the same tuple (cmd, Checker, want) as verdict_test.go:96. Binding: AGENTS.md \"one source per fact\", test-expectation exception. That exception needs a necessary independence plus a recorded and demonstrated red. The only recorded probe is t1-git-context-omission (reviews/shared-guard-projection.md:31-56, on f29f599e2). It mutates DifferentCheckout, so it bites only child_push (:42). Nothing records a red for the redirected row. Omitting redirect handling in the untouched redirectsRepository would also redden verdict_test.go:96-98, so this row's independence is not shown to be necessary. Counter-weight: spec GP10 (spec.md:371 in the diff) and ticket acceptance line 33 name \"child and redirected push\" under this seam. The reviewer must choose between two fixes. Either record a redirect-omission red for this row, or accept it as a spec-bound row and amend GP10. | confidence 5\n\nNamed question: child push versus verdict_test.go:239\n- Decision: the child-push row meets the exception, so it is not a defect.\n- Condition 2 is met. The recorded probe (reviews/shared-guard-projection.md:42, :55) shows \"bit\" on TestGitProjectionAuthority/child_push with restore \"pass\".\n- Condition 1 is partly met. The omission also reddens verdict_test.go:239, so independence is not strictly necessary for a red gate. But ticket acceptance line 33 names TestGitProjectionAuthority as the test that must go red. The spec binds the duplicate, so I treat it as a bound witness and not as drift.\n- The redirected-push row does not get the same treatment (see F2).\n\nChecked with no finding\n- No second wrapper or exec-child grammar remains in internal/gitguard. In the diff, `wrappers`, `wrapperCFlagRe`, the `regexp` import and `worktreeExecChild` are removed. They now exist once, in internal/shellcommand/projection.go:10-12 and :29-37. benchExecutables stays in scan.go:78 as the caller-owned Bench-identity test, which the ticket requires.\n- Behaviour parity of the scan.go migration, from traced old and new code: the first `-c` child matches the old first-flag-then-break behaviour; an empty exec child yields \"\" in both versions; the case order is unchanged.\n- stdlib rule: projection.go uses slices.Contains and slices.Index. No hand-written loop that a standard-library function replaces.\n- Error handling: ShellChildren and WorktreeExec check bounds (projection.go:24, :50) and return no child on a missing operand or separator.\n- Comments: every other new or edited sentence is 25 words or fewer. No narrated history and no FT tags.\n- Naming fits the surrounding code.\n\nAdvice (no finding ID)\n- internal/shellcommand/projection_test.go:288: the loop variable `child` shadows the package-level type `child` (projection_test.go:228). It compiles, but a rename would read more clearly.\n- internal/shellcommand/projection.go:12: `wrapperCFlagRe` has no comment. It was also uncommented in its old home, so this is not a regression.\n- specs/shared-guard-projection/spec.md was edited in the diff but is not on ticket 1's `Writes:` line. The edit only turns `planned` markers into real test citations, which map-discipline.md:126 requires when the covering ticket commits.\n\nCommands (all via bench worktree exec shared-guard-projection-build --): bench preflight evidence sha256:572e5979... --check-current returned current=true, dirty_record=false; git diff f86203658 a4053ed70 (--stat and full); git show of the ticket, scan.go, verdict_test.go, and the review record; git grep over a4053ed70 and f29f599e2; git log f86203658..a4053ed70 --stat. No tests, no probe, no file written.\n"
+          },
+          "axis": "Standards",
+          "base": "f86203658f5190beac7a34ce17e18473d20fe426",
+          "tip": "a4053ed70c625935cd64c2d4fe5943f99348d88c",
+          "finding_ids": [
+            "F1",
+            "F2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gp1-r1-spec",
+          "performer": "claude:sgp-review-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9176090363f3e82572626823207983480c37cc54",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-spec-r1",
+            "digest": "sha256:7a15290d0cf3d4bc8819690271abf9bb201cd6abb455fcaee7e83d329f720261",
+            "excerpt": "SPEC axis, chunk GP1 (base f86203658, code tip a4053ed70, record tip f29f599e): no findings.\n\nFindings: none. The reviewer needs no routing decision for this axis.\n\nCount: 0 findings. Worst issue: none.\n\nWhat I checked, all by re-reading source at the tip:\n- API shapes. WrapperChild, ShellChildren, ExecProjection and WorktreeExec match the spec's \"Projection API and caller policy\" signatures exactly.\n  - ShellChildren: basenames sh/bash/zsh via slices.Contains, regex ^-[A-Za-z]*c[A-Za-z]*$, argv order, no recursion. A negative or too-large index gives nil. A flag in the last position gives no child, and each position is read independently (GP02/GP03, family W).\n  - WorktreeExec: adjacent worktree and exec, first later -- via slices.Index, child returned unchanged with no join or reparse. HasSeparator is true even for an empty child. DifferentCheckout is len(Child) > 0. It trusts the caller's Bench identity, as the spec says.\n- Git caller policy (scan.go:44-71). The keyword trim stays in scan. case benchExecutables[base] is the Bench basename test, and it runs before WorktreeExec. The default branch takes only children[0], so the first matching shell child is consumed even when it finds no Git. Both branches recurse with allowWrapper=false. exec.DifferentCheckout is passed as elsewhere. scan and scanWords signatures are unchanged. Edge cases bash -c, bash -c -c 'git status', an exec with no --, and an empty child after -- give the same result as before.\n- Migration table scan.go rows. wrappers, wrapperCFlagRe, worktreeExecChild and the regexp import are gone from gitguard. shellcommand.go is untouched. gitguard holds 11 of 12 allowed files. The new files are 61 and 129 lines.\n- Coverage rows GP01-GP03, GP05-GP10, GP72, GP74 each cite a real test; GP10 red-bite recorded at reviews/shared-guard-projection.md:42.\n- Spec cell rewrites: limited to nine cells (GP02, GP03, GP05-GP08, GP10, GP72, GP74); each cites a test that lands in this commit, as .agents/commands/bench-implement-spec.md:52 requires. .bench/commitment.json is untouched.\n- Review record duplicate and doubled-prefix rows: bench record ticket builds the evidence ID as prefix + \"-\" + requirement.ID (internal/reviewrecord/recordcmd/ticket.go:143), so t1-t1- is mechanical. checkVerification matches on Requirement and the last match wins (internal/reviewrecord/check.go:46-48). Evidence-ID uniqueness is enforced by unclaimed (change.go:144); the two rows have distinct IDs. Neither breaks a record contract or the chunk checkpoint (confidence 7; parse.go validation not read in full).\n\nAdvice (optional, no finding ID):\n- Plan requirement IDs that begin with t1- produce cosmetic t1-t1- evidence IDs.\n- The duplicate probe rows are redundant evidence. No binding requirement forces their removal.\n\nCommands run, all via bench worktree exec shared-guard-projection-build --: bench preflight evidence sha256:572e5979...88 --check-current returned current=true, dirty_record=false; git diff --stat, git diff, git show of the spec, ticket, scan.go and the review record; rg over source. No tests, no bench probe, no files written.\n"
+          },
+          "axis": "Spec",
+          "base": "f86203658f5190beac7a34ce17e18473d20fe426",
+          "tip": "a4053ed70c625935cd64c2d4fe5943f99348d88c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gp1-r1-coverage",
+          "performer": "claude:sgp-review-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9176090363f3e82572626823207983480c37cc54",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-coverage-r1",
+            "digest": "sha256:2bd2e2f6b498a1f40370884d0282067300188200f1ff3e27fa8ba293ca62efe2",
+            "excerpt": "COVERAGE axis, chunk GP1 (base f86203658, code tip a4053ed70, evidence tip f29f599e). Findings: 2, both auto-fix, both from the one hardening cycle the policy permits. The worst is C2. No acceptance row fails.\n\nFindings (one per line)\n- C1 | auto-fix | internal/shellcommand/projection.go:50 (the words[executable+2] != \"exec\" check) and projection_test.go:117 (TestWorktreeExecContext) | Binding: spec.md:96 \"recognizes adjacent worktree and exec words\"; GP06 \"Header recognition is confused with runnable child discovery\" | Confidence 6. Probe 1 swapped the check for !slices.Contains(words[executable+2:], \"exec\"). The verdict was silent: shellcommand and gitguard both passed (42 and 237 tests). Break input: bench worktree list exec -- git reset --hard. The mutant projects a child and Git refuses; the spec says there is no exec head. No test has worktree adjacent but exec non-adjacent with a later --. Fix: add a negative case to TestWorktreeExecContext (or a sibling) that expects ExecProjection{}.\n- C2 | auto-fix | internal/shellcommand/projection.go:30 and projection_test.go:27 (TestShellChildren) | Binding: spec.md:91 \"It performs no recursion\"; W4 edge row \"a nested wrapper ... neither recurses twice\"; GP02 | Confidence 5. Probe 2 changed the append so it also adds the children of the child's own commands (one extra level). The verdict was silent: both packages passed. Git reads only children[0], and GP09 runs through Git, so the inner child appended after the outer one is never seen. No ShellChildren case has a wrapper inside a -c operand, for example bash -c \"sh -c 'git push'\"; the expected result is one child. Fix: add that case to TestShellChildren. Counter-view: the spec assigns nested depth to GP09, not GP02; treat as optional advice if you read it that way.\n\nNamed gaps, checked and cleared\n- GP05: TestWorktreeExec has \"two words\" and --env A=1 before --; the child comes back unchanged.\n- GP06: TestWorktreeExecMissingDelimiter compares the whole struct; a -- before exec is covered by the no-projection case in TestWorktreeExecContext.\n- W family: /bin/bash -lc, bash -c -c 'git status', a missing operand, a trailing -lc, unsupported dash, and both bad indexes are covered; the zsh omission is bitten.\n- GP74: covered; an every-child loop reds (held).\n- GP01 and GP09: pre-existing characterization rows.\n\nAdvice (no ID)\n- The GP10 \"redirected push\" and GP74 \"first reset child\" cases pass on old and new code; their red comes only from the held mutants. The redirect branch is unchanged code.\n- bench worktree exec -- git push (no target) has no test; old and new code agree on it.\n\nCommands and results\n1. bench preflight evidence sha256:572e5979... --check-current: current=true, dirty_record=false.\n2. git diff f86203658 a4053ed70 (and --stat): read.\n3. bench probe --help: usage only.\n4. Probe 1 (adjacency of exec): silent, cause passed, restored=yes.\n5. Probe 2 (ShellChildren one-level recursion): silent, cause passed, restored=yes.\nProbes used: 2 of 2.\n"
+          },
+          "axis": "Coverage",
+          "base": "f86203658f5190beac7a34ce17e18473d20fe426",
+          "tip": "a4053ed70c625935cd64c2d4fe5943f99348d88c",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
