@@ -1,7 +1,7 @@
 # Enforce guard projection ownership
 
 Blocked by: 1-share-git-command-projections.md, 2-add-envelope-owner-for-git.md, 3-migrate-bench-and-write-readers.md, 4-migrate-bench-projection-consumers.md
-Writes: internal/conformance/guard_projection_owner_test.go (new), internal/conformance/checks_test.go, internal/conformance/tier_live_tree_test.go
+Writes: internal/conformance/guard_projection_owner_test.go (new), internal/conformance/checks_test.go, internal/conformance/tier_live_tree_test.go, internal/conformance/guard_scan_owner_test.go, internal/conformance/guard_owner_walk_test.go (new)
 Covers: GP30, GP31, GP32, GP33, GP42, GP67
 
 ## What to build
