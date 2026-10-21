@@ -640,7 +640,8 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP74 | 2 | The Git guard reads only the first matching child in W4 and keeps the allow verdict for `bash -c 'echo ok' -c 'git reset --hard'` | planned TestGuardWrapperSelection in internal/gitguard/projection_contract_test.go | A Git consumer that searches every child refuses the second-flag reset |
 
 GP46 compares the candidate executable with tuples recorded from a pre-migration executable.
-Build that executable at the integrated source at build entry, before GP1 begins, and retain it outside the tree.
+Build that executable at the integrated source at build entry, before GP1 begins, and retain it outside the tree; record its build commit so it can be rebuilt.
+Replace each temporary fixture root in a tuple with one fixed token before you record or compare it.
 Ticket 5 runs its driver once against that executable and stores the tuples as `internal/systemtest/testdata/guard-projection-family-d.golden`, reviewed apart from the candidate code.
 The landed test compares the candidate with that golden, so it needs no retained executable.
 The same canned events and fixture repositories feed both runs through actual core and hook entries.

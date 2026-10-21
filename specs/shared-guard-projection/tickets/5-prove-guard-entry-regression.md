@@ -14,6 +14,8 @@ GP46 compares the candidate with the pre-migration behavior over family D and th
 The coordinator retains a pre-migration executable built before ticket 1 changes source.
 Run the GP46 driver once against that executable and store its exact exit, stdout, and stderr tuples as `internal/systemtest/testdata/guard-projection-family-d.golden`.
 Review that golden apart from the candidate code. The landed test then compares the candidate with the golden, so it needs no retained executable.
+Before you record or compare a tuple, replace each temporary fixture root in it with one fixed token, so the golden matches across runs.
+The coordinator records the build commit of the retained executable in the build plan; if the executable is lost, rebuild it from that commit.
 This regression repeats earlier cases; it does not supply a missing earlier test or repair.
 GP44 checks census exclusion through the core entry in `cmd/bench/guard_projection_test.go`, which ticket 2 created.
 
