@@ -821,6 +821,72 @@
           "supersedes": [
             "c2-coverage-r3"
           ]
+        },
+        {
+          "id": "c2-standards-r5",
+          "performer": "claude:tcs-c2-standards-r5-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "b604b56d6c000230b4a9b8238003fb8e1f8927ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-standards-r5-20261021",
+            "digest": "sha256:baffa06e9d10c4e279bea5fbab51f655362e5e850097d79a927810aaf650e2e8",
+            "excerpt": "Standards axis, TC-C2 round 5 (the --full amendment 09b938caf..4a966b105 and repair 5b51fcb8e..1795d4bbc): 3 findings, none blocking. F1 (auto-fix proposed, confidence 6): test_cost_test.go:147 fullRun and failure_lines_test.go:38 both spell the --full argv. Coordinator disposition: no-op; the base failure_lines_test.go spells that argv inline five times, so it is incidental test text by tree convention. F2 (auto-fix, confidence 5): spec \"Rendered-shape readers\" cites line numbers that the repair moved; fold: name the tests in the next plan commit. F3 (ask-user, confidence 4): spec prose restates the 10, 5, and 12 line values that internal/bounds owns; fold: name the bound constants in the next plan commit. Its second half (TC40 does not name TestAdoptionSmokeJourney) is no-op: requirement t2-adoption-smoke grades it. Clean: one render path selected by full, one block order, a short why comment, TC23 and TC24 cite real tests.\n"
+          },
+          "axis": "Standards",
+          "base": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
+          "tip": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r4"
+          ]
+        },
+        {
+          "id": "c2-spec-r5",
+          "performer": "claude:tcs-c2-spec-r5-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "b604b56d6c000230b4a9b8238003fb8e1f8927ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-spec-r5-20261021",
+            "digest": "sha256:3dcd48a6b4edf70a6e8c2bbe0a87672c3381d84a7874015b6b799fd2c4f97993",
+            "excerpt": "Spec axis, TC-C2 round 5: 1 finding, 0 accepted. Code matches the amended spec: no slowest block on a plain run, the block order on a full run, the empty table on a full run. TC23, TC24, and TC39 cite tests that assert their behavior by full equality. No claim remains that the table renders on every run; ticket 3 and TC-C3 stay consistent. P1 (confidence 5): the TC40 red was not shown in the read set. Coordinator disposition: no-op; the TC-C2 checkpoint gate at 09b938caf failed TestNativeRecordCLIJourney at record_operations_test.go:183 with the spilled 12-line answer, and the cycle 4 author observed that red at the base.\n"
+          },
+          "axis": "Spec",
+          "base": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
+          "tip": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r4"
+          ]
+        },
+        {
+          "id": "c2-coverage-r5",
+          "performer": "claude:tcs-c2-coverage-r5-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "b604b56d6c000230b4a9b8238003fb8e1f8927ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-coverage-r5-20261021",
+            "digest": "sha256:3531db93f49b9e8ee4f3bd1fe5ce1819958035af4024d9433f5a6d50e66586b6",
+            "excerpt": "Coverage axis, TC-C2 round 5: 0 findings. Every slowest-row test renders --full (renderEvents calls render(true); TC23 and TC24 use fullRun), so none passes on a plain run for the wrong reason. The plain paths of failure_lines_test.go, tests_run_test.go, and outcome_test.go equal the base bytes. The bench probe --full readers use strings.Contains and pass. bench test --package ./internal/testreport --package ./internal/probe passed (257 and 315 tests). Probes already bit: result += slowestBlock omission, if full -> if true, and the coordinator request.full = false insertion in command.go.\n"
+          },
+          "axis": "Coverage",
+          "base": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
+          "tip": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-r4"
+          ]
         }
       ]
     }
