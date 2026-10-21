@@ -128,7 +128,7 @@ GS19 through GS21 observe those entry decisions.
 
 Add checkGuardScanLoopOwner under the existing registered package-core-guard check.
 It grades production Go files beneath internal/guards, including unused private function bodies.
-It rejects GoStmt, SelectStmt, channel creation, and send or receive pipeline constructs there.
+It rejects GoStmt, SelectStmt, channel creation by `make` with a literal channel type, and send or receive pipeline constructs there.
 guards.go is the only production file in internal/guards, and Scan holds every such construct today.
 GS23 restores a renamed copy of the old Scan pipeline and requires the registered check to turn red.
 
@@ -311,7 +311,7 @@ No elapsed-time equality is required, and no production filesystem race defines 
 | pre-cancelled | cancelled context before Scan | no enumeration, unknown counts |
 | enumeration cancellation, error return | barrier releases only after cancellation; enumeration returns the context error | unknown total and omitted counts (GS04) |
 | enumeration cancellation, success return | barrier releases only after cancellation; enumeration returns candidates and a nil error | unknown total and omitted counts, no inspection (GS30) |
-| between candidates | cancel after publishing a completed candidate | completed prefix and known omitted arithmetic |
+| between candidates | cancel after publishing a completed candidate; GS05 drives it through a direct Scan, and family S omits it, because no Command cancel event lands between two candidates | completed prefix and known omitted arithmetic |
 | inspection cancellation | candidate returns after cancellation | no interrupted candidate publication |
 | no rows | inspection completes with an empty row slice | candidate still counted |
 | enumeration error | injected error while context is active | existing complete result |
@@ -335,6 +335,8 @@ The direct loop introduces no new cleanup-error state.
 **Won't handle** new hook execution — HeaderFields remains a static reader.
 **Won't handle** guard grammar or envelope policy — the separate shared-guard-projection outcome owns those migrations.
 **Won't handle** the historical line pin to Scan in `ASSESSMENT.md:42` — it describes a dated tree and is not a contract.
+**Won't handle** a channel made from a named channel type — the ownership subcheck grades syntax, and that type needs go/types.
+**Won't handle** goroutine starts with no go statement — `sync.WaitGroup.Go`, `context.AfterFunc`, `time.AfterFunc`, and errgroup need import bindings or go/types, and the ownership subcheck grades syntax only.
 **Won't handle** the stale column list in the package comment (`guards.go:1-2`) — it predates this spec, and the refactor does not change the output.
 
 ## Out of scope
@@ -370,7 +372,7 @@ Flagged additions for reviewer veto:
 
 - GS29 and story 18 are new. They name an existing pin that the 2026-10-06 spec missed; they add no product behavior.
 - The refresh drops six paths from the 2026-10-06 fence, as Graph ordering states.
-- The ownership subcheck bans go statements, select statements, and channel constructs in all production Go under internal/guards. This ban is wider than copy survival, and it also refuses any future concurrency there. Keep it, or narrow it to the copy of the old pipeline.
+- The ownership subcheck bans go statements, select statements, and channel constructs in all production Go under internal/guards. This ban is wider than copy survival, and it also refuses any future syntax-level concurrency there (go, select, and channel constructs). Keep it, or narrow it to the copy of the old pipeline.
 - The spec keeps `Related roadmap: FT366` instead of a `Roadmap:` line. FT366 closes only when both bound specs land, so a retiring spec must not remove the shared row.
 
 The private-loop ownership check enforces the approved removal of worker indirection.
