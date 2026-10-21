@@ -6,7 +6,7 @@ Decision source: `decisions/architecture-primitives/tickets/1.md`, reviewed in `
 
 Verification log: 1 iteration to accept the spec — independent Sol6.1/xhigh review accepted SHA256 fab072a3665188f7a545335b3bb1a237821383c6dd44e9ea11472dbd1df92e17. The independent ticket review also accepted the graph at static confidence 9
 
-Implementation approval: pending
+Implementation approval: approved by the reviewer on 2026-10-21 (drain d-036de9c826ed ticket triage)
 
 ## Problem
 
