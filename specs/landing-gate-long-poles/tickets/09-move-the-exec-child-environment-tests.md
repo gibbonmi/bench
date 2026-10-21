@@ -1,7 +1,7 @@
 # Move the exec child-environment tests
 
 Blocked by: 08-carry-the-child-environment.md
-Writes: internal/worktree/exec_test.go, internal/worktree/exec_call_env_test.go, internal/worktree/parallel_census_test.go
+Writes: internal/worktree/exec_test.go, internal/worktree/exec_call_env_test.go (new), internal/worktree/parallel_census_test.go
 Covers: LGP20, LGP21, LGP22, LGP34
 
 ## What to build
