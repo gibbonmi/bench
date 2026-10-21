@@ -1121,6 +1121,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3-standards-r1",
+          "performer": "claude:tcs-c3-standards-r1-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c3-standards-r1-20261021",
+            "digest": "sha256:d872e64f1e14cbb3192ca6e08aeedf7e64dce0f0866abb5d9225081db257ee55",
+            "excerpt": "Standards axis, TC-C3 confirming round 1 (repair 7a554e12e..63d979562): 0 findings. S2 closed: the halfTimeoutMS comment states what and why in one line. The warnedPackage type and atThreshold helper give each package's elapsed time one source for the events and the expected rows. The changelog sentence is plain STE.\n"
+          },
+          "axis": "Standards",
+          "base": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+          "tip": "63d97956227bbe55db78767bd7f72bcc8b9a84ac",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-r0"
+          ]
+        },
+        {
+          "id": "c3-spec-r1",
+          "performer": "claude:tcs-c3-spec-r1-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c3-spec-r1-20261021",
+            "digest": "sha256:7ab1a27b6e64a56664b4f9fdead4b566c4b17bb3eae6359e4a497c57945cda29",
+            "excerpt": "Spec axis, TC-C3 confirming round 1: 0 findings. P1 closed: CHANGELOG.md:10 states that the limit was the implicit Go default of ten minutes, which a -timeout in GOFLAGS could change. The changed tests still assert TC27-TC33 as the spec states them; TestTimeoutWarningAboveThreshold is additive.\n"
+          },
+          "axis": "Spec",
+          "base": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+          "tip": "63d97956227bbe55db78767bd7f72bcc8b9a84ac",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-r0"
+          ]
+        },
+        {
+          "id": "c3-coverage-r1",
+          "performer": "claude:tcs-c3-coverage-r1-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "963401f284430475ee64af4ed1c2a5976c1444aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c3-coverage-r1-20261021",
+            "digest": "sha256:8c0f6e684be5ba562bfe4502379efbc8825dd272fa8cb9ae000d26a77746cf01",
+            "excerpt": "Coverage axis, TC-C3 confirming round 1: 0 findings. C1 closed: each warned row takes its elapsed cell from its own fixture value, TestTimeoutWarningAboveThreshold uses the threshold plus one, and the order test uses unequal values, so K6 and K7 bite. TC36 holds. Advice, not a finding: the test-side /2 in halfTimeoutMS is an independent copy of the production divisor; the author's divisor 2->3 mutant bit against it.\n"
+          },
+          "axis": "Coverage",
+          "base": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+          "tip": "63d97956227bbe55db78767bd7f72bcc8b9a84ac",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-r0"
+          ]
         }
       ]
     }
