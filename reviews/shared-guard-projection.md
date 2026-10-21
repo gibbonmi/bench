@@ -1374,6 +1374,74 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gp2-r2-standards",
+          "performer": "claude:sgp-review-standards-gp2-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-standards-gp2-r2",
+            "digest": "sha256:0cf85d52156f10447e6ba98ef225f0224ac4bf4a3deb9d41e5bad1b47a36ae63",
+            "excerpt": "STANDARDS confirming round 1, chunk GP2 (base 6183e1e43, code tip 743b19190, evidence tip 2d9f64794).\n\nEvidence check: bench preflight evidence sha256:8b3925a2... --check-current returned current=true, dirty_record=false, source_tip 2d9f64794.\n\nF1: CLOSED. The coordinator's respell probe answer (/tmp/claude-1000/-home-mgibs-workspace-bench/f5571912-814f-48c2-9e29-363a829710e2/scratchpad/sgp-gp2-f1-respell.out) shows verdict bit, restored yes, first_failure TestWriteEnvelopeCwdContract/duplicate_input_null. Its failure text is envelope_contract_test.go:31: PathFromEnvelope(...) = (\"\", file_path missing), want the file_path field missing error. That is the named mutation turning the independent expectation red, which is the AGENTS.md exception. The delta does not touch envelope_contract_test.go (29-31).\n\nNew finding (repair delta):\n- F2 | auto-fix | internal/benchguard/projection_contract_test.go:60-61 | confidence 8\n  - The added comment is one 33-word descriptive sentence: \"The nested rows read one level only, in the outer judge and in the exec later-segment scan, and the exec exception covers a direct head only, so an exec inside a wrapper refuses.\"\n  - Binding requirement: craft-comments SKILL.md:12 requires ASD-STE100 prose; .agents/skills/bench-craft-spec/references/ste-prose.md:17-18 caps a descriptive sentence at 25 words. Same rule as GP1 round 1 F1.\n  - A failed documented mandatory standard stays blocking even without an automated check (bounded-repair-policy.md:31), so it is not demoted to advice.\n  - Fix: split it into two sentences of 25 words or fewer each. Change no code. The correction is comment-only, so it is evidence-only per bounded-repair-policy.md:47-48.\n\nChecked, no defect:\n- New \"unrelated cwd type\" rows at cmd/bench/guard_projection_test.go:31 and internal/benchguard/projection_contract_test.go:44 test different layers, so there is no duplicated knowledge.\n- New Classify rows at projection_contract_test.go:70-72 are consistent with the table and add no comment.\n\nOptional advice: none.\n\nCommands run, all through bench worktree exec shared-guard-projection-build --: bench preflight evidence ... --check-current; git diff 813efeb55 743b19190 and --stat; git show 743b19190: for envelope_contract_test.go and projection_contract_test.go; git log -S; rg on the review file and ste-prose.md. No tests, no probes, no files written.\n"
+          },
+          "axis": "Standards",
+          "base": "6183e1e43df713b5dbbe2c58dc86df7106b78507",
+          "tip": "743b19190a6ab51a6c7a1d65f4071659223ff53a",
+          "finding_ids": [
+            "F2"
+          ],
+          "supersedes": [
+            "gp2-r1-standards"
+          ]
+        },
+        {
+          "id": "gp2-r2-spec",
+          "performer": "claude:sgp-review-spec-gp2-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-spec-gp2-r2",
+            "digest": "sha256:890f449c84805ebdfc7ab16cea9a96bb643671e87821cd47f8ed1b869c1875e0",
+            "excerpt": "SPEC axis, GP2 confirming round 1 (base 6183e1e43, code tip 743b19190, evidence tip 2d9f64794): PASS, no findings.\n\nEvidence current: bench preflight evidence sha256:8b3925a2... --check-current returned current=true, dirty_record=false, head 2d9f64794.\n\nRows traced against the tip's code:\n- C2, Bench (internal/benchguard/projection_contract_test.go:44): Bench decodes with InputMap, whose target has no cwd field (envelope.go:44-51). The cwd 7 is ignored, so the command is readable and err is \"\". A swap to CwdInputMap would error on cwd. Matches spec.md:193.\n- C2, Git (cmd/bench/guard_projection_test.go:76): Git decodes with CommandStruct, which also has no cwd field (envelope.go:35-43). The command survives, so guardGit exits 2.\n- C1 row A, bash -c \"sh -c 'bench status'\" && echo hi (projection_contract_test.go:38): the outer judge calls invokes(child.Stream, resolver, false) (benchguard.go:138), which returns false for the nested sh, so the verdict is allowed.\n- C1 row B, bench worktree exec L -- true; bash -c \"sh -c 'bench status'\" (projection_contract_test.go:39): judgeExec scans later segments with spanInvokesBench(..., true) (benchguard.go:175); the nested sh is not Bench at one level, so the verdict is allowed. Both rows match \"Git and Bench Classify limit traversal to one level\" (spec lines 105 and 473, W4).\n- C3, bash -c 'bench worktree exec L -- cp a b; cp b a' (projection_contract_test.go:40, ;, blocked): the outer flag blocks the exec exception inside the child. The base code has the same outer && isExecHead guard (6183e1e43:benchguard.go:134), so the row pins retained behavior (GP12).\n- The delta only adds rows and comment text, so every GP2 acceptance row is intact.\n\nRefrozen record (reviews/shared-guard-projection.md at 2d9f64794): GP2 base 6183e1e4, tip 743b1919, source_digest 070c2f92, plan_digest 26860796. All 20 plan verification ids appear at source 070c2f92 with prefixes b2-, r3-, r4-. The r3 and r4 performers match the plan's repair assignments. The repaired files fit the Writes: lines.\n\nAdvice (no ID):\n- No recorded plan probe shows red for the new Bench cwd row or the C1 and C3 rows; the repair probe sets hold that evidence.\n- The b2- rows are attributed to claude:sgp-t2-author-20261021, which has no repair assignment; that session is the ticket 2 author.\n- The new comment at projection_contract_test.go lines 58-60 has a sentence of about 33 words. This is a Standards matter.\n\nCommands run, all through bench worktree exec shared-guard-projection-build --: bench preflight evidence ... --check-current, git diff 813efeb55 743b19190, git log, git show, rg. No tests and no probes.\n"
+          },
+          "axis": "Spec",
+          "base": "6183e1e43df713b5dbbe2c58dc86df7106b78507",
+          "tip": "743b19190a6ab51a6c7a1d65f4071659223ff53a",
+          "finding_ids": [],
+          "supersedes": [
+            "gp2-r1-spec"
+          ]
+        },
+        {
+          "id": "gp2-r2-coverage",
+          "performer": "claude:sgp-review-coverage-gp2-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-coverage-gp2-r2",
+            "digest": "sha256:c0fed787c2281241797c952e93313540fb2d5264b103a325237912a647036c70",
+            "excerpt": "COVERAGE confirming round 1, GP2: C1, C2 and C3 are all closed. I found no new finding and ran no probe (0 of 1 used).\n\nCommands:\n- bench preflight evidence sha256:8b3925a2... --check-current returned current=true, dirty_record=false, source_tip=2d9f64794, base=6183e1e43.\n- Read the saved probe answers and mutant sets in /tmp/claude-1000/-home-mgibs-workspace-bench/f5571912-814f-48c2-9e29-363a829710e2/scratchpad/.\n- git diff 813efeb55 743b19190 for the two test files.\n- git diff --stat 1c01218bf 743b19190 shows only the two test files and one spec.md line changed; production code is identical to what the repair probes ran against.\n\nPer finding:\n- C1 (two-level wrapper depth): closed. The :138 and :305 false-to-true swaps in sgp-t4-r1-mutants.json match benchguard.go:138 and :305. sgp-t4-r1-cases.out shows mutant 1 (:138) bit on bash -c \"sh -c 'bench status'\" && echo hi (projection_contract_test.go:76, got (true,\"&&\"), want (false,\"\")). Mutant 2 (:305) bit on bench worktree exec L -- true; bash -c \"sh -c 'bench status'\". Both restored=yes.\n- C2 (Bench caller cwd independence): closed. The InputMap-to-CwdInputMap swap at benchguard.go:26 bit TestBenchEnvelopeType/unrelated_cwd_type (sgp-t3-r1-bench.out), restored=yes.\n- C3 (outer-only exec exception): closed. Mutant 3 (outer && dropped at benchguard.go:127) bit bash -c 'bench worktree exec L -- cp a b; cp b a', which got (false,\"\") where it wants (true,\";\"). restored=yes.\n\nGit-side C2 red route: adequate. gitguard.go:113 decodes with CommandStruct, which ignores cwd; envelope.go offers no form that decodes both a nested command and cwd, so a form swap cannot red the row. sgp-t3-r1-git.out shows an extra CwdInputMap decode mutant and a raw-bytes \"cwd\":7 mutant both failed TestGuardGitEnvelopePolicy/unrelated_cwd_type (exit 0, want 2) and restored.\n\nNew findings: none.\n\nOptional advice (no ID): the hardening-cycle Git row cannot be reddened by a pure form swap; this is advice only.\n"
+          },
+          "axis": "Coverage",
+          "base": "6183e1e43df713b5dbbe2c58dc86df7106b78507",
+          "tip": "743b19190a6ab51a6c7a1d65f4071659223ff53a",
+          "finding_ids": [],
+          "supersedes": [
+            "gp2-r1-coverage"
+          ]
         }
       ]
     }
