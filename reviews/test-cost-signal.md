@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/test-cost-signal/spec.md",
-  "plan_digest": "sha256:3b77567c43768aebdd895a498a8cfe407310f037da223b9e1c3448e195a089b2",
+  "plan_digest": "sha256:5d79c8012ea0883ed2194af97f5c65fd7f5e75d471531192d2e9a485bc892ee0",
   "implementation_session": "",
   "chunks": [
     {
@@ -250,9 +250,9 @@
     {
       "id": "TC-C2",
       "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
-      "tip": "14b320f6a981e20b6b8b5e7f8a7d5603f2ef23e6",
-      "plan_digest": "sha256:3b77567c43768aebdd895a498a8cfe407310f037da223b9e1c3448e195a089b2",
-      "source_digest": "aaf7ffde7e3059c73ac481b2fb34e993a3a7b3f2",
+      "tip": "49eb64960a455b6ca0443269c644081c07c22806",
+      "plan_digest": "sha256:5d79c8012ea0883ed2194af97f5c65fd7f5e75d471531192d2e9a485bc892ee0",
+      "source_digest": "3b90591aac1d7ac27cb5ac499be470956ed3fe68",
       "acceptance_rows": [
         "TC12",
         "TC13",
@@ -338,6 +338,42 @@
             "ref": "claude-agent:bench-writer-medium:tcs-t2-repair1-20261021",
             "digest": "sha256:ace74449f4ab1f6b28090244670a1ec9cb3276953a5a62bafaf79787f01b8f59",
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12425,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nslowest[1]{package,test,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,12410\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-r2-t2-testreport",
+          "performer": "claude:tcs-t2-repair2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3b90591aac1d7ac27cb5ac499be470956ed3fe68",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t2-repair2-20261021",
+            "digest": "sha256:b048d359264f36759f6ec759fa51ff9f2455d2054911aaaea8c881b1f26181e3",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,65479,255\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nslowest[3]{package,test,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,TestRootConformanceCheckPrintsFailures,21980\n  github.com/gibbonmi/bench/internal/testreport,TestNamedCheckRunsOnlyRegisteredDevScope,16350\n  github.com/gibbonmi/bench/internal/testreport,TestCommandDrainsBuilderGroupOnCancelSignal,6060\n"
+          },
+          "requirement": "t2-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-r2-t2-root-conformance",
+          "performer": "claude:tcs-t2-repair2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3b90591aac1d7ac27cb5ac499be470956ed3fe68",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:tcs-t2-repair2-20261021",
+            "digest": "sha256:c9e09c8b3480b6a52f51272bab15798b87acae7cb73dea23fde46dc96a7f06c5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12357,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nslowest[1]{package,test,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,12340\n"
           },
           "requirement": "t2-root-conformance",
           "command": "bench test --check root-conformance",
@@ -499,6 +535,18 @@
     {
       "from": "sha256:321f4c6febbf4d188806e04290462c6ad9c3af218c9a23a4c831f8fce926e34d",
       "to": "sha256:3b77567c43768aebdd895a498a8cfe407310f037da223b9e1c3448e195a089b2",
+      "chunk_ids": {
+        "TC-C1": [
+          "TC-C1"
+        ],
+        "TC-C2": [
+          "TC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3b77567c43768aebdd895a498a8cfe407310f037da223b9e1c3448e195a089b2",
+      "to": "sha256:5d79c8012ea0883ed2194af97f5c65fd7f5e75d471531192d2e9a485bc892ee0",
       "chunk_ids": {
         "TC-C1": [
           "TC-C1"
