@@ -1,16 +1,22 @@
 package conformance
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
@@ -21,37 +27,58 @@ const (
 	guardScanOwnerFile = guardScanOwnerDir + "/guards.go"
 )
 
-// guardScanOwnerDiagPrefix starts each diagnostic of checkGuardScanLoopOwner.
-const guardScanOwnerDiagPrefix = "guard scan loop owner "
+// guardScanOwnerDiagPrefix starts each diagnostic of checkGuardScanLoopOwner. The other three
+// constants spell the diagnostic pieces that the check and its tests share.
+const (
+	guardScanOwnerDiagPrefix = "guard scan loop owner "
+	guardScanOwnerUnreadable = " is missing or unreadable"
+	guardScanOwnerIrregular  = " is not a regular file"
+	guardScanOwnerUnparsed   = "cannot parse "
+)
 
 // checkGuardScanLoopOwner keeps the guard scan one synchronous loop. It parses each production
-// Go file in internal/guards, unused function bodies included, and reports each go statement,
-// select statement, channel construction, channel send, and channel receive. It reads syntax
-// nodes, so a comment or a string literal never matches. It skips test files, so a test
-// goroutine stays legal. A root without internal/guards, such as a linked consumer, holds no
-// scan source and gets no diagnostic. Inside that directory, a missing or unreadable guards.go
-// is a diagnostic, because an absent owner would otherwise read as a clean pass.
+// Go file beneath internal/guards, unused function bodies included, and reports each go
+// statement, select statement, channel construction, channel send, and channel receive. It reads
+// syntax nodes, so a comment or a string literal never matches. It skips test files and testdata
+// directories, so a test goroutine stays legal. It names a Go file that is not a regular file
+// before any open, because an open of a FIFO can block the gate. A root without internal/guards,
+// such as a linked consumer, holds no scan source and gets no diagnostic; any other stat error is
+// a diagnostic. Inside that directory, a missing or unreadable guards.go or subdirectory is a
+// diagnostic, because an absent owner would otherwise read as a clean pass.
 func checkGuardScanLoopOwner(root string) []string {
 	dir := filepath.Join(root, filepath.FromSlash(guardScanOwnerDir))
-	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
+	info, err := os.Stat(dir)
+	if errors.Is(err, fs.ErrNotExist) || (err == nil && !info.IsDir()) {
 		return nil
 	}
-	entries, err := os.ReadDir(dir)
-	var production []string
-	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".go") && !strings.HasSuffix(entry.Name(), "_test.go") {
-			production = append(production, guardScanOwnerDir+"/"+entry.Name())
+	if err != nil {
+		return []string{guardScanOwnerDiagPrefix + guardScanOwnerDir + guardScanOwnerUnreadable}
+	}
+	var production, diags []string
+	_ = filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+		relPath, relErr := filepath.Rel(root, path)
+		rel := filepath.ToSlash(relPath)
+		switch {
+		case err != nil || relErr != nil:
+			diags = append(diags, guardScanOwnerDiagPrefix+rel+guardScanOwnerUnreadable)
+		case entry.IsDir() && entry.Name() == "testdata":
+			return fs.SkipDir
+		case entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go"):
+		case !entry.Type().IsRegular():
+			diags = append(diags, guardScanOwnerDiagPrefix+rel+guardScanOwnerIrregular)
+		default:
+			production = append(production, rel)
 		}
+		return nil
+	})
+	if !slices.Contains(production, guardScanOwnerFile) {
+		return append(diags, guardScanOwnerDiagPrefix+guardScanOwnerFile+guardScanOwnerUnreadable)
 	}
-	if err != nil || !slices.Contains(production, guardScanOwnerFile) {
-		return []string{guardScanOwnerDiagPrefix + guardScanOwnerFile + " is missing or unreadable"}
-	}
-	var diags []string
 	fset := token.NewFileSet()
 	for _, rel := range production {
 		file, err := parser.ParseFile(fset, filepath.Join(root, filepath.FromSlash(rel)), nil, 0)
 		if err != nil {
-			diags = append(diags, guardScanOwnerDiagPrefix+"cannot parse "+rel)
+			diags = append(diags, guardScanOwnerDiagPrefix+guardScanOwnerUnparsed+rel)
 			continue
 		}
 		ast.Inspect(file, func(node ast.Node) bool {
@@ -177,7 +204,7 @@ func TestGuardScanLoopOwnerOptionalSurface(t *testing.T) {
 // An absent file, a directory in its place, and a file that does not parse each get a named
 // diagnostic, so a missing owner never reads as a clean pass.
 func TestGuardScanLoopOwnerMissingOwner(t *testing.T) {
-	missing := guardScanOwnerDiagPrefix + guardScanOwnerFile + " is missing or unreadable"
+	missing := guardScanOwnerDiagPrefix + guardScanOwnerFile + guardScanOwnerUnreadable
 	for _, tc := range []struct {
 		name, want string
 		plant      func(t *testing.T, path string)
@@ -188,7 +215,7 @@ func TestGuardScanLoopOwnerMissingOwner(t *testing.T) {
 				t.Fatal(err)
 			}
 		}},
-		{"unparseable", guardScanOwnerDiagPrefix + "cannot parse " + guardScanOwnerFile, func(t *testing.T, path string) {
+		{"unparseable", guardScanOwnerDiagPrefix + guardScanOwnerUnparsed + guardScanOwnerFile, func(t *testing.T, path string) {
 			writeFixtureFile(t, path, "package guards\n\nfunc Scan( {\n")
 		}},
 	} {
@@ -200,6 +227,64 @@ func TestGuardScanLoopOwnerMissingOwner(t *testing.T) {
 				t.Fatalf("want %q, got %v", tc.want, diags)
 			}
 		})
+	}
+}
+
+// TestGuardScanLoopOwnerGradesNestedProductionFiles plants a goroutine in a production file of a
+// subdirectory of internal/guards and in a testdata file. Only the nested production file gets a
+// diagnostic, because testdata holds fixtures and no production source.
+func TestGuardScanLoopOwnerGradesNestedProductionFiles(t *testing.T) {
+	root := t.TempDir()
+	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(guardScanOwnerFile)), "package guards\n")
+	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(guardScanOwnerDir+"/inner/inner.go")), "package inner\n\nfunc start(f func()) { go f() }\n")
+	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(guardScanOwnerDir+"/testdata/fixture.go")), "package fixture\n\nfunc start(f func()) { go f() }\n")
+	diags := guardScanOwnerDiags(t, root)
+	want := guardScanOwnerDiagPrefix + guardScanOwnerDir + "/inner/inner.go:3: go statement"
+	if len(diags) != 1 || diags[0] != want {
+		t.Fatalf("want only %q, got %v", want, diags)
+	}
+}
+
+// TestGuardScanLoopOwnerRefusesASpecialGoFile plants a FIFO named x.go in internal/guards. The
+// check must name it before any open, because an open of a FIFO with no writer blocks the gate.
+// The test calls the subcheck itself: a sibling package-core-guard subcheck still opens the FIFO.
+func TestGuardScanLoopOwnerRefusesASpecialGoFile(t *testing.T) {
+	root := t.TempDir()
+	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(guardScanOwnerFile)), "package guards\n")
+	rel := guardScanOwnerDir + "/x.go"
+	if err := syscall.Mkfifo(filepath.Join(root, filepath.FromSlash(rel)), 0o644); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+	}
+	result := make(chan []string, 1)
+	go func() { result <- checkGuardScanLoopOwner(root) }()
+	select {
+	case diags := <-result:
+		if want := guardScanOwnerDiagPrefix + rel + guardScanOwnerIrregular; !slices.Contains(diags, want) {
+			t.Fatalf("want %q, got %v", want, diags)
+		}
+	case <-time.After(bounds.TestDeadline(0)):
+		t.Fatalf("the check blocked on the FIFO %s", rel)
+	}
+}
+
+// TestGuardScanLoopOwnerReportsAnUnstatableOwnerDir strips the permissions of the parent of
+// internal/guards. A stat error other than not-exist must get a named diagnostic, because only an
+// absent directory marks a root with no scan source.
+func TestGuardScanLoopOwnerReportsAnUnstatableOwnerDir(t *testing.T) {
+	root := t.TempDir()
+	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(guardScanOwnerFile)), "package guards\n")
+	parent := filepath.Join(root, "internal")
+	// The restore is registered before the strip, so TempDir's removal can descend again.
+	t.Cleanup(func() { _ = os.Chmod(parent, 0o755) })
+	if err := os.Chmod(parent, 0o000); err != nil {
+		capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot strip directory permissions: %v", err))
+	}
+	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(guardScanOwnerDir))); err == nil {
+		capability.Capability(t, capability.Privilege, "mode 0o000 directory is still searchable by this user")
+	}
+	want := guardScanOwnerDiagPrefix + guardScanOwnerDir + guardScanOwnerUnreadable
+	if diags := guardScanOwnerDiags(t, root); !slices.Contains(diags, want) {
+		t.Fatalf("want %q, got %v", want, diags)
 	}
 }
 
