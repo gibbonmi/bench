@@ -376,15 +376,15 @@ The registered ordinary conformance test detects private copies in the executed 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
 | GP01 | 1 | Routine-prefix family P retains its projected executable index | `internal/shellcommand/shellcommand_test.go` (`TestResolveRoutinePrefix`) | A new private prefix rule differs on query or option forms |
-| GP02 | 2 | ShellChildren returns one ordered child per supported c flag in family W | planned TestShellChildren in internal/shellcommand/projection_test.go | A wrapper basename or flag omission loses a child |
-| GP03 | 2 | Invalid indexes and missing wrapper operands yield no child | planned TestShellChildrenBounds in internal/shellcommand/projection_test.go | Unchecked indexes panic or invent a child |
+| GP02 | 2 | ShellChildren returns one ordered child per supported c flag in family W | `internal/shellcommand/projection_test.go` (`TestShellChildren`) | A wrapper basename or flag omission loses a child |
+| GP03 | 2 | Invalid indexes and missing wrapper operands yield no child | `internal/shellcommand/projection_test.go` (`TestShellChildrenBounds`) | Unchecked indexes panic or invent a child |
 | GP04 | 2 | Bench Classify searches every matching child in W4 and refuses the follow-on in the second `-c` child | planned TestGuardWrapperSelection in internal/benchguard/projection_contract_test.go | A universal first-child or recursive policy changes the Bench verdict |
-| GP05 | 3 | WorktreeExec returns child argv byte-for-byte in family X | planned TestWorktreeExec in internal/shellcommand/projection_test.go | Joining and reparsing loses a quoted argv element |
-| GP06 | 3 | A recognized exec head without a delimiter has no child | planned TestWorktreeExecMissingDelimiter in internal/shellcommand/projection_test.go | Header recognition is confused with runnable child discovery |
-| GP07 | 3 | An empty child after a delimiter has DifferentCheckout=false | planned TestWorktreeExecEmptyChild in internal/shellcommand/projection_test.go | An empty projection fabricates child authority |
-| GP08 | 4 | A nonempty projected child has DifferentCheckout=true | planned TestWorktreeExecContext in internal/shellcommand/projection_test.go | An omitted context bit makes parent facts available |
+| GP05 | 3 | WorktreeExec returns child argv byte-for-byte in family X | `internal/shellcommand/projection_test.go` (`TestWorktreeExec`) | Joining and reparsing loses a quoted argv element |
+| GP06 | 3 | A recognized exec head without a delimiter has no child | `internal/shellcommand/projection_test.go` (`TestWorktreeExecMissingDelimiter`) | Header recognition is confused with runnable child discovery |
+| GP07 | 3 | An empty child after a delimiter has DifferentCheckout=false | `internal/shellcommand/projection_test.go` (`TestWorktreeExecEmptyChild`) | An empty projection fabricates child authority |
+| GP08 | 4 | A nonempty projected child has DifferentCheckout=true | `internal/shellcommand/projection_test.go` (`TestWorktreeExecContext`) | An omitted context bit makes parent facts available |
 | GP09 | 2, 3 | Nested shell and exec combinations in X3 retain one-level Git verdicts | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | Recursive expansion changes the documented depth |
-| GP10 | 4, 5 | Child and redirected push destinations retain the unresolved-destination label | planned TestGitProjectionAuthority in internal/gitguard/projection_contract_test.go | Parent facts incorrectly permit the child push |
+| GP10 | 4, 5 | Child and redirected push destinations retain the unresolved-destination label | `internal/gitguard/projection_contract_test.go` (`TestGitProjectionAuthority`) | Parent facts incorrectly permit the child push |
 | GP11 | 18 | Bare and symlink Bench aliases retain classification | `internal/benchguard/benchguard_test.go` (`TestClassifyResolvesBareAliasFromProcessPath`) | Shared name matching replaces caller resolver policy |
 | GP12 | 19 | Existing outer exec follow-on and heredoc exceptions retain verdicts | `internal/benchguard/benchguard_test.go` (`TestClassifySpanScopedFollowOns`) | Child projection is incorrectly used as a new refusal policy |
 | GP13 | 20 | A pool reference competing with a follow-on emits the pool refusal | planned TestGuardProjectionPoolPrecedence in cmd/bench/guard_projection_test.go | Reordered consumers emit the wrong winning diagnostic |
@@ -446,9 +446,9 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP69 | 29 | runsBenchUnderExec extracts the exec child only through WorktreeExec | review-owned (Standards axis) | GP30 grades production files only, so only review sees a test-side copy |
 | GP70 | 27 | The follow-on core entry keeps exit 2 and the reviewer-verb message for each override envelope | `cmd/bench/main_test.go` (`TestFollowOnGuardDeniesTheOverrideEnvelope`) | The migrated walk breaks the actual entry path |
 | GP71 | 15, 16 | The Bench follow-on hook keeps warning-allow when its resolver, wrapper, or core is missing | `internal/systemtest/bench_follow_on_test.go` (`TestBenchFollowOnHookDegradedRim`, FOG19 and FOG33) | Shared authority imposes Git's refusal on the follow-on hook |
-| GP72 | 18 | `mybench worktree exec X -- git reset --hard` keeps the empty Git label | planned TestGitProjectionAuthority in internal/gitguard/projection_contract_test.go | A Git consumer that calls WorktreeExec without its Bench basename test refuses a non-Bench head |
+| GP72 | 18 | `mybench worktree exec X -- git reset --hard` keeps the empty Git label | `internal/gitguard/projection_contract_test.go` (`TestGitProjectionAuthority`) | A Git consumer that calls WorktreeExec without its Bench basename test refuses a non-Bench head |
 | GP73 | 18, 27 | ReviewerVerb allows `x worktree exec t -- bench commitment override` | planned TestReviewerVerbKeepsRecursiveReach in internal/benchguard/projection_contract_test.go | A reviewer walk that calls WorktreeExec without isBench denies a non-Bench head |
-| GP74 | 2 | The Git guard reads only the first matching child in W4 and keeps the allow verdict for `bash -c 'echo ok' -c 'git reset --hard'` | planned TestGuardWrapperSelection in internal/gitguard/projection_contract_test.go | A Git consumer that searches every child refuses the second-flag reset |
+| GP74 | 2 | The Git guard reads only the first matching child in W4 and keeps the allow verdict for `bash -c 'echo ok' -c 'git reset --hard'` | `internal/gitguard/projection_contract_test.go` (`TestGuardWrapperSelection`) | A Git consumer that searches every child refuses the second-flag reset |
 
 GP46 compares the candidate executable with tuples recorded from a pre-migration executable.
 Before GP1 begins, create a Bench worktree at the build-entry commit, build it, and record the commit so it can be rebuilt.
