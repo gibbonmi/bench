@@ -1442,6 +1442,28 @@
           "supersedes": [
             "gp2-r1-coverage"
           ]
+        },
+        {
+          "id": "gp2-r3-standards",
+          "performer": "claude:sgp-review-standards-gp2-r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-standards-gp2-r3",
+            "digest": "sha256:741d3006176963b55f3331ae39a74843e64758976b62f37474328005dc379fe1",
+            "excerpt": "STANDARDS reaffirmation, pair 743b19190 -> 01781196.\n- F2 closed. internal/benchguard/projection_contract_test.go:60-61 (diff hunk @@ -56,10 +56,10) now holds two sentences. The first ends \"...in the exec later-segment scan.\" and has 17 words. The second is \"The exec exception covers a direct head only, so an exec inside a wrapper refuses.\" and has 15 words. The earlier sentences in the block are 5 and 23 words, so all of them are within the 25-word descriptive bound.\n- The delta is comment-only. In the Go file the diff is 2 comment lines replaced by 2 comment lines. No code line, identifier, or test row changed. git diff 2d9f64794 01781196 --stat shows only that file and reviews/shared-guard-projection.md.\n- Comment rules: active voice, present tense, articles present, one topic; no noun cluster of more than three nouns. The change keeps the same facts, so there is no knowledge duplication.\n- New findings: none. Policy lines 47-53 of bounded-repair-policy.md make this an evidence-only correction. It consumes no repair cycle, and the issuing axis (Standards) reaffirms it.\n- Evidence check: --check-current returned current=true, dirty_record=false, source_tip 01781196a6c33aa09a59c8f9b9b7203f0e90c546, base 6183e1e43.\n- Commands run (all through bench worktree exec shared-guard-projection-build --): bench preflight evidence sha256:5cef71a9... --check-current; git diff 743b19190 01781196; git diff 2d9f64794 01781196 --stat; git diff 743b19190 01781196 --stat; git diff -U4 743b19190 01781196 -- internal/benchguard/projection_contract_test.go. No test, no probe, no file written.\n- Verdict: Standards reaffirmed, 0 open findings, confidence 9/10.\n"
+          },
+          "axis": "Standards",
+          "base": "6183e1e43df713b5dbbe2c58dc86df7106b78507",
+          "tip": "743b19190a6ab51a6c7a1d65f4071659223ff53a",
+          "finding_ids": [],
+          "supersedes": [
+            "gp2-r2-standards"
+          ]
         }
       ]
     }
