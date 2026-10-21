@@ -8,7 +8,8 @@ import (
 const checkHeader = "check[1]{name,kind,tests_run,subjects}:\n"
 
 // TestNamedCheckPrintsCheckRowFirst grades that the check row is the first block of the
-// result and that the packages table follows it.
+// result and that the packages table follows it. A warned run puts `timeout_warnings`
+// between the two.
 func TestNamedCheckPrintsCheckRowFirst(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--check", "line-routing"}, cannedSetNamed(t, "passing").events, 0)
 	want := checkHeader + "  line-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n"

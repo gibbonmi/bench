@@ -191,7 +191,12 @@ func (r *report) render(full bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	result := packageBlock + failureBlock + skipBlock
+	// The warning block leads the result, so a bounded response always shows it.
+	warningBlock, err := r.timeoutWarningsBlock(packages)
+	if err != nil {
+		return "", err
+	}
+	result := warningBlock + packageBlock + failureBlock + skipBlock
 	// Only a --full run prints the slowest table, so a plain run keeps its bytes and its
 	// response line bound.
 	if full {

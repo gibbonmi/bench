@@ -5,11 +5,33 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // slowestPerPackage is the row limit of each package in the slowest table.
 const slowestPerPackage = 3
+
+// timeoutWarningDivisor divides the go test timeout into the warning threshold, so the
+// threshold is never a second duration.
+const timeoutWarningDivisor = 2
+
+// timeoutWarningsBlock renders a row for each package, in the given order, whose elapsed
+// time is at least the warning threshold. It renders nothing when no package qualifies,
+// so a healthy run keeps its bytes.
+func (r *report) timeoutWarningsBlock(packages []string) (string, error) {
+	timeoutMS := bounds.GoTestTimeout.Milliseconds()
+	rows := make([][]any, 0)
+	for _, pkg := range packages {
+		if r.elapsedMS[pkg] >= timeoutMS/timeoutWarningDivisor {
+			rows = append(rows, []any{pkg, r.elapsedMS[pkg], timeoutMS})
+		}
+	}
+	if len(rows) == 0 {
+		return "", nil
+	}
+	return toon.TableTyped("timeout_warnings", []string{"package", "elapsed_ms", "timeout_ms"}, rows)
+}
 
 // milliseconds converts a go test -json `Elapsed` value in seconds to whole milliseconds.
 func milliseconds(seconds float64) int64 {
