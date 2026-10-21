@@ -34,6 +34,10 @@ The `candidate-binary-install` spec stage ran on Claude Code for FT419. An Opus 
 
 Two of the four rejected re-reviews found a blocker that the coordinator's own previous repair had introduced. A consensus diagnosis by Fable/high and Opus/high attributed most misses to three causes: a fork that wrote claims without re-reading the code, no lifecycle walk across the actors, and re-reviews that graded only the repair. The Haiku slicing readers found the directory caps, the census pin, and the rule-sentence anchor conflict that the accepted spec had missed. Provider usage and charges remain unknown. The harness reported about 40k to 280k tokens for each reader, 260k for the fork, and 75k to 300k for each grader.
 
+The FT366-guard-residual spec stage refreshed two staged specs on Claude Code. An Opus coordinator ran five Haiku/high research pairs and four Haiku/high slicing pairs by reviewer direction, and it sliced the tickets itself. An Opus fork refreshed both specs, and Opus/high graded every round by reviewer direction. Each spec round took 2 iterations, and the first ticket round took 2.
+
+The reviewer then directed an experiment: each ticket fits about 200k tokens of author context for an Opus/medium or Opus/high author. The re-slice gave 9 tickets, and its fresh ticket round accepted in 1 iteration. The Haiku readers found a new consumer of the retired helpers and the headroom and canary facts that the old specs missed. Provider usage and charges remain unknown. The harness reported about 40k to 230k tokens for each reader, 300k for the fork, and 115k to 175k for each grader.
+
 ## Current routing
 
 | model / effort | role and sample | observed quality | current use | calibration |

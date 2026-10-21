@@ -5,7 +5,7 @@ Decision source: `decisions/architecture-guards.md`, answers 1 and 3, reviewed 2
 Subject: `f07508b2add49469d686614c70f575531e8ea445` (refresh of 2026-10-20)
 Audience: every repository that links the kit
 Related roadmap: FT366
-Verification log: pending — refresh review at f07508b2a
+Verification log: 5 iteration(s) to accept — refresh of 2026-10-20; the spec round took 2, the first ticket round took 2, and the 200k re-slice ticket round took 1
 
 ## Problem
 
