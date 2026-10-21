@@ -1052,14 +1052,14 @@
               "source": {
                 "id": "shared-guard-projection",
                 "path": "specs/shared-guard-projection/spec.md",
-                "identity": "sha256:5d386bccdfbee434c44667d78f0a7ad7781c39cb2079dec979e09252a60a9315"
+                "identity": "sha256:0f87dd6317d6d57f5ad144f7cdcf6928ee530899183d87a91754fb451fbc93ce"
               }
             },
             {
               "source": {
                 "id": "guard-scan-loop",
                 "path": "specs/guard-scan-loop/spec.md",
-                "identity": "sha256:ae29c95b9c5fc5979969bd2923c0b5163020dcc7a6af694e027b87735b0878b0"
+                "identity": "sha256:2d45844ead152d37313a32d2b9db29b2b44a1d6da0d8b25ecd2c0aab86696fb8"
               }
             }
           ],
