@@ -10,7 +10,9 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchguard"
+	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
@@ -146,4 +148,33 @@ func TestGuardProjectionReviewerPrecedence(t *testing.T) {
 		{name: "pool then reviewer verb", in: bashEnvelope("cd " + target + " && bench commitment override --assignment x --reason y"), want: 2, message: benchguard.PoolReferenceMessage(target)},
 		{name: "reviewer verb then follow-on", in: bashEnvelope("bench commitment override --assignment x --reason y | cat"), want: 2, message: benchguard.ReviewerVerbMessage(commitcmd.ReviewerVerb)},
 	})
+}
+
+// TestGuardProjectionCensusExclusion is GP44. A supported Bench invocation that names a pool
+// path allows silently and writes no raw census record. The raw form of the same read writes one.
+func TestGuardProjectionCensusExclusion(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	t.Chdir(root)
+	home := filepath.Join(t.TempDir(), "home")
+	t.Setenv("BENCH_HOME", home)
+	raw, id := followOnEnvelope(home, root)
+	record := filepath.Join(census.Dir(home, root), id)
+	// Each form wraps the raw read, which starts `"sed ` and ends `"}}` in the envelope.
+	wrap := func(head, tail string) string {
+		return strings.Replace(strings.Replace(raw, `"sed `, `"`+head+`sed `, 1), `"}}`, tail+`"}}`, 1)
+	}
+	for _, tc := range []guardEnvelopeCase{
+		{name: "exec child", in: wrap("bench worktree exec t -- ", "")},
+		{name: "routine prefix", in: wrap("timeout 30 bench worktree exec t -- ", "")},
+		{name: "wrapper child", in: wrap("bash -c 'bench worktree exec t -- ", "'")},
+	} {
+		checkGuardEnvelope(t, guardBenchFollowOn, []guardEnvelopeCase{tc})
+		if _, err := os.Lstat(record); !os.IsNotExist(err) {
+			t.Fatalf("%s wrote a raw census record (stat error %v)", tc.name, err)
+		}
+	}
+	checkGuardEnvelope(t, guardBenchFollowOn, []guardEnvelopeCase{{name: "raw read", in: raw}})
+	if _, err := os.Lstat(record); err != nil {
+		t.Fatalf("raw read wrote no census record: %v", err)
+	}
 }
