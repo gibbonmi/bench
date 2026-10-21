@@ -80,6 +80,24 @@ func init() {
 	}
 }
 
+func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
+	var diags []string
+	diags = append(diags, checkPackageFiles(root, tier)...)
+	diags = append(diags, checkGoToolchain(root)...)
+	diags = append(diags, checkNodeRuntimePolicy(root)...)
+	diags = append(diags, checkReleaseWorkflow(root)...)
+	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
+	diags = append(diags, checkRetiredReproducibilityRecord(root)...)
+	diags = append(diags, checkReleasePreflight(root)...)
+	diags = append(diags, checkShippedIdentityStrings(root)...)
+	diags = append(diags, checkUserFacingBenchkitStrings(root)...)
+	diags = append(diags, checkGuardHeaderManifests(root)...)
+	diags = append(diags, checkGuardResolverOrderDrift(root)...)
+	diags = append(diags, checkGuardClassifierTable(root)...)
+	diags = append(diags, checkGuardScanLoopOwner(root)...)
+	return diags
+}
+
 // RunConformance grades root against the checks tier runs, timing each one. An empty
 // scope runs the whole tier; otherwise it names the single check to run. Callers name a
 // tier and learn nothing about which check belongs to which.
