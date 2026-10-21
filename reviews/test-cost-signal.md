@@ -983,7 +983,74 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3-standards-r0",
+          "performer": "claude:tcs-c3-standards-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "886346e22913f236e8a7ec8c309b8d8a1d47bdb6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c3-standards-20261021",
+            "digest": "sha256:52910e8dd2bb88a775cbdaa4f17c6bfc102f06374ed99a8f4dd4758700b1ef6b",
+            "excerpt": "Standards axis, TC-C3: 2 findings, 1 accepted. S1 (no-op proposed, confidence 3): TestTimeoutWarningKeepsPassingExit repeats the setup of TestTimeoutWarningsRenderFirst; coordinator disposition no-op, because the two tests cite different rows (TC32 and TC30). S2 (auto-fix, confidence 3): internal/testreport/timeout_warning_test.go:117-119 the halfTimeoutMS comment ends with a clause that argues for its own red record; trim that clause. Clean: one sorted package list, the bounds-policy entry for test_cost.go, timeless comments in test_cost.go and testreport.go, STE changelog sentences, plan-commit spec corrections.\n"
+          },
+          "axis": "Standards",
+          "base": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+          "tip": "7a554e12e44555f4553631eebc974765463287bc",
+          "finding_ids": [
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-spec-r0",
+          "performer": "claude:tcs-c3-spec-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "886346e22913f236e8a7ec8c309b8d8a1d47bdb6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c3-spec-20261021",
+            "digest": "sha256:bf2f5691355a95436fbd058a22f4b8ab56c0ae375fdad46ed8107a2606bb869d",
+            "excerpt": "Spec axis, TC-C3: 1 finding, accepted. P1 (auto-fix, confidence 4): CHANGELOG.md:11 \"Before, the limit came from the environment\" is imprecise; the old limit was the implicit Go default of ten minutes, and a GOFLAGS value could override it. Rows TC27-TC37 pass: threshold >= with the divisor constant, one millisecond below renders nothing, package order (three packages make the order check stronger), the block first, the check row first under --check, exits 0 and 1, healthy run unchanged, changelog names the flag, the linked-repository effect, slowest of --full, and timeout_warnings, no literal timeout in any test except the TC38 pin, and the bounds-policy entry.\n"
+          },
+          "axis": "Spec",
+          "base": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+          "tip": "7a554e12e44555f4553631eebc974765463287bc",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-coverage-r0",
+          "performer": "claude:tcs-c3-coverage-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "886346e22913f236e8a7ec8c309b8d8a1d47bdb6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c3-coverage-20261021",
+            "digest": "sha256:dfb9e6ebb5c992774b643dc3724f550df732cd55bc4df31595fd55f765653515",
+            "excerpt": "Coverage axis, TC-C3: 1 finding, accepted. C1 (auto-fix, confidence 9): internal/testreport/timeout_warning_test.go fixtures all sit exactly at the threshold, so a timeout_ms cell derived from the package time (elapsed * divisor) passes; coordinator probe K6 at internal/testreport/test_cost.go read silent, restored yes, and this axis reran it with the same verdict. Fix: a warned fixture above the threshold whose row shows its own elapsed_ms and the constant timeout_ms, and unequal elapsed values in the order test. TC27-TC33 and TC37 otherwise cite tests that assert their rows; TC36 holds.\n"
+          },
+          "axis": "Coverage",
+          "base": "1795d4bbc0fafb61c150c65264fabd843fc46d3c",
+          "tip": "7a554e12e44555f4553631eebc974765463287bc",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
