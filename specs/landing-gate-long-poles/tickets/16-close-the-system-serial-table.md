@@ -1,8 +1,8 @@
 # Close the system serial table
 
-Blocked by: 12-run-the-exec-and-charge-tests-in-parallel.md
-Writes: internal/systemtest/parallel_census_test.go (new)
-Covers: LGP31, LGP32, LGP33, LGP34, LGP35, LGP36, LGP38
+Blocked by: 11-run-the-owner-and-recovery-tests-in-parallel.md, 12-run-the-compatibility-and-adoption-tests-in-parallel.md, 13-run-the-session-start-and-guard-tests-in-parallel.md, 14-run-the-land-and-telemetry-tests-in-parallel.md, 15-run-the-exec-and-charge-tests-in-parallel.md
+Writes: internal/systemtest/parallel_census_test.go (new), internal/systemtest/serial_table_test.go (new)
+Covers: LGP32, LGP33, LGP34, LGP35, LGP36, LGP38
 
 ## What to build
 
@@ -21,8 +21,8 @@ BENCH_KIT is supplied by bench test --check system through the existing sealed s
 ## Acceptance
 
 - [ ] A serial row with the reason "pending migration" reds by name (LGP38).
-- [ ] Each serial row names an existing test and a reason (LGP31).
 - [ ] A test kept serial on an owner repository beyond the two subject tests reds by name (LGP32).
 - [ ] `TestBenchkitPhasesUseBranchNativeDrivers` passes with the system argv unchanged (LGP33).
+- [ ] The probe "keep one pending migration row" bites.
 - [ ] The verification record holds the system phase time before and after the change (LGP34).
 - [ ] The build log names each reverted attempt, and the final report pairs timings with retained reds (LGP35, LGP36).

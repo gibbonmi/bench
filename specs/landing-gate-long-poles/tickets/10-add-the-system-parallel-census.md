@@ -1,14 +1,14 @@
 # Add the system parallel census
 
 Blocked by: none
-Writes: internal/systemtest/parallel_census_test.go (new), internal/systemtest/owner_test.go, internal/systemtest/land_route_test.go
+Writes: internal/systemtest/parallel_census_test.go (new), internal/systemtest/serial_table_test.go (new), internal/systemtest/owner_test.go, internal/systemtest/land_route_test.go
 Covers: LGP25, LGP26, LGP28, LGP29, LGP31, LGP34
 
 ## What to build
 
 The system package gains a census that classifies each top-level test as parallel or serial with a reason. It also gains one journey-repository helper. No test moves yet.
 
-Create `internal/systemtest/parallel_census_test.go` with the `//go:build system` tag. Follow the worktree census walk (`internal/worktree/parallel_census_test.go:326-449`). The census refuses a test that neither calls `t.Parallel` nor appears in the serial table with a reason.
+Create `internal/systemtest/parallel_census_test.go` with the `//go:build system` tag. Follow the worktree census walk (`internal/worktree/parallel_census_test.go:326-449`). The census refuses a test that neither calls `t.Parallel` nor appears in the serial table with a reason. The census's own tests call `t.Parallel`.
 
 It also refuses a parallel test that reaches `owner.repos`, or that names a ledger field outside an owner writer. An owner writer writes at least one ledger field, and every ledger-field reference in it sits between `owner.mu.Lock()` and `owner.mu.Unlock()`.
 
@@ -16,11 +16,15 @@ Match selectors on the owner value, such as `owner.starts` or `o.starts`, not ba
 
 `TestLedgerWritesHoldTheOwnerLock` refuses an unguarded ledger write by name. It exempts `TestOwnerSelectionChild`, which plants the negative controls in a child process.
 
-The serial table holds a temporary reason, "pending migration", for each test that later tickets move. Tickets 08 to 12 remove those rows, and ticket 13 forbids the reason.
+Put the serial table in the new `internal/systemtest/serial_table_test.go`, so that neither file passes 400 lines. A new file over its limit reds the growth ratchet, because its base count is zero.
+
+The table holds a temporary reason, "pending migration", for each of the 103 tests that later tickets move. The two subject tests hold the owner-repository reason. Tickets 11 to 15 remove the temporary rows, and ticket 16 forbids the reason.
 
 Prove each refusal on planted fixture sources, as the worktree census tests do. Also run the census on the live package.
 
 Add the journey-repository helper to `owner_test.go`. `newSystemOwner` builds its three repositories through it, and `landRouteRepo` (`land_route_test.go:180-190`) wraps it.
+
+The helper must not name `repos`. `newSystemOwner` keeps the append (`owner_test.go:112`). Otherwise every migrated caller reaches `owner.repos` through the helper, and the census refuses it.
 
 Keep the `for range 3` loop, `len(o.repos) != 3`, and both `strippedJourneyMarker` occurrences in `owner_test.go`. `internal/conformance/ordinary_build_census_test.go:88-97` pins them.
 

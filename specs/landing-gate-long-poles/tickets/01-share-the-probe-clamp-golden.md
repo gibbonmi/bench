@@ -1,7 +1,7 @@
 # Share the probe clamp golden
 
 Blocked by: none
-Writes: internal/probe/golden_test.go (new), internal/probe/probe_test.go, internal/probe/probetest/fixture.go, internal/probe/refusal_test.go, internal/probe/verdict_test.go, cmd/bench/record_operations_test.go, internal/reviewrecord/recordcmd/verification_import_test.go
+Writes: internal/probe/golden_test.go (new), internal/probe/probe_test.go, internal/probe/probetest/fixture.go, internal/probe/refusal_test.go, internal/probe/verdict_test.go, cmd/bench/record_operations_test.go, internal/reviewrecord/recordcmd/verification_import_test.go, .bench/commitment.json
 Covers: LGP1, LGP2, LGP3, LGP4, LGP5, LGP37, LGP34
 
 ## What to build
@@ -21,6 +21,8 @@ A counting publisher wraps `freshness.Publish`, so that a test observes the numb
 Every witness keeps its assertions. `TestProbeBitesWhenTheFocusedTestFails` (PB1) keeps its real `go test` child. Remove no test.
 
 Record `bench test --full --package ./internal/probe` before and after the change, for LGP34.
+
+The ticket names `.bench/commitment.json` only because the spec-stage close commits the deliverable binding inside the graded range. The author does not edit that file.
 
 ## Acceptance
 
