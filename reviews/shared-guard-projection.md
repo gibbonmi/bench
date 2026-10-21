@@ -376,6 +376,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gp1-r2-standards",
+          "performer": "claude:sgp-review-standards-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "09cf33d9e84ed49744b212f5792a0c2ea4a4bfbd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-standards-r2",
+            "digest": "sha256:83a767caa89254a57ce8d9afb40fcf2649157c2c796a72221a6e7df9d157ce37",
+            "excerpt": "Standards, GP1 round 1 confirmation: F1 and F2 are both closed, and the repair delta adds no new Standards finding.\n\nF1: closed.\n- internal/gitguard/projection_contract_test.go:5-7 (at 93e90d3ee) now holds three sentences of 10, 12 and 7 words.\n- Each sentence is under the 25-word limit, and the comment still states the same contract.\n\nF2: closed by the recorded red, with the row kept.\n- The raw answer file /tmp/claude-1000/-home-mgibs-workspace-bench/f5571912-814f-48c2-9e29-363a829710e2/scratchpad/sgp-t1-r1-redirect.out shows `bit,internal/gitguard/verdict_push.go,swap,failed,2,TestGitProjectionAuthority/child_push,yes`.\n- Its failures list includes TestGitProjectionAuthority/redirected_push at projection_contract_test.go:22: Classify(\"git -C /other push origin topic\") = \"\", want \"git push with an unresolved destination\".\n- The mutated line exists at 93e90d3ee:internal/gitguard/verdict_push.go:19, `if viaXargs || redirected {`.\n- That meets the AGENTS.md test-expectation exception for the row at projection_contract_test.go:16. The omission turns this row red, and the red is recorded and the file restored (restored=yes).\n\nNew findings: none.\n- Repair-delta hunks against a4053ed70, with an unchanged production tree: the comment rewrite in the gitguard test file; the \"nested wrapper stays one child\" case at projection_test.go:43-44; the TestWorktreeExecContext loop that adds {\"bench\",\"worktree\",\"list\",\"exec\",\"--\",\"git\",\"reset\",\"--hard\"}.\n- One source per fact: the new cases test the shellcommand owner directly, with inputs and expectations unlike the gitguard rows.\n- The new cases carry no comments. C1 and C2 are hardening-cycle checks; no blocking condition on them.\n\nOptional advice (no ID): unchanged from round 1 (the child loop variable shadows the type child; wrapperCFlagRe has no comment).\n\nCommands run, all through bench worktree exec shared-guard-projection-build --: bench preflight evidence sha256:5590e889... --check-current returned current=true, dirty_record=false, source_tip ca726066b; git diff a4053ed70 93e90d3ee; git show 93e90d3ee:internal/gitguard/projection_contract_test.go; git grep -n \"viaXargs || redirected\" 93e90d3ee -- internal/gitguard. No test, no probe, no file written.\n"
+          },
+          "axis": "Standards",
+          "base": "f86203658f5190beac7a34ce17e18473d20fe426",
+          "tip": "93e90d3ee55ea6adb6d713389077326e688fec12",
+          "finding_ids": [],
+          "supersedes": [
+            "gp1-r1-standards"
+          ]
+        },
+        {
+          "id": "gp1-r2-spec",
+          "performer": "claude:sgp-review-spec-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "09cf33d9e84ed49744b212f5792a0c2ea4a4bfbd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-spec-r2",
+            "digest": "sha256:aa06cd61f9a7e316d333de3abe1ccba1694145970d1db3ffd5f12c4e20053089",
+            "excerpt": "SPEC axis, GP1 confirming round 1: PASS. No findings. Count 0; worst issue none. Nothing was run beyond reads (no tests, no probe).\n\nChecks:\n- Repair delta is test-only. Per git diff --stat a4053ed70 93e90d3ee, the Go changes are internal/gitguard/projection_contract_test.go (comment split only) and internal/shellcommand/projection_test.go (+2 cases). The other files in the range are the spec.md plan line (repair assignment record) and the review record. projection.go and scan.go did not change, so the Projection API signatures and the Git caller policy are unchanged from the initial pass.\n- Acceptance rows GP01-03, GP05-10, GP72, GP74 still cite the same tests. No assertion was removed or weakened.\n- C1 (projection_test.go:127) matches spec.md:96 \"recognizes adjacent worktree and exec words\". For {bench,worktree,list,exec,--,git,reset,--hard}, words[executable+2] is \"list\", which fails the != \"exec\" check at projection.go:50, so the result is ExecProjection{}.\n- C2 (projection_test.go:43-44) matches spec.md:91 \"It performs no recursion\". ShellChildren reads only the outer argv, so it yields one child at ArgumentIndex 2: [sh -c \"git push\"].\n- Refrozen record at ca726066 adds only reviews/shared-guard-projection.md over 93e90d3: chunk GP1 base f86203658, tip 93e90d3ee, acceptance rows unchanged.\n- The r1-t1-* entries are the five GP1 plan verification IDs with the r1 prefix, all with performer claude:sgp-t1-repair1-20261021, matching the plan's repair assignment, and source_digest equal to the chunk source_digest.\n- Test counts are consistent with the delta: shellcommand 42 to 43 tests; gitguard stays at 237.\n\nAdvice (no ID):\n- The r1 probes replay the original mutants; the red for the new C1 and C2 cases is the repair's own probe set and the Coverage axis evidence. Not binding.\n\nCommands (all via bench worktree exec shared-guard-projection-build --): bench preflight evidence sha256:5590e889... --check-current returned current=true, dirty_record=false; git diff a4053ed70 93e90d3ee; git diff --stat 93e90d3ee ca726066b; git log --oneline f86203658..ca726066b; git show of projection.go, projection_test.go, shellcommand.go, spec.md, and the review record; rg over spec.md.\n"
+          },
+          "axis": "Spec",
+          "base": "f86203658f5190beac7a34ce17e18473d20fe426",
+          "tip": "93e90d3ee55ea6adb6d713389077326e688fec12",
+          "finding_ids": [],
+          "supersedes": [
+            "gp1-r1-spec"
+          ]
+        },
+        {
+          "id": "gp1-r2-coverage",
+          "performer": "claude:sgp-review-coverage-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "09cf33d9e84ed49744b212f5792a0c2ea4a4bfbd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:sgp-review-coverage-r2",
+            "digest": "sha256:e982f871a23aba1ef701488f44759e9fdedbeea444b58dca9f3ce13ef14eb310",
+            "excerpt": "COVERAGE axis, GP1 round 1 confirmation. Both initial findings are closed, and I found no new finding. I used no bench probe, because the saved answer establishes the bite.\n\nC1: closed.\n- The repair adds {\"bench\",\"worktree\",\"list\",\"exec\",\"--\",\"git\",\"reset\",\"--hard\"} to the no-projection loop of TestWorktreeExecContext (internal/shellcommand/projection_test.go).\n- Repair mutant 1 in sgp-t1-r1-mutants.json swaps words[executable+2] != \"exec\" for !slices.Contains(words[executable+2:], \"exec\"), the same mutation as my probe 1.\n- The saved answer reports verdict bit, baseline passed, restored yes. The only failing test is TestWorktreeExecContext: projection_test.go:130: WorktreeExec([\"bench\" \"worktree\" \"list\" \"exec\" \"--\" \"git\" \"reset\" \"--hard\"]) = {... Child:[git reset --hard] DifferentCheckout:true}, want no projection.\n\nC2: closed.\n- The repair adds the case \"nested wrapper stays one child\": bash -c \"sh -c 'git push'\" expects the single child {2, [sh -c git push]}.\n- Repair mutant 2 appends ShellChildren(..., 0) of each child's own commands, the same one-level recursion as my probe 2.\n- The saved answer reports verdict bit, baseline passed, restored yes. The only failing test is TestShellChildren/nested_wrapper_stays_one_child: projection_test.go:49: ... = [{2 [sh -c git push]} {2 [git push]}], want [{2 [sh -c git push]}].\n\nRepair delta (git diff a4053ed70 93e90d3ee): two test files; the gitguard change is a comment reflow only. projection.go is unchanged, so the mutants apply to the code tip.\n\nNew findings: none.\n\nOptional advice (no ID): the GP10 redirected-push and GP74 first-reset-child cases pass on old and new code; bench worktree exec -- git push with no target has no test.\n\nCommands:\n1. bench worktree exec shared-guard-projection-build -- bench preflight evidence sha256:5590e889... --check-current: head ca726066, current true, dirty_record false.\n2. bench worktree exec shared-guard-projection-build -- git diff a4053ed70 93e90d3ee: read.\n3. Read sgp-t1-r1-cases.out, sgp-t1-r1-mutants.json, and gp1-coverage-r1.txt in the scratchpad.\nProbes used: 0 of 1.\n"
+          },
+          "axis": "Coverage",
+          "base": "f86203658f5190beac7a34ce17e18473d20fe426",
+          "tip": "93e90d3ee55ea6adb6d713389077326e688fec12",
+          "finding_ids": [],
+          "supersedes": [
+            "gp1-r1-coverage"
+          ]
         }
       ]
     }
