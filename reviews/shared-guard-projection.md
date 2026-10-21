@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-guard-projection/spec.md",
-  "plan_digest": "sha256:58be6b5bd93d8c412f05906758f1222b531e94281ecca2f75e46f1ab4e013a61",
+  "plan_digest": "sha256:e72a5e2ed6a5e5a9642fa7c09e8dd8216dee309884ab7a090f17096120b47dbc",
   "implementation_session": "",
   "chunks": [
     {
@@ -1470,9 +1470,9 @@
     {
       "id": "GP3",
       "base": "3d4b0707a0ac8cd7988e769586410f53f70b55a1",
-      "tip": "77b26ed917e12641e55846bb96ce57dcc1172c97",
-      "plan_digest": "sha256:58be6b5bd93d8c412f05906758f1222b531e94281ecca2f75e46f1ab4e013a61",
-      "source_digest": "7a4bb0f29eb0c00646735eb0bc97a1812fa4080a",
+      "tip": "1c9a5fa2e1caaa7951763f740e6e8cc603a72ce6",
+      "plan_digest": "sha256:e72a5e2ed6a5e5a9642fa7c09e8dd8216dee309884ab7a090f17096120b47dbc",
+      "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
       "acceptance_rows": [
         "GP30",
         "GP31",
@@ -1778,6 +1778,226 @@
           "requirement": "t6-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "r5-t5-registered-owner",
+          "performer": "claude:sgp-t5-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t5-repair1-20261021",
+            "digest": "sha256:6e7166cdebe5e1e44e0248145ee6e86b5722484722f180df7275cd23fff9e6a5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2462,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-registered-owner",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0
+        },
+        {
+          "id": "r5-t5-conformance-closure",
+          "performer": "claude:sgp-t5-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t5-repair1-20261021",
+            "digest": "sha256:280758c3c4bbdeb5896fa5609c818e554339cad1a039da012b732d5cbfd0d988",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,37145,1138\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t5-conformance-closure",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "r5-t5-registry-closure",
+          "performer": "claude:sgp-t5-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t5-repair1-20261021",
+            "digest": "sha256:813771a1b41cabc8090cc4b755f0d83f0e5615268747be1cd52a98afaab56ecf",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance/registry,pass,1,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-registry-closure",
+          "command": "bench test --package ./internal/conformance/registry",
+          "exit_code": 0
+        },
+        {
+          "id": "r5-t5-root-conformance",
+          "performer": "claude:sgp-t5-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t5-repair1-20261021",
+            "digest": "sha256:81046b161cf42434e5eac3c5bef8adb705d341b4754174a10e39636c8e455d6f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13280,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "r5-t5-copy-check-omission",
+          "performer": "claude:sgp-t5-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t5-repair1-20261021",
+            "digest": "sha256:55cb939df3c6560d6a0a2637d455b8d5781379d8fa115f478202bb19e0d7bc29",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGuardProjectionOwnerBitesOnPrivateCopies,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/conformance,^TestGuardProjectionOwnerBitesOnPrivateCopies$,passed,1\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,364\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,11,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuardProjectionOwnerBitesOnPrivateCopies,\"guard_projection_owner_test.go:279: want copies reported\",16\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-copy-check-omission",
+          "command": "bench test --package ./internal/conformance --run '^TestGuardProjectionOwnerBitesOnPrivateCopies$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit only the registered checkGuardProjectionOwner call while retaining its function and tests; renamed unused copies, including the reviewer.go copy, must stop producing the expected registered diagnostic and red this witness.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:sgp-t5-repair1-20261021",
+              "digest": "sha256:55cb939df3c6560d6a0a2637d455b8d5781379d8fa115f478202bb19e0d7bc29",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGuardProjectionOwnerBitesOnPrivateCopies,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/conformance,^TestGuardProjectionOwnerBitesOnPrivateCopies$,passed,1\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,364\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,11,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuardProjectionOwnerBitesOnPrivateCopies,\"guard_projection_owner_test.go:279: want copies reported\",16\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "b6-t6-core-regression",
+          "performer": "claude:sgp-t6-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t6-author-20261021",
+            "digest": "sha256:447fc1496c93f18eac6d6e5650a08c1c89fcc9de3791ad191036d7e5e2f3ea42",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14896,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-core-regression",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "b6-t6-actual-hook-family",
+          "performer": "claude:sgp-t6-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t6-author-20261021",
+            "digest": "sha256:648d045b4b7feed42d338470784ced3a77570d954d63da3dcb18e174ca5c2e6f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,181,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,112889,181\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-actual-hook-family",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "b6-t6-root-conformance",
+          "performer": "claude:sgp-t6-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t6-author-20261021",
+            "digest": "sha256:3497296aeef8351f80dcaa1ff7d20d2875dad620939ffa820080c774ee79d13a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12696,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "b7-t7-actual-hook-family",
+          "performer": "claude:sgp-t7-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t7-author-20261021",
+            "digest": "sha256:633a1681d576a3ac4e29fa894a9042adf373bbd741fdb2d217fb0561d6dc726d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,181,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,113113,181\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-actual-hook-family",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "b7-t7-differential-golden-bite",
+          "performer": "claude:sgp-t7-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t7-author-20261021",
+            "digest": "sha256:6947c7473b824fc53fab09c081ce60eb39800bb05f141de600361749ed9e7ebc",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestGuardProjectionDifferentialFamilies,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  check,system,^TestGuardProjectionDifferentialFamilies$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,526\nmutant_report[1]{mutant}:\n  1\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,13874,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestGuardProjectionDifferentialFamilies,\"guard_projection_differential_test.go:160: GP46 members differ from the golden: W \\\"bash -c -c 'git reset --hard'\\\"; W4 \\\"bash -c 'echo ok' -c 'git reset --hard'\\\"\",7\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-differential-golden-bite",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap the Git caller's first-child selection for an every-child search; the independently captured guard-projection-family-d.golden must red TestGuardProjectionDifferentialFamilies on the W4 member.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:sgp-t7-author-20261021",
+              "digest": "sha256:6947c7473b824fc53fab09c081ce60eb39800bb05f141de600361749ed9e7ebc",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestGuardProjectionDifferentialFamilies,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  check,system,^TestGuardProjectionDifferentialFamilies$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,526\nmutant_report[1]{mutant}:\n  1\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,13874,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestGuardProjectionDifferentialFamilies,\"guard_projection_differential_test.go:160: GP46 members differ from the golden: W \\\"bash -c -c 'git reset --hard'\\\"; W4 \\\"bash -c 'echo ok' -c 'git reset --hard'\\\"\",7\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "b7-t7-root-conformance",
+          "performer": "claude:sgp-t7-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d08366741698a6e5a4303a583ff5c5a28dfb604d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t7-author-20261021",
+            "digest": "sha256:87de30849bcac32e7b85c5b29288f301ba117b3f3a9a4118e8a83e610dceeb16",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12654,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -1896,6 +2116,21 @@
         ],
         "GP2": [
           "GP2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:58be6b5bd93d8c412f05906758f1222b531e94281ecca2f75e46f1ab4e013a61",
+      "to": "sha256:e72a5e2ed6a5e5a9642fa7c09e8dd8216dee309884ab7a090f17096120b47dbc",
+      "chunk_ids": {
+        "GP1": [
+          "GP1"
+        ],
+        "GP2": [
+          "GP2"
+        ],
+        "GP3": [
+          "GP3"
         ]
       }
     }
