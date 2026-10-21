@@ -40,6 +40,8 @@ func TestShellChildren(t *testing.T) {
 			[]child{{2, []string{"-c"}}, {3, []string{"git", "status"}}}},
 		{"two flags in argv order", []string{"bash", "-c", "echo ok", "-c", "git reset --hard"}, 0,
 			[]child{{2, []string{"echo", "ok"}}, {4, []string{"git", "reset", "--hard"}}}},
+		{"nested wrapper stays one child", []string{"bash", "-c", "sh -c 'git push'"}, 0,
+			[]child{{2, []string{"sh", "-c", "git push"}}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -118,7 +120,12 @@ func TestWorktreeExecContext(t *testing.T) {
 	if got := WorktreeExec([]string{"bench", "worktree", "exec", "X", "--", "git", "push"}, 0); !got.DifferentCheckout {
 		t.Errorf("WorktreeExec with a child = %+v, want DifferentCheckout", got)
 	}
-	for _, words := range [][]string{{"bench", "worktree", "list"}, {"bench", "worktree"}, {"echo", "exec", "worktree", "--", "git"}} {
+	for _, words := range [][]string{
+		{"bench", "worktree", "list"},
+		{"bench", "worktree"},
+		{"echo", "exec", "worktree", "--", "git"},
+		{"bench", "worktree", "list", "exec", "--", "git", "reset", "--hard"},
+	} {
 		if got := WorktreeExec(words, 0); !reflect.DeepEqual(got, ExecProjection{}) {
 			t.Errorf("WorktreeExec(%q) = %+v, want no projection", words, got)
 		}

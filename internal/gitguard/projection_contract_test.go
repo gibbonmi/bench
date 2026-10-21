@@ -2,9 +2,9 @@ package gitguard
 
 import "testing"
 
-// TestGitProjectionAuthority grades the Git policy around the shared exec projection: a child
-// in another checkout and a redirected repository leave push unresolved, and a non-Bench head
-// projects no child.
+// TestGitProjectionAuthority grades the Git policy around the shared exec projection.
+// A child in another checkout and a redirected repository leave push unresolved.
+// A non-Bench head projects no child.
 func TestGitProjectionAuthority(t *testing.T) {
 	cases := []struct {
 		name string
