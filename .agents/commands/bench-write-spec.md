@@ -6,7 +6,7 @@ description: Turn a reviewed decision source into a build spec with user stories
 
 ## Entry orientation
 
-Charge `bench-craft-spec` on one authorized decision source. It owns the process: explore, find seams, and synthesize, with no interview. It owns the discipline: stories, acceptance coverage map, edge inventory, **Won't handle**, hostile-input checklist, fences, and review rubric. It yields `specs/<feature>/spec.md` plus tickets.
+Charge `bench-craft-spec` on one authorized decision source. It owns the process: explore, find seams, and synthesize, with no interview. It owns the discipline: stories, acceptance coverage map, edge inventory, **Won't handle**, hostile-input checklist, fences, and review rubric. It yields `specs/<feature>/spec.md` plus tickets. Before you create the phase worktree, run `bench worktree list`. When an active assignment's label or request names the same roadmap row or outcome, resume it or ask the reviewer.
 
 ## Exit handoff
 
