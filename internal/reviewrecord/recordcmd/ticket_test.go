@@ -103,6 +103,15 @@ func chunkEntry(t *testing.T, f *recordtest.Fixture, id string) rr.Chunk {
 	return rr.Chunk{}
 }
 
+// verificationIDs is the evidence ID of each verification entry of chunk, in record order.
+func verificationIDs(chunk rr.Chunk) []string {
+	ids := []string{}
+	for _, entry := range chunk.Verification {
+		ids = append(ids, entry.ID)
+	}
+	return ids
+}
+
 // RT21, RT22, RT23, RT24, RT28, RT29, RT30, RT31, RT32, RT36, RT60, RT61: each refusal names its
 // cause and leaves the record bytes and every staged excerpt as they were.
 func TestTicketRefusals(t *testing.T) {
@@ -227,11 +236,7 @@ func TestTicketFreezesTheFirstChunk(t *testing.T) {
 	if chunk.Base != base || chunk.Tip != tip {
 		t.Errorf("chunk 1 pair = %s..%s, want %s..%s", chunk.Base, chunk.Tip, base, tip)
 	}
-	ids := []string{}
-	for _, entry := range chunk.Verification {
-		ids = append(ids, entry.ID)
-	}
-	if want := []string{"p-tests", "p-additional"}; !slices.Equal(ids, want) {
+	if ids, want := verificationIDs(chunk), []string{"p-tests", "p-additional"}; !slices.Equal(ids, want) {
 		t.Fatalf("verification IDs = %q, want %q", ids, want)
 	}
 	want := rr.Probe{Outcome: "bit", ExitCode: 1, Restore: "pass", Mutation: f.Plan.Chunks[0].Verification[0].Probe, NativeRef: chunk.Verification[0].NativeRef}
@@ -240,6 +245,18 @@ func TestTicketFreezesTheFirstChunk(t *testing.T) {
 	}
 	if store := responseboundtest.StoreFiles(t, home); len(store) != 0 {
 		t.Errorf("store files after the write = %q, want no staged excerpt", store)
+	}
+}
+
+// A requirement ID that already starts with the prefix and a hyphen is the evidence ID, and
+// any other requirement ID takes the prefix once.
+func TestTicketPrefixesTheEvidenceIDOnce(t *testing.T) {
+	f, home := pooled(t, 1, func(plan *rr.Plan) { plan.Chunks[0].Verification[0].ID = "p-tests" })
+	base, _ := advance(f, "chunk 1")
+	stageOwed(f, home, "1", "1.md")
+	succeed(t, f, ticketArgs(t, "1", "1.md", "p", "--base", base))
+	if ids, want := verificationIDs(chunkEntry(t, f, "1")), []string{"p-tests", "p-additional"}; !slices.Equal(ids, want) {
+		t.Fatalf("verification IDs = %q, want %q", ids, want)
 	}
 }
 
