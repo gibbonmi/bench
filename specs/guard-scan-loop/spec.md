@@ -119,7 +119,7 @@ GS17 through GS20 compare those outputs.
 
 Keep action help order and deduplication for complete stale or unwired inventories.
 The deduplication lives in `internal/axi/action.go`, which this refactor does not touch.
-Suppress action help for incomplete inventories.
+Keep the existing suppression of action help for incomplete inventories (`guards.go:305-308`).
 Keep the current exit 0 for an incomplete inventory, rather than a new error exit.
 Keep the existing invalid-argument and outside-repository command errors.
 GS19 through GS21 observe those entry decisions.
@@ -417,7 +417,7 @@ The direct loop introduces no new cleanup-error state.
 **Won't handle** new enumeration-error diagnostics — Scan retains its existing active-context result.
 **Won't handle** new hook execution — HeaderFields remains a static reader.
 **Won't handle** guard grammar or envelope policy — the separate shared-guard-projection outcome owns those migrations.
-**Won't handle** historical line pins to Scan in `ASSESSMENT.md:42` and `docs/research/bench-efficiency-assessment-2026-10-06.md:122` — they describe a dated tree and are not contracts.
+**Won't handle** the historical line pin to Scan in `ASSESSMENT.md:42` — it describes a dated tree and is not a contract.
 **Won't handle** the stale column list in the package comment (`guards.go:1-2`) — it predates this spec, and the refactor does not change the output.
 
 ## Out of scope
