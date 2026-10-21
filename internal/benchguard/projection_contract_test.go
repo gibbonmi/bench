@@ -57,6 +57,8 @@ func TestBenchEnvelopeValue(t *testing.T) {
 
 // TestGuardWrapperSelection is GP04. Classify searches every matching `-c` child of one
 // wrapper, so a follow-on in the second child refuses, and a nested wrapper stays unread.
+// The nested rows read one level only, in the outer judge and in the exec later-segment
+// scan, and the exec exception covers a direct head only, so an exec inside a wrapper refuses.
 func TestGuardWrapperSelection(t *testing.T) {
 	for _, tc := range []struct {
 		command, operator string
@@ -65,6 +67,9 @@ func TestGuardWrapperSelection(t *testing.T) {
 		{command: "bash -c 'echo ok' -c 'bench status && echo hi'", operator: "&&", blocked: true},
 		{command: "bash -c 'bench status | cat' -c 'echo ok'", operator: "|", blocked: true},
 		{command: `bash -c "sh -c 'bench status && echo hi'"`},
+		{command: `bash -c "sh -c 'bench status'" && echo hi`},
+		{command: `bench worktree exec L -- true; bash -c "sh -c 'bench status'"`},
+		{command: "bash -c 'bench worktree exec L -- cp a b; cp b a'", operator: ";", blocked: true},
 	} {
 		got := Classify(tc.command, notBenchResolver())
 		if got.Blocked != tc.blocked || got.Operator != tc.operator {
