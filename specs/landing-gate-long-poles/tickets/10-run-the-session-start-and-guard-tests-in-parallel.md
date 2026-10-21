@@ -8,7 +8,7 @@ Covers: LGP34
 
 The session-start, guard, and follow-on hook tests run in parallel, each on private repositories.
 
-`newSessionEnvironmentFixtureWithGoDir` (`internal/systemtest/session_start_test.go:275-277`) takes a private journey repository instead of `owner.repos[2]`. Its 15 callers are in the same file. The test at `:343` uses `owner.repos[2]` at `:345` and also moves.
+`newSessionEnvironmentFixtureWithGoDir` (`internal/systemtest/session_start_test.go:275-277`) takes a private journey repository instead of `owner.repos[2]`. Fourteen tests reach it, all in the same file: 13 through `newSessionEnvironmentFixture` and one directly at `:146`. The test at `:343` uses `owner.repos[2]` at `:345` and also moves.
 
 These tests take private repositories: `TestGuardProjectionNeverExecutes` (`guard_projection_test.go:49`), `TestGitGuardHookAndCoreParseRefusal` (`guard_refusal_test.go:103`), and both tests of `bench_follow_on_test.go` (`:42`, `:230`). Each other test in these six files calls `t.Parallel`.
 
