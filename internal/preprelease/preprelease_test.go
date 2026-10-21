@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
@@ -267,12 +268,12 @@ func repoRoot(t *testing.T) string {
 }
 
 // T07: the ship conformance step composes the gate's one test-argv producer, so its
-// prefix is `go -C <kit> test -trimpath -count=1`.
+// prefix is `go -C <kit> test -trimpath -count=1` and the go test timeout.
 func TestShipConformanceStepArgvPrefix(t *testing.T) {
 	root, kit := filepath.Join("elsewhere", "graded root"), filepath.Join("other", "kit")
 	step := stepNamed(t, Steps(root, kit), "conformance-ship")
 
-	want := []string{"go", "-C", kit, "test", "-trimpath", "-count=1"}
+	want := []string{"go", "-C", kit, "test", "-trimpath", "-count=1", "-timeout=" + bounds.GoTestTimeout.String()}
 	if len(step.Argv) < len(want) || !slices.Equal(step.Argv[:len(want)], want) {
 		t.Fatalf("ship conformance argv = %v, want the prefix %v", step.Argv, want)
 	}

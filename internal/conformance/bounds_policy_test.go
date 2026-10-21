@@ -38,6 +38,7 @@ func checkBoundsPolicy(root string) []string {
 		"internal/guards/guards.go":                 {"bounds.VerdictWindow(bounds.GuardScanTimeout)"},
 		"internal/sanitize/sanitize.go":             {"bounds.PreviewRuneLimit"},
 		"internal/gate/gate.go":                     {"bounds.VerdictWindow(bounds.GateTimeout)"},
+		"internal/gate/phases.go":                   {"bounds.GoTestTimeout"},
 		"internal/coverage/citation_execution.go":   {"bounds.VerdictWindow(bounds.PackageLoadTimeout)"},
 		"internal/refresh/refresh.go":               {"bounds.VerdictWindow(bounds.GitRefreshTimeout)"},
 		"internal/git/git.go":                       {"bounds.VerdictWindow(bounds.WorktreeListTimeout)", "bounds.VerdictWindow(bounds.RefCheckTimeout)"},

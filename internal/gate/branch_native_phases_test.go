@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
@@ -99,10 +100,11 @@ func TestBenchkitPhasesUseBranchNativeDrivers(t *testing.T) {
 	if !reflect.DeepEqual(gotNames, wantNames) {
 		t.Fatalf("phase names = %v, want %v", gotNames, wantNames)
 	}
-	if want := []string{"go", "test", "-trimpath", "-count=1", "./..."}; !reflect.DeepEqual(byName["test"].Argv, want) {
+	timeout := "-timeout=" + bounds.GoTestTimeout.String()
+	if want := []string{"go", "test", "-trimpath", "-count=1", timeout, "./..."}; !reflect.DeepEqual(byName["test"].Argv, want) {
 		t.Fatalf("ordinary test argv = %#v, want %#v", byName["test"].Argv, want)
 	}
-	if want := []string{"go", "test", "-trimpath", "-count=1", "-tags=system", "./internal/systemtest"}; !reflect.DeepEqual(byName["system"].Argv, want) {
+	if want := []string{"go", "test", "-trimpath", "-count=1", timeout, "-tags=system", "./internal/systemtest"}; !reflect.DeepEqual(byName["system"].Argv, want) {
 		t.Fatalf("system test argv = %#v, want %#v", byName["system"].Argv, want)
 	}
 	if want := raceDriverArgv(); !reflect.DeepEqual(byName["race"].Argv, want) {
@@ -178,11 +180,11 @@ func TestVetPhaseArgvCarriesTrimPath(t *testing.T) {
 	t.Fatal("the kit phase table declares no vet phase")
 }
 
-// T05: the release core test step runs the enumerated packages under -trimpath and
-// -count=1. Nothing else asserts this argv, so a release run that keys on its own
-// checkout path would otherwise go unobserved.
+// T05: the release core test step runs the enumerated packages under -trimpath,
+// -count=1, and the go test timeout. Nothing else asserts this argv, so a release run
+// that keys on its own checkout path would otherwise go unobserved.
 func TestCoreTestArgvCarriesTrimPathAndCountOne(t *testing.T) {
-	want := []string{"go", "test", "-trimpath", "-count=1", "./internal/gate", "./internal/toon"}
+	want := []string{"go", "test", "-trimpath", "-count=1", "-timeout=" + bounds.GoTestTimeout.String(), "./internal/gate", "./internal/toon"}
 	if got := coreTestArgv([]string{"./internal/gate", "./internal/toon"}); !reflect.DeepEqual(got, want) {
 		t.Fatalf("core test argv = %#v, want %#v", got, want)
 	}

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 )
@@ -30,20 +31,21 @@ func checkOrdinaryBuildCensus(root string) []string {
 	phases := gate.BenchkitPhases(root, root)
 	wantNames := []string{"gofmt", "vet", "test", "race", "system", "shellcheck"}
 	gotNames := make([]string, 0, len(phases))
+	timeout := "-timeout=" + bounds.GoTestTimeout.String()
 	for _, phase := range phases {
 		gotNames = append(gotNames, phase.Name)
 		switch phase.Name {
 		case "test":
-			if !slices.Equal(phase.Argv, []string{"go", "test", "-trimpath", "-count=1", "./..."}) {
+			if !slices.Equal(phase.Argv, []string{"go", "test", "-trimpath", "-count=1", timeout, "./..."}) {
 				diags = append(diags, fmt.Sprintf("ordinary test argv = %q", phase.Argv))
 			}
 		case "race":
 			joined := strings.Join(phase.Argv, " ")
-			if !strings.HasPrefix(joined, "go test -trimpath -count=1 -race -v ") || strings.Contains(joined, "internal/systemtest") {
+			if !strings.HasPrefix(joined, "go test -trimpath -count=1 "+timeout+" -race -v ") || strings.Contains(joined, "internal/systemtest") {
 				diags = append(diags, fmt.Sprintf("race argv is not the registry-only driver: %q", phase.Argv))
 			}
 		case "system":
-			if !slices.Equal(phase.Argv, []string{"go", "test", "-trimpath", "-count=1", "-tags=system", "./internal/systemtest"}) {
+			if !slices.Equal(phase.Argv, []string{"go", "test", "-trimpath", "-count=1", timeout, "-tags=system", "./internal/systemtest"}) {
 				diags = append(diags, fmt.Sprintf("system argv = %q", phase.Argv))
 			}
 		}

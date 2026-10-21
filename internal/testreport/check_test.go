@@ -53,7 +53,7 @@ func TestNamedCheckOwnsConformanceEnvironment(t *testing.T) {
 		t.Fatalf("named check = %d, want 0\n%s", code, output)
 	}
 	environment := readTestReportFile(t, marker)
-	if want := "argv=test -trimpath -count=1 -json ./internal/conformance -run ^" + registry.RootConformanceTest + "$\n"; !strings.Contains(environment, want) {
+	if want := "argv=test -trimpath -count=1 " + timeoutFlag() + " -json ./internal/conformance -run ^" + registry.RootConformanceTest + "$\n"; !strings.Contains(environment, want) {
 		t.Errorf("named-check Go argv missing %q:\n%s", strings.TrimSpace(want), environment)
 	}
 	for name, want := range map[string]string{
@@ -340,7 +340,7 @@ func TestSystemCheckOwnsTheGateEnvironment(t *testing.T) {
 		t.Fatalf("system check = %d, want 0\n%s", code, output)
 	}
 	environment := readTestReportFile(t, marker)
-	if want := "argv=test -trimpath -count=1 -json -tags=system ./internal/systemtest\n"; !strings.Contains(environment, want) {
+	if want := "argv=test -trimpath -count=1 " + timeoutFlag() + " -json -tags=system ./internal/systemtest\n"; !strings.Contains(environment, want) {
 		t.Errorf("system-check Go argv missing %q:\n%s", strings.TrimSpace(want), environment)
 	}
 	for name, want := range map[string]string{

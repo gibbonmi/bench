@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
@@ -77,7 +78,7 @@ func TestBenchkitPhasesKeepWholeProjectTestArgv(t *testing.T) {
 		if phase.Name != "test" {
 			continue
 		}
-		if want := []string{"go", "test", "-trimpath", "-count=1", "./..."}; !reflect.DeepEqual(phase.Argv, want) {
+		if want := []string{"go", "test", "-trimpath", "-count=1", "-timeout=" + bounds.GoTestTimeout.String(), "./..."}; !reflect.DeepEqual(phase.Argv, want) {
 			t.Fatalf("test phase argv = %v, want %v", phase.Argv, want)
 		}
 		return
