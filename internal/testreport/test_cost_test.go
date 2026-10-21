@@ -57,13 +57,17 @@ func TestSlowestRoundsToNearestMillisecond(t *testing.T) {
 	}, "canned,TestA,3", "canned,TestB,2")
 }
 
-// TestSlowestLastTerminalEventWins sends the smaller elapsed value last, so a first-wins
-// or a max-wins reading goes red.
+// TestSlowestLastTerminalEventWins sends the smaller elapsed value last and then the
+// larger value last, so a first-wins, a max-wins, or a min-wins reading goes red.
 func TestSlowestLastTerminalEventWins(t *testing.T) {
 	wantSlowest(t, []string{
 		testTerminal("pass", "canned", "TestA", 0.5),
 		testTerminal("fail", "canned", "TestA", 0.3),
 	}, "canned,TestA,300")
+	wantSlowest(t, []string{
+		testTerminal("fail", "canned", "TestA", 0.2),
+		testTerminal("pass", "canned", "TestA", 0.6),
+	}, "canned,TestA,600")
 }
 
 func TestSlowestKeepsThreePerPackage(t *testing.T) {
