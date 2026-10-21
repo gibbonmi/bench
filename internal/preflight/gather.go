@@ -130,6 +130,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		BuildDeletedPaths:     buildDeletedPaths(root, specPath, landingBase, resolvedSource.Tip),
 		DefaultTipPaths:       defaultTipPaths,
 		DeclaredRowIDs:        ids,
+		ChunkTable:            coverage.ReadChunkTable(content),
 		SpecTag:               specTag(ids),
 		Tickets:               ticketFacts.parsed,
 		TicketDiagnostics:     ticketFacts.diagnostics,

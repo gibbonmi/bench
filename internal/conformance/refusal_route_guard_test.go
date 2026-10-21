@@ -2,7 +2,6 @@ package conformance
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 	"testing"
 
@@ -80,16 +79,12 @@ func runsBenchUnderExec(command string) bool {
 		if !prefix.Executes || prefix.Index >= len(words) {
 			continue
 		}
-		head := words[prefix.Index:]
-		if len(head) < 3 || !benchguard.InvokesBench(sanitize.ShellQuote(head[0]), resolver) || head[1] != "worktree" || head[2] != "exec" {
+		if !benchguard.InvokesBench(sanitize.ShellQuote(words[prefix.Index]), resolver) {
 			continue
 		}
-		separator := slices.Index(head, "--")
-		if separator < 0 {
-			continue
-		}
-		child := make([]string, 0, len(head)-separator-1)
-		for _, word := range head[separator+1:] {
+		exec := shellcommand.WorktreeExec(words, prefix.Index)
+		child := make([]string, 0, len(exec.Child))
+		for _, word := range exec.Child {
 			child = append(child, sanitize.ShellQuote(word))
 		}
 		if benchguard.InvokesBench(strings.Join(child, " "), resolver) {

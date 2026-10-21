@@ -104,11 +104,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT371 (LOW, decision required) — a research probe runs the git behavior it studies in a scratch repository.**
 
-**FT335 (MEDIUM) — a `bench worktree merge` from the primary checkout grades the composed tree with the target's declared lane.**
-
 **FT401 (LOW, decision required) — the refusals outside the write verbs print their routes from the refusal-route registry.**
-
-**FT419 (MEDIUM) — a build that adds a persisted ledger or review-record field writes and lands through a binary that reads that field.**
 
 **FT424 (MEDIUM) — a chunk gap lands the prepared work of waiting committed outcomes.**
 
@@ -340,13 +336,11 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT380-plan-commit
-2. FT409
-3. FT402
-4. FT411
-5. FT366-degraded-guard
-6. FT362-process-lifetime
-7. FT360-shared-fixtures
-8. FT125-exact-readers
-9. FT314-gate-reuse
-10. FT375-residual
+1. FT409
+2. FT402
+3. FT362-process-lifetime
+4. FT360-shared-fixtures
+5. FT411
+6. FT314-gate-reuse
+7. FT125-exact-readers
+8. FT375-residual

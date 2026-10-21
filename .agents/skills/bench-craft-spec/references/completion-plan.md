@@ -47,4 +47,6 @@ The parser refuses an unknown key, a duplicate key, and an empty list. A chunk
 must not come before a chunk that holds one of its `Blocked by:` tickets. Do not
 write `execution` or a requirement `ticket`; the version 2 amendment adds them.
 The `check-floor` row of build preflight names each floor command that a chunk
-omits.
+omits. The `chunk-rows` row compares the chunk table with the coverage map in
+both directions. It names each map row that no acceptance cell lists and each
+listed ID that the map does not declare.

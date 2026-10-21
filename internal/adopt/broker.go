@@ -17,7 +17,8 @@ import (
 // WriteBrokerManifest publishes the broker manifest beside the resolved wrapper,
 // binding the currently running executable as the promotion broker. It returns the
 // manifest path and the broker path it bound. The install and repair owner calls it, so
-// a repository executable can never become the landing owner.
+// a repository executable becomes the landing owner only through the candidate install
+// of a declared build.
 func WriteBrokerManifest(version string) (string, string, error) {
 	return writeBrokerManifest(version, nil)
 }

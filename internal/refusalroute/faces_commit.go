@@ -1,9 +1,7 @@
 package refusalroute
 
-// commitRerun re-runs the caller's own commit in the worktree that the label fact
-// addresses. The raising site composes the arguments, because only it holds how many paths
-// the caller named.
-var commitRerun = TreeCommand("bench commit", Fact(FactLabel), Composed(FactArguments))
+// commitRerun re-runs the caller's own commit.
+var commitRerun = callerRerun("bench commit")
 
 // commitFaces are the commit's refusal faces, in registry order.
 var commitFaces = []Face{

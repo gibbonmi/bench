@@ -4,9 +4,9 @@ package anchors
 // build preflight, the main fold, and the chunk checkpoint gate. They forbid the retired
 // sentences of the chain: the review charge before the author record, the unscoped light-path
 // dispatch in ADR 0023, the main fold at the start of the last chunk and its refreeze, the
-// review as the chunk freezer, the orchestrator's chunk record, the checkpoint gate for every
-// chunk, the README checkpoint edges, the review chain's refusal of a fold, the widened
-// confirming round, and the hand-recording sentences.
+// comment-only correction after a chunk tip, the review as the chunk freezer, the orchestrator's
+// chunk record, the checkpoint gate for every chunk, the README checkpoint edges, the review
+// chain's refusal of a fold, the widened confirming round, and the hand-recording sentences.
 var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Class: Command, Section: "Build", Needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`.", Diagnostic: "chunk chain: build preflight runs through the worktree with the chunk's --base and --source-tip after each ticket commit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Build", Needle: "review charge before the author record commit", Diagnostic: "chunk chain: the Build section puts the review charge before the author record commit"},
@@ -16,6 +16,7 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "The fold at the start of the last chunk comes before its first ticket dispatch.", Diagnostic: "chunk chain: the implement phase restored the last-chunk fold before its first ticket dispatch"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "review delta of the last chunk", Diagnostic: "chunk chain: the implement phase restored the fold in the review delta of the last chunk"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "the last chunk refreezes", Diagnostic: "chunk chain: the implement phase restored the refreeze of the last chunk after a fold"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "comment-only corrections follow the chunk tip", Diagnostic: "chunk chain: the implement phase restored the comment-only correction after the chunk tip"},
 	{Group: AfterImplementSpec, File: craftTickets, Kind: ForbidCaseFoldedEmphasis, Needle: "review freezes", Diagnostic: "chunk chain: craft-tickets restored the review as the chunk freezer"},
 	{Group: AfterImplementSpec, File: benchReference, Kind: ForbidCaseFoldedEmphasis, Needle: "review freezes", Diagnostic: "chunk chain: the reference restored the review as the chunk freezer"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "When the orchestrator freezes a chunk after its last ticket", Diagnostic: "chunk chain: the implement phase restored the orchestrator's chunk record"},

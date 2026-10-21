@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/commitment"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gittest"
@@ -190,6 +191,50 @@ func LedgerPath(t testing.TB, root string) string {
 		t.Fatal(err)
 	}
 	return path
+}
+
+// PlantCommitmentField writes field into the commitment object of the ledger at root,
+// through the raw JSON, as a writer whose schema adds field leaves the shared ledger. The
+// ledger keeps its file mode.
+func PlantCommitmentField(t testing.TB, root, field string) {
+	t.Helper()
+	path := LedgerPath(t, root)
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ledger map[string]any
+	if err := json.Unmarshal(data, &ledger); err != nil {
+		t.Fatal(err)
+	}
+	state, ok := ledger["commitment"].(map[string]any)
+	if !ok {
+		t.Fatalf("ledger %s holds no commitment object", data)
+	}
+	state[field] = "planted"
+	if data, err = json.Marshal(ledger); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, append(data, '\n'), info.Mode().Perm()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// BindManifest writes the broker manifest of the checkout at root so that it binds
+// executable, as the doctor repair of an install does.
+func BindManifest(t testing.TB, root, executable string) {
+	t.Helper()
+	dir := filepath.Dir(brokermanifest.Path(root))
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := brokermanifest.Write(dir, executable, "0.0.0"); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // RequireLedgerKept runs act and fails unless the ledger at root keeps its exact bytes.

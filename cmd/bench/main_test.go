@@ -678,74 +678,14 @@ func gitlessPATH(t *testing.T) string {
 // directory's identity, so a linked project repo, which a path-prefix test could not
 // tell from a worktree, still gets the wrapper's tree.
 func TestShellWrapperResolvesKitForTheInvocation(t *testing.T) {
-	base := t.TempDir()
-	kit := filepath.Join(base, "kit")
-	argvFile := filepath.Join(base, "argv")
-	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(kit, "bin", "bench.sh"))
-	gitInitRepo(t, kit)
-	// dist/bench stays untracked, exactly as in a real checkout. The worktree case reaches
-	// it only because main_tree_kit re-anchors the binary lookup at the main tree.
-	writeExecutable(t, filepath.Join(kit, "dist", "bench"), `#!/usr/bin/env bash
-printf '%s\n' "$BENCH_KIT" > "$BENCH_TEST_ARGV"
-`)
-	worktree := filepath.Join(base, "wt")
-	add := exec.Command("git", "worktree", "add", "-q", "-b", "probe", worktree)
-	add.Dir = kit
-	if out, err := add.CombinedOutput(); err != nil {
-		t.Fatalf("git worktree add: %v\n%s", err, out)
-	}
-	project := filepath.Join(base, "project")
-	gitInitRepo(t, project)
-	// In the adopted-repo layout, the kit is a subdirectory of the project repo. The
-	// project's own CWD shares its common dir with the wrapper's tree, so only the
-	// "kit is its tree's top level" condition keeps the wrapper naming <repo>/.bench.
-	adopted := filepath.Join(base, "adopted")
-	adoptedKit := filepath.Join(adopted, ".bench")
-	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(adoptedKit, "bin", "bench.sh"))
-	writeExecutable(t, filepath.Join(adoptedKit, "dist", "bench"), `#!/usr/bin/env bash
-printf '%s\n' "$BENCH_KIT" > "$BENCH_TEST_ARGV"
-`)
-	gitInitRepo(t, adopted)
-	plain := filepath.Join(base, "plain")
-	if err := os.MkdirAll(plain, 0o755); err != nil {
-		t.Fatal(err)
-	}
-
-	wrapper := filepath.Join(kit, "bin", "bench.sh")
-	cleanEnv := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
-	cleanEnv = capability.WithoutEnvironment(capability.WithoutEnvironment(cleanEnv, "BENCH_KIT"), "BENCH_WRAPPER")
-	cleanEnv = append(cleanEnv, "BENCH_TEST_ARGV="+argvFile, "BENCH_HOME="+filepath.Join(base, "home"))
-
-	for _, tc := range []struct {
-		name    string
-		wrapper string
-		cwd     string
-		env     []string
-		want    string
-	}{
-		{name: "worktree of the wrapper's repository", cwd: worktree, want: worktree},
-		{name: "an adopted repo's own kit subdirectory", wrapper: filepath.Join(adoptedKit, "bin", "bench.sh"), cwd: adopted, want: adoptedKit},
-		{name: "the wrapper's own main checkout", cwd: kit, want: kit},
-		{name: "a different repository (linked project)", cwd: project, want: kit},
-		{name: "outside any repository", cwd: plain, want: kit},
-		{name: "no git on PATH", cwd: worktree, env: []string{"PATH=" + gitlessPATH(t)}, want: kit},
-		{name: "an explicit BENCH_KIT wins", cwd: worktree, env: []string{"BENCH_KIT=" + kit}, want: kit},
-	} {
+	f := newWrapperKitFixture(t)
+	shapes := append(f.shapes,
+		wrapperKitShape{name: "no git on PATH", tree: f.kit, cwd: f.worktree, env: []string{"PATH=" + gitlessPATH(t)}, want: f.kit},
+		wrapperKitShape{name: "an explicit BENCH_KIT wins", tree: f.kit, cwd: f.worktree, env: []string{"BENCH_KIT=" + f.kit}, want: f.kit},
+	)
+	for _, tc := range shapes {
 		t.Run(tc.name, func(t *testing.T) {
-			if err := os.Remove(argvFile); err != nil && !os.IsNotExist(err) {
-				t.Fatal(err)
-			}
-			invoked := wrapper
-			if tc.wrapper != "" {
-				invoked = tc.wrapper
-			}
-			cmd := exec.Command("bash", invoked, "gate-phases", "/tmp/root")
-			cmd.Dir = tc.cwd
-			cmd.Env = append(append([]string(nil), cleanEnv...), tc.env...)
-			if out, err := cmd.CombinedOutput(); err != nil {
-				t.Fatalf("bench.sh from %s: %v\n%s", tc.cwd, err, out)
-			}
-			if got := strings.TrimSpace(readPath(t, argvFile)); got != tc.want {
+			if got := f.run(t, tc); got != tc.want {
 				t.Fatalf("BENCH_KIT = %q, want %q", got, tc.want)
 			}
 		})

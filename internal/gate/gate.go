@@ -198,10 +198,14 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	ctx, finishSpan := beginGateSpan(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, mode.String())
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, mode.String())
-	var result Result
-	if checkpoint.Complete {
+	// The candidate check precedes both execute paths, so its refusal comes before the owner
+	// lookup, the review-record read, and the chunk-gap write.
+	result, refused := refuseUninstalled(ctx, root, checkpoint, stderr, mode)
+	switch {
+	case refused:
+	case checkpoint.Complete:
 		result = executeCompleteCheckpoint(ctx, root, checkpoint.Spec, stdout, stderr, notifyGateSignals, mode)
-	} else {
+	default:
 		result = executeAfterAcquire(ctx, root, stdout, stderr, notifyGateSignals, mode)
 	}
 	finishLog(result)

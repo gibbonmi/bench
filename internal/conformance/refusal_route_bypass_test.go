@@ -28,6 +28,7 @@ var routeBypassPackages = []string{
 	"internal/gate",
 	"internal/gate/authorization",
 	"internal/landing",
+	"internal/reviewrecord/recordcmd",
 	"internal/worktree",
 	"internal/worktree/landingpolicy",
 }
@@ -36,7 +37,7 @@ var routeBypassPackages = []string{
 // the registry does not own, keyed to the read or shared caller that its routes serve.
 var routeBypassAllowed = map[string]string{
 	"internal/worktree/path.go":        "the shared --in tree-target refusal of every tree-scoped verb, read and write",
-	"internal/worktree/build.go":       "the success route of bench worktree build",
+	"internal/worktree/build.go":       "the success routes of bench worktree build and its install form, and the install refusal routes",
 	"internal/worktree/tree_target.go": "the success route of bench worktree create",
 }
 
@@ -142,6 +143,7 @@ func TestRouteBypassCheckBites(t *testing.T) {
 			"internal/gate":                   notLineSafe,
 			"internal/gate/authorization":     joined,
 			"internal/landing":                bareLabel,
+			"internal/reviewrecord/recordcmd": nextField,
 			"internal/worktree":               nextField,
 			"internal/worktree/landingpolicy": nextTable,
 		}

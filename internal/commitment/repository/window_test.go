@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/spec"
 )
 
 // approvedSpec is the staged spec that the policy at root approves for outcome.
@@ -196,5 +197,61 @@ func TestClosersDropTheGapRecord(t *testing.T) {
 				t.Fatalf("gap records after the %s = %+v, want none", row.name, ledger.Commitment.Gaps)
 			}
 		})
+	}
+}
+
+// TestDeclaredBuildNamesItsIntegrationTarget proves the two open-build answers. An open
+// build whose spec declares no field is an open build but not a declared build. A declared
+// build answers its first bound assignment as its integration target.
+func TestDeclaredBuildNamesItsIntegrationTarget(t *testing.T) {
+	t.Run("undeclared", func(t *testing.T) {
+		root := commitmenttest.Staged(t, "A")
+		startBuild(t, root, "build", "A", approvedSpec(t, root, "A"))
+		store := commitrepo.Store{Root: root}
+		open, err := store.HoldsOpenBuild()
+		_, declared, declaredErr := store.DeclaredBuild()
+		if err != nil || !open || declaredErr != nil || declared {
+			t.Fatalf("answers = open %t (%v), declared %t (%v); want an open build that is not declared", open, err, declared, declaredErr)
+		}
+	})
+	t.Run("declared", func(t *testing.T) {
+		root := commitmenttest.Staged(t, "A")
+		path := approvedSpec(t, root, "A")
+		body := commitmenttest.StagedBody + "Persisted fields: intent-ledger:commitment.gaps\n"
+		commitmenttest.Write(t, root, path, body)
+		commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
+			policy.Milestones[0].Outcomes[0].Deliverables[0].Source.Identity = commitment.Identity([]byte(body))
+		})
+		commitmenttest.Commit(t, root, "declare a persisted field")
+		first := startBuild(t, root, "first", "A", path)
+		startBuild(t, root, "second", "A", path)
+		target, declared, err := commitrepo.Store{Root: root}.DeclaredBuild()
+		if err != nil || !declared || target.ID != first.Assignment {
+			t.Fatalf("declared build = %+v, %t, %v; want the first bound assignment %s", target, declared, err, first.Assignment)
+		}
+	})
+}
+
+// TestDefaultDeclarationReadsTheDefaultBranchCopy proves the one declaration reader reads
+// the default-branch tip and not the checkout, and that a missing copy and a malformed line
+// both refuse. The install and the held refresh both read through it.
+func TestDefaultDeclarationReadsTheDefaultBranchCopy(t *testing.T) {
+	t.Parallel()
+	const path = "specs/declared/spec.md"
+	root := gittest.RepoOnBranch(t, "main")
+	commitmenttest.Write(t, root, path, "# declared\n\nStatus: staged\nPersisted fields: intent-ledger:commitment.gaps\n")
+	commitmenttest.Write(t, root, "specs/invalid/spec.md", "# invalid\n\nStatus: staged\nPersisted fields: gate-evidence:x\n")
+	commitmenttest.Commit(t, root, "declare")
+	commitmenttest.Write(t, root, path, "# declared\n\nStatus: staged\n")
+	store := commitrepo.Store{Root: root}
+	fields, err := store.DefaultDeclaration(path)
+	if err != nil || len(fields) != 1 || fields[0].Record != "intent-ledger" || strings.Join(fields[0].Path, ".") != "commitment.gaps" {
+		t.Fatalf("declaration = %+v, %v; want the default-branch item intent-ledger:commitment.gaps", fields, err)
+	}
+	if fields, err := store.DefaultDeclaration("specs/absent/spec.md"); err == nil {
+		t.Fatalf("declaration of an absent copy = %+v, want an error", fields)
+	}
+	if fields, err := store.DefaultDeclaration("specs/invalid/spec.md"); !errors.Is(err, spec.ErrPersistedFieldsInvalid) {
+		t.Fatalf("declaration of a malformed line = %+v, %v; want %v", fields, err, spec.ErrPersistedFieldsInvalid)
 	}
 }

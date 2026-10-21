@@ -138,7 +138,13 @@ func admittedMergeFixture(t *testing.T, labels ...string) mergeSet {
 // grades each fold. script is the gate's body, and the set holds one assignment.
 func wholeGateMergeFixture(t *testing.T, script string) mergeSet {
 	t.Helper()
-	f := mergeSetOver(t, newWorktreeRepo(t), filepath.Join(t.TempDir(), "bench-home"))
+	return wholeGateMergeSetAt(t, newWorktreeRepo(t), script)
+}
+
+// wholeGateMergeSetAt is wholeGateMergeFixture over root, which already holds its commits.
+func wholeGateMergeSetAt(t *testing.T, root, script string) mergeSet {
+	t.Helper()
+	f := mergeSetOver(t, root, filepath.Join(t.TempDir(), "bench-home"))
 	commitWholeGate(t, f.root, script)
 	f.created = append(f.created, mustCreate(t, f.root, f.home, "merge-integration", "integration"))
 	return f

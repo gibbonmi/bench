@@ -19,23 +19,6 @@ import (
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
-func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
-	var diags []string
-	diags = append(diags, checkPackageFiles(root, tier)...)
-	diags = append(diags, checkGoToolchain(root)...)
-	diags = append(diags, checkNodeRuntimePolicy(root)...)
-	diags = append(diags, checkReleaseWorkflow(root)...)
-	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
-	diags = append(diags, checkRetiredReproducibilityRecord(root)...)
-	diags = append(diags, checkReleasePreflight(root)...)
-	diags = append(diags, checkShippedIdentityStrings(root)...)
-	diags = append(diags, checkUserFacingBenchkitStrings(root)...)
-	diags = append(diags, checkGuardHeaderManifests(root)...)
-	diags = append(diags, checkGuardResolverOrderDrift(root)...)
-	diags = append(diags, checkGuardClassifierTable(root)...)
-	return diags
-}
-
 func checkPackageFiles(root string, tier registry.Tier) []string {
 	path := filepath.Join(root, "package.json")
 	data, err := os.ReadFile(path)

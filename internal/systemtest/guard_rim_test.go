@@ -19,7 +19,7 @@ import (
 // PreToolUse contract defines — 2 blocks, 0 allows — and the degraded message that only
 // the rim emits. A verdict from a reachable core cannot pass as one.
 func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
-	hook := filepath.Join(owner.kit, ".bench", "hooks", "block-dangerous-git.sh")
+	hook := gitGuardHookPath()
 	if _, err := os.Stat(hook); err != nil {
 		t.Fatal(err)
 	}
@@ -47,10 +47,7 @@ func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
 		{"timeout prefix", `{"tool_name":"Bash","tool_input":{"command":"timeout 30 git rebase -i main"}}`},
 		{"absolute path to git", `{"tool_name":"Bash","tool_input":{"command":"/usr/bin/git branch -D topic"}}`},
 	} {
-		result := run(blocked.envelope)
-		if result.code != 2 || !strings.Contains(result.stderr, "BLOCKED: guard degraded") {
-			t.Errorf("H20 %s = (%d, %q, %q), want exit 2 and the degraded refusal", blocked.name, result.code, result.stdout, result.stderr)
-		}
+		assertCoarseGitRefusal(t, "H20 "+blocked.name, run(blocked.envelope))
 	}
 
 	// H21 — the defect. `git` in a path, in an argument, or in an unrelated envelope field

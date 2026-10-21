@@ -1,12 +1,15 @@
 package intent
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
+	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
 // ReadMode names how a transaction reads the ledger before it hands it to the decision.
@@ -88,6 +91,101 @@ func transact(replacer durablefile.Replacer, root string, mode ReadMode, decide 
 func published(err error) bool {
 	var replaceErr *durablefile.Error
 	return errors.As(err, &replaceErr) && replaceErr.Published
+}
+
+// ReadTolerant reads the ledger at root in the tolerant mode, outside a transaction, and
+// writes no byte. A field that this schema does not know therefore stops no lookup. The
+// mode drops each assignment record that it cannot decode, so a record that holds such a
+// field is absent from the answer.
+func ReadTolerant(root string) (Ledger, error) {
+	path, err := Address(root)
+	if err != nil {
+		return Ledger{}, err
+	}
+	ledger, _, err := readMode(path, TolerantRead)
+	return ledger, err
+}
+
+// RemoveFields removes each field path of paths from the raw ledger at root under the
+// ledger lock, after it writes the ledger bytes that it read to preserve. It reports whether
+// it wrote that copy: a ledger file that does not exist holds no field, so the removal then
+// writes no file. A path holds JSON tag names from the ledger root. The removal deletes the
+// last name from each object that the rest of the path reaches, and an array along the path
+// takes the rest of the path in each element. A path that the ledger does not hold changes
+// nothing, and a removal that changes nothing writes no ledger byte.
+//
+// The replacement keeps the raw document, so a removed field without omitempty does not
+// return as its zero value. The result must pass the strict decode first. The decode, not
+// the strict read, grades it, because the read's validation can require the nested field
+// that the removal deletes, and an executable that does not know the field requires nothing.
+func RemoveFields(root, preserve string, paths [][]string) (bool, error) {
+	path, err := Address(root)
+	if err != nil {
+		return false, err
+	}
+	release, err := acquire(lockOf(path))
+	if err != nil {
+		return false, err
+	}
+	defer release()
+	data, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("read intent ledger: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(preserve), 0o700); err != nil {
+		return false, fmt.Errorf("preserve intent ledger: %w", err)
+	}
+	if err := durablefile.Replace(preserve, data, 0o600); err != nil {
+		return false, fmt.Errorf("preserve intent ledger: %w", err)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	var document any
+	if err := decoder.Decode(&document); err != nil {
+		return true, fmt.Errorf("read intent ledger: malformed JSON: %w", err)
+	}
+	removed := false
+	for _, fieldPath := range paths {
+		removed = removeField(document, fieldPath) || removed
+	}
+	if !removed {
+		return true, nil
+	}
+	next, err := json.Marshal(document)
+	if err != nil {
+		return true, fmt.Errorf("encode intent ledger: %w", err)
+	}
+	next = append(next, '\n')
+	if err := jsonfile.Decode(next, &Ledger{}); err != nil {
+		return true, fmt.Errorf("decode the cleared intent ledger: %w", err)
+	}
+	return true, durablefile.Replace(path, next, 0o600)
+}
+
+// removeField deletes the last name of fieldPath from each object that the rest of the path
+// reaches in value, and reports whether it deleted one.
+func removeField(value any, fieldPath []string) bool {
+	removed := false
+	switch node := value.(type) {
+	case []any:
+		for _, element := range node {
+			removed = removeField(element, fieldPath) || removed
+		}
+	case map[string]any:
+		child, held := node[fieldPath[0]]
+		switch {
+		case !held:
+		case len(fieldPath) == 1:
+			delete(node, fieldPath[0])
+			removed = true
+		default:
+			removed = removeField(child, fieldPath[1:])
+		}
+	}
+	return removed
 }
 
 func readMode(path string, mode ReadMode) (Ledger, int, error) {

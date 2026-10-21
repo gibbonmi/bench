@@ -65,12 +65,19 @@ func resolveAssignment(root, target string) (intent.Assignment, error) {
 // resolveAssignmentIn is the same resolution; accepts names the ledger states the calling
 // verb takes, as the identity bundle's own state check does.
 func resolveAssignmentIn(root, target string, accepts func(intent.AssignmentState) bool) (intent.Assignment, error) {
-	if !lineSafe(target) {
-		return intent.Assignment{}, errTargetControls
-	}
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return intent.Assignment{}, err
+	}
+	return resolveAmong(root, assignments, target, accepts)
+}
+
+// resolveAmong selects target among assignments and proves the selected record: accepts
+// takes its state, its tree exists, and its creation bundle holds. The caller supplies
+// assignments from its own ledger read, strict or tolerant, so each read proves one bundle.
+func resolveAmong(root string, assignments []intent.Assignment, target string, accepts func(intent.AssignmentState) bool) (intent.Assignment, error) {
+	if !lineSafe(target) {
+		return intent.Assignment{}, errTargetControls
 	}
 	selected, err := selectAssignment(assignments, target)
 	if err != nil {

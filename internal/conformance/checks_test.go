@@ -3,6 +3,9 @@ package conformance
 import (
 	"bytes"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -78,6 +81,25 @@ func init() {
 		"claude-agent-definitions":      {checkClaudeAgentDefinitions, registry.Dev, registry.SubjectRoot},
 		"stdlib-reimplementation":       {checkStdlibReimplementation, registry.Dev, registry.SubjectRoot},
 	}
+}
+
+func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
+	var diags []string
+	diags = append(diags, checkPackageFiles(root, tier)...)
+	diags = append(diags, checkGoToolchain(root)...)
+	diags = append(diags, checkNodeRuntimePolicy(root)...)
+	diags = append(diags, checkReleaseWorkflow(root)...)
+	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
+	diags = append(diags, checkRetiredReproducibilityRecord(root)...)
+	diags = append(diags, checkReleasePreflight(root)...)
+	diags = append(diags, checkShippedIdentityStrings(root)...)
+	diags = append(diags, checkUserFacingBenchkitStrings(root)...)
+	diags = append(diags, checkGuardHeaderManifests(root)...)
+	diags = append(diags, checkGuardResolverOrderDrift(root)...)
+	diags = append(diags, checkGuardClassifierTable(root)...)
+	diags = append(diags, checkGuardScanLoopOwner(root)...)
+	diags = append(diags, checkGuardProjectionOwner(root)...)
+	return diags
 }
 
 // RunConformance grades root against the checks tier runs, timing each one. An empty
@@ -293,8 +315,10 @@ var hardenedProducerRe = regexp.MustCompile(`(^|/)(\.agents/skills/[^/]+/SKILL\.
 // readIfExists returns a file's text, or "" for anything a caller may not trust. A
 // producer path goes through the no-follow classifier first. A link is refused rather
 // than followed, a FIFO cannot block the check in open(2), and oversized or non-UTF-8
-// bytes never reach a parser. Every other path keeps the plain read. This helper is
-// shared by checks whose subjects are ordinary tracked sources.
+// bytes never reach a parser. Every other path follows a link and keeps the plain read,
+// but only of a regular file: a graded tree can hold a FIFO under any source name, and
+// open(2) on it blocks until a writer arrives. This helper is shared by checks whose
+// subjects are ordinary tracked sources.
 func readIfExists(path string) string {
 	if hardenedProducerRe.MatchString(filepath.ToSlash(path)) {
 		classified := bounds.ClassifyNoFollow(path)
@@ -302,6 +326,9 @@ func readIfExists(path string) string {
 			return ""
 		}
 		return string(classified.Data)
+	}
+	if info, err := os.Stat(path); err != nil || !info.Mode().IsRegular() {
+		return ""
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -639,4 +666,43 @@ func writeHostileReferenceRoot(t *testing.T, plant func(*testing.T, string)) str
 		files:  map[string]string{".bench/BENCH.md": "# Guide\n\nSee .bench/BENCH-reference.md\n"},
 		plants: map[string]func(*testing.T, string){".bench/BENCH-reference.md": plant},
 	}.build(t)
+}
+
+// TestGuardProjectionPreservesIndependentChecks parses the live conformance package. The registered
+// package-core-guard implementation must call the resolver-order, classifier-table, and projection
+// owner subchecks, and entry-point parity must keep its own registry row. The conformance-meta check
+// owns the match of each row to its executable binding.
+func TestGuardProjectionPreservesIndependentChecks(t *testing.T) {
+	h := NewHarness(t)
+	packages, err := parser.ParseDir(token.NewFileSet(), filepath.Join(h.KitRoot, "internal", "conformance"), nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	implementations := map[string]string{}
+	for _, row := range registry.Checks {
+		implementations[row.Name] = row.Implementation
+	}
+	if implementations["entry-point-parity"] == "" {
+		t.Error("entry-point parity has no registry row of its own")
+	}
+	called := map[string]bool{}
+	for _, file := range packages["conformance"].Files {
+		for _, declaration := range file.Decls {
+			if fn, ok := declaration.(*ast.FuncDecl); ok && fn.Body != nil && fn.Name.Name == implementations["package-core-guard"] {
+				ast.Inspect(fn.Body, func(node ast.Node) bool {
+					if call, ok := node.(*ast.CallExpr); ok {
+						if ident, ok := call.Fun.(*ast.Ident); ok {
+							called[ident.Name] = true
+						}
+					}
+					return true
+				})
+			}
+		}
+	}
+	for _, subcheck := range []any{checkGuardResolverOrderDrift, checkGuardClassifierTable, checkGuardProjectionOwner} {
+		if name := (checkBinding{implementation: subcheck}).identity(); !called[name] {
+			t.Errorf("the registered package-core-guard implementation does not call %s", name)
+		}
+	}
 }

@@ -2,7 +2,6 @@ package gitguard
 
 import (
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/shellcommand"
@@ -10,23 +9,18 @@ import (
 
 // The scanner walks the token stream command by command (splitting on control
 // operators). It strips the honest-mistake prefixes an agent reflexively types
-// (env/xargs/timeout/…), and hands each `git <subcommand>` to classify. Wrapper strings
-// (`sh|bash|zsh -c '…'`) are re-tokenized and scanned exactly one level deep, by design:
-// this is an honest-mistake layer, not an evasion-resistant boundary. The child argv of
-// `bench worktree exec` is the same one level, because a pool worktree runs git that way.
+// (env/xargs/timeout/…), and hands each `git <subcommand>` to classify. The first shell
+// wrapper child is scanned exactly one level deep, by design: this is an honest-mistake
+// layer, not an evasion-resistant boundary. The child argv of `bench worktree exec` is
+// the same one level, because a pool worktree runs git that way.
 
 // keywords are shell keywords skipped in command position so the verb after them is
 // found (`if git …`, `while git …`).
 var keywords = map[string]bool{"if": true, "then": true, "elif": true, "else": true, "do": true, "while": true, "until": true, "!": true, "{": true}
 
-// wrappers whose `-c` string is re-scanned one level deep.
-var wrappers = map[string]bool{"sh": true, "bash": true, "zsh": true}
-
 // globalOptsWithArg are `git`'s pre-subcommand options that take a separate-word value,
 // so find_subcommand skips the value too and does not mistake it for the subcommand.
 var globalOptsWithArg = map[string]bool{"-C": true, "-c": true, "--exec-path": true, "--git-dir": true, "--namespace": true, "--work-tree": true}
-
-var wrapperCFlagRe = regexp.MustCompile(`^-[A-Za-z]*c[A-Za-z]*$`)
 
 // scan returns the deny label for the first destructive git command it finds, or "" if
 // none. allowWrapper gates the one-level wrapper recursion.
@@ -43,7 +37,7 @@ func scan(stream shellcommand.Stream, chk Checker, allowWrapper bool) string {
 	return ""
 }
 
-// scanWords classifies one simple command's words. A wrapper's `-c` string and a
+// scanWords classifies one simple command's words. The first shell wrapper child and a
 // `bench worktree exec` child are each the one level of recursion allowWrapper gates.
 // elsewhere marks words that run in another checkout, so the verdicts that read this
 // directory's repository facts do not describe them.
@@ -64,37 +58,16 @@ func scanWords(tokens []string, chk Checker, allowWrapper, elsewhere bool) strin
 		return classify(sub, tokens[argsStart:], viaXargs, redirected, chk)
 	case !allowWrapper:
 		return ""
-	case wrappers[base]:
-		for k := j + 1; k < len(tokens); k++ {
-			if wrapperCFlagRe.MatchString(tokens[k]) {
-				if k+1 < len(tokens) {
-					return scan(shellcommand.Parse(tokens[k+1]), chk, false)
-				}
-				break
-			}
+	case benchExecutables[base]:
+		if exec := shellcommand.WorktreeExec(tokens, j); exec.HasSeparator {
+			return scanWords(exec.Child, chk, false, exec.DifferentCheckout)
 		}
 	default:
-		if child, ok := worktreeExecChild(tokens[j:]); ok {
-			return scanWords(child, chk, false, true)
+		if children := shellcommand.ShellChildren(tokens, j); len(children) > 0 {
+			return scan(children[0].Stream, chk, false)
 		}
 	}
 	return ""
-}
-
-// worktreeExecChild returns the argv a `bench worktree exec <target> [--env KEY=VALUE]...
-// -- <argv>` call runs, and whether words are such a call. The child argv starts after
-// the first `--`, the terminator the verb's grammar requires. The verb runs the argv
-// directly in the target worktree, with no shell between them.
-func worktreeExecChild(words []string) ([]string, bool) {
-	if len(words) < 3 || !benchExecutables[filepath.Base(words[0])] || words[1] != "worktree" || words[2] != "exec" {
-		return nil, false
-	}
-	for i := 3; i < len(words); i++ {
-		if words[i] == "--" {
-			return words[i+1:], true
-		}
-	}
-	return nil, false
 }
 
 // isGit reports whether a word names the git executable, bare or by path.

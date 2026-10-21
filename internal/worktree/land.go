@@ -62,8 +62,8 @@ const reviewedRangeDetail = "review base is outside the assignment's reviewed ra
 // LandCommand is the first-run reviewed-source landing operation. It performs every
 // reversible proof before the exact-tree owner receives authority to publish. The
 // invoked process is the one promotion owner for the complete landing: it never
-// consults, rebuilds, or re-executes a repository executable, so candidate landing
-// code cannot run during its own promotion.
+// consults, rebuilds, or re-executes a repository executable. Candidate code runs here
+// only as the broker that `bench worktree build --install` binds for a declared build.
 func LandCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	return landWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }

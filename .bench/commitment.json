@@ -925,6 +925,25 @@
           ]
         },
         {
+          "id": "FT366-degraded-guard",
+          "criteria": [
+            {
+              "id": "FT366-degraded-guard.refuse",
+              "text": "The degraded Git guard refuses a malformed command, such as a joined word or an unclosed quote, before it classifies the command."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "degraded-guard-refusal",
+                "path": "specs/degraded-guard-refusal/spec.md",
+                "identity": "sha256:bc480b11202f47e3c680c6c2fada00d26f20c2cb0ed5476028c55db4ce978100"
+              }
+            }
+          ]
+        },
+        {
           "id": "FT380-plan-commit",
           "criteria": [
             {
@@ -948,7 +967,105 @@
               "text": "The guidance states that any source change after a chunk freeze moves the chunk tip and needs a refreeze, and that the successor base is the last recorded source tip of its predecessor, never a record commit."
             }
           ],
-          "sources": []
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "plan-commit",
+                "path": "specs/plan-commit/spec.md",
+                "identity": "sha256:d7cef4e864219e01ec1568bae03372e07b49b9c1892cbbb56b4ba22789cdcf6e"
+              }
+            }
+          ]
+        },
+        {
+          "id": "FT335",
+          "criteria": [
+            {
+              "id": "FT335.lane",
+              "text": "A bench worktree merge from the primary checkout grades the composed tree with the target's declared lane."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT335",
+              "path": "roadmap/FT335.md",
+              "identity": "sha256:4797c01552df0d5f52cc3620bca015e76a298bb96bab6c9d65999816fbb794b1"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "merge-target-lane",
+                "path": "specs/merge-target-lane/spec.md",
+                "identity": "sha256:8f6724b61e08d439cb88f8d6d2dc794d986c7e3cd5c09dae44e95ecf70ca0a38"
+              },
+              "obligations": [
+                "FT335"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "FT419",
+          "criteria": [
+            {
+              "id": "FT419.reader",
+              "text": "A build that adds a persisted ledger or review-record field writes and lands through a binary that reads that field."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT419",
+              "path": "roadmap/FT419.md",
+              "identity": "sha256:51770caf94fc53b93e5701036d1b6eba2e4e544daca83f491eff1c40359ddd92"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "candidate-binary-install",
+                "path": "specs/candidate-binary-install/spec.md",
+                "identity": "sha256:6878989aae708ee957cb77aeb9685947fa57fd3ab88e853fe9a4dc553fec99ea"
+              },
+              "obligations": [
+                "FT419"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "FT366-guard-residual",
+          "criteria": [
+            {
+              "id": "FT366-guard-residual.projection",
+              "text": "The guards share one command projection and one set of envelope facts."
+            },
+            {
+              "id": "FT366-guard-residual.scan",
+              "text": "The guard inventory scan runs as one synchronous loop."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "shared-guard-projection",
+                "path": "specs/shared-guard-projection/spec.md",
+                "identity": "sha256:0f87dd6317d6d57f5ad144f7cdcf6928ee530899183d87a91754fb451fbc93ce"
+              }
+            },
+            {
+              "source": {
+                "id": "guard-scan-loop",
+                "path": "specs/guard-scan-loop/spec.md",
+                "identity": "sha256:2d45844ead152d37313a32d2b9db29b2b44a1d6da0d8b25ecd2c0aab86696fb8"
+              }
+            }
+          ],
+          "dependencies": [
+            "FT366-degraded-guard"
+          ]
         },
         {
           "id": "FT409",
@@ -1005,45 +1122,6 @@
           ]
         },
         {
-          "id": "FT411",
-          "criteria": [
-            {
-              "id": "FT411.cut",
-              "text": "Each row of the 2026-10-09 test-efficiency review tables whose probe proves a kept test red on the same mutation is cut, and a whole-test cut in internal/worktree repins its top-level test count in the same ticket."
-            },
-            {
-              "id": "FT411.probe",
-              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT411",
-              "path": "roadmap/FT411.md",
-              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
-            }
-          ]
-        },
-        {
-          "id": "FT366-degraded-guard",
-          "criteria": [
-            {
-              "id": "FT366-degraded-guard.refuse",
-              "text": "The degraded Git guard refuses a malformed command, such as a joined word or an unclosed quote, before it classifies the command."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "degraded-guard-refusal",
-                "path": "specs/degraded-guard-refusal/spec.md",
-                "identity": "sha256:bc480b11202f47e3c680c6c2fada00d26f20c2cb0ed5476028c55db4ce978100"
-              }
-            }
-          ]
-        },
-        {
           "id": "FT362-process-lifetime",
           "criteria": [
             {
@@ -1082,21 +1160,22 @@
           ]
         },
         {
-          "id": "FT125-exact-readers",
+          "id": "FT411",
           "criteria": [
             {
-              "id": "FT125-exact-readers.slices",
-              "text": "The section, story, symbol, and worktree readers return precise slices under the output budget."
+              "id": "FT411.cut",
+              "text": "Each row of the 2026-10-09 test-efficiency review tables whose probe proves a kept test red on the same mutation is cut, and a whole-test cut in internal/worktree repins its top-level test count in the same ticket."
+            },
+            {
+              "id": "FT411.probe",
+              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
             }
           ],
-          "sources": [],
-          "deliverables": [
+          "sources": [
             {
-              "source": {
-                "id": "exact-planning-readers",
-                "path": "specs/exact-planning-readers/spec.md",
-                "identity": "sha256:b4f5d534bc72a368e67e9c81420743238d819d40e2dbd6c223e0aac85c60ab2f"
-              }
+              "id": "FT411",
+              "path": "roadmap/FT411.md",
+              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
             }
           ]
         },
@@ -1113,6 +1192,25 @@
               "id": "FT314",
               "path": "roadmap/FT314.md",
               "identity": "sha256:264903c22ff37e51a3e009b46a96a43267b9ad5c38934d96f3af4fd222f662ea"
+            }
+          ]
+        },
+        {
+          "id": "FT125-exact-readers",
+          "criteria": [
+            {
+              "id": "FT125-exact-readers.slices",
+              "text": "The section, story, symbol, and worktree readers return precise slices under the output budget."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "exact-planning-readers",
+                "path": "specs/exact-planning-readers/spec.md",
+                "identity": "sha256:b4f5d534bc72a368e67e9c81420743238d819d40e2dbd6c223e0aac85c60ab2f"
+              }
             }
           ]
         },
@@ -1365,6 +1463,54 @@
       "identity": "sha256:4ffdc4af39bd4ea9a4b4c69d80d8a25eb1a3f04475bb230dea66538423189725",
       "source": "be01ed0360b7507bb69873d5154f42857fea62f9",
       "evidence": "f8903f889af9f0fa45ca764f29e7e31a1df489b7"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT366-degraded-guard",
+      "binding": "degraded-guard-refusal",
+      "identity": "sha256:bc480b11202f47e3c680c6c2fada00d26f20c2cb0ed5476028c55db4ce978100",
+      "source": "1878ec6ce9c818357e2c36f8aa84d3005a5f87c7",
+      "evidence": "e8388886f1f48877dfeb13e25218dfa5b1203a2e"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT380-plan-commit",
+      "binding": "plan-commit",
+      "identity": "sha256:d7cef4e864219e01ec1568bae03372e07b49b9c1892cbbb56b4ba22789cdcf6e",
+      "source": "f1bb7f0ebcd430ae7b8b30381faa6daf3f06ac3a",
+      "evidence": "12ec5f5c66bc3c7a2dfc84142bd66a46d19ba776"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT335",
+      "binding": "merge-target-lane",
+      "identity": "sha256:8f6724b61e08d439cb88f8d6d2dc794d986c7e3cd5c09dae44e95ecf70ca0a38",
+      "source": "ef5c8ccfa3246d99b2ccdfa1914444360e797421",
+      "evidence": "6b5e253d4d0845b171f6a836819e979fea3e216b"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT419",
+      "binding": "candidate-binary-install",
+      "identity": "sha256:6878989aae708ee957cb77aeb9685947fa57fd3ab88e853fe9a4dc553fec99ea",
+      "source": "038d87de8a684384250f81c10a600683c18c5be4",
+      "evidence": "a279da98db1daa69c96ad13853a244632ea03825"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT366-guard-residual",
+      "binding": "guard-scan-loop",
+      "identity": "sha256:2d45844ead152d37313a32d2b9db29b2b44a1d6da0d8b25ecd2c0aab86696fb8",
+      "source": "ff8095631666466b10de508ccb1fc83702983233",
+      "evidence": "2d6bfa3f30292616f86e1fd001a04feeecdfdd9d"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT366-guard-residual",
+      "binding": "shared-guard-projection",
+      "identity": "sha256:0f87dd6317d6d57f5ad144f7cdcf6928ee530899183d87a91754fb451fbc93ce",
+      "source": "8ad9217686bfa9ceebe71d4aaf0ef268b9133016",
+      "evidence": "cbe5ea1ccc99d062b88c373eac88190cf1dc2313"
     }
   ]
 }

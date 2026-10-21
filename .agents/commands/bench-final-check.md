@@ -77,7 +77,18 @@ The landing retires the sibling worktrees whose work it carries, and `bench work
 The phase close reads the assignment census record before `bench worktree land` removes it, and it carries the per-verb breakdown into the close.
 
 Read `census=<n>` from the landed record, and write no `bench learning` entry for a census.
-For `n > 0`, name the Bench form for each verb head in the close, or `none`. Then propose the verb or the help change.
+A census row holds only the time and the command head of a raw call, so it gives no purpose.
+For `n > 0`, classify each raw call by its purpose.
+Use the calls that this session made and the raw calls that each delegate returned.
+Put each call in one class, and make the proposal of that class:
+
+- **Missed form**: an existing Bench form does the job, such as `bench consumers` for Go callers. Propose the guidance or help change that would route a session to that form.
+- **Owned gap**: the call reads or edits state whose format Bench owns, such as a review record or a plan fence. Propose the verb or flag that owns that read or edit.
+- **Sanctioned read**: the repository rules choose the tool, such as `rg` for a text search. Propose no Bench form. If these calls hide the other classes, propose a census change that counts them apart.
+- **Unknown**: this session cannot see the purpose. State the count, and propose no change.
+
+Never propose a Bench wrapper for a sanctioned read.
+Name the friction that each proposal removes and the calls that it replaces.
 Fold a delegate's zero to two CLI improvements into the close's census account.
 
 For `n = 0`, state `census: 0 raw calls` in the close; a nonzero count never blocks a landing.
@@ -109,7 +120,7 @@ Record concrete evidence:
 - what the coordinator caught while accepting delegate claims
 - specific improvements to Bench CLI, skills, and process, with the friction and expected effect named
 
-A spec retro records the close's census account as one `### Bench CLI` item with its `Feeds:` line.
+A spec retro records the close's census account under `### Bench CLI`. Each census proposal is its own item with its `Feeds:` line.
 
 The retro fills the scaffold's calibration table with one row per labeled claim.
 The retro states the Brier mean, the pair count, and the abstention count below the table, with `unknown` for a mean over zero pairs.

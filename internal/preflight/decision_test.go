@@ -17,6 +17,7 @@ func baseFacts() Facts {
 		ReviewBaseResolved:    true,
 		ChangedPaths:          []string{"internal/example/foo.go"},
 		DeclaredRowIDs:        []string{"PF1", "PF2"},
+		ChunkTable:            listing("PF1", "PF2"),
 		SpecTag:               "PF",
 		Tickets: []tickets.Ticket{{
 			Name:   "one.md",
@@ -53,9 +54,8 @@ func TestDecideAllGreen(t *testing.T) {
 
 	wantChecks := []string{
 		"base-current", "paths-authorized",
-		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
-		"kit-pin",
-		"rows-owned", "rows-membership", "diff-nonempty",
+		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve", "kit-pin",
+		"rows-owned", "rows-membership", "chunk-rows", "diff-nonempty",
 	}
 	if len(first.Checks) != len(wantChecks) {
 		t.Fatalf("Checks = %#v, want %d rows", first.Checks, len(wantChecks))
@@ -97,8 +97,8 @@ func TestDecideAllGreen(t *testing.T) {
 	}
 	// Every row that reads a parsed ticket, plus diff-nonempty, is
 	// not-applicable in a build with no tickets/ directory at all.
-	if naSeen != 9 {
-		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 9", naSeen)
+	if naSeen != 10 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 10", naSeen)
 	}
 }
 

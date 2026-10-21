@@ -13,34 +13,32 @@ import (
 // the verb's primary-checkout test, so this rule is the only layer that stops that form.
 // The scan reads text only, so a fabricated pseudo-terminal stays outside it.
 func ReviewerVerb(command string, verb [2]string, resolver Resolver) bool {
-	stream := shellcommand.Parse(command)
+	return streamRunsVerb(shellcommand.Parse(command), verb, resolver)
+}
+
+// streamRunsVerb reports whether any simple command of stream runs verb.
+func streamRunsVerb(stream shellcommand.Stream, verb [2]string, resolver Resolver) bool {
 	return slices.ContainsFunc(stream.Commands, func(span shellcommand.SimpleCommand) bool {
 		return runsReviewerVerb(shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End]), verb, resolver)
 	})
 }
 
-// runsReviewerVerb reports whether one simple command's words run verb.
+// runsReviewerVerb reports whether one simple command's words run verb. It recurses into
+// each exec child and each shell child, so the walk has no depth limit.
 func runsReviewerVerb(words []string, verb [2]string, resolver Resolver) bool {
 	prefix := shellcommand.ResolveRoutinePrefix(words)
 	if !prefix.Executes || prefix.Index >= len(words) {
 		return false
 	}
-	head, args := words[prefix.Index], words[prefix.Index+1:]
-	switch {
-	case isBench(head, resolver) && isExecHead(words, prefix.Index):
-		if child := slices.Index(args, "--"); child >= 0 {
-			return runsReviewerVerb(args[child+1:], verb, resolver)
+	if isBench(words[prefix.Index], resolver) {
+		if exec := shellcommand.WorktreeExec(words, prefix.Index); exec.Head {
+			return runsReviewerVerb(exec.Child, verb, resolver)
 		}
-	case isBench(head, resolver):
-		return namesVerb(args, verb)
-	case isWrapper(head):
-		for i := 0; i+1 < len(args); i++ {
-			if wrapperFlag.MatchString(args[i]) && ReviewerVerb(args[i+1], verb, resolver) {
-				return true
-			}
-		}
+		return namesVerb(words[prefix.Index+1:], verb)
 	}
-	return false
+	return slices.ContainsFunc(shellcommand.ShellChildren(words, prefix.Index), func(child shellcommand.WrapperChild) bool {
+		return streamRunsVerb(child.Stream, verb, resolver)
+	})
 }
 
 // namesVerb reports whether the arguments of a Bench call name verb. The dispatcher reads a

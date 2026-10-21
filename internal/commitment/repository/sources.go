@@ -66,6 +66,23 @@ func (store Store) stagedSpecs(revision string) ([]InventoryItem, error) {
 	return items, nil
 }
 
+// DefaultDeclaration reads the `Persisted fields:` declaration of the bound deliverable at
+// path from the default-branch tip, never from a checkout. A reviewed spec-stage landing
+// wrote that copy, so a candidate tree cannot declare its own fields. A spec without the
+// line, and a tickets-only folder, declare none. A malformed line refuses with
+// spec.ErrPersistedFieldsInvalid.
+func (store Store) DefaultDeclaration(path string) ([]spec.PersistedField, error) {
+	revision, err := store.sourceRevision()
+	if err != nil {
+		return nil, err
+	}
+	_, data, err := sourceAt(store.Root, revision, path)
+	if err != nil {
+		return nil, fmt.Errorf("default-branch copy of %s: %w", path, err)
+	}
+	return spec.PersistedFields(data)
+}
+
 func ticketsOnlyAt(root, revision, path string) bool {
 	name := filepath.Base(path)
 	return path == spec.ClosedFolderPath(name) && spec.TicketsOnly(spec.CommitTree(root, revision), name)

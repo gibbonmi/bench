@@ -6,6 +6,20 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Merge target lane
+
+- Changed `bench worktree merge`, which now grades the composed tree with the target's lane when the merge runs from any checkout of the kit repository. Before, a merge from the primary checkout or from another worktree ran the whole-project gate.
+
+### Plan-commit rules
+
+- Added the `chunk-rows` row of `bench preflight build`. It compares the Implementation chunks table with the coverage map in both directions. It reds each declared row that no acceptance cell lists, each listed ID that the map does not declare, and each token fault. Before, no check graded the chunk table against the map.
+- Changed the chain-gap refusal of `bench gate --checkpoint`, which now states that only record commits and recorded folds follow a chunk tip until its checkpoint. Before, the refusal also named comment-only corrections.
+- Changed `/bench-implement-spec`, which now states the plan-commit rules of a build. Before, the phase let a comment-only correction follow a chunk tip without a refreeze.
+
+### Census purpose classes
+
+- Changed `/bench-final-check`, whose phase close now classifies each raw call by purpose: a missed form, a Bench-owned gap, a sanctioned read, or unknown. Each class routes to one kind of proposal, and a sanctioned read such as `rg` gets no Bench wrapper. `craft-delegate` now asks each delegate for its raw calls with their purpose. Before, the close named a Bench form or `none` for each command head, which gave no sincere improvement for a read.
+
 ### Resumed capture drain
 
 - Changed `bench capture drain`, which now prints a `resumed[1]{sealed_at}:` block after the `drain` block when it resumes a drain that is already open. The `sealed_at` cell is the UTC time that the drain was sealed. Before, a resumed drain printed the same output as a fresh drain, so a session could read an old snapshot as a new one. The output of a fresh drain and of `bench capture drain show` does not change.

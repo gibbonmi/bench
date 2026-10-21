@@ -5,11 +5,11 @@
 package writeguard
 
 import (
-	"encoding/json"
 	"errors"
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/shellcommand"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -21,19 +21,15 @@ import (
 // fail posture: a file edit the guard cannot read stays open, so nothing is refused on
 // a path nobody read.
 func PathFromEnvelope(data []byte) (string, error) {
-	var envelope struct {
-		Cwd       string                     `json:"cwd"`
-		ToolInput map[string]json.RawMessage `json:"tool_input"`
-	}
-	if err := json.Unmarshal(data, &envelope); err != nil {
+	envelope, err := shellcommand.DecodeEnvelope(data, shellcommand.CwdInputMap)
+	if err != nil {
 		return "", err
 	}
-	raw, ok := envelope.ToolInput["file_path"]
+	path, ok, err := envelope.InputString("file_path")
 	if !ok {
 		return "", errors.New("file_path field missing")
 	}
-	var path string
-	if err := json.Unmarshal(raw, &path); err != nil {
+	if err != nil {
 		return "", err
 	}
 	if path == "" {
@@ -45,10 +41,10 @@ func PathFromEnvelope(data []byte) (string, error) {
 	if filepath.IsAbs(path) {
 		return filepath.Clean(path), nil
 	}
-	if envelope.Cwd == "" {
+	if envelope.Cwd() == "" {
 		return "", errors.New("relative file_path with no cwd")
 	}
-	return filepath.Join(envelope.Cwd, path), nil
+	return filepath.Join(envelope.Cwd(), path), nil
 }
 
 // Checker holds the four repository facts the verdict rests on. Each one is injected,

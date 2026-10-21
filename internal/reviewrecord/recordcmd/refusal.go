@@ -4,8 +4,11 @@ import (
 	"errors"
 	"strings"
 
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // cause is the refusal cause of err for the record of spec. A repair names the usage line
@@ -31,6 +34,28 @@ func known(spec string, repair reviewrecord.Repair) map[string]string {
 	slug, _ := reviewrecord.Slug(spec)
 	return map[string]string{refusalroute.FactSlug: slug, "--chunk": repair.Chunk, "--fold": repair.Fold, "--requirement": repair.Requirement, "--ticket": repair.Ticket,
 		"--axis": repair.Axis, "--source": repair.Source}
+}
+
+// refuseUninstalled runs the candidate check of a guarded form of a declared build, before
+// any record read or ledger write. The declaration comes from the spec at the commit that
+// HEAD names in root. It answers no output when the check passes. A refusal that a
+// registered face raises prints its route on its own next= line, and the route re-runs the
+// caller's own call in the worktree of the active assignment that owns root.
+func (f form) refuseUninstalled(root, spec string, parsed usage.Result) (string, int) {
+	err := commitrepo.CheckEntry(root, spec)
+	var raised refusalroute.Raised
+	switch {
+	case err == nil:
+		return "", 0
+	case !errors.As(err, &raised):
+		return f.refuse(err.Error())
+	}
+	owner, _ := intent.AssignmentForWorktree(root)
+	slug, _ := reviewrecord.Slug(spec)
+	rerun := refusalroute.RecordRerun(map[string]string{refusalroute.FactLabel: owner.Label, refusalroute.FactArguments: f.arguments(slug, parsed)})
+	refusal := refusalroute.Printed("", err, map[string]string{refusalroute.FactRerun: rerun})
+	out, code := f.refuse(refusal.Sentence)
+	return out + refusalroute.NextField + "=" + refusal.Route + "\n", code
 }
 
 // completionOrder is the completion form's note on the order of the record writes that

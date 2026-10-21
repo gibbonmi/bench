@@ -363,11 +363,13 @@ func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned
 	return commit, true, contains, nil
 }
 
-// mergeOwner resolves the authority the composed tree is graded under, the way
-// `bench commit` resolves it, but for the target worktree and under the kit that the verb
-// entry read. A root with no declared lane keeps the whole-project gate.
+// mergeOwner resolves the authority the composed tree is graded under, for the target
+// worktree. It resolves the kit that the verb entry read for the target, as the wrapper
+// resolves the kit for its working directory, so a caller in any checkout of the kit
+// repository grades the target with the target's own lane. A root with no declared lane
+// keeps the whole-project gate.
 func mergeOwner(kit, target, previous string) (landing.Owner, error) {
-	lane, err := gate.LaneForCommitAtKit(target, kit)
+	lane, err := gate.LaneForCommitAtKit(target, gate.KitForRoot(kit, target))
 	if err != nil {
 		return landing.Owner{}, err
 	}

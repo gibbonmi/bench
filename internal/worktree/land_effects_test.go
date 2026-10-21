@@ -10,13 +10,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/brokermanifest"
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
-// writeGoMainFixture writes the resolvable Go main package and build script a broker
-// fixture's destination stands on. The seal's source digest is the build-input closure of
-// that package, so a destination without it reports an unresolvable tree rather than the
-// broker state the row is about.
+// writeGoMainFixture writes a resolvable Go main package and its build script, for a
+// fixture whose root must hold Go code. A broker fixture's destination stands on it,
+// because the seal's source digest is the build-input closure of that package. A merge
+// fixture's target stands on it too, because the built-in lane needs a Go package to grade.
 func writeGoMainFixture(t *testing.T, root string) {
 	t.Helper()
 	mustWrite(t, filepath.Join(root, "go.mod"), []byte("module benchfixture\n\ngo 1.22\n"), 0o644)
@@ -222,6 +226,109 @@ func TestLandRefreshReadsTheSeal(t *testing.T) {
 	if *calls != 1 {
 		t.Fatalf("refresh build calls = %d, want exactly one", *calls)
 	}
+}
+
+// openInstallBuild claims the outcome that the install fixture's binding names, and moves the
+// binding to the default-branch identity of installSpec, so the bound assignment holds an
+// open build.
+func openInstallBuild(t *testing.T, root string) {
+	t.Helper()
+	identity, err := commitrepo.SourceIdentity(root, "main", installSpec)
+	mustNoError(t, err)
+	commitmenttest.EditCommitment(t, root, func(state *intent.CommitmentState) {
+		state.Bindings[0].Identity = identity
+		state.Claims = append(state.Claims, intent.OutcomeClaim{Milestone: state.Bindings[0].Milestone, Outcome: state.Bindings[0].Outcome})
+	})
+}
+
+// openUndeclaredBuild claims a second outcome of the install fixture, and binds it to a new
+// assignment whose default-branch spec declares no persisted field.
+func openUndeclaredBuild(t *testing.T, f ownedAssignment) {
+	t.Helper()
+	const plain = "specs/plain/spec.md"
+	mustMkdirAll(t, filepath.Join(f.root, filepath.Dir(plain)), 0o755)
+	commitInWorktree(t, f.root, plain, "# plain\n\nStatus: staged\n", "an undeclared spec")
+	identity, err := commitrepo.SourceIdentity(f.root, "main", plain)
+	mustNoError(t, err)
+	other := mustCreate(t, f.root, f.home, "undeclared-build", "undeclared-build")
+	commitmenttest.EditCommitment(t, f.root, func(state *intent.CommitmentState) {
+		state.Bindings = append(state.Bindings, intent.DeliveryBinding{Assignment: other.Assignment.ID, Request: other.Assignment.Request, Milestone: "fixture", Outcome: "plain", Deliverable: plain, Identity: identity})
+		state.Claims = append(state.Claims, intent.OutcomeClaim{Milestone: "fixture", Outcome: "plain"})
+	})
+}
+
+// TestRefreshHoldsAnInstalledCandidate is CB51 to CB53, CB62, and CB68. The primary
+// executable has no seal, so, like an installed candidate, it never verifies against the
+// primary sources. The refresh holds it only while a declared build is open and the primary
+// manifest binds its digest, or while the ledger does not read. Other rows rebuild as before.
+func TestRefreshHoldsAnInstalledCandidate(t *testing.T) {
+	t.Parallel()
+	undeclared := installShape{inputs: true, deliverable: installSpec}
+	invalid := installShape{inputs: true, declaration: "Persisted fields: gate-evidence:x\n", deliverable: installSpec}
+	for _, row := range []struct {
+		name                             string
+		shape                            installShape
+		earlier, open, bound, unreadable bool
+		want                             string
+	}{
+		{name: "a declared build with the manifest bound holds", shape: declaredInstall, open: true, bound: true, want: effectHeld},
+		{name: "a declared build after an undeclared build holds", shape: declaredInstall, earlier: true, open: true, bound: true, want: effectHeld},
+		{name: "a declared build with another manifest digest rebuilds", shape: declaredInstall, open: true, want: effectComplete},
+		{name: "an undeclared open build rebuilds", shape: undeclared, open: true, bound: true, want: effectComplete},
+		{name: "an invalid declaration counts as none", shape: invalid, open: true, bound: true, want: effectComplete},
+		{name: "an unreadable ledger holds", shape: declaredInstall, open: true, unreadable: true, want: effectHeld},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			f := newInstallAssignment(t, "refresh-hold-"+strings.ReplaceAll(row.name, " ", "-"), row.shape)
+			if row.earlier {
+				openUndeclaredBuild(t, f)
+			}
+			if row.open {
+				openInstallBuild(t, f.root)
+			}
+			if row.unreadable {
+				plantCommitmentField(t, f.root)
+			}
+			primary, manifest := freshness.PublishedExecutable(f.root), manifestPath(f.root)
+			mustMkdirAll(t, filepath.Dir(primary), 0o755)
+			mustWrite(t, primary, []byte("installed-candidate"), 0o755)
+			_, _, err := brokermanifest.Write(wrapperDir(f.root), primary, "1.2.3")
+			mustNoError(t, err)
+			if !row.bound {
+				mustWrite(t, primary, []byte("rebuilt-candidate"), 0o755)
+			}
+			before := fixtureFileText(t, primary) + fixtureFileText(t, manifest)
+			j, calls := refreshJoins(func(root, executable string) error {
+				return publishVerifyingBroker(t, root, executable)
+			})
+			var stderr strings.Builder
+
+			got := refreshBroker(j, f.root, &stderr)
+			requireTest(t, got == row.want, "refresh = %q (%q), want %q", got, stderr.String(), row.want)
+			if row.want == effectHeld {
+				after := fixtureFileText(t, primary) + fixtureFileText(t, manifest)
+				requireTest(t, *calls == 0 && after == before, "held refresh: build calls %d, primary set changed %t; want no write", *calls, after != before)
+				return
+			}
+			requireTest(t, *calls == 1 && freshness.Verify(f.root, primary) == nil, "rebuilt refresh: build calls %d, verify %v; want one verified rebuild", *calls, freshness.Verify(f.root, primary))
+		})
+	}
+	// A held refresh is not a failure, so the landing exits 0 and the cleanup still runs. The
+	// broker notice reads a held refresh as it reads a complete one.
+	t.Run("a held landing exits 0", func(t *testing.T) {
+		t.Parallel()
+		request := "land-refresh-held"
+		f := brokerChangingLanding(t, request)
+		j, calls := refreshJoins(nil)
+		j.heldInstall = func(string) bool { return true }
+		call := f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...)
+		call.kit = f.root
+
+		r := runVerb(t, verbLand, call)
+		requireTest(t, r.exit == 0 && strings.Contains(r.stdout, wantEffects(effectHeld)), "held landing = (%d, %q, %q), want a held refresh at exit 0", r.exit, r.stdout, r.stderr)
+		requireTest(t, *calls == 0 && !strings.Contains(r.stderr, brokerNoticeAnchor), "held landing: build calls %d, stderr %q; want no build and no broker notice", *calls, r.stderr)
+	})
 }
 
 // TestLandEffectsRowPrecedesTheLandedRecord is LC20. Every existing reader takes the

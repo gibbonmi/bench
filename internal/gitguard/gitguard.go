@@ -11,8 +11,6 @@
 package gitguard
 
 import (
-	"encoding/json"
-
 	"github.com/gibbonmi/bench/internal/shellcommand"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -108,19 +106,15 @@ var denyAdvice = func() map[string]string {
 }()
 
 // CommandFromEnvelope extracts tool_input.command from the PreToolUse JSON envelope on
-// stdin. It returns "" when the envelope is malformed or the field is absent. The
-// analyzer then classifies "" as allow, so a non-JSON or command-less envelope is
-// permitted exactly as the Python shim's `|| true` did.
+// stdin through the shared CommandStruct form. It returns "" when the envelope is malformed
+// or the field is absent. The analyzer then classifies "" as allow, so a non-JSON or
+// command-less envelope is permitted.
 func CommandFromEnvelope(data []byte) string {
-	var e struct {
-		ToolInput struct {
-			Command string `json:"command"`
-		} `json:"tool_input"`
-	}
-	if err := json.Unmarshal(data, &e); err != nil {
+	e, err := shellcommand.DecodeEnvelope(data, shellcommand.CommandStruct)
+	if err != nil {
 		return ""
 	}
-	return e.ToolInput.Command
+	return e.Command()
 }
 
 // Classify returns the deny label for command, or "" to allow. It tokenizes then scans
@@ -137,8 +131,13 @@ func Classify(command string, chk Checker) string {
 
 // BlockMessage is the actionable refusal the guard returns to the agent for a blocked
 // command, naming the deny label and appending that label's advice sentence when the
-// table carries one. One source for the message the hook emits.
+// table carries one. One source for the message the hook emits. The unlexed refusal
+// carries only its repair advice, because the guard has not classified that command as
+// destructive, so the authority explanation does not apply to it.
 func BlockMessage(label string) string {
+	if label == denyLabels["unlexed"] {
+		return "BLOCKED: `" + label + "`. " + denyAdvice[label]
+	}
 	msg := "BLOCKED: `" + label + "` — you don't have authority over this. " +
 		"The merge and any history rewrite are the user's, and discarding work leaves a " +
 		"gate verdict answering for something other than what is " +

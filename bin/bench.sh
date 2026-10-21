@@ -343,8 +343,8 @@ route_porcelain() {
 # publishes the manifest and broker together. The installer owns the platform fact and
 # writes it; the route requires the field but never derives a second copy to compare
 # against, because the digest binds the exact executable this host runs. Current-
-# directory state and repository executables never join this selection, so repository
-# code cannot authorize its own publication.
+# directory state and repository executables never join this selection, so candidate
+# code gains landing authority only through 'bench worktree build --install'.
 land_repair_advice() {
   echo "bench: run 'bench doctor --fix' (or reinstall redbench) to republish the promotion broker" >&2
 }
