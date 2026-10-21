@@ -43,6 +43,7 @@ Measure each chunk against the recorded baseline. A gain inside the recorded spr
 - The reviewer directed a re-spec of FT402, because the earlier premise failed on the tmpfs base.
 - The scope is the system suite, the worktree git queries, the serial worktree tests, and the probe and testreport packages.
 - The system suite gains `t.Parallel` in one process. Separate shard processes are out of scope.
+- Each parallel system test takes a private repository instead of a shared owner repository.
 - The git cache holds only the stable location answers of a root: the common directory, the top level, and the admin directory.
 - The probe and testreport cuts share fixtures and keep every witness. No test is removed.
 - The serial worktree tests that move are the working-directory group and the child-environment group.
@@ -167,7 +168,7 @@ The one `go test -tags=system` process stays. `TestMain`, `newSystemOwner`, the 
 Every ledger write in the owner code takes the owner mutex today. The one exception is `TestOwnerSelectionChild` (`internal/systemtest/owner_selection_test.go:156-170`).
 That test plants the negative controls in a child process, where every other test is skipped. The lock census exempts it by name, and the controls stay unchanged.
 
-About 40 of the 105 tests reach `owner.repos` today. Thirteen tests name it directly, and the rest reach it through `newCompatibilitySession` or `newSessionEnvironmentFixtureWithGoDir`.
+About 40 of the 105 tests reach `owner.repos` today. Fourteen tests name it directly at 15 sites, and the rest reach it through `newCompatibilitySession` or `newSessionEnvironmentFixtureWithGoDir`.
 An owner repository is only `git init -q -b main` in a temporary directory (`internal/systemtest/owner_test.go:102-112`). Most of those tests use one only because they need a fresh repository.
 So each such test takes a private journey repository instead. One helper builds it, and `newSystemOwner` builds its three repositories through the same helper.
 Many tests already build a private repository with the same `git init` step, for example `internal/systemtest/land_route_test.go:186`. The profile's "at most three disposable repositories" describes the owner, and it stays true.
@@ -186,7 +187,7 @@ The three `t.Setenv("TMPDIR", ...)` calls (`internal/systemtest/owner_artifact_r
 A new census test in `internal/systemtest` parses the package's test files. It refuses a top-level test that neither calls `t.Parallel` nor appears in a serial table with a reason.
 It also refuses a parallel test that reaches `owner.repos` through its body or a test-file helper. The precedent is the worktree census walk (`internal/worktree/parallel_census_test.go:326-360`).
 It refuses a parallel test whose body, or a non-owner helper, names a ledger field. The ledger rule is direct, and the walk does not follow owner writers.
-An owner writer is a function whose every ledger-field write sits between `owner.mu.Lock()` and `owner.mu.Unlock()`. The census derives this set by that rule, and LGP28 grades the same mutex fact.
+An owner writer is a function that writes at least one ledger field, and whose every ledger-field reference sits between `owner.mu.Lock()` and `owner.mu.Unlock()`. The census derives this set by that rule, and LGP28 grades the same mutex fact.
 Today the rule admits eight writers. Examples are `runWithInput` (`internal/systemtest/owner_test.go:171`), `timeoutProcessGroup` (`:244`), and `startArtifactLand` (`owner_artifact_recovery_test.go:165`).
 Every bench child shares one `owner.home` by default (`internal/systemtest/owner_environment_test.go:56-60`). The build runs the parallel set under the default `-parallel` and records any conflict on that home as a serial reason.
 The gate argv, the phase table, the `projects/benchkit.md` system sentences, and ADR 0024 stay unchanged.
@@ -384,7 +385,7 @@ These promises go beyond the literal decision source. Each one is the structural
   - "Every witness" (LGP4, LGP5, LGP7, LGP8, LGP37): PB1 is the only real-`go` probe test. `installOwnedSelection` has exactly two callers.
   - "At most once" (LGP6): the planted defect is outside the run-binary build inputs (`scripts/go-build.inputs`), so both kit copies share one digest.
   - Common-directory starts (LGP16, LGP17): eight in an owned explicit plan and three in one owner-marker validation, counted by reading.
-  - Owner-repository reach (LGP29, LGP32): 13 direct test sites and two helpers, about 40 tests in all. Two tests have the owner repositories as their subject.
+  - Owner-repository reach (LGP29, LGP32): 15 direct sites in 14 tests and two helpers, about 40 tests in all. Two tests have the owner repositories as their subject.
   - "No `t.Setenv("TMPDIR"`" (LGP30): three sites.
 - `Workflow-step writes`: none.
 
