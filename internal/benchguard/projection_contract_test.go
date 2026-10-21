@@ -57,8 +57,8 @@ func TestBenchEnvelopeValue(t *testing.T) {
 
 // TestGuardWrapperSelection is GP04. Classify searches every matching `-c` child of one
 // wrapper, so a follow-on in the second child refuses, and a nested wrapper stays unread.
-// The nested rows read one level only, in the outer judge and in the exec later-segment
-// scan, and the exec exception covers a direct head only, so an exec inside a wrapper refuses.
+// The nested rows read one level only, in the outer judge and in the exec later-segment scan.
+// The exec exception covers a direct head only, so an exec inside a wrapper refuses.
 func TestGuardWrapperSelection(t *testing.T) {
 	for _, tc := range []struct {
 		command, operator string
