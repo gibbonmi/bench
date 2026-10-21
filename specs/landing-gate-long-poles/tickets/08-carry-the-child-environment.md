@@ -1,7 +1,7 @@
 # Carry the child environment
 
 Blocked by: 07-move-the-working-directory-tests.md
-Writes: internal/worktree/effects.go, internal/worktree/exec.go, internal/worktree/clean.go, internal/worktree/build.go, internal/worktree/build_restore.go, internal/worktree/layers.go, internal/worktree/subshell.go, cmd/bench/worktree_leaves.go, internal/worktree/exec_pwd_test.go, internal/worktree/reset_refusal_test.go, internal/worktree/subshell_test.go, internal/worktree/effect_census_test.go, internal/worktree/single_read_census_cases_test.go, internal/worktree/verb_runner_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/exec_call_env_test.go (new), internal/worktree/parallel_census_test.go
+Writes: internal/worktree/effects.go, internal/worktree/exec.go, internal/worktree/clean.go, internal/worktree/build.go, internal/worktree/build_restore.go, internal/worktree/layers.go, internal/worktree/subshell.go, cmd/bench/worktree_leaves.go, internal/worktree/exec_test.go, internal/worktree/exec_pwd_test.go, internal/worktree/reset_refusal_test.go, internal/worktree/subshell_test.go, internal/worktree/effect_census_test.go, internal/worktree/single_read_census_cases_test.go, internal/worktree/verb_runner_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/exec_call_env_test.go (new), internal/worktree/parallel_census_test.go
 Covers: LGP19, LGP22, LGP24, LGP34
 
 ## What to build
@@ -16,6 +16,8 @@ A verb run carries its child base environment, and `effects.go` becomes the one 
 - the subshell entry (`internal/worktree/subshell.go:40`), called from `cmd/bench/worktree_leaves.go:25`.
 
 The exec tests call `runWorktreeChild` directly (`exec_test.go:33`), not `runVerb`. So the base environment enters through `runWorktreeChild` and `execEnv`. `exec_pwd_test.go:84` also calls `execEnv`.
+
+A signature change of `runWorktreeChild` reaches its calls at `exec_test.go:33`, `:47`, `:272`, and `:343`. `exec_test.go` has 421 lines and no grant, so change only those call lines, with no net line gain.
 
 `TestEffectBoundaryCensus` gains `os.Environ` in `ambientReadPattern` (`internal/worktree/effect_census_test.go:14`). No other `os.Environ` read stays in the package's production files. Update the synthetic copy of `effects.go` in `single_read_census_cases_test.go:15-29`.
 

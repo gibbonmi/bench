@@ -8,7 +8,7 @@ Covers: LGP16, LGP21, LGP22, LGP34
 
 An explicit cleanup plan reads its location answers through the run value, so its six location starts become one.
 
-`planExplicitWith` (`internal/worktree/subshell.go:160`) takes the run value as a parameter. Its seven callers pass the value from their `ambient`, or a fresh run value at a public entry:
+`planExplicitWith` (`internal/worktree/subshell.go:160`) takes the run value as a parameter. Its seven callers pass the value from their `ambient`, or a fresh run value at a public entry. Three callers hold no `ambient`: `planAutomaticAt` (`classifier.go:266`), `planLandedAssignment` (`clean_landed.go:123`), and `planExplicitCleanupRow` (`clean_set.go:190`). Each of them builds a fresh run value on its call line. The callers are:
 
 - `classifier.go:267`;
 - `subshell.go:141` and `:155` (`PlanExplicit`, `PlanExplicitWithOptions`);

@@ -14,7 +14,7 @@ Move `validateOwnerMarker` (`internal/worktree/classifier.go:396`, to the end of
 
 Give `canonicalRoot` (`internal/worktree/worktree.go:100`) a run-value form beside the current one. It reads `poolkey`'s run-value form from ticket 03.
 
-Move the exec-target path onto the run value. `ownerMarkerRefusal` (`identity_component.go:69-73`) has three callers: `identity_component.go:99`, `ownership.go:204`, and `reset.go:158`. `reauthorize.go:83` also calls `validateOwnerMarker`.
+Move the exec-target path onto the run value. `ownerMarkerRefusal` (`identity_component.go:69-73`) has three callers: `identity_component.go:99`, `ownership.go:204`, and `reset.go:158`. `reauthorize.go:83` also calls `validateOwnerMarker`. The functions around the three callers (`identityBundleRefusal`, `ensureRollbackAttribution`, and `planReset`) hold no `ambient`, so each one builds a fresh run value on its call line. One validation then still starts the common-directory query once.
 
 Write the LGP17 test first in `journey_test.go`, and record its red count before the change. Count only the `--git-common-dir` lines of the `journeyStubGit` log. One call under a canonical primary root reads 3 today. If the red shows another count, stop and report a wrong spec.
 

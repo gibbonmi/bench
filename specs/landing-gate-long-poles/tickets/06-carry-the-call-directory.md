@@ -1,7 +1,7 @@
 # Carry the call directory
 
 Blocked by: 05-read-the-explicit-plan-locations-once.md
-Writes: internal/canonicalpath/canonicalpath.go, internal/canonicalpath/canonicalpath_test.go, internal/worktree/effects.go, internal/worktree/subshell.go, internal/worktree/resume.go, internal/worktree/ownership.go, internal/worktree/land.go, internal/worktree/reauthorize.go, internal/worktree/worktree.go, internal/worktree/path.go, internal/worktree/tree_target.go, internal/worktree/verb_runner_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/single_read_census_cases_test.go, internal/worktree/identifier_operand_test.go, internal/worktree/parallel_census_test.go
+Writes: internal/canonicalpath/canonicalpath.go, internal/canonicalpath/canonicalpath_test.go, internal/worktree/effects.go, internal/worktree/subshell.go, internal/worktree/resume.go, internal/worktree/ownership.go, internal/worktree/land.go, internal/worktree/land_resume.go, internal/worktree/reauthorize.go, internal/worktree/worktree.go, internal/worktree/path.go, internal/worktree/tree_target.go, internal/worktree/verb_runner_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/single_read_census_cases_test.go, internal/worktree/identifier_operand_test.go, internal/worktree/parallel_census_test.go
 Covers: LGP18, LGP22, LGP34
 
 ## What to build
@@ -17,6 +17,7 @@ Route the directory to each relative-operand site:
 - `resolveOperand` and `canonicalPath` (`internal/worktree/subshell.go:117-133`);
 - `resolveOperand` in `cleanupIdentity` (`resume.go:23`);
 - `canonicalPath` in `releaseAssignment` (`ownership.go:217`);
+- `canonicalPath` in `resumeLandWith` (`land_resume.go:36`);
 - the `resolveVerbOperand` callers in `land.go`, `reauthorize.go`, and `worktree.go`.
 
 Add a form beside `canonicalPath` rather than change its 22 call sites. `targetPath` (`path.go:293-307`) already refuses a relative path, so it needs no directory. If its signature changes anyway, update `internal/worktree/tree_target.go:64`.
