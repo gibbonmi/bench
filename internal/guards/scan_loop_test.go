@@ -21,13 +21,13 @@ import (
 )
 
 const (
-	// familySGolden is the reference capture of scan family S. It was taken on the worker
-	// pipeline before the synchronous loop replaced it, and it is reviewed apart from the
-	// candidate code, so the candidate is never its oracle.
+	// familySGolden is the reference capture of scan family S.
 	familySGolden = "testdata/scan-family-s.golden"
 	familySHeader = "=== member: "
 	// cancelTick is the scan window of a member whose operation waits for cancellation.
 	cancelTick = 10 * time.Millisecond
+	// inspectionWindow outlasts any plausible stall, so only a blocked second inspection meets its end.
+	inspectionWindow = time.Second
 	// operationHold is how long an injected operation ignores cancellation before it returns.
 	operationHold = 20 * time.Millisecond
 )
@@ -139,8 +139,8 @@ var familyS = []familyMember{
 		<-ctx.Done()
 		return candidatesNamed("late"), nil
 	}),
-	seamMember("inspection-cancelled-empty", cancelTick, enumerateNames("one", "blocked-empty")),
-	seamMember("inspection-cancelled-rows", cancelTick, enumerateNames("one", "blocked-rows")),
+	seamMember("inspection-cancelled-empty", inspectionWindow, enumerateNames("one", "blocked-empty")),
+	seamMember("inspection-cancelled-rows", inspectionWindow, enumerateNames("one", "blocked-rows")),
 	seamMember("blocking-operation", cancelTick, enumerateNames("blocked-holding")),
 	seamMember("enumeration-error-candidates", guardScanTimeout, func(context.Context, string) ([]candidate, error) {
 		return candidatesNamed("one"), errors.New("enumeration failed")
