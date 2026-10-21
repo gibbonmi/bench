@@ -2,33 +2,33 @@
 
 Status: staged
 Decision source: `decisions/architecture-guards.md`, answers 1 and 3, reviewed 2026-10-06
-Subject: `a9c395e77fec36d1f60f6d057c654aecf5720e24` with production source `37ac80b8adeff4ecbd57f3d813ff8937f2bcbc68`
+Subject: `f07508b2add49469d686614c70f575531e8ea445` (refresh of 2026-10-20)
 Audience: every repository that links the kit
 Related roadmap: FT366
-Verification log: independent SPEC acceptance precedes slicing. The high reviewer accepted the decoder/source repairs at 02c799aa with zero findings and confidence 10. The xhigh placement confirmer accepted 6c13b4b3 with zero findings and confidence 9.
-Independent graph review accepted aa86c64d on all three axes with zero findings and confidence 9.
+Verification log: pending — refresh review at f07508b2a
 
 ## Problem
 
-Git and Bench guards share `shellcommand.Parse` but each recognizes shell wrappers itself.
+Git and Bench guards share `shellcommand.Parse`, but each guard recognizes shell wrappers itself.
 The Git guard also projects worktree children in `internal/gitguard/scan.go` (`scanWords`, `worktreeExecChild`).
 The Bench guard recognizes the same exec head in `internal/benchguard/benchguard.go` (`isExecHead`).
-Their envelope readers repeat JSON structure in those packages and `internal/writeguard/writeguard.go` (`PathFromEnvelope`).
-These copies can drift while each guard's different policy must remain intact.
+The reviewer-verb rule in `internal/benchguard/reviewer.go` repeats the wrapper, exec-head, and `--` child grammar a third time.
+A conformance check, `runsBenchUnderExec`, repeats the exec-child grammar a fourth time.
+The envelope readers repeat JSON structure in `gitguard`, `benchguard`, and `internal/writeguard/writeguard.go` (`PathFromEnvelope`).
+These copies can drift, while each guard's different policy must stay intact.
 
 ## Solution
 
 Make `internal/shellcommand` own command projection and common envelope facts.
-Keep each guard's authority, required fields, diagnostics, and failure policy.
-Preserve the supported command language and one-level traversal through actual hook and core entries.
-Keep the independent degraded shell rim because it must run without the core.
+Keep each guard's authority, required fields, diagnostics, traversal depth, and failure policy.
+Preserve the supported command language through actual hook and core entries.
+Keep the independent degraded shell rim, because it must run without the core.
 
 ## User stories
 
-Line: `gpt-5.6-sol` / high
-Implementation-line reason: caller policy is explicit, but structural ownership checks and real degraded-entry evidence require careful integration at resolved seams
-Harder chunks: GP3, use xhigh effort on the declared model
-Author line: `gpt-6.1-sol` / high, one draft and at most two bounded review repairs
+Line: opus / high
+Implementation-line reason: the hardest material chunk is GP2, which moves three decoder forms with fifteen ordered decoder cases and the reviewer-verb walk onto new APIs at once. The spec fixes each decoder target and caller policy exactly, and the seams are resolved owner-package and entry tests. Test strength is high, but the ownership check and the actual-hook witnesses need careful integration.
+Harder chunks: GP2 and GP3, at xhigh effort on the same model.
 
 1. As an agent, I want routine executable prefixes preserved, so that ordinary commands receive the same guard verdict.
 2. As an agent, I want one wrapper level recognized, so that supported shell children remain visible.
@@ -56,8 +56,13 @@ Author line: `gpt-6.1-sol` / high, one draft and at most two bounded review repa
 24. As an agent, I want census exclusion retained, so that a Bench invocation does not become a raw shell record.
 25. As an agent, I want commands parsed without execution, so that guard inspection cannot run shell input.
 26. As an agent, I want rg operand uncertainty kept separate, so that permissive operand analysis cannot weaken dangerous-command refusal.
+27. As a reviewer, I want the reviewer-verb refusal to keep its recursive reach, so that a nested wrapper or a nested exec child cannot run my verb.
+28. As an agent, I want the reviewer-verb refusal to stay between the pool refusal and the follow-on verdict, so that a competing refusal names the same cause as before.
+29. As a maintainer, I want the agent-route conformance check to read exec children through the shared projection, so that no test keeps a second exec grammar.
 
 ## Implementation decisions
+
+Reviewer decision (conversation, 2026-10-20): `benchguard.ReviewerVerb` keeps its recursive walk as guard policy. It consumes the shared one-level projection facts and recurses through them itself.
 
 ### Projection API and caller policy
 
@@ -84,7 +89,7 @@ func WorktreeExec(words []string, executable int) ExecProjection
 `ShellChildren` recognizes basename `sh`, `bash`, or `zsh` and the existing `^-[A-Za-z]*c[A-Za-z]*$` flag shape.
 It returns matching flag children in argv order, parsed by `Parse`.
 It performs no recursion.
-An invalid executable index or missing flag operand yields no child at that position.
+An invalid executable index or a missing flag operand yields no child at that position.
 GP02, GP03, and GP04 observe these cases.
 
 `WorktreeExec` receives an executable index whose identity the caller has already accepted.
@@ -96,15 +101,26 @@ GP05 through GP08 observe these cases.
 
 Git retains its shell-keyword trimming before `ResolveRoutinePrefix`.
 Git consumes the first matching shell child, including a child that finds no Git invocation.
-Bench retains its existing search across matching children for a Bench invocation.
-Each consumer limits traversal to one level across shell and worktree child forms.
+Bench `Classify` retains its existing search across matching children for a Bench invocation.
+Git and Bench `Classify` limit traversal to one level across shell and worktree child forms.
 GP03, GP04, and GP09 prevent the shared facts from replacing those policy choices.
 
+`ReviewerVerb` is the one consumer whose traversal is not one level.
+It calls `ShellChildren` and `WorktreeExec` at each level and recurses into each child stream or child argv.
+An exec head without a separator yields no child and no verb match, as `reviewer.go` decides today.
+It keeps `isBench`, `namesVerb`, and the resolver as its own identity policy.
+GP62 through GP64 and GP70 observe this walk.
+
 Git retains `FindSubcommand`, global-option parsing, `redirectsRepository`, and verdict classification.
-It propagates `DifferentCheckout` into the existing `elsewhere` decision before consulting repository facts.
+It propagates `DifferentCheckout` into the existing `elsewhere` decision before it consults repository facts.
 Bench retains `isBench`, resolver calls, follow-on precedence, `judgeExec`, and the pool-reference guard.
 It uses `ExecProjection.Head` only after its own Bench executable recognition.
-GP10 through GP13 preserve these decisions.
+The follow-on core entry keeps its order: pool reference, then reviewer verb, then `Classify` (`cmd/bench/guards.go:170-178`).
+GP10 through GP13, GP65, and GP66 preserve these decisions.
+
+The agent-route conformance check (`runsBenchUnderExec`) keeps its own Bench identity test and its agent-route scope.
+It reads the exec child through `WorktreeExec` instead of its own `worktree`, `exec`, and `--` scan.
+GP68 preserves its finding, and GP69 grades the migration.
 
 ### Envelope API
 
@@ -128,7 +144,7 @@ A form selects structural decoder semantics, not required fields or guard author
 The common owner uses encoding/json.Unmarshal with the original anonymous target shapes.
 It does not implement a second JSON decoder.
 Each call decodes the outer envelope once into the selected shape.
-InputString decodes the selected map value as a string, matching the current two-stage map readers.
+InputString decodes the selected map value as a string, as the current two-stage map readers do.
 GP14–GP19 and GP47–GP61 observe these contracts.
 
 | Form | Exact target shape | Current caller | Retained decoder facts |
@@ -138,7 +154,7 @@ GP14–GP19 and GP47–GP61 observe these contracts.
 | CwdInputMap | anonymous struct with tagged cwd string and tagged tool_input map[string]json.RawMessage | writeguard.PathFromEnvelope | folded root keys, exact input-map keys, scalar cwd-null preservation, map-null clearing, retained outer type errors |
 
 Keep the existing field names and JSON tags in these anonymous wire targets.
-This also preserves encoding/json error context rather than introducing named-target error text.
+This also preserves encoding/json error context, rather than introducing named-target error text.
 Command returns the decoded nested string for CommandStruct.
 Cwd returns the decoded scalar for CwdInputMap.
 InputString reads exact map keys for InputMap and CwdInputMap.
@@ -171,9 +187,9 @@ GP20–GP29 and GP47–GP61 preserve caller contracts.
 
 Git selects CommandStruct and keeps its string-only signature and empty result on any retained decode error.
 Bench selects InputMap and keeps its error signature and existing missing, type, empty, and NUL error text.
-Write selects CwdInputMap and retains outer cwd validation before path handling, including absolute paths.
+Write selects CwdInputMap and retains outer cwd validation before path handling, including for absolute paths.
 It retains path cleanup and the existing relative-path requirement.
-Neither Git nor Bench begins validating an unrelated cwd field.
+Neither Git nor Bench begins to validate an unrelated cwd field.
 GP20–GP29 and the decoder preservation matrix below observe each branch.
 
 A folded lookup plus one final RawMessage map is insufficient for CommandStruct and scalar cwd semantics.
@@ -185,119 +201,140 @@ Those changes would alter the approved guard policies.
 
 | Current site | Shared fact after migration | Policy that stays local | Rows |
 |---|---|---|---|
-| `gitguard.scanWords` wrapper predicate and flag loop | `ShellChildren` | first matching child and one-level traversal | GP02–GP04, GP09 |
-| `gitguard.worktreeExecChild` | `WorktreeExec` | Bench basename recognition and child authority | GP05–GP10 |
-| `benchguard.judge`, `spanInvokesBench`, `isWrapper` | `ShellChildren` | Bench identity and matching-child selection | GP03–GP04, GP11 |
-| `benchguard.isExecHead` | `WorktreeExec.Head` | outer exec exception and follow-on order | GP12–GP13 |
+| `gitguard.scanWords` wrapper predicate and flag loop (`scan.go:67-75`) | `ShellChildren` | first matching child and one-level traversal | GP02–GP04, GP09 |
+| `gitguard.worktreeExecChild` (`scan.go:88-98`) | `WorktreeExec` | Bench basename recognition and child authority | GP05–GP10 |
+| `benchguard.judge`, `spanInvokesBench`, `isWrapper`, `wrapperFlag` (`benchguard.go:17, 141-155, 315-332`) | `ShellChildren` | Bench identity and matching-child selection | GP03–GP04, GP11 |
+| `benchguard.isExecHead` (`benchguard.go:134, 251`) | `WorktreeExec.Head` | outer exec exception and follow-on order | GP12–GP13 |
+| `benchguard.runsReviewerVerb` (`reviewer.go:30-38`) | `ShellChildren` and `WorktreeExec` | recursive walk, verb naming, and Bench identity | GP62–GP64, GP67, GP70 |
+| conformance `runsBenchUnderExec` (`refusal_route_guard_test.go:84-91`) | `WorktreeExec` | agent-route scope and Bench identity | GP68–GP69 |
 | Git, Bench, and write envelope readers | `DecodeEnvelope` with the current target form | required fields and failure posture | GP14–GP29, GP47–GP61 |
 
-Retire the private wrapper recognizers and private exec-child grammar after their callers migrate.
+Retire the private wrapper recognizers and the private exec-child grammar after their callers migrate.
 Do not introduce a second executable-prefix helper.
 Keep `ResolveRoutinePrefix` as the existing owner.
 The compiler and GP29 detect missing migrations.
-GP30 detects surviving private copies, including renamed unused helpers.
+GP30 and GP67 detect surviving private copies, including renamed unused helpers.
 
 Add `checkGuardProjectionOwner` beneath the existing registered `package-core-guard` check.
-It grades production Go files in shellcommand, gitguard, benchguard, and writeguard, using AST import bindings.
-Outside shellcommand, reject JSON unmarshal or decoder calls used to decode these envelopes.
-Reject the migrated shell-name predicate, wrapper-c flag recognizer, and adjacent worktree-exec child extraction outside the owner.
+It grades production Go files in shellcommand, gitguard, benchguard, and writeguard, through AST import bindings.
+Outside shellcommand, it rejects JSON unmarshal or decoder calls that decode these envelopes.
+It rejects the migrated shell-name predicate, the wrapper-c flag recognizer, and adjacent worktree-exec child extraction outside the owner.
 The checker grades executable AST nodes, including unused function bodies, rather than comments or fixture string data.
-GP30 requires renamed copies of each retired recognizer to make the registered check red.
+GP30 and GP67 require renamed copies of each retired recognizer to make the registered check red.
 
-The subcheck applies only to kit source surfaces containing conformance and at least one governed guard package.
+The subcheck applies only to kit source surfaces that contain conformance and at least one governed guard package.
 Absent consumer source surfaces produce no diagnostic.
-Present kit surfaces with a missing or unreadable owner produce a named diagnostic.
+A present kit surface with a missing or unreadable owner produces a named diagnostic.
 Do not require optional source directories in repositories that only link the kit.
 GP31 and GP32 prove both dispositions.
 
-Retain the existing registry name, tier, subject, and input binding.
+Retain the existing registry name, tier, subject, and input binding (`internal/conformance/registry/checks.go:19`).
 Do not copy a registry count into this spec or add a new count expectation.
 Classify the planned live-tree ownership test in `tier_live_tree_test.go`.
 GP33 observes registered reachability and that classification.
 
+The `stdlib-reimplementation` check (`internal/conformance/stdlib_reimplementation_test.go:39`) also grades the new production Go.
+New shellcommand code must not hand-write a loop that `slices.Contains`, `maps.Copy`, `min`, `max`, `strings.Cut`, or `strings.CutPrefix` replaces.
+The `bounds-policy` check pins no file in this scope.
+
 ### Conformance orchestration placement
 
-Before extending the registered check, move only checkPackageCoreAndGuards from package_core_checks_test.go to checks_test.go.
-Both existing ownership fences include these files.
+Before you extend the registered check, move only checkPackageCoreAndGuards from package_core_checks_test.go to checks_test.go.
 Keep its name, signature, existing subcheck order, and callers unchanged.
-Keep the other producers, npm formatter call, and their tests in package_core_checks_test.go.
+Keep the other producers, the npm formatter call, and their tests in package_core_checks_test.go.
 Add the new ownership subcheck to the relocated function.
 
-The accepted source has 470 lines in package_core_checks_test.go against the default 400-line limit.
-It has no file grant, so adding an orchestration call there would fail the required growth lane.
-checks_test.go has 641 lines against its existing 709-line grant, leaving 68 lines for the move and extensions.
-The moved declaration spans 16 lines; preserve the destination cap and keep each new file within 400 lines.
+package_core_checks_test.go has 470 lines against the default 400-line limit, and no grant covers it.
+The required commit lane runs `structure --growth` (`internal/gate/lane.go:83`).
+That ratchet reports FILE GREW for a source file over its limit that also grew (`internal/structure/structure.go:309-331`).
+An added orchestration call there would therefore turn the lane red.
+checks_test.go has 642 lines against its 739-line grant (`.bench/structure.budgets:51`), which leaves 97 lines.
+The moved declaration spans 16 lines (`package_core_checks_test.go:22-37`).
+Keep checks_test.go within 739 lines after both guard outcomes, and keep each new file within 400 lines.
 Do not add a budget or acceptance grant.
 
+The move changes no reader contract.
+`checks_test.go:49` binds package-core-guard by function symbol, so the declaration file does not matter.
+`node_runtime_policy_test.go:143` and `:147` call the same package symbol and need no edit.
+`package_core_diagnostics_test.go:202-228` counts formatter calls in package_core_checks_test.go; the moved function holds none.
+`TestSkillsIndexConformanceCarriesNoSecondReader` reads checks_test.go for copied skills-index literals; the moved function holds none.
+
 Apply this placement only if the declaration remains in the original file when implementation begins.
-If the other accepted guard outcome already moved it, extend that sole declaration in checks_test.go.
+If the guard-scan-loop outcome already moved it, extend that sole declaration in checks_test.go.
 Retain both ownership subchecks if both outcomes have landed.
 Either outcome can land first; neither requires the other's unlanded implementation.
-[Placement evidence](placement-growth-repair.md) records the lane mechanism, source readers, and closure disposition.
 
 ### Ordering and independent rim
 
-Implement the accepted `degraded-guard-refusal` outcome before the grammar migration reaches its integration checkpoint.
-Its accepted plan is a prerequisite, not evidence that production already contains the repair.
-The subject still contains the permissive degraded fallback described in answer 2.
-GP34 and GP35 preserve the repaired refusal and parse-only advice through both actual entries.
+The degraded-guard-refusal outcome landed before this refresh (commit a9324deb7).
+The degraded Git hook now refuses a malformed command with the parse-repair sentence (`.bench/hooks/block-dangerous-git.sh:105-107`).
+The core emits the same sentence (`internal/gitguard/gitguard.go:143-146`, `internal/shellcommand/unlexed.go:7`).
+`internal/systemtest/guard_refusal_test.go` holds its witnesses, and this spec cites them as preserved regressions.
+No prerequisite outcome remains.
 
-Leave shell resolver and degraded grammar implementations in place.
+Leave the shell resolver and the degraded grammar implementations in place.
 They cannot import the Go owner when the core is missing.
-Keep existing classifier-table, resolver-order, and entry-point-parity checks as independent evidence.
+Keep the existing classifier-table, resolver-order, and entry-point-parity checks as independent evidence.
 Resolver and classifier checks remain beneath package-core-guard.
 Entry-point parity keeps its separate entry-point-parity registry binding.
-GP36 through GP42 preserve the missing-library, missing-core, core-error, stale-core, and recovery cases.
+GP36 through GP42 and GP71 preserve the missing-library, missing-core, core-error, stale-core, and recovery cases.
 
 ## Implementation chunks
 
-Each independently accepted outcome now has one complete vertical ticket and review checkpoint.
-Slicing preserves every acceptance predicate and the reviewed implementation line.
 Each chunk carries its source claims, consumer migration, tests, and a green ordinary test phase.
+Slicing preserves every acceptance predicate and the implementation line.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
 | GP1 / 1-share-git-command-projections.md | Git uses shared wrapper and worktree projections with unchanged verdicts | GP01–GP03, GP05–GP10 | projection and Git contract tests | no |
-| GP2 / 2-migrate-guard-envelope-consumers.md | common envelope facts serve the three readers and Bench uses projections | GP04, GP11–GP29, GP47–GP61 | envelope, Bench, write, and core entry tests | no |
-| GP3 / 3-enforce-guard-projection-ownership.md | copy refusal and actual-entry integration complete the migration | GP30–GP46 | owner mutation tests and system hook witnesses | yes, xhigh |
+| GP2 / 2-migrate-guard-envelope-consumers.md | common envelope facts serve the three readers, and Bench, the reviewer verb, and the agent-route check use the projections | GP04, GP11–GP29, GP43, GP47–GP66, GP68–GP70 | envelope, Bench, reviewer-verb, write, route-check, canary, and core entry tests | yes, xhigh |
+| GP3 / 3-enforce-guard-projection-ownership.md | copy refusal and actual-entry integration complete the migration | GP30–GP42, GP44–GP46, GP67, GP71 | owner mutation tests and system hook witnesses | yes, xhigh |
 
-GP1 precedes GP2 because the shared projection API must exist before the second consumer migrates.
-GP3 enables its final ownership invariant after all consumer migrations.
+GP1 precedes GP2, because the shared projection API must exist before the second consumer migrates.
+GP1 retires the Git recognizers in scan.go.
+GP2 retires the Bench recognizers in one step, because `reviewer.go` and `benchguard.go` share `isWrapper`, `isExecHead`, and `wrapperFlag`.
 GP2 owns GP47–GP61 exactly once and closes every decoder predicate at its first-use green checkpoint.
-GP3 repeats those cases through final differential and actual-entry witnesses under GP46, without duplicating Covers ownership.
-Run GP3 after the degraded repair prerequisite is implemented.
-The shared conformance fences require serial writes during this build.
+GP3 repeats those cases through the final differential and actual-entry witnesses under GP46, without duplicate Covers ownership.
+GP3 enables its final ownership invariant after all consumer migrations.
+The slicer may split GP2 into two serial tickets, envelope readers first and projection consumers second, if one ticket exceeds one context window.
 
 ### Graph ordering and execution boundary
 
 The stable old-to-new mapping is GP1 to GP1, GP2 to GP2, GP3 to GP3.
-Each ticket retains its accepted outcome and independent Standards, Spec, and Coverage checkpoint.
-Shared projection tickets run GP1, then GP2, then GP3; each successor waits for its predecessor's green commit and independent review.
-GS1 is independently useful and consumes no unlanded projection interface.
+Each chunk keeps its independent Standards, Spec, and Coverage checkpoint.
+GP1, GP2, and GP3 run in that order; each successor waits for its predecessor's green commit and review.
+The guard-scan-loop outcome (GS1) is independently useful and consumes no unlanded projection interface.
 
-Cross-spec conformance and command-registry writes require a serial integrated-source handoff.
-The coordinator chooses either complete outcome first and refreshes source and headroom before overlapping successor charges.
-The first ticket extending package-core-guard performs the accepted orchestration move; the other extends that sole declaration.
-Neither plan replaces the other outcome's already landed subcheck or its independent npm producer assertions.
+Both outcomes write checks_test.go, package_core_checks_test.go, and tier_live_tree_test.go.
+These shared writes require a serial integrated-source handoff between the two outcomes.
+The coordinator chooses either complete outcome first and refreshes source and headroom before an overlapping successor charge.
+The first ticket that extends package-core-guard performs the orchestration move; the other extends that sole declaration.
 
-This graph's Writes union has 25 paths, equal to its unchanged path fence minus the review pickup.
-Each introducing ticket owns its canonical fixture, binding, and live-tree closure and closes its own headroom obligations.
-GP04 closes with both consumers in GP2, while GP1 still proves the first-use Git selection contract.
-Every GP47–GP61 decoder case closes in GP2 and remains a mandatory GP3 actual-entry regression.
+Derived Writes scope for the slicer, at f07508b2a:
 
-The version-1 completion plan is a supported planning verification inventory, not a dispatch plan.
-Before any implementation charge, the coordinator binds actual run/session identities and ticket verification ownership in version 2 with author-limit 1.
-Each ticket receives a fresh author on gpt-5.6-sol/high, with GP3 and GS1 at the accepted xhigh effort.
+- GP1: `internal/shellcommand/projection.go` (new), `internal/shellcommand/projection_test.go` (new), `internal/gitguard/scan.go`, `internal/gitguard/projection_contract_test.go` (new).
+- GP2: `internal/shellcommand/envelope.go` (new), `internal/shellcommand/envelope_test.go` (new), `internal/gitguard/gitguard.go`, `internal/gitguard/projection_contract_test.go`, `internal/benchguard/benchguard.go`, `internal/benchguard/reviewer.go`, `internal/benchguard/projection_contract_test.go` (new), `internal/writeguard/writeguard.go`, `internal/writeguard/envelope_contract_test.go` (new), `cmd/bench/guard_projection_test.go` (new), `internal/conformance/refusal_route_guard_test.go`, `tests/canary/canonical-path-owner/second-derivation/`.
+- GP3: `internal/conformance/guard_projection_owner_test.go` (new), `internal/conformance/package_core_checks_test.go`, `internal/conformance/checks_test.go`, `internal/conformance/tier_live_tree_test.go`, `internal/systemtest/guard_projection_test.go` (new), `cmd/bench/guard_projection_test.go`.
+
+The refresh drops seven paths from the 2026-10-06 fence.
+Commit 1e8846bb0 deleted the ownership closure that required the five command-registry co-names: `cmd/bench/command_registry.go`, `cmd/bench/command_registry_test.go`, `cmd/bench/help_inventory_test.go`, `internal/conformance/axi_query_registry_test.go`, and `internal/conformance/subcommand_routing_table_test.go`.
+No row changes `internal/conformance/registry/checks.go`, because the registry row keeps its metadata.
+The injected-ports canary keeps its `type Checker struct` anchor, so `tests/canary/injected-ports/unregistered-port/` needs no edit.
+The slicer's research confirms or restores each dropped path.
+
+The version-1 completion plan is a planning verification inventory, not a dispatch plan.
+Before any implementation charge, the coordinator binds actual run and session identities and ticket verification ownership in version 2 with author-limit 1.
+Each ticket receives a fresh author on opus/high, with GP2 and GP3 at xhigh.
 Refresh current owner interfaces, source closure, and actual headroom before that charge.
-The complete degraded repair and independently captured pre-migration executable precede GP1, not only final integration.
+Capture the pre-migration reference executable for GP46 before GP1 begins.
 Staged status and planning validation grant no build authority.
 
 ### Completion plan
 
 These commands and mutations are future obligations; none ran during authoring.
-Before retaining any independent expectation, pin its mutation source and exact diagnostic and demonstrate a compiling behavioral red.
-Require byte-identical restoration and the same focused green; invalid or restore-failed proof closes no obligation.
-Final verification runs only after this plan's complete independently reviewed outcome.
+Before you retain an independent expectation, pin its mutation source and exact diagnostic and demonstrate a compiling behavioral red.
+Require byte-identical restoration and the same focused green; an invalid or restore-failed proof closes no obligation.
+Final verification runs only after the complete, independently reviewed outcome.
 
 ```bench-completion-plan
 {
@@ -316,6 +353,10 @@ Final verification runs only after this plan's complete independently reviewed o
         {
           "id": "git-policy",
           "command": "bench test --package ./internal/gitguard"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance"
         },
         {
           "id": "git-context-omission",
@@ -360,6 +401,14 @@ Final verification runs only after this plan's complete independently reviewed o
           "command": "bench test --package ./internal/census"
         },
         {
+          "id": "conformance-closure",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance"
+        },
+        {
           "id": "canary-bites",
           "command": "bench test --package ./internal/conformance --run '^TestEveryRetainedFixtureBitesThroughRegisteredOwner$'"
         },
@@ -377,6 +426,11 @@ Final verification runs only after this plan's complete independently reviewed o
           "id": "write-decoder-form-omission",
           "command": "bench test --package ./cmd/bench --run '^TestGuardWriteEnvelopePolicy$'",
           "probe": "Replace only the Write caller CwdInputMap selection with InputMap; actual tracked-relative-primary cwd cases must red."
+        },
+        {
+          "id": "reviewer-recursion-omission",
+          "command": "bench test --package ./internal/benchguard --run '^TestReviewerVerbKeepsRecursiveReach$'",
+          "probe": "Replace only the reviewer walk's recursion into a wrapper child stream with a one-level verb check; the nested-wrapper case must red."
         }
       ]
     },
@@ -395,6 +449,14 @@ Final verification runs only after this plan's complete independently reviewed o
           "command": "bench test --package ./internal/conformance"
         },
         {
+          "id": "registry-closure",
+          "command": "bench test --package ./internal/conformance/registry"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance"
+        },
+        {
           "id": "core-regression",
           "command": "bench test --package ./cmd/bench"
         },
@@ -405,7 +467,7 @@ Final verification runs only after this plan's complete independently reviewed o
         {
           "id": "copy-check-omission",
           "command": "bench test --package ./internal/conformance --run '^TestGuardProjectionOwnerBitesOnPrivateCopies$'",
-          "probe": "Omit only the registered checkGuardProjectionOwner call while retaining its function and tests; renamed unused copies must stop producing the expected registered diagnostic and red this witness."
+          "probe": "Omit only the registered checkGuardProjectionOwner call while retaining its function and tests; renamed unused copies, including the reviewer.go copy, must stop producing the expected registered diagnostic and red this witness."
         }
       ]
     }
@@ -448,6 +510,10 @@ Final verification runs only after this plan's complete independently reviewed o
       "command": "bench test --package ./internal/conformance"
     },
     {
+      "id": "root-conformance",
+      "command": "bench test --check root-conformance"
+    },
+    {
       "id": "actual-hooks",
       "command": "bench test --check system"
     }
@@ -464,9 +530,10 @@ Use the system process owner for actual hook and selected-core witnesses.
 Do not introduce a second subprocess harness or change existing test assertions.
 
 Existing precedents are `TestResolveRoutinePrefix`, `TestScanWrapperDepthAndGlobalOpts`, and `TestInvokesBenchWalksOneWrapperLevel` in their owner packages.
+`TestGuardDeniesTheOverrideVerb` supplies the reviewer-verb value seam.
 `TestPathFromEnvelope` supplies the path-reader seam.
-`TestGuardGitBlockAllow` supplies the core entry seam.
-`TestBenchFollowOnHookDegradedRim` and `TestDegradedGuardRimDecidesFromTheCommandField` supply actual degraded-entry seams.
+`TestGuardGitBlockAllow` and `TestFollowOnGuardDeniesTheOverrideEnvelope` supply the core entry seams.
+`TestDegradedGuardRefusesMalformedCommands`, `TestBenchFollowOnHookDegradedRim`, and `TestDegradedGuardRimDecidesFromTheCommandField` supply actual degraded-entry seams.
 
 ### Seam diagram
 
@@ -474,8 +541,8 @@ Existing precedents are `TestResolveRoutinePrefix`, `TestScanWrapperDepthAndGlob
 Bash or file-tool envelope -> caller reader -> shellcommand structural facts
                                               |
 command words -> shared projection -> caller authority and verdict -> core exit
-                                                               |
-actual harness hook --------------------------------------> shim exit
+                     |                      (reviewer verb recurses here)
+actual harness hook --------------------------------------------------> shim exit
 ```
 
 Tests attach to returned values, caller verdicts, core exits, and actual shim exits.
@@ -488,12 +555,12 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP01 | 1 | Routine-prefix family P retains its projected executable index | `internal/shellcommand/shellcommand_test.go` (`TestResolveRoutinePrefix`) | A new private prefix rule differs on query or option forms |
 | GP02 | 2 | ShellChildren returns one ordered child per supported c flag in family W | planned TestShellChildren in internal/shellcommand/projection_test.go | A wrapper basename or flag omission loses a child |
 | GP03 | 2 | Invalid indexes and missing wrapper operands yield no child | planned TestShellChildrenBounds in internal/shellcommand/projection_test.go | Unchecked indexes panic or invent a child |
-| GP04 | 2 | Git and Bench retain their different matching-child selection in W4 | planned TestGuardWrapperSelection in internal/benchguard/projection_contract_test.go and internal/gitguard/projection_contract_test.go | A universal first-child or recursive policy changes a verdict |
+| GP04 | 2 | Git and Bench Classify retain their different matching-child selection in W4 | planned TestGuardWrapperSelection in internal/benchguard/projection_contract_test.go and internal/gitguard/projection_contract_test.go | A universal first-child or recursive policy changes a verdict |
 | GP05 | 3 | WorktreeExec returns child argv byte-for-byte in family X | planned TestWorktreeExec in internal/shellcommand/projection_test.go | Joining and reparsing loses a quoted argv element |
 | GP06 | 3 | A recognized exec head without a delimiter has no child | planned TestWorktreeExecMissingDelimiter in internal/shellcommand/projection_test.go | Header recognition is confused with runnable child discovery |
 | GP07 | 3 | An empty child after a delimiter has DifferentCheckout=false | planned TestWorktreeExecEmptyChild in internal/shellcommand/projection_test.go | An empty projection fabricates child authority |
 | GP08 | 4 | A nonempty projected child has DifferentCheckout=true | planned TestWorktreeExecContext in internal/shellcommand/projection_test.go | An omitted context bit makes parent facts available |
-| GP09 | 2, 3 | Nested shell and exec combinations in X3 retain one-level verdicts | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | Recursive expansion changes the documented depth |
+| GP09 | 2, 3 | Nested shell and exec combinations in X3 retain one-level Git verdicts | `internal/gitguard/verdict_test.go` (`TestClassifyVerdicts`) | Recursive expansion changes the documented depth |
 | GP10 | 4, 5 | Child and redirected push destinations retain the unresolved-destination label | planned TestGitProjectionAuthority in internal/gitguard/projection_contract_test.go | Parent facts incorrectly permit the child push |
 | GP11 | 18 | Bare and symlink Bench aliases retain classification | `internal/benchguard/benchguard_test.go` (`TestClassifyResolvesBareAliasFromProcessPath`) | Shared name matching replaces caller resolver policy |
 | GP12 | 19 | Existing outer exec follow-on and heredoc exceptions retain verdicts | `internal/benchguard/benchguard_test.go` (`TestClassifySpanScopedFollowOns`) | Child projection is incorrectly used as a new refusal policy |
@@ -514,20 +581,20 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP27 | 12 | Missing, non-string, empty, and NUL path values remain unreadable | `internal/writeguard/writeguard_test.go` (`TestPathFromEnvelopeRefusesAnUnreadablePath`) | Field access removes caller path validation |
 | GP28 | 12, 13 | Invalid cwd types remain unreadable even for an absolute file_path | planned TestWriteEnvelopeCwdContract in internal/writeguard/envelope_contract_test.go | Lazy field validation broadens the write reader |
 | GP29 | 13 | File-write core warning-allow output survives unreadable path and fact inputs | planned TestGuardWriteEnvelopePolicy in cmd/bench/guard_projection_test.go | Shared structure changes the write guard's failure posture |
-| GP30 | 21 | Each renamed private projection or envelope copy makes package-core-guard red | planned TestGuardProjectionOwnerBitesOnPrivateCopies in internal/conformance/guard_projection_owner_test.go | API presence alone permits the retired implementation to survive |
+| GP30 | 21 | Each renamed private projection or envelope copy in gitguard, benchguard.go, or writeguard makes package-core-guard red | planned TestGuardProjectionOwnerBitesOnPrivateCopies in internal/conformance/guard_projection_owner_test.go | API presence alone permits the retired implementation to survive |
 | GP31 | 21 | A consumer tree without kit guard source passes the ownership subcheck | planned TestGuardProjectionOwnerOptionalSurface in internal/conformance/guard_projection_owner_test.go | The new invariant blocks ordinary linked repositories |
 | GP32 | 21 | A kit source tree with a missing owner receives a named diagnostic | planned TestGuardProjectionOwnerMissingOwner in internal/conformance/guard_projection_owner_test.go | Missing source makes the ownership check vacuously green |
 | GP33 | 21 | The registered live-tree check grades the root with explicit live-tree classification | planned TestGuardProjectionOwnerHoldsOnTheLiveTree in internal/conformance/guard_projection_owner_test.go | An unbound helper or unclassified test escapes ordinary conformance |
-| GP34 | 6, 7 | Attached-separator and unclosed-quote family A retains refusal through actual Git hook and core entries | planned TestGuardProjectionMalformedEntryParity in internal/systemtest/guard_projection_test.go | Unit-only parity misses the independent degraded parser |
-| GP35 | 8 | Malformed-entry refusal retains the accepted parse-repair diagnostic | planned TestGuardProjectionParseRepairAdvice in internal/systemtest/guard_projection_test.go | A migrated label reintroduces unrelated authority advice |
-| GP36 | 15 | Missing-library hooks retain their established exit and diagnostic tuples | planned TestGuardProjectionMissingLibrary in internal/systemtest/guard_projection_test.go | Removing the independent rim changes cold recovery behavior |
+| GP34 | 6, 7 | Family A refuses with the parse diagnostic at the missing-core Git hook | `internal/systemtest/guard_refusal_test.go` (`TestDegradedGuardRefusesMalformedCommands`, GR01–GR05) | A migration that touches the shared lexer lets a malformed command reach the coarse path |
+| GP35 | 8 | The live-core Git hook and the guard-git entry emit the same parse-repair refusal | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardHookAndCoreParseRefusal`, GR26–GR27) | A migrated label reintroduces unrelated authority advice or splits hook and core text |
+| GP36 | 15 | The Git hook without its shared library keeps exit 2 and the missing-library refusal | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardMissingLibraryRefuses`, GR20) | Removing the independent rim changes cold recovery behavior |
 | GP37 | 16 | Missing-core Git commands retain the coarse refusal tuple | `internal/systemtest/guard_rim_test.go` (`TestDegradedGuardRimDecidesFromTheCommandField`) | Core-only tests cannot observe the missing-core rim |
-| GP38 | 16 | Missing-core Bench and file-write hooks retain warning-allow tuples | planned TestGuardProjectionMissingCore in internal/systemtest/guard_projection_test.go | Shared authority imposes Git's refusal on another hook |
-| GP39 | 17 | Core-error hooks retain their established exit and diagnostic tuples | planned TestGuardProjectionCoreError in internal/systemtest/guard_projection_test.go | Refactoring stderr forwarding changes degraded posture |
+| GP38 | 15, 16 | The file-write hook without its library or core keeps its warning-allow tuple | planned TestGuardProjectionWriteHookDegraded in internal/systemtest/guard_projection_test.go | Shared authority imposes Git's refusal on the write hook |
+| GP39 | 17 | The Git hook keeps exit 2 and the analyzer-error refusal when its core exits 3 | `internal/systemtest/guard_refusal_test.go` (`TestGitGuardCoreErrorRefuses`, GR21–GR22) | Refactoring stderr forwarding changes degraded posture |
 | GP40 | 14 | Valid non-Git missing-core recovery commands retain exit 0 | `internal/systemtest/guard_rim_test.go` (`TestDegradedGuardRimDecidesFromTheCommandField`) | Blanket refusal disables recovery |
 | GP41 | 14 | Stale-core Bench and non-Bench calls retain their different refusal tuples | `internal/systemtest/bench_follow_on_test.go` (`TestBenchFollowOnHookDegradedRim`) | Treating exit 2 uniformly loses stale-core recovery |
-| GP42 | 15, 16 | Existing resolver, classifier-table, and parity checks retain their registered execution paths | planned TestGuardProjectionPreservesIndependentChecks in internal/conformance/guard_projection_owner_test.go | A migration amputates the shell/core duplication evidence |
-| GP43 | 22 | Both gitguard-pinned canary families retain their original diagnostic predicates | planned TestGuardProjectionFixtureClosure in internal/conformance/guard_projection_owner_test.go | Removing encoding/json invalidates a mutation anchor without a visible behavior change |
+| GP42 | 15, 16 | Existing resolver, classifier-table, and parity checks retain their registered execution paths | planned TestGuardProjectionPreservesIndependentChecks in internal/conformance/guard_projection_owner_test.go | A migration amputates the shell and core duplication evidence |
+| GP43 | 22 | Both gitguard-pinned canary families keep biting through their registered owners | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Removing the encoding/json import breaks a mutation anchor without a visible behavior change |
 | GP44 | 24 | A supported Bench invocation produces no raw census record | planned TestGuardProjectionCensusExclusion in cmd/bench/guard_projection_test.go | A stale invocation consumer records a Bench command as raw shell |
 | GP45 | 25 | Projection of an expansion-shaped command leaves a sentinel absent | planned TestGuardProjectionNeverExecutes in internal/systemtest/guard_projection_test.go | An evaluator executes inspected shell text |
 | GP46 | 23, 26 | Differential family D produces identical caller result tuples before and after migration | planned TestGuardProjectionDifferentialFamilies in internal/systemtest/guard_projection_test.go | Existing narrow suites miss a changed supported command or failure policy |
@@ -546,17 +613,26 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP59 | 9, 12 | Uppercase CWD and TOOL_INPUT still make guard-file-write exit 2 for a tracked relative primary path | planned TestGuardWriteEnvelopePolicy in cmd/bench/guard_projection_test.go | Exact root matching loses the existing write authority facts |
 | GP60 | 9 | Repeated tool_input objects preserve earlier members under each form's standard merge rules | planned TestEnvelopeInputShape in internal/shellcommand/envelope_test.go | A last-object representation discards members absent from the later object |
 | GP61 | 9, 12 | A numeric cwd followed by a valid cwd remains an outer Write decode error | planned TestWriteEnvelopeCwdContract in internal/writeguard/envelope_contract_test.go | Last-value decoding silently clears an earlier typed-field error |
-
+| GP62 | 27 | ReviewerVerb refuses `bash -c "sh -c 'bench commitment override --assignment x --reason y'"` | planned TestReviewerVerbKeepsRecursiveReach in internal/benchguard/projection_contract_test.go | A one-level walk on the reviewer path passes the nested wrapper |
+| GP63 | 27 | ReviewerVerb refuses `bench worktree exec t -- bench worktree exec u -- bench commitment override` | planned TestReviewerVerbKeepsRecursiveReach in internal/benchguard/projection_contract_test.go | A one-level exec walk passes the nested exec child |
+| GP64 | 27 | Every TestGuardDeniesTheOverrideVerb command keeps its denied or allowed result | `internal/benchguard/benchguard_test.go` (`TestGuardDeniesTheOverrideVerb`) | The migration changes the recognized reviewer-verb set |
+| GP65 | 28 | A command with a pool reference and the reviewer verb emits the pool refusal | planned TestGuardProjectionReviewerPrecedence in cmd/bench/guard_projection_test.go | A reordered entry names the reviewer verb instead of the pool cause |
+| GP66 | 28 | A command with the reviewer verb and a shell follow-on emits the reviewer-verb refusal | planned TestGuardProjectionReviewerPrecedence in cmd/bench/guard_projection_test.go | Classify before the reviewer check emits the follow-on refusal |
+| GP67 | 21 | A renamed private wrapper-flag or exec-child copy in reviewer.go makes package-core-guard red | planned TestGuardProjectionOwnerBitesOnPrivateCopies in internal/conformance/guard_projection_owner_test.go | A file list that omits reviewer.go lets its private grammar survive |
+| GP68 | 29 | The agent-route guard check still flags a Bench child under bench worktree exec | `internal/conformance/refusal_route_guard_test.go` (`TestAgentRouteGuardCheckBites`, RR12) | The migration loses exec-child detection in the route check |
+| GP69 | 29 | runsBenchUnderExec extracts the exec child only through WorktreeExec | review-owned (Standards axis) | GP30 grades production files only, so only review sees a test-side copy |
+| GP70 | 27 | The follow-on core entry keeps exit 2 and the reviewer-verb message for each override envelope | `cmd/bench/main_test.go` (`TestFollowOnGuardDeniesTheOverrideEnvelope`) | The migrated walk breaks the actual entry path |
+| GP71 | 15, 16 | The Bench follow-on hook keeps warning-allow when its resolver, wrapper, or core is missing | `internal/systemtest/bench_follow_on_test.go` (`TestBenchFollowOnHookDegradedRim`, FOG19 and FOG33) | Shared authority imposes Git's refusal on the follow-on hook |
 
 GP46 uses an independently preserved pre-migration executable and the candidate executable.
-Prepare the reference after the degraded repair prerequisite, before GP1 begins.
+Capture the reference at f07508b2a or the integrated source at build entry, before GP1 begins.
 The same canned events and fixture repositories feed both executables through actual core and hook entries.
-Include the ordered raw envelopes in the decoder preservation matrix, without JSON remarshal or key normalization.
+Include the ordered raw envelopes from the decoder preservation matrix, without JSON remarshal or key normalization.
 GP47, GP49, GP51, GP54, GP56, GP57, and GP59 require actual guard entry witnesses.
 
 Compare exit, stdout, and stderr exactly through executable entries.
 Compare reader results and decode errors in their existing owner-package contract tests.
-Review owns the reference capture and each intentional difference, and no intentional difference is authorized here.
+Review owns the reference capture and each intentional difference, and this spec authorizes no intentional difference.
 
 ### Edge inventory
 
@@ -564,24 +640,25 @@ Review owns the reference capture and each intentional difference, and no intent
 |---|---|---|
 | P | assignment, env options, command -v/-V, nohup, timeout, xargs from TestResolveRoutinePrefix | existing prefix projection, including nonexecuting command queries |
 | W | sh, bash, zsh, absolute shell paths, -c/-lc, missing operand, invalid index | supported c-flag projection |
-| W4 | `bash -c 'echo ok' -c 'git reset --hard'`, corresponding Bench follow-on child, and a nested wrapper | Git takes first flag, Bench searches matching children, neither recurses twice |
+| W4 | `bash -c 'echo ok' -c 'git reset --hard'`, corresponding Bench follow-on child, and a nested wrapper | Git takes the first flag, Bench Classify searches matching children, neither recurses twice |
 | X | `bench worktree exec X --env A=1 -- git commit -m 'two words'`, no --, empty child, ./dist/bench | direct argv and caller executable recognition |
-| X3 | exec inside wrapper, wrapper inside exec, nested wrappers from TestClassifyVerdicts | existing one-level allowance |
-| A | attached ;/&&/newline before Git reset, unclosed single quote, unclosed double quote, trailing escape | accepted degraded repair refuses malformed input |
+| X3 | exec inside wrapper, wrapper inside exec, nested wrappers from TestClassifyVerdicts | existing one-level allowance for Git and Bench Classify |
+| R | the TestGuardDeniesTheOverrideVerb commands, a wrapper inside a wrapper, an exec inside an exec, an exec head without `--` | the reviewer walk recurses through each child and denies only a named verb |
+| A | attached ;/&&/newline before Git reset, unclosed single quote, unclosed double quote, trailing escape | the landed degraded repair refuses malformed input |
 | G | -C, --git-dir, --work-tree, -c and equals forms from TestClassifyVerdicts | Git owns option operands and repository uncertainty |
 | E0 | empty stdin, invalid JSON, initially absent/null input, initially absent/null command, numeric/array command, empty command, NUL | Git silent allow, Bench warning allow |
 | EP | exact raw envelope bytes in the decoder preservation matrix below | selected standard target semantics |
 | F | absolute path, relative path plus cwd, missing cwd, wrong cwd type, null cwd, unreadable tracked/root fact | writeguard owns validation and warning allow |
 | H | actual hooks with missing library, missing core, erroring core, stale unknown-subcommand core, valid recovery | each shim's own established failure tuple |
-| D | P, W, W4, X, X3, A, G, E0, EP, F, H plus alias, pool conflict, heredoc, redirect, quoted operator | exact before/after observable tuples |
+| D | P, W, W4, X, X3, R, A, G, E0, EP, F, H plus alias, pool conflict, heredoc, redirect, quoted operator | exact before/after observable tuples |
 
 ### Decoder preservation matrix
 
-These inputs use ordered raw JSON bytes rather than maps or remarshaled fixture objects.
+These inputs use ordered raw JSON bytes, not maps or remarshaled fixture objects.
 The /repo spelling is a unit fixture root.
-Actual file-write entry witnesses substitute a real primary checkout with tracked README.md and no ignore rule.
-They call guardFileWrite so RootAt, IsPrimaryCheckout, and tracked-path reads precede the observed exit 2.
-Actual Git witnesses call guardGit, where git reset has an unconditional refusal label after successful decoding.
+Actual file-write entry witnesses substitute a real primary checkout with a tracked README.md and no ignore rule.
+They call guardFileWrite, so RootAt, the IsPrimary checker field, and tracked-path reads precede the observed exit 2.
+Actual Git witnesses call guardGit, where git reset has an unconditional refusal label after a successful decode.
 
 Existing planned reader, core-entry, and differential tests own these cases.
 No parallel suite or new test harness is required.
@@ -600,166 +677,155 @@ No parallel suite or new test harness is required.
 | later matching member | `{"tool_input":{"command":"git status","file_path":"old.md"},"tool_input":{"command":"git reset --hard","file_path":"README.md"},"cwd":"/repo"}` | Later matching members replace prior string or raw-map values | GP60, GP46 |
 | earlier cwd type error | `{"cwd":7,"cwd":"/repo","tool_input":{"file_path":"README.md"}}` | Write retains its outer decode error and core warning-allow policy | GP61, GP29, GP46 |
 
-Case-folding applies to tagged struct fields, not to the nested maps' command and file_path keys.
+Case folding applies to tagged struct fields, not to the nested maps' command and file_path keys.
 Repeated nested objects merge members in all forms, but null distinguishes structs from maps.
 A retained early decoder error is not erased by later valid bytes.
-These are existing observable policies, including permissive cases, rather than new validation rules.
+These are existing observable policies, including permissive cases, not new validation rules.
 
 Tests that swap package variables stay in their own package process.
 System tests use owner.runWithInput, owner.observeSelected, and privateToolPath instead of those substitutions.
-Use existing Checker, Resolver, and writeguard Checker injection without adding an injected port.
-Existing `injected_ports_registry_test.go` remains the authority for port contracts.
+Use the existing Checker, Resolver, and writeguard Checker injection without a new injected port.
+The existing `injected_ports_registry_test.go` remains the authority for port contracts.
+A new system test file must not redeclare `parseRepairWant`, `occurrenceCommand`, `coarseGitWant`, or `coreMissingMarker`, which `guard_refusal_test.go` declares in the same package.
 
-**Won't handle** deeper wrapper recursion — gitguard.scanWords and benchguard.judge keep the one-level contract.
+**Won't handle** deeper wrapper recursion for Git and Bench Classify — gitguard.scanWords and benchguard.judge keep the one-level contract.
+**Won't handle** a depth bound on the reviewer walk — the reviewer decision of 2026-10-20 keeps its recursion as guard policy.
 **Won't handle** shell expansion or execution — shellcommand.Parse remains a structural parser.
 **Won't handle** rg operand parsing — the separate FT366 rg outcome retains permissive operand uncertainty.
 **Won't handle** shared authority policy — gitguard.Classify, benchguard.Classify, and writeguard.Classify retain their separate decisions.
-**Won't handle** check-agent-line model fields — internal/lines owns that separate envelope contract.
+**Won't handle** check-agent-line model fields — internal/lines (`lines.go:109-125`) owns that separate envelope contract.
+**Won't handle** the agent-intent capture envelope — `captureClaudeAgentIntent` (`cmd/bench/main.go:324-333`) reads non-guard fields and stays outside the governed packages.
+**Won't handle** the shell rim's exact-key envelope match — `.bench/lib/resolve-bench.sh:252-271` stays independent under decision answer 2, so its keys may differ from Go's folded keys.
 **Won't handle** pool path expansion — benchguard.PoolReference retains its existing literal-path policy.
-
-## Ownership fences
-
-These 26 exact path entries preserve the independently accepted implementation fence.
-Current author writes planning artifacts only; the accepted graph grants no implementation authority.
-The future graph must co-name closure entries in each affected ticket and preserve assertions unless an approved fixture re-anchor requires a text change.
-
-- `internal/shellcommand/projection.go` (new)
-- `internal/shellcommand/projection_test.go` (new)
-- `internal/shellcommand/envelope.go` (new)
-- `internal/shellcommand/envelope_test.go` (new)
-- `internal/gitguard/scan.go`
-- `internal/gitguard/gitguard.go`
-- `internal/gitguard/projection_contract_test.go` (new)
-- `internal/benchguard/benchguard.go`
-- `internal/benchguard/projection_contract_test.go` (new)
-- `internal/writeguard/writeguard.go`
-- `internal/writeguard/envelope_contract_test.go` (new)
-- `cmd/bench/guard_projection_test.go` (new)
-- `internal/systemtest/guard_projection_test.go` (new)
-- `internal/conformance/guard_projection_owner_test.go` (new)
-- `internal/conformance/package_core_checks_test.go`
-- `internal/conformance/checks_test.go`
-- `internal/conformance/registry/checks.go`
-- `internal/conformance/tier_live_tree_test.go`
-- `cmd/bench/command_registry.go`
-- `cmd/bench/command_registry_test.go`
-- `cmd/bench/help_inventory_test.go`
-- `internal/conformance/axi_query_registry_test.go`
-- `internal/conformance/subcommand_routing_table_test.go`
-- `tests/canary/canonical-path-owner/second-derivation/`
-- `tests/canary/injected-ports/unregistered-port/`
-- `reviews/shared-guard-projection.md` (new)
 
 ## Preserved closure and hook anchors
 
-`internal/tickets/registry_data.go` (`BoundFiles`) derives the command registry closure for the new cmd test.
-`internal/canary/inventory.go` (`FixturePins`) derives both canary directory closures for gitguard.go.
-The canonical-path mutation currently anchors its import edit on encoding/json.
-Re-anchor that mutation after envelope migration without changing its canonical-path diagnostic.
-Retain the injected-ports mutation's Checker target and its diagnostic.
-No other prospective production path above appears in the current BASE or MUTATE path sweep.
+`internal/canary/pins.go:81` (`FixturePins`) maps gitguard.go to both canary directories.
+The canonical-path mutation anchors its import edit on `"encoding/json"` (`MUTATE.json:4`).
+Re-anchor that mutation in GP2, when gitguard.go loses the import, without a change to its canonical-path diagnostic.
+The injected-ports mutation keeps its `type Checker struct` target (`gitguard.go:25-31`) and its diagnostic.
+GP43 observes both families through the registered canary owner.
 
-No anchored hook prose moves.
-The Git hook keeps these exact anchor bytes:
-
-- `this is an honest-mistake layer, not an evasion-resistant`
-- `exactly one level deep by design (see internal/gitguard)`
-- `misaligned agent are the git pre-push hook and bench's pooled-worktree`
-
-The future owner tests classify TestGuardProjectionOwnerHoldsOnTheLiveTree explicitly.
-Registry co-names permit consistency repair, not a new command, assertion weakening, or new semantic registry row.
+The build does not edit `.bench/hooks/block-dangerous-git.sh`.
+No anchor registry entry pins its prose at f07508b2a.
+Its threat-model and one-level comments (lines 10, 14, and 16) stay as written.
 
 ## Out of scope
 
-The degraded malformed-input repair has its own accepted spec, fences, and independent checkpoint.
-Its remaining price follows `specs/degraded-guard-refusal/spec.md`, not a duplicate estimate here.
-Guard scan simplification is a separate capability in `specs/guard-scan-loop/spec.md`, with one vertical chunk and one final integration run.
+The degraded malformed-input repair landed as its own outcome; this spec cites its tests as preserved regressions.
+Guard scan simplification is a separate capability in `specs/guard-scan-loop/spec.md`, with one vertical chunk.
 The rg operand guard remains separate roadmap work, estimated at 3 production edits and 2 gate runs after its own specification.
-A full shell interpreter is excluded, with no implementation price because it is outside the approved threat model.
+A full shell interpreter is excluded, with no price, because it is outside the approved threat model.
 
 ## Further notes
 
 ### Source-clause accounting
 
-The shared ready map remains in place because it also owns the independent degraded and scan outcomes.
+The shared ready map remains in place, because it also owns the scan outcome and the rg residual.
 Each answer 1 clause occurs once there.
 Answer 3 repeats the integration preservation obligation for the overall sequence.
 
 | Source clause | Disposition |
 |---|---|
-| “Deepen shellcommand with shared executable, wrapper, and worktree exec-child projection.” | GP01–GP09 |
+| “Deepen shellcommand with shared executable, wrapper, and worktree exec-child projection.” | GP01–GP09, GP62–GP69 |
 | “Use one common envelope reader for structural input facts.” | GP14–GP19, GP30, GP47–GP61 |
-| “Each guard retains required fields, authority, diagnostics, and fail posture.” | GP10–GP13, GP20–GP29, GP36–GP41, GP46–GP61 |
-| “Preserve the current one-level wrapper contract” | GP04, GP09 |
+| “Each guard retains required fields, authority, diagnostics, and fail posture.” | GP10–GP13, GP20–GP29, GP36–GP41, GP46–GP61, GP65–GP66, GP71 |
+| “Preserve the current one-level wrapper contract” | GP04, GP09; the reviewer decision of 2026-10-20 scopes it to Git and Bench Classify |
 | “Keep Git global-option meaning in the Git guard.” | GP10, family G in GP46 |
 | “carry the child argv and its different-checkout context.” | GP05–GP10 |
 | “It must not evaluate expansions or execute shell input.” | GP45 |
-| “The new rg guard retains its explicitly permissive operand-uncertainty rule.” | Won't handle rg operand parsing, GP46 preserves existing guard posture |
+| “The new rg guard retains its explicitly permissive operand-uncertainty rule.” | Won't handle rg operand parsing; GP46 preserves existing guard posture |
 | “That rule must not weaken dangerous-command parse refusal.” | GP34–GP35 |
-| “First, repair malformed degraded input and its diagnostic.” | predecessor spec prerequisite |
+| “First, repair malformed degraded input and its diagnostic.” | landed predecessor outcome |
 | “Second, migrate common grammar and envelope facts.” | GP1–GP3 |
 | “Third, simplify the guard inventory scan if its behavior stays fixed.” | separate guard-scan-loop spec |
-| “retain tests through actual hook and guard entries.” | GP21, GP25, GP29, GP34–GP41, GP46 |
+| “retain tests through actual hook and guard entries.” | GP21, GP25, GP29, GP34–GP41, GP46, GP70–GP71 |
 | “Cover attached separators, unclosed quotes, wrapper depth, Git options, and worktree exec children.” | GP02–GP10, GP34–GP35, GP46 |
-| “Cover missing library, missing core, core error, and valid recovery commands.” | GP36–GP41 |
+| “Cover missing library, missing core, core error, and valid recovery commands.” | GP36–GP41, GP71 |
 | “Prove that each guard retains its own uncertainty and diagnostic policy.” | GP10, GP21, GP25, GP28–GP29, GP35–GP41, GP46 |
 
-Flagged additions: none in product behavior.
-The structural-copy ownership check and differential witness enforce the approved single owner and preservation promises.
-Their extra fence files are explicit implementation verification, not a new user capability.
+Flagged additions for reviewer veto:
+
+- The agent-route check migration (GP68–GP69) is not in the decision source. It applies the one-source code standard in `AGENTS.md` to a test-side copy of the exec grammar.
+- The refresh drops seven paths from the 2026-10-06 fence, as Graph ordering states.
+- The spec keeps `Related roadmap: FT366` instead of a `Roadmap:` line. FT366 closes only when both bound specs land, so a retiring spec must not remove the shared row.
+
+The structural-copy ownership check and the differential witness enforce the approved single owner and the preservation promises.
+They are implementation verification, not a new user capability.
+
+### Seam research citations
+
+Each seam beyond the decision source has one cited site.
+The map's spec-writer discretion (`decisions/architecture-guards.md:27-28`) covers projection and envelope placement inside shellcommand.
+
+- `ShellChildren` replaces `internal/gitguard/scan.go:67-75`, `internal/benchguard/benchguard.go:141-155` and `:315-322`, and `internal/benchguard/reviewer.go:36-38`.
+- `WorktreeExec` replaces `internal/gitguard/scan.go:88-98`, `internal/benchguard/benchguard.go:251`, `internal/benchguard/reviewer.go:30-32`, and `internal/conformance/refusal_route_guard_test.go:84-91`.
+- The envelope API replaces `internal/gitguard/gitguard.go:114-124`, `internal/benchguard/benchguard.go:29-51`, and `internal/writeguard/writeguard.go:23-52`.
+- `checkGuardProjectionOwner` extends the package-core-guard orchestration at `internal/conformance/package_core_checks_test.go:22-37`, registered at `internal/conformance/registry/checks.go:19`.
+
+### Build-process constraints
+
+These rows of `docs/known-issues.md` bind the build of this spec:
+
+- Row 10 (`docs/known-issues.md:10`): rebuild the worktree binary after each Go ticket commit, before a system run or preflight. GP3 runs `bench test --check system`.
+- Row 13 (`docs/known-issues.md:13`): after each assignment record, run the plan amendment before the chunk record.
+- Row 14 (`docs/known-issues.md:14`): a test-only repair needs a confirming round on all three axes.
+- Row 15 (`docs/known-issues.md:15`): run the evidence currency check through `bench worktree exec`.
+- Row 16 (`docs/known-issues.md:16`): the seam research citations above satisfy it.
+
+Structure obligations: package_core_checks_test.go must not grow, and it shrinks by the moved declaration.
+benchguard.go has 387 lines and must stay within 400 after GP2.
+checks_test.go must stay within its 739-line grant.
+Each new file must stay within 400 lines.
+No file in the derived scope needs a new grant.
 
 ### Pre-review proof checklist
 
-- Cited symbols: current owner and test definitions were read in the subject tree. Future tests use the planned marker.
-- Import edges: go list confirms shellcommand is a stdlib leaf. Adding its import to writeguard creates no cycle.
-- Source-row clauses and occurrences: the table quotes every answer 1 clause and relevant answer 3 clause. Answer 2 stays with its accepted predecessor.
-- Promised field labels: structural forms retain command, tool_input, and cwd tags. Existing file_path, segment, and operator contracts retain their producers.
-- Changed-function callers: bench consumers finds scanWords, worktreeExecChild, judge, spanInvokesBench, isWrapper, isExecHead, and each exported reader's callers.
-- Copy survival: GP30 restores renamed private recognizers and envelope decoders beneath the executed package-core-guard check.
-- Rendered-shape readers: no rendered label changes. cmd/bench/guards.go, internal/census, entry-point parity, classifier table, and system hook readers retain existing contracts.
-- Pin operators: FixturePins keys exact repo-relative source paths. Preflight uses tickets.Covers for fixture and registry co-name containment.
-- Entry reads: cmd guards own stdin, cwd, resolver and repository reads. Hook resolver and core-error branches retain their existing entry graders.
-- Derived expectations: independent reference capture and named current tests own GP46 expectations. Candidate projection output does not author its own oracle.
-- Consolidated rules: the migration and decoder-form tables enumerate each replaced site and its retained target semantics.
-- Quantified obligations: family D includes ordered decoder cases EP. GP30 enumerates retired copy forms, including unused bodies.
+- Cited symbols: the refresh research read each current owner and test definition at f07508b2a. Future tests use the planned marker.
+- Import edges: shellcommand imports the standard library only (`shellcommand.go:4-8`). The writeguard import of shellcommand creates no cycle.
+- Source-row clauses and occurrences: the table quotes every answer 1 clause and each relevant answer 3 clause. Answer 2 stays with its landed outcome.
+- Promised field labels: structural forms retain the command, tool_input, and cwd tags. Existing file_path, segment, and operator contracts retain their producers.
+- Changed-function callers: the sweep below lists each caller of each retired recognizer and reader.
+- Copy survival: GP30 and GP67 restore renamed private recognizers and envelope decoders beneath the executed package-core-guard check.
+- Rendered-shape readers: no rendered label changes. cmd/bench/guards.go, internal/census, entry-point parity, the classifier table, and system hook readers retain their contracts.
+- Pin operators: FixturePins keys exact repo-relative source paths. The check floor adds `./cmd/bench` for a Writes path under a commandPackages prefix (`internal/tickets/registry_data.go:8-28`).
+- Entry reads: the cmd guards own stdin, cwd, resolver, and repository reads. Hook resolver and core-error branches retain their existing entry graders.
+- Derived expectations: the independent reference capture and the named current tests own GP46 expectations. Candidate projection output does not author its own oracle.
+- Consolidated rules: the migration and decoder-form tables list each replaced site and its retained target semantics.
+- Quantified obligations: family D includes the ordered decoder cases EP and the reviewer family R. GP30 and GP67 list the retired copy forms, including unused bodies.
 - Workflow-step writes: none. This spec adds no publisher, command, cache, or execution workflow.
 
-The caller sweep is tied to subject a9c395e77fec36d1f60f6d057c654aecf5720e24 and citation c1ce54b3baafa91dfcefa87a26b1c453c53e17d67cdc95d394c0b3d7e165803b.
+The caller sweep is tied to f07508b2add49469d686614c70f575531e8ea445.
 `gitguard.scanWords` callers are scan and its direct-child recursion.
-`worktreeExecChild` is called only by scanWords.
+`worktreeExecChild` is called only by scanWords (`scan.go:77`).
 `benchguard.judge` is called by Classify and its wrapper recursion.
 `spanInvokesBench` is called by judgeExec and invokes, which serves InvokesBench and census.
 
-`isWrapper` is called by judge and spanInvokesBench.
-`isExecHead` is called by judge.
-The three envelope wrappers are called by cmd/bench/guards.go and their owner-package reader tests.
+`isWrapper` is called by judge (`benchguard.go:141`), spanInvokesBench (`:315`), and runsReviewerVerb (`reviewer.go:36`).
+`isExecHead` is called by judge (`benchguard.go:134`) and runsReviewerVerb (`reviewer.go:30`).
+`wrapperFlag` is read by judge (`benchguard.go:146`), spanInvokesBench (`:319`), and runsReviewerVerb (`reviewer.go:38`).
+`ReviewerVerb` is called by the follow-on core entry (`cmd/bench/guards.go:174`) and its own wrapper recursion.
+The three envelope wrappers are called by cmd/bench/guards.go (`:115`, `:162`, `:201`) and their owner-package reader tests.
 
-Preserve core entry source bytes in cmd/bench/guards.go because the exported wrappers keep their signatures.
-Preserve internal/census.Record and InvokesBench callers through GP44 and existing census tests.
+Preserve the core entry source bytes in cmd/bench/guards.go, because the exported wrappers keep their signatures.
+Preserve internal/census.Record and the InvokesBench callers through GP44 and the existing census tests.
 Preserve .bench/lib/resolve-bench.sh and the three hook entry files through independent conformance and system witnesses.
-Preserve registry metadata and existing injected-port declarations without adding a new injected parameter.
-
-### Review repair record
-
-[GP-C1 repair evidence](review-r1-repairs.md) records the reviewed source, decoder definitions, standard-library contract, and bounded change.
-Independent review accepted the repaired spec at 02c799aa8e7ba9f1dfcf38a14906f51ab4a6d8db with no material findings.
-The xhigh placement confirmer accepted the bounded amendment at 6c13b4b before ticket slicing.
-Independent graph review accepted aa86c64d; no runtime preservation proof is claimed.
+Preserve registry metadata and the existing injected-port declarations without a new injected parameter.
 
 ### Review disposition
 
 | Item | Proposed disposition |
 |---|---|
-| Implementation line | gpt-5.6-sol/high, GP3 xhigh, accepted at 02c799aa |
-| Seams and coverage | value, caller, core, actual hook, and registered ownership seams, accepted at 02c799aa |
-| Ownership fences | exact path fence above, placement accepted at 6c13b4b; graph accepted at aa86c64d |
-| Exclusions | independent rim, rg outcome, scan outcome, and full interpreter boundaries, accepted at 02c799aa |
-| Ticket graph | complete vertical graph authored after independent SPEC acceptance; graph accepted at aa86c64d |
+| Implementation line | opus/high, GP2 and GP3 at xhigh |
+| Seams and coverage | value, caller, core, actual hook, and registered ownership seams |
+| Derived Writes scope | three chunk scopes above, seven paths dropped from the prior fence |
+| Exclusions | independent rim, reviewer-walk depth, rg outcome, scan outcome, and full interpreter boundaries |
+| Ticket graph | the slicer refreshes the three tickets against this spec |
 
 ### Numbered breakdown
 
 | ticket | title | Blocked by | delivered outcome |
 |---|---|---|---|
 | 1-share-git-command-projections.md | Share Git command projections | none | Shared projection facts through the real Git classifier |
-| 2-migrate-guard-envelope-consumers.md | Migrate guard envelope consumers | 1-share-git-command-projections.md | All three standard decoder forms through migrated readers and actual core entries |
-| 3-enforce-guard-projection-ownership.md | Enforce guard projection ownership | 1-share-git-command-projections.md, 2-migrate-guard-envelope-consumers.md | Registered copy refusal and complete actual hook/core regression |
+| 2-migrate-guard-envelope-consumers.md | Migrate guard envelope consumers | 1-share-git-command-projections.md | All three standard decoder forms, the reviewer walk, and the route check through migrated readers and actual core entries |
+| 3-enforce-guard-projection-ownership.md | Enforce guard projection ownership | 1-share-git-command-projections.md, 2-migrate-guard-envelope-consumers.md | Registered copy refusal and complete actual hook and core regression |
