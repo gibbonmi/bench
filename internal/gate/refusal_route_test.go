@@ -220,6 +220,8 @@ func gateFaceFixtures() []gateFaceFixture {
 		evidenceFixture(record),
 		repairFixture(record),
 		dirtyFixture(record),
+		candidateFixture(),
+		overlapFixture(),
 		{
 			// The spec drops its staged status, which only the reviewer restores.
 			face:     "checkpoint-composition",
@@ -349,7 +351,12 @@ func dirtyFixture(record string) gateFaceFixture {
 // refuses a primary checkout. The linked gate exits 0: the outcome gate copies a run record
 // that only the primary checkout's Git directory keeps.
 func linkedAttach(t testing.TB, root string, count int) *recordtest.Fixture {
-	f := recordtest.Attach(t, root, count)
+	return linkedPrepare(t, root, count, recordtest.Body)
+}
+
+// linkedPrepare is linkedAttach over a spec with body.
+func linkedPrepare(t testing.TB, root string, count int, body string) *recordtest.Fixture {
+	f := recordtest.Prepare(t, root, count, recordtest.Spec, body)
 	f.Write(".bench/gate.sh", "#!/bin/sh\nexit 0\n")
 	if err := os.Chmod(filepath.Join(root, ".bench", "gate.sh"), 0o755); err != nil {
 		t.Fatal(err)

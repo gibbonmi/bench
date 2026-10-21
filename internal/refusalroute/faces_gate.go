@@ -1,12 +1,36 @@
 package refusalroute
 
-// gateRerun re-runs the caller's own gate in the worktree that the label fact addresses.
-// The raising site composes the arguments from the run it refuses, and a face whose
-// recovery forces a fresh run gets them with --fresh.
-var gateRerun = TreeCommand("bench gate", Fact(FactLabel), Composed(FactArguments))
+import (
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/usage"
+)
+
+// gateRerun re-runs the caller's own gate. The raising site composes the arguments from the
+// run it refuses, and a face whose recovery forces a fresh run gets them with --fresh.
+var gateRerun = callerRerun("bench gate")
+
+// GateRerun renders the caller's own gate re-run over values.
+func GateRerun(values map[string]string) string { return renderRerun(gateRerun, values) }
 
 // FactForm is the record form that writes the entry a checkpoint refusal lacks.
 const FactForm = "form"
+
+// CandidateNotInstalled is the face of a declared build's guarded write whose running
+// executable is not the installed candidate. The candidate check raises it, and the gate
+// checkpoint and the record verb print it. The build verb's restore prints its route when the
+// running executable cannot read the ledger.
+const CandidateNotInstalled = "candidate-not-installed"
+
+// DeclaredBuildsOverlap is the face of a guarded write while more than one declared build is
+// open. The candidate check raises it, and the gate checkpoint and the record verb print it.
+// The build verb's restore prints its route while the ledger holds an open build of any
+// outcome.
+const DeclaredBuildsOverlap = "declared-builds-overlap"
+
+// installForm is the install form of the build verb up to its target slot, which the target
+// fact fills.
+var installForm = strings.TrimSuffix(usage.WorktreeBuildInstall, " "+placeholder(FactTarget))
 
 // gateFaces are the gate checkpoint's refusal faces, in registry order. The raising site
 // supplies each sentence: the checkpoint names the cause it observed.
@@ -67,5 +91,22 @@ var gateFaces = []Face{
 		Name:      "gate-handback",
 		Authority: Reviewer,
 		Route:     []Step{clearCause, gateRerun},
+	},
+	{
+		// The install runs from the primary checkout, which no step addressed at a worktree
+		// reaches, so it is an instruction. The printing verb supplies its own re-run.
+		Verb:      Gate,
+		Name:      CandidateNotInstalled,
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("from the primary checkout, run"), Text(installForm), Fact(FactTarget)), rerun},
+	},
+	{
+		// One primary executable serves one installed candidate, so one of the open declared
+		// builds must end. The choice of the build to end is the reviewer's. The printing verb
+		// supplies its own re-run.
+		Verb:      Gate,
+		Name:      DeclaredBuildsOverlap,
+		Authority: Reviewer,
+		Route:     []Step{Command(Text("bench commitment block --outcome"), Operator("id"), Text("--reason"), Operator("text")), rerun},
 	},
 }

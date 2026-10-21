@@ -395,6 +395,47 @@ When a stalled build still holds the window, the reviewer stops it with
 revert with `bench commit`, and land it with `bench worktree land` under a
 landing override. Never reset `main`.
 
+When a build adds a field to the intent ledger or the review record, its spec
+declares that field on one unfenced `Persisted fields:` header line. The value is
+a comma-separated list of `<record>:<path>` items, such as
+`intent-ledger:commitment.gaps`. The record is `intent-ledger` or
+`review-record`, and the path holds dot-separated JSON tag names from the record
+root. An open build of such a spec is a declared build.
+
+The install is `bench worktree build --install <target>`. It builds the target
+and publishes the candidate as the primary checkout's executable, seal, and
+broker manifest. It then runs `doctor --fix` under that candidate, so the hooks,
+the record verbs, and the landing decode the new fields. The install reads its
+authority from the default-branch copy of the bound spec, never from the
+candidate tree. The Build section of `/bench-implement-spec` says when to run it.
+
+The install refuses unless the running executable is the primary checkout's
+`dist/bench`. Thus it refuses a worktree or version-cache executable, and the
+refusal names that executable's path. While a declared build is open, these
+entries refuse with `candidate-not-installed` on any other executable, and the
+refusal names the install:
+
+- the chunk checkpoint
+- the complete checkpoint
+- the gap close of `bench record assignment`
+
+While two declared builds are open, each of these entries refuses with
+`declared-builds-overlap`, because one primary executable serves one candidate.
+The reviewer ends one of the builds with `bench commitment block`, and the
+operator then runs the refused command again.
+
+A declared build that `bench commitment block` stops before its landing needs a
+restore. Run `bench worktree build --restore <slug>` from the primary checkout at
+once after the block. The block ends the refresh hold, so a later landing can
+rebuild `main` over the candidate. Before any write, the restore refuses while
+any build is open or while the running executable cannot read the ledger. The
+ledger refusal routes to the install, and the install needs the target worktree.
+Run the restore before `bench worktree release`.
+
+The restore copies the ledger under `$BENCH_HOME/restore/<repo-key>/` and clears
+each declared ledger field. It then rebuilds the primary `dist/bench` from the
+primary checkout's sources and runs `doctor --fix` under that executable.
+
 A conflicted `capture/` path composes by a rule table with three verbs:
 `source`, `destination`, and `union`. `capture/session-handoff.md` takes
 `source`; `capture/learnings.md` and `capture/IDEAS.md` take `union`; every
@@ -413,11 +454,15 @@ After publication and source release, the landing runs two effects: the broker
 refresh and the eligible-sibling cleanup. The landing prints one
 `effects[2]{effect,result}` row on stdout before the `landed{...}` record, which
 stays the last stdout line. A result cell reads `complete`, `failed`, `pending`,
-or `not-applicable`. `pending` names an effect an earlier failure stopped. The
-refresh republishes the destination's own Bench executable, and it applies only
-where the destination declares Bench build inputs. The cleanup retires the
-sibling worktrees whose work this landing carries, and it prints its plan rows on
-stderr.
+`not-applicable`, or `held`. `pending` names an effect an earlier failure
+stopped.
+
+The refresh republishes the destination's own Bench executable, and it applies
+only where the destination declares Bench build inputs. The refresh holds while
+a declared build is open and the broker manifest binds the primary executable's
+digest, or while the ledger does not read. A held refresh writes nothing. The
+cleanup retires the sibling worktrees whose work this landing carries, and it
+prints its plan rows on stderr.
 
 A failed effect exits 3 with `incomplete:refresh` or `incomplete:cleanup` in the
 `worktree` cell. That record carries the same `next=` resume every other

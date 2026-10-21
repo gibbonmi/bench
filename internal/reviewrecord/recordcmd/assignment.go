@@ -28,8 +28,12 @@ func assignmentValid(f form, parsed usage.Result) bool {
 }
 
 // assignment records one dispatch. The first dispatch of a chunk in an open build closes the
-// build's gap in the ledger before the plan write. So a refused dispatch writes no plan.
+// build's gap in the ledger before the plan write. So a refused dispatch writes no plan. The
+// candidate check of a declared build comes first, before the record read and the gap close.
 func assignment(f form, root, spec string, parsed usage.Result) (string, int) {
+	if out, code := f.refuseUninstalled(root, spec, parsed); out != "" {
+		return out, code
+	}
 	values := parsed.Flags
 	source, out, code := commit(f, root, values, "--source")
 	if out != "" {

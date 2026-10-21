@@ -1487,6 +1487,14 @@
       "identity": "sha256:8f6724b61e08d439cb88f8d6d2dc794d986c7e3cd5c09dae44e95ecf70ca0a38",
       "source": "ef5c8ccfa3246d99b2ccdfa1914444360e797421",
       "evidence": "6b5e253d4d0845b171f6a836819e979fea3e216b"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT419",
+      "binding": "candidate-binary-install",
+      "identity": "sha256:6878989aae708ee957cb77aeb9685947fa57fd3ab88e853fe9a4dc553fec99ea",
+      "source": "038d87de8a684384250f81c10a600683c18c5be4",
+      "evidence": "a279da98db1daa69c96ad13853a244632ea03825"
     }
   ]
 }

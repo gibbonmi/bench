@@ -1,14 +1,14 @@
 # Install a declared build's candidate as the repository executable and broker
 
 Blocked by: 1-declare-persisted-fields.md
-Writes: internal/worktree/build.go, internal/worktree/build_install_test.go (new), internal/worktree/build_test.go, internal/worktree/joins.go, internal/worktree/list.go, internal/worktree/journey_test.go, internal/worktree/verb_runner_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/parallel_census_test.go, internal/usage/worktree.go, internal/intent/transaction.go, internal/intent/transaction_test.go, internal/commitment/repository/sources.go, internal/commitment/repository/window_test.go, cmd/bench/help_inventory_test.go, internal/conformance/refusal_route_bypass_test.go, internal/systemtest/candidate_install_test.go (new), internal/systemtest/owner_test.go
+Writes: internal/worktree/build.go, internal/worktree/build_install_test.go (new), internal/worktree/build_test.go, internal/worktree/joins.go, internal/worktree/list.go, internal/worktree/journey_test.go, internal/worktree/verb_runner_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/parallel_census_test.go, internal/usage/worktree.go, internal/intent/transaction.go, internal/intent/transaction_test.go, internal/commitment/repository/sources.go, internal/commitment/repository/window_test.go, cmd/bench/help_inventory_test.go, internal/conformance/refusal_route_bypass_test.go, internal/systemtest/candidate_install_test.go (new), internal/systemtest/owner_test.go, internal/commitment/commitmenttest/admission.go, internal/worktree/path.go, internal/worktree/exec.go
 Covers: CB13, CB14, CB15, CB16, CB17, CB18, CB19, CB20, CB21, CB23, CB54, CB55, CB56, CB63
 
 ## What to build
 
 Deliver the install half of CB-C2: `bench worktree build --install <target>` installs a declared build's candidate as the primary checkout's executable and broker.
 
-Add the `--install` flag to the build grammar in `build.go`. Keep the existing `usage.WorktreeBuild` text unchanged, because `WorktreeBuildFor` derives every rebuild remedy from it. Put the install form in a separate constant in `internal/usage/worktree.go`; the leaf help test reads `buildGrammar.Help` with a contains match. The help row in `cmd/bench/main.go` must not grow, because that file is over its line cap.
+Add the `--install` flag to the build grammar in `build.go`. Keep the existing `usage.WorktreeBuild` text unchanged, because `WorktreeBuildFor` derives every rebuild remedy from it. Put the install form in a separate constant in `internal/usage/worktree.go`; add it to `buildGrammar.Help`, which prints the `--help` output. The leaf help test in `cmd/bench/worktree_leaves_test.go` matches `"usage: " + usage.WorktreeBuild` in that output with a contains match, so the added form keeps it green. The help row in `cmd/bench/main.go` must not grow, because that file is over its line cap.
 
 The verb refuses before any write, in the spec's order:
 

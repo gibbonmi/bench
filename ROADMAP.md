@@ -106,8 +106,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT401 (LOW, decision required) — the refusals outside the write verbs print their routes from the refusal-route registry.**
 
-**FT419 (MEDIUM) — a build that adds a persisted ledger or review-record field writes and lands through a binary that reads that field.**
-
 **FT424 (MEDIUM) — a chunk gap lands the prepared work of waiting committed outcomes.**
 
 **FT425 (LOW) — a Bench write verb prints the tree state after it runs.**
@@ -338,13 +336,12 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT419
-2. FT366-guard-residual
-3. FT409
-4. FT402
-5. FT362-process-lifetime
-6. FT360-shared-fixtures
-7. FT411
-8. FT314-gate-reuse
-9. FT125-exact-readers
-10. FT375-residual
+1. FT366-guard-residual
+2. FT409
+3. FT402
+4. FT362-process-lifetime
+5. FT360-shared-fixtures
+6. FT411
+7. FT314-gate-reuse
+8. FT125-exact-readers
+9. FT375-residual

@@ -16,11 +16,14 @@ package spec
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
@@ -66,7 +69,11 @@ func LiveSpecSlugs(content []byte) []string {
 	return slugs
 }
 
-func metadata(content []byte) (status, roadmapID string) {
+// headerLines is the header scan's view of spec content: each line without its trailing CR,
+// minus fenced code. A line whose first three bytes are a code fence toggles fence state,
+// and the scan skips it and every line inside a fence.
+func headerLines(content []byte) []string {
+	var lines []string
 	inFence := false
 	for _, raw := range strings.Split(string(content), "\n") {
 		line := strings.TrimSuffix(raw, "\r")
@@ -77,6 +84,13 @@ func metadata(content []byte) (status, roadmapID string) {
 		if inFence {
 			continue
 		}
+		lines = append(lines, line)
+	}
+	return lines
+}
+
+func metadata(content []byte) (status, roadmapID string) {
+	for _, line := range headerLines(content) {
 		switch {
 		case strings.HasPrefix(line, "Status:"):
 			status = strings.TrimSpace(strings.TrimPrefix(line, "Status:"))
@@ -85,6 +99,70 @@ func metadata(content []byte) (status, roadmapID string) {
 		}
 	}
 	return status, roadmapID
+}
+
+// ErrPersistedFieldsInvalid is the sentinel that each PersistedFields refusal wraps.
+var ErrPersistedFieldsInvalid = errors.New("persisted-fields-invalid")
+
+// RecordIntentLedger and RecordReviewRecord are the record names that a declaration item can
+// name: the shared intent ledger and the review record.
+const (
+	RecordIntentLedger = "intent-ledger"
+	RecordReviewRecord = "review-record"
+)
+
+// persistedRecords is the closed set of record names that a declaration item can name.
+var persistedRecords = map[string]bool{RecordIntentLedger: true, RecordReviewRecord: true}
+
+// PersistedField is one `<record>:<path>` item of the `Persisted fields:` declaration. Path
+// holds the dot-separated JSON tag names from the record root.
+type PersistedField struct {
+	Record string
+	Path   []string
+}
+
+// PersistedFields reads the `Persisted fields:` declaration through headerLines, the shared
+// fence-aware line view, so a fenced line declares nothing. A spec with no line returns an
+// empty list. The value is a comma-separated item list. A malformed item or a second
+// unfenced line refuses with ErrPersistedFieldsInvalid; the second-line refusal keeps a body
+// line from replacing the reviewed header declaration.
+func PersistedFields(content []byte) ([]PersistedField, error) {
+	value, declared := "", false
+	for _, line := range headerLines(content) {
+		v, ok := strings.CutPrefix(line, "Persisted fields:")
+		if !ok {
+			continue
+		}
+		if declared {
+			return nil, fmt.Errorf("%w: a second Persisted fields: line", ErrPersistedFieldsInvalid)
+		}
+		value, declared = v, true
+	}
+	if !declared {
+		return []PersistedField{}, nil
+	}
+	var fields []PersistedField
+	seen := map[string]bool{}
+	for _, raw := range strings.Split(value, ",") {
+		item := strings.TrimSpace(raw)
+		record, path, _ := strings.Cut(item, ":")
+		segments := strings.Split(path, ".")
+		switch {
+		case item == "":
+			return nil, fmt.Errorf("%w: empty item", ErrPersistedFieldsInvalid)
+		case !persistedRecords[record]:
+			return nil, fmt.Errorf("%w: unknown record %q in %q", ErrPersistedFieldsInvalid, record, item)
+		case slices.Contains(segments, ""):
+			return nil, fmt.Errorf("%w: empty path segment in %q", ErrPersistedFieldsInvalid, item)
+		case strings.ContainsFunc(path, func(r rune) bool { return r == ':' || unicode.IsSpace(r) }):
+			return nil, fmt.Errorf("%w: whitespace or a colon in the path of %q", ErrPersistedFieldsInvalid, item)
+		case seen[item]:
+			return nil, fmt.Errorf("%w: duplicate item %q", ErrPersistedFieldsInvalid, item)
+		}
+		seen[item] = true
+		fields = append(fields, PersistedField{Record: record, Path: segments})
+	}
+	return fields, nil
 }
 
 // Facts reads folder specs in slug order. It classifies every present spec.md before
@@ -127,9 +205,8 @@ func Facts(root string) ([]Fact, error) {
 // status` specs row shares it and counts it across specs/. `bench spec retire` shares
 // it too, and validates it before deleting.
 //
-// The scan strips CRLF from each line. A line whose first three bytes are a code
-// fence toggles fence state, and the scan skips it. The scan also skips every line
-// inside a fence. The first line matching the retirement regex marks the content.
+// It reads the `Status:` value through headerLines, so a fenced line never marks the
+// content.
 func AwaitsRetirement(content []byte) bool {
 	status, _ := metadata(content)
 	return status == StatusImplemented

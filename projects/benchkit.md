@@ -46,9 +46,10 @@ The pre-push hook guards the default branch. This line only states the binding.)
   reconciliation and final integration results. The prospective gate permits
   the broker's exact status transform; new destination content requires review.
 
-  One installed promotion broker owns the complete landing. The wrapper
-  authenticates that broker through the installation manifest, and its land
-  route honors no inherited routing override. The broker composes the exact
+  One installed promotion broker owns the complete landing. The install of a
+  declared build is the only route by which candidate code becomes that broker.
+  The wrapper authenticates that broker through the installation manifest, and
+  its land route honors no inherited routing override. The broker composes the exact
   prospective tree in private temporary storage. It builds the gate executable
   from that same tree, and it takes the phase schedule from the destination. It alone
   accepts the gate evidence and updates the destination ref, and resume stays
@@ -56,8 +57,8 @@ The pre-push hook guards the default branch. This line only states the binding.)
 
   Prospective gate evidence keys to the graded tree and to the baseline runner
   identity, so a retry reuses green evidence only when both are unchanged. A
-  broker source change becomes active only after `bench repair` or a release
-  install publishes the new broker.
+  broker source change becomes active only after `bench repair`, a release
+  install, or the install of a declared build publishes the new broker.
 
   `bench commit` formats changed Go files inside its named ownership fence
   before it composes and gates the prospective tree. It leaves unnamed files
