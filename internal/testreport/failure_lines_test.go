@@ -17,7 +17,7 @@ var threeLineFailureEvents = []string{
 
 const failedPackageRow = "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,fail,500,1\n"
 
-// cannedSlowestBlock is the slowest table of a stream whose one top-level test
+// cannedSlowestBlock is the `--full` slowest table of a stream whose one top-level test
 // `TestCanned` ends with an `Elapsed` of 0.01.
 const cannedSlowestBlock = "slowest[1]{package,test,elapsed_ms}:\n  canned,TestCanned,10\n"
 
@@ -25,7 +25,7 @@ const cannedSlowestBlock = "slowest[1]{package,test,elapsed_ms}:\n  canned,TestC
 // every diagnostic line of the test.
 func TestFailuresRowCountsLines(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./..."}, threeLineFailureEvents, 1)
-	want := failedPackageRow + "failures[1]{package,test,line,lines}:\n  canned,TestCanned,alpha one,3\nskips[0]{package,test,reason}:\n" + cannedSlowestBlock
+	want := failedPackageRow + "failures[1]{package,test,line,lines}:\n  canned,TestCanned,alpha one,3\nskips[0]{package,test,reason}:\n"
 	if output != want || code != 1 {
 		t.Fatalf("Command = (%d, %q), want (1, %q)", code, output, want)
 	}
@@ -35,11 +35,14 @@ func TestFailuresRowCountsLines(t *testing.T) {
 // counted line.
 func TestFailuresRowWithNoDiagnosticCountsZero(t *testing.T) {
 	events := []string{threeLineFailureEvents[0], threeLineFailureEvents[3], threeLineFailureEvents[4]}
-	for _, args := range [][]string{{"--package", "./..."}, {"--package", "./...", "--full"}} {
-		output, code := commandOverEvents(t, t.TempDir(), args, events, 1)
-		want := failedPackageRow + "failures[1]{package,test,line,lines}:\n  canned,TestCanned,no diagnostic emitted,0\nskips[0]{package,test,reason}:\n" + cannedSlowestBlock
+	for _, run := range []struct {
+		args []string
+		tail string
+	}{{[]string{"--package", "./..."}, ""}, {[]string{"--package", "./...", "--full"}, cannedSlowestBlock}} {
+		output, code := commandOverEvents(t, t.TempDir(), run.args, events, 1)
+		want := failedPackageRow + "failures[1]{package,test,line,lines}:\n  canned,TestCanned,no diagnostic emitted,0\nskips[0]{package,test,reason}:\n" + run.tail
 		if output != want || code != 1 {
-			t.Fatalf("Command %v = (%d, %q), want (1, %q)", args, code, output, want)
+			t.Fatalf("Command %v = (%d, %q), want (1, %q)", run.args, code, output, want)
 		}
 	}
 }

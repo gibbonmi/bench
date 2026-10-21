@@ -191,11 +191,16 @@ func (r *report) render(full bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	slowestBlock, err := r.slowestBlock()
-	if err != nil {
-		return "", err
+	result := packageBlock + failureBlock + skipBlock
+	// Only a --full run prints the slowest table, so a plain run keeps its bytes and its
+	// response line bound.
+	if full {
+		slowestBlock, err := r.slowestBlock()
+		if err != nil {
+			return "", err
+		}
+		result += slowestBlock
 	}
-	result := packageBlock + failureBlock + skipBlock + slowestBlock
 	rootSkips := r.rootConformanceSkips()
 	if len(rootSkips) == 0 {
 		return result, nil

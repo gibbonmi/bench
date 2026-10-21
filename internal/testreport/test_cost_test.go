@@ -11,14 +11,14 @@ func testTerminal(action, pkg, test string, seconds float64) string {
 	return `{"Action":"` + action + `","Package":"` + pkg + `","Test":"` + test + `","Elapsed":` + strconv.FormatFloat(seconds, 'f', -1, 64) + `}`
 }
 
-// renderEvents decodes the go test -json events and renders the report without --full.
+// renderEvents decodes the go test -json events and renders the report with --full.
 func renderEvents(t *testing.T, events ...string) string {
 	t.Helper()
 	report, err := decode(strings.NewReader(strings.Join(events, "\n")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	output, err := report.render(false)
+	output, err := report.render(true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,6 +142,36 @@ func TestSlowestMissingElapsedIsZero(t *testing.T) {
 
 func TestSlowestExcludesPackageEvent(t *testing.T) {
 	wantSlowest(t, []string{`{"Action":"pass","Package":"canned","Elapsed":0.5}`})
+}
+
+// fullRun is the argument list of a `--full` run over every package.
+var fullRun = []string{"--package", "./...", "--full"}
+
+// TestSlowestEmptyOnFullRun grades that a `--full` run with no test events prints the
+// empty slowest table.
+func TestSlowestEmptyOnFullRun(t *testing.T) {
+	output, code := commandOverEvents(t, t.TempDir(), fullRun, cannedSetNamed(t, "no-run").events, 0)
+	want := "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nslowest[0]{package,test,elapsed_ms}:\n"
+	if output != want || code != 0 {
+		t.Fatalf("Command = (%d, %q), want (0, %q)", code, output, want)
+	}
+}
+
+// TestSlowestFollowsSkipsOnFullRun grades that on a `--full` run the slowest block comes
+// right after a skips block that holds a row.
+func TestSlowestFollowsSkipsOnFullRun(t *testing.T) {
+	output, code := commandOverEvents(t, t.TempDir(), fullRun, []string{
+		`{"Action":"run","Package":"canned","Test":"TestA"}`,
+		`{"Action":"output","Package":"canned","Test":"TestA","Output":"    not here\n"}`,
+		testTerminal("skip", "canned", "TestA", 0),
+		`{"Action":"run","Package":"canned","Test":"TestB"}`,
+		testTerminal("pass", "canned", "TestB", 0.02),
+		`{"Action":"pass","Package":"canned","Elapsed":0.1}`,
+	}, 0)
+	want := "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,pass,100,2\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  canned,TestA,not here\nslowest[1]{package,test,elapsed_ms}:\n  canned,TestB,20\n"
+	if output != want || code != 0 {
+		t.Fatalf("Command = (%d, %q), want (0, %q)", code, output, want)
+	}
 }
 
 // TestSlowestPrecedesRootConformance grades that the conditional root_conformance block
