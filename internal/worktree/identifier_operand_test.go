@@ -110,6 +110,12 @@ func resolverRefusalCases() []resolverRefusalCase {
 			root := newWorktreeRepo(t)
 			return root, "no-such-target", "target is unassigned", nextList
 		}},
+		// The repository holds no assignment, so without the control refusal this target
+		// reads as unassigned.
+		{name: "control characters", setup: func(t *testing.T) (string, string, string, string) {
+			root := newWorktreeRepo(t)
+			return root, "control\x1btarget", "target contains control characters", nextList
+		}},
 		{name: "ambiguous", setup: func(t *testing.T) (string, string, string, string) {
 			root := newWorktreeRepo(t)
 			home := filepath.Join(t.TempDir(), "bench-home")
