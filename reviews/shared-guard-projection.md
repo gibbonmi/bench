@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-guard-projection/spec.md",
-  "plan_digest": "sha256:867fc6719dcec05d1ffed542b7afc332df124b4192ba607bc4f467f87f77230d",
+  "plan_digest": "sha256:26860796c78f035de7c2a1e29d67091b9d1200c6a543fe521f3f02df7be53ea7",
   "implementation_session": "",
   "chunks": [
     {
@@ -448,9 +448,9 @@
     {
       "id": "GP2",
       "base": "6183e1e43df713b5dbbe2c58dc86df7106b78507",
-      "tip": "813efeb55dbbf65cdd3777178012391c4e241039",
-      "plan_digest": "sha256:867fc6719dcec05d1ffed542b7afc332df124b4192ba607bc4f467f87f77230d",
-      "source_digest": "6818978d77749d4c28f43936b62fe37236394b19",
+      "tip": "743b19190a6ab51a6c7a1d65f4071659223ff53a",
+      "plan_digest": "sha256:26860796c78f035de7c2a1e29d67091b9d1200c6a543fe521f3f02df7be53ea7",
+      "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
       "acceptance_rows": [
         "GP14",
         "GP15",
@@ -902,6 +902,410 @@
               "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestGuardWriteEnvelopePolicy/duplicate_cwd_null,13,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./cmd/bench,^TestGuardWriteEnvelopePolicy$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,836\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,12,13\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestGuardWriteEnvelopePolicy/duplicate_cwd_null,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"cwd\\\\\\\\\\\":\\\\\\\\\\\"/dev/shm/2CLYPW/t/TestGuardWriteEnvelopePolicy4043833738/001\\\\\\\\\\\",\\\\\\\\\\\"cwd\\\\\\\\\\\":null,\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"file_path\\\\\\\\\\\":\\\\\\\\\\\"README.md\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardWriteEnvelopePolicy/write_root_key_casing,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"CWD\\\\\\\\\\\":\\\\\\\\\\\"/dev/shm/2CLYPW/t/TestGuardWriteEnvelopePolicy4043833738/001\\\\\\\\\\\",\\\\\\\\\\\"TOOL_INPUT\\\\\\\\\\\":{\\\\\\\\\\\"file_path\\\\\\\\\\\":\\\\\\\\\\\"README.md\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "r4-t4-bench-policy",
+          "performer": "claude:sgp-t4-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t4-repair1-20261021",
+            "digest": "sha256:6f8b76a7ebe3208f3d41f7dc1e4096f29fe1fe039be9540e050f2612db51c7f0",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/benchguard,pass,2,29\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-bench-policy",
+          "command": "bench test --package ./internal/benchguard",
+          "exit_code": 0
+        },
+        {
+          "id": "r4-t4-actual-core-entries",
+          "performer": "claude:sgp-t4-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t4-repair1-20261021",
+            "digest": "sha256:c72d7f3ca38b9c29f156ad9b4b6b84e550d86232350195509d49ed934c9b0cfa",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14563,398\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-actual-core-entries",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "r4-t4-existing-census",
+          "performer": "claude:sgp-t4-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t4-repair1-20261021",
+            "digest": "sha256:81391e947200cbcc3c4031158f320141971f237efac5bed44f4f178add3a1e5e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/census,pass,131,67\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-existing-census",
+          "command": "bench test --package ./internal/census",
+          "exit_code": 0
+        },
+        {
+          "id": "r4-t4-conformance-closure",
+          "performer": "claude:sgp-t4-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t4-repair1-20261021",
+            "digest": "sha256:15498087a58a9040077b8e581fa57ff69146252380d2556a7a824e5c6f50df51",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,35047,1127\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-conformance-closure",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "r4-t4-root-conformance",
+          "performer": "claude:sgp-t4-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t4-repair1-20261021",
+            "digest": "sha256:6decfb18a91ed775c62887c0094b9f38733122ce18f4e9a3db372dc1fff3dcbf",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12843,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "r4-t4-reviewer-recursion-omission",
+          "performer": "claude:sgp-t4-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t4-repair1-20261021",
+            "digest": "sha256:af1d4b2d6c7cdf77a7673315f822c9e33b2de1c0d929012dc7f2f6cf0bbf24b5",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestReviewerVerbKeepsRecursiveReach,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/benchguard,^TestReviewerVerbKeepsRecursiveReach$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,443\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/benchguard,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/benchguard,TestReviewerVerbKeepsRecursiveReach,\"projection_contract_test.go:95: ReviewerVerb(\\\"bash -c \\\\\\\\\\\"sh -c 'bench commitment override --assignment x --reason y'\\\\\\\\\\\"\\\") = false, want true\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-reviewer-recursion-omission",
+          "command": "bench test --package ./internal/benchguard --run '^TestReviewerVerbKeepsRecursiveReach$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Replace only the reviewer walk's recursion into a wrapper child stream with a one-level verb check; the nested-wrapper case must red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:sgp-t4-repair1-20261021",
+              "digest": "sha256:af1d4b2d6c7cdf77a7673315f822c9e33b2de1c0d929012dc7f2f6cf0bbf24b5",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestReviewerVerbKeepsRecursiveReach,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/benchguard,^TestReviewerVerbKeepsRecursiveReach$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,443\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/benchguard,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/benchguard,TestReviewerVerbKeepsRecursiveReach,\"projection_contract_test.go:95: ReviewerVerb(\\\"bash -c \\\\\\\\\\\"sh -c 'bench commitment override --assignment x --reason y'\\\\\\\\\\\"\\\") = false, want true\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r3-t3-bench-policy",
+          "performer": "claude:sgp-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t3-repair1-20261021",
+            "digest": "sha256:e7b33ca54138d54370163ca516484aa2c2dedc3f2ee67a6f96b8072099bac3c1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/benchguard,pass,3,29\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-bench-policy",
+          "command": "bench test --package ./internal/benchguard",
+          "exit_code": 0
+        },
+        {
+          "id": "r3-t3-write-policy",
+          "performer": "claude:sgp-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t3-repair1-20261021",
+            "digest": "sha256:57683df3fee739f11d15b03e4e6a378a152f0652546b9ea6d577ae89ef2f6c62",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/writeguard,pass,2,28\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-write-policy",
+          "command": "bench test --package ./internal/writeguard",
+          "exit_code": 0
+        },
+        {
+          "id": "r3-t3-actual-core-entries",
+          "performer": "claude:sgp-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t3-repair1-20261021",
+            "digest": "sha256:5b7f897e73575974992d16746b95ddba6a4caad17e11294c3f774c58c3f25d23",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14524,398\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-actual-core-entries",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "r3-t3-conformance-closure",
+          "performer": "claude:sgp-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t3-repair1-20261021",
+            "digest": "sha256:a0c06abc05aa09f9bfa596be3d61a815000462c3c72a9189584b9cc2a4fae040",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,33679,1127\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-conformance-closure",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "r3-t3-root-conformance",
+          "performer": "claude:sgp-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t3-repair1-20261021",
+            "digest": "sha256:ab17319514f1f0cc18cc234f1d00a1becfe9d3557a63a6968619e5852382edf8",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12800,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "r3-t3-bench-decoder-form-omission",
+          "performer": "claude:sgp-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t3-repair1-20261021",
+            "digest": "sha256:dfe10eca47e8431b3abcf9c3a969a82ccadef43c0fb964fd9f54e0f441ec4815",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,4,TestBenchEnvelopeValue/NUL_command,10,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/benchguard,^TestBenchEnvelope(RequiredField|Value)$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1283\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/benchguard,fail,2,10\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/benchguard,TestBenchEnvelopeValue/NUL_command,\"projection_contract_test.go:21: CommandFromEnvelope({\\\"tool_input\\\":{\\\"command\\\":\\\"git\\\\\\\\u0000status\\\"}}) = (\\\"\\\", \\\"command field missing\\\"), want (\\\"\\\", \\\"command field has control byte\\\")\",1\n  github.com/gibbonmi/bench/internal/benchguard,TestBenchEnvelopeValue/duplicate_command_null,\"projection_contract_test.go:21: CommandFromEnvelope({\\\"tool_input\\\":{\\\"command\\\":\\\"git reset --hard\\\",\\\"command\\\":null}}) = (\\\"\\\", \\\"command field missing\\\"), want (\\\"\\\", \\\"command field empty\\\")\",1\n  github.com/gibbonmi/bench/internal/benchguard,TestBenchEnvelopeValue/empty_command,\"projection_contract_test.go:21: CommandFromEnvelope({\\\"tool_input\\\":{\\\"command\\\":\\\"\\\"}}) = (\\\"\\\", \\\"command field missing\\\"), want (\\\"\\\", \\\"command field empty\\\")\",1\n  github.com/gibbonmi/bench/internal/benchguard,TestBenchEnvelopeValue/null_command,\"projection_contract_test.go:21: CommandFromEnvelope({\\\"tool_input\\\":{\\\"command\\\":null}}) = (\\\"\\\", \\\"command field missing\\\"), want (\\\"\\\", \\\"command field empty\\\")\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-bench-decoder-form-omission",
+          "command": "bench test --package ./internal/benchguard --run '^TestBenchEnvelope(RequiredField|Value)$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Replace only the Bench caller InputMap selection with CommandStruct; exact-map and map-null cases must red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:sgp-t3-repair1-20261021",
+              "digest": "sha256:dfe10eca47e8431b3abcf9c3a969a82ccadef43c0fb964fd9f54e0f441ec4815",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,4,TestBenchEnvelopeValue/NUL_command,10,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/benchguard,^TestBenchEnvelope(RequiredField|Value)$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1283\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/benchguard,fail,2,10\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/benchguard,TestBenchEnvelopeValue/NUL_command,\"projection_contract_test.go:21: CommandFromEnvelope({\\\"tool_input\\\":{\\\"command\\\":\\\"git\\\\\\\\u0000status\\\"}}) = (\\\"\\\", \\\"command field missing\\\"), want (\\\"\\\", \\\"command field has control byte\\\")\",1\n  github.com/gibbonmi/bench/internal/benchguard,TestBenchEnvelopeValue/duplicate_command_null,\"projection_contract_test.go:21: CommandFromEnvelope({\\\"tool_input\\\":{\\\"command\\\":\\\"git reset --hard\\\",\\\"command\\\":null}}) = (\\\"\\\", \\\"command field missing\\\"), want (\\\"\\\", \\\"command field empty\\\")\",1\n  github.com/gibbonmi/bench/internal/benchguard,TestBenchEnvelopeValue/empty_command,\"projection_contract_test.go:21: CommandFromEnvelope({\\\"tool_input\\\":{\\\"command\\\":\\\"\\\"}}) = (\\\"\\\", \\\"command field missing\\\"), want (\\\"\\\", \\\"command field empty\\\")\",1\n  github.com/gibbonmi/bench/internal/benchguard,TestBenchEnvelopeValue/null_command,\"projection_contract_test.go:21: CommandFromEnvelope({\\\"tool_input\\\":{\\\"command\\\":null}}) = (\\\"\\\", \\\"command field missing\\\"), want (\\\"\\\", \\\"command field empty\\\")\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r3-t3-write-decoder-form-omission",
+          "performer": "claude:sgp-t3-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t3-repair1-20261021",
+            "digest": "sha256:22b9a9ac7e125f05d92c753ecf0e53b21dd960a568997359bae65346393bd120",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestGuardWriteEnvelopePolicy/duplicate_cwd_null,13,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./cmd/bench,^TestGuardWriteEnvelopePolicy$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,836\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,11,13\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestGuardWriteEnvelopePolicy/duplicate_cwd_null,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"cwd\\\\\\\\\\\":\\\\\\\\\\\"/dev/shm/MNWKB4/t/TestGuardWriteEnvelopePolicy2807368414/001\\\\\\\\\\\",\\\\\\\\\\\"cwd\\\\\\\\\\\":null,\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"file_path\\\\\\\\\\\":\\\\\\\\\\\"README.md\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardWriteEnvelopePolicy/write_root_key_casing,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"CWD\\\\\\\\\\\":\\\\\\\\\\\"/dev/shm/MNWKB4/t/TestGuardWriteEnvelopePolicy2807368414/001\\\\\\\\\\\",\\\\\\\\\\\"TOOL_INPUT\\\\\\\\\\\":{\\\\\\\\\\\"file_path\\\\\\\\\\\":\\\\\\\\\\\"README.md\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-write-decoder-form-omission",
+          "command": "bench test --package ./cmd/bench --run '^TestGuardWriteEnvelopePolicy$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Replace only the Write caller CwdInputMap selection with InputMap; actual tracked-relative-primary cwd cases must red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:sgp-t3-repair1-20261021",
+              "digest": "sha256:22b9a9ac7e125f05d92c753ecf0e53b21dd960a568997359bae65346393bd120",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestGuardWriteEnvelopePolicy/duplicate_cwd_null,13,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./cmd/bench,^TestGuardWriteEnvelopePolicy$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,836\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,11,13\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestGuardWriteEnvelopePolicy/duplicate_cwd_null,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"cwd\\\\\\\\\\\":\\\\\\\\\\\"/dev/shm/MNWKB4/t/TestGuardWriteEnvelopePolicy2807368414/001\\\\\\\\\\\",\\\\\\\\\\\"cwd\\\\\\\\\\\":null,\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"file_path\\\\\\\\\\\":\\\\\\\\\\\"README.md\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardWriteEnvelopePolicy/write_root_key_casing,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"CWD\\\\\\\\\\\":\\\\\\\\\\\"/dev/shm/MNWKB4/t/TestGuardWriteEnvelopePolicy2807368414/001\\\\\\\\\\\",\\\\\\\\\\\"TOOL_INPUT\\\\\\\\\\\":{\\\\\\\\\\\"file_path\\\\\\\\\\\":\\\\\\\\\\\"README.md\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "b2-t2-owner-values",
+          "performer": "claude:sgp-t2-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t2-author-20261021",
+            "digest": "sha256:46fe003d563183afbaa192d908d9f74879898f8dede42631dface30dad7193cc",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/shellcommand,pass,3,50\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-owner-values",
+          "command": "bench test --package ./internal/shellcommand",
+          "exit_code": 0
+        },
+        {
+          "id": "b2-t2-git-policy",
+          "performer": "claude:sgp-t2-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t2-author-20261021",
+            "digest": "sha256:5a056919785168a84836a91bb6a577f57dec8d3e587d1273884f7246594ca512",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gitguard,pass,15168,250\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-git-policy",
+          "command": "bench test --package ./internal/gitguard",
+          "exit_code": 0
+        },
+        {
+          "id": "b2-t2-actual-core-entries",
+          "performer": "claude:sgp-t2-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t2-author-20261021",
+            "digest": "sha256:400bdea2f428256a670ef153b2098409947e646c7d71fe7b5dc2f695debbb0bc",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14438,398\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-actual-core-entries",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "b2-t2-conformance-closure",
+          "performer": "claude:sgp-t2-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t2-author-20261021",
+            "digest": "sha256:079a843e0b9975dd4f9dab9355b14bfd06e01f1c075c5f3b8baf2a3e8b6ebbc9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,34129,1127\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t2-conformance-closure",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "b2-t2-root-conformance",
+          "performer": "claude:sgp-t2-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t2-author-20261021",
+            "digest": "sha256:99474a3f1c32ecb4c5be3bd5a1047c4b1ee24ca9b69c74705dcfa183c2f060e6",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12659,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "b2-t2-canary-bites",
+          "performer": "claude:sgp-t2-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t2-author-20261021",
+            "digest": "sha256:72729a06f09db984178ad66cd7563152a2b91ed028b76fb65ad6867032fe4276",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,3274,288\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-canary-bites",
+          "command": "bench test --package ./internal/conformance --run '^TestEveryRetainedFixtureBitesThroughRegisteredOwner$'",
+          "exit_code": 0
+        },
+        {
+          "id": "b2-t2-git-decoder-form-omission",
+          "performer": "claude:sgp-t2-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "070c2f9217dbd3ebda6c591e60ee3d2513cbbbe8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t2-author-20261021",
+            "digest": "sha256:5d343b21e2b84e4cc00dcec2f516c46d79960b94312e77314f7cd959d01578aa",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,5,TestGuardGitEnvelopePolicy/duplicate_command_null,17,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./cmd/bench,^TestGuardGitEnvelopePolicy$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1453\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5,17\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/duplicate_command_null,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"command\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\",\\\\\\\\\\\"command\\\\\\\\\\\":null}}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/duplicate_input_null,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"command\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\",\\\\\\\\\\\"file_path\\\\\\\\\\\":\\\\\\\\\\\"README.md\\\\\\\\\\\"},\\\\\\\\\\\"tool_input\\\\\\\\\\\":null,\\\\\\\\\\\"cwd\\\\\\\\\\\":\\\\\\\\\\\"/repo\\\\\\\\\\\"}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/nested_key_casing,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"COMMAND\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/root_key_casing,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"TOOL_INPUT\\\\\\\\\\\":{\\\\\\\\\\\"command\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/unrelated_cwd_type,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"cwd\\\\\\\\\\\":7,\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"command\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-git-decoder-form-omission",
+          "command": "bench test --package ./cmd/bench --run '^TestGuardGitEnvelopePolicy$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Replace only the Git caller CommandStruct selection with InputMap; ordered folded/null/early-error cases must red through the actual guardGit entry.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:sgp-t2-author-20261021",
+              "digest": "sha256:5d343b21e2b84e4cc00dcec2f516c46d79960b94312e77314f7cd959d01578aa",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,5,TestGuardGitEnvelopePolicy/duplicate_command_null,17,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./cmd/bench,^TestGuardGitEnvelopePolicy$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1453\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5,17\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/duplicate_command_null,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"command\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\",\\\\\\\\\\\"command\\\\\\\\\\\":null}}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/duplicate_input_null,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"command\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\",\\\\\\\\\\\"file_path\\\\\\\\\\\":\\\\\\\\\\\"README.md\\\\\\\\\\\"},\\\\\\\\\\\"tool_input\\\\\\\\\\\":null,\\\\\\\\\\\"cwd\\\\\\\\\\\":\\\\\\\\\\\"/repo\\\\\\\\\\\"}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/nested_key_casing,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"COMMAND\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/root_key_casing,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"TOOL_INPUT\\\\\\\\\\\":{\\\\\\\\\\\"command\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\n  github.com/gibbonmi/bench/cmd/bench,TestGuardGitEnvelopePolicy/unrelated_cwd_type,\"guard_projection_test.go:37: entry(\\\"{\\\\\\\\\\\"cwd\\\\\\\\\\\":7,\\\\\\\\\\\"tool_input\\\\\\\\\\\":{\\\\\\\\\\\"command\\\\\\\\\\\":\\\\\\\\\\\"git reset --hard\\\\\\\\\\\"}}\\\") exit = 0, want 2\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -997,6 +1401,18 @@
       "chunk_ids": {
         "GP1": [
           "GP1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:867fc6719dcec05d1ffed542b7afc332df124b4192ba607bc4f467f87f77230d",
+      "to": "sha256:26860796c78f035de7c2a1e29d67091b9d1200c6a543fe521f3f02df7be53ea7",
+      "chunk_ids": {
+        "GP1": [
+          "GP1"
+        ],
+        "GP2": [
+          "GP2"
         ]
       }
     }
