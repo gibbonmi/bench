@@ -240,30 +240,23 @@ The `bounds-policy` check pins no file in this scope.
 
 ### Conformance orchestration placement
 
-Before you extend the registered check, move only checkPackageCoreAndGuards from package_core_checks_test.go to checks_test.go.
+The guard-scan-loop outcome landed first (f7d17b5c5) and moved checkPackageCoreAndGuards to `checks_test.go:83-98`.
+Extend that sole declaration: add the new ownership subcheck after `checkGuardScanLoopOwner` (`checks_test.go:97`).
 Keep its name, signature, existing subcheck order, and callers unchanged.
-Keep the other producers, the npm formatter call, and their tests in package_core_checks_test.go.
-Add the new ownership subcheck to the relocated function.
+Do not edit package_core_checks_test.go.
 
-package_core_checks_test.go has 470 lines against the default 400-line limit, and no grant covers it.
+package_core_checks_test.go has 453 lines against the default 400-line limit, and no grant covers it.
 The required commit lane runs `structure --growth` (`internal/gate/lane.go:83`).
 That ratchet reports FILE GREW for a source file over its limit that also grew (`internal/structure/structure.go:309-331`).
 An added orchestration call there would therefore turn the lane red.
-checks_test.go has 642 lines against its 739-line grant (`.bench/structure.budgets:51`), which leaves 97 lines.
-The moved declaration spans 16 lines (`package_core_checks_test.go:22-37`).
-Keep checks_test.go within 739 lines after both guard outcomes, and keep each new file within 400 lines.
+checks_test.go has 660 lines against its 739-line grant (`.bench/structure.budgets:51`), which leaves 79 lines.
+Keep checks_test.go within 739 lines, and keep each new file within 400 lines.
 Do not add a budget or acceptance grant.
 
-The move changes no reader contract.
-`checks_test.go:49` binds package-core-guard by function symbol, so the declaration file does not matter.
+`checks_test.go:49` binds package-core-guard by function symbol.
 `node_runtime_policy_test.go:143` and `:147` call the same package symbol and need no edit.
-`package_core_diagnostics_test.go:202-228` counts formatter calls in package_core_checks_test.go; the moved function holds none.
-`TestSkillsIndexConformanceCarriesNoSecondReader` reads checks_test.go for copied skills-index literals; the moved function holds none.
-
-Apply this placement only if the declaration remains in the original file when implementation begins.
-If the guard-scan-loop outcome already moved it, extend that sole declaration in checks_test.go.
-Retain both ownership subchecks if both outcomes have landed.
-Either outcome can land first; neither requires the other's unlanded implementation.
+`TestSkillsIndexConformanceCarriesNoSecondReader` reads checks_test.go for copied skills-index literals; the new call must hold none.
+Retain both ownership subchecks.
 
 ### Ordering and independent rim
 
@@ -311,18 +304,14 @@ Tickets 2, 3, and 4 share `cmd/bench/guard_projection_test.go`, and tickets 3 an
 The stable old-to-new mapping is GP1 to GP1, GP2 to GP2, GP3 to GP3.
 Each chunk keeps its independent Standards, Spec, and Coverage checkpoint.
 GP1, GP2, and GP3 run in that order; each successor waits for its predecessor's green commit and review.
-The guard-scan-loop outcome (GS1) is independently useful and consumes no unlanded projection interface.
+The guard-scan-loop outcome (GS1) landed at f7d17b5c5, so no serial handoff with it remains.
+Ticket 5 extends the sole package-core-guard declaration in checks_test.go.
 
-Both outcomes write checks_test.go, package_core_checks_test.go, and tier_live_tree_test.go.
-These shared writes require a serial integrated-source handoff between the two outcomes.
-The coordinator chooses either complete outcome first and refreshes source and headroom before an overlapping successor charge.
-The first ticket that extends package-core-guard performs the orchestration move; the other extends that sole declaration.
-
-Derived Writes scope for the slicer, at f07508b2a:
+Derived Writes scope for the slicer, at f07508b2a, refreshed at 1228eedff:
 
 - GP1: `internal/shellcommand/projection.go` (new), `internal/shellcommand/projection_test.go` (new), `internal/gitguard/scan.go`, `internal/gitguard/projection_contract_test.go` (new).
 - GP2: `internal/shellcommand/envelope.go` (new), `internal/shellcommand/envelope_test.go` (new), `internal/gitguard/gitguard.go`, `internal/gitguard/projection_contract_test.go`, `internal/benchguard/benchguard.go`, `internal/benchguard/reviewer.go`, `internal/benchguard/projection_contract_test.go` (new), `internal/writeguard/writeguard.go`, `internal/writeguard/envelope_contract_test.go` (new), `cmd/bench/guard_projection_test.go` (new), `internal/conformance/refusal_route_guard_test.go`, `tests/canary/canonical-path-owner/second-derivation/`.
-- GP3: `internal/conformance/guard_projection_owner_test.go` (new), `internal/conformance/package_core_checks_test.go`, `internal/conformance/checks_test.go`, `internal/conformance/tier_live_tree_test.go`, `internal/systemtest/guard_projection_test.go` (new), `internal/systemtest/guard_projection_differential_test.go` (new), `internal/systemtest/testdata/guard-projection-family-d.golden` (new), `cmd/bench/guard_projection_test.go`.
+- GP3: `internal/conformance/guard_projection_owner_test.go` (new), `internal/conformance/checks_test.go`, `internal/conformance/tier_live_tree_test.go`, `internal/systemtest/guard_projection_test.go` (new), `internal/systemtest/guard_projection_differential_test.go` (new), `internal/systemtest/testdata/guard-projection-family-d.golden` (new), `cmd/bench/guard_projection_test.go`.
 
 GP3 holds three tickets with disjoint writes:
 
@@ -338,9 +327,10 @@ The slicer's research confirms or restores each dropped path.
 
 The version-1 completion plan is a planning verification inventory, not a dispatch plan.
 Before any implementation charge, the coordinator binds actual run and session identities and ticket verification ownership in version 2 with author-limit 1.
-Each ticket receives a fresh author on opus/medium, with the GP2 and GP3 tickets at high.
+Each ticket receives a fresh author on opus/medium; reviewer direction of 2026-10-21 runs the GP2 and GP3 tickets at medium too.
 Refresh current owner interfaces, source closure, and actual headroom before that charge.
-Create and build a Bench worktree at the build-entry commit for GP46 before GP1 begins.
+The build-entry commit is 1228eedff818c5190beca9ed5ea3acc438dcaf7f.
+The Bench worktree `shared-guard-projection-ref` holds that commit and its built executable for GP46.
 Staged status and planning validation grant no build authority.
 
 ### Completion plan
@@ -743,7 +733,7 @@ Its threat-model and one-level comments (lines 10, 14, and 16) stay as written.
 ## Out of scope
 
 The degraded malformed-input repair landed as its own outcome; this spec cites its tests as preserved regressions.
-Guard scan simplification is a separate capability in `specs/guard-scan-loop/spec.md`, with one vertical chunk.
+Guard scan simplification was a separate capability; the guard-scan-loop outcome landed at f7d17b5c5.
 The rg operand guard remains separate roadmap work, estimated at 3 production edits and 2 gate runs after its own specification.
 A full shell interpreter is excluded, with no price, because it is outside the approved threat model.
 
@@ -767,10 +757,10 @@ Answer 3 repeats the integration preservation obligation for the overall sequenc
 | “The new rg guard retains its explicitly permissive operand-uncertainty rule.” | Won't handle rg operand parsing; GP46 preserves existing guard posture |
 | “That rule must not weaken dangerous-command parse refusal.” | GP34–GP35 |
 | “Preserve this distinction from `roadmap/FT366.md`.” | Won't handle rg operand parsing; GP34–GP35 keep the dangerous-command refusal separate |
-| “Use three separately reviewable outcomes under FT366.” | the landed degraded outcome, this spec, and the guard-scan-loop spec |
+| “Use three separately reviewable outcomes under FT366.” | the landed degraded outcome, this spec, and the landed guard-scan-loop outcome |
 | “First, repair malformed degraded input and its diagnostic.” | landed predecessor outcome |
 | “Second, migrate common grammar and envelope facts.” | GP1–GP3 |
-| “Third, simplify the guard inventory scan if its behavior stays fixed.” | separate guard-scan-loop spec |
+| “Third, simplify the guard inventory scan if its behavior stays fixed.” | landed guard-scan-loop outcome (f7d17b5c5) |
 | “retain tests through actual hook and guard entries.” | GP21, GP25, GP29, GP34–GP41, GP46, GP70–GP71 |
 | “Cover attached separators, unclosed quotes, wrapper depth, Git options, and worktree exec children.” | GP02–GP10, GP34–GP35, GP46 |
 | “Cover missing library, missing core, core error, and valid recovery commands.” | GP36–GP41, GP71 |
@@ -780,7 +770,7 @@ Flagged additions for reviewer veto:
 
 - The agent-route check migration (GP68–GP69) is not in the decision source. It applies the one-source code standard in `AGENTS.md` to a test-side copy of the exec grammar.
 - The refresh drops seven paths from the 2026-10-06 fence, as Graph ordering states.
-- The spec keeps `Related roadmap: FT366` instead of a `Roadmap:` line. FT366 closes only when both bound specs land, so a retiring spec must not remove the shared row.
+- The spec keeps `Related roadmap: FT366` instead of a `Roadmap:` line. The guard-scan-loop spec landed and retired first, so this spec is the last bound deliverable of FT366.
 
 The structural-copy ownership check and the differential witness enforce the approved single owner and the preservation promises.
 They are implementation verification, not a new user capability.
@@ -793,7 +783,7 @@ The map's spec-writer discretion (`decisions/architecture-guards.md:27-28`) cove
 - `ShellChildren` replaces `internal/gitguard/scan.go:67-75`, `internal/benchguard/benchguard.go:141-155` and `:315-322`, and `internal/benchguard/reviewer.go:36-38`.
 - `WorktreeExec` replaces `internal/gitguard/scan.go:88-98`, `internal/benchguard/benchguard.go:251`, `internal/benchguard/reviewer.go:30-32`, and `internal/conformance/refusal_route_guard_test.go:84-91`.
 - The envelope API replaces `internal/gitguard/gitguard.go:114-124`, `internal/benchguard/benchguard.go:29-51`, and `internal/writeguard/writeguard.go:23-52`.
-- `checkGuardProjectionOwner` extends the package-core-guard orchestration at `internal/conformance/package_core_checks_test.go:22-37`, registered at `internal/conformance/registry/checks.go:19`.
+- `checkGuardProjectionOwner` extends the package-core-guard orchestration at `internal/conformance/checks_test.go:83-98`, registered at `internal/conformance/registry/checks.go:19`.
 
 ### Build-process constraints
 
@@ -805,7 +795,7 @@ These rows of `docs/known-issues.md` bind the build of this spec:
 - Row 15 (`docs/known-issues.md:15`): run the evidence currency check through `bench worktree exec`.
 - Row 16 (`docs/known-issues.md:16`): the seam research citations above satisfy it.
 
-Structure obligations: package_core_checks_test.go must not grow, and it shrinks by the moved declaration.
+Structure obligations: the build does not edit package_core_checks_test.go.
 benchguard.go has 387 lines and must stay within 400 after GP2.
 checks_test.go must stay within its 739-line grant.
 Each new file must stay within 400 lines.

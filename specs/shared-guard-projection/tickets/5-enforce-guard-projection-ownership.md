@@ -1,7 +1,7 @@
 # Enforce guard projection ownership
 
 Blocked by: 1-share-git-command-projections.md, 2-add-envelope-owner-for-git.md, 3-migrate-bench-and-write-readers.md, 4-migrate-bench-projection-consumers.md
-Writes: internal/conformance/guard_projection_owner_test.go (new), internal/conformance/package_core_checks_test.go, internal/conformance/checks_test.go, internal/conformance/tier_live_tree_test.go
+Writes: internal/conformance/guard_projection_owner_test.go (new), internal/conformance/checks_test.go, internal/conformance/tier_live_tree_test.go
 Covers: GP30, GP31, GP32, GP33, GP42, GP67
 
 ## What to build
@@ -19,11 +19,10 @@ Keep the resolver, classifier-table, and entry-point-parity checks on their regi
 The check must not flag Git's own `worktree` subcommand handling (`gitguard/verdict.go:70`, `gitguard.go:83`); it refuses only the adjacent `worktree exec … --` child extraction.
 To stay within about 200k context, read only the migrated call sites in the guard packages, and read the four retired functions through `git show <build-entry commit>:<path>` for the mutation tests.
 
-If `checkPackageCoreAndGuards` is still in package_core_checks_test.go, move only that 16-line declaration to checks_test.go and add the subcheck there.
-If the guard-scan-loop outcome moved it first, extend that sole declaration and keep its subcheck.
-Keep the npm producers and their formatter call in package_core_checks_test.go. package_core_checks_test.go must not grow.
-Keep checks_test.go within its 739-line grant after either outcome order, and do not add the banned skills-index literals (`skills_index_checks_test.go:375-387`).
-Do not call `Skip`, `Skipf`, or `SkipNow` in the new test file (`cmd/bench/skip_ownership_test.go:30-64`). The new file stays within 400 lines. Add no grant.
+The guard-scan-loop outcome moved `checkPackageCoreAndGuards` to `checks_test.go:83-98`. Extend that sole declaration after `checkGuardScanLoopOwner` (`:97`), and keep that subcheck.
+Do not edit package_core_checks_test.go.
+Keep checks_test.go within its 739-line grant (660 lines at 1228eedff), and do not add the banned skills-index literals (`skills_index_checks_test.go:375-387`).
+Do not call `Skip`, `Skipf`, or `SkipNow` in the new test file (`internal/conformance/skip_ownership_test.go:30-64`). The new file stays within 400 lines. Add no grant.
 
 ## Acceptance
 

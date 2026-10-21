@@ -7,7 +7,7 @@ Covers: GP46
 ## What to build
 
 Prove that the complete migration changed no supported caller result, by comparison with recorded pre-migration behavior.
-Tickets 1–4 supply the migrated consumers. The coordinator supplies a Bench worktree at the pre-migration build-entry commit, built before ticket 1 changed source, and records that commit in the build plan. If the worktree is lost, recreate and rebuild it from that commit.
+Tickets 1–4 supply the migrated consumers. The coordinator supplies a Bench worktree at the pre-migration build-entry commit, built before ticket 1 changed source, and records that commit in the build plan. The spec's Graph ordering section names the commit and the worktree label. If the worktree is lost, recreate and rebuild it from that commit.
 
 Write the GP46 driver in `guard_projection_differential_test.go`. It runs family D and the full decoder preservation matrix through the actual core and hook entries, using the existing system process owner under `BENCH_KIT`.
 The system owner verifies the run binary's seal against `BENCH_KIT` (`internal/systemtest/owner_test.go:86-91`), so record with `BENCH_RUN_BINARY` set to the pre-migration worktree's executable and `BENCH_KIT` set to that worktree.
@@ -19,7 +19,7 @@ Feed the ordered raw envelopes without JSON remarshal or key normalization. Comp
 This ticket authorizes no intentional difference.
 
 Prefix each new package-level helper name with `differential`, so it cannot collide with a helper that ticket 6 adds to the same package.
-Give the new test file the `//go:build system` tag. Write no literal wait deadline (`wait_deadline_literal_test.go:33-39`) and no `Skip` call (`cmd/bench/skip_ownership_test.go:30-64`).
+Give the new test file the `//go:build system` tag. Write no literal wait deadline (`internal/conformance/wait_deadline_literal_test.go:33-39`) and no `Skip` call (`internal/conformance/skip_ownership_test.go:30-64`).
 Each new file stays within 400 lines. Add no grant.
 
 ## Acceptance

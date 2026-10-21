@@ -1,7 +1,7 @@
 # Prove guard entry regression
 
 Blocked by: 1-share-git-command-projections.md, 2-add-envelope-owner-for-git.md, 3-migrate-bench-and-write-readers.md, 4-migrate-bench-projection-consumers.md
-Writes: internal/systemtest/guard_projection_test.go (new), cmd/bench/guard_projection_test.go (new)
+Writes: internal/systemtest/guard_projection_test.go (new), cmd/bench/guard_projection_test.go
 Covers: GP34, GP35, GP36, GP37, GP38, GP39, GP40, GP41, GP44, GP45, GP71
 
 ## What to build
@@ -15,8 +15,8 @@ GP44 checks census exclusion through the core entry in `cmd/bench/guard_projecti
 This regression repeats earlier cases; it does not supply a missing earlier test or repair.
 
 Prefix each new package-level helper name in `internal/systemtest` with `projection`, so it cannot collide with a helper that ticket 7 adds to the same package.
-Give the new system test file the `//go:build system` tag. Write no literal wait deadline in a new test (`wait_deadline_literal_test.go:33-39`).
-Do not call `Skip`, `Skipf`, or `SkipNow` in a new test (`cmd/bench/skip_ownership_test.go:30-64`).
+Give the new system test file the `//go:build system` tag. Write no literal wait deadline in a new test (`internal/conformance/wait_deadline_literal_test.go:33-39`).
+Do not call `Skip`, `Skipf`, or `SkipNow` in a new test (`internal/conformance/skip_ownership_test.go:30-64`).
 Each new file stays within 400 lines. Add no grant.
 
 ## Acceptance
