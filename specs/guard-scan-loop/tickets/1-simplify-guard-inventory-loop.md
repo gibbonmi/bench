@@ -1,77 +1,60 @@
 # Simplify guard inventory scanning
 
 Blocked by: none
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/checks_test.go, internal/conformance/guard_scan_owner_test.go (new), internal/conformance/package_core_checks_test.go, internal/conformance/registry/checks.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/tier_live_tree_test.go, internal/guards/guards.go, internal/guards/scan_loop_test.go (new)
-Covers: GS01, GS02, GS03, GS04, GS05, GS06, GS07, GS08, GS09, GS10, GS11, GS12, GS13, GS14, GS15, GS16, GS17, GS18, GS19, GS20, GS21, GS22, GS23, GS24, GS25, GS26, GS27, GS28
+Writes: internal/guards/guards.go, internal/guards/scan_loop_test.go (new), internal/guards/testdata/scan-family-s.golden (new), internal/conformance/guard_scan_owner_test.go (new), internal/conformance/package_core_checks_test.go, internal/conformance/checks_test.go, internal/conformance/tier_live_tree_test.go
+Covers: GS01, GS02, GS03, GS04, GS05, GS06, GS07, GS08, GS09, GS10, GS11, GS12, GS13, GS14, GS15, GS16, GS17, GS18, GS19, GS20, GS21, GS22, GS23, GS24, GS25, GS26, GS27, GS28, GS29, GS30
 
 ## What to build
 
-Deliver the complete synchronous Scan path, unchanged command formatting, and enforced removal of private worker pipelines in one green checkpoint.
-Keep Scan, Rows, Command, ScanResult, Row, enumerateGuards, and inspectGuard signatures and existing injection ownership.
-Enumerate once, then inspect in current order directly on the caller goroutine.
-Check context before and after each operation and publish only candidates whose post-operation checkpoint is active.
-An active empty-row inspection still increments Inspected; cancelled inspection contributes neither rows nor an inspected count.
+Replace the worker pipeline in Scan with one synchronous loop on the caller goroutine, and keep every observable result.
+Keep Scan, Rows, Command, ScanResult, and their signatures unchanged. Rows returns `[][]string`; add no row type.
+Keep `guardScanTimeout`, `enumerateGuards`, and `inspectGuard` as the package-variable seams, with their names and types.
+Keep the policy line `bounds.VerdictWindow(bounds.GuardScanTimeout)` at its current text, because bounds-policy pins it with `strings.Contains`.
 
-Preserve the completed prefix, unknown enumeration counts, known omitted arithmetic, and current timeout reason.
-After final completion, later cancellation does not reopen the complete result.
+Enumerate once, then inspect the candidates in their current order.
+Do a context check before enumeration, after enumeration, before each inspection, and after each inspection.
+A pre-cancelled context starts no operation.
+If the check after enumeration sees cancellation, return unknown Total and Omitted and start no inspection.
+This rule applies to an error return and to a candidate slice with a nil error.
+Count an inspection only when its post-operation check sees an active context. An empty-row inspection still counts.
+A cancelled inspection adds no rows and no count. Completed rows stay in order.
+After the final completion check, a later cancellation does not change the complete result.
+Scan returns only after the current operation returns. Do not promise a hard filesystem deadline.
+Keep the active-context enumeration-error result, the static header, wiring, no-manifest, symlink, and FIFO behavior, and all command output, help, and exit codes.
 
-Scan waits for the current operation's cleanup even when it ignores context.
-Do not promise a hard filesystem deadline or add a worker, parallel inspector, new interface, or new enumeration-error diagnostic.
-Keep the active-context enumeration-error result and all static header, wiring, no-manifest, symlink, and FIFO dispositions.
-Preserve existing full/brief stdout fixtures, complete action help order and deduplication, incomplete help suppression, and all return codes.
+Before you replace the loop, build the contract driver for family S and run it on the pre-change code.
+Store that reference capture as `internal/guards/testdata/scan-family-s.golden`, and have it reviewed apart from the candidate code.
+GS27 then compares the candidate Command tuples with the golden over the same controlled events, without elapsed-time equality.
 
-Prepare the canned contract driver before replacing Scan and retain its independently reviewed pre-change owner-package test executable.
-Run reference and candidate against the same controlled family S events in their separate test processes through the real Command formatter.
-Compare exact ScanResult and full/brief exit/stdout/stderr tuples; elapsed time and nondeterministic select ties are not equality predicates.
-Use existing package-variable substitutions with cleanup, no parallel tests, and controlled release barriers for cancellation and blocking operations.
-Keep all assertions in guards_test.go, guards_cleanup_test.go, and checked-in stdout fixtures unchanged.
+Add `checkGuardScanLoopOwner` beneath package-core-guard.
+It grades the production Go AST under internal/guards, unused function bodies included, and refuses go statements, select statements, channel construction, and send or receive nodes.
+It engages only when the root holds an `internal/guards` directory. A missing or unreadable `guards.go` in that directory gets a named diagnostic; a root without the directory gets none.
+Classify its live-tree test in `tier_live_tree_test.go`.
 
-Add checkGuardScanLoopOwner beneath package-core-guard, grading production AST nodes including unused function bodies.
-Reject goroutine, select, channel construction, and send/receive pipeline nodes; do not reject channels in test fixtures.
-Keep optional linked-source and named missing/unreadable kit-owner dispositions and explicit live-tree test classification.
+If `checkPackageCoreAndGuards` is still in package_core_checks_test.go, move only that 16-line declaration to checks_test.go, and add the new subcheck there.
+If the shared-guard-projection outcome moved it first, extend that sole declaration and keep its subcheck.
+Keep the name, signature, binding, registry metadata, and subcheck order. Keep the npm producers and their formatter call in package_core_checks_test.go.
 
-If checkPackageCoreAndGuards still resides in package_core_checks_test.go, move only that existing 16-line declaration to checks_test.go in this checkpoint.
-Keep its name, signature, executable binding, registry metadata, and existing subcheck order unchanged.
-If the other guard outcome already moved it, extend that sole destination declaration and retain its landed ownership subcheck.
-The two outcomes need no unlanded interface from each other, but overlapping conformance and command closure writes cannot run concurrently.
-The coordinator serializes those charges against a fresh integrated source and rechecks headroom after the earlier outcome.
-
-Keep npm producers and their one formatter call in package_core_checks_test.go.
-Preserve TestCoreSubprocessFailuresUseProbeFormatter's independently authored path and count assertions.
-Do not move the other producers, their tests, or their policy literals into the destination.
-checks_test.go must remain within its existing 709-line grant after either or both outcomes.
-The source file shrinks, each new file stays within 400 lines, and no budget or accepted debt grows.
-
-Keep all existing assertions and independently authored expectations effective.
-Do not rewrite old tests to match the new owner or derive expected results from the candidate producer.
-For each required omission, pin the landed source and exact diagnostic before running it.
-Accept only a compiling behavioral red, byte-identical restoration, and the same focused green afterward.
-Invalid, compilation-only, skipped, or restore-failed proof closes no obligation.
-
-Every first-use caller, fixture, registry, and headroom obligation closes in its introducing checkpoint.
-A final family audit cannot supply a missing earlier test or repair.
-Co-owned registry files may stay unchanged when their existing bindings and assertions suffice.
-No new scanner, injected port, count expectation, structure grant, or policy authority enters this slice.
+Keep guards_test.go, guards_cleanup_test.go, and the four testdata stdout fixtures unchanged.
+Keep the test names `TestScanTimeoutPreservesPartialRowsAndHonestCounts` and `TestScanEnumerationTimeoutUsesUnknownCounts`, because the race phase names them (`internal/gate/gate_go.go:36-37`).
+Do not add the banned skills-index literals to checks_test.go (`skills_index_checks_test.go:375-387`).
+Keep checks_test.go within its 739-line grant after either outcome order. package_core_checks_test.go must not grow. Each new file stays within 400 lines. Add no grant.
 
 ## Acceptance
 
-- [ ] Complete scans enumerate once and retain candidate and row order; Rows still returns Scan(background).Rows.
-- [ ] Pre-cancellation starts no operation, and cancellation during enumeration keeps Total/Omitted unknown without publishing partial candidates.
-- [ ] Cancellation between candidates keeps the completed prefix and known Total-Inspected arithmetic without starting the next candidate.
-- [ ] A cancelled inspection contributes no rows or inspected count; a completed empty inspection still increments Inspected.
-- [ ] Explicit post-inspection cancellation withholds that candidate, including simultaneous completion/cancellation at the accepted checkpoint.
-- [ ] Existing TestScanWaitsForCancelledWorkerCleanup stays unchanged, and context-ignoring work keeps Scan pending until its controlled release.
-- [ ] Late cancellation after final completion leaves the complete result unchanged; fixture waits assert early-return/deadlock rather than a product deadline.
-- [ ] Active-context enumeration error retains the current complete result without a new error state.
-- [ ] Absent/empty hook directories retain the pre-push candidate; static regular/symlink/missing/incomplete headers and FIFO rejection retain their rows.
-- [ ] Claude/Codex wiring, all ScanResult fields, full/brief checked-in responses, action-help order, suppression, command errors, and incomplete exit 0 remain unchanged.
-- [ ] Family S compares independently retained reference and candidate Command tuples over identical controlled events without elapsed-time equality.
-- [ ] A renamed unused old pipeline makes the registered package-core-guard diagnostic red; a fixture-string or test goroutine does not.
-- [ ] Optional linked surfaces pass; a present kit surface with a missing or unreadable owner receives the named diagnostic.
-- [ ] The live-tree ownership witness executes through its registered binding and explicit classification.
-- [ ] Omitting only the registered scan subcheck call compiles and reds TestGuardScanLoopOwnerBitesOnPrivateCopy; restoration returns the same focused green.
-- [ ] Removing the post-inspection context checkpoint compiles and reds TestScanLoopPostInspectionCancellation before any interrupted rows can publish.
-- [ ] Every required mutation pins source and diagnostic and proves byte-identical restoration plus the same focused green.
-- [ ] The sole relocated orchestrator preserves bindings/order and any already landed projection subcheck; npm producer and independent formatter count stay in their original file.
-- [ ] checks_test.go stays within 709 lines after either outcome order; new files stay within 400 lines and no grant or accepted debt grows.
-- [ ] All 28 predicates and original assertions close with no unlanded projection API dependency, new hook execution, parallel scan, or hard filesystem deadline.
+- [ ] A complete scan enumerates once and keeps candidate and row order, and Rows returns `Scan(background).Rows` (GS01, GS02, GS22).
+- [ ] A pre-cancelled scan starts no operation (GS03).
+- [ ] Cancellation seen after enumeration keeps Total and Omitted unknown for an error return and for a nil-error candidate slice, and starts no inspection (GS04, GS30).
+- [ ] Cancellation between candidates keeps the completed prefix and Omitted = Total − Inspected (GS05, GS06).
+- [ ] An empty-row inspection counts, and a cancelled inspection adds no rows or count (GS07, GS09).
+- [ ] TestScanWaitsForCancelledWorkerCleanup stays unchanged and passes, and a context-ignoring operation keeps Scan pending until its release (GS08, GS11).
+- [ ] All ScanResult fields keep their values, and a late cancellation leaves a complete result unchanged (GS10, GS28).
+- [ ] An active-context enumeration error keeps the current complete result (GS12).
+- [ ] Absent and empty hook directories, static headers, symlinks, FIFOs, and wiring keep their current rows (GS13–GS16).
+- [ ] The four checked-in stdout fixtures, help order, help suppression, and command errors stay unchanged (GS17–GS21).
+- [ ] A renamed unused copy of the old pipeline makes package-core-guard red; a test goroutine does not (GS23).
+- [ ] A root without `internal/guards` passes, and a root whose `internal/guards` lacks a readable `guards.go` gets the named diagnostic (GS24, GS25).
+- [ ] The live-tree ownership test runs through its registered binding and its classification (GS26).
+- [ ] Family S candidate tuples equal `scan-family-s.golden`, and reversing the candidate order makes GS27 red (GS27).
+- [ ] guards.go keeps the text that bounds-policy pins (GS29).
+- [ ] Each completion-plan probe compiles, turns its named witness red, and returns to the same green after byte-identical restoration.

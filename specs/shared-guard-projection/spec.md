@@ -288,8 +288,8 @@ Slicing preserves every acceptance predicate and the implementation line.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
 | GP1 / 1-share-git-command-projections.md | Git uses shared wrapper and worktree projections with unchanged verdicts | GP01–GP03, GP05–GP10, GP72, GP74 | projection and Git contract tests | no |
-| GP2 / 2-migrate-guard-envelope-consumers.md | common envelope facts serve the three readers, and Bench, the reviewer verb, and the agent-route check use the projections | GP04, GP11–GP29, GP43, GP47–GP66, GP68–GP70, GP73 | envelope, Bench, reviewer-verb, write, route-check, canary, and core entry tests | yes, xhigh |
-| GP3 / 3-enforce-guard-projection-ownership.md | copy refusal and actual-entry integration complete the migration | GP30–GP42, GP44–GP46, GP67, GP71 | owner mutation tests and system hook witnesses | yes, xhigh |
+| GP2 / 2-migrate-guard-envelope-consumers.md, 3-migrate-bench-projection-consumers.md | common envelope facts serve the three readers, and Bench, the reviewer verb, and the agent-route check use the projections | GP04, GP11–GP29, GP43, GP47–GP66, GP68–GP70, GP73 | envelope, Bench, reviewer-verb, write, route-check, canary, and core entry tests | yes, xhigh |
+| GP3 / 4-enforce-guard-projection-ownership.md | copy refusal and actual-entry integration complete the migration | GP30–GP42, GP44–GP46, GP67, GP71 | owner mutation tests and system hook witnesses | yes, xhigh |
 
 GP1 precedes GP2, because the shared projection API must exist before the second consumer migrates.
 GP1 retires the Git recognizers in scan.go.
@@ -297,7 +297,9 @@ GP2 retires the Bench recognizers in one step, because `reviewer.go` and `benchg
 GP2 owns GP47–GP61 exactly once and closes every decoder predicate at its first-use green checkpoint.
 GP3 repeats those cases through the final differential and actual-entry witnesses under GP46, without duplicate Covers ownership.
 GP3 enables its final ownership invariant after all consumer migrations.
-The slicer may split GP2 into two serial tickets, envelope readers first and projection consumers second, if one ticket exceeds one context window.
+The slicer split GP2 into two serial tickets: ticket 2 migrates the envelope readers, and ticket 3 migrates the Bench projection consumers.
+Ticket 2 owns GP14–GP29, GP43, and GP47–GP61; ticket 3 owns GP04, GP11–GP13, GP62–GP66, GP68–GP70, and GP73.
+Both tickets write `benchguard.go`, `benchguard/projection_contract_test.go`, and `cmd/bench/guard_projection_test.go`, so ticket 3 starts after ticket 2 commits green.
 
 ### Graph ordering and execution boundary
 
@@ -374,7 +376,8 @@ Final verification runs only after the complete, independently reviewed outcome.
     {
       "id": "GP2",
       "tickets": [
-        "2-migrate-guard-envelope-consumers.md"
+        "2-migrate-guard-envelope-consumers.md",
+        "3-migrate-bench-projection-consumers.md"
       ],
       "verification": [
         {
@@ -438,7 +441,7 @@ Final verification runs only after the complete, independently reviewed outcome.
     {
       "id": "GP3",
       "tickets": [
-        "3-enforce-guard-projection-ownership.md"
+        "4-enforce-guard-projection-ownership.md"
       ],
       "verification": [
         {
@@ -822,16 +825,17 @@ Preserve registry metadata and the existing injected-port declarations without a
 
 | Item | Proposed disposition |
 |---|---|
-| Implementation line | opus/high, GP2 and GP3 at xhigh |
+| Implementation line | opus/high, GP2 (tickets 2 and 3) and GP3 at xhigh |
 | Seams and coverage | value, caller, core, actual hook, and registered ownership seams |
 | Derived Writes scope | three chunk scopes above, seven paths dropped from the prior fence |
 | Exclusions | independent rim, reviewer-walk depth, rg outcome, scan outcome, and full interpreter boundaries |
-| Ticket graph | the slicer refreshes the three tickets against this spec |
+| Ticket graph | four serial tickets; GP2 holds tickets 2 and 3 |
 
 ### Numbered breakdown
 
 | ticket | title | Blocked by | delivered outcome |
 |---|---|---|---|
 | 1-share-git-command-projections.md | Share Git command projections | none | Shared projection facts through the real Git classifier |
-| 2-migrate-guard-envelope-consumers.md | Migrate guard envelope consumers | 1-share-git-command-projections.md | All three standard decoder forms, the reviewer walk, and the route check through migrated readers and actual core entries |
-| 3-enforce-guard-projection-ownership.md | Enforce guard projection ownership | 1-share-git-command-projections.md, 2-migrate-guard-envelope-consumers.md | Registered copy refusal and complete actual hook and core regression |
+| 2-migrate-guard-envelope-consumers.md | Migrate guard envelope readers | 1-share-git-command-projections.md | All three standard decoder forms through migrated readers and actual core entries |
+| 3-migrate-bench-projection-consumers.md | Migrate Bench projection consumers | 2-migrate-guard-envelope-consumers.md | Bench Classify, the recursive reviewer walk, and the route check through the shared projection |
+| 4-enforce-guard-projection-ownership.md | Enforce guard projection ownership | 1-share-git-command-projections.md, 2-migrate-guard-envelope-consumers.md, 3-migrate-bench-projection-consumers.md | Registered copy refusal and complete actual hook and core regression |
