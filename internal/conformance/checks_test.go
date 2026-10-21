@@ -3,6 +3,9 @@ package conformance
 import (
 	"bytes"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -95,6 +98,7 @@ func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
 	diags = append(diags, checkGuardResolverOrderDrift(root)...)
 	diags = append(diags, checkGuardClassifierTable(root)...)
 	diags = append(diags, checkGuardScanLoopOwner(root)...)
+	diags = append(diags, checkGuardProjectionOwner(root)...)
 	return diags
 }
 
@@ -657,4 +661,43 @@ func writeHostileReferenceRoot(t *testing.T, plant func(*testing.T, string)) str
 		files:  map[string]string{".bench/BENCH.md": "# Guide\n\nSee .bench/BENCH-reference.md\n"},
 		plants: map[string]func(*testing.T, string){".bench/BENCH-reference.md": plant},
 	}.build(t)
+}
+
+// TestGuardProjectionPreservesIndependentChecks parses the live conformance package. The registered
+// package-core-guard implementation must call the resolver-order, classifier-table, and projection
+// owner subchecks, and entry-point parity must keep its own registry row. The conformance-meta check
+// owns the match of each row to its executable binding.
+func TestGuardProjectionPreservesIndependentChecks(t *testing.T) {
+	h := NewHarness(t)
+	packages, err := parser.ParseDir(token.NewFileSet(), filepath.Join(h.KitRoot, "internal", "conformance"), nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	implementations := map[string]string{}
+	for _, row := range registry.Checks {
+		implementations[row.Name] = row.Implementation
+	}
+	if implementations["entry-point-parity"] == "" {
+		t.Error("entry-point parity has no registry row of its own")
+	}
+	called := map[string]bool{}
+	for _, file := range packages["conformance"].Files {
+		for _, declaration := range file.Decls {
+			if fn, ok := declaration.(*ast.FuncDecl); ok && fn.Body != nil && fn.Name.Name == implementations["package-core-guard"] {
+				ast.Inspect(fn.Body, func(node ast.Node) bool {
+					if call, ok := node.(*ast.CallExpr); ok {
+						if ident, ok := call.Fun.(*ast.Ident); ok {
+							called[ident.Name] = true
+						}
+					}
+					return true
+				})
+			}
+		}
+	}
+	for _, subcheck := range []any{checkGuardResolverOrderDrift, checkGuardClassifierTable, checkGuardProjectionOwner} {
+		if name := (checkBinding{implementation: subcheck}).identity(); !called[name] {
+			t.Errorf("the registered package-core-guard implementation does not call %s", name)
+		}
+	}
 }
