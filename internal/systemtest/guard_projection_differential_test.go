@@ -150,8 +150,9 @@ func TestGuardProjectionDifferentialFamilies(t *testing.T) {
 	var members, tuples []string
 	for i := range min(len(got), len(want)) {
 		if got[i] != want[i] {
-			member, _, _ := strings.Cut(want[i], " exit=")
-			members = append(members, member)
+			// The quoted input ends the member name, and an input can hold its own " | ".
+			member, _, _ := strings.Cut(want[i], `" | `)
+			members = append(members, member+`"`)
 			tuples = append(tuples, "got  "+got[i], "want "+want[i])
 		}
 	}
@@ -160,8 +161,8 @@ func TestGuardProjectionDifferentialFamilies(t *testing.T) {
 	}
 }
 
-// differentialTuples runs every member through its entries and returns one normalized line
-// for each result, in a fixed order.
+// differentialTuples runs every member through its entries. It returns one normalized line for
+// each member, which holds the member's entry tuples in a fixed order.
 func differentialTuples(t *testing.T) []string {
 	t.Helper()
 	scratch := t.TempDir()
@@ -197,10 +198,14 @@ func differentialTuples(t *testing.T) []string {
 	}
 	commandEntries := []differentialEntry{core(guards[0].guard), core(guards[1].guard), hook(guards[0].name, guards[0].hook), hook(guards[1].name, guards[1].hook)}
 	envelopeEntries := append(append([]differentialEntry{}, commandEntries...), core(guards[2].guard), hook(guards[2].name, guards[2].hook))
-	var lines []string
+	var members []string
+	tuples := map[string][]string{}
 	record := func(family, input, entry string, result processResult) {
-		line := fmt.Sprintf("%s %q %s exit=%d stdout=%q stderr=%q", family, input, entry, result.code, result.stdout, result.stderr)
-		lines = append(lines, normalize.Replace(line))
+		member := fmt.Sprintf("%s %q", family, input)
+		if _, seen := tuples[member]; !seen {
+			members = append(members, member)
+		}
+		tuples[member] = append(tuples[member], fmt.Sprintf("%s exit=%d stdout=%q stderr=%q", entry, result.code, result.stdout, result.stderr))
 	}
 	for _, member := range differentialCommands {
 		envelope := hookEnvelope(t, "Bash", place.Replace(member.command))
@@ -215,6 +220,10 @@ func differentialTuples(t *testing.T) []string {
 	}
 	for _, line := range differentialDegradedHooks(t, guards) {
 		record("H", line.name, line.hook, line.result)
+	}
+	lines := make([]string, 0, len(members))
+	for _, member := range members {
+		lines = append(lines, normalize.Replace(member+" | "+strings.Join(tuples[member], " | ")))
 	}
 	return lines
 }
