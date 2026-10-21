@@ -12,6 +12,14 @@ The reviewer deferred each ask-user finding to two consultants, opus at medium e
 
 Repair cycle 1 closed all 6 repair targets, so the chunk has used 1 of its 2 repair cycles. The ticket 1 repair `0cf5c883` closed F1 and S3, and the ticket 2 repair `cdeaf570` closed F2, C1, C2, and C5. Both repairs change test files only. The chunk is refrozen at `e4db0d2e..cdeaf570`, and both repair sessions recorded their verifications at that tip. The orchestrator's swap probe of the nested walk bit. A confirming round of all three axes reads the repair delta, because the plan bytes in the delta block a coordinator confirmation.
 
+## GS1 confirming round 1
+
+The confirming round read the repair delta `eee73331..cdeaf570` on sonnet at high effort. It closed F1, F2, S1, S2, S3, C1, C2, and C5. Standards and Spec passed, and Coverage found one blocker.
+
+- N1, auto-fix, confidence 8. The `WalkDir` error branch of the ownership check has no witness, and a swap of its diagnostic read silent. Both consultants chose a repair. A silent mutant of a branch that the repair added fails the witness rule of `/bench-implement-spec`. Ticket 2 owns it, and repair cycle 2 adds one witness for an unreadable nested directory.
+- Spec N1, no-op, confidence 5. The fable tie-break of the initial round decided that "real import bindings" bans text matching, so `spec.md` line 135 stays.
+- Spec N2 and Coverage N2-N4, no-op. They name hardening that the spec permits, a symlinked directory that the repair did not widen, and pre-repair behavior.
+
 ## Standards
 
 The axis found 4 findings. The worst issue is F2, because the test respells the diagnostic text that the check spells.
@@ -683,6 +691,74 @@ The axis found 8 findings. The worst issue is C1, because a pipeline in a subdir
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gs1-r2-standards",
+          "performer": "claude:gsl-review-standards-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "748b0101d016df166d50a31f68f4df1f475c8edc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gsl-review-standards-r2",
+            "digest": "sha256:88b4c01c46d99a61273803083cd84139ad54efacb8076dc2980ac8918bf9a3c9",
+            "excerpt": "STANDARDS confirming round, GS1, repair delta eee73331..cdeaf570. check-current: current=true.\nF1: closed. scan_loop_test.go:24 states only that familySGolden is the reference capture of scan family S.\nF2: closed. guard_scan_owner_test.go:33-41 holds one constant for each diagnostic piece; the check (:55, :63, :68, :75, :81) and the tests (:207, :218, :262, :285) share them; no respelled literal remains in the file.\nNew findings: 0.\nAdvice: the cancelTick comment at scan_loop_test.go:27 is slightly wide; each blocked-* member now waits about 3s in total; guard_scan_owner_test.go:242 and :180 respell construct labels, confidence 3, not a block.\n"
+          },
+          "axis": "Standards",
+          "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
+          "tip": "cdeaf570831bad3feee048c7bc74922e570ee3a9",
+          "finding_ids": [],
+          "supersedes": [
+            "gs1-r1-standards"
+          ]
+        },
+        {
+          "id": "gs1-r2-spec",
+          "performer": "claude:gsl-review-spec-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "748b0101d016df166d50a31f68f4df1f475c8edc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gsl-review-spec-r2",
+            "digest": "sha256:3e063b8db993770e18051f7f796e1b072ca96e78baa49a1b0ed1d6808b9a39ec",
+            "excerpt": "SPEC confirming round, GS1, repair delta eee73331..cdeaf570 and spec corrections 2854ddb4..06216f4c. check-current: current=true.\nS1: closed. spec.md:314 gives the between-candidates member to GS05 by direct Scan; familyS (scan_loop_test.go:129-144) omits it; GS27 (spec.md:293) agrees.\nS2 (C1): closed. checkGuardScanLoopOwner walks every production file beneath internal/guards and skips testdata (guard_scan_owner_test.go:58-73), as spec.md:130 says.\nS3: closed. The inspection-cancelled members use inspectionWindow (scan_loop_test.go:30, :142-143); scan-family-s.golden is byte-identical across the repair.\nSpec corrections match the repaired check (spec.md:131, :338-339, :375).\nN1 | ask-user, orchestrator disposition no-op | spec.md:135 | conf 5. \"AST nodes and real import bindings\" versus the AST-only check. The fable tie-break of the initial round decided that this sentence bans text matching, and the line stays unchanged.\nN2 | no-op | guard_scan_owner_test.go:50-73 | conf 6. The stat, unreadable-subdirectory, and non-regular-file diagnostics harden the check in the spirit of spec.md:138.\nCount 2 new, 0 blocking, 0 open named findings.\nAdvice: the blocking-operation member still uses the 10ms cancelTick (scan_loop_test.go:144), outside S3.\n"
+          },
+          "axis": "Spec",
+          "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
+          "tip": "cdeaf570831bad3feee048c7bc74922e570ee3a9",
+          "finding_ids": [],
+          "supersedes": [
+            "gs1-r1-spec"
+          ]
+        },
+        {
+          "id": "gs1-r2-coverage",
+          "performer": "claude:gsl-review-coverage-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "748b0101d016df166d50a31f68f4df1f475c8edc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gsl-review-coverage-r2",
+            "digest": "sha256:0e46addf896bf14ccf0e566e2faf03191970c0cef94b774998ba3d0b8f6de01e",
+            "excerpt": "COVERAGE confirming round, GS1, repair delta eee73331..cdeaf570. check-current: current=true.\nC1: closed. guard_scan_owner_test.go:77-92 walks beneath internal/guards and skips testdata at any depth; TestGuardScanLoopOwnerGradesNestedProductionFiles demands only the nested diagnostic.\nC2: closed. A non-regular .go entry is named before any open (:86); TestGuardScanLoopOwnerRefusesASpecialGoFile ran with a real FIFO and a bounded deadline.\nC5: closed. Only fs.ErrNotExist takes the nil exit (:62); TestGuardScanLoopOwnerReportsAnUnstatableOwnerDir passed.\nN1 | ask-user | guard_scan_owner_test.go:81-82 | conf 8. The WalkDir error branch has no witness: a swap of its diagnostic append for `_ = rel` read silent, and all 10 TestGuardScanLoopOwner* tests stayed green.\nN2 | no-op | guard_scan_owner_test.go:77-92 | conf 4. WalkDir does not follow a symlinked directory; the repair did not widen this.\nN3 | no-op | guard_scan_owner_test.go:62 | conf 3. A regular file named internal/guards still reads as absent, as before the repair.\nN4 | no-op | reviews/guard-scan-loop.md | conf 3. The record fence holds no red-to-green entry for the new C2 and C5 witnesses.\nCount 4 (1 ask-user, 3 no-op). Worst: N1.\nCommands: bench test --package ./internal/conformance --run '^TestGuardScanLoopOwner' passed 10; one bench probe swap at :82 read silent, restored yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
+          "tip": "cdeaf570831bad3feee048c7bc74922e570ee3a9",
+          "finding_ids": [
+            "N1"
+          ],
+          "supersedes": [
+            "gs1-r1-coverage"
+          ]
         }
       ]
     }
