@@ -23,9 +23,9 @@ Do not promise to interrupt an in-flight filesystem call.
 
 ## User stories
 
-Line: opus / high
-Implementation-line reason: GS1 is the only chunk and the harder one. The loop shape is known and every boundary has an exact predicate, but the cancellation checkpoints and the byte-exact output preservation need careful work at the existing package-variable seams. Test strength is high, because checked-in stdout fixtures and controlled barriers already exist.
-Harder chunks: GS1, at xhigh effort on the same model.
+Line: opus / xhigh
+Implementation-line reason: GS1 is the only chunk and the harder one, so the line starts at its effort. The loop shape is known and every boundary has an exact predicate, but the cancellation checkpoints and the byte-exact output preservation need careful work at the existing package-variable seams. Test strength is high, because checked-in stdout fixtures and controlled barriers already exist.
+Harder chunks: GS1.
 
 1. As an agent, I want complete scans preserved, so that the guard inventory keeps its current meaning.
 2. As an agent, I want completed rows retained on cancellation, so that I can use the inspected prefix.
@@ -61,8 +61,9 @@ Check ctx.Err before enumeration and after it returns.
 A pre-cancelled context starts no operation.
 Today enumeration starts before any context check (`guards.go:172-176`), so GS03 is red on the current tree.
 Cancellation observed after enumeration returns an incomplete result with unknown total and omitted counts.
-It does not publish the returned candidates as a completed inventory.
-GS03 and GS04 distinguish these cases.
+This rule applies to both enumeration returns: an error return and a candidate slice with a nil error.
+It does not publish the returned candidates as a completed inventory, and it starts no inspection.
+GS03, GS04, and GS30 distinguish these cases.
 
 Check ctx.Err before each inspection and after it returns.
 Count an inspection only when the post-operation check confirms that cancellation has not occurred.
@@ -133,8 +134,11 @@ GS23 restores a renamed copy of the old Scan pipeline and requires the registere
 
 Use AST nodes and real import bindings, not text in comments or fixture strings.
 The check does not ban goroutines in test code, including the calling goroutine of TestScanWaitsForCancelledWorkerCleanup.
-A kit source surface with a missing or unreadable scan owner produces a named diagnostic.
-An absent kit source surface in a linked consumer produces no diagnostic.
+The subcheck engages exactly when the subject root holds an `internal/guards` directory.
+Inside that directory, a missing or unreadable `guards.go` produces a named diagnostic.
+A root without that directory, such as a linked consumer, produces no diagnostic.
+A canary tree holds only the files its `BASE` lists, and no `package-core-guard` canary lists a file under `internal/guards`, so no existing canary receives the new diagnostic.
+A deleted `internal/guards` directory in the kit fails compilation, because `cmd/bench/main.go:74` imports the package.
 GS24 and GS25 cover these dispositions.
 
 Register the planned live-tree owner test in tier_live_tree_test.go.
@@ -181,10 +185,10 @@ It remains separately reviewable and can stop after its own green vertical slice
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
-| GS1 / 1-simplify-guard-inventory-loop.md | synchronous scan preserves rows, cancellation, command output, and single ownership | GS01–GS29 | scan-loop, cleanup, command fixtures, bounds policy, and registered ownership mutation | yes, xhigh |
+| GS1 / 1-simplify-guard-inventory-loop.md | synchronous scan preserves rows, cancellation, command output, and single ownership | GS01–GS30 | scan-loop, cleanup, command fixtures, bounds policy, and registered ownership mutation | yes, xhigh |
 
 The chunk includes source claim verification and closure maintenance before final integration.
-The one ticket owns all 29 rows and closes their first-use contracts before its independent chunk review.
+The one ticket owns all 30 rows and closes their first-use contracts before its independent chunk review.
 
 ### Graph ordering and execution boundary
 
@@ -197,7 +201,7 @@ These shared writes require a serial integrated-source handoff between the two o
 The coordinator chooses either complete outcome first and refreshes source and headroom before an overlapping successor charge.
 The first ticket that extends package-core-guard performs the orchestration move; the other extends that sole declaration.
 
-Derived Writes scope for the slicer, at f07508b2a: `internal/guards/guards.go`, `internal/guards/scan_loop_test.go` (new), `internal/conformance/guard_scan_owner_test.go` (new), `internal/conformance/package_core_checks_test.go`, `internal/conformance/checks_test.go`, `internal/conformance/tier_live_tree_test.go`.
+Derived Writes scope for the slicer, at f07508b2a: `internal/guards/guards.go`, `internal/guards/scan_loop_test.go` (new), `internal/guards/testdata/scan-family-s.golden` (new), `internal/conformance/guard_scan_owner_test.go` (new), `internal/conformance/package_core_checks_test.go`, `internal/conformance/checks_test.go`, `internal/conformance/tier_live_tree_test.go`.
 
 The refresh drops six paths from the 2026-10-06 fence.
 Commit 1e8846bb0 deleted the ownership closure that required the five command-registry co-names: `cmd/bench/command_registry.go`, `cmd/bench/command_registry_test.go`, `cmd/bench/help_inventory_test.go`, `internal/conformance/axi_query_registry_test.go`, and `internal/conformance/subcommand_routing_table_test.go`.
@@ -249,16 +253,17 @@ Final verification runs only after the complete, independently reviewed outcome.
           "command": "bench test --package ./internal/conformance"
         },
         {
-          "id": "registry-closure",
-          "command": "bench test --package ./internal/conformance/registry"
-        },
-        {
           "id": "root-conformance",
           "command": "bench test --check root-conformance"
         },
         {
           "id": "command-closure",
           "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "enumeration-return-omission",
+          "command": "bench test --package ./internal/guards --run '^TestScanLoopEnumerationReturnsAfterCancellation$'",
+          "probe": "Gate the post-enumeration checkpoint on a non-nil enumeration error only; a nil-error candidate slice returned after cancellation must report known counts and red this witness."
         },
         {
           "id": "post-inspection-omission",
@@ -363,10 +368,12 @@ The registered conformance checks attach to the production scan ownership bounda
 | GS27 | 16, 17 | Deterministic scan family S produces identical command tuples before and after migration | planned TestScanLoopDifferentialCommandFamilies in internal/guards/scan_loop_test.go | Existing partial fixtures miss an unasserted command change |
 | GS28 | 1, 6 | Cancellation after the final completion checkpoint leaves the complete result unchanged | planned TestScanLoopAfterFullCompletion in internal/guards/scan_loop_test.go | A late context read discards fully completed work |
 | GS29 | 18 | guards.go keeps the `bounds.VerdictWindow(bounds.GuardScanTimeout)` text that bounds-policy pins | `internal/conformance/bounds_policy_test.go` (`checkBoundsPolicy`, registered as bounds-policy) | A rewrite that drops or respells the policy line reds bounds-policy with "does not consume" |
+| GS30 | 4 | Enumeration that returns a nonempty candidate slice with a nil error after cancellation leaves Total and Omitted unknown and starts no inspection | planned TestScanLoopEnumerationReturnsAfterCancellation in internal/guards/scan_loop_test.go | A checkpoint gated on the enumeration error alone publishes known counts for this return |
 
 GS27 runs preserved pre-change and candidate owner-package test executables over the same controlled enumeration and inspection events.
 Prepare the contract driver before you replace the loop, then retain its pre-change executable as the reference.
 The reference capture is independently reviewed and remains separate from candidate code.
+Store the reference capture as the checked-in fixture `internal/guards/testdata/scan-family-s.golden`, so GS27 keeps its expectation after the pre-change executable is gone.
 Both executions feed results through the real Command formatter in their own test process.
 Compare full and brief stdout, stderr, exit, and ScanResult values.
 No elapsed-time equality is required, and no production filesystem race defines the expected result.
@@ -377,7 +384,8 @@ No elapsed-time equality is required, and no production filesystem race defines 
 |---|---|---|
 | complete | ordered candidates with zero, one, and multiple rows | current complete metadata and row order |
 | pre-cancelled | cancelled context before Scan | no enumeration, unknown counts |
-| enumeration cancellation | barrier releases only after cancellation | unknown total and omitted counts |
+| enumeration cancellation, error return | barrier releases only after cancellation; enumeration returns the context error | unknown total and omitted counts (GS04) |
+| enumeration cancellation, success return | barrier releases only after cancellation; enumeration returns candidates and a nil error | unknown total and omitted counts, no inspection (GS30) |
 | between candidates | cancel after publishing a completed candidate | completed prefix and known omitted arithmetic |
 | inspection cancellation | candidate returns after cancellation | no interrupted candidate publication |
 | no rows | inspection completes with an empty row slice | candidate still counted |
@@ -421,7 +429,7 @@ Neither capability is authorized here.
 | “Use three separately reviewable outcomes under FT366.” | separate specs and checkpoints; the degraded outcome landed |
 | “First, repair malformed degraded input and its diagnostic.” | landed predecessor outcome |
 | “Second, migrate common grammar and envelope facts.” | shared-guard-projection spec |
-| “Third, simplify the guard inventory scan if its behavior stays fixed.” | GS01–GS29 and the GS27 differential row |
+| “Third, simplify the guard inventory scan if its behavior stays fixed.” | GS01–GS30 and the GS27 differential row |
 | “The scan waits for its goroutines after cancellation” | current Scan and the unchanged cleanup witness, GS08 |
 | “A context-aware loop removes that indirection.” | direct loop and GS23 private-copy refusal |
 | “It does not establish a hard deadline for a blocking filesystem operation.” | GS11 and the explicit Won't handle |
@@ -437,6 +445,7 @@ Flagged additions for reviewer veto:
 
 - GS29 and story 18 are new. They name an existing pin that the 2026-10-06 spec missed; they add no product behavior.
 - The refresh drops six paths from the 2026-10-06 fence, as Graph ordering states.
+- The ownership subcheck bans go statements, select statements, and channel constructs in all production Go under internal/guards. This ban is wider than copy survival, and it also refuses any future concurrency there. Keep it, or narrow it to the copy of the old pipeline.
 - The spec keeps `Related roadmap: FT366` instead of a `Roadmap:` line. FT366 closes only when both bound specs land, so a retiring spec must not remove the shared row.
 
 The private-loop ownership check enforces the approved removal of worker indirection.
@@ -471,7 +480,7 @@ No file in the derived scope needs a new grant.
 - Changed-function callers: the sweep below lists the Scan and Rows callers.
 - Copy survival: GS23 plants a renamed unused worker pipeline and observes the registered package-core-guard diagnostic.
 - Rendered-shape readers: Command, the checked-in stdout fixtures, the SessionStart brief query (`internal/sessioninspect/sessioninspect.go:152`, `internal/systemtest/session_start_test.go:198`), the isolated command fixtures (`cmd/bench/isolated_command_fixtures_test.go:58-70`), and command help keep the current shapes.
-- Pin operators: `bounds-policy` pins the timeout text in guards.go (GS29). The check floor adds `./cmd/bench` because internal/guards is a command package.
+- Pin operators: `bounds-policy` pins the timeout text in guards.go with `strings.Contains` (`bounds_policy_test.go:70`), and its diagnostic says "does not consume" (GS29). The check floor adds `./cmd/bench` because internal/guards is a command package.
 - Entry reads: Command reads cwd and the Git root before Scan. Enumeration reads hook and harness configuration paths, and inspection reads static header files.
 - Derived expectations: the existing fixture files and the independently reviewed canned reference results own output expectations. Candidate scan output is not the oracle.
 - Consolidated rules: only Scan's enumeration and per-candidate worker orchestration become direct calls. Enumeration and inspection remain their current single owners.
@@ -480,7 +489,8 @@ No file in the derived scope needs a new grant.
 
 The caller sweep is tied to f07508b2add49469d686614c70f575531e8ea445.
 Scan callers are Rows (`guards.go:164`), Command (`guards.go:282`), TestScanWaitsForCancelledWorkerCleanup, TestScanTimeoutPreservesPartialRowsAndHonestCounts, and TestScanEnumerationTimeoutUsesUnknownCounts.
-Command is also called by the SessionStart brief query (`internal/sessioninspect/sessioninspect.go:152`), which passes the brief output through unparsed.
+Command is also registered in the command registry (`cmd/bench/main.go:74`), and the SessionStart brief query (`internal/sessioninspect/sessioninspect.go:152`) calls it and passes the brief output through unparsed.
+`bench consumers guards.Scan guards.Rows guards.Command` at f07508b2a returned 16 rows (citation hash `7a3c235aeb35a930`): these production sites plus the internal/guards tests that the coverage map cites.
 Their functions keep signatures and behavior, so the existing caller files need no source edit.
 The new test file avoids crowding the existing guarded test files.
 
@@ -493,9 +503,9 @@ No new conformance registry count, profile row, or injected-port row is needed.
 
 | Item | Proposed disposition |
 |---|---|
-| Implementation line | opus/high, GS1 at xhigh |
+| Implementation line | opus/xhigh |
 | Seam and coverage | synchronous scan, controlled cancellation, exact Command output, registered ownership, bounds-policy pin |
-| Derived Writes scope | six paths, six paths dropped from the prior fence |
+| Derived Writes scope | seven paths, six paths dropped from the prior fence |
 | Exclusions | no hard deadline, no parallel inspection, no new diagnostics, historical pins |
 | Ticket graph | the slicer refreshes the one ticket against this spec |
 

@@ -27,7 +27,7 @@ Keep the independent degraded shell rim, because it must run without the core.
 ## User stories
 
 Line: opus / high
-Implementation-line reason: the hardest material chunk is GP2, which moves three decoder forms with fifteen ordered decoder cases and the reviewer-verb walk onto new APIs at once. The spec fixes each decoder target and caller policy exactly, and the seams are resolved owner-package and entry tests. Test strength is high, but the ownership check and the actual-hook witnesses need careful integration.
+Implementation-line reason: the hardest material chunk is GP2, which moves three decoder forms with fifteen ordered decoder rows and the reviewer-verb walk onto new APIs at once. The spec fixes each decoder target and caller policy exactly, and the seams are resolved owner-package and entry tests. Test strength is high, but the ownership check and the actual-hook witnesses need careful integration.
 Harder chunks: GP2 and GP3, at xhigh effort on the same model.
 
 1. As an agent, I want routine executable prefixes preserved, so that ordinary commands receive the same guard verdict.
@@ -103,7 +103,8 @@ Git retains its shell-keyword trimming before `ResolveRoutinePrefix`.
 Git consumes the first matching shell child, including a child that finds no Git invocation.
 Bench `Classify` retains its existing search across matching children for a Bench invocation.
 Git and Bench `Classify` limit traversal to one level across shell and worktree child forms.
-GP03, GP04, and GP09 prevent the shared facts from replacing those policy choices.
+GP03, GP04, GP09, and GP74 prevent the shared facts from replacing those policy choices.
+Each caller applies its own Bench identity test before it uses `WorktreeExec`; GP72 and GP73 give a non-Bench head on the Git and reviewer paths.
 
 `ReviewerVerb` is the one consumer whose traversal is not one level.
 It calls `ShellChildren` and `WorktreeExec` at each level and recurses into each child stream or child argv.
@@ -201,7 +202,7 @@ Those changes would alter the approved guard policies.
 
 | Current site | Shared fact after migration | Policy that stays local | Rows |
 |---|---|---|---|
-| `gitguard.scanWords` wrapper predicate and flag loop (`scan.go:67-75`) | `ShellChildren` | first matching child and one-level traversal | GP02–GP04, GP09 |
+| `gitguard.scanWords` wrapper predicate and flag loop (`scan.go:67-75`) | `ShellChildren` | first matching child and one-level traversal | GP02, GP03, GP09, GP74 |
 | `gitguard.worktreeExecChild` (`scan.go:88-98`) | `WorktreeExec` | Bench basename recognition and child authority | GP05–GP10 |
 | `benchguard.judge`, `spanInvokesBench`, `isWrapper`, `wrapperFlag` (`benchguard.go:17, 141-155, 315-332`) | `ShellChildren` | Bench identity and matching-child selection | GP03–GP04, GP11 |
 | `benchguard.isExecHead` (`benchguard.go:134, 251`) | `WorktreeExec.Head` | outer exec exception and follow-on order | GP12–GP13 |
@@ -230,7 +231,7 @@ GP31 and GP32 prove both dispositions.
 
 Retain the existing registry name, tier, subject, and input binding (`internal/conformance/registry/checks.go:19`).
 Do not copy a registry count into this spec or add a new count expectation.
-Classify the planned live-tree ownership test in `tier_live_tree_test.go`.
+Classify every planned test in `guard_projection_owner_test.go` that reads live tree sources in `tier_live_tree_test.go`, including the GP30 and GP67 mutation tests if they build fixtures from live sources.
 GP33 observes registered reachability and that classification.
 
 The `stdlib-reimplementation` check (`internal/conformance/stdlib_reimplementation_test.go:39`) also grades the new production Go.
@@ -286,8 +287,8 @@ Slicing preserves every acceptance predicate and the implementation line.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
-| GP1 / 1-share-git-command-projections.md | Git uses shared wrapper and worktree projections with unchanged verdicts | GP01–GP03, GP05–GP10 | projection and Git contract tests | no |
-| GP2 / 2-migrate-guard-envelope-consumers.md | common envelope facts serve the three readers, and Bench, the reviewer verb, and the agent-route check use the projections | GP04, GP11–GP29, GP43, GP47–GP66, GP68–GP70 | envelope, Bench, reviewer-verb, write, route-check, canary, and core entry tests | yes, xhigh |
+| GP1 / 1-share-git-command-projections.md | Git uses shared wrapper and worktree projections with unchanged verdicts | GP01–GP03, GP05–GP10, GP72, GP74 | projection and Git contract tests | no |
+| GP2 / 2-migrate-guard-envelope-consumers.md | common envelope facts serve the three readers, and Bench, the reviewer verb, and the agent-route check use the projections | GP04, GP11–GP29, GP43, GP47–GP66, GP68–GP70, GP73 | envelope, Bench, reviewer-verb, write, route-check, canary, and core entry tests | yes, xhigh |
 | GP3 / 3-enforce-guard-projection-ownership.md | copy refusal and actual-entry integration complete the migration | GP30–GP42, GP44–GP46, GP67, GP71 | owner mutation tests and system hook witnesses | yes, xhigh |
 
 GP1 precedes GP2, because the shared projection API must exist before the second consumer migrates.
@@ -555,7 +556,7 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP01 | 1 | Routine-prefix family P retains its projected executable index | `internal/shellcommand/shellcommand_test.go` (`TestResolveRoutinePrefix`) | A new private prefix rule differs on query or option forms |
 | GP02 | 2 | ShellChildren returns one ordered child per supported c flag in family W | planned TestShellChildren in internal/shellcommand/projection_test.go | A wrapper basename or flag omission loses a child |
 | GP03 | 2 | Invalid indexes and missing wrapper operands yield no child | planned TestShellChildrenBounds in internal/shellcommand/projection_test.go | Unchecked indexes panic or invent a child |
-| GP04 | 2 | Git and Bench Classify retain their different matching-child selection in W4 | planned TestGuardWrapperSelection in internal/benchguard/projection_contract_test.go and internal/gitguard/projection_contract_test.go | A universal first-child or recursive policy changes a verdict |
+| GP04 | 2 | Bench Classify searches every matching child in W4 and refuses the follow-on in the second `-c` child | planned TestGuardWrapperSelection in internal/benchguard/projection_contract_test.go | A universal first-child or recursive policy changes the Bench verdict |
 | GP05 | 3 | WorktreeExec returns child argv byte-for-byte in family X | planned TestWorktreeExec in internal/shellcommand/projection_test.go | Joining and reparsing loses a quoted argv element |
 | GP06 | 3 | A recognized exec head without a delimiter has no child | planned TestWorktreeExecMissingDelimiter in internal/shellcommand/projection_test.go | Header recognition is confused with runnable child discovery |
 | GP07 | 3 | An empty child after a delimiter has DifferentCheckout=false | planned TestWorktreeExecEmptyChild in internal/shellcommand/projection_test.go | An empty projection fabricates child authority |
@@ -623,6 +624,9 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP69 | 29 | runsBenchUnderExec extracts the exec child only through WorktreeExec | review-owned (Standards axis) | GP30 grades production files only, so only review sees a test-side copy |
 | GP70 | 27 | The follow-on core entry keeps exit 2 and the reviewer-verb message for each override envelope | `cmd/bench/main_test.go` (`TestFollowOnGuardDeniesTheOverrideEnvelope`) | The migrated walk breaks the actual entry path |
 | GP71 | 15, 16 | The Bench follow-on hook keeps warning-allow when its resolver, wrapper, or core is missing | `internal/systemtest/bench_follow_on_test.go` (`TestBenchFollowOnHookDegradedRim`, FOG19 and FOG33) | Shared authority imposes Git's refusal on the follow-on hook |
+| GP72 | 18 | `mybench worktree exec X -- git reset --hard` keeps the empty Git label | planned TestGitProjectionAuthority in internal/gitguard/projection_contract_test.go | A Git consumer that calls WorktreeExec without its Bench basename test refuses a non-Bench head |
+| GP73 | 27 | ReviewerVerb allows `x worktree exec t -- bench commitment override` | planned TestReviewerVerbKeepsRecursiveReach in internal/benchguard/projection_contract_test.go | A reviewer walk that calls WorktreeExec without isBench denies a non-Bench head |
+| GP74 | 2 | The Git guard reads only the first matching child in W4 and keeps the allow verdict for `bash -c 'echo ok' -c 'git reset --hard'` | planned TestGuardWrapperSelection in internal/gitguard/projection_contract_test.go | A Git consumer that searches every child refuses the second-flag reset |
 
 GP46 uses an independently preserved pre-migration executable and the candidate executable.
 Capture the reference at f07508b2a or the integrated source at build entry, before GP1 begins.
@@ -639,11 +643,11 @@ Review owns the reference capture and each intentional difference, and this spec
 | Family | Exact inputs or constructors | Winning policy and observation |
 |---|---|---|
 | P | assignment, env options, command -v/-V, nohup, timeout, xargs from TestResolveRoutinePrefix | existing prefix projection, including nonexecuting command queries |
-| W | sh, bash, zsh, absolute shell paths, -c/-lc, missing operand, invalid index | supported c-flag projection |
+| W | sh, bash, zsh, absolute shell paths, -c/-lc, missing operand, invalid index, `bash -c -c 'git status'` | supported c-flag projection; each argv position is read independently, so a flag-shaped operand yields a child and also starts its own child |
 | W4 | `bash -c 'echo ok' -c 'git reset --hard'`, corresponding Bench follow-on child, and a nested wrapper | Git takes the first flag, Bench Classify searches matching children, neither recurses twice |
-| X | `bench worktree exec X --env A=1 -- git commit -m 'two words'`, no --, empty child, ./dist/bench | direct argv and caller executable recognition |
+| X | `bench worktree exec X --env A=1 -- git commit -m 'two words'`, no --, empty child, ./dist/bench, `mybench worktree exec X -- git reset --hard` | direct argv and caller executable recognition; a non-Bench head has no exec child (GP72) |
 | X3 | exec inside wrapper, wrapper inside exec, nested wrappers from TestClassifyVerdicts | existing one-level allowance for Git and Bench Classify |
-| R | the TestGuardDeniesTheOverrideVerb commands, a wrapper inside a wrapper, an exec inside an exec, an exec head without `--` | the reviewer walk recurses through each child and denies only a named verb |
+| R | the TestGuardDeniesTheOverrideVerb commands, a wrapper inside a wrapper, an exec inside an exec, an exec head without `--`, `x worktree exec t -- bench commitment override` | the reviewer walk recurses through each child and denies only a named verb |
 | A | attached ;/&&/newline before Git reset, unclosed single quote, unclosed double quote, trailing escape | the landed degraded repair refuses malformed input |
 | G | -C, --git-dir, --work-tree, -c and equals forms from TestClassifyVerdicts | Git owns option operands and repository uncertainty |
 | E0 | empty stdin, invalid JSON, initially absent/null input, initially absent/null command, numeric/array command, empty command, NUL | Git silent allow, Bench warning allow |
@@ -727,15 +731,17 @@ Answer 3 repeats the integration preservation obligation for the overall sequenc
 
 | Source clause | Disposition |
 |---|---|
-| “Deepen shellcommand with shared executable, wrapper, and worktree exec-child projection.” | GP01–GP09, GP62–GP69 |
+| “Deepen shellcommand with shared executable, wrapper, and worktree exec-child projection.” | GP01–GP09, GP62–GP69, GP72–GP74 |
 | “Use one common envelope reader for structural input facts.” | GP14–GP19, GP30, GP47–GP61 |
 | “Each guard retains required fields, authority, diagnostics, and fail posture.” | GP10–GP13, GP20–GP29, GP36–GP41, GP46–GP61, GP65–GP66, GP71 |
-| “Preserve the current one-level wrapper contract” | GP04, GP09; the reviewer decision of 2026-10-20 scopes it to Git and Bench Classify |
+| “Preserve the current one-level wrapper contract” | GP04, GP09, GP74; the reviewer decision of 2026-10-20 scopes it to Git and Bench Classify |
 | “Keep Git global-option meaning in the Git guard.” | GP10, family G in GP46 |
 | “carry the child argv and its different-checkout context.” | GP05–GP10 |
 | “It must not evaluate expansions or execute shell input.” | GP45 |
 | “The new rg guard retains its explicitly permissive operand-uncertainty rule.” | Won't handle rg operand parsing; GP46 preserves existing guard posture |
 | “That rule must not weaken dangerous-command parse refusal.” | GP34–GP35 |
+| “Preserve this distinction from `roadmap/FT366.md`.” | Won't handle rg operand parsing; GP34–GP35 keep the dangerous-command refusal separate |
+| “Use three separately reviewable outcomes under FT366.” | the landed degraded outcome, this spec, and the guard-scan-loop spec |
 | “First, repair malformed degraded input and its diagnostic.” | landed predecessor outcome |
 | “Second, migrate common grammar and envelope facts.” | GP1–GP3 |
 | “Third, simplify the guard inventory scan if its behavior stays fixed.” | separate guard-scan-loop spec |
