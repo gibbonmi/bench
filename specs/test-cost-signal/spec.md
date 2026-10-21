@@ -6,7 +6,7 @@ Roadmap: FT409
 
 Decision source: the named reviewed artifact `roadmap/FT409.md` (reviewer approval 2026-10-09), with its late forks closed on 2026-10-21 by the reviewer-delegated consultants (fable medium, opus high, and sonnet high as the tiebreaker)
 
-Verification log: pending
+Verification log: 3 iteration(s) to accept — the spec round took 2 iterations, because three rows had fixtures that a cheap wrong build passed; the ticket round took 1
 
 ## Problem
 
