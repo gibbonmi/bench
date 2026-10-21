@@ -1,6 +1,6 @@
 # Simplify guard inventory scanning with a synchronous loop
 
-Status: staged
+Status: implemented
 Decision source: `decisions/architecture-guards.md`, answer 3, reviewed 2026-10-06
 Subject: `f07508b2add49469d686614c70f575531e8ea445` (refresh of 2026-10-20)
 Audience: every repository that links the kit
@@ -119,7 +119,7 @@ GS17 through GS20 compare those outputs.
 
 Keep action help order and deduplication for complete stale or unwired inventories.
 The deduplication lives in `internal/axi/action.go`, which this refactor does not touch.
-Suppress action help for incomplete inventories.
+Keep the existing suppression of action help for incomplete inventories (`guards.go:305-308`).
 Keep the current exit 0 for an incomplete inventory, rather than a new error exit.
 Keep the existing invalid-argument and outside-repository command errors.
 GS19 through GS21 observe those entry decisions.
@@ -128,7 +128,7 @@ GS19 through GS21 observe those entry decisions.
 
 Add checkGuardScanLoopOwner under the existing registered package-core-guard check.
 It grades production Go files beneath internal/guards, including unused private function bodies.
-It rejects GoStmt, SelectStmt, channel creation, and send or receive pipeline constructs there.
+It rejects GoStmt, SelectStmt, channel creation by `make` with a literal channel type, and send or receive pipeline constructs there.
 guards.go is the only production file in internal/guards, and Scan holds every such construct today.
 GS23 restores a renamed copy of the old Scan pipeline and requires the registered check to turn red.
 
@@ -229,90 +229,7 @@ Require byte-identical restoration and the same focused green; an invalid or res
 Final verification runs only after the complete, independently reviewed outcome.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "GS1",
-      "tickets": [
-        "1-replace-scan-pipeline-with-loop.md",
-        "2-enforce-scan-loop-owner.md"
-      ],
-      "verification": [
-        {
-          "id": "scan-and-command",
-          "command": "bench test --package ./internal/guards"
-        },
-        {
-          "id": "registered-owner",
-          "command": "bench test --check package-core-guard"
-        },
-        {
-          "id": "bounds-policy",
-          "command": "bench test --check bounds-policy"
-        },
-        {
-          "id": "conformance-closure",
-          "command": "bench test --package ./internal/conformance"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        },
-        {
-          "id": "command-closure",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "enumeration-return-omission",
-          "command": "bench test --package ./internal/guards --run '^TestScanLoopEnumerationReturnsAfterCancellation$'",
-          "probe": "Gate the post-enumeration checkpoint on a non-nil enumeration error only; a nil-error candidate slice returned after cancellation must report known counts and red this witness."
-        },
-        {
-          "id": "differential-golden-bite",
-          "command": "bench test --package ./internal/guards --run '^TestScanLoopDifferentialCommandFamilies$'",
-          "probe": "Reverse the candidate inspection order in the candidate loop; the independently captured scan-family-s.golden expectation must red this witness on the complete member."
-        },
-        {
-          "id": "post-inspection-omission",
-          "command": "bench test --package ./internal/guards --run '^TestScanLoopPostInspectionCancellation$'",
-          "probe": "Omit only the post-inspection context checkpoint; a returned interrupted candidate must publish rows and red the completed-prefix contract."
-        },
-        {
-          "id": "copy-check-omission",
-          "command": "bench test --package ./internal/conformance --run '^TestGuardScanLoopOwnerBitesOnPrivateCopy$'",
-          "probe": "Omit only the registered checkGuardScanLoopOwner call while retaining its function and tests; an unused old worker pipeline must stop producing the expected registered diagnostic and red this witness."
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "coverage",
-      "command": "bench coverage --check guard-scan-loop"
-    },
-    {
-      "id": "scan-and-command",
-      "command": "bench test --package ./internal/guards"
-    },
-    {
-      "id": "command-closure",
-      "command": "bench test --package ./cmd/bench"
-    },
-    {
-      "id": "registered-owner",
-      "command": "bench test --check package-core-guard"
-    },
-    {
-      "id": "conformance-closure",
-      "command": "bench test --package ./internal/conformance"
-    },
-    {
-      "id": "root-conformance",
-      "command": "bench test --check root-conformance"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft366-guard-scan-loop-full-20261020","orchestrator_session":"claude:gsl-orchestrator-20261020","author_limit":1,"assignments":{"1-replace-scan-pipeline-with-loop.md":[{"session":"claude:gsl-t1-author-20261020","assignment":"f2fe5246354c1f66f90913da303906dd","model":"opus","effort":"high","source":"37d8ffd912b5e4b56d1254dc167e539025720930","native_ref":"claude-agent:bench-writer-high:gsl-t1-author-20261020"},{"session":"claude:gsl-t1-repair1-20261021","assignment":"f2fe5246354c1f66f90913da303906dd","model":"opus","effort":"medium","source":"06216f4ce6e5eba3563cb16f03ec2dd2b04b8e55","native_ref":"claude-agent:bench-writer-medium:gsl-t1-repair1-20261021","predecessor":"claude:gsl-t1-author-20261020","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:gsl-t1-author-20261020","preserved":"2854ddb4ed65187855dfd5fc9e5372f8a475498a"}],"2-enforce-scan-loop-owner.md":[{"session":"claude:gsl-t2-author-20261020","assignment":"f2fe5246354c1f66f90913da303906dd","model":"opus","effort":"high","source":"1da11306f4f569265fe536f11d6f341cd450c8c8","native_ref":"claude-agent:bench-writer-high:gsl-t2-author-20261020"},{"session":"claude:gsl-t2-author-medium-20261020","assignment":"f2fe5246354c1f66f90913da303906dd","model":"opus","effort":"medium","source":"610f0ea18c278f6f57e74be57144434a55be63fe","native_ref":"claude-agent:bench-writer-medium:gsl-t2-author-medium-20261020","predecessor":"claude:gsl-t2-author-20261020","trigger":"user-directed","stopped":"not-dispatched:610f0ea18c278f6f57e74be57144434a55be63fe","preserved":"610f0ea18c278f6f57e74be57144434a55be63fe"},{"session":"claude:gsl-t2-repair1-20261021","assignment":"f2fe5246354c1f66f90913da303906dd","model":"opus","effort":"medium","source":"0cf5c8832f9484b279d5e8e65dcb1915501f8df0","native_ref":"claude-agent:bench-writer-medium:gsl-t2-repair1-20261021","predecessor":"claude:gsl-t2-author-medium-20261020","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:gsl-t2-author-medium-20261020","preserved":"2854ddb4ed65187855dfd5fc9e5372f8a475498a"},{"session":"claude:gsl-t2-repair2-20261021","assignment":"f2fe5246354c1f66f90913da303906dd","model":"opus","effort":"medium","source":"e198f314bb211c613c9ba2ff43c01ab95da52d4e","native_ref":"claude-agent:bench-writer-medium:gsl-t2-repair2-20261021","predecessor":"claude:gsl-t2-repair1-20261021","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:gsl-t2-repair1-20261021","preserved":"046600ac4bf6a36c202a7efa177663701a775111"}]}},"chunks":[{"id":"GS1","tickets":["1-replace-scan-pipeline-with-loop.md","2-enforce-scan-loop-owner.md"],"verification":[{"id":"t1-scan-and-command","command":"bench test --package ./internal/guards","ticket":"1-replace-scan-pipeline-with-loop.md"},{"id":"t1-bounds-policy","command":"bench test --check bounds-policy","ticket":"1-replace-scan-pipeline-with-loop.md"},{"id":"t1-conformance-closure","command":"bench test --package ./internal/conformance","ticket":"1-replace-scan-pipeline-with-loop.md"},{"id":"t1-root-conformance","command":"bench test --check root-conformance","ticket":"1-replace-scan-pipeline-with-loop.md"},{"id":"t1-command-closure","command":"bench test --package ./cmd/bench","ticket":"1-replace-scan-pipeline-with-loop.md"},{"id":"t1-enumeration-return-omission","command":"bench test --package ./internal/guards --run '^TestScanLoopEnumerationReturnsAfterCancellation$'","probe":"Gate the post-enumeration checkpoint on a non-nil enumeration error only; a nil-error candidate slice returned after cancellation must report known counts and red this witness.","ticket":"1-replace-scan-pipeline-with-loop.md"},{"id":"t1-differential-golden-bite","command":"bench test --package ./internal/guards --run '^TestScanLoopDifferentialCommandFamilies$'","probe":"Reverse the candidate inspection order in the candidate loop; the independently captured scan-family-s.golden expectation must red this witness on the complete member.","ticket":"1-replace-scan-pipeline-with-loop.md"},{"id":"t1-post-inspection-omission","command":"bench test --package ./internal/guards --run '^TestScanLoopPostInspectionCancellation$'","probe":"Omit only the post-inspection context checkpoint; a returned interrupted candidate must publish rows and red the completed-prefix contract.","ticket":"1-replace-scan-pipeline-with-loop.md"},{"id":"t2-registered-owner","command":"bench test --check package-core-guard","ticket":"2-enforce-scan-loop-owner.md"},{"id":"t2-conformance-closure","command":"bench test --package ./internal/conformance","ticket":"2-enforce-scan-loop-owner.md"},{"id":"t2-root-conformance","command":"bench test --check root-conformance","ticket":"2-enforce-scan-loop-owner.md"},{"id":"t2-copy-check-omission","command":"bench test --package ./internal/conformance --run '^TestGuardScanLoopOwnerBitesOnPrivateCopy$'","probe":"Omit only the registered checkGuardScanLoopOwner call while retaining its function and tests; an unused old worker pipeline must stop producing the expected registered diagnostic and red this witness.","ticket":"2-enforce-scan-loop-owner.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check guard-scan-loop"},{"id":"scan-and-command","command":"bench test --package ./internal/guards"},{"id":"command-closure","command":"bench test --package ./cmd/bench"},{"id":"registered-owner","command":"bench test --check package-core-guard"},{"id":"conformance-closure","command":"bench test --package ./internal/conformance"},{"id":"root-conformance","command":"bench test --check root-conformance"}]}
 ```
 
 ## Testing decisions
@@ -347,19 +264,19 @@ The registered conformance checks attach to the production scan ownership bounda
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| GS01 | 1 | A complete canned scan retains candidate order and row order | planned TestScanLoopCompleteOrder in internal/guards/scan_loop_test.go | A reordered loop changes inventory meaning |
-| GS02 | 1 | Enumeration runs once per Scan call | planned TestScanLoopEnumeratesOnce in internal/guards/scan_loop_test.go | A retry or per-candidate enumeration duplicates work |
-| GS03 | 4 | A pre-cancelled Scan starts no operation | planned TestScanLoopPreCancelled in internal/guards/scan_loop_test.go | Cancellation is checked only after starting filesystem work |
+| GS01 | 1 | A complete canned scan retains candidate order and row order | `internal/guards/scan_loop_test.go` (`TestScanLoopCompleteOrder`) | A reordered loop changes inventory meaning |
+| GS02 | 1 | Enumeration runs once per Scan call | `internal/guards/scan_loop_test.go` (`TestScanLoopCompleteOrder`) | A retry or per-candidate enumeration duplicates work |
+| GS03 | 4 | A pre-cancelled Scan starts no operation | `internal/guards/scan_loop_test.go` (`TestScanLoopPreCancelled`) | Cancellation is checked only after starting filesystem work |
 | GS04 | 4 | Cancellation during enumeration retains unknown Total and Omitted fields | `internal/guards/guards_test.go` (`TestScanEnumerationTimeoutUsesUnknownCounts`) | Returned partial candidates fabricate known totals |
-| GS05 | 2 | Cancellation before the next inspection retains the completed row prefix | planned TestScanLoopBetweenCandidates in internal/guards/scan_loop_test.go | The loop drops completed rows or starts the next candidate |
+| GS05 | 2 | Cancellation before the next inspection retains the completed row prefix | `internal/guards/scan_loop_test.go` (`TestScanLoopBetweenCandidates`) | The loop drops completed rows or starts the next candidate |
 | GS06 | 3 | A cancelled inspection yields Omitted=Total-Inspected | `internal/guards/guards_test.go` (`TestScanTimeoutPreservesPartialRowsAndHonestCounts`) | The interrupted candidate is counted as inspected |
-| GS07 | 3 | An active-context inspection with no rows still increments Inspected | planned TestScanLoopEmptyInspectionCounts in internal/guards/scan_loop_test.go | Counting rows instead of candidates reports false omissions |
+| GS07 | 3 | An active-context inspection with no rows still increments Inspected | `internal/guards/scan_loop_test.go` (`TestScanLoopEmptyInspectionCounts`) | Counting rows instead of candidates reports false omissions |
 | GS08 | 5 | Scan returns only after cancelled inspection cleanup completes | `internal/guards/guards_cleanup_test.go` (`TestScanWaitsForCancelledWorkerCleanup`) | Returning on cancellation races unfinished work |
-| GS09 | 2 | Cancellation observed after inspection prevents that candidate's rows from publication | planned TestScanLoopPostInspectionCancellation in internal/guards/scan_loop_test.go | The loop publishes an interrupted candidate |
-| GS10 | 3, 4 | Complete and cancelled scans retain all ScanResult metadata values | planned TestScanLoopResultMetadata in internal/guards/scan_loop_test.go | A renamed or defaulted field changes the result contract |
-| GS11 | 6 | An operation that ignores cancellation keeps Scan pending until release | planned TestScanLoopBlockingOperationHasNoHardDeadline in internal/guards/scan_loop_test.go | A false deadline returns while filesystem work remains active |
-| GS12 | 1 | A non-cancellation enumeration error retains the current complete result | planned TestScanLoopEnumerationError in internal/guards/scan_loop_test.go | A refactor silently introduces a new refusal state |
-| GS13 | 7 | Absent and empty hook directories retain the pre-push candidate | planned TestScanLoopAbsentAndEmptyHooks in internal/guards/scan_loop_test.go | Optional hook surfaces change the inventory total |
+| GS09 | 2 | Cancellation observed after inspection prevents that candidate's rows from publication | `internal/guards/scan_loop_test.go` (`TestScanLoopPostInspectionCancellation`) | The loop publishes an interrupted candidate |
+| GS10 | 3, 4 | Complete and cancelled scans retain all ScanResult metadata values | `internal/guards/scan_loop_test.go` (`TestScanLoopResultMetadata`) | A renamed or defaulted field changes the result contract |
+| GS11 | 6 | An operation that ignores cancellation keeps Scan pending until release | `internal/guards/scan_loop_test.go` (`TestScanLoopBlockingOperationHasNoHardDeadline`) | A false deadline returns while filesystem work remains active |
+| GS12 | 1 | A non-cancellation enumeration error retains the current complete result | `internal/guards/scan_loop_test.go` (`TestScanLoopEnumerationError`) | A refactor silently introduces a new refusal state |
+| GS13 | 7 | Absent and empty hook directories retain the pre-push candidate | `internal/guards/scan_loop_test.go` (`TestScanLoopDifferentialCommandFamilies/hooks-absent`, `TestScanLoopDifferentialCommandFamilies/hooks-empty`) | Optional hook surfaces change the inventory total |
 | GS14 | 8 | Static header, symlink, and incomplete-header cases retain their current rows | `internal/guards/guards_test.go` (`TestGuardRowReadsStaticHeader`) | The loop begins executing hooks or broadens header recognition |
 | GS15 | 8 | FIFO header inspection returns without opening the FIFO | `internal/guards/guards_test.go` (`TestGuardRowRejectsFIFOWithoutOpening`) | A moved read blocks on a special file |
 | GS16 | 9 | Claude and Codex wiring retain the same row facts | `internal/guards/guards_test.go` (`TestRowsReportFollowOnManifestAndBothHarnessWires`) | Enumeration migration loses a harness configuration |
@@ -367,16 +284,16 @@ The registered conformance checks attach to the production scan ownership bounda
 | GS18 | 11 | Enumeration timeout stdout matches its existing unknown-count fixture | `internal/guards/guards_test.go` (`TestCommandPreservesCheckedInEnumerationTimeoutPrimaryResponse`) | The command renders fabricated counts |
 | GS19 | 12 | Complete stale and unwired stdout retains the existing action fixture | `internal/guards/guards_test.go` (`TestCommandPreservesCheckedInStaleAndUnwiredPrimaryResponse`) | The new loop changes help order or duplicates actions |
 | GS20 | 11, 13 | Inspection timeout stdout retains its existing fixture without action help | `internal/guards/guards_test.go` (`TestCommandPreservesCheckedInIncompleteTimeoutPrimaryResponse`) | Partial data emits misleading complete-scan guidance |
-| GS21 | 14 | Invalid arguments and a non-repository retain their command error tuples | planned TestScanLoopCommandErrors in internal/guards/scan_loop_test.go | Simplification changes Command's operand or root failure policy |
-| GS22 | 1 | Rows retains Scan(background).Rows behavior | planned TestScanLoopRowsAdapter in internal/guards/scan_loop_test.go | A second public path keeps the old scanner |
-| GS23 | 15 | A renamed unused worker-pipeline copy makes package-core-guard red | planned TestGuardScanLoopOwnerBitesOnPrivateCopy in internal/conformance/guard_scan_owner_test.go | New loop tests pass while the old implementation survives |
-| GS24 | 15 | A linked consumer without kit scan source passes the ownership subcheck | planned TestGuardScanLoopOwnerOptionalSurface in internal/conformance/guard_scan_owner_test.go | The new invariant rejects ordinary consumer repositories |
-| GS25 | 15 | A kit source tree with a missing or unreadable scan owner receives a named diagnostic | planned TestGuardScanLoopOwnerMissingOwner in internal/conformance/guard_scan_owner_test.go | A missing owner makes the check vacuously green |
-| GS26 | 15, 16 | The live-tree check runs through its registered owner with explicit classification | planned TestGuardScanLoopOwnerHoldsOnTheLiveTree in internal/conformance/guard_scan_owner_test.go | A private helper or hidden test never grades the ordinary root |
-| GS27 | 16, 17 | Deterministic scan family S produces identical command tuples before and after migration | planned TestScanLoopDifferentialCommandFamilies in internal/guards/scan_loop_test.go | Existing partial fixtures miss an unasserted command change |
-| GS28 | 1, 6 | Cancellation after the final completion checkpoint leaves the complete result unchanged | planned TestScanLoopAfterFullCompletion in internal/guards/scan_loop_test.go | A late context read discards fully completed work |
+| GS21 | 14 | Invalid arguments and a non-repository retain their command error tuples | `internal/guards/scan_loop_test.go` (`TestScanLoopDifferentialCommandFamilies/invalid-arguments`, `TestScanLoopDifferentialCommandFamilies/outside-repository`) | Simplification changes Command's operand or root failure policy |
+| GS22 | 1 | Rows retains Scan(background).Rows behavior | `internal/guards/scan_loop_test.go` (`TestScanLoopRowsAdapter`) | A second public path keeps the old scanner |
+| GS23 | 15 | A renamed unused worker-pipeline copy makes package-core-guard red | `internal/conformance/guard_scan_owner_test.go` (`TestGuardScanLoopOwnerBitesOnPrivateCopy`) | New loop tests pass while the old implementation survives |
+| GS24 | 15 | A linked consumer without kit scan source passes the ownership subcheck | `internal/conformance/guard_scan_owner_test.go` (`TestGuardScanLoopOwnerOptionalSurface`) | The new invariant rejects ordinary consumer repositories |
+| GS25 | 15 | A kit source tree with a missing or unreadable scan owner receives a named diagnostic | `internal/conformance/guard_scan_owner_test.go` (`TestGuardScanLoopOwnerMissingOwner`) | A missing owner makes the check vacuously green |
+| GS26 | 15, 16 | The live-tree check runs through its registered owner with explicit classification | `internal/conformance/guard_scan_owner_test.go` (`TestGuardScanLoopOwnerHoldsOnTheLiveTree`) | A private helper or hidden test never grades the ordinary root |
+| GS27 | 16, 17 | Deterministic scan family S produces identical command tuples before and after migration | `internal/guards/scan_loop_test.go` (`TestScanLoopDifferentialCommandFamilies`) | Existing partial fixtures miss an unasserted command change |
+| GS28 | 1, 6 | Cancellation after the final completion checkpoint leaves the complete result unchanged | `internal/guards/scan_loop_test.go` (`TestScanLoopAfterFullCompletion`) | A late context read discards fully completed work |
 | GS29 | 18 | guards.go keeps the `bounds.VerdictWindow(bounds.GuardScanTimeout)` text that bounds-policy pins | `internal/conformance/bounds_policy_test.go` (`checkBoundsPolicy`, registered as bounds-policy) | A rewrite that drops or respells the policy line reds bounds-policy with "does not consume" |
-| GS30 | 4 | Enumeration that returns a nonempty candidate slice with a nil error after cancellation leaves Total and Omitted unknown and starts no inspection | planned TestScanLoopEnumerationReturnsAfterCancellation in internal/guards/scan_loop_test.go | A checkpoint gated on the enumeration error alone publishes known counts for this return |
+| GS30 | 4 | Enumeration that returns a nonempty candidate slice with a nil error after cancellation leaves Total and Omitted unknown and starts no inspection | `internal/guards/scan_loop_test.go` (`TestScanLoopEnumerationReturnsAfterCancellation`) | A checkpoint gated on the enumeration error alone publishes known counts for this return |
 
 GS27 runs preserved pre-change and candidate owner-package test executables over the same controlled enumeration and inspection events.
 Prepare the contract driver before you replace the loop, then retain its pre-change executable as the reference.
@@ -394,7 +311,7 @@ No elapsed-time equality is required, and no production filesystem race defines 
 | pre-cancelled | cancelled context before Scan | no enumeration, unknown counts |
 | enumeration cancellation, error return | barrier releases only after cancellation; enumeration returns the context error | unknown total and omitted counts (GS04) |
 | enumeration cancellation, success return | barrier releases only after cancellation; enumeration returns candidates and a nil error | unknown total and omitted counts, no inspection (GS30) |
-| between candidates | cancel after publishing a completed candidate | completed prefix and known omitted arithmetic |
+| between candidates | cancel after publishing a completed candidate; GS05 drives it through a direct Scan, and family S omits it, because no Command cancel event lands between two candidates | completed prefix and known omitted arithmetic |
 | inspection cancellation | candidate returns after cancellation | no interrupted candidate publication |
 | no rows | inspection completes with an empty row slice | candidate still counted |
 | enumeration error | injected error while context is active | existing complete result |
@@ -417,7 +334,9 @@ The direct loop introduces no new cleanup-error state.
 **Won't handle** new enumeration-error diagnostics — Scan retains its existing active-context result.
 **Won't handle** new hook execution — HeaderFields remains a static reader.
 **Won't handle** guard grammar or envelope policy — the separate shared-guard-projection outcome owns those migrations.
-**Won't handle** historical line pins to Scan in `ASSESSMENT.md:42` and `docs/research/bench-efficiency-assessment-2026-10-06.md:122` — they describe a dated tree and are not contracts.
+**Won't handle** the historical line pin to Scan in `ASSESSMENT.md:42` — it describes a dated tree and is not a contract.
+**Won't handle** a channel made from a named channel type — the ownership subcheck grades syntax, and that type needs go/types.
+**Won't handle** goroutine starts with no go statement — `sync.WaitGroup.Go`, `context.AfterFunc`, `time.AfterFunc`, and errgroup need import bindings or go/types, and the ownership subcheck grades syntax only.
 **Won't handle** the stale column list in the package comment (`guards.go:1-2`) — it predates this spec, and the refactor does not change the output.
 
 ## Out of scope
@@ -453,7 +372,7 @@ Flagged additions for reviewer veto:
 
 - GS29 and story 18 are new. They name an existing pin that the 2026-10-06 spec missed; they add no product behavior.
 - The refresh drops six paths from the 2026-10-06 fence, as Graph ordering states.
-- The ownership subcheck bans go statements, select statements, and channel constructs in all production Go under internal/guards. This ban is wider than copy survival, and it also refuses any future concurrency there. Keep it, or narrow it to the copy of the old pipeline.
+- The ownership subcheck bans go statements, select statements, and channel constructs in all production Go under internal/guards. This ban is wider than copy survival, and it also refuses any future syntax-level concurrency there (go, select, and channel constructs). Keep it, or narrow it to the copy of the old pipeline.
 - The spec keeps `Related roadmap: FT366` instead of a `Roadmap:` line. FT366 closes only when both bound specs land, so a retiring spec must not remove the shared row.
 
 The private-loop ownership check enforces the approved removal of worker indirection.

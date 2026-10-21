@@ -1,0 +1,278 @@
+=== member: complete
+--- args [] exit 0
+guards[3]{guard,boundary,denies,branch,provenance,currency,wired}:
+  one,boundary of one,denies of one,"","",current,claude
+  multi-stale,boundary of multi-stale,denies of multi-stale,"","",stale,claude
+  multi-unwired,boundary of multi-unwired,denies of multi-unwired,"","","",none
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"3","3","0",none
+help[2]{cmd,why}:
+  bench link,repair multi-stale
+  bench link,repair multi-unwired
+--- stderr
+--- args ["--brief"] exit 0
+one: denies of one [wired: claude]
+multi-stale: denies of multi-stale [wired: claude]
+multi-unwired: denies of multi-unwired [wired: none]
+guard_scan: status=complete inspected=3 total=3 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"one", "boundary of one", "denies of one", "", "", "current", "claude"}, []string{"multi-stale", "boundary of multi-stale", "denies of multi-stale", "", "", "stale", "claude"}, []string{"multi-unwired", "boundary of multi-unwired", "denies of multi-unwired", "", "", "", "none"}}, Status:"complete", Inspected:"3", Total:"3", Omitted:"0", Reason:"none"}
+=== member: pre-cancelled
+--- args [] exit 0
+guards[0]{guard,boundary,denies,branch,provenance,currency,wired}:
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  incomplete,"0",unknown,unknown,timeout
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+guard_scan: status=incomplete inspected=0 total=unknown omitted=unknown reason=timeout
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string(nil), Status:"incomplete", Inspected:"0", Total:"unknown", Omitted:"unknown", Reason:"timeout"}
+=== member: enumeration-cancelled-error
+--- args [] exit 0
+guards[0]{guard,boundary,denies,branch,provenance,currency,wired}:
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  incomplete,"0",unknown,unknown,timeout
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+guard_scan: status=incomplete inspected=0 total=unknown omitted=unknown reason=timeout
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string(nil), Status:"incomplete", Inspected:"0", Total:"unknown", Omitted:"unknown", Reason:"timeout"}
+=== member: enumeration-cancelled-candidates
+--- args [] exit 0
+guards[0]{guard,boundary,denies,branch,provenance,currency,wired}:
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  incomplete,"0",unknown,unknown,timeout
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+guard_scan: status=incomplete inspected=0 total=unknown omitted=unknown reason=timeout
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string(nil), Status:"incomplete", Inspected:"0", Total:"unknown", Omitted:"unknown", Reason:"timeout"}
+=== member: inspection-cancelled-empty
+--- args [] exit 0
+guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:
+  one,boundary of one,denies of one,"","",current,claude
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  incomplete,"1","2","1",timeout
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+one: denies of one [wired: claude]
+guard_scan: status=incomplete inspected=1 total=2 omitted=1 reason=timeout
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"one", "boundary of one", "denies of one", "", "", "current", "claude"}}, Status:"incomplete", Inspected:"1", Total:"2", Omitted:"1", Reason:"timeout"}
+=== member: inspection-cancelled-rows
+--- args [] exit 0
+guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:
+  one,boundary of one,denies of one,"","",current,claude
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  incomplete,"1","2","1",timeout
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+one: denies of one [wired: claude]
+guard_scan: status=incomplete inspected=1 total=2 omitted=1 reason=timeout
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"one", "boundary of one", "denies of one", "", "", "current", "claude"}}, Status:"incomplete", Inspected:"1", Total:"2", Omitted:"1", Reason:"timeout"}
+=== member: blocking-operation
+--- args [] exit 0
+guards[0]{guard,boundary,denies,branch,provenance,currency,wired}:
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  incomplete,"0","1","1",timeout
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+guard_scan: status=incomplete inspected=0 total=1 omitted=1 reason=timeout
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string(nil), Status:"incomplete", Inspected:"0", Total:"1", Omitted:"1", Reason:"timeout"}
+=== member: enumeration-error-candidates
+--- args [] exit 0
+guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:
+  one,boundary of one,denies of one,"","",current,claude
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"1","1","0",none
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+one: denies of one [wired: claude]
+guard_scan: status=complete inspected=1 total=1 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"one", "boundary of one", "denies of one", "", "", "current", "claude"}}, Status:"complete", Inspected:"1", Total:"1", Omitted:"0", Reason:"none"}
+=== member: enumeration-error-empty
+--- args [] exit 0
+guards[0]{guard,boundary,denies,branch,provenance,currency,wired}:
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"0","0","0",none
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+guard_scan: status=complete inspected=0 total=0 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string(nil), Status:"complete", Inspected:"0", Total:"0", Omitted:"0", Reason:"none"}
+=== member: hooks-absent
+--- args [] exit 0
+guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:
+  pre-push,"",not installed,"","",not-applicable,git
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"1","1","0",none
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+pre-push: not installed [branch:  provenance:  currency: not-applicable wired: git]
+guard_scan: status=complete inspected=1 total=1 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"pre-push", "", "not installed", "", "", "not-applicable", "git"}}, Status:"complete", Inspected:"1", Total:"1", Omitted:"0", Reason:"none"}
+=== member: hooks-empty
+--- args [] exit 0
+guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:
+  pre-push,"",not installed,"","",not-applicable,git
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"1","1","0",none
+help[0]{cmd,why}:
+--- stderr
+--- args ["--brief"] exit 0
+pre-push: not installed [branch:  provenance:  currency: not-applicable wired: git]
+guard_scan: status=complete inspected=1 total=1 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"pre-push", "", "not installed", "", "", "not-applicable", "git"}}, Status:"complete", Inspected:"1", Total:"1", Omitted:"0", Reason:"none"}
+=== member: static-headers
+--- args [] exit 0
+guards[4]{guard,boundary,denies,branch,provenance,currency,wired}:
+  full-guard,"PreToolUse:Bash",full-guard denials,"","","",none
+  headerless,"",no manifest,"","","",none
+  incomplete,"",no manifest,"","","",none
+  pre-push,"",not installed,"","",not-applicable,git
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"5","5","0",none
+help[3]{cmd,why}:
+  bench link,repair full-guard
+  bench link,repair headerless
+  bench link,repair incomplete
+--- stderr
+--- args ["--brief"] exit 0
+full-guard: full-guard denials [wired: none]
+headerless: no manifest [wired: none]
+incomplete: no manifest [wired: none]
+pre-push: not installed [branch:  provenance:  currency: not-applicable wired: git]
+guard_scan: status=complete inspected=5 total=5 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"full-guard", "PreToolUse:Bash", "full-guard denials", "", "", "", "none"}, []string{"headerless", "", "no manifest", "", "", "", "none"}, []string{"incomplete", "", "no manifest", "", "", "", "none"}, []string{"pre-push", "", "not installed", "", "", "not-applicable", "git"}}, Status:"complete", Inspected:"5", Total:"5", Omitted:"0", Reason:"none"}
+=== member: symlink-and-missing-headers
+--- args [] exit 0
+guards[4]{guard,boundary,denies,branch,provenance,currency,wired}:
+  full-guard,"PreToolUse:Bash",full-guard denials,"","","",none
+  full-guard,"PreToolUse:Bash",full-guard denials,"","","",none
+  missing,"",no manifest,"","","",none
+  pre-push,"",not installed,"","",not-applicable,git
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"4","4","0",none
+help[2]{cmd,why}:
+  bench link,repair full-guard
+  bench link,repair missing
+--- stderr
+--- args ["--brief"] exit 0
+full-guard: full-guard denials [wired: none]
+full-guard: full-guard denials [wired: none]
+missing: no manifest [wired: none]
+pre-push: not installed [branch:  provenance:  currency: not-applicable wired: git]
+guard_scan: status=complete inspected=4 total=4 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"full-guard", "PreToolUse:Bash", "full-guard denials", "", "", "", "none"}, []string{"full-guard", "PreToolUse:Bash", "full-guard denials", "", "", "", "none"}, []string{"missing", "", "no manifest", "", "", "", "none"}, []string{"pre-push", "", "not installed", "", "", "not-applicable", "git"}}, Status:"complete", Inspected:"4", Total:"4", Omitted:"0", Reason:"none"}
+=== member: fifo-header
+--- args [] exit 0
+guards[2]{guard,boundary,denies,branch,provenance,currency,wired}:
+  special,"",no manifest,"","","",none
+  pre-push,"",not installed,"","",not-applicable,git
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"2","2","0",none
+help[1]{cmd,why}:
+  bench link,repair special
+--- stderr
+--- args ["--brief"] exit 0
+special: no manifest [wired: none]
+pre-push: not installed [branch:  provenance:  currency: not-applicable wired: git]
+guard_scan: status=complete inspected=2 total=2 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"special", "", "no manifest", "", "", "", "none"}, []string{"pre-push", "", "not installed", "", "", "not-applicable", "git"}}, Status:"complete", Inspected:"2", Total:"2", Omitted:"0", Reason:"none"}
+=== member: wiring-claude-and-codex
+--- args [] exit 0
+guards[3]{guard,boundary,denies,branch,provenance,currency,wired}:
+  a-wired,"PreToolUse:Bash",a-wired denials,"","","","claude,codex"
+  z-unwired,"PreToolUse:Bash",z-unwired denials,"","","",none
+  pre-push,"",not installed,"","",not-applicable,git
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"3","3","0",none
+help[1]{cmd,why}:
+  bench link,repair z-unwired
+--- stderr
+--- args ["--brief"] exit 0
+a-wired: a-wired denials [wired: claude,codex]
+z-unwired: z-unwired denials [wired: none]
+pre-push: not installed [branch:  provenance:  currency: not-applicable wired: git]
+guard_scan: status=complete inspected=3 total=3 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"a-wired", "PreToolUse:Bash", "a-wired denials", "", "", "", "claude,codex"}, []string{"z-unwired", "PreToolUse:Bash", "z-unwired denials", "", "", "", "none"}, []string{"pre-push", "", "not installed", "", "", "not-applicable", "git"}}, Status:"complete", Inspected:"3", Total:"3", Omitted:"0", Reason:"none"}
+=== member: wiring-empty-and-invalid
+--- args [] exit 0
+guards[2]{guard,boundary,denies,branch,provenance,currency,wired}:
+  a-wired,"PreToolUse:Bash",a-wired denials,"","","",none
+  pre-push,"",not installed,"","",not-applicable,git
+guard_scan[1]{status,inspected,total,omitted,reason}:
+  complete,"2","2","0",none
+help[1]{cmd,why}:
+  bench link,repair a-wired
+--- stderr
+--- args ["--brief"] exit 0
+a-wired: a-wired denials [wired: none]
+pre-push: not installed [branch:  provenance:  currency: not-applicable wired: git]
+guard_scan: status=complete inspected=2 total=2 omitted=0 reason=none
+full manifests: bench guards
+--- stderr
+--- scan
+guards.ScanResult{Rows:[][]string{[]string{"a-wired", "PreToolUse:Bash", "a-wired denials", "", "", "", "none"}, []string{"pre-push", "", "not installed", "", "", "not-applicable", "git"}}, Status:"complete", Inspected:"2", Total:"2", Omitted:"0", Reason:"none"}
+=== member: invalid-arguments
+--- args ["--bogus"] exit 2
+usage: bench guards (unknown argument: --bogus)
+--- stderr
+--- args ["--brief" "extra"] exit 2
+usage: bench guards (unknown argument: extra)
+--- stderr
+=== member: outside-repository
+--- args [] exit 1
+error: not in a git repository — run inside a Bench-linked repo
+--- stderr
+--- args ["--brief"] exit 1
+error: not in a git repository — run inside a Bench-linked repo
+--- stderr
