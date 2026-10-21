@@ -14,6 +14,7 @@ Most rows cite the landed degraded-guard witnesses; new tests cover only GP38, G
 GP44 checks census exclusion through the core entry in `cmd/bench/guard_projection_test.go`, which ticket 2 created.
 This regression repeats earlier cases; it does not supply a missing earlier test or repair.
 
+Prefix each new package-level helper name in `internal/systemtest` with `projection`, so it cannot collide with a helper that ticket 7 adds to the same package.
 Give the new system test file the `//go:build system` tag. Write no literal wait deadline in a new test (`wait_deadline_literal_test.go:33-39`).
 Do not call `Skip`, `Skipf`, or `SkipNow` in a new test (`cmd/bench/skip_ownership_test.go:30-64`).
 Each new file stays within 400 lines. Add no grant.

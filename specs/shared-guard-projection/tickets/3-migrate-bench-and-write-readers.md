@@ -25,4 +25,4 @@ Each new file stays within 400 lines.
 - [ ] The Bench and Write rows of the decoder preservation matrix give their stated results at their stated seams (GP48, GP50, GP52, GP53, GP55, GP56, GP58, GP59, GP61).
 - [ ] Replacing the Bench caller's `InputMap` selection with `CommandStruct` makes `TestBenchEnvelopeRequiredField` or `TestBenchEnvelopeValue` red, and restoration returns the same green.
 - [ ] Replacing the Write caller's `CwdInputMap` selection with `InputMap` makes `TestGuardWriteEnvelopePolicy` red, and restoration returns the same green.
-- [ ] No reader outside `internal/shellcommand` calls `json.Unmarshal` on a hook envelope.
+- [ ] gitguard, benchguard, and writeguard call no `json.Unmarshal` on a hook envelope. The two excluded non-guard readers (`cmd/bench/main.go:333`, `internal/lines/lines.go:121`) stay unchanged.

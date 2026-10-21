@@ -340,7 +340,7 @@ The version-1 completion plan is a planning verification inventory, not a dispat
 Before any implementation charge, the coordinator binds actual run and session identities and ticket verification ownership in version 2 with author-limit 1.
 Each ticket receives a fresh author on opus/medium, with the GP2 and GP3 tickets at high.
 Refresh current owner interfaces, source closure, and actual headroom before that charge.
-Build and retain the pre-migration executable for GP46 before GP1 begins.
+Create and build a Bench worktree at the build-entry commit for GP46 before GP1 begins.
 Staged status and planning validation grant no build authority.
 
 ### Completion plan
@@ -651,7 +651,8 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP74 | 2 | The Git guard reads only the first matching child in W4 and keeps the allow verdict for `bash -c 'echo ok' -c 'git reset --hard'` | planned TestGuardWrapperSelection in internal/gitguard/projection_contract_test.go | A Git consumer that searches every child refuses the second-flag reset |
 
 GP46 compares the candidate executable with tuples recorded from a pre-migration executable.
-Build that executable at the integrated source at build entry, before GP1 begins, and retain it outside the tree; record its build commit so it can be rebuilt.
+Before GP1 begins, create a Bench worktree at the build-entry commit, build it, and record the commit so it can be rebuilt.
+The system owner verifies a run binary against its kit source, so the recording run sets `BENCH_RUN_BINARY` to that worktree's executable and `BENCH_KIT` to that worktree.
 Replace each temporary fixture root in a tuple with one fixed token before you record or compare it.
 Ticket 7 runs its driver once against that executable and stores the tuples as `internal/systemtest/testdata/guard-projection-family-d.golden`, reviewed apart from the candidate code.
 The landed test compares the candidate with that golden, so it needs no retained executable.

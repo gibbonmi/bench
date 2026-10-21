@@ -16,6 +16,8 @@ It ignores comments and fixture strings. A consumer root without kit guard sourc
 The subcheck engages only on a root that holds `internal/conformance` and at least one governed guard package. The `guard-classifier-table/word-test-drops-xargs` canary tree holds no guard package, so it must get no new diagnostic.
 Keep the registry name, tier, subject, and input binding. Classify every test in `guard_projection_owner_test.go` that reads live sources in `tier_live_tree_test.go`.
 Keep the resolver, classifier-table, and entry-point-parity checks on their registered execution paths.
+The check must not flag Git's own `worktree` subcommand handling (`gitguard/verdict.go:70`, `gitguard.go:83`); it refuses only the adjacent `worktree exec … --` child extraction.
+To stay within about 200k context, read only the migrated call sites in the guard packages, and read the four retired functions through `git show <build-entry commit>:<path>` for the mutation tests.
 
 If `checkPackageCoreAndGuards` is still in package_core_checks_test.go, move only that 16-line declaration to checks_test.go and add the subcheck there.
 If the guard-scan-loop outcome moved it first, extend that sole declaration and keep its subcheck.
