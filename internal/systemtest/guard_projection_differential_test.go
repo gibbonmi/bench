@@ -146,10 +146,17 @@ func TestGuardProjectionDifferentialFamilies(t *testing.T) {
 	if len(got) != len(want) {
 		t.Errorf("GP46 tuple count = %d, want %d", len(got), len(want))
 	}
+	// The first failure line names every differing member, so a bounded report shows each one.
+	var members, tuples []string
 	for i := range min(len(got), len(want)) {
 		if got[i] != want[i] {
-			t.Errorf("GP46 member differs from the golden:\ngot  %s\nwant %s", got[i], want[i])
+			member, _, _ := strings.Cut(want[i], " exit=")
+			members = append(members, member)
+			tuples = append(tuples, "got  "+got[i], "want "+want[i])
 		}
+	}
+	if len(members) > 0 {
+		t.Errorf("GP46 members differ from the golden: %s\n%s", strings.Join(members, "; "), strings.Join(tuples, "\n"))
 	}
 }
 
