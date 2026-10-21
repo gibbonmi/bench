@@ -2,19 +2,15 @@
 package benchguard
 
 import (
-	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/shellcommand"
 )
-
-var wrapperFlag = regexp.MustCompile(`^-[A-Za-z]*c[A-Za-z]*$`)
 
 type Resolver struct {
 	Getwd        func() (string, error)
@@ -27,18 +23,15 @@ func DefaultResolver() Resolver {
 }
 
 func CommandFromEnvelope(data []byte) (string, error) {
-	var envelope struct {
-		ToolInput map[string]json.RawMessage `json:"tool_input"`
-	}
-	if err := json.Unmarshal(data, &envelope); err != nil {
+	envelope, err := shellcommand.DecodeEnvelope(data, shellcommand.InputMap)
+	if err != nil {
 		return "", err
 	}
-	raw, ok := envelope.ToolInput["command"]
+	command, ok, err := envelope.InputString("command")
 	if !ok {
 		return "", errors.New("command field missing")
 	}
-	var command string
-	if err := json.Unmarshal(raw, &command); err != nil {
+	if err != nil {
 		return "", err
 	}
 	if command == "" {
@@ -131,25 +124,24 @@ func judge(stream shellcommand.Stream, resolver Resolver, outer bool) Verdict {
 			continue
 		}
 		if isBench(words[prefix.Index], resolver) {
-			if outer && isExecHead(words, prefix.Index) {
+			if outer && shellcommand.WorktreeExec(words, prefix.Index).Head {
 				return judgeExec(stream, index, words, resolver)
 			}
 			blocked := refusal(stream, index, words, false)
 			blocked.Blocked = !leadAllowed(stream, index) || hasSyntaxFrom(stream, span.Start)
 			return blocked
 		}
-		if !outer || !isWrapper(words[prefix.Index]) {
+		if !outer {
 			continue
 		}
-		for i := prefix.Index + 1; i+1 < len(words); i++ {
-			child := shellcommand.Parse(words[i+1])
-			if !wrapperFlag.MatchString(words[i]) || !invokes(child, resolver, false) {
+		for _, child := range shellcommand.ShellChildren(words, prefix.Index) {
+			if !invokes(child.Stream, resolver, false) {
 				continue
 			}
 			if hasOuterSyntax(stream) {
 				return refusal(stream, index, words, false)
 			}
-			if inner := judge(child, resolver, false); inner.Blocked {
+			if inner := judge(child.Stream, resolver, false); inner.Blocked {
 				return inner
 			}
 		}
@@ -246,12 +238,6 @@ func hasSyntaxFrom(stream shellcommand.Stream, start int) bool {
 	return false
 }
 
-// isExecHead reports whether the segment's head is a direct `bench worktree exec`
-// call, which is the only head the exception covers.
-func isExecHead(words []string, index int) bool {
-	return index+2 < len(words) && words[index+1] == "worktree" && words[index+2] == "exec"
-}
-
 // operatorFor names the token adjacent to one segment, and the side it sits on, by the
 // refusal's precedence. The heredocAllowed flag marks a segment the exec exception
 // covers: a heredoc there is legal, so it never names the cause, and the next
@@ -312,24 +298,14 @@ func spanInvokesBench(words []string, resolver Resolver, wrapper bool) bool {
 	if isBench(words[prefix.Index], resolver) {
 		return true
 	}
-	if !wrapper || !isWrapper(words[prefix.Index]) {
+	if !wrapper {
 		return false
 	}
-	for i := prefix.Index + 1; i+1 < len(words); i++ {
-		if wrapperFlag.MatchString(words[i]) && invokes(shellcommand.Parse(words[i+1]), resolver, false) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(shellcommand.ShellChildren(words, prefix.Index), func(child shellcommand.WrapperChild) bool {
+		return invokes(child.Stream, resolver, false)
+	})
 }
 
-func isWrapper(word string) bool {
-	switch filepath.Base(word) {
-	case "sh", "bash", "zsh":
-		return true
-	}
-	return false
-}
 func isBench(word string, r Resolver) bool {
 	if word == "bench" {
 		return true

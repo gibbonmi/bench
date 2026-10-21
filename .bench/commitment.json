@@ -1503,6 +1503,14 @@
       "identity": "sha256:2d45844ead152d37313a32d2b9db29b2b44a1d6da0d8b25ecd2c0aab86696fb8",
       "source": "ff8095631666466b10de508ccb1fc83702983233",
       "evidence": "2d6bfa3f30292616f86e1fd001a04feeecdfdd9d"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT366-guard-residual",
+      "binding": "shared-guard-projection",
+      "identity": "sha256:0f87dd6317d6d57f5ad144f7cdcf6928ee530899183d87a91754fb451fbc93ce",
+      "source": "8ad9217686bfa9ceebe71d4aaf0ef268b9133016",
+      "evidence": "cbe5ea1ccc99d062b88c373eac88190cf1dc2313"
     }
   ]
 }

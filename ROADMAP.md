@@ -336,12 +336,11 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT366-guard-residual
-2. FT409
-3. FT402
-4. FT362-process-lifetime
-5. FT360-shared-fixtures
-6. FT411
-7. FT314-gate-reuse
-8. FT125-exact-readers
-9. FT375-residual
+1. FT409
+2. FT402
+3. FT362-process-lifetime
+4. FT360-shared-fixtures
+5. FT411
+6. FT314-gate-reuse
+7. FT125-exact-readers
+8. FT375-residual
