@@ -681,6 +681,72 @@
           "supersedes": [
             "c2-coverage-r2"
           ]
+        },
+        {
+          "id": "c2-standards-r4",
+          "performer": "claude:tcs-c2-standards-r4-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "9be17cb51fd80fb5567656b3ebfd8a142f0213c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-standards-r4-20261021",
+            "digest": "sha256:0599e10e7ef04cc0f46895289b5eb3abc90d5baaf004dec8e759681b308055c5",
+            "excerpt": "Standards axis, TC-C2 at the moved base 6ba2c0406 (code tip 849d606f3, evidence tip 15bc2bd8d): PASS, 0 findings. The added range 6ba2c0406..f2a1a6934 changes only reviews/test-cost-signal.md (the TC-C1 record and review commits) and one line of the spec completion plan (the ticket 2 assignment entry). No code and no behavior change.\n"
+          },
+          "axis": "Standards",
+          "base": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
+          "tip": "849d606f3d57dc5321d847ba8076ebe3620d90a8",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r3"
+          ]
+        },
+        {
+          "id": "c2-spec-r4",
+          "performer": "claude:tcs-c2-spec-r4-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "9be17cb51fd80fb5567656b3ebfd8a142f0213c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-spec-r4-20261021",
+            "digest": "sha256:d922b47871d4049822db645af12ce394932d6fd448f4133661df155d89327404",
+            "excerpt": "Spec axis, TC-C2 at the moved base: PASS, 0 findings. The one spec change in 6ba2c0406..f2a1a6934 is the 2-slowest-tests.md assignment entry at spec.md:161; acceptance rows, tickets, coverage cells, and chunks are unchanged. The refrozen TC-C2 chunk entry names base 6ba2c0406 and tip 849d606f3.\n"
+          },
+          "axis": "Spec",
+          "base": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
+          "tip": "849d606f3d57dc5321d847ba8076ebe3620d90a8",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r3"
+          ]
+        },
+        {
+          "id": "c2-coverage-r4",
+          "performer": "claude:tcs-c2-coverage-r4-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "9be17cb51fd80fb5567656b3ebfd8a142f0213c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-coverage-r4-20261021",
+            "digest": "sha256:4be746671cc53e697b53696d3e0564d5d6a7a0c3afd2f60cc63922504604d4fd",
+            "excerpt": "Coverage axis, TC-C2 at the moved base: PASS, 0 findings. The added range changes no Go file and no tested behavior, so TC12-TC26 coverage is unchanged. The t2-r3 verification entries carry source digest 9be17cb51, which matches the TC-C2 chunk entry and the r3 reviews.\n"
+          },
+          "axis": "Coverage",
+          "base": "6ba2c0406751db07573d8c3929cfa4dff99ab355",
+          "tip": "849d606f3d57dc5321d847ba8076ebe3620d90a8",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-r3"
+          ]
         }
       ]
     }
