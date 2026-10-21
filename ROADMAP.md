@@ -353,3 +353,13 @@ recommended table is sequencing advice.
 6. FT314-gate-reuse
 7. FT125-exact-readers
 8. FT375-residual
+9. FT438-test-only
+10. FT344-remedy
+11. FT406-rebuild
+12. FT366-rg-guard
+13. FT380-residual
+14. FT354-strict-json
+15. FT363-member-set
+16. FT358-block-reader
+17. FT365-conformance
+18. FT414-preconditions

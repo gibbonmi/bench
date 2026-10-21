@@ -1236,6 +1236,194 @@
           "dependencies": [
             "FT293-closure-removal"
           ]
+        },
+        {
+          "id": "FT438-test-only",
+          "criteria": [
+            {
+              "id": "FT438-test-only.assignment",
+              "text": "A test-only repair whose delta adds only a completion-plan assignment block closes through bench record confirmation with no confirming round; every other plan change still takes one."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT438",
+              "path": "roadmap/FT438.md",
+              "identity": "sha256:c19d21864ea039b3dd2ddbe93ff43a6aeba729e4d1c7834abb6399d803d82d11"
+            }
+          ]
+        },
+        {
+          "id": "FT344-remedy",
+          "criteria": [
+            {
+              "id": "FT344-remedy.one-owner",
+              "text": "Every rebuild remedy for a pool worktree names bench worktree build from one owner."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT344",
+              "path": "roadmap/FT344.md",
+              "identity": "sha256:b927fd97a505b7ffdb373a8fb7eff0ebce1a5274ead4f6777a835efb8278ab04"
+            }
+          ]
+        },
+        {
+          "id": "FT406-rebuild",
+          "criteria": [
+            {
+              "id": "FT406-rebuild.fresh",
+              "text": "A commit in a build worktree leaves no stale dist/bench for the next preflight or --in verb."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT406",
+              "path": "roadmap/FT406.md",
+              "identity": "sha256:aed754faf293126519efe9467ae9d00323fe84b5238b6bf57e71747e34a45335"
+            }
+          ],
+          "dependencies": [
+            "FT344-remedy"
+          ]
+        },
+        {
+          "id": "FT366-rg-guard",
+          "criteria": [
+            {
+              "id": "FT366-rg-guard.pathless",
+              "text": "A PreToolUse guard refuses a pathless rg call through the shared command projection."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT366",
+              "path": "roadmap/FT366.md",
+              "identity": "sha256:425277dbe93364a7b7cce28ca37e1872169e3f95a236afe688824344c499bc2d"
+            }
+          ]
+        },
+        {
+          "id": "FT380-residual",
+          "criteria": [
+            {
+              "id": "FT380-residual.before-publication",
+              "text": "A plan commit runs the coverage parser, the build preflight, and the check-floor row before it publishes."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT380",
+              "path": "roadmap/FT380.md",
+              "identity": "sha256:973c1bdd832a91921d4dfbb214c7dc3e5edc6d19adc980e4ad8e2a2a48dcd693"
+            }
+          ]
+        },
+        {
+          "id": "FT354-strict-json",
+          "criteria": [
+            {
+              "id": "FT354-strict-json.one-owner",
+              "text": "Every strict JSON read goes through the one jsonfile owner."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "strict-json-ownership",
+                "path": "specs/strict-json-ownership/spec.md",
+                "identity": "sha256:9741209379b687f9a3ca1b816dd83af57dea627341dd9140a892b9d083a574d6"
+              }
+            }
+          ]
+        },
+        {
+          "id": "FT363-member-set",
+          "criteria": [
+            {
+              "id": "FT363-member-set.applier",
+              "text": "The clean modes share one member-set applier."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "cleanup-member-traversal",
+                "path": "specs/cleanup-member-traversal/spec.md",
+                "identity": "sha256:fc37cb1be76e7304075c9550383f2bf04b5ac5a5331836009bd2b508188deeec"
+              }
+            }
+          ],
+          "dependencies": [
+            "FT360-shared-fixtures"
+          ]
+        },
+        {
+          "id": "FT358-block-reader",
+          "criteria": [
+            {
+              "id": "FT358-block-reader.one-reader",
+              "text": "Authored Markdown has one line reader for fences, frontmatter, comments, and sections."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "markdown-block-reader",
+                "path": "specs/markdown-block-reader/spec.md",
+                "identity": "sha256:fc6dcf6d82322cd7ef4723998ebeb6db6b8c4403ab307687057e9251f9c0fd70"
+              }
+            }
+          ]
+        },
+        {
+          "id": "FT365-conformance",
+          "criteria": [
+            {
+              "id": "FT365-conformance.derived",
+              "text": "Conformance tests derive restated tables from their owners and share one Go-rule scanner."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "conformance-observation-follow-on",
+                "path": "specs/conformance-observation-follow-on/spec.md",
+                "identity": "sha256:781e3174532b2074fd314ed1956d5b3e6fdf8e474d297180e375fb2fba07a6cf"
+              }
+            },
+            {
+              "source": {
+                "id": "independent-expectation-audit",
+                "path": "specs/independent-expectation-audit/spec.md",
+                "identity": "sha256:a046d4864b35200cf2d927c7c06c89e740ba41e059a69ec6145d2b161a8e96b0"
+              }
+            }
+          ],
+          "dependencies": [
+            "FT402"
+          ]
+        },
+        {
+          "id": "FT414-preconditions",
+          "criteria": [
+            {
+              "id": "FT414-preconditions.stated",
+              "text": "The record, commit, and landing verbs state their preconditions before an attempt."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT414",
+              "path": "roadmap/FT414.md",
+              "identity": "sha256:de3916872764dfd7d0519d93f954c961e4296399283c5defffa43718b66d6f46"
+            }
+          ]
         }
       ]
     }
