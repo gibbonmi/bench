@@ -73,6 +73,7 @@ func TestGuardGitEnvelopePolicy(t *testing.T) {
 		{name: "duplicate input null", in: `{"tool_input":{"command":"git reset --hard","file_path":"README.md"},"tool_input":null,"cwd":"/repo"}`, want: 2},
 		{name: "earlier command type error", in: `{"tool_input":{"command":7,"command":"git reset --hard"}}`},
 		{name: "root key casing", in: `{"TOOL_INPUT":{"command":"git reset --hard"}}`, want: 2},
+		{name: "unrelated cwd type", in: `{"cwd":7,"tool_input":{"command":"git reset --hard"}}`, want: 2},
 	})
 }
 

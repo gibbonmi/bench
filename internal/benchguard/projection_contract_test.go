@@ -41,6 +41,7 @@ func TestBenchEnvelopeType(t *testing.T) {
 		{name: "array command", in: `{"tool_input":{"command":["git status"]}}`, err: "json: cannot unmarshal array into Go value of type string"},
 		{name: "earlier command type error", in: `{"tool_input":{"command":7,"command":"git reset --hard"}}`, command: "git reset --hard"},
 		{name: "root key casing", in: `{"TOOL_INPUT":{"command":"git reset --hard"}}`, command: "git reset --hard"},
+		{name: "unrelated cwd type", in: `{"cwd":7,"tool_input":{"command":"git reset --hard"}}`, command: "git reset --hard"},
 	})
 }
 
