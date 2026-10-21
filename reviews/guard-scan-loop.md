@@ -1,5 +1,43 @@
 # Review outcomes
 
+## GS1 initial review pickup
+
+The initial review read the frozen pair `e4db0d2e..eee73331`. Each axis ran on sonnet at high effort, by reviewer direction. The axes found 16 findings. After the collapse of S2 into C1, 6 repair targets remain. Ticket 1 owns F1 and S3, and ticket 2 owns F2, C1, C2, and C5.
+
+Each ticket gets its own fresh repair session on opus at medium effort, by reviewer direction. The chunk has used 0 of its 2 repair cycles, and the next repair is cycle 1.
+
+The reviewer deferred each ask-user finding to two consultants, opus at medium effort and sonnet at medium effort. A fable delegate at medium effort decided the one stalemate. The orchestrator committed the resulting spec corrections in one plan commit before the repair.
+
+## Standards
+
+The axis found 4 findings. The worst issue is F2, because the test respells the diagnostic text that the check spells.
+
+- F1, auto-fix, confidence 6. The `familySGolden` comment in `internal/guards/scan_loop_test.go` narrates its provenance and argues its own independence. Keep only the fact that it is the reference capture of scan family S.
+- F2, auto-fix, confidence 5. `internal/conformance/guard_scan_owner_test.go` respells the suffixes " is missing or unreadable" and "cannot parse " that the check spells. Share each piece as one constant.
+- F3, no-op, confidence 4. The five construct names stay an independent expectation, because a list derived from the check would stay green when a case is dropped. The ticket 2 author recorded a natural red before the production edit: `TestGuardScanLoopOwnerBitesOnPrivateCopy` failed one `t.Errorf` for each of the five construct kinds. Both consultants chose this disposition.
+- F4, no-op, confidence 6. The GS05 and GS28 read-count witnesses are necessary, and the select ban limits their risk.
+
+## Spec
+
+The axis found 5 findings. The worst issue is S1, because the Edge inventory listed a family S member that the golden omits.
+
+- S1, no-op, confidence 6. No Command cancel event lands between two candidates, so GS05 owns that member through a direct Scan. Both consultants chose a spec correction, and the Edge inventory now states this split.
+- S2, auto-fix, confidence 5. This finding names the same defect as C1, and the C1 repair closes it.
+- S3, auto-fix, confidence 4. The inspection-cancelled family S members depend on a 10ms wall-clock window. Make the cancel moment independent of a short timer, and keep the golden bytes unchanged.
+- S4, no-op, confidence 3. GS11 observes its contract.
+- S5, no-op, confidence 3. GS23 closes the second-path failure of GS22.
+
+## Coverage
+
+The axis found 8 findings. The worst issue is C1, because a pipeline in a subdirectory of `internal/guards` escapes the check, and the spec says "beneath".
+
+- C1, auto-fix, confidence 7. Walk every production Go file beneath `internal/guards`, skip `testdata`, and add a nested-directory witness.
+- C2, auto-fix, confidence 6. Skip or name a special file whose name ends in `.go` before the parser opens it, as the hostile-input checklist of `projects/benchkit.md` requires. Add a witness.
+- C3, no-op, confidence 5. Both consultants chose a spec correction. The check grades `make` with a literal channel type, and a Won't handle line names the named channel type.
+- C4, no-op, confidence 5. The consultants split. The fable tie-break chose a Won't handle line for goroutine starts with no go statement and no check change. The phrase "real import bindings" bans text matching, so the check meets it.
+- C5, auto-fix, confidence 5. Only `fs.ErrNotExist` takes the optional-surface exit. Another `os.Stat` error gets a named diagnostic. Add a witness.
+- C6, C7, and C8, no-op, confidence 6. GS23 covers the GS22 second path, and the preservation rows are legitimate regression guards. The axis demonstrated the GS21 invalid-arguments red with a probe at `internal/guards/guards.go`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -307,7 +345,82 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gs1-r1-standards",
+          "performer": "claude:gsl-review-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d360efb6c316c4523f5c5d342d3d3756b00856ce",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gsl-review-standards-r1",
+            "digest": "sha256:02983951314c50d6d8732be6e296eb1b7f61d05e9065788b6be8ff2cad32f9e4",
+            "excerpt": "STANDARDS axis, GS1 (base e4db0d2e6, code tip eee733317). check-current: current=true.\nF1 | auto-fix | internal/guards/scan_loop_test.go:24-26 | conf 6. The familySGolden comment narrates provenance and argues its own independence; craft-comments forbids narration. Keep only \"reference capture of scan family S, reviewed apart from the candidate\".\nF2 | auto-fix | internal/conformance/guard_scan_owner_test.go:180, :191 vs :47, :54 | conf 5. The test respells the diagnostic suffixes \" is missing or unreadable\" and \"cannot parse \" that the check spells; only the prefix is shared. AGENTS.md one source per fact. Share the two pieces as constants.\nF3 | ask-user | internal/conformance/guard_scan_owner_test.go:153 vs :69-87 | conf 4. The test lists the five construct names that scanPipelineConstruct returns, with no recorded per-construct red. Record a mutation, or derive the list from the check.\nF4 | no-op | internal/guards/scan_loop_test.go:340, :372-374 | conf 6. GS05 and GS28 read-count witnesses are necessary and not brittle beyond the spec; the select ban limits the risk.\nCount 4 (2 auto-fix, 1 ask-user, 1 no-op). Worst: F2. Structure limits all met; the move is verbatim; no edit outside the acceptance's reach; 6 touched=false consumers read, none stale.\nAdvice: a shared production-.go listing helper does not exist; make(namedChanType) is not detected; the in-process fifo-header member could hang on a regression; magic numbers 5 and 7 could derive from len(names).\n"
+          },
+          "axis": "Standards",
+          "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
+          "tip": "eee733317545f94b7df5efcc56f23e1e93437e26",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gs1-r1-spec",
+          "performer": "claude:gsl-review-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d360efb6c316c4523f5c5d342d3d3756b00856ce",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gsl-review-spec-r1",
+            "digest": "sha256:3ed5204e2bf3f39b8fba09989188649698fe07f563dbf38a3ae22395ef11d5e6",
+            "excerpt": "SPEC axis, GS1 (base e4db0d2e6, code tip eee733317). check-current: current=true.\nS1 | ask-user | spec.md:314, :293, :271; scan_loop_test.go:129-130 | conf 6. Family S omits the \"between candidates\" member; Command's timeout cannot place it and the old select cannot take a read-count cancel. GS05 covers it by a direct Scan. The spec records no waiver.\nS2 | ask-user | guard_scan_owner_test.go:39-45 vs spec.md:130, :373 | conf 5. The ownership check reads only the top level of internal/guards; a nested production package gets no diagnostic. Recursive walk that skips testdata, or a spec amendment to \"directly in\".\nS3 | auto-fix | scan_loop_test.go:30, :142-143 | conf 4. The inspection-cancelled family S members depend on a 10ms wall-clock window; a CPU stall changes the tuple. spec.md:304, :326 forbid timing-defined expectations.\nS4 | no-op | scan_loop_test.go:379-391 vs spec.md:94 | conf 3. GS11 uses a 20ms hold, not a release barrier, but it observes the contract.\nS5 | no-op | scan_loop_test.go:393-399 | conf 3. GS22 observes its stated behavior; GS23 backs it.\nCount 5 (2 ask-user, 1 auto-fix, 2 no-op). Worst: S1. All 30 rows observed by their cited tests except as S1 notes.\nAdvice: checkpointContext tests pin the exact count of ctx.Err reads; the check does not catch `for range ch` or `new(chan T)`, which the spec does not require.\n"
+          },
+          "axis": "Spec",
+          "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
+          "tip": "eee733317545f94b7df5efcc56f23e1e93437e26",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gs1-r1-coverage",
+          "performer": "claude:gsl-review-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d360efb6c316c4523f5c5d342d3d3756b00856ce",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gsl-review-coverage-r1",
+            "digest": "sha256:d9fe84149f7458b2b6864d06f5f1fc480fc6065b56eabd0824b11e3a1dedda47",
+            "excerpt": "COVERAGE axis, GS1 (base e4db0d2e6, code tip eee733317). check-current: current=true.\nC1 | auto-fix | internal/conformance/guard_scan_owner_test.go:41-45 vs spec.md:130, :373 | conf 7. The check reads only direct children of internal/guards; a nested pipeline gets no diagnostic.\nC2 | auto-fix | guard_scan_owner_test.go:52; projects/benchkit.md:226 | conf 6. A FIFO or special file named *.go reaches parser.ParseFile and can hang; the hostile-input checklist requires rejection before read.\nC3 | ask-user | guard_scan_owner_test.go:83-84; spec.md:131 | conf 5. make(namedChanType) is not reported as channel construction; a fix needs go/types.\nC4 | ask-user | guard_scan_owner_test.go:70-90; spec.md:240, :131 | conf 5. sync.WaitGroup.Go, context.AfterFunc, and time.AfterFunc start goroutines without a go statement; no decision covers them.\nC5 | auto-fix | guard_scan_owner_test.go:36; projects/benchkit.md:216-223 | conf 5. Every os.Stat error reads as absent; only ErrNotExist should take the optional-surface exit.\nC6 | no-op | scan_loop_test.go:393-399 | conf 6. GS23 closes the second-path failure that GS22 names.\nC7 | no-op | scan_loop_test.go:324-328, :365, :373, :379 | conf 6. Preservation rows without a demonstrated red are legitimate regression guards.\nC8 | no-op | scan_loop_test.go:331, :339-342 | conf 6. GS03, GS05, GS07 reds derived by reading.\nGS21 invalid-arguments red demonstrated: probe swap at guards.go:274 read bit, first failure TestScanLoopDifferentialCommandFamilies/invalid-arguments, restored yes.\nGolden review: f5c12ccbc changed no guards.go; golden bytes unchanged to eee733317; faithful capture of the old pipeline; no member tailored to the new code.\nCount 8 (5 actionable, 3 no-op). Worst: C1.\nAdvice: 10ms cancelTick and 20ms operationHold could flake on a loaded runner; the live-tree test is the only catch for a renamed internal/guards.\n"
+          },
+          "axis": "Coverage",
+          "base": "e4db0d2e66ffae4045c9c29c11c4696462442bc4",
+          "tip": "eee733317545f94b7df5efcc56f23e1e93437e26",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
