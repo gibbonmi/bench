@@ -4,7 +4,6 @@ package testreport
 import (
 	"encoding/json"
 	"io"
-	"math"
 	"sort"
 	"strings"
 
@@ -31,6 +30,9 @@ type testResult struct {
 	failed      bool
 	skipped     bool
 	structured  string
+	// finished and elapsedMS come from the last terminal event of the test.
+	finished  bool
+	elapsedMS int64
 }
 
 type report struct {
@@ -86,7 +88,7 @@ func decode(stream io.Reader) (*report, error) {
 				report.terminal = true
 				// The terminal package event is the one carrier of the package's own
 				// wall time. Every other event's Elapsed belongs to a single test.
-				report.elapsedMS[e.Package] = int64(math.Round(e.Elapsed * 1000))
+				report.elapsedMS[e.Package] = milliseconds(e.Elapsed)
 				if e.Action == "fail" || report.statuses[e.Package] != "no-tests" {
 					report.statuses[e.Package] = e.Action
 				}
@@ -95,6 +97,8 @@ func decode(stream io.Reader) (*report, error) {
 				test := report.test(e.Package, e.Test)
 				test.failed = e.Action == "fail"
 				test.skipped = e.Action == "skip"
+				test.finished = true
+				test.elapsedMS = milliseconds(e.Elapsed)
 			}
 		}
 		if e.Action != "output" && e.Action != "build-output" {
@@ -187,15 +191,20 @@ func (r *report) render(full bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	slowestBlock, err := r.slowestBlock()
+	if err != nil {
+		return "", err
+	}
+	result := packageBlock + failureBlock + skipBlock + slowestBlock
 	rootSkips := r.rootConformanceSkips()
 	if len(rootSkips) == 0 {
-		return packageBlock + failureBlock + skipBlock, nil
+		return result, nil
 	}
 	rootBlock, err := toon.Table("root_conformance", []string{"package", "status", "route"}, rootSkips)
 	if err != nil {
 		return "", err
 	}
-	return packageBlock + failureBlock + skipBlock + rootBlock, nil
+	return result + rootBlock, nil
 }
 
 func (r *report) rootConformanceSkips() [][]string {

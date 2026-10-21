@@ -17,11 +17,15 @@ var threeLineFailureEvents = []string{
 
 const failedPackageRow = "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,fail,500,1\n"
 
+// cannedSlowestBlock is the slowest table of a stream whose one top-level test
+// `TestCanned` ends with an `Elapsed` of 0.01.
+const cannedSlowestBlock = "slowest[1]{package,test,elapsed_ms}:\n  canned,TestCanned,10\n"
+
 // TestFailuresRowCountsLines grades that the default row shows the first line and counts
 // every diagnostic line of the test.
 func TestFailuresRowCountsLines(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./..."}, threeLineFailureEvents, 1)
-	want := failedPackageRow + "failures[1]{package,test,line,lines}:\n  canned,TestCanned,alpha one,3\nskips[0]{package,test,reason}:\n"
+	want := failedPackageRow + "failures[1]{package,test,line,lines}:\n  canned,TestCanned,alpha one,3\nskips[0]{package,test,reason}:\n" + cannedSlowestBlock
 	if output != want || code != 1 {
 		t.Fatalf("Command = (%d, %q), want (1, %q)", code, output, want)
 	}
@@ -33,7 +37,7 @@ func TestFailuresRowWithNoDiagnosticCountsZero(t *testing.T) {
 	events := []string{threeLineFailureEvents[0], threeLineFailureEvents[3], threeLineFailureEvents[4]}
 	for _, args := range [][]string{{"--package", "./..."}, {"--package", "./...", "--full"}} {
 		output, code := commandOverEvents(t, t.TempDir(), args, events, 1)
-		want := failedPackageRow + "failures[1]{package,test,line,lines}:\n  canned,TestCanned,no diagnostic emitted,0\nskips[0]{package,test,reason}:\n"
+		want := failedPackageRow + "failures[1]{package,test,line,lines}:\n  canned,TestCanned,no diagnostic emitted,0\nskips[0]{package,test,reason}:\n" + cannedSlowestBlock
 		if output != want || code != 1 {
 			t.Fatalf("Command %v = (%d, %q), want (1, %q)", args, code, output, want)
 		}
@@ -44,7 +48,7 @@ func TestFailuresRowWithNoDiagnosticCountsZero(t *testing.T) {
 // its own row in emitted order, and that each row carries the count of the test.
 func TestFullFailuresPrintOneRowPerLine(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./...", "--full"}, threeLineFailureEvents, 1)
-	want := failedPackageRow + "failures[3]{package,test,line,lines}:\n  canned,TestCanned,alpha one,3\n  canned,TestCanned,beta two,3\n  canned,TestCanned,gamma three,3\nskips[0]{package,test,reason}:\n"
+	want := failedPackageRow + "failures[3]{package,test,line,lines}:\n  canned,TestCanned,alpha one,3\n  canned,TestCanned,beta two,3\n  canned,TestCanned,gamma three,3\nskips[0]{package,test,reason}:\n" + cannedSlowestBlock
 	if output != want || code != 1 {
 		t.Fatalf("Command = (%d, %q), want (1, %q)", code, output, want)
 	}
