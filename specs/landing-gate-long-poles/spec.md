@@ -23,11 +23,11 @@ The current long poles are these packages:
 | Package | Gate time | Shape of the cost |
 |---|---:|---|
 | `internal/systemtest` | 100 to 108 s | 105 top-level tests in one serial process; no test calls `t.Parallel` |
-| `internal/probe` | 87 s (66 s alone) | 131 tests; each fixture runs `git init` and a real `go list -deps` |
+| `internal/probe` | 87 s (66 s alone) | 131 tests; each fixture runs `git init` and publishes a seal |
 | `internal/worktree` | 70 to 71 s | 45 serial tests; 41.9 percent of git starts repeat a query |
 | `internal/testreport` | 65 to 73 s | two tests copy the kit and build a real run binary each |
 
-Sources: `.logs/gate-20261021T192218.079145862Z-3443832.jsonl` and its `.out` file, the two newer gate logs of 2026-10-21, and the S1 to S5 research returns of 2026-10-21.
+Sources: the gate logs `.logs/gate-20261021T192218.079145862Z-3443832.jsonl`, `gate-20261021T191248.934370406Z-2945722`, and `gate-20261021T154223.033572571Z-2308306`, with their `.out` files. The S1 to S5 research returns of 2026-10-21 supply the cost shapes.
 
 ## Solution
 
@@ -57,14 +57,14 @@ Harder chunks: LGP-C2, LGP-C4.
 
 ### Shared fixtures in probe and testreport
 
-1. As a maintainer, I want the probe clamp repository built once for each package run, so that each test skips `git init` and `go list -deps`.
+1. As a maintainer, I want the probe clamp repository built once for each package run, so that each test skips `git init` and the seal publication.
 2. As a test author, I want a private copy of the clamp repository for each probe test, so that mutations stay in one test.
 3. As a test author, I want each copy to keep the sealed run binary valid, so that the run-binary freshness check still accepts the copy.
 4. As a maintainer, I want the PB1 witness to keep its real `go test` child, so that the real toolchain still proves a bite.
 5. As a maintainer, I want the PB22 and PS40 to PS43 witnesses to keep their assertions, so that usage and expectation refusals stay pinned.
 6. As a maintainer, I want the testreport run binary built once for each package run, so that two kit-copy tests do not each build it.
 7. As a maintainer, I want `TestRootConformanceCheckPrintsFailures` to keep its real conformance child, so that the planted defect still reaches the diagnostic.
-8. As a maintainer, I want the seam test of `selectRunBinary` to keep its real selection, so that the production-test-seam-policy row stays true.
+8. As a maintainer, I want the seam test of `selectRunBinary` to keep its real selection, so that the owned-selection path keeps a real-build test.
 
 ### Git location answers for one command run
 
@@ -75,16 +75,16 @@ Harder chunks: LGP-C2, LGP-C4.
 13. As a test author, I want the package-level git functions to stay uncached, so that each hostile-path test still observes its own starts.
 14. As a maintainer, I want no process-global or cross-run cache, so that tests that swap PATH or recreate repositories see fresh answers.
 15. As a maintainer, I want the four plumbing flags to stay inside `internal/git`, so that the git plumbing owner check stays green.
-16. As a developer, I want `planExplicitWith` to stop repeating its common-directory and default-branch queries, so that one explicit plan costs fewer starts.
-17. As a developer, I want `validateOwnerMarker` to stop asking for the common directory three times, so that each exec target costs fewer starts.
+16. As a developer, I want `planExplicitWith` to stop repeating its common-directory query, so that one explicit plan costs fewer starts.
+17. As a developer, I want `validateOwnerMarker` to stop asking for the common directory twice, so that each exec target costs fewer starts.
 
 ### Serial worktree tests in the parallel set
 
 18. As a test author, I want a verb call to carry its working directory, so that an operand test needs no process `chdir`.
 19. As a test author, I want a verb call to carry its child base environment, so that an exec test binds no process environment.
 20. As a maintainer, I want the working-directory group and the child-environment group to call `t.Parallel`, so that they leave the serial head of the package.
-21. As a maintainer, I want the serial ceiling lowered by exactly the moved count, so that the pin stays exact.
-22. As a maintainer, I want the top-level test count to stay at 805, so that no test is removed or merged.
+21. As a maintainer, I want the serial ceiling to equal the recorded arithmetic of moved and new serial tests, so that the pin stays exact.
+22. As a maintainer, I want no existing worktree test removed or merged, so that the count pin rises only by the new tests.
 23. As a maintainer, I want the Home-default graders, the PATH-stub tests, and the removed-directory test to stay serial, so that their process-level subject stays graded.
 24. As a maintainer, I want the effect boundary census to cover the new environment read, so that the child base environment has one owner.
 
@@ -94,8 +94,8 @@ Harder chunks: LGP-C2, LGP-C4.
 26. As a maintainer, I want one `TestMain` owner and one identity ledger to remain, so that the profile's statement of the suite stays true.
 27. As a reviewer, I want the unfiltered run to verify all four terminal outcomes, so that a parallel run cannot skip a teardown proof.
 28. As a reviewer, I want the ledger writes safe under concurrent tests, so that a parallel start cannot lose an observation.
-29. As a test author, I want a test that mutates an owner repository to stay serial, so that no parallel test sees a half-made repository.
-30. As a test author, I want the three TMPDIR bindings replaced with explicit child values, so that the recovery tests can run in parallel.
+29. As a test author, I want a test that reaches an owner repository to stay serial, so that no parallel test sees a half-made repository.
+30. As a test author, I want the three TMPDIR bindings replaced with explicit child values, so that no system test binds TMPDIR in the process.
 31. As a maintainer, I want a census that classifies each system test as parallel or serial with a reason, so that no test stays serial unnoticed.
 32. As a maintainer, I want the census to refuse a parallel test that reaches an owner repository, so that shared state stays serial.
 33. As a maintainer, I want the gate's system argv and the phase table unchanged, so that the census pins and the profile table stay true.
@@ -112,12 +112,15 @@ Harder chunks: LGP-C2, LGP-C4.
 
 The probe test package gains a package-run golden of the clamp repository. It follows the adopt golden precedent (`internal/adopt/golden_test.go:20-69`): one `sync.Once` build and one `TestMain` cleanup.
 `clampFixture` and `refusalFixture` take a private copy of the golden for each test. The copy keeps file bytes and modes, and it keeps a valid git repository.
-The sealed run binary of a copy must pass the existing freshness check for the copy's root. The build decides whether one seal stays valid after the copy or each copy needs a cheap reseal, through a focused probe.
+The golden build calls the fixture publisher once. `probetest.Repository` takes that publisher as an argument (`internal/probe/probetest/fixture.go:69`), so a counting publisher observes the builds.
+The seal holds source and executable digests and no root path (`internal/freshness/freshness_publish.go:97-111`). So a byte-identical copy keeps a valid seal, when the executable, the seal, and the manifest directory move together.
 The build keeps the environment bindings and the `t.Chdir` of `probetest.Repository` (`internal/probe/probetest/fixture.go:106-112`) for each test.
 
 `TestProbeBitesWhenTheFocusedTestFails` keeps its real `go test` child (PB1). The witnesses PB22 and PS40 to PS43 keep every assertion. The build removes no test from either package.
 
 The testreport package builds its run binary once for each package run, as `testRunSelector` does (`internal/worktree/test_run_test.go:11-52`). An inherited `BENCH_RUN_BINARY` wins, and a present invalid selection refuses.
+A counting builder wraps the run-binary build, so the two kit-copy tests together show at most one build.
+The probe verb's own run-binary check can still run `go list -deps` through `freshness.VerifyAt` (`internal/runbinary/runbinary.go:155-163`). This spec claims no saving from that check.
 `TestRootConformanceCheckPrintsFailures` and `TestNamedCheckRunsOnlyRegisteredDevScope` keep their real children and their kit copies. The build reuses a run binary only where the kit-copy sources match the binary's seal.
 
 ### Git location answers for one command run
@@ -126,41 +129,52 @@ The testreport package builds its run binary once for each package run, as `test
 The run value caches the raw answers of the common-directory, top-level, and admin-directory queries, keyed by the root spelling that the caller passes.
 On every read, the run value runs the existing validation again, such as `validateCommonDir` (`internal/git/worktree_admin.go:245-259`). The cache saves the git start, not the filesystem check.
 The package-level functions `CommonDir`, `AdminDir`, `Worktrees`, and `Root` stay uncached. The hostile tests in `internal/git/worktree_admin_hostile_test.go` call them directly and keep their meaning.
+The run value has its own `Worktrees` form. That form reads the common directory through the run value, and it keeps the admin scan and the porcelain start live.
 
 The run value holds no ref, HEAD, registration, index, default-branch, or ancestry answer. Those reads stay live (S2 research, finding 21 and 22).
 No package variable holds a cache. A direct caller with no run value gets a fresh query, as today.
 
-`planExplicitWith` (`internal/worktree/subshell.go:167-178`) and `predictedForeignRef` (`subshell.go:411`) read the common directory once through the run value. The second `ResolveCommit` of the default branch reuses the commit that `ResolvedDefault` already proved, or the build records why it cannot.
-`validateOwnerMarker` (`internal/worktree/classifier.go:397-426`) reads the common directory once through the run value.
+`planExplicitWith` (`internal/worktree/subshell.go:167-178`) and `predictedForeignRef` (`subshell.go:411`) read the common directory once through the run value. The default-branch reads stay as they are.
+`validateOwnerMarker` (`internal/worktree/classifier.go:397-426`) asks for the common directory twice today: inside `Worktrees` and through `CommonDir`. It reads it once through the run value.
 
 ### Serial worktree tests in the parallel set
 
 `verbCall` (`internal/worktree/verb_runner_test.go:47-55`) gains a working-directory field and a child base environment field.
-The working directory reaches operand resolution through `canonicalpath.Operand`, which already takes the directory as an argument. `canonicalpath.Resolve` reads the process directory today (`internal/canonicalpath/canonicalpath.go:46-50`).
+`canonicalpath.Resolve` reads the process directory for a relative path (`internal/canonicalpath/canonicalpath.go:46-50`). It joins the parts as text and resolves symlinks before it cleans, on purpose.
+A new `canonicalpath` form takes the directory as an argument and keeps exactly those semantics. `canonicalpath.Operand` is not that form, because it cleans lexically and resolves no symlink.
+`effects.go` reads the process directory once at the verb boundary. A failed read is carried forward and surfaces only when a relative operand needs it.
+So an absolute operand still works in a removed directory, and `TestLandingHandsBackAPathWithNoCanonicalForm` (`internal/worktree/land_resume_refusal_test.go:343`) keeps its behavior.
 The child base environment enters `ambient` once at the verb boundary in `effects.go`. Four production sites read `os.Environ()` today, and each one takes the ambient value instead.
 The four sites are `execEnv` (`internal/worktree/exec.go:201`), `gitInput` (`internal/worktree/clean.go:218`), the doctor child (`internal/worktree/build.go:331`), and the subshell entry (`internal/worktree/subshell.go:40`).
 
 The working-directory group holds 17 tests, and the child-environment group holds 10 tests (S3 research). The build moves each test that its seam frees and records each test that stays.
-`worktreeSerialCeiling` (`internal/worktree/parallel_census_test.go:1041`) drops by exactly the moved count. `worktreeTestCount` stays 805.
+Both pins change by recorded arithmetic. Each ticket that touches the package records each term in its verification excerpt.
+
+- `worktreeTestCount` (`internal/worktree/parallel_census_test.go:1061`) equals 805 plus the new top-level tests.
+- `worktreeSerialCeiling` (`parallel_census_test.go:1041`) equals 45, minus the moved tests, plus the new serial tests.
+
+LGP-C2 adds serial tests, because its start counts use `journeyStubGit`, which binds PATH (`internal/worktree/journey_test.go:64-68`). So LGP-C2 also writes `parallel_census_test.go`.
 The Home-default graders, the PATH-stub tests, and `TestLandingHandsBackAPathWithNoCanonicalForm` stay serial, because the process state is their subject.
 `TestEffectBoundaryCensus` (`internal/worktree/effect_census_test.go:20`) gains `os.Environ` in its forbidden set, because `effects.go` becomes the one owner of that read. No other `os.Environ` read stays in the package's production files.
 
 ### System suite tests in parallel
 
 The one `go test -tags=system` process stays. `TestMain`, `newSystemOwner`, the three owner repositories, and `verify` keep their shape (`internal/systemtest/owner_test.go:52-113`, `:350-373`).
-The ledger fields stay behind the owner mutex. The build confirms that every write to `starts`, `seen`, and `terminal` takes the mutex.
+Every ledger write in the owner code takes the owner mutex today. The one exception is `TestOwnerSelectionChild` (`internal/systemtest/owner_selection_test.go:156-170`).
+That test plants the negative controls in a child process, where every other test is skipped. The lock census exempts it by name, and the controls stay unchanged.
 
 A system test calls `t.Parallel` unless it holds a serial reason. A serial reason is one of these:
 
-- The test mutates an owner repository.
+- The test reaches `owner.repos` through its body or a test-file helper.
+- The test reaches a ledger field (`starts`, `seen`, or `terminal`) directly.
 - The test binds process state, such as `t.Setenv`.
-- The test reads the ledger or the owner root as its subject.
 
 `TestRedTimeoutAndDescendantTeardown` stays whole. Go runs the serial tests first and the parallel tests after them, so a serial mutator never overlaps a parallel test.
-The three `t.Setenv("TMPDIR", ...)` calls (`internal/systemtest/owner_artifact_recovery_test.go:24`, `:280`, `:301`) become explicit child environment values where the test allows it.
+The three `t.Setenv("TMPDIR", ...)` calls (`internal/systemtest/owner_artifact_recovery_test.go:24`, `:280`, `:301`) become explicit child environment values. Those children already take an explicit environment, such as `mergeEnvironment(systemBaseEnvironment(), artifactLandEnv(...))` at `:172`.
 
 A new census test in `internal/systemtest` parses the package's test files. It refuses a top-level test that neither calls `t.Parallel` nor appears in a serial table with a reason.
-It also refuses a parallel test that reaches `owner.repos` through its body or a test-file helper. The precedent is the worktree census walk (`internal/worktree/parallel_census_test.go:326-360`).
+It also refuses a parallel test that reaches `owner.repos` or a ledger field through its body or a test-file helper. The precedent is the worktree census walk (`internal/worktree/parallel_census_test.go:326-360`).
+Every bench child shares one `owner.home` by default (`internal/systemtest/owner_environment_test.go:56-60`). The build runs the parallel set under the gate's `-parallel` and records any conflict on that home as a serial reason.
 The gate argv, the phase table, the `projects/benchkit.md` system sentences, and ADR 0024 stay unchanged.
 
 ### Measurement
@@ -172,19 +186,19 @@ The final reconciliation pairs the package and phase timings of the landing gate
 
 | Stable chunk ID / tickets | Delivered outcome | Acceptance rows | Tests | Harder chunk |
 |---|---|---|---|---|
-| LGP-C1 / pending | Probe and testreport fixtures built once for each package run, with every witness kept | LGP1–LGP8 | probe and testreport package tests | no |
-| LGP-C2 / pending | Stable git location answers cached for one command run, and direct duplicates removed | LGP9–LGP17 | git and worktree package tests | yes |
-| LGP-C3 / pending | Working-directory and child-environment worktree tests in the parallel set | LGP18–LGP24 | worktree census and moved tests | no |
-| LGP-C4 / pending | System tests in parallel inside one process, with a serial-reason census | LGP25–LGP33 | system suite and its census | yes |
-| LGP-C5 / pending | Measured results paired with retained failure proofs | LGP34–LGP36 | review-owned reconciliation | no |
+| LGP-C1 / pending | Probe and testreport fixtures built once for each package run, with every witness kept | LGP1–LGP8, LGP37, LGP34 | probe and testreport package tests | no |
+| LGP-C2 / pending | Stable git location answers cached for one command run, and direct duplicates removed | LGP9–LGP17, LGP22, LGP34 | git and worktree package tests | yes |
+| LGP-C3 / pending | Working-directory and child-environment worktree tests in the parallel set | LGP18–LGP24, LGP34 | worktree census and moved tests | no |
+| LGP-C4 / pending | System tests in parallel inside one process, with a serial-reason census | LGP25–LGP36 | system suite and its census | yes |
 
-The chunks have no write overlap except `internal/worktree/effects.go`, which LGP-C2 and LGP-C3 both edit. LGP-C3 therefore follows LGP-C2.
+LGP-C2 and LGP-C3 both edit `internal/worktree/effects.go` and `internal/worktree/parallel_census_test.go`. LGP-C3 therefore follows LGP-C2. The other chunks have no write overlap.
+LGP34 belongs to each chunk's author. LGP35 and LGP36 belong to the orchestrator's final reconciliation after the last chunk.
 The ticket slicer replaces each `pending` cell with ticket basenames.
 
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"LGP-C1","tickets":["01-share-probe-and-testreport-fixtures.md"],"verification":[{"id":"probe","command":"bench test --package ./internal/probe"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"copy-isolation","command":"bench test --package ./internal/probe","probe":"return the golden root instead of a private copy"}]},{"id":"LGP-C2","tickets":["02-cache-stable-git-locations.md"],"verification":[{"id":"git","command":"bench test --package ./internal/git"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"revalidation","command":"bench test --package ./internal/git","probe":"skip the validation on a cached common directory"}]},{"id":"LGP-C3","tickets":["03-move-cwd-and-child-env-tests.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"ceiling","command":"bench test --package ./internal/worktree","probe":"leave worktreeSerialCeiling at 45"}]},{"id":"LGP-C4","tickets":["04-run-system-tests-in-parallel.md"],"verification":[{"id":"system","command":"bench test --check system"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"serial-census","command":"bench test --check system","probe":"drop the serial reason of an owner-repository mutator"}]},{"id":"LGP-C5","tickets":["05-reconcile-measured-results.md"],"verification":[{"id":"coverage","command":"bench coverage --check specs/landing-gate-long-poles/spec.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/landing-gate-long-poles/spec.md"},{"id":"probe","command":"bench test --package ./internal/probe"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"system","command":"bench test --check system"}]}
+{"version":1,"chunks":[{"id":"LGP-C1","tickets":["01-share-probe-and-testreport-fixtures.md"],"verification":[{"id":"probe","command":"bench test --package ./internal/probe"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"copy-isolation","command":"bench test --package ./internal/probe","probe":"return the golden root instead of a private copy"},{"id":"golden-use","command":"bench test --package ./internal/probe","probe":"build a fresh repository in clampFixture"}]},{"id":"LGP-C2","tickets":["02-cache-stable-git-locations.md"],"verification":[{"id":"git","command":"bench test --package ./internal/git"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"revalidation","command":"bench test --package ./internal/git","probe":"skip the validation on a cached common directory"}]},{"id":"LGP-C3","tickets":["03-move-cwd-and-child-env-tests.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"ceiling","command":"bench test --package ./internal/worktree","probe":"leave worktreeSerialCeiling at 45"}]},{"id":"LGP-C4","tickets":["04-run-system-tests-in-parallel.md"],"verification":[{"id":"system","command":"bench test --check system"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"serial-census","command":"bench test --check system","probe":"drop the serial reason of an owner-repository mutator"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/landing-gate-long-poles/spec.md"},{"id":"probe","command":"bench test --package ./internal/probe"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ## Testing decisions
@@ -197,7 +211,7 @@ Three structural checks prove the removed duplicate work:
 - a fixture build count.
 
 The stub git argument log (`internal/gittest/gittest.go:84`) is the start counter. A line-count assertion over it is new; the hostile tests only assert absence today.
-A fixture build counter uses the `sync.Once` field of the golden, as the worktree selector counts journeys (`internal/worktree/test_run_test.go:28-31`).
+A fixture build counter wraps the fixture publisher or the run-binary builder. It follows the mutex-guarded log of the worktree selector (`internal/worktree/test_run_test.go:33-39`), because `sync.Once` keeps no count.
 
 The system census follows the worktree census walk. It refuses by test name and names the reason table. The ledger negative controls in `TestUnfilteredRunVerifiesLedger` stay unchanged.
 The gate observes the result through `bench test --check system`, the package tests, and `bench test --check root-conformance`.
@@ -226,12 +240,12 @@ The gate observes the result through `bench test --check system`, the package te
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| LGP1 | 1 | One package run builds the clamp golden exactly once. | planned TestClampGoldenBuildsOnce in internal/probe/golden_test.go | A per-test build raises the build count above one. |
+| LGP1 | 1 | Two `clampFixture` calls in one package run invoke the fixture publisher once. | planned TestClampGoldenBuildsOnce in internal/probe/golden_test.go | A fixture that still builds its own repository invokes the publisher a second time. |
 | LGP2 | 2 | A write in one fixture copy leaves a second copy's subject bytes unchanged. | planned TestClampCopiesAreIsolated in internal/probe/golden_test.go | A shared root or a hard link shows the write in the second copy. |
 | LGP3 | 3 | A fixture copy passes the run-binary freshness check for its own root. | planned TestClampCopyKeepsAFreshSeal in internal/probe/golden_test.go | A stale seal refuses the selection with the freshness diagnostic. |
 | LGP4 | 4 | The PB1 witness still runs a real `go test` child and bites. | `internal/probe/probe_test.go` (`TestProbeBitesWhenTheFocusedTestFails`) | A stubbed child or a skipped run loses the packages table. |
 | LGP5 | 5 | The PB22 usage witness keeps every refusal case on the shared fixture. | `internal/probe/refusal_test.go` (`TestProbeUsageNamesOneSelectionAndOneMutation`) | A dropped case or a changed usage text fails the comparison. |
-| LGP6 | 6 | One testreport package run builds the owned run binary at most once. | planned TestOwnedSelectionBuildsOnce in internal/testreport/selection_once_test.go | A per-test build raises the build count above one. |
+| LGP6 | 6 | The two kit-copy tests together invoke the run-binary builder at most once. | planned TestOwnedSelectionBuildsOnce in internal/testreport/selection_once_test.go | A test that still builds its own selection invokes the builder a second time. |
 | LGP7 | 7 | The planted row-next-grammar defect still reaches the diagnostic through the real child. | `internal/testreport/root_conformance_test.go` (`TestRootConformanceCheckPrintsFailures`) | A canned child or a reused stale binary loses exit 1 or the diagnostic. |
 | LGP8 | 8 | The named check still runs only the registered dev-scope check through the real selection. | `internal/testreport/check_test.go` (`TestNamedCheckRunsOnlyRegisteredDevScope`) | A changed selection path breaks the header row or the timing file. |
 | LGP9 | 9 | Two common-directory reads in one run start git once. | planned TestRunCachesTheCommonDir in internal/git/run_cache_test.go | Each extra start adds one line to the stub argument log. |
@@ -240,37 +254,40 @@ The gate observes the result through `bench test --check system`, the package te
 | LGP12 | 12 | A branch moved by `update-ref` inside one run reads its new commit. | planned TestRunReadsRefsLive in internal/git/run_cache_test.go | A cached ref returns the old commit. |
 | LGP13 | 13 | The bad common-directory cases still refuse before the porcelain start. | `internal/git/worktree_admin_hostile_test.go` (`TestWorktreesRejectsBadCommonDirBeforePorcelain`) | A cached package-level answer hides the hostile stub answer. |
 | LGP14 | 14 | Two run values over one root each start their own common-directory query. | planned TestRunValuesShareNoCache in internal/git/run_cache_test.go | A process-global cache saves the second start. |
-| LGP15 | 15 | The git plumbing owner check stays green over the new run value. | planned TestGitPlumbingOwnerCoversTheRunValue in internal/conformance/git_plumbing_owner_test.go | A plumbing flag outside `internal/git` reds the check. |
+| LGP15 | 15 | A plumbing flag written outside `internal/git` reds the git plumbing owner check. | `internal/conformance/git_plumbing_owner_test.go` (`TestGitPlumbingOwnerRedsARetypedFlag`) | A run value that spells a flag outside `internal/git` fails the registered check. |
 | LGP16 | 16 | One explicit plan starts the common-directory query once. | planned TestExplicitPlanReadsTheCommonDirOnce in internal/worktree/journey_test.go | The removed duplicate adds a second line to the argument log. |
-| LGP17 | 17 | One owner-marker validation starts the common-directory query once. | planned TestOwnerMarkerReadsTheCommonDirOnce in internal/worktree/journey_test.go | The removed duplicates add lines to the argument log. |
+| LGP17 | 17 | One owner-marker validation starts the common-directory query once. | planned TestOwnerMarkerReadsTheCommonDirOnce in internal/worktree/journey_test.go | The removed duplicate adds a second line to the argument log. |
 | LGP18 | 18 | A relative operand resolves against the verb call's directory, not the process directory. | planned TestVerbCallDirectoryResolvesOperands in internal/worktree/identifier_operand_test.go | A process-directory read resolves the operand elsewhere and the path differs. |
 | LGP19 | 19 | An exec child sees a value from the verb call's base environment and not a process-only value. | planned TestExecChildTakesTheCallEnvironment in internal/worktree/exec_test.go | An `os.Environ()` read shows the process value in the child. |
 | LGP20 | 20 | Each moved test calls `t.Parallel` and reaches neither `bindEnv` nor `chdir`. | `internal/worktree/parallel_census_test.go` (`TestSerialSetStaysBelowTheCeiling`) | A moved test that still binds the process lands in the serial set. |
-| LGP21 | 21 | The serial set equals the lowered ceiling. | `internal/worktree/parallel_census_test.go` (`TestSerialSetStaysBelowTheCeiling`) | A ceiling left at 45 reds with the lower-the-ceiling diagnostic. |
-| LGP22 | 22 | The top-level test count equals 805. | `internal/worktree/parallel_census_test.go` (`TestPackageTestCountPin`) | A removed or merged test reds the pin. |
+| LGP21 | 21 | The serial set equals 45 minus the moved tests plus the new serial tests. | `internal/worktree/parallel_census_test.go` (`TestSerialSetStaysBelowTheCeiling`) | A ceiling that misses one term reds with the exact-ceiling diagnostic. |
+| LGP22 | 22 | The top-level test count equals 805 plus the new top-level tests. | `internal/worktree/parallel_census_test.go` (`TestPackageTestCountPin`) | A removed or merged test leaves the count below the recorded sum. |
 | LGP23 | 23 | The removed-directory test stays serial and keeps its real process directory. | planned TestRemovedDirectoryOperandStaysSerial in internal/worktree/parallel_census_test.go | A moved test loses the real `filepath.Abs` failure. |
 | LGP24 | 24 | An `os.Environ` read outside `effects.go` reds the effect census. | `internal/worktree/effect_census_test.go` (`TestEffectBoundaryCensus`) | A second environment owner passes an unextended census. |
 | LGP25 | 25 | Every system test without a serial reason calls `t.Parallel`. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A new test with no call and no reason reds by name. |
 | LGP26 | 26 | The package keeps one `TestMain` and three owner repositories. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A second owner or a fourth repository changes the parsed facts. |
 | LGP27 | 27 | The unfiltered run still names each missing terminal outcome. | `internal/systemtest/owner_selection_test.go` (`TestUnfilteredRunVerifiesLedger`) | A ledger that skips a terminal outcome loses its diagnostic. |
-| LGP28 | 28 | Every ledger write in the package takes the owner mutex. | planned TestLedgerWritesHoldTheOwnerLock in internal/systemtest/parallel_census_test.go | An unguarded write to `starts`, `seen`, or `terminal` reds by name. |
-| LGP29 | 29 | A parallel test that reaches `owner.repos` reds the census. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A parallel mutator shares a repository with no refusal. |
-| LGP30 | 30 | The recovery tests set TMPDIR only through child environment values. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A remaining `t.Setenv` in a parallel test reds the census. |
+| LGP28 | 28 | Every ledger write outside `TestOwnerSelectionChild` takes the owner mutex. | planned TestLedgerWritesHoldTheOwnerLock in internal/systemtest/parallel_census_test.go | An unguarded write to `starts`, `seen`, or `terminal` reds by name. |
+| LGP29 | 29 | A parallel test that reaches `owner.repos` or a ledger field reds the census. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | A parallel test that shares a repository passes with no refusal. |
+| LGP30 | 30 | No `t.Setenv("TMPDIR"` call remains in the package. | planned TestSystemParallelCensus in internal/systemtest/parallel_census_test.go | Each remaining TMPDIR binding reds by test name. |
 | LGP31 | 31 | Each serial table row names a test that exists and a reason. | planned TestSystemSerialTableIsExact in internal/systemtest/parallel_census_test.go | A stale row or a row with no reason reds. |
 | LGP32 | 32 | A test listed as serial for an owner repository does reach `owner.repos`. | planned TestSystemSerialTableIsExact in internal/systemtest/parallel_census_test.go | A wrong reason keeps a free test serial. |
 | LGP33 | 33 | The system phase argv stays the pinned single `go test` call. | `internal/gate/branch_native_phases_test.go` (`TestBenchkitPhasesUseBranchNativeDrivers`) | A shard driver or a changed operand fails the exact argv. |
 | LGP34 | 34 | Each chunk records its package time before and after its change. | Review-owned: chunk verification record. | A chunk with no timing cannot support its speed claim. |
 | LGP35 | 35 | The build log names each reverted attempt. | Review-owned: build log at the final reconciliation. | A missing entry lets a later run repeat the attempt. |
 | LGP36 | 36 | The final report pairs landing-gate timings with each retained red proof. | Review-owned: final implementation reconciliation. | A faster green run alone cannot establish retained quality. |
+| LGP37 | 5 | The PS40 to PS43 witness keeps its passing-run guard and its expectation refusals on the shared fixture. | `internal/probe/verdict_test.go` (`TestExpectRequiresTheNamedWitness`) | A dropped subtest or a changed refusal fails the comparison. |
 
 ### Edge inventory
 
-- Fixture edges: an absent golden, a failed golden build, a copy with a broken seal, a symlink in the copy path, and two parallel copies.
-- Git edges: a hostile common directory after a cached read, a missing directory, and a root spelled through a symlink.
-- More git edges: a ref write inside the run, and two run values in one process.
-- Worktree edges: a relative operand, a removed process directory, a process-only environment value, and a PATH stub.
-- System edges: a serial mutator, a parallel reader, a test that binds process state, and a filtered run.
-- More system edges: an unfiltered run that misses one terminal outcome.
+- Fixture edges: a write in one copy (LGP2), and a copy's seal (LGP3).
+- Git edges: a hostile common directory after a cached read (LGP11, LGP13), a ref write inside the run (LGP12), and two run values in one process (LGP14).
+- Worktree edges: a relative operand (LGP18), a removed process directory (LGP23), a process-only environment value (LGP19), and a PATH stub (LGP23 serial set).
+- System edges: a test that reaches an owner repository (LGP29, LGP32), a test that binds process state (LGP30), and an unfiltered run that misses one terminal outcome (LGP27).
+
+**Won't handle:** A failed golden build. `clampFixture` fails the test with the build error, as `probetest.Repository` does today, and that remains the surviving caller.
+
+**Won't handle:** A filtered system run. `TestMain` skips the ledger verify under `-run` today (`internal/systemtest/owner_test.go:64`), and that behavior is unchanged.
 
 **Won't handle:** Separate system shard processes. The single-process parallel run keeps one ledger, and `TestUnfilteredRunVerifiesLedger` remains its surviving caller.
 
@@ -311,9 +328,46 @@ The gate sets `BENCH_RUN_BINARY` and `BENCH_KIT` for every phase (`internal/gate
 `canonicalpath.Resolve` reads the process directory for a relative path, and `targetPath` refuses a relative path target (`internal/worktree/path.go:305-306`).
 The secondary reviews of 2026-10-09 cite 767 worktree tests. The tree pins 805 (`internal/worktree/parallel_census_test.go:1061`).
 
+### Flagged additions
+
+These promises go beyond the literal decision source. Each one is the structural guard that a closed seam needs to stay red-capable. The reviewer can veto each one.
+
+- The effect census gains `os.Environ` (story 24, LGP24). It guards the one owner of the child base environment.
+- The system lock census (story 28, LGP28). It guards the ledger under parallel tests.
+- The system serial-reason census and its exact table (stories 31 and 32, LGP25, LGP26, LGP29 to LGP32). It guards the parallel set.
+- The removed-directory row (LGP23). It keeps the one process-directory test serial.
+- A new `canonicalpath` form that takes the directory as an argument. It keeps the symlink semantics of `Resolve`.
+
+### Source sentence to rows
+
+| Closed decision of 2026-10-21 | Rows |
+|---|---|
+| The system suite gains `t.Parallel` in one process, with one owner, one ledger, and the pinned argv. | LGP25 to LGP33 |
+| The git cache holds only the common directory, the top level, and the admin directory for one run. | LGP9 to LGP15 |
+| The direct duplicate queries go away. | LGP16, LGP17 |
+| The probe and testreport fixtures are built once for each package run, and every witness is kept. | LGP1 to LGP8, LGP37 |
+| The working-directory and child-environment worktree groups move into the parallel set. | LGP18 to LGP24 |
+| A gain inside the spread counts as no change, and each reverted attempt is recorded. | LGP34 to LGP36 |
+
+### Pre-review proof checklist
+
+- `Cited symbols`: the review of 2026-10-21 resolved every cited symbol and test name at `43d84ec19`.
+- `Import edges`: none. The spec adds no cross-package import edge except the run value from `internal/git` into `internal/worktree`, which already imports it.
+- `Source-row clauses and occurrences`: none.
+- `Promised field labels`: none.
+- `Changed-function callers`: `canonicalpath.Resolve` keeps its signature. The callers of the four `os.Environ` sites and of `planExplicitWith` and `validateOwnerMarker` are listed under Implementation decisions. The slicer runs `bench consumers` for each.
+- `Copy survival`: LGP1 and LGP6 fail when a per-test build survives.
+- `Rendered-shape readers`: none. No rendered output changes.
+- `Pin operators`: `TestPackageTestCountPin` compares with `!=` in both directions, and `TestSerialSetStaysBelowTheCeiling` requires equality (`internal/worktree/parallel_census_test.go:1043-1078`).
+- `Entry reads`: the process directory and `os.Environ` move into `effects.go` (LGP18, LGP19, LGP24).
+- `Derived expectations`: none. Each count is an independent literal or a recorded sum.
+- `Consolidated rules`: none.
+- `Quantified obligations`: "every ledger write" (LGP28), "every witness" (LGP4, LGP5, LGP7, LGP8, LGP37), and "no `t.Setenv("TMPDIR"`" (LGP30).
+- `Workflow-step writes`: none.
+
 ### What this spec did not verify
 
 - The per-test cost split inside the probe fixture between `git init` and the seal publication.
-- Which system tests read an owner repository without a write. The census decides that at build time.
 - Whether each of the 17 operand tests needs only the verb-call directory.
-- Whether one seal stays valid after a fixture copy. LGP3 decides it.
+- Whether concurrent bench children that share one `owner.home` conflict. The build records each conflict as a serial reason.
+- Whether the probe verb's selection path reaches `freshness.VerifyAt` and its `go list -deps` start.
