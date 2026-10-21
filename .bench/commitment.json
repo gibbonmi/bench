@@ -1123,9 +1123,9 @@
           "deliverables": [
             {
               "source": {
-                "id": "landing-test-efficiency",
-                "path": "specs/landing-test-efficiency/spec.md",
-                "identity": "sha256:5afc43cc54436ff8c7dabc57517d02172eb4ba72951a3a8e8837f20f3b0f0ca6"
+                "id": "landing-gate-long-poles",
+                "path": "specs/landing-gate-long-poles/spec.md",
+                "identity": "sha256:4adbb6afc01f4b8849173e4239cff6fc47a2935bf8886488804c709511155d07"
               }
             }
           ],
