@@ -5,7 +5,7 @@ Status: ready
 ## Destination
 
 Extend existing preflight, record, and reader owners for repeated planning work.
-Keep FT293, FT375, FT318, and FT125 as distinct deliverable outcomes.
+Keep FT375, FT318, and FT125 as distinct deliverable outcomes.
 
 ## Notes
 

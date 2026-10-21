@@ -52,7 +52,7 @@ The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure
 light paths and the worktree-seam-reduction build landed cards 01, 03, 04, 06, and 07
 and the small cuts. The rows below hold the rest.
 
-**FT366 (MEDIUM) — hook input and shell-wrapper grammar have one owner.**
+**FT366 (MEDIUM) — a PreToolUse guard refuses a pathless `rg` call through the shared command projection.**
 
 **FT362 (MEDIUM) — `subprocess` owns the process-group run, and the profile claim matches the tree.**
 
@@ -120,6 +120,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT414 (HIGH) — the record, commit, and landing verbs state their preconditions before an attempt.**
 
+**FT438 (HIGH) — a delegated repair's assignment and plan records keep a test-only repair eligible for `bench record confirmation`.**
+
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
 **FT89 (LOW) — resolve the remaining guidance contradictions.**
@@ -144,7 +146,9 @@ and the small cuts. The rows below hold the rest.
 
 **FT241 (LOW, decision required) — versioned acceptance promises with retained evidence.**
 
-**FT380 (MEDIUM) — every plan commit passes the coverage parser and build preflight before dispatch.**
+**FT380 (MEDIUM) — a plan commit passes the coverage parser and the `check-floor` row before publication.**
+
+**FT439 (MEDIUM, decision required) — a comment-only correction after a chunk freeze keeps its verifications and its review chain.**
 
 **FT381 (MEDIUM, decision required) — a delegated full run has decided risk classes, repair routing, and author-replacement records.**
 
@@ -168,6 +172,9 @@ and the small cuts. The rows below hold the rest.
 
 **FT437 (MEDIUM, decision required) — a settled decision on a commitment-pinned row reaches its row file.**
 
+**FT441 (MEDIUM, decision required) — the spec author re-reads each cited source and walks each lifecycle, and the spec review grades rows against the tree.**
+
+**FT442 (LOW) — a build widens each consumer file of a touched declaration before dispatch.**
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -203,6 +210,8 @@ and the small cuts. The rows below hold the rest.
 **FT415 (LOW) — a red `bench test` lists every failed want line of a multi-rule harness.**
 
 **FT404 (LOW, decision required) — each conformance check states the scope that its detector grades.**
+
+**FT444 (LOW) — each retro improvement item names its fix lever.**
 
 ## Release qualification
 
