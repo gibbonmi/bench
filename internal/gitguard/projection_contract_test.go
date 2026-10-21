@@ -25,6 +25,35 @@ func TestGitProjectionAuthority(t *testing.T) {
 	}
 }
 
+// TestGitEnvelopeContract grades that an unreadable, missing, null, or empty command reads as "".
+func TestGitEnvelopeContract(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"readable command", `{"tool_input":{"command":"git status"}}`, "git status"},
+		{"empty input", ``, ""},
+		{"invalid JSON", `not json`, ""},
+		{"array root", `[]`, ""},
+		{"array tool_input", `{"tool_input":[]}`, ""},
+		{"numeric command", `{"tool_input":{"command":7}}`, ""},
+		{"array command", `{"tool_input":{"command":["git","reset"]}}`, ""},
+		{"missing tool_input", `{}`, ""},
+		{"missing command", `{"tool_input":{}}`, ""},
+		{"null tool_input", `{"tool_input":null}`, ""},
+		{"null command", `{"tool_input":{"command":null}}`, ""},
+		{"empty command", `{"tool_input":{"command":""}}`, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := CommandFromEnvelope([]byte(tc.in)); got != tc.want {
+				t.Errorf("CommandFromEnvelope(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
 // TestGuardWrapperSelection grades that Git reads only the first matching shell child.
 func TestGuardWrapperSelection(t *testing.T) {
 	cases := []struct {
