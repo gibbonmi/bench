@@ -266,6 +266,11 @@ Final verification runs only after the complete, independently reviewed outcome.
           "probe": "Gate the post-enumeration checkpoint on a non-nil enumeration error only; a nil-error candidate slice returned after cancellation must report known counts and red this witness."
         },
         {
+          "id": "differential-golden-bite",
+          "command": "bench test --package ./internal/guards --run '^TestScanLoopDifferentialCommandFamilies$'",
+          "probe": "Reverse the candidate inspection order in the candidate loop; the independently captured scan-family-s.golden expectation must red this witness on the complete member."
+        },
+        {
           "id": "post-inspection-omission",
           "command": "bench test --package ./internal/guards --run '^TestScanLoopPostInspectionCancellation$'",
           "probe": "Omit only the post-inspection context checkpoint; a returned interrupted candidate must publish rows and red the completed-prefix contract."

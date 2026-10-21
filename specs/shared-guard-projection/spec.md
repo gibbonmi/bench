@@ -203,10 +203,10 @@ Those changes would alter the approved guard policies.
 | Current site | Shared fact after migration | Policy that stays local | Rows |
 |---|---|---|---|
 | `gitguard.scanWords` wrapper predicate and flag loop (`scan.go:67-75`) | `ShellChildren` | first matching child and one-level traversal | GP02, GP03, GP09, GP74 |
-| `gitguard.worktreeExecChild` (`scan.go:88-98`) | `WorktreeExec` | Bench basename recognition and child authority | GP05–GP10 |
+| `gitguard.worktreeExecChild` (`scan.go:88-98`) | `WorktreeExec` | Bench basename recognition and child authority | GP05–GP10, GP72 |
 | `benchguard.judge`, `spanInvokesBench`, `isWrapper`, `wrapperFlag` (`benchguard.go:17, 141-155, 315-332`) | `ShellChildren` | Bench identity and matching-child selection | GP03–GP04, GP11 |
 | `benchguard.isExecHead` (`benchguard.go:134, 251`) | `WorktreeExec.Head` | outer exec exception and follow-on order | GP12–GP13 |
-| `benchguard.runsReviewerVerb` (`reviewer.go:30-38`) | `ShellChildren` and `WorktreeExec` | recursive walk, verb naming, and Bench identity | GP62–GP64, GP67, GP70 |
+| `benchguard.runsReviewerVerb` (`reviewer.go:30-38`) | `ShellChildren` and `WorktreeExec` | recursive walk, verb naming, and Bench identity | GP62–GP64, GP67, GP70, GP73 |
 | conformance `runsBenchUnderExec` (`refusal_route_guard_test.go:84-91`) | `WorktreeExec` | agent-route scope and Bench identity | GP68–GP69 |
 | Git, Bench, and write envelope readers | `DecodeEnvelope` with the current target form | required fields and failure posture | GP14–GP29, GP47–GP61 |
 
@@ -625,7 +625,7 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP70 | 27 | The follow-on core entry keeps exit 2 and the reviewer-verb message for each override envelope | `cmd/bench/main_test.go` (`TestFollowOnGuardDeniesTheOverrideEnvelope`) | The migrated walk breaks the actual entry path |
 | GP71 | 15, 16 | The Bench follow-on hook keeps warning-allow when its resolver, wrapper, or core is missing | `internal/systemtest/bench_follow_on_test.go` (`TestBenchFollowOnHookDegradedRim`, FOG19 and FOG33) | Shared authority imposes Git's refusal on the follow-on hook |
 | GP72 | 18 | `mybench worktree exec X -- git reset --hard` keeps the empty Git label | planned TestGitProjectionAuthority in internal/gitguard/projection_contract_test.go | A Git consumer that calls WorktreeExec without its Bench basename test refuses a non-Bench head |
-| GP73 | 27 | ReviewerVerb allows `x worktree exec t -- bench commitment override` | planned TestReviewerVerbKeepsRecursiveReach in internal/benchguard/projection_contract_test.go | A reviewer walk that calls WorktreeExec without isBench denies a non-Bench head |
+| GP73 | 18, 27 | ReviewerVerb allows `x worktree exec t -- bench commitment override` | planned TestReviewerVerbKeepsRecursiveReach in internal/benchguard/projection_contract_test.go | A reviewer walk that calls WorktreeExec without isBench denies a non-Bench head |
 | GP74 | 2 | The Git guard reads only the first matching child in W4 and keeps the allow verdict for `bash -c 'echo ok' -c 'git reset --hard'` | planned TestGuardWrapperSelection in internal/gitguard/projection_contract_test.go | A Git consumer that searches every child refuses the second-flag reset |
 
 GP46 uses an independently preserved pre-migration executable and the candidate executable.
