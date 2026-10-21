@@ -148,7 +148,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT380 (MEDIUM) — a plan commit passes the coverage parser and the `check-floor` row before publication.**
 
-**FT439 (MEDIUM, decision required) — a comment-only correction after a chunk freeze keeps its verifications and its review chain.**
+**FT439 (MEDIUM) — a comment-only correction after a chunk freeze keeps its verifications and its review chain.**
 
 **FT381 (MEDIUM, decision required) — a delegated full run has decided risk classes, repair routing, and author-replacement records.**
 
