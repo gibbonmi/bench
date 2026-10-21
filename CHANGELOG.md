@@ -8,7 +8,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Test cost signal
 
-- Changed every Bench-owned `go test` command, which now passes a `-timeout` flag of ten minutes from one constant. This includes the gate `test`, `race`, and `system` phases, the release steps, and every `bench test` run. A command-line flag takes precedence over a `GOFLAGS` value. So a linked repository that sets a `-timeout` in `GOFLAGS` now gets the ten-minute limit in its gate `test` phase. Before, the limit came from the environment.
+- Changed every Bench-owned `go test` command, which now passes a `-timeout` flag of ten minutes from one constant. This includes the gate `test`, `race`, and `system` phases, the release steps, and every `bench test` run. A command-line flag takes precedence over a `GOFLAGS` value. So a linked repository that sets a `-timeout` in `GOFLAGS` now gets the ten-minute limit in its gate `test` phase. Before, the limit was the implicit Go default of ten minutes, and a `-timeout` in `GOFLAGS` could change it.
 - Added the `slowest[N]{package,test,elapsed_ms}` table of `bench test --full`. It names the three slowest top-level tests of each package after the `skips` table. A run without `--full` prints no `slowest` table.
 - Added the `timeout_warnings[N]{package,elapsed_ms,timeout_ms}` table of `bench test`. It names each package that uses half or more of the go test timeout, and it prints only when it has a row. It is the first table of the result, and under `--check` it follows the check row. A warning changes no exit code.
 

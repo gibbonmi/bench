@@ -9,7 +9,7 @@ import (
 )
 
 // halfTimeoutMS is the warning threshold, built here from the timeout by its own
-// expression so that a changed production divisor turns these tests red.
+// expression.
 func halfTimeoutMS() int64 { return bounds.GoTestTimeout.Milliseconds() / 2 }
 
 // warnedPackageEvents is a stream in which pkg runs one test that ends with action, and
@@ -23,12 +23,21 @@ func warnedPackageEvents(pkg, action string, elapsedMS int64) []string {
 	}
 }
 
-// warningBlock is the expected `timeout_warnings` block with one threshold row for each
-// package.
-func warningBlock(packages ...string) string {
+// warnedPackage is one expected warning row: a package and its elapsed milliseconds.
+type warnedPackage struct {
+	name      string
+	elapsedMS int64
+}
+
+// atThreshold is the warning row of a package whose elapsed time is the threshold.
+func atThreshold(pkg string) warnedPackage { return warnedPackage{pkg, halfTimeoutMS()} }
+
+// warningBlock is the expected `timeout_warnings` block with one row for each package,
+// in the given order.
+func warningBlock(packages ...warnedPackage) string {
 	block := fmt.Sprintf("timeout_warnings[%d]{package,elapsed_ms,timeout_ms}:\n", len(packages))
 	for _, pkg := range packages {
-		block += fmt.Sprintf("  %s,%d,%d\n", pkg, halfTimeoutMS(), bounds.GoTestTimeout.Milliseconds())
+		block += fmt.Sprintf("  %s,%d,%d\n", pkg.name, pkg.elapsedMS, bounds.GoTestTimeout.Milliseconds())
 	}
 	return block
 }
@@ -36,7 +45,17 @@ func warningBlock(packages ...string) string {
 // TestTimeoutWarningAtThreshold grades that a package at half of the timeout gets a row.
 func TestTimeoutWarningAtThreshold(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./..."}, warnedPackageEvents("canned", "pass", halfTimeoutMS()), 0)
-	if want := warningBlock("canned"); !strings.Contains(output, want) || code != 0 {
+	if want := warningBlock(atThreshold("canned")); !strings.Contains(output, want) || code != 0 {
+		t.Fatalf("Command = (%d, %q), want (0, containing %q)", code, output, want)
+	}
+}
+
+// TestTimeoutWarningAboveThreshold grades that a package above the threshold gets a row
+// with its own elapsed time and the go test timeout.
+func TestTimeoutWarningAboveThreshold(t *testing.T) {
+	above := warnedPackage{"canned", halfTimeoutMS() + 1}
+	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./..."}, warnedPackageEvents(above.name, "pass", above.elapsedMS), 0)
+	if want := warningBlock(above); !strings.Contains(output, want) || code != 0 {
 		t.Fatalf("Command = (%d, %q), want (0, containing %q)", code, output, want)
 	}
 }
@@ -51,11 +70,15 @@ func TestTimeoutWarningBelowThreshold(t *testing.T) {
 }
 
 // TestTimeoutWarningsOrderByPackage grades that warned packages, whose events arrive in
-// reverse name order, print in package name order.
+// reverse name order with unequal elapsed times, print in package name order.
 func TestTimeoutWarningsOrderByPackage(t *testing.T) {
-	events := append(append(warnedPackageEvents("zeta", "pass", halfTimeoutMS()), warnedPackageEvents("mid", "pass", halfTimeoutMS())...), warnedPackageEvents("alpha", "pass", halfTimeoutMS())...)
+	alpha, mid, zeta := atThreshold("alpha"), warnedPackage{"mid", halfTimeoutMS() + 1}, warnedPackage{"zeta", halfTimeoutMS() + 2}
+	events := make([]string, 0)
+	for _, pkg := range []warnedPackage{zeta, mid, alpha} {
+		events = append(events, warnedPackageEvents(pkg.name, "pass", pkg.elapsedMS)...)
+	}
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./..."}, events, 0)
-	if want := warningBlock("alpha", "mid", "zeta"); !strings.Contains(output, want) || code != 0 {
+	if want := warningBlock(alpha, mid, zeta); !strings.Contains(output, want) || code != 0 {
 		t.Fatalf("Command = (%d, %q), want (0, containing %q)", code, output, want)
 	}
 }
@@ -64,7 +87,7 @@ func TestTimeoutWarningsOrderByPackage(t *testing.T) {
 // bounded response always shows it.
 func TestTimeoutWarningsRenderFirst(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./..."}, warnedPackageEvents("canned", "pass", halfTimeoutMS()), 0)
-	if want := warningBlock("canned") + "packages[1]"; !strings.HasPrefix(output, want) || code != 0 {
+	if want := warningBlock(atThreshold("canned")) + "packages[1]"; !strings.HasPrefix(output, want) || code != 0 {
 		t.Fatalf("Command = (%d, %q), want (0, prefix %q)", code, output, want)
 	}
 }
@@ -73,7 +96,7 @@ func TestTimeoutWarningsRenderFirst(t *testing.T) {
 // the warning block, then the packages table.
 func TestTimeoutWarningsFollowCheckRow(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--check", "line-routing"}, warnedPackageEvents("canned", "pass", halfTimeoutMS()), 0)
-	want := checkHeader + "  line-routing,conformance,1,0\n" + warningBlock("canned") + "packages[1]"
+	want := checkHeader + "  line-routing,conformance,1,0\n" + warningBlock(atThreshold("canned")) + "packages[1]"
 	if !strings.HasPrefix(output, want) || code != 0 {
 		t.Fatalf("Command = (%d, %q), want (0, prefix %q)", code, output, want)
 	}
@@ -82,7 +105,7 @@ func TestTimeoutWarningsFollowCheckRow(t *testing.T) {
 // TestTimeoutWarningKeepsPassingExit grades that a warning does not fail a passing run.
 func TestTimeoutWarningKeepsPassingExit(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./..."}, warnedPackageEvents("canned", "pass", halfTimeoutMS()), 0)
-	if !strings.HasPrefix(output, warningBlock("canned")) || code != 0 {
+	if !strings.HasPrefix(output, warningBlock(atThreshold("canned"))) || code != 0 {
 		t.Fatalf("Command = (%d, %q), want (0, the warning block first)", code, output)
 	}
 }
@@ -92,7 +115,7 @@ func TestTimeoutWarningKeepsPassingExit(t *testing.T) {
 func TestTimeoutWarningKeepsFailingExit(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./..."}, warnedPackageEvents("canned", "fail", halfTimeoutMS()), 1)
 	failure := "failures[1]{package,test,line,lines}:\n  canned,TestCanned,\"canned_test.go:9: boom\",1\n"
-	if !strings.HasPrefix(output, warningBlock("canned")) || !strings.Contains(output, failure) || code != 1 {
+	if !strings.HasPrefix(output, warningBlock(atThreshold("canned"))) || !strings.Contains(output, failure) || code != 1 {
 		t.Fatalf("Command = (%d, %q), want (1, the warning block first and %q)", code, output, failure)
 	}
 }
