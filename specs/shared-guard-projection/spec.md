@@ -26,9 +26,9 @@ Keep the independent degraded shell rim, because it must run without the core.
 
 ## User stories
 
-Line: opus / high
-Implementation-line reason: the hardest material chunk is GP2, which moves three decoder forms with fifteen ordered decoder rows and the reviewer-verb walk onto new APIs at once. The spec fixes each decoder target and caller policy exactly, and the seams are resolved owner-package and entry tests. Test strength is high, but the ownership check and the actual-hook witnesses need careful integration.
-Harder chunks: GP2 and GP3, at xhigh effort on the same model.
+Line: opus / medium
+Implementation-line reason: the hardest material chunk is GP2, which moves three decoder forms with fifteen ordered decoder rows and the reviewer-verb walk onto new APIs. The spec fixes each decoder target and caller policy exactly, and the seams are resolved owner-package and entry tests. Each ticket is sliced to an estimated peak author context of about 200k tokens, so no ticket needs a larger effort to hold its read set. The ownership check and the actual-hook witnesses need careful integration.
+Harder chunks: GP2 and GP3, at high effort on the same model.
 
 1. As an agent, I want routine executable prefixes preserved, so that ordinary commands receive the same guard verdict.
 2. As an agent, I want one wrapper level recognized, so that supported shell children remain visible.
@@ -288,8 +288,8 @@ Slicing preserves every acceptance predicate and the implementation line.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
 | GP1 / 1-share-git-command-projections.md | Git uses shared wrapper and worktree projections with unchanged verdicts | GP01–GP03, GP05–GP10, GP72, GP74 | projection and Git contract tests | no |
-| GP2 / 2-migrate-guard-envelope-consumers.md, 3-migrate-bench-projection-consumers.md | common envelope facts serve the three readers, and Bench, the reviewer verb, and the agent-route check use the projections | GP04, GP11–GP29, GP43, GP47–GP66, GP68–GP70, GP73 | envelope, Bench, reviewer-verb, write, route-check, canary, and core entry tests | yes, xhigh |
-| GP3 / 4-enforce-guard-projection-ownership.md, 5-prove-guard-entry-regression.md | copy refusal and actual-entry integration complete the migration | GP30–GP42, GP44–GP46, GP67, GP71 | owner mutation tests and system hook witnesses | yes, xhigh |
+| GP2 / 2-add-envelope-owner-for-git.md, 3-migrate-bench-and-write-readers.md, 4-migrate-bench-projection-consumers.md | common envelope facts serve the three readers, and Bench, the reviewer verb, and the agent-route check use the projections | GP04, GP11–GP29, GP43, GP47–GP66, GP68–GP70, GP73 | envelope, Bench, reviewer-verb, write, route-check, canary, and core entry tests | yes, high |
+| GP3 / 5-enforce-guard-projection-ownership.md, 6-prove-guard-entry-regression.md, 7-prove-guard-migration-differential.md | copy refusal and actual-entry integration complete the migration | GP30–GP42, GP44–GP46, GP67, GP71 | owner mutation tests and system hook witnesses | yes, high |
 
 GP1 precedes GP2, because the shared projection API must exist before the second consumer migrates.
 GP1 retires the Git recognizers in scan.go.
@@ -297,9 +297,14 @@ GP2 retires the Bench recognizers in one step, because `reviewer.go` and `benchg
 GP2 owns GP47–GP61 exactly once and closes every decoder predicate at its first-use green checkpoint.
 GP3 repeats those cases through the final differential and actual-entry witnesses under GP46, without duplicate Covers ownership.
 GP3 enables its final ownership invariant after all consumer migrations.
-The slicer split GP2 into two serial tickets: ticket 2 migrates the envelope readers, and ticket 3 migrates the Bench projection consumers.
-Ticket 2 owns GP14–GP29, GP43, and GP47–GP61; ticket 3 owns GP04, GP11–GP13, GP62–GP66, GP68–GP70, and GP73.
-Both tickets write `benchguard.go`, `benchguard/projection_contract_test.go`, and `cmd/bench/guard_projection_test.go`, so ticket 3 starts after ticket 2 commits green.
+Each ticket is sliced to an estimated peak author context of about 200k tokens.
+GP2 holds three serial tickets:
+
+- Ticket 2 adds the envelope owner with all three forms and migrates the Git reader (GP14–GP21, GP43, GP47, GP49, GP51, GP54, GP57, GP60).
+- Ticket 3 migrates the Bench and Write readers (GP22–GP29, GP48, GP50, GP52, GP53, GP55, GP56, GP58, GP59, GP61).
+- Ticket 4 migrates the Bench projection consumers (GP04, GP11–GP13, GP62–GP66, GP68–GP70, GP73).
+
+Tickets 2, 3, and 4 share `cmd/bench/guard_projection_test.go`, and tickets 3 and 4 share `benchguard.go` and `benchguard/projection_contract_test.go`, so each starts after its predecessor commits green.
 
 ### Graph ordering and execution boundary
 
@@ -317,9 +322,13 @@ Derived Writes scope for the slicer, at f07508b2a:
 
 - GP1: `internal/shellcommand/projection.go` (new), `internal/shellcommand/projection_test.go` (new), `internal/gitguard/scan.go`, `internal/gitguard/projection_contract_test.go` (new).
 - GP2: `internal/shellcommand/envelope.go` (new), `internal/shellcommand/envelope_test.go` (new), `internal/gitguard/gitguard.go`, `internal/gitguard/projection_contract_test.go`, `internal/benchguard/benchguard.go`, `internal/benchguard/reviewer.go`, `internal/benchguard/projection_contract_test.go` (new), `internal/writeguard/writeguard.go`, `internal/writeguard/envelope_contract_test.go` (new), `cmd/bench/guard_projection_test.go` (new), `internal/conformance/refusal_route_guard_test.go`, `tests/canary/canonical-path-owner/second-derivation/`.
-- GP3: `internal/conformance/guard_projection_owner_test.go` (new), `internal/conformance/package_core_checks_test.go`, `internal/conformance/checks_test.go`, `internal/conformance/tier_live_tree_test.go`, `internal/systemtest/guard_projection_test.go` (new), `internal/systemtest/testdata/guard-projection-family-d.golden` (new), `cmd/bench/guard_projection_test.go`.
+- GP3: `internal/conformance/guard_projection_owner_test.go` (new), `internal/conformance/package_core_checks_test.go`, `internal/conformance/checks_test.go`, `internal/conformance/tier_live_tree_test.go`, `internal/systemtest/guard_projection_test.go` (new), `internal/systemtest/guard_projection_differential_test.go` (new), `internal/systemtest/testdata/guard-projection-family-d.golden` (new), `cmd/bench/guard_projection_test.go`.
 
-GP3 holds two tickets with disjoint writes: ticket 4 owns the registered copy refusal (GP30–GP33, GP42, GP67), and ticket 5 owns the actual-entry regression (GP34–GP41, GP44–GP46, GP71).
+GP3 holds three tickets with disjoint writes:
+
+- Ticket 5 owns the registered copy refusal (GP30–GP33, GP42, GP67).
+- Ticket 6 owns the actual-entry regression (GP34–GP41, GP44, GP45, GP71).
+- Ticket 7 owns the migration differential and its golden (GP46).
 
 The refresh drops seven paths from the 2026-10-06 fence.
 Commit 1e8846bb0 deleted the ownership closure that required the five command-registry co-names: `cmd/bench/command_registry.go`, `cmd/bench/command_registry_test.go`, `cmd/bench/help_inventory_test.go`, `internal/conformance/axi_query_registry_test.go`, and `internal/conformance/subcommand_routing_table_test.go`.
@@ -329,7 +338,7 @@ The slicer's research confirms or restores each dropped path.
 
 The version-1 completion plan is a planning verification inventory, not a dispatch plan.
 Before any implementation charge, the coordinator binds actual run and session identities and ticket verification ownership in version 2 with author-limit 1.
-Each ticket receives a fresh author on opus/high, with GP2 and GP3 at xhigh.
+Each ticket receives a fresh author on opus/medium, with the GP2 and GP3 tickets at high.
 Refresh current owner interfaces, source closure, and actual headroom before that charge.
 Build and retain the pre-migration executable for GP46 before GP1 begins.
 Staged status and planning validation grant no build authority.
@@ -378,8 +387,9 @@ Final verification runs only after the complete, independently reviewed outcome.
     {
       "id": "GP2",
       "tickets": [
-        "2-migrate-guard-envelope-consumers.md",
-        "3-migrate-bench-projection-consumers.md"
+        "2-add-envelope-owner-for-git.md",
+        "3-migrate-bench-and-write-readers.md",
+        "4-migrate-bench-projection-consumers.md"
       ],
       "verification": [
         {
@@ -443,8 +453,9 @@ Final verification runs only after the complete, independently reviewed outcome.
     {
       "id": "GP3",
       "tickets": [
-        "4-enforce-guard-projection-ownership.md",
-        "5-prove-guard-entry-regression.md"
+        "5-enforce-guard-projection-ownership.md",
+        "6-prove-guard-entry-regression.md",
+        "7-prove-guard-migration-differential.md"
       ],
       "verification": [
         {
@@ -609,7 +620,7 @@ The registered ordinary conformance test detects private copies in the executed 
 | GP43 | 22 | Both gitguard-pinned canary families keep biting through their registered owners | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | Removing the encoding/json import breaks a mutation anchor without a visible behavior change |
 | GP44 | 24 | A supported Bench invocation produces no raw census record | planned TestGuardProjectionCensusExclusion in cmd/bench/guard_projection_test.go | A stale invocation consumer records a Bench command as raw shell |
 | GP45 | 25 | Projection of an expansion-shaped command leaves a sentinel absent | planned TestGuardProjectionNeverExecutes in internal/systemtest/guard_projection_test.go | An evaluator executes inspected shell text |
-| GP46 | 23, 26 | Differential family D produces identical caller result tuples before and after migration | planned TestGuardProjectionDifferentialFamilies in internal/systemtest/guard_projection_test.go | Existing narrow suites miss a changed supported command or failure policy |
+| GP46 | 23, 26 | Differential family D produces identical caller result tuples before and after migration | planned TestGuardProjectionDifferentialFamilies in internal/systemtest/guard_projection_differential_test.go | Existing narrow suites miss a changed supported command or failure policy |
 | GP47 | 9, 10 | An uppercase COMMAND carrying git reset still makes guard-git exit 2 | planned TestGuardGitEnvelopePolicy in cmd/bench/guard_projection_test.go | Exact-only lookup silently permits a dangerous command |
 | GP48 | 9, 11 | An uppercase COMMAND remains missing to the Bench reader | planned TestBenchEnvelopeRequiredField in internal/benchguard/projection_contract_test.go | Uniform folded matching broadens exact-map policy |
 | GP49 | 9, 10 | A command string followed by duplicate null still makes guard-git exit 2 | planned TestGuardGitEnvelopePolicy in cmd/bench/guard_projection_test.go | Last-raw-value lookup discards the retained Git command |
@@ -642,7 +653,7 @@ The registered ordinary conformance test detects private copies in the executed 
 GP46 compares the candidate executable with tuples recorded from a pre-migration executable.
 Build that executable at the integrated source at build entry, before GP1 begins, and retain it outside the tree; record its build commit so it can be rebuilt.
 Replace each temporary fixture root in a tuple with one fixed token before you record or compare it.
-Ticket 5 runs its driver once against that executable and stores the tuples as `internal/systemtest/testdata/guard-projection-family-d.golden`, reviewed apart from the candidate code.
+Ticket 7 runs its driver once against that executable and stores the tuples as `internal/systemtest/testdata/guard-projection-family-d.golden`, reviewed apart from the candidate code.
 The landed test compares the candidate with that golden, so it needs no retained executable.
 The same canned events and fixture repositories feed both runs through actual core and hook entries.
 Include the ordered raw envelopes from the decoder preservation matrix, without JSON remarshal or key normalization.
@@ -836,18 +847,20 @@ Preserve registry metadata and the existing injected-port declarations without a
 
 | Item | Proposed disposition |
 |---|---|
-| Implementation line | opus/high, GP2 (tickets 2 and 3) and GP3 at xhigh |
+| Implementation line | opus/medium; GP2 (tickets 2–4) and GP3 (tickets 5–7) at high |
 | Seams and coverage | value, caller, core, actual hook, and registered ownership seams |
 | Derived Writes scope | three chunk scopes above, seven paths dropped from the prior fence |
 | Exclusions | independent rim, reviewer-walk depth, rg outcome, scan outcome, and full interpreter boundaries |
-| Ticket graph | five tickets; GP2 holds tickets 2 and 3 in series, and GP3 holds tickets 4 and 5 with disjoint writes |
+| Ticket graph | seven tickets, each estimated at or below about 200k peak author context; GP2 holds tickets 2–4 in series, and GP3 holds tickets 5–7 with disjoint writes |
 
 ### Numbered breakdown
 
 | ticket | title | Blocked by | delivered outcome |
 |---|---|---|---|
 | 1-share-git-command-projections.md | Share Git command projections | none | Shared projection facts through the real Git classifier |
-| 2-migrate-guard-envelope-consumers.md | Migrate guard envelope readers | 1-share-git-command-projections.md | All three standard decoder forms through migrated readers and actual core entries |
-| 3-migrate-bench-projection-consumers.md | Migrate Bench projection consumers | 1-share-git-command-projections.md, 2-migrate-guard-envelope-consumers.md | Bench Classify, the recursive reviewer walk, and the route check through the shared projection |
-| 4-enforce-guard-projection-ownership.md | Enforce guard projection ownership | 1-share-git-command-projections.md, 2-migrate-guard-envelope-consumers.md, 3-migrate-bench-projection-consumers.md | Registered copy refusal for every retired private grammar copy |
-| 5-prove-guard-entry-regression.md | Prove guard entry regression | 1-share-git-command-projections.md, 2-migrate-guard-envelope-consumers.md, 3-migrate-bench-projection-consumers.md | Actual hook and core regression against a checked-in pre-migration golden |
+| 2-add-envelope-owner-for-git.md | Add the envelope owner and migrate the Git reader | 1-share-git-command-projections.md | One structural envelope owner, with the Git reader and core entry on it |
+| 3-migrate-bench-and-write-readers.md | Migrate the Bench and Write envelope readers | 2-add-envelope-owner-for-git.md | The Bench and Write readers on the owner with their errors and posture |
+| 4-migrate-bench-projection-consumers.md | Migrate Bench projection consumers | 1-share-git-command-projections.md, 3-migrate-bench-and-write-readers.md | Bench Classify, the recursive reviewer walk, and the route check through the shared projection |
+| 5-enforce-guard-projection-ownership.md | Enforce guard projection ownership | tickets 1–4 | Registered copy refusal for every retired private grammar copy |
+| 6-prove-guard-entry-regression.md | Prove guard entry regression | tickets 1–4 | Actual hook and core regression for degraded and recovery behavior |
+| 7-prove-guard-migration-differential.md | Prove the guard migration differential | tickets 1–4 | Family D and decoder-matrix tuples equal a checked-in pre-migration golden |

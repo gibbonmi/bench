@@ -23,8 +23,8 @@ Do not promise to interrupt an in-flight filesystem call.
 
 ## User stories
 
-Line: opus / xhigh
-Implementation-line reason: GS1 is the only chunk and the harder one, so the line starts at its effort. The loop shape is known and every boundary has an exact predicate, but the cancellation checkpoints and the byte-exact output preservation need careful work at the existing package-variable seams. Test strength is high, because checked-in stdout fixtures and controlled barriers already exist.
+Line: opus / high
+Implementation-line reason: GS1 is the only chunk and the harder one, so the line starts at its effort. Each of its two tickets is sliced to an estimated peak author context of about 200k tokens. The loop shape is known and every boundary has an exact predicate, but the cancellation checkpoints and the byte-exact output preservation need careful work at the existing package-variable seams. Test strength is high, because checked-in stdout fixtures and controlled barriers already exist.
 Harder chunks: GS1.
 
 1. As an agent, I want complete scans preserved, so that the guard inventory keeps its current meaning.
@@ -185,10 +185,12 @@ It remains separately reviewable and can stop after its own green vertical slice
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
-| GS1 / 1-simplify-guard-inventory-loop.md | synchronous scan preserves rows, cancellation, command output, and single ownership | GS01–GS30 | scan-loop, cleanup, command fixtures, bounds policy, and registered ownership mutation | yes, xhigh |
+| GS1 / 1-replace-scan-pipeline-with-loop.md, 2-enforce-scan-loop-owner.md | synchronous scan preserves rows, cancellation, command output, and single ownership | GS01–GS30 | scan-loop, cleanup, command fixtures, bounds policy, and registered ownership mutation | yes, high |
 
 The chunk includes source claim verification and closure maintenance before final integration.
-The one ticket owns all 30 rows and closes their first-use contracts before its independent chunk review.
+GS1 holds two serial tickets, each sliced to an estimated peak author context of about 200k tokens.
+Ticket 1 replaces the pipeline with the loop and owns GS01–GS22 and GS27–GS30.
+Ticket 2 adds the ownership check and the orchestration move and owns GS23–GS26; it starts after ticket 1 commits green, because its live-tree test is red while the old pipeline exists.
 
 ### Graph ordering and execution boundary
 
@@ -215,7 +217,7 @@ If that spec lands first, build entry refreshes these witnesses and their fixtur
 
 The version-1 completion plan is a planning verification inventory, not a dispatch plan.
 Before any implementation charge, the coordinator binds actual run and session identities and ticket verification ownership in version 2 with author-limit 1.
-The ticket receives a fresh author on opus at xhigh effort.
+Each ticket receives a fresh author on opus at high effort.
 Refresh current owner interfaces, source closure, and actual headroom before that charge.
 Staged status and planning validation grant no build authority.
 
@@ -233,7 +235,8 @@ Final verification runs only after the complete, independently reviewed outcome.
     {
       "id": "GS1",
       "tickets": [
-        "1-simplify-guard-inventory-loop.md"
+        "1-replace-scan-pipeline-with-loop.md",
+        "2-enforce-scan-loop-owner.md"
       ],
       "verification": [
         {
@@ -508,14 +511,15 @@ No new conformance registry count, profile row, or injected-port row is needed.
 
 | Item | Proposed disposition |
 |---|---|
-| Implementation line | opus/xhigh |
+| Implementation line | opus/high |
 | Seam and coverage | synchronous scan, controlled cancellation, exact Command output, registered ownership, bounds-policy pin |
 | Derived Writes scope | seven paths, six paths dropped from the prior fence |
 | Exclusions | no hard deadline, no parallel inspection, no new diagnostics, historical pins |
-| Ticket graph | the slicer refreshes the one ticket against this spec |
+| Ticket graph | two serial tickets, each estimated at or below about 200k peak author context |
 
 ### Numbered breakdown
 
 | ticket | title | Blocked by | delivered outcome |
 |---|---|---|---|
-| 1-simplify-guard-inventory-loop.md | Simplify guard inventory scanning | none | Synchronous scan, exact command output, cancellation, bounds-policy pin, and registered loop ownership |
+| 1-replace-scan-pipeline-with-loop.md | Replace the scan pipeline with a synchronous loop | none | Synchronous scan with exact command output, cancellation, family-S golden, and bounds-policy pin |
+| 2-enforce-scan-loop-owner.md | Enforce one scan loop owner | 1-replace-scan-pipeline-with-loop.md | Registered refusal of a second scan pipeline, with the orchestration move |

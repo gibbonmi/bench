@@ -1,13 +1,13 @@
 # Enforce guard projection ownership
 
-Blocked by: 1-share-git-command-projections.md, 2-migrate-guard-envelope-consumers.md, 3-migrate-bench-projection-consumers.md
+Blocked by: 1-share-git-command-projections.md, 2-add-envelope-owner-for-git.md, 3-migrate-bench-and-write-readers.md, 4-migrate-bench-projection-consumers.md
 Writes: internal/conformance/guard_projection_owner_test.go (new), internal/conformance/package_core_checks_test.go, internal/conformance/checks_test.go, internal/conformance/tier_live_tree_test.go
 Covers: GP30, GP31, GP32, GP33, GP42, GP67
 
 ## What to build
 
 Make the registered conformance check refuse any second owner of the guard grammar.
-Tickets 1–3 supply the shared projection and envelope owner and retire every private copy in gitguard, benchguard, and writeguard, so the live tree is clean when this check starts.
+Tickets 1–4 supply the shared projection and envelope owner and retire every private copy in gitguard, benchguard, and writeguard, so the live tree is clean when this check starts.
 
 Add `checkGuardProjectionOwner` beneath the registered package-core-guard check.
 It grades the production Go AST in shellcommand, gitguard, benchguard (`benchguard.go` and `reviewer.go`), and writeguard through real import bindings, unused function bodies included.

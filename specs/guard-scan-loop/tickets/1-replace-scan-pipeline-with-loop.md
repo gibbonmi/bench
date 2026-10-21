@@ -1,8 +1,8 @@
-# Simplify guard inventory scanning
+# Replace the scan pipeline with a synchronous loop
 
 Blocked by: none
-Writes: internal/guards/guards.go, internal/guards/scan_loop_test.go (new), internal/guards/testdata/scan-family-s.golden (new), internal/conformance/guard_scan_owner_test.go (new), internal/conformance/package_core_checks_test.go, internal/conformance/checks_test.go, internal/conformance/tier_live_tree_test.go
-Covers: GS01, GS02, GS03, GS04, GS05, GS06, GS07, GS08, GS09, GS10, GS11, GS12, GS13, GS14, GS15, GS16, GS17, GS18, GS19, GS20, GS21, GS22, GS23, GS24, GS25, GS26, GS27, GS28, GS29, GS30
+Writes: internal/guards/guards.go, internal/guards/scan_loop_test.go (new), internal/guards/testdata/scan-family-s.golden (new)
+Covers: GS01, GS02, GS03, GS04, GS05, GS06, GS07, GS08, GS09, GS10, GS11, GS12, GS13, GS14, GS15, GS16, GS17, GS18, GS19, GS20, GS21, GS22, GS27, GS28, GS29, GS30
 
 ## What to build
 
@@ -26,19 +26,9 @@ Before you replace the loop, build the contract driver for family S and run it o
 Store that reference capture as `internal/guards/testdata/scan-family-s.golden`, and have it reviewed apart from the candidate code.
 GS27 then compares the candidate Command tuples with the golden over the same controlled events, without elapsed-time equality.
 
-Add `checkGuardScanLoopOwner` beneath package-core-guard.
-It grades the production Go AST under internal/guards, unused function bodies included, and refuses go statements, select statements, channel construction, and send or receive nodes.
-It engages only when the root holds an `internal/guards` directory. A missing or unreadable `guards.go` in that directory gets a named diagnostic; a root without the directory gets none.
-Classify its live-tree test in `tier_live_tree_test.go`.
-
-If `checkPackageCoreAndGuards` is still in package_core_checks_test.go, move only that 16-line declaration to checks_test.go, and add the new subcheck there.
-If the shared-guard-projection outcome moved it first, extend that sole declaration and keep its subcheck.
-Keep the name, signature, binding, registry metadata, and subcheck order. Keep the npm producers and their formatter call in package_core_checks_test.go.
-
 Keep guards_test.go, guards_cleanup_test.go, and the four testdata stdout fixtures unchanged.
 Keep the test names `TestScanTimeoutPreservesPartialRowsAndHonestCounts` and `TestScanEnumerationTimeoutUsesUnknownCounts`, because the race phase names them (`internal/gate/gate_go.go:36-37`).
-Do not add the banned skills-index literals to checks_test.go (`skills_index_checks_test.go:375-387`).
-Keep checks_test.go within its 739-line grant after either outcome order. package_core_checks_test.go must not grow. Each new file stays within 400 lines. Add no grant.
+guards.go stays within 400 lines, and each new file stays within 400 lines. Ticket 2 adds the ownership check after this loop lands.
 
 ## Acceptance
 
@@ -52,9 +42,6 @@ Keep checks_test.go within its 739-line grant after either outcome order. packag
 - [ ] An active-context enumeration error keeps the current complete result (GS12).
 - [ ] Absent and empty hook directories, static headers, symlinks, FIFOs, and wiring keep their current rows (GS13–GS16).
 - [ ] The four checked-in stdout fixtures, help order, help suppression, and command errors stay unchanged (GS17–GS21).
-- [ ] A renamed unused copy of the old pipeline makes package-core-guard red; a test goroutine does not (GS23).
-- [ ] A root without `internal/guards` passes, and a root whose `internal/guards` lacks a readable `guards.go` gets the named diagnostic (GS24, GS25).
-- [ ] The live-tree ownership test runs through its registered binding and its classification (GS26).
 - [ ] Family S candidate tuples equal `scan-family-s.golden`, and reversing the candidate order makes GS27 red (GS27).
 - [ ] guards.go keeps the text that bounds-policy pins (GS29).
-- [ ] Each completion-plan probe compiles, turns its named witness red, and returns to the same green after byte-identical restoration.
+- [ ] Gating the post-enumeration check on the error alone makes `TestScanLoopEnumerationReturnsAfterCancellation` red, and removing the post-inspection check makes `TestScanLoopPostInspectionCancellation` red; restoration returns the same green.

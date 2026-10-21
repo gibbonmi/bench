@@ -18,7 +18,7 @@ The Git guard keeps its shell-keyword trim, its first matching shell child, its 
 It passes `DifferentCheckout` into its existing `elsewhere` decision.
 Keep the `scan` signature, so `gitguard.go:135` needs no edit.
 
-Before this ticket changes source, the coordinator builds and retains the pre-migration executable that ticket 5 uses to record the GP46 golden.
+Before this ticket changes source, the coordinator builds and retains the pre-migration executable that ticket 7 uses to record the GP46 golden, and records its build commit in the build plan.
 GP2 receives the reviewed projection API with all Git rows green, while its own consumers are still unbuilt.
 `internal/gitguard` holds 10 of its 12 allowed files; this ticket adds one, so add no other new file there.
 
