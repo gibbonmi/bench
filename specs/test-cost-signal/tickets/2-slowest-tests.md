@@ -19,10 +19,12 @@ This ticket supplies two values to TC-C3: the `test_cost.go` file that holds the
 ## Acceptance
 
 - [ ] A top-level test with terminal `Elapsed` 1.5 renders `canned,TestA,1500` in `slowest`.
+- [ ] One package with four top-level tests renders three rows and leaves out the fastest test.
 - [ ] Two packages with four top-level tests each render six rows, three for each package, in package name order.
-- [ ] Rows of one package order from high to low elapsed, and an elapsed tie orders by test name.
+- [ ] Rows of one package order from high to low elapsed when the events arrive fastest first.
+- [ ] An elapsed tie, whose events arrive in reverse name order, orders by test name.
 - [ ] A subtest, a skipped test, a test with no terminal event, and the package terminal event render no row.
 - [ ] A failed test renders a row, and a terminal event without `Elapsed` renders 0.
 - [ ] A run with no test events prints the empty `slowest` table right after the `skips` block.
 - [ ] With a skipped root conformance test, `slowest` comes before `root_conformance`.
-- [ ] A test terminal with `Elapsed` 2.0 and a package terminal with `Elapsed` 0.5 render `canned,pass,500,1` in `packages`.
+- [ ] A test terminal with `Elapsed` 2.0 and a package terminal with `Elapsed` 0.5 render `canned,pass,500,1` in `packages` and `canned,TestA,2000` in `slowest`.
