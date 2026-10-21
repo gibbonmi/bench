@@ -308,7 +308,71 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-standards-r0",
+          "performer": "claude:tcs-c2-standards-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "bd4d0e07d53386e9678bb22ae282c164e7949229",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-standards-20261021",
+            "digest": "sha256:eb4269a0a6ec290facfc5c4fbdd9b8e3a94d5e141cde9b00de1c8b2a3ccc2ac7",
+            "excerpt": "Standards axis, TC-C2: 3 findings, 0 accepted. S1 (auto-fix proposed, confidence 6): outcome_test.go:49-74 golden rows spell the slowest block inline while failure_lines_test.go defines cannedSlowestBlock. Coordinator disposition: no-op; the baseGoldens table spells each full output inline by its own convention (skips[0] repeats seven times there), so this is incidental golden text. S2 (no-op, confidence 6): renderEvents in test_cost_test.go repeats two short decode-then-render steps of testreport_test.go; honest incidental repetition. S3 (no-op, confidence 4): the spec coverage-cell rewrite is outside Writes:; the delegation rule requires the citation to land with its test. Clean: one milliseconds helper, one slowestPerPackage constant, comments state current code.\n"
+          },
+          "axis": "Standards",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "e214d5647273fc31eb3ac4884d70438c014125f4",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec-r0",
+          "performer": "claude:tcs-c2-spec-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "bd4d0e07d53386e9678bb22ae282c164e7949229",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-spec-20261021",
+            "digest": "sha256:c57e328ef7f49617156203830c99731398010ebea828f077d6ab5dc2f03cf907",
+            "excerpt": "Spec axis, TC-C2: 0 findings. Rows TC12-TC26 each cite an existing test that asserts the row behavior; TC23 and TC24 sit in the baseGoldens full-equality table of TestCommandKeepsItsBaseOutput. Implementation decisions hold: one math.Round helper used by both cells, last terminal event overwrites finished, skipped, and elapsedMS, one row-limit constant, render order packages, failures, skips, slowest, root_conformance, empty table form slowest[0]{package,test,elapsed_ms}:. No edit outside the acceptance reach.\n"
+          },
+          "axis": "Spec",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "e214d5647273fc31eb3ac4884d70438c014125f4",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage-r0",
+          "performer": "claude:tcs-c2-coverage-20261021",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "bd4d0e07d53386e9678bb22ae282c164e7949229",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:tcs-c2-coverage-20261021",
+            "digest": "sha256:296d71c882f11e58af9bb9dde0beb7f43dccda0ed63f5e82004e1dd63066d6ad",
+            "excerpt": "Coverage axis, TC-C2: 2 findings, both accepted (auto-fix). C1 (confidence 8): internal/testreport/test_cost.go milliseconds helper; the math.Round decision is unpinned, because every fixture value lands on a whole millisecond; coordinator probe K1 (truncation swap) read silent, restored yes. Fix: a fixture with a sub-millisecond fraction that truncation and rounding render differently. C2 (confidence 6): internal/testreport/testreport.go elapsedMS assignment; \"the last terminal event of a test wins\" is unpinned for elapsed; coordinator probe K2 (first nonzero terminal wins) read silent, restored yes. Fix: a fixture with two terminal events for one test whose later value renders. No other defect: TC12-TC26 cited tests assert their rows; edges TC21 and TC23 asserted.\n"
+          },
+          "axis": "Coverage",
+          "base": "f2a1a693405ee8443c98d7c592d81068b7898919",
+          "tip": "e214d5647273fc31eb3ac4884d70438c014125f4",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
