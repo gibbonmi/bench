@@ -1,12 +1,13 @@
 # Migrate Bench projection consumers
 
-Blocked by: 2-migrate-guard-envelope-consumers.md
+Blocked by: 1-share-git-command-projections.md, 2-migrate-guard-envelope-consumers.md
 Writes: internal/benchguard/benchguard.go, internal/benchguard/reviewer.go, internal/benchguard/projection_contract_test.go (new), internal/conformance/refusal_route_guard_test.go, cmd/bench/guard_projection_test.go (new)
 Covers: GP04, GP11, GP12, GP13, GP62, GP63, GP64, GP65, GP66, GP68, GP69, GP70, GP73
 
 ## What to build
 
 Move every Bench-side wrapper and exec-child reader onto `ShellChildren` and `WorktreeExec`, then retire the private Bench recognizers.
+Ticket 1 supplies `ShellChildren` and `WorktreeExec`. Ticket 2 supplies `benchguard.go` with its reader migrated, and the two test files `benchguard/projection_contract_test.go` and `cmd/bench/guard_projection_test.go`, which this ticket extends.
 In `benchguard.go`, `judge` and `spanInvokesBench` read wrapper children through `ShellChildren` and keep their search across every matching child, one level deep.
 `judge` uses `WorktreeExec.Head` only after its own `isBench` test. Bench keeps its resolver, `judgeExec`, and the pool-reference guard.
 

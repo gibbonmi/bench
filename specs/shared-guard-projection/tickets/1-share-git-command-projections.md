@@ -10,6 +10,7 @@ Add the shared wrapper and worktree-child projection, and move the Git guard ont
 Add `ShellChildren` and `WorktreeExec` in a new `internal/shellcommand/projection.go`, as the spec's Projection API states.
 Keep `Parse`, `ProjectCommandWords`, and `ResolveRoutinePrefix` unchanged. Do not edit `shellcommand.go`, which has 3 lines of headroom.
 `ShellChildren` returns the matching `-c` children of `sh`, `bash`, or `zsh` in argv order, reads each argv position independently, and does not recurse.
+New shellcommand code must pass the `stdlib-reimplementation` check; do not hand-write a loop that a standard-library function replaces.
 `WorktreeExec` trusts the caller's Bench identity, returns the child argv after the first later `--` unchanged, and sets `DifferentCheckout` only for a nonempty child.
 
 Migrate `scanWords` and `worktreeExecChild` in `internal/gitguard/scan.go` to these facts, then remove the private `wrappers`, `wrapperCFlagRe`, and exec-child grammar.
@@ -17,7 +18,7 @@ The Git guard keeps its shell-keyword trim, its first matching shell child, its 
 It passes `DifferentCheckout` into its existing `elsewhere` decision.
 Keep the `scan` signature, so `gitguard.go:135` needs no edit.
 
-Before this ticket changes source, the coordinator captures the pre-migration reference executable that GP46 uses.
+Before this ticket changes source, the coordinator builds and retains the pre-migration executable that ticket 5 uses to record the GP46 golden.
 GP2 receives the reviewed projection API with all Git rows green, while its own consumers are still unbuilt.
 `internal/gitguard` holds 10 of its 12 allowed files; this ticket adds one, so add no other new file there.
 

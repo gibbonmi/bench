@@ -10,6 +10,8 @@ Move the three hook-envelope decoders onto one structural owner, and keep each g
 Add `DecodeEnvelope`, the three `EnvelopeForm` values, and the `Command`, `Cwd`, and `InputString` accessors in a new `internal/shellcommand/envelope.go`, as the spec's Envelope API states.
 The owner calls `encoding/json.Unmarshal` with the original anonymous target shapes and tags, so folded keys, merges, null rules, and early type errors stay as they are.
 It does not require a field, resolve a path, inspect a repository, or choose an exit.
+Ticket 1 creates `gitguard/projection_contract_test.go`, and this ticket extends it with the Git reader rows.
+New shellcommand code must pass the `stdlib-reimplementation` check; do not hand-write a loop that a standard-library function replaces.
 
 `gitguard.CommandFromEnvelope` selects `CommandStruct` and keeps its string-only signature and its empty result on any decode error.
 `benchguard.CommandFromEnvelope` selects `InputMap` and keeps its error signature and its missing, type, empty, and NUL error text.
