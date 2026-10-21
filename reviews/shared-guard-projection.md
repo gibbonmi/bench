@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/shared-guard-projection/spec.md",
-  "plan_digest": "sha256:b81505d2f7e258a72e0ec8ccd6ff68968ed27183cf6dbfa9251140eced2210bf",
+  "plan_digest": "sha256:ed266643ad636c39c00201d70cd717be17e818a9770d0a1ee83d3b5f690b8df7",
   "implementation_session": "",
   "chunks": [
     {
       "id": "GP1",
       "base": "f86203658f5190beac7a34ce17e18473d20fe426",
-      "tip": "a4053ed70c625935cd64c2d4fe5943f99348d88c",
-      "plan_digest": "sha256:b81505d2f7e258a72e0ec8ccd6ff68968ed27183cf6dbfa9251140eced2210bf",
-      "source_digest": "9176090363f3e82572626823207983480c37cc54",
+      "tip": "93e90d3ee55ea6adb6d713389077326e688fec12",
+      "plan_digest": "sha256:ed266643ad636c39c00201d70cd717be17e818a9770d0a1ee83d3b5f690b8df7",
+      "source_digest": "09cf33d9e84ed49744b212f5792a0c2ea4a4bfbd",
       "acceptance_rows": [
         "GP01",
         "GP02",
@@ -196,6 +196,118 @@
               "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestShellChildren/zsh,8,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/shellcommand,^TestShellChildren$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,387\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/shellcommand,fail,2,8\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/shellcommand,TestShellChildren/zsh,\"projection_test.go:47: ShellChildren([\\\"zsh\\\" \\\"-c\\\" \\\"git status\\\"], 0) = [], want [{2 [git status]}]\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "r1-t1-projection",
+          "performer": "claude:sgp-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "09cf33d9e84ed49744b212f5792a0c2ea4a4bfbd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t1-repair1-20261021",
+            "digest": "sha256:12fab91f8bbfbe21da8fc58a08044d2b6dc98719f843ae8c6437466e6ec2c26a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/shellcommand,pass,2,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-projection",
+          "command": "bench test --package ./internal/shellcommand",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-git-policy",
+          "performer": "claude:sgp-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "09cf33d9e84ed49744b212f5792a0c2ea4a4bfbd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t1-repair1-20261021",
+            "digest": "sha256:55e7668a2a17c8b0c2eac162922b51bd3e00d019e32f21b078d7f82ccb9d4511",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gitguard,pass,15165,237\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-git-policy",
+          "command": "bench test --package ./internal/gitguard",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-root-conformance",
+          "performer": "claude:sgp-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "09cf33d9e84ed49744b212f5792a0c2ea4a4bfbd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t1-repair1-20261021",
+            "digest": "sha256:bb9cc91367ffdf4ed92d92136b1a5e24a67f4134a93b46c9463b9e1e26a6d980",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12826,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "r1-t1-git-context-omission",
+          "performer": "claude:sgp-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "09cf33d9e84ed49744b212f5792a0c2ea4a4bfbd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t1-repair1-20261021",
+            "digest": "sha256:e85efeaaca93794962a7490c9b5c6803a02647316225ec2097caa0d07f973a3d",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestGitProjectionAuthority/child_push,4,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gitguard,^TestGitProjectionAuthority$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,442\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gitguard,fail,2,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gitguard,TestGitProjectionAuthority/child_push,\"projection_contract_test.go:22: Classify(\\\"bench worktree exec X -- git push origin topic\\\") = \\\"\\\", want \\\"git push with an unresolved destination\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-git-context-omission",
+          "command": "bench test --package ./internal/gitguard --run '^TestGitProjectionAuthority$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit only DifferentCheckout propagation at the Git consumer, keeping WorktreeExec and its other facts; child push must red the existing unresolved-destination assertion.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:sgp-t1-repair1-20261021",
+              "digest": "sha256:e85efeaaca93794962a7490c9b5c6803a02647316225ec2097caa0d07f973a3d",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestGitProjectionAuthority/child_push,4,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gitguard,^TestGitProjectionAuthority$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,442\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gitguard,fail,2,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gitguard,TestGitProjectionAuthority/child_push,\"projection_contract_test.go:22: Classify(\\\"bench worktree exec X -- git push origin topic\\\") = \\\"\\\", want \\\"git push with an unresolved destination\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r1-t1-wrapper-projection-omission",
+          "performer": "claude:sgp-t1-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "09cf33d9e84ed49744b212f5792a0c2ea4a4bfbd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:sgp-t1-repair1-20261021",
+            "digest": "sha256:d2867cdc02e532debb96d5818c727a9e492a2d1b111d5c46cef4800b619b5048",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestShellChildren/zsh,9,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/shellcommand,^TestShellChildren$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,387\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/shellcommand,fail,2,9\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/shellcommand,TestShellChildren/zsh,\"projection_test.go:49: ShellChildren([\\\"zsh\\\" \\\"-c\\\" \\\"git status\\\"], 0) = [], want [{2 [git status]}]\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-wrapper-projection-omission",
+          "command": "bench test --package ./internal/shellcommand --run '^TestShellChildren$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit a supported shell basename or c-flag projection while preserving the API; the independent ordered child cases must red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:sgp-t1-repair1-20261021",
+              "digest": "sha256:d2867cdc02e532debb96d5818c727a9e492a2d1b111d5c46cef4800b619b5048",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestShellChildren/zsh,9,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/shellcommand,^TestShellChildren$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,387\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/shellcommand,fail,2,9\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/shellcommand,TestShellChildren/zsh,\"projection_test.go:49: ShellChildren([\\\"zsh\\\" \\\"-c\\\" \\\"git status\\\"], 0) = [], want [{2 [git status]}]\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -274,6 +386,17 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:b81505d2f7e258a72e0ec8ccd6ff68968ed27183cf6dbfa9251140eced2210bf",
+      "to": "sha256:ed266643ad636c39c00201d70cd717be17e818a9770d0a1ee83d3b5f690b8df7",
+      "chunk_ids": {
+        "GP1": [
+          "GP1"
+        ]
+      }
+    }
+  ]
 }
 ```
