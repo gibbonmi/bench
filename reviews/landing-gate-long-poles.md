@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:b5e476e1aadba9767c08baeae66130b308c5e2b5302df2a0170bf35907fad091",
+  "plan_digest": "sha256:fe347c414941ba74b5a7b77a17b53c51e6b1bd2cddd35828205d27a88531fcdb",
   "implementation_session": "",
   "chunks": [
     {
@@ -2629,9 +2629,9 @@
     {
       "id": "LGP-C3D",
       "base": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
-      "tip": "fd7ac338eea9394fa3cf878e9ea495cff9441874",
-      "plan_digest": "sha256:b5e476e1aadba9767c08baeae66130b308c5e2b5302df2a0170bf35907fad091",
-      "source_digest": "7a9817df854f82559365cabf9cd949f1f8632fc0",
+      "tip": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+      "plan_digest": "sha256:fe347c414941ba74b5a7b77a17b53c51e6b1bd2cddd35828205d27a88531fcdb",
+      "source_digest": "479bf3e7e785aa93791d60231659a02a16586d4d",
       "acceptance_rows": [
         "LGP20",
         "LGP21",
@@ -2719,6 +2719,89 @@
               "ref": "claude-agent:bench-writer-high:lgp-t09-author-20261022",
               "digest": "sha256:fb94119dbd296a80a46e4068d094178a694ea993a7ea5430dab0f297577e1f44",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/exec_call_env_test.go,insert,failed,1,TestParallelCensusOnTheLiveTree,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,^TestParallelCensusOnTheLiveTree$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,327\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,90,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestParallelCensusOnTheLiveTree,\"parallel_census_test.go:1029: the parallel census reports 10 breaks:\",11\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t09-r1-t09-pkg-cmd-bench",
+          "performer": "claude:lgp-t09-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "479bf3e7e785aa93791d60231659a02a16586d4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t09-repair1-20261022",
+            "digest": "sha256:47d99db9e5c175c3f146fea42c02304e4fceeedd664234f82d95d39bd4d65f72",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14528,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t09-pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-r1-t09-worktree",
+          "performer": "claude:lgp-t09-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "479bf3e7e785aa93791d60231659a02a16586d4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t09-repair1-20261022",
+            "digest": "sha256:51ca4060a0b035b7a051a58d2f2d7bfde8715e238c7d445327d75e0a214b7a35",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62764,1498\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t09-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-r1-t09-root-conformance",
+          "performer": "claude:lgp-t09-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "479bf3e7e785aa93791d60231659a02a16586d4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t09-repair1-20261022",
+            "digest": "sha256:86f91ba651ab17d45b6eb80d2b2959981648112a055671d39a7e687432adab1e",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12571,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t09-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-r1-t09-exec-bind",
+          "performer": "claude:lgp-t09-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "479bf3e7e785aa93791d60231659a02a16586d4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t09-repair1-20261022",
+            "digest": "sha256:c52286141557d05b4c1a16a8a0e7087f4acea354f9aca7dfd702415a996b1796",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/exec_call_env_test.go,insert,failed,3,TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1292\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,709\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,38172,1292\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName,\"panic: testing: test using t.Setenv or t.Chdir can not use t.Parallel [recovered, repanicked]\",26\n  github.com/gibbonmi/bench/internal/worktree,TestParallelCensusOnTheLiveTree,\"parallel_census_test.go:1029: the parallel census reports 10 breaks:\",11\n  github.com/gibbonmi/bench/internal/worktree,TestSerialSetStaysBelowTheCeiling,\"parallel_census_test.go:1051: the package holds 31 serial tests, above the ceiling of 21:\",32\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t09-exec-bind",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "bind the caller environment again in childOutputAtHome",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:lgp-t09-repair1-20261022",
+              "digest": "sha256:c52286141557d05b4c1a16a8a0e7087f4acea354f9aca7dfd702415a996b1796",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/exec_call_env_test.go,insert,failed,3,TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1292\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,709\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,38172,1292\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName,\"panic: testing: test using t.Setenv or t.Chdir can not use t.Parallel [recovered, repanicked]\",26\n  github.com/gibbonmi/bench/internal/worktree,TestParallelCensusOnTheLiveTree,\"parallel_census_test.go:1029: the parallel census reports 10 breaks:\",11\n  github.com/gibbonmi/bench/internal/worktree,TestSerialSetStaysBelowTheCeiling,\"parallel_census_test.go:1051: the package holds 31 serial tests, above the ceiling of 21:\",32\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -3012,6 +3095,36 @@
         ],
         "LGP-C3C": [
           "LGP-C3C"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b5e476e1aadba9767c08baeae66130b308c5e2b5302df2a0170bf35907fad091",
+      "to": "sha256:fe347c414941ba74b5a7b77a17b53c51e6b1bd2cddd35828205d27a88531fcdb",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ],
+        "LGP-C2A": [
+          "LGP-C2A"
+        ],
+        "LGP-C2B": [
+          "LGP-C2B"
+        ],
+        "LGP-C2C": [
+          "LGP-C2C"
+        ],
+        "LGP-C3A": [
+          "LGP-C3A"
+        ],
+        "LGP-C3B": [
+          "LGP-C3B"
+        ],
+        "LGP-C3C": [
+          "LGP-C3C"
+        ],
+        "LGP-C3D": [
+          "LGP-C3D"
         ]
       }
     }
