@@ -179,12 +179,9 @@ func plantRepositoryDecoys(t *testing.T, root string) {
 
 func landRouteRepo(t *testing.T, name string) string {
 	t.Helper()
-	repo, err := os.MkdirTemp(owner.root, name)
+	repo, err := owner.journeyRepository(name)
 	if err != nil {
 		t.Fatal(err)
-	}
-	if result := owner.runAt(repo, nil, "git", "init", "-q", "-b", "main"); result.code != 0 {
-		t.Fatalf("git init %s = (%d, %q)", name, result.code, result.stderr)
 	}
 	return repo
 }

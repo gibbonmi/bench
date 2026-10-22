@@ -100,18 +100,29 @@ func newSystemOwner() (*systemOwner, error) {
 	// go test.
 	o := &systemOwner{selected: selected, kit: kit, root: root, home: filepath.Join(root, "bench-home"), terminal: map[string]bool{}}
 	for range 3 {
-		repo, err := os.MkdirTemp(root, "repository [journey]-")
+		repo, err := o.journeyRepository("repository [journey]-")
 		if err != nil {
 			_ = o.cleanup()
 			return nil, err
 		}
-		if result := o.runAt(repo, nil, "git", "init", "-q", "-b", "main"); result.code != 0 {
-			_ = o.cleanup()
-			return nil, fmt.Errorf("git init: %s", result.stderr)
-		}
 		o.repos = append(o.repos, repo)
 	}
 	return o, nil
+}
+
+// journeyRepository creates an empty repository on main below the owner's root, named
+// after pattern. The owner's three repositories and each private test repository share
+// this one git init step. It returns an error rather than failing a test, because
+// newSystemOwner runs before any test.
+func (o *systemOwner) journeyRepository(pattern string) (string, error) {
+	repo, err := os.MkdirTemp(o.root, pattern)
+	if err != nil {
+		return "", err
+	}
+	if result := o.runAt(repo, nil, "git", "init", "-q", "-b", "main"); result.code != 0 {
+		return "", fmt.Errorf("git init %s = (%d, %q)", pattern, result.code, result.stderr)
+	}
+	return repo, nil
 }
 
 func identifyExecutable(path string) (executableIdentity, error) {
