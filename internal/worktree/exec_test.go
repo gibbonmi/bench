@@ -30,7 +30,7 @@ func childOutputAtHome(t *testing.T, worktree, script, home string) string {
 	bindEnv(t, runbinary.Env, "/caller/run/bench")
 	bindEnv(t, "BENCH_EXEC_TEST_CARRIED", "carried-value")
 	var stdout, stderr bytes.Buffer
-	code := runWorktreeChild([]string{"sh", "-c", script}, worktree, home, nil, nil, &stdout, &stderr)
+	code := runWorktreeChild([]string{"sh", "-c", script}, worktree, home, os.Environ(), nil, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "child exit = %d, stderr %q", code, stderr.String())
 	return stdout.String()
 }
@@ -44,7 +44,7 @@ func TestExecRunsTheWorktreeDistBench(t *testing.T) {
 	mustMkdirAll(t, filepath.Join(worktree, "dist"), 0o755)
 	mustWrite(t, filepath.Join(worktree, "dist", "bench"), []byte("#!/bin/sh\nprintf 'worktree-grammar'\n"), 0o755)
 	var stdout, stderr bytes.Buffer
-	code := runWorktreeChild([]string{"./dist/bench", "version"}, worktree, Home(), nil, nil, &stdout, &stderr)
+	code := runWorktreeChild([]string{"./dist/bench", "version"}, worktree, Home(), os.Environ(), nil, nil, &stdout, &stderr)
 	requireTest(t, code == 0, "child exit = %d, stderr %q", code, stderr.String())
 	requireTest(t, stdout.String() == "worktree-grammar", "child printed %q, want the built file's word", stdout.String())
 }
@@ -269,7 +269,7 @@ func TestExecChildReadsTheCallersStdin(t *testing.T) {
 	t.Parallel()
 	fed := "first\nsecond\nthird\x00"
 	var stdout, stderr bytes.Buffer
-	code := runWorktreeChild([]string{"cat"}, t.TempDir(), t.TempDir(), nil, strings.NewReader(fed), &stdout, &stderr)
+	code := runWorktreeChild([]string{"cat"}, t.TempDir(), t.TempDir(), os.Environ(), nil, strings.NewReader(fed), &stdout, &stderr)
 	requireTest(t, code == 0, "cat exited %d, stderr %q", code, stderr.String())
 	requireTest(t, stdout.String() == fed, "child emitted %q, want the fed bytes %q", stdout.String(), fed)
 }
@@ -340,7 +340,7 @@ func TestExecEnvCannotRestoreTheStrippedKit(t *testing.T) {
 func childFailure(t *testing.T, dir string, argv ...string) (string, int) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := runWorktreeChild(argv, dir, t.TempDir(), nil, nil, &stdout, &stderr)
+	code := runWorktreeChild(argv, dir, t.TempDir(), os.Environ(), nil, nil, &stdout, &stderr)
 	return stderr.String(), code
 }
 

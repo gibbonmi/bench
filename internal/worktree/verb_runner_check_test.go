@@ -384,3 +384,11 @@ func TestVerbCallRefusesADirectoryValue(t *testing.T) {
 		t.Fatalf("checkVerbCall = %v, want %q", err, want)
 	}
 }
+
+func TestVerbCallRefusesAnEnvironmentValue(t *testing.T) {
+	t.Parallel()
+	err := checkVerbCall(verbPath, verbCall{environ: []string{"PATH=" + t.TempDir()}})
+	if want := "verb runner: the path verb takes no environment value"; err == nil || err.Error() != want {
+		t.Fatalf("checkVerbCall = %v, want %q", err, want)
+	}
+}

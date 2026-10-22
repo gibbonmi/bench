@@ -68,7 +68,7 @@ func resetWith(j joins, a ambient, root string, args []string, stdout, stderr io
 		return refuse(err)
 	}
 	if fingerprint, apply := parsed.Flags["--apply"]; apply {
-		return applyReset(j, root, a.home, plan, fingerprint, stdout, refuse)
+		return applyReset(j, root, a.home, a.environ, plan, fingerprint, stdout, refuse)
 	}
 	next := ""
 	if plan.action != "none" {

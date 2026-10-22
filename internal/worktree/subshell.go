@@ -37,7 +37,8 @@ func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Wri
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	return subshellAt(root, newAmbient(home, stderr), subshellShell(), os.Environ(), args, stdin, stdout, stderr)
+	a := newAmbient(home, stderr)
+	return subshellAt(root, a, subshellShell(), a.environ, args, stdin, stdout, stderr)
 }
 
 func subshellAt(root string, a ambient, shell string, environ []string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {

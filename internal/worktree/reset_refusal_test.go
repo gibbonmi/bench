@@ -135,7 +135,7 @@ func TestResetRefusesAnAmbiguousCheckpoint(t *testing.T) {
 		prefix := digest[:4]
 		if previous, found := seen[prefix]; found {
 			for _, commit := range []string{previous, body} {
-				_, err := gitInput(f.root, nil, []byte(commit), "hash-object", "-t", "commit", "-w", "--stdin")
+				_, err := gitInput(f.root, os.Environ(), nil, []byte(commit), "hash-object", "-t", "commit", "-w", "--stdin")
 				mustNoError(t, err)
 			}
 			requireTest(t, len(strings.Fields(gitOutput(t, f.root, "rev-parse", "--disambiguate="+prefix))) >= 2,

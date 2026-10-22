@@ -22,11 +22,17 @@ import (
 // passes it down, so decision code can be tested with an injected time.
 func currentTime() time.Time { return time.Now() }
 
+// baseEnviron is the boundary read of the child base environment. newAmbient carries it
+// through a verb run. RunTreeChild holds no ambient value, so it reads it here for its
+// chain through runChild to execEnv.
+func baseEnviron() []string { return os.Environ() }
+
 // ambient is the process context of one verb run: the Bench home and the warnings writer
 // that the verb entry received, the kit value, one instant, the git run value that holds
-// the run's location answers, and the call directory that a relative operand joins, or
-// the error of its failed read. Each internal verb form takes it second, after the joins
-// value, so nothing below the entry reads the process.
+// the run's location answers, the call directory that a relative operand joins, or the
+// error of its failed read, and the base environment of each child that the verb starts.
+// Each internal verb form takes it second, after the joins value, so nothing below the
+// entry reads the process.
 type ambient struct {
 	home     string
 	kit      string
@@ -35,14 +41,15 @@ type ambient struct {
 	run      *git.Run
 	dir      string
 	dirErr   error
+	environ  []string
 }
 
-// newAmbient reads the kit value, the clock, and the process directory once, and it
-// builds a fresh run value, so no location answer outlives the verb run. The caller
-// supplies the home and the warnings writer.
+// newAmbient reads the kit value, the clock, the process directory, and the environment
+// once, and it builds a fresh run value, so no location answer outlives the verb run. The
+// caller supplies the home and the warnings writer.
 func newAmbient(home string, stderr io.Writer) ambient {
 	dir, dirErr := filepath.Abs(".")
-	return ambient{home: home, kit: gate.KitValue(), now: currentTime(), warnings: stderr, run: &git.Run{}, dir: dir, dirErr: dirErr}
+	return ambient{home: home, kit: gate.KitValue(), now: currentTime(), warnings: stderr, run: &git.Run{}, dir: dir, dirErr: dirErr, environ: baseEnviron()}
 }
 
 // homeEnv is this package's name for the Bench home variable. internal/benchhome

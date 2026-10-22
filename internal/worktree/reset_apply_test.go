@@ -152,13 +152,13 @@ func TestResetApplyRefusesAnUnverifiedEnvelope(t *testing.T) {
 	head := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	status := gitOutput(t, f.creation.Path, "status", "--porcelain=v1")
 	j := defaultJoins()
-	j.resetEnvelope = func(root string, plan resetPlan) (intent.Recovery, error) {
-		envelope, err := writeResetEnvelope(root, plan)
+	j.resetEnvelope = func(root string, environ []string, plan resetPlan) (intent.Recovery, error) {
+		envelope, err := writeResetEnvelope(root, environ, plan)
 		if err != nil {
 			return envelope, err
 		}
 		tree := gitOutput(t, root, "rev-parse", envelope.Root+"^{tree}")
-		broken, err := commitTree(root, tree, nil, "dropped payload\n")
+		broken, err := commitTree(root, environ, tree, nil, "dropped payload\n")
 		if err != nil {
 			return envelope, err
 		}
@@ -191,7 +191,7 @@ func TestResetApplyPreservesTheLayersAndMovesTheCheckout(t *testing.T) {
 	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("staged\n"), 0o644)
 	gitRun(t, f.creation.Path, "add", "README.md")
 	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("working\n"), 0o644)
-	before, _, err := captureLayers(f.root, f.creation.Path, true, checkpoint)
+	before, _, err := captureLayers(f.root, os.Environ(), f.creation.Path, true, checkpoint)
 	mustNoError(t, err)
 	expected, ok := readRecoveryManifest(f.root, before)
 	requireTest(t, ok, "fixture envelope is unreadable")

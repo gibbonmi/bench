@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -30,7 +31,7 @@ type indexEntry struct {
 
 // recoverAssignmentWithFault writes every Git-visible layer through temporary indexes. It
 // never points HEAD elsewhere and never opens the real index for writing.
-func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault Fault) (intent.Assignment, error) {
+func recoverAssignmentWithFault(root string, environ []string, assignment intent.Assignment, fault Fault) (intent.Assignment, error) {
 	if len(assignment.Recovery) > 0 {
 		if len(assignment.Recovery) != 1 {
 			return assignment, errors.New("existing recovery metadata is ambiguous")
@@ -40,7 +41,7 @@ func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault
 		}
 		return assignment, nil
 	}
-	rootOID, payloads, err := captureLayers(root, assignment.Worktree, false, "")
+	rootOID, payloads, err := captureLayers(root, environ, assignment.Worktree, false, "")
 	if err != nil {
 		return assignment, err
 	}
@@ -200,7 +201,7 @@ func conflictTree(path, admin string, entries []indexEntry, wanted int) (string,
 	}
 	return indexInput(path, index, nil, "write-tree")
 }
-func commitTree(root, tree string, parents []string, message string) (string, error) {
+func commitTree(root string, environ []string, tree string, parents []string, message string) (string, error) {
 	args := []string{"commit-tree", tree}
 	for _, parent := range parents {
 		args = append(args, "-p", parent)
@@ -209,13 +210,13 @@ func commitTree(root, tree string, parents []string, message string) (string, er
 		"GIT_AUTHOR_NAME=bench", "GIT_AUTHOR_EMAIL=bench@local",
 		"GIT_COMMITTER_NAME=bench", "GIT_COMMITTER_EMAIL=bench@local",
 	}
-	return gitInput(root, env, []byte(message), args...)
+	return gitInput(root, environ, env, []byte(message), args...)
 }
 
-// gitInput runs `git -C root <args>` with extraEnv appended to the process environment.
-func gitInput(root string, extraEnv []string, input []byte, args ...string) (string, error) {
+// gitInput runs `git -C root <args>` with extraEnv appended to the verb's base environment.
+func gitInput(root string, environ, extraEnv []string, input []byte, args ...string) (string, error) {
 	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	cmd.Env = append(os.Environ(), extraEnv...)
+	cmd.Env = slices.Concat(environ, extraEnv)
 	return runInput(cmd, args[0], input)
 }
 

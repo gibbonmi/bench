@@ -68,7 +68,7 @@ func explicitContentIdentity(target string) (string, error) {
 
 // captureLayers writes one recovery envelope for the checkout at path and returns the
 // root commit and its payload commits. The manifest carries the base head.
-func captureLayers(root, path string, keepWorking bool, tip string) (string, []string, error) {
+func captureLayers(root string, environ []string, path string, keepWorking bool, tip string) (string, []string, error) {
 	head, err := git.Output("-C", path, "rev-parse", "HEAD")
 	if err != nil {
 		return "", nil, fmt.Errorf("read recovery HEAD: %w", err)
@@ -124,7 +124,7 @@ func captureLayers(root, path string, keepWorking bool, tip string) (string, []s
 		tree := layerTrees[name]
 		payload := treePayload[tree]
 		if payload == "" {
-			payload, err = commitTree(root, tree, []string{head}, "bench recovery payload: "+name+"\n")
+			payload, err = commitTree(root, environ, tree, []string{head}, "bench recovery payload: "+name+"\n")
 			if err != nil {
 				return "", nil, err
 			}
@@ -146,11 +146,11 @@ func captureLayers(root, path string, keepWorking bool, tip string) (string, []s
 		return "", nil, err
 	}
 	manifestBytes = append(manifestBytes, '\n')
-	blob, err := gitInput(root, nil, manifestBytes, "hash-object", "-w", "--stdin")
+	blob, err := gitInput(root, environ, nil, manifestBytes, "hash-object", "-w", "--stdin")
 	if err != nil {
 		return "", nil, err
 	}
-	rootTree, err := gitInput(root, nil, []byte("100644 blob "+blob+"\tmanifest.json\n"), "mktree")
+	rootTree, err := gitInput(root, environ, nil, []byte("100644 blob "+blob+"\tmanifest.json\n"), "mktree")
 	if err != nil {
 		return "", nil, err
 	}
@@ -158,7 +158,7 @@ func captureLayers(root, path string, keepWorking bool, tip string) (string, []s
 	if manifest.Tip != "" && manifest.Tip != head {
 		parents = append(parents, manifest.Tip)
 	}
-	rootOID, err := commitTree(root, rootTree, parents, "bench recovery root\n")
+	rootOID, err := commitTree(root, environ, rootTree, parents, "bench recovery root\n")
 	if err != nil {
 		return "", nil, err
 	}

@@ -81,7 +81,7 @@ func checkExecPWD(t *testing.T, mode string) {
 func TestExecEnvironmentContainsOneCanonicalPWD(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
-	entries := execEnv(dir, t.TempDir(), []string{"PWD=/first", "PWD=/last", "PWD_EXTRA=kept"})
+	entries := execEnv(dir, t.TempDir(), os.Environ(), []string{"PWD=/first", "PWD=/last", "PWD_EXTRA=kept"})
 	requireExecPWD(t, entries, dir)
 	seen := "\n" + strings.Join(entries, "\n") + "\n"
 	requireTest(t, strings.Contains(seen, "\nPWD_EXTRA=kept\n"), "composed environment lost PWD_EXTRA")

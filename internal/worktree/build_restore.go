@@ -47,7 +47,7 @@ func restoreAttributed(j joins, a ambient, root, slug string, stdout, stderr io.
 		fmt.Fprintf(stderr, "%s: %v\n", buildVerb, buildErr)
 		return nameWorktree(stderr, primary, buildExitCode(buildErr))
 	}
-	if code := repairPrimary(j, primary, executable, stderr); code != 0 {
+	if code := repairPrimary(j, primary, executable, a.environ, stderr); code != 0 {
 		detail := fmt.Sprintf("the doctor repair of the primary checkout exited %d", code)
 		if copied {
 			detail += "; the ledger copy is " + preserved

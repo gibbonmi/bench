@@ -12,10 +12,10 @@ import (
 	"testing"
 )
 
-// syntheticEffectsFile mirrors effects.go: currentTime reads the clock, newAmbient the
-// kit, the clock, and the process directory, and Home the Bench home. The run value of
-// newAmbient is a composite literal and no call, so it is no read. Its os import serves an
-// added read.
+// syntheticEffectsFile mirrors effects.go: currentTime reads the clock, baseEnviron the
+// environment, newAmbient the kit, the clock, the process directory, and the environment,
+// and Home the Bench home. The run value of newAmbient is a composite literal and no call,
+// so it is no read.
 const syntheticEffectsFile = `package worktree
 
 import (
@@ -28,9 +28,10 @@ import (
 )
 
 func currentTime() time.Time { return time.Now() }
+func baseEnviron() []string { return os.Environ() }
 func newAmbient(home string) ambient {
 	dir, dirErr := filepath.Abs(".")
-	return ambient{kit: gate.KitValue(), now: currentTime(), run: &git.Run{}, dir: dir, dirErr: dirErr}
+	return ambient{kit: gate.KitValue(), now: currentTime(), run: &git.Run{}, dir: dir, dirErr: dirErr, environ: baseEnviron()}
 }
 func Home() string { return benchhome.Dir() }
 `
