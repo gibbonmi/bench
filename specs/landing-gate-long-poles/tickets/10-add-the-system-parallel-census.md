@@ -26,7 +26,7 @@ The table holds a temporary reason, "pending migration", for each of the 103 tes
 
 Prove each refusal on planted fixture sources, as the worktree census tests do. Also run the census on the live package.
 
-Add the journey-repository helper to `owner_test.go`. `newSystemOwner` builds its three repositories through it, and `landRouteRepo` (`land_route_test.go:180-190`) wraps it. `newSystemOwner` returns errors and runs before the global `owner` is set (`owner_test.go:56-61`), so the helper returns `(string, error)`, and a test wrapper such as `landRouteRepo` turns the error into `t.Fatal`.
+Add the journey-repository helper to `owner_test.go`. `newSystemOwner` builds its three repositories through it, and `landRouteRepo` (now in `land_route_fixture_test.go`) wraps it. `newSystemOwner` returns errors and runs before the global `owner` is set (`owner_test.go:56-61`), so the helper returns `(string, error)`, and a test wrapper such as `landRouteRepo` turns the error into `t.Fatal`.
 
 The helper must not name `repos`. `newSystemOwner` keeps the append (`owner_test.go:112`). Otherwise every migrated caller reaches `owner.repos` through the helper, and the census refuses it.
 

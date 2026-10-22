@@ -187,7 +187,7 @@ That test plants the negative controls in a child process, where every other tes
 About 40 of the 105 tests reach `owner.repos` today. Fourteen tests name it directly at 15 sites, and the rest reach it through `newCompatibilitySession` or `newSessionEnvironmentFixtureWithGoDir`.
 An owner repository is only `git init -q -b main` in a temporary directory (`internal/systemtest/owner_test.go:102-112`). Most of those tests use one only because they need a fresh repository.
 So each such test takes a private journey repository instead. One helper builds it, and `newSystemOwner` builds its three repositories through the same helper.
-Many tests already build a private repository with the same `git init` step, for example `internal/systemtest/land_route_test.go:186`. The profile's "at most three disposable repositories" describes the owner, and it stays true.
+Many tests already build a private repository with the same `git init` step, for example `landRouteRepo` in `internal/systemtest/land_route_fixture_test.go`. The profile's "at most three disposable repositories" describes the owner, and it stays true.
 
 `TestBranchNativeArchitectureCensus` (`internal/conformance/ordinary_build_census_test.go:304`) already pins `func TestMain(`, the `for range 3` loop, and `len(o.repos) != 3` in `owner_test.go` (`:88-99`).
 It is the one source of LGP26, so the new census does not parse those facts again.
@@ -220,7 +220,7 @@ The gate argv, the phase table, the `projects/benchkit.md` system sentences, and
 
 The system migration runs as expand, migrate, and contract. The expand ticket adds the census and lists each unmoved test with the temporary reason "pending migration".
 Each migration ticket removes those rows for its files. The contract ticket forbids the temporary reason (LGP38).
-`landRouteRepo` (`internal/systemtest/land_route_test.go:180-190`) already builds a private repository with the same `git init` step. It wraps the new journey-repository helper, so the step has one source.
+`landRouteRepo` (`internal/systemtest/land_route_fixture_test.go`) already builds a private repository with the same `git init` step. It wraps the new journey-repository helper, so the step has one source.
 The recovery tests pass the private TMPDIR to every child that writes a bundle. The routes are `artifactLandEnv` and `startArtifactLand` (`owner_artifact_recovery_test.go:161-191`), and `systemLandEnv` for the review children (`:29`, `:59`, `:398`).
 The serial table lives in its own new file beside the census, so that neither file passes 400 lines. A new file over its limit reds the growth ratchet, because its base count is zero.
 
