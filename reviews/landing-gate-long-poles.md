@@ -1795,6 +1795,77 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3a-standards-r1",
+          "performer": "claude:lgp-c3a-standards-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3a-standards-r1-20261022",
+            "digest": "sha256:6f9b1068ec6eba6f88d41b6e39e9ee4ecfabb91a3c8a6c92fcd7f1684207725a",
+            "excerpt": "Standards axis r1, LGP-C3A (cd9889779..4f2541aea): S1, S2 closed (homeOperand is the one home-operand predicate; clean refuses at the boundary with errTargetNotCanonical). 2 new findings, both accepted for repair: S3, the callPath doc (subshell.go:121-125) says each caller passes the path no further, but clean passes the unresolved path on as the refusal row's Target; S4, the operand refusal plan unresolvedPlan(x, ReasonUncertain, ...) is built at worktree.go:286 and subshell.go:189, so the reason-code pairing has two sources. Advice: a failed read gives different refusal texts per verb family; only clean's is new.\n"
+          },
+          "axis": "Standards",
+          "base": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "tip": "4f2541aea85b0ed2c45ad572997ba8c3be999aee",
+          "finding_ids": [
+            "S3",
+            "S4"
+          ],
+          "supersedes": [
+            "c3a-standards-r0"
+          ]
+        },
+        {
+          "id": "c3a-spec-r1",
+          "performer": "claude:lgp-c3a-spec-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3a-spec-r1-20261022",
+            "digest": "sha256:ef562372580c1e22a588a05d7aa1b471745747c83903b0c013148f56bc7676c7",
+            "excerpt": "Spec axis r1, LGP-C3A (cd9889779..4f2541aea): 0 findings; S1, S2, P1, C1, and C2 closed. Spec line 156 now holds: callPath errors only for a relative operand, and clean refuses at the boundary with the plan's own text. The --apply change from an error row to a retain row keeps ticket 06 line 25's refusal text and exit 1; no spec line binds the row action. LGP18 met (t06-call-directory bit); LGP22 met, 807 + 2 = 809, ceiling 47; LGP34: coordinator records the repair tip's bench test --package ./internal/worktree time, 64976 ms (1495 tests), against 65266 ms before and 65576 ms after the ticket, inside the spread. Every acceptance item met.\n"
+          },
+          "axis": "Spec",
+          "base": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "tip": "4f2541aea85b0ed2c45ad572997ba8c3be999aee",
+          "finding_ids": [],
+          "supersedes": [
+            "c3a-spec-r0"
+          ]
+        },
+        {
+          "id": "c3a-coverage-r1",
+          "performer": "claude:lgp-c3a-coverage-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3a-coverage-r1-20261022",
+            "digest": "sha256:5255b8419c21dc76dfb6c690e33ca20476e395bf8cfb1cd329ef1147ea3baeb9",
+            "excerpt": "Coverage axis r1, LGP-C3A (cd9889779..4f2541aea): C1 and C2 closed; land_resume.go:36 and reauthorize.go:70 canonicalPath swaps bit, and a callPath bypass that drops a.dirErr bit (restored yes). 1 new finding, accepted for repair: C3, gating the clean boundary to the plan posture (`fingerprint == \"\"`) read silent across the whole package, so clean --apply sends a relative operand to planExplicitWith and cleanupIdentity unpinned, against ticket 06 line 23 and spec line 156; the LGP18 test needs two --apply cases (good directory names the creation path; failed read exits 1 with a retain row and the not-canonical text).\n"
+          },
+          "axis": "Coverage",
+          "base": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "tip": "4f2541aea85b0ed2c45ad572997ba8c3be999aee",
+          "finding_ids": [
+            "C3"
+          ],
+          "supersedes": [
+            "c3a-coverage-r0"
+          ]
         }
       ]
     }
