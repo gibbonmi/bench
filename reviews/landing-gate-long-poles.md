@@ -3866,6 +3866,72 @@
           "supersedes": [
             "c4a-coverage-r1"
           ]
+        },
+        {
+          "id": "c4a-standards-r3",
+          "performer": "claude:lgp-c4a-standards-r3-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-standards-r3-20261022",
+            "digest": "sha256:9043abf17a2bdf2024c7796905c6f66e36b25694bc22df839e6933957c801909",
+            "excerpt": "Standards axis r3, LGP-C4A (c9d119580..d23316b55): 0 findings; C1 to C3, C7 to C9, S1, and P1/C10 closed. The lock census and the reach walk now read one pkg.funcs index, which removes the second function enumeration; each declaration or literal is filed under one key, so no write is reported twice. The new ledgerLockCases row's red is recorded and demonstrated (before the fix, and by a pkg.funcs to pkg.all probe). The ledgerLockCensus and systemPackage docs match the code. Advice: lockExempt matches Recv == nil and the name, so a literal named TestOwnerSelectionChild would also be exempt (no live or migrated shape); the sort.Strings call must stay because the census now ranges over a map.\n"
+          },
+          "axis": "Standards",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "finding_ids": [],
+          "supersedes": [
+            "c4a-standards-r2"
+          ]
+        },
+        {
+          "id": "c4a-spec-r3",
+          "performer": "claude:lgp-c4a-spec-r3-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-spec-r3-20261022",
+            "digest": "sha256:9d0a884217cb4a5c6c2b625fea1aebf6d77129aa0d320cf0e7d91c7d423edfff",
+            "excerpt": "Spec axis r3, LGP-C4A (c9d119580..d23316b55): 0 findings; C1 to C3, C7 to C9, and P1/C10 closed. ledgerLockCensus ranges pkg.funcs, the index the reach walk reads, and spec :209 states that scope; the planted literal row red-names the gap, and the reports stay sorted. LGP25, LGP26, LGP28, LGP29, and LGP31 met (105 serial rows); the planned probe ran with bench test --check system and bit. LGP34: coordinator records 109854 ms (181 tests) before the ticket and 112827 ms (203 tests) at the third repair tip, inside the spread. Advice: the spec's ledger paragraph still cites base-tree line numbers.\n"
+          },
+          "axis": "Spec",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "finding_ids": [],
+          "supersedes": [
+            "c4a-spec-r2"
+          ]
+        },
+        {
+          "id": "c4a-coverage-r3",
+          "performer": "claude:lgp-c4a-coverage-r3-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-coverage-r3-20261022",
+            "digest": "sha256:0223ac179f32ed7bb3bd4c4c40aa312d51dff41e9beb7d5f03584a8cad1ac81d",
+            "excerpt": "Coverage axis r3, LGP-C4A (c9d119580..d23316b55): 0 findings under the convergence rule; C1 to C3, C7 to C9, and C10 closed. Probes, restored yes: skipping the synthetic literal declarations in ledgerLockCensus only (an independent site) bit TestLedgerWritesHoldTheOwnerLock/package-level_function_literal; literalFuncs(nil) on the shared index bit the lock row and the reach row. The live census passed (22 tests). Advice, no live shape: a closure built under the lock but run after the Unlock grades as locked; an owner alias or a receiver not named o escapes both censuses; a literal inside a composite package value is not indexed.\n"
+          },
+          "axis": "Coverage",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "finding_ids": [],
+          "supersedes": [
+            "c4a-coverage-r2"
+          ]
         }
       ]
     }
