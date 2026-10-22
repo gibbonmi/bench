@@ -564,6 +564,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1-standards-r2",
+          "performer": "claude:plt-c1-standards-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c1-standards-r2-20261022",
+            "digest": "sha256:1e76da24b1ba71874d89f3a2063a537f22b06edc962f9b6332b8f3e15c8a9094",
+            "excerpt": "PL-C1 Standards confirming round r2: both r1 findings are closed, and the repair adds no new finding. The evidence check returned current=true at tip 746689e57, with dirty_record=false.\n\nS1: closed. protection.Classify at internal/subprocess/protection/observe.go:47-51 is now the only place that decides ESRCH means absence. observeGroup delegates to it (observe.go:37). controller.signal at internal/subprocess/control.go:246-253 stores the result only when Classify says the group is absent, and keeps every other non-nil error as signalErr. The doc for Cleanup in outcome.go now states that same rule, so it does not restate ESRCH.\n\nS2: closed. The 50 ms pause and the alive(leader) loop are gone. The test now syncs on the polled channel (internal/subprocess/lifetime_test.go:72-79, 88-92); the time.After there only bounds a failure. observe returns early while waitPending is true (control.go:258), so Poll runs only from onWait (control.go:195-196), after the owner took the waiter result. The joinGroup zombie keeps the group present (lifetime_test.go:279). requireIncomplete(t, o, ObligationGroup, ObligationStdout) at lifetime_test.go:274 leaves out the waiter obligation, so an unconsumed waiter result turns the test red.\n\nNew findings: none. Every added or changed comment sentence is 25 words or fewer and describes current code.\n\nFinding count: 0 open, 2 closed.\n\nAdvice\n- starts is written on the owner's goroutine and read on the test goroutine (lifetime_test.go:97); it predates the repair and is ordered only through waitWithin's channel.\n"
+          },
+          "axis": "Standards",
+          "base": "4115afad73961d526b3df1015ee85ea4a71c84b3",
+          "tip": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-standards-r1"
+          ]
+        },
+        {
+          "id": "c1-spec-r2",
+          "performer": "claude:plt-c1-spec-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c1-spec-r2-20261022",
+            "digest": "sha256:4a5626cc9b04136a08071ac4e105c4bda2edd3351e48157e52f45ef675af719a",
+            "excerpt": "Spec axis, PL-C1 round r2 (claude:plt-c1-spec-r2-20261022)\n\nThe evidence check returned current=true and dirty_record=false at tip 746689e57.\n\nConfirmations\n- PL10 TestLifetimeForcedClose (internal/subprocess/lifetime_test.go:184-196): uses the OutputDelay path. It still asserts StreamClosed with data \"early\", and the new assertion requires CleanupComplete, which outcome.go:128 (c.closed) supplies. This matches spec.md:146.\n- PL125 TestLifetimeLateStart (lifetime_test.go:62-76): a TERM-resistant child, with SIGTERM under a real grace; the Start is released after grace and final expire. control.go:177-180 (c.forced, then SIGKILL) is the only path that reaps the child inside final. It still asserts one waiter. This matches spec.md:136 and closes r1 C1.\n- PL66 TestLifetimeSingleFinalWindow (lifetime_test.go:241-271): the 50 ms pause is gone; polled fires only through observe() after the waiter result (control.go:258); starts == 1 still enforces one shared window.\n- PL15-PL18: observe_test.go:25-56 still drives ObserveGroup and observeGroup, which delegate to Classify (observe.go:42). Test names are unchanged, so no citation drifted.\n- Classify (observe.go:47-56): nil means present, ESRCH means absent, every other error means uncertain and keeps its Err. This matches spec.md:200-202. control.go:246-254 keeps the signal error as evidence unless the answer proves absence (spec.md:203).\n- No edit falls outside the acceptance's reach.\n\nFindings: None.\n\nAdvice\n- No test exercises how controller.signal grades EPERM into SignalErr; r1 advice already noted this.\n\nCount: 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "4115afad73961d526b3df1015ee85ea4a71c84b3",
+          "tip": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec-r1"
+          ]
+        },
+        {
+          "id": "c1-coverage-r2",
+          "performer": "claude:plt-c1-coverage-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c1-coverage-r2-20261022",
+            "digest": "sha256:0ae9f6aec46917726250b8f06af1e1c0246094cb364c7100a32688c3d754478b",
+            "excerpt": "Coverage axis, PL-C1 confirming round r2 (claude:plt-c1-coverage-r2-20261022). The evidence check returned current=true and dirty_record=false at tip 746689e5. Every probe reports restored=yes.\n\nC1: closed. My probe omitted the KILL in the forced branch of onStart (internal/subprocess/control.go:177-179). TestLifetimeLateStart bit at lifetime_test.go:72 and timed out on completion. With the earlier c.forced->false and KILL->remembered-signal probes, three different mutations of spec.md:136 now bite.\n\nC3: closed. My probe changed the case at internal/subprocess/outcome.go:128 so it no longer includes c.closed. TestLifetimeForcedClose bit at lifetime_test.go:173 with \"Status:not-requested, want complete\" (spec.md:146).\n\nC2: no-op reaffirmed. Under processPolicy, the loop at internal/bounds/bounds.go:256-260 cannot be reached without a prior cancellation: the policy sets no OutputDelay, Normal is Preserve, and it has no Drain (bounds.go:213-217), so closeOwned (control.go:122,125) runs only on final-window expiry; beginFinal runs only from force() or the Drain branch of onWait (control.go:186-190); StreamFailed (streams.go:123) needs a read error from bytes.Buffer.ReadFrom on the owner end of the pipe (streams.go:95-96); a cancellation returns early at bounds.go:250-253. The branch is defense-in-depth with no binding requirement that a test bites it.\n\nC4: no-op unchanged.\n\nProbes\n- control.go onStart | omit c.signal(syscall.SIGKILL) (occurrence 1) | bit | restored yes\n- outcome.go:128 | swap to case c.stopping || c.needGroup: | bit | restored yes\n- control.go signal | omit c.group = answer | silent across ./internal/subprocess/... | restored yes\n\nNew findings: none. The silent probe hit the refactored Classify branch in signal; the mutant is effectively equivalent because ESRCH comes only after reaping, and onWait->observe() then records the absence (control.go:196-197,258-260). No spec row binds the early record.\n\nAdvice\n- A direct witness for the ESRCH absence that signal records would have to separate that record from the observe() that follows.\n\nFinding count: 0 new; C1 and C3 closed, C2 and C4 no-op.\n"
+          },
+          "axis": "Coverage",
+          "base": "4115afad73961d526b3df1015ee85ea4a71c84b3",
+          "tip": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-coverage-r1"
+          ]
         }
       ]
     }
@@ -593,6 +659,7 @@
 
 PL-C1 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies.
 Repair 1 (commit 36c2fa86a) closed S1, S2, C1, and C3. The C2 disposition moved to no-op by consultant tie-break, as a record-only correction.
+The confirming round r2 passed on all three axes with no new finding, and the Coverage axis reaffirmed the C2 no-op.
 
 ## Standards
 
