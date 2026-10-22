@@ -589,24 +589,24 @@ The final implementation must demonstrate its stated omission red.
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
 | PL1 | 1 | Every census entry reaches the shared lifetime owner. | planned `internal/conformance/process_lifetime_test.go` (OwnerEntries) | A production-entry audit detects a caller that retains its private owner. |
-| PL2 | 2 | A pre-canceled lifetime starts no child. | planned `internal/subprocess/lifetime_test.go` (PreCanceled) | The child's start marker appears if cancellation follows launch. |
-| PL3 | 3 | Cancellation during Start reaches the eventual resistant child. | planned `internal/subprocess/lifetime_test.go` (StartingCancel) | The child's readiness PID survives if cancellation loses the unpublished handle. |
-| PL4 | 4 | A failed Start creates no waiter. | planned `internal/subprocess/lifetime_test.go` (SpawnFailure) | A waiter counter exposes a failed-start wait. |
-| PL5 | 4 | Concurrent cancellation and completion create exactly one waiter. | planned `internal/subprocess/lifetime_test.go` (SingleWaiter) | An audited real-command owner detects a second Wait call. |
-| PL6 | 5 | Exit seven retains raw status seven and complete output. | planned `internal/subprocess/lifetime_test.go` (Nonzero) | A generic failure projection loses the child status or output. |
-| PL7 | 5 | Cleanup failure retains an already observed child exit. | planned `internal/subprocess/lifetime_test.go` (ExitAndIncomplete) | A replacement cleanup error erases the process result. |
-| PL8 | 6 | Captured output remains unread until its worker completes. | planned `internal/subprocess/lifetime_test.go` (DelayedCapture) | A blocked consumer exposes premature mutable-buffer access under race checks. |
-| PL9 | 6 | A direct caller file remains open after completion. | planned `internal/subprocess/lifetime_test.go` (CallerFile) | A subsequent caller write fails if teardown closes its file. |
-| PL10 | 6 | Forced owned-pipe closure returns incomplete output. | planned `internal/subprocess/lifetime_test.go` (ForcedClose) | An EOF-only projection accepts truncated output. |
-| PL11 | 6 | A blocked caller writer returns a pending stream snapshot. | planned `internal/subprocess/lifetime_test.go` (BlockedWriter) | Waiting on the writer holds the lifetime past its final deadline. |
-| PL12 | 7 | A TERM-resistant group receives KILL after its grace. | planned `internal/subprocess/lifetime_test.go` (ResistantGroup) | A live descendant-survival oracle exposes missing escalation. |
-| PL13 | 8 | An unresolved waiter returns incomplete by the final deadline. | planned `internal/subprocess/lifetime_test.go` (PendingWaiter) | An unconditional receive leaves the caller blocked. |
-| PL14 | 8 | A descriptor-retaining descendant cannot hold canceled decoding forever. | planned `internal/subprocess/lifetime_test.go` (InheritedDescriptor) | The live descendant and decoder remain unresolved past the final window without owned closure. |
-| PL15 | 9 | Current ESRCH marks the group absent. | planned `internal/subprocess/protection/observe_test.go` (Absent) | A positive-absence fixture cannot complete cleanup if ESRCH remains uncertain. |
-| PL16 | 9 | An answering probe marks the group present. | planned `internal/subprocess/protection/observe_test.go` (Present) | The protected resource disappears if presence becomes absence. |
-| PL17 | 9 | EPERM retains uncertain group state. | planned `internal/subprocess/protection/observe_test.go` (Permission) | Cleanup deletes the resource if every failed probe means gone. |
-| PL18 | 9 | An unknown probe error retains uncertainty. | planned `internal/subprocess/protection/observe_test.go` (UnknownError) | An ESRCH-only check omission permits deletion after an unrelated failure. |
-| PL19 | 10 | Preserve mode leaves a normal surviving group unsignaled. | planned `internal/subprocess/lifetime_test.go` (NormalPreserve) | The descendant dies before fixture cleanup if migration adds a blanket normal kill. |
+| PL2 | 2 | A pre-canceled lifetime starts no child. | `internal/subprocess/lifetime_test.go` (`TestLifetimePreCanceled`) | The child's start marker appears if cancellation follows launch. |
+| PL3 | 3 | Cancellation during Start reaches the eventual resistant child. | `internal/subprocess/lifetime_test.go` (`TestLifetimeStartingCancel`) | The child's readiness PID survives if cancellation loses the unpublished handle. |
+| PL4 | 4 | A failed Start creates no waiter. | `internal/subprocess/lifetime_test.go` (`TestLifetimeSpawnFailure`) | A waiter counter exposes a failed-start wait. |
+| PL5 | 4 | Concurrent cancellation and completion create exactly one waiter. | `internal/subprocess/lifetime_test.go` (`TestLifetimeSingleWaiter`) | An audited real-command owner detects a second Wait call. |
+| PL6 | 5 | Exit seven retains raw status seven and complete output. | `internal/subprocess/lifetime_test.go` (`TestLifetimeNonzero`) | A generic failure projection loses the child status or output. |
+| PL7 | 5 | Cleanup failure retains an already observed child exit. | `internal/subprocess/lifetime_test.go` (`TestLifetimeExitAndIncomplete`) | A replacement cleanup error erases the process result. |
+| PL8 | 6 | Captured output remains unread until its worker completes. | `internal/subprocess/lifetime_test.go` (`TestLifetimeDelayedCapture`) | A blocked consumer exposes premature mutable-buffer access under race checks. |
+| PL9 | 6 | A direct caller file remains open after completion. | `internal/subprocess/lifetime_test.go` (`TestLifetimeCallerFile`) | A subsequent caller write fails if teardown closes its file. |
+| PL10 | 6 | Forced owned-pipe closure returns incomplete output. | `internal/subprocess/lifetime_test.go` (`TestLifetimeForcedClose`) | An EOF-only projection accepts truncated output. |
+| PL11 | 6 | A blocked caller writer returns a pending stream snapshot. | `internal/subprocess/lifetime_test.go` (`TestLifetimeBlockedWriter`) | Waiting on the writer holds the lifetime past its final deadline. |
+| PL12 | 7 | A TERM-resistant group receives KILL after its grace. | `internal/subprocess/lifetime_test.go` (`TestLifetimeResistantGroup`) | A live descendant-survival oracle exposes missing escalation. |
+| PL13 | 8 | An unresolved waiter returns incomplete by the final deadline. | `internal/subprocess/lifetime_test.go` (`TestLifetimePendingWaiter`) | An unconditional receive leaves the caller blocked. |
+| PL14 | 8 | A descriptor-retaining descendant cannot hold canceled decoding forever. | `internal/subprocess/lifetime_test.go` (`TestLifetimeInheritedDescriptor`) | The live descendant and decoder remain unresolved past the final window without owned closure. |
+| PL15 | 9 | Current ESRCH marks the group absent. | `internal/subprocess/protection/observe_test.go` (`TestObserveGroupAbsent`) | A positive-absence fixture cannot complete cleanup if ESRCH remains uncertain. |
+| PL16 | 9 | An answering probe marks the group present. | `internal/subprocess/protection/observe_test.go` (`TestObserveGroupPresent`) | The protected resource disappears if presence becomes absence. |
+| PL17 | 9 | EPERM retains uncertain group state. | `internal/subprocess/protection/observe_test.go` (`TestObserveGroupPermission`) | Cleanup deletes the resource if every failed probe means gone. |
+| PL18 | 9 | An unknown probe error retains uncertainty. | `internal/subprocess/protection/observe_test.go` (`TestObserveGroupUnknownError`) | An ESRCH-only check omission permits deletion after an unrelated failure. |
+| PL19 | 10 | Preserve mode leaves a normal surviving group unsignaled. | `internal/subprocess/lifetime_test.go` (`TestLifetimeNormalPreserve`) | The descendant dies before fixture cleanup if migration adds a blanket normal kill. |
 | PL20 | 19 | Protection persists before the child's resource-use marker. | planned `internal/subprocess/protection/registration_test.go` (Prelaunch) | The marker precedes the synced user record if launch happens first. |
 | PL21 | 20 | First user-publication failure prevents Start. | planned `internal/subprocess/protection/registration_test.go` (FirstPublishFailure) | A child marker appears if the persistence error is ignored. |
 | PL22 | 20 | Later resource-publication failure prevents Start. | planned `internal/subprocess/protection/registration_test.go` (PartialPublish) | A child uses an unprotected second resource if partial success permits launch. |
@@ -615,7 +615,7 @@ The final implementation must demonstrate its stated omission red.
 | PL25 | 21 | Actor death retains a pending startup identity. | planned `internal/subprocess/protection/recovery_test.go` (UnknownStartup) | Owner-PID-only recovery removes a potentially live child's resource. |
 | PL26 | 22 | Two concurrent users require two complete group-absence proofs. | planned `internal/subprocess/protection/recovery_test.go` (OverlappingUsers) | The first completion deletes the second live user's resource. |
 | PL27 | 23 | Sealed admission refuses new registration before Start. | planned `internal/subprocess/protection/registration_test.go` (SealedAdmission) | A late start marker exposes the cleanup check-then-launch race. |
-| PL28 | 13 | Bounds preserves immediate-KILL cancellation classification. | planned `internal/bounds/lifetime_test.go` (BoundsCancel) | An added grace or changed canceled status breaks its policy witness. |
+| PL28 | 13 | Bounds preserves immediate-KILL cancellation classification. | `internal/bounds/lifetime_test.go` (`TestBoundsCancel`) | An added grace or changed canceled status breaks its policy witness. |
 | PL29 | 11 | Gate interruption retains INT and exit 130. | planned `internal/gate/lifetime_test.go` (GateInterrupt) | The child's signal log exposes an incorrect TERM or KILL opener. |
 | PL30 | 11 | Gate timeout retains TERM and exit 124. | planned `internal/gate/lifetime_test.go` (GateTimeout) | The cause fixture fails if timeout becomes interruption. |
 | PL31 | 11 | Gate normal completion drains the remaining group. | planned `internal/gate/lifetime_test.go` (GateNormalDrain) | A readiness descendant survives if normal drain disappears. |
@@ -653,10 +653,10 @@ The final implementation must demonstrate its stated omission red.
 | PL63 | 14 | Scanner cancellation escalates a TERM-resistant child. | planned `internal/releasepreflight/lifetime_test.go` (ScannerCancel) | The scanner survives if its old unbounded wait remains. |
 | PL64 | 15 | Focused-test cancellation resolves a descriptor-retaining descendant. | planned `internal/testreport/lifetime_test.go` (FocusedPipeCancel) | The descendant-survival oracle exposes a decoder blocked before Wait. |
 | PL65 | 15 | Malformed focused JSON remains a decode failure. | planned `internal/testreport/lifetime_test.go` (MalformedJSON) | Child zero falsely certifies unreadable report data. |
-| PL66 | 8 | Wait and stream obligations share one final cleanup window. | planned `internal/subprocess/lifetime_test.go` (SingleFinalWindow) | Sequential fresh deadlines exceed the selected shutdown bound. |
-| PL67 | 8 | The unbounded-verdict switch keeps teardown finite. | planned `internal/bounds/lifetime_test.go` (FixedShutdown) | A resistant group outlives the outer wait if teardown uses VerdictWindow. |
-| PL68 | 32 | An incomplete worker holds only required resources. | planned `internal/subprocess/lifetime_test.go` (WorkerOwnership) | An unrelated closeable sentinel remains retained by the unfinished owner. |
-| PL69 | 6 | Blocked caller stdin yields a pending local worker. | planned `internal/subprocess/lifetime_test.go` (BlockedInput) | Wait blocks indefinitely if independent completion covers only output. |
+| PL66 | 8 | Wait and stream obligations share one final cleanup window. | `internal/subprocess/lifetime_test.go` (`TestLifetimeSingleFinalWindow`) | Sequential fresh deadlines exceed the selected shutdown bound. |
+| PL67 | 8 | The unbounded-verdict switch keeps teardown finite. | `internal/bounds/lifetime_test.go` (`TestBoundsFixedShutdown`) | A resistant group outlives the outer wait if teardown uses VerdictWindow. |
+| PL68 | 32 | An incomplete worker holds only required resources. | `internal/subprocess/lifetime_test.go` (`TestLifetimeWorkerOwnership`) | An unrelated closeable sentinel remains retained by the unfinished owner. |
+| PL69 | 6 | Blocked caller stdin yields a pending local worker. | `internal/subprocess/lifetime_test.go` (`TestLifetimeBlockedInput`) | Wait blocks indefinitely if independent completion covers only output. |
 | PL70 | 40 | A proved no-start removes its protection durably. | planned `internal/subprocess/protection/registration_test.go` (NoStartComplete) | A canceled prepared run leaks a terminal user without the no-start close path. |
 | PL71 | 19 | Resource-record sync failure prevents first launch. | planned `internal/subprocess/protection/registration_test.go` (ResourceSyncFailure) | A child marker appears if renamed but unsynced protection permits use. |
 | PL72 | 38, 40 | Deletion-sync failure returns uncertain cleanup. | planned `internal/subprocess/protection/registration_test.go` (DeleteSyncFailure) | The owner reports success despite failed durable terminal publication. |
@@ -711,8 +711,8 @@ The final implementation must demonstrate its stated omission red.
 | PL121 | 27 | Sweep retains a live prospective owner with no group users. | planned `internal/gate/prospectiveartifact/lifetime_test.go` (LiveUnusedOwner) | A second producer removes the first owner's checkout before its child registration. |
 | PL122 | 25 | The focused run consumes selection Close failure. | planned `internal/testreport/lifetime_test.go` (SelectionCloseFailure) | Child zero becomes the operation result while the selected executable stays protected. |
 | PL123 | 25 | The lane consumes its selection-release failure. | planned `internal/gate/lifetime_resources_test.go` (LaneSelectionCloseFailure) | A void release closure hides protected executable retention behind a lane pass. |
-| PL124 | 3, 8 | Pending Start returns incomplete within the cancellation deadline. | planned `internal/subprocess/lifetime_test.go` (BlockedStart) | A held start worker blocks cancellation if control waits on the startup mutex. |
-| PL125 | 3, 4 | Late successful Start receives shutdown and one waiter. | planned `internal/subprocess/lifetime_test.go` (LateStart) | Releasing the held worker leaves a live child if an incomplete return discards its pending cancellation. |
+| PL124 | 3, 8 | Pending Start returns incomplete within the cancellation deadline. | `internal/subprocess/lifetime_test.go` (`TestLifetimeBlockedStart`) | A held start worker blocks cancellation if control waits on the startup mutex. |
+| PL125 | 3, 4 | Late successful Start receives shutdown and one waiter. | `internal/subprocess/lifetime_test.go` (`TestLifetimeLateStart`) | Releasing the held worker leaves a live child if an incomplete return discards its pending cancellation. |
 
 ### Preservation fixtures
 

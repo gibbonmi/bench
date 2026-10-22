@@ -3,15 +3,17 @@
 package bounds
 
 import (
-	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"os"
 	"os/exec"
 	"syscall"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
 // The const block is the production policy registry. Callers name these entries. They do
@@ -36,6 +38,10 @@ const (
 	ProcessGroupCancelGrace = 2 * time.Second
 	BuilderCancelGrace      = 2 * time.Second
 	PublicationStepGrace    = 2 * time.Second
+	// ProcessShutdownGrace is the grace of a catchable shutdown path that has no grace of its
+	// own. ProcessFinalWindow bounds every teardown obligation after forced termination.
+	ProcessShutdownGrace = 2 * time.Second
+	ProcessFinalWindow   = 3 * time.Second
 	// Git 2.43.0 can block while reading malformed worktree admin files; this
 	// backstop retires when upstream bounds those reads itself.
 	WorktreeListTimeout = 15 * time.Second
@@ -176,56 +182,90 @@ type ProcessResult struct {
 	Exit   int
 }
 
+// Run retains the merged stdout and stderr in Result.Output.
 func Run(parent context.Context, limit time.Duration, cmd *exec.Cmd) ProcessResult {
-	var output bytes.Buffer
-	result := run(parent, limit, cmd, &output, &output)
-	result.Output = output.Bytes()
-	return result
+	return run(parent, limit, cmd, nil)
 }
 
 // RunOutput preserves command stdout in stdout while retaining stderr in Result.Output.
+// stdout receives the captured bytes after the stream's worker finishes.
 func RunOutput(parent context.Context, limit time.Duration, cmd *exec.Cmd, stdout io.Writer) ProcessResult {
-	var stderr bytes.Buffer
-	result := run(parent, limit, cmd, stdout, &stderr)
-	result.Output = stderr.Bytes()
-	return result
+	return run(parent, limit, cmd, stdout)
 }
 
-func run(parent context.Context, limit time.Duration, cmd *exec.Cmd, stdout, stderr io.Writer) ProcessResult {
+// ProcessWindow builds a subprocess window of limit. An Unbounded limit never expires.
+func ProcessWindow(limit time.Duration) subprocess.Window {
+	return func() (<-chan time.Time, func() bool) {
+		if limit == Unbounded {
+			return nil, func() bool { return false }
+		}
+		timer := time.NewTimer(limit)
+		return timer.C, timer.Stop
+	}
+}
+
+// ProcessPoll paces group-absence observations inside a final cleanup window.
+var ProcessPoll = ProcessWindow(FixedWindow(10 * time.Millisecond))
+
+// processPolicy is the runner's policy: a normal exit keeps its group, and cancellation
+// sends KILL at once. The final window stays fixed, so teardown is finite under the
+// unbounded-verdict switch.
+var processPolicy = subprocess.Policy{
+	Normal: subprocess.Preserve,
+	Final:  ProcessWindow(FixedWindow(ProcessFinalWindow)),
+	Poll:   ProcessPoll,
+}
+
+// run returns the captured stderr, or the merged output when stdout is nil.
+func run(parent context.Context, limit time.Duration, cmd *exec.Cmd, stdout io.Writer) ProcessResult {
 	if err := parent.Err(); err != nil {
 		return ProcessResult{Status: ProcessCanceled, Err: err}
 	}
 	ctx, cancel := Context(parent, limit)
 	defer cancel()
-	if cmd.SysProcAttr == nil {
-		cmd.SysProcAttr = &syscall.SysProcAttr{}
-	}
-	cmd.SysProcAttr.Setpgid = true
-	cmd.Stdout, cmd.Stderr = stdout, stderr
-	if err := cmd.Start(); err != nil {
+	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}, Stderr: subprocess.Output{Capture: true}, MergeStderr: stdout == nil}
+	lifetime := subprocess.NewLifetime(cmd, processPolicy, streams)
+	if err := lifetime.Start(); err != nil {
 		return ProcessResult{Status: ProcessStart, Err: err}
 	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		if err == nil {
-			return ProcessResult{Status: ProcessComplete}
-		}
-		exit := 1
-		if cmd.ProcessState != nil && cmd.ProcessState.ExitCode() > 0 {
-			exit = cmd.ProcessState.ExitCode()
-		}
-		return ProcessResult{Status: ProcessExit, Err: err, Exit: exit}
-	case <-ctx.Done():
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		<-done
-		status := ProcessTimeout
+	stop := context.AfterFunc(ctx, func() {
+		cause := subprocess.CauseDeadline
 		if parent.Err() != nil {
-			status = ProcessCanceled
+			cause = subprocess.CauseInterruption
 		}
-		return ProcessResult{Status: status, Err: ctx.Err()}
+		lifetime.Cancel(cause, syscall.SIGKILL)
+	})
+	defer stop()
+	outcome, _ := lifetime.Wait()
+	process := outcome.Process
+	output := outcome.Streams.Stderr.Data
+	if stdout == nil {
+		output = outcome.Streams.Stdout.Data
+	} else if _, err := stdout.Write(outcome.Streams.Stdout.Data); err != nil && process.WaitErr == nil {
+		process.WaitErr = err
 	}
+	switch {
+	case process.StartErr != nil && !errors.Is(process.StartErr, subprocess.ErrNoStart):
+		return ProcessResult{Status: ProcessStart, Err: process.StartErr}
+	case outcome.Cancellation.Cause == subprocess.CauseInterruption:
+		return ProcessResult{Status: ProcessCanceled, Output: output, Err: ctx.Err()}
+	case outcome.Cancellation.Cause == subprocess.CauseDeadline:
+		return ProcessResult{Status: ProcessTimeout, Output: output, Err: ctx.Err()}
+	}
+	err := process.WaitErr
+	for _, stream := range []subprocess.Stream{outcome.Streams.Stdout, outcome.Streams.Stderr} {
+		if err == nil && stream.Status != subprocess.StreamComplete && stream.Status != subprocess.StreamNone {
+			err = fmt.Errorf("process stream %s: %v", stream.Status, stream.Err)
+		}
+	}
+	if err == nil {
+		return ProcessResult{Status: ProcessComplete, Output: output}
+	}
+	exit := 1
+	if process.Code > 0 {
+		exit = process.Code
+	}
+	return ProcessResult{Status: ProcessExit, Output: output, Err: err, Exit: exit}
 }
 
 type ReadStatus string

@@ -9,6 +9,7 @@ var auditedPortPackages = []string{
 	"internal/gitguard",
 	"internal/preflight",
 	"internal/publication",
+	"internal/subprocess/protection",
 }
 
 // This block names the five failure modes, each with its own message, so a red names its
@@ -61,5 +62,9 @@ var injectedPortRegistry = []injectedPortRow{
 	{
 		pkg: "internal/preflight", port: "reviewEvidenceObserver",
 		testFile: "internal/preflight/review_charge_test.go", testName: "TestEvidenceReviewCollectors",
+	},
+	{
+		pkg: "internal/subprocess/protection", port: "Probe",
+		testFile: "internal/subprocess/protection/observe_test.go", testName: "TestObserveGroupPresent",
 	},
 }
