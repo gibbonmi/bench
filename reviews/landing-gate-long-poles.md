@@ -2870,6 +2870,72 @@
           "tip": "fd7ac338eea9394fa3cf878e9ea495cff9441874",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "c3d-standards-r1",
+          "performer": "claude:lgp-c3d-standards-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "479bf3e7e785aa93791d60231659a02a16586d4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3d-standards-r1-20261022",
+            "digest": "sha256:8e58816d442528e1c6efb953983ff979871a71562ea2feb990075865c0d85101",
+            "excerpt": "Standards axis r1, LGP-C3D (8ac213e02..c9d119580): 0 findings; S1 and P1 closed. The census comment no longer restates the exec child fact, which lives only in the exec_call_env_test.go helper comment, and its three-class count matches the remaining classes. The t09-r1-t09-exec-bind row records the plan's whole-package command. Advice: \"PATH=\" + os.Getenv(\"PATH\") in two caller lists is incidental text.\n"
+          },
+          "axis": "Standards",
+          "base": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+          "tip": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "finding_ids": [],
+          "supersedes": [
+            "c3d-standards-r0"
+          ]
+        },
+        {
+          "id": "c3d-spec-r1",
+          "performer": "claude:lgp-c3d-spec-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "479bf3e7e785aa93791d60231659a02a16586d4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3d-spec-r1-20261022",
+            "digest": "sha256:687977cf90c512ea4585f9afe0e376ccdba51154c36368ec632c46c90f4fbe89",
+            "excerpt": "Spec axis r1, LGP-C3D (8ac213e02..c9d119580): 0 findings; P1 and S1 closed. The t09-r1-t09-exec-bind row uses the plan's command bench test --package ./internal/worktree with the whole-package selection and the plan's mutation, and it bit with 3 failures, restored yes. LGP20 met; LGP21 met, 31 - 10 + 0 = 21; LGP22 met, 812 unchanged; LGP34: coordinator records 63189 ms (1498 tests) before the ticket and 62764 ms (1498 tests) at the repair tip, inside the spread. Ticket lines 13, 15, and 17 met (exec_test.go 408 lines).\n"
+          },
+          "axis": "Spec",
+          "base": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+          "tip": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "finding_ids": [],
+          "supersedes": [
+            "c3d-spec-r0"
+          ]
+        },
+        {
+          "id": "c3d-coverage-r1",
+          "performer": "claude:lgp-c3d-coverage-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "479bf3e7e785aa93791d60231659a02a16586d4d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3d-coverage-r1-20261022",
+            "digest": "sha256:324067bff0cecddb85991c4ba08de2733d05a012582ea6a2a8d733dff0a3d712",
+            "excerpt": "Coverage axis r1, LGP-C3D (8ac213e02..c9d119580): 0 findings; P1 and S1 closed. The record row t09-r1-t09-exec-bind shows the whole-package selection (1292 run), outcome bit, 3 failures, restored yes. A focused run of the census, the ceiling, and the TestExecChild tests at the tip passed (18 tests). The moved tests read no process environment: childOutputAtHome passes an explicit caller slice and execEnv builds from it alone. No new probe: the repair is comment-only.\n"
+          },
+          "axis": "Coverage",
+          "base": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+          "tip": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "finding_ids": [],
+          "supersedes": [
+            "c3d-coverage-r0"
+          ]
         }
       ]
     }
