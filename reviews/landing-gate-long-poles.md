@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:504f3662dc285101a10b12a57d0d3171265e21af7bf269af10240c19c8d2b397",
+  "plan_digest": "sha256:f97a2dd92aa8f25d612c082e08c62d69946a1bc987a3ae263cae84b7ac1b56b3",
   "implementation_session": "",
   "chunks": [
     {
@@ -1133,6 +1133,105 @@
           ]
         }
       ]
+    },
+    {
+      "id": "LGP-C2B",
+      "base": "4c4d1df002f9b734aa5db8a99032dabf669c7318",
+      "tip": "bb8a207e3b56c973ee1cd6fe043e4bc3167e6351",
+      "plan_digest": "sha256:f97a2dd92aa8f25d612c082e08c62d69946a1bc987a3ae263cae84b7ac1b56b3",
+      "source_digest": "fe4abb4dc1ffa973a0494d808d083b5bd8cd9d56",
+      "acceptance_rows": [
+        "LGP17",
+        "LGP21",
+        "LGP22",
+        "LGP34"
+      ],
+      "verification": [
+        {
+          "id": "t04-pkg-cmd-bench",
+          "performer": "claude:lgp-t04-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "fe4abb4dc1ffa973a0494d808d083b5bd8cd9d56",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t04-author-20261021",
+            "digest": "sha256:c82afa71b7a56f8746febc38aade5b2f87feb21b940e08fe49ec99242ad27f48",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20456,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t04-pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-worktree",
+          "performer": "claude:lgp-t04-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "fe4abb4dc1ffa973a0494d808d083b5bd8cd9d56",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t04-author-20261021",
+            "digest": "sha256:27a03bb313a7ed9ea56629a9326bab3b3ecd81eccd4b54035b924ce784e8d5b4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,87545,1492\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t04-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-root-conformance",
+          "performer": "claude:lgp-t04-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "fe4abb4dc1ffa973a0494d808d083b5bd8cd9d56",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t04-author-20261021",
+            "digest": "sha256:4f2d445178d2799cf0aae733d65f3b90946ddbbc4a3012d0045428fcc331691a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16784,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t04-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-marker-run-value",
+          "performer": "claude:lgp-t04-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "fe4abb4dc1ffa973a0494d808d083b5bd8cd9d56",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t04-author-20261021",
+            "digest": "sha256:eadee60d96f1c7d95a8b846915d1da20c0521ff51bb777150fd4bcc691fd63c8",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/owner_marker.go,swap+swap+swap+swap,failed,1,TestOwnerMarkerReadsTheCommonDirOnce,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1492\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,368\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,88765,1492\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestOwnerMarkerReadsTheCommonDirOnce,\"journey_test.go:257: one owner-marker validation started the common-directory query 3 times, want 1\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t04-marker-run-value",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip the run value in validateOwnerMarker",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t04-author-20261021",
+              "digest": "sha256:eadee60d96f1c7d95a8b846915d1da20c0521ff51bb777150fd4bcc691fd63c8",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/owner_marker.go,swap+swap+swap+swap,failed,1,TestOwnerMarkerReadsTheCommonDirOnce,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1492\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,368\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,88765,1492\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestOwnerMarkerReadsTheCommonDirOnce,\"journey_test.go:257: one owner-marker validation started the common-directory query 3 times, want 1\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1164,6 +1263,18 @@
     {
       "from": "sha256:6fc699b363a5ca38032b7bd24f0eb9e055a3519c6924419b580011ee584ebdd6",
       "to": "sha256:504f3662dc285101a10b12a57d0d3171265e21af7bf269af10240c19c8d2b397",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ],
+        "LGP-C2A": [
+          "LGP-C2A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:504f3662dc285101a10b12a57d0d3171265e21af7bf269af10240c19c8d2b397",
+      "to": "sha256:f97a2dd92aa8f25d612c082e08c62d69946a1bc987a3ae263cae84b7ac1b56b3",
       "chunk_ids": {
         "LGP-C1": [
           "LGP-C1"
