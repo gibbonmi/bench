@@ -28,12 +28,17 @@ func liveKitRoot(t *testing.T) string {
 	return root
 }
 
-// installOwnedSelection makes kit the BENCH_KIT of the test, and each focused run builds
-// its run binary from kit. The kit is set after the factory install, because that install
-// clears BENCH_KIT.
+// installOwnedSelection makes kit the BENCH_KIT of the test and hands each focused run the
+// package's shared run binary, which the run validates against kit. Both variables are set
+// after the factory install, because that install clears them.
 func installOwnedSelection(t *testing.T, kit string) {
 	t.Helper()
 	installTestSelectionFactory(t, runbinary.Factory{})
+	path, err := packageRunBinary.path(kit)
+	if err != nil {
+		t.Fatalf("select the package run binary for %s: %v", kit, err)
+	}
+	t.Setenv(runbinary.Env, path)
 	t.Setenv("BENCH_KIT", kit)
 }
 
