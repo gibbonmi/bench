@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:f97a2dd92aa8f25d612c082e08c62d69946a1bc987a3ae263cae84b7ac1b56b3",
+  "plan_digest": "sha256:c29cdfbe2ba7223fba8e656138b5210901464cb9f4b555854aabd86698ec4368",
   "implementation_session": "",
   "chunks": [
     {
@@ -1293,6 +1293,105 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "LGP-C2C",
+      "base": "bb8a207e3b56c973ee1cd6fe043e4bc3167e6351",
+      "tip": "cd9889779c97c9d50b07158bce399e6b40612737",
+      "plan_digest": "sha256:c29cdfbe2ba7223fba8e656138b5210901464cb9f4b555854aabd86698ec4368",
+      "source_digest": "1bc5392d81da0bc27398f21fc9886a61f8bc59bf",
+      "acceptance_rows": [
+        "LGP16",
+        "LGP21",
+        "LGP22",
+        "LGP34"
+      ],
+      "verification": [
+        {
+          "id": "t05-pkg-cmd-bench",
+          "performer": "claude:lgp-t05-author2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "1bc5392d81da0bc27398f21fc9886a61f8bc59bf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t05-author2-20261021",
+            "digest": "sha256:8d01b84995fc9afeb28081c4b6b0ad96783be317c225f19157dc6742a88af7fd",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15832,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t05-pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t05-worktree",
+          "performer": "claude:lgp-t05-author2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "1bc5392d81da0bc27398f21fc9886a61f8bc59bf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t05-author2-20261021",
+            "digest": "sha256:d01dc353a141b2d6388caea7c184b370944d8f0f3dd59ad456492ec44904640e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,67191,1493\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t05-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t05-root-conformance",
+          "performer": "claude:lgp-t05-author2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "1bc5392d81da0bc27398f21fc9886a61f8bc59bf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t05-author2-20261021",
+            "digest": "sha256:d4192c07261c0623c4496c10f09e57b8b1cba09596ba42b075cb7fc2993c236e",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18894,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t05-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t05-plan-run-value",
+          "performer": "claude:lgp-t05-author2-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "1bc5392d81da0bc27398f21fc9886a61f8bc59bf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t05-author2-20261021",
+            "digest": "sha256:3fd74654de1bfb9ec4676265fbebcc585d2a0ae08fb49aa4fe0733f8af415729",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/subshell.go,swap,failed,1,TestExplicitPlanReadsEachLocationOnce,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1493\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,359\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,65754,1493\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestExplicitPlanReadsEachLocationOnce,\"journey_test.go:279: one explicit plan started the common-directory query 4 times, want 3\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t05-plan-run-value",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "read the common directory again in planExplicitWith",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t05-author2-20261021",
+              "digest": "sha256:3fd74654de1bfb9ec4676265fbebcc585d2a0ae08fb49aa4fe0733f8af415729",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/subshell.go,swap,failed,1,TestExplicitPlanReadsEachLocationOnce,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1493\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,359\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,65754,1493\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestExplicitPlanReadsEachLocationOnce,\"journey_test.go:279: one explicit plan started the common-directory query 4 times, want 3\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1342,6 +1441,21 @@
         ],
         "LGP-C2A": [
           "LGP-C2A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f97a2dd92aa8f25d612c082e08c62d69946a1bc987a3ae263cae84b7ac1b56b3",
+      "to": "sha256:c29cdfbe2ba7223fba8e656138b5210901464cb9f4b555854aabd86698ec4368",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ],
+        "LGP-C2A": [
+          "LGP-C2A"
+        ],
+        "LGP-C2B": [
+          "LGP-C2B"
         ]
       }
     }
