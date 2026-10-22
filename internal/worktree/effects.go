@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 // currentTime is the boundary clock read. A command resolves one instant here and
@@ -20,19 +21,22 @@ import (
 func currentTime() time.Time { return time.Now() }
 
 // ambient is the process context of one verb run: the Bench home and the warnings writer
-// that the verb entry received, the kit value, and one instant. Each internal verb form
-// takes it second, after the joins value, so nothing below the entry reads the process.
+// that the verb entry received, the kit value, one instant, and the git run value that
+// holds the run's location answers. Each internal verb form takes it second, after the
+// joins value, so nothing below the entry reads the process.
 type ambient struct {
 	home     string
 	kit      string
 	now      time.Time
 	warnings io.Writer
+	run      *git.Run
 }
 
-// newAmbient reads the kit value and the clock once. The caller supplies the home and the
-// warnings writer.
+// newAmbient reads the kit value and the clock once, and it builds a fresh run value, so
+// no location answer outlives the verb run. The caller supplies the home and the warnings
+// writer.
 func newAmbient(home string, stderr io.Writer) ambient {
-	return ambient{home: home, kit: gate.KitValue(), now: currentTime(), warnings: stderr}
+	return ambient{home: home, kit: gate.KitValue(), now: currentTime(), warnings: stderr, run: &git.Run{}}
 }
 
 // homeEnv is this package's name for the Bench home variable. internal/benchhome

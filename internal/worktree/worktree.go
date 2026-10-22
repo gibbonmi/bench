@@ -98,6 +98,9 @@ func classifyRegisteredWorktreesAt(root, home string) ([]Registered, error) {
 // canonicalRoot is the in-package spelling of the shared derivation. A path builder
 // below receives an already canonical root, so it never repeats the resolution.
 func canonicalRoot(root string) string { return poolkey.Canonical(root) }
+
+// canonicalRootIn is canonicalRoot with the common directory read through run.
+func canonicalRootIn(run *git.Run, root string) string { return poolkey.CanonicalIn(run, root) }
 func classifyPath(root, pool, path string) Class {
 	if samePath(path, root) {
 		return ClassRoot

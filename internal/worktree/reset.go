@@ -155,7 +155,7 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	if _, err := os.Stat(selected.Worktree); os.IsNotExist(err) {
 		return resetPlan{}, missingTreeRefusal(root, selected)
 	}
-	evidence, err := ownerMarkerRefusal(root, selected.Worktree, selected)
+	evidence, err := ownerMarkerRefusal(&git.Run{}, root, selected.Worktree, selected)
 	if err != nil {
 		return resetPlan{}, err
 	}
