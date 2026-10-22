@@ -4343,7 +4343,77 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c4b-standards-r0",
+          "performer": "claude:lgp-c4b-standards-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c5e6a01da77e11c3609fee373c8ae5c1f074c944",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4b-standards-20261022",
+            "digest": "sha256:21c70161d359dd58276e9c9a87d8d4a45cabffd9b4274ab7c5a2e5558be561dc",
+            "excerpt": "Standards axis, LGP-C4B (base d23316b55, tip f20a963e1). Four findings.\nS1: the serial_table_test.go:9-12 doc comment still says a serial test may share the owner's repositories, name a ledger field, or bind process state; at the tip the census refuses an owner reach outside the two subjects and any TMPDIR binding. Rule: craft-comments, never leave a comment describing the code that was. Confidence 6. Auto-fix.\nS2: otel_crash_test.go:79-99 `endPhase` repeats the pid-file poll of `interruptProcessGroup` (owner_test.go:297-313) and the bounded wait of `waitForFile` (charge_evidence_test.go:154). Rule: AGENTS.md, knowledge duplication is a defect. The leak fix itself is in reach. Confidence 5. Auto-fix.\nS3: otel_crash_test.go:102-107 `awaitSpan` comment explains the start-up wait only, not the ended=true wait. Rule: craft-comments. Confidence 4. Auto-fix.\nS4: `landRouteRepo` (land_route_fixture_test.go:180) is now the general private journey repository wrapper with about 20 callers but keeps the land-route name. Smell: Mysterious Name. Confidence 5. Ask-user.\nRefuted: `ownerRepositorySubjects` meets the independent-expectation exception (necessity named, red recorded in f20a963e1); the serial-reason vocabulary has one source per constant; the moved helpers kept their error handling and comments.\nAdvice: drop \"now\" narration in ticket 10; the TestCompatibilityConcurrentWriters hooksPath cleanup lost its purpose; a case-local constant for \"binds process state\".\n"
+          },
+          "axis": "Standards",
+          "base": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "tip": "f20a963e14af08b051dee04c7468dcb13caa9f70",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c4b-spec-r0",
+          "performer": "claude:lgp-c4b-spec-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c5e6a01da77e11c3609fee373c8ae5c1f074c944",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4b-spec-20261022",
+            "digest": "sha256:a968d6b2307145f9baeb3292a567a8f8c9b2e5b1b822c96e36ff9a915983b964",
+            "excerpt": "Spec axis, LGP-C4B (base d23316b55, tip f20a963e1). One finding, closed by this excerpt.\nP1 (LGP34): the verification items hold only chunk-tip times; the before/after pairs live in the ticket commit bodies. Disposition: evidence only, as in LGP-C1 and LGP-C2A; this excerpt records the pairs.\nLGP34 system phase time (bench test --check system), before and after each ticket, from the ticket commit bodies:\n- t11 (178ab4c55): 113508 ms (203 tests) before; 101763, 102696, 103617 ms (204 tests) after.\n- t12 (d92578155): 103572 ms before; 87874, 86727 ms after.\n- t13 (515dad71b): 87849 ms before; 73349, 76873, 77042 ms after.\n- t14 (290211ba0): 74290 ms before; 68304, 66653 ms after.\n- t15 (9b93fca5c): 71909 ms before; 48219, 44153 ms after.\n- t16 (f20a963e1): 46270 ms before; 51518, 55305 ms after (no test moved).\n- Chunk tip record runs: 51518 to 60860 ms, 204 tests each.\nVerdicts: LGP27, LGP30, LGP32, LGP33, LGP38 met; LGP34 met with this excerpt. Tickets 11 to 16: every acceptance item met (no owner.repos reach, no TMPDIR binding, line limits held, TestEvidenceInterruptedPublication kept, assertions unchanged, each probe bit at the tip). Ticket 16 author decisions 1 to 5 match the ticket text. Every coverage cell is in citation form. LGP35 and LGP36 belong to the final reconciliation.\nAdvice: refresh spec :187, :203, :228 base-time wording at the final reconciliation; name the otel_crash `endPhase` leak fix in the build log; the TestCompatibilityConcurrentWriters `RemovePreserving` of .bench/gate.sh may now do nothing.\n"
+          },
+          "axis": "Spec",
+          "base": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "tip": "f20a963e14af08b051dee04c7468dcb13caa9f70",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4b-coverage-r0",
+          "performer": "claude:lgp-c4b-coverage-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c5e6a01da77e11c3609fee373c8ae5c1f074c944",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4b-coverage-20261022",
+            "digest": "sha256:a8d74ba6fc48a87fc86dba061e3d2c052d4f1d6440beb2376c3f20447e214960",
+            "excerpt": "Coverage axis, LGP-C4B (tip f20a963e1, record 6b034f70d, evidence current). Three findings.\nC1: a serial row whose reason is whitespace, or a near-miss of the temporary reason (\"pending migration \", \"Pending migration\"), passes; `serialTableCensus` compares only `reason == \"\"` and `== pendingMigration` (serial_census_test.go:57-61). Probe P1 (an empty TestProbeWhitespaceRow with a \" \" row) silent, restored yes. Confidence 8. Auto-fix (hardening cycle).\nC2: a parallel test that binds TMPDIR through a non-literal key, or any os.Setenv or os.Chdir, passes; `bindsTempRoot` matches only a literal \"TMPDIR\" (parallel_census_test.go:298-309). LGP30's literal text is met. Probe P2 (os.Setenv through a const TMPDIR key) silent, restored yes. No such call exists in the package. Confidence 6. Ask-user (new scope).\nC3: `TestOtelCrashKeepsStartedPhaseLine` runs `endPhase` only on the success path; on a red, the `sleep 30` phase outlives the test and re-creates the deleted temp root (the leak ticket 14 fixed). Read, not probed. Confidence 6. Auto-fix (register the kill in t.Cleanup).\nFull suite: bench test --check system passed, 204 tests, 55726 ms; git status clean.\nAdvice: `systemStartSelected` and `startArtifactLand` build from systemBaseEnvironment, not childEnvironment (every caller passes BENCH_HOME today); TE15 allows 3 s under parallel load and passed; receivers or aliases not spelled owner or o escape the walk (decided limit).\n"
+          },
+          "axis": "Coverage",
+          "base": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "tip": "f20a963e14af08b051dee04c7468dcb13caa9f70",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
