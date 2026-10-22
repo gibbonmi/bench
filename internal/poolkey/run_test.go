@@ -1,9 +1,7 @@
 package poolkey
 
 import (
-	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -23,11 +21,7 @@ func TestCanonicalInReadsTheCommonDirOnce(t *testing.T) {
 	if _, err := run.CommonDir(root); err != nil {
 		t.Fatalf("run.CommonDir(%s): %v", root, err)
 	}
-	data, err := os.ReadFile(logPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got := strings.Count(string(data), "--git-common-dir"); got != 1 {
-		t.Fatalf("common-directory starts = %d, want 1:\n%s", got, data)
+	if got := gittest.StubGitStarts(t, logPath, "--git-common-dir"); got != 1 {
+		t.Fatalf("common-directory starts = %d, want 1", got)
 	}
 }
