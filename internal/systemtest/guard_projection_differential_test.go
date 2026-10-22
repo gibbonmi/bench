@@ -137,6 +137,7 @@ type differentialEntry struct {
 // TestGuardProjectionDifferentialFamilies is GP46. Family D and the decoder matrix keep the
 // exit, stdout, and stderr that the pre-migration executable recorded in the golden.
 func TestGuardProjectionDifferentialFamilies(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile(differentialGolden)
 	if err != nil {
 		t.Fatal(err)

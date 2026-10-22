@@ -27,6 +27,7 @@ func projectionRunHook(t *testing.T, hook, dir string, overrides []string, envel
 // TestGuardProjectionWriteHookDegraded is GP38. The file-write hook without its library or
 // its core warns and allows, so Git's fail-closed refusal never reaches a file write.
 func TestGuardProjectionWriteHookDegraded(t *testing.T) {
+	t.Parallel()
 	envelope := `{"cwd":"/repo","tool_input":{"file_path":"README.md"}}`
 	path := []string{"PATH=" + privateToolPath(t, "git", "cat", "dirname")}
 	for _, tc := range []struct{ name, hook, reason string }{
@@ -46,7 +47,8 @@ func TestGuardProjectionWriteHookDegraded(t *testing.T) {
 // TestGuardProjectionNeverExecutes is GP45. Each expansion-shaped command passes through
 // the actual Bash hooks, with and without a core, and its sentinel file stays absent.
 func TestGuardProjectionNeverExecutes(t *testing.T) {
-	repo := owner.repos[0]
+	t.Parallel()
+	repo := landRouteRepo(t, "guard-projection [journey]-")
 	installWrapper(t, repo)
 	live := []string{"BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
 	degraded := []string{"PATH=" + privateToolPath(t, "git", "cat")}

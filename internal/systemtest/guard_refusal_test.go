@@ -33,6 +33,7 @@ const coreMissingMarker = "BLOCKED: guard degraded (bench core missing)"
 // supported wrapper child refuses the same way, and well-formed git keeps the coarse
 // refusal.
 func TestDegradedGuardRefusesMalformedCommands(t *testing.T) {
+	t.Parallel()
 	outside := t.TempDir()
 	path := []string{"PATH=" + privateToolPath(t, "git", "cat")}
 	// The private PATH holds no Bench executable, and the working directory is in no
@@ -65,6 +66,7 @@ func TestDegradedGuardRefusesMalformedCommands(t *testing.T) {
 // TestGitGuardMissingLibraryRefuses runs a copy of the hook whose adjacent shared library
 // is absent. The hook cannot read the envelope, so it refuses.
 func TestGitGuardMissingLibraryRefuses(t *testing.T) {
+	t.Parallel()
 	hook := hookWithoutLibrary(t, gitGuardHookPath())
 	result := runGitGuardHook(t, hook, t.TempDir(), []string{"PATH=" + privateToolPath(t, "git", "cat")}, occurrenceCommand)
 	if result.code != 2 || !strings.Contains(result.stderr, "BLOCKED: guard degraded (shared library missing)") {
@@ -75,6 +77,7 @@ func TestGitGuardMissingLibraryRefuses(t *testing.T) {
 // TestGitGuardCoreErrorRefuses gives the hook a core that exits 3. The hook keeps its
 // analyzer-error refusal and does not read the failure as a parse result or an allow.
 func TestGitGuardCoreErrorRefuses(t *testing.T) {
+	t.Parallel()
 	repo := plantWrapperAnswer(t, "core analyzer failed", 3)
 	result := runGitGuardHook(t, gitGuardHookPath(), repo, nil, occurrenceCommand)
 	if result.code != 2 {
@@ -89,6 +92,7 @@ func TestGitGuardCoreErrorRefuses(t *testing.T) {
 // wrapper's answer when this platform has no installed binary. The degraded rim then
 // decides: a malformed command refuses, and a recovery read passes.
 func TestGitGuardMissingBinaryPreservesRecovery(t *testing.T) {
+	t.Parallel()
 	repo := plantWrapperAnswer(t, "no installed binary for this platform", 127)
 	assertParseRefusal(t, "GR30 occurrence at the missing-binary rim", runGitGuardHook(t, gitGuardHookPath(), repo, nil, occurrenceCommand))
 	if result := runGitGuardHook(t, gitGuardHookPath(), repo, nil, "cat .github/workflows/gate.yml"); result.code != 0 {
@@ -100,7 +104,8 @@ func TestGitGuardMissingBinaryPreservesRecovery(t *testing.T) {
 // through the unchanged hook and through its guard-git entry. Both refuse with the parse
 // diagnostic, and the hook passes the core's refusal through unchanged.
 func TestGitGuardHookAndCoreParseRefusal(t *testing.T) {
-	repo := owner.repos[0]
+	t.Parallel()
+	repo := landRouteRepo(t, "guard-refusal [journey]-")
 	installWrapper(t, repo)
 	live := []string{"BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
 	hooked := runGitGuardHook(t, gitGuardHookPath(), repo, live, occurrenceCommand)

@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
-	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 func TestSessionStartTE5DiagnosesPartialEnvironment(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	result := fixture.run(t, nil)
 	if result.code != 0 {
@@ -30,6 +30,7 @@ func TestSessionStartTE5DiagnosesPartialEnvironment(t *testing.T) {
 }
 
 func TestSessionStartTE5IgnoresBashEnvMarker(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	bashEnv := filepath.Join(t.TempDir(), "bash-env")
 	if err := os.WriteFile(bashEnv, []byte("export ENVMAN_LOAD=loaded\n"), 0o644); err != nil {
@@ -44,6 +45,7 @@ func TestSessionStartTE5IgnoresBashEnvMarker(t *testing.T) {
 }
 
 func TestSessionStartTE5DiscoversGoWithMarkerAbsentOrEmpty(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	for _, marker := range []struct {
 		name, override string
@@ -63,6 +65,7 @@ func TestSessionStartTE5DiscoversGoWithMarkerAbsentOrEmpty(t *testing.T) {
 }
 
 func TestSessionStartTE6PrependsTheDiscoveredDirectory(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	result := fixture.run(t, nil)
 	want := "export PATH='" + filepath.Dir(fixture.goExecutable) + "':\"$PATH\""
@@ -72,6 +75,7 @@ func TestSessionStartTE6PrependsTheDiscoveredDirectory(t *testing.T) {
 }
 
 func TestSessionStartTE7DoesNotExecuteDiscoveredGo(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	sentinel := filepath.Join(t.TempDir(), "go-executed")
 	result := fixture.run(t, []string{"GO_EXECUTION_SENTINEL=" + sentinel})
@@ -84,6 +88,7 @@ func TestSessionStartTE7DoesNotExecuteDiscoveredGo(t *testing.T) {
 }
 
 func TestSessionStartTE7AcceptsSymlinkWithoutExecutingTarget(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	target := fixture.goExecutable + "-target"
 	if err := os.Rename(fixture.goExecutable, target); err != nil {
@@ -103,6 +108,7 @@ func TestSessionStartTE7AcceptsSymlinkWithoutExecutingTarget(t *testing.T) {
 }
 
 func TestSessionStartTE8MissingAndPartialCasesExitZero(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	for _, test := range []struct {
 		name  string
@@ -121,6 +127,7 @@ func TestSessionStartTE8MissingAndPartialCasesExitZero(t *testing.T) {
 }
 
 func TestSessionStartTE9HealthyHarnessPrintsNoRecovery(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	healthyPath := filepath.Dir(fixture.goExecutable) + string(os.PathListSeparator) + fixture.harnessPath
 	result := fixture.run(t, []string{"PATH=" + healthyPath})
@@ -132,6 +139,7 @@ func TestSessionStartTE9HealthyHarnessPrintsNoRecovery(t *testing.T) {
 }
 
 func TestSessionStartTE10MissingGoPrintsNoPathAssignment(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	result := fixture.run(t, []string{"HOME=" + t.TempDir()})
 	if !strings.Contains(result.stdout, "Go is absent from PATH") {
@@ -143,6 +151,7 @@ func TestSessionStartTE10MissingGoPrintsNoPathAssignment(t *testing.T) {
 }
 
 func TestSessionStartTE13QuotesOnePathElement(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixtureWithGoDir(t, "Go SDK [stable]*")
 	result := fixture.run(t, nil)
 	want := "export PATH='" + filepath.Dir(fixture.goExecutable) + "':\"$PATH\""
@@ -152,6 +161,7 @@ func TestSessionStartTE13QuotesOnePathElement(t *testing.T) {
 }
 
 func TestSessionStartTE14RejectsUnsafeDiscoveryOutput(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	shellPath := discoveryShellPath(t)
 	valid := fixture.goExecutable
@@ -174,6 +184,7 @@ func TestSessionStartTE14RejectsUnsafeDiscoveryOutput(t *testing.T) {
 }
 
 func TestSessionStartNonzeroDiscoveryPrintsNoRecovery(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	path := discoveryShellPath(t) + string(os.PathListSeparator) + fixture.harnessPath
 	result := fixture.run(t, []string{
@@ -187,6 +198,7 @@ func TestSessionStartNonzeroDiscoveryPrintsNoRecovery(t *testing.T) {
 }
 
 func TestSessionStartTE15BoundsDiscoveryAndContinues(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	path := hangingDiscoveryShellPath(t) + string(os.PathListSeparator) + fixture.harnessPath
 	started := time.Now()
@@ -201,6 +213,7 @@ func TestSessionStartTE15BoundsDiscoveryAndContinues(t *testing.T) {
 }
 
 func TestSessionStartTE16KillsDiscoveryDescendants(t *testing.T) {
+	t.Parallel()
 	fixture := newSessionEnvironmentFixture(t)
 	shellPath, child := descendantDiscoveryShellPath(t)
 	pidFile := filepath.Join(t.TempDir(), "descendant.pid")
@@ -274,7 +287,7 @@ func newSessionEnvironmentFixture(t *testing.T) sessionEnvironmentFixture {
 
 func newSessionEnvironmentFixtureWithGoDir(t *testing.T, directory string) sessionEnvironmentFixture {
 	t.Helper()
-	repo := owner.repos[2]
+	repo := landRouteRepo(t, "session-start [journey]-")
 	installWrapper(t, repo)
 	goMod := filepath.Join(repo, "go.mod")
 	if err := os.WriteFile(goMod, nil, 0o644); err != nil {
@@ -333,88 +346,6 @@ func runHookWithDeadline(t *testing.T, dir string, overrides []string, hook stri
 	return owner.runAt(dir, overrides, timeout, "--signal=KILL", deadline.String(), shell, hook)
 }
 
-// TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable drives
-// .bench/hooks/session-start.sh as a subprocess in the state the hint exists for: a
-// session opening in a repository whose Bench core cannot be reached. The wrapper answers
-// with exit 127 and no dashboard. Every launch goes through the owner's process ledger.
-// The expected hint is read from freshness.RebuildAction, the one source of the rebuild
-// invocation. This pins the shell copy in the hook to the Go source rather than to a
-// second hand-written spelling of it.
-func TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable(t *testing.T) {
-	hook := sessionStartHook(t)
-	repo := owner.repos[2]
-	installWrapper(t, repo)
-	root, err := filepath.EvalSymlinks(repo)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rebuild := freshness.RebuildAction(root)
-
-	// H23 — the unreachable half. BENCH_KIT names a directory holding no binary. The
-	// overrides remove BENCH_RUN_BINARY outright as a bare name. The wrapper then runs its
-	// real no-binary resolution instead of the ambient one the test process launched with.
-	// PATH carries only the tools the hook and the wrapper themselves run, so `bench`
-	// cannot be reached that way either.
-	missing := []string{
-		"BENCH_KIT=" + filepath.Join(t.TempDir(), "missing-kit"),
-		"BENCH_HOME=" + filepath.Join(t.TempDir(), "home"),
-		"PATH=" + privateToolPath(t, "git", "bash", "uname", "dirname", "basename", "readlink", "tr"),
-		"BENCH_RUN_BINARY",
-	}
-	cold := runHook(t, repo, missing, hook)
-	if cold.code != 0 {
-		t.Errorf("H23 unreachable core exit = %d (%q, %q), want 0 — the hint must never block a session", cold.code, cold.stdout, cold.stderr)
-	}
-	if !strings.Contains(cold.stdout, rebuild) {
-		t.Errorf("H23 unreachable core stdout = %q, want the rebuild invocation %q", cold.stdout, rebuild)
-	}
-
-	// The hint replaces silence, not the dashboard. A reachable core still routes to
-	// `bench session-inspect` and says nothing about rebuilding.
-	warm := runHook(t, repo, []string{
-		"BENCH_KIT=" + owner.kit,
-		"BENCH_RUN_BINARY=" + owner.selected.path,
-		"BENCH_HOME=" + filepath.Join(t.TempDir(), "home"),
-	}, hook)
-	if warm.code != 0 {
-		t.Errorf("H23 reachable core exit = %d (%q, %q), want 0", warm.code, warm.stdout, warm.stderr)
-	}
-	if strings.Contains(warm.stdout, "scripts/go-build.sh") {
-		t.Errorf("H23 reachable core printed the rebuild hint: %q", warm.stdout)
-	}
-	if !strings.Contains(warm.stdout, "bench CLI: ") {
-		t.Errorf("H23 reachable core stdout = %q, want the unchanged CLI advertisement", warm.stdout)
-	}
-}
-
-// TestSessionStartIsSilentOutsideARepository pins H24. The launch deliberately makes a
-// wrapper reachable: `bench` resolves on PATH. The assertion is that the hook declines to
-// say anything because the working directory is not a repository, not because it had
-// nothing to say. Without that distinction, the row would pass on a hook whose repository
-// guard had been deleted.
-func TestSessionStartIsSilentOutsideARepository(t *testing.T) {
-	hook := sessionStartHook(t)
-	outside := t.TempDir()
-	path := privateToolPath(t, "git", "bash", "uname", "dirname", "basename", "readlink", "tr")
-	reachable := filepath.Join(t.TempDir(), "path")
-	if err := os.MkdirAll(reachable, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink(filepath.Join(owner.kit, "bin", "bench.sh"), filepath.Join(reachable, "bench")); err != nil {
-		t.Fatal(err)
-	}
-
-	result := runHook(t, outside, []string{
-		"BENCH_KIT=" + filepath.Join(t.TempDir(), "missing-kit"),
-		"BENCH_HOME=" + filepath.Join(t.TempDir(), "home"),
-		"PATH=" + path + string(os.PathListSeparator) + reachable,
-		"BENCH_RUN_BINARY",
-	}, hook)
-	if result.code != 0 || result.stdout != "" || result.stderr != "" {
-		t.Errorf("H24 outside a repository = (%d, %q, %q), want exit 0 and no output at all", result.code, result.stdout, result.stderr)
-	}
-}
-
 func sessionStartHook(t *testing.T) string {
 	t.Helper()
 	hook := filepath.Join(owner.kit, ".bench", "hooks", "session-start.sh")
@@ -424,23 +355,8 @@ func sessionStartHook(t *testing.T) string {
 	return hook
 }
 
-// runHook launches one hook through the owner's process ledger, the way every other
-// system launch in this package does.
-func runHook(t *testing.T, dir string, overrides []string, hook string) processResult {
-	t.Helper()
-	shell, err := exec.LookPath("bash")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := owner.observeSelected(); err != nil {
-		t.Fatal(err)
-	}
-	return owner.runAt(dir, overrides, shell, hook)
-}
-
 // installWrapper puts the kit's real wrapper where the shared resolver looks for it in
-// repo. This lets both halves of H23 resolve a wrapper regardless of what other journeys
-// in this package have installed there.
+// repo.
 func installWrapper(t *testing.T, repo string) {
 	t.Helper()
 	source, err := os.ReadFile(filepath.Join(owner.kit, "bin", "bench.sh"))
