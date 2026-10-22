@@ -14,6 +14,7 @@ import (
 	"go/ast"
 	"go/token"
 	"sort"
+	"testing"
 
 	"github.com/gibbonmi/bench/internal/testcensus"
 )
@@ -319,4 +320,41 @@ func serialTableCensus(dir string, serial map[string]string) ([]string, error) {
 	}
 	sort.Strings(reports)
 	return reports, nil
+}
+
+// TestSystemParallelCensus proves the census refuses a test with no t.Parallel() call and
+// no serial reason, and a parallel test that reaches the owner's repositories or names a
+// ledger field outside an owner writer, and that the live package passes. (Coverage rows
+// LGP25, LGP29.)
+func TestSystemParallelCensus(t *testing.T) {
+	t.Parallel()
+	for _, row := range parallelCensusCases {
+		t.Run(row.name, func(t *testing.T) {
+			requireCensus(t, func(dir string) ([]string, error) { return systemParallelCensus(dir, row.serial) }, row.body, row.want)
+		})
+	}
+	requireReports(t, func(dir string) ([]string, error) { return systemParallelCensus(dir, systemSerialTests) }, ".", nil)
+}
+
+// TestLedgerWritesHoldTheOwnerLock proves every ledger write outside lockExempt holds the
+// owner mutex: an unguarded write reds by name, and the live package passes. (Coverage
+// row LGP28.)
+func TestLedgerWritesHoldTheOwnerLock(t *testing.T) {
+	t.Parallel()
+	for _, row := range ledgerLockCases {
+		t.Run(row.name, func(t *testing.T) {
+			requireCensus(t, ledgerLockCensus, row.body, row.want)
+		})
+	}
+	requireReports(t, ledgerLockCensus, ".", nil)
+}
+
+// TestSystemSerialTableIsExact proves a serial row that names a missing test or a
+// parallel test, or that holds no reason, reds, and that the live table is exact.
+// (Coverage row LGP31.)
+func TestSystemSerialTableIsExact(t *testing.T) {
+	t.Parallel()
+	requireCensus(t, func(dir string) ([]string, error) { return serialTableCensus(dir, serialTableCase.table) },
+		serialTableCase.body, serialTableCase.want)
+	requireReports(t, func(dir string) ([]string, error) { return serialTableCensus(dir, systemSerialTests) }, ".", nil)
 }
