@@ -11,11 +11,11 @@ import (
 // it, so a resumed landing reuses the exact token without a refusal round-trip. The
 // digest stays the authorization identity; the token column is recall, not proof.
 func TestListPrintsThePersistedRequestToken(t *testing.T) {
+	t.Parallel()
 	f := newOwnedAssignment(t, "token-recall")
 	if f.creation.Assignment.RequestToken == "" {
 		t.Fatal("create persisted no request token")
 	}
-	chdir(t, f.root)
 	listed := runVerb(t, verbList, f.call())
 	if listed.exit != 0 {
 		t.Fatalf("list code=%d out=%q", listed.exit, listed.stdout)
@@ -28,11 +28,11 @@ func TestListPrintsThePersistedRequestToken(t *testing.T) {
 // A record written before the field existed carries none: it still loads, and its row
 // prints an empty token cell rather than failing the whole listing.
 func TestListToleratesAPreTokenRecord(t *testing.T) {
+	t.Parallel()
 	f := newOwnedAssignment(t, "token-absent")
 	stripped := f.creation.Assignment
 	stripped.RequestToken = ""
 	mustNoError(t, intent.PutAssignment(f.root, stripped))
-	chdir(t, f.root)
 	if path := runVerb(t, verbPath, f.call(f.creation.Assignment.ID)); path.exit != 0 {
 		t.Fatalf("pre-token record no longer resolves: %s", path.stderr)
 	}

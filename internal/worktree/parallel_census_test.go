@@ -1035,10 +1035,10 @@ func TestParallelCensusOnTheLiveTree(t *testing.T) {
 // because the default Home() resolves is what they grade. The exec child tests
 // bind the caller environment because the child's inherited environment is what
 // they grade. The stub tests bind PATH because the child under test reads it.
-// The operand tests change the working directory because a relative or a
-// prefixed operand is what they grade. The pin is exact, so a fixture that binds
+// The removed-directory test changes the working directory because the failed
+// directory read is what it grades. The pin is exact, so a fixture that binds
 // the process instead of its own home, or a test that leaves the set, turns it red.
-const worktreeSerialCeiling = 47
+const worktreeSerialCeiling = 31
 
 // TestSerialSetStaysBelowTheCeiling proves the serial set equals the ceiling.
 // (Coverage row WF18.)
@@ -1058,7 +1058,7 @@ func TestSerialSetStaysBelowTheCeiling(t *testing.T) {
 // cannot supply it, because a removal changes the live count and the expectation
 // together. One removal or merge turns the pin red. One addition also turns the
 // pin red, so the author raises the pin in the same change and it never drifts.
-const worktreeTestCount = 809
+const worktreeTestCount = 810
 
 // TestPackageTestCountPin proves no test is removed or merged for wall-clock.
 // It counts the census walk's facts, one for each top-level test. (Coverage row WF12.)

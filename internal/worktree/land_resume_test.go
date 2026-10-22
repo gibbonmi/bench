@@ -206,14 +206,14 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 }
 
 func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
+	t.Parallel()
 	for _, specArg := range []string{"x", "./specs/x/spec.md"} {
 		t.Run(specArg, func(t *testing.T) {
 			request := "resume-spec-form-" + strings.ReplaceAll(specArg, "/", "-")
 			f := markerLandingFixture(t, request, true)
-			chdir(t, f.root)
 			_, published := interruptLandingAtMarker(t, f, landArgs(request, f.base, f.tip, f.creation.Path)...)
 			args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", specArg, f.creation.Path}
-			if r := runVerb(t, verbLand, f.call(args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
+			if r := runVerb(t, verbLand, f.callFromRoot(args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
 				t.Fatalf("resume with spec %q = (%d, %q, %q)", specArg, r.exit, r.stdout, r.stderr)
 			}
 			if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {

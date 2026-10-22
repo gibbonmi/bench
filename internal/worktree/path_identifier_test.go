@@ -66,8 +66,8 @@ func TestListActiveRowsUseTargetSlot(t *testing.T) {
 // fills the slot rather than the label, because ids are unique and labels can collide.
 // It is the only address an agent has for a worktree it did not create.
 func TestListPathActionRunsAsAdvertised(t *testing.T) {
+	t.Parallel()
 	f := newOwnedAssignment(t, "advertised")
-	chdir(t, f.root)
 	r := runVerb(t, verbList, f.call())
 	listed := r.stdout
 	if r.exit != 0 {

@@ -11,16 +11,16 @@ import (
 // that assignment by id, which a path-misread operand never could. The reauthorize
 // case completes end to end through an id prefix.
 func TestLandAndReauthorizeResolveIdentifierOperands(t *testing.T) {
+	t.Parallel()
 	f := newOwnedAssignment(t, "operand-land")
-	chdir(t, f.root)
-	landed := runVerb(t, verbLand, f.call("--request", "wrong-token", "--base", f.creation.Assignment.Start, "--source-tip", f.creation.Assignment.Start, "-m", "land", f.creation.Assignment.Label))
+	landed := runVerb(t, verbLand, f.callFromRoot("--request", "wrong-token", "--base", f.creation.Assignment.Start, "--source-tip", f.creation.Assignment.Start, "-m", "land", f.creation.Assignment.Label))
 	if landed.exit == 0 {
 		t.Fatal("a mismatched request landed")
 	}
 	if !strings.Contains(landed.stdout, f.creation.Assignment.ID) {
 		t.Fatalf("land refusal does not address the resolved assignment:\n%s", landed.stdout)
 	}
-	reauthorized := runVerb(t, verbReauthorize, f.call("--assignment", f.creation.Assignment.ID, "--request", "rotated-token", "--base", f.creation.Assignment.Start, "--source-tip", "HEAD", f.creation.Assignment.ID[:10]))
+	reauthorized := runVerb(t, verbReauthorize, f.callFromRoot("--assignment", f.creation.Assignment.ID, "--request", "rotated-token", "--base", f.creation.Assignment.Start, "--source-tip", "HEAD", f.creation.Assignment.ID[:10]))
 	if reauthorized.exit != 0 {
 		t.Fatalf("reauthorize via an id prefix exited %d: %s", reauthorized.exit, reauthorized.stderr)
 	}

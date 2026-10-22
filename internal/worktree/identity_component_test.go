@@ -352,10 +352,10 @@ func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 // A wrong owner id and a detached HEAD fail together, and the marker is the earlier
 // component, so the branch sentence must not win.
 func TestTargetVerbNamesTheOwnerMarkerBeforeTheBranch(t *testing.T) {
+	t.Parallel()
 	f := newOwnedAssignment(t, "marker-before-branch")
 	rewriteMarkerOwner(t, f.creation.Path, strings.Repeat("a", 32))
 	gitRun(t, f.creation.Path, "checkout", "--detach")
-	chdir(t, f.root)
 	r := runVerb(t, verbPath, f.call(f.creation.Assignment.Label))
 	want := "bench worktree path: owner marker does not match assignment " + f.creation.Assignment.ID + "\nnext=" + nextList + "\n"
 	if r.exit != 1 || r.stderr != want {
