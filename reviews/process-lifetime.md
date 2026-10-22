@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/process-lifetime/spec.md",
-  "plan_digest": "sha256:c50d5467850cec958ff45993f032691dee138de7662bca7b6d67d6e589266777",
+  "plan_digest": "sha256:dbb8b18b9518678f70a2d2a437f7ae9e355507e4dbb28f1b411810cc37504e8d",
   "implementation_session": "",
   "chunks": [
     {
@@ -636,9 +636,9 @@
     {
       "id": "PL-C2",
       "base": "36c2fa86aac94a56792529dbdae08ec1e6652701",
-      "tip": "58e4b351cdb9250de98cbcb8e6e3b3e7df355514",
-      "plan_digest": "sha256:c50d5467850cec958ff45993f032691dee138de7662bca7b6d67d6e589266777",
-      "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+      "tip": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+      "plan_digest": "sha256:dbb8b18b9518678f70a2d2a437f7ae9e355507e4dbb28f1b411810cc37504e8d",
+      "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
       "acceptance_rows": [
         "PL20",
         "PL21",
@@ -944,6 +944,269 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/bounds/bounds.go,swap,failed,2,TestProcessLifetimeNestedOverlap,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,206\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,654\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,206,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,40719,206\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedOverlap,\"process_lifetime_test.go:128: provider blocked used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedRegistration,\"process_lifetime_test.go:102: provider only used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t02r1-ticket-2-check-1",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:fd317faa6d52e0a8bb44826e77b74a2704909aba4e95300c994e6a79afd20343",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,41,42\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-1",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-2",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:393b5a759a15604b40d8b993e8538625cc4091922de72fce99b94e576ac39f7b",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/bounds,pass,3919,64\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-2",
+          "command": "bench test --package ./internal/bounds",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-3",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:bca20b2d1d91f66ab3274612cae251e696ee383069be9b8a4ca3ad90e4d4bed7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,pass,97,44\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-3",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-4",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:bd5b16d6d0489dc3db1460bddafb9482438f9c17b8bbe3fccae38c32530fb564",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,206,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,48062,206\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-4",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-5",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:2a3556a753967e927a4608d8547d7a0c57e1f6397991acd49df7b7447ad08bca",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12734,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-5",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-6",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:0f59ae512e6f83597a085450e315aa94cf3ea4212bf449dbef2e00dfa94f7f47",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14421,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-6",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-7",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:8fd2377ba3e639c452f16dcfe3b2e222146a6dd5323617eb6f9a2e14da707df9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,102,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-7",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-8",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:823b4df983f1e9db29cd1cb74871cffd0f478c91475f1e68fd4fdee4e98cb107",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,35735,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ticket-2-check-8",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-9",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:5146800f07abbbf2426af66f089e623741dbe35f7c773bcbcab002f6194cdaeb",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,pass,3923,34\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-9",
+          "command": "bench test --package ./internal/subprocess",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-10",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:c9eb8ae6de1c44a7dea8bf2e89c1df75f6274721739ba23191590976376f6f3e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-10",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-11",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:0570173198b71d68ffdbfaa4facbe957045d752e3f35aaf27496ec6af277bf05",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-11",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-12",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:0aaabee70dfcea4b354fdc4790e3db36125abe22a576723f2b6660764c8834f7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-12",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-check-13",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:933b0f0474c12b388587dac721f21cf6738a3f059a3c401dc1a13c47b5acfe41",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/processtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-13",
+          "command": "bench test --package ./internal/subprocess/processtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ticket-2-omission",
+          "performer": "claude:plt-t02-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+            "digest": "sha256:9862003a0d778e59f3c1f7f72b483944fc48e4abfa8179d1df34b82936549610",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/bounds/bounds.go,swap,failed,2,TestProcessLifetimeNestedOverlap,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,206\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,654\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,206,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,44856,206\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedOverlap,\"process_lifetime_test.go:128: provider blocked used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedRegistration,\"process_lifetime_test.go:102: provider only used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-omission",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop inherited descriptors from the real bounds launch. The nested-provider witness must fail through bench test --check system.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022",
+              "digest": "sha256:9862003a0d778e59f3c1f7f72b483944fc48e4abfa8179d1df34b82936549610",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/bounds/bounds.go,swap,failed,2,TestProcessLifetimeNestedOverlap,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,206\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,654\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,206,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,44856,206\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedOverlap,\"process_lifetime_test.go:128: provider blocked used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedRegistration,\"process_lifetime_test.go:102: provider only used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1043,6 +1306,18 @@
       "chunk_ids": {
         "PL-C1": [
           "PL-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c50d5467850cec958ff45993f032691dee138de7662bca7b6d67d6e589266777",
+      "to": "sha256:dbb8b18b9518678f70a2d2a437f7ae9e355507e4dbb28f1b411810cc37504e8d",
+      "chunk_ids": {
+        "PL-C1": [
+          "PL-C1"
+        ],
+        "PL-C2": [
+          "PL-C2"
         ]
       }
     }
