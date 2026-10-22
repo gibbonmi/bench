@@ -121,7 +121,8 @@ func canonicalPath(path string) (string, error) {
 // callPath makes a relative path absolute against the call directory that a carries, so
 // no code below the verb boundary joins it to the process directory. An absolute path
 // stays. A failed directory read leaves a relative path as given and returns the read's
-// error, so the failure surfaces only where a relative path needs the directory.
+// error, so the failure surfaces only where a relative path needs the directory. Each
+// caller refuses on that error and passes the path no further.
 func callPath(a ambient, path string) (string, error) {
 	if a.dirErr != nil && !filepath.IsAbs(path) {
 		return path, a.dirErr
@@ -153,10 +154,13 @@ func resolveOperand(path string) (string, error) {
 	}
 	target, err := canonicalPath(path)
 	if err != nil {
-		return "", errors.New("target path is not canonical")
+		return "", errTargetNotCanonical
 	}
 	return target, nil
 }
+
+// errTargetNotCanonical is the cleanup refusal for a target with no absolute form.
+var errTargetNotCanonical = errors.New("target path is not canonical")
 
 func PlanExplicit(root, path string) (CleanupPlan, error) {
 	return planExplicitWith(defaultJoins(), &git.Run{}, root, path, CleanupOptions{})

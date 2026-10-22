@@ -49,7 +49,8 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 // directory that the verb call carries, and the process directory takes no part. The test
 // process runs in the package directory, which holds no worktree. A failed directory read
 // refuses only a relative operand, so an absolute operand still resolves when the
-// directory is gone.
+// directory is gone. Clean refuses that operand at its boundary, because a plan that read
+// the still-present process directory would name another refusal.
 func TestVerbCallDirectoryResolvesOperands(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "call-directory")
@@ -64,6 +65,9 @@ func TestVerbCallDirectoryResolvesOperands(t *testing.T) {
 	if planned := runVerb(t, verbClean, at(parent, nil, relative)); planned.exit != 0 || !strings.Contains(planned.stdout, f.creation.Path) {
 		t.Fatalf("clean %q = %d %q, want a plan for %q", relative, planned.exit, planned.stdout, f.creation.Path)
 	}
+	if r := runVerb(t, verbClean, at("", gone, relative)); r.exit != 1 || !strings.Contains(r.stdout, errTargetNotCanonical.Error()) {
+		t.Fatalf("clean %q without a directory = %d %q, want %q", relative, r.exit, r.stdout, errTargetNotCanonical)
+	}
 	if r := runVerb(t, verbRelease, at("", gone, "--request", "landed-call-directory", relative)); r.exit != 1 || r.stderr != "bench worktree release: "+gone.Error()+"\n" {
 		t.Fatalf("release %q without a directory = %d %q, want the read failure", relative, r.exit, r.stderr)
 	}
@@ -71,7 +75,24 @@ func TestVerbCallDirectoryResolvesOperands(t *testing.T) {
 	if r := runVerb(t, verbRelease, at("", gone, "--request", "landed-call-directory-absolute", second.Path)); r.exit != 0 {
 		t.Fatalf("release %q without a directory = %d %q, want it released", second.Path, r.exit, r.stderr)
 	}
-	if r := runVerb(t, verbRelease, at(parent, nil, "--request", "landed-call-directory", relative)); r.exit != 0 {
+	// The land refusals route back to the resolved tree, and reauthorize matches the
+	// resolved tree against the assignment's own.
+	start, rotated := f.creation.Assignment.Start, "landed-call-directory-rotated"
+	for _, routed := range []struct {
+		key  verbKey
+		args []string
+		exit int
+		out  string
+	}{
+		{verbLand, []string{"--request", "wrong-token", "--base", start, "--source-tip", start, "-m", "land", relative}, 1, f.creation.Path},
+		{verbLandResume, resumeLandArgs(start, "landed-call-directory", start, start, relative), 1, f.creation.Path},
+		{verbReauthorize, []string{"--assignment", f.creation.Assignment.ID, "--request", rotated, "--base", start, "--source-tip", "HEAD", relative}, 0, "reauthorized{"},
+	} {
+		if r := runVerb(t, routed.key, at(parent, nil, routed.args...)); r.exit != routed.exit || !strings.Contains(r.stdout, routed.out) {
+			t.Fatalf("%s %q = %d %q %q, want %d with %q", routed.key, relative, r.exit, r.stdout, r.stderr, routed.exit, routed.out)
+		}
+	}
+	if r := runVerb(t, verbRelease, at(parent, nil, "--request", rotated, relative)); r.exit != 0 {
 		t.Fatalf("release %q = %d %q, want it released", relative, r.exit, r.stderr)
 	}
 }

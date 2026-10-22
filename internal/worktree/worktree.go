@@ -276,11 +276,16 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 	}
 	if target != "" {
 		target = resolveVerbOperand(root, target)
-		// The plan holds no call directory, so a relative operand joins it here. A `~` operand
-		// stays, because expandHomeTarget owns its refusal, and a failed directory read leaves
-		// the operand as typed, so the plan refuses it with its own text.
-		if !strings.HasPrefix(target, "~") {
-			target, _ = callPath(a, target)
+		// The plan holds no call directory, so a relative operand joins it here. A home
+		// operand stays, because expandHomeTarget owns its refusal. A failed directory read
+		// refuses here with the plan's own refusal, because the plan would read the process
+		// directory again.
+		if !homeOperand(target) {
+			var err error
+			if target, err = callPath(a, target); err != nil {
+				_ = renderCleanup(stdout, unresolvedPlan(target, ReasonUncertain, errTargetNotCanonical.Error()))
+				return 1
+			}
 		}
 	}
 	if unclaimed {
