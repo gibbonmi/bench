@@ -30,9 +30,10 @@ func baseEnviron() []string { return os.Environ() }
 // ambient is the process context of one verb run: the Bench home and the warnings writer
 // that the verb entry received, the kit value, one instant, the git run value that holds
 // the run's location answers, the call directory that a relative operand joins, or the
-// error of its failed read, and the base environment of each child that the verb starts.
-// Each internal verb form takes it second, after the joins value, so nothing below the
-// entry reads the process.
+// error of its failed read, and the base environment of the exec children, the doctor
+// child, the subshell, and the gitInput children of the recovery chain. Each other git
+// child starts from the process environment. Each internal verb form takes the ambient
+// value second, after the joins value, so nothing below the entry reads the process.
 type ambient struct {
 	home     string
 	kit      string

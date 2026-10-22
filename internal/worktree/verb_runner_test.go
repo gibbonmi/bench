@@ -46,7 +46,7 @@ const (
 // the call holds none. The kit value, the clock value, the directory value, and the
 // environment value replace the reads of the ambient value that the joins form receives.
 // The directory value answers as the directory read does, so a call can carry a failed
-// read. The environment value is the base environment of each child that the verb starts.
+// read. The ambient type states which children take the environment value.
 type verbCall struct {
 	root    string
 	home    string

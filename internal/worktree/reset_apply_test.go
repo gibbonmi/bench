@@ -198,11 +198,18 @@ func TestResetApplyPreservesTheLayersAndMovesTheCheckout(t *testing.T) {
 	plan := runVerb(t, verbReset, f.call("--to", checkpoint, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, f.call("--to", checkpoint, f.creation.Assignment.ID, "--apply", fingerprint))
+	// The envelope commits take the call's base environment. commitTree sets the identity
+	// and no date, so the committer date of the call shows in the root commit.
+	const callSeconds = "1000000000"
+	apply := f.call("--to", checkpoint, f.creation.Assignment.ID, "--apply", fingerprint)
+	apply.environ = append(os.Environ(), "GIT_COMMITTER_DATE="+callSeconds+" +0000")
+	result := runVerb(t, verbReset, apply)
 	requireTest(t, result.exit == 0, "apply = %d %s %s", result.exit, result.stdout, result.stderr)
 	ref := intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"
 	actual, ok := readRecoveryManifest(f.root, ref)
 	requireTest(t, ok && actual.Tip == checkpoint, "reset manifest = %#v, readable=%v", actual, ok)
+	committed := gitOutput(t, f.root, "log", "-1", "--format=%ct", ref)
+	requireTest(t, committed == callSeconds, "envelope committer date = %s, want the call environment's %s", committed, callSeconds)
 	for _, layer := range []string{"working", "staged"} {
 		want := gitOutput(t, f.root, "rev-parse", expected.Layers[layer]+"^{tree}")
 		got := gitOutput(t, f.root, "rev-parse", actual.Layers[layer]+"^{tree}")
