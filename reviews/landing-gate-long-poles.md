@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:e15cb1da923ae005902078362e7c2e00b733194f22922820f90fa00d060865c7",
+  "plan_digest": "sha256:6fc699b363a5ca38032b7bd24f0eb9e055a3519c6924419b580011ee584ebdd6",
   "implementation_session": "",
   "chunks": [
     {
@@ -739,6 +739,109 @@
           ]
         }
       ]
+    },
+    {
+      "id": "LGP-C2A",
+      "base": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+      "tip": "de63c6090aa9328c5c0f131eba4498765dc69846",
+      "plan_digest": "sha256:6fc699b363a5ca38032b7bd24f0eb9e055a3519c6924419b580011ee584ebdd6",
+      "source_digest": "7c41bdcf5553577385591dc3ef047af10544dd78",
+      "acceptance_rows": [
+        "LGP9",
+        "LGP10",
+        "LGP11",
+        "LGP12",
+        "LGP13",
+        "LGP14",
+        "LGP15",
+        "LGP34"
+      ],
+      "verification": [
+        {
+          "id": "t03-git",
+          "performer": "claude:lgp-t03-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "7c41bdcf5553577385591dc3ef047af10544dd78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-author-20261021",
+            "digest": "sha256:0f54ffd4eca704b2ebe4319d82723d6acbb5792f567d33c377de825338dbad78",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1619,177\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-git",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-poolkey",
+          "performer": "claude:lgp-t03-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "7c41bdcf5553577385591dc3ef047af10544dd78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-author-20261021",
+            "digest": "sha256:a24b67b6f05cbc52f5ff78d0590eb0daaf0b8f2634d6e44edb63e6fde41f0387",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/poolkey,pass,20,10\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-poolkey",
+          "command": "bench test --package ./internal/poolkey",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-root-conformance",
+          "performer": "claude:lgp-t03-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "7c41bdcf5553577385591dc3ef047af10544dd78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-author-20261021",
+            "digest": "sha256:074e9e751fd3bb2713950d6dc646462192b9789e806051eee3af4b805b0bba98",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16695,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-revalidation",
+          "performer": "claude:lgp-t03-author-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "7c41bdcf5553577385591dc3ef047af10544dd78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-author-20261021",
+            "digest": "sha256:53c0e8bc782e849741d39bdd77931a6afbfcb3939e9488598a8a17d54c005c74",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/git/run.go,swap,failed,1,TestRunRevalidatesACachedCommonDir,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/git,all,passed,177\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,399\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1590,177\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunRevalidatesACachedCommonDir,\"run_cache_test.go:92: second read = <nil>, want the symlink refusal of \\\"/dev/shm/QPTAG5/t/TestRunRevalidatesACachedCommonDir37012447/001/.git\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-revalidation",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip the validation on a cached common directory",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t03-author-20261021",
+              "digest": "sha256:53c0e8bc782e849741d39bdd77931a6afbfcb3939e9488598a8a17d54c005c74",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/git/run.go,swap,failed,1,TestRunRevalidatesACachedCommonDir,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/git,all,passed,177\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,399\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1590,177\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunRevalidatesACachedCommonDir,\"run_cache_test.go:92: second read = <nil>, want the symlink refusal of \\\"/dev/shm/QPTAG5/t/TestRunRevalidatesACachedCommonDir37012447/001/.git\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -752,6 +855,15 @@
     {
       "from": "sha256:400cd4647d7f162a60c2c9c5d31dde7bdfd1f3789c3b6a3c878532c65ddfcdc3",
       "to": "sha256:e15cb1da923ae005902078362e7c2e00b733194f22922820f90fa00d060865c7",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e15cb1da923ae005902078362e7c2e00b733194f22922820f90fa00d060865c7",
+      "to": "sha256:6fc699b363a5ca38032b7bd24f0eb9e055a3519c6924419b580011ee584ebdd6",
       "chunk_ids": {
         "LGP-C1": [
           "LGP-C1"
