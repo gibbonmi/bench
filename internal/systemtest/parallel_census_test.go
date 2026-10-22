@@ -272,21 +272,23 @@ func systemParallelCensus(dir string, serial map[string]string) ([]string, error
 	return reports, nil
 }
 
-// ledgerLockCensus reports every ledger-field write in dir outside the owner mutex,
-// except in lockExempt.
+// ledgerLockCensus reports every ledger-field write outside the owner mutex, except in
+// lockExempt, in every function that the reach walk can enter.
 func ledgerLockCensus(dir string) ([]string, error) {
 	pkg, err := parseSystemPackage(dir)
 	if err != nil {
 		return nil, err
 	}
 	var reports []string
-	for _, fn := range pkg.all {
-		if fn.decl.Recv == nil && fn.decl.Name.Name == lockExempt {
-			continue
-		}
-		for _, ref := range ledgerRefs(fn.decl) {
-			if ref.write && !ref.locked {
-				reports = append(reports, fmt.Sprintf("%s: %s writes %s outside the owner mutex", pkg.where(fn, ref.pos), fn.decl.Name.Name, ref.text))
+	for _, fns := range pkg.funcs {
+		for _, fn := range fns {
+			if fn.decl.Recv == nil && fn.decl.Name.Name == lockExempt {
+				continue
+			}
+			for _, ref := range ledgerRefs(fn.decl) {
+				if ref.write && !ref.locked {
+					reports = append(reports, fmt.Sprintf("%s: %s writes %s outside the owner mutex", pkg.where(fn, ref.pos), fn.decl.Name.Name, ref.text))
+				}
 			}
 		}
 	}

@@ -75,6 +75,8 @@ var ledgerLockCases = []struct {
 		[]string{"planted_test.go:5: bump writes o.starts outside the owner mutex"}},
 	{"after the unlock", "func record(x int) {\n\towner.mu.Lock()\n\towner.mu.Unlock()\n\towner.seen = append(owner.seen, x)\n}\n",
 		[]string{"planted_test.go:8: record writes owner.seen outside the owner mutex"}},
+	{"package-level function literal", "var record = func() { owner.starts++ }\n",
+		[]string{"planted_test.go:5: record writes owner.starts outside the owner mutex"}},
 	{"guarded", "func (o *systemOwner) mark(k string) {\n\to.mu.Lock()\n\tdefer o.mu.Unlock()\n\to.terminal[k] = true\n}\n", nil},
 	{"exempt", "func TestOwnerSelectionChild(t *testing.T) { owner.starts = 0 }\n", nil},
 }
