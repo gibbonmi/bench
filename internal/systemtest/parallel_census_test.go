@@ -4,7 +4,7 @@ package systemtest
 
 // This file owns the system parallel census. The census parses the package's test files
 // through the shared testcensus walk. A top-level test is parallel when it calls
-// t.Parallel(), and serial when systemSerialTests holds a reason for it. Parallel tests
+// t.Parallel(), and serial when systemSerialTests holds a row for it. Parallel tests
 // share the one owner, so a parallel test must not reach the owner's repositories or name
 // a ledger field outside an owner writer. An owner writer writes a ledger field, and the
 // owner mutex holds each of its ledger-field references. No function binds TMPDIR in the
@@ -243,8 +243,9 @@ func (p systemPackage) reach(test systemFunc) (repos, ledger string) {
 }
 
 // systemParallelCensus reports every top-level test in dir that calls no t.Parallel()
-// and holds no serial reason, every parallel test that reaches the owner's repositories
-// or a ledger field, and every function that binds TMPDIR in the process.
+// and has no serial row, every parallel test that reaches the owner's repositories or a
+// ledger field, and every function that binds TMPDIR in the process. serialTableCensus
+// grades the reason of each row.
 func systemParallelCensus(dir string, serial map[string]string) ([]string, error) {
 	pkg, err := parseSystemPackage(dir)
 	if err != nil {
@@ -257,8 +258,8 @@ func systemParallelCensus(dir string, serial map[string]string) ([]string, error
 		}
 		name, where := fn.decl.Name.Name, pkg.where(fn, fn.decl.Name.Pos())
 		if !testcensus.CallsParallelDirectly(fn.decl) {
-			if serial[name] == "" {
-				reports = append(reports, fmt.Sprintf("%s: %s calls no t.Parallel() and holds no serial reason", where, name))
+			if _, row := serial[name]; !row {
+				reports = append(reports, fmt.Sprintf("%s: %s calls no t.Parallel() and has no serial row", where, name))
 			}
 			continue
 		}
@@ -333,7 +334,7 @@ func ledgerLockCensus(dir string) ([]string, error) {
 }
 
 // TestSystemParallelCensus proves the census refuses a test with no t.Parallel() call and
-// no serial reason, a parallel test that reaches the owner's repositories or names a
+// no serial row, a parallel test that reaches the owner's repositories or names a
 // ledger field outside an owner writer, and a TMPDIR binding in the process, and that the
 // live package passes. (Coverage rows LGP25, LGP29, LGP30.)
 func TestSystemParallelCensus(t *testing.T) {

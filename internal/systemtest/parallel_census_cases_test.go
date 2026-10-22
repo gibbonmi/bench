@@ -40,7 +40,7 @@ var parallelCensusCases = []struct {
 	want       []string
 }{
 	{"no call and no reason", "func TestQuiet(t *testing.T) {}\n", nil,
-		[]string{"planted_test.go:5: TestQuiet calls no t.Parallel() and holds no serial reason"}},
+		[]string{"planted_test.go:5: TestQuiet calls no t.Parallel() and has no serial row"}},
 	{"serial reason", "func TestQuiet(t *testing.T) {}\n", map[string]string{"TestQuiet": "binds process state"}, nil},
 	{"owner repository", "func TestShare(t *testing.T) { t.Parallel(); _ = owner.repos[0] }\n", nil,
 		[]string{"planted_test.go:5: TestShare calls t.Parallel() and reaches owner.repos"}},
