@@ -17,6 +17,7 @@ import (
 //
 // Row OT21.
 func TestOtelHookRecordJourney(t *testing.T) {
+	t.Parallel()
 	fixture := scaffoldRecordedPublicationRepo(t)
 
 	for _, leg := range []struct {

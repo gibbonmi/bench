@@ -3,8 +3,13 @@
 package systemtest
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -20,8 +25,14 @@ import (
 //
 // Row OT25.
 func TestOtelCrashKeepsStartedPhaseLine(t *testing.T) {
+	t.Parallel()
 	home := filepath.Join(t.TempDir(), "bench-home")
-	scaffold := scaffoldRecordedGateRepo(t, home, `{"phases":[{"name":"slow","argv":["sleep","30"]}]}`)
+	pidFile := filepath.Join(t.TempDir(), "slow.pid")
+	argv, err := json.Marshal([]string{"sh", "-c", `echo $$ > "$0"; exec sleep 30`, pidFile})
+	if err != nil {
+		t.Fatal(err)
+	}
+	scaffold := scaffoldRecordedGateRepo(t, home, `{"phases":[{"name":"slow","argv":`+string(argv)+`}]}`)
 
 	run, err := owner.startProcessGroup(scaffold.path, scaffold.environment(t, home), "bash", scaffold.wrapper, "gate", "--fresh")
 	if err != nil {
@@ -30,7 +41,7 @@ func TestOtelCrashKeepsStartedPhaseLine(t *testing.T) {
 	// The wait polls the record file itself, because the record is the only evidence the
 	// phase has begun. The gate's own output is buffered until the run ends, which the
 	// kill prevents.
-	awaitStartedSpan(t, home, "slow")
+	awaitSpan(t, home, "slow", false)
 	if err := run.kill(syscall.SIGKILL); err != nil {
 		t.Fatalf("kill the gate process group: %v", err)
 	}
@@ -57,25 +68,55 @@ func TestOtelCrashKeepsStartedPhaseLine(t *testing.T) {
 	if slow.Parent == "" {
 		t.Fatalf("slow phase span = %+v, want the started root gate span as its parent", slow)
 	}
+	endPhase(t, home, pidFile, "slow")
 }
 
-// awaitStartedSpan blocks until the record below home holds a started span of the given
-// name. It reads leniently, because the run still appends while the wait reads. The
-// window contains one gate run's start-up: the run reads git worktree state before it
-// enters the phase table, so that read is the longest bound the wait has to outlast.
-func awaitStartedSpan(t *testing.T, home, name string) {
+// endPhase kills the phase whose pid is in pidFile and waits until the record below home
+// holds that phase's end line. The gate starts each phase in a process group of its own,
+// so the kill of the gate's group leaves the phase running. When the phase exits, its
+// runner writes the end line below home. That write must come before the test removes its
+// temporary directory.
+func endPhase(t *testing.T, home, pidFile, name string) {
+	t.Helper()
+	// The phase writes its pid before it sleeps, so this wait covers a start-up handshake
+	// with no window of its own.
+	window := bounds.TestDeadline(0)
+	deadline := time.Now().Add(window)
+	for {
+		data, _ := os.ReadFile(pidFile)
+		if pid, err := strconv.Atoi(strings.TrimSpace(string(data))); err == nil {
+			// A phase that already exited has written, or will write, the same end line.
+			if err := syscall.Kill(pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
+				t.Fatalf("kill the %s phase %d: %v", name, pid, err)
+			}
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal(bounds.TestTimeoutVerdict("the "+name+" phase to write its pid file "+pidFile, window))
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	awaitSpan(t, home, name, true)
+}
+
+// awaitSpan blocks until the record below home holds a span of the given name, ended or
+// started as asked. It reads leniently, because the run still appends while the wait
+// reads. The window contains one gate run's start-up: the run reads git worktree state
+// before it enters the phase table, so that read is the longest bound the wait has to
+// outlast.
+func awaitSpan(t *testing.T, home, name string, ended bool) {
 	t.Helper()
 	window := bounds.TestDeadline(bounds.WorktreeListTimeout)
 	deadline := time.Now().Add(window)
 	for time.Now().Before(deadline) {
 		if matches, _ := filepath.Glob(filepath.Join(home, "otel", "*", "traces.jsonl")); len(matches) == 1 {
 			for _, span := range readRecordLines(t, home, false) {
-				if span.Name == name {
+				if span.Name == name && span.Ended == ended {
 					return
 				}
 			}
 		}
 		time.Sleep(25 * time.Millisecond)
 	}
-	t.Fatal(bounds.TestTimeoutVerdict(fmt.Sprintf("a started %s span in the record below %s", name, home), window))
+	t.Fatal(bounds.TestTimeoutVerdict(fmt.Sprintf("a %s span (ended %t) in the record below %s", name, ended, home), window))
 }

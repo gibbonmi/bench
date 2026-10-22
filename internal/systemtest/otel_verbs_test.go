@@ -20,6 +20,7 @@ import (
 //
 // Rows OT18 and OT19.
 func TestOtelCommitAndLandingRecordJourney(t *testing.T) {
+	t.Parallel()
 	// The commit subject is the objective text the record must never copy. It is a token
 	// no path, digest, or seam name can hold, so a match is the record carrying it.
 	const subject = "objective subject text 8f3a"
@@ -120,6 +121,7 @@ func TestOtelCommitAndLandingRecordJourney(t *testing.T) {
 //
 // Rows LE84 and LE85.
 func TestOtelShiftTraceJourney(t *testing.T) {
+	t.Parallel()
 	fixture := scaffoldRecordedPublicationRepo(t)
 	if err := os.WriteFile(filepath.Join(fixture.root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
 		t.Fatal(err)
