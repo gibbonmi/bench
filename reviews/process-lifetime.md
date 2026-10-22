@@ -1332,6 +1332,7 @@ Repair 1 (commit 36c2fa86a) closed S1, S2, C1, and C3. The C2 disposition moved 
 The confirming round r2 passed on all three axes with no new finding, and the Coverage axis reaffirmed the C2 no-op.
 
 PL-C2 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies. The reviewer directed minimal probing during this round.
+Repair 1 (commit 3e9708ec5, test-only) closed P2, C1 to C4, and the PL110 half of P1. The Opus and Sonnet consultants agreed that the PL71 half of P1 is a no-op.
 
 ## Standards
 
@@ -1350,7 +1351,7 @@ PL-C1 round r1: 0 findings. Worst issue: none.
 
 PL-C2 round r1: 2 findings. Worst issue: P1, a launch-refusal assertion that refuses only an empty descriptor.
 
-- P1 | auto-fix | confidence 6 | `internal/subprocess/protection/registration_test.go:204-206` and `record_test.go:225-229` | The PL71 and PL110 tests never launch against the unsynced record or the unsafe descriptor.
+- P1 | auto-fix | confidence 6 | `internal/subprocess/protection/registration_test.go:204-206` and `record_test.go:225-229` | The PL71 and PL110 tests never launch against the unsynced record or the unsafe descriptor. The PL110 half is repaired. The PL71 half is a no-op, because row PL71 states the first launch only, and the `OpenResource` error witnesses it. A lasting refusal would add a record state that no row approves (spec.md:317-318, :661).
 - P2 | auto-fix | confidence 5 | `internal/subprocess/protection/record_test.go:59-61` | The PL39 foreign-binding test never changes the `Binding` field.
 
 ## Coverage
@@ -1375,3 +1376,5 @@ PL-C2 round r1: 4 findings. Worst issue: C3, a kind with no validator row gets a
 - `bounds.ProcessPoll` is an exported mutable variable.
 - `TestLifetimeResistantGroup` does not prove that TERM came before KILL.
 - The `Unbounded` window branch, drain mode, `StreamFailed`, and `Cleanup.SignalErr` have no PL-C1 test; later rows cover drain mode.
+- PL-C2: the `requireRefused` call on the empty descriptor in `TestRegistrationResourceSyncFailure` proves nothing and can go.
+- PL-C2: a later consumer must not treat `Outcome.Protection` as release proof; release authority stays with `SealAndObserve`.
