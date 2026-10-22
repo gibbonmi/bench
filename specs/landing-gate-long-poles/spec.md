@@ -164,8 +164,8 @@ A ledger-fed caller passes a recorded absolute path, and the public entries `Pla
 The child base environment enters `ambient` once at the verb boundary in `effects.go`. Four production sites read `os.Environ()` today, and each one takes the ambient value instead.
 The four sites are `execEnv` (`internal/worktree/exec.go:201`), `gitInput` (`internal/worktree/clean.go:218`), the doctor child (`internal/worktree/build.go:331`), and the subshell entry (`internal/worktree/subshell.go:40`).
 
-A chain that holds no `ambient` takes the base environment from one `effects.go` function, as `currentTime` serves the clock (`internal/worktree/effects.go:20`).
-Two chains hold none: `RunTreeChild` (`exec.go:119`), whose one caller is `internal/treetarget/run.go:66`, and `gitInput` under `commitTree` and `captureLayers` on the reset recovery path.
+An exported chain that holds no `ambient` takes the base environment from one `effects.go` function, as `currentTime` serves the clock (`internal/worktree/effects.go:23`). That chain is `RunTreeChild` (`exec.go:119`), whose one caller is `internal/treetarget/run.go:66`.
+The single-read census refuses an `effects.go` read from an unexported declaration. So `gitInput`, `commitTree`, and `captureLayers` on the reset recovery path take the environment as a parameter, from the `ambient` at `retireCheckout` and `resetWith`, by consultant decision of 2026-10-22.
 So `effects.go` stays the one `os.Environ` reader, and no package outside `internal/worktree` changes. The exec entry `ExecCommandResolving` (`exec.go:60`) is a verb boundary, so it builds its own `ambient` value.
 
 The working-directory group holds 17 tests, and the child-environment group holds 10 tests (S3 research). The build moves each test that its seam frees and records each test that stays.
@@ -399,7 +399,7 @@ These promises go beyond the literal decision source. Each one is the structural
 - The system lock census (story 28, LGP28). It guards the ledger under parallel tests.
 - The system serial-reason census and its exact table (stories 31 and 32, LGP25, LGP29 to LGP32). It guards the parallel set.
 - One `internal/testcensus` package that both censuses import. It applies the one-source rule to the census walk, by consultant consensus of 2026-10-21.
-- One `effects.go` environment function for the chains that hold no `ambient`. It keeps `effects.go` the one `os.Environ` reader without a change outside `internal/worktree`.
+- One `effects.go` environment function for the exported chain that holds no `ambient`. It keeps `effects.go` the one `os.Environ` reader without a change outside `internal/worktree`.
 - The removed-directory row (LGP23). It keeps the one process-directory test serial.
 - A new `canonicalpath` form that takes the directory as an argument. It keeps the symlink semantics of `Resolve`.
 - A `poolkey` form that reads the common directory through the run value. Without it, `canonicalRoot` keeps a duplicate start that the closed decision names.
