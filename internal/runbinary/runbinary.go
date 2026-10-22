@@ -2,7 +2,6 @@
 package runbinary
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -12,12 +11,13 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // Env carries the exact Bench executable selected by the current top-level run.
@@ -35,12 +35,15 @@ type Verifier func(string, string) error
 // operating-system temp directory, canonical builder, and freshness verifier. RepairRoot
 // is the checkout a refusal tells the operator to rebuild in; its zero value names the
 // source root the selection was graded against. They part only where the digest root is
-// a composed tree the operator cannot rebuild in.
+// a composed tree the operator cannot rebuild in. Protection is the protocol of the
+// selection's private generation, and its zero value selects the installed protocol. A
+// process with no installed protocol opens no generation.
 type Factory struct {
 	TempRoot   string
 	RepairRoot string
 	Build      Builder
 	Verify     Verifier
+	Protection *protection.Protocol
 }
 
 // Selection is the exact source-bound executable used by one run. Close removes bytes
@@ -50,6 +53,8 @@ type Selection struct {
 	SourceRoot string
 
 	dir       string
+	protocol  *protection.Protocol
+	resource  protection.Descriptor
 	closeOnce sync.Once
 	closeErr  error
 }
@@ -106,26 +111,34 @@ func requireSourceRoot(sourceRoot string) error {
 	return nil
 }
 
-// Own creates one private selection through the factory's builder.
-func (f Factory) Own(ctx context.Context, sourceRoot string) (*Selection, error) {
+// Own creates one private selection through the factory's builder. Its private generation
+// opens before the build. A failed selection returns its own Close error too.
+func (f Factory) Own(ctx context.Context, sourceRoot string) (_ *Selection, err error) {
 	source, err := canonicalSourceRoot(sourceRoot)
 	if err != nil {
 		return nil, err
 	}
-	dir, err := os.MkdirTemp(f.TempRoot, "bench-run-")
+	dir, err := os.MkdirTemp(f.TempRoot, runDirPrefix)
 	if err != nil {
 		return nil, fmt.Errorf("create private Bench run directory: %w", err)
 	}
-	selection := &Selection{Path: filepath.Join(dir, "bench"), SourceRoot: source, dir: dir}
-	complete := false
+	selection := &Selection{Path: filepath.Join(dir, "bench"), SourceRoot: source, dir: dir, protocol: f.Protection}
+	if selection.protocol == nil {
+		selection.protocol = protection.Installed()
+	}
 	defer func() {
-		if !complete {
-			_ = selection.Close()
+		if err != nil {
+			err = errors.Join(err, selection.Close())
 		}
 	}()
+	if selection.protocol != nil {
+		if selection.resource, err = protect(selection.protocol, dir); err != nil {
+			return nil, fmt.Errorf("protect private Bench run directory: %w", err)
+		}
+	}
 	build := f.Build
 	if build == nil {
-		build = canonicalBuild
+		build = selection.canonicalBuild
 	}
 	if err := build(ctx, source, selection.Path); err != nil {
 		return nil, fmt.Errorf("build private Bench executable: %w", err)
@@ -133,7 +146,6 @@ func (f Factory) Own(ctx context.Context, sourceRoot string) (*Selection, error)
 	if err := f.Validate(source, selection.Path); err != nil {
 		return nil, err
 	}
-	complete = true
 	return selection, nil
 }
 
@@ -206,13 +218,38 @@ func (s *Selection) Owned() bool {
 	return s != nil && s.dir != ""
 }
 
-// Close releases an owner-authored private directory after its children have returned.
+// Resources names the selection's private generation for a launch that uses the executable.
+// An inherited or unprotected selection names none.
+func (s *Selection) Resources() []protection.Descriptor {
+	if s == nil || s.resource == (protection.Descriptor{}) {
+		return nil
+	}
+	return []protection.Descriptor{s.resource}
+}
+
+// Close releases an owner-authored private directory after its children have returned. A
+// protected generation retains the directory, and Close returns that unresolved release.
 func (s *Selection) Close() error {
 	if !s.Owned() {
 		return nil
 	}
-	s.closeOnce.Do(func() { s.closeErr = os.RemoveAll(s.dir) })
+	s.closeOnce.Do(func() { s.closeErr = s.release() })
 	return s.closeErr
+}
+
+// release seals the generation and removes the directory only when every user is resolved.
+// Removal follows the seal, because the store lives inside the directory.
+func (s *Selection) release() error {
+	if s.Resources() != nil {
+		disposition, err := s.protocol.SealAndObserve(s.resource, nil)
+		if err != nil {
+			return fmt.Errorf("observe the users of selection %s: %w", s.dir, err)
+		}
+		if disposition.State != protection.Safe {
+			return fmt.Errorf("selection %s stays retained: protection is %s for users %v", s.dir, disposition.State, disposition.Users)
+		}
+	}
+	return os.RemoveAll(s.dir)
 }
 
 // WithEnv replaces every ambient selection with path.
@@ -242,7 +279,7 @@ func canonicalSourceRoot(root string) (string, error) {
 // build script, the same build the run owner uses for its private selection. It is the
 // one Go seam onto that script.
 func Build(ctx context.Context, sourceRoot, output string) error {
-	return canonicalBuild(ctx, sourceRoot, output)
+	return canonicalBuild(ctx, sourceRoot, output, subprocess.Registration{})
 }
 
 // BuildSubject publishes one Bench executable from sourceRoot at output under the build
@@ -250,14 +287,20 @@ func Build(ctx context.Context, sourceRoot, output string) error {
 // checkout's own published executable, so the manifest lands where that checkout's
 // wrapper reads it rather than beside a throwaway.
 func BuildSubject(ctx context.Context, sourceRoot, output string) error {
-	return runBuildScript(ctx, sourceRoot, output, "")
+	return runBuildScript(ctx, sourceRoot, output, "", subprocess.Registration{})
 }
 
-func canonicalBuild(ctx context.Context, sourceRoot, output string) error {
+// canonicalBuild is the selection's default builder. Its launch registers on the selection's
+// private generation.
+func (s *Selection) canonicalBuild(ctx context.Context, sourceRoot, output string) error {
+	return canonicalBuild(ctx, sourceRoot, output, subprocess.Registration{Protocol: s.protocol, Resources: s.Resources()})
+}
+
+func canonicalBuild(ctx context.Context, sourceRoot, output string, local subprocess.Registration) error {
 	// The private selection is deleted when the run owner closes it, so its manifest goes
 	// beside it rather than beside the source checkout's wrapper. A manifest left in the
 	// wrapper's directory would outlive this executable and refuse the next landing.
-	return runBuildScript(ctx, sourceRoot, output, filepath.Dir(output))
+	return runBuildScript(ctx, sourceRoot, output, filepath.Dir(output), local)
 }
 
 // BuildError is a build script that ran and exited with a failure. A cancelled build and an
@@ -274,12 +317,29 @@ func (e BuildError) Error() string {
 
 func (e BuildError) Unwrap() error { return e.Err }
 
+// builderPolicy kills and observes the remaining group after a normal exit. A cancellation
+// sends TERM, and KILL follows the builder grace.
+var builderPolicy = subprocess.Policy{
+	Normal: subprocess.Drain,
+	Grace:  bounds.ProcessWindow(bounds.FixedWindow(BuilderCancelGrace)),
+	Final:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessFinalWindow)),
+	Poll:   bounds.ProcessPoll,
+}
+
 // runBuildScript runs the sanctioned build script once. An empty manifestDir passes no
 // manifest-directory flag, which leaves the script its own default; a named one overrides
-// it. The two callers differ only in that operand, so they share this one exec.
-func runBuildScript(ctx context.Context, sourceRoot, output, manifestDir string) error {
+// it. The callers differ only in that operand and their local resources, so they share
+// this one exec. The launch registers on the inherited union plus the local resources.
+func runBuildScript(ctx context.Context, sourceRoot, output, manifestDir string, local subprocess.Registration) error {
 	if _, err := exec.LookPath("go"); err != nil {
 		return errors.New("Go is absent from PATH; prepend an executable Go toolchain directory to PATH and retry")
+	}
+	inherited, err := protection.Inherited()
+	if err != nil {
+		return err
+	}
+	if local.Protocol == nil {
+		local.Protocol = protection.Installed()
 	}
 	script := []string{filepath.Join(sourceRoot, "scripts", "go-build.sh")}
 	if manifestDir != "" {
@@ -293,42 +353,34 @@ func runBuildScript(ctx context.Context, sourceRoot, output, manifestDir string)
 	}
 	cmd.Env = buildEnv
 	cmd.SysProcAttr = builderProcAttr()
-	var outputBytes bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &outputBytes, &outputBytes
-	if err := cmd.Start(); err != nil {
+	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}, MergeStderr: true}
+	registration := subprocess.Registration{Protocol: local.Protocol, Resources: append(inherited, local.Resources...)}
+	lifetime := subprocess.NewLifetime(cmd, builderPolicy, streams, registration)
+	if err := lifetime.Start(); err != nil {
 		return err
 	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		drainBuilderGroup(cmd.Process.Pid)
-		if err != nil {
-			return BuildError{Err: err, Output: outputBytes.String()}
+	stop := context.AfterFunc(ctx, func() {
+		cause := subprocess.CauseInterruption
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			cause = subprocess.CauseDeadline
 		}
-		return nil
-	case <-ctx.Done():
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
-		select {
-		case <-done:
-			drainBuilderGroup(cmd.Process.Pid)
-		case <-time.After(bounds.FixedWindow(BuilderCancelGrace)):
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
-			drainBuilderGroup(cmd.Process.Pid)
-		}
+		lifetime.Cancel(cause, syscall.SIGTERM)
+	})
+	defer stop()
+	outcome, _ := lifetime.Wait()
+	switch {
+	case outcome.Cancellation.Cause != subprocess.CauseNone:
 		return context.Cause(ctx)
+	case outcome.Process.StartErr != nil:
+		return outcome.Process.StartErr
+	case outcome.Process.WaitErr != nil:
+		return BuildError{Err: outcome.Process.WaitErr, Output: string(outcome.Streams.Stdout.Data)}
+	case outcome.Cleanup.Status == subprocess.CleanupIncomplete:
+		return fmt.Errorf("builder cleanup incomplete: %v", outcome.Cleanup.Obligations)
+	case outcome.Protection.State != protection.Safe:
+		return fmt.Errorf("builder protection %s: %v", outcome.Protection.State, outcome.Protection.Err)
 	}
-}
-
-func drainBuilderGroup(pgid int) {
-	_ = syscall.Kill(-pgid, syscall.SIGKILL)
-	for {
-		if err := syscall.Kill(-pgid, 0); errors.Is(err, syscall.ESRCH) {
-			return
-		}
-		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
-	}
+	return nil
 }
 
 // buildEnvironment returns the environment the build script runs under. The cross
