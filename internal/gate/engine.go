@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // EvidenceInspection reports whether retained gate evidence can authorize one tree.
@@ -201,13 +202,13 @@ func reusableEvidence(root string, plan subject, now time.Time) Inspection {
 	return Inspection{State: Ready, Status: "green", CachedTree: plan.Tree, CurrentTree: plan.Tree, RecordedAt: evidence.RecordedAt, ReusableGreen: true}
 }
 
-func runResolved(ctx context.Context, root string, res Resolution, env []string, stdout, stderr io.Writer) processGroupResult {
+func runResolved(ctx context.Context, root string, res Resolution, env []string, stdout, stderr io.Writer, local ...protection.Descriptor) processGroupResult {
 	cmd := res.command(root)
 	if cmd == nil {
 		return processGroupResult{Code: 3}
 	}
 	cmd.Dir, cmd.Stdout, cmd.Stderr, cmd.Env = root, stdout, stderr, withGateSpanEnv(ctx, append([]string(nil), env...))
-	return runProcessGroupCommand(ctx, cmd)
+	return runProcessGroupCommand(ctx, cmd, local...)
 }
 
 type controlSafeWriter struct{ io.Writer }

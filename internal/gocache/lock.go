@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
+
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // LockFile is the name of the cache lock inside the Bench build cache. A holder locks it
@@ -24,10 +26,13 @@ func RecordLock(typ int16) syscall.Flock_t {
 // heldLock is one open descriptor on a lock path and the count of this process's holders
 // that share it. The count exists because closing any descriptor for a file drops every
 // record lock this process holds on that file, so two in-process holders must share one
-// descriptor and close it once.
+// descriptor and close it once. protocol and resource name the cache generation that a
+// holder protected, which the last release retires.
 type heldLock struct {
-	file  *os.File
-	count int
+	file     *os.File
+	count    int
+	protocol *protection.Protocol
+	resource protection.Descriptor
 }
 
 // held tracks this process's record locks by lock path. POSIX record locks are owned
@@ -140,11 +145,30 @@ func (h *Holder) Release() error {
 		return nil
 	}
 	delete(held.paths, h.path)
+	retireErr := entry.retire()
 	lock := RecordLock(syscall.F_UNLCK)
 	err := syscall.FcntlFlock(entry.file.Fd(), syscall.F_SETLK, &lock)
 	if closeErr := entry.file.Close(); err == nil {
 		err = closeErr
 	}
+	return errors.Join(retireErr, err)
+}
+
+// retire seals the protected generation before the shared lock drops, when no other process
+// holds the cache. A safe generation clears, and an unresolved user stays recorded and sealed.
+// A contended conversion keeps the generation open for the other holders.
+func (e *heldLock) retire() error {
+	if e.protocol == nil {
+		return nil
+	}
+	lock := RecordLock(syscall.F_WRLCK)
+	if err := syscall.FcntlFlock(e.file.Fd(), syscall.F_SETLK, &lock); err != nil {
+		if Contended(err) {
+			return nil
+		}
+		return err
+	}
+	_, err := e.protocol.SealAndObserve(e.resource, nil)
 	return err
 }
 

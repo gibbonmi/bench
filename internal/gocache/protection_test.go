@@ -2,8 +2,11 @@ package gocache
 
 import (
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -81,4 +84,117 @@ func TestProtectionRefusesAForeignCache(t *testing.T) {
 	if _, err := holder.Protect(cacheProtocol()); err == nil {
 		t.Fatal("a released hold opened cache protection")
 	}
+}
+
+// protectedHold holds dir shared and opens its generation under p.
+func protectedHold(t *testing.T, dir string, p *protection.Protocol) (*Holder, protection.Descriptor) {
+	t.Helper()
+	holder, err := HoldDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = holder.Release() })
+	d, err := holder.Protect(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return holder, d
+}
+
+// completedUser registers one user of d and records its proved no-start.
+func completedUser(t *testing.T, p *protection.Protocol, d protection.Descriptor) {
+	t.Helper()
+	run, err := p.Prepare([]protection.Descriptor{d})
+	if err == nil {
+		err = run.Finish(protection.Terminal{NoStart: true})
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// requireShards fails unless the fixture's shards are present exactly when want is true.
+func requireShards(t *testing.T, fixture cacheFixture, want bool) {
+	t.Helper()
+	if got := slices.Contains(entries(t, fixture.dir), "aa"); got != want {
+		t.Fatalf("shards present = %t, want %t; entries %q", got, want, entries(t, fixture.dir))
+	}
+}
+
+// TestProtectionCompletedHold is PL57. The sole holder's release retires a completed
+// generation, so the next hold opens a fresh one.
+func TestProtectionCompletedHold(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "go-build")
+	p := cacheProtocol()
+	holder, d := protectedHold(t, dir, p)
+	completedUser(t, p, d)
+	if err := holder.Release(); err != nil {
+		t.Fatal(err)
+	}
+	if _, next := protectedHold(t, dir, p); next.ResourceID == d.ResourceID {
+		t.Fatalf("the next hold joined the released generation %s", d.ResourceID)
+	}
+}
+
+// TestProtectionUnreadableProtection is PL56. A pending user keeps its sealed generation,
+// and unreadable records leave the exclusive cleaner uncertain, so go clean never starts.
+func TestProtectionUnreadableProtection(t *testing.T) {
+	fixture := newCacheFixture(t)
+	p := cacheProtocol()
+	holder, d := protectedHold(t, fixture.dir, p)
+	if _, err := p.Prepare([]protection.Descriptor{d}); err != nil {
+		t.Fatal(err)
+	}
+	if err := holder.Release(); err != nil {
+		t.Fatal(err)
+	}
+	err := filepath.WalkDir(d.Store, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.IsDir() {
+			return err
+		}
+		if info, err := entry.Info(); err != nil || info.Size() == 0 {
+			return err
+		}
+		return os.WriteFile(path, []byte("{"), 0o600)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out, code := cleanWith(cleanEnv(fixture.home), p); code != 1 || !strings.HasPrefix(out, "error: cache protected — ") {
+		t.Fatalf("clean over unreadable protection = (%q, %d), want the protection refusal", out, code)
+	}
+	requireShards(t, fixture, true)
+}
+
+// TestProtectionAbsentCache is PL76. An installed protocol keeps the absent-cache answer, so
+// the clean creates no directory and no store.
+func TestProtectionAbsentCache(t *testing.T) {
+	home := t.TempDir()
+	if out, code := cleanWith(cleanEnv(home), cacheProtocol()); code != 0 {
+		t.Fatalf("clean of an absent cache = (%q, %d), want exit 0", out, code)
+	}
+	if _, err := os.Lstat(cacheDir(home)); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("cache after the clean = %v, want it absent", err)
+	}
+}
+
+// TestProtectionEmptyCache is PL77. Another process holds the cache, so the release keeps
+// the open generation; its only user is complete, so the clean still removes the shards.
+func TestProtectionEmptyCache(t *testing.T) {
+	fixture := newCacheFixture(t)
+	stop := startHolderProcess(t, fixture.home)
+	p := cacheProtocol()
+	holder, d := protectedHold(t, fixture.dir, p)
+	completedUser(t, p, d)
+	if err := holder.Release(); err != nil {
+		t.Fatal(err)
+	}
+	stop()
+	if _, err := os.Lstat(d.Store); err != nil {
+		t.Fatalf("protection store after a contended release = %v, want it present", err)
+	}
+	if out, code := cleanWith(cleanEnv(fixture.home), p); code != 0 {
+		t.Fatalf("clean of an empty protected cache = (%q, %d), want exit 0", out, code)
+	}
+	requireShards(t, fixture, false)
 }

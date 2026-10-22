@@ -127,12 +127,19 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 		return LaneResult{}, errors.New("gate: build cache lock unavailable")
 	}
 	defer holder.Release()
+	cache, err := holder.Resources()
+	if err != nil {
+		return LaneResult{}, fmt.Errorf("gate: build cache protection unavailable: %w", err)
+	}
 
 	selected, names, classes, err := selectLaneChecks(req, checkout)
 	if err != nil {
 		return LaneResult{}, err
 	}
 	checks := resolveLane(selected, req.Root, checkout, proseSubject(req.Changes), req.Base)
+	for i := range checks {
+		checks[i].Resources = append(checks[i].Resources, cache...)
+	}
 	runBinary, checks, closeSelection, err := selectLaneRunBinary(ctx, req, checkout, artifacts.Root(), checks)
 	if err != nil {
 		return LaneResult{}, err

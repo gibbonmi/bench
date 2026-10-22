@@ -32,6 +32,16 @@ func persistenceFailure(root string, gateExit int, stderr io.Writer, category st
 	return operational(root, gateExit, stderr, category+": "+err.Error())
 }
 
+// unprotectedFailure keeps the pending record after a failed run whose protection is not
+// safe, so no verdict claims the tree. It reports the process exit beside the protection cause.
+func unprotectedFailure(root string, plan subject, rc int, stderr io.Writer, run processGroupResult) Result {
+	message := fmt.Sprintf("gate terminal protection failed: process exit %d; %v", run.Outcome.Process.Code, run.StartErr)
+	if err := invalidateEvidence(root, plan); err != nil {
+		message += "; gate evidence invalidation failed: " + err.Error()
+	}
+	return operational(root, rc, stderr, message)
+}
+
 // persistInterruptedIfGreen demotes a reusable green verdict of root to a pending record
 // so that a run which cannot take the execution lock leaves no reusable green behind.
 func persistInterruptedIfGreen(replacer durablefile.Replacer, root, gitdir string, plan subject) error {

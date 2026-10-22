@@ -1,6 +1,9 @@
 package gocache
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -26,7 +30,11 @@ const goTool = "go"
 // live gate, lane, or focused run refuses it and keeps every archive it is reading. With
 // the lock it measures the footprint, runs `go clean -cache` against the directory, and
 // reports the difference the removal made.
-func clean(env []string) (string, int) {
+func clean(env []string) (string, int) { return cleanWith(env, protection.Installed()) }
+
+// cleanWith is clean under protocol p. Under the exclusive lock, the cache's protection must
+// permit release before `go clean` starts.
+func cleanWith(env []string, p *protection.Protocol) (string, int) {
 	dir, refusal := derivedDir(env)
 	if refusal != "" {
 		return refusal, 1
@@ -50,14 +58,44 @@ func clean(env []string) (string, int) {
 		return notDerived(err), 1
 	}
 	before := Measure(dir)
-	child := exec.Command(tool, "clean", "-cache")
-	child.Env = childEnv
-	child.Dir = dir
-	if output, err := child.CombinedOutput(); err != nil {
-		return toon.Errorf("go clean failed", firstLine(string(output))+" ("+err.Error()+")") + "\n", 1
+	var output []byte
+	var goErr error
+	goClean := func() error {
+		child := exec.Command(tool, "clean", "-cache")
+		child.Env = childEnv
+		child.Dir = dir
+		output, goErr = child.CombinedOutput()
+		return goErr
+	}
+	protectErr := releaseUnprotected(dir, p, goClean)
+	if goErr != nil {
+		return toon.Errorf("go clean failed", firstLine(string(output))+" ("+goErr.Error()+")") + "\n", 1
+	}
+	if protectErr != nil {
+		return toon.Errorf("cache protected", protectErr.Error()) + "\n", 1
 	}
 	after := Measure(dir)
 	return cleanRow(dir, before.Bytes-after.Bytes, before.Files-after.Files)
+}
+
+// releaseUnprotected runs release once no cache user can still need the archives. A store
+// with no generation is a retired one. Unresolved or unreadable protection refuses.
+func releaseUnprotected(dir string, p *protection.Protocol, release func() error) error {
+	store := filepath.Join(dir, ProtectionStore)
+	if _, err := os.Lstat(store); errors.Is(err, fs.ErrNotExist) {
+		return release()
+	}
+	disposition, err := p.Recover(store, release)
+	if errors.Is(err, fs.ErrNotExist) && disposition.Resources[0].ResourceID == "" {
+		return release()
+	}
+	if err != nil {
+		return err
+	}
+	if disposition.State != protection.Safe {
+		return fmt.Errorf("protection %s for users %v; retry after they finish", disposition.State, disposition.Users)
+	}
+	return nil
 }
 
 // lockForClean opens the cache lock and takes the write lock without a wait. It answers a

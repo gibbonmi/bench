@@ -18,6 +18,7 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 type runBinaryOwner func(context.Context, string) (*runbinary.Selection, error)
@@ -136,6 +137,11 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 		}
 	}
 	defer holder.Release()
+	// The oracle registers on the cache generation, so a clean refuses while it lives on.
+	cache, err := holder.Resources()
+	if err != nil {
+		return operational(storageRoot, 0, stderr, "gate cache protection unavailable: "+err.Error())
+	}
 	var selection *runbinary.Selection
 	if owner != nil && phaseTableGate(runtimeRoot, plan.Resolution) {
 		source := runBinarySource(runtimeRoot, storageRoot, plan)
@@ -176,7 +182,8 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
 	// The code derives from the whole outcome, so an undrained group or open obligation is not green.
-	rc := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr).Code
+	run := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr, cache...)
+	rc := run.Code
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.finish", Root: runtimeRoot, Exit: &rc})
 	if ctx.Err() != nil {
 		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, time.Now().UTC())}
@@ -200,6 +207,9 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 			inspection = inspectSubjectAt(storageRoot, after, time.Now().UTC())
 		}
 		return Result{GateExit: rc, ActionExit: 1, Inspection: inspection}
+	}
+	if rc != 0 && run.Outcome.Process.Started && run.Outcome.Protection.State != protection.Safe {
+		return unprotectedFailure(storageRoot, plan, rc, stderr, run)
 	}
 	status := "red"
 	if rc == 0 {
@@ -318,8 +328,8 @@ func subjectChangeDiagnostic(root string, declaredPaths []string, before, after 
 	return "gate subject changed during execution"
 }
 
-func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer) processGroupResult {
-	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr})
+func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer, local ...protection.Descriptor) processGroupResult {
+	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr}, local...)
 }
 
 // ExecutionInProgress answers whether a gate run holds the checkout's execution
