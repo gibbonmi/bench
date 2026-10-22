@@ -1231,7 +1231,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2b-standards-r0",
+          "performer": "claude:lgp-c2b-standards-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fe4abb4dc1ffa973a0494d808d083b5bd8cd9d56",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2b-standards-20261021",
+            "digest": "sha256:76b0509cfdcfbbcbfaafb0780a4b6ce7086ea18adbfab4291749940c465262bc",
+            "excerpt": "Standards axis, LGP-C2B (4c4d1df00..bb8a207e3): 0 findings. The canonical-root rule has one source, poolkey.CanonicalIn; canonicalRoot and canonicalRootIn are one-line delegates (internal/worktree/worktree.go:415, :418). validateOwnerMarker moved to owner_marker.go with only the run reads changed, and no second body remains; the thin form keeps subshell.go:225 and two test callers. Every touched comment matches the code. Advice: &git.Run{} against new(git.Run) is incidental text.\n"
+          },
+          "axis": "Standards",
+          "base": "4c4d1df002f9b734aa5db8a99032dabf669c7318",
+          "tip": "bb8a207e3b56c973ee1cd6fe043e4bc3167e6351",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2b-spec-r0",
+          "performer": "claude:lgp-c2b-spec-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fe4abb4dc1ffa973a0494d808d083b5bd8cd9d56",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2b-spec-20261021",
+            "digest": "sha256:ca40dc581f2a548fcaecd761f10ad4b180befc7368929c7cd22eab78f7824769",
+            "excerpt": "Spec axis, LGP-C2B (4c4d1df00..bb8a207e3): 0 findings. LGP17 met: validateOwnerMarkerIn reads canonicalRootIn, run.Worktrees, and run.CommonDir under one key; TestOwnerMarkerReadsTheCommonDirOnce (journey_test.go:247) asserts one start. Carrier met: ambient.run, newAmbient builds &git.Run{}, callAmbient calls newAmbient, no joins field holds a run, the three ownerMarkerRefusal callers build a run on the call line, and reauthorizeParsed takes a.run. Two-runs item met inside the LGP17 test. LGP21 and LGP22 met: 805 + 1 = 806 tests, 45 - 0 + 1 = 46 serial. LGP34: coordinator records the ticket 04 author's bench test --full --package ./internal/worktree times, 88859 ms (1491 tests) before and 86662 ms (1492 tests) after, inside the spread. AdminDir through the run is within spec line 136.\n"
+          },
+          "axis": "Spec",
+          "base": "4c4d1df002f9b734aa5db8a99032dabf669c7318",
+          "tip": "bb8a207e3b56c973ee1cd6fe043e4bc3167e6351",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2b-coverage-r0",
+          "performer": "claude:lgp-c2b-coverage-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fe4abb4dc1ffa973a0494d808d083b5bd8cd9d56",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2b-coverage-20261021",
+            "digest": "sha256:106e033302437fec73c8c4b6f6f614aa09472cab4e419db2a24cdc4ad9ab5bdd",
+            "excerpt": "Coverage axis, LGP-C2B (4c4d1df00..bb8a207e3): 0 findings. Probes, all restored yes: canonicalRootIn given a fresh run bit (LGP17, 2 starts); newAmbient run set to nil bit (panic and LGP17); an extra git.CommonDir read inserted in owner_marker.go bit (LGP17); reauthorize a.run swapped for a fresh run read silent, an equivalent mutant today. Refuted: shared runs across verb runs, joins reuse, a stale cache after a registration write, the single-read census. Advice: nothing pins reauthorize's a.run until a second reader joins the verb.\n"
+          },
+          "axis": "Coverage",
+          "base": "4c4d1df002f9b734aa5db8a99032dabf669c7318",
+          "tip": "bb8a207e3b56c973ee1cd6fe043e4bc3167e6351",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
