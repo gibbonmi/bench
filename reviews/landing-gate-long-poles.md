@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:6fc699b363a5ca38032b7bd24f0eb9e055a3519c6924419b580011ee584ebdd6",
+  "plan_digest": "sha256:504f3662dc285101a10b12a57d0d3171265e21af7bf269af10240c19c8d2b397",
   "implementation_session": "",
   "chunks": [
     {
@@ -743,9 +743,9 @@
     {
       "id": "LGP-C2A",
       "base": "be0aca0c526c177be15b360eeba46c7b57927ee8",
-      "tip": "de63c6090aa9328c5c0f131eba4498765dc69846",
-      "plan_digest": "sha256:6fc699b363a5ca38032b7bd24f0eb9e055a3519c6924419b580011ee584ebdd6",
-      "source_digest": "7c41bdcf5553577385591dc3ef047af10544dd78",
+      "tip": "4c4d1df002f9b734aa5db8a99032dabf669c7318",
+      "plan_digest": "sha256:504f3662dc285101a10b12a57d0d3171265e21af7bf269af10240c19c8d2b397",
+      "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
       "acceptance_rows": [
         "LGP9",
         "LGP10",
@@ -837,6 +837,165 @@
               "ref": "claude-agent:bench-writer-xhigh:lgp-t03-author-20261021",
               "digest": "sha256:53c0e8bc782e849741d39bdd77931a6afbfcb3939e9488598a8a17d54c005c74",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/git/run.go,swap,failed,1,TestRunRevalidatesACachedCommonDir,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/git,all,passed,177\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,399\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1590,177\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunRevalidatesACachedCommonDir,\"run_cache_test.go:92: second read = <nil>, want the symlink refusal of \\\"/dev/shm/QPTAG5/t/TestRunRevalidatesACachedCommonDir37012447/001/.git\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t03-r1-t03-git",
+          "performer": "claude:lgp-t03-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+            "digest": "sha256:4699607975d155670eebfa347ec4b6ddbf0f350afc1a256f83201bbed94968b2",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1610,179\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-git",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-r1-t03-poolkey",
+          "performer": "claude:lgp-t03-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+            "digest": "sha256:53ea3916008c2325461b3864e9c1e9c0a714d83afd492527ff4631581f105975",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/poolkey,pass,17,10\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-poolkey",
+          "command": "bench test --package ./internal/poolkey",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-r1-t03-root-conformance",
+          "performer": "claude:lgp-t03-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+            "digest": "sha256:f9f9ee075f37ce2ea3136667c61d220588fdee357ec86a668219cb48659ae56c",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16655,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-r1-t03-revalidation",
+          "performer": "claude:lgp-t03-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+            "digest": "sha256:b1d49d4a1c935a063930ffa6901a2fe3fc41e8e11a5c775c8d99ffa656438863",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestRunRevalidatesACachedCommonDir,179,1,0,null,yes\n  2,bit,swap,failed,1,TestRunKeysTheAdminDirApartFromTheCommonDir,179,1,0,null,yes\n  3,bit,swap,failed,1,TestRunStoresNoFailedAnswer,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/git,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1318\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1611,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunRevalidatesACachedCommonDir,\"run_cache_test.go:97: second read = <nil>, want the symlink refusal of \\\"/dev/shm/U3AKEW/t/TestRunRevalidatesACachedCommonDir2522912558/001/.git\\\"\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1628,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunKeysTheAdminDirApartFromTheCommonDir,\"run_cache_test.go:73: run.AdminDir(/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/002/linked) = \\\"/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/001/.git\\\", <nil>, want an answer apart from th… (341 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1614,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunStoresNoFailedAnswer,\"run_cache_test.go:161: common-directory starts = 1, want 2\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-revalidation",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip the validation on a cached common directory",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+              "digest": "sha256:b1d49d4a1c935a063930ffa6901a2fe3fc41e8e11a5c775c8d99ffa656438863",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestRunRevalidatesACachedCommonDir,179,1,0,null,yes\n  2,bit,swap,failed,1,TestRunKeysTheAdminDirApartFromTheCommonDir,179,1,0,null,yes\n  3,bit,swap,failed,1,TestRunStoresNoFailedAnswer,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/git,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1318\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1611,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunRevalidatesACachedCommonDir,\"run_cache_test.go:97: second read = <nil>, want the symlink refusal of \\\"/dev/shm/U3AKEW/t/TestRunRevalidatesACachedCommonDir2522912558/001/.git\\\"\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1628,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunKeysTheAdminDirApartFromTheCommonDir,\"run_cache_test.go:73: run.AdminDir(/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/002/linked) = \\\"/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/001/.git\\\", <nil>, want an answer apart from th… (341 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1614,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunStoresNoFailedAnswer,\"run_cache_test.go:161: common-directory starts = 1, want 2\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t03-r1-t03-gittest",
+          "performer": "claude:lgp-t03-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+            "digest": "sha256:676ea7b4e7ab18ce01c6bc1d498d25cf0438b297351bc890a60ad90915efcd42",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gittest,pass,35,2\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-gittest",
+          "command": "bench test --package ./internal/gittest",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-r1-t03-admin-key",
+          "performer": "claude:lgp-t03-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+            "digest": "sha256:b1d49d4a1c935a063930ffa6901a2fe3fc41e8e11a5c775c8d99ffa656438863",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestRunRevalidatesACachedCommonDir,179,1,0,null,yes\n  2,bit,swap,failed,1,TestRunKeysTheAdminDirApartFromTheCommonDir,179,1,0,null,yes\n  3,bit,swap,failed,1,TestRunStoresNoFailedAnswer,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/git,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1318\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1611,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunRevalidatesACachedCommonDir,\"run_cache_test.go:97: second read = <nil>, want the symlink refusal of \\\"/dev/shm/U3AKEW/t/TestRunRevalidatesACachedCommonDir2522912558/001/.git\\\"\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1628,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunKeysTheAdminDirApartFromTheCommonDir,\"run_cache_test.go:73: run.AdminDir(/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/002/linked) = \\\"/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/001/.git\\\", <nil>, want an answer apart from th… (341 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1614,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunStoresNoFailedAnswer,\"run_cache_test.go:161: common-directory starts = 1, want 2\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-admin-key",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "key Run.AdminDir under the common-directory location; the linked-worktree test must red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+              "digest": "sha256:b1d49d4a1c935a063930ffa6901a2fe3fc41e8e11a5c775c8d99ffa656438863",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestRunRevalidatesACachedCommonDir,179,1,0,null,yes\n  2,bit,swap,failed,1,TestRunKeysTheAdminDirApartFromTheCommonDir,179,1,0,null,yes\n  3,bit,swap,failed,1,TestRunStoresNoFailedAnswer,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/git,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1318\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1611,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunRevalidatesACachedCommonDir,\"run_cache_test.go:97: second read = <nil>, want the symlink refusal of \\\"/dev/shm/U3AKEW/t/TestRunRevalidatesACachedCommonDir2522912558/001/.git\\\"\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1628,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunKeysTheAdminDirApartFromTheCommonDir,\"run_cache_test.go:73: run.AdminDir(/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/002/linked) = \\\"/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/001/.git\\\", <nil>, want an answer apart from th… (341 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1614,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunStoresNoFailedAnswer,\"run_cache_test.go:161: common-directory starts = 1, want 2\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t03-r1-t03-failure-memo",
+          "performer": "claude:lgp-t03-repair1-20261021",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+            "digest": "sha256:b1d49d4a1c935a063930ffa6901a2fe3fc41e8e11a5c775c8d99ffa656438863",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestRunRevalidatesACachedCommonDir,179,1,0,null,yes\n  2,bit,swap,failed,1,TestRunKeysTheAdminDirApartFromTheCommonDir,179,1,0,null,yes\n  3,bit,swap,failed,1,TestRunStoresNoFailedAnswer,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/git,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1318\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1611,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunRevalidatesACachedCommonDir,\"run_cache_test.go:97: second read = <nil>, want the symlink refusal of \\\"/dev/shm/U3AKEW/t/TestRunRevalidatesACachedCommonDir2522912558/001/.git\\\"\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1628,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunKeysTheAdminDirApartFromTheCommonDir,\"run_cache_test.go:73: run.AdminDir(/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/002/linked) = \\\"/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/001/.git\\\", <nil>, want an answer apart from th… (341 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1614,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunStoresNoFailedAnswer,\"run_cache_test.go:161: common-directory starts = 1, want 2\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t03-failure-memo",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "store a failed answer in Run.answer; the failed-query test must red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t03-repair1-20261021",
+              "digest": "sha256:b1d49d4a1c935a063930ffa6901a2fe3fc41e8e11a5c775c8d99ffa656438863",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestRunRevalidatesACachedCommonDir,179,1,0,null,yes\n  2,bit,swap,failed,1,TestRunKeysTheAdminDirApartFromTheCommonDir,179,1,0,null,yes\n  3,bit,swap,failed,1,TestRunStoresNoFailedAnswer,179,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/git,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1318\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1611,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunRevalidatesACachedCommonDir,\"run_cache_test.go:97: second read = <nil>, want the symlink refusal of \\\"/dev/shm/U3AKEW/t/TestRunRevalidatesACachedCommonDir2522912558/001/.git\\\"\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1628,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunKeysTheAdminDirApartFromTheCommonDir,\"run_cache_test.go:73: run.AdminDir(/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/002/linked) = \\\"/dev/shm/7NW27O/t/TestRunKeysTheAdminDirApartFromTheCommonDir2495499539/001/.git\\\", <nil>, want an answer apart from th… (341 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,1614,179\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestRunStoresNoFailedAnswer,\"run_cache_test.go:161: common-directory starts = 1, want 2\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -933,6 +1092,18 @@
       "chunk_ids": {
         "LGP-C1": [
           "LGP-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6fc699b363a5ca38032b7bd24f0eb9e055a3519c6924419b580011ee584ebdd6",
+      "to": "sha256:504f3662dc285101a10b12a57d0d3171265e21af7bf269af10240c19c8d2b397",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ],
+        "LGP-C2A": [
+          "LGP-C2A"
         ]
       }
     }
