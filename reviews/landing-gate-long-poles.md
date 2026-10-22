@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:4ac131444b87c7a14de29125ae9b270da620935b6adaed6c5b60471f364eced9",
+  "plan_digest": "sha256:91612ff61ecb2fc10a4be3e1df5548c24d844e8ebc268576f6c3adf48a13b10d",
   "implementation_session": "",
   "chunks": [
     {
@@ -1457,9 +1457,9 @@
     {
       "id": "LGP-C3A",
       "base": "cd9889779c97c9d50b07158bce399e6b40612737",
-      "tip": "b31f7de1ef3bafe11ae5909bbfdf1b9f1ad539e5",
-      "plan_digest": "sha256:4ac131444b87c7a14de29125ae9b270da620935b6adaed6c5b60471f364eced9",
-      "source_digest": "0bca031bcf55878ac2b0a1202fda122b4e3e33ad",
+      "tip": "4f2541aea85b0ed2c45ad572997ba8c3be999aee",
+      "plan_digest": "sha256:91612ff61ecb2fc10a4be3e1df5548c24d844e8ebc268576f6c3adf48a13b10d",
+      "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
       "acceptance_rows": [
         "LGP18",
         "LGP22",
@@ -1564,6 +1564,165 @@
               "ref": "claude-agent:bench-writer-high:lgp-t06-author-20261022",
               "digest": "sha256:a34096f62f91421804b521dbb6d1ea96919b4e8c15bd945e2fb705f2abeceb87",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/subshell.go,swap,failed,1,TestVerbCallDirectoryResolvesOperands,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1495\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,531\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,65439,1495\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestVerbCallDirectoryResolvesOperands,\"identifier_operand_test.go:65: clean \\\"./fb9f22b1767d97ffe4b107bade374bec-f6904e3db200e0e8a830bc70c736fc83\\\" = 1 \\\"worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /home/mgibs/.bench/worktrees/bench-2826441890… (735 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t06-r1-t06-pkg-cmd-bench",
+          "performer": "claude:lgp-t06-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+            "digest": "sha256:f2ab88fef3cffece4ccf029213cbd538f5b868292bc2281b45d9e84ebdbbba2e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15679,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t06-pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t06-r1-t06-worktree",
+          "performer": "claude:lgp-t06-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+            "digest": "sha256:5c035c3676f0d5d0e091b219efa96b8834eda65d7c43b39a749a8926387ee0e7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,64976,1495\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t06-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t06-r1-t06-canonicalpath",
+          "performer": "claude:lgp-t06-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+            "digest": "sha256:0e215200df57dd24d2c7ac061bd57bc68af495eec0b2a2af6162c3fa80075653",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/canonicalpath,pass,2,12\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t06-canonicalpath",
+          "command": "bench test --package ./internal/canonicalpath",
+          "exit_code": 0
+        },
+        {
+          "id": "t06-r1-t06-root-conformance",
+          "performer": "claude:lgp-t06-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+            "digest": "sha256:ad513d08b16fdc330c9d529ac4cbddf9101a3dd5031347e6cb88ae333af4f344",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12893,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t06-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t06-r1-t06-call-directory",
+          "performer": "claude:lgp-t06-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+            "digest": "sha256:40b09c802041841ee2b652548e852c70791c8bff163ad788fb2ea37bdc73be8f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/subshell.go,swap,failed,1,TestVerbCallDirectoryResolvesOperands,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1495\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,531\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,65118,1495\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestVerbCallDirectoryResolvesOperands,\"identifier_operand_test.go:66: clean \\\"./24da2fe974cae11318a60ff690fbf9e4-1a77b2ea472a099952dfcd1242ae85fd\\\" = 1 \\\"worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /home/mgibs/.bench/worktrees/bench-2826441890… (734 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t06-call-directory",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "resolve a relative operand against the process directory",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+              "digest": "sha256:40b09c802041841ee2b652548e852c70791c8bff163ad788fb2ea37bdc73be8f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/subshell.go,swap,failed,1,TestVerbCallDirectoryResolvesOperands,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1495\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,531\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,65118,1495\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestVerbCallDirectoryResolvesOperands,\"identifier_operand_test.go:66: clean \\\"./24da2fe974cae11318a60ff690fbf9e4-1a77b2ea472a099952dfcd1242ae85fd\\\" = 1 \\\"worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /home/mgibs/.bench/worktrees/bench-2826441890… (734 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t06-r1-t06-routed-sites",
+          "performer": "claude:lgp-t06-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+            "digest": "sha256:69e4bb8f83dc02dca7dd1bcb6493c7017f4d6936e180b30ba014b9bab62001c8",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/land.go,swap,failed,1,TestVerbCallDirectoryResolvesOperands,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1495\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,534\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,65112,1495\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestVerbCallDirectoryResolvesOperands,\"identifier_operand_test.go:92: land \\\"./3f90e89ff54ba15e5908cb25fd007ef8-0f3c7ada52b05855faad71b2f4049a7c\\\" = 1 \\\"refused{detail=request token matches no assignment,next=later proofs in this group did not run; bench worktree list}\\\\\\\\n\\\" \\\"\\\", want … (421 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t06-routed-sites",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "resolve the land, land resume, and reauthorize operands against the process directory; the LGP18 test must red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+              "digest": "sha256:69e4bb8f83dc02dca7dd1bcb6493c7017f4d6936e180b30ba014b9bab62001c8",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/land.go,swap,failed,1,TestVerbCallDirectoryResolvesOperands,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1495\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,534\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,65112,1495\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestVerbCallDirectoryResolvesOperands,\"identifier_operand_test.go:92: land \\\"./3f90e89ff54ba15e5908cb25fd007ef8-0f3c7ada52b05855faad71b2f4049a7c\\\" = 1 \\\"refused{detail=request token matches no assignment,next=later proofs in this group did not run; bench worktree list}\\\\\\\\n\\\" \\\"\\\", want … (421 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t06-r1-t06-clean-failed-read",
+          "performer": "claude:lgp-t06-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ffc425ae18affb5db9e65ee556d33ffa92016da0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+            "digest": "sha256:e68bf1a033f7c84e8b0cba48211b63bddb94c9c530aad88ba55526b43de18ac1",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/worktree.go,swap,failed,1,TestVerbCallDirectoryResolvesOperands,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1495\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,531\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,64927,1495\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestVerbCallDirectoryResolvesOperands,\"identifier_operand_test.go:69: clean \\\"./09c537a47719ecaaf3656b72fc29ae84-4945877479d0f429ae517103bbb3ffbe\\\" without a directory = 1 \\\"worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /home/mgibs/.bench/worktr… (600 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t06-clean-failed-read",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the carried directory-read failure on the clean path; the clean failed-read test must red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:lgp-t06-repair1-20261022",
+              "digest": "sha256:e68bf1a033f7c84e8b0cba48211b63bddb94c9c530aad88ba55526b43de18ac1",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/worktree.go,swap,failed,1,TestVerbCallDirectoryResolvesOperands,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1495\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,531\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,64927,1495\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestVerbCallDirectoryResolvesOperands,\"identifier_operand_test.go:69: clean \\\"./09c537a47719ecaaf3656b72fc29ae84-4945877479d0f429ae517103bbb3ffbe\\\" without a directory = 1 \\\"worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /home/mgibs/.bench/worktr… (600 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1720,6 +1879,27 @@
         ],
         "LGP-C2C": [
           "LGP-C2C"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4ac131444b87c7a14de29125ae9b270da620935b6adaed6c5b60471f364eced9",
+      "to": "sha256:91612ff61ecb2fc10a4be3e1df5548c24d844e8ebc268576f6c3adf48a13b10d",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ],
+        "LGP-C2A": [
+          "LGP-C2A"
+        ],
+        "LGP-C2B": [
+          "LGP-C2B"
+        ],
+        "LGP-C2C": [
+          "LGP-C2C"
+        ],
+        "LGP-C3A": [
+          "LGP-C3A"
         ]
       }
     }
