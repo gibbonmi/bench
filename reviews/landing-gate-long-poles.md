@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:349fc776edc544f71e25cf884bb82e09460276f6e421789e9021c1015fe57862",
+  "plan_digest": "sha256:b3f24647c62e7b8a74db8edc3df5ec19e3cf6ca346497878013f3ad2de42a1a5",
   "implementation_session": "",
   "chunks": [
     {
@@ -2942,9 +2942,9 @@
     {
       "id": "LGP-C4A",
       "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
-      "tip": "b2256f1e94cceafd497e647edd87ab6c3ebc5207",
-      "plan_digest": "sha256:349fc776edc544f71e25cf884bb82e09460276f6e421789e9021c1015fe57862",
-      "source_digest": "7af982076ec86a54c9dd2c1f92a97f841d6738c9",
+      "tip": "d23316b55c913f8612b23b61228f21d70c52be1d",
+      "plan_digest": "sha256:b3f24647c62e7b8a74db8edc3df5ec19e3cf6ca346497878013f3ad2de42a1a5",
+      "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
       "acceptance_rows": [
         "LGP25",
         "LGP26",
@@ -3424,6 +3424,241 @@
               "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair2-20261022",
               "digest": "sha256:2f6ef6cf2aec91befe44fb143810302293369d09ca38945cf9acb5cff0278f54",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/parallel_census_test.go,swap,failed,1,TestSystemParallelCensus/owner_repository_through_a_package-level_function_literal,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,202\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,514\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,202,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,111811,202\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus/owner_repository_through_a_package-level_function_literal,\"parallel_census_test.go:333: census /dev/shm/YVJQHP/t/TestSystemParallelCensusowner_repository_through_a_package-leve3085564243/001 =\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t10-r3-t10-pkg-cmd-bench",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:ea3cfd1b853094f348b29d7608f1e5baeba00d025c61e33a290d40a88918420d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14497,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-r3-t10-worktree",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:72566508ec8c83dffb7d14555f3a0b34652d17da7ea212d93d549867e9e5b4f2",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62429,1498\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-r3-t10-testcensus",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:b68510a9923bf08bd785f80b1dd19d9326a0a58711e0a1a749e10575c8eaf3fa",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testcensus,pass,2,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-testcensus",
+          "command": "bench test --package ./internal/testcensus",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-r3-t10-system",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:b634f2789735bb6510a2cb0e1d3103652aa9feafb0d8a3a7d441d0da6289b47e",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,112827,203\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-r3-t10-root-conformance",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:1cec9241b12c3a8399c775c0ef40c7ceae4dd88b849bd90240ca7afb59539a74",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12539,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-r3-t10-serial-census",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:802e7cd5b4757a40652013fd19becf35baa7b786b7351b660cd97130d376e6ce",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/serial_table_test.go,swap,failed,2,TestSystemParallelCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,483\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,111277,203\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus,\"parallel_census_test.go:338: census . =\",3\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemSerialTableIsExact,\"parallel_census_test.go:361: census . =\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-serial-census",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the serial reason of an owner-repository mutator",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+              "digest": "sha256:802e7cd5b4757a40652013fd19becf35baa7b786b7351b660cd97130d376e6ce",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/serial_table_test.go,swap,failed,2,TestSystemParallelCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,483\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,111277,203\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus,\"parallel_census_test.go:338: census . =\",3\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemSerialTableIsExact,\"parallel_census_test.go:361: census . =\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t10-r3-t10-census-reach",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:94ec6523053643e224193101fd47418ce02d4459aac9bbc0dfa724bb8bd6ace2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/parallel_census_test.go,swap,failed,2,TestSystemParallelCensus/owner_repository_through_a_method_value,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,751\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,122505,203\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus/owner_repository_through_a_method_value,\"parallel_census_test.go:336: census /dev/shm/RZMY2Q/t/TestSystemParallelCensusowner_repository_through_a_method_value1384170111/001 =\",3\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus/owner_repository_through_a_non-owner_method,\"parallel_census_test.go:336: census /dev/shm/RZMY2Q/t/TestSystemParallelCensusowner_repository_through_a_non-owner_me2801565555/001 =\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-census-reach",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "resolve only a called owner selector in the census reach walk; the method-value and non-owner-method rows of TestSystemParallelCensus must red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+              "digest": "sha256:94ec6523053643e224193101fd47418ce02d4459aac9bbc0dfa724bb8bd6ace2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/parallel_census_test.go,swap,failed,2,TestSystemParallelCensus/owner_repository_through_a_method_value,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,751\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,122505,203\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus/owner_repository_through_a_method_value,\"parallel_census_test.go:336: census /dev/shm/RZMY2Q/t/TestSystemParallelCensusowner_repository_through_a_method_value1384170111/001 =\",3\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus/owner_repository_through_a_non-owner_method,\"parallel_census_test.go:336: census /dev/shm/RZMY2Q/t/TestSystemParallelCensusowner_repository_through_a_non-owner_me2801565555/001 =\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t10-r3-t10-census-visited",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:235028bb4f9dc511377acd053d81c7d88998d24d7e872925af7837497a55d30a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/parallel_census_test.go,swap,failed,1,TestSystemParallelCensus/ledger_field_through_a_helper_that_an_owner_writer_also_runs,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,517\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,113986,203\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus/ledger_field_through_a_helper_that_an_owner_writer_also_runs,\"parallel_census_test.go:335: census /dev/shm/B7NTED/t/TestSystemParallelCensusledger_field_through_a_helper_that_an_o3873723126/001 =\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-census-visited",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "key the census visited set by declaration only; the writer-then-direct helper row must red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+              "digest": "sha256:235028bb4f9dc511377acd053d81c7d88998d24d7e872925af7837497a55d30a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/parallel_census_test.go,swap,failed,1,TestSystemParallelCensus/ledger_field_through_a_helper_that_an_owner_writer_also_runs,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,517\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,113986,203\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus/ledger_field_through_a_helper_that_an_owner_writer_also_runs,\"parallel_census_test.go:335: census /dev/shm/B7NTED/t/TestSystemParallelCensusledger_field_through_a_helper_that_an_o3873723126/001 =\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t10-r3-t10-census-closure",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:827a13229f39e924e9a77eb3bba5fbac40a070bdf4e6cbad889924a5b652fe0c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/parallel_census_test.go,swap,failed,2,TestLedgerWritesHoldTheOwnerLock/package-level_function_literal,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,761\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,113205,203\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestLedgerWritesHoldTheOwnerLock/package-level_function_literal,\"parallel_census_test.go:348: census /dev/shm/ELQYXR/t/TestLedgerWritesHoldTheOwnerLockpackage-level_function_literal226389395/001 =\",3\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus/owner_repository_through_a_package-level_function_literal,\"parallel_census_test.go:335: census /dev/shm/ELQYXR/t/TestSystemParallelCensusowner_repository_through_a_package-leve572358605/001 =\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-census-closure",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "index only function declarations in the system census; the package-level function literal row must red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+              "digest": "sha256:827a13229f39e924e9a77eb3bba5fbac40a070bdf4e6cbad889924a5b652fe0c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/parallel_census_test.go,swap,failed,2,TestLedgerWritesHoldTheOwnerLock/package-level_function_literal,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,761\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,113205,203\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestLedgerWritesHoldTheOwnerLock/package-level_function_literal,\"parallel_census_test.go:348: census /dev/shm/ELQYXR/t/TestLedgerWritesHoldTheOwnerLockpackage-level_function_literal226389395/001 =\",3\n  github.com/gibbonmi/bench/internal/systemtest,TestSystemParallelCensus/owner_repository_through_a_package-level_function_literal,\"parallel_census_test.go:335: census /dev/shm/ELQYXR/t/TestSystemParallelCensusowner_repository_through_a_package-leve572358605/001 =\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t10-r3-t10-lock-literal",
+          "performer": "claude:lgp-t10-repair3-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "0177d801774d9797359427849f96456502dbe8c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+            "digest": "sha256:c7851189fdcef3e150f0a72980d017bbe33949f88423e4f40aebd5b58bfea46d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/parallel_census_test.go,swap,failed,1,TestLedgerWritesHoldTheOwnerLock/package-level_function_literal,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,494\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,111986,203\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestLedgerWritesHoldTheOwnerLock/package-level_function_literal,\"parallel_census_test.go:348: census /dev/shm/WZ22DS/t/TestLedgerWritesHoldTheOwnerLockpackage-level_function_literal4095553662/001 =\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-lock-literal",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "grade only function declarations in the ledger lock census; the package-level literal ledger row must red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:lgp-t10-repair3-20261022",
+              "digest": "sha256:c7851189fdcef3e150f0a72980d017bbe33949f88423e4f40aebd5b58bfea46d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/systemtest/parallel_census_test.go,swap,failed,1,TestLedgerWritesHoldTheOwnerLock/package-level_function_literal,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,203\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,494\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,203,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,111986,203\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestLedgerWritesHoldTheOwnerLock/package-level_function_literal,\"parallel_census_test.go:348: census /dev/shm/WZ22DS/t/TestLedgerWritesHoldTheOwnerLockpackage-level_function_literal4095553662/001 =\",3\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -3955,6 +4190,39 @@
     {
       "from": "sha256:58baf001e13be62cb0a97ebf176b18a213d8b10de868945499490e39499d4c09",
       "to": "sha256:349fc776edc544f71e25cf884bb82e09460276f6e421789e9021c1015fe57862",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ],
+        "LGP-C2A": [
+          "LGP-C2A"
+        ],
+        "LGP-C2B": [
+          "LGP-C2B"
+        ],
+        "LGP-C2C": [
+          "LGP-C2C"
+        ],
+        "LGP-C3A": [
+          "LGP-C3A"
+        ],
+        "LGP-C3B": [
+          "LGP-C3B"
+        ],
+        "LGP-C3C": [
+          "LGP-C3C"
+        ],
+        "LGP-C3D": [
+          "LGP-C3D"
+        ],
+        "LGP-C4A": [
+          "LGP-C4A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:349fc776edc544f71e25cf884bb82e09460276f6e421789e9021c1015fe57862",
+      "to": "sha256:b3f24647c62e7b8a74db8edc3df5ec19e3cf6ca346497878013f3ad2de42a1a5",
       "chunk_ids": {
         "LGP-C1": [
           "LGP-C1"
