@@ -8,6 +8,7 @@ package systemtest
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/testcensus"
@@ -23,11 +24,12 @@ const pendingMigration = "pending migration"
 var ownerRepositorySubjects = map[string]bool{"TestOwnerSelectionChild": true, "TestSelectedExecutableComposition": true}
 
 // serialTableCensus reports every serial row that names no top-level test in dir, names
-// a test that calls t.Parallel(), holds no reason, or holds pendingMigration. It also
-// reports where the ownerRepositories reason and the owner's repositories disagree: the
-// reason on a test outside ownerRepositorySubjects or on a test that reaches no
-// owner.repos, another reason on a serial test that reaches owner.repos, and a subject
-// with no row of that reason.
+// a test that calls t.Parallel(), holds no reason, or holds pendingMigration. A reason of
+// only space counts as no reason, and a reason matches pendingMigration in any letter case
+// and with any space around it. It also reports where the ownerRepositories reason and
+// the owner's repositories disagree: the reason on a test outside ownerRepositorySubjects
+// or on a test that reaches no owner.repos, another reason on a serial test that reaches
+// owner.repos, and a subject with no row of that reason.
 func serialTableCensus(dir string, serial map[string]string) ([]string, error) {
 	pkg, err := parseSystemPackage(dir)
 	if err != nil {
@@ -54,12 +56,12 @@ func serialTableCensus(dir string, serial map[string]string) ([]string, error) {
 				reports = append(reports, fmt.Sprintf("serial row %s reaches %s without the owner-repository reason", name, repos))
 			}
 		}
-		switch reason {
-		case "":
+		switch trimmed := strings.TrimSpace(reason); {
+		case trimmed == "":
 			reports = append(reports, fmt.Sprintf("serial row %s holds no reason", name))
-		case pendingMigration:
+		case strings.EqualFold(trimmed, pendingMigration):
 			reports = append(reports, fmt.Sprintf("serial row %s holds the temporary reason %q", name, reason))
-		case ownerRepositories:
+		case reason == ownerRepositories:
 			if !ownerRepositorySubjects[name] {
 				reports = append(reports, fmt.Sprintf("serial row %s holds the owner-repository reason and names no owner-repository subject", name))
 			}
