@@ -16,7 +16,7 @@ The tests are `TestSystemParallelCensus` (LGP25, LGP29), `TestLedgerWritesHoldTh
 
 The census also refuses a parallel test that reaches `owner.repos`, or that names a ledger field outside an owner writer. An owner writer writes at least one ledger field, and every ledger-field reference in it sits between a `Lock` and an `Unlock` of the owner mutex. The owner value is spelled `owner` or `o`: six writers lock through `o.mu` (for example `owner_test.go:158-160`), and two through `owner.mu`.
 
-Match selectors on the owner value, such as `owner.starts` or `o.starts`, not bare words. A local `seen` at `charge_evidence_test.go:378` and the strings in `TestUnfilteredRunVerifiesLedger` (`owner_selection_test.go:80-86`) are not ledger references.
+Match selectors on the owner value, such as `owner.starts` or `o.starts`, not bare words. A local `seen` at `charge_evidence_stateless_test.go:57` and the strings in `TestUnfilteredRunVerifiesLedger` (`owner_selection_test.go:80-86`) are not ledger references.
 
 `TestLedgerWritesHoldTheOwnerLock` refuses an unguarded ledger write by name. It exempts `TestOwnerSelectionChild`, which plants the negative controls in a child process.
 
