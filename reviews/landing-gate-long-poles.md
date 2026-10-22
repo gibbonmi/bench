@@ -2221,7 +2221,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3b-standards-r0",
+          "performer": "claude:lgp-c3b-standards-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7f455bc4e131f44b0458e65bda0c4d801b68846c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3b-standards-20261022",
+            "digest": "sha256:37ec89f330dae17f47211791c5fc29df4c0d24f67488e79f7fe9b1da3a8d21a1",
+            "excerpt": "Standards axis, LGP-C3B (14d72a647..b2f333d0b): 0 findings. Every former chdir site that calls a joins-form verb uses repoHome.callFromRoot, and only land_resume_refusal_test.go:346 keeps chdir. TestRemovedDirectoryOperandStaysSerial reuses censusFacts, so no second census walk exists, and its \"chdir\" literal names the serial helper that reachedEffects reports. The four-class comment in parallel_census_test.go lists the four current classes. The delta touches only internal/worktree test files. Advice: resume_reconcile_test.go:354-355 sets joins on a callFromRoot call by hand, as mergeSet.merge does.\n"
+          },
+          "axis": "Standards",
+          "base": "14d72a647f88c503680baf8e6d4253f587fdceba",
+          "tip": "b2f333d0b73d6058a4f881d15649de14854d698f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c3b-spec-r0",
+          "performer": "claude:lgp-c3b-spec-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7f455bc4e131f44b0458e65bda0c4d801b68846c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3b-spec-20261022",
+            "digest": "sha256:2d2a6ac2a193d75855688ecd7e3e834a22123b8d6c4605d37df94afc5efbf3b5",
+            "excerpt": "Spec axis, LGP-C3B (14d72a647..b2f333d0b): 0 blocking findings. LGP20 met: the 16 moved tests call t.Parallel and drop chdir, and the live census passes. LGP21 met: 45 + 1 + 1 - 16 + 0 = 31 serial. LGP22 met: 805 + 1 + 1 + 2 + 1 = 810. LGP23 met: TestRemovedDirectoryOperandStaysSerial pins the chdir serial reason, and TestLandingHandsBackAPathWithNoCanonicalForm still grades the real filepath.Abs failure (land_resume_refusal_test.go:354). Ticket line 20 holds: path, list, show, and exec build no ambient and targetPath reads no directory for an identifier or absolute operand. P1 and P2 (evidence placement) close here: the coordinator records the ticket 07 author's bench test --full --package ./internal/worktree times, 65067 ms (1495 tests) before and 62560 ms (1496 tests) after, inside the spread, and the moved and stayed lists with reasons and the no-directory proof are in ticket commit b2f333d0b's body.\n"
+          },
+          "axis": "Spec",
+          "base": "14d72a647f88c503680baf8e6d4253f587fdceba",
+          "tip": "b2f333d0b73d6058a4f881d15649de14854d698f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c3b-coverage-r0",
+          "performer": "claude:lgp-c3b-coverage-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7f455bc4e131f44b0458e65bda0c4d801b68846c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3b-coverage-20261022",
+            "digest": "sha256:e1828406f39cd1e73f2b62fedadf66f45bea2f4cbeecdac2422a6cf773104806",
+            "excerpt": "Coverage axis, LGP-C3B (14d72a647..b2f333d0b): 0 binding findings. Probes, all restored yes: callFromRoot returning a failed directory read read silent across the 11 joins-form tests, because each operand is absolute or an identifier, so the helper's effect is the joins-form route and not a directory read (advice, no repair: parallel safety is the graded subject and holds); removing mustRemove(t, gone) while chdir stays bit TestLandingHandsBackAPathWithNoCanonicalForm, so that serial test grades the real filepath.Abs failure itself; omitting one t.Parallel in request_token_test.go bit TestParallelCensusOnTheLiveTree. Every git child in internal/worktree and internal/git on a moved test's path carries -C or Dir. Advice: the callFromRoot comment could say the test does not read the directory value.\n"
+          },
+          "axis": "Coverage",
+          "base": "14d72a647f88c503680baf8e6d4253f587fdceba",
+          "tip": "b2f333d0b73d6058a4f881d15649de14854d698f",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
