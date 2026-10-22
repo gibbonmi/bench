@@ -36,8 +36,8 @@ type systemFunc struct {
 }
 
 // systemPackage is one parse of a directory's test files. funcs indexes a function by
-// its name and a method by a dot and its name, because a bare call resolves to a
-// function and a call on the owner value resolves to a method.
+// its name and a method by a dot and its name, because a bare identifier resolves to a
+// function and a selector resolves to a method.
 type systemPackage struct {
 	fset  *token.FileSet
 	all   []systemFunc
@@ -141,7 +141,7 @@ func ledgerRefs(decl *ast.FuncDecl) []ledgerRef {
 }
 
 // ownerWriter reports whether decl writes a ledger field while the owner mutex holds
-// each of its ledger-field references. The reach walk stops at an owner writer.
+// each of its ledger-field references.
 func ownerWriter(decl *ast.FuncDecl) bool {
 	refs := ledgerRefs(decl)
 	wrote := false
@@ -154,55 +154,66 @@ func ownerWriter(decl *ast.FuncDecl) bool {
 	return wrote
 }
 
-// callees resolves call to the test-file functions it runs: the function a bare call
-// names, and each method of the name a call on the owner value selects.
-func (p systemPackage) callees(call *ast.CallExpr) []systemFunc {
-	if ident, ok := call.Fun.(*ast.Ident); ok {
-		return p.funcs[ident.Name]
-	}
-	if value, name := ownerSelector(call.Fun); value != "" {
-		return p.funcs["."+name]
-	}
-	return nil
+// callees returns each test-file function that body can run, as a call or as a value. A
+// bare identifier resolves to the function of its name, and a selector to each method of
+// its name on any receiver, because the census reads no types. A selector's own name and
+// a composite-literal key name no function.
+func (p systemPackage) callees(body *ast.BlockStmt) []systemFunc {
+	var found []systemFunc
+	skip := map[ast.Expr]bool{}
+	ast.Inspect(body, func(node ast.Node) bool {
+		switch n := node.(type) {
+		case *ast.SelectorExpr:
+			skip[n.Sel] = true
+			found = append(found, p.funcs["."+n.Sel.Name]...)
+		case *ast.KeyValueExpr:
+			skip[n.Key] = true
+		case *ast.Ident:
+			if !skip[n] {
+				found = append(found, p.funcs[n.Name]...)
+			}
+		}
+		return true
+	})
+	return found
 }
 
 // reach names the first owner-repository reference and the first ledger-field reference
-// that test reaches through its body and the functions it calls, each with the helper it
-// reaches the reference through. A ledger field in the test body counts even under the
-// owner mutex.
+// that test reaches through its body and the functions it can run, each with the helper
+// it reaches the reference through. A ledger field in the test body counts even under the
+// owner mutex. Inside an owner writer the walk drops only the ledger rule. The visited set
+// keys a function by the ledger rule, so a function that a writer runs still grades its
+// ledger references when the test also reaches it outside every writer.
 func (p systemPackage) reach(test systemFunc) (repos, ledger string) {
-	visited := map[*ast.FuncDecl]bool{test.decl: true}
-	var walk func(fn systemFunc, via string)
-	walk = func(fn systemFunc, via string) {
-		through := ""
-		if via != "" {
-			through = " through " + via
-		}
+	type visit struct {
+		decl   *ast.FuncDecl
+		graded bool
+	}
+	visited := map[visit]bool{{test.decl, true}: true}
+	var walk func(fn systemFunc, through string, graded bool)
+	walk = func(fn systemFunc, through string, graded bool) {
 		ast.Inspect(fn.decl.Body, func(node ast.Node) bool {
 			if value, name := ownerSelector(node); name == "repos" && repos == "" {
 				repos = value + ".repos" + through
-			} else if ledgerFields[name] && ledger == "" {
+			} else if graded && ledgerFields[name] && ledger == "" {
 				ledger = value + "." + name + through
-			}
-			call, ok := node.(*ast.CallExpr)
-			if !ok {
-				return true
-			}
-			for _, next := range p.callees(call) {
-				if visited[next.decl] || ownerWriter(next.decl) {
-					continue
-				}
-				visited[next.decl] = true
-				hop := via
-				if hop == "" {
-					hop = next.decl.Name.Name
-				}
-				walk(next, hop)
 			}
 			return true
 		})
+		for _, next := range p.callees(fn.decl.Body) {
+			step := visit{next.decl, graded && !ownerWriter(next.decl)}
+			if visited[step] {
+				continue
+			}
+			visited[step] = true
+			hop := through
+			if hop == "" {
+				hop = " through " + next.decl.Name.Name
+			}
+			walk(next, hop, step.graded)
+		}
 	}
-	walk(test, "")
+	walk(test, "", true)
 	return repos, ledger
 }
 
@@ -331,6 +342,14 @@ func TestSystemParallelCensus(t *testing.T) {
 		{"ledger field through a helper", "func TestPeek(t *testing.T) { t.Parallel(); peek() }\n\nfunc peek() int { return len(owner.seen) }\n", nil,
 			[]string{"planted_test.go:5: TestPeek calls t.Parallel() and names owner.seen through peek"}},
 		{"owner writer", "func TestRun(t *testing.T) { t.Parallel(); owner.bump() }\n\nfunc (o *systemOwner) bump() { o.mu.Lock(); o.starts++; o.mu.Unlock() }\n", nil, nil},
+		{"owner repository through an owner writer", "func TestStore(t *testing.T) { t.Parallel(); owner.store() }\n\nfunc (o *systemOwner) store() { o.mu.Lock(); o.starts++; _ = o.repos[0]; o.mu.Unlock() }\n", nil,
+			[]string{"planted_test.go:5: TestStore calls t.Parallel() and reaches o.repos through store"}},
+		{"owner repository through a method value", "func TestPick(t *testing.T) { t.Parallel(); f := owner.pick; f() }\n\nfunc (o *systemOwner) pick() string { return o.repos[0] }\n", nil,
+			[]string{"planted_test.go:5: TestPick calls t.Parallel() and reaches o.repos through pick"}},
+		{"owner repository through a function value", "func TestFirst(t *testing.T) { t.Parallel(); f := first; f() }\n\nfunc first() string { return owner.repos[0] }\n", nil,
+			[]string{"planted_test.go:5: TestFirst calls t.Parallel() and reaches owner.repos through first"}},
+		{"owner repository through a non-owner method", "func TestHold(t *testing.T) { t.Parallel(); var h holder; h.first() }\n\ntype holder struct{}\n\nfunc (holder) first() string { return owner.repos[0] }\n", nil,
+			[]string{"planted_test.go:5: TestHold calls t.Parallel() and reaches owner.repos through first"}},
 		{"local names", "func TestLocal(t *testing.T) { t.Parallel(); seen := map[string]bool{\"starts\": true}; seen[\"terminal\"] = true }\n", nil, nil},
 	} {
 		t.Run(row.name, func(t *testing.T) {
