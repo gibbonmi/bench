@@ -243,7 +243,7 @@ Its lifetime outcome retains raw status for the separate shell repair.
 ### Durable protection schema
 
 A dependency-leaf package under `internal/subprocess/protection/` owns protection, admission, aggregation, and recovery observations.
-It imports the standard library and the planned durablefile publication leaf.
+It imports the standard library, the internal/jsonfile strict decoder, and the durablefile publication leaf.
 Both subprocess and resource owners use it.
 It does not replace resource derivation, assignment ownership, bundle ownership, or evidence authority.
 
@@ -334,7 +334,7 @@ If the leaf contract changes, revise this dependency before the affected ticket 
 Resource owners acquire outer cleanup exclusions before protocol locks.
 Cache users acquire the existing shared cache lock first.
 Protocol operations deduplicate generations and lock stores in canonical absolute-path order.
-In-process users share descriptors under the existing POSIX record-lock rule.
+Each protocol lock is a flock on the store's lock file, held by one open file description, so in-process users exclude each other.
 No operation acquires a resource-owner exclusion while it holds a protocol lock.
 
 Prepare validates the complete descriptor vector before its first record mutation.
