@@ -33,14 +33,18 @@ type Probe func(target int, signal syscall.Signal) error
 // ObserveGroup probes process group pgid with signal zero.
 func ObserveGroup(pgid int) Observation { return observeGroup(syscall.Kill, pgid) }
 
-// observeGroup grades one probe answer. Only ESRCH proves absence: EPERM and every other
-// error leave a member possibly alive, so they stay uncertain.
+// observeGroup sends signal zero to group pgid through probe and grades the answer.
 func observeGroup(probe Probe, pgid int) Observation {
 	if pgid <= 1 {
 		// Zero and one select the caller's own group and every process, not one group.
 		return Observation{State: GroupUncertain, Err: fmt.Errorf("process group %d is not one group", pgid)}
 	}
-	err := probe(-pgid, 0)
+	return Classify(probe(-pgid, 0))
+}
+
+// Classify grades the answer to one signal sent to a group. Only ESRCH proves absence:
+// EPERM and every other error leave a member possibly alive, so they stay uncertain.
+func Classify(err error) Observation {
 	switch {
 	case err == nil:
 		return Observation{State: GroupPresent}

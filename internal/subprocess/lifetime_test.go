@@ -58,14 +58,16 @@ func TestLifetimeBlockedStart(t *testing.T) {
 	requireIncomplete(t, o, subprocess.ObligationStart)
 }
 
+// TestLifetimeLateStart releases the held Start after the TERM grace and the final window
+// expired. Only an immediate KILL ends the TERM-resistant child, because no grace remains.
 func TestLifetimeLateStart(t *testing.T) {
-	l := subprocess.NewLifetime(script(t, "exec sleep 30", nil), policy(0, final, 0), subprocess.Streams{})
+	l := subprocess.NewLifetime(script(t, `trap "" TERM; exec sleep 30`, nil), policy(grace, final, 0), subprocess.Streams{})
 	entered, release := holdStart(t, l)
 	waits := countWaits(l)
 	started(t, l)
 	<-entered
-	l.Cancel(subprocess.CauseInterruption, syscall.SIGKILL)
-	_, completion := waitWithin(t, l, final)
+	l.Cancel(subprocess.CauseInterruption, syscall.SIGTERM)
+	_, completion := waitWithin(t, l, grace+final)
 	release()
 	o := completeWithin(t, completion, final)
 	if !o.Process.Waited || o.Process.Signal != syscall.SIGKILL || waits.Load() != 1 || alive(o.Process.PID) {
@@ -166,6 +168,10 @@ func TestLifetimeForcedClose(t *testing.T) {
 	if o.Streams.Stdout.Status != subprocess.StreamClosed || string(o.Streams.Stdout.Data) != "early" {
 		t.Fatalf("forced closure projected %+v", o.Streams.Stdout)
 	}
+	// The owner closed a stream itself, so the cleanup was requested.
+	if o.Cleanup.Status != subprocess.CleanupComplete {
+		t.Fatalf("forced closure cleanup = %+v, want complete", o.Cleanup)
+	}
 }
 
 func TestLifetimeBlockedWriter(t *testing.T) {
@@ -233,27 +239,54 @@ func TestLifetimeNormalPreserve(t *testing.T) {
 	}
 }
 
+// TestLifetimeSingleFinalWindow fires the one final window only after the owner took the
+// waiter result, so the outcome names every obligation that remains after it.
 func TestLifetimeSingleFinalWindow(t *testing.T) {
 	holder := processtest.NewHolder(t)
 	fire, starts := make(chan time.Time, 1), 0
+	polled := make(chan struct{}, 1)
 	p := policy(0, final, 0)
 	p.Final = func() (<-chan time.Time, func() bool) { starts++; return fire, func() bool { return true } }
+	// An unreaped member keeps the group present, so the owner starts a poll only after it takes the waiter result.
+	p.Poll = func() (<-chan time.Time, func() bool) {
+		select {
+		case polled <- struct{}{}:
+		default:
+		}
+		return make(chan time.Time), func() bool { return true }
+	}
 	cmd := script(t, `"$0" & echo $$ > leader; exec sleep 30`, holder)
 	l := started(t, subprocess.NewLifetime(cmd, p, subprocess.Streams{Stdout: capture}))
 	holder.PID(t)
-	leader := processtest.WaitPID(t, filepath.Join(cmd.Dir, "leader"))
+	joinGroup(t, processtest.WaitPID(t, filepath.Join(cmd.Dir, "leader")))
 	l.Cancel(subprocess.CauseDeadline, syscall.SIGKILL)
-	for deadline := time.Now().Add(bounds.TestDeadline(final)); alive(leader) && time.Now().Before(deadline); {
-		<-time.After(10 * time.Millisecond)
+	select {
+	case <-polled:
+	case <-time.After(bounds.TestDeadline(final)):
+		t.Fatal(bounds.TestTimeoutVerdict("the owner to take the waiter result", bounds.TestDeadline(final)))
 	}
-	// The waiter reaped the leader; this pause lets the owner take that result first.
-	<-time.After(50 * time.Millisecond)
 	fire <- time.Time{}
 	o, _ := waitWithin(t, l, final)
 	if starts != 1 {
 		t.Fatalf("teardown started %d final windows, want one shared window", starts)
 	}
-	requireIncomplete(t, o, subprocess.ObligationStdout)
+	// No waiter obligation remains: the owner took the waiter result before the window expired.
+	requireIncomplete(t, o, subprocess.ObligationGroup, subprocess.ObligationStdout)
+}
+
+// joinGroup adds a member to group pgid. The test reaps it only at cleanup, so after KILL
+// its zombie keeps the group present.
+func joinGroup(t *testing.T, pgid int) {
+	t.Helper()
+	member := exec.Command("sleep", "30")
+	member.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pgid: pgid}
+	if err := member.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = member.Process.Kill()
+		_ = member.Wait()
+	})
 }
 
 func TestLifetimeWorkerOwnership(t *testing.T) {

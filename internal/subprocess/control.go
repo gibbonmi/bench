@@ -241,13 +241,14 @@ func (c *controller) beginFinal() {
 	c.final.begin(c.policy.Final)
 }
 
+// signal sends sig to the group. An answer that proves absence resolves the group; any
+// other error stays evidence.
 func (c *controller) signal(sig syscall.Signal) {
 	err := syscall.Kill(-c.pid, sig)
-	switch {
-	case err == nil:
-	case errors.Is(err, syscall.ESRCH):
-		c.group = protection.Observation{State: protection.GroupAbsent}
-	case c.signalErr == nil:
+	switch answer := protection.Classify(err); {
+	case answer.State == protection.GroupAbsent:
+		c.group = answer
+	case err != nil && c.signalErr == nil:
 		c.signalErr = err
 	}
 }

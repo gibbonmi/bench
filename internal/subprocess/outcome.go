@@ -82,7 +82,7 @@ const (
 )
 
 // Cleanup is the teardown verdict, each unresolved obligation once, the last group
-// observation, and the first signal error that is not ESRCH.
+// observation, and the first signal error that does not prove the group absent.
 type Cleanup struct {
 	Status      CleanupStatus
 	Obligations []Obligation
