@@ -616,9 +616,9 @@ The final implementation must demonstrate its stated omission red.
 | PL26 | 22 | Two concurrent users require two complete group-absence proofs. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryOverlappingUsers`) | The first completion deletes the second live user's resource. |
 | PL27 | 23 | Sealed admission refuses new registration before Start. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationSealedAdmission`) | A late start marker exposes the cleanup check-then-launch race. |
 | PL28 | 13 | Bounds preserves immediate-KILL cancellation classification. | `internal/bounds/lifetime_test.go` (`TestBoundsCancel`) | An added grace or changed canceled status breaks its policy witness. |
-| PL29 | 11 | Gate interruption retains INT and exit 130. | planned `internal/gate/lifetime_test.go` (GateInterrupt) | The child's signal log exposes an incorrect TERM or KILL opener. |
-| PL30 | 11 | Gate timeout retains TERM and exit 124. | planned `internal/gate/lifetime_test.go` (GateTimeout) | The cause fixture fails if timeout becomes interruption. |
-| PL31 | 11 | Gate normal completion drains the remaining group. | planned `internal/gate/lifetime_test.go` (GateNormalDrain) | A readiness descendant survives if normal drain disappears. |
+| PL29 | 11 | Gate interruption retains INT and exit 130. | `internal/gate/lifetime_test.go` (`TestGateInterruptOpensWithINTAndExits130`) | The child's signal log exposes an incorrect TERM or KILL opener. |
+| PL30 | 11 | Gate timeout retains TERM and exit 124. | `internal/gate/lifetime_test.go` (`TestGateTimeoutOpensWithTERMAndExits124`) | The cause fixture fails if timeout becomes interruption. |
+| PL31 | 11 | Gate normal completion drains the remaining group. | `internal/gate/lifetime_test.go` (`TestGateNormalDrainRemovesReadyDescendant`) | A readiness descendant survives if normal drain disappears. |
 | PL32 | 11, 25 | An unresolved nested phase prevents retained green evidence. | planned `internal/systemtest/process_lifetime_test.go` (NestedGate) | The real inner group survives despite outer group absence and child zero. |
 | PL33 | 25 | Incomplete cleanup prevents a lane pass record. | planned `internal/gate/lifetime_resources_test.go` (LaneIncomplete) | A pass appears if lane aggregation consumes only child codes. |
 | PL34 | 12 | Builder normal completion drains its remaining group. | planned `internal/runbinary/lifetime_test.go` (BuilderNormalDrain) | The selection returns while a builder descendant remains live. |

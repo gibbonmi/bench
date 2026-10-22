@@ -21,6 +21,7 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -314,6 +315,21 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 	ctx, stop := subprocess.NotifyCancel(base)
 	defer stop()
 	return runPhases(ctx, kit, phases, stdout, stderr)
+}
+
+func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
+	// The phases run in their own process, so the run's record and trace come from the
+	// handoff that the run's parent composed.
+	ctx, closeRecord := otelrecord.AttachHandoff(ctx)
+	defer closeRecord()
+	skipLog, cleanup, err := newSkipLog()
+	if err != nil {
+		fmt.Fprintf(stderr, "gate: cannot open the capability skip log: %v\n", err)
+		fmt.Fprintln(stderr, "gate: red")
+		return 1
+	}
+	defer cleanup()
+	return runPhasesSerial(ctx, root, withSkipLog(phases, skipLog), skipLog, stdout, stderr)
 }
 
 func shellcheckArgv(root string) []string {

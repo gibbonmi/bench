@@ -175,7 +175,8 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 		return persistenceFailure(storageRoot, 0, stderr, "gate pending persistence failed", err)
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
-	rc := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
+	// The code derives from the whole outcome, so an undrained group or open obligation is not green.
+	rc := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr).Code
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.finish", Root: runtimeRoot, Exit: &rc})
 	if ctx.Err() != nil {
 		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, time.Now().UTC())}
@@ -317,8 +318,8 @@ func subjectChangeDiagnostic(root string, declaredPaths []string, before, after 
 	return "gate subject changed during execution"
 }
 
-func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer) int {
-	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr}, true).Code
+func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer) processGroupResult {
+	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr})
 }
 
 // ExecutionInProgress answers whether a gate run holds the checkout's execution

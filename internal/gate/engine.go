@@ -201,24 +201,13 @@ func reusableEvidence(root string, plan subject, now time.Time) Inspection {
 	return Inspection{State: Ready, Status: "green", CachedTree: plan.Tree, CurrentTree: plan.Tree, RecordedAt: evidence.RecordedAt, ReusableGreen: true}
 }
 
-func runResolved(ctx context.Context, root string, res Resolution, env []string, stdout, stderr io.Writer, processGroup bool) processGroupResult {
+func runResolved(ctx context.Context, root string, res Resolution, env []string, stdout, stderr io.Writer) processGroupResult {
 	cmd := res.command(root)
 	if cmd == nil {
 		return processGroupResult{Code: 3}
 	}
 	cmd.Dir, cmd.Stdout, cmd.Stderr, cmd.Env = root, stdout, stderr, withGateSpanEnv(ctx, append([]string(nil), env...))
-	if processGroup {
-		return runProcessGroupCommand(ctx, cmd)
-	}
-	if err := cmd.Run(); err != nil {
-		if cmd.ProcessState != nil {
-			if code := cmd.ProcessState.ExitCode(); code > 0 {
-				return processGroupResult{Code: code}
-			}
-		}
-		return processGroupResult{Code: 1, StartErr: err}
-	}
-	return processGroupResult{}
+	return runProcessGroupCommand(ctx, cmd)
 }
 
 type controlSafeWriter struct{ io.Writer }

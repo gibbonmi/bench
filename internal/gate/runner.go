@@ -21,78 +21,89 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/otelrecord"
+	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
 const processGroupCancelGrace = bounds.ProcessGroupCancelGrace
 
-type processGroupCancelGraceKey struct{}
-
-func processGroupGrace(ctx context.Context) time.Duration {
-	if grace, ok := ctx.Value(processGroupCancelGraceKey{}).(time.Duration); ok {
-		return grace
-	}
-	return processGroupCancelGrace
+// gateProcessPolicy kills and observes the remaining group after a normal exit. A
+// cancellation opens with the caller's catchable signal, and KILL follows the grace.
+var gateProcessPolicy = subprocess.Policy{
+	Normal: subprocess.Drain,
+	Grace:  bounds.ProcessWindow(bounds.FixedWindow(processGroupCancelGrace)),
+	Final:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessFinalWindow)),
+	Poll:   bounds.ProcessPoll,
 }
 
+// processGroupResult is the gate's execution form. Outcome holds the lifetime facts, and
+// the scalar fields present them. StartErr also names why a normal exit cannot succeed.
 type processGroupResult struct {
 	Code     int
 	StartErr error
 	// Cancelled reports that the context, not the command, decided the outcome. It is
 	// the only way to tell a killed command from one that chose the same exit code.
 	Cancelled bool
+	Outcome   subprocess.Outcome
 }
 
+// runProcessGroupCommand runs cmd as one group that registers on every inherited resource.
+// The timeout needs the catchable opener most: with no operator present, the child's last
+// output is the only account of where the run stuck.
 func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResult {
-	if cmd.SysProcAttr == nil {
-		cmd.SysProcAttr = &syscall.SysProcAttr{}
-	}
-	cmd.SysProcAttr.Setpgid = true
-	if err := cmd.Start(); err != nil {
-		if ctx.Err() != nil {
-			return processGroupResult{Code: 130, StartErr: err, Cancelled: true}
-		}
+	inherited, err := protection.Inherited()
+	if err != nil {
 		return processGroupResult{Code: 1, StartErr: err}
 	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		drainProcessGroup(cmd.Process.Pid)
-		return processGroupResult{Code: processExitCode(cmd, err)}
-	case <-ctx.Done():
-		// Both flavors of cancellation get the same cascade: a catchable signal, the
-		// grace, then SIGKILL. They differ only in which signal and which code.
-		//
-		// The deadline needs the grace most. It fires with no operator watching. So what
-		// the child says on its way out is the only account of what the run was stuck
-		// on. Opening with SIGKILL would take that account with it.
-		notice, code := syscall.SIGINT, 130
-		if errors.Is(context.Cause(ctx), errGateTimeout) {
-			notice, code = syscall.SIGTERM, 124
-		}
-		_ = syscall.Kill(-cmd.Process.Pid, notice)
-		select {
-		case <-done:
-			drainProcessGroup(cmd.Process.Pid)
-		case <-time.After(bounds.FixedWindow(processGroupGrace(ctx))):
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
-			drainProcessGroup(cmd.Process.Pid)
-		}
-		return processGroupResult{Code: code, Cancelled: true}
+	streams := subprocess.Streams{Stdin: cmd.Stdin, Stdout: subprocess.Output{Writer: cmd.Stdout}, Stderr: subprocess.Output{Writer: cmd.Stderr}}
+	lifetime := subprocess.NewLifetime(cmd, gateProcessPolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: inherited})
+	if err := lifetime.Start(); err != nil {
+		return processGroupResult{Code: 1, StartErr: err}
 	}
-}
-
-func drainProcessGroup(pgid int) {
-	_ = syscall.Kill(-pgid, syscall.SIGKILL)
-	for {
-		if err := syscall.Kill(-pgid, 0); errors.Is(err, syscall.ESRCH) {
+	stop := context.AfterFunc(ctx, func() {
+		if errors.Is(context.Cause(ctx), errGateTimeout) {
+			lifetime.Cancel(subprocess.CauseDeadline, syscall.SIGTERM)
 			return
 		}
-		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
+		lifetime.Cancel(subprocess.CauseInterruption, syscall.SIGINT)
+	})
+	defer stop()
+	outcome, _ := lifetime.Wait()
+	result := processGroupResult{StartErr: outcome.Process.StartErr, Outcome: outcome}
+	switch {
+	case outcome.Cancellation.Cause == subprocess.CauseDeadline:
+		result.Code, result.Cancelled = 124, true
+	case outcome.Cancellation.Cause == subprocess.CauseInterruption:
+		result.Code, result.Cancelled = 130, true
+	case result.StartErr != nil:
+		result.Code = 1
+	default:
+		result.Code = processExitCode(cmd, outcome.Process.WaitErr)
+		if result.StartErr = uncertified(outcome); result.StartErr != nil {
+			result.Code = 1
+		}
 	}
+	return result
+}
+
+// uncertified names why a normal exit cannot report success: an unresolved obligation, an
+// incomplete stream, or protection that is not safe. It wraps no cause, so an optional
+// phase never reads it as a missing tool.
+func uncertified(o subprocess.Outcome) error {
+	if len(o.Cleanup.Obligations) > 0 {
+		return fmt.Errorf("process cleanup incomplete: %v", o.Cleanup.Obligations)
+	}
+	for _, stream := range []subprocess.Stream{o.Streams.Stdin, o.Streams.Stdout, o.Streams.Stderr} {
+		if stream.Status != subprocess.StreamComplete && stream.Status != subprocess.StreamNone {
+			return fmt.Errorf("process stream %s: %v", stream.Status, stream.Err)
+		}
+	}
+	if o.Protection.State != protection.Safe {
+		return fmt.Errorf("process protection %s: %v", o.Protection.State, o.Protection.Err)
+	}
+	return nil
 }
 
 func processExitCode(cmd *exec.Cmd, err error) int {
@@ -134,21 +145,6 @@ type phaseResult struct {
 // produced one.
 func (r phaseResult) green() bool {
 	return r.Code == 0 && !r.Skipped && r.SkippedBy == ""
-}
-
-func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
-	// The phases run in their own process, so the run's record and trace come from the
-	// handoff that the run's parent composed.
-	ctx, closeRecord := otelrecord.AttachHandoff(ctx)
-	defer closeRecord()
-	skipLog, cleanup, err := newSkipLog()
-	if err != nil {
-		fmt.Fprintf(stderr, "gate: cannot open the capability skip log: %v\n", err)
-		fmt.Fprintln(stderr, "gate: red")
-		return 1
-	}
-	defer cleanup()
-	return runPhasesSerial(ctx, root, withSkipLog(phases, skipLog), skipLog, stdout, stderr)
 }
 
 func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
