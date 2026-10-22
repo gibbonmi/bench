@@ -21,8 +21,8 @@ Preserve Linux Pdeathsig and Darwin Setpgid through the shared command adapter.
 Do not claim Linux parent-death behavior on Darwin.
 The final chunk performs native reconciliation; this ticket retains and exercises existing platform assertions.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -35,6 +35,10 @@ This ticket belongs to PL-C3.
 Finish the preceding chunk review before this chunk starts.
 Its blockers include every prior overlapping Writes owner.
 No successor caller must exist for this ticket's owned predicates.
+
+Selection.Close keeps its error return, so runbinary.Shared.Close and testreport.HeldRuns.Close compile unchanged.
+Each Own selection is its own private generation, including a fresh selection that HeldRuns builds.
+Keep the typed BuildError and its output text.
 
 ## Acceptance
 
@@ -51,5 +55,8 @@ Preserve existing assertions and fixture mutation purpose.
 Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/runbinary`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/conformance`
 
 Mutation witness: Remove normal builder drain or delete the selection before all registered groups are absent. The live descendant or executable-retention assertion must fail.

@@ -20,8 +20,8 @@ The focused operation consumes Selection.Close and private-run Close errors befo
 Preserve child status beside required cleanup failure.
 Keep current command inputs and ordinary complete selection cleanup.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -34,6 +34,10 @@ This ticket belongs to PL-C4.
 Finish the preceding chunk review before this chunk starts.
 Its blockers include every prior overlapping Writes owner.
 No successor caller must exist for this ticket's owned predicates.
+
+Apply PL122 in runFocusedRequest, where the selection Close is deferred today.
+The private-run Close error is already consumed, and that consumption stays.
+Preserve repeated --package selection, and reuse the parking helper and installTestSelectionFactory.
 
 ## Acceptance
 
@@ -52,5 +56,7 @@ Preserve existing assertions and fixture mutation purpose.
 Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/testreport`
+- `bench test --check root-conformance`
+- `bench test --package ./internal/conformance`
 
 Mutation witness: Treat forced EOF as a complete report, wait before decoder completion, or discard Selection.Close failure. The real report and retained executable witnesses must fail.

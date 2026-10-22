@@ -16,8 +16,8 @@ External preflight refuses promotion while any applicable user remains protected
 Keep process, decode, cleanup, and evidence results separate.
 Do not reconstruct successful findings from truncated output or child zero.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -45,5 +45,7 @@ Preserve existing assertions and fixture mutation purpose.
 Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/releasepreflight`
+- `bench test --check root-conformance`
+- `bench test --package ./internal/conformance`
 
 Mutation witness: Restore an unbounded scanner wait or accept promotion from child zero with unresolved cleanup. The real resistant scanner or protected promotion assertion must fail.

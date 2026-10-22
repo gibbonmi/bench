@@ -25,8 +25,8 @@ Keep over-budget source files from gaining lines at this checkpoint.
 Move only cohesive outcome or phase composition into the co-owned runner or phases source when needed.
 Do not defer headroom debt to a successor.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -39,6 +39,8 @@ This ticket belongs to PL-C3.
 Finish the preceding chunk review before this chunk starts.
 Its blockers include every prior overlapping Writes owner.
 No successor caller must exist for this ticket's owned predicates.
+
+Keep runProcessGroupCommand as the scalar entry, because two existing gate tests call it.
 
 ## Acceptance
 
@@ -55,5 +57,7 @@ Preserve existing assertions and fixture mutation purpose.
 Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/gate`
+- `bench test --check root-conformance`
+- `bench test --package ./internal/conformance`
 
 Mutation witness: Replace INT with TERM, map timeout to interruption, or omit normal group drain. The actual gate signal and descendant-survival fixtures must fail.

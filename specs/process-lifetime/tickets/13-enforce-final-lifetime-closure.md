@@ -1,7 +1,7 @@
 # Enforce the complete caller and resource lifetime census
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md, 06-refuse-clean-of-protected-cache.md, 07-retain-prospective-gate-artifacts.md, 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md, 10-preserve-focused-test-completion.md, 11-preserve-worktree-exec-and-shell.md, 12-retain-shift-scratch-through-recovery.md
-Writes: CONTEXT.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_data.go, internal/anchors/registry_decision_maps.go, internal/anchors/registry_decision_maps_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/process_lifetime_test.go (new), internal/conformance/subcommand_routing_table_test.go, internal/runbinary/lifetime_darwin_test.go (new), internal/runbinary/pdeathsig_linux_test.go, internal/subprocess, internal/systemtest/process_lifetime_artifacts_test.go (new), internal/systemtest/process_lifetime_preservation_test.go (new), tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary
+Writes: CONTEXT.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_data.go, internal/anchors/registry_decision_maps.go, internal/anchors/registry_decision_maps_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/process_lifetime_test.go (new), internal/conformance/subcommand_routing_table_test.go, internal/runbinary/lifetime_darwin_test.go (new), internal/runbinary/pdeathsig_linux_test.go, internal/subprocess, internal/systemtest/process_lifetime_artifacts_test.go (new), internal/systemtest/process_lifetime_preservation_test.go (new), tests/canary/docs-currency-token-diet/signal-vocabulary-drift
 Covers: PL1, PL89, PL90, PL91, PL92, PL93, PL94, PL95, PL96, PL97, PL98, PL99, PL100, PL101, PL102, PL103, PL116, PL118
 
 ## What to build
@@ -28,8 +28,8 @@ Register actual fault ports with their real-producer junction tests.
 Close the source census and scope exclusions without weakening existing architecture checks.
 The final complete-source verification and reconciliation consume all ticket evidence.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -45,6 +45,9 @@ No successor caller must exist for this ticket's owned predicates.
 
 BENCH_KIT is supplied by bench test --check system through the existing sealed system owner.
 Do not introduce another subprocess fixture runner or private binary publisher.
+
+Each new system test calls t.Parallel and passes TMPDIR to its child by value.
+The closed system serial table gains no row.
 
 ## Acceptance
 
@@ -80,6 +83,9 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/runbinary`
 - `bench test --check system`
 - `bench test --check docs-currency-workflow`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/anchors`
 
 Mutation witness: Reintroduce a private scanner or shift loop, bypass one production caller, or certify output from child zero. The actual-tree audit or named caller differential must fail; restore and re-run the same check.
 

@@ -29,8 +29,7 @@ Decision ticket 6 identifies those owners and the resulting retention obligation
 
 This outcome serves every repository that links the kit.
 Kit-only tests use the same lifetime and resource owners.
-This planning stage changes no delivery commitment.
-FT290 remains the active commitment.
+This outcome is the active delivery commitment, FT362-process-lifetime.
 
 ## Solution
 
@@ -321,19 +320,14 @@ A partial Prepare rollback uses the same replacement owner and retains uncertain
 Protection owns directory creation and terminal record deletion durability because those are resource-protocol operations.
 A deletion-sync failure returns uncertain cleanup.
 Caller-supplied bounds limits keep the package independent of bounds.
+Persistence fault tests inject faults through the existing durablefile.Replacer seam and add no second fault port.
 
 ### Build-entry prerequisite
 
-Complete durable-file-replacement delivery must be accepted and landed before any process-lifetime implementation begins.
-The prerequisite is specs/durable-file-replacement/spec.md with its leaf, real review-record caller, and native qualification.
-PL-C1 starts after that complete outcome lands.
-PL-C2 consumes its landed internal/durablefile API.
-The prerequisite completes Bench whole-spec acceptance, reconciliation, and landing; D-A is its internal chunk.
-
-durable-caller-migration is not a prerequisite.
-It owns the remaining caller migrations as a separate delivery.
-The split prerequisite specification is accepted, but its implementation is not delivered at this checkpoint.
-If the leaf contract changes, revise this dependency before process build entry.
+The durable-file-replacement and durable-caller-migration deliveries landed before this build entry.
+PL-C2 consumes the internal/durablefile leaf as it stands on main.
+Its native qualification holds on Linux, and the reviewer left macOS open on FT354 on 2026-10-12.
+If the leaf contract changes, revise this dependency before the affected ticket starts.
 
 ### Ordering, admission, and failure
 
@@ -444,7 +438,7 @@ Existing owner-death fixtures gain complete proof or expect retention.
 Canonical bundle ownership and the no-recovered-execution rule remain intact.
 
 Gate and lane propagate complete lifetime outcomes through nested entry points.
-RunCaptured must stop reducing the outcome to an integer before resource owners consume it.
+runCaptured must stop reducing the outcome to an integer before resource owners consume it.
 Unresolved protection permits no green record, retained green evidence, or lane pass.
 Protection persistence failure leaves the pending verdict posture.
 Phase order, subject identity, and evidence reuse authority remain unchanged.
@@ -501,7 +495,7 @@ The last closes recovery and the complete census.
 
 The version 1 plan declares future evidence, not executed implementation results.
 The coordinator adds required version 2 fresh-author assignments before dispatch.
-The complete landed durability prerequisite applies before the first ticket.
+The durability prerequisite landed before the first ticket.
 The implementation line remains the approved proposal, with no binding change.
 
 The first two chunks expose the shared lifetime and protection seams through real bounds consumers.
@@ -513,7 +507,7 @@ All caller migrations precede the final global census and differential reconcili
 Worktree descriptor rows PL114 and PL115 join PL-C4 with their actual consumer.
 This narrower consumer assignment preserves all predicates and the five stable chunk IDs.
 
-Every ticket co-names its canonical registry, anchor, and fixture closure.
+Every ticket names each registry, anchor, and fixture holder that its change can make stale.
 Direct blockers order each shared Writes path, including holder files kept unchanged.
 Over-budget sources gain no lines without a cohesive move into that ticket's owned files.
 No later ticket can pay that checkpoint's headroom debt.
@@ -535,6 +529,34 @@ No later ticket can pay that checkpoint's headroom debt.
         {
           "id": "ticket-1-check-2",
           "command": "bench test --package ./internal/bounds"
+        },
+        {
+          "id": "ticket-1-check-3",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-1-check-4",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "ticket-1-check-5",
+          "command": "bench test --package ./internal/anchors"
+        },
+        {
+          "id": "ticket-1-check-6",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
+          "id": "ticket-1-check-7",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample"
+        },
+        {
+          "id": "ticket-1-check-8",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample"
+        },
+        {
+          "id": "ticket-1-check-9",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample"
         },
         {
           "id": "ticket-1-omission",
@@ -566,6 +588,38 @@ No later ticket can pay that checkpoint's headroom debt.
           "command": "bench test --check system"
         },
         {
+          "id": "ticket-2-check-5",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-2-check-6",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "ticket-2-check-7",
+          "command": "bench test --package ./internal/anchors"
+        },
+        {
+          "id": "ticket-2-check-8",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
+          "id": "ticket-2-check-9",
+          "command": "bench test --package ./internal/subprocess"
+        },
+        {
+          "id": "ticket-2-check-10",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample"
+        },
+        {
+          "id": "ticket-2-check-11",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample"
+        },
+        {
+          "id": "ticket-2-check-12",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample"
+        },
+        {
           "id": "ticket-2-omission",
           "command": "bench test --check system",
           "probe": "Drop inherited descriptors from the real bounds launch. The nested-provider witness must fail through bench test --check system."
@@ -587,6 +641,14 @@ No later ticket can pay that checkpoint's headroom debt.
           "command": "bench test --package ./internal/gate"
         },
         {
+          "id": "ticket-3-check-2",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-3-check-3",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
           "id": "ticket-3-omission",
           "command": "bench test --package ./internal/gate",
           "probe": "Replace INT with TERM, map timeout to interruption, or omit normal group drain. The actual gate signal and descendant-survival fixtures must fail."
@@ -594,6 +656,18 @@ No later ticket can pay that checkpoint's headroom debt.
         {
           "id": "ticket-4-check-1",
           "command": "bench test --package ./internal/runbinary"
+        },
+        {
+          "id": "ticket-4-check-2",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-4-check-3",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "ticket-4-check-4",
+          "command": "bench test --package ./internal/conformance"
         },
         {
           "id": "ticket-4-omission",
@@ -607,6 +681,18 @@ No later ticket can pay that checkpoint's headroom debt.
         {
           "id": "ticket-5-check-2",
           "command": "bench test --package ./internal/gate"
+        },
+        {
+          "id": "ticket-5-check-3",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-5-check-4",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "ticket-5-check-5",
+          "command": "bench test --package ./internal/conformance"
         },
         {
           "id": "ticket-5-omission",
@@ -624,6 +710,14 @@ No later ticket can pay that checkpoint's headroom debt.
         {
           "id": "ticket-6-check-3",
           "command": "bench test --check system"
+        },
+        {
+          "id": "ticket-6-check-4",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-6-check-5",
+          "command": "bench test --package ./internal/conformance"
         },
         {
           "id": "ticket-6-omission",
@@ -645,6 +739,22 @@ No later ticket can pay that checkpoint's headroom debt.
         {
           "id": "ticket-7-check-4",
           "command": "bench test --check docs-currency-workflow"
+        },
+        {
+          "id": "ticket-7-check-5",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-7-check-6",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "ticket-7-check-7",
+          "command": "bench test --package ./internal/anchors"
+        },
+        {
+          "id": "ticket-7-check-8",
+          "command": "bench test --package ./internal/conformance"
         },
         {
           "id": "ticket-7-omission",
@@ -671,6 +781,18 @@ No later ticket can pay that checkpoint's headroom debt.
           "command": "bench test --package ./internal/releaseevidence"
         },
         {
+          "id": "ticket-8-check-3",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-8-check-4",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "ticket-8-check-5",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
           "id": "ticket-8-omission",
           "command": "bench test --package ./internal/preprelease",
           "probe": "Keep the store inside a swapped stage or delete an abandoned protected stage from its owner marker alone. The resistant-child evidence sentinel must survive and the erroneous success assertion must fail."
@@ -678,6 +800,14 @@ No later ticket can pay that checkpoint's headroom debt.
         {
           "id": "ticket-9-check-1",
           "command": "bench test --package ./internal/releasepreflight"
+        },
+        {
+          "id": "ticket-9-check-2",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-9-check-3",
+          "command": "bench test --package ./internal/conformance"
         },
         {
           "id": "ticket-9-omission",
@@ -689,6 +819,14 @@ No later ticket can pay that checkpoint's headroom debt.
           "command": "bench test --package ./internal/testreport"
         },
         {
+          "id": "ticket-10-check-2",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-10-check-3",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
           "id": "ticket-10-omission",
           "command": "bench test --package ./internal/testreport",
           "probe": "Treat forced EOF as a complete report, wait before decoder completion, or discard Selection.Close failure. The real report and retained executable witnesses must fail."
@@ -696,6 +834,18 @@ No later ticket can pay that checkpoint's headroom debt.
         {
           "id": "ticket-11-check-1",
           "command": "bench test --package ./internal/worktree"
+        },
+        {
+          "id": "ticket-11-check-2",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-11-check-3",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "ticket-11-check-4",
+          "command": "bench test --package ./internal/conformance"
         },
         {
           "id": "ticket-11-omission",
@@ -724,6 +874,18 @@ No later ticket can pay that checkpoint's headroom debt.
           "command": "bench test --check system"
         },
         {
+          "id": "ticket-12-check-4",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-12-check-5",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "ticket-12-check-6",
+          "command": "bench test --package ./internal/worktree/reclaimpolicy"
+        },
+        {
           "id": "ticket-12-omission",
           "command": "bench test --package ./internal/shift",
           "probe": "Read cmd.Process before the serialized transition, let an empty dirty set authorize removal, or trust a stale cleanup fingerprint. The actual resistant adapter and protected scratch witnesses must fail."
@@ -747,6 +909,18 @@ No later ticket can pay that checkpoint's headroom debt.
         {
           "id": "ticket-13-check-5",
           "command": "bench test --check docs-currency-workflow"
+        },
+        {
+          "id": "ticket-13-check-6",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "ticket-13-check-7",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "ticket-13-check-8",
+          "command": "bench test --package ./internal/anchors"
         },
         {
           "id": "ticket-13-omission",
@@ -811,6 +985,7 @@ No new phase or gate order is required.
 The migration-closure package test parses actual production call sites.
 It rejects group setup, negative-PID termination, and private waiter/drain ownership outside subprocess and platform adapters.
 It permits read-only absence observations and test-only process fixtures.
+New system and worktree tests obey the parallel census of their package.
 
 The closure check resolves import aliases and negative operands through syntax.
 It cannot treat comments as executable mechanics.
@@ -1058,10 +1233,9 @@ This spec-only pass writes none of its production or test paths.
 Ticket design partitions it after independent spec review.
 No writer receives all of internal or worktree.
 
-The closure inventory uses the existing tickets.BoundFiles, anchors.ReferencingFiles, and canary.FixturePins owners.
-Starting with this complete fence, their transitive requirements reach a fixed point.
+The preflight closure owners are retired.
+The gate and the check-floor row find each missing Writes path, and the coordinator widens a Writes line through bench spec widen.
 Command-package and worktree edits co-name the five command registry files.
-Profile, glossary, and data-policy edits co-name every referring anchor registry.
 Individual fixture units below close their BASE, overlay, and mutation pins.
 No fixture-family prefix grants unrelated writes.
 
@@ -1069,7 +1243,7 @@ The added holders retain their existing assertions, diagnostics, and mutation pu
 Update only references or fixtures made stale by the approved ownership changes.
 A holder that needs no content change remains co-owned and unchanged.
 Do not weaken a check, remove an assertion, or change caller policy to close the fence.
-PL103 retains whole-spec fence review, and the existing preflight closure rows grade the later ticket slices.
+PL103 retains whole-spec fence review, and the gate grades each later ticket slice against its Writes line.
 
 - `cmd/bench/process_resources.go`
 - `internal/subprocess/`
@@ -1185,18 +1359,7 @@ Closure holders:
 - `tests/canary/skill-description-budgets/description-missing/`
 - `tests/canary/skill-description-budgets/over-budget-command/`
 - `tests/canary/skill-description-budgets/over-budget-description/`
-- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading/`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner/`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing/`
-- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership/`
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route/`
-- `tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary/`
-- `tests/canary/workflow-guidance-anchors/context-coverage-map-term/`
-- `tests/canary/workflow-guidance-anchors/context-coverage-row-parts/`
-- `tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary/`
-- `tests/canary/workflow-guidance-anchors/context-decision-map-term/`
-- `tests/canary/workflow-guidance-anchors/context-reader-sweep-term/`
-- `tests/canary/workflow-guidance-anchors/context-ticket-vocabulary/`
 
 Reviewer disposition: specification accepted at the retained checkpoint, ticket-graph review pending
 
@@ -1245,25 +1408,14 @@ Read sources: Testreport cancellation, worktree exec and shell, builder drain, p
 
 Read enforcement: Coverage parser and citations, conformance registry and checks, injected-port registry, cancellation registration, gate entry, and project profile
 
-Read closure: internal/tickets/registry_data.go, internal/preflight/closure.go, internal/preflight/gather.go, internal/anchors/references.go, and internal/canary/inventory.go
+Read closure: internal/canary/pins.go
 
-The author enumerated the fence through the existing accessors in a disposable read-only helper outside the repository.
-The fixed point adds 12 registry files and 37 individually named fixture units.
+The planning author enumerated the fence through closure accessors that a later delivery retired.
 No production test or gate ran for that enumeration.
 
 Read data policy: DATA_HANDLING.md and SECURITY.md
 
-Read dependency: specs/durable-file-replacement/spec.md from maintenance-primitives-spec
-Accepted split SHA256: 05c79801d3746e5250fb23d7261f66827f971e6d26c0f9661ec7aaff48a0c2f8
-Read graph-bearing SHA256: 4eacd9370ea59bf7003f897aa14e3e2702382b393b3db115727c094e61243333
-
-Read excluded successor: specs/durable-caller-migration/spec.md from maintenance-primitives-spec
-Accepted split SHA256: 32b04d2f6d1ce773170d1641eb3408a998d84656104c9fbf9702474f92c2ea66
-Read graph-bearing SHA256: 2d606f650bb99d3c6daa3d040f504f432210d7e0cdf5f428b53ddbb1878be1ee
-
-The source reads include ticket graph text added after independent split-spec acceptance.
-The prerequisite retains its seventeen accepted rows and the successor retains its remaining thirty-five rows.
-Build-entry prerequisite owns this process specification dependency and its implementation admission rule.
+Read dependency: internal/durablefile on main
 
 The data policy treats local records as mutable evidence and excludes same-user adversarial security guarantees.
 The protection protocol shares that posture.
@@ -1279,7 +1431,7 @@ DATA_HANDLING names the production record owner without duplicating its schema v
 | Duration registry | Bounds, gate, builder, exec, shell, testreport | Selected caller policies, PL28, PL66–PL67 |
 | Cache protection | Hold and exclusive clean, gate, lane, focused test | Shared lock before registration, PL55–PL57 |
 | Prospective identity | Open, ReadPublished, Publish, Close, sweep, gate engine, lane | One strict owner, PL58–PL60, PL75 |
-| Selected binary | Factory build-failure cleanup, Selection.Close, gate transaction, lane selection, focused test selection | PL36 and close-error composition |
+| Selected binary | Factory build-failure cleanup, Selection.Close, runbinary Shared, testreport HeldRuns, gate transaction, lane selection, focused test selection | PL36 and close-error composition |
 | Private test directory | OpenKitTestRun, Entries, Close, phases, testreport, preflight | PL37–PL38 and nested registration |
 | Worktree protection | Exec, shell, acquire, release, cleanup transaction, pool reclaim, shift teardown and recovery | PL82, PL85–PL88, PL117 |
 | Release evidence | Preflight finalization, atomic promotion, abandoned-stage cleanup, prep-release phase | PL61–PL62 and protection owner |
@@ -1369,7 +1521,7 @@ They add no capability beyond the map's resource and stream obligations.
 - Worktree reuse and reclaim consume protected-user disposition.
 - The next prospective schema retains ambiguous legacy proof.
 - Release evidence keeps protection outside its exchanged output directories.
-- Protection record publication consumes the complete delivery named in Build-entry prerequisite.
+- Protection record publication consumes the landed internal/durablefile leaf.
 
 These decisions take PL20–PL27, PL39–PL60, PL70–PL78, PL85–PL88, PL104–PL115, and PL119–PL123.
 Independent review must remove any unlisted acceptance expansion.

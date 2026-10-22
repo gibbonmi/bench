@@ -29,8 +29,8 @@ PL114 and PL115 stay with this actual environment-routing consumer.
 Keep over-budget resume from gaining lines.
 Move only cohesive protection composition into this ticket's co-owned worktree protection source.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -43,6 +43,10 @@ This ticket belongs to PL-C4.
 Finish the preceding chunk review before this chunk starts.
 Its blockers include every prior overlapping Writes owner.
 No successor caller must exist for this ticket's owned predicates.
+
+Exec and shell take their base environment from ambient.environ through execEnv and subshellAt.
+Append the reserved vector after the extra and --env values; tests inject environ, not os.Environ.
+The protected-user predicate reads git and the call directory through ambient.run and ambient.dir.
 
 ## Acceptance
 
@@ -60,5 +64,8 @@ Preserve existing assertions and fixture mutation purpose.
 Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/worktree`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/conformance`
 
 Mutation witness: Add a normal-exit group kill, strip the descriptor vector, or release the interrupted shell lease. The real command, environment, and lease assertions must fail.

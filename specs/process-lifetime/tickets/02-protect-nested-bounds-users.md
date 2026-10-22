@@ -34,8 +34,8 @@ The nested CLI installs the same available validators and registers its provider
 Prove two nested users, partial records, sealed pending admission, and retained disposition after CLI exit.
 This checkpoint does not depend on later gate, focused-test, worktree, or shift migrations.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -51,6 +51,11 @@ No successor caller must exist for this ticket's owned predicates.
 
 BENCH_KIT is supplied by bench test --check system through the existing sealed system owner.
 Do not introduce another subprocess fixture runner or private binary publisher.
+
+Each new system test calls t.Parallel and passes TMPDIR to its child by value.
+The closed system serial table gains no row.
+Reuse gocache.Contended and the held-map Holder for same-process shared descriptors; add no second lock table.
+Persistence fault tests inject faults through the existing durablefile.Replacer seam.
 
 ## Acceptance
 
@@ -107,5 +112,13 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/bounds`
 - `bench test --package ./internal/gocache`
 - `bench test --check system`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/anchors`
+- `bench test --package ./internal/conformance`
+- `bench test --package ./internal/subprocess`
+- `bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample`
+- `bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample`
+- `bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample`
 
 Mutation witness: Drop inherited descriptors from the real bounds launch. The nested-provider witness must fail through bench test --check system.

@@ -17,8 +17,8 @@ The gate phase owner consumes Close failure before reporting success.
 It consumes the selected-binary result from ticket 4 through its existing owner path.
 Keep the current private environment contents and ordinary completed-run cleanup.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -31,6 +31,10 @@ This ticket belongs to PL-C3.
 Finish the preceding chunk review before this chunk starts.
 Its blockers include every prior overlapping Writes owner.
 No successor caller must exist for this ticket's owned predicates.
+
+openKitRunDirectory creates the run under /dev/shm unless the caller sets TMPDIR.
+Create protection from the directory that it returns.
+KitTestRun.Close keeps its error return, so its testreport and releasepreflight consumers stay unchanged here.
 
 ## Acceptance
 
@@ -47,5 +51,8 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/env`
 - `bench test --package ./internal/gate`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/conformance`
 
 Mutation witness: Drop the private-run descriptor or discard KitTestRun.Close failure. The child-owned file survives while a successful phase result must disappear.

@@ -1,7 +1,7 @@
 # Retain shift scratch through startup cancellation and recovery
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md, 06-refuse-clean-of-protected-cache.md, 07-retain-prospective-gate-artifacts.md, 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md, 10-preserve-focused-test-completion.md, 11-preserve-worktree-exec-and-shell.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/shift/lifetime_test.go (new), internal/shift/loop.go, internal/shift/recover.go, internal/shift/session.go, internal/systemtest/process_lifetime_shift_test.go (new), internal/worktree/lifecycle.go, internal/worktree/pool_reclaim.go, internal/worktree/protection.go (new), internal/worktree/protection_test.go (new), internal/worktree/resume.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/shift/lifetime_test.go (new), internal/shift/loop.go, internal/shift/recover.go, internal/shift/session.go, internal/systemtest/process_lifetime_shift_test.go (new), internal/worktree/lifecycle.go, internal/worktree/pool_reclaim.go, internal/worktree/protection.go (new), internal/worktree/protection_test.go (new), internal/worktree/resume.go, internal/worktree/reclaimpolicy/reclaimpolicy.go, internal/worktree/reclaimpolicy/reclaimpolicy_test.go
 Covers: PL83, PL84, PL85, PL86, PL87, PL88, PL117
 
 ## What to build
@@ -20,11 +20,11 @@ Preserve deadline precedence and the current evidence taxonomy.
 Pause the production startup transition in the test, not a modeled command decision.
 Run the actual adapter and recovery owners in the second-process witness.
 
-Keep over-budget resume and shift sources from gaining lines.
+Keep resume.go and lifecycle.go within their structure grants.
 Move only cohesive protection or shutdown composition into this ticket's co-owned protection, session, or recovery source.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -40,6 +40,11 @@ No successor caller must exist for this ticket's owned predicates.
 
 BENCH_KIT is supplied by bench test --check system through the existing sealed system owner.
 Do not introduce another subprocess fixture runner or private binary publisher.
+
+Each new system test calls t.Parallel and passes TMPDIR to its child by value.
+The closed system serial table gains no row.
+PL88 adds its protected-member fact and verdict to internal/worktree/reclaimpolicy, the one reclaimability predicate.
+Refusal text in internal/worktree routes through internal/refusalroute.
 
 ## Acceptance
 
@@ -62,5 +67,8 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/shift`
 - `bench test --package ./internal/worktree`
 - `bench test --check system`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/worktree/reclaimpolicy`
 
 Mutation witness: Read cmd.Process before the serialized transition, let an empty dirty set authorize removal, or trust a stale cleanup fingerprint. The actual resistant adapter and protected scratch witnesses must fail.
