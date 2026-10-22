@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,6 +42,37 @@ func TestVerbsResolveIdentifierOperands(t *testing.T) {
 	}
 	if r := runVerb(t, verbRelease, f.call("--request", "landed-operand-forms", f.creation.Assignment.Label)); r.exit != 0 {
 		t.Fatalf("release by label exited %d: %s", r.exit, r.stderr)
+	}
+}
+
+// TestVerbCallDirectoryResolvesOperands proves that a relative operand resolves against the
+// directory that the verb call carries, and the process directory takes no part. The test
+// process runs in the package directory, which holds no worktree. A failed directory read
+// refuses only a relative operand, so an absolute operand still resolves when the
+// directory is gone.
+func TestVerbCallDirectoryResolvesOperands(t *testing.T) {
+	t.Parallel()
+	f := newOwnedAssignment(t, "call-directory")
+	relative := "." + string(filepath.Separator) + filepath.Base(f.creation.Path)
+	gone := errors.New("the call directory is gone")
+	at := func(dir string, dirErr error, args ...string) verbCall {
+		call := f.call(args...)
+		call.dir = func() (string, error) { return dir, dirErr }
+		return call
+	}
+	parent := filepath.Dir(f.creation.Path)
+	if planned := runVerb(t, verbClean, at(parent, nil, relative)); planned.exit != 0 || !strings.Contains(planned.stdout, f.creation.Path) {
+		t.Fatalf("clean %q = %d %q, want a plan for %q", relative, planned.exit, planned.stdout, f.creation.Path)
+	}
+	if r := runVerb(t, verbRelease, at("", gone, "--request", "landed-call-directory", relative)); r.exit != 1 || r.stderr != "bench worktree release: "+gone.Error()+"\n" {
+		t.Fatalf("release %q without a directory = %d %q, want the read failure", relative, r.exit, r.stderr)
+	}
+	second := mustCreate(t, f.root, f.home, "landed-call-directory-absolute", "absolute")
+	if r := runVerb(t, verbRelease, at("", gone, "--request", "landed-call-directory-absolute", second.Path)); r.exit != 0 {
+		t.Fatalf("release %q without a directory = %d %q, want it released", second.Path, r.exit, r.stderr)
+	}
+	if r := runVerb(t, verbRelease, at(parent, nil, "--request", "landed-call-directory", relative)); r.exit != 0 {
+		t.Fatalf("release %q = %d %q, want it released", relative, r.exit, r.stderr)
 	}
 }
 

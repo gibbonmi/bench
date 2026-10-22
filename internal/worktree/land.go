@@ -134,7 +134,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		return code
 	}
 	operand := resolveVerbOperand(root, parsed.Positionals[0])
-	path, err := canonicalPath(operand)
+	path, err := canonicalPathIn(a, operand)
 	if err != nil {
 		rerun := landingRerun(parsed.Flags["--request"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"], operand, "")
 		return landRefusalError(stdout, landingFaceRoute(errors.New("worktree path is not canonical"), rerun, false))

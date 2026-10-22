@@ -1,5 +1,6 @@
 // This file is the effect boundary: the one place the worktree package reads
-// ambient process context — environment variables, the clock, and the user's home.
+// ambient process context — environment variables, the clock, the current directory,
+// and the user's home.
 // Public commands call these adapters once at their boundary and pass the resolved
 // values down explicitly. Lower owners never read the environment, the current
 // directory, or the clock themselves; the source census test enforces that split.
@@ -9,6 +10,7 @@ package worktree
 import (
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
@@ -21,22 +23,26 @@ import (
 func currentTime() time.Time { return time.Now() }
 
 // ambient is the process context of one verb run: the Bench home and the warnings writer
-// that the verb entry received, the kit value, one instant, and the git run value that
-// holds the run's location answers. Each internal verb form takes it second, after the
-// joins value, so nothing below the entry reads the process.
+// that the verb entry received, the kit value, one instant, the git run value that holds
+// the run's location answers, and the call directory that a relative operand joins, or
+// the error of its failed read. Each internal verb form takes it second, after the joins
+// value, so nothing below the entry reads the process.
 type ambient struct {
 	home     string
 	kit      string
 	now      time.Time
 	warnings io.Writer
 	run      *git.Run
+	dir      string
+	dirErr   error
 }
 
-// newAmbient reads the kit value and the clock once, and it builds a fresh run value, so
-// no location answer outlives the verb run. The caller supplies the home and the warnings
-// writer.
+// newAmbient reads the kit value, the clock, and the process directory once, and it
+// builds a fresh run value, so no location answer outlives the verb run. The caller
+// supplies the home and the warnings writer.
 func newAmbient(home string, stderr io.Writer) ambient {
-	return ambient{home: home, kit: gate.KitValue(), now: currentTime(), warnings: stderr, run: &git.Run{}}
+	dir, dirErr := filepath.Abs(".")
+	return ambient{home: home, kit: gate.KitValue(), now: currentTime(), warnings: stderr, run: &git.Run{}, dir: dir, dirErr: dirErr}
 }
 
 // homeEnv is this package's name for the Bench home variable. internal/benchhome

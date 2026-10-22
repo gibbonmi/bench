@@ -33,7 +33,7 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 		fmt.Fprintln(stderr, line)
 		return code
 	}
-	path, err := canonicalPath(parsed.Positionals[0])
+	path, err := canonicalPathIn(a, parsed.Positionals[0])
 	if err != nil {
 		return landRefusalError(stdout, landingFaceRoute(errors.New("worktree path is not canonical"), resumeRerun(parsed.Flags, parsed.Positionals[0], ""), false))
 	}

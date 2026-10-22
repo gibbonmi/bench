@@ -118,6 +118,27 @@ func canonicalPath(path string) (string, error) {
 	return canonicalpath.Resolve(path)
 }
 
+// callPath makes a relative path absolute against the call directory that a carries, so
+// no code below the verb boundary joins it to the process directory. An absolute path
+// stays. A failed directory read leaves a relative path as given and returns the read's
+// error, so the failure surfaces only where a relative path needs the directory.
+func callPath(a ambient, path string) (string, error) {
+	if a.dirErr != nil && !filepath.IsAbs(path) {
+		return path, a.dirErr
+	}
+	return canonicalpath.Absolute(a.dir, path), nil
+}
+
+// canonicalPathIn is canonicalPath for a path operand of the verb call that a carries. Its
+// one refusal is the failed directory read, as canonicalPath's is.
+func canonicalPathIn(a ambient, path string) (string, error) {
+	path, err := callPath(a, path)
+	if err != nil {
+		return "", err
+	}
+	return canonicalPath(path)
+}
+
 // resolveOperand canonicalizes an operator-supplied target, resolving the portable `~`
 // form the worktree commands print. Both the plan and the apply that follows it route
 // through this, so a fingerprint taken from one addresses the same checkout as the

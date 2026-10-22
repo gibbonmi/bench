@@ -40,15 +40,18 @@ const (
 	verbLeaseFile   verbKey = "lease-file"
 )
 
-// verbCall is the input of one verb run. A call with no joins value, no kit value, and no
-// clock value runs the verb entry. Any other call runs the verb's joins form, with the
-// joins value unchanged or defaultJoins() when the call holds none. The kit value and the
-// clock value replace the reads of the ambient value that the joins form receives.
+// verbCall is the input of one verb run. A call with no joins value, no kit value, no
+// clock value, and no directory value runs the verb entry. Any other call runs the verb's
+// joins form, with the joins value unchanged or defaultJoins() when the call holds none.
+// The kit value, the clock value, and the directory value replace the reads of the ambient
+// value that the joins form receives. The directory value answers as the directory read
+// does, so a call can carry a failed read.
 type verbCall struct {
 	root  string
 	home  string
 	kit   string
 	clock func() time.Time
+	dir   func() (string, error)
 	stdin io.Reader
 	joins *joins
 	args  []string
@@ -132,7 +135,7 @@ func runVerb(t testing.TB, key verbKey, call verbCall) verbResult {
 	}
 	var stdout, stderr bytes.Buffer
 	var result verbResult
-	if call.joins == nil && call.kit == "" && call.clock == nil {
+	if call.joins == nil && call.kit == "" && call.clock == nil && call.dir == nil {
 		result.exit, result.assignment = form.entry(call, &stdout, &stderr)
 	} else {
 		if form.joined == nil {
@@ -150,7 +153,7 @@ func runVerb(t testing.TB, key verbKey, call verbCall) verbResult {
 }
 
 // callAmbient builds the ambient value with the constructor that each verb entry calls.
-// The call's kit value and clock value replace the constructor's reads.
+// The call's kit value, clock value, and directory value replace the constructor's reads.
 func callAmbient(call verbCall, stderr io.Writer) ambient {
 	a := newAmbient(call.home, stderr)
 	if call.kit != "" {
@@ -159,12 +162,15 @@ func callAmbient(call verbCall, stderr io.Writer) ambient {
 	if call.clock != nil {
 		a.now = call.clock()
 	}
+	if call.dir != nil {
+		a.dir, a.dirErr = call.dir()
+	}
 	return a
 }
 
-// checkVerbCall refuses a kit value or a clock value for a verb key without a joins form,
-// because only a joins form receives the ambient value. It does not check that a joins
-// form reads either value.
+// checkVerbCall refuses a kit value, a clock value, or a directory value for a verb key
+// without a joins form, because only a joins form receives the ambient value. It does not
+// check that a joins form reads any of them.
 func checkVerbCall(key verbKey, call verbCall) error {
 	if verbForms[key].joined != nil {
 		return nil
@@ -174,6 +180,9 @@ func checkVerbCall(key verbKey, call verbCall) error {
 	}
 	if call.clock != nil {
 		return fmt.Errorf("verb runner: the %s verb takes no clock value", key)
+	}
+	if call.dir != nil {
+		return fmt.Errorf("verb runner: the %s verb takes no directory value", key)
 	}
 	return nil
 }

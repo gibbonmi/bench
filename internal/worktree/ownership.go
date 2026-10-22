@@ -214,7 +214,7 @@ func validateCreationBundle(root string, assignment intent.Assignment) error {
 const releaseOperation = "worktree-release"
 
 func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (intent.CleanupReceipt, error) {
-	target, err := canonicalPath(targetArg)
+	target, err := canonicalPathIn(a, targetArg)
 	if err != nil {
 		return intent.CleanupReceipt{}, err
 	}

@@ -276,6 +276,12 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 	}
 	if target != "" {
 		target = resolveVerbOperand(root, target)
+		// The plan holds no call directory, so a relative operand joins it here. A `~` operand
+		// stays, because expandHomeTarget owns its refusal, and a failed directory read leaves
+		// the operand as typed, so the plan refuses it with its own text.
+		if !strings.HasPrefix(target, "~") {
+			target, _ = callPath(a, target)
+		}
 	}
 	if unclaimed {
 		set, planErr := planUnclaimedAssignmentSet(root, options)
@@ -354,7 +360,7 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 	}
 	if err != nil {
 		if plan.Target == "" {
-			plan.Target, _ = canonicalPath(target)
+			plan.Target, _ = canonicalPathIn(a, target)
 		}
 		plan.Action, plan.Reason = ActionError, err.Error()
 		if plan.Fingerprint == "" {

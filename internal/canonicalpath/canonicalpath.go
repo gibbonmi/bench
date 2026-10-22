@@ -25,16 +25,27 @@ func Operand(root, cwd, arg string) (path, display string) {
 	return path, filepath.ToSlash(relative)
 }
 
+// Absolute returns the absolute spelling of path against dir, the working directory that a
+// relative path starts from. An absolute path stays. The join is plain concatenation, not
+// filepath.Join, because a lexical clean would pop a ".." off the unresolved text before
+// Resolve follows the links.
+func Absolute(dir, path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return dir + string(filepath.Separator) + path
+}
+
 // Resolve returns one cleaned absolute spelling of path. A symbolic link resolves to its
 // target, so two spellings of one directory compare equal. A path that does not exist yet
 // carries no link to follow, so it keeps its absolute spelling. The only refusal is the
-// working-directory failure that leaves a relative path with no absolute form.
+// working-directory failure that leaves a relative path with no absolute form. A caller
+// that already holds the working directory resolves Absolute(dir, path), which reads none.
 //
-// A relative path joins the working directory before any link resolves. A process that
-// entered its directory through a link reads that link spelling back as its working
-// directory, so a link step that ran first would leave the link spelling in the answer.
-// The join is plain concatenation, not filepath.Join, because a lexical clean would pop a
-// ".." off the unresolved text.
+// A relative path joins the working directory through Absolute before any link resolves.
+// A process that entered its directory through a link reads that link spelling back as its
+// working directory, so a link step that ran first would leave the link spelling in the
+// answer.
 //
 // filepath.EvalSymlinks then runs before any lexical cleaning. A ".." that follows a
 // symbolic link component must pop off the link's resolved target, not off the unresolved
@@ -49,7 +60,7 @@ func Resolve(path string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		path = cwd + string(filepath.Separator) + path
+		path = Absolute(cwd, path)
 	}
 	resolved, err := filepath.EvalSymlinks(path)
 	if err != nil {
