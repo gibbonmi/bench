@@ -332,34 +332,6 @@ func ledgerLockCensus(dir string) ([]string, error) {
 	return reports, nil
 }
 
-// serialTableCensus reports every serial row that names no top-level test in dir, names
-// a test that calls t.Parallel(), or holds no reason.
-func serialTableCensus(dir string, serial map[string]string) ([]string, error) {
-	pkg, err := parseSystemPackage(dir)
-	if err != nil {
-		return nil, err
-	}
-	parallel := map[string]bool{}
-	for _, fn := range pkg.all {
-		if testcensus.IsTopLevelTest(fn.decl) {
-			parallel[fn.decl.Name.Name] = testcensus.CallsParallelDirectly(fn.decl)
-		}
-	}
-	var reports []string
-	for name, reason := range serial {
-		if isParallel, declared := parallel[name]; !declared {
-			reports = append(reports, fmt.Sprintf("serial row %s names no top-level test", name))
-		} else if isParallel {
-			reports = append(reports, fmt.Sprintf("serial row %s names a test that calls t.Parallel()", name))
-		}
-		if reason == "" {
-			reports = append(reports, fmt.Sprintf("serial row %s holds no reason", name))
-		}
-	}
-	sort.Strings(reports)
-	return reports, nil
-}
-
 // TestSystemParallelCensus proves the census refuses a test with no t.Parallel() call and
 // no serial reason, a parallel test that reaches the owner's repositories or names a
 // ledger field outside an owner writer, and a TMPDIR binding in the process, and that the
@@ -385,14 +357,4 @@ func TestLedgerWritesHoldTheOwnerLock(t *testing.T) {
 		})
 	}
 	requireReports(t, ledgerLockCensus, ".", nil)
-}
-
-// TestSystemSerialTableIsExact proves a serial row that names a missing test or a
-// parallel test, or that holds no reason, reds, and that the live table is exact.
-// (Coverage row LGP31.)
-func TestSystemSerialTableIsExact(t *testing.T) {
-	t.Parallel()
-	requireCensus(t, func(dir string) ([]string, error) { return serialTableCensus(dir, serialTableCase.table) },
-		serialTableCase.body, serialTableCase.want)
-	requireReports(t, func(dir string) ([]string, error) { return serialTableCensus(dir, systemSerialTests) }, ".", nil)
 }

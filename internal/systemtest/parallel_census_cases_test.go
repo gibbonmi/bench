@@ -41,7 +41,7 @@ var parallelCensusCases = []struct {
 }{
 	{"no call and no reason", "func TestQuiet(t *testing.T) {}\n", nil,
 		[]string{"planted_test.go:5: TestQuiet calls no t.Parallel() and holds no serial reason"}},
-	{"serial reason", "func TestQuiet(t *testing.T) {}\n", map[string]string{"TestQuiet": pendingMigration}, nil},
+	{"serial reason", "func TestQuiet(t *testing.T) {}\n", map[string]string{"TestQuiet": "binds process state"}, nil},
 	{"owner repository", "func TestShare(t *testing.T) { t.Parallel(); _ = owner.repos[0] }\n", nil,
 		[]string{"planted_test.go:5: TestShare calls t.Parallel() and reaches owner.repos"}},
 	{"owner repository through a method", "func TestShare(t *testing.T) { t.Parallel(); first() }\n\nfunc first() string { return owner.pick() }\n\nfunc (o *systemOwner) pick() string { return o.repos[0] }\n", nil,
@@ -90,11 +90,18 @@ var serialTableCase = struct {
 	body  string
 	want  []string
 }{
-	map[string]string{"TestSerial": "", "TestGone": pendingMigration, "TestMain": pendingMigration, "TestQuick": pendingMigration},
-	"func TestMain(m *testing.M) {}\n\nfunc TestSerial(t *testing.T) {}\n\nfunc TestQuick(t *testing.T) { t.Parallel() }\n",
+	map[string]string{"TestSerial": "", "TestGone": "binds process state", "TestMain": "binds process state", "TestQuick": "binds process state",
+		"TestLeft": pendingMigration, "TestOwnerSelectionChild": ownerRepositories, "TestExtra": ownerRepositories, "TestHidden": "binds process state"},
+	"func TestMain(m *testing.M) {}\n\nfunc TestSerial(t *testing.T) {}\n\nfunc TestQuick(t *testing.T) { t.Parallel() }\n\nfunc TestLeft(t *testing.T) {}\n\n" +
+		"func TestOwnerSelectionChild(t *testing.T) {}\n\nfunc TestExtra(t *testing.T) { _ = owner.repos[0] }\n\nfunc TestHidden(t *testing.T) { _ = owner.repos[0] }\n",
 	[]string{
+		"owner-repository subject TestSelectedExecutableComposition holds no owner-repository row",
+		"serial row TestExtra holds the owner-repository reason and names no owner-repository subject",
 		"serial row TestGone names no top-level test",
+		"serial row TestHidden reaches owner.repos without the owner-repository reason",
+		"serial row TestLeft holds the temporary reason \"pending migration\"",
 		"serial row TestMain names no top-level test",
+		"serial row TestOwnerSelectionChild holds the owner-repository reason and reaches no owner.repos",
 		"serial row TestQuick names a test that calls t.Parallel()",
 		"serial row TestSerial holds no reason",
 	},

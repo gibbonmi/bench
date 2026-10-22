@@ -2,10 +2,6 @@
 
 package systemtest
 
-// pendingMigration is the serial reason of a test that has not yet moved into the
-// parallel set.
-const pendingMigration = "pending migration"
-
 // ownerRepositories is the serial reason of a test whose subject is the owner's own
 // repositories.
 const ownerRepositories = "the owner's repositories are the test's subject"

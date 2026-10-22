@@ -329,14 +329,14 @@ The gate observes the result through `bench test --check system`, the package te
 | LGP28 | 28 | Every ledger write outside `TestOwnerSelectionChild` takes the owner mutex. | `internal/systemtest/parallel_census_test.go` (`TestLedgerWritesHoldTheOwnerLock`) | An unguarded write to `starts`, `seen`, or `terminal` reds by name. |
 | LGP29 | 29 | A parallel test that reaches `owner.repos`, or names a ledger field outside a mutex-guarded owner writer, reds the census. | `internal/systemtest/parallel_census_test.go` (`TestSystemParallelCensus`) | A parallel test that shares a repository or writes the ledger unguarded passes with no refusal. |
 | LGP30 | 30 | No `t.Setenv("TMPDIR"` call remains in the package. | `internal/systemtest/parallel_census_test.go` (`TestSystemParallelCensus`) | Each remaining TMPDIR binding reds by test name. |
-| LGP31 | 31 | Each serial table row names a test that exists and a reason. | `internal/systemtest/parallel_census_test.go` (`TestSystemSerialTableIsExact`) | A stale row or a row with no reason reds. |
-| LGP32 | 32 | The owner-repository serial reason names exactly `TestSelectedExecutableComposition` and `TestOwnerSelectionChild`, and both reach `owner.repos`. | planned TestSystemSerialTableIsExact in internal/systemtest/parallel_census_test.go | A test kept serial on an owner repository beyond the two subject tests reds by name. |
+| LGP31 | 31 | Each serial table row names a test that exists and a reason. | `internal/systemtest/serial_census_test.go` (`TestSystemSerialTableIsExact`) | A stale row or a row with no reason reds. |
+| LGP32 | 32 | The owner-repository serial reason names exactly `TestSelectedExecutableComposition` and `TestOwnerSelectionChild`, and both reach `owner.repos`. | `internal/systemtest/serial_census_test.go` (`TestSystemSerialTableIsExact`) | A test kept serial on an owner repository beyond the two subject tests reds by name. |
 | LGP33 | 33 | The system phase argv stays the pinned single `go test` call. | `internal/gate/branch_native_phases_test.go` (`TestBenchkitPhasesUseBranchNativeDrivers`) | A shard driver or a changed operand fails the exact argv. |
 | LGP34 | 34 | Each chunk records its package time before and after its change. | Review-owned: chunk verification record. | A chunk with no timing cannot support its speed claim. |
 | LGP35 | 35 | The build log names each reverted attempt. | Review-owned: build log at the final reconciliation. | A missing entry lets a later run repeat the attempt. |
 | LGP36 | 36 | The final report pairs landing-gate timings with each retained red proof. | Review-owned: final implementation reconciliation. | A faster green run alone cannot establish retained quality. |
 | LGP37 | 5 | The PS40 to PS43 witness keeps its passing-run guard and its expectation refusals on the shared fixture. | `internal/probe/verdict_test.go` (`TestExpectRequiresTheNamedWitness`) | A dropped subtest or a changed refusal fails the comparison. |
-| LGP38 | 31 | No serial table row holds the temporary reason "pending migration". | planned TestSystemSerialTableIsExact in internal/systemtest/parallel_census_test.go | A migration left unfinished keeps its temporary row and reds by name. |
+| LGP38 | 31 | No serial table row holds the temporary reason "pending migration". | `internal/systemtest/serial_census_test.go` (`TestSystemSerialTableIsExact`) | A migration left unfinished keeps its temporary row and reds by name. |
 
 ### Edge inventory
 
