@@ -62,24 +62,21 @@ func ClampFailure(diagnostic string) Start {
 // file supplies it, so this non-test package cannot publish a sealed run binary on its own.
 type Publisher func(root, staged, executable, manifestDir, version string) error
 
-// Repository writes the clamp package and a build-input closure into the Git checkout dir and
-// publishes a sealed run binary for it with publish. For the rest of the test, it binds the kit,
-// the run binary, a private Bench home, and the working directory to that root. It answers the
-// root with every link resolved, and the home.
+// Repository builds the clamp repository in the Git checkout dir with Build and binds it to
+// the test with Bind. It answers the root with every link resolved, and the home.
 func Repository(t testing.TB, dir string, publish Publisher) (string, string) {
 	t.Helper()
-	root, err := filepath.EvalSymlinks(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	binDir, err := filepath.EvalSymlinks(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
-	home, err := filepath.EvalSymlinks(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
+	root := resolved(t, dir)
+	executable := Build(t, root, resolved(t, t.TempDir()), publish)
+	return root, Bind(t, root, executable)
+}
+
+// Build writes the clamp package and a build-input closure into the Git checkout root. It
+// then publishes a sealed run binary for that root into binDir with publish, and it answers
+// the executable. Build binds nothing to the test, so a build can outlive the test that
+// starts it.
+func Build(t testing.TB, root, binDir string, publish Publisher) string {
+	t.Helper()
 	staged, executable := filepath.Join(binDir, "staged"), filepath.Join(binDir, "bench")
 	for _, file := range []struct {
 		path, body string
@@ -106,11 +103,30 @@ func Repository(t testing.TB, dir string, publish Publisher) (string, string) {
 	if err := publish(root, staged, executable, binDir, "probetest"); err != nil {
 		t.Fatal(err)
 	}
+	return executable
+}
+
+// Bind binds the kit, the run binary executable, a private Bench home, and the working
+// directory to root for the rest of the test. It answers the home.
+func Bind(t testing.TB, root, executable string) string {
+	t.Helper()
+	home := resolved(t, t.TempDir())
 	t.Setenv(runbinary.Env, executable)
 	t.Setenv("BENCH_KIT", root)
 	t.Setenv(benchhome.Env, home)
 	t.Chdir(root)
-	return root, home
+	return home
+}
+
+// resolved answers dir with every symbolic link resolved. The run-binary selection refuses a
+// path that traverses a link.
+func resolved(t testing.TB, dir string) string {
+	t.Helper()
+	path, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return path
 }
 
 // Start is what the canned `go` does on one `go test` start: the shell it runs first, the
@@ -156,10 +172,7 @@ func install(t testing.TB, marker, body string) {
 	if err := os.Remove(marker); err != nil && !os.IsNotExist(err) {
 		t.Fatal(err)
 	}
-	dir, err := filepath.EvalSymlinks(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
+	dir := resolved(t, t.TempDir())
 	quoted := sanitize.ShellQuote(marker)
 	script := "#!/usr/bin/env bash\n" +
 		"printf '%s\\n' \"$1\" >> " + quoted + "\n" +

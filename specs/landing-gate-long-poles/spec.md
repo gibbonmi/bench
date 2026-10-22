@@ -299,9 +299,9 @@ The gate observes the result through `bench test --check system`, the package te
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| LGP1 | 1 | Two `clampFixture` calls in one package run invoke the fixture publisher once. | planned TestClampGoldenBuildsOnce in internal/probe/golden_test.go | A fixture that still builds its own repository invokes the publisher a second time. |
-| LGP2 | 2 | A write in one fixture copy leaves a second copy's subject bytes unchanged. | planned TestClampCopiesAreIsolated in internal/probe/golden_test.go | A shared root or a hard link shows the write in the second copy. |
-| LGP3 | 3 | A fixture copy passes the run-binary freshness check for its own root. | planned TestClampCopyKeepsAFreshSeal in internal/probe/golden_test.go | A stale seal refuses the selection with the freshness diagnostic. |
+| LGP1 | 1 | Two `clampFixture` calls in one package run invoke the fixture publisher once. | `internal/probe/golden_test.go` (`TestClampGoldenBuildsOnce`) | A fixture that still builds its own repository invokes the publisher a second time. |
+| LGP2 | 2 | A write in one fixture copy leaves a second copy's subject bytes unchanged. | `internal/probe/golden_test.go` (`TestClampCopiesAreIsolated`) | A shared root or a hard link shows the write in the second copy. |
+| LGP3 | 3 | A fixture copy passes the run-binary freshness check for its own root. | `internal/probe/golden_test.go` (`TestClampCopyKeepsAFreshSeal`) | A stale seal refuses the selection with the freshness diagnostic. |
 | LGP4 | 4 | The PB1 witness still runs a real `go test` child and bites. | `internal/probe/probe_test.go` (`TestProbeBitesWhenTheFocusedTestFails`) | A stubbed child or a skipped run loses the packages table. |
 | LGP5 | 5 | The PB22 usage witness keeps every refusal case on the shared fixture. | `internal/probe/refusal_test.go` (`TestProbeUsageNamesOneSelectionAndOneMutation`) | A dropped case or a changed usage text fails the comparison. |
 | LGP6 | 6 | The two kit-copy tests together invoke the run-binary builder at most once. | planned TestOwnedSelectionBuildsOnce in internal/testreport/selection_once_test.go | A test that still builds its own selection invokes the builder a second time. |

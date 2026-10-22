@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/freshness"
-	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
@@ -23,10 +21,10 @@ type fixture struct {
 	marker  string
 }
 
-// clampFixture builds the probetest clamp repository and binds a start marker to it.
+// clampFixture takes a private copy of the clamp golden and binds a start marker to it.
 func clampFixture(t *testing.T) *fixture {
 	t.Helper()
-	root, home := probetest.Repository(t, gittest.Repo(t), freshness.Publish)
+	root, home := clampCopy(t)
 	return &fixture{
 		root:    root,
 		home:    home,
