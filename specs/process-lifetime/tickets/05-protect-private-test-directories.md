@@ -1,7 +1,7 @@
 # Retain private test directories through phase cleanup
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/env/kit_run.go, internal/env/kit_run_lifetime_test.go (new), internal/env/kit_run_test.go, internal/env/protection.go (new), internal/gate/engine.go, internal/gate/lifetime_resources_test.go (new), internal/gate/phases.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/env/kit_run.go, internal/env/kit_run_lifetime_test.go (new), internal/env/kit_run_test.go, internal/env/protection.go (new), internal/gate/engine.go, internal/gate/lifetime_resources_test.go (new), internal/gate/phases.go, internal/subprocess/control.go, internal/subprocess/lifetime_test.go, internal/gate/runner.go
 Covers: PL37, PL38
 
 ## What to build
@@ -36,6 +36,11 @@ openKitRunDirectory creates the run under /dev/shm unless the caller sets TMPDIR
 Create protection from the directory that it returns.
 KitTestRun.Close keeps its error return, so its testreport and releasepreflight consumers stay unchanged here.
 
+Reviewer decision 2026-10-22: a process with no installed protocol registers no launch and keeps its inherited vector.
+Guard the one Prepare call in internal/subprocess/control.go with a non-nil Protocol, and test that path.
+Pin in cmd/bench that Command.Run installs the table before any launch, so production stays fail-closed.
+Register the direct phase child on the inherited vector plus the private-run descriptor in internal/gate/runner.go.
+
 ## Acceptance
 
 - [ ] PL37: KitTestRun.Close retains a protected private directory.
@@ -54,5 +59,6 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --check root-conformance`
 - `bench test --package ./cmd/bench`
 - `bench test --package ./internal/conformance`
+- `bench test --package ./internal/subprocess`
 
 Mutation witness: Drop the private-run descriptor or discard KitTestRun.Close failure. The child-owned file survives while a successful phase result must disappear.
