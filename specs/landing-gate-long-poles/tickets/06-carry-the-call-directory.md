@@ -8,7 +8,7 @@ Covers: LGP18, LGP22, LGP34
 
 A verb run carries its working directory, and a relative operand resolves against it.
 
-`internal/canonicalpath` gains a form of `Resolve` that takes the directory as an argument. It keeps exactly the semantics of `Resolve` (`internal/canonicalpath/canonicalpath.go:46-59`): it joins the parts as text and resolves symlinks before it cleans. `canonicalpath.Operand` is not that form, because it cleans lexically.
+`internal/canonicalpath` gains `Absolute(dir, path)`, a form that takes the directory as an argument and joins as text; `Resolve` of its result keeps exactly the semantics of `Resolve` (`internal/canonicalpath/canonicalpath.go:46-59`): it joins the parts as text and resolves symlinks before it cleans. `canonicalpath.Operand` is not that form, because it cleans lexically.
 
 `effects.go` reads the process directory once at the verb boundary into `ambient`. A failed read is carried forward, and it surfaces only when a relative operand needs it. So an absolute operand still works in a removed directory.
 
@@ -32,7 +32,7 @@ The new process-directory read in `effects.go` joins the read set of the single-
 
 `verbCall` (`verb_runner_test.go:47-55`) gains a working-directory field. Extend `checkVerbCall` and its refusal tests as the kit and clock fields do. A verb with no joins form (create, reclaim, list, path, show, exec, pool, lease-file) refuses the field.
 
-Put the LGP18 test in `identifier_operand_test.go`. It calls `t.Parallel`, so `worktreeTestCount` rises by one and the ceiling stays unchanged. Record that arithmetic.
+Put the LGP18 test in `identifier_operand_test.go`. It calls `t.Parallel`, and so does the `verbCall` directory refusal test, so `worktreeTestCount` rises by two and the ceiling stays unchanged. Record that arithmetic.
 
 ## Acceptance
 
