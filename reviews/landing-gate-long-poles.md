@@ -3074,7 +3074,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c4a-standards-r0",
+          "performer": "claude:lgp-c4a-standards-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "613330b3ae0c5a4981e8b6b7f44848444900dbc3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-standards-20261022",
+            "digest": "sha256:0870495d9c6e809ecad45bc8e4e0504637eca1b6541efa515584f94ed5c0de8c",
+            "excerpt": "Standards axis, LGP-C4A (c9d119580..7a2756b18): 0 findings. The worktree delegates are one-line forwards kept for callers outside the fence, not a second derivation. Moving WriteTargets and AssignRoot keeps one resolver, and no lowercase copy remains. Census rules (3) to (5) are each stated in a why comment. journeyRepository follows ticket 10 line 29 and merges two git-init copies. testcensus.Plant follows the tree's non-test helper packages that import testing (internal/gittest, internal/probe/probetest, internal/testrepo). \"pending migration\" is spelled once. Advice: the systemtest census classifies top-level tests twice with the same loop; the testcensus package comment \"Only tests import this package\" is an unenforced claim.\n"
+          },
+          "axis": "Standards",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "7a2756b185f179332d6fc3e779412fc7e8534908",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4a-spec-r0",
+          "performer": "claude:lgp-c4a-spec-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "613330b3ae0c5a4981e8b6b7f44848444900dbc3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-spec-20261022",
+            "digest": "sha256:aeea187aa85efd376099ac2467f2e76b3a73724c8136d062a5d4a214b22b13ed",
+            "excerpt": "Spec axis, LGP-C4A (c9d119580..7a2756b18): 0 open findings. LGP25 met (planted no-call-no-reason refusal; live census passes). LGP26 met: owner_test.go keeps func TestMain(, for range 3, len(o.repos) != 3, and both strippedJourneyMarker occurrences, and the root-conformance run grades TestBranchNativeArchitectureCensus. LGP28 met with eight live owner writers. LGP29 met; every live owner.repos site sits in a bare function or a test. LGP31 met: 105 rows, 103 pending migration plus TestOwnerSelectionChild and TestSelectedExecutableComposition with the owner-repository reason. The planned probe ran with the plan's command bench test --check system and bit. P1 (record placement) closes here: the coordinator records the ticket 10 author's system phase times from commit 7a2756b18's body, 109854 ms (181 tests) before and 112018 ms (196 tests) after, with 111152 ms at the record run, inside the spread. Advice: decision 3's leaf rule could hide an owner.repos reach through a later non-owner method; spec line 216 cites stale line numbers.\n"
+          },
+          "axis": "Spec",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "7a2756b185f179332d6fc3e779412fc7e8534908",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4a-coverage-r0",
+          "performer": "claude:lgp-c4a-coverage-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "613330b3ae0c5a4981e8b6b7f44848444900dbc3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-coverage-20261022",
+            "digest": "sha256:ff0ee5b227b5dceb03654526d8045ea9da0c183c004fe8391066953d4d14da43",
+            "excerpt": "Coverage axis, LGP-C4A (c9d119580..7a2756b18): 6 findings, dispositioned by consultant decision (opus/high and sonnet/high; fable/high broke the C3 and C6 ties). Accepted for one ticket 10 repair: C1, reach skips owner writers for the repos rule too, while spec :207 binds reach through any test-file helper and the writer exemption at :208 covers only the ledger rule; C2, callees follows only a called identifier or owner selector, so a function value or method value (f := owner.pick; f()) reaches owner.repos unrefused; C3, a method on a non-owner receiver that reads owner.repos is a leaf, while spec :207 binds methods as test-file helpers (resolve a selector call by method name; no live false refusal). No-op: C4, a goroutine or conditional lock needs flow analysis, and spec :209 defines the rule by position; C5, spec :211 scopes matching to owner or o selectors; C6, census.go:108 already compares the receiver name. Probes P1 and P2 (planted rows that should refuse) read silent, restored yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "7a2756b185f179332d6fc3e779412fc7e8534908",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
