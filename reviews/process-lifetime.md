@@ -592,6 +592,7 @@
 ## Repair state
 
 PL-C1 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies.
+Repair 1 (commit 36c2fa86a) closed S1, S2, C1, and C3. The C2 disposition moved to no-op by consultant tie-break, as a record-only correction.
 
 ## Standards
 
@@ -609,7 +610,7 @@ PL-C1 round r1: 0 findings. Worst issue: none.
 PL-C1 round r1: 4 findings. Worst issue: C1, the expired-deadline KILL of a late Start has no biting test.
 
 - C1 | auto-fix | confidence 7 | `internal/subprocess/control.go:177` | No test bites the forced KILL without another grace for a late Start after an expired deadline (spec.md:136).
-- C2 | auto-fix | confidence 5 | `internal/bounds/bounds.go:257` | No test fails when bounds certifies completion over a failed or force-closed stream (ticket 01 line 40). The axis asked for the user; the orchestrator routed it as auto-fix with a real child and no new fault port.
+- C2 | no-op | confidence 5 | `internal/bounds/bounds.go:257` | No test fails when bounds certifies completion over a failed or force-closed stream (ticket 01 line 40). The repair found that no real child reaches the loop under the production policy. The consultants split, and the fable tie-break chose no-op. The loop is the bounds status projection over the separate stream facts of `subprocess.Outcome` (spec.md:38; ticket 01:25). Each later caller composes those facts under its own contract (spec.md:169-183; ticket 09:16). The branch stays as defense-in-depth with no test.
 - C3 | auto-fix | confidence 5 | `internal/subprocess/outcome.go:128` | No test fails when a forced closure reports the cleanup as not requested (spec.md:146).
 - C4 | no-op | confidence 4 | `internal/subprocess/control.go:81` | PL89 in PL-C5 is the planned witness for the platform-attribute rule.
 
