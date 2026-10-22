@@ -28,7 +28,9 @@ func TestOtelCrashKeepsStartedPhaseLine(t *testing.T) {
 	t.Parallel()
 	home := filepath.Join(t.TempDir(), "bench-home")
 	pidFile := filepath.Join(t.TempDir(), "slow.pid")
-	argv, err := json.Marshal([]string{"sh", "-c", `echo $$ > "$0"; exec sleep 30`, pidFile})
+	// The phase end waits only until the pid file exists. So the phase writes its pid to a
+	// temporary name first, and the rename publishes the whole pid at once.
+	argv, err := json.Marshal([]string{"sh", "-c", `echo $$ > "$0.tmp"; mv "$0.tmp" "$0"; exec sleep 30`, pidFile})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,6 +40,7 @@ func TestOtelCrashKeepsStartedPhaseLine(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	endSlow := phaseEnd(t, home, pidFile, "slow")
 	// The wait polls the record file itself, because the record is the only evidence the
 	// phase has begun. The gate's own output is buffered until the run ends, which the
 	// kill prevents.
@@ -68,42 +71,51 @@ func TestOtelCrashKeepsStartedPhaseLine(t *testing.T) {
 	if slow.Parent == "" {
 		t.Fatalf("slow phase span = %+v, want the started root gate span as its parent", slow)
 	}
-	endPhase(t, home, pidFile, "slow")
+	endSlow()
 }
 
-// endPhase kills the phase whose pid is in pidFile and waits until the record below home
-// holds that phase's end line. The gate starts each phase in a process group of its own,
-// so the kill of the gate's group leaves the phase running. When the phase exits, its
-// runner writes the end line below home. That write must come before the test removes its
-// temporary directory.
-func endPhase(t *testing.T, home, pidFile, name string) {
+// phaseEnd answers a function that ends the phase whose pid is in pidFile. The end kills
+// the phase and waits until the record below home holds the phase's end line. The gate
+// starts each phase in a process group of its own, so the kill of the gate's group leaves
+// the phase running. When the phase exits, its runner writes the end line below home. That
+// write must come before the test removes its temporary directory, so a cleanup also runs
+// the end when the test stops early. The end runs once, because a second kill can reach a
+// reused pid.
+func phaseEnd(t *testing.T, home, pidFile, name string) func() {
 	t.Helper()
-	// The phase writes its pid before it sleeps, so this wait covers a start-up handshake
-	// with no window of its own.
-	window := bounds.TestDeadline(0)
-	deadline := time.Now().Add(window)
-	for {
-		data, _ := os.ReadFile(pidFile)
-		if pid, err := strconv.Atoi(strings.TrimSpace(string(data))); err == nil {
-			// A phase that already exited has written, or will write, the same end line.
-			if err := syscall.Kill(pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
-				t.Fatalf("kill the %s phase %d: %v", name, pid, err)
-			}
-			break
+	ended := false
+	end := func() {
+		t.Helper()
+		if ended {
+			return
 		}
-		if time.Now().After(deadline) {
-			t.Fatal(bounds.TestTimeoutVerdict("the "+name+" phase to write its pid file "+pidFile, window))
+		ended = true
+		waitForFile(t, pidFile, "the "+name+" phase to write its pid file "+pidFile)
+		data, err := os.ReadFile(pidFile)
+		if err != nil {
+			t.Fatal(err)
 		}
-		time.Sleep(10 * time.Millisecond)
+		pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
+		if err != nil {
+			t.Fatalf("the %s phase pid file %s: %v", name, pidFile, err)
+		}
+		// A phase that already exited has written, or will write, the same end line.
+		if err := syscall.Kill(pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
+			t.Fatalf("kill the %s phase %d: %v", name, pid, err)
+		}
+		awaitSpan(t, home, name, true)
 	}
-	awaitSpan(t, home, name, true)
+	t.Cleanup(end)
+	return end
 }
 
 // awaitSpan blocks until the record below home holds a span of the given name, ended or
 // started as asked. It reads leniently, because the run still appends while the wait
-// reads. The window contains one gate run's start-up: the run reads git worktree state
-// before it enters the phase table, so that read is the longest bound the wait has to
-// outlast.
+// reads. A wait for the started line contains one gate run's start-up. The run reads git
+// worktree state before it enters the phase table, and that read is the longest bound the
+// window must outlast. A wait for the end line follows the kill of the phase, and the
+// runner writes that line when it reaps the phase. That wait has no bound of its own, so
+// the same window contains it.
 func awaitSpan(t *testing.T, home, name string, ended bool) {
 	t.Helper()
 	window := bounds.TestDeadline(bounds.WorktreeListTimeout)
