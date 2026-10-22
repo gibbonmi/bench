@@ -14,7 +14,7 @@ Create that parent directory lazily, inside the golden build, and not eagerly in
 
 `clampFixture` (`internal/probe/probe_test.go:27-36`) copies the golden into private directories for each test. The repository root with its `.git`, the executable, the seal, and the manifest directory move together, because the seal holds digests and no path (`internal/freshness/freshness_publish.go:97-111`). Each test keeps its own environment bindings and its `t.Chdir`.
 
-The broker manifest of a copy still names the golden executable (`internal/brokermanifest/brokermanifest.go:50-55`). No probe reader reads it, because `runbinary.Validate` checks only the seal (`internal/runbinary/runbinary.go:169-195`).
+The broker manifest of a copy still names the golden executable (`internal/brokermanifest/brokermanifest.go:50-55`). No probe reader reads it, because `runbinary.Validate` checks only the seal (`internal/runbinary/runbinary.go:176-202`).
 
 `TestProbeOmitsTheMatchOnce`, `TestProbeIsSilentWhenTheFocusedTestPasses`, and `TestProbeIsInvalidWhenTheMutationDoesNotCompile` (`internal/probe/probe_test.go:206-224`) also run a real `go test` child. They must pass on the copy too.
 

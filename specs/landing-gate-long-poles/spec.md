@@ -118,14 +118,14 @@ The probe test package gains a package-run golden of the clamp repository. It fo
 `clampFixture` and `refusalFixture` take a private copy of the golden for each test. The copy keeps file bytes and modes, and it keeps a valid git repository.
 The golden build calls the fixture publisher once. `probetest.Repository` takes that publisher as an argument (`internal/probe/probetest/fixture.go:69`), so a counting publisher observes the builds.
 The seal holds source and executable digests and no root path (`internal/freshness/freshness_publish.go:97-111`). So a byte-identical copy keeps a valid seal, when the executable, the seal, and the manifest directory move together.
-The publisher also writes a broker manifest whose `path` field binds the golden executable (`internal/brokermanifest/brokermanifest.go:50-55`). No probe or testreport reader reads that manifest, because `runbinary.Validate` checks only the seal (`internal/runbinary/runbinary.go:169-195`). So the stale manifest of a copy is harmless.
+The publisher also writes a broker manifest whose `path` field binds the golden executable (`internal/brokermanifest/brokermanifest.go:50-55`). No probe or testreport reader reads that manifest, because `runbinary.Validate` checks only the seal (`internal/runbinary/runbinary.go:176-202`). So the stale manifest of a copy is harmless.
 The build keeps the environment bindings and the `t.Chdir` of `probetest.Repository` (`internal/probe/probetest/fixture.go:106-112`) for each test.
 
 `TestProbeBitesWhenTheFocusedTestFails` keeps its real `go test` child (PB1). The witnesses PB22 and PS40 to PS43 keep every assertion. The build removes no test from either package.
 
-The testreport package builds its run binary once for each package run, as `testRunSelector` does (`internal/worktree/test_run_test.go:16-52`). An inherited `BENCH_RUN_BINARY` wins, and a present invalid selection refuses.
+The testreport package builds its run binary once for each package run through `runbinary.Shared` (`internal/runbinary/shared.go`), as `testRunSelector` does (`internal/worktree/test_run_test.go:19-34`). An inherited `BENCH_RUN_BINARY` wins, and a present invalid selection refuses, by the one rule of `Factory.Select` (`internal/runbinary/runbinary.go:77-85`).
 A counting builder wraps the run-binary build, so the two kit-copy tests together show at most one build.
-The probe verb's own run-binary check can still run `go list -deps` through `freshness.VerifyAt` (`internal/runbinary/runbinary.go:155-163`). This spec claims no saving from that check.
+The probe verb's own run-binary check can still run `go list -deps` through `freshness.VerifyAt` (`internal/runbinary/runbinary.go:162-171`). This spec claims no saving from that check.
 `TestRootConformanceCheckPrintsFailures` and `TestNamedCheckRunsOnlyRegisteredDevScope` keep their real children and their kit copies. The build reuses a run binary only where the kit-copy sources match the binary's seal.
 
 ### Git location answers for one command run
