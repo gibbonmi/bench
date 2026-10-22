@@ -34,7 +34,7 @@ A signature change of `runWorktreeChild` reaches its calls at `exec_test.go:33`,
 
 `verbCall` gains a child base environment field. Extend `checkVerbCall` and its refusal tests in `verb_runner_check_test.go`, which ticket 06 also extended. Keep that file at or under 400 lines. The field applies to the verbs with a joins form. Exec has none (`verb_runner_check_test.go:168-178`), so the LGP19 test passes the base environment to `runWorktreeChild` directly.
 
-Put the LGP19 test in the new `internal/worktree/exec_call_env_test.go`. It calls `t.Parallel`, so the count rises by one. Record that arithmetic.
+Put the LGP19 test in the new `internal/worktree/exec_call_env_test.go`. It calls `t.Parallel`, and so does the `verbCall` environment refusal test, so the count rises by two. Record that arithmetic.
 
 Record `bench test --full --package ./internal/worktree` before and after the change, for LGP34.
 
