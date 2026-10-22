@@ -1065,6 +1065,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2a-standards-r1",
+          "performer": "claude:lgp-c2a-standards-r1-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2a-standards-r1-20261021",
+            "digest": "sha256:08acc06cc556e74aa8af04b6a05d48eaf090ed962b8e62b5aacc212281c944f5",
+            "excerpt": "Standards axis, LGP-C2A confirming round (repair delta de63c6090..4c4d1df00): S1 closed (9), 0 new findings. One gittest.StubGitStarts(t, logPath, flag) at internal/gittest/gittest.go:140-155 serves internal/git/run_cache_test.go and internal/poolkey/run_test.go:24; the local gitStarts and the inline count are gone. Advice: the two new tests carry no coverage-row tag; the StubGitStarts doc names StubGitDir.\n"
+          },
+          "axis": "Standards",
+          "base": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+          "tip": "4c4d1df002f9b734aa5db8a99032dabf669c7318",
+          "finding_ids": [],
+          "supersedes": [
+            "c2a-standards-r0"
+          ]
+        },
+        {
+          "id": "c2a-spec-r1",
+          "performer": "claude:lgp-c2a-spec-r1-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2a-spec-r1-20261021",
+            "digest": "sha256:25db2b1e8b9276f0109ad48f46d2476c01122c0b2b921564461b572687b3f1d8",
+            "excerpt": "Spec axis, LGP-C2A confirming round (repair delta de63c6090..4c4d1df00): LGP9-LGP15 met at 4c4d1df00, 0 new findings. The delta touches only internal/git/run_cache_test.go, internal/poolkey/run_test.go, and internal/gittest/gittest.go, so no production file of internal/git or internal/poolkey changes; each row's test keeps its name and its assertions. Advice: StubGitStarts counts lines, which matches one stub line per start; the poolkey failure message no longer prints the log.\n"
+          },
+          "axis": "Spec",
+          "base": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+          "tip": "4c4d1df002f9b734aa5db8a99032dabf669c7318",
+          "finding_ids": [],
+          "supersedes": [
+            "c2a-spec-r0"
+          ]
+        },
+        {
+          "id": "c2a-coverage-r1",
+          "performer": "claude:lgp-c2a-coverage-r1-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4a16f6b13947814e1769e848c0eb30d91ff85547",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2a-coverage-r1-20261021",
+            "digest": "sha256:1763df2a438eff32395f805c935ddd2a5138a6d1938d218273fe9dbca746fab6",
+            "excerpt": "Coverage axis, LGP-C2A confirming round (repair delta de63c6090..4c4d1df00): C1 closed (9), C2 closed (8), 0 new findings. Independent probes, all restored yes: RootAt keyed as the admin directory bit (TestRunCachesTopLevelAndAdminDir); StubGitStarts counting every log line bit (TestRunCachesTheCommonDir and two more); a failed answer stored only for the admin and top-level locations read silent. Advice: answer has no per-location branch and t03-failure-memo bites, so a failed AdminDir case would only harden the test.\n"
+          },
+          "axis": "Coverage",
+          "base": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+          "tip": "4c4d1df002f9b734aa5db8a99032dabf669c7318",
+          "finding_ids": [],
+          "supersedes": [
+            "c2a-coverage-r0"
+          ]
         }
       ]
     }
@@ -1166,3 +1232,8 @@ Count: 2 findings, accepted. Worst issue: C1.
 
 - C1 (auto-fix, confidence 7): an admin-directory read keyed as the common directory passes, because LGP10 runs in a primary checkout (`internal/git/run.go:49`). Route: ticket 03 repair, with a linked-worktree test.
 - C2 (auto-fix, confidence 6): a cached failed query passes, although `internal/git/run.go:77-78` says a failed start stores nothing. Route: ticket 03 repair, with a failed-query test.
+
+### LGP-C2A state
+
+Repair cycle 1 closed S1, C1, and C2 at the tip `4c4d1df00`, and the confirming round passed on all three axes. The chunk used 1 of its 2 repair cycles and its one hardening cycle.
+`gittest.StubGitStarts` is the one start counter for tickets 04 and 05.
