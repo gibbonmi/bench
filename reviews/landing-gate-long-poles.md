@@ -2381,7 +2381,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3c-standards-r0",
+          "performer": "claude:lgp-c3c-standards-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "af5ffed93be6a7c13b2d61d29823624d986a8bb4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3c-standards-20261022",
+            "digest": "sha256:97388da1495f8bc8abe027397f84c15af8ad0934deb35325bacdfc55131776e7",
+            "excerpt": "Standards axis, LGP-C3C (b2f333d0b..8c3e7f18f): 2 findings. S1 (closed in this round, no code change): TestVerbCallRefusesAnEnvironmentValue checks an independently written refusal string with no recorded red; the Coverage axis demonstrated that red (probe P4, the checkVerbCall environ refusal disabled, bit, restored yes), which meets AGENTS.md's record-and-demonstrate condition. S2 (accepted, repair): the ambient doc (effects.go:40-41) says environ is the base environment of each child the verb starts, and the verbCall doc (verb_runner_test.go:49) repeats it, but git.Output children in captureLayers (layers.go:373) inherit the process environment; narrow the doc to the children that take the value and drop the restatement. Advice: ExecCommandResolving builds a whole newAmbient for .environ while RunTreeChild calls baseEnviron.\n"
+          },
+          "axis": "Standards",
+          "base": "b2f333d0b73d6058a4f881d15649de14854d698f",
+          "tip": "8c3e7f18f0a9f2c275de73170032f6a015aa6f74",
+          "finding_ids": [
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3c-spec-r0",
+          "performer": "claude:lgp-c3c-spec-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "af5ffed93be6a7c13b2d61d29823624d986a8bb4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3c-spec-20261022",
+            "digest": "sha256:36995cd56e3de31304dfcfa0980f1c3cb64a6b00a41a2229c48fa93692a1a35f",
+            "excerpt": "Spec axis, LGP-C3C (b2f333d0b..8c3e7f18f): 0 open findings. LGP19 met (TestExecChildTakesTheCallEnvironment; t08-environ-owner bit). LGP22 met: 810 + 2 = 812, ceiling 31. LGP24 met: effect_census_test.go adds os.Environ, and the only production os.Environ read is effects.go baseEnviron. The four sites and both chains match the amended ticket; subshellAt and RunTreeChild keep their signatures; exec_test.go has no net line gain; verb_runner_check_test.go has 394 lines. P1 (record placement) closes here: the coordinator records the ticket 08 author's bench test --full --package ./internal/worktree times from commit 8c3e7f18f's body, 63309 ms (1496 tests) before at 2e8dd2851 and 63324 ms (1498 tests) after, inside the spread. Advice: installAttributed puts environ after target.\n"
+          },
+          "axis": "Spec",
+          "base": "b2f333d0b73d6058a4f881d15649de14854d698f",
+          "tip": "8c3e7f18f0a9f2c275de73170032f6a015aa6f74",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c3c-coverage-r0",
+          "performer": "claude:lgp-c3c-coverage-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "af5ffed93be6a7c13b2d61d29823624d986a8bb4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3c-coverage-20261022",
+            "digest": "sha256:a07e9ba324c129ac0b9bf87f7db193c84a245c6cc693090bb6be339c0f7a3f92",
+            "excerpt": "Coverage axis, LGP-C3C (b2f333d0b..8c3e7f18f): 2 findings. C1 (accepted as the chunk's hardening cycle): gitInput dropping the threaded environ (slices.Concat(extraEnv)) read silent across the whole package (1498 tests, restored yes), so no test pins the reset or cleanup recovery chain to the call's base environment. C2 (closed here): probe P4, the checkVerbCall environ refusal disabled, bit TestVerbCallRefusesAnEnvironmentValue, restored yes, which records that expectation's red. Other probes, restored yes: nil environ to repairPrimary on restore and on install bit; repairPrimary reading baseEnviron bit the single-read census; baseEnviron returning nil bit; os.Environ in gitInput bit both censuses; syscall.Environ in subshellAt and a method-value os.Environ read bit only through a behavior test and the single-read census. Advice: the effect census regex misses syscall.Environ and a method value; about 20 git children with nil Env lie outside the spec's four sites.\n"
+          },
+          "axis": "Coverage",
+          "base": "b2f333d0b73d6058a4f881d15649de14854d698f",
+          "tip": "8c3e7f18f0a9f2c275de73170032f6a015aa6f74",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
