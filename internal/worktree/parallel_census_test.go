@@ -1030,15 +1030,15 @@ func TestParallelCensusOnTheLiveTree(t *testing.T) {
 	}
 }
 
-// worktreeSerialCeiling is the package's pinned serial-test count. Four classes
+// worktreeSerialCeiling is the package's pinned serial-test count. Three classes
 // hold the whole set. The boundary-default graders bind the process environment
-// because the default Home() resolves is what they grade. The exec child tests
-// bind the caller environment because the child's inherited environment is what
-// they grade. The stub tests bind PATH because the child under test reads it.
+// because the default Home() resolves is what they grade. An exec child test
+// takes its caller environment from the call, so it stays out of the set.
+// The stub tests bind PATH because the child under test reads it.
 // The removed-directory test changes the working directory because the failed
 // directory read is what it grades. The pin is exact, so a fixture that binds
 // the process instead of its own home, or a test that leaves the set, turns it red.
-const worktreeSerialCeiling = 31
+const worktreeSerialCeiling = 21
 
 // TestSerialSetStaysBelowTheCeiling proves the serial set equals the ceiling.
 // (Coverage row WF18.)

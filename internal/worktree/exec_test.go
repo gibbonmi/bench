@@ -14,27 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// childOutput runs a real child through the exec path against worktree, with the caller's
-// routing variables set, and returns what that child wrote.
-func childOutput(t *testing.T, worktree, script string) string {
-	t.Helper()
-	return childOutputAtHome(t, worktree, script, Home())
-}
-
-// childOutputAtHome is childOutput with the home the verb resolved passed explicitly, so
-// a row can separate the caller's home from the one the process carries.
-func childOutputAtHome(t *testing.T, worktree, script, home string) string {
-	t.Helper()
-	bindEnv(t, "BENCH_KIT", "/caller/kit")
-	bindEnv(t, "BENCH_WRAPPER", "/caller/bin/bench")
-	bindEnv(t, runbinary.Env, "/caller/run/bench")
-	bindEnv(t, "BENCH_EXEC_TEST_CARRIED", "carried-value")
-	var stdout, stderr bytes.Buffer
-	code := runWorktreeChild([]string{"sh", "-c", script}, worktree, home, os.Environ(), nil, nil, &stdout, &stderr)
-	requireTest(t, code == 0, "child exit = %d, stderr %q", code, stderr.String())
-	return stdout.String()
-}
-
 // WF10: the exec form reaches the worktree's own build. The child runs with the worktree
 // as its working directory, so the relative `./dist/bench` spelling resolves there and
 // stays independent of the caller's own cwd.
@@ -96,14 +75,13 @@ func assignment(seen, name string) (string, bool) {
 }
 
 // TestExecChildTakesTheExplicitHome covers WF16. The child reads the home the verb was
-// given, not the one the caller's process carries, so it resolves the same pool the verb
-// resolved. The two homes differ here, so an inherited value fails the comparison. The
-// child emits the value as a NUL-terminated field, which no environment value can forge.
-// The bind keeps this test serial.
+// given, not the one the caller's environment carries, so it resolves the same pool the
+// verb resolved. The two homes differ here, so an inherited value fails the comparison.
+// The child emits the value as a NUL-terminated field, which no environment value can forge.
 func TestExecChildTakesTheExplicitHome(t *testing.T) {
+	t.Parallel()
 	worktree, _ := worktreeWithWrapper(t)
 	explicit := t.TempDir()
-	bindEnv(t, homeEnv, t.TempDir())
 	emitted := childOutputAtHome(t, worktree, `printf '%s\0' "${BENCH_HOME-}"`, explicit)
 	fields := strings.Split(emitted, "\x00")
 	requireTest(t, len(fields) == 2 && fields[1] == "", "child emitted %q, want one NUL-terminated field", emitted)
@@ -112,6 +90,7 @@ func TestExecChildTakesTheExplicitHome(t *testing.T) {
 
 // TestExecChildIsRootedAtTheWorktreeWrapper covers WX1 and WX2.
 func TestExecChildIsRootedAtTheWorktreeWrapper(t *testing.T) {
+	t.Parallel()
 	worktree, wrapper := worktreeWithWrapper(t)
 	value, ok := childWrapper(t, worktree)
 	requireTest(t, ok, "child received no BENCH_WRAPPER")
@@ -124,6 +103,7 @@ func TestExecChildIsRootedAtTheWorktreeWrapper(t *testing.T) {
 // non-empty and the run-binary variable is absent. The lookup itself is graded by the
 // composed run recorded as WX20 evidence.
 func TestExecChildOwnsRatherThanInheritsItsRunBinary(t *testing.T) {
+	t.Parallel()
 	worktree, _ := worktreeWithWrapper(t)
 	seen := childEnvironment(t, worktree)
 	marker, ok := childWrapper(t, worktree)
@@ -134,6 +114,7 @@ func TestExecChildOwnsRatherThanInheritsItsRunBinary(t *testing.T) {
 
 // TestExecChildDropsWrapperRouting covers WX4 and WX5.
 func TestExecChildDropsWrapperRouting(t *testing.T) {
+	t.Parallel()
 	worktree, _ := worktreeWithWrapper(t)
 	seen := childEnvironment(t, worktree)
 	for _, name := range []string{"BENCH_KIT", runbinary.Env} {
@@ -146,6 +127,7 @@ func TestExecChildDropsWrapperRouting(t *testing.T) {
 
 // TestExecChildKeepsUnrelatedCallerVariables covers WX6.
 func TestExecChildKeepsUnrelatedCallerVariables(t *testing.T) {
+	t.Parallel()
 	worktree, _ := worktreeWithWrapper(t)
 	seen := childEnvironment(t, worktree)
 	value, ok := assignment(seen, "BENCH_EXEC_TEST_CARRIED")
@@ -156,6 +138,7 @@ func TestExecChildKeepsUnrelatedCallerVariables(t *testing.T) {
 // one predicate, so every path that is not a regular file leaves the child as it is
 // today.
 func TestExecChildTakesNoMarkerFromANonWrapper(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name  string
 		build func(t *testing.T, worktree string)
@@ -184,6 +167,7 @@ func TestExecChildTakesNoMarkerFromANonWrapper(t *testing.T) {
 // TestExecChildTakesTheMarkerFromAnEmptyWrapper covers WX11: the predicate is the file's
 // kind, never its content.
 func TestExecChildTakesTheMarkerFromAnEmptyWrapper(t *testing.T) {
+	t.Parallel()
 	worktree := t.TempDir()
 	wrapper := wrapperPathIn(t, worktree)
 	requireTest(t, os.WriteFile(wrapper, nil, 0o755) == nil, "write empty wrapper")
@@ -196,6 +180,7 @@ func TestExecChildTakesTheMarkerFromAnEmptyWrapper(t *testing.T) {
 // environment is the one assignment. Both children run in one worktree so nothing
 // path-derived varies between them.
 func TestExecChildDiffersByTheWrapperAssignmentAlone(t *testing.T) {
+	t.Parallel()
 	worktree := t.TempDir()
 	wrapper := wrapperPathIn(t, worktree)
 	today := strings.Split(childEnvironment(t, worktree), "\n")
@@ -224,6 +209,7 @@ func TestExecChildDiffersByTheWrapperAssignmentAlone(t *testing.T) {
 // links, so a link to a regular file is a wrapper. The marker names the link path the
 // child's own wrapper resolution will walk rather than the target behind it.
 func TestExecChildTakesTheMarkerThroughALiveWrapperLink(t *testing.T) {
+	t.Parallel()
 	worktree := t.TempDir()
 	target := filepath.Join(worktree, "linked-wrapper.sh")
 	requireTest(t, os.WriteFile(target, []byte("#!/bin/sh\n"), 0o755) == nil, "write link target")
@@ -238,6 +224,7 @@ func TestExecChildTakesTheMarkerThroughALiveWrapperLink(t *testing.T) {
 // joined path handed to the child as one value, so a space cannot split it and a glob
 // character cannot expand.
 func TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName(t *testing.T) {
+	t.Parallel()
 	worktree := filepath.Join(t.TempDir(), "nested [*] path")
 	requireTest(t, os.MkdirAll(worktree, 0o755) == nil, "create awkward worktree")
 	wrapper := wrapperPathIn(t, worktree)
