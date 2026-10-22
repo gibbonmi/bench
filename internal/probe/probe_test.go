@@ -13,7 +13,7 @@ import (
 )
 
 // fixture is one probefixture repository the verb runs over: the root and Bench home from
-// probetest.Repository, the clamp subject path, and the start marker for stubbed Go runs.
+// clampCopy, the clamp subject path, and the start marker for stubbed Go runs.
 type fixture struct {
 	root    string
 	home    string

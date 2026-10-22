@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // goldenParent holds the clamp golden of this package run, and TestMain removes it after
@@ -96,7 +97,7 @@ func clampCopy(t *testing.T) (string, string) {
 	t.Helper()
 	base := golden(t)
 	dir := scratchDir(t)
-	if err := os.CopyFS(dir, os.DirFS(base.dir)); err != nil {
+	if err := testrepo.CopyTree(dir, base.dir); err != nil {
 		t.Fatal(err)
 	}
 	copied := func(path string) string {
