@@ -964,6 +964,11 @@ No later ticket can pay that checkpoint's headroom debt.
           "ticket": "12-retain-shift-scratch-through-recovery.md"
         },
         {
+          "id": "ticket-12-check-7",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "12-retain-shift-scratch-through-recovery.md"
+        },
+        {
           "id": "ticket-12-omission",
           "command": "bench test --package ./internal/shift",
           "probe": "Read cmd.Process before the serialized transition, let an empty dirty set authorize removal, or trust a stale cleanup fingerprint. The actual resistant adapter and protected scratch witnesses must fail.",
