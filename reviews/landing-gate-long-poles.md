@@ -1391,7 +1391,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2c-standards-r0",
+          "performer": "claude:lgp-c2c-standards-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1bc5392d81da0bc27398f21fc9886a61f8bc59bf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2c-standards-20261021",
+            "digest": "sha256:06a23879df9b063129b2ece3e25d8ce4cda3f742d8947fca77f43bc926014848",
+            "excerpt": "Standards axis, LGP-C2C (bb8a207e3..cd9889779): 0 findings. The thin validateOwnerMarker form has only test callers now (journey_test.go, admin_readers_test.go, eligibility_test.go), but ticket 04 keeps it as the graded LGP17 seam, and it delegates in one line, so no fact has two sources: no-op. The five &git.Run{} call-line constructions follow ticket 05's direction and ticket 04's constructor shape. The three setup lines that TestExplicitPlanReadsEachLocationOnce repeats are incidental helper calls. Every touched comment matches the code, and classifier.go and clean_landed.go gain no line. Advice: subshell.go:200 still reads git.AdminDir(target) directly while the nested validation reads run.AdminDir; ticket 05 leaves it out of scope.\n"
+          },
+          "axis": "Standards",
+          "base": "bb8a207e3b56c973ee1cd6fe043e4bc3167e6351",
+          "tip": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2c-spec-r0",
+          "performer": "claude:lgp-c2c-spec-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1bc5392d81da0bc27398f21fc9886a61f8bc59bf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2c-spec-20261021",
+            "digest": "sha256:c06321c9a877a72852da55f79b4ca70d35dd94de1a3b70942d009694a7e7b0ac",
+            "excerpt": "Spec axis, LGP-C2C (bb8a207e3..cd9889779): 0 findings. LGP16 met: planExplicitWith (subshell.go:160) reads canonicalRootIn, run.Worktrees, run.CommonDir, and validateOwnerMarkerIn through the run value; the intent.Address ledger reads and the default-branch reads stay live; worktree.go:347 and resume.go:86 pass a.run, and the five other callers pass &git.Run{}; TestExplicitPlanReadsEachLocationOnce asserts 3. LGP21 and LGP22 met: 806 + 1 = 807 tests, 46 - 0 + 1 = 47 serial. LGP34: coordinator records the ticket 05 author's bench test --full --package ./internal/worktree times, 67314 ms (1492 tests) before and 66960 ms (1493 tests) after, inside the spread. Plan commit 83bfa89b7 (red prediction eight to six) is accurate and non-behavioral. Advice: planExplicitSet could pass a.run to its rows; spec line 135 could adopt ticket 05's wording for callers without an ambient.\n"
+          },
+          "axis": "Spec",
+          "base": "bb8a207e3b56c973ee1cd6fe043e4bc3167e6351",
+          "tip": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2c-coverage-r0",
+          "performer": "claude:lgp-c2c-coverage-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1bc5392d81da0bc27398f21fc9886a61f8bc59bf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2c-coverage-20261021",
+            "digest": "sha256:5ae48f71f3a921d3137fad05a6c6d8d60620bc8a8db570173cfcc6c92020cf4c",
+            "excerpt": "Coverage axis, LGP-C2C (bb8a207e3..cd9889779): 0 findings. Probes, all restored yes: the nested validateOwnerMarkerIn swapped for the fresh-run thin form at subshell.go:225 bit (4 starts, want 3); canonicalRootIn swapped for canonicalRoot at subshell.go:161 bit (4 starts); resume.go:86 a.run swapped for &git.Run{} read silent across the whole package, an efficiency-only mutant that no acceptance row covers. Refuted: a stale shared a.run answer (the run caches only location directories, revalidates the common directory, and the fingerprint reads a live AdminDir); a root spelling cache miss (spec accepts one extra start); the single-read census. Advice: a verb-level start count could pin the ambient wiring; one plan reads the admin directory twice (subshell.go:200 and owner_marker.go:54), within ticket scope.\n"
+          },
+          "axis": "Coverage",
+          "base": "bb8a207e3b56c973ee1cd6fe043e4bc3167e6351",
+          "tip": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
