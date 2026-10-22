@@ -24,6 +24,7 @@ import (
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -32,7 +33,8 @@ import (
 // phases that must complete green before this one starts. A need that ends red or
 // skipped skips this phase too, because it would grade an artifact its need never
 // produced. Dir is the phase's absolute working directory; empty means the runner's
-// root.
+// root. Resources names the phase-local generations its launch registers on, beside every
+// inherited one.
 //
 // Anchoring a declared directory is the producer's job. The graded root and the
 // runner's root are different trees in a linked repo. Only the producer knows which
@@ -45,6 +47,7 @@ type Phase struct {
 	Needs        []string
 	Dir          string
 	ExpectedRuns []string
+	Resources    []protection.Descriptor
 }
 
 var benchkitPhasesForCommand = BenchkitPhases
@@ -309,6 +312,7 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 		}()
 		for i := range phases {
 			phases[i].Env = mergeEnv(phases[i].Env, run.Entries())
+			phases[i].Resources = run.Resources()
 		}
 		base = withCheckoutGuard(base, root)
 	}

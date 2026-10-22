@@ -149,12 +149,14 @@ func (c *controller) launch(start func(*exec.Cmd) error) {
 }
 
 // register publishes pending protection before Start and the actual identity after it. A
-// proved no-start closes the registration, so a canceled or failed launch keeps no user.
+// proved no-start closes the registration, so a canceled or failed launch keeps no user. A
+// process with no installed protocol registers nothing, and its child keeps the inherited
+// vector.
 func (c *controller) register(start func(*exec.Cmd) error) error {
 	if c.l.pendingRequest().Cause != CauseNone {
 		return ErrNoStart
 	}
-	if resources := c.l.registration.Resources; len(resources) > 0 {
+	if resources := c.l.registration.Resources; len(resources) > 0 && c.l.registration.Protocol != nil {
 		reg, err := c.l.registration.Protocol.Prepare(resources)
 		if c.reg = reg; err != nil {
 			return err

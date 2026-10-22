@@ -49,16 +49,16 @@ type processGroupResult struct {
 	Outcome   subprocess.Outcome
 }
 
-// runProcessGroupCommand runs cmd as one group that registers on every inherited resource.
+// runProcessGroupCommand runs cmd as one group registered on each inherited and local resource.
 // The timeout needs the catchable opener most: with no operator present, the child's last
 // output is the only account of where the run stuck.
-func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResult {
+func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd, local ...protection.Descriptor) processGroupResult {
 	inherited, err := protection.Inherited()
 	if err != nil {
 		return processGroupResult{Code: 1, StartErr: err}
 	}
 	streams := subprocess.Streams{Stdin: cmd.Stdin, Stdout: subprocess.Output{Writer: cmd.Stdout}, Stderr: subprocess.Output{Writer: cmd.Stderr}}
-	lifetime := subprocess.NewLifetime(cmd, gateProcessPolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: inherited})
+	lifetime := subprocess.NewLifetime(cmd, gateProcessPolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: append(inherited, local...)})
 	if err := lifetime.Start(); err != nil {
 		return processGroupResult{Code: 1, StartErr: err}
 	}
@@ -376,7 +376,7 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		return result
 	}
 	cmd.Env = mergeEnv(baseEnv, phase.Env)
-	run := runProcessGroupCommand(ctx, cmd)
+	run := runProcessGroupCommand(ctx, cmd, phase.Resources...)
 	result.Interrupted = run.Cancelled
 	if run.StartErr != nil {
 		if run.Cancelled {

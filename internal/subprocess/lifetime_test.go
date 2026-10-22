@@ -345,6 +345,20 @@ func TestLifetimeSignalFailure(t *testing.T) {
 	}
 }
 
+// TestLifetimeWithoutProtocol is a process with no installed protocol, such as a Go test
+// binary. Its launch registers nothing, and the child reads the inherited vector unchanged.
+func TestLifetimeWithoutProtocol(t *testing.T) {
+	vector := []protection.Descriptor{{Store: "/absent/run/process-users", ResourceID: "0123456789abcdef0123456789abcdef", Kind: protection.KindKitTest, ResourcePath: "/absent/run", Binding: "1:2"}}
+	entry := protection.Environ(nil, vector)[0]
+	cmd := script(t, `printf '%s' "$BENCH_PROCESS_RESOURCES"`, nil)
+	cmd.Env = append(cmd.Env, entry)
+	l := started(t, subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{Stdout: capture}, subprocess.Registration{Resources: vector}))
+	o, _ := waitWithin(t, l, final)
+	if !o.Process.Started || o.Process.Code != 0 || protection.Env+"="+string(o.Streams.Stdout.Data) != entry {
+		t.Fatalf("unregistered launch: process=%+v stdout=%q, want the child to read %q", o.Process, o.Streams.Stdout.Data, entry)
+	}
+}
+
 // closeableSentinel is an unrelated caller writer whose collection proves release.
 type closeableSentinel struct{ written []byte }
 

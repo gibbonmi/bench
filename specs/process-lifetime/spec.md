@@ -626,8 +626,8 @@ The final implementation must demonstrate its stated omission red.
 | PL34 | 12 | Builder normal completion drains its remaining group. | `internal/runbinary/lifetime_test.go` (`TestBuilderNormalDrain`) | The selection returns while a builder descendant remains live. |
 | PL35 | 12 | Builder cancellation keeps TERM and its existing grace. | `internal/runbinary/lifetime_test.go` (`TestBuilderCancel`) | A signal log and descendant oracle detect premature KILL or absent escalation. |
 | PL36 | 28 | Selection.Close retains a protected private executable. | `internal/runbinary/lifetime_resources_test.go` (`TestBinaryClose`) | The selection directory disappears if Close ignores registered users. |
-| PL37 | 29 | KitTestRun.Close retains a protected private directory. | planned `internal/env/kit_run_lifetime_test.go` (KitRunClose) | The private home disappears while a registered child owns its files. |
-| PL38 | 29 | The gate consumes private-directory Close failure. | planned `internal/gate/lifetime_resources_test.go` (PhaseCloseError) | A successful phase hides the enclosing resource failure. |
+| PL37 | 29 | KitTestRun.Close retains a protected private directory. | `internal/env/kit_run_lifetime_test.go` (`TestKitRunClose`) | The private home disappears while a registered child owns its files. |
+| PL38 | 29 | The gate consumes private-directory Close failure. | `internal/gate/lifetime_resources_test.go` (`TestPhaseCloseError`) | A successful phase hides the enclosing resource failure. |
 | PL39 | 39 | A foreign binding prevents registration. | `internal/subprocess/protection/record_test.go` (`TestRecordForeignBinding`) | An unrelated store gains a user if inherited paths supply authority. |
 | PL40 | 39 | Malformed protection retains the resource. | `internal/subprocess/protection/record_test.go` (`TestRecordMalformed`) | A parse failure becomes an empty user set and permits removal. |
 | PL41 | 39 | A protection symlink prevents admission. | `internal/subprocess/protection/record_test.go` (`TestRecordSymlink`) | The outside sentinel changes if the receiver follows the descriptor. |
