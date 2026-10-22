@@ -671,6 +671,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1-standards-r1",
+          "performer": "claude:lgp-c1-standards-r1-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ccf2c687b713b6d6c0336145de2ed8fb1290cae5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c1-standards-r1-20261021",
+            "digest": "sha256:e45b1222c788e2b028071fa303e3c1ec5c92bc83ae076ddfbc6c63fc3c3dd3f9",
+            "excerpt": "Standards axis, LGP-C1 confirming round (repair delta 5cd784915..be0aca0c5): S1, S2, S3 closed, 0 new findings. S1 closed (9): Factory.Select holds the rule (internal/runbinary/runbinary.go:77-85), ReuseOrOwn calls it (:70-73), and runbinary.Shared (shared.go:12) serves the testreport and worktree selectors, each with its own capture. S2 closed (9): testrepo.CopyTree (internal/testrepo/copy_tree.go:15) holds the mode-preserving copy; both goldens call it. S3 closed (10): probe_test.go:15-16 names clampCopy. Advice only: a comment that Shared serves test runs; the worktree refusal table overlaps shared_test.go:204-227; the CopyTree destination comment overstates the limit.\n"
+          },
+          "axis": "Standards",
+          "base": "7f585da4489289b34df9cf3beeef2c59de8edb6d",
+          "tip": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-standards-r0"
+          ]
+        },
+        {
+          "id": "c1-spec-r1",
+          "performer": "claude:lgp-c1-spec-r1-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ccf2c687b713b6d6c0336145de2ed8fb1290cae5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c1-spec-r1-20261021",
+            "digest": "sha256:5eecc1c407a1406cc82ce8e72e85be5b178a36848fa3b4f9765baae49344e485",
+            "excerpt": "Spec axis, LGP-C1 confirming round (repair delta 5cd784915..be0aca0c5): P1, P3, P4 closed. P1 closed (9): story 8 names TestBuildLeavesTheWrapperManifestUntouched, which runs the real Build on a kit copy (internal/runbinary/build_script_test.go:26-57). P3 closed (9): testrepo.CopyTree restores permission bits, and clampCopy uses it. P4 closed (9): the LGP6 row names the per-call build, and TestOwnedSelectionBuildsOnce proves it. ReuseOrOwn keeps its behavior (runbinary.go:70-85). P5 (auto-fix, confidence 8): spec lines 121, 126, and 128 cite runbinary.go and test_run_test.go lines that the repair shifted. Coordinator disposition: a prose-only spec correction in the next plan commit, before the ticket 03 dispatch, as the Land rule routes it; it meets no blocking condition of the bounded repair policy, so this round carries no open finding.\n"
+          },
+          "axis": "Spec",
+          "base": "7f585da4489289b34df9cf3beeef2c59de8edb6d",
+          "tip": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec-r0"
+          ]
+        },
+        {
+          "id": "c1-coverage-r1",
+          "performer": "claude:lgp-c1-coverage-r1-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ccf2c687b713b6d6c0336145de2ed8fb1290cae5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c1-coverage-r1-20261021",
+            "digest": "sha256:ceb33cd0d94dd3fac80b9cd91c9c227662fbdcc0ee56a0d085d86a3a4faab74b",
+            "excerpt": "Coverage axis, LGP-C1 confirming round (repair delta 5cd784915..be0aca0c5): C1 closed (9), 0 new findings. internal/runbinary/shared_test.go:188-227 pins the valid-inherited and present-invalid branches through runbinary.Shared; worktree SB1-SB3 and the parallel journey test pass. Independent probes, all restored yes: Shared.Path argument s.Present to s.Present && s.Raw != \"\" bit (TestSharedInvalidInheritedSelectionRefusesBeforeAnyBuild/empty); CopyTree symlink skip removed bit (TestCopyTreeKeepsModes); CopyTree directory entries skipped bit (TestCopyTreeKeepsModes, dir mode). Advice: no test covers a source directory without the search bit.\n"
+          },
+          "axis": "Coverage",
+          "base": "7f585da4489289b34df9cf3beeef2c59de8edb6d",
+          "tip": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-coverage-r0"
+          ]
         }
       ]
     }
@@ -723,3 +789,8 @@ P2 is closed in the record: the `c1-spec-r0` excerpt holds the LGP34 timings.
 Count: 1 finding, accepted. Worst issue: C1.
 
 - C1 (auto-fix, confidence 8): no test covers the inherited branch of the testreport selection, so a probe that disables it reads silent. Route: ticket 02 repair, as the one hardening cycle.
+
+### LGP-C1 state
+
+Repair cycle 1 closed every accepted finding at the tip `be0aca0c5`, and the confirming round passed on all three axes. The chunk used 1 of its 2 repair cycles and its one hardening cycle.
+The confirming Spec axis raised P5: spec lines 121, 126, and 128 cite lines that the repair shifted. The next plan commit corrects them before the ticket 03 dispatch.
