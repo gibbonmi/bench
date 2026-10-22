@@ -1279,6 +1279,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2-standards-r2",
+          "performer": "claude:plt-c2-standards-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c2-standards-r2-20261022",
+            "digest": "sha256:ca62ffec458be645cf067c4914f60fd9ef22d33c393d6bc5d39e7a2a411d44a2",
+            "excerpt": "Standards axis, PL-C2 confirming round r2. Pass. The repair delta adds no new Standards defect. Evidence current=true, dirty_record=false, tip 699f1b4e4.\n\nOne source per fact: the new cases reuse the single-sourced fixtures newResource, newProtocol, requireRefused (internal/subprocess/protection/fixture_test.go:159), resourceRecord, and plant (record_test.go:19, :30). No harness is pasted again. The gocache \"parent link\" case extends the existing table at protection_test.go:71.\n\nComments: all six new comment sentences are 25 words or fewer and describe current code; the longest, record_test.go:92-93, is 22 words.\n\nr1 S1 stays a no-op; this delta does not reopen it.\n\nAdvice: none.\n"
+          },
+          "axis": "Standards",
+          "base": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+          "tip": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r1"
+          ]
+        },
+        {
+          "id": "c2-spec-r2",
+          "performer": "claude:plt-c2-spec-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c2-spec-r2-20261022",
+            "digest": "sha256:9ce56e6e2b85979eb3e49edbb05a389224f337c1bb779c33a8cb2aba8eef97f9",
+            "excerpt": "Spec axis, PL-C2 round r2. Evidence current=true, dirty_record=false at tip 699f1b4e4. No new findings.\n\n- P1, PL110 half: closed. TestRecordUnsafePath launches the full control-byte descriptor through requireRefused, which checks the marker stays absent, Started is false, and StartErr is set (fixture_test.go:159-165); the launch error must equal the parse check's own error. This matches spec.md:700 and spec.md:750.\n- P1, PL71 half: reaffirmed as no-op. Row PL71 refuses only the first launch (spec.md:661); spec.md:317-318 requires the launch refused and the visible record kept for observation and repair, and asks for no lasting refusal. The OpenResource error is the witness for that row.\n- P2: closed. The test copies the second resource's Binding into the first resource's published record and requires the launch refused (record_test.go:84-86). This covers spec.md:629.\n\nThe C1 to C4 test-only repairs stay within PL-C2's rows; no defect.\n\nAdvice: P2 does not check which error refused the launch; matching the binding-mismatch error would tighten it.\n"
+          },
+          "axis": "Spec",
+          "base": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+          "tip": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r1"
+          ]
+        },
+        {
+          "id": "c2-coverage-r2",
+          "performer": "claude:plt-c2-coverage-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1894600687d86e6e43827a9509cf8f69a71e77c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c2-coverage-r2-20261022",
+            "digest": "sha256:fee7e544d3023e2426352d2313e0568467a000a42bbed78ff0e4ecbb30ef6726",
+            "excerpt": "Coverage axis, PL-C2 round r2. Evidence current=true, tip 699f1b4e, not dirty. No probe ran: none of the changed tests looks vacuous on reading. All four r1 findings are closed.\n\n- C1 closed. The \"parent link\" case keeps the store, binding, and lock, and changes only a parent component, so the canonical check at internal/gocache/protection.go:38 is the only refusal. Test: protection_test.go:68-71.\n- C2 closed. unlocked is a sibling directory under the canonical parent whose store and binding match it, so only the lock check at protection.go:44 refuses it. Test: protection_test.go:64-65.\n- C3 closed. newResource makes a real cache generation; with a nil table, an empty table, or a worktree-only table, owner (internal/subprocess/protection/store.go:57-62) refuses first through union (registration.go:97). Test: record_test.go:76-82. The nil *Protocol subcase may fail the mutant by a later nil-receiver panic rather than by admission; unverified and low risk.\n- C4 closed. The malformed guard is at internal/bounds/bounds.go:226-228, and the assertion (internal/bounds/lifetime_test.go:56-61) requires ProcessStart with a non-nil error and no started process, matching the orchestrator's status-swap probe.\n\nNo new findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+          "tip": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-r1"
+          ]
         }
       ]
     }
@@ -1333,6 +1399,7 @@ The confirming round r2 passed on all three axes with no new finding, and the Co
 
 PL-C2 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies. The reviewer directed minimal probing during this round.
 Repair 1 (commit 3e9708ec5, test-only) closed P2, C1 to C4, and the PL110 half of P1. The Opus and Sonnet consultants agreed that the PL71 half of P1 is a no-op.
+The confirming round r2 passed on all three axes with no new finding, and the Spec axis reaffirmed the PL71 no-op.
 
 ## Standards
 
