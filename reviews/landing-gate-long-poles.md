@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:8c97d52b575a5fb918a786e9098901522c03d40ce6f294f8d2eac848e89eb4d6",
+  "plan_digest": "sha256:672b86bd3295ae362b43842629b00cdbd2cbbd02d14bbded0388a400f2fa24b0",
   "implementation_session": "",
   "chunks": [
     {
@@ -2122,6 +2122,106 @@
           ]
         }
       ]
+    },
+    {
+      "id": "LGP-C3B",
+      "base": "14d72a647f88c503680baf8e6d4253f587fdceba",
+      "tip": "b2f333d0b73d6058a4f881d15649de14854d698f",
+      "plan_digest": "sha256:672b86bd3295ae362b43842629b00cdbd2cbbd02d14bbded0388a400f2fa24b0",
+      "source_digest": "7f455bc4e131f44b0458e65bda0c4d801b68846c",
+      "acceptance_rows": [
+        "LGP20",
+        "LGP21",
+        "LGP22",
+        "LGP23",
+        "LGP34"
+      ],
+      "verification": [
+        {
+          "id": "t07-pkg-cmd-bench",
+          "performer": "claude:lgp-t07-author-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f455bc4e131f44b0458e65bda0c4d801b68846c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t07-author-20261022",
+            "digest": "sha256:f2274b426fb24e355358152f3b8c440a484ea486bfcc647c5818e8cf300c1fcf",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14732,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t07-pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t07-worktree",
+          "performer": "claude:lgp-t07-author-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f455bc4e131f44b0458e65bda0c4d801b68846c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t07-author-20261022",
+            "digest": "sha256:badf6487cb13219e77df2d0f1c240550497dd074bb9cc691aa6232d91ca197c7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63074,1496\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t07-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t07-root-conformance",
+          "performer": "claude:lgp-t07-author-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f455bc4e131f44b0458e65bda0c4d801b68846c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t07-author-20261022",
+            "digest": "sha256:705f36ba10d270f4943234364bbe670da21c4d4ef51752f4fe23fb30a8748c61",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12995,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t07-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t07-ceiling",
+          "performer": "claude:lgp-t07-author-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7f455bc4e131f44b0458e65bda0c4d801b68846c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t07-author-20261022",
+            "digest": "sha256:d1c074f30abc07b6078967cea59282d0b72242f0fe8528bebd902dc74c279266",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/parallel_census_test.go,swap,failed,1,TestSerialSetStaysBelowTheCeiling,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1496\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,404\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,63068,1496\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestSerialSetStaysBelowTheCeiling,\"parallel_census_test.go:1052: the package holds 31 serial tests, below the ceiling of 47: lower worktreeSerialCeiling to 31 in this change\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t07-ceiling",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "leave the ceiling at its ticket-06 value",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:lgp-t07-author-20261022",
+              "digest": "sha256:d1c074f30abc07b6078967cea59282d0b72242f0fe8528bebd902dc74c279266",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/parallel_census_test.go,swap,failed,1,TestSerialSetStaysBelowTheCeiling,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1496\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,404\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,63068,1496\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestSerialSetStaysBelowTheCeiling,\"parallel_census_test.go:1052: the package holds 31 serial tests, below the ceiling of 47: lower worktreeSerialCeiling to 31 in this change\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2231,6 +2331,27 @@
     {
       "from": "sha256:91612ff61ecb2fc10a4be3e1df5548c24d844e8ebc268576f6c3adf48a13b10d",
       "to": "sha256:8c97d52b575a5fb918a786e9098901522c03d40ce6f294f8d2eac848e89eb4d6",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ],
+        "LGP-C2A": [
+          "LGP-C2A"
+        ],
+        "LGP-C2B": [
+          "LGP-C2B"
+        ],
+        "LGP-C2C": [
+          "LGP-C2C"
+        ],
+        "LGP-C3A": [
+          "LGP-C3A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8c97d52b575a5fb918a786e9098901522c03d40ce6f294f8d2eac848e89eb4d6",
+      "to": "sha256:672b86bd3295ae362b43842629b00cdbd2cbbd02d14bbded0388a400f2fa24b0",
       "chunk_ids": {
         "LGP-C1": [
           "LGP-C1"
