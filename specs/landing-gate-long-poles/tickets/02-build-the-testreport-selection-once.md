@@ -1,7 +1,7 @@
 # Build the testreport owned selection once
 
 Blocked by: none
-Writes: internal/testreport/selection_once_test.go (new), internal/testreport/root_conformance_test.go, internal/testreport/check_test.go, internal/testreport/runbinary_test.go
+Writes: internal/testreport/selection_once_test.go (new), internal/testreport/root_conformance_test.go, internal/testreport/check_test.go, internal/testreport/runbinary_test.go, internal/runbinary/runbinary.go, internal/runbinary/shared.go (new), internal/runbinary/shared_test.go (new), internal/worktree/test_run_test.go
 Covers: LGP6, LGP7, LGP8, LGP34
 
 ## What to build

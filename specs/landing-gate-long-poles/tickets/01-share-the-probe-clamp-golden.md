@@ -1,7 +1,7 @@
 # Share the probe clamp golden
 
 Blocked by: none
-Writes: internal/probe/golden_test.go (new), internal/probe/probe_test.go, internal/probe/probetest/fixture.go, internal/probe/refusal_test.go, internal/probe/verdict_test.go, cmd/bench/record_operations_test.go, internal/reviewrecord/recordcmd/verification_import_test.go, .bench/commitment.json
+Writes: internal/probe/golden_test.go (new), internal/probe/probe_test.go, internal/probe/probetest/fixture.go, internal/probe/refusal_test.go, internal/probe/verdict_test.go, cmd/bench/record_operations_test.go, internal/reviewrecord/recordcmd/verification_import_test.go, .bench/commitment.json, internal/testrepo/copy_tree.go (new), internal/testrepo/copy_tree_test.go (new), internal/adopt/golden_test.go
 Covers: LGP1, LGP2, LGP3, LGP4, LGP5, LGP37, LGP34
 
 ## What to build
