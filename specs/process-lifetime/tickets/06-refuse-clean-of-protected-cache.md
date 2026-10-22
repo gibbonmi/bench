@@ -1,7 +1,7 @@
 # Refuse cache clean after unresolved CLI exit
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md
-Writes: internal/conformance/injected_ports_registry_test.go, internal/gate/lane.go, internal/gate/lifetime_resources_test.go (new), internal/gate/phases.go, internal/gate/run_transaction.go, internal/gate/runner.go, internal/gocache/clean.go, internal/gocache/lock.go, internal/gocache/protection.go (new), internal/gocache/protection_test.go (new), internal/systemtest/process_lifetime_cache_test.go (new)
+Writes: internal/conformance/injected_ports_registry_test.go, internal/gate/lane.go, internal/gate/lifetime_resources_test.go (new), internal/gate/phases.go, internal/gate/run_transaction.go, internal/gate/runner.go, internal/gocache/clean.go, internal/gocache/lock.go, internal/gocache/protection.go (new), internal/gocache/protection_test.go (new), internal/systemtest/process_lifetime_cache_test.go (new), internal/gate/run_durability.go
 Covers: PL55, PL56, PL57, PL76, PL77, PL78
 
 ## What to build
