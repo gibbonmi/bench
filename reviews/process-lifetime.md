@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/process-lifetime/spec.md",
-  "plan_digest": "sha256:c36d67f25b6ac6ce1b621f6b196cb4fb4e063b2830bdb5ba4bb7405337a33930",
+  "plan_digest": "sha256:c50d5467850cec958ff45993f032691dee138de7662bca7b6d67d6e589266777",
   "implementation_session": "",
   "chunks": [
     {
@@ -632,6 +632,321 @@
           ]
         }
       ]
+    },
+    {
+      "id": "PL-C2",
+      "base": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+      "tip": "58e4b351cdb9250de98cbcb8e6e3b3e7df355514",
+      "plan_digest": "sha256:c50d5467850cec958ff45993f032691dee138de7662bca7b6d67d6e589266777",
+      "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+      "acceptance_rows": [
+        "PL20",
+        "PL21",
+        "PL22",
+        "PL23",
+        "PL24",
+        "PL25",
+        "PL26",
+        "PL27",
+        "PL39",
+        "PL40",
+        "PL41",
+        "PL42",
+        "PL43",
+        "PL44",
+        "PL45",
+        "PL46",
+        "PL47",
+        "PL48",
+        "PL49",
+        "PL50",
+        "PL51",
+        "PL52",
+        "PL53",
+        "PL54",
+        "PL70",
+        "PL71",
+        "PL72",
+        "PL73",
+        "PL74",
+        "PL104",
+        "PL105",
+        "PL106",
+        "PL107",
+        "PL108",
+        "PL109",
+        "PL110",
+        "PL111",
+        "PL112",
+        "PL113",
+        "PL120"
+      ],
+      "verification": [
+        {
+          "id": "t02-ticket-2-check-1",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:bef02d78ea325bfa2622bc04fe27b12b0229fdd32ffc3c1a4c121e021b778c46",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,42,41\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-1",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-2",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:266b18f9ccd057e4ec9c2eecc0e9fceff9f13cc2ed46c912de51789a90f80532",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/bounds,pass,3949,63\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-2",
+          "command": "bench test --package ./internal/bounds",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-3",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:b37918dd66be754e50593fcc0e87c3bbfb6018dff4e26937d877adb7305cf0b6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,pass,88,44\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-3",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-4",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:d09c5bc2b5c59d39dd1d17f67a4105937cce52d0e85bdc3d7b4db04fd200751d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,206,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,43365,206\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-4",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-5",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:828b5c5b9ad104e0faf8bddba6ad3e9583c9aeb3a0eeff40bbd572e0ed04bb30",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12942,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-5",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-6",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:f98b4745f79e6cd636f671d7bdc9a8afd712d5765463a4e6d955ee41303f7386",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14521,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-6",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-7",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:6c926d40204c36382fa02b8a8ae2306b1d1776984fc5cb1f3252f3fbed8d8f2e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,99,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-7",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-8",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:486da63162330289a823861a0907aa14ebba88c49aaa3d179ad64ed56fa608aa",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,36101,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ticket-2-check-8",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-9",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:3b2214bf5e1da03908018b148ff1aa2ec5eb37b4316a9fe4131f64303f8fa2b9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,pass,3915,34\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-9",
+          "command": "bench test --package ./internal/subprocess",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-10",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:c9eb8ae6de1c44a7dea8bf2e89c1df75f6274721739ba23191590976376f6f3e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-10",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-11",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:0570173198b71d68ffdbfaa4facbe957045d752e3f35aaf27496ec6af277bf05",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-11",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-12",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:0aaabee70dfcea4b354fdc4790e3db36125abe22a576723f2b6660764c8834f7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-12",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-13",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:933b0f0474c12b388587dac721f21cf6738a3f059a3c401dc1a13c47b5acfe41",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/processtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-check-13",
+          "command": "bench test --package ./internal/subprocess/processtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-omission",
+          "performer": "claude:plt-t02-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+            "digest": "sha256:cc9ee03c435bda8c49f209cec77a66639e866ae0bced16ee6716d613d6d8f9a3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/bounds/bounds.go,swap,failed,2,TestProcessLifetimeNestedOverlap,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,206\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,654\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,206,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,40719,206\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedOverlap,\"process_lifetime_test.go:128: provider blocked used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedRegistration,\"process_lifetime_test.go:102: provider only used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-2-omission",
+          "command": "bench test --check system",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop inherited descriptors from the real bounds launch. The nested-provider witness must fail through bench test --check system.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:plt-t02-author2-20261022",
+              "digest": "sha256:cc9ee03c435bda8c49f209cec77a66639e866ae0bced16ee6716d613d6d8f9a3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/bounds/bounds.go,swap,failed,2,TestProcessLifetimeNestedOverlap,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,all,passed,206\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,654\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,206,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,40719,206\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedOverlap,\"process_lifetime_test.go:128: provider blocked used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\n  github.com/gibbonmi/bench/internal/systemtest,TestProcessLifetimeNestedRegistration,\"process_lifetime_test.go:102: provider only used the cache with protection \\\"absent\\\\\\\\n\\\" (<nil>), want registered\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -645,6 +960,15 @@
     {
       "from": "sha256:a3d8f9f0d05b81006d7e1a91c4898a0c28fee10543b663198fcf80e08429465d",
       "to": "sha256:c36d67f25b6ac6ce1b621f6b196cb4fb4e063b2830bdb5ba4bb7405337a33930",
+      "chunk_ids": {
+        "PL-C1": [
+          "PL-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c36d67f25b6ac6ce1b621f6b196cb4fb4e063b2830bdb5ba4bb7405337a33930",
+      "to": "sha256:c50d5467850cec958ff45993f032691dee138de7662bca7b6d67d6e589266777",
       "chunk_ids": {
         "PL-C1": [
           "PL-C1"
