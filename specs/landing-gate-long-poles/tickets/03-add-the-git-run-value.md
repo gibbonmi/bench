@@ -1,7 +1,7 @@
 # Add the git run value
 
 Blocked by: none
-Writes: internal/git/run.go (new), internal/git/run_cache_test.go (new), internal/git/worktree_admin.go, internal/git/git.go, internal/poolkey/poolkey.go, internal/poolkey/run_test.go (new)
+Writes: internal/git/run.go (new), internal/git/run_cache_test.go (new), internal/git/worktree_admin.go, internal/git/git.go, internal/poolkey/poolkey.go, internal/poolkey/run_test.go (new), internal/gittest/gittest.go, internal/gittest/gittest_test.go
 Covers: LGP9, LGP10, LGP11, LGP12, LGP13, LGP14, LGP15, LGP34
 
 ## What to build
