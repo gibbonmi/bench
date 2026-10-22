@@ -3561,6 +3561,76 @@
           "supersedes": [
             "c4a-coverage-r0"
           ]
+        },
+        {
+          "id": "c4a-standards-r2",
+          "performer": "claude:lgp-c4a-standards-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7af982076ec86a54c9dd2c1f92a97f841d6738c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-standards-r2-20261022",
+            "digest": "sha256:5b36fef98c8d17075f5e6be71095a1d3004ab6f7289083f8052c4d518249a128",
+            "excerpt": "Standards axis r2, LGP-C4A (c9d119580..b2256f1e9): C1 to C3 and C7 to C9 closed. 1 item, closed by the orchestrator's next plan commit as a prose-only spec correction (no code change): S1, spec :207 cites the precedent walk at internal/worktree/parallel_census_test.go:326-360, which this chunk's extraction moved; cite reachedEffects by name. Advice: ledgerLockCensus iterates pkg.all, which excludes package-level literals, while reach reads pkg.funcs (the Spec and Coverage axes carry this as P1 and C10).\n"
+          },
+          "axis": "Standards",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "b2256f1e94cceafd497e647edd87ab6c3ebc5207",
+          "finding_ids": [],
+          "supersedes": [
+            "c4a-standards-r1"
+          ]
+        },
+        {
+          "id": "c4a-spec-r2",
+          "performer": "claude:lgp-c4a-spec-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7af982076ec86a54c9dd2c1f92a97f841d6738c9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-spec-r2-20261022",
+            "digest": "sha256:ae9bab69eae6bc1ddff7d09cbf36711ad85dcd11a0654133e867a2f78f2ef462",
+            "excerpt": "Spec axis r2, LGP-C4A (c9d119580..b2256f1e9): C1 to C3 and C7 to C9 closed; LGP25, LGP26, LGP29, LGP31 met; LGP34: coordinator records 109854 ms (181 tests) before the ticket and 110794 ms (202 tests) at the second repair tip. 1 finding, accepted for a third ticket 10 repair under --auto-approve: P1, ledgerLockCensus iterates pkg.all, which holds only FuncDecl entries, while literalFuncs adds package-level literals to pkg.funcs only; an owner writer that calls a literal which writes owner.seen after its Unlock escapes both censuses, against LGP28 \"An unguarded write to starts, seen, or terminal reds by name\". The C8 repair created the asymmetry; no live literal exists.\n"
+          },
+          "axis": "Spec",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "b2256f1e94cceafd497e647edd87ab6c3ebc5207",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": [
+            "c4a-spec-r1"
+          ]
+        },
+        {
+          "id": "c4a-coverage-r2",
+          "performer": "claude:lgp-c4a-coverage-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7af982076ec86a54c9dd2c1f92a97f841d6738c9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-coverage-r2-20261022",
+            "digest": "sha256:efe7ffa1b5bb7e601664f798ac60567f3f36486cb6e7c4b88f625573fd9b545a",
+            "excerpt": "Coverage axis r2, LGP-C4A (c9d119580..b2256f1e9): C1 to C3 and C7 to C9 closed; independent probes on the visited key (P1) and the literal index (P2) bit, restored yes; a call-only literal mutant (P5) read silent, and the function-value row already pins the value path. 1 finding, the same gap as Spec P1, accepted for the third repair: C10, a package-level var f = func(){ owner.seen = nil } that an owner writer runs after its Unlock is refused by neither census (planted rows P3 and P4 read silent, restored yes); the missing row is a ledgerLockCases package-level literal case. rg finds no live package-level function literal in internal/systemtest.\n"
+          },
+          "axis": "Coverage",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "b2256f1e94cceafd497e647edd87ab6c3ebc5207",
+          "finding_ids": [
+            "C10"
+          ],
+          "supersedes": [
+            "c4a-coverage-r1"
+          ]
         }
       ]
     }
