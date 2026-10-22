@@ -5478,6 +5478,72 @@
           "supersedes": [
             "c4b-coverage-r0"
           ]
+        },
+        {
+          "id": "c4b-standards-r2",
+          "performer": "claude:lgp-c4b-standards-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4b-standards-r2-20261022",
+            "digest": "sha256:135217221431f38e6508cc32b2e6f89a835974923022e0aa0edb3ad77c083e1a",
+            "excerpt": "Standards axis r2, LGP-C4B (repair delta 333f97b0e..b725b77c7; record f59ec6622). Zero findings.\nS5 closed: parallel_census_test.go:261 checks only whether a serial row exists; serialTableCensus (serial_census_test.go:59-61) is the one owner of the reason rule, and both comments agree.\nS6 closed: serial_table_test.go:9-13 names TestSystemParallelCensus and TestSystemSerialTableIsExact as the owners of the row limits and restates no rule.\nThe planted expectation at parallel_census_cases_test.go:43 changed with its producer in the same commit; the new comments state current state.\nAdvice: the case name \"no call and no reason\" and spec LGP25 wording (\"without a serial reason\") still say reason where the code says row; cosmetic.\n"
+          },
+          "axis": "Standards",
+          "base": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "tip": "b725b77c7b9859ea35649b0751ba1457614ce8b5",
+          "finding_ids": [],
+          "supersedes": [
+            "c4b-standards-r1"
+          ]
+        },
+        {
+          "id": "c4b-spec-r2",
+          "performer": "claude:lgp-c4b-spec-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4b-spec-r2-20261022",
+            "digest": "sha256:0261f032ef07d4ce77db0e28d3b73da386a1de6711cb9e04429f39846fbead0d",
+            "excerpt": "Spec axis r2, LGP-C4B (repair delta 333f97b0e..b725b77c7; record f59ec6622). Zero findings; S5 and S6 closed.\nLGP25 met: parallel_census_test.go:261 checks for a serial row; the planted case \"no call and no reason\" reds by name; empty and whitespace reasons red in serialTableCensus through planted TestSerial and TestBlank. LGP31, LGP32, LGP38 met: serial_census_test.go unchanged in the delta. Fence held: three files on ticket 16's Writes line; spec change is the repair2 assignment.\nRecord held: chunk tip b725b77c7; all 19 plan requirements for t11 to t16 at that source (t16-r2, t11-rf2, t12-rf2, t13-rf2, t14-r1c, t15-rf2) with the plan's commands; all 8 probes bit, restored yes.\nAdvice: LGP25's seam cell could also name TestSystemSerialTableIsExact for the empty-reason half.\n"
+          },
+          "axis": "Spec",
+          "base": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "tip": "b725b77c7b9859ea35649b0751ba1457614ce8b5",
+          "finding_ids": [],
+          "supersedes": [
+            "c4b-spec-r1"
+          ]
+        },
+        {
+          "id": "c4b-coverage-r2",
+          "performer": "claude:lgp-c4b-coverage-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4b-coverage-r2-20261022",
+            "digest": "sha256:f869ed407f5f0409ee01bf75be86b97b6c02f26b55003b7da7dbaa23cde33cee",
+            "excerpt": "Coverage axis r2, LGP-C4B (repair delta 333f97b0e..b725b77c7; record f59ec6622). Zero findings; S5 closed on the coverage side. bench test --check system passed, 204 tests, 42995 ms; git status clean.\nProbes (--check system, --run 'TestSystemParallelCensus|TestSystemSerialTableIsExact'):\nP1 serial_table_test.go, plant TestProbeNoRow (no t.Parallel, no row): bit, TestSystemParallelCensus red, restored yes.\nP2 serial_table_test.go, plant TestProbeBlank with row \" \\t\": bit, TestSystemSerialTableIsExact red (parallel census green, the intended single owner), restored yes.\nP3 parallel_census_test.go:261, invert !row to row: bit, four failures (live census and three planted cases), restored yes.\nP4 serial_table_test.go, a serial row for the parallel TestLedgerWritesHoldTheOwnerLock: bit, TestSystemSerialTableIsExact red, restored yes.\nAdvice: no planted parallel-census case uses an empty-string row; acceptable because serialTableCensus owns the reason rule.\n"
+          },
+          "axis": "Coverage",
+          "base": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "tip": "b725b77c7b9859ea35649b0751ba1457614ce8b5",
+          "finding_ids": [],
+          "supersedes": [
+            "c4b-coverage-r1"
+          ]
         }
       ]
     }
