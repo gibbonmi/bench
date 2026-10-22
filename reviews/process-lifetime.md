@@ -946,7 +946,78 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-standards-r1",
+          "performer": "claude:plt-c2-standards-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c2-standards-20261022",
+            "digest": "sha256:6cffe68cf4cb8f50648bc337489535ce212a6af5adeaf35f9a40b65da4c0a8c6",
+            "excerpt": "Standards axis, PL-C2 (FT362-plt; frozen pair 36c2fa86 to 58e4b351, record e4b782c4b)\n\nThe evidence check passed: current=true, dirty_record=false.\n\nFindings\nS1 | no-op | 4 | internal/subprocess/protection/fixture_test.go:138 and internal/systemtest/process_lifetime_test.go:141 | AGENTS.md, fixture harnesses \"remain single-sourced\" | The diff adds two bounded-wait helpers, within[T] and exitWithin, each running a call in a goroutine and selecting against bounds.TestDeadline, the same shape as waitWithin in internal/subprocess/lifetime_helpers_test.go:59. The deadline policy stays single-sourced in bounds, so the repeated part is the select scaffold, close to incidental text. No repair cycle recommended.\n\nRejected candidates: Environ vs capability.WithoutEnvironment (spec.md:246 closes the leaf's imports; capability is the test-skip package); the strict reader (readRecord uses DecodeExactDocument; jsonfile has no no-follow reader); group-absence waits (WaitAbsent uses protection.ObserveGroup; WaitPID now shares waitFor); status literals (ObligationGroup aliases protection.ObligationGroup); the Install global (spec.md:251-254 and the ticket require it); test seams (SetReplacer and SetProbe in export_test.go only; Lifetime.kill follows the start/wait field precedent); comments (no narration or provenance; present tense).\n\nTotals: 1 finding. The worst is S1, a judgment-grade fixture duplication.\n\nAdvice\n- registration.go Started formats r.state in its refusal (\"not protected\"), but the cause is a closed or non-pending registration; naming r.record.Identity would describe it better.\n- If a third production env-filter copy appears, it belongs in a leaf both owners can import.\n\nImplementation command: no command change.\n"
+          },
+          "axis": "Standards",
+          "base": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+          "tip": "58e4b351cdb9250de98cbcb8e6e3b3e7df355514",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec-r1",
+          "performer": "claude:plt-c2-spec-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c2-spec-20261022",
+            "digest": "sha256:186abc89d3fdd3175cfed7b2006f16a152fd65358cd9f831fd8396e49dc0e6fe",
+            "excerpt": "Spec axis, PL-C2. Evidence current=true. Two findings; neither blocks the production contract. Worst is P1.\n\nFindings\nP1 | auto-fix | medium | internal/subprocess/protection/registration_test.go:204-206 and record_test.go:225-229 | PL71, PL110 (spec 661, 700) | On error, OpenResource returns Descriptor{}, so requireRefused(t, p, d) refuses only because the path is empty. It never launches against the visible-but-unsynced resource.json (PL71) or the control-byte descriptor (PL110); Prepare's own check() refusal of an unsafe descriptor is never exercised.\nP2 | auto-fix | low | internal/subprocess/protection/record_test.go:59-61 | PL39 (spec 629) | The foreign-binding test changes the store and the generation but never the Binding field; a validator or matches that ignored the binding would pass this row.\n\nAdvice\n- TestRegistrationPartialPublish's loop over the first store's records has no count check; noStartUser guards this elsewhere.\n- In TestRecoveryMissingCompletion, the outer Outcome.Protection is Safe while a nested user is unresolved; release authority stays with SealAndObserve, and later consumers must not treat Outcome.Protection as release proof (spec 400-402).\n- After Started fails, the registration closes, so pending records stay indefinitely; conservative and consistent with spec 353-357.\n\nContracts verified in code: Prepare validates the whole vector and admission before its first mutation and releases locks before Start; sealing refuses new users while Started and Finish still update; rollback publishes no-start and returns uncertain on failure; a Started failure forces KILL through the in-memory handle; grade treats pending as protected and never infers no-start, requiring group ESRCH then complete workers or actor ESRCH; recovery probes with signal 0 only; ParseVector and Environ handle BENCH_PROCESS_RESOURCES and bounds.run refuses a malformed vector; schema fields, 0700/0600 modes, and the strict reader match spec 256-287. Outside Writes:, the ticket commit changes only spec.md coverage citations, which spec 584 expects.\n"
+          },
+          "axis": "Spec",
+          "base": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+          "tip": "58e4b351cdb9250de98cbcb8e6e3b3e7df355514",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage-r1",
+          "performer": "claude:plt-c2-coverage-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9624eb4bfdce87ebee84ef2abb9b05167cb5d621",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c2-coverage-20261022",
+            "digest": "sha256:67eee62d7259f339d4339a5c996063af3f82105e843a69c7805e0e7cafbf758f",
+            "excerpt": "Coverage axis, PL-C2. Evidence current=true, dirty_record=false. Four findings, all silent probes on behavior the spec states; worst is C3.\n\nFindings\nC1 | auto-fix | high | internal/gocache/protection.go:136 | probe silent, restored yes; spec \"Descriptors cannot choose arbitrary files, symlinks...\" | The canonical-path check has no biting test. The link case in TestProtectionRefusesAForeignCache is still refused by cacheIdentity's Lstat on the final symlink; a symlink parent component would pass without the check.\nC2 | auto-fix | medium | internal/gocache/protection.go:142 | probe silent, restored yes; spec \"The validator checks the resource kind's recognized store location and existing owner identity\" | The lock-file check has no biting test; the unlocked case keeps the original binding, so the binding check refuses it first.\nC3 | auto-fix | high | internal/subprocess/protection/store.go:43-44 | probe silent across ./internal/subprocess/..., ./internal/bounds, ./internal/gocache, restored yes; spec \"Malformed, missing, foreign, and sealed descriptors prevent launch\" and \"each resource owner's identity validator\" | No test covers a kind with no validator row or a nil Protocol; with the mutant a kind with no row skips validation.\nC4 | auto-fix | medium | internal/bounds/bounds.go:226-229 | probe silent on ./internal/bounds and ./internal/subprocess/..., restored yes; spec \"Malformed ... descriptors prevent launch\" | No bounds test sets a malformed BENCH_PROCESS_RESOURCES; ParseVector rows cover only the parser, not the refusal in run.\n\nAdvice\n- bounds.run does not copy Outcome.Protection into ProcessResult; no spec line asks for it.\n- Environ removes the entry for an empty vector; production never calls it that way.\n- The h.dir == \"\" arm of Holder.Protect is unreachable from HoldDir.\n- The errIdentityPending snapshot arm (outcome.go:373-374) was not probed.\n\nProbes: gocache/protection.go lock check made false (silent, yes); gocache/protection.go canonical check made false (silent, yes); protection/store.go no-validator refusal to return nil (silent, yes); bounds/bounds.go malformed check made false (silent, yes).\n"
+          },
+          "axis": "Coverage",
+          "base": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+          "tip": "58e4b351cdb9250de98cbcb8e6e3b3e7df355514",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -985,6 +1056,8 @@ PL-C1 consumed repair cycle 1 of 2 after its initial review (round r1). No revie
 Repair 1 (commit 36c2fa86a) closed S1, S2, C1, and C3. The C2 disposition moved to no-op by consultant tie-break, as a record-only correction.
 The confirming round r2 passed on all three axes with no new finding, and the Coverage axis reaffirmed the C2 no-op.
 
+PL-C2 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies. The reviewer directed minimal probing during this round.
+
 ## Standards
 
 PL-C1 round r1: 2 findings. Worst issue: S2, a scheduling-dependent verdict in a PL66 test.
@@ -992,9 +1065,18 @@ PL-C1 round r1: 2 findings. Worst issue: S2, a scheduling-dependent verdict in a
 - S1 | auto-fix | confidence 6 | `internal/subprocess/control.go:248-249` | `controller.signal` reclassifies ESRCH as absence, which duplicates the rule that `protection.observeGroup` owns (AGENTS.md one source per fact).
 - S2 | auto-fix | confidence 6 | `internal/subprocess/lifetime_test.go:246-250` | `TestLifetimeSingleFinalWindow` orders its events with a raw 50 ms pause (craft-tdd broken-oracle rule).
 
+PL-C2 round r1: 1 finding. Worst issue: S1, a fixture scaffold that repeats incidental text.
+
+- S1 | no-op | confidence 4 | `internal/subprocess/protection/fixture_test.go:138` | Two bounded-wait helpers repeat the select scaffold of `waitWithin`; the deadline policy keeps one source in `bounds`.
+
 ## Spec
 
 PL-C1 round r1: 0 findings. Worst issue: none.
+
+PL-C2 round r1: 2 findings. Worst issue: P1, a launch-refusal assertion that refuses only an empty descriptor.
+
+- P1 | auto-fix | confidence 6 | `internal/subprocess/protection/registration_test.go:204-206` and `record_test.go:225-229` | The PL71 and PL110 tests never launch against the unsynced record or the unsafe descriptor.
+- P2 | auto-fix | confidence 5 | `internal/subprocess/protection/record_test.go:59-61` | The PL39 foreign-binding test never changes the `Binding` field.
 
 ## Coverage
 
@@ -1004,6 +1086,13 @@ PL-C1 round r1: 4 findings. Worst issue: C1, the expired-deadline KILL of a late
 - C2 | no-op | confidence 5 | `internal/bounds/bounds.go:257` | No test fails when bounds certifies completion over a failed or force-closed stream (ticket 01 line 40). The repair found that no real child reaches the loop under the production policy. The consultants split, and the fable tie-break chose no-op. The loop is the bounds status projection over the separate stream facts of `subprocess.Outcome` (spec.md:38; ticket 01:25). Each later caller composes those facts under its own contract (spec.md:169-183; ticket 09:16). The branch stays as defense-in-depth with no test.
 - C3 | auto-fix | confidence 5 | `internal/subprocess/outcome.go:128` | No test fails when a forced closure reports the cleanup as not requested (spec.md:146).
 - C4 | no-op | confidence 4 | `internal/subprocess/control.go:81` | PL89 in PL-C5 is the planned witness for the platform-attribute rule.
+
+PL-C2 round r1: 4 findings. Worst issue: C3, a kind with no validator row gets admission with no biting test.
+
+- C1 | auto-fix | confidence 8 | `internal/gocache/protection.go:136` | No test bites the canonical-path check; a symlink parent component would pass.
+- C2 | auto-fix | confidence 6 | `internal/gocache/protection.go:142` | No test bites the lock-file check; the binding check refuses the test case first.
+- C3 | auto-fix | confidence 8 | `internal/subprocess/protection/store.go:43-44` | No test bites the refusal of a kind with no validator row.
+- C4 | auto-fix | confidence 6 | `internal/bounds/bounds.go:226-229` | No bounds test sets a malformed `BENCH_PROCESS_RESOURCES`; only the parser is tested.
 
 ## Advice
 
