@@ -2723,7 +2723,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3d-standards-r0",
+          "performer": "claude:lgp-c3d-standards-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7a9817df854f82559365cabf9cd949f1f8632fc0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3d-standards-20261022",
+            "digest": "sha256:cf81dac1fb9ce20350b84fe7a40409bbc1540087c4adc39a65b34b42e74f7fe3",
+            "excerpt": "Standards axis, LGP-C3D (8ac213e02..fd7ac338e): 1 finding. S1 (accepted, auto-fix): the census comment (parallel_census_test.go:1035-1036) says an exec child test takes its caller environment from the call and stays out of the set, which repeats the fact that the helper comment (exec_call_env_test.go:21) owns and names something outside the three serial classes it lists; delete the census sentence. Clean: ten t.Parallel additions match the ten TestExecChild tests; the census comment names three classes; the ceiling is 21; no edit outside the ticket's tests. Advice: the helper chain is split across two files; \"PATH=\" + os.Getenv(\"PATH\") appears in two call bases.\n"
+          },
+          "axis": "Standards",
+          "base": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+          "tip": "fd7ac338eea9394fa3cf878e9ea495cff9441874",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3d-spec-r0",
+          "performer": "claude:lgp-c3d-spec-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7a9817df854f82559365cabf9cd949f1f8632fc0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3d-spec-20261022",
+            "digest": "sha256:69d5e056d841e2ef8f7943f432d9f965ab3bf4e8c087a16688a309f73ab43e8a",
+            "excerpt": "Spec axis, LGP-C3D (8ac213e02..fd7ac338e): 1 finding. P1 (accepted, repair): the recorded t09-exec-bind run used --run \"^TestParallelCensusOnTheLiveTree$\" while the plan names bench test --package ./internal/worktree, against the rule \"Run the plan's named probe exactly\"; the plan was not amended, and the record shows the plan command beside a narrowed selection. The Coverage axis then ran the plan's exact probe on the whole package and it bit cleanly, so the repair re-records the plan's run and the plan stays. LGP20 met (ten tests parallel, no bindEnv left, the mutant census reports 10 breaks); LGP21 met, 31 - 10 + 0 = 21; LGP22 met, 812 unchanged; LGP34: coordinator records the ticket 09 author's bench test --full --package ./internal/worktree times, 63189 ms (1498 tests) before and 63078 ms (1498 tests) after, inside the spread. Ticket lines 13, 15, and 17 met (exec_test.go 408 lines).\n"
+          },
+          "axis": "Spec",
+          "base": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+          "tip": "fd7ac338eea9394fa3cf878e9ea495cff9441874",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3d-coverage-r0",
+          "performer": "claude:lgp-c3d-coverage-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7a9817df854f82559365cabf9cd949f1f8632fc0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3d-coverage-20261022",
+            "digest": "sha256:7c15780bbac5f954e6c82b3c5cfce33d9eccf26eb603cfc74e793a2e6d9d496f",
+            "excerpt": "Coverage axis, LGP-C3D (8ac213e02..fd7ac338e): 0 findings. Probes, all restored yes: the planned t09-exec-bind mutation (bindEnv in childOutputAtHome) on the whole package as the plan states bit with 3 failures (a t.Setenv panic in a moved test, the census with 10 breaks, the ceiling at 31 against 21) and left no temp directory; execEnv reading baseEnviron instead of the call environ bit two moved tests; removing one t.Parallel bit the census; dropping BENCH_EXEC_TEST_CARRIED from the caller slice bit. Silent and equivalent: withHome stripping a dummy name (exec.Cmd keeps the last duplicate). Advice: dropping BENCH_KIT from the caller slice reads silent, so TestExecChildDropsWrapperRouting could first assert its fixture carries the value; this predates the ticket.\n"
+          },
+          "axis": "Coverage",
+          "base": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+          "tip": "fd7ac338eea9394fa3cf878e9ea495cff9441874",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
