@@ -3286,6 +3286,75 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c4a-standards-r1",
+          "performer": "claude:lgp-c4a-standards-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "68de6e354e47475aeafb0e1dbfd903590c3a183a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-standards-r1-20261022",
+            "digest": "sha256:787066b530d22392bd1f332d1b578271d731939a5cc1203cf7ed42efbbe0404d",
+            "excerpt": "Standards axis r1, LGP-C4A (c9d119580..e2cf59a3a): 0 findings; C1, C2, and C3 are closed in source (repos check ungraded inside an owner writer; callees resolves any identifier or selector; method lookup by name on any receiver), each with a planted row. The second call-graph walk is allowed (each census keeps its own rules); the serial-reason vocabulary is spelled once; the testcensus non-test package that imports testing has tree precedent. Advice: the worktree pass-through wrappers; ledgerFields hand-lists three systemOwner fields; t.Run reaches any test-file method named Run, as the comment states.\n"
+          },
+          "axis": "Standards",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "e2cf59a3a23e0a6b301dd934e82ab74015d15eea",
+          "finding_ids": [],
+          "supersedes": [
+            "c4a-standards-r0"
+          ]
+        },
+        {
+          "id": "c4a-spec-r1",
+          "performer": "claude:lgp-c4a-spec-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "68de6e354e47475aeafb0e1dbfd903590c3a183a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-spec-r1-20261022",
+            "digest": "sha256:0bdb8e7ee893e6d1a1d9527c039d520ad3e1c94de3588daecbf7ea2d6e18e2da",
+            "excerpt": "Spec axis r1, LGP-C4A (c9d119580..e2cf59a3a): 0 findings; C1, C2, and C3 closed. LGP25, LGP26, LGP28, LGP29, and LGP31 met (105 serial rows: 103 pending migration and two owner-repository); the planned probe ran with bench test --check system and bit; the shared worktree walk passes. LGP34: coordinator records 109854 ms (181 tests) before the ticket and 110712 ms (200 tests) at the repair tip. Advice: spec :208 \"the walk does not follow owner writers\" now holds only for the ledger rule; spec :216 cites base-tree line numbers.\n"
+          },
+          "axis": "Spec",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "e2cf59a3a23e0a6b301dd934e82ab74015d15eea",
+          "finding_ids": [],
+          "supersedes": [
+            "c4a-spec-r0"
+          ]
+        },
+        {
+          "id": "c4a-coverage-r1",
+          "performer": "claude:lgp-c4a-coverage-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "68de6e354e47475aeafb0e1dbfd903590c3a183a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4a-coverage-r1-20261022",
+            "digest": "sha256:c51d23b77e3b5d03d71a53bf4a9d4418d5c2daceacca665e61dc823a929f3094",
+            "excerpt": "Coverage axis r1, LGP-C4A (c9d119580..e2cf59a3a): C1, C2, and C3 closed (independent mutants P1 to P4 each red their planted row, restored yes). 3 new findings. C7 (accepted, repair): no planted row guards the visited key; keying by declaration only reads silent (P6), and a row where a helper is reached first through an owner writer and then directly reds that mutant (P7). C8 (accepted, repair, by the same spec :207 basis as C1 to C3): a package-level function literal (var pickRepo = func() string { return owner.repos[0] }) called from a parallel test is not followed, because parseSystemPackage indexes only FuncDecl (P8 silent, P9 bit). C9 (plan action, not a code finding): parallel_census_test.go is exactly 400 lines with a zero base, so tickets 11 and 16, which add census rules to it, have no room; the planted fixtures move to a sibling file. Advice: an aliased owner value or a systemOwner receiver not named o escapes both censuses, as spec :209 declares.\n"
+          },
+          "axis": "Coverage",
+          "base": "c9d11958023fa09a46434a3865f6734f7f1c1ade",
+          "tip": "e2cf59a3a23e0a6b301dd934e82ab74015d15eea",
+          "finding_ids": [
+            "C7",
+            "C8"
+          ],
+          "supersedes": [
+            "c4a-coverage-r0"
+          ]
         }
       ]
     }
