@@ -120,5 +120,6 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample`
 - `bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample`
 - `bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample`
+- `bench test --package ./internal/subprocess/processtest`
 
 Mutation witness: Drop inherited descriptors from the real bounds launch. The nested-provider witness must fail through bench test --check system.
