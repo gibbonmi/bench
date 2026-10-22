@@ -1,6 +1,7 @@
 package testreport
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -34,7 +35,7 @@ func liveKitRoot(t *testing.T) string {
 func installOwnedSelection(t *testing.T, kit string) {
 	t.Helper()
 	installTestSelectionFactory(t, runbinary.Factory{})
-	path, err := packageRunBinary.path(kit)
+	path, err := packageRunBinary.Path(context.Background(), kit)
 	if err != nil {
 		t.Fatalf("select the package run binary for %s: %v", kit, err)
 	}

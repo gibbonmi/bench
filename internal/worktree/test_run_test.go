@@ -18,19 +18,10 @@ import (
 // before every t.Setenv, so this is the operator's selection, never a fixture's.
 var inheritedRunBinary, inheritedRunBinaryPresent = os.LookupEnv(runbinary.Env)
 
-// testRunSelector owns the one Bench executable a worktree test run hands to every
-// real-binary journey. It reuses an inherited selection when one is present, or builds
-// and seals exactly one direct-run executable through internal/runbinary. A present
-// invalid selection refuses; it is never permission to build a private second binary.
+// testRunSelector hands the one Bench executable of a worktree test run to every
+// real-binary journey, graded against the checkout that holds this package.
 type testRunSelector struct {
-	inherited func() (string, bool)
-	build     runbinary.Builder
-	verify    runbinary.Verifier
-	tempRoot  string
-
-	once      sync.Once
-	selection *runbinary.Selection
-	err       error
+	shared *runbinary.Shared
 
 	// journeys is the identity log: one "journey path" line per successful selection
 	// consumer. A refusal appends nothing, so its length is the journey-start counter.
@@ -41,14 +32,18 @@ type testRunSelector struct {
 }
 
 func (s *testRunSelector) selectFor(journey string) (string, error) {
-	s.once.Do(func() { s.selection, s.err = s.selectOnce() })
-	if s.err != nil {
-		return "", s.err
+	source, err := benchSourceRoot()
+	if err != nil {
+		return "", err
+	}
+	path, err := s.shared.Path(context.Background(), source)
+	if err != nil {
+		return "", err
 	}
 	s.journeysMu.Lock()
-	s.journeys = append(s.journeys, journey+" "+s.selection.Path)
+	s.journeys = append(s.journeys, journey+" "+path)
 	s.journeysMu.Unlock()
-	return s.selection.Path, nil
+	return path, nil
 }
 
 // journeyLog returns a copy of the identity log.
@@ -58,22 +53,8 @@ func (s *testRunSelector) journeyLog() []string {
 	return append([]string(nil), s.journeys...)
 }
 
-func (s *testRunSelector) selectOnce() (*runbinary.Selection, error) {
-	source, err := benchSourceRoot()
-	if err != nil {
-		return nil, err
-	}
-	factory := runbinary.Factory{TempRoot: s.tempRoot, Build: s.build, Verify: s.verify}
-	if raw, present := s.inherited(); present {
-		return factory.Inherit(source, raw)
-	}
-	return factory.Own(context.Background(), source)
-}
-
 func (s *testRunSelector) close() {
-	if s.selection != nil {
-		_ = s.selection.Close()
-	}
+	_ = s.shared.Close()
 }
 
 func benchSourceRoot() (string, error) {
@@ -87,7 +68,7 @@ func benchSourceRoot() (string, error) {
 // packageRunBinary is the package-wide owner. Every journey that starts a real Bench
 // child obtains its executable here; no journey builds its own.
 var packageRunBinary = &testRunSelector{
-	inherited: func() (string, bool) { return inheritedRunBinary, inheritedRunBinaryPresent },
+	shared: &runbinary.Shared{Raw: inheritedRunBinary, Present: inheritedRunBinaryPresent},
 }
 
 func testRunBinary(t *testing.T) string {
@@ -106,15 +87,14 @@ func testRunBinary(t *testing.T) string {
 func TestDirectRunBuildsAndSealsOneExecutableForAllJourneys(t *testing.T) {
 	t.Parallel()
 	builds := 0
-	selector := &testRunSelector{
-		inherited: func() (string, bool) { return "", false },
-		tempRoot:  t.TempDir(),
-		build: func(_ context.Context, _, output string) error {
+	selector := &testRunSelector{shared: &runbinary.Shared{Factory: runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
 			builds++
 			return os.WriteFile(output, []byte("selected"), 0o755)
 		},
-		verify: func(string, string) error { return nil },
-	}
+		Verify: func(string, string) error { return nil },
+	}}}
 	t.Cleanup(selector.close)
 	paths := map[string]bool{}
 	for _, journey := range []string{"journey-a", "journey-b", "journey-c"} {
@@ -126,8 +106,10 @@ func TestDirectRunBuildsAndSealsOneExecutableForAllJourneys(t *testing.T) {
 	requireTest(t, len(paths) == 1, "journeys observed %d executable identities %v, want 1", len(paths), paths)
 	log := selector.journeyLog()
 	requireTest(t, len(log) == 3, "identity log = %q, want three journey entries", log)
-	for _, entry := range log {
-		requireTest(t, strings.HasSuffix(entry, " "+selector.selection.Path), "identity log entry %q does not carry the selected path %q", entry, selector.selection.Path)
+	for selected := range paths {
+		for _, entry := range log {
+			requireTest(t, strings.HasSuffix(entry, " "+selected), "identity log entry %q does not carry the selected path %q", entry, selected)
+		}
 	}
 }
 
@@ -151,14 +133,13 @@ func TestInheritedSelectionReachesJourneysUnchangedWithZeroBuilds(t *testing.T) 
 	t.Parallel()
 	sealed := testRunBinary(t)
 	builds := 0
-	selector := &testRunSelector{
-		inherited: func() (string, bool) { return sealed, true },
-		tempRoot:  t.TempDir(),
-		build: func(_ context.Context, _, output string) error {
+	selector := &testRunSelector{shared: &runbinary.Shared{Raw: sealed, Present: true, Factory: runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
 			builds++
 			return os.WriteFile(output, []byte("private"), 0o755)
 		},
-	}
+	}}}
 	t.Cleanup(selector.close)
 	for _, journey := range []string{"journey-a", "journey-b"} {
 		path, err := selector.selectFor(journey)
@@ -197,14 +178,13 @@ func TestInvalidSelectionRefusesBeforeAnyJourney(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			builds := 0
-			selector := &testRunSelector{
-				inherited: func() (string, bool) { return tc.value, true },
-				tempRoot:  t.TempDir(),
-				build: func(_ context.Context, _, output string) error {
+			selector := &testRunSelector{shared: &runbinary.Shared{Raw: tc.value, Present: true, Factory: runbinary.Factory{
+				TempRoot: t.TempDir(),
+				Build: func(_ context.Context, _, output string) error {
 					builds++
 					return os.WriteFile(output, []byte("fallback"), 0o755)
 				},
-			}
+			}}}
 			t.Cleanup(selector.close)
 			_, err := selector.selectFor("journey-a")
 			requireTest(t, err != nil, "selectFor with %s selection %q = nil, want refusal", tc.name, tc.value)
@@ -220,14 +200,13 @@ func TestInvalidSelectionRefusesBeforeAnyJourney(t *testing.T) {
 // line per journey. An unguarded append drops a line or races.
 func TestParallelJourneysRecordEverySelection(t *testing.T) {
 	t.Parallel()
-	selector := &testRunSelector{
-		inherited: func() (string, bool) { return "", false },
-		tempRoot:  t.TempDir(),
-		build: func(_ context.Context, _, output string) error {
+	selector := &testRunSelector{shared: &runbinary.Shared{Factory: runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
 			return os.WriteFile(output, []byte("selected"), 0o755)
 		},
-		verify: func(string, string) error { return nil },
-	}
+		Verify: func(string, string) error { return nil },
+	}}}
 	t.Cleanup(selector.close)
 	names := []string{"parallel-journey-a", "parallel-journey-b"}
 	var wait sync.WaitGroup
