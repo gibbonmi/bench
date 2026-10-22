@@ -2,11 +2,12 @@ package adopt
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // teamProse is the project AGENTS.md prose that a fixture writes before Link.
@@ -76,8 +77,7 @@ func (g *golden) build(t *testing.T) string {
 }
 
 // linkedCopy returns a fresh consumer repository, made the working directory, that holds a
-// copy of the golden repository g: each file with its bytes, each symlink with its target,
-// and each entry with its mode.
+// testrepo.CopyTree copy of the golden repository g.
 func linkedCopy(t *testing.T, g *golden) string {
 	t.Helper()
 	base := g.build(t)
@@ -85,24 +85,7 @@ func linkedCopy(t *testing.T, g *golden) string {
 	if err := os.RemoveAll(filepath.Join(root, ".git")); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.CopyFS(root, os.DirFS(base)); err != nil {
-		t.Fatal(err)
-	}
-	err := filepath.WalkDir(base, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil || entry.Type()&fs.ModeSymlink != 0 {
-			return err
-		}
-		info, err := entry.Info()
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(base, path)
-		if err != nil {
-			return err
-		}
-		return os.Chmod(filepath.Join(root, rel), info.Mode().Perm())
-	})
-	if err != nil {
+	if err := testrepo.CopyTree(root, base); err != nil {
 		t.Fatal(err)
 	}
 	return root

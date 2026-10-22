@@ -179,6 +179,7 @@ func (c candidateInstall) landGapChange(t *testing.T) processResult {
 // chunk gap of the declared build holds the installed candidate, so the primary executable
 // keeps its digest and still reads the ledger that holds the candidate's field.
 func TestCandidateInstallSurvivesAGapLanding(t *testing.T) {
+	t.Parallel()
 	c := newCandidateInstall(t)
 	c.require(t, c.primary, "worktree", "build", "--install", candidateLabel)
 	primary := freshness.PublishedExecutable(c.primary)
@@ -202,6 +203,7 @@ func TestCandidateInstallSurvivesAGapLanding(t *testing.T) {
 // the installed candidate's source, so the refresh rebuilds the primary executable from the
 // landed sources and binds it in the manifest.
 func TestCandidateInstallLandsItsNewFields(t *testing.T) {
+	t.Parallel()
 	c := newCandidateInstall(t)
 	start := systemGitOutput(t, c.worktree, "merge-base", "HEAD", "main")
 	c.require(t, c.primary, "worktree", "build", "--install", candidateLabel)
@@ -243,6 +245,7 @@ func TestCandidateInstallLandsItsNewFields(t *testing.T) {
 // primary executable in the manifest, and `bench status` then reads a ledger that holds the
 // field that the main executable refuses.
 func TestCandidateInstallPublishesTheCandidate(t *testing.T) {
+	t.Parallel()
 	c := newCandidateInstall(t)
 	primary, built := freshness.PublishedExecutable(c.primary), freshness.PublishedExecutable(c.worktree)
 	mainDigest := fileDigest(t, primary)

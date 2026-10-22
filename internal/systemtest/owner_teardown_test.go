@@ -13,7 +13,8 @@ import (
 )
 
 func TestRedTimeoutAndDescendantTeardown(t *testing.T) {
-	if red := owner.runSelected(owner.repos[1], "not-a-command"); red.code == 0 {
+	t.Parallel()
+	if red := owner.runSelected(landRouteRepo(t, "teardown [journey]-"), "not-a-command"); red.code == 0 {
 		t.Fatal("unknown command unexpectedly green")
 	}
 	owner.markTerminal("red")

@@ -147,6 +147,7 @@ func TestBuildOutputDeclarationFailsClosed(t *testing.T) {
 }
 
 func TestResumeReconcilesDeadLeaseAndPreservesSafetyBranches(t *testing.T) {
+	t.Parallel()
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	home := filepath.Join(root, ".bench-home")
@@ -167,8 +168,7 @@ func TestResumeReconcilesDeadLeaseAndPreservesSafetyBranches(t *testing.T) {
 	commitInWorktree(t, unlanded.Path, "unique.txt", "preserve\n", "unique work")
 	markPending(t, root, unlanded.Assignment)
 
-	chdir(t, root)
-	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.callFromRoot())
 	requireTest(t, resumed.exit == 0 && resumed.stderr == "", "resume exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	want := expectedResumeSummary(1, 0, "; retained live-lease=1 unmerged=1", 0, 0, 0, 2)
 	requireTest(t, resumed.stdout == want, "resume summary=%q want=%q", resumed.stdout, want)

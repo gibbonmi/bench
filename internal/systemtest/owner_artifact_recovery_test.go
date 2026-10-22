@@ -18,19 +18,19 @@ import (
 )
 
 func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
+	t.Parallel()
 	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
 	configureArtifactLandingFixture(t, root)
 	private := t.TempDir()
-	t.Setenv("TMPDIR", private)
 	first := systemCreateLandingWorktree(t, root, home, "artifact-dead", "artifact dead")
 	base := systemGitOutput(t, root, "rev-parse", "main")
 	systemCommit(t, first.path, "loser.txt", "dead\n", "dead prospective subject")
 	first.tip = systemRetainLandingEvidence(t, first.path, base)
-	if review := systemSelected(t, first.path, systemLandEnv(root, home, tally, trees, ready, release), "preflight", "review", "x", "--base", base); review.code != 0 {
+	if review := systemSelected(t, first.path, artifactChildEnv(root, home, tally, trees, ready, release, private), "preflight", "review", "x", "--base", base); review.code != 0 {
 		t.Fatalf("first review = (%d, %q, %q)", review.code, review.stdout, review.stderr)
 	}
 
-	cmd, childOut, childErr, done := startArtifactLand(t, root, home, tally, trees, ready, release, first, base)
+	cmd, childOut, childErr, done := startArtifactLand(t, root, home, tally, trees, ready, release, private, first, base)
 	awaitArtifactBarrier(t, ready, done, childOut, childErr)
 
 	bundle := oneProspectiveBundle(t, private)
@@ -56,10 +56,10 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 	fresh := systemCreateLandingWorktree(t, root, home, "artifact-fresh", "artifact fresh")
 	systemCommit(t, fresh.path, "winner.txt", "fresh\n", "fresh prospective subject")
 	fresh.tip = systemRetainLandingEvidence(t, fresh.path, base)
-	if review := systemSelected(t, fresh.path, systemLandEnv(root, home, tally, trees, ready, release), "preflight", "review", "x", "--base", base); review.code != 0 {
+	if review := systemSelected(t, fresh.path, artifactChildEnv(root, home, tally, trees, ready, release, private), "preflight", "review", "x", "--base", base); review.code != 0 {
 		t.Fatalf("fresh review = (%d, %q, %q)", review.code, review.stdout, review.stderr)
 	}
-	_, freshOut, freshErr, freshDone := startArtifactLand(t, root, home, tally, trees, ready, release, fresh, base)
+	_, freshOut, freshErr, freshDone := startArtifactLand(t, root, home, tally, trees, ready, release, private, fresh, base)
 	awaitArtifactBarrier(t, ready, freshDone, freshOut, freshErr)
 	if _, err := os.Stat(bundle); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("dead bundle = %v, want absent", err)
@@ -90,7 +90,7 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 	// byte. The landing moves its own worktrees either way, so the registration half asks
 	// only that no registration names a prospective bundle, and that the refresh completes.
 	plantedRoot := artifactRootEntries(t, private)
-	if result := systemSelected(t, root, artifactLandEnv(root, home, tally, trees, ready, release), systemLandArgs(fresh, base)...); result.code != 0 || !strings.Contains(result.stdout, "refresh,complete") {
+	if result := systemSelected(t, root, artifactLandEnv(root, home, tally, trees, ready, release, private), systemLandArgs(fresh, base)...); result.code != 0 || !strings.Contains(result.stdout, "refresh,complete") {
 		t.Fatalf("second prospective authorization = (%d, %q, %q)", result.code, result.stdout, result.stderr)
 	}
 	if repeatedTally, err := os.ReadFile(tally); err != nil || string(repeatedTally) != string(gateTally) {
@@ -156,38 +156,6 @@ func releaseArtifactBarrier(t *testing.T, release string) {
 	if err := releaseWriter.Close(); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func artifactLandEnv(root, home, tally, trees, ready, release string) []string {
-	return append(systemLandEnv(root, home, tally, trees, ready, release), "BENCH_RUN_BINARY", "HOME="+home, "LAND_BASELINE_BENCH="+owner.selected.path)
-}
-
-func startArtifactLand(t *testing.T, root, home, tally, trees, ready, release string, source systemLandingWorktree, base string) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer, chan error) {
-	t.Helper()
-	if err := owner.observeSelected(); err != nil {
-		t.Fatal(err)
-	}
-	cmd := exec.Command(owner.selected.path, systemLandArgs(source, base)...)
-	cmd.Dir = root
-	cmd.Env = mergeEnvironment(systemBaseEnvironment(), artifactLandEnv(root, home, tally, trees, ready, release))
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
-	cmd.Stdout, cmd.Stderr = stdout, stderr
-	owner.mu.Lock()
-	owner.starts++
-	owner.mu.Unlock()
-	if err := cmd.Start(); err != nil {
-		t.Fatal(err)
-	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	t.Cleanup(func() {
-		if cmd.ProcessState == nil {
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
-		}
-	})
-	return cmd, stdout, stderr, done
 }
 
 // awaitArtifactBarrier waits for a landing subprocess to open its prospective gate
@@ -274,14 +242,14 @@ func oneOwnerBinary(t *testing.T, bundle string) string {
 // recognized bundle for this repository whose recorded PID answers -- is the same one a
 // second gate run would present.
 func TestConcurrentAuthorizationRetainsALiveOwner(t *testing.T) {
+	t.Parallel()
 	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
 	configureArtifactLandingFixture(t, root)
 	private := t.TempDir()
-	t.Setenv("TMPDIR", private)
 	base := systemGitOutput(t, root, "rev-parse", "main")
 	live, liveCheckout, liveBinary := plantLiveProspectiveBundle(t, private, root)
 
-	_, out, errOut, done := startArtifactAuthorization(t, root, home, tally, trees, ready, release, base, "artifact-second", "winner.txt", "second prospective subject")
+	_, out, errOut, done := startArtifactAuthorization(t, root, home, tally, trees, ready, release, private, base, "artifact-second", "winner.txt", "second prospective subject")
 	awaitArtifactBarrier(t, ready, done, out, errOut)
 	releaseArtifactBarrier(t, release)
 	<-done
@@ -295,14 +263,14 @@ func TestConcurrentAuthorizationRetainsALiveOwner(t *testing.T) {
 // owner's resources to the dead owner's recovery. The live owner is a live process
 // beside a planted bundle for the reason PAR11 records.
 func TestOneAuthorizationRecoversTheDeadBundleOfADeadAndLivePair(t *testing.T) {
+	t.Parallel()
 	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
 	configureArtifactLandingFixture(t, root)
 	private := t.TempDir()
-	t.Setenv("TMPDIR", private)
 	base := systemGitOutput(t, root, "rev-parse", "main")
 	live, liveCheckout, liveBinary := plantLiveProspectiveBundle(t, private, root)
 
-	deadCommand, deadOut, deadErr, deadDone := startArtifactAuthorization(t, root, home, tally, trees, ready, release, base, "artifact-dead", "loser.txt", "dead prospective subject")
+	deadCommand, deadOut, deadErr, deadDone := startArtifactAuthorization(t, root, home, tally, trees, ready, release, private, base, "artifact-dead", "loser.txt", "dead prospective subject")
 	awaitArtifactBarrier(t, ready, deadDone, deadOut, deadErr)
 	dead := otherProspectiveBundle(t, private, live)
 	deadCheckout := filepath.Join(dead, prospectiveartifact.CheckoutName)
@@ -315,7 +283,7 @@ func TestOneAuthorizationRecoversTheDeadBundleOfADeadAndLivePair(t *testing.T) {
 	}
 	releaseArtifactBarrier(t, release)
 
-	_, freshOut, freshErr, freshDone := startArtifactAuthorization(t, root, home, tally, trees, ready, release, base, "artifact-fresh", "winner.txt", "fresh prospective subject")
+	_, freshOut, freshErr, freshDone := startArtifactAuthorization(t, root, home, tally, trees, ready, release, private, base, "artifact-fresh", "winner.txt", "fresh prospective subject")
 	awaitArtifactBarrier(t, ready, freshDone, freshOut, freshErr)
 
 	if _, err := os.Stat(dead); !errors.Is(err, os.ErrNotExist) {
@@ -390,15 +358,15 @@ func requireLiveBundleRetained(t *testing.T, root, bundle, checkout, binary stri
 // startArtifactAuthorization reviews one new source worktree and starts its landing, so
 // a row names the authorizations it wants rather than repeating the review and start
 // sequence for each.
-func startArtifactAuthorization(t *testing.T, root, home, tally, trees, ready, release, base, name, file, message string) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer, chan error) {
+func startArtifactAuthorization(t *testing.T, root, home, tally, trees, ready, release, private, base, name, file, message string) (*exec.Cmd, *bytes.Buffer, *bytes.Buffer, chan error) {
 	t.Helper()
 	source := systemCreateLandingWorktree(t, root, home, name, name)
 	systemCommit(t, source.path, file, message+"\n", message)
 	source.tip = systemRetainLandingEvidence(t, source.path, base)
-	if review := systemSelected(t, source.path, systemLandEnv(root, home, tally, trees, ready, release), "preflight", "review", "x", "--base", base); review.code != 0 {
+	if review := systemSelected(t, source.path, artifactChildEnv(root, home, tally, trees, ready, release, private), "preflight", "review", "x", "--base", base); review.code != 0 {
 		t.Fatalf("%s review = (%d, %q, %q)", name, review.code, review.stdout, review.stderr)
 	}
-	return startArtifactLand(t, root, home, tally, trees, ready, release, source, base)
+	return startArtifactLand(t, root, home, tally, trees, ready, release, private, source, base)
 }
 
 // otherProspectiveBundle answers the one bundle under private that no held owner opened.

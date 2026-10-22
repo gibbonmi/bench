@@ -32,6 +32,7 @@ type recordedSpan struct {
 //
 // Rows OT14, OT15, OT16, and OT28.
 func TestOtelGateRecordJourney(t *testing.T) {
+	t.Parallel()
 	home := filepath.Join(t.TempDir(), "bench-home")
 	scaffold := scaffoldRecordedGateRepo(t, home, `{"phases":[
 		{"name":"probe","argv":["true"]},
@@ -278,6 +279,7 @@ func spanNames(spans map[string]recordedSpan) []string {
 // values from an earlier run. The gate strips both and sets its own, so the phase spans
 // join this run's root span and the record stays keyed by this repository alone.
 func TestOtelGateIgnoresAnAmbientRecordRoot(t *testing.T) {
+	t.Parallel()
 	home := filepath.Join(t.TempDir(), "bench-home")
 	scaffold := scaffoldRecordedGateRepo(t, home, `{"phases":[{"name":"probe","argv":["true"]}]}`)
 	ambient := append(scaffold.environment(t, home),
@@ -312,6 +314,7 @@ func TestOtelGateIgnoresAnAmbientRecordRoot(t *testing.T) {
 // stamped version to the record writes no version, so the equality with the version
 // line reds. The version line also names the platform, so the row reads its second field.
 func TestOtelGateRecordNamesTheStampedVersion(t *testing.T) {
+	t.Parallel()
 	home := filepath.Join(t.TempDir(), "bench-home")
 	scaffold := scaffoldRecordedGateRepo(t, home, `{"phases":[{"name":"probe","argv":["true"]}]}`)
 	environment := scaffold.environment(t, home)

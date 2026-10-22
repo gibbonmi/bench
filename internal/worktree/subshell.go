@@ -37,7 +37,8 @@ func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Wri
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	return subshellAt(root, newAmbient(home, stderr), subshellShell(), os.Environ(), args, stdin, stdout, stderr)
+	a := newAmbient(home, stderr)
+	return subshellAt(root, a, subshellShell(), a.environ, args, stdin, stdout, stderr)
 }
 
 func subshellAt(root string, a ambient, shell string, environ []string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
@@ -118,6 +119,29 @@ func canonicalPath(path string) (string, error) {
 	return canonicalpath.Resolve(path)
 }
 
+// callPath makes a relative path absolute against the call directory that a carries, so
+// no code below the verb boundary joins it to the process directory. An absolute path
+// stays. A failed directory read leaves a relative path as given and returns the read's
+// error, so the failure surfaces only where a relative path needs the directory. No caller
+// resolves a path that comes with that error: each refuses, and clean names the path as
+// given only as the target of its refusal row.
+func callPath(a ambient, path string) (string, error) {
+	if a.dirErr != nil && !filepath.IsAbs(path) {
+		return path, a.dirErr
+	}
+	return canonicalpath.Absolute(a.dir, path), nil
+}
+
+// canonicalPathIn is canonicalPath for a path operand of the verb call that a carries. Its
+// one refusal is the failed directory read, as canonicalPath's is.
+func canonicalPathIn(a ambient, path string) (string, error) {
+	path, err := callPath(a, path)
+	if err != nil {
+		return "", err
+	}
+	return canonicalPath(path)
+}
+
 // resolveOperand canonicalizes an operator-supplied target, resolving the portable `~`
 // form the worktree commands print. Both the plan and the apply that follows it route
 // through this, so a fingerprint taken from one addresses the same checkout as the
@@ -132,13 +156,23 @@ func resolveOperand(path string) (string, error) {
 	}
 	target, err := canonicalPath(path)
 	if err != nil {
-		return "", errors.New("target path is not canonical")
+		return "", errTargetNotCanonical
 	}
 	return target, nil
 }
 
+// errTargetNotCanonical is the cleanup refusal for a target with no absolute form.
+var errTargetNotCanonical = errors.New("target path is not canonical")
+
+// operandRefusalPlan is the cleanup plan for an operand that resolves to no checkout path.
+// The plan and the clean boundary both refuse through it, so one reason code goes with
+// every operand refusal text.
+func operandRefusalPlan(operand string, err error) CleanupPlan {
+	return unresolvedPlan(operand, ReasonUncertain, err.Error())
+}
+
 func PlanExplicit(root, path string) (CleanupPlan, error) {
-	return planExplicitWith(defaultJoins(), root, path, CleanupOptions{})
+	return planExplicitWith(defaultJoins(), &git.Run{}, root, path, CleanupOptions{})
 }
 
 // explicitRetainFingerprint binds a refusal decided before the registration is known to
@@ -152,23 +186,23 @@ func explicitRetainFingerprint(common, defaultRef, defaultOID, target string, pl
 	)
 }
 func PlanExplicitWithOptions(root, path string, options CleanupOptions) (CleanupPlan, error) {
-	return planExplicitWith(defaultJoins(), root, path, options)
+	return planExplicitWith(defaultJoins(), &git.Run{}, root, path, options)
 }
 
-// planExplicitWith is PlanExplicitWithOptions with the seam set resolved explicitly at
-// the caller's boundary.
-func planExplicitWith(j joins, root, path string, options CleanupOptions) (CleanupPlan, error) {
-	root = canonicalRoot(root)
+// planExplicitWith is PlanExplicitWithOptions with the seam set and the run value
+// resolved explicitly at the caller's boundary.
+func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupOptions) (CleanupPlan, error) {
+	root = canonicalRootIn(run, root)
 	target, err := resolveOperand(path)
 	if err != nil {
-		return unresolvedPlan(path, ReasonUncertain, err.Error()), nil
+		return operandRefusalPlan(path, err), nil
 	}
 	unsafeTarget := !cleanupOutputSafe(target)
-	worktrees, err := git.Worktrees(root)
+	worktrees, err := run.Worktrees(root)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	common, err := git.CommonDir(root)
+	common, err := run.CommonDir(root)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -222,7 +256,7 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	_, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
 	if markerStatErr == nil {
 		facts.MarkerPresent = true
-		evidence, markerErr := validateOwnerMarker(root, target)
+		evidence, markerErr := validateOwnerMarkerIn(run, root, target)
 		if markerErr != nil {
 			facts.MarkerErr = markerErr
 		} else {

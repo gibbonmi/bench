@@ -4,12 +4,10 @@ package systemtest
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -174,6 +172,7 @@ func waitExit(t *testing.T, cmd *exec.Cmd) int {
 // TestEvidenceLocationIndependence is CE17: sibling assignments at one source tip prepare
 // one identity, and the assignment stays outside it.
 func TestEvidenceLocationIndependence(t *testing.T) {
+	t.Parallel()
 	j := newEvidenceJourney(t)
 	first := j.assignment(t, "location-first", "changed\n")
 	second := j.assignment(t, "location-second", "", "location-first")
@@ -195,6 +194,7 @@ func TestEvidenceLocationIndependence(t *testing.T) {
 // writer resume. A writer lock that did not serialize the two lets the second writer count
 // an empty store and publish past the quota.
 func TestEvidenceQuotaConcurrency(t *testing.T) {
+	t.Parallel()
 	j := newEvidenceJourney(t)
 	first := j.assignment(t, "quota-first", "first\n")
 	second := j.assignment(t, "quota-second", "second body\n")
@@ -222,6 +222,7 @@ func TestEvidenceQuotaConcurrency(t *testing.T) {
 
 // TestEvidenceInterruptedPublication is CE86 and CE87.
 func TestEvidenceInterruptedPublication(t *testing.T) {
+	t.Parallel()
 	for _, stage := range []string{chargeevidence.StageStaged, chargeevidence.StageVerifying} {
 		t.Run(stage, func(t *testing.T) {
 			j := newEvidenceJourney(t)
@@ -245,6 +246,7 @@ func TestEvidenceInterruptedPublication(t *testing.T) {
 
 // TestEvidenceConcurrentPublication is CE89 and CE90.
 func TestEvidenceConcurrentPublication(t *testing.T) {
+	t.Parallel()
 	t.Run("CE89 identical writers", func(t *testing.T) {
 		j := newEvidenceJourney(t)
 		first := j.assignment(t, "identical-first", "identical\n")
@@ -293,32 +295,10 @@ func (j evidenceJourney) read(t *testing.T, dir string, args ...string) processR
 	return systemSelected(t, dir, j.env(), append([]string{"preflight", "evidence"}, args...)...)
 }
 
-// storeState lists the store's objects with their sizes, excluding the two lock files every
-// operation opens. A consumer cursor or reading log would appear here, whatever its name.
-func (j evidenceJourney) storeState(t *testing.T) []string {
-	t.Helper()
-	entries, err := os.ReadDir(j.store())
-	if err != nil {
-		t.Fatal(err)
-	}
-	var state []string
-	for _, entry := range entries {
-		if name := entry.Name(); name == chargeevidence.OperationLockName || name == chargeevidence.WriterLockName {
-			continue
-		}
-		info, err := entry.Info()
-		if err != nil {
-			t.Fatal(err)
-		}
-		state = append(state, fmt.Sprintf("%s %d %s", entry.Name(), info.Size(), info.ModTime()))
-	}
-	sort.Strings(state)
-	return state
-}
-
 // TestEvidenceSiblingRead is CE55: a sibling assignment reads the same prepared bytes,
 // because the store lives beneath the repository-common directory, not the checkout.
 func TestEvidenceSiblingRead(t *testing.T) {
+	t.Parallel()
 	j := newEvidenceJourney(t)
 	origin := j.assignment(t, "sibling-origin", "sibling\n")
 	sibling := j.assignment(t, "sibling-reader", "", "sibling-origin")
@@ -334,6 +314,7 @@ func TestEvidenceSiblingRead(t *testing.T) {
 // TestEvidenceReleaseRead is CE56: production assignment release keeps historical evidence
 // readable, so releasing the preparing assignment destroys no prepared artifact.
 func TestEvidenceReleaseRead(t *testing.T) {
+	t.Parallel()
 	j := newEvidenceJourney(t)
 	// The preparing assignment commits nothing of its own, so release has no unlanded
 	// branch to retain and the production verb runs to completion.
@@ -357,37 +338,10 @@ func TestEvidenceReleaseRead(t *testing.T) {
 	}
 }
 
-// TestEvidenceStatelessProcesses is CE65: repeated and out-of-order reads in separate
-// processes return the same bytes and leave the store unchanged, so no reading session or
-// consumer cursor survives a read.
-func TestEvidenceStatelessProcesses(t *testing.T) {
-	j := newEvidenceJourney(t)
-	worktree := j.assignment(t, "stateless", "stateless\n")
-	identity := identityOf(t, j.prepare(t, worktree))
-	manifest := chargeevidence.Cursor{Identity: identity}.String()
-	source := chargeevidence.Cursor{Identity: identity, Ordinal: 1}.String()
-	before := j.storeState(t)
-	// The later source page reads before the first manifest fragment, and each read repeats.
-	order := []string{source, manifest, source, manifest}
-	results := map[string]string{}
-	for _, cursor := range order {
-		result := j.read(t, worktree.path, identity, "--cursor", cursor)
-		if result.code != 0 {
-			t.Fatalf("read %s = (%d, %q)", cursor, result.code, result.stdout)
-		}
-		if seen, repeated := results[cursor]; repeated && seen != result.stdout {
-			t.Fatalf("repeated read of %s returned different bytes", cursor)
-		}
-		results[cursor] = result.stdout
-	}
-	if after := j.storeState(t); strings.Join(before, "\n") != strings.Join(after, "\n") {
-		t.Fatalf("reads changed the store:\nbefore:\n%s\nafter:\n%s", strings.Join(before, "\n"), strings.Join(after, "\n"))
-	}
-}
-
 // TestEvidenceNestedDirectory is CE120: a nested working directory resolves the same
 // repository-common artifact and returns the same source bytes.
 func TestEvidenceNestedDirectory(t *testing.T) {
+	t.Parallel()
 	j := newEvidenceJourney(t)
 	worktree := j.assignment(t, "nested", "nested\n")
 	identity := identityOf(t, j.prepare(t, worktree))

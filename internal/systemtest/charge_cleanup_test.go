@@ -55,6 +55,7 @@ var planFingerprint = regexp.MustCompile(`(sha256:[0-9a-f]{64})`)
 // TestEvidenceCleanupReaderExclusion is CE83. Cleanup refuses while a reader holds the
 // operation lock, and it deletes nothing.
 func TestEvidenceCleanupReaderExclusion(t *testing.T) {
+	t.Parallel()
 	j := newEvidenceJourney(t)
 	worktree := j.assignment(t, "clean-reader", "reader\n")
 	identity := identityOf(t, j.prepare(t, worktree))
@@ -83,6 +84,7 @@ func TestEvidenceCleanupReaderExclusion(t *testing.T) {
 // TestEvidenceCleanupWriterExclusion is CE84. Cleanup refuses while a writer holds the
 // operation lock, and it removes no temporary artifact that writer owns.
 func TestEvidenceCleanupWriterExclusion(t *testing.T) {
+	t.Parallel()
 	j := newEvidenceJourney(t)
 	first := j.assignment(t, "clean-writer-first", "first\n")
 	identityOf(t, j.prepare(t, first))
@@ -109,6 +111,7 @@ func TestEvidenceCleanupWriterExclusion(t *testing.T) {
 // removed and reports nothing, so the plan it was applying no longer describes the store:
 // that fingerprint refuses, and only a fresh plan covers the targets that survived.
 func TestEvidenceCleanupInterrupt(t *testing.T) {
+	t.Parallel()
 	j := newEvidenceJourney(t)
 	worktree := j.assignment(t, "clean-interrupt", "interrupt\n")
 	identityOf(t, j.prepare(t, worktree))

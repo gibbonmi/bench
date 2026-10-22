@@ -66,6 +66,7 @@ func treeRowCells(stdout string) string {
 // and a relative operand resolves in that tree. The exec route and directory inference
 // still name the tree that they run in.
 func TestTreeTargetRunsInNamedWorktree(t *testing.T) {
+	t.Parallel()
 	fixture, alpha := treeTargetFixture(t)
 	primaryRow := "primary," + systemGitOutput(t, fixture.root, "rev-parse", "HEAD") + ",false"
 	alphaRow := "alpha," + systemGitOutput(t, alpha.path, "rev-parse", "HEAD") + ",false"
@@ -92,6 +93,7 @@ func TestTreeTargetRunsInNamedWorktree(t *testing.T) {
 // target whose build no longer matches the tree, and it starts no child. The build is a
 // script that freshness.Publish seals and that writes a marker when it runs.
 func TestTreeTargetRefusesStaleKitBuild(t *testing.T) {
+	t.Parallel()
 	fixture, alpha := treeTargetFixture(t)
 	kittest.WriteTree(t, alpha.path)
 	marker := filepath.Join(t.TempDir(), "marker")

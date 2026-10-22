@@ -65,3 +65,24 @@ func TestBoundOne(t *testing.T) {
 		t.Fatalf("a set of one under a ceiling of two = %q, want %q", breach, want)
 	}
 }
+
+// TestRemovedDirectoryOperandStaysSerial proves that the removed-directory landing test
+// changes the process directory itself. Its subject is the real failure of the process
+// directory read, so a call directory value in place of its chdir grades no read.
+func TestRemovedDirectoryOperandStaysSerial(t *testing.T) {
+	t.Parallel()
+	facts, err := censusFacts(".")
+	if err != nil {
+		t.Fatalf("census the package: %v", err)
+	}
+	const name = "TestLandingHandsBackAPathWithNoCanonicalForm"
+	for _, fact := range facts {
+		if fact.name == name {
+			if fact.serialReason != "chdir" {
+				t.Fatalf("%s serial reason = %q, want %q", name, fact.serialReason, "chdir")
+			}
+			return
+		}
+	}
+	t.Fatalf("the census finds no %s", name)
+}

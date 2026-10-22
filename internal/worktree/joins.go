@@ -59,7 +59,7 @@ type joins struct {
 	// env, and answers its exit code. It is a seam because the default starts a process.
 	doctorChild   func(dir string, argv, env []string, stderr io.Writer) int
 	resetLayers   func(string, recoveryManifest) error
-	resetEnvelope func(string, resetPlan) (intent.Recovery, error)
+	resetEnvelope func(string, []string, resetPlan) (intent.Recovery, error)
 }
 
 // defaultJoins names the real function behind every seam. It is the one place a default

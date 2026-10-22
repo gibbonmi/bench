@@ -152,13 +152,13 @@ func TestResetApplyRefusesAnUnverifiedEnvelope(t *testing.T) {
 	head := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	status := gitOutput(t, f.creation.Path, "status", "--porcelain=v1")
 	j := defaultJoins()
-	j.resetEnvelope = func(root string, plan resetPlan) (intent.Recovery, error) {
-		envelope, err := writeResetEnvelope(root, plan)
+	j.resetEnvelope = func(root string, environ []string, plan resetPlan) (intent.Recovery, error) {
+		envelope, err := writeResetEnvelope(root, environ, plan)
 		if err != nil {
 			return envelope, err
 		}
 		tree := gitOutput(t, root, "rev-parse", envelope.Root+"^{tree}")
-		broken, err := commitTree(root, tree, nil, "dropped payload\n")
+		broken, err := commitTree(root, environ, tree, nil, "dropped payload\n")
 		if err != nil {
 			return envelope, err
 		}
@@ -191,18 +191,25 @@ func TestResetApplyPreservesTheLayersAndMovesTheCheckout(t *testing.T) {
 	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("staged\n"), 0o644)
 	gitRun(t, f.creation.Path, "add", "README.md")
 	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("working\n"), 0o644)
-	before, _, err := captureLayers(f.root, f.creation.Path, true, checkpoint)
+	before, _, err := captureLayers(f.root, os.Environ(), f.creation.Path, true, checkpoint)
 	mustNoError(t, err)
 	expected, ok := readRecoveryManifest(f.root, before)
 	requireTest(t, ok, "fixture envelope is unreadable")
 	plan := runVerb(t, verbReset, f.call("--to", checkpoint, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, f.call("--to", checkpoint, f.creation.Assignment.ID, "--apply", fingerprint))
+	// The envelope commits take the call's base environment. commitTree sets the identity
+	// and no date, so the committer date of the call shows in the root commit.
+	const callSeconds = "1000000000"
+	apply := f.call("--to", checkpoint, f.creation.Assignment.ID, "--apply", fingerprint)
+	apply.environ = append(os.Environ(), "GIT_COMMITTER_DATE="+callSeconds+" +0000")
+	result := runVerb(t, verbReset, apply)
 	requireTest(t, result.exit == 0, "apply = %d %s %s", result.exit, result.stdout, result.stderr)
 	ref := intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"
 	actual, ok := readRecoveryManifest(f.root, ref)
 	requireTest(t, ok && actual.Tip == checkpoint, "reset manifest = %#v, readable=%v", actual, ok)
+	committed := gitOutput(t, f.root, "log", "-1", "--format=%ct", ref)
+	requireTest(t, committed == callSeconds, "envelope committer date = %s, want the call environment's %s", committed, callSeconds)
 	for _, layer := range []string{"working", "staged"} {
 		want := gitOutput(t, f.root, "rev-parse", expected.Layers[layer]+"^{tree}")
 		got := gitOutput(t, f.root, "rev-parse", actual.Layers[layer]+"^{tree}")

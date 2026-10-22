@@ -16,6 +16,7 @@ import (
 // unchanged. The spill line names the child's spill in the assignment's scope, and exec,
 // which runs from the primary checkout, writes no spill of its own.
 func TestExecNestedBenchBoundsOnce(t *testing.T) {
+	t.Parallel()
 	fixture, source := execBoundFixture(t)
 	systemCommit(t, source.path, "thirty.txt", joinLines(seqLines(1, 30)), "thirty lines")
 	if err := owner.observeSelected(); err != nil {
@@ -48,6 +49,7 @@ func TestExecNestedBenchBoundsOnce(t *testing.T) {
 // child and exec both run in the assignment's scope, so a retaining exec would replace the
 // child's response with its own.
 func TestExecNestedBenchKeepsChildRetained(t *testing.T) {
+	t.Parallel()
 	fixture, source := execBoundFixture(t)
 	if err := owner.observeSelected(); err != nil {
 		t.Fatal(err)

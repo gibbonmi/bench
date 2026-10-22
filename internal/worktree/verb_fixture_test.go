@@ -21,6 +21,16 @@ func (f repoHome) call(args ...string) verbCall {
 	return verbCall{root: f.root, home: f.home, args: args}
 }
 
+// callFromRoot builds a verb call at the fixture's root and home that runs from the root,
+// as an operator in the checkout runs it. The call carries the root as its directory
+// value, so the test changes no process directory, and only a verb with a joins form
+// takes the call.
+func (f repoHome) callFromRoot(args ...string) verbCall {
+	call := f.call(args...)
+	call.dir = func() (string, error) { return f.root, nil }
+	return call
+}
+
 // callWith builds a verb call at the fixture's root and home that runs the verb's joins
 // form with j.
 func (f repoHome) callWith(j joins, args ...string) verbCall {

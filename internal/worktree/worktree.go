@@ -98,6 +98,9 @@ func classifyRegisteredWorktreesAt(root, home string) ([]Registered, error) {
 // canonicalRoot is the in-package spelling of the shared derivation. A path builder
 // below receives an already canonical root, so it never repeats the resolution.
 func canonicalRoot(root string) string { return poolkey.Canonical(root) }
+
+// canonicalRootIn is canonicalRoot with the common directory read through run.
+func canonicalRootIn(run *git.Run, root string) string { return poolkey.CanonicalIn(run, root) }
 func classifyPath(root, pool, path string) Class {
 	if samePath(path, root) {
 		return ClassRoot
@@ -273,6 +276,17 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 	}
 	if target != "" {
 		target = resolveVerbOperand(root, target)
+		// The plan holds no call directory, so a relative operand joins it here. A home
+		// operand stays, because expandHomeTarget owns its refusal. A failed directory read
+		// refuses here with the plan's own refusal, because the plan would read the process
+		// directory again.
+		if !homeOperand(target) {
+			var err error
+			if target, err = callPath(a, target); err != nil {
+				_ = renderCleanup(stdout, operandRefusalPlan(target, errTargetNotCanonical))
+				return 1
+			}
+		}
 	}
 	if unclaimed {
 		set, planErr := planUnclaimedAssignmentSet(root, options)
@@ -341,7 +355,7 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 	if len(selection.targets) > 0 {
 		return cleanExplicitSet(j, a, root, selection, stdout, stderr)
 	}
-	plan, err := planExplicitWith(j, root, target, options)
+	plan, err := planExplicitWith(j, a.run, root, target, options)
 	if err == nil && fingerprint != "" {
 		plan, err = applyExplicitWith(j, a, root, target, fingerprint, options)
 	}
@@ -351,7 +365,7 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 	}
 	if err != nil {
 		if plan.Target == "" {
-			plan.Target, _ = canonicalPath(target)
+			plan.Target, _ = canonicalPathIn(a, target)
 		}
 		plan.Action, plan.Reason = ActionError, err.Error()
 		if plan.Fingerprint == "" {

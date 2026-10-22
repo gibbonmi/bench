@@ -3,7 +3,10 @@
 // refusal.
 package worktree
 
-import "github.com/gibbonmi/bench/internal/intent"
+import (
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
+)
 
 // The component names. An operator reads these in guidance and in a refusal's detail,
 // so the string and the registry entry are the same fact.
@@ -66,8 +69,8 @@ func componentRefusal(name, assignment, observed, wanted string) refusalError {
 // assignment's. A marker this verb cannot read at all is an owner-marker fault, because the
 // later components read the same evidence and so decide nothing. The evidence is the step's
 // result, so no caller reads the marker twice.
-func ownerMarkerRefusal(root, target string, a intent.Assignment) (ownerEvidence, error) {
-	evidence, err := validateOwnerMarker(root, target)
+func ownerMarkerRefusal(run *git.Run, root, target string, a intent.Assignment) (ownerEvidence, error) {
+	evidence, err := validateOwnerMarkerIn(run, root, target)
 	if err != nil || evidence.marker.OwnerID != a.OwnerID || evidence.marker.Path != a.Worktree {
 		return ownerEvidence{}, componentRefusal(componentOwnerMarker, a.ID, "", "")
 	}
@@ -96,7 +99,7 @@ func identityBundleRefusal(root, target string, a intent.Assignment, active func
 	if a.Worktree != target {
 		return componentRefusal(componentAssignmentPath, a.ID, a.Worktree, target)
 	}
-	evidence, err := ownerMarkerRefusal(root, target, a)
+	evidence, err := ownerMarkerRefusal(&git.Run{}, root, target, a)
 	if err != nil {
 		return err
 	}

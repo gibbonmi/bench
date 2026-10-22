@@ -56,16 +56,18 @@ func reauthorizeWith(j joins, a ambient, root string, args []string, stdout, std
 	// The record opens after the grammar answers. The assignment the caller named is the
 	// subject, because a refusal inside the swap still acted on that named assignment.
 	finishSpan := beginVerbSpan(a.home, root, otelReauthorizeSeam)
-	exit := reauthorizeParsed(j, root, parsed, stdout, stderr)
+	exit := reauthorizeParsed(j, a, root, parsed, stdout, stderr)
 	finishSpan(exit, parsed.Flags["--assignment"])
 	return exit
 }
 
 // reauthorizeParsed is the reauthorize verb's own work, with the grammar already answered.
-func reauthorizeParsed(j joins, root string, parsed usage.Result, stdout, stderr io.Writer) int {
+func reauthorizeParsed(j joins, a ambient, root string, parsed usage.Result, stdout, stderr io.Writer) int {
 	id, request := parsed.Flags["--assignment"], parsed.Flags["--request"]
 	base, tip := parsed.Flags["--base"], parsed.Flags["--source-tip"]
-	path, err := canonicalPath(resolveVerbOperand(root, parsed.Positionals[0]))
+	// The proof closure below names its assignment a, so the run value takes its own name.
+	run := a.run
+	path, err := canonicalPathIn(a, resolveVerbOperand(root, parsed.Positionals[0]))
 	if err != nil {
 		fmt.Fprintln(stderr, "bench worktree reauthorize: worktree path is not canonical")
 		return 1
@@ -80,7 +82,7 @@ func reauthorizeParsed(j joins, root string, parsed usage.Result, stdout, stderr
 		if a.State != intent.StateActive || a.Worktree != path {
 			return errors.New("assignment identity mismatch")
 		}
-		evidence, err := validateOwnerMarker(root, path)
+		evidence, err := validateOwnerMarkerIn(run, root, path)
 		if err != nil {
 			return err
 		}

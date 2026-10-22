@@ -1719,6 +1719,14 @@
       "identity": "sha256:94a04f99b46ab979b53d1ff78424e3ab9747994268c5d4613de8da538e0555fe",
       "source": "1c32f2686ac2903248e0e03771cb8b922195fd6c",
       "evidence": "a9e031980f43983385953dbea6dc0bf793bed5f3"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT402",
+      "binding": "landing-gate-long-poles",
+      "identity": "sha256:4adbb6afc01f4b8849173e4239cff6fc47a2935bf8886488804c709511155d07",
+      "source": "a4c72441396b90253bdf78a04651378882c5fdda",
+      "evidence": "0c7cec2815ac965f9686e7c1e89022e2b6178c36"
     }
   ]
 }

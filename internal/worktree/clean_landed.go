@@ -142,7 +142,7 @@ func planLandedAssignment(j joins, root string, assignment intent.Assignment, op
 		plan.assignment, plan.owned = &assignment, true
 		return plan
 	}
-	plan, err := planExplicitWith(j, root, assignment.Worktree, options)
+	plan, err := planExplicitWith(j, &git.Run{}, root, assignment.Worktree, options)
 	if err != nil {
 		plan = retainedPlan(assignment.Worktree, ReasonUncertain, err.Error())
 		plan.Assignment, plan.Recovery, plan.Tracked, plan.ignoredSummary = assignment.ID, "none", "unknown", "unknown"

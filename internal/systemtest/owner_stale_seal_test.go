@@ -17,6 +17,7 @@ import (
 // its verdict from the exit code and the setup line, which no in-process assertion can
 // reach.
 func TestSystemOwnerRefusesAStaleSelectedSeal(t *testing.T) {
+	t.Parallel()
 	stale := staleSealedCopy(t, owner.selected.path)
 	overrides := []string{"BENCH_RUN_BINARY=" + stale, "BENCH_KIT=" + owner.kit}
 

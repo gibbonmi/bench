@@ -68,7 +68,7 @@ func buildWith(j joins, a ambient, root string, args []string, stdout, stderr io
 // none.
 func buildAttributed(attributed *string, j joins, a ambient, root string, parsed usage.Result, stdout, stderr io.Writer) int {
 	if _, install := parsed.Flags[installFlag]; install {
-		return installAttributed(attributed, j, root, parsed.Positionals[0], stdout, stderr)
+		return installAttributed(attributed, j, root, parsed.Positionals[0], a.environ, stdout, stderr)
 	}
 	if _, restore := parsed.Flags[restoreFlag]; restore {
 		return restoreAttributed(j, a, root, parsed.Positionals[0], stdout, stderr)
@@ -155,7 +155,7 @@ type installTarget struct {
 // the primary checkout's doctor repair, so the broker manifest binds the candidate. Each
 // authority refusal comes before the build, so such a refusal writes no file. A failed
 // repair leaves the published candidate in place, and a rerun repeats both steps.
-func installAttributed(attributed *string, j joins, root, target string, stdout, stderr io.Writer) int {
+func installAttributed(attributed *string, j joins, root, target string, environ []string, stdout, stderr io.Writer) int {
 	authority, err := installAuthority(j, root, target)
 	if err != nil {
 		return printTargetRefusal(stderr, buildVerb, err)
@@ -172,7 +172,7 @@ func installAttributed(attributed *string, j joins, root, target string, stdout,
 	if err != nil {
 		return printTargetRefusal(stderr, buildVerb, refusalError{refusal{detail: "publication refused: " + err.Error(), next: usage.WorktreeBuildInstallFor(targetAddress(target))}})
 	}
-	if code := repairPrimary(j, authority.primary, executable, stderr); code != 0 {
+	if code := repairPrimary(j, authority.primary, executable, environ, stderr); code != 0 {
 		detail := fmt.Sprintf("the doctor repair of the primary checkout exited %d; the candidate stays published", code)
 		return printTargetRefusal(stderr, buildVerb, refusalError{refusal{detail: detail, next: usage.WorktreeBuildInstallFor(targetAddress(target))}})
 	}
@@ -325,10 +325,11 @@ func installChildEnv(base []string, executable string) []string {
 }
 
 // repairPrimary runs the primary checkout's doctor repair under executable through the doctor
-// child seam, and answers its exit code. The install and the restore each end with it.
-func repairPrimary(j joins, primary, executable string, stderr io.Writer) int {
+// child seam, from the verb's base environment, and answers its exit code. The install and
+// the restore each end with it.
+func repairPrimary(j joins, primary, executable string, environ []string, stderr io.Writer) int {
 	argv := []string{wrapperPath(primary), "doctor", "--fix"}
-	return j.doctorChild(primary, argv, installChildEnv(os.Environ(), executable), stderr)
+	return j.doctorChild(primary, argv, installChildEnv(environ, executable), stderr)
 }
 
 // runDoctorChild is the default doctorChild. The child writes to stderr, so stdout keeps

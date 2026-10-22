@@ -21,7 +21,8 @@ const wrapperPoolHomeRefusal = "the Bench pool home needs BENCH_HOME set, or HOM
 // An already-set BENCH_HOME still wins. This is the precedence the guard sits behind, so
 // both legs run.
 func TestWrapperNamesTheMissingPoolHome(t *testing.T) {
-	repo := owner.repos[0]
+	t.Parallel()
+	repo := landRouteRepo(t, "wrapper-pool-home [journey]-")
 	wrapper := filepath.Join(owner.kit, "bin", "bench.sh")
 	// An override with no "=" removes that variable from the child environment.
 	launch := func(overrides ...string) processResult {

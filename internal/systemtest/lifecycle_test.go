@@ -118,6 +118,7 @@ func trimLifecycleUnlink(t *testing.T, repo string, rels ...string) {
 // Upgrade and a compatibility repair each restore an owned asset that the repository lost.
 // Unlink removes the clean managed assets with the manifest and restores the project prose.
 func TestLifecycleEntryJourney(t *testing.T) {
+	t.Parallel()
 	repo := linkedLifecycleRepo(t)
 	requireLifecycleState(t, repo, true, lifecycleDoc, lifecycleReference)
 
@@ -171,6 +172,7 @@ func lifecycleKit(t *testing.T, rel, content string) []string {
 // After an interruption at a publication boundary, a fresh process converges the
 // repository to the clean link or the clean unlink.
 func TestLifecyclePublicationCompatibility(t *testing.T) {
+	t.Parallel()
 	control := ".agents/commands/control\x01.md"
 	link, unlink := []string{"link", "copy"}, []string{"unlink"}
 	for _, tc := range []struct {
@@ -300,6 +302,7 @@ func TestLifecyclePublicationCompatibility(t *testing.T) {
 // gone and AGENTS.md is stripped, while the final manifest removal has not started. Undo of
 // the journal that the interrupted process left in TMPDIR restores every destination.
 func TestLifecycleUnlinkRemovalInterruption(t *testing.T) {
+	t.Parallel()
 	repo := linkedLifecycleRepo(t)
 	trimLifecycleUnlink(t, repo, lifecycleDoc, lifecycleReference)
 	before := compatibilitytest.SnapshotHome(t, repo)

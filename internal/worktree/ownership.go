@@ -201,7 +201,7 @@ func validateCreationBundle(root string, assignment intent.Assignment) error {
 	// The marker step runs before the branch check, because the branch check decides
 	// nothing on evidence the marker step has not accepted. The caller already holds the
 	// assignment, so the state component stays the caller's own check.
-	evidence, err := ownerMarkerRefusal(root, assignment.Worktree, assignment)
+	evidence, err := ownerMarkerRefusal(&git.Run{}, root, assignment.Worktree, assignment)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func validateCreationBundle(root string, assignment intent.Assignment) error {
 const releaseOperation = "worktree-release"
 
 func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (intent.CleanupReceipt, error) {
-	target, err := canonicalPath(targetArg)
+	target, err := canonicalPathIn(a, targetArg)
 	if err != nil {
 		return intent.CleanupReceipt{}, err
 	}

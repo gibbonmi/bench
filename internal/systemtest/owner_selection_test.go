@@ -17,6 +17,7 @@ import (
 )
 
 func TestFocusedRunUsesSelectedVerdict(t *testing.T) {
+	t.Parallel()
 	for _, args := range [][]string{
 		{"-test.run=^TestOwnerSelectionChild$"},
 		{"-test.run", "^TestOwnerSelectionChild$"},
@@ -42,6 +43,7 @@ func TestFocusedRunUsesSelectedVerdict(t *testing.T) {
 }
 
 func TestFocusedRunStillCleansOwnerRoot(t *testing.T) {
+	t.Parallel()
 	for _, verdict := range []string{"pass", "fail", "cleanup-failure"} {
 		t.Run(verdict, func(t *testing.T) {
 			result, root := runOwnerSelectionChild(t, verdict, "-test.run=^TestOwnerSelectionChild$")
@@ -57,6 +59,7 @@ func TestFocusedRunStillCleansOwnerRoot(t *testing.T) {
 }
 
 func TestUnfilteredRunVerifiesLedger(t *testing.T) {
+	t.Parallel()
 	// Go lists the live test inventory. Exclude each other test with test.skip
 	// so the child reaches TestMain without a non-empty test.run value.
 	listed := owner.runAt(owner.root, []string{"BENCH_KIT=" + owner.kit}, os.Args[0], "-test.list=.")
@@ -198,6 +201,7 @@ func TestSelectedExecutableComposition(t *testing.T) {
 // TestChildEnvironmentDefaultsBenchHomeWhenUnnamed checks that overrides
 // without BENCH_HOME use the owner's private home, never the operator's home.
 func TestChildEnvironmentDefaultsBenchHomeWhenUnnamed(t *testing.T) {
+	t.Parallel()
 	env := owner.childEnvironment([]string{"BENCH_COMMAND_OBSERVE=1"})
 	if got := envValue(env, benchhome.Env); got != owner.home {
 		t.Fatalf("BENCH_HOME = %q, want the owner's private home %q", got, owner.home)
@@ -207,6 +211,7 @@ func TestChildEnvironmentDefaultsBenchHomeWhenUnnamed(t *testing.T) {
 // TestChildEnvironmentKeepsAnExplicitBenchHome checks the exception: a caller
 // that names its own BENCH_HOME keeps it instead of the owner's private home.
 func TestChildEnvironmentKeepsAnExplicitBenchHome(t *testing.T) {
+	t.Parallel()
 	want := t.TempDir()
 	env := owner.childEnvironment([]string{benchhome.Env + "=" + want})
 	if got := envValue(env, benchhome.Env); got != want {
@@ -225,7 +230,8 @@ func envValue(entries []string, key string) string {
 }
 
 func TestWrapperInstallFreshnessAndReloadJourneys(t *testing.T) {
-	linked := owner.repos[0]
+	t.Parallel()
+	linked := landRouteRepo(t, "wrapper [journey]-")
 	if result := owner.runSelected(linked, "link", "copy"); result.code != 0 {
 		t.Fatalf("link exit = %d: %s", result.code, result.stderr)
 	}
@@ -243,11 +249,12 @@ func TestWrapperInstallFreshnessAndReloadJourneys(t *testing.T) {
 }
 
 func TestCanaryInventoryAndSelectedExecutable(t *testing.T) {
+	t.Parallel()
 	fixtures, err := canary.Fixtures(filepath.Join(owner.kit, "tests", "canary"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	result := owner.runSelected(owner.repos[1], "canary", owner.kit)
+	result := owner.runSelected(landRouteRepo(t, "canary [journey]-"), "canary", owner.kit)
 	want := fmt.Sprintf("canary inventory ok (%d fixture bindings)\n", len(fixtures))
 	if result.code != 0 || treetargettest.WithoutRow(result.stdout) != want {
 		t.Fatalf("canary inventory = (%d, %q, %q)", result.code, result.stdout, result.stderr)
@@ -258,6 +265,7 @@ func TestCanaryInventoryAndSelectedExecutable(t *testing.T) {
 }
 
 func TestWorktreeReauthorizeJourney(t *testing.T) {
+	t.Parallel()
 	repo, err := os.MkdirTemp(owner.root, "reauthorize [journey]-")
 	if err != nil {
 		t.Fatal(err)

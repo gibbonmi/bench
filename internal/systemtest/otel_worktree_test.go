@@ -16,6 +16,7 @@ import (
 //
 // Row OT20.
 func TestOtelWorktreeVerbRecordJourney(t *testing.T) {
+	t.Parallel()
 	fixture := scaffoldRecordedPublicationRepo(t)
 	tip := systemGitOutput(t, fixture.root, "rev-parse", "main")
 	source := systemCreateLandingWorktree(t, fixture.root, fixture.home, "otel-verbs", "otel verbs")

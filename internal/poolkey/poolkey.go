@@ -16,7 +16,13 @@ import (
 // A linked worktree's git common directory is the primary checkout's `.git`, so a
 // repository resolves to one root from any of its worktrees.
 func Canonical(root string) string {
-	common, err := git.CommonDir(root)
+	return CanonicalIn(new(git.Run), root)
+}
+
+// CanonicalIn is Canonical with the common directory read through run, so a command
+// run that reads the common directory of root again starts no second query.
+func CanonicalIn(run *git.Run, root string) string {
+	common, err := run.CommonDir(root)
 	if err != nil || filepath.Base(common) != ".git" {
 		return root
 	}

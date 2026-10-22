@@ -68,7 +68,14 @@ func ReuseOrOwn(ctx context.Context, sourceRoot string) (*Selection, error) {
 
 // ReuseOrOwn applies the factory's seams while preserving the inherited-selection rule.
 func (f Factory) ReuseOrOwn(ctx context.Context, sourceRoot string) (*Selection, error) {
-	if raw, present := os.LookupEnv(Env); present {
+	raw, present := os.LookupEnv(Env)
+	return f.Select(ctx, sourceRoot, raw, present)
+}
+
+// Select applies the inherited-selection rule to an Env value that the caller read: a
+// present raw value is inherited or refused, and an absent one makes the factory build.
+func (f Factory) Select(ctx context.Context, sourceRoot, raw string, present bool) (*Selection, error) {
+	if present {
 		if err := requireSourceRoot(sourceRoot); err != nil {
 			return nil, err
 		}

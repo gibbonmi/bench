@@ -1,7 +1,7 @@
 # Run the owner and recovery tests in parallel
 
 Blocked by: 10-add-the-system-parallel-census.md
-Writes: internal/systemtest/owner_artifact_recovery_test.go, internal/systemtest/owner_artifact_children_test.go (new), internal/systemtest/owner_test.go, internal/systemtest/owner_selection_test.go, internal/systemtest/owner_teardown_test.go, internal/systemtest/owner_land_race_test.go, internal/systemtest/owner_land_lease_test.go, internal/systemtest/owner_stale_seal_test.go, internal/systemtest/parallel_census_test.go (new), internal/systemtest/serial_table_test.go (new)
+Writes: internal/systemtest/owner_artifact_recovery_test.go, internal/systemtest/owner_artifact_children_test.go (new), internal/systemtest/owner_test.go, internal/systemtest/owner_selection_test.go, internal/systemtest/owner_teardown_test.go, internal/systemtest/owner_land_race_test.go, internal/systemtest/owner_land_lease_test.go, internal/systemtest/owner_stale_seal_test.go, internal/systemtest/parallel_census_test.go (new), internal/systemtest/serial_table_test.go (new), internal/systemtest/parallel_census_cases_test.go (new)
 Covers: LGP27, LGP30, LGP34
 
 ## What to build

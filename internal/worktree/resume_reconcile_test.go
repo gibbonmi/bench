@@ -126,7 +126,7 @@ func TestCaptureLayersKeepsAnUnchangedWorkingLayer(t *testing.T) {
 	root := newWorktreeRepo(t)
 	head := gitOutput(t, root, "rev-parse", "HEAD")
 	refs := refsUnder(t, root, "refs/")
-	rootOID, payloads, err := captureLayers(root, root, true, "")
+	rootOID, payloads, err := captureLayers(root, os.Environ(), root, true, "")
 	mustNoError(t, err)
 	manifest, ok := readRecoveryManifest(root, rootOID)
 	requireTest(t, ok && manifest.Base == head, "capture manifest = %#v", manifest)
@@ -144,9 +144,9 @@ func TestCaptureLayersRecordsADifferentTipAsAParent(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	head := gitOutput(t, root, "rev-parse", "HEAD")
-	tip, err := commitTree(root, gitOutput(t, root, "rev-parse", "HEAD^{tree}"), []string{head}, "assignment tip\n")
+	tip, err := commitTree(root, os.Environ(), gitOutput(t, root, "rev-parse", "HEAD^{tree}"), []string{head}, "assignment tip\n")
 	mustNoError(t, err)
-	rootOID, payloads, err := captureLayers(root, root, true, tip)
+	rootOID, payloads, err := captureLayers(root, os.Environ(), root, true, tip)
 	mustNoError(t, err)
 	var manifest map[string]any
 	mustNoError(t, json.Unmarshal([]byte(gitOutput(t, root, "show", rootOID+":manifest.json")), &manifest))
@@ -160,7 +160,7 @@ func TestCaptureLayersRecordsOnlyASuppliedTip(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	for _, tip := range []string{"", gitOutput(t, root, "rev-parse", "HEAD")} {
-		rootOID, payloads, err := captureLayers(root, root, true, tip)
+		rootOID, payloads, err := captureLayers(root, os.Environ(), root, true, tip)
 		mustNoError(t, err)
 		manifest, ok := readRecoveryManifest(root, rootOID)
 		requireTest(t, ok && manifest.Tip == tip, "optional tip = %#v, want %q", manifest, tip)
@@ -169,7 +169,7 @@ func TestCaptureLayersRecordsOnlyASuppliedTip(t *testing.T) {
 		requireTest(t, gitOutput(t, root, "show", "-s", "--format=%P", rootOID) == strings.Join(payloads, " "),
 			"absent or equal tip added a root parent")
 	}
-	_, _, err := captureLayers(root, root, false, "")
+	_, _, err := captureLayers(root, os.Environ(), root, false, "")
 	requireTest(t, err != nil && strings.Contains(err.Error(), "clean assignment"), "flag-off clean capture error = %v", err)
 }
 
@@ -203,7 +203,7 @@ func TestResumeReconcileKeepsResetRefsForEveryRecordedState(t *testing.T) {
 // the sweep lists ref and before it deletes it. It also returns that new commit.
 func movedRefJoins(t *testing.T, root, ref string) (joins, string) {
 	t.Helper()
-	moved, err := commitTree(root, gitOutput(t, root, "rev-parse", "HEAD^{tree}"), nil, "concurrent ref\n")
+	moved, err := commitTree(root, os.Environ(), gitOutput(t, root, "rev-parse", "HEAD^{tree}"), nil, "concurrent ref\n")
 	mustNoError(t, err)
 	j := defaultJoins()
 	j.cleanupBoundary = func(step LifecycleStep) error {
@@ -234,14 +234,14 @@ func TestResumeReconcileRefusesAResetRefMovedAfterListing(t *testing.T) {
 // touches nothing else. The gate's verdict store shares the refs/bench/ prefix, so an
 // over-broad delete would destroy green evidence at every session start.
 func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
 	root := newWorktreeRepo(t)
 	green := seedLifecycleDebris(t, root)
 	diagnostic := "refs/bench/diagnostic/probe"
 	gitRun(t, root, "update-ref", diagnostic, "HEAD")
 
-	chdir(t, root)
-	out := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	out := runVerb(t, verbResumeClean, repoHome{root, home}.callFromRoot())
 	requireTest(t, out.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", out.exit, out.stdout, out.stderr)
 
 	remaining := refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/")
@@ -255,20 +255,20 @@ func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
 // after it are the compared pair: once the tree has settled, a reconcile writes
 // nothing and reports exactly what its predecessor did.
 func TestResumeReconcileIsIdempotent(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
 	root := newWorktreeRepo(t)
 	seedLifecycleDebris(t, root)
 
-	chdir(t, root)
-	settling := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	settling := runVerb(t, verbResumeClean, repoHome{root, home}.callFromRoot())
 	requireTest(t, settling.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", settling.exit, settling.stdout, settling.stderr)
 	requireTest(t, strings.Contains(settling.stdout, "swept refs 2"), "settling reconcile did not report the sweep")
 	before := refsUnder(t, root, "refs/bench/")
 	ledgerPath := filepath.Join(root, ".git", intent.Filename)
 	ledgerBefore, _ := os.ReadFile(ledgerPath)
 
-	second := runVerb(t, verbResumeClean, repoHome{root, home}.call())
-	third := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	second := runVerb(t, verbResumeClean, repoHome{root, home}.callFromRoot())
+	third := runVerb(t, verbResumeClean, repoHome{root, home}.callFromRoot())
 	ledgerAfter, _ := os.ReadFile(ledgerPath)
 	requireTest(t, second.exit == 0 && third.exit == 0, "settled reconcile exits = %d, %d\nstderr=%s%s", second.exit, third.exit, second.stderr, third.stderr)
 	requireTest(t, second.stdout == third.stdout, "settled reconciles disagree:\nsecond=%q\nthird=%q", second.stdout, third.stdout)
@@ -281,14 +281,14 @@ func TestResumeReconcileIsIdempotent(t *testing.T) {
 // decoder can read, exits zero and drops them. It leaves the pool's own record
 // alone and authors nothing.
 func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
 	root := newWorktreeRepo(t)
 	pool := mustCreate(t, root, home, "reconcile-pool", "pool work")
 	green := seedLifecycleDebris(t, root)
 	seedLegacyAssignments(t, root)
 
-	chdir(t, root)
-	first := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	first := runVerb(t, verbResumeClean, repoHome{root, home}.callFromRoot())
 	requireTest(t, first.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", first.exit, first.stdout, first.stderr)
 
 	surviving, err := intent.Assignments(root)
@@ -303,8 +303,8 @@ func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 		"settling reconcile did not report what it removed: %q", first.stdout)
 	ledgerPath := filepath.Join(root, ".git", intent.Filename)
 	ledgerBefore, _ := os.ReadFile(ledgerPath)
-	second := runVerb(t, verbResumeClean, repoHome{root, home}.call())
-	third := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	second := runVerb(t, verbResumeClean, repoHome{root, home}.callFromRoot())
+	third := runVerb(t, verbResumeClean, repoHome{root, home}.callFromRoot())
 	ledgerAfter, _ := os.ReadFile(ledgerPath)
 	requireTest(t, second.exit == 0 && third.exit == 0, "settled reconcile exits = %d, %d\nstderr=%s%s", second.exit, third.exit, second.stderr, third.stderr)
 	requireTest(t, second.stdout == third.stdout, "settled reconciles disagree:\nsecond=%q\nthird=%q", second.stdout, third.stdout)
@@ -314,6 +314,7 @@ func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 // TestResumeReconcileConvergesAfterInterruption is RM9: a reconcile killed between two ref
 // deletions leaves a partial namespace and an unpurged ledger, and re-entry finishes both.
 func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
 	root := newWorktreeRepo(t)
 	pool := mustCreate(t, root, home, "interrupted-pool", "pool work")
@@ -333,13 +334,14 @@ func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
 		}
 		return nil
 	}
-	chdir(t, root)
-	interruptedRun := runVerb(t, verbResumeClean, repoHome{root, home}.callWith(j))
+	interruptedCall := repoHome{root, home}.callFromRoot()
+	interruptedCall.joins = &j
+	interruptedRun := runVerb(t, verbResumeClean, interruptedCall)
 	requireTest(t, interruptedRun.exit != 0, "interrupted reconcile exit=%d stdout=%s", interruptedRun.exit, interruptedRun.stdout)
 	partial := refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/")
 	requireTest(t, partial != "" && len(strings.Split(partial, "\n")) < 4, "interruption left %q, want a partial namespace", partial)
 
-	reentry := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	reentry := runVerb(t, verbResumeClean, repoHome{root, home}.callFromRoot())
 	requireTest(t, reentry.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", reentry.exit, reentry.stdout, reentry.stderr)
 
 	requireTest(t, refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/") == "", "re-entry did not finish the sweep")

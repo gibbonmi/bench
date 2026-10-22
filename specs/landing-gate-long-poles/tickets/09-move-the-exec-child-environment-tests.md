@@ -10,7 +10,9 @@ The ten exec child-environment tests pass the call's base environment instead of
 
 Nine tests reach `bindEnv` through `childOutputAtHome` (`internal/worktree/exec_test.go:26-31`), by way of `childOutput`, `childEnvironment`, or `childWrapper`. `TestExecChildTakesTheExplicitHome` also calls `bindEnv` at `:106`. The ten tests sit at `exec_test.go:103-240`.
 
-`childOutputAtHome` passes the base environment through `runWorktreeChild` from ticket 08 instead of `bindEnv`. Update the stale comments at `exec_test.go:24-26` and `:99-103`.
+`childOutputAtHome` passes the base environment through `runWorktreeChild` from ticket 08 instead of `bindEnv`. Update the stale comments at `exec_test.go:17-18`, `:24-25`, and `:98-102`. A test that still reaches the `effects.go` environment function of ticket 08 reads the process environment, so it stays serial; record it.
+
+The exec class comment at `parallel_census_test.go:1033-1040` says that the exec child tests bind the caller environment. Update it with no net line gain.
 
 `exec_test.go` has 421 lines and no grant, so it may not gain net lines. Move the helpers to `exec_call_env_test.go` if the ten `t.Parallel` lines need the room.
 

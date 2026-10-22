@@ -9,6 +9,7 @@ package worktree
 // main_test.go. (Coverage rows EI1, RJ1, FA1.)
 
 import (
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +19,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
@@ -235,6 +237,46 @@ func TestJourneyHarnessRecordsStarts(t *testing.T) {
 	}
 	if !repo || !child {
 		t.Fatalf("harness log %q lacks a repository and a descendant start for %s", log, t.Name())
+	}
+}
+
+// --- location reads through the run value (coverage rows LGP16, LGP17) ---
+
+// TestOwnerMarkerReadsTheCommonDirOnce proves one owner-marker validation under a
+// canonical primary root starts the common-directory query once. The fail-git-path stub
+// passes that query through to the real git and logs each start. It also proves that two
+// verb runs build two run values, so no location answer crosses verb runs. (Coverage row
+// LGP17.)
+func TestOwnerMarkerReadsTheCommonDirOnce(t *testing.T) {
+	f := newOwnedAssignment(t, "owner-marker-common-dir")
+	root, logPath := canonicalRoot(f.root), filepath.Join(t.TempDir(), "argv")
+	journeyStubGit(t, root, "fail-git-path", logPath)
+	if _, err := validateOwnerMarker(root, f.creation.Path); err != nil {
+		t.Fatalf("validateOwnerMarker(%q, %q) = %v, want the owner evidence", root, f.creation.Path, err)
+	}
+	if starts := gittest.StubGitStarts(t, logPath, "--git-common-dir"); starts != 1 {
+		t.Fatalf("one owner-marker validation started the common-directory query %d times, want 1", starts)
+	}
+	first, second := callAmbient(verbCall{}, io.Discard), callAmbient(verbCall{}, io.Discard)
+	if first.run == second.run {
+		t.Fatalf("two verb runs share the run value %p, want a fresh run value for each verb run", first.run)
+	}
+}
+
+// TestExplicitPlanReadsEachLocationOnce proves one explicit plan for an owned target under
+// a canonical primary root starts the common-directory query three times: once through the
+// run value, and once for each of the two ledger reads, which stay live. The fail-git-path
+// stub refuses the index path query, so the plan stops after its owner-marker and ledger
+// reads. (Coverage row LGP16.)
+func TestExplicitPlanReadsEachLocationOnce(t *testing.T) {
+	f := newOwnedAssignment(t, "explicit-plan-common-dir")
+	root, logPath := canonicalRoot(f.root), filepath.Join(t.TempDir(), "argv")
+	journeyStubGit(t, root, "fail-git-path", logPath)
+	if _, err := planExplicitWith(defaultJoins(), &git.Run{}, root, f.creation.Path, CleanupOptions{}); err == nil {
+		t.Fatalf("planExplicitWith(%q, %q) = nil error, want the refused index path query", root, f.creation.Path)
+	}
+	if starts := gittest.StubGitStarts(t, logPath, "--git-common-dir"); starts != 3 {
+		t.Fatalf("one explicit plan started the common-directory query %d times, want 3", starts)
 	}
 }
 

@@ -68,7 +68,7 @@ func resetWith(j joins, a ambient, root string, args []string, stdout, stderr io
 		return refuse(err)
 	}
 	if fingerprint, apply := parsed.Flags["--apply"]; apply {
-		return applyReset(j, root, a.home, plan, fingerprint, stdout, refuse)
+		return applyReset(j, root, a.home, a.environ, plan, fingerprint, stdout, refuse)
 	}
 	next := ""
 	if plan.action != "none" {
@@ -155,7 +155,7 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	if _, err := os.Stat(selected.Worktree); os.IsNotExist(err) {
 		return resetPlan{}, missingTreeRefusal(root, selected)
 	}
-	evidence, err := ownerMarkerRefusal(root, selected.Worktree, selected)
+	evidence, err := ownerMarkerRefusal(&git.Run{}, root, selected.Worktree, selected)
 	if err != nil {
 		return resetPlan{}, err
 	}

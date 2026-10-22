@@ -137,6 +137,23 @@ esac
 	return dir, commonDir
 }
 
+// StubGitStarts counts the git starts that a StubGitDir stub logged at logPath with flag
+// among their arguments. The stub appends one line of arguments for each start.
+func StubGitStarts(t testing.TB, logPath, flag string) int {
+	t.Helper()
+	data, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	starts := 0
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.Contains(line, flag) {
+			starts++
+		}
+	}
+	return starts
+}
+
 // RepoOnBranch initializes an empty repository on branch, with a commit identity
 // configured. So a committing test neither inherits nor depends on the developer's own
 // git config.

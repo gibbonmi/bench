@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
+	"slices"
 	"syscall"
 	"time"
 
@@ -76,7 +76,7 @@ func ExecCommandResolving(root, home string, args []string, stdin io.Reader, std
 	// the span, so a target refusal records the verb with no subject.
 	var assignment string
 	finishSpan := beginVerbSpan(home, root, otelExecSeam)
-	exit := execAttributed(&assignment, parsed, root, home, values, stdin, stdout, stderr)
+	exit := execAttributed(&assignment, parsed, root, home, newAmbient(home, stderr).environ, values, stdin, stdout, stderr)
 	// The verb returns the child's own code, which the grammar help promises. The span
 	// takes the outcome instead: a 3 here is the child speaking rather than a Bench
 	// publication, so only a zero reads green.
@@ -99,17 +99,17 @@ func AssignmentActive(root, id string) bool {
 // execAttributed is the exec verb's own work, with the assignment that owns the child's
 // tree written to assignment. The ledger is read once, through the one target authority,
 // so the record names the same assignment the child ran in.
-func execAttributed(assignment *string, parsed usage.Result, root, home string, values []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func execAttributed(assignment *string, parsed usage.Result, root, home string, environ, values []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	selected, err := resolveAssignment(root, parsed.Positionals[0])
 	if err != nil {
 		return printTargetRefusal(stderr, worktreeExecGrammar.Cmd, err)
 	}
 	*assignment = selected.ID
-	return runWorktreeChild(parsed.Positionals[1:], selected.Worktree, home, values, stdin, stdout, stderr)
+	return runWorktreeChild(parsed.Positionals[1:], selected.Worktree, home, environ, values, stdin, stdout, stderr)
 }
 
-func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	return nameWorktree(stderr, dir, runChild(worktreeExecGrammar.Cmd, argv, dir, home, extraEnv, stdin, stdout, stderr))
+func runWorktreeChild(argv []string, dir, home string, environ, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	return nameWorktree(stderr, dir, runChild(worktreeExecGrammar.Cmd, argv, dir, home, environ, extraEnv, stdin, stdout, stderr))
 }
 
 // RunTreeChild runs argv in dir as the one child of a tree-scoped call, and answers the
@@ -117,17 +117,17 @@ func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin 
 // because the child names its own tree in its response. verb names the call in a start
 // failure.
 func RunTreeChild(verb string, argv []string, dir, home string, stdin io.Reader, stdout, stderr io.Writer) int {
-	return runChild(verb, argv, dir, home, nil, stdin, stdout, stderr)
+	return runChild(verb, argv, dir, home, baseEnviron(), nil, stdin, stdout, stderr)
 }
 
 // runChild is the one child runner of the exec verb and the tree-scoped call. It answers
 // the child's exit, 1 for a start failure, and 130 for an interrupt.
-func runChild(verb string, argv []string, dir, home string, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func runChild(verb string, argv []string, dir, home string, environ, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = dir, stdin, stdout, stderr
-	cmd.Env = execEnv(dir, home, extraEnv)
+	cmd.Env = execEnv(dir, home, environ, extraEnv)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	// A descendant of the child can hold an output pipe open after the child exits. The
 	// delay lets exec return at the child's own exit with the output that arrived.
@@ -194,11 +194,11 @@ func nameWorktree(stderr io.Writer, dir string, code int) int {
 // child that inherited the name would read a different pool than the verb that
 // started it.
 //
-// The order is the caller's environment, then the --env values, then the values this
+// The order is the call's base environment, then the --env values, then the values this
 // verb owns. A named routing variable therefore meets the same strip an inherited one
 // meets, and --env cannot repoint the child's pool or its kit.
-func execEnv(dir, home string, extra []string) []string {
-	base := withHome(env.WithoutWrapperRouting(append(os.Environ(), extra...), runbinary.Env, "PWD"), home)
+func execEnv(dir, home string, environ, extra []string) []string {
+	base := withHome(env.WithoutWrapperRouting(slices.Concat(environ, extra), runbinary.Env, "PWD"), home)
 	base = append(base, "PWD="+dir)
 	wrapper := wrapperPath(dir)
 	if !isRegularFile(wrapper) {

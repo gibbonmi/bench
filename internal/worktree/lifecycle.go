@@ -520,7 +520,7 @@ func retireCheckout(j joins, a ambient, root string, plan CleanupPlan, checkpoin
 			if err := intent.PutAssignment(root, assignment); err != nil {
 				return plan, err
 			}
-		} else if assignment, err = recoverAssignmentWithFault(root, assignment, fault); err != nil {
+		} else if assignment, err = recoverAssignmentWithFault(root, a.environ, assignment, fault); err != nil {
 			return plan, err
 		}
 		recovered = &assignment

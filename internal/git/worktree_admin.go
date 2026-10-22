@@ -190,23 +190,28 @@ func adminPathArgs(root, name string) []string {
 
 // CommonDir resolves the repository's shared administrative directory, refusing
 // an empty, missing, symlinked, or non-directory answer the way Worktrees does.
+// Each call starts its own query. A command run that reads one root more than once
+// reads through one Run.
 func CommonDir(root string) (string, error) {
-	raw, err := boundedGit(subjectCommonDir, commonDirArgs(root)...)
-	if err != nil {
-		return "", typeGitFailure(err, subjectCommonDir)
-	}
-	return validateCommonDir(strings.TrimRight(string(raw), "\n"), subjectCommonDir)
+	return new(Run).CommonDir(root)
 }
 
 // AdminDir resolves the checkout's own administration directory: the common
 // directory for a primary checkout, or the linked worktree's private admin entry
-// beneath it. It validates its answer the way CommonDir does.
+// beneath it. It validates its answer the way CommonDir does, and each call starts
+// its own query.
 func AdminDir(root string) (string, error) {
-	raw, err := boundedGit(subjectAdminDir, adminDirArgs(root)...)
+	return new(Run).AdminDir(root)
+}
+
+// locationAnswer starts one bounded location query and returns its raw answer
+// without its trailing newline.
+func locationAnswer(subject string, args []string) (string, error) {
+	raw, err := boundedGit(subject, args...)
 	if err != nil {
-		return "", typeGitFailure(err, subjectAdminDir)
+		return "", typeGitFailure(err, subject)
 	}
-	return validateCommonDir(strings.TrimRight(string(raw), "\n"), subjectAdminDir)
+	return strings.TrimRight(string(raw), "\n"), nil
 }
 
 // AdminPath resolves the absolute path of a named file inside the checkout's
@@ -224,11 +229,10 @@ func AdminDir(root string) (string, error) {
 // physical directory git ran in, not onto a lexically cleaned root that never saw the
 // symlink.
 func AdminPath(root, name string) (string, error) {
-	raw, err := boundedGit(subjectAdminPath, adminPathArgs(root, name)...)
+	answer, err := locationAnswer(subjectAdminPath, adminPathArgs(root, name))
 	if err != nil {
-		return "", typeGitFailure(err, subjectAdminPath)
+		return "", err
 	}
-	answer := strings.TrimRight(string(raw), "\n")
 	if answer == "" {
 		return "", &ResolutionError{Err: errors.New("rev-parse returned an empty path"), Action: investigateGitFailureAction, Subject: subjectAdminPath}
 	}
@@ -291,16 +295,15 @@ func boundedGit(subject string, args ...string) ([]byte, error) {
 }
 
 // Worktrees returns every registered checkout using NUL-framed porcelain. The framing
-// matters because a valid worktree path may contain a newline.
+// matters because a valid worktree path may contain a newline. Each call starts its
+// own common-directory query.
 func Worktrees(root string) ([]Worktree, error) {
-	commonRaw, err := boundedGit(subjectCommonDir, commonDirArgs(root)...)
-	if err != nil {
-		return nil, typeGitFailure(err, subjectCommonDir)
-	}
-	common, err := validateCommonDir(strings.TrimRight(string(commonRaw), "\n"), subjectCommonDir)
-	if err != nil {
-		return nil, err
-	}
+	return new(Run).Worktrees(root)
+}
+
+// worktreesAt lists the registrations of root after the admin scan of its validated
+// common directory.
+func worktreesAt(root, common string) ([]Worktree, error) {
 	if err := ScanWorktreeAdmin(common); err != nil {
 		return nil, err
 	}

@@ -16,6 +16,7 @@ import (
 )
 
 func TestDetectedProjectGateRejectsIgnoredDeclaredInput(t *testing.T) {
+	t.Parallel()
 	repo := t.TempDir()
 	home := filepath.Join(t.TempDir(), "bench-home")
 	environment := []string{"BENCH_HOME=" + home, "BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
@@ -68,7 +69,8 @@ func TestDetectedProjectGateRejectsIgnoredDeclaredInput(t *testing.T) {
 // runAt the way TestWorktreeReauthorizeJourney does. It asserts after every leg that the
 // private home stayed empty.
 func TestAdoptionSmokeJourney(t *testing.T) {
-	repo := owner.repos[1]
+	t.Parallel()
+	repo := landRouteRepo(t, "adoption-smoke [journey]-")
 	home := filepath.Join(t.TempDir(), "bench-home")
 	environment := []string{"BENCH_HOME=" + home, "BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
 	launch := func(program string, args ...string) processResult {
@@ -162,6 +164,7 @@ func TestAdoptionSmokeJourney(t *testing.T) {
 // at the installed broker. A policy with no approval cannot publish itself; the planned and
 // approved policy publishes and then admits only its approved deliverable.
 func TestCommitmentBootstrapInstall(t *testing.T) {
+	t.Parallel()
 	project := newLinkedProject(t)
 	if _, err := os.Stat(filepath.Join(project.root, filepath.FromSlash(commitment.PolicyPath))); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("setup wrote a commitment policy: %v", err)
@@ -208,6 +211,7 @@ func TestCommitmentBootstrapInstall(t *testing.T) {
 // wrapper. A start of an outcome that the commitment does not hold refuses, and a
 // production commit with no delivery binding refuses until the committed outcome starts.
 func TestCommitmentLinkedAdoption(t *testing.T) {
+	t.Parallel()
 	project := newLinkedProject(t)
 	delivery := systemCreateLandingWorktree(t, project.root, project.home, "delivery", "delivery")
 	project.adopt(t)
@@ -237,6 +241,7 @@ func TestCommitmentLinkedAdoption(t *testing.T) {
 // in its own checkout. The installed broker refuses its displaced production work before
 // publication, and the same tip lands only after the candidate's admission call.
 func TestCommitmentInstalledAuthority(t *testing.T) {
+	t.Parallel()
 	project := newLinkedProject(t)
 	base := systemGitOutput(t, project.root, "rev-parse", "HEAD")
 	candidate := systemCreateLandingWorktree(t, project.root, project.home, "candidate", "candidate")

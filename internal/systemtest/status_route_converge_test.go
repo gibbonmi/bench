@@ -16,6 +16,7 @@ import (
 // ref the routed plan keeps the ref; over a landed ref the apply command that plan prints
 // removes it.
 func TestStatusRouteExecutesUnclaimedCleanup(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		landed bool

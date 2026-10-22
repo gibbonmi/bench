@@ -343,20 +343,19 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT402
-2. FT362-process-lifetime
-3. FT360-shared-fixtures
-4. FT411
-5. FT314-gate-reuse
-6. FT125-exact-readers
-7. FT375-residual
-8. FT438-test-only
-9. FT344-remedy
-10. FT406-rebuild
-11. FT366-rg-guard
-12. FT380-residual
-13. FT354-strict-json
-14. FT363-member-set
-15. FT358-block-reader
-16. FT365-conformance
-17. FT414-preconditions
+1. FT362-process-lifetime
+2. FT360-shared-fixtures
+3. FT411
+4. FT314-gate-reuse
+5. FT125-exact-readers
+6. FT375-residual
+7. FT438-test-only
+8. FT344-remedy
+9. FT406-rebuild
+10. FT366-rg-guard
+11. FT380-residual
+12. FT354-strict-json
+13. FT363-member-set
+14. FT358-block-reader
+15. FT365-conformance
+16. FT414-preconditions

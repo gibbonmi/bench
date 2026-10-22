@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -188,7 +189,7 @@ func planExplicitSet(j joins, a ambient, root string, targets []string, options 
 // The set plan and every pre-transaction re-plan call it, so a member cannot become
 // removable through a route the shared fingerprint never described.
 func planExplicitCleanupRow(j joins, root string, assignment intent.Assignment, options CleanupOptions) (explicitCleanupRow, error) {
-	plan, err := planExplicitWith(j, root, assignment.Worktree, options)
+	plan, err := planExplicitWith(j, &git.Run{}, root, assignment.Worktree, options)
 	if err != nil {
 		return explicitCleanupRow{}, err
 	}

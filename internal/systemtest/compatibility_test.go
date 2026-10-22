@@ -19,6 +19,7 @@ import (
 )
 
 func TestCompatibilityMissingPath(t *testing.T) {
+	t.Parallel()
 	result, repo, wrapper := runCompatibilityDoctor(t)
 	if result.code != 1 {
 		t.Fatalf("doctor --compat without global Bench = %d, want 1; stdout=%q stderr=%q", result.code, result.stdout, result.stderr)
@@ -31,6 +32,7 @@ func TestCompatibilityMissingPath(t *testing.T) {
 }
 
 func TestCompatibilityPaths(t *testing.T) {
+	t.Parallel()
 	result, repo, _ := runCompatibilityDoctor(t)
 	expected, err := toon.Table("context", []string{"field", "value", "source"}, [][]string{{"repository", filepath.Clean(repo), "git root"}})
 	if err != nil {
@@ -57,7 +59,7 @@ func runCompatibilityDoctor(t *testing.T) (processResult, string, string) {
 
 func newCompatibilitySession(t *testing.T) compatibilitySession {
 	t.Helper()
-	repo := owner.repos[0]
+	repo := landRouteRepo(t, "compatibility [journey]-")
 	if result := owner.runSelected(repo, "link", "copy"); result.code != 0 {
 		t.Fatalf("link fixture = %d; stdout=%q stderr=%q", result.code, result.stdout, result.stderr)
 	}
@@ -162,6 +164,7 @@ func compatibilityContext(t *testing.T, result processResult) map[string]string 
 }
 
 func TestCompatibilityCollectorInterfaces(t *testing.T) {
+	t.Parallel()
 	fixture := newCompatibilitySession(t)
 	for _, selected := range compatibility.Interfaces() {
 		t.Run(string(selected), func(t *testing.T) {
@@ -174,6 +177,7 @@ func TestCompatibilityCollectorInterfaces(t *testing.T) {
 }
 
 func TestCompatibilityCollectorReadOnly(t *testing.T) {
+	t.Parallel()
 	fixture := newCompatibilitySession(t)
 	before := map[string]map[string]compatibilitytest.HomeEntry{}
 	for _, home := range fixture.homes {
@@ -205,6 +209,7 @@ func TestCompatibilityCollectorReadOnly(t *testing.T) {
 }
 
 func TestCompatibilityCollectorPolicyFingerprint(t *testing.T) {
+	t.Parallel()
 	fixture := newCompatibilitySession(t)
 	hookPath := filepath.Join(fixture.repo, ".codex", "hooks.json")
 	original, err := os.ReadFile(hookPath)
@@ -233,6 +238,7 @@ func TestCompatibilityCollectorPolicyFingerprint(t *testing.T) {
 }
 
 func TestCompatibilitySetup(t *testing.T) {
+	t.Parallel()
 	fixture := newCompatibilitySession(t)
 	before := map[string]map[string]compatibilitytest.HomeEntry{}
 	for _, home := range fixture.homes {
@@ -268,6 +274,7 @@ func TestCompatibilitySetup(t *testing.T) {
 }
 
 func TestCompatibilityInterruptedRepair(t *testing.T) {
+	t.Parallel()
 	fixture := newCompatibilitySession(t)
 	paths := []string{".bench/BENCH.md", ".bench/BENCH-reference.md", ".codex/hooks.json"}
 	for _, rel := range paths {
@@ -317,6 +324,7 @@ func TestCompatibilityInterruptedRepair(t *testing.T) {
 }
 
 func TestCompatibilityConcurrentWriters(t *testing.T) {
+	t.Parallel()
 	fixture := newCompatibilitySession(t)
 	hook := filepath.Join(fixture.repo, ".git", "hooks", "pre-push")
 	if err := os.Remove(hook); err != nil {
@@ -336,7 +344,7 @@ func TestCompatibilityConcurrentWriters(t *testing.T) {
 	if err := os.Symlink(filepath.Dir(hook), alias); err != nil {
 		t.Fatal(err)
 	}
-	other := owner.repos[1]
+	other := landRouteRepo(t, "compatibility [other]-")
 	compatibilitytest.RemovePreserving(t, filepath.Join(other, ".bench", "gate.sh"))
 	systemGitOutput(t, other, "config", "core.hooksPath", alias)
 	t.Cleanup(func() { systemGitOutput(t, other, "config", "--unset", "core.hooksPath") })
@@ -381,7 +389,7 @@ func TestCompatibilityConcurrentWriters(t *testing.T) {
 	if after := compatibilitytest.SnapshotHome(t, filepath.Dir(hook)); !reflect.DeepEqual(before, after) {
 		t.Error("competing writer changed the shared hook")
 	}
-	if result := owner.runSelected(owner.repos[2], "link", "copy"); result.code != 0 {
+	if result := owner.runSelected(landRouteRepo(t, "compatibility [disjoint]-"), "link", "copy"); result.code != 0 {
 		t.Errorf("disjoint writer was blocked: %#v", result)
 	}
 }

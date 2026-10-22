@@ -10,8 +10,9 @@ import (
 )
 
 // ambientReadPattern names the process-context reads only the effect boundary may
-// perform. Lower owners receive home, root, time, and repository facts explicitly.
-var ambientReadPattern = regexp.MustCompile(`\b(os\.Getenv|os\.LookupEnv|os\.Getwd|time\.Now)\(`)
+// perform. Lower owners receive home, root, time, the child base environment, and
+// repository facts explicitly.
+var ambientReadPattern = regexp.MustCompile(`\b(os\.Getenv|os\.LookupEnv|os\.Environ|os\.Getwd|time\.Now)\(`)
 
 // TestEffectBoundaryCensus fails when any production file below the boundary reads
 // the environment, the current directory, or the clock. The one named boundary

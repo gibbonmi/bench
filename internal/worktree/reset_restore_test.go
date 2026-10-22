@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -47,7 +48,7 @@ func assertRestoreLayers(t *testing.T, root, path, ref string) {
 	t.Helper()
 	expected, ok := readRecoveryManifest(root, ref)
 	requireTest(t, ok, "expected envelope unreadable")
-	recaptured, _, err := captureLayers(root, path, true, expected.Tip)
+	recaptured, _, err := captureLayers(root, os.Environ(), path, true, expected.Tip)
 	mustNoError(t, err)
 	actual, ok := readRecoveryManifest(root, recaptured)
 	requireTest(t, ok && len(actual.Layers) == len(expected.Layers), "restore layer set = %#v, want %#v", actual, expected)

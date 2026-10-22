@@ -39,7 +39,8 @@ func plantWrapperAnswer(t *testing.T, line string, code int) string {
 const staleCoreAnswer = `bench: unknown subcommand: "guard-bench-follow-on"`
 
 func TestBenchFollowOnHookProcess(t *testing.T) {
-	repo := owner.repos[0]
+	t.Parallel()
+	repo := landRouteRepo(t, "follow-on [journey]-")
 	installWrapper(t, repo)
 	hook := filepath.Join(owner.kit, ".bench", "hooks", "block-bench-follow-on.sh")
 	if _, err := os.Stat(hook); err != nil {
@@ -219,6 +220,7 @@ func TestBenchFollowOnHookProcess(t *testing.T) {
 }
 
 func TestBenchFollowOnHookDegradedRim(t *testing.T) {
+	t.Parallel()
 	hook := filepath.Join(owner.kit, ".bench", "hooks", "block-bench-follow-on.sh")
 	run := func(hook, dir string, overrides []string, envelope string) processResult {
 		t.Helper()
@@ -227,7 +229,7 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 		}
 		return owner.runWithInput(dir, overrides, envelope, shellPath(t), hook)
 	}
-	repo := owner.repos[1]
+	repo := landRouteRepo(t, "follow-on-rim [journey]-")
 	installWrapper(t, repo)
 	for _, envelope := range []string{
 		`{`,

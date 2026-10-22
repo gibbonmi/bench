@@ -268,17 +268,23 @@ func releaseRoot(root string) string {
 	return root
 }
 
+// homeOperand reports whether target uses the home form, which expandHomeTarget owns,
+// supported or not.
+func homeOperand(target string) bool {
+	return strings.HasPrefix(target, "~")
+}
+
 // expandHomeTarget resolves the portable `~`-prefixed form that every worktree command
 // prints, and owns that grammar for all of them. The second result reports whether the
 // target used the home form at all, so a caller can leave an ordinary path untouched.
 // `~user` stays unsupported, because the address this expands is one Bench itself
 // printed, and Bench never prints another account's home.
 func expandHomeTarget(target string) (string, bool, error) {
-	if target != "~" && !strings.HasPrefix(target, "~/") {
-		if strings.HasPrefix(target, "~") {
-			return "", true, errors.New("unsupported home target")
-		}
+	if !homeOperand(target) {
 		return "", false, nil
+	}
+	if target != "~" && !strings.HasPrefix(target, "~/") {
+		return "", true, errors.New("unsupported home target")
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {

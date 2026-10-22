@@ -19,6 +19,7 @@ import (
 // PreToolUse contract defines — 2 blocks, 0 allows — and the degraded message that only
 // the rim emits. A verdict from a reachable core cannot pass as one.
 func TestDegradedGuardRimDecidesFromTheCommandField(t *testing.T) {
+	t.Parallel()
 	hook := gitGuardHookPath()
 	if _, err := os.Stat(hook); err != nil {
 		t.Fatal(err)
