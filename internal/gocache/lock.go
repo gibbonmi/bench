@@ -40,10 +40,10 @@ var held = struct {
 }{paths: map[string]*heldLock{}}
 
 // Holder is one acquired record lock. Release returns the hold; the descriptor stays
-// open while any holder in this process still needs it.
+// open while any holder in this process still needs it. dir names the cache of a shared hold.
 type Holder struct {
-	path     string
-	released bool
+	path, dir string
+	released  bool
 }
 
 // Hold takes the shared cache lock for the Bench build cache that env derives, and keeps
@@ -66,7 +66,7 @@ func HoldDir(dir string) (*Holder, error) {
 	defer held.Unlock()
 	if entry := held.paths[path]; entry != nil {
 		entry.count++
-		return &Holder{path: path}, nil
+		return &Holder{path: path, dir: dir}, nil
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func HoldDir(dir string) (*Holder, error) {
 		return nil, err
 	}
 	held.paths[path] = &heldLock{file: file, count: 1}
-	return &Holder{path: path}, nil
+	return &Holder{path: path, dir: dir}, nil
 }
 
 // acquireShared requests the read lock and waits. The one holder that refuses it is a

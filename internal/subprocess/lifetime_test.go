@@ -15,11 +15,12 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 func TestLifetimePreCanceled(t *testing.T) {
 	cmd := script(t, "touch started", nil)
-	l := subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{})
+	l := subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{}, subprocess.Registration{})
 	var launches int
 	subprocess.Hold(l, func(real func(*exec.Cmd) error, cmd *exec.Cmd) error { launches++; return real(cmd) }, nil)
 	l.Cancel(subprocess.CauseInterruption, syscall.SIGKILL)
@@ -33,7 +34,7 @@ func TestLifetimePreCanceled(t *testing.T) {
 }
 
 func TestLifetimeStartingCancel(t *testing.T) {
-	l := subprocess.NewLifetime(script(t, `trap "" TERM; exec sleep 30`, nil), policy(grace, final, 0), subprocess.Streams{})
+	l := subprocess.NewLifetime(script(t, `trap "" TERM; exec sleep 30`, nil), policy(grace, final, 0), subprocess.Streams{}, subprocess.Registration{})
 	entered, release := holdStart(t, l)
 	started(t, l)
 	<-entered
@@ -46,7 +47,7 @@ func TestLifetimeStartingCancel(t *testing.T) {
 }
 
 func TestLifetimeBlockedStart(t *testing.T) {
-	l := subprocess.NewLifetime(script(t, "exec sleep 30", nil), policy(0, final, 0), subprocess.Streams{})
+	l := subprocess.NewLifetime(script(t, "exec sleep 30", nil), policy(0, final, 0), subprocess.Streams{}, subprocess.Registration{})
 	entered, _ := holdStart(t, l)
 	started(t, l)
 	<-entered
@@ -61,7 +62,7 @@ func TestLifetimeBlockedStart(t *testing.T) {
 // TestLifetimeLateStart releases the held Start after the TERM grace and the final window
 // expired. Only an immediate KILL ends the TERM-resistant child, because no grace remains.
 func TestLifetimeLateStart(t *testing.T) {
-	l := subprocess.NewLifetime(script(t, `trap "" TERM; exec sleep 30`, nil), policy(grace, final, 0), subprocess.Streams{})
+	l := subprocess.NewLifetime(script(t, `trap "" TERM; exec sleep 30`, nil), policy(grace, final, 0), subprocess.Streams{}, subprocess.Registration{})
 	entered, release := holdStart(t, l)
 	waits := countWaits(l)
 	started(t, l)
@@ -76,7 +77,7 @@ func TestLifetimeLateStart(t *testing.T) {
 }
 
 func TestLifetimeSpawnFailure(t *testing.T) {
-	l := subprocess.NewLifetime(exec.Command("/definitely/missing/bench-child"), policy(0, final, 0), subprocess.Streams{})
+	l := subprocess.NewLifetime(exec.Command("/definitely/missing/bench-child"), policy(0, final, 0), subprocess.Streams{}, subprocess.Registration{})
 	waits := countWaits(l)
 	o, _ := waitWithin(t, started(t, l), final)
 	if o.Process.Started || o.Process.StartErr == nil || waits.Load() != 0 {
@@ -86,7 +87,7 @@ func TestLifetimeSpawnFailure(t *testing.T) {
 
 func TestLifetimeSingleWaiter(t *testing.T) {
 	for range 20 {
-		l := subprocess.NewLifetime(script(t, "exit 0", nil), policy(0, final, 0), subprocess.Streams{})
+		l := subprocess.NewLifetime(script(t, "exit 0", nil), policy(0, final, 0), subprocess.Streams{}, subprocess.Registration{})
 		var waits atomic.Int32
 		subprocess.Hold(l, nil, func(real func(*exec.Cmd) error, cmd *exec.Cmd) error {
 			waits.Add(1)
@@ -103,7 +104,7 @@ func TestLifetimeSingleWaiter(t *testing.T) {
 
 func TestLifetimeNonzero(t *testing.T) {
 	streams := subprocess.Streams{Stdout: capture, Stderr: capture}
-	l := subprocess.NewLifetime(script(t, "printf out; printf err >&2; exit 7", nil), policy(0, final, 0), streams)
+	l := subprocess.NewLifetime(script(t, "printf out; printf err >&2; exit 7", nil), policy(0, final, 0), streams, subprocess.Registration{})
 	o, _ := waitWithin(t, started(t, l), final)
 	var exit *exec.ExitError
 	if !o.Process.Waited || o.Process.Code != 7 || !errors.As(o.Process.WaitErr, &exit) || o.Cleanup.Status != subprocess.CleanupNotRequested {
@@ -117,7 +118,7 @@ func TestLifetimeNonzero(t *testing.T) {
 func TestLifetimeExitAndIncomplete(t *testing.T) {
 	holder := processtest.NewHolder(t)
 	cmd := script(t, `trap 'exit 7' TERM; "$0" & while :; do sleep 0.05; done`, holder)
-	l := started(t, subprocess.NewLifetime(cmd, policy(grace, final, 0), subprocess.Streams{Stdout: capture}))
+	l := started(t, subprocess.NewLifetime(cmd, policy(grace, final, 0), subprocess.Streams{Stdout: capture}, subprocess.Registration{}))
 	holder.PID(t)
 	l.Cancel(subprocess.CauseInterruption, syscall.SIGTERM)
 	o, _ := waitWithin(t, l, grace+final)
@@ -130,7 +131,7 @@ func TestLifetimeExitAndIncomplete(t *testing.T) {
 func TestLifetimeDelayedCapture(t *testing.T) {
 	holder := processtest.NewHolder(t)
 	cmd := script(t, `printf early; "$0" & exit 0`, holder)
-	l := started(t, subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{Stdout: capture}))
+	l := started(t, subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{Stdout: capture}, subprocess.Registration{}))
 	holder.PID(t)
 	l.Cancel(subprocess.CauseInterruption, syscall.SIGKILL)
 	o, completion := waitWithin(t, l, final)
@@ -150,7 +151,7 @@ func TestLifetimeCallerFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer file.Close()
-	l := subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{Stdout: subprocess.Output{Writer: file}})
+	l := subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{Stdout: subprocess.Output{Writer: file}}, subprocess.Registration{})
 	o, _ := waitWithin(t, started(t, l), final)
 	if _, err := file.WriteString("caller"); err != nil || o.Streams.Stdout.Status != subprocess.StreamNone {
 		t.Fatalf("caller file after completion: write=%v stream=%+v", err, o.Streams.Stdout)
@@ -163,7 +164,7 @@ func TestLifetimeCallerFile(t *testing.T) {
 func TestLifetimeForcedClose(t *testing.T) {
 	holder := processtest.NewHolder(t)
 	cmd := script(t, `printf early; "$0" & exit 0`, holder)
-	l := started(t, subprocess.NewLifetime(cmd, policy(0, final, grace), subprocess.Streams{Stdout: capture}))
+	l := started(t, subprocess.NewLifetime(cmd, policy(0, final, grace), subprocess.Streams{Stdout: capture}, subprocess.Registration{}))
 	o, _ := waitWithin(t, l, grace+final)
 	if o.Streams.Stdout.Status != subprocess.StreamClosed || string(o.Streams.Stdout.Data) != "early" {
 		t.Fatalf("forced closure projected %+v", o.Streams.Stdout)
@@ -176,7 +177,7 @@ func TestLifetimeForcedClose(t *testing.T) {
 
 func TestLifetimeBlockedWriter(t *testing.T) {
 	streams := subprocess.Streams{Stdout: subprocess.Output{Writer: newBlockingWriter(t)}}
-	l := started(t, subprocess.NewLifetime(script(t, "printf x", nil), policy(0, final, grace), streams))
+	l := started(t, subprocess.NewLifetime(script(t, "printf x", nil), policy(0, final, grace), streams, subprocess.Registration{}))
 	o, _ := waitWithin(t, l, grace+final)
 	if o.Streams.Stdout.Status != subprocess.StreamPending {
 		t.Fatalf("blocked writer stream = %+v", o.Streams.Stdout)
@@ -186,7 +187,7 @@ func TestLifetimeBlockedWriter(t *testing.T) {
 
 func TestLifetimeResistantGroup(t *testing.T) {
 	cmd := script(t, `trap "" TERM; sleep 30 & echo $! > descendant; wait`, nil)
-	l := started(t, subprocess.NewLifetime(cmd, policy(grace, final, 0), subprocess.Streams{}))
+	l := started(t, subprocess.NewLifetime(cmd, policy(grace, final, 0), subprocess.Streams{}, subprocess.Registration{}))
 	descendant := processtest.WaitPID(t, filepath.Join(cmd.Dir, "descendant"))
 	l.Cancel(subprocess.CauseInterruption, syscall.SIGTERM)
 	o, _ := waitWithin(t, l, grace+final)
@@ -196,7 +197,7 @@ func TestLifetimeResistantGroup(t *testing.T) {
 }
 
 func TestLifetimePendingWaiter(t *testing.T) {
-	l := subprocess.NewLifetime(script(t, "exec sleep 30", nil), policy(0, final, 0), subprocess.Streams{})
+	l := subprocess.NewLifetime(script(t, "exec sleep 30", nil), policy(0, final, 0), subprocess.Streams{}, subprocess.Registration{})
 	waiting, release := make(chan struct{}), make(chan struct{})
 	subprocess.Hold(l, nil, func(real func(*exec.Cmd) error, cmd *exec.Cmd) error {
 		close(waiting)
@@ -218,7 +219,7 @@ func TestLifetimePendingWaiter(t *testing.T) {
 func TestLifetimeInheritedDescriptor(t *testing.T) {
 	holder := processtest.NewHolder(t)
 	streams := subprocess.Streams{Stdout: subprocess.Output{Writer: io.Discard}}
-	l := started(t, subprocess.NewLifetime(script(t, `"$0" & exec sleep 30`, holder), policy(0, final, 0), streams))
+	l := started(t, subprocess.NewLifetime(script(t, `"$0" & exec sleep 30`, holder), policy(0, final, 0), streams, subprocess.Registration{}))
 	pid := holder.PID(t)
 	l.Cancel(subprocess.CauseDeadline, syscall.SIGKILL)
 	o, completion := waitWithin(t, l, final)
@@ -231,7 +232,7 @@ func TestLifetimeInheritedDescriptor(t *testing.T) {
 
 func TestLifetimeNormalPreserve(t *testing.T) {
 	cmd := script(t, "sleep 30 >/dev/null 2>&1 & echo $! > descendant", nil)
-	l := started(t, subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{Stdout: capture}))
+	l := started(t, subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{Stdout: capture}, subprocess.Registration{}))
 	o, _ := waitWithin(t, l, final)
 	descendant := processtest.WaitPID(t, filepath.Join(cmd.Dir, "descendant"))
 	if o.Cleanup.Status != subprocess.CleanupNotRequested || !alive(descendant) {
@@ -256,7 +257,7 @@ func TestLifetimeSingleFinalWindow(t *testing.T) {
 		return make(chan time.Time), func() bool { return true }
 	}
 	cmd := script(t, `"$0" & echo $$ > leader; exec sleep 30`, holder)
-	l := started(t, subprocess.NewLifetime(cmd, p, subprocess.Streams{Stdout: capture}))
+	l := started(t, subprocess.NewLifetime(cmd, p, subprocess.Streams{Stdout: capture}, subprocess.Registration{}))
 	holder.PID(t)
 	joinGroup(t, processtest.WaitPID(t, filepath.Join(cmd.Dir, "leader")))
 	l.Cancel(subprocess.CauseDeadline, syscall.SIGKILL)
@@ -294,7 +295,7 @@ func TestLifetimeWorkerOwnership(t *testing.T) {
 	sentinel := &closeableSentinel{}
 	runtime.AddCleanup(sentinel, func(done chan struct{}) { close(done) }, collected)
 	streams := subprocess.Streams{Stdout: subprocess.Output{Writer: newBlockingWriter(t)}, Stderr: subprocess.Output{Writer: sentinel}}
-	l := started(t, subprocess.NewLifetime(script(t, "printf x; printf y >&2", nil), policy(0, final, grace), streams))
+	l := started(t, subprocess.NewLifetime(script(t, "printf x; printf y >&2", nil), policy(0, final, grace), streams, subprocess.Registration{}))
 	o, _ := waitWithin(t, l, grace+final)
 	if o.Streams.Stdout.Status != subprocess.StreamPending || o.Streams.Stderr.Status != subprocess.StreamComplete {
 		t.Fatalf("streams = %+v", o.Streams)
@@ -315,12 +316,33 @@ func TestLifetimeWorkerOwnership(t *testing.T) {
 func TestLifetimeBlockedInput(t *testing.T) {
 	input, feed := io.Pipe()
 	t.Cleanup(func() { _ = feed.Close() })
-	l := started(t, subprocess.NewLifetime(script(t, "exit 0", nil), policy(0, final, grace), subprocess.Streams{Stdin: input}))
+	l := started(t, subprocess.NewLifetime(script(t, "exit 0", nil), policy(0, final, grace), subprocess.Streams{Stdin: input}, subprocess.Registration{}))
 	o, _ := waitWithin(t, l, grace+final)
 	if !o.Process.Waited || o.Streams.Stdin.Status != subprocess.StreamPending {
 		t.Fatalf("blocked stdin: process=%+v stdin=%+v", o.Process, o.Streams.Stdin)
 	}
 	requireIncomplete(t, o, subprocess.ObligationStdin)
+}
+
+// TestLifetimeSignalFailure refuses every group signal. The live group keeps cleanup
+// unresolved until its real absence, and the refusal stays as evidence.
+func TestLifetimeSignalFailure(t *testing.T) {
+	cmd := script(t, "echo $$ > ready; exec sleep 30", nil)
+	l := subprocess.NewLifetime(cmd, policy(0, final, 0), subprocess.Streams{}, subprocess.Registration{})
+	subprocess.HoldSignal(l, func(func(int, syscall.Signal) error, int, syscall.Signal) error { return syscall.EPERM })
+	started(t, l)
+	processtest.WaitPID(t, filepath.Join(cmd.Dir, "ready"))
+	l.Cancel(subprocess.CauseInterruption, syscall.SIGKILL)
+	o, completion := waitWithin(t, l, final)
+	requireIncomplete(t, o, subprocess.ObligationWaiter, subprocess.ObligationGroup)
+	if !errors.Is(o.Cleanup.SignalErr, syscall.EPERM) {
+		t.Fatalf("signal error = %v, want the refused KILL", o.Cleanup.SignalErr)
+	}
+	_ = syscall.Kill(-o.Process.PID, syscall.SIGKILL)
+	done := completeWithin(t, completion, final)
+	if done.Cleanup.Status != subprocess.CleanupComplete || done.Cleanup.Group.State != protection.GroupAbsent || !errors.Is(done.Cleanup.SignalErr, syscall.EPERM) {
+		t.Fatalf("completion after the group's absence = %+v", done.Cleanup)
+	}
 }
 
 // closeableSentinel is an unrelated caller writer whose collection proves release.

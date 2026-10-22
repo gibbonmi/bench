@@ -1,18 +1,21 @@
 package subprocess
 
 import (
+	"errors"
 	"syscall"
 
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // Outcome is one immutable lifetime snapshot. Its parts stay separate, so a cleanup
-// failure cannot erase the child result and a child exit cannot certify its streams.
+// failure cannot erase the child result and a child exit cannot certify its streams or
+// release its resources. Protection is safe when the lifetime registered no resource.
 type Outcome struct {
 	Process      Process
 	Cancellation Cancellation
 	Streams      StreamSet
 	Cleanup      Cleanup
+	Protection   protection.Disposition
 }
 
 // Process holds the launch and wait facts. Code is the raw exit code, or -1 when Signal
@@ -75,7 +78,7 @@ type Obligation string
 const (
 	ObligationStart  Obligation = "start"
 	ObligationWaiter Obligation = "waiter"
-	ObligationGroup  Obligation = "group"
+	ObligationGroup  Obligation = protection.ObligationGroup
 	ObligationStdin  Obligation = "stdin"
 	ObligationStdout Obligation = "stdout"
 	ObligationStderr Obligation = "stderr"
@@ -128,7 +131,39 @@ func (c *controller) snapshot() Outcome {
 	case c.stopping || c.needGroup || c.closed:
 		o.Cleanup.Status = CleanupComplete
 	}
+	o.Protection = protection.Disposition{State: protection.Safe}
+	switch resources := c.l.registration.Resources; {
+	case c.startPending && len(resources) > 0:
+		o.Protection = protection.Disposition{State: protection.Uncertain, Resources: resources, Err: errIdentityPending}
+	case !c.startPending && c.reg != nil:
+		o.Protection = c.reg.Disposition()
+	}
 	return o
+}
+
+var errIdentityPending = errors.New("subprocess: the launch identity is still pending")
+
+// terminal projects an outcome into the facts that its registration publishes.
+func terminal(o Outcome) protection.Terminal {
+	t := protection.Terminal{Process: protection.Pending, Streams: protection.Complete, Cleanup: protection.Complete}
+	if o.Process.Waited {
+		t.Process = protection.Complete
+	}
+	for _, s := range []Stream{o.Streams.Stdin, o.Streams.Stdout, o.Streams.Stderr} {
+		switch {
+		case s.Status == StreamPending:
+			t.Streams = protection.Pending
+		case (s.Status == StreamFailed || s.Status == StreamClosed) && t.Streams != protection.Pending:
+			t.Streams = protection.Incomplete
+		}
+	}
+	if o.Cleanup.Status == CleanupIncomplete {
+		t.Cleanup = protection.Incomplete
+	}
+	for _, obligation := range o.Cleanup.Obligations {
+		t.Obligations = append(t.Obligations, string(obligation))
+	}
+	return t
 }
 
 // Completion publishes the outcome after every unfinished worker completes.

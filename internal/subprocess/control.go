@@ -59,6 +59,9 @@ type controller struct {
 	startErr, waitErr                  error
 	pid                                int
 	state                              *os.ProcessState
+	// The startup worker writes reg and identityErr before it reports on startDone.
+	reg         *protection.Registration
+	identityErr error
 
 	request                     Cancellation
 	stopping, forced, needGroup bool
@@ -136,17 +139,42 @@ func (c *controller) run() {
 		c.observe()
 		c.poll.end()
 	}
-	c.l.complete.outcome = c.snapshot()
+	c.l.complete.outcome = c.finished()
 	close(c.l.complete.done)
 }
 
 // launch is the one startup worker. It never holds the lifetime lock across Start.
 func (c *controller) launch(start func(*exec.Cmd) error) {
+	c.startDone <- c.register(start)
+}
+
+// register publishes pending protection before Start and the actual identity after it. A
+// proved no-start closes the registration, so a canceled or failed launch keeps no user.
+func (c *controller) register(start func(*exec.Cmd) error) error {
 	if c.l.pendingRequest().Cause != CauseNone {
-		c.startDone <- ErrNoStart
-		return
+		return ErrNoStart
 	}
-	c.startDone <- start(c.cmd)
+	if resources := c.l.registration.Resources; len(resources) > 0 {
+		reg, err := c.l.registration.Protocol.Prepare(resources)
+		if c.reg = reg; err != nil {
+			return err
+		}
+		c.cmd.Env = protection.Environ(c.cmd.Environ(), reg.Resources())
+	}
+	err := ErrNoStart
+	if c.l.pendingRequest().Cause == CauseNone {
+		err = start(c.cmd)
+	}
+	switch {
+	case c.reg == nil:
+		return err
+	case err != nil:
+		// The disposition keeps any persistence error of the no-start record.
+		_ = c.reg.Finish(protection.Terminal{NoStart: true})
+		return err
+	}
+	c.identityErr = c.reg.Started(c.cmd.Process.Pid, c.cmd.Process.Pid)
+	return nil
 }
 
 func (c *controller) onStart(err error) {
@@ -170,6 +198,12 @@ func (c *controller) onStart(err error) {
 	}
 	c.waitPending = true
 	go func() { c.waitDone <- c.l.wait(c.cmd) }()
+	if c.identityErr != nil && !c.stopping {
+		// The records cannot name this child, so the live owner stops it with its own handle.
+		c.stopping, c.needGroup = true, true
+		c.force()
+		return
+	}
 	if !c.stopping {
 		return
 	}
@@ -244,7 +278,7 @@ func (c *controller) beginFinal() {
 // signal sends sig to the group. An answer that proves absence resolves the group; any
 // other error stays evidence.
 func (c *controller) signal(sig syscall.Signal) {
-	err := syscall.Kill(-c.pid, sig)
+	err := c.l.kill(-c.pid, sig)
 	switch answer := protection.Classify(err); {
 	case answer.State == protection.GroupAbsent:
 		c.group = answer
@@ -294,6 +328,18 @@ func (c *controller) resolved() bool {
 
 func (c *controller) publish() {
 	c.returned = true
-	c.l.outcome = c.snapshot()
+	c.l.outcome = c.finished()
 	close(c.l.returned)
+}
+
+// finished publishes a started launch's terminal facts to its registration and returns the
+// snapshot with the resulting disposition.
+func (c *controller) finished() Outcome {
+	o := c.snapshot()
+	if c.started && c.reg != nil {
+		// The disposition keeps any persistence error.
+		_ = c.reg.Finish(terminal(o))
+		o.Protection = c.reg.Disposition()
+	}
+	return o
 }

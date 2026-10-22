@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // The const block is the production policy registry. Callers name these entries. They do
@@ -216,15 +217,21 @@ var processPolicy = subprocess.Policy{
 	Poll:   ProcessPoll,
 }
 
-// run returns the captured stderr, or the merged output when stdout is nil.
+// run returns the captured stderr, or the merged output when stdout is nil. The child's group
+// registers on every resource this process inherited before it starts.
 func run(parent context.Context, limit time.Duration, cmd *exec.Cmd, stdout io.Writer) ProcessResult {
 	if err := parent.Err(); err != nil {
 		return ProcessResult{Status: ProcessCanceled, Err: err}
 	}
+	inherited, malformed := protection.Inherited()
+	if malformed != nil {
+		return ProcessResult{Status: ProcessStart, Err: malformed}
+	}
 	ctx, cancel := Context(parent, limit)
 	defer cancel()
 	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}, Stderr: subprocess.Output{Capture: true}, MergeStderr: stdout == nil}
-	lifetime := subprocess.NewLifetime(cmd, processPolicy, streams)
+	registration := subprocess.Registration{Protocol: protection.Installed(), Resources: inherited}
+	lifetime := subprocess.NewLifetime(cmd, processPolicy, streams, registration)
 	if err := lifetime.Start(); err != nil {
 		return ProcessResult{Status: ProcessStart, Err: err}
 	}

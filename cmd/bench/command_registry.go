@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/repairpilot"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -290,8 +291,10 @@ type Command struct {
 	resolved *string
 }
 
-// Run executes args through the production command dispatcher.
+// Run executes args through the production command dispatcher. Every verb's launches admit
+// the composition root's resource kinds.
 func (c Command) Run(args []string) int {
+	protection.Install(processResources)
 	if c.Stdin == nil {
 		c.Stdin = emptyReader{}
 	}

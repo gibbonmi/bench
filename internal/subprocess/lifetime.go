@@ -7,6 +7,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // Window starts one caller-classified window. Its channel receives when the window
@@ -62,16 +64,25 @@ type Streams struct {
 	MergeStderr bool
 }
 
+// Registration names the resources that a launch protects before Start: the inherited union
+// plus the caller's local resources. The child receives that union in its environment.
+type Registration struct {
+	Protocol  *protection.Protocol
+	Resources []protection.Descriptor
+}
+
 var errStartedTwice = errors.New("subprocess: lifetime already started")
 
 // Lifetime owns one command's process group from Start until its last worker completes.
 // No caller calls Wait, Run, or a context Cancel on the owned command.
 type Lifetime struct {
-	cmd     *exec.Cmd
-	policy  Policy
-	streams Streams
-	// start and wait are the real command calls; tests hold them to order a race.
+	cmd          *exec.Cmd
+	policy       Policy
+	streams      Streams
+	registration Registration
+	// start, wait, and kill are the real calls; tests hold them to order a race or fail one.
 	start, wait func(*exec.Cmd) error
+	kill        func(int, syscall.Signal) error
 
 	mu       sync.Mutex
 	started  bool
@@ -82,12 +93,13 @@ type Lifetime struct {
 	complete *Completion
 }
 
-// NewLifetime prepares cmd under policy and streams without starting it.
-func NewLifetime(cmd *exec.Cmd, policy Policy, streams Streams) *Lifetime {
+// NewLifetime prepares cmd under policy, streams, and registration without starting it.
+func NewLifetime(cmd *exec.Cmd, policy Policy, streams Streams, registration Registration) *Lifetime {
 	return &Lifetime{
-		cmd: cmd, policy: policy, streams: streams,
+		cmd: cmd, policy: policy, streams: streams, registration: registration,
 		start:    (*exec.Cmd).Start,
 		wait:     (*exec.Cmd).Wait,
+		kill:     syscall.Kill,
 		notify:   make(chan struct{}, 1),
 		returned: make(chan struct{}),
 		complete: &Completion{done: make(chan struct{})},

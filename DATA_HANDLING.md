@@ -247,6 +247,17 @@ The [lock owner](internal/adopt/transaction/lock.go) defines the shared namespac
 Locks contain destination-path digests, without file content.
 The [adoption publication owner](internal/adopt/transaction.go) defines the explicit fault-injection input for process recovery tests.
 
+## Process resource protection
+
+The [protection record owner](internal/subprocess/protection/record.go) defines the protection store layout, its record schema, and its private access modes.
+Each resource owner keeps its store beside the resource that it protects.
+The reserved `BENCH_PROCESS_RESOURCES` entry gives the same resource descriptors to a nested Bench launch.
+
+The records hold resource and launch identifiers, resource paths, process identifiers, statuses, and unresolved obligation names.
+They hold no environment value, prompt, transcript, or credential.
+A record stays until its owner proves each registered launch complete, so an unresolved launch can keep its resource indefinitely.
+These records are local, mutable evidence inputs, not proof.
+
 ## Log and terminal output
 
 Every terminal render of operator-influenced text goes through the single
