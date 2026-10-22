@@ -1568,7 +1568,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3a-standards-r0",
+          "performer": "claude:lgp-c3a-standards-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0bca031bcf55878ac2b0a1202fda122b4e3e33ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3a-standards-20261022",
+            "digest": "sha256:7d0813a4b1a341201f7f9c367f5adbb1f9f0354b61d7aba7623c746abe414c07",
+            "excerpt": "Standards axis, LGP-C3A (cd9889779..b31f7de1e): 2 findings. S1 (accepted, repair): under a failed call-directory read, clean passes the relative operand down as typed, and planExplicitWith -> resolveOperand -> canonicalpath.Resolve reads the process directory again below the boundary (worktree.go:279-283, subshell.go:121-124); the callPath comment claims no lower code does that, and effects.go says lower owners never read the current directory. S2 (accepted, auto-fix): the boundary's `~` test (worktree.go:282) spells the home-operand rule a second time beside expandHomeTarget (path.go:277-278). Advice: accept Absolute plus Resolve as the directory form; rename reauthorize's closure parameter to drop the run alias.\n"
+          },
+          "axis": "Standards",
+          "base": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "tip": "b31f7de1ef3bafe11ae5909bbfdf1b9f1ad539e5",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3a-spec-r0",
+          "performer": "claude:lgp-c3a-spec-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0bca031bcf55878ac2b0a1202fda122b4e3e33ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3a-spec-20261022",
+            "digest": "sha256:32f7bca83a1856b87807545613f76f0ae72b68c0b635592d82930e41e9de45de",
+            "excerpt": "Spec axis, LGP-C3A (cd9889779..b31f7de1e): 1 finding. P1 (accepted, repair, same defect as S1): spec line 156, \"A failed read is carried forward and surfaces only when a relative operand needs it\", fails on clean, where callPath's error is dropped (worktree.go:282-284) and the plan reads the process directory again; repair by rendering the existing refusal at the boundary through one named error shared with resolveOperand. LGP18 met (TestVerbCallDirectoryResolvesOperands; t06-call-directory bit). LGP22 met: 807 + 2 = 809 tests, ceiling 47. LGP34: coordinator records the ticket 06 author's bench test --full --package ./internal/worktree times, 65266 ms (1493 tests) before and 65576 ms (1495 tests) after, inside the spread. Absolute operand under a failed read: met. Author decisions 1, 3, 4, and 5 accepted; decision 1 is a non-behavioral form change flagged for veto.\n"
+          },
+          "axis": "Spec",
+          "base": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "tip": "b31f7de1ef3bafe11ae5909bbfdf1b9f1ad539e5",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3a-coverage-r0",
+          "performer": "claude:lgp-c3a-coverage-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0bca031bcf55878ac2b0a1202fda122b4e3e33ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3a-coverage-20261022",
+            "digest": "sha256:6339d31f795a6023fb7e643b7a89c1cf1c17f4718cda7d19bbdb34d79fd1700c",
+            "excerpt": "Coverage axis, LGP-C3A (cd9889779..b31f7de1e): 2 findings. C1 (accepted, repair): the LGP18 test exercises only clean and release; canonicalPathIn swapped back to canonicalPath read silent at land.go:137, reauthorize.go:70, and land_resume.go:36 (restored yes), so three routed sites have no test. C2 (accepted, folded into the S1/P1 repair): no test pins clean under a failed directory value. Probes that bit (restored yes): the `~` guard forced true; canonicalpath.Absolute swapped for filepath.Join; an added filepath.Abs read in callPath (single-read census); clean's boundary callPath omitted. Advice: the clean error path at worktree.go:407 affects only the displayed Target.\n"
+          },
+          "axis": "Coverage",
+          "base": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "tip": "b31f7de1ef3bafe11ae5909bbfdf1b9f1ad539e5",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
