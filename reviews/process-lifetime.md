@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/process-lifetime/spec.md",
-  "plan_digest": "sha256:a3d8f9f0d05b81006d7e1a91c4898a0c28fee10543b663198fcf80e08429465d",
+  "plan_digest": "sha256:c36d67f25b6ac6ce1b621f6b196cb4fb4e063b2830bdb5ba4bb7405337a33930",
   "implementation_session": "",
   "chunks": [
     {
       "id": "PL-C1",
       "base": "4115afad73961d526b3df1015ee85ea4a71c84b3",
-      "tip": "2e56083604aa6706a47923d03e4b533887c780b2",
-      "plan_digest": "sha256:a3d8f9f0d05b81006d7e1a91c4898a0c28fee10543b663198fcf80e08429465d",
-      "source_digest": "dd9860f250f48ac55476ff340f5c1c0d7de8b498",
+      "tip": "36c2fa86aac94a56792529dbdae08ec1e6652701",
+      "plan_digest": "sha256:c36d67f25b6ac6ce1b621f6b196cb4fb4e063b2830bdb5ba4bb7405337a33930",
+      "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
       "acceptance_rows": [
         "PL2",
         "PL3",
@@ -267,6 +267,233 @@
               "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,3,TestLifetimeBlockedStart,33,1,0,null,yes\n  2,bit,insert,failed,2,TestLifetimeExitAndIncomplete,28,1,0,null,yes\n  3,bit,swap,failed,7,TestLifetimeBlockedInput,33,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/subprocess,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2535\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,64484,33\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeBlockedStart,\"lifetime_test.go:54: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeLateStart,\"lifetime_test.go:68: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeStartingCancel,\"lifetime_test.go:42: timeout: waited 20.6s for the lifetime to return\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,2065,28\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeExitAndIncomplete,\"lifetime_test.go:123: cleanup failure replaced the observed exit: {Started:true StartErr:<nil> PID:870109 PGID:870109 Waited:true Code:0 Signal:signal 0 WaitErr:waitid: no child processes}\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeSingleWaiter,\"lifetime_test.go:97: one launch created 2 waiters\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,145173,33\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeBlockedInput,\"lifetime_test.go:286: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeBlockedWriter,\"lifetime_test.go:174: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeDelayedCapture,\"lifetime_test.go:134: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeExitAndIncomplete,\"lifetime_test.go:121: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeInheritedDescriptor,\"lifetime_test.go:218: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeSingleFinalWindow,\"lifetime_test.go:252: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeWorkerOwnership,\"lifetime_test.go:265: timeout: waited 20.6s for the lifetime to return\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t01r1-ticket-1-check-1",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:4109c48dc61bc8c333e8379cee677dacaa4d9a50765062512e3c9af35839d252",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,pass,3599,33\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-1",
+          "command": "bench test --package ./internal/subprocess",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-2",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:99e664978059e7d12ad0b26b10fb892199d2e46f51e274348cd56be954ce3a24",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/bounds,pass,3940,63\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-2",
+          "command": "bench test --package ./internal/bounds",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-3",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:8c71de58f6fd086d5d2aa72e1f99e8f5f460aa49bc839d2c8effd7bbd565e370",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14094,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-4",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:6098d83a3b12179138af3798b1df2d63bc9b8d6234422d2a9f1e818fcd2d9c05",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16832,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-4",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-5",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:87e3ed0085cedfbe08518008f388b05d62c87ec20bcafb3ed30b1d729b8bc928",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,106,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-5",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-6",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:eb356f895f2a180bdc8e787badf910b528041d98baf39b59d60a1359b45d3071",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,35392,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ticket-1-check-6",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-7",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:c9eb8ae6de1c44a7dea8bf2e89c1df75f6274721739ba23191590976376f6f3e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-7",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-8",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:0570173198b71d68ffdbfaa4facbe957045d752e3f35aaf27496ec6af277bf05",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-8",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-9",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:0aaabee70dfcea4b354fdc4790e3db36125abe22a576723f2b6660764c8834f7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-9",
+          "command": "bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-10",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:085563a55cd74cec959ff54381673a618521b021277e421cb1b052c3c05d4e05",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,2,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-10",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-check-11",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:933b0f0474c12b388587dac721f21cf6738a3f059a3c401dc1a13c47b5acfe41",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/processtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-check-11",
+          "command": "bench test --package ./internal/subprocess/processtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-ticket-1-omission",
+          "performer": "claude:plt-t01-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a961a5af5525e0724759d154bcc7d615c32ed9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+            "digest": "sha256:52b5e1edce3736ee3a969ff8c074ddc20fc07208a13e48499808778bd10afe41",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,3,TestLifetimeBlockedStart,33,1,0,null,yes\n  2,bit,insert,failed,3,TestLifetimeExitAndIncomplete,28,1,0,null,yes\n  3,bit,swap,failed,7,TestLifetimeBlockedInput,33,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/subprocess,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2869\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,64571,33\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeBlockedStart,\"lifetime_test.go:54: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeLateStart,\"lifetime_test.go:70: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeStartingCancel,\"lifetime_test.go:42: timeout: waited 20.6s for the lifetime to return\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,2157,28\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeExitAndIncomplete,\"lifetime_test.go:125: cleanup failure replaced the observed exit: {Started:true StartErr:<nil> PID:971270 PGID:971270 Waited:true Code:0 Signal:signal 0 WaitErr:waitid: no child processes}\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeResistantGroup,\"lifetime_test.go:194: TERM-resistant group after grace: process={Started:true StartErr:<nil> PID:971291 PGID:971291 Waited:true Code:0 Signal:signal 0 WaitErr:waitid: no child processes} cleanup={Status:complete Obligations:[] Group:{State:… (274 bytes)\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeSingleWaiter,\"lifetime_test.go:99: one launch created 2 waiters\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,145211,33\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeBlockedInput,\"lifetime_test.go:319: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeBlockedWriter,\"lifetime_test.go:180: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeDelayedCapture,\"lifetime_test.go:136: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeExitAndIncomplete,\"lifetime_test.go:123: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeInheritedDescriptor,\"lifetime_test.go:224: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeSingleFinalWindow,\"lifetime_test.go:269: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeWorkerOwnership,\"lifetime_test.go:298: timeout: waited 20.6s for the lifetime to return\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-1-omission",
+          "command": "bench test --package ./internal/subprocess",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit remembered cancellation for a held Start, start a second waiter, or wait unconditionally on a blocked consumer. The corresponding real-child or controlled-start assertion must fail.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:plt-t01-repair1-20261022",
+              "digest": "sha256:52b5e1edce3736ee3a969ff8c074ddc20fc07208a13e48499808778bd10afe41",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,3,TestLifetimeBlockedStart,33,1,0,null,yes\n  2,bit,insert,failed,3,TestLifetimeExitAndIncomplete,28,1,0,null,yes\n  3,bit,swap,failed,7,TestLifetimeBlockedInput,33,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/subprocess,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2869\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,64571,33\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeBlockedStart,\"lifetime_test.go:54: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeLateStart,\"lifetime_test.go:70: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeStartingCancel,\"lifetime_test.go:42: timeout: waited 20.6s for the lifetime to return\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,2157,28\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeExitAndIncomplete,\"lifetime_test.go:125: cleanup failure replaced the observed exit: {Started:true StartErr:<nil> PID:971270 PGID:971270 Waited:true Code:0 Signal:signal 0 WaitErr:waitid: no child processes}\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeResistantGroup,\"lifetime_test.go:194: TERM-resistant group after grace: process={Started:true StartErr:<nil> PID:971291 PGID:971291 Waited:true Code:0 Signal:signal 0 WaitErr:waitid: no child processes} cleanup={Status:complete Obligations:[] Group:{State:… (274 bytes)\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeSingleWaiter,\"lifetime_test.go:99: one launch created 2 waiters\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,145211,33\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeBlockedInput,\"lifetime_test.go:319: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeBlockedWriter,\"lifetime_test.go:180: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeDelayedCapture,\"lifetime_test.go:136: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeExitAndIncomplete,\"lifetime_test.go:123: timeout: waited 20.6s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeInheritedDescriptor,\"lifetime_test.go:224: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeSingleFinalWindow,\"lifetime_test.go:269: timeout: waited 20.45s for the lifetime to return\",1\n  github.com/gibbonmi/bench/internal/subprocess,TestLifetimeWorkerOwnership,\"lifetime_test.go:298: timeout: waited 20.6s for the lifetime to return\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -347,7 +574,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:a3d8f9f0d05b81006d7e1a91c4898a0c28fee10543b663198fcf80e08429465d",
+      "to": "sha256:c36d67f25b6ac6ce1b621f6b196cb4fb4e063b2830bdb5ba4bb7405337a33930",
+      "chunk_ids": {
+        "PL-C1": [
+          "PL-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
