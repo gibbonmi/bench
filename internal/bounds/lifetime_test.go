@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // TestBoundsCancel holds the runner's cancellation policy: KILL with no catchable signal,
@@ -46,6 +47,17 @@ func TestBoundsCancel(t *testing.T) {
 		if result.Status != want || !errors.Is(result.Err, wantErr) || len(signals) != 0 {
 			t.Fatalf("interrupt=%t: status=%s err=%v catchable signals=%q, want %s with immediate KILL", interrupt, result.Status, result.Err, signals, want)
 		}
+	}
+}
+
+// TestBoundsMalformedResources holds that a malformed inherited resource vector refuses the run
+// before any child starts.
+func TestBoundsMalformedResources(t *testing.T) {
+	t.Setenv(protection.Env, "{not a vector")
+	cmd := exec.Command("true")
+	result := bounds.Run(context.Background(), bounds.TestDeadline(bounds.ProcessFinalWindow), cmd)
+	if result.Status != bounds.ProcessStart || result.Err == nil || cmd.Process != nil {
+		t.Fatalf("a malformed %s started %v: status=%s err=%v", protection.Env, cmd.Process, result.Status, result.Err)
 	}
 }
 

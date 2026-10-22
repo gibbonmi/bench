@@ -1,6 +1,7 @@
 package gocache
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -51,20 +52,25 @@ func TestProtectionRefusesAForeignCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	other := filepath.Join(t.TempDir(), "go-build")
+	parent := filepath.Dir(d.ResourcePath)
+	other := filepath.Join(parent, "other")
 	if err := os.Mkdir(other, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	link := filepath.Join(t.TempDir(), "link")
-	if err := os.Symlink(dir, link); err != nil {
+	link, parentLink := filepath.Join(t.TempDir(), "link"), filepath.Join(t.TempDir(), "parent")
+	if err := errors.Join(os.Symlink(dir, link), os.Symlink(parent, parentLink)); err != nil {
 		t.Fatal(err)
 	}
-	foreignStore, foreignBinding, unlocked, linked := d, d, d, d
+	foreignStore, foreignBinding, unlocked, linked, linkedParent := d, d, d, d, d
 	foreignStore.Store = filepath.Join(other, ProtectionStore)
 	foreignBinding.Binding, _ = cacheIdentity(other)
-	unlocked.ResourcePath, unlocked.Store = other, filepath.Join(other, ProtectionStore)
+	// The unlocked directory carries its own binding, so only the missing cache lock refuses it.
+	unlocked.ResourcePath, unlocked.Store, unlocked.Binding = other, filepath.Join(other, ProtectionStore), foreignBinding.Binding
 	linked.ResourcePath, linked.Store = link, filepath.Join(link, ProtectionStore)
-	for name, foreign := range map[string]protection.Descriptor{"store": foreignStore, "binding": foreignBinding, "lock": unlocked, "link": linked} {
+	// A link in a parent component reaches the real cache, so only the canonical-path check refuses it.
+	linkedParent.ResourcePath = filepath.Join(parentLink, filepath.Base(d.ResourcePath))
+	linkedParent.Store = filepath.Join(linkedParent.ResourcePath, ProtectionStore)
+	for name, foreign := range map[string]protection.Descriptor{"store": foreignStore, "binding": foreignBinding, "lock": unlocked, "link": linked, "parent link": linkedParent} {
 		if err := ValidateProtection(foreign); err == nil {
 			t.Errorf("%s: the cache validator accepted %+v", name, foreign)
 		}

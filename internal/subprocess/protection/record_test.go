@@ -62,9 +62,23 @@ func TestRecordForeignBinding(t *testing.T) {
 	for _, d := range []protection.Descriptor{foreignStore, foreignGeneration} {
 		requireRefused(t, p, d)
 	}
+	// The validator admits first, so only the published generation's foreign binding refuses it.
+	path, data := resourceRecord(t, first)
+	plant(t, path, strings.Replace(data, first.Binding, second.Binding, 1))
+	requireRefused(t, p, first)
 	if users := len(userRecords(t, first)) + len(userRecords(t, second)); users != 0 {
 		t.Fatalf("a foreign descriptor registered %d users", users)
 	}
+}
+
+// TestRecordKindWithoutValidator launches a real generation. A kind with no validator row gains
+// no admission, whether the table is nil, empty, or another kind's, or no protocol exists.
+func TestRecordKindWithoutValidator(t *testing.T) {
+	d := newResource(t, newProtocol(), "cache")
+	for _, table := range []protection.Validators{nil, {}, {protection.KindWorktree: validate}} {
+		requireRefused(t, &protection.Protocol{Validators: table, ReadLimit: readLimit}, d)
+	}
+	requireRefused(t, nil, d)
 }
 
 func TestRecordMalformed(t *testing.T) {
@@ -222,15 +236,18 @@ func TestRecordUnsafePath(t *testing.T) {
 	if err := os.Mkdir(path, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	d, err := p.OpenResource(candidate(path))
-	if err == nil {
+	if d, err := p.OpenResource(candidate(path)); err == nil {
 		t.Errorf("a control-byte path opened generation %+v", d)
 	}
-	requireRefused(t, p, d)
 	unsafe := candidate(path)
 	unsafe.ResourceID = strings.Repeat("0", 32)
-	if _, err := protection.ParseVector(strings.TrimPrefix(vectorEnv(unsafe), protection.Env+"=")); err == nil {
+	_, parsed := protection.ParseVector(strings.TrimPrefix(vectorEnv(unsafe), protection.Env+"="))
+	if parsed == nil {
 		t.Fatal("an inherited control-byte path parsed")
+	}
+	// Prepare's own descriptor check refuses the launch with the refusal that the inherited vector gets.
+	if err, check := requireRefused(t, p, unsafe), errors.Unwrap(parsed); err.Error() != check.Error() {
+		t.Fatalf("the launch refusal %q is not the descriptor check's %q", err, check)
 	}
 }
 
