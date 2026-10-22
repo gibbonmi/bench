@@ -12,6 +12,7 @@ import (
 )
 
 func TestCompatibilityResume(t *testing.T) {
+	t.Parallel()
 	fixture := newCompatibilitySession(t)
 	hook := filepath.Join(fixture.repo, ".bench", "hooks", "session-start.sh")
 	for _, event := range []string{"startup", "resume"} {
@@ -28,6 +29,7 @@ func TestCompatibilityResume(t *testing.T) {
 }
 
 func TestCompatibilityOtherHosts(t *testing.T) {
+	t.Parallel()
 	for _, host := range []string{"linux/amd64", "darwin/arm64"} {
 		report := compatibility.Inspect(compatibility.Input{Context: compatibility.Context{
 			Interface: compatibility.CodexCLI, Environment: compatibility.Fact{Value: host, Source: "host fixture"},
@@ -53,6 +55,7 @@ func TestCompatibilityOtherHosts(t *testing.T) {
 }
 
 func TestCompatibilityPermissionConflict(t *testing.T) {
+	t.Parallel()
 	fixture := newCompatibilitySession(t)
 	path := filepath.Join(fixture.homes[compatibility.CodexDesktop], "config.toml")
 	policy := []byte("approval_policy = \"untrusted\"\nsandbox_mode = \"read-only\"\n")
@@ -71,6 +74,7 @@ func TestCompatibilityPermissionConflict(t *testing.T) {
 }
 
 func TestCompatibilityPayload(t *testing.T) {
+	t.Parallel()
 	fixture := newCompatibilitySession(t)
 	for _, rel := range []string{".bench/BENCH.md", ".bench/BENCH-reference.md"} {
 		installed, err := os.ReadFile(filepath.Join(fixture.repo, filepath.FromSlash(rel)))
