@@ -86,6 +86,7 @@ func joinLines(lines []string) string { return strings.Join(lines, "\n") + "\n" 
 // BO26: exec bounds its child's output to lines 1 to 4, the spill line, and lines 36 to
 // 40, and the spill file holds the complete output.
 func TestExecBoundsChildOutput(t *testing.T) {
+	t.Parallel()
 	fixture, source := execBoundFixture(t)
 	result := runBoundedExec(t, fixture, source, "", "sh", "-c", "seq 1 40")
 	if result.code != 0 {
@@ -99,6 +100,7 @@ func TestExecBoundsChildOutput(t *testing.T) {
 
 // BO27: the bound keeps the child's own exit code.
 func TestExecKeepsChildExitUnderBound(t *testing.T) {
+	t.Parallel()
 	fixture, source := execBoundFixture(t)
 	result := runBoundedExec(t, fixture, source, "", "sh", "-c", "seq 1 40; exit 7")
 	if result.code != 7 {
@@ -109,6 +111,7 @@ func TestExecKeepsChildExitUnderBound(t *testing.T) {
 
 // BO28: a heredoc on exec's stdin reaches the child, and the child's 12 lines spill.
 func TestExecForwardsStdinUnderBound(t *testing.T) {
+	t.Parallel()
 	fixture, source := execBoundFixture(t)
 	result := runBoundedExec(t, fixture, source, "seq 1 12\n", "sh")
 	if result.code != 0 {
@@ -123,6 +126,7 @@ func TestExecForwardsStdinUnderBound(t *testing.T) {
 // BO29: a SIGINT after the child printed 12 lines gives exit 130, and the spill file
 // holds those lines.
 func TestExecInterruptKeepsOutput(t *testing.T) {
+	t.Parallel()
 	fixture, source := execBoundFixture(t)
 	marker := filepath.Join(t.TempDir(), "printed")
 	cmd, stdout, stderr := systemStartSelected(t, fixture.root, fixture.environment(fixture.home),
@@ -158,6 +162,7 @@ func TestExecInterruptKeepsOutput(t *testing.T) {
 // byte, and exec's peak memory stays far below the output. An owner that kept the
 // complete output would hold at least 64 MiB.
 func TestExecStreamsLargeChild(t *testing.T) {
+	t.Parallel()
 	const size = 64 << 20
 	const peakLimit = 48 << 20
 	fixture, source := execBoundFixture(t)
@@ -186,6 +191,7 @@ func TestExecStreamsLargeChild(t *testing.T) {
 // prints the cut line and the spill line within the byte value. The spill file holds the
 // complete line first; the note that exec adds after a failed child follows it.
 func TestExecStreamsLongLine(t *testing.T) {
+	t.Parallel()
 	const size = 64 << 20
 	fixture, source := execBoundFixture(t)
 	result := runBoundedExec(t, fixture, source, "", "sh", "-c", fmt.Sprintf("head -c %d /dev/zero | tr '\\000' x; exit 5", size))
@@ -226,6 +232,7 @@ func peakResidentBytes(pid int, done <-chan struct{}) int64 {
 // BO69: a background descendant that holds the output pipe open cannot hang exec. Exec
 // returns within its wait delay with the child's exit code and the child's line.
 func TestExecReturnsAtChildExit(t *testing.T) {
+	t.Parallel()
 	fixture, source := execBoundFixture(t)
 	window := bounds.TestDeadline(bounds.ExecWaitDelay)
 	started := time.Now()
