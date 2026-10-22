@@ -5549,11 +5549,213 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+    "performer": "claude:lgp-orchestrator-20261021",
+    "reconciliation": {
+      "LGP1": "covered",
+      "LGP10": "covered",
+      "LGP11": "covered",
+      "LGP12": "covered",
+      "LGP13": "covered",
+      "LGP14": "covered",
+      "LGP15": "covered",
+      "LGP16": "covered",
+      "LGP17": "covered",
+      "LGP18": "covered",
+      "LGP19": "covered",
+      "LGP2": "covered",
+      "LGP20": "covered",
+      "LGP21": "covered",
+      "LGP22": "covered",
+      "LGP23": "covered",
+      "LGP24": "covered",
+      "LGP25": "covered",
+      "LGP26": "covered",
+      "LGP27": "covered",
+      "LGP28": "covered",
+      "LGP29": "covered",
+      "LGP3": "covered",
+      "LGP30": "covered",
+      "LGP31": "covered",
+      "LGP32": "covered",
+      "LGP33": "covered",
+      "LGP34": "covered",
+      "LGP35": "covered",
+      "LGP36": "covered",
+      "LGP37": "covered",
+      "LGP38": "covered",
+      "LGP4": "covered",
+      "LGP5": "covered",
+      "LGP6": "covered",
+      "LGP7": "covered",
+      "LGP8": "covered",
+      "LGP9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:lgp-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "agent-session:claude:lgp-orchestrator-20261021",
+          "digest": "sha256:1b32d4322dbd9530ed3e04d70d92724eab7c4e54533d6989dfdaa73b4f23a1ca",
+          "excerpt": "bench coverage --check specs/landing-gate-long-poles/spec.md at b28ff0542 (clean): ok: coverage map valid, 38 rows; uncited LGP34, LGP35, LGP36 (review-owned rows).\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/landing-gate-long-poles/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-probe",
+        "performer": "claude:lgp-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "agent-session:claude:lgp-orchestrator-20261021",
+          "digest": "sha256:d6b1abe5143084a4224848dc11a2dfcaf7212b1ec8bc3e88110770fde0a520a2",
+          "excerpt": "bench test --package ./internal/probe at b28ff0542 (clean): pass, 318 tests, 33025 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "probe",
+        "command": "bench test --package ./internal/probe",
+        "exit_code": 0
+      },
+      {
+        "id": "final-testreport",
+        "performer": "claude:lgp-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "agent-session:claude:lgp-orchestrator-20261021",
+          "digest": "sha256:69c745a4fab8b3f928de28485d071ae9fb064b30d9467c532e8e68bee8c6d6d3",
+          "excerpt": "bench test --package ./internal/testreport at b28ff0542 (clean): pass, 268 tests, 57060 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "testreport",
+        "command": "bench test --package ./internal/testreport",
+        "exit_code": 0
+      },
+      {
+        "id": "final-git",
+        "performer": "claude:lgp-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "agent-session:claude:lgp-orchestrator-20261021",
+          "digest": "sha256:3c7ede7b9f1c74bf71b3b54f2f57af2fa1c6ce5a688c909d01339a3b8d00bd63",
+          "excerpt": "bench test --package ./internal/git at b28ff0542 (clean): pass, 179 tests, 1319 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "git",
+        "command": "bench test --package ./internal/git",
+        "exit_code": 0
+      },
+      {
+        "id": "final-poolkey",
+        "performer": "claude:lgp-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "agent-session:claude:lgp-orchestrator-20261021",
+          "digest": "sha256:cafd0fb1c03ef2d596f1ce4f25414bca8b6333fb565f4b92ba5ec22137acb80d",
+          "excerpt": "bench test --package ./internal/poolkey at b28ff0542 (clean): pass, 10 tests, 14 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "poolkey",
+        "command": "bench test --package ./internal/poolkey",
+        "exit_code": 0
+      },
+      {
+        "id": "final-worktree",
+        "performer": "claude:lgp-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "agent-session:claude:lgp-orchestrator-20261021",
+          "digest": "sha256:a67eca2c4d353dee81bf5425a83809f74da111d87e0c234efd6018e0b8c8e863",
+          "excerpt": "bench test --package ./internal/worktree at b28ff0542 (clean): pass, 1498 tests, 62800 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "final-canonicalpath",
+        "performer": "claude:lgp-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "agent-session:claude:lgp-orchestrator-20261021",
+          "digest": "sha256:9e5315900e6a5009b209801acab2d0f1b940adaa14d039e0a1af11bb826441e2",
+          "excerpt": "bench test --package ./internal/canonicalpath at b28ff0542 (clean): pass, 12 tests, 2 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "canonicalpath",
+        "command": "bench test --package ./internal/canonicalpath",
+        "exit_code": 0
+      },
+      {
+        "id": "final-root-conformance",
+        "performer": "claude:lgp-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "agent-session:claude:lgp-orchestrator-20261021",
+          "digest": "sha256:ff8319601fe613e94d2a3e1e5fbe10d1dfc61d088d8de52a1124c217d9500e45",
+          "excerpt": "bench test --check root-conformance at b28ff0542 (clean): pass, internal/conformance 1 test, 12942 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-system",
+        "performer": "claude:lgp-orchestrator-20261021",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a47f3af16c3f5b3ab1a13aa6e7369149aa9807af",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "agent-session:claude:lgp-orchestrator-20261021",
+          "digest": "sha256:1a2dd41b30eb851a4e63a5fe34ec9f4b138ea8688b98ceeb2dd98151fd5882cc",
+          "excerpt": "bench test --check system at b28ff0542 (clean): pass, internal/systemtest 204 tests, 44971 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
