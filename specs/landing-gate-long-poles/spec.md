@@ -143,9 +143,9 @@ No package variable holds a cache. A direct caller with no run value gets a fres
 
 `validateOwnerMarker` (`internal/worktree/classifier.go:396-463`) asks for the common directory three times today. The starts come from `canonicalRoot`, from `Worktrees`, and from `CommonDir`.
 `canonicalRoot` (`internal/worktree/worktree.go:100`) calls `poolkey.Canonical`, which runs `git.CommonDir` (`internal/poolkey/poolkey.go:18-23`). So `internal/poolkey` gains a form that reads through the run value, and `Canonical` keeps its signature for its other callers.
-`planExplicitWith` (`internal/worktree/subshell.go:160-370`) starts eight common-directory queries in an owned plan today. Three come from its own `canonicalRoot`, `Worktrees`, and `CommonDir`, and three more from the nested `validateOwnerMarker`.
+`planExplicitWith` (`internal/worktree/subshell.go:160-370`) starts six common-directory queries in an owned plan after ticket 04. Three come from its own `canonicalRoot`, `Worktrees`, and `CommonDir`, and one more from the nested `validateOwnerMarker`, whose fresh run value reads once.
 The other two come from the ledger reads `intent.LifecycleEvidence` and `intent.Assignments`, through `intent.Address` (`internal/intent/intent.go:34-38`).
-The run value cuts the six location starts to one. The two ledger reads stay live, because the closed decision does not move `internal/intent` onto the run value. The default-branch reads also stay as they are.
+The run value cuts the four location starts to one. The two ledger reads stay live, because the closed decision does not move `internal/intent` onto the run value. The default-branch reads also stay as they are.
 The cache key is the root spelling. `canonicalRoot` returns the canonical root, so a caller that passes the canonical primary root hits the same key on each later read.
 
 ### Serial worktree tests in the parallel set
@@ -435,7 +435,7 @@ These promises go beyond the literal decision source. Each one is the structural
   - "No other `os.Environ` read" (LGP24): four production sites, all in top-level files of `internal/worktree`.
   - "Every witness" (LGP4, LGP5, LGP7, LGP8, LGP37): PB1 is the real-`go` witness of LGP4. `TestProbeOmitsTheMatchOnce`, `TestProbeIsSilentWhenTheFocusedTestPasses`, and `TestProbeIsInvalidWhenTheMutationDoesNotCompile` (`internal/probe/probe_test.go:206-224`) also run a real `go test` child on the fixture. `installOwnedSelection` has exactly two callers.
   - "At most once" (LGP6): the planted defect is outside the run-binary build inputs (`scripts/go-build.inputs`), so both kit copies share one digest.
-  - Common-directory starts (LGP16, LGP17): eight in an owned explicit plan and three in one owner-marker validation, counted by reading.
+  - Common-directory starts (LGP16, LGP17): eight in an owned explicit plan and three in one owner-marker validation, counted by reading before ticket 04. After ticket 04, the plan's red test observed six.
   - Owner-repository reach (LGP29, LGP32): 15 direct sites in 14 tests and two helpers, about 40 tests in all. Two tests have the owner repositories as their subject.
   - "No `t.Setenv("TMPDIR"`" (LGP30): three sites.
 - `Workflow-step writes`: none.

@@ -21,9 +21,9 @@ Inside the plan, `canonicalRoot`, `Worktrees`, `CommonDir`, and the nested owner
 
 `classifier.go` has about 395 lines after ticket 04 moves `validateOwnerMarker` out, and `clean_landed.go` has 400. Neither has a grant. Change only their call lines, with no net line gain. `subshell.go` has 432 lines against its grant of 497.
 
-Write the LGP16 test first in `journey_test.go`, and record its red count before the change. Call `planExplicitWith` directly, for an owned target under a canonical primary root. Count only the `--git-common-dir` lines. The plan reads 8 today. If the red shows another count, stop and report a wrong spec.
+Write the LGP16 test first in `journey_test.go`, and record its red count before the change. Call `planExplicitWith` directly, for an owned target under a canonical primary root. Count only the `--git-common-dir` lines. The plan reads 6 today: ticket 04 cut the nested owner-marker validation from 3 starts to 1. If the red shows another count, stop and report a wrong spec.
 
-Use the stub mode `fail-git-path` or `relative-git-path`, which gives 8 because `AdminPath` fails after the eighth read (`internal/worktree/subshell.go:281`). The default modes stop at `subshell.go:195-199` with 3 reads.
+Use the stub mode `fail-git-path` or `relative-git-path`, which gives 6 because `AdminPath` fails after the sixth read (`internal/worktree/subshell.go:281`). The default modes stop at `subshell.go:195-199` with 3 reads.
 
 The new test is serial, because `journeyStubGit` binds PATH. Set `worktreeTestCount` to 807 and `worktreeSerialCeiling` to 47, and record that arithmetic.
 
