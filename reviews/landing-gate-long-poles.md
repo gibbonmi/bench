@@ -2054,6 +2054,72 @@
           "supersedes": [
             "c3a-coverage-r0"
           ]
+        },
+        {
+          "id": "c3a-standards-r2",
+          "performer": "claude:lgp-c3a-standards-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "66dedb119854ada4ff0ac6b1d1c945fa48b9bc60",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3a-standards-r2-20261022",
+            "digest": "sha256:950a5127c4ad7793c10c420b310c61680c8fc93914560ca6c5eecd8161d8cbc3",
+            "excerpt": "Standards axis r2, LGP-C3A (cd9889779..14d72a647): 0 findings; S1 to S4 closed. The callPath doc (subshell.go:121-126) matches its two callers. One operandRefusalPlan constructor (subshell.go:169) serves the plan (subshell.go:197) and the clean boundary (worktree.go:286), and errTargetNotCanonical is the one refusal value that the tests compare by symbol. homeOperand (path.go:273) is the one home-operand predicate. Advice: renaming reauthorize's closure parameter would drop the run alias. A multi-target clean resolves through clean_set.go, where targetPath refuses a relative path (Coverage r0 and r1 confirmed it), so the call-directory join does not apply there.\n"
+          },
+          "axis": "Standards",
+          "base": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "tip": "14d72a647f88c503680baf8e6d4253f587fdceba",
+          "finding_ids": [],
+          "supersedes": [
+            "c3a-standards-r1"
+          ]
+        },
+        {
+          "id": "c3a-spec-r2",
+          "performer": "claude:lgp-c3a-spec-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "66dedb119854ada4ff0ac6b1d1c945fa48b9bc60",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3a-spec-r2-20261022",
+            "digest": "sha256:89720478c28745be9d40cc1f7c81efd1c1a5d9299f42846f8181448bbbed09b3",
+            "excerpt": "Spec axis r2, LGP-C3A (cd9889779..14d72a647): 0 findings; S1 to S4, P1, and C1 to C3 closed. Spec line 156 holds on clean, release, land, land resume, and reauthorize; operandRefusalPlan gives every operand refusal one reason code and the errTargetNotCanonical text, as ticket 06 line 25 requires. LGP18 met: t06-call-directory, t06-routed-sites, t06-clean-failed-read, and t06-apply-call-directory all bit at the r2 tip. LGP22 met: 807 + 2 = 809, ceiling 47. LGP34: coordinator records the second repair tip's bench test --package ./internal/worktree time, 65342 ms (1495 tests), against the ticket's 65266 ms before and 65576 ms after, inside the spread. Every acceptance item met.\n"
+          },
+          "axis": "Spec",
+          "base": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "tip": "14d72a647f88c503680baf8e6d4253f587fdceba",
+          "finding_ids": [],
+          "supersedes": [
+            "c3a-spec-r1"
+          ]
+        },
+        {
+          "id": "c3a-coverage-r2",
+          "performer": "claude:lgp-c3a-coverage-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "66dedb119854ada4ff0ac6b1d1c945fa48b9bc60",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3a-coverage-r2-20261022",
+            "digest": "sha256:5d738473083a4bb083dc7e3740b90075c89383a58cbdbd19b888442280a6675d",
+            "excerpt": "Coverage axis r2, LGP-C3A (cd9889779..14d72a647): 0 findings; S3, S4, and C3 closed, and the r0 findings stay closed. Probes, restored yes: the boundary refusal dropped under --apply only bit (identifier_operand_test.go:79, the failed-read --apply case); the boundary retain row turned into an error row under --apply only bit (:79); an inline unresolvedPlan with a divergent reason code at subshell.go:197 read silent across the whole package, an equivalent mutant because no output renders ReasonCode. Refuted: multi-target clean (targetPath refuses a relative path), cleanupIdentity callers (canonical paths), the canonicalPathIn fallback (only a ~ operand), spaces and glob characters (text join). Advice: one full-package baseline run failed TestLandCommandCarriesTheBaselineScheduleRootIntoTheProspectiveGate with an infrastructure refusal, and it passed alone and on the next run.\n"
+          },
+          "axis": "Coverage",
+          "base": "cd9889779c97c9d50b07158bce399e6b40612737",
+          "tip": "14d72a647f88c503680baf8e6d4253f587fdceba",
+          "finding_ids": [],
+          "supersedes": [
+            "c3a-coverage-r1"
+          ]
         }
       ]
     }
