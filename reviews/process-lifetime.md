@@ -269,7 +269,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1-standards-r1",
+          "performer": "claude:plt-c1-standards-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dd9860f250f48ac55476ff340f5c1c0d7de8b498",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c1-standards-20261022",
+            "digest": "sha256:35f1e24bc06ecc85cf6d3088a4408eb686a153fcc64460f09176815941fcd9cf",
+            "excerpt": "## Standards axis, PL-C1 (base 4115afad, tip 7769a5ea)\n\nEvidence check: --check-current returned current=true, dirty_record=false.\n\nFindings\nS1 | auto-fix | 6 | internal/subprocess/control.go:248-249 | AGENTS.md \"one source per fact... two derivations of the same fact must collapse into one source\"; protection/observe.go:44 doc \"Package protection owns the observations...\" | controller.signal reclassifies ESRCH as GroupAbsent on its own, which duplicates the ESRCH-only-proves-absence rule that protection.observeGroup (observe.go:79-93) owns.\nS2 | auto-fix | 6 | internal/subprocess/lifetime_test.go:246-250 | bench-craft-tdd SKILL.md:101 \"a test whose verdict depends on wall-clock time... is a broken oracle\" | TestLifetimeSingleFinalWindow relies on a raw 50ms pause so that the owner consumes waitDone before fire. On a loaded host, run's select can take final.c first. The snapshot then carries ObligationWaiter, and requireIncomplete(..., ObligationStdout) goes red with no code defect. Also, alive(leader) is true for a zombie, so the loop proves only reaping, not that the owner consumed the waiter's result.\n\nAdvice (no IDs, not counted)\n- bounds.ProcessPoll is an exported mutable package var. A function or const-backed constructor would prevent reassignment.\n- Process.PGID always equals PID (outcome.go snapshot). Keep it only if the spec needs the separate field.\n- ProcessShutdownGrace has no production consumer yet. The ticket mandates it for later callers, so it is not a defect.\n\nCount and worst issue: 2 findings. The worst is S2, a scheduling-dependent verdict in a PL66 test.\n"
+          },
+          "axis": "Standards",
+          "base": "4115afad73961d526b3df1015ee85ea4a71c84b3",
+          "tip": "2e56083604aa6706a47923d03e4b533887c780b2",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c1-spec-r1",
+          "performer": "claude:plt-c1-spec-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dd9860f250f48ac55476ff340f5c1c0d7de8b498",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c1-spec-20261022",
+            "digest": "sha256:f9ab11da18102b7da16868239c9a613a19da21c4512b9d28bc9ca0b2d24edd42",
+            "excerpt": "Spec axis, PL-C1 (claude:plt-c1-spec-20261022)\n\nThe evidence check reported current=true at tip 7769a5ea. I found no Spec findings.\n\nFindings: None.\n\nI traced every row ticket 01 covers (PL2-PL19, PL28, PL66-PL69, PL124-PL125) from the coverage map to its cited test. Each test exercises the stated behavior at the stated seam, and each row's why-it-catches clause would fail under the named mutation. internal/subprocess/lifetime_test.go lines 20-291 cover every row except PL15-18 and PL28/PL67; internal/subprocess/protection/observe_test.go lines 26-56 cover PL15-18; internal/bounds/lifetime_test.go lines 18-73 cover PL28 and PL67. The controller (internal/subprocess/control.go) matches spec lines 127-139 and 193-204.\n\nThe five accepted interface calls: none is behavioral (window values keep the registry durations; Registration and Protection belong to ticket 02; the signal through Cancel matches spec line 123; every RunOutput caller passes a bytes.Buffer read after return; processtest is a test fixture only).\n\nNo edit falls outside the acceptance's reach.\n\nAdvice\n- internal/subprocess/streams.go:57 clears cmd.Stdin, so bounds.run now drops a stdin that a caller sets on the command. None of the bounds.Run/RunOutput callers sets Stdin, so this is a latent trap only.\n- TestLifetimeResistantGroup does not prove that TERM came before KILL. The PL12 witness requires only missing escalation.\n- bounds.ProcessPoll puts a 10ms literal outside the const registry.\n\nCount: 0 findings. Worst issue: none.\n"
+          },
+          "axis": "Spec",
+          "base": "4115afad73961d526b3df1015ee85ea4a71c84b3",
+          "tip": "2e56083604aa6706a47923d03e4b533887c780b2",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1-coverage-r1",
+          "performer": "claude:plt-c1-coverage-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dd9860f250f48ac55476ff340f5c1c0d7de8b498",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c1-coverage-20261022",
+            "digest": "sha256:5c35f23bc9b1b3ea5dd9719eb2fd8d188b7d6751447c3f5caff87d94c4bd281c",
+            "excerpt": "Coverage axis, PL-C1. Preflight evidence check: current=true, dirty_record=false. All probes read restored=yes, and none was invalid.\n\nFindings\nC1 | auto-fix | 7 | internal/subprocess/control.go:177 | probe silent, restored yes; spec.md:136 \"If that deadline already expired, the owner forces termination without another grace.\" | TestLifetimeLateStart (PL125) uses no grace and SIGKILL, so it cannot tell the c.forced KILL from the remembered signal.\nC2 | ask-user | 5 | internal/bounds/bounds.go:257 | probe silent, restored yes; ticket 01 line 40 \"A raw child status cannot certify required cleanup or publication.\" | When a captured stream fails or is force-closed, bounds should not return ProcessComplete, but no test fails when that check is removed.\nC3 | auto-fix | 5 | internal/subprocess/outcome.go:128 | probe silent, restored yes; spec.md:146 Cleanup \"Not requested, complete, or incomplete\". | A forced closure through the OutputDelay window, or a drain, can report CleanupNotRequested and no test notices.\nC4 | no-op | 4 | internal/subprocess/control.go:81 | probe silent, restored yes; spec.md:159 \"preserves caller platform attributes\". | No C1 test bites this; PL89 (a later ticket, builder Pdeathsig) is the planned biting row.\n\nAdvice\n- Nothing tests the Unbounded branch in ProcessWindow (bounds.go:199); no C1 caller passes Unbounded.\n- Drain mode (control.go:451) has no C1 test; PL31 and PL34 cover it later.\n- Nothing tests StreamFailed, Cleanup.SignalErr, the stdin EPIPE swallow, the pgid<=1 guard, or a second Start and a Wait before Start.\n- TestLifetimeSingleFinalWindow orders its events with a fixed 50 ms pause.\n\nTotals: 4 findings. Worst is C1.\n\nProbes: bounds.go:257 stream-status check made false, silent, yes; bounds.go:199 Unbounded check made false, silent, yes; outcome.go:128 made case c.stopping, silent, yes; control.go:177 if c.forced made false, silent, yes; control.go:81 SysProcAttr == nil made true, silent, yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "4115afad73961d526b3df1015ee85ea4a71c84b3",
+          "tip": "2e56083604aa6706a47923d03e4b533887c780b2",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -281,3 +350,34 @@
   }
 }
 ```
+
+## Repair state
+
+PL-C1 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies.
+
+## Standards
+
+PL-C1 round r1: 2 findings. Worst issue: S2, a scheduling-dependent verdict in a PL66 test.
+
+- S1 | auto-fix | confidence 6 | `internal/subprocess/control.go:248-249` | `controller.signal` reclassifies ESRCH as absence, which duplicates the rule that `protection.observeGroup` owns (AGENTS.md one source per fact).
+- S2 | auto-fix | confidence 6 | `internal/subprocess/lifetime_test.go:246-250` | `TestLifetimeSingleFinalWindow` orders its events with a raw 50 ms pause (craft-tdd broken-oracle rule).
+
+## Spec
+
+PL-C1 round r1: 0 findings. Worst issue: none.
+
+## Coverage
+
+PL-C1 round r1: 4 findings. Worst issue: C1, the expired-deadline KILL of a late Start has no biting test.
+
+- C1 | auto-fix | confidence 7 | `internal/subprocess/control.go:177` | No test bites the forced KILL without another grace for a late Start after an expired deadline (spec.md:136).
+- C2 | auto-fix | confidence 5 | `internal/bounds/bounds.go:257` | No test fails when bounds certifies completion over a failed or force-closed stream (ticket 01 line 40). The axis asked for the user; the orchestrator routed it as auto-fix with a real child and no new fault port.
+- C3 | auto-fix | confidence 5 | `internal/subprocess/outcome.go:128` | No test fails when a forced closure reports the cleanup as not requested (spec.md:146).
+- C4 | no-op | confidence 4 | `internal/subprocess/control.go:81` | PL89 in PL-C5 is the planned witness for the platform-attribute rule.
+
+## Advice
+
+- The bounds runner does not forward a caller's `cmd.Stdin`; no current caller sets it.
+- `bounds.ProcessPoll` is an exported mutable variable.
+- `TestLifetimeResistantGroup` does not prove that TERM came before KILL.
+- The `Unbounded` window branch, drain mode, `StreamFailed`, and `Cleanup.SignalErr` have no PL-C1 test; later rows cover drain mode.
