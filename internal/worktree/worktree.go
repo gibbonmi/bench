@@ -344,7 +344,7 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 	if len(selection.targets) > 0 {
 		return cleanExplicitSet(j, a, root, selection, stdout, stderr)
 	}
-	plan, err := planExplicitWith(j, root, target, options)
+	plan, err := planExplicitWith(j, a.run, root, target, options)
 	if err == nil && fingerprint != "" {
 		plan, err = applyExplicitWith(j, a, root, target, fingerprint, options)
 	}

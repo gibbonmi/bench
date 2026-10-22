@@ -138,7 +138,7 @@ func resolveOperand(path string) (string, error) {
 }
 
 func PlanExplicit(root, path string) (CleanupPlan, error) {
-	return planExplicitWith(defaultJoins(), root, path, CleanupOptions{})
+	return planExplicitWith(defaultJoins(), &git.Run{}, root, path, CleanupOptions{})
 }
 
 // explicitRetainFingerprint binds a refusal decided before the registration is known to
@@ -152,23 +152,23 @@ func explicitRetainFingerprint(common, defaultRef, defaultOID, target string, pl
 	)
 }
 func PlanExplicitWithOptions(root, path string, options CleanupOptions) (CleanupPlan, error) {
-	return planExplicitWith(defaultJoins(), root, path, options)
+	return planExplicitWith(defaultJoins(), &git.Run{}, root, path, options)
 }
 
-// planExplicitWith is PlanExplicitWithOptions with the seam set resolved explicitly at
-// the caller's boundary.
-func planExplicitWith(j joins, root, path string, options CleanupOptions) (CleanupPlan, error) {
-	root = canonicalRoot(root)
+// planExplicitWith is PlanExplicitWithOptions with the seam set and the run value
+// resolved explicitly at the caller's boundary.
+func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupOptions) (CleanupPlan, error) {
+	root = canonicalRootIn(run, root)
 	target, err := resolveOperand(path)
 	if err != nil {
 		return unresolvedPlan(path, ReasonUncertain, err.Error()), nil
 	}
 	unsafeTarget := !cleanupOutputSafe(target)
-	worktrees, err := git.Worktrees(root)
+	worktrees, err := run.Worktrees(root)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	common, err := git.CommonDir(root)
+	common, err := run.CommonDir(root)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -222,7 +222,7 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	_, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
 	if markerStatErr == nil {
 		facts.MarkerPresent = true
-		evidence, markerErr := validateOwnerMarker(root, target)
+		evidence, markerErr := validateOwnerMarkerIn(run, root, target)
 		if markerErr != nil {
 			facts.MarkerErr = markerErr
 		} else {

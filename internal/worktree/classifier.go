@@ -264,7 +264,7 @@ func PlanAutomatic(root, path string) (CleanupPlan, error) {
 // planAutomaticAt is PlanAutomatic with the instant resolved explicitly at the
 // caller's effect boundary; PlanAutomatic is its temporary compatibility form.
 func planAutomaticAt(j joins, root, path string, now time.Time) (CleanupPlan, error) {
-	explicitPlan, explicitErr := planExplicitWith(j, root, path, CleanupOptions{})
+	explicitPlan, explicitErr := planExplicitWith(j, &git.Run{}, root, path, CleanupOptions{})
 	facts := lifecyclepolicy.AutomaticFacts{ExplicitErr: explicitErr, Explicit: explicitOutcome(explicitPlan)}
 
 	var missingBranchAssignment *intent.Assignment

@@ -83,7 +83,7 @@ func ApplyExplicitWithOptions(root, path, fingerprint string, options CleanupOpt
 // resolved explicitly at the caller's boundary.
 func applyExplicitWith(j joins, a ambient, root, path, fingerprint string, options CleanupOptions) (CleanupPlan, error) {
 	planner := func(target string) (CleanupPlan, error) {
-		return planExplicitWith(j, root, target, options)
+		return planExplicitWith(j, a.run, root, target, options)
 	}
 	return applyCleanupTransaction(j, a, root, path, fingerprint, planner, nil, nil)
 }
