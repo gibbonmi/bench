@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:672b86bd3295ae362b43842629b00cdbd2cbbd02d14bbded0388a400f2fa24b0",
+  "plan_digest": "sha256:76f8f9e1e0d3dc9d5b45af7c1f854109efe64adf1f66fe0e82cb4229f31b9702",
   "implementation_session": "",
   "chunks": [
     {
@@ -2283,6 +2283,105 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "LGP-C3C",
+      "base": "b2f333d0b73d6058a4f881d15649de14854d698f",
+      "tip": "8c3e7f18f0a9f2c275de73170032f6a015aa6f74",
+      "plan_digest": "sha256:76f8f9e1e0d3dc9d5b45af7c1f854109efe64adf1f66fe0e82cb4229f31b9702",
+      "source_digest": "af5ffed93be6a7c13b2d61d29823624d986a8bb4",
+      "acceptance_rows": [
+        "LGP19",
+        "LGP22",
+        "LGP24",
+        "LGP34"
+      ],
+      "verification": [
+        {
+          "id": "t08-pkg-cmd-bench",
+          "performer": "claude:lgp-t08-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "af5ffed93be6a7c13b2d61d29823624d986a8bb4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t08-author2-20261022",
+            "digest": "sha256:a76d58400a51fb547cd4a74b788ac0d2e6c345ef83bee5f02491a198f31aba86",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14614,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t08-pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-worktree",
+          "performer": "claude:lgp-t08-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "af5ffed93be6a7c13b2d61d29823624d986a8bb4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t08-author2-20261022",
+            "digest": "sha256:b10a474b69eb007dbfb5d44172e07935d66a414db7b22542d79b00267ea5779e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63227,1498\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t08-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-root-conformance",
+          "performer": "claude:lgp-t08-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "af5ffed93be6a7c13b2d61d29823624d986a8bb4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t08-author2-20261022",
+            "digest": "sha256:ee3ed1465ce50861f2875926b3116869a1831fc8b497d928a7242afc36b00c9b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12885,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t08-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-environ-owner",
+          "performer": "claude:lgp-t08-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "af5ffed93be6a7c13b2d61d29823624d986a8bb4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t08-author2-20261022",
+            "digest": "sha256:8e150dd15bbda61e66980af90e3b7c01ee7c213a29701999fbf1ad83bee69c22",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/exec.go,swap+swap,failed,3,TestEffectBoundaryCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1498\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,716\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,62731,1498\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestEffectBoundaryCensus,\"effect_census_test.go:45: exec.go:201: ambient read os.Environ( below the effect boundary; resolve it in effects.go and pass the value down\",1\n  github.com/gibbonmi/bench/internal/worktree,TestExecChildTakesTheCallEnvironment,\"exec_call_env_test.go:30: the child environment lacks the call value:\",78\n  github.com/gibbonmi/bench/internal/worktree,TestSingleReadCensusOnTheLiveTree,\"single_read_census_cases_test.go:200: the single-read census reports 1 reads:\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t08-environ-owner",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore the os.Environ read in execEnv",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:lgp-t08-author2-20261022",
+              "digest": "sha256:8e150dd15bbda61e66980af90e3b7c01ee7c213a29701999fbf1ad83bee69c22",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/exec.go,swap+swap,failed,3,TestEffectBoundaryCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1498\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,716\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,62731,1498\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestEffectBoundaryCensus,\"effect_census_test.go:45: exec.go:201: ambient read os.Environ( below the effect boundary; resolve it in effects.go and pass the value down\",1\n  github.com/gibbonmi/bench/internal/worktree,TestExecChildTakesTheCallEnvironment,\"exec_call_env_test.go:30: the child environment lacks the call value:\",78\n  github.com/gibbonmi/bench/internal/worktree,TestSingleReadCensusOnTheLiveTree,\"single_read_census_cases_test.go:200: the single-read census reports 1 reads:\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2428,6 +2527,30 @@
         ],
         "LGP-C3A": [
           "LGP-C3A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:672b86bd3295ae362b43842629b00cdbd2cbbd02d14bbded0388a400f2fa24b0",
+      "to": "sha256:76f8f9e1e0d3dc9d5b45af7c1f854109efe64adf1f66fe0e82cb4229f31b9702",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ],
+        "LGP-C2A": [
+          "LGP-C2A"
+        ],
+        "LGP-C2B": [
+          "LGP-C2B"
+        ],
+        "LGP-C2C": [
+          "LGP-C2C"
+        ],
+        "LGP-C3A": [
+          "LGP-C3A"
+        ],
+        "LGP-C3B": [
+          "LGP-C3B"
         ]
       }
     }
