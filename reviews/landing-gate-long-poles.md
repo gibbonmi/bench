@@ -841,7 +841,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2a-standards-r0",
+          "performer": "claude:lgp-c2a-standards-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7c41bdcf5553577385591dc3ef047af10544dd78",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2a-standards-20261021",
+            "digest": "sha256:061c61e961fc0a1c23fdac533dafda47684c5960922faeaa2209d83e40f8fd2f",
+            "excerpt": "Standards axis, LGP-C2A (be0aca0c5..de63c6090): 1 finding, accepted. Worst: S1. S1 (auto-fix, confidence 4): the stub-git start-counting reader is derived twice, in gitStarts and loggedStub (internal/git/run_cache_test.go:15-29) and inline (internal/poolkey/run_test.go:17, :26-30); AGENTS.md keeps fixture harnesses single-sourced. Coordinator disposition: auto-fix in the ticket 03 repair; one start counter beside StubGitDir in internal/gittest, which tickets 04 and 05 also need. Clean: the query-then-validate step lives in Run.directory, the trim in locationAnswer, and the package forms build new(Run). Advice: the Run doc comment repeats the location list; a test file spells --git-common-dir, which the owner check permits in tests.\n"
+          },
+          "axis": "Standards",
+          "base": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+          "tip": "de63c6090aa9328c5c0f131eba4498765dc69846",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2a-spec-r0",
+          "performer": "claude:lgp-c2a-spec-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7c41bdcf5553577385591dc3ef047af10544dd78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2a-spec-20261021",
+            "digest": "sha256:49e0d1685c58262f840b32b40d2003ce6bd21a4030416d577c3fadab558e6de8",
+            "excerpt": "Spec axis, LGP-C2A (be0aca0c5..de63c6090): rows LGP9-LGP15 met; LGP34 partial. P1 (auto-fix, confidence 8): the record held no before time for LGP34. Coordinator disposition: evidence-only; this entry records the ticket 03 author's bench test --full --package ./internal/git times: 1564 ms with 172 tests before, 1582 ms with 177 tests after (de63c6090), no change within the spread. LGP12 holds: Run exposes no ref reader, and the test interleaves the live ResolveCommit with run reads. Advice: LGP12 cannot catch a future run-level ref method; the Run comment states the rule.\n"
+          },
+          "axis": "Spec",
+          "base": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+          "tip": "de63c6090aa9328c5c0f131eba4498765dc69846",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2a-coverage-r0",
+          "performer": "claude:lgp-c2a-coverage-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7c41bdcf5553577385591dc3ef047af10544dd78",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c2a-coverage-20261021",
+            "digest": "sha256:9a2b62924bfe1266caf73dc22bb7db247d584d136f3cd9af5197e449880e7c71",
+            "excerpt": "Coverage axis, LGP-C2A (be0aca0c5..de63c6090): 2 findings, accepted. Worst: C1. C1 (auto-fix, confidence 7): Run.AdminDir keyed under the common-directory location passes, because LGP10 runs in a primary checkout where both answers are equal; probe swap runQuery{adminDirLocation, root} for runQuery{commonDirLocation, root} read silent, restored yes. Ticket 04 reads both in one run. C2 (auto-fix, confidence 6): a failed first query cached in Run.answer passes, although run.go:77-78 says a failed start stores nothing; probe storing raw unconditionally read silent, restored yes. Disposition: both in the ticket 03 repair, as the one hardening cycle. Refuted: root spellings keyed apart by design, revalidation on every read, package forms uncached, Canonical delegates to CanonicalIn. Advice: a nil *Run panics; a relative root is keyed as text.\n"
+          },
+          "axis": "Coverage",
+          "base": "be0aca0c526c177be15b360eeba46c7b57927ee8",
+          "tip": "de63c6090aa9328c5c0f131eba4498765dc69846",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -906,3 +972,26 @@ Count: 1 finding, accepted. Worst issue: C1.
 
 Repair cycle 1 closed every accepted finding at the tip `be0aca0c5`, and the confirming round passed on all three axes. The chunk used 1 of its 2 repair cycles and its one hardening cycle.
 The confirming Spec axis raised P5: spec lines 121, 126, and 128 cite lines that the repair shifted. The next plan commit corrects them before the ticket 03 dispatch.
+
+## Pickup: LGP-C2A initial review
+
+The frozen pair is `be0aca0c5..de63c6090`. Repair cycle 1 of 2 starts here, and C1 and C2 use the one hardening cycle of the chunk. Every accepted finding falls on ticket 03, so one combined repair charge carries them.
+
+### Standards
+
+Count: 1 finding, accepted. Worst issue: S1.
+
+- S1 (auto-fix, confidence 4): the stub-git start counter is derived twice (`internal/git/run_cache_test.go:15-29`, `internal/poolkey/run_test.go:17`, `:26-30`). Route: ticket 03 repair; one start counter beside `StubGitDir` in `internal/gittest`.
+
+### Spec
+
+Count: 1 finding, closed in the record. Worst issue: P1.
+
+P1 is closed in the record: the `c2a-spec-r0` excerpt holds the LGP34 timings.
+
+### Coverage
+
+Count: 2 findings, accepted. Worst issue: C1.
+
+- C1 (auto-fix, confidence 7): an admin-directory read keyed as the common directory passes, because LGP10 runs in a primary checkout (`internal/git/run.go:49`). Route: ticket 03 repair, with a linked-worktree test.
+- C2 (auto-fix, confidence 6): a cached failed query passes, although `internal/git/run.go:77-78` says a failed start stores nothing. Route: ticket 03 repair, with a failed-query test.
