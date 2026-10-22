@@ -4990,6 +4990,75 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c4b-standards-r1",
+          "performer": "claude:lgp-c4b-standards-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c08c49677ace6168383cf5301c69de22e650c8a9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4b-standards-r1-20261022",
+            "digest": "sha256:23083c01fa4981c6edbe43daaa862213b746c4197ce82f73b0bd91b5943200cf",
+            "excerpt": "Standards axis r1, LGP-C4B (repair delta f20a963e1..333f97b0e; refrozen tip 0b14f293d). S1, S2, S3 closed (serial_table_test.go:9-13 comment current; phaseEnd waits through waitForFile; awaitSpan comment covers both waits).\nNew: S5: the no-reason rule has two sources that disagree: serial_census_test.go:59-61 trims the reason, parallel_census_test.go:260 checks serial[name] == \"\" untrimmed. Rule: AGENTS.md one source per fact. Confidence 5. Ask-user (vetoes ticket 16 repair decision 1).\nNew: S6: the S1 comment (serial_table_test.go:11-12) restates two enforced census rules. Rule: craft-comments, comments rot when they duplicate what code enforces. Confidence 3. Auto-fix (point at the censuses).\nRefuted: the inline pid parse is incidental text; the temp-file pid write, bool once-guard, and phase-only cleanup are sound.\n"
+          },
+          "axis": "Standards",
+          "base": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "tip": "0b14f293d90f5daf679432dcec8f5d45d351b4cd",
+          "finding_ids": [
+            "S5",
+            "S6"
+          ],
+          "supersedes": [
+            "c4b-standards-r0"
+          ]
+        },
+        {
+          "id": "c4b-spec-r1",
+          "performer": "claude:lgp-c4b-spec-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c08c49677ace6168383cf5301c69de22e650c8a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4b-spec-r1-20261022",
+            "digest": "sha256:5abf2dfd09d14c8368e39f931070a8626cbe59488f1628a9663cd6ed23bc55d4",
+            "excerpt": "Spec axis r1, LGP-C4B (repair delta f20a963e1..333f97b0e; refrozen tip 0b14f293d). Zero findings.\nLGP30 met (no TMPDIR binding; the new comment agrees). LGP31 met (the serial census trims the reason; planted TestBlank reds as \"holds no reason\"). LGP32 met (owner checks compare the exact reason; a padded owner reason on a third reaching test still reds by name; subject check unchanged). LGP38 met and hardened (strings.EqualFold after trim; planted TestNearly reds).\nRepaired acceptance items met: ticket 14 repair touches only otel_crash_test.go with no span assertion changed; ticket 16 repair touches only its three files; plan row t16-blank-reason uses the plan's command. Restaged entries at 0b14f293d: t16-r1b (both probes bit, restore pass), t14-r1b (probe bit), t11-rf, t12-rf, t13-rf, t15-rf.\nAdvice: the parallel census still checks serial[name] == \"\" untrimmed, so a whitespace row reds only through TestSystemSerialTableIsExact.\n"
+          },
+          "axis": "Spec",
+          "base": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "tip": "0b14f293d90f5daf679432dcec8f5d45d351b4cd",
+          "finding_ids": [],
+          "supersedes": [
+            "c4b-spec-r0"
+          ]
+        },
+        {
+          "id": "c4b-coverage-r1",
+          "performer": "claude:lgp-c4b-coverage-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c08c49677ace6168383cf5301c69de22e650c8a9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c4b-coverage-r1-20261022",
+            "digest": "sha256:21a4cb6ea7ee94bfdf3db6a99f55c771a37cf9df8e07e1ffd2b5c85cfd597bea",
+            "excerpt": "Coverage axis r1, LGP-C4B (repair delta f20a963e1..333f97b0e; refrozen tip 0b14f293d). Zero new findings. bench test --check system passed, 204 tests, 59664 ms; git status clean.\nC1 closed: serialTableCensus trims before the no-reason check and matches the temporary reason with EqualFold (serial_census_test.go:59-63). Probes on serial_table_test.go (--check system): P1 empty test with reason \" \" bit, restored yes; P1b \"PENDING MIGRATION\" bit, restored yes; P3 \"\\t\\n\" bit, restored yes; P4 a test reaching owner.repos under a padded ownerRepositories reason bit, restored yes; P5 TestOwnerSelectionChild row with ownerRepositories + \" \" bit, restored yes.\nC3 closed by reading: phaseEnd registers t.Cleanup(end) right after startProcessGroup, after both t.TempDir calls, so LIFO order kills the phase before the temp roots go; the ended guard stops a second kill. The repair session's control probe is the leak evidence.\nAdvice: the untrimmed serial[name] == \"\" in the parallel census (parallel_census_test.go:260) lets a whitespace row pass that census, but the serial census reds it; the cleanup ends only the phase on an early red.\n"
+          },
+          "axis": "Coverage",
+          "base": "d23316b55c913f8612b23b61228f21d70c52be1d",
+          "tip": "0b14f293d90f5daf679432dcec8f5d45d351b4cd",
+          "finding_ids": [],
+          "supersedes": [
+            "c4b-coverage-r0"
+          ]
         }
       ]
     }
