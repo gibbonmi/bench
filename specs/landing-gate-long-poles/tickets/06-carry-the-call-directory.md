@@ -8,19 +8,25 @@ Covers: LGP18, LGP22, LGP34
 
 A verb run carries its working directory, and a relative operand resolves against it.
 
-`internal/canonicalpath` gains a form of `Resolve` that takes the directory as an argument. It keeps exactly the semantics of `Resolve` (`internal/canonicalpath/canonicalpath.go:33-58`): it joins the parts as text and resolves symlinks before it cleans. `canonicalpath.Operand` is not that form, because it cleans lexically.
+`internal/canonicalpath` gains a form of `Resolve` that takes the directory as an argument. It keeps exactly the semantics of `Resolve` (`internal/canonicalpath/canonicalpath.go:46-59`): it joins the parts as text and resolves symlinks before it cleans. `canonicalpath.Operand` is not that form, because it cleans lexically.
 
 `effects.go` reads the process directory once at the verb boundary into `ambient`. A failed read is carried forward, and it surfaces only when a relative operand needs it. So an absolute operand still works in a removed directory.
 
 Route the directory to each relative-operand site:
 
-- `resolveOperand` and `canonicalPath` (`internal/worktree/subshell.go:117-133`);
-- `resolveOperand` in `cleanupIdentity` (`resume.go:23`);
+- `canonicalPath` and `resolveOperand` (`internal/worktree/subshell.go:117-138`);
 - `canonicalPath` in `releaseAssignment` (`ownership.go:217`);
 - `canonicalPath` in `resumeLandWith` (`land_resume.go:36`);
+- `canonicalPath(target)` in the `cleanCommandWith` error path (`worktree.go:354`);
 - the `resolveVerbOperand` callers in `land.go`, `reauthorize.go`, and `worktree.go`.
 
-Add a form beside `canonicalPath` rather than change its 22 call sites. `targetPath` (`path.go:293-307`) already refuses a relative path, so it needs no directory. If its signature changes anyway, update `internal/worktree/tree_target.go:64`.
+`planExplicitWith` (`subshell.go:160`) and `cleanupIdentity` (`resume.go:22-23`) call `resolveOperand` and hold no `ambient`. Do not add a directory parameter to them. The verb boundary that holds `ambient` makes a relative path operand absolute against the call directory before the call, for example at `worktree.go:275`. `resolveOperand` then sees an absolute path, which `canonicalpath.Resolve` leaves unchanged.
+
+Leave an operand that starts with `~` unchanged at the boundary, because `expandHomeTarget` (`path.go:276`) owns its refusal text. A ledger-fed caller passes a recorded absolute path, and the public entries `PlanExplicit`, `PlanAutomatic`, and `ApplyExplicit` keep the process directory. A carried directory-read failure surfaces with the same refusal text as a failed process-directory read today.
+
+Add a form beside `canonicalPath` rather than change its 22 call sites. `targetPath` (`path.go:293-309`) already refuses a relative path, so it needs no directory. If its signature changes anyway, update `internal/worktree/tree_target.go:64`.
+
+The new process-directory read in `effects.go` joins the read set of the single-read census. Update the synthetic copy of `effects.go` in `single_read_census_cases_test.go:15-29` to match.
 
 `land.go` has 397 lines, so only 3 lines of headroom remain. `verb_runner_check_test.go` has 378 lines, and ticket 08 also extends it.
 

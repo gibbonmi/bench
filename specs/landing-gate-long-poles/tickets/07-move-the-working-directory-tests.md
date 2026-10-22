@@ -1,7 +1,7 @@
 # Move the working-directory tests
 
 Blocked by: 06-carry-the-call-directory.md
-Writes: internal/worktree/identifier_operand_test.go, internal/worktree/resume_reconcile_test.go, internal/worktree/request_token_test.go, internal/worktree/identity_component_test.go, internal/worktree/land_resume_test.go, internal/worktree/land_reauthorize_operand_test.go, internal/worktree/path_identifier_test.go, internal/worktree/lifecycle_policy_test.go, internal/worktree/serial_ceiling_test.go, internal/worktree/parallel_census_test.go
+Writes: internal/worktree/identifier_operand_test.go, internal/worktree/resume_reconcile_test.go, internal/worktree/request_token_test.go, internal/worktree/identity_component_test.go, internal/worktree/land_resume_test.go, internal/worktree/land_reauthorize_operand_test.go, internal/worktree/path_identifier_test.go, internal/worktree/lifecycle_policy_test.go, internal/worktree/serial_ceiling_test.go, internal/worktree/parallel_census_test.go, internal/worktree/verb_fixture_test.go
 Covers: LGP20, LGP21, LGP22, LGP23, LGP34
 
 ## What to build
@@ -17,9 +17,13 @@ Sixteen movable `chdir` tests sit in eight files:
 
 Replace each `chdir` with the verb call's directory field from ticket 06. A test whose verb has no joins form cannot take the field. Remove its `chdir` only if the verb reads no process directory, and keep it serial otherwise.
 
+Eight of the sixteen tests run a verb with no joins form (`path`, `list`, `show`, or `exec`): `identifier_operand_test.go:18`, `:54`, `:181`, and `:223`, `request_token_test.go:18` and `:35`, `identity_component_test.go:358`, and `path_identifier_test.go:70`. None of the sixteen passes a relative path operand. So for each of the eight, show that the verb reads no process directory before you remove its `chdir`.
+
+`repoHome.call` (`internal/worktree/verb_fixture_test.go:20`) builds the verb calls. Set the directory for each call there, or add a fixture helper beside it.
+
 Record each test that moves and each test that stays, with its reason.
 
-`TestLandingHandsBackAPathWithNoCanonicalForm` (`land_resume_refusal_test.go:343`) stays serial, because the real `filepath.Abs` failure is its subject. Put the LGP23 test in `serial_ceiling_test.go`, because `parallel_census_test.go` has 1096 lines and no grant.
+`TestLandingHandsBackAPathWithNoCanonicalForm` (`land_resume_refusal_test.go:343`) stays serial, because the real `filepath.Abs` failure is its subject. Put the LGP23 test in `serial_ceiling_test.go`, because `parallel_census_test.go` has 1096 lines and no grant. The LGP23 test adds one to the count. If it binds no process state, it calls `t.Parallel` and leaves the ceiling unchanged; record which term applies.
 
 Set both pins by the recorded arithmetic: the ceiling falls by the moved tests, and the count rises by the new tests. Update the four-class comment at `parallel_census_test.go:1033-1040` with no net line gain.
 

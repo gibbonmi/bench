@@ -10,7 +10,7 @@ The exec-bound, charge, and candidate-install tests run in parallel. None of the
 
 Each test in these five files calls `t.Parallel`. Remove each test's "pending migration" row from the serial table. Run `bench test --check system` twice before you call a test safe in parallel. A test that fails under parallel load keeps a serial row, and its reason quotes the failing run.
 
-`charge_evidence_test.go` has exactly 400 lines, and its eight new `t.Parallel` lines would put it over the limit. Move `TestEvidenceStatelessProcesses` and its helpers to the new `charge_evidence_stateless_test.go`.
+`charge_evidence_test.go` has exactly 400 lines, and its eight new `t.Parallel` lines would put it over the limit. Move `TestEvidenceStatelessProcesses` and its one private helper `(evidenceJourney).storeState` (`charge_evidence_test.go:296-317`) to the new `charge_evidence_stateless_test.go`. Keep `j.read` (`:290-294`), because three other tests use it.
 
 Keep `TestEvidenceInterruptedPublication` in `charge_evidence_test.go`, because `internal/conformance/injected_ports_registry_test.go:51` names that file and test.
 

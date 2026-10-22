@@ -8,9 +8,15 @@ Covers: LGP1, LGP2, LGP3, LGP4, LGP5, LGP37, LGP34
 
 The probe test package builds the clamp repository and its sealed run binary once for each package run. Each test then takes a private copy.
 
-A `TestMain` owns one temporary parent directory for the golden and removes it after the run, as `internal/adopt/golden_test.go:39-69` does. A golden built inside one test would vanish when that test ends, because `probetest.Repository` takes its directories from `t.TempDir()` (`internal/probe/probetest/fixture.go:75-79`).
+A `TestMain` owns one temporary parent directory for the golden and removes it after the run, as `internal/adopt/golden_test.go:15-76` does. A golden built inside one test would vanish when that test ends, because `probetest.Repository` takes its directories from `t.TempDir()` (`internal/probe/probetest/fixture.go:75-82`).
+
+Create that parent directory lazily, inside the golden build, and not eagerly in `TestMain`. The probe tests re-execute their own test binary through `reentryArgv` (`internal/probe/baseline_test.go:382-384`), and each helper process runs `TestMain`. An eager directory leaks in each helper that a test signals or kills.
 
 `clampFixture` (`internal/probe/probe_test.go:27-36`) copies the golden into private directories for each test. The repository root with its `.git`, the executable, the seal, and the manifest directory move together, because the seal holds digests and no path (`internal/freshness/freshness_publish.go:97-111`). Each test keeps its own environment bindings and its `t.Chdir`.
+
+The broker manifest of a copy still names the golden executable (`internal/brokermanifest/brokermanifest.go:50-55`). No probe reader reads it, because `runbinary.Validate` checks only the seal (`internal/runbinary/runbinary.go:169-195`).
+
+`TestProbeOmitsTheMatchOnce`, `TestProbeIsSilentWhenTheFocusedTestPasses`, and `TestProbeIsInvalidWhenTheMutationDoesNotCompile` (`internal/probe/probe_test.go:206-224`) also run a real `go test` child. They must pass on the copy too.
 
 `probetest.Repository` keeps its signature, because `cmd/bench/record_operations_test.go:131` and `internal/reviewrecord/recordcmd/verification_import_test.go:152` call it. Split its build step from its per-test binding inside `probetest`.
 

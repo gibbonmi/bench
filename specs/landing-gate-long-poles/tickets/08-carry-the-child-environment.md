@@ -15,13 +15,22 @@ A verb run carries its child base environment, and `effects.go` becomes the one 
 - the doctor child of `repairPrimary` (`internal/worktree/build.go:331`), under `installAttributed` and `restoreAttributed` (`build_restore.go:50`);
 - the subshell entry (`internal/worktree/subshell.go:40`), called from `cmd/bench/worktree_leaves.go:25`.
 
+A chain that holds no `ambient` takes the base environment from one `effects.go` function, as `currentTime` serves the clock (`internal/worktree/effects.go:20`). Two chains hold none:
+
+- `RunTreeChild` (`exec.go:119`) through `runChild` to `execEnv` (`exec.go:130`), whose one caller is `internal/treetarget/run.go:66`;
+- `commitTree` and `captureLayers` on the reset recovery path, called from `clean.go:43`, `reset_envelope.go:11`, and `reset_restore.go:49`.
+
+Keep the signatures of both chains, so no file outside this `Writes:` line changes. The doc comment of the `effects.go` function names the chains that use it.
+
+The exec entry `ExecCommandResolving` (`exec.go:52-108`), called from `cmd/bench/worktree_leaves.go:20`, is a verb boundary, so it builds its own `ambient` value. `installAttributed` (`build.go:158`, called at `:71`) has no `ambient` parameter today; pass the value down from its verb boundary. `subshellAt` (`subshell.go:43`) keeps its `environ` parameter for its test callers (`subshell_test.go:27`, `:46`, `:82`); only its entry stops its own read.
+
 The exec tests call `runWorktreeChild` directly (`exec_test.go:33`), not `runVerb`. So the base environment enters through `runWorktreeChild` and `execEnv`. `exec_pwd_test.go:84` also calls `execEnv`.
 
 A signature change of `runWorktreeChild` reaches its calls at `exec_test.go:33`, `:47`, `:272`, and `:343`. `exec_test.go` has 421 lines and no grant, so change only those call lines, with no net line gain.
 
 `TestEffectBoundaryCensus` gains `os.Environ` in `ambientReadPattern` (`internal/worktree/effect_census_test.go:14`). No other `os.Environ` read stays in the package's production files. Update the synthetic copy of `effects.go` in `single_read_census_cases_test.go:15-29`.
 
-`verbCall` gains a child base environment field. Extend `checkVerbCall` and its refusal tests in `verb_runner_check_test.go`, which ticket 06 also extended. Keep that file at or under 400 lines.
+`verbCall` gains a child base environment field. Extend `checkVerbCall` and its refusal tests in `verb_runner_check_test.go`, which ticket 06 also extended. Keep that file at or under 400 lines. The field applies to the verbs with a joins form. Exec has none (`verb_runner_check_test.go:168-178`), so the LGP19 test passes the base environment to `runWorktreeChild` directly.
 
 Put the LGP19 test in the new `internal/worktree/exec_call_env_test.go`. It calls `t.Parallel`, so the count rises by one. Record that arithmetic.
 

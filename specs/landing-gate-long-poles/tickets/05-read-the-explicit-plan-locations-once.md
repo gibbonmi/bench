@@ -8,7 +8,7 @@ Covers: LGP16, LGP21, LGP22, LGP34
 
 An explicit cleanup plan reads its location answers through the run value, so its six location starts become one.
 
-`planExplicitWith` (`internal/worktree/subshell.go:160`) takes the run value as a parameter. Its seven callers pass the value from their `ambient`, or a fresh run value at a public entry. Three callers hold no `ambient`: `planAutomaticAt` (`classifier.go:266`), `planLandedAssignment` (`clean_landed.go:123`), and `planExplicitCleanupRow` (`clean_set.go:190`). Each of them builds a fresh run value on its call line. The callers are:
+`planExplicitWith` (`internal/worktree/subshell.go:160`) takes the run value as a parameter. Its seven callers pass the value from their `ambient`, or a fresh run value at a public entry. Three callers hold no `ambient`: `planAutomaticAt` (`classifier.go:266`), `planLandedAssignment` (`clean_landed.go:123`), and `planExplicitCleanupRow` (`clean_set.go:190`). Each of them builds a fresh run value on its call line, with the constructor shape that ticket 04 chose for the single-read census. The callers are:
 
 - `classifier.go:267`;
 - `subshell.go:141` and `:155` (`PlanExplicit`, `PlanExplicitWithOptions`);
@@ -19,9 +19,11 @@ An explicit cleanup plan reads its location answers through the run value, so it
 
 Inside the plan, `canonicalRoot`, `Worktrees`, `CommonDir`, and the nested owner-marker validation read through the run value. The two ledger reads through `intent.Address` stay live, and so do the default-branch reads.
 
-`classifier.go` has 463 lines and `clean_landed.go` has 400, and neither has a grant. Change only their call lines, with no net line gain. `subshell.go` has 432 lines against its grant of 497.
+`classifier.go` has about 395 lines after ticket 04 moves `validateOwnerMarker` out, and `clean_landed.go` has 400. Neither has a grant. Change only their call lines, with no net line gain. `subshell.go` has 432 lines against its grant of 497.
 
 Write the LGP16 test first in `journey_test.go`, and record its red count before the change. Call `planExplicitWith` directly, for an owned target under a canonical primary root. Count only the `--git-common-dir` lines. The plan reads 8 today. If the red shows another count, stop and report a wrong spec.
+
+Use the stub mode `fail-git-path` or `relative-git-path`, which gives 8 because `AdminPath` fails after the eighth read (`internal/worktree/subshell.go:281`). The default modes stop at `subshell.go:195-199` with 3 reads.
 
 The new test is serial, because `journeyStubGit` binds PATH. Set `worktreeTestCount` to 807 and `worktreeSerialCeiling` to 47, and record that arithmetic.
 
