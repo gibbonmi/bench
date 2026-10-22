@@ -1,7 +1,7 @@
 # Close the system serial table
 
 Blocked by: 11-run-the-owner-and-recovery-tests-in-parallel.md, 12-run-the-compatibility-and-adoption-tests-in-parallel.md, 13-run-the-session-start-and-guard-tests-in-parallel.md, 14-run-the-land-and-telemetry-tests-in-parallel.md, 15-run-the-exec-and-charge-tests-in-parallel.md
-Writes: internal/systemtest/parallel_census_test.go (new), internal/systemtest/serial_table_test.go (new)
+Writes: internal/systemtest/parallel_census_test.go (new), internal/systemtest/serial_table_test.go (new), internal/systemtest/parallel_census_cases_test.go (new)
 Covers: LGP32, LGP33, LGP34, LGP35, LGP36, LGP38
 
 ## What to build

@@ -1,7 +1,7 @@
 # Add the system parallel census
 
 Blocked by: 09-move-the-exec-child-environment-tests.md
-Writes: internal/systemtest/parallel_census_test.go (new), internal/systemtest/serial_table_test.go (new), internal/systemtest/owner_test.go, internal/systemtest/land_route_test.go, internal/testcensus/census.go (new), internal/testcensus/census_test.go (new), internal/worktree/parallel_census_test.go
+Writes: internal/systemtest/parallel_census_test.go (new), internal/systemtest/serial_table_test.go (new), internal/systemtest/owner_test.go, internal/systemtest/land_route_test.go, internal/testcensus/census.go (new), internal/testcensus/census_test.go (new), internal/worktree/parallel_census_test.go, internal/systemtest/parallel_census_cases_test.go (new)
 Covers: LGP25, LGP26, LGP28, LGP29, LGP31, LGP34
 
 ## What to build
