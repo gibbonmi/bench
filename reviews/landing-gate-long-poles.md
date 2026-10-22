@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-gate-long-poles/spec.md",
-  "plan_digest": "sha256:76f8f9e1e0d3dc9d5b45af7c1f854109efe64adf1f66fe0e82cb4229f31b9702",
+  "plan_digest": "sha256:d2657bc9aba2dcd702db7ef57791f341c08425eec7593e80663637f9fda45ee9",
   "implementation_session": "",
   "chunks": [
     {
@@ -2287,9 +2287,9 @@
     {
       "id": "LGP-C3C",
       "base": "b2f333d0b73d6058a4f881d15649de14854d698f",
-      "tip": "8c3e7f18f0a9f2c275de73170032f6a015aa6f74",
-      "plan_digest": "sha256:76f8f9e1e0d3dc9d5b45af7c1f854109efe64adf1f66fe0e82cb4229f31b9702",
-      "source_digest": "af5ffed93be6a7c13b2d61d29823624d986a8bb4",
+      "tip": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+      "plan_digest": "sha256:d2657bc9aba2dcd702db7ef57791f341c08425eec7593e80663637f9fda45ee9",
+      "source_digest": "450319442053d40f7641de2e84dfa03330ef5c26",
       "acceptance_rows": [
         "LGP19",
         "LGP22",
@@ -2377,6 +2377,118 @@
               "ref": "claude-agent:bench-writer-high:lgp-t08-author2-20261022",
               "digest": "sha256:8e150dd15bbda61e66980af90e3b7c01ee7c213a29701999fbf1ad83bee69c22",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/exec.go,swap+swap,failed,3,TestEffectBoundaryCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1498\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,716\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,62731,1498\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestEffectBoundaryCensus,\"effect_census_test.go:45: exec.go:201: ambient read os.Environ( below the effect boundary; resolve it in effects.go and pass the value down\",1\n  github.com/gibbonmi/bench/internal/worktree,TestExecChildTakesTheCallEnvironment,\"exec_call_env_test.go:30: the child environment lacks the call value:\",78\n  github.com/gibbonmi/bench/internal/worktree,TestSingleReadCensusOnTheLiveTree,\"single_read_census_cases_test.go:200: the single-read census reports 1 reads:\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t08-r1-t08-pkg-cmd-bench",
+          "performer": "claude:lgp-t08-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "450319442053d40f7641de2e84dfa03330ef5c26",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t08-repair1-20261022",
+            "digest": "sha256:59eb6871bb9bb24bc2ff292fe69b78622119e46e3c20fcb1b91e636afdccc0d1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14993,403\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t08-pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-r1-t08-worktree",
+          "performer": "claude:lgp-t08-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "450319442053d40f7641de2e84dfa03330ef5c26",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t08-repair1-20261022",
+            "digest": "sha256:7ad985bd240388535a641418f129a36ed5abc54e07433df1907695d0d5c76549",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63270,1498\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t08-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-r1-t08-root-conformance",
+          "performer": "claude:lgp-t08-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "450319442053d40f7641de2e84dfa03330ef5c26",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t08-repair1-20261022",
+            "digest": "sha256:b95d5216eeecfa98db39eff94b51b6b4d558bbf98b262743421fb688524f2bba",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12629,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t08-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-r1-t08-environ-owner",
+          "performer": "claude:lgp-t08-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "450319442053d40f7641de2e84dfa03330ef5c26",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t08-repair1-20261022",
+            "digest": "sha256:c0a1025a19ab8875e328a7c6e0b3b7d8c5dd2fc1b1af9cbf429ff181fc248b25",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/exec.go,swap+swap,failed,3,TestEffectBoundaryCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1498\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,716\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,62958,1498\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestEffectBoundaryCensus,\"effect_census_test.go:45: exec.go:202: ambient read os.Environ( below the effect boundary; resolve it in effects.go and pass the value down\",1\n  github.com/gibbonmi/bench/internal/worktree,TestExecChildTakesTheCallEnvironment,\"exec_call_env_test.go:30: the child environment lacks the call value:\",78\n  github.com/gibbonmi/bench/internal/worktree,TestSingleReadCensusOnTheLiveTree,\"single_read_census_cases_test.go:200: the single-read census reports 1 reads:\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t08-environ-owner",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore the os.Environ read in execEnv",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:lgp-t08-repair1-20261022",
+              "digest": "sha256:c0a1025a19ab8875e328a7c6e0b3b7d8c5dd2fc1b1af9cbf429ff181fc248b25",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/exec.go,swap+swap,failed,3,TestEffectBoundaryCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1498\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,716\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,62958,1498\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestEffectBoundaryCensus,\"effect_census_test.go:45: exec.go:202: ambient read os.Environ( below the effect boundary; resolve it in effects.go and pass the value down\",1\n  github.com/gibbonmi/bench/internal/worktree,TestExecChildTakesTheCallEnvironment,\"exec_call_env_test.go:30: the child environment lacks the call value:\",78\n  github.com/gibbonmi/bench/internal/worktree,TestSingleReadCensusOnTheLiveTree,\"single_read_census_cases_test.go:200: the single-read census reports 1 reads:\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t08-r1-t08-recovery-environ",
+          "performer": "claude:lgp-t08-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "450319442053d40f7641de2e84dfa03330ef5c26",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:lgp-t08-repair1-20261022",
+            "digest": "sha256:41309ff78137cf4849d809adb15a8afb936ef983f283c2e683e980c13feac172",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean.go,swap,failed,1,TestResetApplyPreservesTheLayersAndMovesTheCheckout,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1498\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,385\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,63046,1498\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestResetApplyPreservesTheLayersAndMovesTheCheckout,\"reset_apply_test.go:212: envelope committer date = 1792653168, want the call environment's 1000000000\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t08-recovery-environ",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the threaded environ in gitInput; the recovery-chain environment test must red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:lgp-t08-repair1-20261022",
+              "digest": "sha256:41309ff78137cf4849d809adb15a8afb936ef983f283c2e683e980c13feac172",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean.go,swap,failed,1,TestResetApplyPreservesTheLayersAndMovesTheCheckout,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,all,passed,1498\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,385\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,63046,1498\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestResetApplyPreservesTheLayersAndMovesTheCheckout,\"reset_apply_test.go:212: envelope committer date = 1792653168, want the call environment's 1000000000\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -2616,6 +2728,33 @@
         ],
         "LGP-C3B": [
           "LGP-C3B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:76f8f9e1e0d3dc9d5b45af7c1f854109efe64adf1f66fe0e82cb4229f31b9702",
+      "to": "sha256:d2657bc9aba2dcd702db7ef57791f341c08425eec7593e80663637f9fda45ee9",
+      "chunk_ids": {
+        "LGP-C1": [
+          "LGP-C1"
+        ],
+        "LGP-C2A": [
+          "LGP-C2A"
+        ],
+        "LGP-C2B": [
+          "LGP-C2B"
+        ],
+        "LGP-C2C": [
+          "LGP-C2C"
+        ],
+        "LGP-C3A": [
+          "LGP-C3A"
+        ],
+        "LGP-C3B": [
+          "LGP-C3B"
+        ],
+        "LGP-C3C": [
+          "LGP-C3C"
         ]
       }
     }
