@@ -240,7 +240,78 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1-standards-r0",
+          "performer": "claude:lgp-c1-standards-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a209794fd9556f6ed4a4da99debb782345e2bbda",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c1-standards-20261021",
+            "digest": "sha256:5c1740c213710a93174fc305147dce9b1a53c799fc217340f50f299f5a6a4c79",
+            "excerpt": "Standards axis, LGP-C1 (7f585da44..5cd784915): 4 findings, 3 accepted. Worst: S1. S1 (ask-user, confidence 8): ownedRunBinary (internal/testreport/selection_once_test.go:12-52) repeats the worktree testRunSelector (internal/worktree/test_run_test.go:16-90) and is a third, weaker derivation of the runbinary.Factory.ReuseOrOwn inherit-or-own policy (it skips requireSourceRoot). Consultants split (sonnet: accept; opus: extract); the fable tie-breaker chose one Factory.Select(ctx, sourceRoot, raw, present) method and one exported once-holder inside internal/runbinary. Disposition: auto-fix, ticket 02 repair. S2 (ask-user, confidence 6): the probe golden repeats the adopt golden harness and drops its mode-restoring walk. Consultant consensus: extract only the mode-preserving tree copy into one internal/testrepo helper that adopt and probe share. Disposition: auto-fix, ticket 01 repair. S3 (auto-fix, confidence 8): the fixture doc comment at internal/probe/probe_test.go:15-16 still names probetest.Repository. Disposition: auto-fix, ticket 01 repair. S4 (no-op, confidence 7): the counters are an atomic or the fake builder, not a mutex-guarded log; the count requirement holds and no standard fails.\n"
+          },
+          "axis": "Standards",
+          "base": "7f585da4489289b34df9cf3beeef2c59de8edb6d",
+          "tip": "5cd7849154fcfed5f255cc99a6812d2f38d8cc7a",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c1-spec-r0",
+          "performer": "claude:lgp-c1-spec-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a209794fd9556f6ed4a4da99debb782345e2bbda",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c1-spec-20261021",
+            "digest": "sha256:116692ba6e841ab8e083001f86d0eff9169ec530dd6a33fb76525c3c21da4c3c",
+            "excerpt": "Spec axis, LGP-C1 (7f585da44..5cd784915): 4 findings, 3 accepted. Worst: P1. Rows LGP1-5, LGP7, LGP8, LGP37 met; LGP6 and LGP34 partial. P1 (ask-user, confidence 6): story 8 asks for a real owned build, but the inherited BENCH_RUN_BINARY wins in the gate, so no testreport test builds. Consultant consensus: amend story 8 to name the surviving real-build test TestBuildLeavesTheWrapperManifestUntouched (internal/runbinary/build_script_test.go:26-57). Disposition: spec prose amendment. P2 (auto-fix, confidence 7): LGP34 before-and-after --full times were only in commit messages. Coordinator disposition: evidence-only; this entry records them: internal/probe 74925 ms before, 44304 ms after (dc17fbba8); internal/testreport 79679 ms before, 77267 ms after (5cd784915), inside the recorded spread. P3 (ask-user, confidence 6): os.CopyFS does not keep modes, against spec line 118. Disposition: closed by the S2 repair (mode-preserving copy). P4 (ask-user, confidence 5): LGP6's why-it-catches names a bypass that TestOwnedSelectionBuildsOnce does not see. Consultant consensus: amend the clause to \"A helper that builds on each installOwnedSelection call invokes the builder a second time.\" Disposition: spec prose amendment.\n"
+          },
+          "axis": "Spec",
+          "base": "7f585da4489289b34df9cf3beeef2c59de8edb6d",
+          "tip": "5cd7849154fcfed5f255cc99a6812d2f38d8cc7a",
+          "finding_ids": [
+            "P1",
+            "P3",
+            "P4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c1-coverage-r0",
+          "performer": "claude:lgp-c1-coverage-20261021",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a209794fd9556f6ed4a4da99debb782345e2bbda",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c1-coverage-20261021",
+            "digest": "sha256:fb86bfc5852ad18de1a6cfb54c8be370fa8396d1eea503be815a2f1b2f058a9b",
+            "excerpt": "Coverage axis, LGP-C1 (7f585da44..5cd784915): 1 finding, accepted. Worst: C1. C1 (auto-fix, confidence 8): the inherited branch of ownedRunBinary (valid inherited wins; present invalid refuses, spec line 126) has no test; probe swap of the inherited test for a never-true one read silent, restored yes. Disposition: auto-fix as the chunk's one hardening cycle, in the ticket 02 repair (the Factory.Select extraction of S1 carries the branch tests). Other probes: copy shares the golden executable (silent, restored yes; advice: seal holds no path); TestMain cleanup removed (silent, restored yes; advice). Refuted: hard-link sharing, re-entry helpers building a golden, inherited selection removal at Close. File modes: advice, joined to S2/P3.\n"
+          },
+          "axis": "Coverage",
+          "base": "7f585da4489289b34df9cf3beeef2c59de8edb6d",
+          "tip": "5cd7849154fcfed5f255cc99a6812d2f38d8cc7a",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -252,3 +323,31 @@
   }
 }
 ```
+
+## Pickup: LGP-C1 initial review
+
+The frozen pair is `7f585da44..5cd784915`. Repair cycle 1 of 2 starts here, and C1 uses the one hardening cycle of the chunk.
+
+### Standards
+
+Count: 4 findings, 3 accepted. Worst issue: S1.
+
+- S1 (auto-fix, confidence 8): `ownedRunBinary` (`internal/testreport/selection_once_test.go:12-52`) repeats the worktree `testRunSelector` (`internal/worktree/test_run_test.go:16-90`). It is a third, weaker form of the inherit-or-own rule of `runbinary.Factory.ReuseOrOwn`. Route: ticket 02 repair. The fable tie-breaker chose one `Factory.Select` method and one exported once-holder in `internal/runbinary`.
+- S2 (auto-fix, confidence 6): the probe golden repeats the adopt golden harness and drops its mode walk (`internal/probe/golden_test.go:99`, `internal/adopt/golden_test.go:88-104`). Route: ticket 01 repair. One mode-preserving tree copy in `internal/testrepo` serves adopt and probe.
+- S3 (auto-fix, confidence 8): the `fixture` doc comment (`internal/probe/probe_test.go:15-16`) still names `probetest.Repository`. Route: ticket 01 repair.
+
+### Spec
+
+Count: 4 findings, 3 accepted. Worst issue: P1.
+
+- P1 (auto-fix, confidence 6): story 8 asks for a real owned build, but the inherited selection wins in the gate. Route: a spec prose amendment of story 8, by consultant consensus.
+- P3 (auto-fix, confidence 6): `os.CopyFS` does not keep the modes that spec line 118 promises. Route: closed by the S2 repair.
+- P4 (auto-fix, confidence 5): the LGP6 catch clause names a bypass that its test does not see. Route: a spec prose amendment of the LGP6 row, by consultant consensus.
+
+P2 is closed in the record: the `c1-spec-r0` excerpt holds the LGP34 timings.
+
+### Coverage
+
+Count: 1 finding, accepted. Worst issue: C1.
+
+- C1 (auto-fix, confidence 8): no test covers the inherited branch of the testreport selection, so a probe that disables it reads silent. Route: ticket 02 repair, as the one hardening cycle.
