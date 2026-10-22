@@ -2557,6 +2557,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3c-standards-r1",
+          "performer": "claude:lgp-c3c-standards-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "450319442053d40f7641de2e84dfa03330ef5c26",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3c-standards-r1-20261022",
+            "digest": "sha256:09ea69600df248dd25c1045cfc2cc806a6ba4a6d3b81816ae4acd2a3db92e3cc",
+            "excerpt": "Standards axis r1, LGP-C3C (b2f333d0b..8ac213e02): S2 closed; the ambient doc names exactly the children that take the base environment, the verbCall doc points to it, and the baseEnviron doc names its one chain. 1 raised item, dispositioned no-op: subshellAt takes both an environ parameter and the ambient, but ticket 08 line 25 keeps that parameter for its test callers, and finding-discipline makes a finding against a ticket's explicit keep decision a no-op. Advice: ExecCommandResolving builds a whole newAmbient for .environ; the reset_apply_test.go comment on commitTree's date restates the code.\n"
+          },
+          "axis": "Standards",
+          "base": "b2f333d0b73d6058a4f881d15649de14854d698f",
+          "tip": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+          "finding_ids": [],
+          "supersedes": [
+            "c3c-standards-r0"
+          ]
+        },
+        {
+          "id": "c3c-spec-r1",
+          "performer": "claude:lgp-c3c-spec-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "450319442053d40f7641de2e84dfa03330ef5c26",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3c-spec-r1-20261022",
+            "digest": "sha256:caba5d1fc3db9e63e5a24d57b111d00009726b0b4decaaf491ba68c2ebdcdc51",
+            "excerpt": "Spec axis r1, LGP-C3C (b2f333d0b..8ac213e02): 0 findings; S2 and C1 closed. LGP19 met; LGP24 met (the only production os.Environ read is effects.go baseEnviron); LGP22 met, 810 + 2 = 812, ceiling 31; LGP34: coordinator records 63309 ms (1496 tests) before the ticket and 63270 ms (1498 tests) at the repair tip, inside the spread. The four sites and both chains match the amended ticket; RunTreeChild and subshellAt keep their signatures; exec_test.go 421 lines, verb_runner_check_test.go 394. Advice: ticket 08's \"count rises by one\" undercounts the required refusal test (+2).\n"
+          },
+          "axis": "Spec",
+          "base": "b2f333d0b73d6058a4f881d15649de14854d698f",
+          "tip": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+          "finding_ids": [],
+          "supersedes": [
+            "c3c-spec-r0"
+          ]
+        },
+        {
+          "id": "c3c-coverage-r1",
+          "performer": "claude:lgp-c3c-coverage-r1-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "450319442053d40f7641de2e84dfa03330ef5c26",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:lgp-c3c-coverage-r1-20261022",
+            "digest": "sha256:32f74822d09c306b9b775efca6d488119556c74d71759fd877e85ade92969dbd",
+            "excerpt": "Coverage axis r1, LGP-C3C (b2f333d0b..8ac213e02): 0 findings; S2 and C1 closed. Probes, restored yes: applyReset receiving nil at reset.go bit TestResetApplyPreservesTheLayersAndMovesTheCheckout (committer date); captureLayers receiving nil in reset_envelope.go bit the same test; recoverAssignmentWithFault receiving nil at lifecycle.go:523 read silent across the package; installChildEnv receiving nil at build.go:43 read silent under the focused build selection. Advice: the cleanup recovery chain and the doctor child have no pin on the threaded environment; no acceptance row requires one, and the chunk's hardening cycle is spent.\n"
+          },
+          "axis": "Coverage",
+          "base": "b2f333d0b73d6058a4f881d15649de14854d698f",
+          "tip": "8ac213e021c3e86955957c6c92073dcf7bf968b8",
+          "finding_ids": [],
+          "supersedes": [
+            "c3c-coverage-r0"
+          ]
         }
       ]
     }
