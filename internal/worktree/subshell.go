@@ -121,8 +121,9 @@ func canonicalPath(path string) (string, error) {
 // callPath makes a relative path absolute against the call directory that a carries, so
 // no code below the verb boundary joins it to the process directory. An absolute path
 // stays. A failed directory read leaves a relative path as given and returns the read's
-// error, so the failure surfaces only where a relative path needs the directory. Each
-// caller refuses on that error and passes the path no further.
+// error, so the failure surfaces only where a relative path needs the directory. No caller
+// resolves a path that comes with that error: each refuses, and clean names the path as
+// given only as the target of its refusal row.
 func callPath(a ambient, path string) (string, error) {
 	if a.dirErr != nil && !filepath.IsAbs(path) {
 		return path, a.dirErr
@@ -162,6 +163,13 @@ func resolveOperand(path string) (string, error) {
 // errTargetNotCanonical is the cleanup refusal for a target with no absolute form.
 var errTargetNotCanonical = errors.New("target path is not canonical")
 
+// operandRefusalPlan is the cleanup plan for an operand that resolves to no checkout path.
+// The plan and the clean boundary both refuse through it, so one reason code goes with
+// every operand refusal text.
+func operandRefusalPlan(operand string, err error) CleanupPlan {
+	return unresolvedPlan(operand, ReasonUncertain, err.Error())
+}
+
 func PlanExplicit(root, path string) (CleanupPlan, error) {
 	return planExplicitWith(defaultJoins(), &git.Run{}, root, path, CleanupOptions{})
 }
@@ -186,7 +194,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 	root = canonicalRootIn(run, root)
 	target, err := resolveOperand(path)
 	if err != nil {
-		return unresolvedPlan(path, ReasonUncertain, err.Error()), nil
+		return operandRefusalPlan(path, err), nil
 	}
 	unsafeTarget := !cleanupOutputSafe(target)
 	worktrees, err := run.Worktrees(root)

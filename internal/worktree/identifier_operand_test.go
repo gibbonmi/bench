@@ -62,11 +62,21 @@ func TestVerbCallDirectoryResolvesOperands(t *testing.T) {
 		return call
 	}
 	parent := filepath.Dir(f.creation.Path)
-	if planned := runVerb(t, verbClean, at(parent, nil, relative)); planned.exit != 0 || !strings.Contains(planned.stdout, f.creation.Path) {
+	planned := runVerb(t, verbClean, at(parent, nil, relative))
+	if planned.exit != 0 || !strings.Contains(planned.stdout, f.creation.Path) {
 		t.Fatalf("clean %q = %d %q, want a plan for %q", relative, planned.exit, planned.stdout, f.creation.Path)
 	}
 	if r := runVerb(t, verbClean, at("", gone, relative)); r.exit != 1 || !strings.Contains(r.stdout, errTargetNotCanonical.Error()) {
 		t.Fatalf("clean %q without a directory = %d %q, want %q", relative, r.exit, r.stdout, errTargetNotCanonical)
+	}
+	// An apply joins the operand as the plan does. A stale fingerprint keeps the tree, and
+	// the stale row carries the fingerprint of the replanned joined target.
+	stale := strings.Repeat("a", 64)
+	if r := runVerb(t, verbClean, at(parent, nil, relative, "--apply", stale)); r.exit != 1 || !strings.Contains(r.stdout, f.creation.Path) || !strings.Contains(r.stdout, planned.mustFingerprint(t)) {
+		t.Fatalf("clean %q --apply = %d %q, want the stale row of %q", relative, r.exit, r.stdout, f.creation.Path)
+	}
+	if r := runVerb(t, verbClean, at("", gone, relative, "--apply", stale)); r.exit != 1 || !strings.Contains(r.stdout, ",retain,") || !strings.Contains(r.stdout, errTargetNotCanonical.Error()) {
+		t.Fatalf("clean %q --apply without a directory = %d %q, want a retain row with %q", relative, r.exit, r.stdout, errTargetNotCanonical)
 	}
 	if r := runVerb(t, verbRelease, at("", gone, "--request", "landed-call-directory", relative)); r.exit != 1 || r.stderr != "bench worktree release: "+gone.Error()+"\n" {
 		t.Fatalf("release %q without a directory = %d %q, want the read failure", relative, r.exit, r.stderr)

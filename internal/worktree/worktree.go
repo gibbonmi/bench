@@ -283,7 +283,7 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 		if !homeOperand(target) {
 			var err error
 			if target, err = callPath(a, target); err != nil {
-				_ = renderCleanup(stdout, unresolvedPlan(target, ReasonUncertain, errTargetNotCanonical.Error()))
+				_ = renderCleanup(stdout, operandRefusalPlan(target, errTargetNotCanonical))
 				return 1
 			}
 		}
