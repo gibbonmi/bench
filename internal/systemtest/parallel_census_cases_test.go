@@ -64,6 +64,8 @@ var parallelCensusCases = []struct {
 	{"owner repository through a non-owner method", "func TestHold(t *testing.T) { t.Parallel(); var h holder; h.first() }\n\ntype holder struct{}\n\nfunc (holder) first() string { return owner.repos[0] }\n", nil,
 		[]string{"planted_test.go:5: TestHold calls t.Parallel() and reaches owner.repos through first"}},
 	{"local names", "func TestLocal(t *testing.T) { t.Parallel(); seen := map[string]bool{\"starts\": true}; seen[\"terminal\"] = true }\n", nil, nil},
+	{"process temporary root", "func TestTemp(t *testing.T) { t.Setenv(\"TMPDIR\", t.TempDir()) }\n", map[string]string{"TestTemp": "binds process state"},
+		[]string{"planted_test.go:5: TestTemp binds TMPDIR in the process"}},
 }
 
 // ledgerLockCases holds the planted cases of TestLedgerWritesHoldTheOwnerLock.

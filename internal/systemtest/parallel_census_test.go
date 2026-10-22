@@ -7,13 +7,15 @@ package systemtest
 // t.Parallel(), and serial when systemSerialTests holds a reason for it. Parallel tests
 // share the one owner, so a parallel test must not reach the owner's repositories or name
 // a ledger field outside an owner writer. An owner writer writes a ledger field, and the
-// owner mutex holds each of its ledger-field references.
+// owner mutex holds each of its ledger-field references. No function binds TMPDIR in the
+// process.
 
 import (
 	"fmt"
 	"go/ast"
 	"go/token"
 	"sort"
+	"strconv"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/testcensus"
@@ -241,8 +243,8 @@ func (p systemPackage) reach(test systemFunc) (repos, ledger string) {
 }
 
 // systemParallelCensus reports every top-level test in dir that calls no t.Parallel()
-// and holds no serial reason, and every parallel test that reaches the owner's
-// repositories or a ledger field.
+// and holds no serial reason, every parallel test that reaches the owner's repositories
+// or a ledger field, and every function that binds TMPDIR in the process.
 func systemParallelCensus(dir string, serial map[string]string) ([]string, error) {
 	pkg, err := parseSystemPackage(dir)
 	if err != nil {
@@ -268,8 +270,42 @@ func systemParallelCensus(dir string, serial map[string]string) ([]string, error
 			reports = append(reports, fmt.Sprintf("%s: %s calls t.Parallel() and names %s", where, name, ledger))
 		}
 	}
+	reports = append(reports, pkg.tempRootBindings()...)
 	sort.Strings(reports)
 	return reports, nil
+}
+
+// tempRootBindings reports every function in the package that binds TMPDIR in the process.
+// Parallel tests share the process environment, so a test gives each child its private
+// temporary root as an explicit environment value instead.
+func (p systemPackage) tempRootBindings() []string {
+	var reports []string
+	for _, fns := range p.funcs {
+		for _, fn := range fns {
+			ast.Inspect(fn.decl.Body, func(node ast.Node) bool {
+				if call, ok := node.(*ast.CallExpr); ok && bindsTempRoot(call) {
+					reports = append(reports, fmt.Sprintf("%s: %s binds TMPDIR in the process", p.where(fn, call.Pos()), fn.decl.Name.Name))
+				}
+				return true
+			})
+		}
+	}
+	return reports
+}
+
+// bindsTempRoot reports whether call is a Setenv call on any receiver whose name argument
+// is the literal TMPDIR.
+func bindsTempRoot(call *ast.CallExpr) bool {
+	method, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || method.Sel.Name != "Setenv" || len(call.Args) != 2 {
+		return false
+	}
+	name, ok := call.Args[0].(*ast.BasicLit)
+	if !ok || name.Kind != token.STRING {
+		return false
+	}
+	value, err := strconv.Unquote(name.Value)
+	return err == nil && value == "TMPDIR"
 }
 
 // ledgerLockCensus reports every ledger-field write outside the owner mutex, except in
@@ -325,9 +361,9 @@ func serialTableCensus(dir string, serial map[string]string) ([]string, error) {
 }
 
 // TestSystemParallelCensus proves the census refuses a test with no t.Parallel() call and
-// no serial reason, and a parallel test that reaches the owner's repositories or names a
-// ledger field outside an owner writer, and that the live package passes. (Coverage rows
-// LGP25, LGP29.)
+// no serial reason, a parallel test that reaches the owner's repositories or names a
+// ledger field outside an owner writer, and a TMPDIR binding in the process, and that the
+// live package passes. (Coverage rows LGP25, LGP29, LGP30.)
 func TestSystemParallelCensus(t *testing.T) {
 	t.Parallel()
 	for _, row := range parallelCensusCases {

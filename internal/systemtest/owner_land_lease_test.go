@@ -12,6 +12,7 @@ import (
 // only the kernel record lock tells the contender that the holder is alive. The fixture's
 // gate waits at its barrier for a tree with loser.txt, so the holder writes that file.
 func TestTwoLandingProcessesShareOneLease(t *testing.T) {
+	t.Parallel()
 	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
 	base := systemGitOutput(t, root, "rev-parse", "main")
 	env := systemLandEnv(root, home, tally, trees, ready, release)

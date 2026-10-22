@@ -458,7 +458,8 @@ func systemTOONCell(value string) (string, error) {
 const strippedJourneyMarker = "branch-native-stripped-distribution"
 
 func TestStrippedDistributionJourney(t *testing.T) {
-	repo := owner.repos[2]
+	t.Parallel()
+	repo := landRouteRepo(t, "stripped [journey]-")
 	if result := owner.runSelected(repo, "link", "copy"); result.code != 0 {
 		t.Fatalf("stripped install exit = %d: %s", result.code, result.stderr)
 	}

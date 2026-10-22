@@ -18,6 +18,7 @@ import (
 )
 
 func TestWorktreeLandPublicRaceAndRerun(t *testing.T) {
+	t.Parallel()
 	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
 	base := systemGitOutput(t, root, "rev-parse", "main")
 	loser := systemReviewedLandingWorktree(t, root, home, systemLandEnv(root, home, tally, trees, ready, release), "race-loser", "race loser", "loser.txt", base)
