@@ -144,13 +144,16 @@ func TestStartGateStartedFailure(t *testing.T) {
 
 // sealStore makes every directory under store read-only until the test ends.
 func sealStore(t *testing.T, store string) {
+	t.Helper()
 	var dirs []string
-	_ = filepath.WalkDir(store, func(path string, d fs.DirEntry, err error) error {
+	if err := filepath.WalkDir(store, func(path string, d fs.DirEntry, err error) error {
 		if err == nil && d.IsDir() {
 			dirs = append(dirs, path)
 		}
 		return err
-	})
+	}); err != nil {
+		t.Fatalf("walk %s: %v", store, err)
+	}
 	for _, dir := range dirs {
 		if err := os.Chmod(dir, 0o500); err != nil {
 			t.Error(err)
