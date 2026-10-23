@@ -10,8 +10,8 @@ A real prep-release step retains its evidence after resistant descendant teardow
 Migrate the step through Lifetime with TERM and the accepted missing two-second grace.
 Preserve step order, attribution, normal policy, and existing publication authority.
 
-Create the release-evidence store in the repository common directory before any phase launches.
-Bind its generation to that repository and the canonical dist/preflight target.
+Create the release-evidence store under the process-user store root before any phase launches.
+Bind its generation to the checkout's canonical dist directory, which the exchange of dist/preflight does not replace.
 The store stays outside exchanged evidence and temporary stage directories.
 Expose its Descriptor and install the owner identity adapter in the existing CLI table.
 

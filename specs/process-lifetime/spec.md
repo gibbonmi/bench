@@ -1027,10 +1027,13 @@ This includes focused selection cleanup and the lane's selection-release closure
 No completed child code can hide those failures.
 
 Release evidence protection lives outside dist/preflight and temporary stage directories.
-The repository common directory holds its store under bench-process-resources/release-evidence.
-Its identity binds the repository and canonical dist/preflight target.
+Its store is a derived store under the process-user store root.
+Its identity binds the checkout's canonical dist directory, because the exchange replaces dist/preflight.
 It protects phase-authored evidence before any phase starts.
 FinalizeEvidence, promotion, and abandoned-stage cleanup consume its disposition before replacement or deletion.
+A promotion that runs inside a registered user of the open generation does not seal that generation.
+The enclosing owner seals and observes the generation after its step, and that disposition decides the result.
+Two concurrent release runs in one checkout are guarded only at the start, where an unresolved earlier user refuses the new run.
 The existing atomic exchange remains the publication owner.
 
 ### Pre-review proof checklist
