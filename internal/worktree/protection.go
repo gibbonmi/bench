@@ -9,6 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
+	"github.com/gibbonmi/bench/internal/worktree/reclaimpolicy"
 )
 
 // checkoutDirectory is the identity adapter of a checkout's Git administrative directory.
@@ -33,6 +34,12 @@ func describeCheckout(run *git.Run, dir string) (protection.Descriptor, error) {
 		return protection.Descriptor{}, err
 	}
 	return checkoutDirectory.Describe(admin)
+}
+
+// ChildResources is the resource vector of a child that another package launches in the
+// checkout at dir, as childResources states it.
+func ChildResources(dir string, environ []string) ([]protection.Descriptor, error) {
+	return childResources(dir, environ)
 }
 
 // childResources is the resource vector of one child in the checkout at dir: the vector that
@@ -82,9 +89,30 @@ func checkoutUnprotected(run *git.Run, path string) error {
 	case err != nil:
 		return fmt.Errorf("worktree %s %w: %w", path, protection.ErrRetained, err)
 	case disposition.State != protection.Safe:
-		return fmt.Errorf("worktree %s %w: protection is %s for users %v", path, protection.ErrRetained, disposition.State, disposition.Users)
+		return fmt.Errorf("worktree %s %w: %w", path, protection.ErrRetained, disposition.Unresolved())
 	}
 	return nil
+}
+
+// CheckoutUnprotected is checkoutUnprotected for an owner outside the package, such as a
+// shift that rolls back, removes its scratch, or recovers the checkout at path.
+func CheckoutUnprotected(path string) error {
+	return checkoutUnprotected(new(git.Run), path)
+}
+
+// memberUsers is the protected-user fact of a pool member whose administrative directory
+// target no longer exists. The member's repository is gone, so its store cannot derive from
+// the checkout: the fact grades each worktree store whose generation records target. A
+// failed observation leaves the fact unknown, which retains the member.
+func memberUsers(target string) (reclaimpolicy.Users, string) {
+	disposition, err := checkoutDirectory.ObserveRecorded(target, bounds.ControlRecordLimit)
+	switch unresolved := disposition.Unresolved(); {
+	case err != nil:
+		return reclaimpolicy.UsersUnknown, err.Error()
+	case unresolved != nil:
+		return reclaimpolicy.UsersUnresolved, unresolved.Error()
+	}
+	return reclaimpolicy.UsersResolved, ""
 }
 
 // protectionEvidence is the plan evidence of the protection of the checkout whose

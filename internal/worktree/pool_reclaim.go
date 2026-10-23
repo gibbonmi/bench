@@ -99,7 +99,8 @@ func gatherPoolKeyFacts(path, name string) reclaimpolicy.KeyFacts {
 
 // gatherPoolChildFacts translates one top-level entry: its shape, its `.git` pointer's
 // shape and body, and — for a parseable absolute target — the one Lstat probe whose
-// verdict separates a proven absence from an open question.
+// verdict separates a proven absence from an open question. A proven absence also reads
+// the users that the target's protection stores still record.
 func gatherPoolChildFacts(path, name string) reclaimpolicy.ChildFacts {
 	child := reclaimpolicy.ChildFacts{Name: name}
 	child.Shape, child.ShapeErr = lstatShape(path)
@@ -125,6 +126,7 @@ func gatherPoolChildFacts(path, name string) reclaimpolicy.ChildFacts {
 		child.Pointer.TargetExistence = reclaimpolicy.ExistencePresent
 	} else if os.IsNotExist(err) {
 		child.Pointer.TargetExistence = reclaimpolicy.ExistenceAbsent
+		child.Users, child.UsersErr = memberUsers(target)
 	} else {
 		child.Pointer.TargetErr = err.Error()
 	}

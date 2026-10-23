@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -94,6 +95,67 @@ func (a Directory) Validate(d Descriptor) error {
 		return fmt.Errorf("binding %s does not name %s %s", d.Binding, a.Noun, d.ResourcePath)
 	}
 	// The store derives from the checked path and binding, so it comes last.
+	return a.derived(d)
+}
+
+// ObserveRecorded seals and grades the users of each store of the kind whose generation
+// records the resource path path. An owner calls it for a resource that it can no longer
+// describe, such as a directory that no longer exists, so no store derives from the
+// resource. A store whose generation retired names no user. Each recorded generation must
+// reside in the store that Store derives for its recorded path and binding, and
+// SealAndObserve grades it. The result is the worst disposition over every such store, with
+// each unresolved user. A store root or a store of the kind that ObserveRecorded cannot read
+// is uncertain, because its generation can record path. readLimit bounds each record read.
+func (a Directory) ObserveRecorded(path string, readLimit int64) (Disposition, error) {
+	recorded, err := canonicalpath.Resolve(path)
+	if err != nil {
+		return uncertain(Descriptor{ResourcePath: path}, err)
+	}
+	root, err := storeRoot()
+	if err != nil {
+		return uncertain(Descriptor{ResourcePath: recorded}, err)
+	}
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return uncertain(Descriptor{ResourcePath: recorded}, err)
+	}
+	p := &Protocol{Validators: Validators{a.Kind: a.derived}, ReadLimit: readLimit}
+	result := Disposition{State: Safe}
+	var failed []error
+	for _, entry := range entries {
+		if !strings.HasPrefix(entry.Name(), string(a.Kind)+"-") {
+			continue
+		}
+		store := filepath.Join(root, entry.Name())
+		var r resourceRecord
+		switch err := readRecord(filepath.Join(store, resourceFile), readLimit, &r); {
+		case errors.Is(err, fs.ErrNotExist):
+			continue
+		case err != nil:
+			failed = append(failed, err)
+			continue
+		case r.Kind != a.Kind || r.ResourcePath != recorded:
+			continue
+		}
+		disposition, err := p.SealAndObserve(Descriptor{Store: store, ResourceID: r.ResourceID, Kind: r.Kind, ResourcePath: r.ResourcePath, Binding: r.Binding}, nil)
+		failed = append(failed, err)
+		result.Resources = append(result.Resources, disposition.Resources...)
+		result.Users = append(result.Users, disposition.Users...)
+		if rank(disposition.State) > rank(result.State) {
+			result.State = disposition.State
+		}
+	}
+	if err := errors.Join(failed...); err != nil {
+		result.State, result.Err = Uncertain, err
+		return result, err
+	}
+	return result, nil
+}
+
+// derived accepts only the store that Store derives for the descriptor's path and binding.
+// It completes Validate, and it alone validates a recorded generation whose resource
+// ObserveRecorded cannot describe.
+func (a Directory) derived(d Descriptor) error {
 	store, err := a.Store(d.ResourcePath, d.Binding)
 	if err != nil {
 		return err
@@ -168,7 +230,7 @@ func (g Generation) Release(name string, release func() error) error {
 	case err != nil:
 		return fmt.Errorf("%s %w: %w", name, ErrRetained, err)
 	case disposition.State != Safe:
-		return fmt.Errorf("%s %w: protection is %s for users %v", name, ErrRetained, disposition.State, disposition.Users)
+		return fmt.Errorf("%s %w: %w", name, ErrRetained, disposition.Unresolved())
 	}
 	return nil
 }

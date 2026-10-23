@@ -10,7 +10,7 @@ import (
 // the only shape the predicate may count toward a reclaim.
 func deadChild(name, target string) ChildFacts {
 	return ChildFacts{Name: name, Shape: ShapeDir, Pointer: PointerFacts{
-		Shape: ShapeRegular, Body: "gitdir: " + target + "\n", TargetExistence: ExistenceAbsent}}
+		Shape: ShapeRegular, Body: "gitdir: " + target + "\n", TargetExistence: ExistenceAbsent}, Users: UsersResolved}
 }
 
 // TestClassifyKeyTable is the RP1 typed reclaim table. Each case is one named
@@ -55,6 +55,12 @@ func TestClassifyKeyTable(t *testing.T) {
 		{"uncertain: zero-value existence fails closed", KeyFacts{Name: "k", Shape: ShapeDir, Children: []ChildFacts{{
 			Name: "wt", Shape: ShapeDir, Pointer: PointerFacts{Shape: ShapeRegular, Body: "gitdir: /gone/.git\n"}}}},
 			VerdictRetain, "child wt gitdir: target cannot be read: ", nil},
+		{"protected: unresolved member users", KeyFacts{Name: "k", Shape: ShapeDir, Children: []ChildFacts{{
+			Name: "wt", Shape: ShapeDir, Pointer: deadChild("wt", "/gone/.git/worktrees/wt").Pointer, Users: UsersUnresolved, UsersErr: "protection is protected for users [u]"}}},
+			VerdictRetain, "child wt users remain unresolved: protection is protected for users [u]", nil},
+		{"uncertain: zero-value member users fail closed", KeyFacts{Name: "k", Shape: ShapeDir, Children: []ChildFacts{{
+			Name: "wt", Shape: ShapeDir, Pointer: deadChild("wt", "/gone/.git/worktrees/wt").Pointer}}},
+			VerdictRetain, "child wt users cannot be observed: ", nil},
 		{"hostile: symlink key", KeyFacts{Name: "k", Shape: ShapeSymlink},
 			VerdictRetain, "key is a symlink", nil},
 		{"hostile: non-directory key", KeyFacts{Name: "k", Shape: ShapeRegular},

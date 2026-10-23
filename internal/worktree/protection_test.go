@@ -31,7 +31,9 @@ func protectCheckout(t *testing.T, dir string) (protection.Descriptor, *protecti
 // TestCheckoutProtectionPredicate covers the protected-user predicate. An absent store and a
 // retired generation name no user. A live pending user keeps the checkout and the sealed
 // generation, and a launch after the user resolves recovers the seal. A checkout that the
-// predicate cannot describe, or a store that it cannot read, keeps the checkout too.
+// predicate cannot describe, or a store that it cannot lock, keeps the checkout too. The
+// denied store keeps its directory and generation readable, because the store root is
+// shared and pool reclaim reads every worktree generation in it.
 func TestCheckoutProtectionPredicate(t *testing.T) {
 	t.Parallel()
 	run, root := new(git.Run), newWorktreeRepo(t)
@@ -42,10 +44,11 @@ func TestCheckoutProtectionPredicate(t *testing.T) {
 	d, user := protectCheckout(t, root)
 	err = checkoutUnprotected(run, root)
 	requireTest(t, errors.Is(err, protection.ErrRetained) && strings.Contains(err.Error(), string(protection.Protected)), "a live user = %v, want a protected retention", err)
-	mustChmod(t, d.Store, 0)
+	lock := filepath.Join(d.Store, "lock")
+	mustChmod(t, lock, 0)
 	err = checkoutUnprotected(run, root)
-	mustChmod(t, d.Store, 0o700)
-	requireTest(t, errors.Is(err, protection.ErrRetained) && errors.Is(err, fs.ErrPermission), "an unreadable store = %v, want a retention with its cause", err)
+	mustChmod(t, lock, 0o600)
+	requireTest(t, errors.Is(err, protection.ErrRetained) && errors.Is(err, fs.ErrPermission), "a denied store = %v, want a retention with its cause", err)
 	_, err = checkoutObserver.Reopen(d)
 	requireTest(t, errors.Is(err, protection.ErrSealed), "a launch beside the live user = %v, want the sealed generation", err)
 
@@ -105,4 +108,31 @@ func TestPoolKeepsProtectedCheckout(t *testing.T) {
 	mustNoError(t, err)
 	_, leaseErr = os.Stat(lease)
 	requireTest(t, next != wt && os.IsNotExist(leaseErr), "acquire = %s with protected lease %v, want another checkout and no claim", next, leaseErr)
+}
+
+// TestProtectedReclaim covers pool reclaim. The repository of a pool member is gone, and a
+// user that its checkout registered is unresolved, so the plan retains the member's key and
+// names the users. Once the user resolves, the plan reclaims the key and the apply removes it.
+func TestProtectedReclaim(t *testing.T) {
+	t.Parallel()
+	f := newReclaimPool(t)
+	source := newWorktreeRepo(t)
+	key := filepath.Base(Pool(canonicalRoot(source)))
+	created := mustCreate(t, source, f.home, "protected-reclaim", "protrec")
+	_, user := protectCheckout(t, created.Path)
+	mustNoError(t, os.RemoveAll(source))
+
+	plan := runVerb(t, verbReclaim, f.call())
+	_, verdicts := reclaimVerdicts(t, plan.stdout)
+	requireTest(t, plan.exit == 0 && verdicts[key][0] == poolVerdictRetain && strings.Contains(verdicts[key][1], "users remain unresolved"),
+		"plan with a live member user = %d %q/%q, want a retention that names the users", plan.exit, verdicts[key][0], verdicts[key][1])
+
+	requireTest(t, user.Finish(protection.Terminal{NoStart: true}) == nil, "finish the member user")
+	plan = runVerb(t, verbReclaim, f.call())
+	fingerprint := plan.mustFingerprint(t)
+	_, verdicts = reclaimVerdicts(t, plan.stdout)
+	requireTest(t, verdicts[key][0] == poolVerdictReclaim, "plan after the user resolved = %q/%q, want reclaim", verdicts[key][0], verdicts[key][1])
+	out := runVerb(t, verbReclaim, f.call("--apply", fingerprint))
+	_, err := os.Lstat(filepath.Join(f.pool, key))
+	requireTest(t, out.exit == 0 && os.IsNotExist(err), "apply code=%d out=%q, key %v, want the key removed", out.exit, out.stdout, err)
 }

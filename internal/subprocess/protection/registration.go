@@ -28,6 +28,15 @@ type Disposition struct {
 	Err       error
 }
 
+// Unresolved names the state and the users of a disposition that retains its resource. A
+// safe disposition returns nil.
+func (d Disposition) Unresolved() error {
+	if d.State == Safe {
+		return nil
+	}
+	return fmt.Errorf("protection is %s for users %v", d.State, d.Users)
+}
+
 // Terminal holds the live owner's facts about one launch. NoStart is a proved failed or
 // canceled start.
 type Terminal struct {

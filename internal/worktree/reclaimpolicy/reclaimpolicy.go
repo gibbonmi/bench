@@ -1,6 +1,7 @@
 // Package reclaimpolicy owns the pure pool-reclaim decisions of the worktree
 // commands: current-repository key protection, key and child shape
-// classification, pointer parsing, target-existence reclaimability, plan
+// classification, pointer parsing, target-existence reclaimability, protected
+// member users, plan
 // drift, removal bounding, requalification, removal outcomes, and the apply's
 // exit verdict. The parent package translates filesystem, registration, and
 // path state into these typed facts once at its effect boundary. The decisions
@@ -93,12 +94,28 @@ type PointerFacts struct {
 	TargetErr       string
 }
 
-// ChildFacts is the translated state of one top-level pool-key entry.
+// Users is the typed protected-user verdict over the protection stores that
+// record a child's absent gitdir: target. Only UsersResolved proves that no
+// user of the member remains. The zero value is not Resolved, so an unfilled
+// fact fails closed as unobserved rather than as permission to remove.
+type Users string
+
+const (
+	UsersUnknown    Users = ""
+	UsersResolved   Users = "resolved"
+	UsersUnresolved Users = "unresolved"
+)
+
+// ChildFacts is the translated state of one top-level pool-key entry. Users
+// and UsersErr are filled only for a proven-absent target; UsersErr carries
+// the observation error or the unresolved disposition text.
 type ChildFacts struct {
 	Name     string
 	Shape    EntryShape
 	ShapeErr string
 	Pointer  PointerFacts
+	Users    Users
+	UsersErr string
 }
 
 // KeyFacts is the translated state of one pool key. Current marks the key the
@@ -117,8 +134,8 @@ type KeyFacts struct {
 // ClassifyKey is the one reclaimability predicate in the tree. A key is
 // reclaimable when it holds nothing at top level. It is also reclaimable when
 // every top-level entry is a real directory holding a regular `.git` file
-// whose `gitdir:` target is provably absent. Everything else retains and says
-// what protected it.
+// whose `gitdir:` target is provably absent and whose recorded users are
+// resolved. Everything else retains and says what protected it.
 //
 // Absence is proven only by ExistenceAbsent. Every other existence leaves the
 // question open, and unknown retains — treating a permission failure as
@@ -202,11 +219,26 @@ func classifyChild(child ChildFacts) (target, retain string) {
 	}
 	switch pointer.TargetExistence {
 	case ExistenceAbsent:
-		return target, ""
+		return protectedMember(child, target)
 	case ExistencePresent:
 		return "", fmt.Sprintf("child %s gitdir: target exists", child.Name)
 	default:
 		return "", fmt.Sprintf("child %s gitdir: target cannot be read: %s", child.Name, pointer.TargetErr)
+	}
+}
+
+// protectedMember decides a child whose repository is provably gone. A process
+// that the member's checkout started can outlive the repository, so only
+// resolved users let the key count the child's target. An unresolved or
+// unobserved user retains the whole key.
+func protectedMember(child ChildFacts, target string) (string, string) {
+	switch child.Users {
+	case UsersResolved:
+		return target, ""
+	case UsersUnresolved:
+		return "", fmt.Sprintf("child %s users remain unresolved: %s", child.Name, child.UsersErr)
+	default:
+		return "", fmt.Sprintf("child %s users cannot be observed: %s", child.Name, child.UsersErr)
 	}
 }
 
