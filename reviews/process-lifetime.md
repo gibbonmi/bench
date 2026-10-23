@@ -4416,6 +4416,86 @@
           "supersedes": [
             "c3-coverage-r1"
           ]
+        },
+        {
+          "id": "c3-standards-r3",
+          "performer": "claude:plt-c3-standards-r3-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-standards-r3-20261023",
+            "digest": "sha256:26bef761ebcec2deb599ae30e8c0679fda0d1309132ce681cb160f793cabcd03",
+            "excerpt": "Standards axis, PL-C3 round r3 (store and start-gate amendment). Evidence current=true, dirty_record=false at d9e29a54a. Two findings, no blocker; worst is S1.\n\nFindings\nS1 | auto-fix | 5 | internal/env/kit_run.go:136-156, internal/runbinary/runbinary.go:164-171, internal/gate/prospectiveartifact/prospectiveartifact.go:317-323 | AGENTS.md one source per fact; Generation.Discard doc (protection/directory.go ~127) | Each owner carries the same order: Release, remove the resource, Discard. Nothing enforces it, and an owner that omits Discard leaks a store in the tmpfs root. One Generation helper that takes the removal makes it one source. Owner 04 (prospective site 07).\nS2 | auto-fix | 5 | internal/systemtest/process_lifetime_cache_test.go:47 | AGENTS.md one source per fact | The bare protection.Env override repeats the drop that systemEnvironmentFrom now owns (owner_environment_test.go:21). Owner 06.\n\nAdvice\n- A Bench binary that inherits BENCH_SUBPROCESS_START_GATE exits 1 with no message; the key is single-sourced and removed before exec.\n- Off Linux, darwin is coherent; other systems refuse at bootID before any gate starts.\n- Directory.Store creates directories as a side effect of Validate.\n- root_linux.go checks /dev/shm on every call, so the root can change mid-boot.\n- The \"fork/exec\" literal repeats the os.StartProcess Op string.\n\nChecked and clean: one root derivation with no environment input; gocache.ProtectionStore derives through Describe; error meanings kept; comment register.\n"
+          },
+          "axis": "Standards",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "e4ca40405fad4b55cf0c7209d9cdd028d751e70d",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": [
+            "c3-standards-r2"
+          ]
+        },
+        {
+          "id": "c3-spec-r3",
+          "performer": "claude:plt-c3-spec-r3-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-spec-r3-20261023",
+            "digest": "sha256:a4e566132f29924609dbb87302145a8203125db5eee59e4aed0cfae3511a7441",
+            "excerpt": "Spec axis, PL-C3 round r3 (store and start-gate amendment). Evidence current=true, dirty_record=false at d9e29a54a. Five findings; worst is P1.\n\nFindings\nP1 | auto-fix | 7 | internal/gate/prospectiveartifact/prospectiveartifact.go:241-249, internal/subprocess/protection/store.go:175, internal/subprocess/protection/recovery.go:19-21 | spec \"An absent store names no user in the current boot\" | An absent store makes lock hit ErrNotExist and SealAndObserve return Uncertain, so a sweep keeps such a bundle on every run. Only gocache/clean.go:88 treats an absent store as no users. Owner 07 (shared seam in protection: 04).\nP2 | auto-fix | 8 | prospectiveartifact.go:119-121 | \"Safe removal deletes the store after it deletes the resource\" | A Publish failure after Open removes the root but never discards the store. Owner 07.\nP3 | auto-fix | 6 | internal/env/kit_run.go:151 | same | RemoveAll of a run deletes resources a child created inside it without their stores being deleted; the likeliest cause of /dev/shm growth from 135 to 240 stores. Owner 05.\nP4 | auto-fix | 6 | runbinary.go:135, kit_run.go:57-60, prospectiveartifact.go:113-114, store.go:78-113 | same | OpenResource can fail after it creates the store; the zero generation makes Discard a no-op, so the store stays. Owners 04/05/07.\nP5 | veto | 8 | internal/subprocess/protection/directory.go:118-119 | \"a SHA-256 digest\" | The store name uses the first 16 bytes of the digest; directory_test.go:73 repeats the truncation. Owner 14.\n\nAdvice\n- Cache clean keeps the cache directory, so one store per cache path is consistent; tests that create caches under t.TempDir without SetStoreBase leave one store per test.\n- Selection, kit-run and bundle Close and sweep call Discard after a successful removal.\n- The start gate, PL25 grading, schema 1, the gate-free path, and the identityErr kill path match the spec; PL126 replaces storeBase, so the /dev/shm versus /tmp choice and darwin root are untested; the PL127 owner case skips unless root.\n- Every package init linked into the binary runs inside the gate before exec; not audited.\n"
+          },
+          "axis": "Spec",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "e4ca40405fad4b55cf0c7209d9cdd028d751e70d",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3",
+            "P4",
+            "P5"
+          ],
+          "supersedes": [
+            "c3-spec-r2"
+          ]
+        },
+        {
+          "id": "c3-coverage-r3",
+          "performer": "claude:plt-c3-coverage-r3-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-coverage-r3-20261023",
+            "digest": "sha256:0e5e08c9857cc477338a69e4e5b69ff9dbd7ea6639142be4d321d243190bcb63",
+            "excerpt": "Coverage axis, PL-C3 round r3 (store and start-gate amendment). Evidence current=true, clean at d9e29a54a. Four findings; worst is C1-C3, a store-leak path no test catches. All 6 probes restored.\n\nFindings\nC1 | auto-fix | 9 | internal/runbinary/runbinary.go:249 | silent, restored; spec \"Safe removal deletes the store after it deletes the resource\" | Discard swapped for return nil passes 38 tests. Owner 04.\nC2 | auto-fix | 9 | internal/env/kit_run.go:154 | silent, restored; same | Skipping Discard passes 50 tests. Owner 05.\nC3 | auto-fix | 9 | internal/gate/prospectiveartifact/prospectiveartifact.go:323 | silent, restored; same | Discard swapped for return nil passes 43 tests. Owner 07.\nC4 | auto-fix | 8 | internal/subprocess/control.go:185 | silent, restored; spec \"The actor sends that signal only after Started succeeds in every registered store\" | Releasing the gate after a failed Started passes 38 tests; no test injects a Started failure. Owner 14.\n\nProbes: runbinary.go Discard→return nil (silent, yes); kit_run.go Discard→error(nil) (silent, yes); prospectiveartifact.go Discard→return nil (silent, yes); directory.go store comparison disabled (bit TestStoreRoot, TestProtectionRefusesAForeignCache; yes); control.go Started check→false (silent, yes); control.go case c.reg != nil→case true (bit 15 tests by timeout; yes).\n\nAdvice\n- gocache clean never calls Discard; the cache directory survives a clean, so the store rule may not apply there.\n- The no-registration path bites through hangs, not a dedicated assertion.\n"
+          },
+          "axis": "Coverage",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "e4ca40405fad4b55cf0c7209d9cdd028d751e70d",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": [
+            "c3-coverage-r2"
+          ]
         }
       ],
       "confirmations": [
@@ -4569,6 +4649,10 @@ Repair cycle 1 of 2 ran one fresh repair session per affected ticket, and the re
 The repair commits are 918c78c13 and f44d12d4b (ticket 04), 148f5f7d9 (ticket 05), 5f675b171 (ticket 07), and 72c097e5b (ticket 03).
 The confirming round r2 passed on all three axes with no new finding.
 
+The PL-C3 checkpoint gate then went red: launches serialized on durable writes under every inherited store's lock.
+The reviewer approved an amendment on 2026-10-23: tmpfs process-user stores, no inherited vector in system tests, and a start gate in new ticket 14.
+Round r3 reviewed that amendment and found 11 findings. Repair cycle 2 of 2 runs one repair session for ticket 04 and one for ticket 14.
+
 ## Standards
 
 PL-C1 round r1: 2 findings. Worst issue: S2, a scheduling-dependent verdict in a PL66 test.
@@ -4586,6 +4670,11 @@ PL-C3 round r1: 3 findings. Worst issue: S3, a builder zero exit with a failed c
 - S2 | auto-fix | confidence 7 | `internal/env/kit_run.go:140`, `internal/runbinary/runbinary.go:244` | The seal-then-remove-unless-safe rule has two copies, and the descriptor accessor has three. They fold into the S1 source.
 - S3 | auto-fix | confidence 7 | `internal/gate/runner.go:96-110`, `internal/runbinary/runbinary.go:378-381` | The normal-exit certification rule has two forms, and the builder form omits the stream check (spec.md:68 story 6). One predicate on `subprocess.Outcome` serves the gate and the builder. `bounds` keeps its own composition, as the PL-C1 C2 decision states.
 
+PL-C3 round r3: 2 findings. Worst issue: S1, the release, removal, and store-deletion order has three copies.
+
+- S1 | auto-fix | confidence 5 | `internal/env/kit_run.go:136-156`, `internal/runbinary/runbinary.go:164-171`, `internal/gate/prospectiveartifact/prospectiveartifact.go:317-323` | Each owner repeats release, removal, and `Discard` (AGENTS.md one source per fact). One `Generation` helper takes the removal. Owner: ticket 04.
+- S2 | auto-fix | confidence 5 | `internal/systemtest/process_lifetime_cache_test.go:47` | The bare `protection.Env` override repeats the drop that `systemEnvironmentFrom` owns. Owner: ticket 04, widened.
+
 ## Spec
 
 PL-C1 round r1: 0 findings. Worst issue: none.
@@ -4598,6 +4687,14 @@ PL-C2 round r1: 2 findings. Worst issue: P1, a launch-refusal assertion that ref
 PL-C3 round r1: 1 finding. Worst issue: P1, the selected executable is deleted while a nested user that inherits it survives.
 
 - P1 | auto-fix | confidence 7 | `internal/gate/run_transaction.go:194`, `internal/gate/lane.go:140`, `internal/gate/phases.go:178` | The oracle and the lane checks never register on the selection's descriptor (spec.md:90 story 28, spec.md:413). The selection then reads safe. Its executable is removed while a nested phase can still run it. Owner: ticket 07.
+
+PL-C3 round r3: 5 findings. Worst issue: P1, a bundle whose store is absent stays retained forever.
+
+- P1 | auto-fix | confidence 7 | `internal/subprocess/protection/store.go:175`, `recovery.go:19-21` | An absent store returns uncertain, but the spec says an absent store names no user in the current boot. Owner: ticket 04.
+- P2 | auto-fix | confidence 8 | `internal/gate/prospectiveartifact/prospectiveartifact.go:119-121` | A Publish failure removes the bundle but keeps its store. Owner: ticket 04.
+- P3 | auto-fix | confidence 6 | `internal/env/kit_run.go:151` | Run removal deletes resources that children created inside it and keeps their stores. Owner: ticket 04.
+- P4 | auto-fix | confidence 6 | `internal/subprocess/protection/store.go:78-113` | A failed OpenResource can keep the store it created. Owner: ticket 04.
+- P5 | auto-fix | confidence 8 | `internal/subprocess/protection/directory.go:118-119` | The store name uses the first 16 bytes of the digest. A prose-only spec correction states that length.
 
 ## Coverage
 
@@ -4621,6 +4718,13 @@ PL-C3 round r1: 3 findings. Worst issue: C1, a foreign binary descriptor passes 
 - C2 | auto-fix | confidence 8 | `internal/env/protection.go:42` | No test bites the binding comparison for a kit-test descriptor. Owner: ticket 05.
 - C3 | auto-fix | confidence 8 | `internal/gate/prospectiveartifact/protection.go:56` | No test bites the binding comparison for a bundle descriptor. Owner: ticket 07.
 
+PL-C3 round r3: 4 findings. Worst issue: C1 to C3, no test bites a skipped store deletion.
+
+- C1 | auto-fix | confidence 9 | `internal/runbinary/runbinary.go:249` | Skipping `Discard` passes every test. Owner: ticket 04.
+- C2 | auto-fix | confidence 9 | `internal/env/kit_run.go:154` | Skipping `Discard` passes every test. Owner: ticket 04.
+- C3 | auto-fix | confidence 9 | `internal/gate/prospectiveartifact/prospectiveartifact.go:323` | Skipping `Discard` passes every test. Owner: ticket 04.
+- C4 | auto-fix | confidence 8 | `internal/subprocess/control.go:185` | No test injects a Started failure, so opening the gate after it passes. Owner: ticket 14.
+
 ## Advice
 
 - The bounds runner does not forward a caller's `cmd.Stdin`; no current caller sets it.
@@ -4634,3 +4738,8 @@ PL-C3 round r1: 3 findings. Worst issue: C1, a foreign binary descriptor passes 
 - PL-C3: the `Uncertain` state at `outcome.go:136` and the store and prefix checks of the adapters were not probed.
 - PL-C3 r2: the focused-test child receives `BENCH_RUN_BINARY` but registers no selection descriptor in `internal/testreport`. Ticket 10 in PL-C4 owns that path.
 - PL-C3 r2: the three owner validator pins repeat one test body; each pin has a recorded red, so the test-expectation exception holds.
+- PL-C3 r3: a Bench binary that inherits the start-gate key exits 1 with no message.
+- PL-C3 r3: `Directory.Store` creates directories as a side effect of `Validate`.
+- PL-C3 r3: the root check reads `/dev/shm` on every call, so the root can change during one boot.
+- PL-C3 r3: PL126 replaces the store base, so the `/dev/shm` and `/tmp` choice and the darwin root have no test.
+- PL-C3 r3: every package `init` in the binary runs inside the start gate before exec.
