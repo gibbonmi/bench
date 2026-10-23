@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/process-lifetime/spec.md",
-  "plan_digest": "sha256:cce28f6ec806cd14a2584f82658ea24c135b62aa57a76382469b7b815c01569a",
+  "plan_digest": "sha256:3bf4de5bb086b76069553ee314c6fef0e5bddf003656cb21a2463f275ad0ac88",
   "implementation_session": "",
   "chunks": [
     {
@@ -1351,9 +1351,9 @@
     {
       "id": "PL-C3",
       "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
-      "tip": "75c0cb5371dde7a9be08dab3760ca07f821ffc23",
-      "plan_digest": "sha256:cce28f6ec806cd14a2584f82658ea24c135b62aa57a76382469b7b815c01569a",
-      "source_digest": "173af91dfd496d875cb634e90e7054df6c6486aa",
+      "tip": "e4ca40405fad4b55cf0c7209d9cdd028d751e70d",
+      "plan_digest": "sha256:3bf4de5bb086b76069553ee314c6fef0e5bddf003656cb21a2463f275ad0ac88",
+      "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
       "acceptance_rows": [
         "PL29",
         "PL30",
@@ -1361,6 +1361,8 @@
         "PL34",
         "PL35",
         "PL36",
+        "PL126",
+        "PL127",
         "PL37",
         "PL38",
         "PL55",
@@ -1376,7 +1378,10 @@
         "PL60",
         "PL75",
         "PL121",
-        "PL123"
+        "PL123",
+        "PL25",
+        "PL128",
+        "PL129"
       ],
       "verification": [
         {
@@ -3397,6 +3402,882 @@
               "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestProtectionUnreadableProtection,48,1,0,null,yes\n  2,bit,swap,failed,1,TestProtectionUnreadableProtection,48,1,0,null,yes\n  3,bit,omit,failed,2,TestCleanOnAnAbsentDirectory,48,1,0,null,yes\n  4,bit,swap,failed,1,TestProtectionEmptyCache,48,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gocache,all,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2365\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,243,48\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionUnreadableProtection,\"protection_test.go:165: clean over unreadable protection = (\\\"go_build_cache_clean[1]{dir,bytes_removed,files_removed}:\\\\\\\\n  /dev/shm/BOP4LP/t/TestProtectionUnreadableProtection3430648816/001/.cache/bench/go-build,26,2\\\\\\\\n\\\", 0), want the protect… (251 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,213,48\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionUnreadableProtection,\"protection_test.go:165: clean over unreadable protection = (\\\"go_build_cache_clean[1]{dir,bytes_removed,files_removed}:\\\\\\\\n  /dev/shm/ZWKOSF/t/TestProtectionUnreadableProtection1177041840/001/.cache/bench/go-build,26,2\\\\\\\\n\\\", 0), want the protect… (251 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,146,48\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestCleanOnAnAbsentDirectory,\"clean_test.go:175: clean = exit 1, want 0; out=\\\"error: cache lock unavailable — open /dev/shm/ZPNUJ5/t/TestCleanOnAnAbsentDirectory792211444/001/.cache/bench/go-build/bench.lock: no such file or directory\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionAbsentCache,\"protection_test.go:175: clean of an absent cache = (\\\"error: cache lock unavailable — open /dev/shm/ZPNUJ5/t/TestProtectionAbsentCache1696668615/001/.cache/bench/go-build/bench.lock: no such file or directory\\\\\\\\n\\\", 1), want exit 0\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,153,48\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionEmptyCache,\"protection_test.go:198: clean of an empty protected cache = (\\\"error: cache protected — protection safe for users []; retry after they finish\\\\\\\\n\\\", 1), want exit 0\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t14-ticket-14-check-1",
+          "performer": "claude:plt-t14-author-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t14-author-20261023",
+            "digest": "sha256:0e72fe3549ada50bbe8543ed1ec5db0b25f6a5514c2015be9c4854338bda1a45",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,pass,4078,38\n  github.com/gibbonmi/bench/internal/subprocess/processtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,62,54\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/boot_root,\"capability: privilege: only a root user can give a directory another owner\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/user_root,\"capability: privilege: only a root user can give a directory another owner\"\n"
+          },
+          "requirement": "ticket-14-check-1",
+          "command": "bench test --package ./internal/subprocess/...",
+          "exit_code": 0
+        },
+        {
+          "id": "t14-ticket-14-check-2",
+          "performer": "claude:plt-t14-author-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t14-author-20261023",
+            "digest": "sha256:4b1e7754afc02007e2b96848cae0eb8fe9de0c08119f6574e20eb2ad22031ba6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,24689,404\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-14-check-2",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t14-ticket-14-check-3",
+          "performer": "claude:plt-t14-author-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t14-author-20261023",
+            "digest": "sha256:7137835fc89c1c934e64c0c5780dcf27f6e09f78a6bd5c80ab477a653ad56567",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,122,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-14-check-3",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t14-ticket-14-check-4",
+          "performer": "claude:plt-t14-author-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t14-author-20261023",
+            "digest": "sha256:bec982b817470ebd90f6bb54813410511fe1eb96b2da5ec539afbb371c7b7f85",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,46156,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ticket-14-check-4",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t14-ticket-14-check-5",
+          "performer": "claude:plt-t14-author-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t14-author-20261023",
+            "digest": "sha256:6bc4359381c8c7b7c6ef050eafac26b7a4153efa89470aa489095ae995cd425d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16701,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-14-check-5",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t14-ticket-14-check-6",
+          "performer": "claude:plt-t14-author-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t14-author-20261023",
+            "digest": "sha256:2d2f3e0971a22c706da1ce5a6a813da420f7744317216cd7c13c0e5500eef3a7",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,210,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,65916,210\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-14-check-6",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t14-ticket-14-check-7",
+          "performer": "claude:plt-t14-author-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t14-author-20261023",
+            "digest": "sha256:1b06a693f346cb301c419fdbc2206ae3bff010159bd69939e9ec35aac61491ea",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,31738,516\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-14-check-7",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t14-ticket-14-omission",
+          "performer": "claude:plt-t14-author-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t14-author-20261023",
+            "digest": "sha256:d78b2796fce1afab7a2be45a3e31359b419052e203a975a5426b9ff26b6928ea",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/startgate.go,swap,failed,1,TestStartGateActorDeathBeforeOpen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess/...,all,passed,92\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,856\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,4055,38\n  github.com/gibbonmi/bench/internal/subprocess/processtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,60,54\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestStartGateActorDeathBeforeOpen,\"startgate_test.go:72: the program ran after its actor died before the open signal: <nil>\",1\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/boot_root,\"capability: privilege: only a root user can give a directory another owner\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/user_root,\"capability: privilege: only a root user can give a directory another owner\"\n"
+          },
+          "requirement": "ticket-14-omission",
+          "command": "bench test --package ./internal/subprocess/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Execute the program at end of file, or grade a pending user with an absent actor as protected. The ActorDeathBeforeOpen or PendingActorAbsent witness must fail.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:plt-t14-author-20261023",
+              "digest": "sha256:d78b2796fce1afab7a2be45a3e31359b419052e203a975a5426b9ff26b6928ea",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/startgate.go,swap,failed,1,TestStartGateActorDeathBeforeOpen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess/...,all,passed,92\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,856\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,4055,38\n  github.com/gibbonmi/bench/internal/subprocess/processtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,60,54\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestStartGateActorDeathBeforeOpen,\"startgate_test.go:72: the program ran after its actor died before the open signal: <nil>\",1\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/boot_root,\"capability: privilege: only a root user can give a directory another owner\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/user_root,\"capability: privilege: only a root user can give a directory another owner\"\n"
+            }
+          }
+        },
+        {
+          "id": "t03r1b-ticket-3-check-1",
+          "performer": "claude:plt-t03-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t03-repair1-20261022",
+            "digest": "sha256:8a8124a916ca3b5889c1e65be58b554dbde44aeb2f8f0996439491fe8b9991b4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,31624,516\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-3-check-1",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1b-ticket-3-check-2",
+          "performer": "claude:plt-t03-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t03-repair1-20261022",
+            "digest": "sha256:2e9e206f8b374cf0ef9032fbb22c0b9237d0e0155ba2ba47bb0ead6bdb968d7e",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19666,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-3-check-2",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1b-ticket-3-check-3",
+          "performer": "claude:plt-t03-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t03-repair1-20261022",
+            "digest": "sha256:a9d8680aae6666533b2406a36b5132c35035398c1cae84c86d5366693a804458",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,47490,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ticket-3-check-3",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1b-ticket-3-omission",
+          "performer": "claude:plt-t03-repair1-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t03-repair1-20261022",
+            "digest": "sha256:f9cb6968d4b846bf8f81b2f74b2f7b455a814ed98e4b21c62f95cacd71c66d1e",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestGateInterruptOpensWithINTAndExits130,516,1,0,null,yes\n  2,bit,swap,failed,1,TestGateTimeoutOpensWithTERMAndExits124,516,1,0,null,yes\n  3,bit,swap,failed,1,TestGateNormalDrainRemovesReadyDescendant,516,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1164\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,32212,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateInterruptOpensWithINTAndExits130,\"lifetime_test.go:56: interrupted phase opener = \\\"TERM\\\", exit = 130, interrupted = true, want INT, 130, true\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,32329,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateTimeoutOpensWithTERMAndExits124,\"lifetime_test.go:64: timed-out phase opener = \\\"INT\\\", exit = 130, interrupted = true, want TERM, 124, true\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,32338,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateNormalDrainRemovesReadyDescendant,\"lifetime_test.go:78: descendant 3605668 survived normal completion\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-3-omission",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Replace INT with TERM, map timeout to interruption, or omit normal group drain. The actual gate signal and descendant-survival fixtures must fail.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:plt-t03-repair1-20261022",
+              "digest": "sha256:f9cb6968d4b846bf8f81b2f74b2f7b455a814ed98e4b21c62f95cacd71c66d1e",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestGateInterruptOpensWithINTAndExits130,516,1,0,null,yes\n  2,bit,swap,failed,1,TestGateTimeoutOpensWithTERMAndExits124,516,1,0,null,yes\n  3,bit,swap,failed,1,TestGateNormalDrainRemovesReadyDescendant,516,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1164\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,32212,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateInterruptOpensWithINTAndExits130,\"lifetime_test.go:56: interrupted phase opener = \\\"TERM\\\", exit = 130, interrupted = true, want INT, 130, true\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,32329,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateTimeoutOpensWithTERMAndExits124,\"lifetime_test.go:64: timed-out phase opener = \\\"INT\\\", exit = 130, interrupted = true, want TERM, 124, true\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,32338,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateNormalDrainRemovesReadyDescendant,\"lifetime_test.go:78: descendant 3605668 survived normal completion\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t04r4-ticket-4-check-1",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:4dbb641468e18f6d568feaf7ead13e6b731de4bc760b1cf5988a2ad4667ac351",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/runbinary,pass,29043,38\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-4-check-1",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r4-ticket-4-check-2",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:7619f5ae9daf98b635cd2a129d503653a17f4cef8664895c77f169a0b09c5e09",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17340,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-4-check-2",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r4-ticket-4-check-3",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:8e1af329969f2adfec49091c71c76f54bef12854797c994af8d2742199fb18e3",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,25498,404\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-4-check-3",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r4-ticket-4-check-4",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:55e6c952d45e398b71ecdfca50a4e7d5897b3cb298e61b5cdffd06e1e8e5e51e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,46878,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ticket-4-check-4",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r4-ticket-4-check-5",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:a6caf0891309047c7bebb6b215e8c9d081be6a49538c4df99b718cad9ffeb030",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,pass,4084,38\n  github.com/gibbonmi/bench/internal/subprocess/processtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,62,54\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/boot_root,\"capability: privilege: only a root user can give a directory another owner\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/user_root,\"capability: privilege: only a root user can give a directory another owner\"\n"
+          },
+          "requirement": "ticket-4-check-5",
+          "command": "bench test --package ./internal/subprocess/...",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r4-ticket-4-check-6",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:f669b5cded00ad10cc66df7258efc3533af1b60551134e7bbbc055477651630e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,pass,267,48\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-4-check-6",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r4-ticket-4-check-7",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:feac0721a75f57b67d28ecf831dcf1d0f0d99274d28d9dd02f71510b91439c7c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/env,pass,1310,50\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-4-check-7",
+          "command": "bench test --package ./internal/env",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r4-ticket-4-check-8",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:f0353162df1dc346c0d829af6c0ae52ccb537b0f7f8ecf36f27ab4ceed64f074",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,435,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-4-check-8",
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r4-ticket-4-check-9",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:428d823d7210d57715991bdead6736147efd309dc5fd817613b22ba029cae251",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,32160,516\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-4-check-9",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r4-ticket-4-omission",
+          "performer": "claude:plt-t04-repair4-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+            "digest": "sha256:27cbb7efd75239299b17d0a678be63f069c286a312bc730713e03ece95cff7fc",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/runbinary/runbinary.go,swap,failed,1,TestBinaryClose,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/runbinary,TestBinaryClose$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,344\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/runbinary,fail,8,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/runbinary,TestBinaryClose,\"lifetime_resources_test.go:98: Close with a live registered group = <nil>, want a protected retention\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-4-omission",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove normal builder drain or delete the selection before all registered groups are absent. The live descendant or executable-retention assertion must fail.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:plt-t04-repair4-20261023",
+              "digest": "sha256:27cbb7efd75239299b17d0a678be63f069c286a312bc730713e03ece95cff7fc",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/runbinary/runbinary.go,swap,failed,1,TestBinaryClose,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/runbinary,TestBinaryClose$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,344\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/runbinary,fail,8,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/runbinary,TestBinaryClose,\"lifetime_resources_test.go:98: Close with a live registered group = <nil>, want a protected retention\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t05r2c-ticket-5-check-1",
+          "performer": "claude:plt-t05-repair2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t05-repair2-20261022",
+            "digest": "sha256:feab895936e70039687dc37bcfae400641b070ef4124ca6549150e484cd8d45a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/env,pass,1371,50\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-5-check-1",
+          "command": "bench test --package ./internal/env",
+          "exit_code": 0
+        },
+        {
+          "id": "t05r2c-ticket-5-check-2",
+          "performer": "claude:plt-t05-repair2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t05-repair2-20261022",
+            "digest": "sha256:6199ed56f155c5e3d422e0e43e14e218b14ec748bccc3cd491913de45177b19c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,32169,516\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-5-check-2",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t05r2c-ticket-5-check-3",
+          "performer": "claude:plt-t05-repair2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t05-repair2-20261022",
+            "digest": "sha256:094d26a3416780afe1ca1afe151b30f1f4ab27ce47d5eeafe22e9a68dda1881f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16738,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-5-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t05r2c-ticket-5-check-4",
+          "performer": "claude:plt-t05-repair2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t05-repair2-20261022",
+            "digest": "sha256:795045602850925bbe0e72e4f37f5898d1780b9fd953bcbc9a73785501581e9b",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,25044,404\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-5-check-4",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t05r2c-ticket-5-check-5",
+          "performer": "claude:plt-t05-repair2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t05-repair2-20261022",
+            "digest": "sha256:0ebe4fc857b60380f08609a4094080d9f126ea293b615d8db8f4914a4e46e9f7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,46548,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ticket-5-check-5",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t05r2c-ticket-5-check-6",
+          "performer": "claude:plt-t05-repair2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t05-repair2-20261022",
+            "digest": "sha256:9c392b259b84ddebbb4d5d3c4aadfb15fb497bdec7eabc4760cda1e8cda11e8d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,pass,4056,38\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-5-check-6",
+          "command": "bench test --package ./internal/subprocess",
+          "exit_code": 0
+        },
+        {
+          "id": "t05r2c-ticket-5-check-7",
+          "performer": "claude:plt-t05-repair2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t05-repair2-20261022",
+            "digest": "sha256:89c2ea40a590acc49d1034126547b6fd6ff91966495bdf67a998fcda1c389c3a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,61,54\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/boot_root,\"capability: privilege: only a root user can give a directory another owner\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/user_root,\"capability: privilege: only a root user can give a directory another owner\"\n"
+          },
+          "requirement": "ticket-5-check-7",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "exit_code": 0
+        },
+        {
+          "id": "t05r2c-ticket-5-omission",
+          "performer": "claude:plt-t05-repair2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t05-repair2-20261022",
+            "digest": "sha256:35565121b39f3ab5cb6e8b9432ccb2c257ef77827e8d0c90ea687ce2592d7d35",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/env/kit_run.go,swap,failed,1,TestKitRunClose,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/env,all,passed,50\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,490\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/env,fail,1437,50\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/env,TestKitRunClose,\"kit_run_lifetime_test.go:57: user outcome = {Process:{Started:true StartErr:<nil> PID:3728293 PGID:3728293 Waited:true Code:0 Signal:signal 0 WaitErr:<nil>} Cancellation:{Cause:0 Signal:signal 0} Streams:{Stdin:{Status:none Err:<nil> Data:[… (508 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-5-omission",
+          "command": "bench test --package ./internal/env",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the private-run descriptor or discard KitTestRun.Close failure. The child-owned file survives while a successful phase result must disappear.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:plt-t05-repair2-20261022",
+              "digest": "sha256:35565121b39f3ab5cb6e8b9432ccb2c257ef77827e8d0c90ea687ce2592d7d35",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/env/kit_run.go,swap,failed,1,TestKitRunClose,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/env,all,passed,50\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,490\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/env,fail,1437,50\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/env,TestKitRunClose,\"kit_run_lifetime_test.go:57: user outcome = {Process:{Started:true StartErr:<nil> PID:3728293 PGID:3728293 Waited:true Code:0 Signal:signal 0 WaitErr:<nil>} Cancellation:{Cause:0 Signal:signal 0} Streams:{Stdin:{Status:none Err:<nil> Data:[… (508 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t06c-ticket-6-check-1",
+          "performer": "claude:plt-t06-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t06-author2-20261022",
+            "digest": "sha256:dbf3cbe45e9c11fa661c4a7f0a6db6c4a2646e5088b860eba3e9e6f6c1ec8fc1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,pass,260,48\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-6-check-1",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "t06c-ticket-6-check-2",
+          "performer": "claude:plt-t06-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t06-author2-20261022",
+            "digest": "sha256:94ce6911cfadd82e8f263410d0abec936dd9c11919ac8127729dcaac28c72266",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,32875,516\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-6-check-2",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t06c-ticket-6-check-3",
+          "performer": "claude:plt-t06-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t06-author2-20261022",
+            "digest": "sha256:82fb3920daaea250c69fc7d5ad713ee4d0ffd5bb88d40cc6337c8f71612280f1",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,210,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,62114,210\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-6-check-3",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t06c-ticket-6-check-4",
+          "performer": "claude:plt-t06-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t06-author2-20261022",
+            "digest": "sha256:7e894027ffa513888ae2d6efabffcab2e010b170bc228fd18b4a4d504765c212",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17787,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-6-check-4",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t06c-ticket-6-check-5",
+          "performer": "claude:plt-t06-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t06-author2-20261022",
+            "digest": "sha256:72b8e95d54179c941085b8aa6f0547be671a2b1de274e5ce261b3e4e60e5c48e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,47567,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ticket-6-check-5",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t06c-ticket-6-omission",
+          "performer": "claude:plt-t06-author2-20261022",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:plt-t06-author2-20261022",
+            "digest": "sha256:61f08e35dbaf23bb46cb3461a36690050ef32b2f4697b09b1685a2d091263611",
+            "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestProtectionUnreadableProtection,48,1,0,null,yes\n  2,bit,swap,failed,1,TestProtectionUnreadableProtection,48,1,0,null,yes\n  3,bit,omit,failed,2,TestCleanOnAnAbsentDirectory,48,1,0,null,yes\n  4,bit,swap,failed,1,TestProtectionEmptyCache,48,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gocache,all,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2366\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,334,48\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionUnreadableProtection,\"protection_test.go:167: clean over unreadable protection = (\\\"go_build_cache_clean[1]{dir,bytes_removed,files_removed}:\\\\\\\\n  /dev/shm/CNHVSR/t/TestProtectionUnreadableProtection3321946623/001/.cache/bench/go-build,26,2\\\\\\\\n\\\", 0), want the protect… (251 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,324,48\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionUnreadableProtection,\"protection_test.go:167: clean over unreadable protection = (\\\"go_build_cache_clean[1]{dir,bytes_removed,files_removed}:\\\\\\\\n  /dev/shm/QTMVDU/t/TestProtectionUnreadableProtection4214816891/001/.cache/bench/go-build,26,2\\\\\\\\n\\\", 0), want the protect… (251 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,240,48\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestCleanOnAnAbsentDirectory,\"clean_test.go:175: clean = exit 1, want 0; out=\\\"error: cache lock unavailable — open /dev/shm/AJFLBH/t/TestCleanOnAnAbsentDirectory2392132198/001/.cache/bench/go-build/bench.lock: no such file or directory\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionAbsentCache,\"protection_test.go:177: clean of an absent cache = (\\\"error: cache lock unavailable — open /dev/shm/AJFLBH/t/TestProtectionAbsentCache1139134954/001/.cache/bench/go-build/bench.lock: no such file or directory\\\\\\\\n\\\", 1), want exit 0\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,269,48\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionEmptyCache,\"protection_test.go:200: clean of an empty protected cache = (\\\"error: cache protected — protection safe for users []; retry after they finish\\\\\\\\n\\\", 1), want exit 0\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-6-omission",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Use only the dropped owner lock, treat unreadable records as empty, or publish green before terminal persistence. The second CLI cleaner and real gate record witnesses must fail.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:plt-t06-author2-20261022",
+              "digest": "sha256:61f08e35dbaf23bb46cb3461a36690050ef32b2f4697b09b1685a2d091263611",
+              "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestProtectionUnreadableProtection,48,1,0,null,yes\n  2,bit,swap,failed,1,TestProtectionUnreadableProtection,48,1,0,null,yes\n  3,bit,omit,failed,2,TestCleanOnAnAbsentDirectory,48,1,0,null,yes\n  4,bit,swap,failed,1,TestProtectionEmptyCache,48,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gocache,all,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2366\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,334,48\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionUnreadableProtection,\"protection_test.go:167: clean over unreadable protection = (\\\"go_build_cache_clean[1]{dir,bytes_removed,files_removed}:\\\\\\\\n  /dev/shm/CNHVSR/t/TestProtectionUnreadableProtection3321946623/001/.cache/bench/go-build,26,2\\\\\\\\n\\\", 0), want the protect… (251 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,324,48\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionUnreadableProtection,\"protection_test.go:167: clean over unreadable protection = (\\\"go_build_cache_clean[1]{dir,bytes_removed,files_removed}:\\\\\\\\n  /dev/shm/QTMVDU/t/TestProtectionUnreadableProtection4214816891/001/.cache/bench/go-build,26,2\\\\\\\\n\\\", 0), want the protect… (251 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,240,48\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestCleanOnAnAbsentDirectory,\"clean_test.go:175: clean = exit 1, want 0; out=\\\"error: cache lock unavailable — open /dev/shm/AJFLBH/t/TestCleanOnAnAbsentDirectory2392132198/001/.cache/bench/go-build/bench.lock: no such file or directory\\\\\\\\n\\\"\",1\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionAbsentCache,\"protection_test.go:177: clean of an absent cache = (\\\"error: cache lock unavailable — open /dev/shm/AJFLBH/t/TestProtectionAbsentCache1139134954/001/.cache/bench/go-build/bench.lock: no such file or directory\\\\\\\\n\\\", 1), want exit 0\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,269,48\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestProtectionEmptyCache,\"protection_test.go:200: clean of an empty protected cache = (\\\"error: cache protected — protection safe for users []; retry after they finish\\\\\\\\n\\\", 1), want exit 0\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t07r2-ticket-7-check-1",
+          "performer": "claude:plt-t07-repair2-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+            "digest": "sha256:abe194412b6d08ed71b99126dff554ebd075db0f230b253f5499ea2d3469eb7f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,438,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-7-check-1",
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r2-ticket-7-check-2",
+          "performer": "claude:plt-t07-repair2-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+            "digest": "sha256:f84796d8d7ab2630014e3a21afd9491f617155899ff75e97bb1c1dae38c137e1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,33510,516\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-7-check-2",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r2-ticket-7-check-3",
+          "performer": "claude:plt-t07-repair2-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+            "digest": "sha256:6a412ef230b30bdaea0030a0cc2e8d31259fad9e56dd1d98ffb6d1483e0c65e1",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,210,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,58438,210\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-7-check-3",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r2-ticket-7-check-4",
+          "performer": "claude:plt-t07-repair2-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+            "digest": "sha256:0a6b5a174e9aed7766e3751bb38cfb3074f79ef656492416d88f16fffc4835df",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5069,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-7-check-4",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r2-ticket-7-check-5",
+          "performer": "claude:plt-t07-repair2-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+            "digest": "sha256:3e0e074b666185f8546cd5ac87ee9445766e2c36eb299c771c308c37494794e5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17523,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-7-check-5",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r2-ticket-7-check-6",
+          "performer": "claude:plt-t07-repair2-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+            "digest": "sha256:0e8a9d8a659e4dc624a0fe474d33c5d7e61941699f6c930cbb4b667c637c63be",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,26160,404\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-7-check-6",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r2-ticket-7-check-7",
+          "performer": "claude:plt-t07-repair2-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+            "digest": "sha256:e908087131657cb3e3a2a71345c9e013d71ded28a37a477bde48c0192e089964",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,126,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-7-check-7",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r2-ticket-7-check-8",
+          "performer": "claude:plt-t07-repair2-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+            "digest": "sha256:323724090e8b32c5f0f10b98281f13f6e5d0c48315f103f2d8bae8b44e435677",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,47723,1139\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "ticket-7-check-8",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r2-ticket-7-omission",
+          "performer": "claude:plt-t07-repair2-20261023",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afcd6e340d9a811b7919bb28616a09602bbfc48a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+            "digest": "sha256:db4a1d741f47078030fbb750684402eb898bec40f365ac5d005fa08b7f8cdb57",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/lane.go,swap,failed,1,TestLaneSelectionCloseFailure,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,516\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,325\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,33321,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLaneSelectionCloseFailure,\"lifetime_resources_test.go:264: lane with a nested user = <nil>; output:\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ticket-7-omission",
+          "command": "bench test --package ./internal/gate/prospectiveartifact",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore owner-death-only sweep, ignore a nested registered group, or discard lane selection release failure. The real Close, second-process sweep, or green-record witness must fail.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:plt-t07-repair2-20261023",
+              "digest": "sha256:db4a1d741f47078030fbb750684402eb898bec40f365ac5d005fa08b7f8cdb57",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/lane.go,swap,failed,1,TestLaneSelectionCloseFailure,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,516\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,325\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,33321,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLaneSelectionCloseFailure,\"lifetime_resources_test.go:264: lane with a nested user = <nil>; output:\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -3625,6 +4506,36 @@
     {
       "from": "sha256:eba58dd14aa0003e578bafade100c714a3dd1c554ce3508af878811fb8342bef",
       "to": "sha256:cce28f6ec806cd14a2584f82658ea24c135b62aa57a76382469b7b815c01569a",
+      "chunk_ids": {
+        "PL-C1": [
+          "PL-C1"
+        ],
+        "PL-C2": [
+          "PL-C2"
+        ],
+        "PL-C3": [
+          "PL-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:cce28f6ec806cd14a2584f82658ea24c135b62aa57a76382469b7b815c01569a",
+      "to": "sha256:1d5c9d89d3d5bf071cbc0c8b773d92c28686b143851d1ead9f1a84d261f9bfd6",
+      "chunk_ids": {
+        "PL-C1": [
+          "PL-C1"
+        ],
+        "PL-C2": [
+          "PL-C2"
+        ],
+        "PL-C3": [
+          "PL-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1d5c9d89d3d5bf071cbc0c8b773d92c28686b143851d1ead9f1a84d261f9bfd6",
+      "to": "sha256:3bf4de5bb086b76069553ee314c6fef0e5bddf003656cb21a2463f275ad0ac88",
       "chunk_ids": {
         "PL-C1": [
           "PL-C1"
