@@ -743,7 +743,7 @@ The final implementation must demonstrate its stated omission red.
 | PL127 | 39 | A root that is a link, has another owner, or has a wider mode prevents launch. | `internal/subprocess/protection/directory_test.go` (`TestStoreRootRefusal`) | A shared or foreign root lets another user forge protection records. |
 | PL128 | 21 | A gated program never runs when its actor dies before the open signal. | `internal/subprocess/startgate_test.go` (`TestStartGateActorDeathBeforeOpen`) | The program's start marker appears if the gate executes at end of file. |
 | PL129 | 21 | An exec failure behind the start gate remains a Start error. | `internal/subprocess/startgate_test.go` (`TestStartGateExecFailure`) | A missing program reports a child exit instead of a failed start. |
-| PL130 | 25 | The probe set consumes a held selection Close failure. | planned `internal/probe/set_test.go` (SetSelectionCloseFailure) | A mutant set exits zero and prints no cleanup line while the held executable stays protected. |
+| PL130 | 25 | The probe set consumes a held selection Close failure. | `internal/probe/set_cleanup_test.go` (`TestSetSelectionCloseFailure`) | A mutant set exits zero and prints no cleanup line while the held executable stays protected. |
 
 ### Preservation fixtures
 
