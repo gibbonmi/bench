@@ -18,10 +18,9 @@ import (
 // KitTestRun owns the private home and temporary directories for one kit test run.
 // A plain go test opens no run and receives none of this policy.
 type KitTestRun struct {
-	dir      string
-	entries  []string
-	protocol *protection.Protocol
-	resource protection.Descriptor
+	dir        string
+	entries    []string
+	generation protection.Generation
 }
 
 // OpenKitTestRun preserves Go's resolved settings before it replaces HOME.
@@ -50,17 +49,17 @@ func openKitTestRun(base []string, protocol *protection.Protocol) (*KitTestRun, 
 	if err != nil {
 		return nil, fmt.Errorf("kit test run: TMPDIR: %w", err)
 	}
-	run := &KitTestRun{dir: dir, protocol: protocol}
+	run := &KitTestRun{dir: dir}
 	var vector []protection.Descriptor
 	if protocol != nil {
 		inherited, err := protection.ParseVector(kitEnvValue(base, protection.Env))
 		if err == nil {
-			run.resource, err = protect(protocol, dir)
+			run.generation, err = kitRunProtection.Open(protocol, dir)
 		}
 		if err != nil {
 			return nil, errors.Join(fmt.Errorf("kit test run: protect TMPDIR run: %w", err), run.Close())
 		}
-		vector = append(inherited, run.resource)
+		vector = append(inherited, run.generation.Resources()...)
 	}
 	for _, name := range []string{"h", "t", "c"} {
 		if err := os.Mkdir(filepath.Join(dir, name), 0o700); err != nil {
@@ -125,10 +124,7 @@ func (r *KitTestRun) Entries() []string {
 // Resources names the run's private generation for a launch that uses the run. An unprotected
 // run names none.
 func (r *KitTestRun) Resources() []protection.Descriptor {
-	if r.resource == (protection.Descriptor{}) {
-		return nil
-	}
-	return []protection.Descriptor{r.resource}
+	return r.generation.Resources()
 }
 
 // Close seals the run's generation and returns the unresolved release of a protected or
@@ -136,14 +132,8 @@ func (r *KitTestRun) Resources() []protection.Descriptor {
 // Close restores directory access before removal, because tests can leave unreadable directories.
 // It does not follow symbolic links outside the run.
 func (r *KitTestRun) Close() error {
-	if r.Resources() != nil {
-		disposition, err := r.protocol.SealAndObserve(r.resource, nil)
-		if err != nil {
-			return fmt.Errorf("kit test run: observe the users of %s: %w", r.dir, err)
-		}
-		if disposition.State != protection.Safe {
-			return fmt.Errorf("kit test run: %s stays retained: protection is %s for users %v", r.dir, disposition.State, disposition.Users)
-		}
+	if err := r.generation.Release("kit test run "+r.dir, nil); err != nil {
+		return err
 	}
 	err := filepath.WalkDir(r.dir, func(path string, entry fs.DirEntry, err error) error {
 		if errors.Is(err, os.ErrNotExist) {

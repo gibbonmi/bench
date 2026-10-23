@@ -13,6 +13,23 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
+// TestKitRunValidatorRefusesAForeignBinding pins the kit-test validator that the composition
+// root installs: it accepts the run's own descriptor and refuses one whose binding names another
+// directory at the same path.
+func TestKitRunValidatorRefusesAForeignBinding(t *testing.T) {
+	d, err := kitRunProtection.Describe(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateProtection(d); err != nil {
+		t.Fatalf("ValidateProtection(own run) = %v, want nil", err)
+	}
+	d.Binding = "0:0"
+	if err := ValidateProtection(d); err == nil || !strings.Contains(err.Error(), "binding 0:0 does not name kit test run") {
+		t.Fatalf("ValidateProtection(foreign binding) = %v, want a binding refusal", err)
+	}
+}
+
 // TestKitRunClose is PL37. A child registers on the vector that Entries hands it, writes into
 // the private home, and leaves a live descendant in its group. Close must keep that file.
 func TestKitRunClose(t *testing.T) {
