@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/releaseevidence"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // processResources is the composition root's protection protocol. Each kind's validator
@@ -19,6 +20,7 @@ var processResources = protection.Protocol{
 		protection.KindBinary:          runbinary.ValidateProtection,
 		protection.KindKitTest:         env.ValidateProtection,
 		protection.KindReleaseEvidence: releaseevidence.ValidateProtection,
+		protection.KindWorktree:        worktree.ValidateProtection,
 	},
 	ReadLimit: bounds.ControlRecordLimit,
 }
