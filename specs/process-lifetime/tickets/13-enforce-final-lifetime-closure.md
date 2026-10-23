@@ -59,10 +59,10 @@ The closed system serial table gains no row.
 - [ ] PL93: Builder preserved fixtures match their row contract.
 - [ ] PL94: Bounds preserved fixtures match their row contract.
 - [ ] PL95: Prep-release preserved fixtures match their row contract.
-- [ ] PL96: External preflight preserved fixtures match the baseline.
+- [ ] PL96: External preflight preserved fixtures match their row contract.
 - [ ] PL97: Scanner preserved fixtures match their row contract.
-- [ ] PL98: Focused-test preserved fixtures match the baseline.
-- [ ] PL99: Package-list preserved fixtures match the baseline.
+- [ ] PL98: Focused-test preserved fixtures match their row contract.
+- [ ] PL99: Package-list preserved fixtures match their row contract.
 - [ ] PL100: Exec preserved fixtures match their row contract.
 - [ ] PL101: Shell preserved fixtures match their row contract.
 - [ ] PL102: Shift preserved fixtures match their row contract.
