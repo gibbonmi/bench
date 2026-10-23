@@ -16,7 +16,8 @@ Expose the worktree Descriptor and install its existing assignment-identity vali
 Keep the reserved inherited/local vector through current environment routing; --env cannot replace it.
 Preserve command inputs, caller streams, assignment behavior, and the separate ExecWaitDelay.
 
-Exec can return child zero only after its own required stream and cleanup obligations complete.
+After ExecWaitDelay expiry, exec reports the forced close of its output on stderr and returns the child's exit code (BO69).
+Exec returns child zero only after its cleanup obligations complete.
 It releases no assignment on that return; durable users still prevent reuse and removal.
 Required enclosing owners consume unresolved disposition across that CLI boundary.
 
@@ -71,5 +72,6 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/gocache`
 - `bench test --package ./internal/releaseevidence`
 - `bench test --package ./internal/subprocess/protection`
+- `bench test --check system`
 
 Mutation witness: Add a normal-exit group kill, strip the descriptor vector, or release the interrupted shell lease. The real command, environment, and lease assertions must fail.
