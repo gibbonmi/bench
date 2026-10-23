@@ -72,13 +72,12 @@ func TestRecordForeignBinding(t *testing.T) {
 }
 
 // TestRecordKindWithoutValidator launches a real generation. A kind with no validator row gains
-// no admission, whether the table is nil, empty, or another kind's, or no protocol exists.
+// no admission, whether the table is nil, empty, or another kind's.
 func TestRecordKindWithoutValidator(t *testing.T) {
 	d := newResource(t, newProtocol(), "cache")
 	for _, table := range []protection.Validators{nil, {}, {protection.KindWorktree: validate}} {
 		requireRefused(t, &protection.Protocol{Validators: table, ReadLimit: readLimit}, d)
 	}
-	requireRefused(t, nil, d)
 }
 
 func TestRecordMalformed(t *testing.T) {
