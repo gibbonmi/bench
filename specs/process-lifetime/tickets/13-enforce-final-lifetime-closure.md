@@ -13,7 +13,7 @@ Permit only shared/platform mechanics, read-only absence observations, and test 
 No comments or copied count can stand in for executable ownership proof.
 
 Consume the frozen caller interfaces and evidence from every predecessor.
-Run all eleven differential fixtures against the production baseline over the accepted producer family.
+Run all eleven differential fixtures against each row's stated contract over the accepted producer family, with one demonstrated red per row.
 Earlier tickets remain independently green without this global assertion.
 Do not migrate all eleven callers again in this ticket.
 Use the existing system binary and fixture owners instead of a second benchmark or runner.
@@ -55,17 +55,17 @@ The closed system serial table gains no row.
 - [ ] PL89: Linux parent death still kills the direct builder child.
 - [ ] PL90: Native Darwin preserves its group policy.
 - [ ] PL91: The final tree has no private production lifetime loop.
-- [ ] PL92: Gate preserved fixtures match the production baseline.
-- [ ] PL93: Builder preserved fixtures match the production baseline.
-- [ ] PL94: Bounds preserved fixtures match the production baseline.
-- [ ] PL95: Prep-release preserved fixtures match the production baseline.
+- [ ] PL92: Gate preserved fixtures match their row contract.
+- [ ] PL93: Builder preserved fixtures match their row contract.
+- [ ] PL94: Bounds preserved fixtures match their row contract.
+- [ ] PL95: Prep-release preserved fixtures match their row contract.
 - [ ] PL96: External preflight preserved fixtures match the baseline.
-- [ ] PL97: Scanner preserved fixtures match the production baseline.
+- [ ] PL97: Scanner preserved fixtures match their row contract.
 - [ ] PL98: Focused-test preserved fixtures match the baseline.
 - [ ] PL99: Package-list preserved fixtures match the baseline.
-- [ ] PL100: Exec preserved fixtures match the production baseline.
-- [ ] PL101: Shell preserved fixtures match the production baseline.
-- [ ] PL102: Shift preserved fixtures match the production baseline.
+- [ ] PL100: Exec preserved fixtures match their row contract.
+- [ ] PL101: Shell preserved fixtures match their row contract.
+- [ ] PL102: Shift preserved fixtures match their row contract.
 - [ ] PL103: Migration preserves the declared scope exclusions.
 - [ ] PL116: Cleanup failure names each unresolved obligation once.
 - [ ] PL118: Ordinary complete resource users release their resources.
