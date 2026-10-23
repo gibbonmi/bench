@@ -636,7 +636,7 @@ The final implementation must demonstrate its stated omission red.
 | PL22 | 20 | Later resource-publication failure prevents Start. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationPartialPublish`) | A child uses an unprotected second resource if partial success permits launch. |
 | PL23 | 20 | Failed rollback retains its partial pending record. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationRollbackFailure`) | Removing partial records hides an uncertain transaction. |
 | PL24 | 21 | Partial known-identity publication retains the launch disposition. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationIdentityPublishFailure`) | One completed write wrongly certifies the whole resource union. |
-| PL25 | 21 | A pending user resolves as no-start when its actor is absent and stays protected while its actor answers. | planned `internal/subprocess/protection/recovery_test.go` (PendingActorAbsent) | Recovery keeps a dead actor's pending record forever, or releases a pending user whose actor PID answers. |
+| PL25 | 21 | A pending user resolves as no-start when its actor is absent and stays protected while its actor answers. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryPendingActorAbsent`) | Recovery keeps a dead actor's pending record forever, or releases a pending user whose actor PID answers. |
 | PL26 | 22 | Two concurrent users require two complete group-absence proofs. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryOverlappingUsers`) | The first completion deletes the second live user's resource. |
 | PL27 | 23 | Sealed admission refuses new registration before Start. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationSealedAdmission`) | A late start marker exposes the cleanup check-then-launch race. |
 | PL28 | 13 | Bounds preserves immediate-KILL cancellation classification. | `internal/bounds/lifetime_test.go` (`TestBoundsCancel`) | An added grace or changed canceled status breaks its policy witness. |
@@ -739,8 +739,8 @@ The final implementation must demonstrate its stated omission red.
 | PL125 | 3, 4 | Late successful Start receives shutdown and one waiter. | `internal/subprocess/lifetime_test.go` (`TestLifetimeLateStart`) | Releasing the held worker leaves a live child if an incomplete return discards its pending cancellation. |
 | PL126 | 39 | The store derives from kind, resource path, and binding under the per-user boot root, and no environment variable changes it. | planned `internal/subprocess/protection/directory_test.go` (StoreRoot) | A nested CLI with a rewritten TMPDIR refuses a legitimate descriptor if the environment selects the root. |
 | PL127 | 39 | A root that is a link, has another owner, or has a wider mode prevents launch. | planned `internal/subprocess/protection/directory_test.go` (StoreRootRefusal) | A shared or foreign root lets another user forge protection records. |
-| PL128 | 21 | A gated program never runs when its actor dies before the open signal. | planned `internal/subprocess/startgate_test.go` (ActorDeathBeforeOpen) | The program's start marker appears if the gate executes at end of file. |
-| PL129 | 21 | An exec failure behind the start gate remains a Start error. | planned `internal/subprocess/startgate_test.go` (ExecFailure) | A missing program reports a child exit instead of a failed start. |
+| PL128 | 21 | A gated program never runs when its actor dies before the open signal. | `internal/subprocess/startgate_test.go` (`TestStartGateActorDeathBeforeOpen`) | The program's start marker appears if the gate executes at end of file. |
+| PL129 | 21 | An exec failure behind the start gate remains a Start error. | `internal/subprocess/startgate_test.go` (`TestStartGateExecFailure`) | A missing program reports a child exit instead of a failed start. |
 
 ### Preservation fixtures
 

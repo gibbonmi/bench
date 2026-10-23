@@ -59,8 +59,9 @@ type controller struct {
 	startErr, waitErr                  error
 	pid                                int
 	state                              *os.ProcessState
-	// The startup worker writes reg and identityErr before it reports on startDone.
+	// The startup worker writes reg, gate, and identityErr before it reports on startDone.
 	reg         *protection.Registration
+	gate        *startGate
 	identityErr error
 
 	request                     Cancellation
@@ -150,8 +151,9 @@ func (c *controller) launch(start func(*exec.Cmd) error) {
 
 // register publishes pending protection before Start and the actual identity after it. A
 // proved no-start closes the registration, so a canceled or failed launch keeps no user. A
-// process with no installed protocol registers nothing, and its child keeps the inherited
-// vector.
+// registered program starts behind a start gate that opens only after Started succeeds in
+// every store, so a pending user never ran its program. A process with no installed
+// protocol registers nothing, starts no gate, and its child keeps the inherited vector.
 func (c *controller) register(start func(*exec.Cmd) error) error {
 	if c.l.pendingRequest().Cause != CauseNone {
 		return ErrNoStart
@@ -164,7 +166,11 @@ func (c *controller) register(start func(*exec.Cmd) error) error {
 		c.cmd.Env = protection.Environ(c.cmd.Environ(), reg.Resources())
 	}
 	err := ErrNoStart
-	if c.l.pendingRequest().Cause == CauseNone {
+	switch {
+	case c.l.pendingRequest().Cause != CauseNone:
+	case c.reg != nil:
+		c.gate, err = startGated(c.cmd, start)
+	default:
 		err = start(c.cmd)
 	}
 	switch {
@@ -175,7 +181,17 @@ func (c *controller) register(start func(*exec.Cmd) error) error {
 		_ = c.reg.Finish(protection.Terminal{NoStart: true})
 		return err
 	}
-	c.identityErr = c.reg.Started(c.cmd.Process.Pid, c.cmd.Process.Pid)
+	// The gate's PID and group become the program's at its exec.
+	if c.identityErr = c.reg.Started(c.cmd.Process.Pid, c.cmd.Process.Pid); c.identityErr != nil {
+		// The gate stays closed until the reap, so the program never runs.
+		return nil
+	}
+	if err := c.gate.release(); err != nil {
+		// No program ran, and the reaped gate was its group's only member.
+		_ = c.l.wait(c.cmd)
+		_ = c.reg.Finish(protection.Terminal{Process: protection.Complete, Streams: protection.Complete, Cleanup: protection.Complete})
+		return err
+	}
 	return nil
 }
 
@@ -220,6 +236,7 @@ func (c *controller) onStart(err error) {
 
 func (c *controller) onWait(err error) {
 	c.waitPending, c.waitErr, c.state = false, err, c.cmd.ProcessState
+	c.gate.shut()
 	if !c.stopping && c.policy.Normal == Drain {
 		c.needGroup = true
 		c.signal(syscall.SIGKILL)

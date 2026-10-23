@@ -73,21 +73,23 @@ func (p *Protocol) Recover(store string, release func() error) (Disposition, err
 	return p.SealAndObserve(Descriptor{Store: store, ResourceID: r.ResourceID, Kind: r.Kind, ResourcePath: r.ResourcePath, Binding: r.Binding}, release)
 }
 
-// grade is the one release predicate for a user. A no-start is complete and a pending user
-// is protected. A known user needs current group absence, then finished local workers or a
-// currently absent actor. It sends only signal zero, and record age grants nothing.
+// grade is the one release predicate for a user. A no-start is complete. A pending user needs
+// a currently absent actor: its start gate opens only after the actor publishes the known
+// identity, so the program of a pending user whose actor is gone never ran. A known user
+// needs current group absence, then finished local workers or a currently absent actor. It
+// sends only signal zero, and record age grants nothing.
 func (p *Protocol) grade(u userRecord) State {
 	switch u.Identity {
 	case identityNoStart:
 		return Safe
 	case identityPending:
-		return Protected
-	}
-	if state := stateOf(observeGroup(p.observer(), u.PGID)); state != Safe {
-		return state
-	}
-	if u.Process == Complete && u.Streams != Pending && u.Cleanup != Pending {
-		return Safe
+	default:
+		if state := stateOf(observeGroup(p.observer(), u.PGID)); state != Safe {
+			return state
+		}
+		if u.Process == Complete && u.Streams != Pending && u.Cleanup != Pending {
+			return Safe
+		}
 	}
 	return stateOf(Classify(p.observer()(u.ActorPID, 0)))
 }

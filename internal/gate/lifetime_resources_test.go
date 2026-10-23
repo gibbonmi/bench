@@ -9,7 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -32,6 +34,7 @@ const (
 	laneGateHelper   = "lane-gate"
 	nestedUserHelper = "nested-user"
 	kitRunRootEnv    = "BENCH_TEST_KIT_RUN_ROOT"
+	nestedGroupEnv   = "BENCH_TEST_NESTED_GROUP"
 )
 
 // TestMain lets this test binary serve as the gates and the nested users below.
@@ -112,24 +115,37 @@ func kitRunUser() int {
 	return nestedUser()
 }
 
-// nestedUser is a nested CLI. It registers on its inherited vector and exits zero before it
-// resolves its startup identity.
+// nestedUser is a nested CLI. It registers on its inherited vector, publishes the live group
+// that nestedGroupEnv names as its started identity, and exits zero without a terminal record,
+// so that group keeps the resources protected.
 func nestedUser() int {
 	installTestProtocol()
 	inherited, err := protection.Inherited()
 	if err != nil || len(inherited) == 0 {
 		return 2
 	}
-	if _, err := protection.Installed().Prepare(inherited); err != nil {
+	group, err := strconv.Atoi(os.Getenv(nestedGroupEnv))
+	if err != nil {
+		return 2
+	}
+	reg, err := protection.Installed().Prepare(inherited)
+	if err != nil || reg.Started(group, group) != nil {
 		return 2
 	}
 	return 0
 }
 
+// nestedHelper prepares the named nested-user helper. The test's own group is a live group,
+// so it stands for the group that the nested user started.
+func nestedHelper(t *testing.T, helper string) *exec.Cmd {
+	t.Helper()
+	return processtest.Helper(t, helper, nestedGroupEnv+"="+strconv.Itoa(syscall.Getpgrp()))
+}
+
 // userPhase declares one check or phase that runs the named nested-user helper.
 func userPhase(t *testing.T, helper string) map[string]any {
 	t.Helper()
-	user := processtest.Helper(t, helper)
+	user := nestedHelper(t, helper)
 	phaseEnv := map[string]string{}
 	for _, entry := range user.Env[len(os.Environ()):] {
 		name, value, _ := strings.Cut(entry, "=")
@@ -227,7 +243,7 @@ func TestLaneIncomplete(t *testing.T) {
 // nestedUserCommand is the shell command that runs the nested-user helper.
 func nestedUserCommand(t *testing.T) string {
 	t.Helper()
-	user := processtest.Helper(t, nestedUserHelper)
+	user := nestedHelper(t, nestedUserHelper)
 	nested := []string{"env"}
 	for _, entry := range append(user.Env[len(os.Environ()):], user.Path) {
 		nested = append(nested, sanitize.ShellQuote(entry))

@@ -28,16 +28,26 @@ func requireRecoveredProtected(t *testing.T, p *protection.Protocol, d protectio
 	}
 }
 
-func TestRecoveryUnknownStartup(t *testing.T) {
+// TestRecoveryPendingActorAbsent is PL25. A start gate opens only after the actor publishes the
+// known identity, so a pending user whose actor is absent never ran and resolves as no-start. A
+// pending user whose actor answers stays protected, because its PID can be a reused one.
+func TestRecoveryPendingActorAbsent(t *testing.T) {
 	p := newProtocol()
-	d := newResource(t, p, "cache")
-	if err := processtest.Helper(t, "nested", vectorEnv(d), stageEnv+"=prepared").Run(); err != nil {
+	absent, answering := newResource(t, p, "cache"), newResource(t, p, "cache")
+	if err := processtest.Helper(t, "nested", vectorEnv(absent), stageEnv+"=prepared").Run(); err != nil {
 		t.Fatal(err)
 	}
-	requireRecoveredProtected(t, p, d)
-	for _, record := range userRecords(t, d) {
+	if disposition, released := recovered(t, p, absent); disposition.State != protection.Safe || !released {
+		t.Fatalf("pending user of an absent actor: %+v released=%t, want no-start", disposition, released)
+	}
+	// This test process is the answering actor.
+	if _, err := p.Prepare([]protection.Descriptor{answering}); err != nil {
+		t.Fatal(err)
+	}
+	requireRecoveredProtected(t, p, answering)
+	for _, record := range userRecords(t, answering) {
 		if record["identity"] != "pending" {
-			t.Fatalf("the dead actor's startup record became %v", record)
+			t.Fatalf("the answering actor's startup record became %v", record)
 		}
 	}
 }
