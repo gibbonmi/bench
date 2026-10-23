@@ -3536,6 +3536,39 @@
             "c3-coverage-r1"
           ]
         }
+      ],
+      "confirmations": [
+        {
+          "id": "c3-confirm-r2",
+          "performer": "claude:plt-orchestrator-20261022",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "173af91dfd496d875cb634e90e7054df6c6486aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:plt-orchestrator-20261022",
+            "digest": "sha256:930efda2f3c8ab3aeb2d519726614dbba234381a6da76dcd3f2ea549c6721ee5",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/phases.go,swap,failed,1,TestLaneSelectedExecutableUser,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,516\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,25878,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLaneSelectedExecutableUser,\"lifetime_resources_test.go:253: retained bench-run-*/bench = [], <nil>; want one\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "reviewed_tip": "72c097e5b349fb51f69d6a8bdb159a54cd45ba61",
+          "repaired_tip": "75c0cb5371dde7a9be08dab3760ca07f821ffc23",
+          "finding_ids": [],
+          "supersedes": [],
+          "probe": {
+            "mutation": "withRunBinary drops the selection's descriptor from every phase's resources",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:plt-orchestrator-20261022",
+              "digest": "sha256:930efda2f3c8ab3aeb2d519726614dbba234381a6da76dcd3f2ea549c6721ee5",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/phases.go,swap,failed,1,TestLaneSelectedExecutableUser,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,516\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,25878,516\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLaneSelectedExecutableUser,\"lifetime_resources_test.go:253: retained bench-run-*/bench = [], <nil>; want one\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
