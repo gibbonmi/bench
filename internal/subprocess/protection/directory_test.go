@@ -137,17 +137,7 @@ func TestStoreRootRefusal(t *testing.T) {
 	for name, condition := range conditions {
 		for level, up := range map[string]int{"user root": 1, "boot root": 0} {
 			t.Run(name+"/"+level, func(t *testing.T) {
-				protection.SetStoreBase(t, t.TempDir())
-				adapter := protection.Directory{Kind: protection.KindKitTest, Noun: "run"}
-				p := &protection.Protocol{Validators: protection.Validators{protection.KindKitTest: adapter.Validate}, ReadLimit: readLimit}
-				dir := filepath.Join(t.TempDir(), "run")
-				if err := os.Mkdir(dir, 0o700); err != nil {
-					t.Fatal(err)
-				}
-				g, err := adapter.Open(p, dir)
-				if err != nil {
-					t.Fatal(err)
-				}
+				adapter, p, dir, g := openPrivateRun(t)
 				root := filepath.Dir(g.Resource.Store)
 				for range up {
 					root = filepath.Dir(root)
@@ -160,4 +150,53 @@ func TestStoreRootRefusal(t *testing.T) {
 			})
 		}
 	}
+}
+
+// TestObserveRecordedFailsClosed holds that ObserveRecorded keeps a resource whose users it
+// cannot observe. A store whose record names the resource but cannot be read, and a store root
+// that cannot be listed, each grade the resource uncertain with the error, so its owner keeps it.
+func TestObserveRecordedFailsClosed(t *testing.T) {
+	for name, hide := range map[string]func(t *testing.T, store string){
+		"unread record": func(t *testing.T, store string) {
+			if err := os.Chmod(filepath.Join(store, protection.ResourceFile), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		},
+		"unlisted root": func(t *testing.T, store string) {
+			root := filepath.Dir(store)
+			if err := os.Chmod(root, 0o300); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = os.Chmod(root, 0o700) })
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			adapter, _, dir, g := openPrivateRun(t)
+			// The open generation's record names dir, so only the hidden condition stops a safe
+			// verdict.
+			hide(t, g.Resource.Store)
+			d, err := adapter.ObserveRecorded(dir, readLimit)
+			if err == nil || d.State != protection.Uncertain || d.Err == nil {
+				t.Fatalf("observation of a store that cannot be read = %+v (%v), want uncertain with its error", d, err)
+			}
+		})
+	}
+}
+
+// openPrivateRun opens the generation of one run directory under a private store base, so a
+// test can change its store root.
+func openPrivateRun(t *testing.T) (protection.Directory, *protection.Protocol, string, protection.Generation) {
+	t.Helper()
+	protection.SetStoreBase(t, t.TempDir())
+	adapter := protection.Directory{Kind: protection.KindKitTest, Noun: "run"}
+	p := &protection.Protocol{Validators: protection.Validators{protection.KindKitTest: adapter.Validate}, ReadLimit: readLimit}
+	dir := filepath.Join(t.TempDir(), "run")
+	if err := os.Mkdir(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	g, err := adapter.Open(p, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return adapter, p, dir, g
 }

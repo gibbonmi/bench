@@ -58,7 +58,13 @@ func (a Directory) Store(path, binding string) (string, error) {
 		return "", err
 	}
 	sum := sha256.Sum256([]byte(path + "\x00" + binding))
-	return filepath.Join(root, string(a.Kind)+"-"+hex.EncodeToString(sum[:16])), nil
+	return filepath.Join(root, a.storePrefix()+hex.EncodeToString(sum[:16])), nil
+}
+
+// storePrefix starts the name of each store of the kind. Store names a store with it, and
+// ObserveRecorded selects the stores of the kind with it.
+func (a Directory) storePrefix() string {
+	return string(a.Kind) + "-"
 }
 
 // Open opens the generation of the resource at dir under p before any user of it.
@@ -111,11 +117,7 @@ func (a Directory) ObserveRecorded(path string, readLimit int64) (Disposition, e
 	if err != nil {
 		return uncertain(Descriptor{ResourcePath: path}, err)
 	}
-	root, err := storeRoot()
-	if err != nil {
-		return uncertain(Descriptor{ResourcePath: recorded}, err)
-	}
-	entries, err := os.ReadDir(root)
+	root, entries, err := storeEntries()
 	if err != nil {
 		return uncertain(Descriptor{ResourcePath: recorded}, err)
 	}
@@ -123,7 +125,7 @@ func (a Directory) ObserveRecorded(path string, readLimit int64) (Disposition, e
 	result := Disposition{State: Safe}
 	var failed []error
 	for _, entry := range entries {
-		if !strings.HasPrefix(entry.Name(), string(a.Kind)+"-") {
+		if !strings.HasPrefix(entry.Name(), a.storePrefix()) {
 			continue
 		}
 		store := filepath.Join(root, entry.Name())
@@ -260,11 +262,7 @@ func (g Generation) Remove(name string, release, remove func() error) error {
 // inside dir that no longer exists. Such a resource has no user that can still reach it. A
 // store without a readable generation stays.
 func (p *Protocol) discardNested(dir string) error {
-	root, err := storeRoot()
-	if err != nil {
-		return err
-	}
-	entries, err := os.ReadDir(root)
+	root, entries, err := storeEntries()
 	if err != nil {
 		return err
 	}

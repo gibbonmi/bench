@@ -40,6 +40,20 @@ func storeRoot() (string, error) {
 	return root, nil
 }
 
+// storeEntries certifies the store root and lists each entry in it. A root that it cannot
+// certify or list is one error, so a scan of the stores fails as a whole.
+func storeEntries() (string, []os.DirEntry, error) {
+	root, err := storeRoot()
+	if err != nil {
+		return "", nil, err
+	}
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return "", nil, err
+	}
+	return root, entries, nil
+}
+
 // privateRoot creates dir when it is absent and certifies it. It never repairs an existing
 // directory, so a link, a foreign owner, or another mode stays a refusal.
 func privateRoot(dir string) error {
