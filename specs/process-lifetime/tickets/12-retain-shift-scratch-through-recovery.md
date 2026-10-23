@@ -73,5 +73,6 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./cmd/bench`
 - `bench test --package ./internal/worktree/reclaimpolicy`
 - `bench test --package ./internal/conformance`
+- `bench test --package ./internal/subprocess/protection`
 
 Mutation witness: Read cmd.Process before the serialized transition, let an empty dirty set authorize removal, or trust a stale cleanup fingerprint. The actual resistant adapter and protected scratch witnesses must fail.
