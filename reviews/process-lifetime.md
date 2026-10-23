@@ -5390,6 +5390,78 @@
           "supersedes": [
             "c3-coverage-r2"
           ]
+        },
+        {
+          "id": "c3-standards-r4",
+          "performer": "claude:plt-c3-standards-r4-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7c5866e7b844ae4aa5a10238969fc23ba7c557e8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-standards-r4-20261023",
+            "digest": "sha256:8a22976875505055c535b3af0d001821dfe9e5c7f9920a485b2543181e36780e",
+            "excerpt": "Standards axis, PL-C3 confirming round r4. Evidence current=true at b3eaea5f0. S1 and S2 closed; the r3 repair delta stays inside each ticket's Writes: line. Three new low-severity findings, no blocker.\n\nFindings\nN1 | auto-fix | 2 | internal/subprocess/protection/directory.go:217 | AGENTS.md one source per fact | discardNested writes the Lstat/ErrNotExist absence check inline; the same delta adds absent(path) at recovery.go:121 for that check, with a store-specific parameter name and comment. Call absent(r.ResourcePath) and make the helper path-neutral. Owner 04.\nN2 | auto-fix | 2 | internal/subprocess/startgate_test.go:146-148 | error handling kept | sealStore discards the filepath.WalkDir error and lacks t.Helper(); a failed walk leaves a partly sealed store and a misleading assertion. Owner 14.\nN3 | auto-fix | 1 | internal/gocache/clean.go:82 | comment register | The edited doc comment runs past the file's usual 100-column wrap. Owner 04.\n\nClosed\nS1: protection.Generation.Remove (directory.go:182) is the one safe removal; owners call it at env/kit_run.go:135, runbinary/runbinary.go:242, prospectiveartifact.go:120 and :317; no production caller of Release or Discard remains outside Remove.\nS2: process_lifetime_cache_test.go no longer adds protection.Env; systemEnvironmentFrom (owner_environment_test.go:16, :20-21) is the single drop.\n\nAdvice\n- Generation.Release and Discard stay exported, so the compiler does not enforce Remove; unexporting them is a follow-up candidate.\n- gocache/clean.go:89 keeps its own ErrNotExist fallback; its comment could say it now catches only a store with no generation.\n"
+          },
+          "axis": "Standards",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "3e0eaaad6e0d5d5ed9d83e0be33556b3e7e07220",
+          "finding_ids": [
+            "N1",
+            "N2",
+            "N3"
+          ],
+          "supersedes": [
+            "c3-standards-r3"
+          ]
+        },
+        {
+          "id": "c3-spec-r4",
+          "performer": "claude:plt-c3-spec-r4-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7c5866e7b844ae4aa5a10238969fc23ba7c557e8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-spec-r4-20261023",
+            "digest": "sha256:e6fcea1433f8c07233ec228e930821cf1e808f7eda3c21f22f7c62aff82f640d",
+            "excerpt": "Spec axis, PL-C3 confirming round r4. Evidence current=true at b3eaea5f0 (code tip 3e0eaaad6, clean). The r3 repair closes P1-P5; no new spec deviation in e4ca40405..3e0eaaad6.\n\nFindings\nNo new finding.\n\nClosed\nP1: recovery.go:23-25 and :74-76 grade an absent store before lock through unused (:127-134), Safe with no users and no store created; store.go:182-194 lock never creates the store; the prospective sweep reaches it through prospectiveartifact.go:246 and :317; TestRecoveryAbsentStore (lifecycle_test.go:261). Spec: \"An absent store names no user in the current boot.\"\nP2: prospectiveartifact.go:119-121 sends a failed Publish through Generation.Remove, which deletes the bundle and its store (directory.go:182-196).\nP3: kit_run.go:134-136 closes through Generation.Remove; discardNested (directory.go:201-222) deletes each store of a deleted nested resource; TestGenerationRemove (lifecycle_test.go:215).\nP4: OpenResource (store.go:79-131) deletes a store it created when open fails; all three owners open through Directory.Open (directory.go:65-74); TestOpenFailureRemovesItsOwnStore (lifecycle_test.go:284).\nP5: directory.go:60-61 matches spec line 268 (first 16 bytes of a SHA-256 digest, in hexadecimal).\n\nAdvice\n- SealAndObserve's absent-store check (recovery.go:23) runs outside the protocol lock; a comment could state the owner-only creation assumption.\n- discardNested scans the store root without the lock and relies on the outer generation being safe; its doc comment could say so.\n- clean.go:89-90 can run release twice if unused's release error wraps fs.ErrNotExist; minor, not a spec deviation.\n"
+          },
+          "axis": "Spec",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "3e0eaaad6e0d5d5ed9d83e0be33556b3e7e07220",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-r3"
+          ]
+        },
+        {
+          "id": "c3-coverage-r4",
+          "performer": "claude:plt-c3-coverage-r4-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7c5866e7b844ae4aa5a10238969fc23ba7c557e8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-coverage-r4-20261023",
+            "digest": "sha256:ee7a5c34e5537751adeb525c2ad616460bd5cd2f2d2ad9427ba3081e00fb7249",
+            "excerpt": "Coverage axis, PL-C3 confirming round r4. Evidence current=true at b3eaea5f0. C1-C4 closed at their current sites; the discard moved into one seam, protection.Generation.Remove (directory.go:192), and every probe there bit and restored. One residual gap: no owner package test observes the store discard.\n\nFindings\nR4-C1 | veto | 4 | internal/runbinary/runbinary.go:242, internal/env/kit_run.go:135, internal/gate/prospectiveartifact/prospectiveartifact.go:120 and :317 | inferred from passing owner packages, no owner-site probe; spec \"Safe removal deletes the store after it deletes the resource\" | Both directory.go mutants bit only TestGenerationRemove; runbinary (38), env (50) and prospectiveartifact (43) passed with the store present. An owner that went back to Release plus RemoveAll would pass. Owners 04, 05, 07.\n\nProbes:\n- directory.go:192 own-store Discard dropped: bit TestGenerationRemove; restored yes.\n- directory.go:192 discardNested dropped: bit TestGenerationRemove; restored yes.\n- control.go:186 gate released on failed Started (single form): bit TestStartGateStartedFailure; restored yes.\n\nClosed\nC1, C2, C3: runbinary.go:242, kit_run.go:135, prospectiveartifact.go:120 and :317 go through Generation.Remove, and its discard site bites; residual is R4-C1.\nC4: TestStartGateStartedFailure bites. Spec: \"The actor sends that signal only after Started succeeds in every registered store.\"\n\nAdvice\n- One store-absence assertion per owner close test closes R4-C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "3e0eaaad6e0d5d5ed9d83e0be33556b3e7e07220",
+          "finding_ids": [
+            "R4-C1"
+          ],
+          "supersedes": [
+            "c3-coverage-r3"
+          ]
         }
       ],
       "confirmations": [
@@ -5560,7 +5632,10 @@ The confirming round r2 passed on all three axes with no new finding.
 
 The PL-C3 checkpoint gate then went red: launches serialized on durable writes under every inherited store's lock.
 The reviewer approved an amendment on 2026-10-23: tmpfs process-user stores, no inherited vector in system tests, and a start gate in new ticket 14.
-Round r3 reviewed that amendment and found 11 findings. Repair cycle 2 of 2 runs one repair session for ticket 04 and one for ticket 14.
+Round r3 reviewed that amendment and found 11 findings. Repair cycle 2 of 2 ran one repair session for ticket 04 (commit 65a501d96) and one for ticket 14 (commit 3e0eaaad6).
+
+The confirming round r4 closed all 11 r3 findings. The Spec axis passed, and the Standards and Coverage axes found 4 new low-severity findings.
+Repair cycle 3 runs past the allowance under the reviewer's advance approval: one repair session for ticket 04 and one for ticket 14.
 
 ## Standards
 
@@ -5584,6 +5659,12 @@ PL-C3 round r3: 2 findings. Worst issue: S1, the release, removal, and store-del
 - S1 | auto-fix | confidence 5 | `internal/env/kit_run.go:136-156`, `internal/runbinary/runbinary.go:164-171`, `internal/gate/prospectiveartifact/prospectiveartifact.go:317-323` | Each owner repeats release, removal, and `Discard` (AGENTS.md one source per fact). One `Generation` helper takes the removal. Owner: ticket 04.
 - S2 | auto-fix | confidence 5 | `internal/systemtest/process_lifetime_cache_test.go:47` | The bare `protection.Env` override repeats the drop that `systemEnvironmentFrom` owns. Owner: ticket 04, widened.
 
+PL-C3 round r4: 3 findings. Worst issue: N1, `discardNested` repeats the absence check of the `absent` helper.
+
+- N1 | auto-fix | confidence 2 | `internal/subprocess/protection/directory.go:217` | `discardNested` writes the absence check inline, and the `absent` helper at `recovery.go:121` owns it (AGENTS.md one source per fact). The helper takes a path-neutral name and comment. Owner: ticket 04.
+- N2 | auto-fix | confidence 2 | `internal/subprocess/startgate_test.go:146-148` | `sealStore` discards the walk error and does not call `t.Helper()`. Owner: ticket 14.
+- N3 | auto-fix | confidence 1 | `internal/gocache/clean.go:82` | The edited doc comment runs past the file's wrap width. Owner: ticket 04.
+
 ## Spec
 
 PL-C1 round r1: 0 findings. Worst issue: none.
@@ -5604,6 +5685,8 @@ PL-C3 round r3: 5 findings. Worst issue: P1, a bundle whose store is absent stay
 - P3 | auto-fix | confidence 6 | `internal/env/kit_run.go:151` | Run removal deletes resources that children created inside it and keeps their stores. Owner: ticket 04.
 - P4 | auto-fix | confidence 6 | `internal/subprocess/protection/store.go:78-113` | A failed OpenResource can keep the store it created. Owner: ticket 04.
 - P5 | auto-fix | confidence 8 | `internal/subprocess/protection/directory.go:118-119` | The store name uses the first 16 bytes of the digest. A prose-only spec correction states that length.
+
+PL-C3 round r4: 0 findings. Worst issue: none.
 
 ## Coverage
 
@@ -5634,6 +5717,10 @@ PL-C3 round r3: 4 findings. Worst issue: C1 to C3, no test bites a skipped store
 - C3 | auto-fix | confidence 9 | `internal/gate/prospectiveartifact/prospectiveartifact.go:323` | Skipping `Discard` passes every test. Owner: ticket 04.
 - C4 | auto-fix | confidence 8 | `internal/subprocess/control.go:185` | No test injects a Started failure, so opening the gate after it passes. Owner: ticket 14.
 
+PL-C3 round r4: 1 finding. Worst issue: R4-C1, no owner test sees its store deleted after a safe close.
+
+- R4-C1 | auto-fix | confidence 4 | `internal/runbinary/runbinary.go:242`, `internal/env/kit_run.go:135`, `internal/gate/prospectiveartifact/prospectiveartifact.go:120` | Only `TestGenerationRemove` bites a skipped store deletion. An owner that went back to release and removal without `Generation.Remove` passes every owner test. One store-absence assertion goes in each owner close test. The axis marked it veto; the orchestrator set it to auto-fix under the reviewer's advance approval. Owner: ticket 04, widened.
+
 ## Advice
 
 - The bounds runner does not forward a caller's `cmd.Stdin`; no current caller sets it.
@@ -5652,3 +5739,6 @@ PL-C3 round r3: 4 findings. Worst issue: C1 to C3, no test bites a skipped store
 - PL-C3 r3: the root check reads `/dev/shm` on every call, so the root can change during one boot.
 - PL-C3 r3: PL126 replaces the store base, so the `/dev/shm` and `/tmp` choice and the darwin root have no test.
 - PL-C3 r3: every package `init` in the binary runs inside the start gate before exec.
+- PL-C3 r4: `Generation.Release` and `Generation.Discard` stay exported, so the compiler does not force an owner through `Generation.Remove`.
+- PL-C3 r4: the absent-store check in `SealAndObserve` and the root scan in `discardNested` run outside the protocol lock. Each relies on the owner alone to create a store.
+- PL-C3 r4: `gocache/clean.go:89-90` can run release twice when the release error of `unused` wraps `fs.ErrNotExist`.
