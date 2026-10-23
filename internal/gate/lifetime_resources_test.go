@@ -217,15 +217,38 @@ func TestLaneIncomplete(t *testing.T) {
 	requireLaneRetained(t, root, prospectiveartifact.CheckoutName)
 }
 
-// TestLaneSelectionCloseFailure is PL123. The selected build leaves a nested user on the
-// selection alone, so only the selection release reports it, and the lane must consume it.
-func TestLaneSelectionCloseFailure(t *testing.T) {
+// nestedUserCommand is the shell command that runs the nested-user helper.
+func nestedUserCommand(t *testing.T) string {
+	t.Helper()
 	user := processtest.Helper(t, nestedUserHelper)
 	nested := []string{"env"}
 	for _, entry := range append(user.Env[len(os.Environ()):], user.Path) {
 		nested = append(nested, sanitize.ShellQuote(entry))
 	}
-	build := "#!/bin/sh\nshift $(($# - 2))\n" + strings.Join(nested, " ") + "\nprintf '#!/bin/sh\\n' > \"$2\"\nchmod 0700 \"$2\"\n"
-	root := laneRoot(t, map[string]string{"scripts/go-build.sh": build}, map[string]any{"name": "selected", "argv": []string{runBinaryArgvToken}})
+	return strings.Join(nested, " ")
+}
+
+// selectedLane commits a lane whose one check runs the selected executable that build publishes.
+func selectedLane(t *testing.T, build string) string {
+	t.Helper()
+	return laneRoot(t, map[string]string{"scripts/go-build.sh": "#!/bin/sh\nshift $(($# - 2))\n" + build}, map[string]any{"name": "selected", "argv": []string{runBinaryArgvToken}})
+}
+
+// TestLaneSelectionCloseFailure is PL123. The selected build leaves a nested user on the
+// selection alone, so only the selection release reports it, and the lane must consume it.
+func TestLaneSelectionCloseFailure(t *testing.T) {
+	root := selectedLane(t, nestedUserCommand(t)+"\nprintf '#!/bin/sh\\n' > \"$2\"\nchmod 0700 \"$2\"\n")
+	requireLaneRetained(t, root, filepath.Join("bench-run-*", "bench"))
+}
+
+// TestLaneSelectedExecutableUser is story 28. The check runs the selected executable, which
+// leaves a nested user and exits zero, so the selection must retain the executable that user
+// can still run.
+func TestLaneSelectedExecutableUser(t *testing.T) {
+	executable := filepath.Join(t.TempDir(), "selected")
+	if err := os.WriteFile(executable, []byte("#!/bin/sh\nexec "+nestedUserCommand(t)+"\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	root := selectedLane(t, "cp "+sanitize.ShellQuote(executable)+" \"$2\"\n")
 	requireLaneRetained(t, root, filepath.Join("bench-run-*", "bench"))
 }

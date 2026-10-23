@@ -56,13 +56,10 @@ type Owner struct {
 	repository string
 	remove     func(string, string) error
 	protocol   *protection.Protocol
-	resource   protection.Descriptor
+	generation protection.Generation
 	closeOnce  sync.Once
 	closeErr   error
 }
-
-// errRetained marks a bundle whose users are unresolved or unobserved, so it stays in place.
-var errRetained = errors.New("stays retained")
 
 // Root returns the bundle root.
 func (o *Owner) Root() string { return o.root }
@@ -111,12 +108,13 @@ func (f Factory) Open(repository string) (*Owner, error) {
 	}
 	o := &Owner{root: root, repository: repository, remove: remove, protocol: protocol}
 	record := Record{Schema: RecordSchema, OwnerPID: os.Getpid(), CommonDir: common}
+	// The generation opens before the record names it and before any checkout use.
 	if protocol != nil {
-		if o.resource, err = protect(protocol, root); err != nil {
+		if o.generation, err = bundleDirectory.Open(protocol, root); err != nil {
 			_ = os.RemoveAll(root)
 			return nil, fmt.Errorf("protect prospective artifact bundle: %w", err)
 		}
-		record.Protection = o.resource.ResourceID
+		record.Protection = o.generation.Resource.ResourceID
 	}
 	if err := Publish(root, record); err != nil {
 		_ = os.RemoveAll(root)
@@ -139,10 +137,10 @@ func (o *Owner) Materialize(tree string) error {
 // Resources names the bundle's generation for a launch that uses the checkout. An unprotected
 // bundle names none.
 func (o *Owner) Resources() []protection.Descriptor {
-	if o == nil || o.resource == (protection.Descriptor{}) {
+	if o == nil {
 		return nil
 	}
-	return []protection.Descriptor{o.resource}
+	return o.generation.Resources()
 }
 
 // Close observes every registered user before it removes the Git registration and the
@@ -164,11 +162,11 @@ func (o *Owner) CloseAfter(release func() error) error {
 	o.closeOnce.Do(func() {
 		if release != nil {
 			if err := release(); err != nil {
-				o.closeErr = fmt.Errorf("prospective bundle %s %w: %w", o.root, errRetained, err)
+				o.closeErr = fmt.Errorf("prospective bundle %s %w: %w", o.root, protection.ErrRetained, err)
 				return
 			}
 		}
-		o.closeErr = releaseBundle(o.protocol, o.resource, o.repository, o.root, o.remove)
+		o.closeErr = releaseBundle(o.generation, o.repository, o.root, o.remove)
 	})
 	return o.closeErr
 }
@@ -240,13 +238,13 @@ func sweep(base, repository, common string, probe func(int) error, remove func(s
 		if record.Protection == "" || protocol == nil {
 			continue
 		}
-		resource, err := describe(root)
+		resource, err := bundleDirectory.Describe(root)
 		if err != nil {
 			continue
 		}
 		resource.ResourceID = record.Protection
-		switch err := releaseBundle(protocol, resource, repository, root, remove); {
-		case errors.Is(err, errRetained):
+		switch err := releaseBundle(protection.Generation{Protocol: protocol, Resource: resource}, repository, root, remove); {
+		case errors.Is(err, protection.ErrRetained):
 			continue
 		case err != nil:
 			return fmt.Errorf("recover prospective artifact bundle: %w", err)
@@ -309,29 +307,14 @@ func publish(replacer durablefile.Replacer, root string, record Record) error {
 	return replacer.Replace(filepath.Join(root, RecordName), append(data, '\n'), RecordMode)
 }
 
-// releaseBundle observes every user of a protected bundle under its protocol lock. Only a safe
-// generation removes the Git registration, still under that lock, and then the bundle root.
-// An unresolved or unobserved generation returns errRetained; a removal failure returns itself.
-func releaseBundle(p *protection.Protocol, resource protection.Descriptor, repository, root string, remove func(string, string) error) error {
-	var removal error
-	unregister := func() error {
-		removal = unregisterCheckout(repository, filepath.Join(root, CheckoutName), remove)
-		return removal
-	}
-	if resource == (protection.Descriptor{}) {
-		if err := unregister(); err != nil {
-			return err
-		}
-		return os.RemoveAll(root)
-	}
-	disposition, err := p.SealAndObserve(resource, unregister)
-	switch {
-	case removal != nil:
-		return removal
-	case err != nil:
-		return fmt.Errorf("prospective bundle %s %w: %w", root, errRetained, err)
-	case disposition.State != protection.Safe:
-		return fmt.Errorf("prospective bundle %s %w: protection is %s for users %v", root, errRetained, disposition.State, disposition.Users)
+// releaseBundle observes every user of the bundle's generation under its protocol lock. Only a
+// safe generation removes the Git registration, still under that lock, and then the bundle root.
+// An unresolved or unobserved generation returns protection.ErrRetained; a removal failure
+// returns itself.
+func releaseBundle(generation protection.Generation, repository, root string, remove func(string, string) error) error {
+	unregister := func() error { return unregisterCheckout(repository, filepath.Join(root, CheckoutName), remove) }
+	if err := generation.Release("prospective bundle "+root, unregister); err != nil {
+		return err
 	}
 	return os.RemoveAll(root)
 }

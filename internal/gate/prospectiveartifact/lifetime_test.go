@@ -43,11 +43,28 @@ func testBundle(t *testing.T, base string, record Record) string {
 // protectedGeneration opens the protection generation of a planted bundle root, as an owner does.
 func protectedGeneration(t *testing.T, root string) string {
 	t.Helper()
-	resource, err := protect(protection.Installed(), root)
+	generation, err := bundleDirectory.Open(protection.Installed(), root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return resource.ResourceID
+	return generation.Resource.ResourceID
+}
+
+// TestBundleValidatorRefusesAForeignBinding pins the bundle validator that the composition root
+// installs: it accepts a bundle's own descriptor and refuses one whose binding names another
+// directory at the same path.
+func TestBundleValidatorRefusesAForeignBinding(t *testing.T) {
+	d, err := bundleDirectory.Describe(plantedBundle(t, t.TempDir()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateProtection(d); err != nil {
+		t.Fatalf("ValidateProtection(own bundle) = %v, want nil", err)
+	}
+	d.Binding = "0:0"
+	if err := ValidateProtection(d); err == nil || !strings.Contains(err.Error(), "binding 0:0 does not name bundle") {
+		t.Fatalf("ValidateProtection(foreign binding) = %v, want a binding refusal", err)
+	}
 }
 
 // materializedOwner opens one protected owner under base and materializes the repository's tree.

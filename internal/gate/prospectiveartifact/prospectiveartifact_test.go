@@ -60,7 +60,7 @@ func TestOpenPublishesPrivateOwnerRecordBeforeCheckout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := (Record{Schema: RecordSchema, OwnerPID: os.Getpid(), CommonDir: common, Protection: owner.resource.ResourceID}); record != want || want.Protection == "" {
+	if want := (Record{Schema: RecordSchema, OwnerPID: os.Getpid(), CommonDir: common, Protection: owner.generation.Resource.ResourceID}); record != want || want.Protection == "" {
 		t.Fatalf("owner record = %#v, want %#v", record, want)
 	}
 	if _, err := os.Lstat(owner.Checkout()); !errors.Is(err, os.ErrNotExist) {

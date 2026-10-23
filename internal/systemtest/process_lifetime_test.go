@@ -200,11 +200,16 @@ func TestProcessLifetimeNestedGate(t *testing.T) {
 	if after := evidenceNames(t, evidence); !reflect.DeepEqual(after, before) {
 		t.Fatalf("gate evidence after the refusal = %v, want the prior %v", after, before)
 	}
-	checkout := filepath.Join(oneProspectiveBundle(t, private), prospectiveartifact.CheckoutName)
+	bundle := oneProspectiveBundle(t, private)
+	checkout := filepath.Join(bundle, prospectiveartifact.CheckoutName)
 	if _, err := os.Stat(checkout); err != nil {
 		t.Fatalf("checkout with a surviving phase user = %v, want retained", err)
 	}
 	requireCheckoutRegistered(t, root, checkout, true)
+	// The surviving phase runs the selected executable, so the selection must keep it.
+	if selected, err := filepath.Glob(filepath.Join(bundle, "bench-run-*", "bench")); err != nil || len(selected) != 1 {
+		t.Fatalf("selected executable with a surviving phase user = %v, %v; want the one retained executable", selected, err)
+	}
 }
 
 // evidenceNames lists the retained evidence records, and none when the store is absent.

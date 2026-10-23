@@ -191,7 +191,9 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
 	// The code derives from the whole outcome, so an undrained group or open obligation is not green.
-	run := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr, append(cache, bundle.Resources()...)...)
+	// The oracle can run the selected executable, so it registers on the selection too.
+	local := append(append(cache, bundle.Resources()...), selection.Resources()...)
+	run := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr, local...)
 	rc := run.Code
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.finish", Root: runtimeRoot, Exit: &rc})
 	if ctx.Err() != nil {

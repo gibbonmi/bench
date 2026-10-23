@@ -167,10 +167,13 @@ func RootConformanceRuns(root, kit string) bool {
 // graded root.
 const conformancePackagePath = "internal/conformance"
 
+// withRunBinary hands selection to every phase. A phase that receives the executable can run
+// it, so its launch registers on the selection's generation too.
 func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 	selected := make([]Phase, len(phases))
 	for i, phase := range phases {
 		selected[i] = phase
+		selected[i].Resources = append(append([]protection.Descriptor(nil), phase.Resources...), selection.Resources()...)
 		selected[i].Argv = append([]string(nil), phase.Argv...)
 		if len(selected[i].Argv) > 0 && selected[i].Argv[0] == runBinaryArgvToken {
 			selected[i].Argv[0] = selection.Path
@@ -312,7 +315,7 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 		}()
 		for i := range phases {
 			phases[i].Env = mergeEnv(phases[i].Env, run.Entries())
-			phases[i].Resources = run.Resources()
+			phases[i].Resources = append(phases[i].Resources, run.Resources()...)
 		}
 		base = withCheckoutGuard(base, root)
 	}
