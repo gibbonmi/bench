@@ -176,6 +176,9 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	if envelope != "" {
 		plan.mode = "restore"
 		plan.manifest, err = readResetRestore(root, selected, envelope)
+		if err == nil {
+			plan.manifest, err = restoreOntoTip(root, plan.manifest, plan.tip)
+		}
 		checkpoint = plan.manifest.Base
 	} else {
 		checkpoint, err = git.ResolveCommit(selected.Worktree, checkpoint, "--quiet", "--end-of-options")
@@ -263,6 +266,15 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	}
 	if len(collisions) > 0 {
 		return resetPlan{}, refusalError{refusal{detail: "ignored content would be overwritten", paths: collisions}}
+	}
+	if envelope != "" {
+		kept, err := authorization.IsAncestor(root, plan.tip, plan.manifest.Tip)
+		if err != nil {
+			return resetPlan{}, err
+		}
+		if !kept {
+			return resetPlan{}, refusalError{refusal{detail: "restore would drop commits on the assignment branch", observed: plan.tip, wanted: plan.manifest.Tip}}
+		}
 	}
 	if len(plan.status) == 0 {
 		plan.tracked = "clean"

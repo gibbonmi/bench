@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Reset restore keeps later commits
+
+- Fixed `bench worktree reset --restore`, which now keeps the branch tip when the branch has commits after the envelope's tip. The restore merges the preserved index and working tree onto that tip. A merge conflict, or a branch that does not contain the envelope's tip, refuses the plan before any write. Before, the restore moved the branch back to the envelope's tip and dropped the later commits.
+
 ### Test cost signal
 
 - Changed every Bench-owned `go test` command, which now passes a `-timeout` flag of ten minutes from one constant. This includes the gate `test`, `race`, and `system` phases, the release steps, and every `bench test` run. A command-line flag takes precedence over a `GOFLAGS` value. So a linked repository that sets a `-timeout` in `GOFLAGS` now gets the ten-minute limit in its gate `test` phase. Before, the limit was the implicit Go default of ten minutes, and a `-timeout` in `GOFLAGS` could change it.
