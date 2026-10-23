@@ -4,14 +4,33 @@ package systemtest
 
 import (
 	"os"
+	"slices"
 	"strings"
+	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
-func systemBaseEnvironment() []string {
-	return mergeEnvironment(os.Environ(), []string{bounds.UnboundedWaitsEnv})
+func systemBaseEnvironment() []string { return systemEnvironmentFrom(os.Environ()) }
+
+// systemEnvironmentFrom drops the inherited protection vector, so a nested CLI registers on no
+// store of the process that runs go test. A test that needs a vector supplies it as an override.
+func systemEnvironmentFrom(inherited []string) []string {
+	return mergeEnvironment(inherited, []string{bounds.UnboundedWaitsEnv, protection.Env})
+}
+
+func TestSystemBaseEnvironmentDropsTheInheritedProtectionVector(t *testing.T) {
+	t.Parallel()
+	base := systemEnvironmentFrom([]string{"KEEP=1", protection.Env + "=inherited"})
+	if namesEnv(base, protection.Env) || !slices.Contains(base, "KEEP=1") {
+		t.Fatalf("system base environment = %q, want KEEP=1 and no %s", base, protection.Env)
+	}
+	supplied := protection.Env + "=supplied"
+	if got := mergeEnvironment(base, []string{supplied}); !slices.Contains(got, supplied) {
+		t.Fatalf("child environment = %q, want the test-supplied %s", got, supplied)
+	}
 }
 
 // mergeEnvironment layers overrides over base. An override spelled as a bare NAME with no
