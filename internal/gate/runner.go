@@ -49,28 +49,24 @@ type processGroupResult struct {
 	Outcome   subprocess.Outcome
 }
 
+// gateCancelRequest answers a deadline that sends TERM for the gate timeout, and an
+// interruption that sends INT otherwise.
+func gateCancelRequest(ctx context.Context) (subprocess.Cause, syscall.Signal) {
+	if errors.Is(context.Cause(ctx), errGateTimeout) {
+		return subprocess.CauseDeadline, syscall.SIGTERM
+	}
+	return subprocess.CauseInterruption, syscall.SIGINT
+}
+
 // runProcessGroupCommand runs cmd as one group registered on each inherited and local resource.
 // The timeout needs the catchable opener most: with no operator present, the child's last
 // output is the only account of where the run stuck.
 func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd, local ...protection.Descriptor) processGroupResult {
-	inherited, err := protection.Inherited()
+	streams := subprocess.Streams{Stdin: cmd.Stdin, Stdout: subprocess.Output{Writer: cmd.Stdout}, Stderr: subprocess.Output{Writer: cmd.Stderr}}
+	outcome, err := subprocess.RunInherited(ctx, cmd, gateProcessPolicy, streams, gateCancelRequest, local...)
 	if err != nil {
 		return processGroupResult{Code: 1, StartErr: err}
 	}
-	streams := subprocess.Streams{Stdin: cmd.Stdin, Stdout: subprocess.Output{Writer: cmd.Stdout}, Stderr: subprocess.Output{Writer: cmd.Stderr}}
-	lifetime := subprocess.NewLifetime(cmd, gateProcessPolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: append(inherited, local...)})
-	if err := lifetime.Start(); err != nil {
-		return processGroupResult{Code: 1, StartErr: err}
-	}
-	stop := context.AfterFunc(ctx, func() {
-		if errors.Is(context.Cause(ctx), errGateTimeout) {
-			lifetime.Cancel(subprocess.CauseDeadline, syscall.SIGTERM)
-			return
-		}
-		lifetime.Cancel(subprocess.CauseInterruption, syscall.SIGINT)
-	})
-	defer stop()
-	outcome, _ := lifetime.Wait()
 	result := processGroupResult{StartErr: outcome.Process.StartErr, Outcome: outcome}
 	switch {
 	case outcome.Cancellation.Cause == subprocess.CauseDeadline:

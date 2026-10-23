@@ -265,23 +265,15 @@ func runStep(ctx context.Context, root string, step Step, stderr io.Writer, reso
 	if step.Run != nil {
 		return step.Run(root)
 	}
-	inherited, err := protection.Inherited()
-	if err != nil {
-		return err
-	}
 	cmd := exec.Command(step.Argv[0], step.Argv[1:]...)
 	cmd.Dir = root
 	cmd.Env = append(os.Environ(), step.Env...)
 	streams := subprocess.Streams{Stdout: subprocess.Output{Writer: stderr}, MergeStderr: true}
-	registration := subprocess.Registration{Protocol: protection.Installed(), Resources: append(inherited, resources...)}
-	lifetime := subprocess.NewLifetime(cmd, stepPolicy, streams, registration)
-	if err := lifetime.Start(); err != nil {
+	// The run has no deadline, so every cancellation is an interruption.
+	outcome, err := subprocess.RunInherited(ctx, cmd, stepPolicy, streams, subprocess.Interrupt(syscall.SIGTERM), resources...)
+	if err != nil {
 		return err
 	}
-	// The run has no deadline, so every cancellation is an interruption.
-	stop := context.AfterFunc(ctx, func() { lifetime.Cancel(subprocess.CauseInterruption, syscall.SIGTERM) })
-	defer stop()
-	outcome, _ := lifetime.Wait()
 	var failed error
 	switch {
 	case outcome.Process.StartErr != nil:

@@ -304,19 +304,8 @@ var phasePolicy = subprocess.Policy{
 // launch runs cmd under phasePolicy as one group that registers on the inherited union, the
 // release-evidence generation, and local. A cancellation of ctx is an interruption that sends TERM.
 func (r *runner) launch(ctx context.Context, cmd *exec.Cmd, streams subprocess.Streams, local ...protection.Descriptor) (subprocess.Outcome, error) {
-	inherited, err := protection.Inherited()
-	if err != nil {
-		return subprocess.Outcome{}, err
-	}
-	resources := append(append(inherited, r.evidence.Resources()...), local...)
-	lifetime := subprocess.NewLifetime(cmd, phasePolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: resources})
-	if err := lifetime.Start(); err != nil {
-		return subprocess.Outcome{}, err
-	}
-	stop := context.AfterFunc(ctx, func() { lifetime.Cancel(subprocess.CauseInterruption, syscall.SIGTERM) })
-	defer stop()
-	outcome, _ := lifetime.Wait()
-	return outcome, nil
+	resources := append(append([]protection.Descriptor(nil), r.evidence.Resources()...), local...)
+	return subprocess.RunInherited(ctx, cmd, phasePolicy, streams, subprocess.Interrupt(syscall.SIGTERM), resources...)
 }
 
 func (r *runner) populateBaseIdentity() error {

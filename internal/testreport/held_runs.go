@@ -25,7 +25,8 @@ func Hold(ctx context.Context, root string, request Request) *HeldRuns {
 
 // Run executes the held request once and returns its outcome, report, and exit. A failed
 // selection under a cancelled context reads interrupted, and a fresh build closes after its run.
-func (h *HeldRuns) Run() (Outcome, string, int) {
+// A failed close of that build stays beside the run's report and fails the run.
+func (h *HeldRuns) Run() (outcome Outcome, out string, code int) {
 	if outcome, out, code, answered := h.request.answerWithoutSelection(h.root); answered {
 		return outcome, out, code
 	}
@@ -37,7 +38,11 @@ func (h *HeldRuns) Run() (Outcome, string, int) {
 		return selectionFailure(err)
 	}
 	if selection != h.held {
-		defer selection.Close()
+		defer func() {
+			if err := selection.Close(); err != nil {
+				outcome, out, code = withCleanupFailure(outcome, out, code, SelectionCleanupFailure(err))
+			}
+		}()
 	}
 	return runSelected(h.ctx, h.root, h.request, selection)
 }
@@ -47,7 +52,8 @@ func (h *HeldRuns) Builds() int {
 	return h.builds
 }
 
-// Close releases the held selection after the last run.
+// Close releases the held selection after the last run. The caller consumes its error as a
+// cleanup failure beside the runs' results.
 func (h *HeldRuns) Close() error {
 	return h.held.Close()
 }

@@ -116,6 +116,25 @@ func TestSelectionCloseFailure(t *testing.T) {
 		runSelectionCloseHelper(t)
 		return
 	}
+	launchSelectionCloseHelper(t, "TestSelectionCloseFailure")
+}
+
+// TestHeldSelectionCloseFailure is PL122 for held runs. The second run's held build fails its
+// validation, so the run owns a fresh build that a nested user keeps protected. That run must
+// consume the fresh build's Close failure beside its report, and the held build's Close must
+// return its own failure.
+func TestHeldSelectionCloseFailure(t *testing.T) {
+	if os.Getenv(selectionCloseHelperEnv) != "" {
+		runHeldSelectionCloseHelper(t)
+		return
+	}
+	launchSelectionCloseHelper(t, "TestHeldSelectionCloseFailure")
+}
+
+// launchSelectionCloseHelper runs the test that name names as the focused-run owner. Its go stub
+// starts the nested user and then prints the canned passing report.
+func launchSelectionCloseHelper(t *testing.T, name string) {
+	t.Helper()
 	events := cannedSetNamed(t, "passing").events
 	quoted := make([]string, len(events))
 	for i, event := range events {
@@ -126,7 +145,7 @@ func TestSelectionCloseFailure(t *testing.T) {
 	writeGoStub(t, filepath.Join(goDir, "go"), "#!/usr/bin/env bash\n"+
 		"env "+nestedUserGroupEnv+"="+strconv.Itoa(syscall.Getpgrp())+" "+sanitize.ShellQuote(os.Args[0])+" -test.run='^TestNestedSelectionUser$' >/dev/null 2>&1 || exit 9\n"+
 		"printf '%s\\n' "+strings.Join(quoted, " ")+"\n")
-	helper := exec.Command(os.Args[0], "-test.run=^TestSelectionCloseFailure$", "-test.timeout="+deadline().String())
+	helper := exec.Command(os.Args[0], "-test.run=^"+name+"$", "-test.timeout="+deadline().String())
 	// The run under test owns the only vector, so an outer run's resources stay out of it.
 	helper.Env = protection.Environ(append(os.Environ(),
 		selectionCloseHelperEnv+"=1",
@@ -168,6 +187,62 @@ func runSelectionCloseHelper(t *testing.T) {
 	}
 	if info, err := os.Stat(selected); err != nil || !info.Mode().IsRegular() {
 		t.Fatalf("retained executable = %v, %v; want the selected file", info, err)
+	}
+}
+
+// runHeldSelectionCloseHelper is the held-runs owner under the protocol of the selection and
+// cache kinds. The first build stops validating after the first run, so the second run builds.
+func runHeldSelectionCloseHelper(t *testing.T) {
+	installSelectionProtocol()
+	var built []string
+	stale := false
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
+			built = append(built, output)
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(_, executable string) error {
+			if stale && executable == built[0] {
+				return errors.New("stale held build")
+			}
+			return nil
+		},
+	})
+	t.Cleanup(func() {
+		for _, selected := range built {
+			discardSelectionStores(t, selected)
+		}
+	})
+	root := t.TempDir()
+	request, line, _ := Prepare(root, []string{"--package", "./..."})
+	if line != "" {
+		t.Fatalf("Prepare = %q", line)
+	}
+	held := Hold(context.Background(), root, request)
+	if outcome, output, code := held.Run(); code != 0 || outcome.Kind != OutcomePassed {
+		t.Fatalf("first Run = (%q, %d, %q), want (passed, 0)", outcome.Kind, code, output)
+	}
+	stale = true
+	outcome, output, code := held.Run()
+	if code != 1 || outcome.Kind != OutcomeRefused || !strings.HasPrefix(output, passingPackages) {
+		t.Fatalf("second Run = (%q, %d, %q), want (refused, 1) with the child report %q", outcome.Kind, code, output, passingPackages)
+	}
+	for _, want := range []string{"error: Bench executable selection cleanup failed — ", protection.ErrRetained.Error()} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("second Run output = %q, want %q", output, want)
+		}
+	}
+	if err := held.Close(); !errors.Is(err, protection.ErrRetained) {
+		t.Fatalf("Close = %v, want %v", err, protection.ErrRetained)
+	}
+	if len(built) != 2 {
+		t.Fatalf("builds = %d, want 2", len(built))
+	}
+	for _, selected := range built {
+		if info, err := os.Stat(selected); err != nil || !info.Mode().IsRegular() {
+			t.Fatalf("retained executable = %v, %v; want the selected file", info, err)
+		}
 	}
 }
 

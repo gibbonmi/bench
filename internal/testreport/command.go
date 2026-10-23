@@ -165,10 +165,15 @@ func runFocusedRequest(root string, request focusedRequest) (outcome Outcome, ou
 	}
 	defer func() {
 		if err := selection.Close(); err != nil {
-			outcome, out, code = withCleanupFailure(outcome, out, code, toon.Errorf("Bench executable selection cleanup failed", err.Error())+"\n")
+			outcome, out, code = withCleanupFailure(outcome, out, code, SelectionCleanupFailure(err))
 		}
 	}()
 	return runSelected(ctx, root, request, selection)
+}
+
+// SelectionCleanupFailure is the report line of a run-binary selection whose Close failed.
+func SelectionCleanupFailure(err error) string {
+	return toon.Errorf("Bench executable selection cleanup failed", err.Error()) + "\n"
 }
 
 // withCleanupFailure keeps the child's report and outcome beside a required cleanup failure,
@@ -277,7 +282,7 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		}
 		defer func() {
 			if err := run.Close(); err != nil {
-				outcome, out, code = refusedOutcome(toon.Errorf("kit test cleanup failed", err.Error())+"\n", 1)
+				outcome, out, code = withCleanupFailure(outcome, out, code, toon.Errorf("kit test cleanup failed", err.Error())+"\n")
 			}
 		}()
 		env = append(env, run.Entries()...)
@@ -300,18 +305,11 @@ var goChildPolicy = subprocess.Policy{
 // captures the child's stdout. The cancellation of ctx interrupts the group. The captured
 // stdout is complete only when its stream status is complete.
 func runGoChild(ctx context.Context, cmd *exec.Cmd, local []protection.Descriptor) subprocess.Outcome {
-	inherited, err := protection.Inherited()
+	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}}
+	outcome, err := subprocess.RunInherited(ctx, cmd, goChildPolicy, streams, subprocess.Interrupt(syscall.SIGINT), local...)
 	if err != nil {
 		return subprocess.Outcome{Process: subprocess.Process{StartErr: err}}
 	}
-	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}}
-	lifetime := subprocess.NewLifetime(cmd, goChildPolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: append(inherited, local...)})
-	if err := lifetime.Start(); err != nil {
-		return subprocess.Outcome{Process: subprocess.Process{StartErr: err}}
-	}
-	stop := context.AfterFunc(ctx, func() { lifetime.Cancel(subprocess.CauseInterruption, syscall.SIGINT) })
-	defer stop()
-	outcome, _ := lifetime.Wait()
 	return outcome
 }
 
