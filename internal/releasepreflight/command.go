@@ -9,14 +9,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"slices"
 	"strings"
 	"syscall"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/releaseevidence"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 type commandFailure struct{ failure Failure }
@@ -29,6 +31,9 @@ type runner struct {
 	binaryVersion string
 	stderr        io.Writer
 	identity      Identity
+	// evidence is the release-evidence generation that every phase launch registers on, so
+	// promotion refuses while a phase user stays unresolved.
+	evidence protection.Generation
 }
 
 func Command(args []string, binaryVersion string, stderr io.Writer) int {
@@ -52,6 +57,11 @@ func Command(args []string, binaryVersion string, stderr io.Writer) int {
 	if err := r.populateBaseIdentity(); err != nil {
 		failure := failureFrom(err, "identity")
 		emitFailure(stderr, failure)
+		return 1
+	}
+	// The generation opens before the first phase starts, so every phase launch registers on it.
+	if r.evidence, err = releaseevidence.Protect(root); err != nil {
+		emitFailure(stderr, Failure{Kind: "evidence", Message: err.Error()})
 		return 1
 	}
 	results := r.run(ctx, focused)
@@ -244,7 +254,7 @@ func (r *runner) runExternal(ctx context.Context, name string) (code int, result
 	if _, err := exec.LookPath(argv[0]); err != nil {
 		return 1, commandFailure{Failure{Kind: "tool", Message: "required tool is missing or not executable: " + argv[0]}}
 	}
-	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
+	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = r.root
 	base, err := gocache.Apply(os.Environ())
 	if err != nil {
@@ -260,36 +270,53 @@ func (r *runner) runExternal(ctx context.Context, name string) (code int, result
 		}
 	}()
 	cmd.Env = append(base, run.Entries()...)
-	cmd.Stdout = r.stderr
-	cmd.Stderr = r.stderr
-	if runtime.GOOS != "windows" {
-		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	outcome, err := r.launch(ctx, cmd, subprocess.Streams{Stdout: subprocess.Output{Writer: r.stderr}, MergeStderr: true}, run.Resources()...)
+	if err != nil {
+		return 1, err
 	}
-	if err := cmd.Start(); err != nil {
+	switch {
+	case outcome.Cancellation.Cause != subprocess.CauseNone:
+		return 0, errors.Join(ctx.Err(), outcome.Uncertified())
+	case outcome.Process.StartErr != nil:
 		return 1, commandFailure{Failure{Kind: "tool", Message: "could not start required phase tool: " + argv[0]}}
 	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		if err == nil {
-			return 0, nil
-		}
-		if ee := new(exec.ExitError); errors.As(err, &ee) {
-			return ee.ExitCode(), commandFailure{Failure{Kind: "phase", Message: name + " phase failed"}}
-		}
-		return 1, err
-	case <-ctx.Done():
-		if cmd.Process != nil {
-			if runtime.GOOS != "windows" {
-				_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
-			} else {
-				_ = cmd.Process.Kill()
-			}
-		}
-		<-done
-		return 0, ctx.Err()
+	// A raw phase status cannot certify the phase: an unresolved cleanup obligation, stream, or
+	// protection fails it beside the child result.
+	uncertified := outcome.Uncertified()
+	if ee := new(exec.ExitError); errors.As(outcome.Process.WaitErr, &ee) {
+		return ee.ExitCode(), errors.Join(commandFailure{Failure{Kind: "phase", Message: name + " phase failed"}}, uncertified)
 	}
+	if err := errors.Join(outcome.Process.WaitErr, uncertified); err != nil {
+		return 1, err
+	}
+	return 0, nil
+}
+
+// phasePolicy preserves a phase or scanner result after a normal exit, and KILL follows the
+// shutdown grace of a cancellation.
+var phasePolicy = subprocess.Policy{
+	Normal: subprocess.Preserve,
+	Grace:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessShutdownGrace)),
+	Final:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessFinalWindow)),
+	Poll:   bounds.ProcessPoll,
+}
+
+// launch runs cmd under phasePolicy as one group that registers on the inherited union, the
+// release-evidence generation, and local. A cancellation of ctx is an interruption that sends TERM.
+func (r *runner) launch(ctx context.Context, cmd *exec.Cmd, streams subprocess.Streams, local ...protection.Descriptor) (subprocess.Outcome, error) {
+	inherited, err := protection.Inherited()
+	if err != nil {
+		return subprocess.Outcome{}, err
+	}
+	resources := append(append(inherited, r.evidence.Resources()...), local...)
+	lifetime := subprocess.NewLifetime(cmd, phasePolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: resources})
+	if err := lifetime.Start(); err != nil {
+		return subprocess.Outcome{}, err
+	}
+	stop := context.AfterFunc(ctx, func() { lifetime.Cancel(subprocess.CauseInterruption, syscall.SIGTERM) })
+	defer stop()
+	outcome, _ := lifetime.Wait()
+	return outcome, nil
 }
 
 func (r *runner) populateBaseIdentity() error {
