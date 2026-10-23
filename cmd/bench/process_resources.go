@@ -5,6 +5,7 @@ import (
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	"github.com/gibbonmi/bench/internal/gocache"
+	"github.com/gibbonmi/bench/internal/releaseevidence"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
@@ -13,10 +14,11 @@ import (
 // comes from its resource owner; a kind without a row refuses admission.
 var processResources = protection.Protocol{
 	Validators: protection.Validators{
-		protection.KindCache:       gocache.ValidateProtection,
-		protection.KindProspective: prospectiveartifact.ValidateProtection,
-		protection.KindBinary:      runbinary.ValidateProtection,
-		protection.KindKitTest:     env.ValidateProtection,
+		protection.KindCache:           gocache.ValidateProtection,
+		protection.KindProspective:     prospectiveartifact.ValidateProtection,
+		protection.KindBinary:          runbinary.ValidateProtection,
+		protection.KindKitTest:         env.ValidateProtection,
+		protection.KindReleaseEvidence: releaseevidence.ValidateProtection,
 	},
 	ReadLimit: bounds.ControlRecordLimit,
 }

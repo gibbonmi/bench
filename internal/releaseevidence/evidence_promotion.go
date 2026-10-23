@@ -31,16 +31,17 @@ func PromoteEvidence(root string, mode Mode, results []Result, manifest Manifest
 // PromoteEvidenceFiles atomically replaces dist/preflight with phase records, a manifest, and named files.
 // Callers must provide base file names and a root whose dist path is absent or a real directory.
 // It returns stage, write, synchronization, or exchange errors. A pre-exchange failure leaves existing preflight evidence unchanged.
+// Release-evidence protection that is not safe refuses before any stage cleanup or replacement.
 func PromoteEvidenceFiles(root string, mode Mode, results []Result, manifest Manifest, files map[string][]byte) error {
-	dist := filepath.Join(root, "dist")
-	if info, err := os.Lstat(dist); err == nil && (!info.IsDir() || info.Mode()&os.ModeSymlink != 0) {
-		return fmt.Errorf("dist output target is not a real directory")
-	} else if err != nil && !os.IsNotExist(err) {
+	dist, err := evidenceDist(root)
+	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(dist, 0o755); err != nil {
-		return err
-	}
+	return publishEvidence(dist, func() error { return promoteStage(dist, mode, results, manifest, files) })
+}
+
+// promoteStage cleans abandoned stages, writes a new stage, and exchanges it with the target.
+func promoteStage(dist string, mode Mode, results []Result, manifest Manifest, files map[string][]byte) error {
 	if err := cleanupAbandonedStages(dist); err != nil {
 		return err
 	}
@@ -111,6 +112,8 @@ func PromoteEvidenceFiles(root string, mode Mode, results []Result, manifest Man
 	return nil
 }
 
+// cleanupAbandonedStages removes each stage that a valid owner marker names. An owner marker
+// alone grants no deletion authority, so it runs only under safe release-evidence protection.
 func cleanupAbandonedStages(dist string) error {
 	entries, err := os.ReadDir(dist)
 	if err != nil {
