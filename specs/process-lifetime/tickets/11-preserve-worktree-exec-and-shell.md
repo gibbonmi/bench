@@ -68,5 +68,8 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --check root-conformance`
 - `bench test --package ./cmd/bench`
 - `bench test --package ./internal/conformance`
+- `bench test --package ./internal/gocache`
+- `bench test --package ./internal/releaseevidence`
+- `bench test --package ./internal/subprocess/protection`
 
 Mutation witness: Add a normal-exit group kill, strip the descriptor vector, or release the interrupted shell lease. The real command, environment, and lease assertions must fail.

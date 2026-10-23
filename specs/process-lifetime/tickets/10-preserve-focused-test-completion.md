@@ -58,5 +58,13 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/testreport`
 - `bench test --check root-conformance`
 - `bench test --package ./internal/conformance`
+- `bench test --package ./internal/gate`
+- `bench test --package ./internal/preprelease`
+- `bench test --package ./internal/probe`
+- `bench test --package ./internal/releasepreflight`
+- `bench test --package ./internal/subprocess`
+- `bench test --package ./internal/subprocess/processtest`
+- `bench test --package ./internal/subprocess/protection`
+- `bench test --package ./cmd/bench`
 
 Mutation witness: Treat forced EOF as a complete report, wait before decoder completion, or discard Selection.Close failure. The real report and retained executable witnesses must fail.
