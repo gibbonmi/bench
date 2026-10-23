@@ -265,7 +265,7 @@ On darwin, the root resides under /private/tmp, and BOOT-ID is kern.bootsessionu
 No environment variable selects the root.
 Each root directory is a real directory with mode 0700 that the effective user owns.
 Any other root condition prevents launch.
-The store name is the kind and a SHA-256 digest of the canonical resource path and the binding.
+The store name is the kind and the first 16 bytes of a SHA-256 digest of the canonical resource path and the binding, in hexadecimal.
 A store does not reside inside its resource.
 Safe removal deletes the store after it deletes the resource.
 
