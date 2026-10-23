@@ -1,8 +1,8 @@
 # Retain selected binaries for unresolved users
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/runbinary/lifetime_resources_test.go (new), internal/runbinary/lifetime_test.go (new), internal/runbinary/pdeathsig_linux_test.go, internal/runbinary/protection.go (new), internal/runbinary/runbinary.go, internal/runbinary/runbinary_test.go, internal/runbinary/sysprocattr_darwin.go, internal/runbinary/sysprocattr_linux.go, internal/runbinary/sysprocattr_other.go, internal/subprocess/protection, internal/subprocess/outcome.go, internal/subprocess/outcome_test.go (new), internal/gocache/protection.go, internal/gocache/protection_test.go
-Covers: PL34, PL35, PL36
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/runbinary/lifetime_resources_test.go (new), internal/runbinary/lifetime_test.go (new), internal/runbinary/pdeathsig_linux_test.go, internal/runbinary/protection.go (new), internal/runbinary/runbinary.go, internal/runbinary/runbinary_test.go, internal/runbinary/sysprocattr_darwin.go, internal/runbinary/sysprocattr_linux.go, internal/runbinary/sysprocattr_other.go, internal/subprocess/protection, internal/subprocess/outcome.go, internal/subprocess/outcome_test.go (new), internal/gocache/protection.go, internal/gocache/protection_test.go, internal/gocache/clean.go, internal/env/protection.go, internal/gate/prospectiveartifact/protection.go
+Covers: PL34, PL35, PL36, PL126, PL127
 
 ## What to build
 
@@ -40,8 +40,17 @@ Selection.Close keeps its error return, so runbinary.Shared.Close and testreport
 Each Own selection is its own private generation, including a fresh selection that HeldRuns builds.
 Keep the typed BuildError and its output text.
 
+## Store root amendment
+
+The reviewer decided on 2026-10-23 that process-user stores live on tmpfs.
+protection.Directory derives every store under the per-user boot root that the spec states.
+Each owner's Store field goes away, and every caller that joins a store path uses the derived store.
+Keep every existing check and error meaning.
+
 ## Acceptance
 
+- [ ] PL126: The store derives from kind, resource path, and binding under the per-user boot root, and no environment variable changes it.
+- [ ] PL127: A root that is a link, has another owner, or has a wider mode prevents launch.
 - [ ] PL34: Builder normal completion drains its remaining group.
 - [ ] PL35: Builder cancellation keeps TERM and its existing grace.
 - [ ] PL36: Selection.Close retains a protected private executable.
