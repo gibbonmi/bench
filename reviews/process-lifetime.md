@@ -9518,6 +9518,72 @@
           "supersedes": [
             "c4-coverage-r3"
           ]
+        },
+        {
+          "id": "c4-standards-r5",
+          "performer": "claude:plt-c4-standards-r5-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd3ff83ebb9295a1dce060363b65979274dffd48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-standards-r5-20261023",
+            "digest": "sha256:0ba5cd413ed5b30692dc624427a236e6eb19b72a96a501b0b7c9a241caa5f9f7",
+            "excerpt": "Standards axis, PL-C4 confirming round r5. Evidence current=true at fe2c8817d. The delta (TestExecUnfinishedChildZero and refusingWriter in internal/worktree/exec_lifetime_test.go:41-57, the census pin 826 to 827, one plan line) duplicates no knowledge at severity 5 or higher. The status token comes from subprocess.StreamFailed; refusingWriter is the only failing-writer helper under internal/.\n\nFindings\nNo new finding.\n\nAdvice\n- The \"process stream \" prefix is formatted in internal/subprocess/outcome.go:32 and internal/bounds/bounds.go:265 and repeated in two tests; one exported formatter would keep one source (pre-existing).\n- The new test cites \"ticket 11's rule\"; citing a coverage row ID would match the sibling test's register.\n"
+          },
+          "axis": "Standards",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "7ed27ae69641661f327e0ddae661148ea9ff2adf",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards-r4"
+          ]
+        },
+        {
+          "id": "c4-spec-r5",
+          "performer": "claude:plt-c4-spec-r5-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd3ff83ebb9295a1dce060363b65979274dffd48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-spec-r5-20261023",
+            "digest": "sha256:2991029453e8fd2504d2cdaec9cbcbeeaa6f6935dc1ff7aef657b505ad47ee73",
+            "excerpt": "Spec axis, PL-C4 confirming round r5. Evidence current=true at fe2c8817d. The delta matches the spec and adds no deviation. TestExecUnfinishedChildZero (internal/worktree/exec_lifetime_test.go:50-57) runs a child that exits zero with a refusing caller stdout, so exec's owned stdout stream fails; it asserts exit 1 (:54) and the failed-stream line on stderr (:55). This matches ticket 11:20 and :26. The BO69 forced branch (exec.go:182-199) is untouched. The census pin and plan line are bookkeeping.\n\nFindings\nNo new finding.\n\nAdvice\n- Severity 3 or below: the stderr check matches the stream-status token only, not which stream failed.\n"
+          },
+          "axis": "Spec",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "7ed27ae69641661f327e0ddae661148ea9ff2adf",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-r4"
+          ]
+        },
+        {
+          "id": "c4-coverage-r5",
+          "performer": "claude:plt-c4-coverage-r5-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd3ff83ebb9295a1dce060363b65979274dffd48",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-coverage-r5-20261023",
+            "digest": "sha256:e96db7bd22619847fe390e2956e03cc9c3e73bdfcdc0dfb328f744ab03128b95",
+            "excerpt": "Coverage axis, PL-C4 confirming round r5. Evidence current=true at fe2c8817d. The single probe bit the named test and the source was restored.\n\nFindings\nNo new finding.\n\nProbes: internal/worktree/exec.go:175, return 1 swapped for return code in the code == 0 && unfinished != nil branch, over --package ./internal/worktree; bit TestExecUnfinishedChildZero (exec_lifetime_test.go:54); restored yes.\n\nClosed: C4-COV-r4-1. TestExecUnfinishedChildZero catches the loss of exit 1 for a child zero with a failed stream.\n"
+          },
+          "axis": "Coverage",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "7ed27ae69641661f327e0ddae661148ea9ff2adf",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-coverage-r4"
+          ]
         }
       ]
     }
@@ -9794,7 +9860,8 @@ The confirming round r3 passed on all three axes with no new finding.
 The PL-C4 checkpoint gate then went red on system test BO69: exec exited 1 on a forced output close.
 The reviewer chose BO69 on 2026-10-23, and repair cycle 3 for ticket 11 (commit 4829483c4) restored the child's exit code.
 The confirming round r4 passed the Standards and Spec axes. The Coverage axis found that no test bites the nonzero exit for a failed stream with child zero.
-Repair cycle 4 runs one repair session for ticket 11 under the reviewer's advance approval.
+Repair cycle 4 ran one repair session for ticket 11 (commit 7ed27ae69) under the reviewer's advance approval.
+The confirming round r5 passed on all three axes with no new finding.
 
 ## Standards
 
@@ -9941,3 +10008,4 @@ PL-C4 round r4: 1 finding. Worst issue: C4-COV-r4-1, exec can report success ove
 - PL-C4 r2: no test covers the kit-run Close failure path in `internal/testreport/command.go`.
 - PL-C4 r2: `withCleanupFailure` always exits 1, so the raw child code shows only in the report.
 - PL-C4 r3: two probe tests write the `mutant_report` heading by hand. A shared helper that renders it through `toon.TableTyped` would keep one source.
+- PL-C4 r5: the `process stream` prefix is formatted in `internal/subprocess/outcome.go` and `internal/bounds/bounds.go`, and two tests repeat it. One exported formatter would keep one source.
