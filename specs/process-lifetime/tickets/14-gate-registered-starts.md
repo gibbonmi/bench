@@ -1,7 +1,7 @@
 # Gate every registered start
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md
-Writes: internal/subprocess/control.go, internal/subprocess/startgate.go (new), internal/subprocess/startgate_test.go (new), internal/subprocess/lifetime_test.go, internal/subprocess/protection/recovery.go, internal/subprocess/protection/recovery_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/subprocess/control.go, internal/subprocess/startgate.go (new), internal/subprocess/startgate_test.go (new), internal/subprocess/lifetime_test.go, internal/subprocess/protection/recovery.go, internal/subprocess/protection/recovery_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/gate/lifetime_resources_test.go
 Covers: PL25, PL128, PL129
 
 ## What to build
@@ -46,5 +46,6 @@ Preserve existing assertions and fixture mutation purpose.
 - `bench test --package ./internal/conformance`
 - `bench test --check root-conformance`
 - `bench test --check system`
+- `bench test --package ./internal/gate`
 
 Mutation witness: Execute the program at end of file, or grade a pending user with an absent actor as protected. The ActorDeathBeforeOpen or PendingActorAbsent witness must fail.
