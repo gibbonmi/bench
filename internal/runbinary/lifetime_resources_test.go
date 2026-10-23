@@ -28,11 +28,9 @@ func binaryProtocol() *protection.Protocol {
 	return &protection.Protocol{Validators: protection.Validators{protection.KindBinary: ValidateProtection}, ReadLimit: bounds.ControlRecordLimit}
 }
 
-// TestBinaryClose is PL36. A selection user exits and leaves a live descendant in its
-// registered group, so Close must keep the executable and report the retention.
-func TestBinaryClose(t *testing.T) {
-	t.Parallel()
-	factory := Factory{
+// selectedFactory builds a selection that writes a stub executable under the binary protocol.
+func selectedFactory(t *testing.T) Factory {
+	return Factory{
 		TempRoot:   t.TempDir(),
 		Protection: binaryProtocol(),
 		Build: func(_ context.Context, _, output string) error {
@@ -40,6 +38,42 @@ func TestBinaryClose(t *testing.T) {
 		},
 		Verify: func(string, string) error { return nil },
 	}
+}
+
+// TestSelectionValidatorRefusesAForeignBinding pins the selection validator that the composition
+// root installs: it accepts a real selection's descriptor and refuses the same descriptor when its
+// binding names another directory at the same path.
+func TestSelectionValidatorRefusesAForeignBinding(t *testing.T) {
+	t.Parallel()
+	factory := selectedFactory(t)
+	selection, err := factory.Own(context.Background(), t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := selection.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	resources := selection.Resources()
+	if len(resources) != 1 {
+		t.Fatalf("selection resources = %+v, want one binary generation", resources)
+	}
+	d := resources[0]
+	if err := ValidateProtection(d); err != nil {
+		t.Fatalf("ValidateProtection(own selection) = %v, want nil", err)
+	}
+	d.Binding = "0:0"
+	if err := ValidateProtection(d); err == nil || !strings.Contains(err.Error(), "binding 0:0 does not name selection") {
+		t.Fatalf("ValidateProtection(foreign binding) = %v, want a binding refusal", err)
+	}
+}
+
+// TestBinaryClose is PL36. A selection user exits and leaves a live descendant in its
+// registered group, so Close must keep the executable and report the retention.
+func TestBinaryClose(t *testing.T) {
+	t.Parallel()
+	factory := selectedFactory(t)
 	selection, err := factory.Own(context.Background(), t.TempDir())
 	if err != nil {
 		t.Fatal(err)
