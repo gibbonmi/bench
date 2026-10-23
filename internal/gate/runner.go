@@ -81,29 +81,11 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd, local ...protect
 		result.Code = 1
 	default:
 		result.Code = processExitCode(cmd, outcome.Process.WaitErr)
-		if result.StartErr = uncertified(outcome); result.StartErr != nil {
+		if result.StartErr = outcome.Uncertified(); result.StartErr != nil {
 			result.Code = 1
 		}
 	}
 	return result
-}
-
-// uncertified names why a normal exit cannot report success: an unresolved obligation, an
-// incomplete stream, or protection that is not safe. It wraps no cause, so an optional
-// phase never reads it as a missing tool.
-func uncertified(o subprocess.Outcome) error {
-	if len(o.Cleanup.Obligations) > 0 {
-		return fmt.Errorf("process cleanup incomplete: %v", o.Cleanup.Obligations)
-	}
-	for _, stream := range []subprocess.Stream{o.Streams.Stdin, o.Streams.Stdout, o.Streams.Stderr} {
-		if stream.Status != subprocess.StreamComplete && stream.Status != subprocess.StreamNone {
-			return fmt.Errorf("process stream %s: %v", stream.Status, stream.Err)
-		}
-	}
-	if o.Protection.State != protection.Safe {
-		return fmt.Errorf("process protection %s: %v", o.Protection.State, o.Protection.Err)
-	}
-	return nil
 }
 
 func processExitCode(cmd *exec.Cmd, err error) int {
