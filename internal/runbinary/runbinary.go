@@ -52,11 +52,11 @@ type Selection struct {
 	Path       string
 	SourceRoot string
 
-	dir       string
-	protocol  *protection.Protocol
-	resource  protection.Descriptor
-	closeOnce sync.Once
-	closeErr  error
+	dir        string
+	protocol   *protection.Protocol
+	generation protection.Generation
+	closeOnce  sync.Once
+	closeErr   error
 }
 
 // Own creates one private host-target Bench executable from sourceRoot.
@@ -132,7 +132,7 @@ func (f Factory) Own(ctx context.Context, sourceRoot string) (_ *Selection, err 
 		}
 	}()
 	if selection.protocol != nil {
-		if selection.resource, err = protect(selection.protocol, dir); err != nil {
+		if selection.generation, err = selectionDirectory.Open(selection.protocol, dir); err != nil {
 			return nil, fmt.Errorf("protect private Bench run directory: %w", err)
 		}
 	}
@@ -221,10 +221,10 @@ func (s *Selection) Owned() bool {
 // Resources names the selection's private generation for a launch that uses the executable.
 // An inherited or unprotected selection names none.
 func (s *Selection) Resources() []protection.Descriptor {
-	if s == nil || s.resource == (protection.Descriptor{}) {
+	if s == nil {
 		return nil
 	}
-	return []protection.Descriptor{s.resource}
+	return s.generation.Resources()
 }
 
 // Close releases an owner-authored private directory after its children have returned. A
@@ -240,14 +240,8 @@ func (s *Selection) Close() error {
 // release seals the generation and removes the directory only when every user is resolved.
 // Removal follows the seal, because the store lives inside the directory.
 func (s *Selection) release() error {
-	if s.Resources() != nil {
-		disposition, err := s.protocol.SealAndObserve(s.resource, nil)
-		if err != nil {
-			return fmt.Errorf("observe the users of selection %s: %w", s.dir, err)
-		}
-		if disposition.State != protection.Safe {
-			return fmt.Errorf("selection %s stays retained: protection is %s for users %v", s.dir, disposition.State, disposition.Users)
-		}
+	if err := s.generation.Release("selection "+s.dir, nil); err != nil {
+		return err
 	}
 	return os.RemoveAll(s.dir)
 }
@@ -375,10 +369,9 @@ func runBuildScript(ctx context.Context, sourceRoot, output, manifestDir string,
 		return outcome.Process.StartErr
 	case outcome.Process.WaitErr != nil:
 		return BuildError{Err: outcome.Process.WaitErr, Output: string(outcome.Streams.Stdout.Data)}
-	case outcome.Cleanup.Status == subprocess.CleanupIncomplete:
-		return fmt.Errorf("builder cleanup incomplete: %v", outcome.Cleanup.Obligations)
-	case outcome.Protection.State != protection.Safe:
-		return fmt.Errorf("builder protection %s: %v", outcome.Protection.State, outcome.Protection.Err)
+	}
+	if err := outcome.Uncertified(); err != nil {
+		return fmt.Errorf("builder %w", err)
 	}
 	return nil
 }

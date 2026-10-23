@@ -2,6 +2,7 @@ package subprocess
 
 import (
 	"errors"
+	"fmt"
 	"syscall"
 
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
@@ -16,6 +17,25 @@ type Outcome struct {
 	Streams      StreamSet
 	Cleanup      Cleanup
 	Protection   protection.Disposition
+}
+
+// Uncertified names why a normal exit cannot report success. A raw child status cannot
+// certify required cleanup, a complete stream, or released protection, so an unresolved
+// obligation, an owned stream that did not complete, or protection that is not safe each
+// refuses. It wraps no cause, so a caller never reads it as a missing tool.
+func (o Outcome) Uncertified() error {
+	if len(o.Cleanup.Obligations) > 0 {
+		return fmt.Errorf("process cleanup incomplete: %v", o.Cleanup.Obligations)
+	}
+	for _, stream := range []Stream{o.Streams.Stdin, o.Streams.Stdout, o.Streams.Stderr} {
+		if stream.Status != StreamComplete && stream.Status != StreamNone {
+			return fmt.Errorf("process stream %s: %v", stream.Status, stream.Err)
+		}
+	}
+	if o.Protection.State != protection.Safe {
+		return fmt.Errorf("process protection %s: %v", o.Protection.State, o.Protection.Err)
+	}
+	return nil
 }
 
 // Process holds the launch and wait facts. Code is the raw exit code, or -1 when Signal

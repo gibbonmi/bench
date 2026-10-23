@@ -66,7 +66,8 @@ func TestProtectionRefusesAForeignCache(t *testing.T) {
 	}
 	foreignStore, foreignBinding, unlocked, linked, linkedParent := d, d, d, d, d
 	foreignStore.Store = filepath.Join(other, ProtectionStore)
-	foreignBinding.Binding, _ = cacheIdentity(other)
+	described, _ := cacheDirectory.Describe(other)
+	foreignBinding.Binding = described.Binding
 	// The unlocked directory carries its own binding, so only the missing cache lock refuses it.
 	unlocked.ResourcePath, unlocked.Store, unlocked.Binding = other, filepath.Join(other, ProtectionStore), foreignBinding.Binding
 	linked.ResourcePath, linked.Store = link, filepath.Join(link, ProtectionStore)
