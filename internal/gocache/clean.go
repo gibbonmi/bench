@@ -79,7 +79,8 @@ func cleanWith(env []string, p *protection.Protocol) (string, int) {
 }
 
 // releaseUnprotected runs release once no cache user can still need the archives. A store
-// with no generation is a retired one, and recovery grades an absent store safe. Unresolved or unreadable protection refuses.
+// with no generation is a retired one, and recovery grades an absent store safe. Unresolved
+// or unreadable protection refuses.
 func releaseUnprotected(dir string, p *protection.Protocol, release func() error) error {
 	store, err := ProtectionStore(dir)
 	if err != nil {

@@ -117,9 +117,9 @@ func stateOf(o Observation) State {
 
 func rank(s State) int { return slices.Index([]State{Safe, Protected, Uncertain}, s) }
 
-// absent reports whether no store exists at path.
-func absent(store string) bool {
-	_, err := os.Lstat(store)
+// absent reports whether no file exists at path.
+func absent(path string) bool {
+	_, err := os.Lstat(path)
 	return errors.Is(err, fs.ErrNotExist)
 }
 

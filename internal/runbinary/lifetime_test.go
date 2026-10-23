@@ -30,11 +30,15 @@ func TestBuilderNormalDrain(t *testing.T) {
 	if state := protection.ObserveGroup(readPID(t, builder.builderPID)).State; state != protection.GroupAbsent {
 		t.Fatalf("builder group at Own's return is %s, want absent", state)
 	}
+	store := selection.generation.Resource.Store
 	if err := selection.Close(); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(filepath.Dir(selection.Path)); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("selection directory after Close = %v, want absent", err)
+	}
+	if _, err := os.Lstat(store); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("protection store after Close = %v, want absent", err)
 	}
 	if _, err := os.Stat(builder.premature); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("builder descendant observed premature cleanup: %v", err)

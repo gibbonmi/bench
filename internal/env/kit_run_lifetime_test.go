@@ -1,10 +1,12 @@
 package env
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -52,7 +54,7 @@ func TestKitRunClose(t *testing.T) {
 		t.Fatal(err)
 	}
 	outcome, _ := lifetime.Wait()
-	processtest.WaitPID(t, pidFile)
+	descendant := processtest.WaitPID(t, pidFile)
 	if outcome.Process.Code != 0 || outcome.Protection.State != protection.Protected {
 		t.Fatalf("user outcome = %+v, want exit 0 with its live group protected", outcome)
 	}
@@ -62,5 +64,21 @@ func TestKitRunClose(t *testing.T) {
 	}
 	if data, err := os.ReadFile(filepath.Join(kitEnvValue(run.Entries(), "HOME"), "owned")); err != nil || string(data) != "held\n" {
 		t.Fatalf("child-owned file after Close = %q, %v; want it retained", data, err)
+	}
+
+	// Once the group is gone, Close is safe and deletes the store after the run.
+	pgid, err := syscall.Getpgid(descendant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Kill(-pgid, syscall.SIGKILL); err != nil {
+		t.Fatal(err)
+	}
+	processtest.WaitAbsent(t, pgid)
+	if err := run.Close(); err != nil {
+		t.Fatalf("Close after the group exits = %v, want removal", err)
+	}
+	if _, err := os.Lstat(run.generation.Resource.Store); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("protection store after the safe Close = %v, want absent", err)
 	}
 }

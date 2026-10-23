@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -214,7 +213,7 @@ func (p *Protocol) discardNested(dir string) error {
 		if !entry.IsDir() || readRecord(filepath.Join(store, resourceFile), p.ReadLimit, &r) != nil || !strings.HasPrefix(r.ResourcePath, dir+string(filepath.Separator)) {
 			continue
 		}
-		if _, err := os.Lstat(r.ResourcePath); errors.Is(err, fs.ErrNotExist) {
+		if absent(r.ResourcePath) {
 			failed = append(failed, os.RemoveAll(store))
 		}
 	}

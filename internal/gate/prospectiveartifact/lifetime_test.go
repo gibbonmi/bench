@@ -142,6 +142,9 @@ func TestEmptyCurrentBundle(t *testing.T) {
 		if _, err := os.Stat(owner.Root()); !errors.Is(err, os.ErrNotExist) {
 			t.Fatalf("unused bundle %s = %v, want absent", owner.Root(), err)
 		}
+		if _, err := os.Lstat(owner.generation.Resource.Store); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("protection store of %s = %v, want absent", owner.Root(), err)
+		}
 		requireCheckoutUnregistered(t, repository, owner.Checkout())
 	}
 }
