@@ -8,7 +8,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -102,6 +104,58 @@ func TestStartGateExecFailure(t *testing.T) {
 		if err := g.Release("run", nil); o.Protection.State != protection.Safe || err != nil {
 			t.Fatalf("%s: protection=%+v release=%v, want no remaining user", name, o.Protection, err)
 		}
+	}
+}
+
+// TestStartGateStartedFailure is the Started half of PL128. The store refuses the Started write
+// after the gate starts, so the gate stays closed and the launch reports an uncertain user. The
+// held group signal gives an opened gate time to run the program before the KILL lands.
+func TestStartGateStartedFailure(t *testing.T) {
+	g := gateResource(t, gateProtocol())
+	marker := filepath.Join(t.TempDir(), "started")
+	l := subprocess.NewLifetime(exec.Command("touch", marker), policy(0, final, 0), subprocess.Streams{}, subprocess.Registration{Protocol: gateProtocol(), Resources: g.Resources()})
+	subprocess.Hold(l, func(real func(*exec.Cmd) error, cmd *exec.Cmd) error {
+		if err := real(cmd); err != nil {
+			return err
+		}
+		for _, d := range g.Resources() {
+			sealStore(t, d.Store)
+		}
+		return nil
+	}, nil)
+	subprocess.HoldSignal(l, func(real func(int, syscall.Signal) error, target int, sig syscall.Signal) error {
+		deadline := time.Now().Add(grace)
+		for time.Now().Before(deadline) {
+			if _, err := os.Stat(marker); err == nil {
+				break
+			}
+			time.Sleep(time.Millisecond)
+		}
+		return real(target, sig)
+	})
+	o, _ := waitWithin(t, started(t, l), grace+final)
+	if _, err := os.Stat(marker); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("the program ran after its Started write failed: %v", err)
+	}
+	if o.Protection.State != protection.Uncertain || o.Process.Signal != syscall.SIGKILL {
+		t.Fatalf("process=%+v protection=%+v, want a killed gate and an uncertain user", o.Process, o.Protection)
+	}
+}
+
+// sealStore makes every directory under store read-only until the test ends.
+func sealStore(t *testing.T, store string) {
+	var dirs []string
+	_ = filepath.WalkDir(store, func(path string, d fs.DirEntry, err error) error {
+		if err == nil && d.IsDir() {
+			dirs = append(dirs, path)
+		}
+		return err
+	})
+	for _, dir := range dirs {
+		if err := os.Chmod(dir, 0o500); err != nil {
+			t.Error(err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
 	}
 }
 
