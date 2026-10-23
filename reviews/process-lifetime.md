@@ -8180,6 +8180,72 @@
           "supersedes": [
             "c4-coverage-r1"
           ]
+        },
+        {
+          "id": "c4-standards-r3",
+          "performer": "claude:plt-c4-standards-r3-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5dca980f3235d85dc2d4858b297a712854c46e11",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-standards-r3-20261023",
+            "digest": "sha256:1d13cfd226ef948fed6a569b229ed74c1302aaa072c378d9613cdbe4e7e9fda2",
+            "excerpt": "Standards axis, PL-C4 confirming round r3. Evidence current=true at a551f7dab. The repair delta 9bd0c1872..c927fe6f9 adds one test, the PL130 citation and ticket 10's Writes entry, and breaks no Standards rule at severity 5 or higher.\n\nFindings\nNo new finding.\n\nChecked: both line prefixes derive from production (testreport.SelectionCleanupFailure at internal/probe/set_cleanup_test.go:19; toon.RenderError at :47); the test reuses the existing probe fixtures; the header comment matches the tree convention; PL130 (spec.md:746) cites the file and function.\n\nAdvice\n- Severity 3: set_cleanup_test.go:52 writes the mutant_report heading by hand, as set_test.go:344 already does; production builds it with toon.TableTyped (set.go:269). A drift fails the test rather than passing it; a shared heading helper would fix both.\n"
+          },
+          "axis": "Standards",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "c927fe6f91bf63772f322996bc1e9fa901fccfaf",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards-r2"
+          ]
+        },
+        {
+          "id": "c4-spec-r3",
+          "performer": "claude:plt-c4-spec-r3-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5dca980f3235d85dc2d4858b297a712854c46e11",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-spec-r3-20261023",
+            "digest": "sha256:d7c7ba48f086578ec6bd3e8c628a3e0edde7e9fd0ec45074cb2530f236aa9741",
+            "excerpt": "Spec axis, PL-C4 confirming round r3. Evidence current=true at a551f7dab. PL130 is met, and its row sits in the chunk row, the coverage map and ticket 10. The repair delta adds no spec deviation.\n\nFindings\nNo new finding.\n\nClosed: PL130. spec.md:746 cites internal/probe/set_cleanup_test.go (TestSetSelectionCloseFailure); the PL-C4 chunk row lists PL130 (spec.md:505); ticket 10 lists it in Covers and Acceptance, and its Writes line holds the new file. The test (set_cleanup_test.go:24) checks exit 1 and the cleanup line last, after the reports, and the same for a render refusal; production consumes the failure at internal/probe/set.go:156-157 and keeps the line on the refusal path at :287. The plan records the repair2 assignment as BENCH.md requires; no production file changed.\n\nAdvice\n- The row's mutant was not run in this round; the Coverage axis probe demonstrates it.\n"
+          },
+          "axis": "Spec",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "c927fe6f91bf63772f322996bc1e9fa901fccfaf",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-r2"
+          ]
+        },
+        {
+          "id": "c4-coverage-r3",
+          "performer": "claude:plt-c4-coverage-r3-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5dca980f3235d85dc2d4858b297a712854c46e11",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-coverage-r3-20261023",
+            "digest": "sha256:ea1e27d89f8b00ba01832c422d8cf82ed31d0fbd159750f065109e34d4e98b45",
+            "excerpt": "Coverage axis, PL-C4 confirming round r3. Evidence current=true at a551f7dab. internal/probe/set_cleanup_test.go now pins the cleanup assignment at internal/probe/set.go:157 on the answer path (:275) and the render-refusal path (:287).\n\nFindings\nNo new finding.\n\nProbes: internal/probe/set.go:157, s.cleanup = testreport.SelectionCleanupFailure(err) swapped for _ = err, over --package ./internal/probe; bit TestSetSelectionCloseFailure/answer (set_cleanup_test.go:40, exit 0, want 1) and TestSetSelectionCloseFailure/render_refusal (:44, cleanup line missing); restored yes.\n\nClosed: C4-COV-r2-1. Removing the cleanup assignment turns both subtests red.\n"
+          },
+          "axis": "Coverage",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "c927fe6f91bf63772f322996bc1e9fa901fccfaf",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-coverage-r2"
+          ]
         }
       ]
     }
@@ -8414,7 +8480,8 @@ The repairs are commits daa10290e (ticket 10) and e28e9ca2f (ticket 11).
 
 The confirming round r2 closed every r1 finding. The Standards and Spec axes passed.
 The Coverage axis found that no test bites a dropped Close failure in the probe set (severity 5).
-Repair cycle 2 of 2 runs one repair session for ticket 10, which adds row PL130 and its test.
+Repair cycle 2 of 2 ran one repair session for ticket 10 (commit c927fe6f9), which added row PL130 and its test.
+The confirming round r3 passed on all three axes with no new finding.
 
 ## Standards
 
@@ -8556,3 +8623,4 @@ PL-C4 round r2: 1 finding. Worst issue: C4-COV-r2-1, the probe set can drop a he
 - PL-C4 r2: `releaseevidence` restates `Directory.Open` with `Reopen`; a `Directory.Reopen` would keep one source.
 - PL-C4 r2: no test covers the kit-run Close failure path in `internal/testreport/command.go`.
 - PL-C4 r2: `withCleanupFailure` always exits 1, so the raw child code shows only in the report.
+- PL-C4 r3: two probe tests write the `mutant_report` heading by hand. A shared helper that renders it through `toon.TableTyped` would keep one source.
