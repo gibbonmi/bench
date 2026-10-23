@@ -132,8 +132,9 @@ var execPolicy = subprocess.Policy{
 }
 
 // runChild is the one child runner of the exec verb and the tree-scoped call. It answers
-// the child's exit, 1 for a start failure or an unfinished stream or cleanup, and 130 for
-// an interrupt. The child registers on its resource vector before it starts. A normal
+// the child's exit, 1 for a start failure or a failed stream or unfinished cleanup, and 130
+// for an interrupt. A stream that the output delay forcibly closed is reported on stderr
+// and keeps the child's exit. The child registers on its resource vector before it starts. A normal
 // return releases no resource: a registered user that is still unresolved keeps its
 // protection, and the enclosing owner observes it.
 func runChild(verb string, argv []string, dir, home string, environ, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {
@@ -165,18 +166,36 @@ func runChild(verb string, argv []string, dir, home string, environ, extraEnv []
 		return 1
 	}
 	code := lifetimeExitCode(outcome.Process)
-	if unfinished := childUnfinished(outcome); code == 0 && unfinished != nil {
+	forced, unfinished := childUnfinished(outcome)
+	if forced != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", verb, forced)
+	}
+	if code == 0 && unfinished != nil {
 		fmt.Fprintf(stderr, "%s: %v\n", verb, unfinished)
 		return 1
 	}
 	return code
 }
 
-// childUnfinished names the child's own stream or cleanup obligation that did not
-// complete. It leaves protection out: the enclosing owner consumes that disposition.
-func childUnfinished(o subprocess.Outcome) error {
+// childUnfinished splits the child's incomplete state in two. forced names an owned
+// stream that the output delay closed: exec reports it and still returns the child's code,
+// so a descendant that holds the pipe cannot turn a child zero into a failure (BO69).
+// unfinished names any other stream or cleanup obligation that did not complete. It
+// leaves protection out: the enclosing owner consumes that disposition.
+func childUnfinished(o subprocess.Outcome) (forced, unfinished error) {
 	o.Protection = protection.Disposition{State: protection.Safe}
-	return o.Uncertified()
+	for _, stream := range []*subprocess.Stream{&o.Streams.Stdin, &o.Streams.Stdout, &o.Streams.Stderr} {
+		if stream.Status != subprocess.StreamClosed {
+			continue
+		}
+		if forced == nil {
+			// The outcome's own refusal names the stream, so the line keeps one format.
+			none := subprocess.Stream{Status: subprocess.StreamNone}
+			forced = subprocess.Outcome{Streams: subprocess.StreamSet{Stdin: *stream, Stdout: none, Stderr: none}, Protection: o.Protection}.Uncertified()
+		}
+		stream.Status = subprocess.StreamComplete
+	}
+	return forced, o.Uncertified()
 }
 
 // nameWorktree returns code, and names the tree the child ran in when that code is a

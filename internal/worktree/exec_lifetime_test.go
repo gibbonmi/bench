@@ -17,9 +17,9 @@ import (
 )
 
 // TestExecNormalPipe covers PL81. A descendant holds the child's stdout after the child
-// exits. Exec returns after its output delay with the output that arrived, and it reports the
-// forced stream instead of child zero. The descendant survives the return, because a normal
-// exit sends no signal to the group.
+// exits. Exec returns after its output delay with the output that arrived and the child's
+// zero, and it reports the forced stream on stderr (BO69). The descendant survives the
+// return, because a normal exit sends no signal to the group.
 func TestExecNormalPipe(t *testing.T) {
 	t.Parallel()
 	pidFile := filepath.Join(t.TempDir(), "descendant")
@@ -33,8 +33,8 @@ func TestExecNormalPipe(t *testing.T) {
 	t.Cleanup(func() { _ = syscall.Kill(pid, syscall.SIGKILL) })
 	requireTest(t, alive, "the descendant %d died at the child's normal exit, so exec added a group kill", pid)
 	requireTest(t, stdout.String() == "early\n", "exec stdout = %q, want the output that arrived before the delay", stdout.String())
-	requireTest(t, code == 1 && strings.Contains(stderr.String(), string(subprocess.StreamClosed)),
-		"exec exit = %d with stderr %q, want 1 naming the forcibly closed stream", code, stderr.String())
+	requireTest(t, code == 0 && strings.Contains(stderr.String(), string(subprocess.StreamClosed)),
+		"exec exit = %d with stderr %q, want the child's 0 and a line naming the forcibly closed stream", code, stderr.String())
 }
 
 // testVector is a well-formed descriptor vector that names no published store. A test binary
