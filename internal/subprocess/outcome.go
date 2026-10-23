@@ -3,6 +3,7 @@ package subprocess
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"syscall"
 
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
@@ -22,20 +23,32 @@ type Outcome struct {
 // Uncertified names why a normal exit cannot report success. A raw child status cannot
 // certify required cleanup, a complete stream, or released protection, so an unresolved
 // obligation, an owned stream that did not complete, or protection that is not safe each
-// refuses. It wraps no cause, so a caller never reads it as a missing tool.
+// refuses. The one diagnostic names every unresolved part, and a protection part names its
+// users. It wraps no cause, so a caller never reads it as a missing tool.
 func (o Outcome) Uncertified() error {
+	var parts []string
+	unresolved := func(cause error, format string, args ...any) {
+		part := fmt.Sprintf("process "+format, args...)
+		if cause != nil {
+			part += ": " + cause.Error()
+		}
+		parts = append(parts, part)
+	}
 	if len(o.Cleanup.Obligations) > 0 {
-		return fmt.Errorf("process cleanup incomplete: %v", o.Cleanup.Obligations)
+		unresolved(nil, "cleanup incomplete: %v", o.Cleanup.Obligations)
 	}
 	for _, stream := range []Stream{o.Streams.Stdin, o.Streams.Stdout, o.Streams.Stderr} {
 		if stream.Status != StreamComplete && stream.Status != StreamNone {
-			return fmt.Errorf("process stream %s: %v", stream.Status, stream.Err)
+			unresolved(stream.Err, "stream %s", stream.Status)
 		}
 	}
-	if o.Protection.State != protection.Safe {
-		return fmt.Errorf("process protection %s: %v", o.Protection.State, o.Protection.Err)
+	if users := o.Protection.Unresolved(); users != nil {
+		unresolved(o.Protection.Err, "protection %s: %v", o.Protection.State, users)
 	}
-	return nil
+	if len(parts) == 0 {
+		return nil
+	}
+	return errors.New(strings.Join(parts, "; "))
 }
 
 // Process holds the launch and wait facts. Code is the raw exit code, or -1 when Signal

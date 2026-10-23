@@ -265,8 +265,8 @@ func TestLifetimeIncompleteDiagnostic(t *testing.T) {
 			t.Fatalf("diagnostic %v names the %s obligation other than once", diagnostic, obligation)
 		}
 	}
-	if o.Protection.State != protection.Protected || len(o.Protection.Users) != 1 || g.Release("run", nil) == nil {
-		t.Fatalf("protection = %+v, want one retained user that refuses release", o.Protection)
+	if o.Protection.State != protection.Protected || len(o.Protection.Users) != 1 || !strings.Contains(diagnostic.Error(), o.Protection.Users[0]) || g.Release("run", nil) == nil {
+		t.Fatalf("protection = %+v in %v, want one named retained user that refuses release", o.Protection, diagnostic)
 	}
 }
 

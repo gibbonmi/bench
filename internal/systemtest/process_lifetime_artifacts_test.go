@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // TestProcessLifetimeArtifactsSecondProcessSweep is PL59. The landing CLI dies while its
@@ -54,13 +55,31 @@ func TestProcessLifetimeArtifactsSecondProcessSweep(t *testing.T) {
 
 // TestProcessLifetimeArtifactsCompletedOwners is PL118. A green landing completes every
 // resource user, so its owners release the bundle with its selected executable, the
-// checkout registration, and the cache generation. A blanket retention leaves one behind.
+// checkout registration, and the cache generation. A released worktree retires the generation
+// that a completed exec user left open, and a completed kit-root focused run removes its
+// private test directory. A blanket retention leaves one of them behind.
 func TestProcessLifetimeArtifactsCompletedOwners(t *testing.T) {
 	t.Parallel()
 	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
 	configureArtifactLandingFixture(t, root)
 	private := t.TempDir()
 	base := systemGitOutput(t, root, "rev-parse", "main")
+	used := systemCreateLandingWorktree(t, root, home, "artifact-used", "artifact used")
+	if exec := owner.runAt(root, artifactChildEnv(root, home, tally, trees, ready, release, private), owner.selected.path, execBoundArgs(used, "true")...); exec.code != 0 {
+		t.Fatalf("exec in the used worktree = (%d, %q, %q)", exec.code, exec.stdout, exec.stderr)
+	}
+	checkoutStore, err := worktree.Descriptor(used.path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The release retires the generation that the completed exec user left open.
+	if released := owner.runAt(root, artifactChildEnv(root, home, tally, trees, ready, release, private), owner.selected.path, "worktree", "release", "--request", used.request, used.path); released.code != 0 {
+		t.Fatalf("release of the used worktree = (%d, %q, %q)", released.code, released.stdout, released.stderr)
+	}
+	checkouts := &protection.Protocol{Validators: protection.Validators{protection.KindWorktree: worktree.ValidateProtection}, ReadLimit: bounds.ControlRecordLimit}
+	if disposition, err := checkouts.Recover(checkoutStore.Store, nil); (err != nil && !protection.NoGeneration(disposition, err)) || disposition.Resources[0].ResourceID != "" {
+		t.Fatalf("worktree protection after the released exec user = %+v (%v), want a retired generation", disposition, err)
+	}
 	cmd, out, errOut, done := startArtifactAuthorization(t, root, home, tally, trees, ready, release, private, base, "artifact-complete", "winner.txt", "complete prospective subject")
 	awaitArtifactBarrier(t, ready, done, out, errOut)
 	bundle := oneProspectiveBundle(t, private)
@@ -77,6 +96,18 @@ func TestProcessLifetimeArtifactsCompletedOwners(t *testing.T) {
 		}
 	}
 	requireCheckoutRegistered(t, root, checkout, false)
+	// A focused run at the kit root opens a private test directory, and its go test child
+	// names that run's TMPDIR. The kit root builds its own private executable, as PL93 does.
+	tools, mark := t.TempDir(), filepath.Join(t.TempDir(), "run")
+	fakeGo(t, tools, map[string]string{goTestPattern: "printf '%s' \"$TMPDIR\" > '" + mark + "'\nprintf '%s' '" + goEvents([]string{"landingrace"}, "landingrace") + "'\n"})
+	focused := systemSelected(t, root, kitRootEnv(home, root, tools, t.TempDir()), "test", "--package", "./...")
+	run, err := os.ReadFile(mark)
+	if focused.code != 0 || err != nil {
+		t.Fatalf("focused run at the kit root = (%d, %q, %q), TMPDIR %v; want a completed private run", focused.code, focused.stdout, focused.stderr, err)
+	}
+	if _, err := os.Lstat(filepath.Dir(string(run))); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("private test directory %s after the completed run = %v, want released", filepath.Dir(string(run)), err)
+	}
 	dir, err := gocache.Dir([]string{"HOME=" + home})
 	if err != nil {
 		t.Fatal(err)

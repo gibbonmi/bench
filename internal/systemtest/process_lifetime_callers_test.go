@@ -135,7 +135,7 @@ func TestProcessLifetimeShiftDifferential(t *testing.T) {
 		t.Parallel()
 		dir := t.TempDir()
 		mark := filepath.Join(dir, "group")
-		hold := "cat >/dev/null\necho \"$$\" > '" + mark + ".partial' && mv '" + mark + ".partial' '" + mark + "'\nexec sleep 300\n"
+		hold := "cat >/dev/null\n" + publishGroup("mv", mark) + "exec sleep 300\n"
 		_, result := shift(t, callerTool(t, dir, "agent", hold), "BENCH_MAX_WALL=1s")
 		pgid := groupOf(t, mark)
 		if result.code != 3 {
@@ -146,8 +146,10 @@ func TestProcessLifetimeShiftDifferential(t *testing.T) {
 }
 
 // TestProcessLifetimeBoundsDifferential is PL94. The bounds runner projects a complete codex
-// as the live inventory, an exit as the bundled fallback, and a failed start as the
-// unavailable row. A surviving descendant gets no normal-exit signal.
+// as the live inventory, an exit as the bundled fallback, a failed start as the unavailable
+// row, and a codex past the provider deadline as the timeout row with its group stopped. A
+// surviving descendant gets no normal-exit signal. No models caller cancels its codex, so
+// the canceled projection has no reachable fixture.
 func TestProcessLifetimeBoundsDifferential(t *testing.T) {
 	t.Parallel()
 	const inventory = `{"models":[{"slug":"fake-model","visibility":"list"}]}`
@@ -155,12 +157,14 @@ func TestProcessLifetimeBoundsDifferential(t *testing.T) {
 	cases := []struct {
 		shape preservationShape
 		start bool
+		hold  bool
 		want  string
 	}{
 		{shape: preservationShapes[0], want: "codex,live,fake-model"},
 		{shape: preservationShapes[1], want: "codex,bundled,fake-model"},
 		{shape: preservationShapes[2], want: "codex,live,fake-model"},
 		{shape: preservationShape{name: "start failure"}, start: true, want: "codex debug models unavailable"},
+		{shape: preservationShape{name: "provider timeout"}, hold: true, want: "codex,timeout,timeout"},
 	}
 	for _, c := range cases {
 		t.Run(c.shape.name, func(t *testing.T) {
@@ -172,6 +176,8 @@ func TestProcessLifetimeBoundsDifferential(t *testing.T) {
 				if err := os.WriteFile(filepath.Join(dir, "codex"), []byte("#!"+filepath.Join(dir, "absent")+"\n"), 0o755); err != nil {
 					t.Fatal(err)
 				}
+			} else if c.hold {
+				callerTool(t, dir, "codex", publishGroup("mv", mark)+"exec sleep 300\n")
 			} else {
 				// The merged output is the inventory, so the canned lines go nowhere.
 				callerTool(t, dir, "codex", bundled+"printf '%s' '"+inventory+"'\n{\n"+shapeScript(c.shape, "sleep", "mv", mark)+"} >/dev/null 2>&1\n")
@@ -191,8 +197,18 @@ func TestProcessLifetimeBoundsDifferential(t *testing.T) {
 			if c.shape.descendant {
 				requireGroup(t, pgid, protection.GroupPresent, "codex")
 			}
+			if c.hold {
+				requireGroup(t, pgid, protection.GroupAbsent, "codex past its deadline")
+			}
 		})
 	}
+}
+
+// kitRootEnv is the environment of a focused run at the kit root with no inherited selection,
+// so the run builds its own private executable. The fake go in tools answers the test run.
+func kitRootEnv(home, root, tools, tmp string) []string {
+	return []string{"BENCH_COMMAND_OBSERVE=1", "BENCH_HOME=" + home, "BENCH_RUN_BINARY", "BENCH_KIT=" + root,
+		"LAND_BASELINE_BENCH=" + owner.selected.path, toolPath(tools), "TMPDIR=" + tmp}
 }
 
 // realGo is the go executable that a fake go passes every other subcommand to.
@@ -358,9 +374,7 @@ func TestProcessLifetimeBuilderDifferential(t *testing.T) {
 			}
 			systemGit(t, fixture.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qam", "shaped builder")
 			fakeGo(t, dir, map[string]string{goTestPattern: "printf '%s' '" + goEvents([]string{"landingrace"}, "landingrace") + "'\n"})
-			env := []string{"BENCH_COMMAND_OBSERVE=1", "BENCH_HOME=" + fixture.home, "BENCH_RUN_BINARY", "BENCH_KIT=" + fixture.root,
-				"LAND_BASELINE_BENCH=" + owner.selected.path, toolPath(dir), "TMPDIR=" + t.TempDir()}
-			result := systemSelected(t, fixture.root, env, "test", "--package", "./...")
+			result := systemSelected(t, fixture.root, kitRootEnv(fixture.home, fixture.root, dir, t.TempDir()), "test", "--package", "./...")
 			out := result.stdout + result.stderr
 			// The CLI has returned, so a build script that ran has published its group.
 			if _, err := os.Stat(mark); err != nil {

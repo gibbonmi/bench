@@ -1,6 +1,7 @@
 package subprocess_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -35,6 +36,38 @@ func TestUncertifiedRefusesEachUncertainPart(t *testing.T) {
 		mutate(&o)
 		if err := o.Uncertified(); err == nil {
 			t.Errorf("%s: a zero exit certified %+v", name, o)
+		}
+	}
+}
+
+// TestUncertifiedNamesEveryUnresolvedPart is PL116 over the protection and mixed cases. A
+// protected disposition with no error still names its users, and one diagnostic names the
+// cleanup obligation, the failed stream, and the retained protection together.
+func TestUncertifiedNamesEveryUnresolvedPart(t *testing.T) {
+	none := subprocess.Stream{Status: subprocess.StreamNone}
+	o := subprocess.Outcome{
+		Process:    subprocess.Process{Started: true, Waited: true},
+		Streams:    subprocess.StreamSet{Stdin: none, Stdout: subprocess.Stream{Status: subprocess.StreamFailed}, Stderr: none},
+		Cleanup:    subprocess.Cleanup{Status: subprocess.CleanupIncomplete, Obligations: []subprocess.Obligation{subprocess.ObligationWaiter}},
+		Protection: protection.Disposition{State: protection.Protected, Users: []string{"user-a"}},
+	}
+	protected := o
+	protected.Streams.Stdout.Status, protected.Cleanup = subprocess.StreamComplete, subprocess.Cleanup{}
+	for name, tc := range map[string]struct {
+		outcome subprocess.Outcome
+		want    []string
+	}{
+		"protection": {protected, []string{"process protection protected", "user-a"}},
+		"mixed":      {o, []string{"process cleanup incomplete", string(subprocess.ObligationWaiter), "process stream failed", "process protection protected", "user-a"}},
+	} {
+		err := tc.outcome.Uncertified()
+		if err == nil || strings.Contains(err.Error(), "<nil>") {
+			t.Fatalf("%s: diagnostic = %v, want every unresolved part and no empty cause", name, err)
+		}
+		for _, want := range tc.want {
+			if strings.Count(err.Error(), want) != 1 {
+				t.Errorf("%s: diagnostic %q names %q other than once", name, err, want)
+			}
 		}
 	}
 }

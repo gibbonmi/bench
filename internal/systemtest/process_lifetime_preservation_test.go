@@ -44,12 +44,18 @@ func shapeScript(shape preservationShape, sleep, mv, mark string) string {
 	if shape.descendant {
 		script += sleep + " 300 </dev/null >/dev/null 2>&1 &\n"
 	}
-	quoted := "'" + mark + "'"
 	end := "exit " + strconv.Itoa(shape.exit) + "\n"
 	if shape.signal {
 		end = "kill -TERM \"$$\"\n"
 	}
-	return script + "echo \"$$\" > " + quoted + ".partial && " + mv + " " + quoted + ".partial " + quoted + "\n" + end
+	return script + publishGroup(mv, mark) + end
+}
+
+// publishGroup is the script line that publishes the shell's group in mark through a rename,
+// so a reader never sees a partial number. mv names the tool as the caller resolves it.
+func publishGroup(mv, mark string) string {
+	quoted := "'" + mark + "'"
+	return "echo \"$$\" > " + quoted + ".partial && " + mv + " " + quoted + ".partial " + quoted + "\n"
 }
 
 // jsonShapeScript is the canned child body of shape for a caller that decodes the child's
@@ -132,4 +138,40 @@ func TestProcessLifetimeExecDifferential(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestProcessLifetimeStartFailureDifferential is the start-failure shape of PL92 and PL100.
+// A child whose interpreter is absent never starts, so the gate and exec each attribute the
+// failed start and report no child output.
+func TestProcessLifetimeStartFailureDifferential(t *testing.T) {
+	t.Parallel()
+	t.Run("gate", func(t *testing.T) {
+		t.Parallel()
+		root := gittest.RepoOnBranch(t, "main")
+		f := testrepo.NewGateFixture(t.TempDir(), "HOME")
+		f.MustWrite(t, root, "exit 0\n", "")
+		absent := filepath.Join(t.TempDir(), "absent")
+		if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!"+absent+"\n"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		gittest.Output(t, root, "add", ".")
+		gittest.Output(t, root, "commit", "-qm", "fixture")
+		env := []string{"HOME=" + t.TempDir(), "TMPDIR=" + t.TempDir(), "TEST_TELEMETRY_DIR=" + os.DevNull}
+		result := systemSelected(t, root, env, "gate", "--fresh")
+		// The baseline gate reds a script that cannot start, with no child output and no
+		// stderr line below its tree header.
+		if result.code != 1 || result.stderr != "" || !strings.HasPrefix(result.stdout, "tree[1]") || strings.Count(result.stdout, "\n") != 2 {
+			t.Fatalf("gate over a failed start = (%d, %q, %q), want exit 1 with no child output", result.code, result.stdout, result.stderr)
+		}
+	})
+	t.Run("exec", func(t *testing.T) {
+		t.Parallel()
+		fixture, source := execBoundFixture(t)
+		absent := filepath.Join(t.TempDir(), "absent")
+		result := runBoundedExec(t, fixture, source, "", absent)
+		want := "bench worktree exec: fork/exec " + absent + ": " + syscall.ENOENT.Error()
+		if result.code != 1 || result.stdout != "" || !strings.Contains(result.stderr, want) {
+			t.Fatalf("exec over a failed start = (%d, %q, %q), want exit 1 and %q", result.code, result.stdout, result.stderr, want)
+		}
+	})
 }
