@@ -1,9 +1,13 @@
 package worktree
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
+	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
@@ -20,7 +24,12 @@ func ValidateProtection(d protection.Descriptor) error { return checkoutDirector
 
 // Descriptor names the protection resource of the checkout at dir without its generation.
 func Descriptor(dir string) (protection.Descriptor, error) {
-	admin, err := git.AdminDir(dir)
+	return describeCheckout(new(git.Run), dir)
+}
+
+// describeCheckout is Descriptor with the location answers of run.
+func describeCheckout(run *git.Run, dir string) (protection.Descriptor, error) {
+	admin, err := run.AdminDir(dir)
 	if err != nil {
 		return protection.Descriptor{}, err
 	}
@@ -42,12 +51,71 @@ func childResources(dir string, environ []string) ([]protection.Descriptor, erro
 	}
 	d, err := Descriptor(dir)
 	if err == nil {
-		d, err = p.OpenResource(d)
+		d, err = openCheckout(p, d)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("protect worktree %s: %w", dir, err)
 	}
 	return append(inherited, d), nil
+}
+
+// openCheckout joins or publishes the checkout's generation. A refused release, reuse, or
+// removal leaves its generation sealed, and recovery retires it once every user resolves.
+func openCheckout(p *protection.Protocol, d protection.Descriptor) (protection.Descriptor, error) {
+	opened, err := p.OpenResource(d)
+	if errors.Is(err, protection.ErrSealed) {
+		if _, err = p.Recover(d.Store, nil); err == nil {
+			opened, err = p.OpenResource(d)
+		}
+	}
+	return opened, err
+}
+
+// checkoutObserver is the protocol that observes the users of a checkout. Observation needs
+// only the worktree identity adapter, so a process with no installed protocol still sees each
+// user that another process registered.
+var checkoutObserver = &protection.Protocol{Validators: protection.Validators{protection.KindWorktree: ValidateProtection}, ReadLimit: bounds.ControlRecordLimit}
+
+// checkoutUnprotected is the one protected-user predicate of a checkout. Release, reuse, and
+// cleanup apply ask it before they reset, clean, or remove the checkout at path. It seals
+// the checkout's generation and observes every user, so no new user joins a generation that
+// a safe answer retires. A nil answer means that no user of the checkout remains unresolved.
+// An absent store, and a store that holds no generation, name no user. An unresolved user, a
+// failed observation, or a checkout that it cannot describe keeps the checkout. It reads Git
+// through run.
+func checkoutUnprotected(run *git.Run, path string) error {
+	d, err := describeCheckout(run, path)
+	if err != nil {
+		return fmt.Errorf("worktree %s %w: %w", path, protection.ErrRetained, err)
+	}
+	disposition, err := checkoutObserver.Recover(d.Store, nil)
+	switch {
+	case errors.Is(err, fs.ErrNotExist) && disposition.Resources[0].ResourceID == "":
+		return nil
+	case err != nil:
+		return fmt.Errorf("worktree %s %w: %w", path, protection.ErrRetained, err)
+	case disposition.State != protection.Safe:
+		return fmt.Errorf("worktree %s %w: protection is %s for users %v", path, protection.ErrRetained, disposition.State, disposition.Users)
+	}
+	return nil
+}
+
+// protectionEvidence is the plan evidence of the protection of the checkout whose
+// administrative directory is admin: each entry of its store, read without a seal. A user
+// that joins or resolves after the plan changes the evidence, and apply rechecks the users
+// through checkoutUnprotected under the cleanup exclusion. An absent store, an undescribed
+// checkout, and an unreadable entry each end the evidence with the error that stopped it.
+func protectionEvidence(admin string) []byte {
+	d, err := checkoutDirectory.Describe(admin)
+	var parts [][]byte
+	if err == nil {
+		err = filepath.WalkDir(d.Store, func(path string, _ fs.DirEntry, walkErr error) error {
+			evidence, fileErr := fileEvidence(path)
+			parts = append(parts, []byte(path), evidence)
+			return errors.Join(walkErr, fileErr)
+		})
+	}
+	return canonicalParts(append(parts, []byte(fmt.Sprint(err)))...)
 }
 
 // environValue is the last value environ assigns to name, which is the value a child reads.

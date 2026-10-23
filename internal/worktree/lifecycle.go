@@ -175,7 +175,8 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 
 // acquireAt claims a clean pool entry or mints one in three bounded attempts. It
 // resets to resetRef (HEAD when empty). Soft mode tolerates an unresolved ref.
-// The home and the instant are the caller's explicit boundary resolutions.
+// The home and the instant are the caller's explicit boundary resolutions. A claimed
+// entry with an unresolved user goes back to the pool unreset.
 func acquireAt(j joins, root, resetRef, resetMode, home string, now time.Time) (string, error) {
 	pool := poolAt(home, root)
 	if err := preparePoolRoot(j, pool); err != nil {
@@ -190,6 +191,10 @@ func acquireAt(j joins, root, resetRef, resetMode, home string, now time.Time) (
 		}
 		lease, err := LeaseFile(d)
 		if err != nil || !claimAt(j, lease, now, staleLease) {
+			continue
+		}
+		if checkoutUnprotected(new(git.Run), d) != nil {
+			os.Remove(lease)
 			continue
 		}
 		wt = d
@@ -242,8 +247,9 @@ func worktreeAdd(root, cand, ref string) bool {
 }
 
 // Release restores a pooled worktree to a clean detached checkout before it removes
-// the lease. It does nothing when wt is empty or another live process owns the lease;
-// after lease removal, callers must assume that a concurrent Acquire owns the checkout.
+// the lease. It does nothing when wt is empty, another live process owns the lease, or a
+// user of the checkout remains unresolved; after lease removal, callers must assume that a
+// concurrent Acquire owns the checkout.
 func Release(wt string) {
 	releaseWith(defaultJoins(), wt)
 }
@@ -262,6 +268,9 @@ func releaseWith(j joins, wt string) {
 		if pid, err := strconv.Atoi(field[0]); err == nil && pid != os.Getpid() && PIDAlive(pid) {
 			return
 		}
+	}
+	if checkoutUnprotected(new(git.Run), wt) != nil {
+		return
 	}
 	j.restoreClean(wt)
 	os.Remove(lease)
@@ -488,10 +497,15 @@ func handoffDocumentPath(root string) string {
 }
 
 // retireCheckout performs the removal itself: the recovery preservation, the ignored
-// discard, the registration removal, and the terminal record states.
+// discard, the registration removal, and the terminal record states. Before any of them,
+// it rechecks the checkout's users under the caller's cleanup exclusion, and an unresolved
+// user keeps the checkout.
 func retireCheckout(j joins, a ambient, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
 	if plan.Action == actionReleaseLeftover {
 		return releaseLeftover(root, plan, checkpoint, fault)
+	}
+	if err := checkoutUnprotected(a.run, plan.Target); err != nil {
+		return plan, err
 	}
 	var recovered *intent.Assignment
 	if plan.preserves() {

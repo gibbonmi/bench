@@ -408,7 +408,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 		[]byte("bench-explicit/v2"), []byte(common), []byte(defaultRef), []byte(defaultOID),
 		[]byte(target), []byte(admin), []byte(registration.Path), []byte(registration.BranchRef),
 		[]byte(strconv.FormatBool(registration.Detached)), []byte(strconv.FormatBool(registration.Locked)), []byte(registration.LockReason),
-		markerBytes, ledgerBytes, []byte(head), []byte(headRef), indexBytes, status, []byte(contentIdentity), leaseBytes, buildOutputEvidence,
+		markerBytes, ledgerBytes, []byte(head), []byte(headRef), indexBytes, status, []byte(contentIdentity), leaseBytes, buildOutputEvidence, protectionEvidence(admin),
 		[]byte(plan.landedTyped.String()), []byte(nestedEvidence), ignoredCanonical, []byte(plan.Recovery),
 		[]byte(strconv.FormatBool(options.DiscardIgnored)), []byte(strconv.FormatBool(options.DiscardBranch)),
 		[]byte(plan.Action), []byte(plan.ReasonCode), []byte(plan.Reason), []byte(strconv.FormatBool(plan.deleteBranch)), []byte(plan.branchRef), []byte(plan.branchOID),
