@@ -797,7 +797,7 @@ It composes existing canonical-path policy instead of adding another resolver.
 
 Won't handle: Escaped unregistered descendants — the gate and builder retain their existing process-group contract.
 
-Won't handle: Native Windows lifetime semantics — releasepreflight keeps its current non-Unix fallback outside this migration.
+Won't handle: Native Windows lifetime semantics — the protection package does not build for Windows, so releasepreflight carries no non-Unix fallback.
 
 Won't handle: Bounded arbitrary caller I/O — exec retains caller-owned streams and explicit incomplete facts.
 
