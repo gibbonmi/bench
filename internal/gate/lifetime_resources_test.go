@@ -65,7 +65,14 @@ func TestGateTerminalFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	store := filepath.Join(dir, gocache.ProtectionStore)
+	// The store derives from the cache's identity, so the cache exists before the gate holds it.
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	store, err := gocache.ProtectionStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
 	root := outcomeFixture(t, func(f *testrepo.GateFixture, body string) string {
 		f.Environment = []string{"HOME"}
 		return body + f.Command("chmod") + " -R a-w " + sanitize.ShellQuote(store) + "\n"

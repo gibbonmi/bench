@@ -2,13 +2,9 @@ package prospectiveartifact
 
 import "github.com/gibbonmi/bench/internal/subprocess/protection"
 
-// ProtectionStore names the protection store inside a bundle root.
-const ProtectionStore = "process-users"
-
 // bundleDirectory is the identity adapter of a bundle root.
 var bundleDirectory = protection.Directory{
 	Kind:   protection.KindProspective,
-	Store:  ProtectionStore,
 	Noun:   "bundle",
 	Prefix: BundlePrefix,
 	Class:  "prospective artifact bundle",

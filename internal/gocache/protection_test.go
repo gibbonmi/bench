@@ -35,7 +35,8 @@ func TestProtectionJoinsUnderTheSharedHold(t *testing.T) {
 	p := cacheProtocol()
 	d, err := first.Protect(p)
 	canonical, _ := canonicalpath.Resolve(dir)
-	if err != nil || d.Store != filepath.Join(canonical, ProtectionStore) || ValidateProtection(d) != nil {
+	described, _ := cacheDirectory.Describe(canonical)
+	if err != nil || d.Store != described.Store || ValidateProtection(d) != nil {
 		t.Fatalf("cache protection = %+v (%v)", d, err)
 	}
 	if joined, err := second.Protect(p); err != nil || joined != d {
@@ -65,15 +66,16 @@ func TestProtectionRefusesAForeignCache(t *testing.T) {
 		t.Fatal(err)
 	}
 	foreignStore, foreignBinding, unlocked, linked, linkedParent := d, d, d, d, d
-	foreignStore.Store = filepath.Join(other, ProtectionStore)
 	described, _ := cacheDirectory.Describe(other)
+	foreignStore.Store = described.Store
 	foreignBinding.Binding = described.Binding
 	// The unlocked directory carries its own binding, so only the missing cache lock refuses it.
-	unlocked.ResourcePath, unlocked.Store, unlocked.Binding = other, filepath.Join(other, ProtectionStore), foreignBinding.Binding
-	linked.ResourcePath, linked.Store = link, filepath.Join(link, ProtectionStore)
+	unlocked.ResourcePath, unlocked.Store, unlocked.Binding = other, described.Store, foreignBinding.Binding
+	linked.ResourcePath = link
+	linked.Store, _ = cacheDirectory.Store(link, linked.Binding)
 	// A link in a parent component reaches the real cache, so only the canonical-path check refuses it.
 	linkedParent.ResourcePath = filepath.Join(parentLink, filepath.Base(d.ResourcePath))
-	linkedParent.Store = filepath.Join(linkedParent.ResourcePath, ProtectionStore)
+	linkedParent.Store, _ = cacheDirectory.Store(linkedParent.ResourcePath, linkedParent.Binding)
 	for name, foreign := range map[string]protection.Descriptor{"store": foreignStore, "binding": foreignBinding, "lock": unlocked, "link": linked, "parent link": linkedParent} {
 		if err := ValidateProtection(foreign); err == nil {
 			t.Errorf("%s: the cache validator accepted %+v", name, foreign)

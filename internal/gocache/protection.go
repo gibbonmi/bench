@@ -6,10 +6,6 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
-// ProtectionStore names the protection store inside the Bench build cache. Go's clean
-// removes the two-hex subdirectories alone, so the store survives a clean.
-const ProtectionStore = "bench-process-users"
-
 // Protect opens the protection generation of the cache that h holds shared. The shared lock
 // comes first, so an exclusive clean cannot start between the hold and the protection. The
 // last release of the hold retires the generation through p.
@@ -54,7 +50,13 @@ func (h *Holder) Resources() ([]protection.Descriptor, error) {
 }
 
 // cacheDirectory is the identity adapter of a cache directory, which holds the cache lock.
-var cacheDirectory = protection.Directory{Kind: protection.KindCache, Store: ProtectionStore, Noun: "cache", Lock: LockFile}
+var cacheDirectory = protection.Directory{Kind: protection.KindCache, Noun: "cache", Lock: LockFile}
+
+// ProtectionStore derives the protection store of the existing cache directory dir.
+func ProtectionStore(dir string) (string, error) {
+	d, err := cacheDirectory.Describe(dir)
+	return d.Store, err
+}
 
 // ValidateProtection is the cache identity adapter.
 func ValidateProtection(d protection.Descriptor) error { return cacheDirectory.Validate(d) }

@@ -238,12 +238,15 @@ func (s *Selection) Close() error {
 }
 
 // release seals the generation and removes the directory only when every user is resolved.
-// Removal follows the seal, because the store lives inside the directory.
+// Removal follows the seal, and the store's removal follows the directory's.
 func (s *Selection) release() error {
 	if err := s.generation.Release("selection "+s.dir, nil); err != nil {
 		return err
 	}
-	return os.RemoveAll(s.dir)
+	if err := os.RemoveAll(s.dir); err != nil {
+		return err
+	}
+	return s.generation.Discard()
 }
 
 // WithEnv replaces every ambient selection with path.

@@ -308,7 +308,8 @@ func publish(replacer durablefile.Replacer, root string, record Record) error {
 }
 
 // releaseBundle observes every user of the bundle's generation under its protocol lock. Only a
-// safe generation removes the Git registration, still under that lock, and then the bundle root.
+// safe generation removes the Git registration, still under that lock, then the bundle root, and
+// then the generation's store.
 // An unresolved or unobserved generation returns protection.ErrRetained; a removal failure
 // returns itself.
 func releaseBundle(generation protection.Generation, repository, root string, remove func(string, string) error) error {
@@ -316,7 +317,10 @@ func releaseBundle(generation protection.Generation, repository, root string, re
 	if err := generation.Release("prospective bundle "+root, unregister); err != nil {
 		return err
 	}
-	return os.RemoveAll(root)
+	if err := os.RemoveAll(root); err != nil {
+		return err
+	}
+	return generation.Discard()
 }
 
 func unregisterCheckout(repository, checkout string, remove func(string, string) error) error {

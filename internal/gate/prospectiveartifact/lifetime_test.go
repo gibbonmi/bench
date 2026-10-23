@@ -171,24 +171,13 @@ func TestOpenRefusesRecoveryWhenRegistrationRemovalFails(t *testing.T) {
 	planted := snapshotPath(t, base)
 	registrations := worktreeRegistrations(t, repository)
 	// Observation seals the dead generation before registration removal, so the first
-	// refusal writes inside the protection store alone. A repeated refusal writes nothing.
+	// refusal writes inside the protection store alone. The store resides under the store
+	// root, outside the temporary root. A repeated refusal writes nothing.
 	if _, err := refusing.Open(repository); err == nil {
 		t.Fatal("first recovery with a registration failure = nil, want refusal")
 	}
-	sealed := snapshotPath(t, base)
-	store, err := filepath.Rel(filepath.Dir(base), filepath.Join(dead, ProtectionStore))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, snapshot := range []map[string]string{planted, sealed} {
-		for name := range snapshot {
-			if name == store || strings.HasPrefix(name, store+string(filepath.Separator)) {
-				delete(snapshot, name)
-			}
-		}
-	}
-	if !reflect.DeepEqual(planted, sealed) {
-		t.Fatalf("temporary root outside the protection store after the first refusal = %v, want the planted %v", sealed, planted)
+	if sealed := snapshotPath(t, base); !reflect.DeepEqual(planted, sealed) {
+		t.Fatalf("temporary root after the first refusal = %v, want the planted %v", sealed, planted)
 	}
 	if after := worktreeRegistrations(t, repository); after != registrations {
 		t.Fatalf("registrations after the first refusal =\n%s\nwant\n%s", after, registrations)

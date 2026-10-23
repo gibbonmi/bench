@@ -81,7 +81,10 @@ func cleanWith(env []string, p *protection.Protocol) (string, int) {
 // releaseUnprotected runs release once no cache user can still need the archives. A store
 // with no generation is a retired one. Unresolved or unreadable protection refuses.
 func releaseUnprotected(dir string, p *protection.Protocol, release func() error) error {
-	store := filepath.Join(dir, ProtectionStore)
+	store, err := ProtectionStore(dir)
+	if err != nil {
+		return err
+	}
 	if _, err := os.Lstat(store); errors.Is(err, fs.ErrNotExist) {
 		return release()
 	}

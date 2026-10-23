@@ -1,6 +1,8 @@
 package protection
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -16,14 +18,13 @@ import (
 var ErrRetained = errors.New("stays retained")
 
 // Directory is the identity adapter of a resource that is one owned directory. Its descriptor
-// names the canonical directory, the fixed store inside it, and the directory's device and
-// inode, so a directory that replaced the resource at the same path is a different resource.
+// names the canonical directory, the store that Store derives for it, and the directory's device
+// and inode, so a directory that replaced the resource at the same path is a different resource.
 // Prefix and Lock are optional rules: a set Prefix starts the directory's base name, and a set
 // Lock names a regular file that the directory holds. Noun names the resource in a refusal,
 // and Class names the prefixed directory class.
 type Directory struct {
 	Kind   Kind
-	Store  string
 	Noun   string
 	Prefix string
 	Class  string
@@ -40,7 +41,23 @@ func (a Directory) Describe(dir string) (Descriptor, error) {
 	if err != nil {
 		return Descriptor{}, err
 	}
-	return Descriptor{Store: filepath.Join(canonical, a.Store), Kind: a.Kind, ResourcePath: canonical, Binding: binding}, nil
+	store, err := a.Store(canonical, binding)
+	if err != nil {
+		return Descriptor{}, err
+	}
+	return Descriptor{Store: store, Kind: a.Kind, ResourcePath: canonical, Binding: binding}, nil
+}
+
+// Store derives the store of the resource at path with binding. Its name is the kind and a
+// digest of the path and the binding, and it resides under the store root, never inside the
+// resource. A root that Store cannot certify prevents every launch that names it.
+func (a Directory) Store(path, binding string) (string, error) {
+	root, err := storeRoot()
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256([]byte(path + "\x00" + binding))
+	return filepath.Join(root, string(a.Kind)+"-"+hex.EncodeToString(sum[:16])), nil
 }
 
 // Open opens the generation of the resource at dir under p before any user of it.
@@ -55,14 +72,11 @@ func (a Directory) Open(p *Protocol, dir string) (Generation, error) {
 	return Generation{Protocol: p, Resource: d}, nil
 }
 
-// Validate is the kind's Validator. It accepts only a canonical directory of the kind, its
-// fixed store, and the directory's existing identity.
+// Validate is the kind's Validator. It accepts only a canonical directory of the kind, the
+// store that Store derives for it, and the directory's existing identity.
 func (a Directory) Validate(d Descriptor) error {
 	if canonical, err := canonicalpath.Resolve(d.ResourcePath); err != nil || canonical != d.ResourcePath {
 		return fmt.Errorf("%s path %s is not canonical", a.Noun, d.ResourcePath)
-	}
-	if d.Store != filepath.Join(d.ResourcePath, a.Store) {
-		return fmt.Errorf("store %s is not the protection store of %s %s", d.Store, a.Noun, d.ResourcePath)
 	}
 	if a.Prefix != "" && !strings.HasPrefix(filepath.Base(d.ResourcePath), a.Prefix) {
 		return fmt.Errorf("%s is not a %s", d.ResourcePath, a.Class)
@@ -78,6 +92,14 @@ func (a Directory) Validate(d Descriptor) error {
 	}
 	if binding != d.Binding {
 		return fmt.Errorf("binding %s does not name %s %s", d.Binding, a.Noun, d.ResourcePath)
+	}
+	// The store derives from the checked path and binding, so it comes last.
+	store, err := a.Store(d.ResourcePath, d.Binding)
+	if err != nil {
+		return err
+	}
+	if d.Store != store {
+		return fmt.Errorf("store %s is not the protection store of %s %s", d.Store, a.Noun, d.ResourcePath)
 	}
 	return nil
 }
@@ -100,6 +122,16 @@ func (a Directory) identity(dir string) (string, error) {
 type Generation struct {
 	Protocol *Protocol
 	Resource Descriptor
+}
+
+// Discard deletes the store of a released generation. Its owner calls it after it deletes the
+// resource, so no new generation can open on the resource between the two deletions. A zero
+// generation has no store.
+func (g Generation) Discard() error {
+	if g.Resource == (Descriptor{}) {
+		return nil
+	}
+	return os.RemoveAll(g.Resource.Store)
 }
 
 // Resources names the generation for a launch that uses the resource. A zero generation
