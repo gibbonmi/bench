@@ -62,7 +62,7 @@ func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr
 		owner = prospectiveRunBinaryOwnerAt(checkout, artifacts.Root())
 	}
 	evaluation := checkpointEvaluation(ctx, newProspectiveTreeEvaluation(checkout, root, tree))
-	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, arm, mode, evaluation, owner, root)
+	return executeSubjectOwning(ctx, checkout, root, stdout, stderr, arm, mode, evaluation, owner, root, durablefile.Native(), artifacts)
 }
 
 // ValidateProjectGreen reports whether branch's current tip and marker have retained

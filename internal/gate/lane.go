@@ -137,14 +137,17 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 		return LaneResult{}, err
 	}
 	checks := resolveLane(selected, req.Root, checkout, proseSubject(req.Changes), req.Base)
+	local := append(cache, artifacts.Resources()...)
 	for i := range checks {
-		checks[i].Resources = append(checks[i].Resources, cache...)
+		checks[i].Resources = append(checks[i].Resources, local...)
 	}
 	runBinary, checks, closeSelection, err := selectLaneRunBinary(ctx, req, checkout, artifacts.Root(), checks)
+	// The selection lives in the bundle, so the bundle releases only after the selection does.
+	release := func() error { return artifacts.CloseAfter(closeSelection) }
+	defer release()
 	if err != nil {
 		return LaneResult{}, err
 	}
-	defer closeSelection()
 
 	runCtx, cancel := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
 	defer cancel()
@@ -173,6 +176,10 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 		result.Outcome, result.Check = laneFail, settled.Name
 		result.Diagnostic = diagnostics.firstLine(settled.Name, settled.StartErr)
 		break
+	}
+	// A nested user that outlives its check keeps a resource, so the run reaches no outcome.
+	if err := release(); err != nil {
+		return LaneResult{}, fmt.Errorf("gate: lane cleanup incomplete: %w", err)
 	}
 	if err := writeLaneRecord(durablefile.Native(), gitdir, result); err != nil {
 		return LaneResult{}, fmt.Errorf("gate: lane record persistence failed: %w", err)
@@ -266,11 +273,11 @@ func reanchor(value, root, checkout string) string {
 // no token runs no Bench-owned check, so there is nothing to select and the record
 // carries the executable that ran the lane. An authored selection is written inside
 // artifactRoot, so the bundle owns every executable it authors; an inherited selection
-// stays where its own owner put it.
-func selectLaneRunBinary(ctx context.Context, req LaneRequest, checkout, artifactRoot string, checks []Phase) (string, []Phase, func(), error) {
+// stays where its own owner put it. The returned release reports the selection's retention.
+func selectLaneRunBinary(ctx context.Context, req LaneRequest, checkout, artifactRoot string, checks []Phase) (string, []Phase, func() error, error) {
 	if !laneUsesRunBinary(checks) {
 		digest, err := ownExecutableDigest()
-		return digest, checks, func() {}, err
+		return digest, checks, func() error { return nil }, err
 	}
 	source := req.Kit
 	if source == "" {
@@ -280,14 +287,13 @@ func selectLaneRunBinary(ctx context.Context, req LaneRequest, checkout, artifac
 	factory.TempRoot = artifactRoot
 	selection, err := factory.ReuseOrOwn(ctx, source)
 	if err != nil {
-		return "", nil, func() {}, fmt.Errorf("gate: lane Bench executable unavailable: %w", err)
+		return "", nil, nil, fmt.Errorf("gate: lane Bench executable unavailable: %w", err)
 	}
 	digest, err := fileDigest(selection.Path)
 	if err != nil {
-		_ = selection.Close()
-		return "", nil, func() {}, err
+		return "", nil, selection.Close, err
 	}
-	return digest, withRunBinary(checks, selection), func() { _ = selection.Close() }, nil
+	return digest, withRunBinary(checks, selection), selection.Close, nil
 }
 
 func laneUsesRunBinary(checks []Phase) bool {

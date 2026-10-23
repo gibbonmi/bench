@@ -35,7 +35,12 @@ func persistenceFailure(root string, gateExit int, stderr io.Writer, category st
 // unprotectedFailure keeps the pending record after a failed run whose protection is not
 // safe, so no verdict claims the tree. It reports the process exit beside the protection cause.
 func unprotectedFailure(root string, plan subject, rc int, stderr io.Writer, run processGroupResult) Result {
-	message := fmt.Sprintf("gate terminal protection failed: process exit %d; %v", run.Outcome.Process.Code, run.StartErr)
+	return retainedFailure(root, plan, rc, stderr, fmt.Sprintf("gate terminal protection failed: process exit %d; %v", run.Outcome.Process.Code, run.StartErr))
+}
+
+// retainedFailure keeps the pending record, so no verdict claims the tree, and invalidates
+// retained evidence. It reports message with any invalidation failure beside it.
+func retainedFailure(root string, plan subject, rc int, stderr io.Writer, message string) Result {
 	if err := invalidateEvidence(root, plan); err != nil {
 		message += "; gate evidence invalidation failed: " + err.Error()
 	}

@@ -3,18 +3,23 @@
 package systemtest
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"syscall"
 	"testing"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // fakeCodex is a local codex provider. At first use, it records whether a user record names
@@ -142,13 +147,79 @@ func exitWithin(t *testing.T, cmd *exec.Cmd, inner time.Duration) int {
 	t.Helper()
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
+	return exitedWithin(t, cmd, done, inner)
+}
+
+// exitedWithin reads the exit of cmd from done, which carries the result of its one Wait,
+// inside the deadline derived from inner.
+func exitedWithin(t *testing.T, cmd *exec.Cmd, done <-chan error, inner time.Duration) int {
+	t.Helper()
 	window := bounds.TestDeadline(inner)
 	select {
 	case err := <-done:
 		return systemExitCode(err)
 	case <-time.After(window):
 		_ = cmd.Process.Kill()
-		t.Fatal(bounds.TestTimeoutVerdict("the nested CLI to exit", window))
+		t.Fatal(bounds.TestTimeoutVerdict("the CLI to exit", window))
 	}
 	return -1
+}
+
+// TestProcessLifetimeNestedGate is PL32. The oracle starts the nested phase runner, kills it
+// once its phase group is registered, and exits zero. The phase group survives as a bundle
+// user, so the landing gate must retain no green evidence and keep the bundle.
+func TestProcessLifetimeNestedGate(t *testing.T) {
+	t.Parallel()
+	root, home, tally, trees, ready, release := systemLandingRaceFixture(t)
+	configureArtifactLandingFixture(t, root)
+	f := testrepo.NewGateFixture(t.TempDir())
+	f.Environment = []string{"HOME", "LAND_BASELINE_BENCH", "LAND_GATE_TALLY", "LAND_GATE_TREES", "LAND_RACE_READY", "LAND_RACE_RELEASE"}
+	f.Command("go")
+	// The hand-off keeps the spelling that the gate's phase-table predicate recognizes, so the
+	// gate receives BENCH_KIT and BENCH_RUN_BINARY. The script reads both before the background
+	// launch, so an absent value fails the gate and not only the nested runner.
+	gate := "set -eu\nroot=${1:-$(" + f.Command("git") + " rev-parse --show-toplevel)}\nkit=${BENCH_KIT:?}\nbench=${BENCH_RUN_BINARY:?}\n" +
+		f.Command("env") + " BENCH_KIT=\"$kit\" BENCH_RUN_BINARY=\"$bench\" \"$bench\" gate-phases \"$root\" &\nnested=$!\n" +
+		boundedWait(f, artifactBarrierWindow) + f.Command("cat") + " \"$LAND_RACE_READY\" > /dev/null\nkill -KILL \"$nested\"\n"
+	f.MustWrite(t, root, gate, gate)
+	systemGit(t, root, "add", ".")
+	systemGit(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "nested phase gate")
+	systemGit(t, root, "update-ref", "refs/bench/green/main", systemGitOutput(t, root, "rev-parse", "HEAD"))
+	evidence := filepath.Join(systemGitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), "bench-gate-evidence")
+	before := evidenceNames(t, evidence)
+	private := t.TempDir()
+	base := systemGitOutput(t, root, "rev-parse", "main")
+
+	cmd, out, errOut, done := startArtifactAuthorization(t, root, home, tally, trees, ready, release, private, base, "nested-gate", "winner.txt", "nested phase subject")
+	// The released phase lets the surviving group end after the row has its answer.
+	t.Cleanup(func() { releaseArtifactBarrier(t, release) })
+	// The landing contains the gate's own barrier wait.
+	if code := exitedWithin(t, cmd, done, artifactBarrierWindow); code == 0 || !strings.Contains(out.String()+errOut.String(), "stays retained") {
+		t.Fatalf("landing with a surviving nested phase = (%d, %q, %q), want the retained-bundle refusal", code, out.String(), errOut.String())
+	}
+	if after := evidenceNames(t, evidence); !reflect.DeepEqual(after, before) {
+		t.Fatalf("gate evidence after the refusal = %v, want the prior %v", after, before)
+	}
+	checkout := filepath.Join(oneProspectiveBundle(t, private), prospectiveartifact.CheckoutName)
+	if _, err := os.Stat(checkout); err != nil {
+		t.Fatalf("checkout with a surviving phase user = %v, want retained", err)
+	}
+	requireCheckoutRegistered(t, root, checkout, true)
+}
+
+// evidenceNames lists the retained evidence records, and none when the store is absent.
+func evidenceNames(t *testing.T, dir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+	return names
 }
