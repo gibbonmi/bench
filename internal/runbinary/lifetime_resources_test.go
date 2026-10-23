@@ -14,6 +14,15 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
+// TestMain removes an outer run's resource vector, so this package owns the only vector. A
+// builder then registers only the selection's resources, under the protocol that its test names.
+func TestMain(m *testing.M) {
+	if err := os.Unsetenv(protection.Env); err != nil {
+		os.Exit(3)
+	}
+	os.Exit(m.Run())
+}
+
 // binaryProtocol admits the selection kind alone, as the composition root's binary row does.
 func binaryProtocol() *protection.Protocol {
 	return &protection.Protocol{Validators: protection.Validators{protection.KindBinary: ValidateProtection}, ReadLimit: bounds.ControlRecordLimit}
