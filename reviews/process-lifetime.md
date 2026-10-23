@@ -2885,6 +2885,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3-standards-r2",
+          "performer": "claude:plt-c3-standards-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "173af91dfd496d875cb634e90e7054df6c6486aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-standards-r2-20261022",
+            "digest": "sha256:315cd2a1c74e44da6be7cdcf3b76a731eef19bb90f551266d60433037fd081a5",
+            "excerpt": "Standards axis, PL-C3 confirming round r2. Evidence current=true at 83198984e. All r1 findings closed; no new finding.\n\nS1 closed: one adapter, protection.Directory (internal/subprocess/protection/directory.go:24-94), composed by env/protection.go:9, runbinary/protection.go:12, gate/prospectiveartifact/protection.go:9, gocache/protection.go:57; no owner keeps its own identity copy.\nS2 closed: one release rule, Generation.Release (directory.go:~113-143), and one accessor, Generation.Resources(); callers env/kit_run.go:135,:127, runbinary/runbinary.go:243,:227, prospectiveartifact.go:316,:143. gocache/lock.go:171 retire seals without removal and is a different rule.\nS3 closed: one predicate, Outcome.Uncertified() (subprocess/outcome.go:26), used by gate/runner.go:84 and runbinary/runbinary.go:373; the builder now checks streams. bounds.go:264 excluded by the PL-C1 C2 decision.\n\nAdvice\n- The three owner validator pins repeat one test body (env, prospectiveartifact, runbinary); each restates the directory.go:80 binding message format.\n- The Generation.Release parameter shares the method's name in its doc.\n- Observation-failure messages in runbinary and env now read \"<name> stays retained: <err>\"; the directory is still kept.\n"
+          },
+          "axis": "Standards",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "72c097e5b349fb51f69d6a8bdb159a54cd45ba61",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-r1"
+          ]
+        },
+        {
+          "id": "c3-spec-r2",
+          "performer": "claude:plt-c3-spec-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "173af91dfd496d875cb634e90e7054df6c6486aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-spec-r2-20261022",
+            "digest": "sha256:cd65754ccc90f2d58ccf197efcb9863c05863df339449fe55a98e09bfab4165e",
+            "excerpt": "Spec axis, PL-C3 confirming round r2. Evidence current=true, dirty_record=false at 83198984e. P1 closed; no new finding.\n\nP1 closed: internal/gate/phases.go:176 withRunBinary adds selection.Resources() to every phase, and phases.go:318 appends run.Resources() instead of overwriting; internal/gate/run_transaction.go:195 registers the oracle on cache, bundle, and selection; internal/gate/lane.go:140-142 and :296 send lane checks through withRunBinary. TestLaneSelectedExecutableUser (internal/gate/lifetime_resources_test.go:~41) and PL32's bench-run-*/bench glob (internal/systemtest/process_lifetime_test.go:~399) witness it. Of three production receivers of BENCH_RUN_BINARY, phases.go:182 and run_transaction.go:179 are covered; internal/testreport/environment.go:89/101 is outside PL-C3.\n\nContracts kept: directory.go:60-83 refuses a non-canonical path, wrong store, missing prefix or lock, missing directory, and foreign binding (spec.md:387-391); the sealed refusal stays in the protocol. Generation.Release (directory.go:119-144) keeps the safe, retained, and failed-release split that KitTestRun.Close, Selection.release, and releaseBundle relied on. outcome.go:22-39 messages match the removed gate uncertified text.\n\nAdvice\n- The focused-test child receives BENCH_RUN_BINARY but registers no selection descriptor (internal/testreport); this belongs to ticket 10 in PL-C4.\n- runBuildScript now also refuses an incomplete stream with \"builder process\" messages.\n"
+          },
+          "axis": "Spec",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "72c097e5b349fb51f69d6a8bdb159a54cd45ba61",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-r1"
+          ]
+        },
+        {
+          "id": "c3-coverage-r2",
+          "performer": "claude:plt-c3-coverage-r2-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "173af91dfd496d875cb634e90e7054df6c6486aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-coverage-r2-20261022",
+            "digest": "sha256:68eaba3869eca945dfb7f69423bbbba6b7558b6e594f44d265900df3c3fadd06",
+            "excerpt": "Coverage axis, PL-C3 confirming round r2. Evidence current=true, dirty=false at 83198984e. C1, C2, C3 closed; no new finding.\n\nProbes (focused selections; both restored yes):\n1. internal/subprocess/protection/directory.go:79, binding comparison made never to refuse; --run Foreign across protection, runbinary, env, gate/prospectiveartifact, gocache: bit, 7 failures in all 5 packages: TestDirectoryRefusesAForeignBinding/{plain,prefix,lock}, TestSelectionValidatorRefusesAForeignBinding (closes C1), TestKitRunValidatorRefusesAForeignBinding (closes C2), TestBundleValidatorRefusesAForeignBinding (closes C3), TestProtectionRefusesAForeignCache.\n2. internal/subprocess/outcome.go:175, Uncertified stream check disabled; --run \"Uncertified|Stream|Lifetime\" across subprocess, runbinary, gate: bit, TestUncertifiedRefusesEachUncertainPart (outcome_test.go:37).\n\nAdvice\n- Only the subprocess unit test bites the stream part; the gate's use of Uncertified() was probed by a repair session. The P1 registration in phases.go was not probed this round.\n"
+          },
+          "axis": "Coverage",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "72c097e5b349fb51f69d6a8bdb159a54cd45ba61",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-r1"
+          ]
         }
       ]
     }
@@ -2969,7 +3035,11 @@ Repair 1 (commit 3e9708ec5, test-only) closed P2, C1 to C4, and the PL110 half o
 The confirming round r2 passed on all three axes with no new finding, and the Spec axis reaffirmed the PL71 no-op.
 
 PL-C3 took two pre-review repairs before its record commit: ticket 04 (commit 9f83d4328, test-only) and ticket 05 (commit f50919c53, test-only). These repairs fixed reds that the floor checks found at the frozen tip; they consume no review repair cycle.
-PL-C3 round r1 found 7 findings. The orchestrator set every finding to auto-fix under the reviewer's advance approval. Repair cycle 1 of 2 runs one fresh repair session per affected ticket, in this order: ticket 04, ticket 05, ticket 07, ticket 03.
+PL-C3 round r1 found 7 findings. The orchestrator set every finding to auto-fix under the reviewer's advance approval.
+
+Repair cycle 1 of 2 ran one fresh repair session per affected ticket, and the repairs closed all 7 findings.
+The repair commits are 918c78c13 and f44d12d4b (ticket 04), 148f5f7d9 (ticket 05), 5f675b171 (ticket 07), and 72c097e5b (ticket 03).
+The confirming round r2 passed on all three axes with no new finding.
 
 ## Standards
 
@@ -3034,3 +3104,5 @@ PL-C3 round r1: 3 findings. Worst issue: C1, a foreign binary descriptor passes 
 - PL-C3: the 10 ms poll literal in `releaseArtifactBarrier` repeats `bounds.ProcessPoll`.
 - PL-C3: `releaseUnprotected` indexes `disposition.Resources[0]`, which is safe only because the read-error path of `Recover` fills the slice.
 - PL-C3: the `Uncertain` state at `outcome.go:136` and the store and prefix checks of the adapters were not probed.
+- PL-C3 r2: the focused-test child receives `BENCH_RUN_BINARY` but registers no selection descriptor in `internal/testreport`. Ticket 10 in PL-C4 owns that path.
+- PL-C3 r2: the three owner validator pins repeat one test body; each pin has a recorded red, so the test-expectation exception holds.
