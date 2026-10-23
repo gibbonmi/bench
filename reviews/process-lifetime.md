@@ -8848,6 +8848,74 @@
           "supersedes": [
             "c4-coverage-r2"
           ]
+        },
+        {
+          "id": "c4-standards-r4",
+          "performer": "claude:plt-c4-standards-r4-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bc3c23b965c252c1f5887388dd7c553f4a206c3e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-standards-r4-20261023",
+            "digest": "sha256:441962341403dbf8ba3171eb4f936c600578d3c27e85b52504c01d9aa82b113a",
+            "excerpt": "Standards axis, PL-C4 confirming round r4. Evidence current=true at 82ac8e5e6. The BO69 repair has no Standards defect at severity 5 or higher. The forced-close line has one format source, subprocess.Outcome.Uncertified (internal/subprocess/outcome.go:32), and both the forced and the unfinished reports use the same stderr write (internal/worktree/exec.go:24, :27). Cleanup obligations and other stream failures still return 1 on a child zero (exec.go:26-29).\n\nFindings\nNo new finding.\n\nAdvice\n- Severity 2: exec.go:48-54 reports only the first StreamClosed stream; a second forced stream would go unreported.\n- Severity 2: exec.go:50-51 builds the forced error from a synthetic Outcome; a Stream-level error method would be a cleaner single source.\n- Severity 1: the rewrapped comment at exec.go:13 runs past the wrap width.\n"
+          },
+          "axis": "Standards",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "4829483c4106a94ece30902aeea5017a7f599bb5",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards-r3"
+          ]
+        },
+        {
+          "id": "c4-spec-r4",
+          "performer": "claude:plt-c4-spec-r4-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bc3c23b965c252c1f5887388dd7c553f4a206c3e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-spec-r4-20261023",
+            "digest": "sha256:7926bdf1903a41ec8a027a6c81eac8301c3ebbdb9a9952b66aa8c424db894fca",
+            "excerpt": "Spec axis, PL-C4 confirming round r4. Evidence current=true at 82ac8e5e6. The code matches the amended spec (spec.md:181-186) and ticket 11 (lines 19-20): a forced close keeps the child's code with a stderr line, a failed stream or open cleanup obligation still gives a nonzero exit, and a normal exit adds no group kill.\n\nFindings\nNo new finding.\n\nChecked: childUnfinished (internal/worktree/exec.go:41-56) moves only StreamClosed streams into forced and marks them complete before Uncertified; StreamFailed, StreamPending and Cleanup.Obligations still refuse (internal/subprocess/outcome.go:27-33, :141-146); runChild signals only on interruption (SIGINT, 130); TestExecNormalPipe (exec_lifetime_test.go:66-84) checks the descendant stays alive and the forced-close line appears.\n\nAdvice\n- When the child exits nonzero and something is also unfinished, runChild returns the child's code without the unfinished line (pre-existing).\n- Whether a live descendant leaves the group obligation open depends on needGroup (outcome.go:138); TestExecNormalPipe covers it.\n"
+          },
+          "axis": "Spec",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "4829483c4106a94ece30902aeea5017a7f599bb5",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-r3"
+          ]
+        },
+        {
+          "id": "c4-coverage-r4",
+          "performer": "claude:plt-c4-coverage-r4-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bc3c23b965c252c1f5887388dd7c553f4a206c3e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-coverage-r4-20261023",
+            "digest": "sha256:7c9f51fa671bc5e88d256ed9ac24b738f0857746498fcfc253433d45ee04aedf",
+            "excerpt": "Coverage axis, PL-C4 confirming round r4. Evidence current=true at 82ac8e5e6. The BO69 forced-close arm is pinned by TestExecNormalPipe. The other arm has no test: with a failed stream or an unresolved cleanup obligation and child zero, exec must return 1, and a mutant that returns the child's 0 passes every worktree test.\n\nFindings\nC4-COV-r4-1 | auto-fix | 5 | internal/worktree/exec.go:175-177 | probe silent, restored yes; ticket 11:20 \"Exec returns child zero only after its cleanup obligations complete.\" and :40 \"A raw child status cannot certify required cleanup or publication.\" | The code == 0 && unfinished != nil branch has no biting test; a later change could fold it into \"return child code\" and give a false success. A runChild-level test with a child zero and a failed (not StreamClosed) stream, asserting exit 1 and the stderr line, closes it; internal/worktree/exec_lifetime_test.go is on ticket 11's Writes line. Owner 11.\n\nProbes: internal/worktree/exec.go, return 1 swapped for return code in the code == 0 && unfinished != nil branch, over --package ./internal/worktree (1512 tests); silent; restored yes.\n\nAdvice\n- The branch may have been untested before the BO69 repair too; the BO69 split put it at risk.\n"
+          },
+          "axis": "Coverage",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "4829483c4106a94ece30902aeea5017a7f599bb5",
+          "finding_ids": [
+            "C4-COV-r4-1"
+          ],
+          "supersedes": [
+            "c4-coverage-r3"
+          ]
         }
       ]
     }
@@ -9103,6 +9171,11 @@ The Coverage axis found that no test bites a dropped Close failure in the probe 
 Repair cycle 2 of 2 ran one repair session for ticket 10 (commit c927fe6f9), which added row PL130 and its test.
 The confirming round r3 passed on all three axes with no new finding.
 
+The PL-C4 checkpoint gate then went red on system test BO69: exec exited 1 on a forced output close.
+The reviewer chose BO69 on 2026-10-23, and repair cycle 3 for ticket 11 (commit 4829483c4) restored the child's exit code.
+The confirming round r4 passed the Standards and Spec axes. The Coverage axis found that no test bites the nonzero exit for a failed stream with child zero.
+Repair cycle 4 runs one repair session for ticket 11 under the reviewer's advance approval.
+
 ## Standards
 
 PL-C1 round r1: 2 findings. Worst issue: S2, a scheduling-dependent verdict in a PL66 test.
@@ -9212,6 +9285,10 @@ PL-C4 round r1: 0 findings. Worst issue: none.
 PL-C4 round r2: 1 finding. Worst issue: C4-COV-r2-1, the probe set can drop a held Close failure with no red.
 
 - C4-COV-r2-1 | auto-fix | confidence 5 | `internal/probe/set.go:154-158` | No test drives a held-selection Close failure through the probe set (spec.md:87 story 25). A mutant set can then exit zero with no cleanup line. Row PL130 and a set-level test close it. Owner: ticket 10, widened.
+
+PL-C4 round r4: 1 finding. Worst issue: C4-COV-r4-1, exec can report success over a failed stream with no red.
+
+- C4-COV-r4-1 | auto-fix | confidence 5 | `internal/worktree/exec.go:175-177` | No test bites exit 1 for a failed stream with child zero (ticket 11:20, :40). A test in `exec_lifetime_test.go` closes it. Owner: ticket 11.
 
 ## Advice
 
