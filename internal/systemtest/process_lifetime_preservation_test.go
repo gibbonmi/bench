@@ -17,12 +17,14 @@ import (
 )
 
 // The differential rows run each production entry over canned producer shapes and compare
-// the projection with the production baseline. A shape names the exit status of the child
-// and whether the child leaves a normal descendant in its group.
+// the projection with the production baseline. A shape names the exit status of the child,
+// whether the child leaves a normal descendant in its group, and whether the child ends on
+// its own TERM instead of an exit.
 type preservationShape struct {
 	name       string
 	exit       int
 	descendant bool
+	signal     bool
 }
 
 var preservationShapes = []preservationShape{
@@ -30,6 +32,9 @@ var preservationShapes = []preservationShape{
 	{name: "complete exit seven", exit: 7},
 	{name: "surviving normal descendant", exit: 0, descendant: true},
 }
+
+// signalShape is the child that a TERM from inside its own body ends.
+var signalShape = preservationShape{name: "terminating signal", signal: true}
 
 // shapeScript is the canned child body of shape. It writes one line to each stream, publishes
 // its group in mark, and leaves a descendant in that group when the shape asks for one. sleep
@@ -40,7 +45,17 @@ func shapeScript(shape preservationShape, sleep, mv, mark string) string {
 		script += sleep + " 300 </dev/null >/dev/null 2>&1 &\n"
 	}
 	quoted := "'" + mark + "'"
-	return script + "echo \"$$\" > " + quoted + ".partial && " + mv + " " + quoted + ".partial " + quoted + "\nexit " + strconv.Itoa(shape.exit) + "\n"
+	end := "exit " + strconv.Itoa(shape.exit) + "\n"
+	if shape.signal {
+		end = "kill -TERM \"$$\"\n"
+	}
+	return script + "echo \"$$\" > " + quoted + ".partial && " + mv + " " + quoted + ".partial " + quoted + "\n" + end
+}
+
+// jsonShapeScript is the canned child body of shape for a caller that decodes the child's
+// stdout. It writes body to stdout first, and the canned lines of shape go to stderr.
+func jsonShapeScript(shape preservationShape, body, mark string) string {
+	return "printf '%s' '" + body + "'\n{\n" + shapeScript(shape, "sleep", "mv", mark) + "} >&2\n"
 }
 
 // groupOf waits for the group that the child of a shape published in mark, and kills that
