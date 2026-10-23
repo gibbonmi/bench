@@ -7527,6 +7527,74 @@
           "tip": "a95a90df47d7782d42c5d88d9c3d5c2af3c06a6e",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "c4-standards-r2",
+          "performer": "claude:plt-c4-standards-r2-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "752a813094ceadfa26ac7353c4b8a70934e35b94",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-standards-r2-20261023",
+            "digest": "sha256:8913304cf4df1011ce80325caa605fbad003ad73951d68ee1b43018e08dca492",
+            "excerpt": "Standards axis, PL-C4 confirming round r2. Evidence current=true at 5f6deb11e. S1 through S5 are closed at the cited sites; the delta adds no Standards defect at severity 5 or higher.\n\nFindings\nNo new finding.\n\nClosed\nS1: protection.Protocol.Reopen (internal/subprocess/protection/store.go:93-104) is the one sealed-reopen source; callers worktree/protection.go:53, gocache/protection.go:20, releaseevidence/protection.go:80.\nS2: protection.NoGeneration (recovery.go:90) is the one no-user predicate; callers worktree/protection.go:80, gocache/clean.go:88; no other caller indexes Resources[0].\nS3: protection.InheritedFrom (record.go:132) reads the vector from an environ; worktree's environValue is deleted.\nS4: subprocess.RunInherited (internal/subprocess/inherited.go:23) serves gate/runner.go:66, preprelease.go:273, releasepreflight/command.go:308, testreport/command.go:309.\nS5: shellExitCode (internal/worktree/exec.go:267) is the one exit mapping.\n\nAdvice\n- Severity 4: bounds.go:226-245 and runbinary.go:327-343 still build the inherited registration by hand; RunInherited needs a protocol parameter for runbinary. Pre-existing; a learning fits.\n- Severity 3: releaseevidence/protection.go:76-85 restates Directory.Open with Reopen; a Directory.Reopen would make Generation construction one source.\n- Severity 2: Inherited() could be InheritedFrom(os.Environ()).\n- Severity 1: the cleanup-failure line is single-sourced as testreport.SelectionCleanupFailure.\n"
+          },
+          "axis": "Standards",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "e28e9ca2f1df3a16a73972111a00dd3d1bc750a4",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards-r1"
+          ]
+        },
+        {
+          "id": "c4-spec-r2",
+          "performer": "claude:plt-c4-spec-r2-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "752a813094ceadfa26ac7353c4b8a70934e35b94",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-spec-r2-20261023",
+            "digest": "sha256:d32a1b1c195eecb0e08e1291ee45d8c713e9c3fed1660b94076a38e0be2fee6a",
+            "excerpt": "Spec axis, PL-C4 confirming round r2. Evidence current=true at 5f6deb11e. P1, P2 and P3 are closed; the repair delta 19b60622d..e28e9ca2f adds no spec deviation at severity 5 or higher.\n\nFindings\nNo new finding.\n\nClosed\nP1: ticket 11:24 no longer claims reclaim; spec.md:477-478 names the store lookup by resource path; ticket 12:46-47 carries it under PL88.\nP2: internal/testreport/held_runs.go:41-45 and internal/probe/set.go:154-158 consume Close failures through withCleanupFailure and SelectionCleanupFailure; the child outcome and report stay beside the line (spec.md:1029).\nP3: internal/testreport/command.go:284-286 sends a kit-run Close failure through withCleanupFailure; the child outcome stays.\n\nDelta grading: the probe-set output keeps its order and trailing count (result.go:138 validates); a kept-copy exit 2 still wins. subprocess.RunInherited keeps each caller's policy, streams, order, error return and cancel signal (gate TERM on deadline, INT otherwise; preprelease and releasepreflight TERM; testreport INT). The other refactors keep behavior.\n\nAdvice\n- Severity 3: no test witnesses the probe-set cleanup path, its suffix line or its exit raise.\n- Severity 3: no test found for the kit-run Close path at command.go:284-286 (unknown).\n- Severity 2: withCleanupFailure always exits 1; the raw code shows only in the report (pre-existing).\n"
+          },
+          "axis": "Spec",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "e28e9ca2f1df3a16a73972111a00dd3d1bc750a4",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-r1"
+          ]
+        },
+        {
+          "id": "c4-coverage-r2",
+          "performer": "claude:plt-c4-coverage-r2-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "752a813094ceadfa26ac7353c4b8a70934e35b94",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-coverage-r2-20261023",
+            "digest": "sha256:2e7e19d7d9485e3561f660a2c823d7ac2e0e88ad40cccb2fad6708f23557f0e9",
+            "excerpt": "Coverage axis, PL-C4 confirming round r2. Evidence current=true at 5f6deb11e. The one probe on internal/probe/set.go was silent: no test bites when the probe set drops the HeldRuns.Close failure.\n\nFindings\nC4-COV-r2-1 | auto-fix | 5 | internal/probe/set.go:154-158 | probe silent, restored yes; spec story 25 (spec.md:87) \"As an enclosing owner, I want durable unresolved disposition, so that an exit code cannot substitute for cleanup proof.\" | No test drives a held-selection Close failure through runSet; with the failure discarded, a mutant set exits 0 and prints no cleanup line. No acceptance row names the probe-set consumer. Fix: a set-level test in internal/probe and a coverage row. Owner 10.\n\nProbes:\n- internal/probe/set.go: s.cleanup = testreport.SelectionCleanupFailure(err) swapped for _ = err, --package ./internal/...; silent; restored yes.\n\nAdvice\n- The ./internal/... run also showed privilege-only failures on this host (TestLandPreAuthorizationRefusalTable device cases, TestStoreRootRefusal/other_owner); they did not affect the verdict.\n- One set-level test that forces Close to fail also covers the refuse() path (s.preserved + s.cleanup).\n"
+          },
+          "axis": "Coverage",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "e28e9ca2f1df3a16a73972111a00dd3d1bc750a4",
+          "finding_ids": [
+            "C4-COV-r2-1"
+          ],
+          "supersedes": [
+            "c4-coverage-r1"
+          ]
         }
       ]
     }
@@ -7739,6 +7807,11 @@ The reviewer set a severity floor for confirming rounds on 2026-10-23: a new ite
 PL-C4 round r1 found 10 actionable findings and 6 no-op findings. The Coverage axis passed.
 Repair cycle 1 of 2 runs one repair session for ticket 10 (P2, P3, S4) and one for ticket 11 (S1, S2, S3, S5).
 The reviewer directed S4 to repair now on 2026-10-23. Ticket 12 owns P1 through a spec correction that names the reclaim store lookup.
+The repairs are commits daa10290e (ticket 10) and e28e9ca2f (ticket 11).
+
+The confirming round r2 closed every r1 finding. The Standards and Spec axes passed.
+The Coverage axis found that no test bites a dropped Close failure in the probe set (severity 5).
+Repair cycle 2 of 2 runs one repair session for ticket 10, which adds row PL130 and its test.
 
 ## Standards
 
@@ -7846,6 +7919,10 @@ PL-C3 round r4: 1 finding. Worst issue: R4-C1, no owner test sees its store dele
 
 PL-C4 round r1: 0 findings. Worst issue: none.
 
+PL-C4 round r2: 1 finding. Worst issue: C4-COV-r2-1, the probe set can drop a held Close failure with no red.
+
+- C4-COV-r2-1 | auto-fix | confidence 5 | `internal/probe/set.go:154-158` | No test drives a held-selection Close failure through the probe set (spec.md:87 story 25). A mutant set can then exit zero with no cleanup line. Row PL130 and a set-level test close it. Owner: ticket 10, widened.
+
 ## Advice
 
 - The bounds runner does not forward a caller's `cmd.Stdin`; no current caller sets it.
@@ -7870,3 +7947,9 @@ PL-C4 round r1: 0 findings. Worst issue: none.
 - PL-C3 r5: the three owner store-absence assertions repeat one pattern. A shared test helper fits if more appear.
 - PL-C3 r5: the comment of `absent` can say "no entry exists at path".
 - PL-C3 r5: the safe-close assertion in `TestKitRunClose` checks the store only. An assertion that the run directory is absent would cover both halves of the safe-removal sentence.
+- PL-C4 r1: `Release` in `internal/worktree/lifecycle.go` drops the protected-user error without a diagnostic.
+- PL-C4 r1: ticket 08's first omission probe bit only in test setup; the r1 Coverage probe and the restaged probe bite at the `TestPrepIncomplete` assertion.
+- PL-C4 r2: `bounds` and `runbinary` still build the inherited registration by hand; `RunInherited` needs a protocol parameter for `runbinary`.
+- PL-C4 r2: `releaseevidence` restates `Directory.Open` with `Reopen`; a `Directory.Reopen` would keep one source.
+- PL-C4 r2: no test covers the kit-run Close failure path in `internal/testreport/command.go`.
+- PL-C4 r2: `withCleanupFailure` always exits 1, so the raw child code shows only in the report.

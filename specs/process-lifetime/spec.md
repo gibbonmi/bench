@@ -502,7 +502,7 @@ Ticket implementation preserves the accepted interface contracts above.
 | PL-C1 / 01-own-lifetime-through-bounds.md | Bounded lifetime and unchanged bounds policy | PL2–PL19, PL28, PL66–PL69, PL124–PL125 | Lifetime and bounds package tests | no |
 | PL-C2 / 02-protect-nested-bounds-users.md | Durable admission and nested resource protection | PL20–PL24, PL26–PL27, PL39–PL54, PL70–PL74, PL104–PL113, PL120 | Protection tests and nested CLI witness | yes |
 | PL-C3 / 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md, 06-refuse-clean-of-protected-cache.md, 07-retain-prospective-gate-artifacts.md, 14-gate-registered-starts.md | Protected gate, cache, bundle, binary, and test resources | PL25, PL29–PL38, PL55–PL60, PL75–PL78, PL121, PL123, PL126–PL129 | Resource-owner and second-process cleanup witnesses | yes |
-| PL-C4 / 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md, 10-preserve-focused-test-completion.md, 11-preserve-worktree-exec-and-shell.md | Preserved release, testreport, and worktree policies | PL61–PL65, PL79–PL82, PL114–PL115, PL119, PL122 | Caller package tests | no |
+| PL-C4 / 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md, 10-preserve-focused-test-completion.md, 11-preserve-worktree-exec-and-shell.md | Preserved release, testreport, and worktree policies | PL61–PL65, PL79–PL82, PL114–PL115, PL119, PL122, PL130 | Caller package tests | no |
 | PL-C5 / 12-retain-shift-scratch-through-recovery.md, 13-enforce-final-lifetime-closure.md | Shift recovery and final migration closure | PL1, PL83–PL103, PL116–PL118 | Actual shift race, caller differential matrix, native checks | yes |
 
 The first chunk supplies the lifetime and stream contract through the bounds caller.
@@ -743,6 +743,7 @@ The final implementation must demonstrate its stated omission red.
 | PL127 | 39 | A root that is a link, has another owner, or has a wider mode prevents launch. | `internal/subprocess/protection/directory_test.go` (`TestStoreRootRefusal`) | A shared or foreign root lets another user forge protection records. |
 | PL128 | 21 | A gated program never runs when its actor dies before the open signal. | `internal/subprocess/startgate_test.go` (`TestStartGateActorDeathBeforeOpen`) | The program's start marker appears if the gate executes at end of file. |
 | PL129 | 21 | An exec failure behind the start gate remains a Start error. | `internal/subprocess/startgate_test.go` (`TestStartGateExecFailure`) | A missing program reports a child exit instead of a failed start. |
+| PL130 | 25 | The probe set consumes a held selection Close failure. | planned `internal/probe/set_test.go` (SetSelectionCloseFailure) | A mutant set exits zero and prints no cleanup line while the held executable stays protected. |
 
 ### Preservation fixtures
 

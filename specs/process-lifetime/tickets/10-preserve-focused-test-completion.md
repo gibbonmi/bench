@@ -1,8 +1,8 @@
 # Preserve focused test decoding through bounded cancellation
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md, 06-refuse-clean-of-protected-cache.md, 07-retain-prospective-gate-artifacts.md, 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md
-Writes: internal/conformance/injected_ports_registry_test.go, internal/testreport/cancel_test.go, internal/testreport/command.go, internal/testreport/lifetime_test.go (new), internal/testreport/selection.go, internal/testreport/selection_test.go, internal/testreport/held_runs.go, internal/probe/set.go, internal/subprocess, internal/preprelease/preprelease.go, internal/releasepreflight/command.go, internal/gate/runner.go
-Covers: PL64, PL65, PL79, PL80, PL122
+Writes: internal/conformance/injected_ports_registry_test.go, internal/testreport/cancel_test.go, internal/testreport/command.go, internal/testreport/lifetime_test.go (new), internal/testreport/selection.go, internal/testreport/selection_test.go, internal/testreport/held_runs.go, internal/probe/set.go, internal/subprocess, internal/preprelease/preprelease.go, internal/releasepreflight/command.go, internal/gate/runner.go, internal/probe/set_test.go
+Covers: PL64, PL65, PL79, PL80, PL122, PL130
 
 ## What to build
 
@@ -46,6 +46,7 @@ Preserve repeated --package selection, and reuse the parking helper and installT
 - [ ] PL79: Focused output requires terminal events for every package.
 - [ ] PL80: Package-list cancellation keeps current interruption attribution.
 - [ ] PL122: The focused run consumes selection Close failure.
+- [ ] PL130: The probe set consumes a held selection Close failure.
 
 ## Verification
 
