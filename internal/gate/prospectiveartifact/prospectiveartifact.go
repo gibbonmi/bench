@@ -117,7 +117,7 @@ func (f Factory) Open(repository string) (*Owner, error) {
 		record.Protection = o.generation.Resource.ResourceID
 	}
 	if err := Publish(root, record); err != nil {
-		_ = os.RemoveAll(root)
+		_ = o.generation.Remove("prospective bundle "+root, nil, func() error { return os.RemoveAll(root) })
 		return nil, err
 	}
 	return o, nil
@@ -308,19 +308,13 @@ func publish(replacer durablefile.Replacer, root string, record Record) error {
 }
 
 // releaseBundle observes every user of the bundle's generation under its protocol lock. Only a
-// safe generation removes the Git registration, still under that lock, then the bundle root, and
-// then the generation's store.
+// safe generation removes the Git registration, still under that lock, and then the bundle root
+// through the generation's safe removal.
 // An unresolved or unobserved generation returns protection.ErrRetained; a removal failure
 // returns itself.
 func releaseBundle(generation protection.Generation, repository, root string, remove func(string, string) error) error {
 	unregister := func() error { return unregisterCheckout(repository, filepath.Join(root, CheckoutName), remove) }
-	if err := generation.Release("prospective bundle "+root, unregister); err != nil {
-		return err
-	}
-	if err := os.RemoveAll(root); err != nil {
-		return err
-	}
-	return generation.Discard()
+	return generation.Remove("prospective bundle "+root, unregister, func() error { return os.RemoveAll(root) })
 }
 
 func unregisterCheckout(repository, checkout string, remove func(string, string) error) error {

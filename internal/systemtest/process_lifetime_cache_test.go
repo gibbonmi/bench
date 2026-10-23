@@ -15,7 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
-	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
@@ -44,7 +43,7 @@ exec `+f.Command("sleep")+` 300
 `, "")
 	gittest.Output(t, root, "add", ".")
 	gittest.Output(t, root, "commit", "-qm", "fixture")
-	env := []string{"HOME=" + home, "TMPDIR=" + t.TempDir(), "TEST_TELEMETRY_DIR=" + os.DevNull, protection.Env}
+	env := []string{"HOME=" + home, "TMPDIR=" + t.TempDir(), "TEST_TELEMETRY_DIR=" + os.DevNull}
 
 	gate, _, stderr := systemStartSelected(t, root, env, "gate", "--fresh")
 	pgid := processtest.WaitPID(t, oracle)

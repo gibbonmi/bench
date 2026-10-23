@@ -127,15 +127,16 @@ func (r *KitTestRun) Resources() []protection.Descriptor {
 	return r.generation.Resources()
 }
 
-// Close seals the run's generation and returns the unresolved release of a protected or
-// uncertain run, which it retains. Removal follows the seal, and the store's removal follows the
-// run's.
+// Close removes the run through its generation's safe removal and returns the unresolved release
+// of a protected or uncertain run, which it retains.
 // Close restores directory access before removal, because tests can leave unreadable directories.
 // It does not follow symbolic links outside the run.
 func (r *KitTestRun) Close() error {
-	if err := r.generation.Release("kit test run "+r.dir, nil); err != nil {
-		return err
-	}
+	return r.generation.Remove("kit test run "+r.dir, nil, r.remove)
+}
+
+// remove deletes the run directory.
+func (r *KitTestRun) remove() error {
 	err := filepath.WalkDir(r.dir, func(path string, entry fs.DirEntry, err error) error {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
@@ -150,9 +151,6 @@ func (r *KitTestRun) Close() error {
 	})
 	if err = errors.Join(err, os.RemoveAll(r.dir)); err != nil {
 		return fmt.Errorf("kit test run: remove TMPDIR run: %w", err)
-	}
-	if err := r.generation.Discard(); err != nil {
-		return fmt.Errorf("kit test run: remove protection store: %w", err)
 	}
 	return nil
 }

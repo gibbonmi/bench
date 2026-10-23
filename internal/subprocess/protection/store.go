@@ -66,7 +66,8 @@ func (p *Protocol) owner(d Descriptor) error {
 }
 
 // OpenResource validates the owner's identity and joins the store's open generation, or
-// publishes a fresh one when none exists. It never rewrites a generation or its users.
+// publishes a fresh one when none exists. It never rewrites a generation or its users. A
+// failed call deletes a store that it created, unless a generation was published there.
 func (p *Protocol) OpenResource(d Descriptor) (Descriptor, error) {
 	d.ResourceID = ""
 	if err := d.checkOwner(); err != nil {
@@ -75,20 +76,34 @@ func (p *Protocol) OpenResource(d Descriptor) (Descriptor, error) {
 	if err := p.owner(d); err != nil {
 		return Descriptor{}, err
 	}
-	if err := p.makeDir(d.Store); err != nil && !errors.Is(err, fs.ErrExist) {
+	created := false
+	switch err := p.makeDir(d.Store); {
+	case err == nil:
+		created = true
+	case !errors.Is(err, fs.ErrExist):
 		return Descriptor{}, err
 	}
+	opened, published, err := p.join(d)
+	if err != nil && created && !published {
+		err = errors.Join(err, os.RemoveAll(d.Store))
+	}
+	return opened, err
+}
+
+// join takes the store's lock and joins or publishes its generation. Published reports whether
+// the store holds a generation, so a failed caller knows whether a user can depend on the store.
+func (p *Protocol) join(d Descriptor) (_ Descriptor, published bool, _ error) {
 	release, err := lock([]string{d.Store})
 	if err != nil {
-		return Descriptor{}, err
+		return Descriptor{}, false, err
 	}
 	defer release()
 	users := filepath.Join(d.Store, usersDir)
 	if err := p.makeDir(users); err != nil && !errors.Is(err, fs.ErrExist) {
-		return Descriptor{}, err
+		return Descriptor{}, false, err
 	}
 	if err := checkDir(users); err != nil {
-		return Descriptor{}, err
+		return Descriptor{}, false, err
 	}
 	var r resourceRecord
 	path := filepath.Join(d.Store, resourceFile)
@@ -96,23 +111,23 @@ func (p *Protocol) OpenResource(d Descriptor) (Descriptor, error) {
 	case errors.Is(err, fs.ErrNotExist):
 		r = resourceRecord{Schema: schema, ResourceID: newID(), Kind: d.Kind, ResourcePath: d.ResourcePath, Binding: d.Binding, OwnerPID: os.Getpid(), Admission: admissionOpen, UsersDir: usersDir}
 		if err := p.publish(path, r); err != nil {
-			return Descriptor{}, err
+			return Descriptor{}, false, err
 		}
 	case err != nil:
-		return Descriptor{}, err
+		return Descriptor{}, true, err
 	default:
 		if err := r.valid(); err != nil {
-			return Descriptor{}, err
+			return Descriptor{}, true, err
 		}
 	}
 	d.ResourceID = r.ResourceID
 	if err := r.matches(d); err != nil {
-		return Descriptor{}, err
+		return Descriptor{}, true, err
 	}
 	if r.Admission == admissionSealed {
-		return Descriptor{}, ErrSealed
+		return Descriptor{}, true, ErrSealed
 	}
-	return d, nil
+	return d, true, nil
 }
 
 // view is one store's strictly read generation and users.

@@ -2,19 +2,26 @@ package protection
 
 import (
 	"errors"
+	"io/fs"
 	"maps"
+	"os"
 	"path/filepath"
 	"slices"
 )
 
 // SealAndObserve closes admission and grades every user of the resource under its protocol
 // lock. Only a safe resource runs release and retires its generation, still under that lock.
+// An absent store names no user in the current boot, so its resource is safe and SealAndObserve
+// runs release without creating the store.
 func (p *Protocol) SealAndObserve(d Descriptor, release func() error) (Disposition, error) {
 	if err := d.check(); err != nil {
 		return uncertain(d, err)
 	}
 	if err := p.owner(d); err != nil {
 		return uncertain(d, err)
+	}
+	if absent(d.Store) {
+		return unused(d, release)
 	}
 	unlock, err := lock([]string{d.Store})
 	if err != nil {
@@ -61,8 +68,12 @@ func (p *Protocol) SealAndObserve(d Descriptor, release func() error) (Dispositi
 }
 
 // Recover applies the same observation to a resource that its owner found on disk. Its
-// published generation names the descriptor, and the kind's validator must accept it.
+// published generation names the descriptor, and the kind's validator must accept it. The
+// owner derives store, so an absent store is a safe resource with no users.
 func (p *Protocol) Recover(store string, release func() error) (Disposition, error) {
+	if absent(store) {
+		return unused(Descriptor{Store: store}, release)
+	}
 	if p == nil {
 		return uncertain(Descriptor{Store: store}, errors.New("protection: no protocol is installed"))
 	}
@@ -105,6 +116,22 @@ func stateOf(o Observation) State {
 }
 
 func rank(s State) int { return slices.Index([]State{Safe, Protected, Uncertain}, s) }
+
+// absent reports whether no store exists at path.
+func absent(store string) bool {
+	_, err := os.Lstat(store)
+	return errors.Is(err, fs.ErrNotExist)
+}
+
+// unused runs release for a resource whose store is absent and grades it safe with no users.
+func unused(d Descriptor, release func() error) (Disposition, error) {
+	if release != nil {
+		if err := release(); err != nil {
+			return uncertain(d, err)
+		}
+	}
+	return Disposition{State: Safe, Resources: []Descriptor{d}}, nil
+}
 
 func uncertain(d Descriptor, err error) (Disposition, error) {
 	return Disposition{State: Uncertain, Resources: []Descriptor{d}, Err: err}, err

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -124,9 +125,7 @@ type Generation struct {
 	Resource Descriptor
 }
 
-// Discard deletes the store of a released generation. Its owner calls it after it deletes the
-// resource, so no new generation can open on the resource between the two deletions. A zero
-// generation has no store.
+// Discard deletes the store of a generation. A zero generation has no store.
 func (g Generation) Discard() error {
 	if g.Resource == (Descriptor{}) {
 		return nil
@@ -173,4 +172,51 @@ func (g Generation) Release(name string, release func() error) error {
 		return fmt.Errorf("%s %w: protection is %s for users %v", name, ErrRetained, disposition.State, disposition.Users)
 	}
 	return nil
+}
+
+// Remove is the one safe removal of an owner's resource. It releases the generation as Release
+// does, and only a nil release runs remove, which deletes the resource. Then it deletes the
+// generation's store, and the store of each resource that the removal deleted inside the
+// resource. A store goes only after its resource, so no new generation can open on the resource
+// between the two deletions. A zero generation has no store.
+func (g Generation) Remove(name string, release, remove func() error) error {
+	if err := g.Release(name, release); err != nil {
+		return err
+	}
+	if err := remove(); err != nil {
+		return err
+	}
+	if g.Resource == (Descriptor{}) {
+		return nil
+	}
+	if err := errors.Join(g.Discard(), g.Protocol.discardNested(g.Resource.ResourcePath)); err != nil {
+		return fmt.Errorf("%s: remove protection store: %w", name, err)
+	}
+	return nil
+}
+
+// discardNested deletes each store under the store root whose generation names a resource
+// inside dir that no longer exists. Such a resource has no user that can still reach it. A
+// store without a readable generation stays.
+func (p *Protocol) discardNested(dir string) error {
+	root, err := storeRoot()
+	if err != nil {
+		return err
+	}
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return err
+	}
+	var failed []error
+	for _, entry := range entries {
+		store := filepath.Join(root, entry.Name())
+		var r resourceRecord
+		if !entry.IsDir() || readRecord(filepath.Join(store, resourceFile), p.ReadLimit, &r) != nil || !strings.HasPrefix(r.ResourcePath, dir+string(filepath.Separator)) {
+			continue
+		}
+		if _, err := os.Lstat(r.ResourcePath); errors.Is(err, fs.ErrNotExist) {
+			failed = append(failed, os.RemoveAll(store))
+		}
+	}
+	return errors.Join(failed...)
 }
