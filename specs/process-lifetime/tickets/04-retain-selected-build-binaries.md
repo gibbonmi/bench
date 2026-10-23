@@ -1,7 +1,7 @@
 # Retain selected binaries for unresolved users
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/runbinary/lifetime_resources_test.go (new), internal/runbinary/lifetime_test.go (new), internal/runbinary/pdeathsig_linux_test.go, internal/runbinary/protection.go (new), internal/runbinary/runbinary.go, internal/runbinary/runbinary_test.go, internal/runbinary/sysprocattr_darwin.go, internal/runbinary/sysprocattr_linux.go, internal/runbinary/sysprocattr_other.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/runbinary/lifetime_resources_test.go (new), internal/runbinary/lifetime_test.go (new), internal/runbinary/pdeathsig_linux_test.go, internal/runbinary/protection.go (new), internal/runbinary/runbinary.go, internal/runbinary/runbinary_test.go, internal/runbinary/sysprocattr_darwin.go, internal/runbinary/sysprocattr_linux.go, internal/runbinary/sysprocattr_other.go, internal/subprocess/protection, internal/subprocess/outcome.go, internal/subprocess/outcome_test.go (new), internal/gocache/protection.go, internal/gocache/protection_test.go
 Covers: PL34, PL35, PL36
 
 ## What to build
@@ -58,5 +58,7 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --check root-conformance`
 - `bench test --package ./cmd/bench`
 - `bench test --package ./internal/conformance`
+- `bench test --package ./internal/subprocess/...`
+- `bench test --package ./internal/gocache`
 
 Mutation witness: Remove normal builder drain or delete the selection before all registered groups are absent. The live descendant or executable-retention assertion must fail.
