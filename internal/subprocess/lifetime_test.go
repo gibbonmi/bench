@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"testing"
@@ -237,6 +238,35 @@ func TestLifetimeNormalPreserve(t *testing.T) {
 	descendant := processtest.WaitPID(t, filepath.Join(cmd.Dir, "descendant"))
 	if o.Cleanup.Status != subprocess.CleanupNotRequested || !alive(descendant) {
 		t.Fatalf("preserve mode signaled a surviving group: cleanup=%+v alive=%t", o.Cleanup, alive(descendant))
+	}
+}
+
+// TestLifetimeIncompleteDiagnostic is PL116. A held waiter keeps the registered group present, so
+// cleanup fails. Its outcome and diagnostic name each obligation once, and its user stays retained.
+func TestLifetimeIncompleteDiagnostic(t *testing.T) {
+	p := gateProtocol()
+	g := gateResource(t, p)
+	l := subprocess.NewLifetime(script(t, "exec sleep 30", nil), policy(0, final, 0), subprocess.Streams{}, subprocess.Registration{Protocol: p, Resources: g.Resources()})
+	waiting, release := make(chan struct{}), make(chan struct{})
+	subprocess.Hold(l, nil, func(real func(*exec.Cmd) error, cmd *exec.Cmd) error {
+		close(waiting)
+		<-release
+		return real(cmd)
+	})
+	t.Cleanup(func() { close(release) })
+	started(t, l)
+	<-waiting
+	l.Cancel(subprocess.CauseInterruption, syscall.SIGKILL)
+	o, _ := waitWithin(t, l, final)
+	requireIncomplete(t, o, subprocess.ObligationWaiter, subprocess.ObligationGroup)
+	diagnostic := o.Uncertified()
+	for _, obligation := range o.Cleanup.Obligations {
+		if diagnostic == nil || strings.Count(diagnostic.Error(), string(obligation)) != 1 {
+			t.Fatalf("diagnostic %v names the %s obligation other than once", diagnostic, obligation)
+		}
+	}
+	if o.Protection.State != protection.Protected || len(o.Protection.Users) != 1 || g.Release("run", nil) == nil {
+		t.Fatalf("protection = %+v, want one retained user that refuses release", o.Protection)
 	}
 }
 

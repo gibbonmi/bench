@@ -615,7 +615,7 @@ The final implementation must demonstrate its stated omission red.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| PL1 | 1 | Every census entry reaches the shared lifetime owner. | planned `internal/conformance/process_lifetime_test.go` (OwnerEntries) | A production-entry audit detects a caller that retains its private owner. |
+| PL1 | 1 | Every census entry reaches the shared lifetime owner. | `internal/conformance/process_lifetime_test.go` (`TestProcessLifetimeOwnerEntries`) | A production-entry audit detects a caller that retains its private owner. |
 | PL2 | 2 | A pre-canceled lifetime starts no child. | `internal/subprocess/lifetime_test.go` (`TestLifetimePreCanceled`) | The child's start marker appears if cancellation follows launch. |
 | PL3 | 3 | Cancellation during Start reaches the eventual resistant child. | `internal/subprocess/lifetime_test.go` (`TestLifetimeStartingCancel`) | The child's readiness PID survives if cancellation loses the unpublished handle. |
 | PL4 | 4 | A failed Start creates no waiter. | `internal/subprocess/lifetime_test.go` (`TestLifetimeSpawnFailure`) | A waiter counter exposes a failed-start wait. |
@@ -703,9 +703,9 @@ The final implementation must demonstrate its stated omission red.
 | PL86 | 30 | Explicit cleanup rechecks protection before apply. | `internal/worktree/protection_test.go` (`TestCleanupPlanFingerprintsProtection`) | A user admitted after the plan loses its checkout if apply trusts the old fingerprint. |
 | PL87 | 30 | Pool reuse refuses a protected checkout. | `internal/worktree/protection_test.go` (`TestPoolKeepsProtectedCheckout`) | Reset or clean changes the child's protected sentinel. |
 | PL88 | 30 | Pool reclaim retains protected member users. | `internal/worktree/protection_test.go` (`TestProtectedReclaim`) | Bulk key removal bypasses member protection. |
-| PL89 | 33 | Linux parent death still kills the direct builder child. | planned `internal/runbinary/pdeathsig_linux_test.go` (ParentDeath) | The real child survives owner SIGKILL if Pdeathsig disappears. |
+| PL89 | 33 | Linux parent death still kills the direct builder child. | `internal/runbinary/pdeathsig_linux_test.go` (`TestBuilderChildDiesWithAnOwnerThatNeverDrains`) | The real child survives owner SIGKILL if Pdeathsig disappears. |
 | PL90 | 34 | Native Darwin preserves its group policy. | planned `internal/runbinary/lifetime_darwin_test.go` (DarwinPolicy) | A resistant child survives if the native platform adapter loses Setpgid. |
-| PL91 | 1, 35 | The final tree has no private production lifetime loop. | planned `internal/conformance/process_lifetime_test.go` (MigrationClosure) | A reintroduced private scanner or shift loop turns the graded-tree check red. |
+| PL91 | 1, 35 | The final tree has no private production lifetime loop. | `internal/conformance/process_lifetime_closure_test.go` (`TestProcessLifetimeMigrationClosure`) | A reintroduced private scanner or shift loop turns the graded-tree check red. |
 | PL92 | 11, 36 | Gate preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (GateDifferential) | A changed normal code, output, or policy differs on the same canned fixture. |
 | PL93 | 12, 36 | Builder preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (BuilderDifferential) | The same normal fixture exposes changed executable validation or output. |
 | PL94 | 13, 36 | Bounds preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (BoundsDifferential) | The same fixture exposes changed start, exit, complete, canceled, or timeout projection. |
@@ -730,7 +730,7 @@ The final implementation must demonstrate its stated omission red.
 | PL113 | 7, 9 | A failed KILL remains unresolved until absence is proved. | `internal/subprocess/lifetime_test.go` (`TestLifetimeSignalFailure`) | An ignored termination error falsely completes cleanup while the group remains present. |
 | PL114 | 24 | Worktree environment transforms retain the resource vector. | `internal/worktree/exec_lifetime_test.go` (`TestExecDescriptorEnvironment`) | Nested CLI registration disappears if routing strips the reserved entry. |
 | PL115 | 24 | Worktree --env cannot override the resource vector. | `internal/worktree/exec_lifetime_test.go` (`TestExecDescriptorOverride`) | The child sees a replacement store if user values win over owner propagation. |
-| PL116 | 38 | Cleanup failure names each unresolved obligation once. | planned `internal/subprocess/lifetime_test.go` (IncompleteDiagnostic) | An empty or duplicated obligation projection hides the actual retained reason. |
+| PL116 | 38 | Cleanup failure names each unresolved obligation once. | `internal/subprocess/lifetime_test.go` (`TestLifetimeIncompleteDiagnostic`) | An empty or duplicated obligation projection hides the actual retained reason. |
 | PL117 | 30 | Shift refuses rollback while resource users remain unresolved. | `internal/shift/lifetime_test.go` (`TestProtectedRollback`) | Reset or clean changes evidence that the unresolved child can still modify. |
 | PL118 | 40 | Ordinary complete resource users release their resources. | planned `internal/systemtest/process_lifetime_artifacts_test.go` (CompletedOwners) | A blanket retention implementation leaves cache, bundle, binary, test, or worktree protection behind. |
 | PL119 | 14 | Abandoned release-stage cleanup retains protected evidence. | `internal/releaseevidence/protection_test.go` (`TestProtectedStageCleanup`) | The stage disappears if cleanup treats its old owner marker as sufficient authority. |

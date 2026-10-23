@@ -80,6 +80,7 @@ func init() {
 		"ticket-grammar":                {checkTicketGrammar, registry.Dev, registry.SubjectRoot},
 		"claude-agent-definitions":      {checkClaudeAgentDefinitions, registry.Dev, registry.SubjectRoot},
 		"stdlib-reimplementation":       {checkStdlibReimplementation, registry.Dev, registry.SubjectRoot},
+		"process-lifetime-closure":      {checkProcessLifetimeClosure, registry.Dev, registry.SubjectRoot},
 	}
 }
 
