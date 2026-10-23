@@ -507,6 +507,18 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **current-action binding** — a verified current assignment and source pair associated
   with an evidence identity. Not "artifact lifetime", not "origin location" —
   current-action binding.
+- **process lifetime** — the shared owner that starts, waits for, and cancels a child
+  process group. It returns separate process, cancellation, stream, and cleanup facts.
+  Not "private wait loop", not "runner" — process lifetime.
+- **normal-exit policy** — what a caller does with the child group after a normal exit.
+  Drain kills and observes the remaining group, and preserve leaves it. Not "cleanup mode" —
+  normal-exit policy.
+- **resource protection** — the durable record that names each user of a resource before
+  a child can use the resource. A release occurs only after each recorded user is complete.
+  Not "lock", not "lease" — resource protection.
+- **unresolved obligation** — one cleanup or publication step that an incomplete result
+  could not prove. The result names it once and retains the affected resources. Not "child
+  error" — unresolved obligation.
 
 ## Avoid
 
