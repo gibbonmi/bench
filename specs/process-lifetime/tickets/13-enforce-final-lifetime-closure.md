@@ -88,6 +88,7 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/anchors`
 - `bench test --package ./internal/subprocess/protection`
 - `bench test --package ./internal/subprocess/processtest`
+- `bench test --package ./internal/conformance/registry`
 
 Mutation witness: Reintroduce a private scanner or shift loop, bypass one production caller, or certify output from child zero. The actual-tree audit or named caller differential must fail; restore and re-run the same check.
 
