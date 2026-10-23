@@ -6356,6 +6356,72 @@
           "supersedes": [
             "c3-coverage-r3"
           ]
+        },
+        {
+          "id": "c3-standards-r5",
+          "performer": "claude:plt-c3-standards-r5-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3359764140326f05a33dc1b7f56e4cdec1d2b394",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-standards-r5-20261023",
+            "digest": "sha256:3e55a50defa80195fe8dde86a11338c2fcee806c3b028623a63bcc2b79278ae7",
+            "excerpt": "Standards axis, PL-C3 confirming round r5. Evidence current=true at 8c673fa05. The repair delta aaa434389..32aeb2db5 closes N1, N2 and N3 and adds no defect at severity 5 or higher.\n\nFindings\nNo new finding.\n\nClosed\nN1: discardNested calls absent(r.ResourcePath) at internal/subprocess/protection/directory.go:216; the helper is path-neutral at recovery.go:120-121; earlier callers at recovery.go:23 and :74 still read correctly.\nN2: sealStore calls t.Helper() at internal/subprocess/startgate_test.go:147 and fails on a WalkDir error at :149-155.\nN3: the releaseUnprotected doc comment is rewrapped at internal/gocache/clean.go:81-83, inside the file's wrap width.\n\nAdvice\n- Severity 2: the three owner store-absence assertions repeat one Lstat and ErrNotExist pattern (kit_run_lifetime_test.go:44, prospectiveartifact/lifetime_test.go:56, runbinary/lifetime_test.go:91); a shared test helper fits if more appear.\n- Severity 1: the absent comment at recovery.go:120 could say \"no entry exists at path\".\n"
+          },
+          "axis": "Standards",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "32aeb2db509ee2977b351b7cbfe0e48276a27993",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-r4"
+          ]
+        },
+        {
+          "id": "c3-spec-r5",
+          "performer": "claude:plt-c3-spec-r5-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3359764140326f05a33dc1b7f56e4cdec1d2b394",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-spec-r5-20261023",
+            "digest": "sha256:d9eb3d9013f38560f8f5be44ab68b195417bef146de34353c94709937ad61b2b",
+            "excerpt": "Spec axis, PL-C3 confirming round r5. Evidence current=true at 8c673fa05 (clean tree). The r4 repair delta aaa434389..32aeb2db5 adds no spec deviation: production changes only refactor (directory.go:216 calls absent, recovery.go parameter rename, clean.go comment rewrap), and the tests add store-absence assertions after a safe removal.\n\nFindings\nNo new finding.\n\nThe new safe-close path in TestKitRunClose (internal/env/kit_run_lifetime_test.go:69-83) matches spec line 270, \"Safe removal deletes the store after it deletes the resource\": KitTestRun.Close goes through Generation.Remove (directory.go:181-195), which releases, removes the resource, then runs Discard and discardNested.\n\nAdvice\n- Below severity 5: the safe-Close assertion at kit_run_lifetime_test.go:80-83 checks the store only; asserting the run directory absent too would cover both halves of the spec sentence. The order holds by construction in directory.go:185-191.\n"
+          },
+          "axis": "Spec",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "32aeb2db509ee2977b351b7cbfe0e48276a27993",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-r4"
+          ]
+        },
+        {
+          "id": "c3-coverage-r5",
+          "performer": "claude:plt-c3-coverage-r5-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3359764140326f05a33dc1b7f56e4cdec1d2b394",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-coverage-r5-20261023",
+            "digest": "sha256:d208048a089af13e8ee4bc22850b7d780fc05016d07bb94c09e638cbe80aad58",
+            "excerpt": "Coverage axis, PL-C3 confirming round r5. Evidence current=true at 8c673fa05. The r4 repair delta aaa434389..32aeb2db5 adds a store-absence assertion after a safe close to each owner; the spot-check probe bit and restored; no new coverage gap.\n\nFindings\nNo new finding.\n\nProbes: internal/runbinary/runbinary.go:242 Generation.Remove swapped for Release plus os.RemoveAll; bit TestBuilderNormalDrain (lifetime_test.go:41 \"protection store after Close = <nil>, want absent\"); restored yes.\n\nClosed: R4-C1. Owner assertions at internal/runbinary/lifetime_test.go:84-93 (probed), internal/env/kit_run_lifetime_test.go:32-46, internal/gate/prospectiveartifact/lifetime_test.go:56-58; the env and prospectiveartifact bites rest on the repair author's recorded probes.\n\nAdvice\n- The other delta changes (discardNested through absent, comment rewording and rewrap, sealStore walk failure) do not change behavior and need no mutant.\n"
+          },
+          "axis": "Coverage",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "32aeb2db509ee2977b351b7cbfe0e48276a27993",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-r4"
+          ]
         }
       ],
       "confirmations": [
@@ -6544,7 +6610,10 @@ The reviewer approved an amendment on 2026-10-23: tmpfs process-user stores, no 
 Round r3 reviewed that amendment and found 11 findings. Repair cycle 2 of 2 ran one repair session for ticket 04 (commit 65a501d96) and one for ticket 14 (commit 3e0eaaad6).
 
 The confirming round r4 closed all 11 r3 findings. The Spec axis passed, and the Standards and Coverage axes found 4 new low-severity findings.
-Repair cycle 3 runs past the allowance under the reviewer's advance approval: one repair session for ticket 04 and one for ticket 14.
+Repair cycle 3 ran past the allowance under the reviewer's advance approval: ticket 04 (commit 009705c9b) and ticket 14 (commit 32aeb2db5).
+
+The confirming round r5 passed on all three axes with no new finding.
+The reviewer set a severity floor for confirming rounds on 2026-10-23: a new item below severity 5 goes to Advice and opens no repair cycle.
 
 ## Standards
 
@@ -6651,3 +6720,6 @@ PL-C3 round r4: 1 finding. Worst issue: R4-C1, no owner test sees its store dele
 - PL-C3 r4: `Generation.Release` and `Generation.Discard` stay exported, so the compiler does not force an owner through `Generation.Remove`.
 - PL-C3 r4: the absent-store check in `SealAndObserve` and the root scan in `discardNested` run outside the protocol lock. Each relies on the owner alone to create a store.
 - PL-C3 r4: `gocache/clean.go:89-90` can run release twice when the release error of `unused` wraps `fs.ErrNotExist`.
+- PL-C3 r5: the three owner store-absence assertions repeat one pattern. A shared test helper fits if more appear.
+- PL-C3 r5: the comment of `absent` can say "no entry exists at path".
+- PL-C3 r5: the safe-close assertion in `TestKitRunClose` checks the store only. An assertion that the run directory is absent would cover both halves of the safe-removal sentence.
