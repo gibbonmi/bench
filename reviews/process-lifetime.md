@@ -6584,6 +6584,22 @@
         ]
       }
     }
+  ],
+  "folds": [
+    {
+      "id": "F1",
+      "after": "PL-C3",
+      "from": "ce4b42b82331bd3b85d65fd47a7e8cbc23a6e321",
+      "commit": "ce6bceafafaaeb11239e5af9cfa1410494160267",
+      "incoming": "a3cdff4da29f4fd6380db07f4222197364613c8d",
+      "source_digest": "d4e3c360e47e070201f697614b69108a8d48043b",
+      "resolution": [],
+      "resolution_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_packages": [
+        "./internal/worktree"
+      ],
+      "reviews": []
+    }
   ]
 }
 ```
