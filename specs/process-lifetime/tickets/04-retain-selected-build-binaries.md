@@ -69,5 +69,7 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/conformance`
 - `bench test --package ./internal/subprocess/...`
 - `bench test --package ./internal/gocache`
+- `bench test --package ./internal/env`
+- `bench test --package ./internal/gate/prospectiveartifact`
 
 Mutation witness: Remove normal builder drain or delete the selection before all registered groups are absent. The live descendant or executable-retention assertion must fail.
