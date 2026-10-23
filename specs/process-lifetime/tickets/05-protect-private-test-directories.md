@@ -60,5 +60,6 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./cmd/bench`
 - `bench test --package ./internal/conformance`
 - `bench test --package ./internal/subprocess`
+- `bench test --package ./internal/subprocess/protection`
 
 Mutation witness: Drop the private-run descriptor or discard KitTestRun.Close failure. The child-owned file survives while a successful phase result must disappear.
