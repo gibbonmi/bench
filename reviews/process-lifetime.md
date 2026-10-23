@@ -2267,7 +2267,78 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3-standards-r1",
+          "performer": "claude:plt-c3-standards-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "17efbc34bfae7a14a844e11242cd9273461cbd66",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-standards-20261022",
+            "digest": "sha256:70bded6ceb7d792a3caa0afa460e2a1498e95e832e204988b87c3144b57a3da3",
+            "excerpt": "Standards axis, PL-C3. Evidence current=true. Three findings; worst is S3, a builder zero exit with a failed capture stream reports success. No test or probe run.\n\nFindings\nS1 | ask-user | 8 | internal/env/protection.go:31, internal/runbinary/protection.go:35, internal/gate/prospectiveartifact/protection.go:15 and :69 | AGENTS.md one source per fact | The directory identity adapter is pasted three times (protect; ValidateProtection with canonical path, fixed process-users store, binding check; dev:ino identity at runbinary/protection.go:66), copying internal/gocache/protection.go:68 and :99. The copies differ only in Kind, an optional name prefix and error nouns. One source belongs in internal/subprocess/protection. Owners: 04, 05, 07.\nS2 | ask-user | 7 | internal/env/kit_run.go:140, internal/runbinary/runbinary.go:244; Resources() at kit_run.go ~125, runbinary.go ~221, prospectiveartifact.go ~284 | AGENTS.md one source per fact | \"Seal and observe, keep the directory unless Safe, else remove\" appears twice with the same error shape; the descriptor-to-slice accessor appears three times. Fold into the S1 source. Owners: 04, 05.\nS3 | ask-user | 7 | internal/gate/runner.go:~96-110 (uncertified), internal/runbinary/runbinary.go:378-381, internal/bounds/bounds.go:262-267 | AGENTS.md one source per fact; spec.md:68 story 6; ticket 04 \"A raw child status cannot certify required cleanup or publication\" | The normal-exit certification rule exists in three forms: the gate checks obligations, streams and protection; the builder checks cleanup and protection but not stream status; bounds.run checks streams but not protection. Defect: a builder zero exit with a failed captured stream returns nil. Fix: one predicate on subprocess.Outcome that all callers use. Owners: 03, 04.\n\nAdvice\n- gateProcessPolicy and builderPolicy differ only in Grace (incidental).\n- The two TestMain functions that unset protection.Env are incidental; processtest.Main could take the step.\n- The 10 ms literal in releaseArtifactBarrier repeats bounds.ProcessPoll.\n- PLnn IDs in test doc comments follow tree convention.\n\nImplementation command: name directory identity validation and normal-exit certification as single sources in the ticket (\"reuse, do not copy\").\n"
+          },
+          "axis": "Standards",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "f50919c538584b625cf1184bd16ab8a5e9ce5c39",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-spec-r1",
+          "performer": "claude:plt-c3-spec-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "17efbc34bfae7a14a844e11242cd9273461cbd66",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-spec-20261022",
+            "digest": "sha256:17b941d9bfd7db94c83e2d209c2469513924328577c195b874f7a71238c89aad",
+            "excerpt": "Spec axis, PL-C3. Evidence current=true, dirty_record=false. One finding; worst is P1.\n\nFindings\nP1 | auto-fix | 7 | internal/gate/run_transaction.go:194, internal/gate/lane.go:140, internal/gate/phases.go:178 | spec.md:90 story 28 \"unresolved children retain the executable they can still use\"; spec.md:413 private binary row; ticket 04 \"Expose its Descriptor through the existing selection composition path\" | Only the selection's own builder registers on Selection.Resources() (runbinary.go:296). The oracle and lane checks register on cache and bundle only; withRunBinary passes BENCH_RUN_BINARY but no descriptor. A nested phase that runs $BENCH_RUN_BINARY survives a zero oracle exit; bundle.CloseAfter(selection.Close) finds the selection generation Safe and os.RemoveAll deletes the executable (runbinary.go:250) while the bundle stays retained. PL32's test checks only the checkout; PL36 registers a user by hand. Owner: ticket 07 (its Writes holds run_transaction.go, lane.go, phases.go).\n\nContracts confirmed: gate certification and retainedFailure (PL32, PL78); KitTestRun.Close seals before removal (PL38); cache clean refuses unresolved protection under the exclusive lock; rule (a) guard at control.go with Inherited() parsed before launch and Command.Run installing the table; composition table has four rows; ADR 0019 states the decided state; PL33, PL38, PL78, PL123 tests use real helpers at the stated seams.\n\nAdvice\n- releaseUnprotected indexes disposition.Resources[0]; safe only because Recover's read-error path fills the slice.\n\nImplementation command: ticket 04 asked for descriptor exposure but gave it no gate write path, and its PL36 witness passes with a hand-registered user, so the gap fell between tickets 04 and 07.\n"
+          },
+          "axis": "Spec",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "f50919c538584b625cf1184bd16ab8a5e9ce5c39",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-coverage-r1",
+          "performer": "claude:plt-c3-coverage-20261022",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "17efbc34bfae7a14a844e11242cd9273461cbd66",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c3-coverage-20261022",
+            "digest": "sha256:ad02304d36e6b180ef70985e23df09eba41f5de0b6c411629b7f61234f8ccd95",
+            "excerpt": "Coverage axis, PL-C3. Evidence current=true at source tip 88f81d3, tree clean. Three findings, all silent probes on behavior the spec states; worst is C1.\n\nFindings\nC1 | auto-fix | high | internal/runbinary/protection.go:49 | probe silent, restored yes; spec 388 \"existing owner identity\", 391 \"Malformed, missing, foreign, and sealed descriptors prevent launch\" | No test hands a binary descriptor whose Binding does not match the selection's dev:ino; the only call is a positive check (lifetime_resources_test.go:47). Owner: ticket 04.\nC2 | auto-fix | high | internal/env/protection.go:42 | probe silent, restored yes; spec 388, 391 | No negative test for a foreign kit-test binding. Owner: ticket 05.\nC3 | auto-fix | high | internal/gate/prospectiveartifact/protection.go:56 | probe silent, restored yes; spec 388, 391 | No negative test for a foreign bundle binding. Owner: ticket 07.\ngocache has the foreign-descriptor negative test the other three adapters lack (internal/gocache/protection_test.go:77).\n\nAdvice\n- The three gaps share one shape; one foreign-binding check per owner closes them, as the chunk's single hardening cycle.\n- outcome.go:136 Uncertain versus rule (a), the retainedFailure branch in run_transaction.go, and the adapters' store and prefix checks were not probed.\n\nProbes: each swapped `if binding != d.Binding {` for `if false && binding != d.Binding {`; every mutant compiled. runbinary/protection.go on ./internal/runbinary, ./cmd/bench, ./internal/subprocess/... (silent, yes); prospectiveartifact/protection.go on ./internal/gate/prospectiveartifact (silent, yes); env/protection.go on ./internal/env (silent, yes). System suite not run.\n"
+          },
+          "axis": "Coverage",
+          "base": "3e9708ec537419d91b9740dd5238fe13f02e874a",
+          "tip": "f50919c538584b625cf1184bd16ab8a5e9ce5c39",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2334,6 +2405,9 @@ PL-C2 consumed repair cycle 1 of 2 after its initial review (round r1). No revie
 Repair 1 (commit 3e9708ec5, test-only) closed P2, C1 to C4, and the PL110 half of P1. The Opus and Sonnet consultants agreed that the PL71 half of P1 is a no-op.
 The confirming round r2 passed on all three axes with no new finding, and the Spec axis reaffirmed the PL71 no-op.
 
+PL-C3 took two pre-review repairs before its record commit: ticket 04 (commit 9f83d4328, test-only) and ticket 05 (commit f50919c53, test-only). These repairs fixed reds that the floor checks found at the frozen tip; they consume no review repair cycle.
+PL-C3 round r1 found 7 findings. The orchestrator set every finding to auto-fix under the reviewer's advance approval. Repair cycle 1 of 2 runs one fresh repair session per affected ticket, in this order: ticket 04, ticket 05, ticket 07, ticket 03.
+
 ## Standards
 
 PL-C1 round r1: 2 findings. Worst issue: S2, a scheduling-dependent verdict in a PL66 test.
@@ -2345,6 +2419,12 @@ PL-C2 round r1: 1 finding. Worst issue: S1, a fixture scaffold that repeats inci
 
 - S1 | no-op | confidence 4 | `internal/subprocess/protection/fixture_test.go:138` | Two bounded-wait helpers repeat the select scaffold of `waitWithin`; the deadline policy keeps one source in `bounds`.
 
+PL-C3 round r1: 3 findings. Worst issue: S3, a builder zero exit with a failed capture stream reports success.
+
+- S1 | auto-fix | confidence 8 | `internal/env/protection.go:31`, `internal/runbinary/protection.go:35`, `internal/gate/prospectiveartifact/protection.go:15` | The directory identity adapter has three copies (AGENTS.md one source per fact). The copies differ only in kind, name prefix, and error nouns. One source goes in `internal/subprocess/protection`.
+- S2 | auto-fix | confidence 7 | `internal/env/kit_run.go:140`, `internal/runbinary/runbinary.go:244` | The seal-then-remove-unless-safe rule has two copies, and the descriptor accessor has three. They fold into the S1 source.
+- S3 | auto-fix | confidence 7 | `internal/gate/runner.go:96-110`, `internal/runbinary/runbinary.go:378-381` | The normal-exit certification rule has two forms, and the builder form omits the stream check (spec.md:68 story 6). One predicate on `subprocess.Outcome` serves the gate and the builder. `bounds` keeps its own composition, as the PL-C1 C2 decision states.
+
 ## Spec
 
 PL-C1 round r1: 0 findings. Worst issue: none.
@@ -2353,6 +2433,10 @@ PL-C2 round r1: 2 findings. Worst issue: P1, a launch-refusal assertion that ref
 
 - P1 | auto-fix | confidence 6 | `internal/subprocess/protection/registration_test.go:204-206` and `record_test.go:225-229` | The PL71 and PL110 tests never launch against the unsynced record or the unsafe descriptor. The PL110 half is repaired. The PL71 half is a no-op, because row PL71 states the first launch only, and the `OpenResource` error witnesses it. A lasting refusal would add a record state that no row approves (spec.md:317-318, :661).
 - P2 | auto-fix | confidence 5 | `internal/subprocess/protection/record_test.go:59-61` | The PL39 foreign-binding test never changes the `Binding` field.
+
+PL-C3 round r1: 1 finding. Worst issue: P1, the selected executable is deleted while a nested user that inherits it survives.
+
+- P1 | auto-fix | confidence 7 | `internal/gate/run_transaction.go:194`, `internal/gate/lane.go:140`, `internal/gate/phases.go:178` | The oracle and the lane checks never register on the selection's descriptor (spec.md:90 story 28, spec.md:413). The selection then reads safe. Its executable is removed while a nested phase can still run it. Owner: ticket 07.
 
 ## Coverage
 
@@ -2370,6 +2454,12 @@ PL-C2 round r1: 4 findings. Worst issue: C3, a kind with no validator row gets a
 - C3 | auto-fix | confidence 8 | `internal/subprocess/protection/store.go:43-44` | No test bites the refusal of a kind with no validator row.
 - C4 | auto-fix | confidence 6 | `internal/bounds/bounds.go:226-229` | No bounds test sets a malformed `BENCH_PROCESS_RESOURCES`; only the parser is tested.
 
+PL-C3 round r1: 3 findings. Worst issue: C1, a foreign binary descriptor passes validation with no biting test.
+
+- C1 | auto-fix | confidence 8 | `internal/runbinary/protection.go:49` | No test bites the binding comparison for a binary descriptor (spec.md:388, :391). Owner: ticket 04.
+- C2 | auto-fix | confidence 8 | `internal/env/protection.go:42` | No test bites the binding comparison for a kit-test descriptor. Owner: ticket 05.
+- C3 | auto-fix | confidence 8 | `internal/gate/prospectiveartifact/protection.go:56` | No test bites the binding comparison for a bundle descriptor. Owner: ticket 07.
+
 ## Advice
 
 - The bounds runner does not forward a caller's `cmd.Stdin`; no current caller sets it.
@@ -2378,3 +2468,6 @@ PL-C2 round r1: 4 findings. Worst issue: C3, a kind with no validator row gets a
 - The `Unbounded` window branch, drain mode, `StreamFailed`, and `Cleanup.SignalErr` have no PL-C1 test; later rows cover drain mode.
 - PL-C2: the `requireRefused` call on the empty descriptor in `TestRegistrationResourceSyncFailure` proves nothing and can go.
 - PL-C2: a later consumer must not treat `Outcome.Protection` as release proof; release authority stays with `SealAndObserve`.
+- PL-C3: the 10 ms poll literal in `releaseArtifactBarrier` repeats `bounds.ProcessPoll`.
+- PL-C3: `releaseUnprotected` indexes `disposition.Resources[0]`, which is safe only because the read-error path of `Recover` fills the slice.
+- PL-C3: the `Uncertain` state at `outcome.go:136` and the store and prefix checks of the adapters were not probed.
