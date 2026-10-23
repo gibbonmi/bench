@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
@@ -41,7 +40,7 @@ func describeCheckout(run *git.Run, dir string) (protection.Descriptor, error) {
 // before it starts. A malformed inherited vector prevents the launch. A process with no
 // installed protocol opens no generation and passes the inherited vector on unchanged.
 func childResources(dir string, environ []string) ([]protection.Descriptor, error) {
-	inherited, err := protection.ParseVector(environValue(environ, protection.Env))
+	inherited, err := protection.InheritedFrom(environ)
 	if err != nil {
 		return nil, err
 	}
@@ -51,24 +50,12 @@ func childResources(dir string, environ []string) ([]protection.Descriptor, erro
 	}
 	d, err := Descriptor(dir)
 	if err == nil {
-		d, err = openCheckout(p, d)
+		d, err = p.Reopen(d)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("protect worktree %s: %w", dir, err)
 	}
 	return append(inherited, d), nil
-}
-
-// openCheckout joins or publishes the checkout's generation. A refused release, reuse, or
-// removal leaves its generation sealed, and recovery retires it once every user resolves.
-func openCheckout(p *protection.Protocol, d protection.Descriptor) (protection.Descriptor, error) {
-	opened, err := p.OpenResource(d)
-	if errors.Is(err, protection.ErrSealed) {
-		if _, err = p.Recover(d.Store, nil); err == nil {
-			opened, err = p.OpenResource(d)
-		}
-	}
-	return opened, err
 }
 
 // checkoutObserver is the protocol that observes the users of a checkout. Observation needs
@@ -90,7 +77,7 @@ func checkoutUnprotected(run *git.Run, path string) error {
 	}
 	disposition, err := checkoutObserver.Recover(d.Store, nil)
 	switch {
-	case errors.Is(err, fs.ErrNotExist) && disposition.Resources[0].ResourceID == "":
+	case protection.NoGeneration(disposition, err):
 		return nil
 	case err != nil:
 		return fmt.Errorf("worktree %s %w: %w", path, protection.ErrRetained, err)
@@ -116,15 +103,4 @@ func protectionEvidence(admin string) []byte {
 		})
 	}
 	return canonicalParts(append(parts, []byte(fmt.Sprint(err)))...)
-}
-
-// environValue is the last value environ assigns to name, which is the value a child reads.
-func environValue(environ []string, name string) string {
-	value := ""
-	for _, entry := range environ {
-		if after, ok := strings.CutPrefix(entry, name+"="); ok {
-			value = after
-		}
-	}
-	return value
 }

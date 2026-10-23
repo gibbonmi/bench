@@ -17,13 +17,7 @@ func (h *Holder) Protect(p *protection.Protocol) (protection.Descriptor, error) 
 	if err != nil {
 		return protection.Descriptor{}, err
 	}
-	d, err := p.OpenResource(open)
-	// A refused clean leaves its generation sealed. Recovery retires it once every user resolves.
-	if errors.Is(err, protection.ErrSealed) {
-		if _, err = p.Recover(open.Store, nil); err == nil {
-			d, err = p.OpenResource(open)
-		}
-	}
+	d, err := p.Reopen(open)
 	if err != nil {
 		return protection.Descriptor{}, err
 	}

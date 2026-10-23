@@ -84,6 +84,13 @@ func (p *Protocol) Recover(store string, release func() error) (Disposition, err
 	return p.SealAndObserve(Descriptor{Store: store, ResourceID: r.ResourceID, Kind: r.Kind, ResourcePath: r.ResourcePath, Binding: r.Binding}, release)
 }
 
+// NoGeneration reports that the result of Recover found a store that holds no generation,
+// such as a store whose generation retired. Such a store names no user, as an absent store
+// does. Every other failure of Recover keeps the resource.
+func NoGeneration(d Disposition, err error) bool {
+	return errors.Is(err, fs.ErrNotExist) && len(d.Resources) == 1 && d.Resources[0].ResourceID == ""
+}
+
 // grade is the one release predicate for a user. A no-start is complete. A pending user needs
 // a currently absent actor: its start gate opens only after the actor publishes the known
 // identity, so the program of a pending user whose actor is gone never ran. A known user

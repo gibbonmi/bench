@@ -1,9 +1,7 @@
 package gocache
 
 import (
-	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -87,7 +85,7 @@ func releaseUnprotected(dir string, p *protection.Protocol, release func() error
 		return err
 	}
 	disposition, err := p.Recover(store, release)
-	if errors.Is(err, fs.ErrNotExist) && disposition.Resources[0].ResourceID == "" {
+	if protection.NoGeneration(disposition, err) {
 		return release()
 	}
 	if err != nil {

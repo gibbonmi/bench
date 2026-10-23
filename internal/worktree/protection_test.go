@@ -46,11 +46,11 @@ func TestCheckoutProtectionPredicate(t *testing.T) {
 	err = checkoutUnprotected(run, root)
 	mustChmod(t, d.Store, 0o700)
 	requireTest(t, errors.Is(err, protection.ErrRetained) && errors.Is(err, fs.ErrPermission), "an unreadable store = %v, want a retention with its cause", err)
-	_, err = openCheckout(checkoutObserver, d)
+	_, err = checkoutObserver.Reopen(d)
 	requireTest(t, errors.Is(err, protection.ErrSealed), "a launch beside the live user = %v, want the sealed generation", err)
 
 	requireTest(t, user.Finish(protection.Terminal{NoStart: true}) == nil, "finish the checkout user")
-	_, err = openCheckout(checkoutObserver, d)
+	_, err = checkoutObserver.Reopen(d)
 	requireTest(t, err == nil, "a launch after the user resolved = %v, want the recovered generation", err)
 	requireTest(t, checkoutUnprotected(run, root) == nil, "an unused generation kept the checkout")
 	requireTest(t, checkoutUnprotected(run, root) == nil, "a retired generation kept the checkout")

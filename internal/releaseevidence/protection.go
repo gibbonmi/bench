@@ -1,7 +1,6 @@
 package releaseevidence
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -76,18 +75,14 @@ func openEvidence(dist string) (_ protection.Generation, enclosed bool, _ error)
 	if p == nil {
 		return protection.Generation{}, false, nil
 	}
-	generation, err := evidenceDirectory.Open(p, dist)
-	if errors.Is(err, protection.ErrSealed) {
-		var d protection.Descriptor
-		if d, err = evidenceDirectory.Describe(dist); err == nil {
-			if _, err = p.Recover(d.Store, nil); err == nil {
-				generation, err = evidenceDirectory.Open(p, dist)
-			}
-		}
+	d, err := evidenceDirectory.Describe(dist)
+	if err == nil {
+		d, err = p.Reopen(d)
 	}
 	if err != nil {
 		return protection.Generation{}, false, fmt.Errorf("protect %s: %w", evidenceName(dist), err)
 	}
+	generation := protection.Generation{Protocol: p, Resource: d}
 	inherited, err := protection.Inherited()
 	if err != nil {
 		return protection.Generation{}, false, err

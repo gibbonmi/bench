@@ -90,6 +90,19 @@ func (p *Protocol) OpenResource(d Descriptor) (Descriptor, error) {
 	return opened, err
 }
 
+// Reopen is OpenResource for an owner whose earlier release can leave its generation sealed.
+// A refused release, reuse, removal, or clean leaves the generation sealed. Recovery retires
+// it once every user resolves, and then Reopen opens a fresh generation.
+func (p *Protocol) Reopen(d Descriptor) (Descriptor, error) {
+	opened, err := p.OpenResource(d)
+	if errors.Is(err, ErrSealed) {
+		if _, err = p.Recover(d.Store, nil); err == nil {
+			opened, err = p.OpenResource(d)
+		}
+	}
+	return opened, err
+}
+
 // join takes the store's lock and joins or publishes its generation. Published reports whether
 // the store holds a generation, so a failed caller knows whether a user can depend on the store.
 func (p *Protocol) join(d Descriptor) (_ Descriptor, published bool, _ error) {

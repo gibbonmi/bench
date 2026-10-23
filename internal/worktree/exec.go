@@ -238,29 +238,38 @@ func withHome(base []string, home string) []string {
 	return append(capability.WithoutEnvironment(base, homeEnv), homeEnv+"="+home)
 }
 
-// lifetimeExitCode is the child's own code, 128 plus the signal that ended it, or 1 when
-// the one waiter never reported.
+// lifetimeExitCode is the shell exit code of a Lifetime child. A child whose one waiter never
+// reported has no code of its own.
 func lifetimeExitCode(p subprocess.Process) int {
-	switch {
-	case p.Signal != 0:
-		return 128 + int(p.Signal)
-	case !p.Waited || p.Code < 0:
-		return 1
+	code := p.Code
+	if !p.Waited {
+		code = -1
 	}
-	return p.Code
+	return shellExitCode(code, p.Signal)
 }
 
 func childExitCode(cmd *exec.Cmd, err error) int {
 	if err == nil {
 		return 0
 	}
-	if cmd.ProcessState != nil {
-		if exit := cmd.ProcessState.ExitCode(); exit >= 0 {
-			return exit
-		}
-		if status, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok && status.Signaled() {
-			return 128 + int(status.Signal())
-		}
+	if cmd.ProcessState == nil {
+		return 1
 	}
-	return 1
+	var signal syscall.Signal
+	if status, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok && status.Signaled() {
+		signal = status.Signal()
+	}
+	return shellExitCode(cmd.ProcessState.ExitCode(), signal)
+}
+
+// shellExitCode is the one map from a child's end to the code that a worktree verb returns:
+// 128 plus the signal that ended the child, else its own code, or 1 when it has no code.
+func shellExitCode(code int, signal syscall.Signal) int {
+	switch {
+	case signal != 0:
+		return 128 + int(signal)
+	case code < 0:
+		return 1
+	}
+	return code
 }

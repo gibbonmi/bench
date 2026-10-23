@@ -127,6 +127,18 @@ func ParseVector(value string) ([]Descriptor, error) {
 // Inherited parses the descriptor vector that this process inherited.
 func Inherited() ([]Descriptor, error) { return ParseVector(os.Getenv(Env)) }
 
+// InheritedFrom parses the descriptor vector that environ passes to a child: the last value
+// that environ assigns to the vector entry.
+func InheritedFrom(environ []string) ([]Descriptor, error) {
+	value := ""
+	for _, entry := range environ {
+		if after, ok := strings.CutPrefix(entry, Env+"="); ok {
+			value = after
+		}
+	}
+	return ParseVector(value)
+}
+
 // Environ returns env with the vector entry replaced by vector, or removed when it is empty.
 func Environ(env []string, vector []Descriptor) []string {
 	out := slices.DeleteFunc(slices.Clone(env), func(entry string) bool { return strings.HasPrefix(entry, Env+"=") })
