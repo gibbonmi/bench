@@ -483,6 +483,9 @@ applies either plan by its fingerprint.
 Before a destructive move, the verb verifies a reset envelope under
 `refs/bench/reset/<owner>/<assignment>/<n>` that preserves staged, unstaged, and untracked work.
 The restore returns HEAD, the index, and the working tree to the preserved state.
+When the branch has commits after the envelope's tip, the restore keeps the branch tip and merges the preserved index and working tree onto it.
+A merge conflict, or a branch that does not contain the envelope's tip, refuses the plan before any write.
+
 The verb repairs a partial migration, a shift-branch checkout, a detached checkout, a drifted
 registration lock, and an unreconciled merge checkout.
 Its exit meanings follow the preservation boundary:

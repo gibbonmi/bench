@@ -33,6 +33,36 @@ func readResetRestore(root string, assignment intent.Assignment, ref string) (re
 	return manifest, nil
 }
 
+// restoreOntoTip returns the manifest that a restore applies when the branch tip descends
+// from the envelope tip. That manifest keeps the branch tip as its base and its tip, and
+// each layer is the three-way merge of the preserved layer onto the branch tip. A staged
+// layer that merges to the tip tree drops, as a capture drops it.
+func restoreOntoTip(root string, manifest recoveryManifest, tip string) (recoveryManifest, error) {
+	if manifest.Tip == tip {
+		return manifest, nil
+	}
+	later, err := authorization.IsAncestor(root, manifest.Tip, tip)
+	if err != nil || !later {
+		return manifest, err
+	}
+	tipTree, err := git.Output("-C", root, "rev-parse", tip+"^{tree}")
+	if err != nil {
+		return recoveryManifest{}, err
+	}
+	onto := recoveryManifest{Schema: manifest.Schema, Base: tip, Tip: tip, Layers: map[string]string{}}
+	for layer, payload := range manifest.Layers {
+		merged, err := git.Output("-C", root, "merge-tree", "--write-tree", "--merge-base="+manifest.Base, tip, payload)
+		if err != nil {
+			return recoveryManifest{}, refusalError{refusal{detail: "envelope payload conflicts with the branch tip", observed: layer, wanted: tip}}
+		}
+		if layer != "working" && merged == tipTree {
+			continue
+		}
+		onto.Layers[layer] = merged
+	}
+	return onto, nil
+}
+
 func restoreResetLayers(path string, manifest recoveryManifest) error {
 	if _, err := git.Output("-C", path, "read-tree", "-u", "--reset", manifest.Layers["working"]+"^{tree}"); err != nil {
 		return err
