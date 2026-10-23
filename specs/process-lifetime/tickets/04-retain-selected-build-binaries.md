@@ -46,6 +46,7 @@ The reviewer decided on 2026-10-23 that process-user stores live on tmpfs.
 protection.Directory derives every store under the per-user boot root that the spec states.
 Each owner's Store field goes away, and every caller that joins a store path uses the derived store.
 Keep every existing check and error meaning.
+BENCH_KIT is supplied by bench test --check system through the existing sealed system owner.
 
 ## Acceptance
 
@@ -72,5 +73,6 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/env`
 - `bench test --package ./internal/gate/prospectiveartifact`
 - `bench test --package ./internal/gate`
+- `bench test --check system`
 
 Mutation witness: Remove normal builder drain or delete the selection before all registered groups are absent. The live descendant or executable-retention assertion must fail.
