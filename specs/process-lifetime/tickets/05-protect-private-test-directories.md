@@ -1,7 +1,7 @@
 # Retain private test directories through phase cleanup
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/env/kit_run.go, internal/env/kit_run_lifetime_test.go (new), internal/env/kit_run_test.go, internal/env/protection.go (new), internal/gate/engine.go, internal/gate/lifetime_resources_test.go (new), internal/gate/phases.go, internal/subprocess/control.go, internal/subprocess/lifetime_test.go, internal/gate/runner.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/env/kit_run.go, internal/env/kit_run_lifetime_test.go (new), internal/env/kit_run_test.go, internal/env/protection.go (new), internal/gate/engine.go, internal/gate/lifetime_resources_test.go (new), internal/gate/phases.go, internal/subprocess/control.go, internal/subprocess/lifetime_test.go, internal/gate/runner.go, internal/subprocess/protection/record_test.go
 Covers: PL37, PL38
 
 ## What to build
