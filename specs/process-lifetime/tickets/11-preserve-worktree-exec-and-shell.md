@@ -1,7 +1,7 @@
 # Preserve worktree command policy with durable protection
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md, 06-refuse-clean-of-protected-cache.md, 07-retain-prospective-gate-artifacts.md, 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md, 10-preserve-focused-test-completion.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/exec.go, internal/worktree/exec_lifetime_test.go (new), internal/worktree/exec_test.go, internal/worktree/lifecycle.go, internal/worktree/pool_reclaim.go, internal/worktree/protection.go (new), internal/worktree/protection_test.go (new), internal/worktree/resume.go, internal/worktree/subshell.go, internal/worktree/subshell_lifetime_test.go (new), internal/worktree/subshell_test.go, internal/worktree/parallel_census_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/exec.go, internal/worktree/exec_lifetime_test.go (new), internal/worktree/exec_test.go, internal/worktree/lifecycle.go, internal/worktree/pool_reclaim.go, internal/worktree/protection.go (new), internal/worktree/protection_test.go (new), internal/worktree/resume.go, internal/worktree/subshell.go, internal/worktree/subshell_lifetime_test.go (new), internal/worktree/subshell_test.go, internal/worktree/parallel_census_test.go, internal/subprocess/protection, internal/releaseevidence/protection.go, internal/gocache/protection.go, internal/gocache/clean.go
 Covers: PL81, PL82, PL114, PL115
 
 ## What to build
@@ -20,7 +20,8 @@ Exec can return child zero only after its own required stream and cleanup obliga
 It releases no assignment on that return; durable users still prevent reuse and removal.
 Required enclosing owners consume unresolved disposition across that CLI boundary.
 
-Introduce the single protected-user predicate into release, cleanup planning/apply, reuse, and reclaim composition.
+Introduce the single protected-user predicate into release, cleanup planning/apply, and reuse composition.
+Ticket 12 brings reclaim to the same verdict through a store lookup by resource path.
 Fingerprint protection evidence and recheck under exclusion before apply.
 Do not add another pool cleanup rule.
 Ticket 12 completes and witnesses shift-specific rollback and recovery consumption.

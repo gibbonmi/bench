@@ -6867,7 +6867,84 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c4-standards-r1",
+          "performer": "claude:plt-c4-standards-r1-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4debcf6a1c75eb21ff5bda7ce500022c79ea1490",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-standards-r1-20261023",
+            "digest": "sha256:36b08def6e5d1bffb1404ac3c9767bfd31b7fb353f17855b5a3de5eae89df29a",
+            "excerpt": "Standards axis, PL-C4 round r1. Evidence current=true at c777878f1. The chunk adds three duplicated protection facts (sealed reopen, the retired-store predicate, the environ vector read), the inherited-union registration in three more sites, and a second exit-code derivation. Each protection fact belongs in internal/subprocess/protection, which no PL-C4 Writes line reaches. Comment register clean.\n\nFindings\nS1 | veto | 5 | internal/worktree/protection.go:66, internal/releaseevidence/protection.go:80 (pre-existing internal/gocache/protection.go:22) | AGENTS.md one source per fact | The sealed-reopen policy (OpenResource, ErrSealed, Recover, OpenResource) has three copies; it belongs on protection.Protocol or Directory.Open. Owner 08, 11.\nS2 | veto | 5 | internal/worktree/protection.go:93 vs internal/gocache/clean.go:90 | AGENTS.md one source per fact | \"An absent or retired store names no user\" is derived twice from Recover's result shape (fs.ErrNotExist and an empty Resources[0].ResourceID); it should be one protection predicate. Owner 11.\nS3 | veto | 4 | internal/worktree/protection.go:122 | AGENTS.md one source per fact | environValue is a third environ lookup whose only job is to read protection.Env; protection owns Environ and Inherited, so the slice read should be protection InheritedFrom(environ). Owner 11.\nS4 | veto | 4 | internal/preprelease/preprelease.go:276, internal/releasepreflight/command.go:312, internal/testreport/command.go:308 (pre-existing internal/gate/runner.go:61) | AGENTS.md one source per fact | Three more derivations of \"inherited union plus local under the Installed protocol\" plus the Start, AfterFunc cancel, Wait sequence; one subprocess constructor should own it. Owner 08, 09, 10.\nS5 | auto-fix | 3 | internal/worktree/exec.go:243 vs :253 | AGENTS.md one source per fact | lifetimeExitCode re-derives childExitCode's exit-code convention. Owner 11.\nS6 | no-op | 2 | preprelease.go:250 vs releasepreflight/command.go:297 | judgment | stepPolicy and phasePolicy are per-consumer policy choices; honest repetition. Owner 08, 09.\nS7 | no-op | 2 | preprelease/lifetime_test.go:179, releaseevidence/protection_test.go:91 | fixture harnesses | The store-discard test helper copies are incidental text; the store location stays single-sourced. Owner 08.\nS8 | no-op | 1 | worktree/protection.go:77 vs cmd/bench/process_resources.go:23 | one source per fact | The checkoutObserver row references one function; honest. Owner 11.\n\nAdvice\n- Ticket 10 retired two cancel tests; TestListCancel and TestFocusedPipeCancel replace them.\n- lifecycle.go:416 and :439 discard the checkoutUnprotected error without a trace.\n- S1-S3 suit one protection-package plan expansion.\n"
+          },
+          "axis": "Standards",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "a95a90df47d7782d42c5d88d9c3d5c2af3c06a6e",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6",
+            "S7",
+            "S8"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c4-spec-r1",
+          "performer": "claude:plt-c4-spec-r1-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4debcf6a1c75eb21ff5bda7ce500022c79ea1490",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-spec-r1-20261023",
+            "digest": "sha256:e71b37f1f44e92fd84f1617b65b7f98b51da2211168539aecb3d4c071d299761",
+            "excerpt": "Spec axis, PL-C4 round r1. Evidence current=true at c777878f1. Tickets 08 and 09 match their What-to-build. Ticket 10 has one same-package leak and one inconsistent child-status treatment. Ticket 11 claims reclaim composition its code does not contain; reclaim belongs to ticket 12, and the spec's mechanism cannot work as written.\n\nFindings\nP1 | veto | 5 | internal/worktree/protection.go:86-89, internal/subprocess/protection/directory.go:35-44, spec.md:476 | \"Pool reclaim consumes the same protected-user verdict before key removal.\" | A reclaimable member's repository is absent, so Describe cannot derive its store. Ticket 11:23 overclaims reclaim. Narrowest fix: ticket 12 gives reclaimpolicy a protected-member fact by scanning the store root for worktree records whose ResourcePath equals the member's gitdir target, graded through SealAndObserve; one spec sentence names the lookup; ticket 11:23 drops \"reclaim\". Owner 12, text correction 11.\nP2 | veto | 6 | internal/testreport/held_runs.go:40; internal/probe/set.go:152 | \"The migration consumes them wherever the operation owns cleanup or certification. No completed child code can hide those failures.\" | HeldRuns.Run discards a rebuilt selection's Close error, and the probe set discards HeldRuns.Close; a retained executable hides behind a successful probe run. Owner 10 (widen).\nP3 | auto-fix | 4 | internal/testreport/command.go:278-281 | \"Preserve child status beside required cleanup failure.\" | A private-run Close failure replaces the child's outcome and report; the selection-close path keeps both. Owner 10.\nP4 | no-op | 2 | internal/worktree/reset_apply.go:116-123 | \"Worktree protection resides outside files that reset or clean can remove.\" | The spec does not require reset to consult the predicate; the store survives reset.\nP5 | no-op | 1 | internal/worktree/exec.go:91-95 | \"Exec can return child zero only after its own required stream and cleanup obligations complete.\" | Exit 1 after ExecWaitDelay expiry is required; intentional and covered.\nP6 | no-op | 1 | internal/subprocess/protection/store.go:211, observe.go:34 | \"the protection package does not build for Windows\" | Confirmed; the fallback removal matches the corrected Won't line.\n\nAdvice\n- lifecycle.go:272 Release drops the checkoutUnprotected error without telling the caller (severity 3).\n- exec.go lifetimeExitCode restates childExitCode (Standards S5).\n- lifecycle.go:196 the sealed-then-reopened checkout relies on the lease serializing the acquirer; the comment could say so.\n"
+          },
+          "axis": "Spec",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "a95a90df47d7782d42c5d88d9c3d5c2af3c06a6e",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3",
+            "P4",
+            "P5",
+            "P6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c4-coverage-r1",
+          "performer": "claude:plt-c4-coverage-r1-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4debcf6a1c75eb21ff5bda7ce500022c79ea1490",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c4-coverage-r1-20261023",
+            "digest": "sha256:5477db3caaf34305a071c6627830288bcc5d1ff3d5a94131ae51dc5659097e36",
+            "excerpt": "Coverage axis, PL-C4 round r1. Evidence current=true at c777878f1. All 13 cited tests for PL61-PL65, PL79-PL82, PL114-PL115, PL119 and PL122 exist; the one probe set confirms that the store-binding behavior bites at an assertion, not in setup.\n\nFindings\nNo finding.\n\nProbes:\n- internal/releaseevidence/protection.go, store bound to dist/preflight instead of dist (openEvidence creates and opens dist/preflight, Prefix \"dist\" to \"\", Descriptor uses dist/preflight): bit TestPrepIncomplete at internal/preprelease/lifetime_test.go:114 (the swapped stage breaks the descendant's binding, so the retained-evidence diagnostics change) and incidentally TestProtectedStageCleanup/protected at internal/releaseevidence/protection_test.go:54; restored yes.\n\nAdvice\n- Severity 3: ticket 08's recorded omission probe bit only in setup (lifetime_test.go:83 and :153, a 20 s timeout); the r1 probe above closes the store-binding half.\n- Severity 2: the store-binding mutant fails closed; TestPrepIncomplete catches it through its diagnostic assertion, not the ErrSealed or sentinel assertion.\n- Severity 2: the PL119 half (an abandoned stage deleted on its owner marker alone) has no r1 probe beyond the author's record.\n- No other row was probed in r1, as directed.\n"
+          },
+          "axis": "Coverage",
+          "base": "5f9733dccad2595d2bbf934ff15edda6f3401552",
+          "tip": "a95a90df47d7782d42c5d88d9c3d5c2af3c06a6e",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -7057,6 +7134,10 @@ Repair cycle 3 ran past the allowance under the reviewer's advance approval: tic
 The confirming round r5 passed on all three axes with no new finding.
 The reviewer set a severity floor for confirming rounds on 2026-10-23: a new item below severity 5 goes to Advice and opens no repair cycle.
 
+PL-C4 round r1 found 10 actionable findings and 6 no-op findings. The Coverage axis passed.
+Repair cycle 1 of 2 runs one repair session for ticket 10 (P2, P3, S4) and one for ticket 11 (S1, S2, S3, S5).
+The reviewer directed S4 to repair now on 2026-10-23. Ticket 12 owns P1 through a spec correction that names the reclaim store lookup.
+
 ## Standards
 
 PL-C1 round r1: 2 findings. Worst issue: S2, a scheduling-dependent verdict in a PL66 test.
@@ -7085,6 +7166,17 @@ PL-C3 round r4: 3 findings. Worst issue: N1, `discardNested` repeats the absence
 - N2 | auto-fix | confidence 2 | `internal/subprocess/startgate_test.go:146-148` | `sealStore` discards the walk error and does not call `t.Helper()`. Owner: ticket 14.
 - N3 | auto-fix | confidence 1 | `internal/gocache/clean.go:82` | The edited doc comment runs past the file's wrap width. Owner: ticket 04.
 
+PL-C4 round r1: 8 findings. Worst issue: S1, the sealed-reopen policy has three copies.
+
+- S1 | auto-fix | confidence 5 | `internal/worktree/protection.go:66`, `internal/releaseevidence/protection.go:80`, `internal/gocache/protection.go:22` | The sealed-reopen policy has three copies (AGENTS.md one source per fact). One source goes in `internal/subprocess/protection`. Owner: ticket 11, widened.
+- S2 | auto-fix | confidence 5 | `internal/worktree/protection.go:93`, `internal/gocache/clean.go:90` | The rule that an absent or retired store names no user has two production copies. One protection predicate owns it. Owner: ticket 11, widened.
+- S3 | auto-fix | confidence 4 | `internal/worktree/protection.go:122` | `environValue` reads the resource vector from an environ; the protection package owns that read. Owner: ticket 11, widened.
+- S4 | auto-fix | confidence 4 | `internal/preprelease/preprelease.go:276`, `internal/releasepreflight/command.go:312`, `internal/testreport/command.go:308`, `internal/gate/runner.go:61` | The inherited-plus-local registration and its start, cancel, and wait sequence have four copies. One subprocess constructor owns them. Owner: ticket 10, widened.
+- S5 | auto-fix | confidence 3 | `internal/worktree/exec.go:243` | `lifetimeExitCode` repeats the exit-code mapping of `childExitCode`. Owner: ticket 11.
+- S6 | no-op | confidence 2 | `internal/preprelease/preprelease.go:250` | Each release child policy is its consumer's choice.
+- S7 | no-op | confidence 2 | `internal/preprelease/lifetime_test.go:179` | The store-discard test helper copies are incidental text.
+- S8 | no-op | confidence 1 | `internal/worktree/protection.go:77` | The observer row references one validator function.
+
 ## Spec
 
 PL-C1 round r1: 0 findings. Worst issue: none.
@@ -7107,6 +7199,15 @@ PL-C3 round r3: 5 findings. Worst issue: P1, a bundle whose store is absent stay
 - P5 | auto-fix | confidence 8 | `internal/subprocess/protection/directory.go:118-119` | The store name uses the first 16 bytes of the digest. A prose-only spec correction states that length.
 
 PL-C3 round r4: 0 findings. Worst issue: none.
+
+PL-C4 round r1: 6 findings. Worst issue: P2, a rebuilt selection's Close failure hides behind a successful probe run.
+
+- P1 | auto-fix | confidence 5 | `internal/worktree/protection.go:86-89`, spec.md:476 | A reclaimable member's repository is absent, so the checkout cannot derive its store. The spec now names a store lookup by resource path, and ticket 11 no longer claims reclaim. Owner: ticket 12.
+- P2 | auto-fix | confidence 6 | `internal/testreport/held_runs.go:40`, `internal/probe/set.go:152` | `HeldRuns.Run` and the probe set discard Close errors (spec.md:1025-1027). Owner: ticket 10, widened.
+- P3 | auto-fix | confidence 4 | `internal/testreport/command.go:278-281` | A private-run Close failure replaces the child's outcome; the child status stays beside the failure. Owner: ticket 10.
+- P4 | no-op | confidence 2 | `internal/worktree/reset_apply.go:116-123` | The spec requires only that the store survive reset.
+- P5 | no-op | confidence 1 | `internal/worktree/exec.go:91-95` | Exit 1 after the wait delay is the required behavior.
+- P6 | no-op | confidence 1 | `internal/subprocess/protection/store.go:211` | The protection package does not build for Windows.
 
 ## Coverage
 
@@ -7140,6 +7241,8 @@ PL-C3 round r3: 4 findings. Worst issue: C1 to C3, no test bites a skipped store
 PL-C3 round r4: 1 finding. Worst issue: R4-C1, no owner test sees its store deleted after a safe close.
 
 - R4-C1 | auto-fix | confidence 4 | `internal/runbinary/runbinary.go:242`, `internal/env/kit_run.go:135`, `internal/gate/prospectiveartifact/prospectiveartifact.go:120` | Only `TestGenerationRemove` bites a skipped store deletion. An owner that went back to release and removal without `Generation.Remove` passes every owner test. One store-absence assertion goes in each owner close test. The axis marked it veto; the orchestrator set it to auto-fix under the reviewer's advance approval. Owner: ticket 04, widened.
+
+PL-C4 round r1: 0 findings. Worst issue: none.
 
 ## Advice
 

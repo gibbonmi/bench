@@ -474,6 +474,8 @@ Protected checkouts cannot return to the pool or pass cleanup apply.
 The existing planner includes protection evidence in its fingerprint.
 Apply rechecks that evidence under cleanup exclusion.
 Pool reclaim consumes the same protected-user verdict before key removal.
+A reclaimable member's repository is absent, so reclaim cannot derive its store from the checkout.
+Reclaim finds each worktree store whose recorded resource path is the member's gitdir target, and it grades that store through SealAndObserve.
 The implementation introduces no second cleanup predicate.
 
 Shift stores a lifetime handle instead of a mutable command before Start.

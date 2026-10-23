@@ -44,6 +44,8 @@ Do not introduce another subprocess fixture runner or private binary publisher.
 Each new system test calls t.Parallel and passes TMPDIR to its child by value.
 The closed system serial table gains no row.
 PL88 adds its protected-member fact and verdict to internal/worktree/reclaimpolicy, the one reclaimability predicate.
+The member's repository is absent, so the fact comes from the worktree stores whose recorded resource path is the member's gitdir target.
+Each such store is graded through SealAndObserve.
 Refusal text in internal/worktree routes through internal/refusalroute.
 
 ## Acceptance
