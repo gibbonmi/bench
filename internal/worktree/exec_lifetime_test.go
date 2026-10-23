@@ -3,6 +3,7 @@ package worktree
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -35,6 +36,24 @@ func TestExecNormalPipe(t *testing.T) {
 	requireTest(t, stdout.String() == "early\n", "exec stdout = %q, want the output that arrived before the delay", stdout.String())
 	requireTest(t, code == 0 && strings.Contains(stderr.String(), string(subprocess.StreamClosed)),
 		"exec exit = %d with stderr %q, want the child's 0 and a line naming the forcibly closed stream", code, stderr.String())
+}
+
+// refusingWriter fails every write, so the stream that copies into it ends failed.
+type refusingWriter struct{}
+
+func (refusingWriter) Write([]byte) (int, error) { return 0, errors.New("caller stdout refused") }
+
+// TestExecUnfinishedChildZero covers ticket 11's rule that exec returns child zero only
+// after its cleanup obligations complete. The child exits zero, but the caller's stdout
+// refuses its output, so exec's owned stdout stream fails rather than completing. Exec
+// returns 1 and names the failed stream on stderr.
+func TestExecUnfinishedChildZero(t *testing.T) {
+	t.Parallel()
+	var stderr bytes.Buffer
+	code := runWorktreeChild([]string{"sh", "-c", "printf out"}, t.TempDir(), t.TempDir(), os.Environ(), nil, nil, refusingWriter{}, &stderr)
+	requireTest(t, code == 1, "exec exit = %d with stderr %q, want 1 for a child zero with a failed stream", code, stderr.String())
+	requireTest(t, strings.Contains(stderr.String(), "process stream "+string(subprocess.StreamFailed)),
+		"exec stderr = %q, want the line naming the failed stream", stderr.String())
 }
 
 // testVector is a well-formed descriptor vector that names no published store. A test binary
