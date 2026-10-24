@@ -271,9 +271,9 @@ const helperRoleEnv = "BENCH_SHIFT_HELPER_ROLE"
 var helperWindow = bounds.TestDeadline(0)
 
 // TestShiftHelperProcess is the re-exec target of the helper-process tests. The interrupt
-// role runs one shift and exits with its code, so the checkpoint's os.Exit ends a real
-// process. The recover-act role runs one recovery pass that stops between its entry
-// write and its act, and exits. Without a role it does nothing.
+// role runs one shift and exits with its code, so a signal reaches a real process. The
+// recover-act role runs one recovery pass that stops between its entry write and its act,
+// and exits. Without a role it does nothing.
 func TestShiftHelperProcess(t *testing.T) {
 	switch os.Getenv(helperRoleEnv) {
 	case "interrupt":

@@ -57,6 +57,16 @@ func TicketRequirements(plan Plan, tip, chunk, ticket string) ([]Requirement, st
 	return owed, planned.Tickets[len(planned.Tickets)-1], nil
 }
 
+// EvidenceID is the evidence ID of requirement under prefix. A requirement ID that already
+// starts with the prefix and a hyphen is the evidence ID, so the prefix occurs once. Any other
+// requirement ID follows the prefix and a hyphen.
+func EvidenceID(prefix, requirement string) string {
+	if strings.HasPrefix(requirement, prefix+"-") {
+		return requirement
+	}
+	return prefix + "-" + requirement
+}
+
 // plannedChunk answers chunk id of plan, the plan at source, or refuses a chunk that the plan
 // does not name.
 func plannedChunk(plan Plan, source, id string) (*PlannedChunk, error) {

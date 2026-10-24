@@ -158,7 +158,7 @@ func TestFoldDerivedFinalRequirements(t *testing.T) {
 	if !errors.As(err, &repair) || repair.Form != rr.FormVerification || repair.Requirement != merged.ID || !strings.Contains(err.Error(), merged.Command) {
 		t.Fatalf("completion without a merged-test result = %v, want the verification form for %s", err, merged.ID)
 	}
-	call := rr.VerificationCall{Source: f.Tip(), Requirement: merged.ID, Evidence: f.Evidence("final-"+merged.ID, "", "author-verification")}
+	call := rr.VerificationCall{Source: f.Tip(), Requirement: merged.ID, Evidence: f.Evidence(rr.EvidenceID("final", merged.ID), "", "author-verification")}
 	if _, err := rr.RecordVerification(f.Root, recordtest.Spec, call); err != nil {
 		t.Fatalf("final verification of %s: %v", merged.ID, err)
 	}

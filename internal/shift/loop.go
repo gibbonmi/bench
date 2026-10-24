@@ -21,9 +21,9 @@ import (
 
 // finish emits the shift_result block and resolves res to its process exit code. When
 // entry is non-nil, it records the outcome on the intent entry. A validation failure
-// exits before an entry exists, so there is nothing yet to enrich. Every Loop return, and
-// checkpoint's os.Exit path through exitPreserving, funnels through this one path, the
-// single source for the emit-record-exit-code sequence. A failed Upsert changes neither
+// exits before an entry exists, so there is nothing yet to enrich. Every Loop return,
+// a checkpoint stop included, funnels through this one path, the single source for the
+// emit-record-exit-code sequence. A failed Upsert changes neither
 // the outcome nor the exit code: the gate already decided, and the ledger record is
 // enrichment, not the oracle. It is not silently swallowed; it is reported to stderr so
 // an operator can see the ledger fell out of sync. finish also ends the shift's record
@@ -176,7 +176,7 @@ func loop(outcomeID, objectiveText string, refresh bool, stdout, stderr io.Write
 	}
 	intentEntry.Lease, _, _, _ = worktree.ReadLease(wt)
 
-	s := &session{agent: os.Getenv("BENCH_AGENT"), root: wt, stdout: stdout, stderr: stderr, mainRoot: mainRoot, entry: &intentEntry, record: record}
+	s := &session{agent: os.Getenv("BENCH_AGENT"), root: wt, stdout: stdout, stderr: stderr, mainRoot: mainRoot, record: record}
 	record.session = s
 	branch, err := createShiftBranch(wt, timeNow().Format("20060102-150405"))
 	if err != nil {
@@ -243,17 +243,23 @@ func loop(outcomeID, objectiveText string, refresh bool, stdout, stderr io.Write
 	// or exit failure ended it.
 	var stopReason, stopDetail string
 	for i := 1; i <= maxIters; i++ {
-		s.checkpoint()
+		if res, stop := s.checkpoint(); stop {
+			return finish(stdout, stderr, mainRoot, &intentEntry, record, res)
+		}
 		s.iterationsUsed = i
 		passCtx := record.beginPass(iterationSeam)
 		fmt.Fprintf(stdout, "── iteration %d/%d ──\n", i, maxIters)
 		pre := dirtyPaths(wt)
 		adapterErr := s.runAdapter(passCtx, objective.prompt())
 		record.adapterRan(adapterErr)
-		s.checkpoint()
+		if res, stop := s.checkpoint(); stop {
+			return finish(stdout, stderr, mainRoot, &intentEntry, record, res)
+		}
 		post := dirtyPaths(wt)
 		if s.runGate(passCtx) == 0 {
-			s.checkpoint()
+			if res, stop := s.checkpoint(); stop {
+				return finish(stdout, stderr, mainRoot, &intentEntry, record, res)
+			}
 			if err := stageTouched(wt, pre, post); err != nil {
 				fmt.Fprintf(stderr, "could not stage iteration %d: %v\n", i, err)
 				return finish(stdout, stderr, mainRoot, &intentEntry, record, evidenceResult(s, fmt.Sprintf("could not stage iteration %d", i)))
@@ -294,7 +300,9 @@ func loop(outcomeID, objectiveText string, refresh bool, stdout, stderr io.Write
 				break
 			}
 		} else {
-			s.checkpoint()
+			if res, stop := s.checkpoint(); stop {
+				return finish(stdout, stderr, mainRoot, &intentEntry, record, res)
+			}
 			// Neither the human line nor the detail may name the pool worktree as the
 			// preservation site: the snapshot path releases and cleans it right after.
 			// The location is the "recovery:" line preserveAndRecover prints, the ref or
@@ -311,8 +319,8 @@ func loop(outcomeID, objectiveText string, refresh bool, stdout, stderr io.Write
 		return finish(stdout, stderr, mainRoot, &intentEntry, record, evidenceResult(s, stopDetail))
 	}
 
-	if err := s.refactorPhase(base, refactorIters); err != nil {
-		return finish(stdout, stderr, mainRoot, &intentEntry, record, evidenceResult(s, err.Error()))
+	if res, stop := s.refactorPhase(base, refactorIters); stop {
+		return finish(stdout, stderr, mainRoot, &intentEntry, record, res)
 	}
 
 	recovery, teardownErr := s.preserveAndRecover("shift teardown")

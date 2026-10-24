@@ -1,11 +1,14 @@
 package shift
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -112,6 +115,30 @@ func TestDeadlinePrecedence(t *testing.T) {
 	outcome, detail, ok := s.checkpointOutcome()
 	if !ok || outcome != OutcomeIncomplete || detail != "wall deadline exceeded" {
 		t.Fatalf("checkpoint = (%q, %q, %v), want the deadline's incomplete outcome", outcome, detail, ok)
+	}
+}
+
+// TestCheckpointTeardownFaultKeepsResponse covers the checkpoint's teardown failure. The wall
+// deadline stops a sleeping adapter, and the checkpoint's teardown fails. Loop must return
+// failed/1 to its caller with the shift_result block written, so a bounded caller that
+// prints the response after Loop returns keeps it.
+func TestCheckpointTeardownFaultKeepsResponse(t *testing.T) {
+	faultFixtureCore(t, greenGate, nil)
+	sleepingAgent(t, "")
+	t.Setenv("BENCH_MAX_WALL", "1s")
+	armFault(t, func(step shiftStep) error {
+		if step == stepTeardown {
+			return fmt.Errorf("injected teardown failure")
+		}
+		return nil
+	})
+
+	var stdout, stderr bytes.Buffer
+	code := Loop("delivery", "checkpoint teardown fault", &stdout, &stderr)
+
+	out := stdout.String()
+	if code != 1 || !strings.Contains(out, "shift_result[1]") || !strings.Contains(out, "\n  failed,") || !strings.Contains(out, "teardown failed") {
+		t.Fatalf("Loop past its deadline with a teardown fault = (%d, %q, %q), want failed/1 with the shift_result block", code, out, stderr.String())
 	}
 }
 

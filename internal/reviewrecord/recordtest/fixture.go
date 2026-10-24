@@ -309,7 +309,7 @@ func (f *Fixture) Verification(prefix, source string, requirements []rr.Requirem
 	for _, requirement := range requirements {
 		zero := 0
 		performer, role := f.owes(requirement)
-		item := rr.Verification{Evidence: f.EvidenceAs(prefix+"-"+requirement.ID, source, role, performer), Requirement: requirement.ID, Command: requirement.Command, ExitCode: &zero}
+		item := rr.Verification{Evidence: f.EvidenceAs(rr.EvidenceID(prefix, requirement.ID), source, role, performer), Requirement: requirement.ID, Command: requirement.Command, ExitCode: &zero}
 		if requirement.Probe != "" {
 			probe := bitProbe(requirement.Probe)
 			item.Probe = &probe
