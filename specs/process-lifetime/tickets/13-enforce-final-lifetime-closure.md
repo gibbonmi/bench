@@ -53,7 +53,7 @@ The closed system serial table gains no row.
 
 - [ ] PL1: Every census entry reaches the shared lifetime owner.
 - [ ] PL89: Linux parent death still kills the direct builder child.
-- [ ] PL90: Native Darwin preserves its group policy.
+- [ ] PL90: Native Darwin preserves its group policy. The native run is deferred to a follow-up on Darwin; the test cross-compiles on the Linux build host.
 - [ ] PL91: The final tree has no private production lifetime loop.
 - [ ] PL92: Gate preserved fixtures match their row contract.
 - [ ] PL93: Builder preserved fixtures match their row contract.
