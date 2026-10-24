@@ -1065,7 +1065,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-c2b-r1-standards",
+          "performer": "claude:rc-c2b-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-standards-r1",
+            "digest": "sha256:fbdb62b52f617e9c2c202eda17f7870e12132305b877ca3ce5f742205f9fff73",
+            "excerpt": "## Standards\n\n1 finding. Worst: S1, severity 3.\n\n- S1 | sev 3 | auto-fix | conf 6 | internal/reviewrecord/ticket.go:95 | RecordTicket holds a create closure and a created flag identical to RecordChunk (write.go:130-135, 140-142); one fact has two derivations (AGENTS.md one source per fact).\n\n### Advice\n- The \"verification at the reviewed digest\" case assigns a digest the fixture already holds, so its mutation is a no-op.\n- freezeTip and TicketRecord.Action docs say a call at the tip leaves the entry as is; it reports updated.\n- RunBinding runs twice per call; the knowledge is single-sourced.\n- Two guidance sentences sit at 25 words and join two facts.\n- Test moves for the 400-line cap cost some cohesion.\n"
+          },
+          "axis": "Standards",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2b-r1-spec",
+          "performer": "claude:rc-c2b-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-spec-r1",
+            "digest": "sha256:664f1e96ac65f1bdc7319ef8fd8071056dea1f6ced3bffcb167198125292b82c",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. RC9, RC10, RC11, RC12, RC16, RC24, the guidance acceptance, the recordtest Refreeze change, and the caller dispositions hold.\n\nrefusePlanned on every record call contradicts no spec sentence: the spec sets no precondition (spec lines 152-177), the ticket says \"keep the planned-cell refusal on every call that freezes\" (ticket 03 line 15), and the guidance already requires cited cells (bench-implement-spec.md:52). Story 7 holds, because staged runs at the author's own commit stay valid.\n\n### Advice\n- No test pins the planned-cell refusal for an earlier ticket in a multi-ticket chunk.\n- The RC16 row text could name the tip for a record-only descendant.\n- bench-implement-spec.md:66 leaves implicit when an earlier author records.\n"
+          },
+          "axis": "Spec",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2b-r1-coverage",
+          "performer": "claude:rc-c2b-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-coverage-r1",
+            "digest": "sha256:668af90918cf7791917cd32ec75d40ca176a8c924b02cd544cec8c2ae3e8e07a",
+            "excerpt": "## Coverage\n\n4 findings. Worst: C1, severity 5.\n\n- C1 | sev 5 | auto-fix | conf 8 | internal/reviewrecord/ticket.go:170-172 | No test runs a recorded chunk through a ticket call at a commit that does not descend from the entry tip. Probe: omit the freezeTip isAncestor(entry.Tip, bound) guard: silent, restored yes.\n- C2 | sev 4 | auto-fix | conf 8 | internal/reviewrecord/ticket.go:114 | The tip == \"\" skip in the FormChunk step is unpinned. Probe: drop || tip == \"\": silent, restored yes.\n- C3 | sev 3 | auto-fix | conf 6 | internal/reviewrecord/change.go:186-188 | No test reads SourceCommit from the bench record verification form.\n- C4 | sev 2 | auto-fix | conf 6 | internal/reviewrecord/change.go:152 | The off-line refusal text and its ErrNoChunkEntry wrap have no direct assertion.\n\nProbe set on ticket.go: guard omit silent; boundCommit skip bit (TestTicketStagedAfterARecordCommitBindsTheTip); tip == \"\" drop silent. Restored yes on every row.\n\n### Advice\n- ReadStaged does not check that Head is a full object id.\n- A call at the tip reports freeze=updated with an unchanged tip.\n"
+          },
+          "axis": "Coverage",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1128,6 +1196,8 @@ RC-C1 consumed repair cycle 1 of 2 after its initial review (round r1). The test
 
 RC-C2 consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `b721e5a7c` closed S1, and the confirming round r2 passed on all three axes with no new finding.
 
+RC-C2B consumed repair cycle 1 of 2 after its initial review (round r1).
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
@@ -1138,6 +1208,10 @@ RC-C2 round r1: 3 findings. Worst issue: S1, a third derivation of the source di
 - S2 | no-op | confidence 6 | `internal/gate/review_checkpoint_commits_test.go:15` | The author moved the test to keep the gate test file under its 400-line budget.
 - S3 | no-op | confidence 4 | `specs/chunk-repair-cycle/spec.md:298` | The scorecard decision moves a harder, uncertain-seam ticket one effort step up, and the assignment commit records it.
 
+RC-C2B round r1: 1 finding. Worst issue: S1, a duplicated record-creation closure.
+
+- S1 | auto-fix | confidence 6 | `internal/reviewrecord/ticket.go:95` | `RecordTicket` repeats the `create` closure and the created action of `RecordChunk`.
+
 ## Spec
 
 RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
@@ -1145,6 +1219,8 @@ RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red 
 - P1 | auto-fix | confidence 5 | `specs/chunk-repair-cycle/tickets/01-exempt-the-assignment-block.md:19` | The mirrored `FT438` row of `TestTicketSlicingAnchors` has no recorded red.
 
 RC-C2 round r1: 0 findings. Worst issue: none.
+
+RC-C2B round r1: 0 findings. Worst issue: none.
 
 ## Coverage
 
@@ -1157,6 +1233,13 @@ RC-C1 round r1: 4 findings. Worst issue: C2, the error returns of the exemption 
 
 RC-C2 round r1: 0 findings. Worst issue: none.
 
+RC-C2B round r1: 4 findings. Worst issue: C1, a backward refreeze guard with no test.
+
+- C1 | auto-fix | confidence 8 | `internal/reviewrecord/ticket.go:170-172` | No test records a recorded chunk at a commit that does not descend from the entry tip.
+- C2 | auto-fix | confidence 8 | `internal/reviewrecord/ticket.go:114` | The empty-tip skip of the chunk step has no test.
+- C3 | auto-fix | confidence 6 | `internal/reviewrecord/change.go:186-188` | No test reads `source_commit` from the verification form.
+- C4 | auto-fix | confidence 6 | `internal/reviewrecord/change.go:152` | The off-line refusal text and its marker have no direct assertion.
+
 ## Advice
 
 - The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
@@ -1165,3 +1248,6 @@ RC-C2 round r1: 0 findings. Worst issue: none.
 
 - RC-C2: a failed ancestry query in `chunkLine` has no test, and the entry still refuses as stale.
 - RC-C2: the `source_commit` parse rule has no uppercase or length-boundary case.
+
+- RC-C2B: the "verification at the reviewed digest" case sets a digest that the fixture already holds.
+- RC-C2B: a call at the tip reports `updated` with an unchanged tip, and the doc says it leaves the entry as is.
