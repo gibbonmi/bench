@@ -187,7 +187,8 @@ func TestCheckFloorRedsAnOmittedPackage(t *testing.T) {
 func TestCheckFloorRedsAnUnplannedTicket(t *testing.T) {
 	root := floorModule(t, "internal/x", "internal/y")
 	one, two := writer("one.md", "internal/x/p.go"), writer("two.md", "internal/y/p.go")
-	plan := onePlan([]tickets.Ticket{one}, "bench test --package ./internal/x")
+	// Chunk c1 runs ./internal/y, but no chunk names two.md, so no requirement meets its floor.
+	plan := onePlan([]tickets.Ticket{one}, "bench test --package ./internal/x", "bench test --package ./internal/y")
 	requireFloorRed(t, floorRow(t, root, plan, one, two), omittedElement("two.md", "./internal/y"))
 	// A ticket whose floor is empty stays green, although no chunk names it.
 	requireFloorGreen(t, floorRow(t, root, plan, one, writer("three.md", "docs/guide.md")))
@@ -327,11 +328,16 @@ func TestCheckFloorRejectsTheConformancePackage(t *testing.T) {
 func TestCheckFloorReadsOnlyTheOwnChunk(t *testing.T) {
 	root := floorModule(t, "internal/x", "internal/y")
 	one, two := writer("one.md", "internal/x/p.go"), writer("two.md", "internal/y/p.go")
-	plan := reviewrecord.Plan{Version: 1, Chunks: []reviewrecord.PlannedChunk{
-		chunk("c1", []string{"one.md"}, "bench test --package ./internal/x", "bench test --package ./internal/y"),
-		chunk("c2", []string{"two.md"}, "bench test --package ./internal/x"),
-	}}
-	requireFloorRed(t, floorRow(t, root, plan, one, two), omittedElement(chunkOwner("c2"), "./internal/y"))
+	plan := func(c2 string) reviewrecord.Plan {
+		return reviewrecord.Plan{Version: 1, Chunks: []reviewrecord.PlannedChunk{
+			chunk("c1", []string{"one.md"}, "bench test --package ./internal/x", "bench test --package ./internal/y"),
+			chunk("c2", []string{"two.md"}, c2),
+		}}
+	}
+	requireFloorRed(t, floorRow(t, root, plan("bench test --package ./internal/x"), one, two),
+		omittedElement(chunkOwner("c2"), "./internal/y"))
+	// Chunk c2 owes the floor of two.md only, so the ./internal/x of chunk c1 does not reach it.
+	requireFloorGreen(t, floorRow(t, root, plan("bench test --package ./internal/y"), one, two))
 }
 
 // TestCheckFloorGradesTheChunkUnion plans the requirement of ./internal/y under one.md,
