@@ -231,7 +231,7 @@ func envValue(entries []string, key string) string {
 
 func TestWrapperInstallFreshnessAndReloadJourneys(t *testing.T) {
 	t.Parallel()
-	linked := landRouteRepo(t, "wrapper [journey]-")
+	linked := journeyRepo(t, "wrapper [journey]-")
 	if result := owner.runSelected(linked, "link", "copy"); result.code != 0 {
 		t.Fatalf("link exit = %d: %s", result.code, result.stderr)
 	}
@@ -254,7 +254,7 @@ func TestCanaryInventoryAndSelectedExecutable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result := owner.runSelected(landRouteRepo(t, "canary [journey]-"), "canary", owner.kit)
+	result := owner.runSelected(journeyRepo(t, "canary [journey]-"), "canary", owner.kit)
 	want := fmt.Sprintf("canary inventory ok (%d fixture bindings)\n", len(fixtures))
 	if result.code != 0 || treetargettest.WithoutRow(result.stdout) != want {
 		t.Fatalf("canary inventory = (%d, %q, %q)", result.code, result.stdout, result.stderr)

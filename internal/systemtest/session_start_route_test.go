@@ -22,7 +22,7 @@ import (
 func TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable(t *testing.T) {
 	t.Parallel()
 	hook := sessionStartHook(t)
-	repo := landRouteRepo(t, "session-start-route [journey]-")
+	repo := journeyRepo(t, "session-start-route [journey]-")
 	installWrapper(t, repo)
 	root, err := filepath.EvalSymlinks(repo)
 	if err != nil {

@@ -287,7 +287,7 @@ func newSessionEnvironmentFixture(t *testing.T) sessionEnvironmentFixture {
 
 func newSessionEnvironmentFixtureWithGoDir(t *testing.T, directory string) sessionEnvironmentFixture {
 	t.Helper()
-	repo := landRouteRepo(t, "session-start [journey]-")
+	repo := journeyRepo(t, "session-start [journey]-")
 	installWrapper(t, repo)
 	goMod := filepath.Join(repo, "go.mod")
 	if err := os.WriteFile(goMod, nil, 0o644); err != nil {

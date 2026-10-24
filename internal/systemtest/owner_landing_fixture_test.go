@@ -106,7 +106,7 @@ type linkedProject struct {
 // executable, bound by the manifest that the land route authenticates.
 func newLinkedProject(t *testing.T) linkedProject {
 	t.Helper()
-	root := landRouteRepo(t, "linked-adoption [project]-")
+	root := journeyRepo(t, "linked-adoption [project]-")
 	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
 		systemGit(t, root, "config", identity[0], identity[1])
 	}
