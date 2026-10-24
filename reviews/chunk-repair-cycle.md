@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:bca0562cf26f7838331ce130f3e09067fdfc3748aa1ec7490ccb4b1098657830",
+  "plan_digest": "sha256:e6111e13c1b938948744fe0b963f1d8ad713222530ac2a92b8bfa05f4785c040",
   "implementation_session": "",
   "chunks": [
     {
@@ -908,9 +908,9 @@
     {
       "id": "RC-C2B",
       "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
-      "tip": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
-      "plan_digest": "sha256:bca0562cf26f7838331ce130f3e09067fdfc3748aa1ec7490ccb4b1098657830",
-      "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+      "tip": "bda45ae07bde12756003f4aaa9f451f622589772",
+      "plan_digest": "sha256:e6111e13c1b938948744fe0b963f1d8ad713222530ac2a92b8bfa05f4785c040",
+      "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
       "acceptance_rows": [
         "RC9",
         "RC10",
@@ -1063,6 +1063,150 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,1,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,277\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,20548,277\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,\"ticket_test.go:337: earlier ticket entry = early-tests at 2c0f5d8e7c19e7a555b1ef278b47266a6ff34df7 with digest 37b1ff8d87b492aa99b99f4199bac58f858c14f8, want early-tests at 11ac1f6ff63709f32333fad816d644e0e834d1ba with digest e80601fec2c040… (266 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t03r1-record",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:6e178a4b8d7cffbd7f90de27bf259ee9dae6271947a27f091f621a8b71f7c309",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3458,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-record-command",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:0c952d9d8316ad160ce540fd44b2bbafd73d6906f0bcfd3875d1550da66282ce",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,21033,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-record-fixture",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "record-fixture",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-gate",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:ef094e62aef512c93f89acf40ce139cebf420aec307f71b18b51feb5f66ef549",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,35336,527\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-conformance",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:474f0438f365396cbd1793d72014e464c0913eeea8363a3b87066c41980718de",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12540,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-floor",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:476288bb12ed6772bf5722b42db7f5333e40754565c88bcfd5d680a09ac3a69f",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19303,404\n  github.com/gibbonmi/bench/internal/anchors,pass,106,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/anchors --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-writer-probe",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:e35fbb84f8e4e2f98b5249c53198b1080c6774492ca07e1d311063c34273a559",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,1,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,279\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,20872,279\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,\"ticket_test.go:337: earlier ticket entry = early-tests at 767f9d4168e811c78d5863944549b1d973e02c58 with digest 37b1ff8d87b492aa99b99f4199bac58f858c14f8, want early-tests at 268ad39c815237277a1b786763d792264bd20a34 with digest e80601fec2c040… (266 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "writer-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "bind an earlier ticket to the chunk tip",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+              "digest": "sha256:e35fbb84f8e4e2f98b5249c53198b1080c6774492ca07e1d311063c34273a559",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,1,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,279\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,20872,279\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,\"ticket_test.go:337: earlier ticket entry = early-tests at 767f9d4168e811c78d5863944549b1d973e02c58 with digest 37b1ff8d87b492aa99b99f4199bac58f858c14f8, want early-tests at 268ad39c815237277a1b786763d792264bd20a34 with digest e80601fec2c040… (266 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1183,6 +1327,21 @@
         ],
         "RC-C2": [
           "RC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:bca0562cf26f7838331ce130f3e09067fdfc3748aa1ec7490ccb4b1098657830",
+      "to": "sha256:e6111e13c1b938948744fe0b963f1d8ad713222530ac2a92b8bfa05f4785c040",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
         ]
       }
     }
