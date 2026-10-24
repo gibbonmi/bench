@@ -18,7 +18,7 @@ Rewrite `TestCheckFloorReadsOnlyTheOwnTicket` (`check_floor_test.go:330-343`) to
 
 `check_floor_test.go` is at 383 of 400 lines, and the commit lane grades growth. Move an existing test to `check_floor_command_test.go` (106 lines) when the new rows need the room. Do not add a file to the crowded `internal/preflight/` directory.
 
-Add the RC30 test: `bench record assignment` refuses while a ticket file differs from HEAD. The repair order of ticket 05 depends on this refusal (`internal/reviewrecord/assignment.go:105-117`). If the test shows that the refusal covers the spec only, extend it to the ticket files in this ticket.
+RC30 already holds: `bench record assignment` refuses while a planned ticket file differs from HEAD (`internal/reviewrecord/assignment.go:81-85,105-117`), and the case "changed planned ticket" of `TestAssignmentSourceRefusals` (`internal/reviewrecord/recordcmd/assignment_test.go:182-187`) pins it. The repair order of ticket 05 depends on this refusal. Keep that case green; this ticket adds no RC30 test.
 
 ## Acceptance
 
