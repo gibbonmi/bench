@@ -1681,6 +1681,43 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "rc-c3-confirm-1",
+          "performer": "claude:rc-orchestrator-20261024",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77601154ef9ede2c4e785c71465cb7f3151a8477",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:rc-orchestrator-20261024:rc-c3-confirm-1",
+            "digest": "sha256:4631c28a5dd821374e16375420738c8604dd364bf6ddd2f39c91aab9d97e1201",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,1,TestCheckFloorRedsAnUnplannedTicket,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,497\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23707,379\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorRedsAnUnplannedTicket,\"check_floor_test.go:192: check-floor row = {Check:check-floor Verdict:green Detail: Next: exempt:false}, want the red detailed \\\"completion plan omits a floor check: two.md: ./internal/y (add bench test --package ./internal/y)\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "reviewed_tip": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "repaired_tip": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "finding_ids": [
+            "S1",
+            "C1",
+            "C3"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "skip the unplanned-ticket grade in checkFloorCheck",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:rc-orchestrator-20261024:rc-c3-confirm-1",
+              "digest": "sha256:4631c28a5dd821374e16375420738c8604dd364bf6ddd2f39c91aab9d97e1201",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,1,TestCheckFloorRedsAnUnplannedTicket,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,497\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23707,379\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorRedsAnUnplannedTicket,\"check_floor_test.go:192: check-floor row = {Check:check-floor Verdict:green Detail: Next: exempt:false}, want the red detailed \\\"completion plan omits a floor check: two.md: ./internal/y (add bench test --package ./internal/y)\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -1812,7 +1849,7 @@ RC-C2 consumed repair cycle 1 of 2 after its initial review (round r1). The repa
 
 RC-C2B consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `bda45ae07` closed S1 and C1 to C4, and the confirming round r2 passed on all three axes. The coordinator demonstrated the red of the C4 text expectation in `repair_test.go`: a reworded refusal in `change.go` failed `TestRecordRepairPreservesErrorIdentity/source_off_the_chunk_line`, and the probe restored the file.
 
-RC-C3 consumed repair cycle 1 of 2 after its initial review (round r1).
+RC-C3 consumed repair cycle 1 of 2 after its initial review (round r1). The test-only repair of ticket 04 at `a469af522` closed C1 and C3, and the coordinator confirmation `rc-c3-confirm-1` replaced a confirming round. That repair recorded only ticket 04's entries at its own commit, and ticket 05's entries at `0b649e867` carried forward with no restage.
 
 ## Standards
 
