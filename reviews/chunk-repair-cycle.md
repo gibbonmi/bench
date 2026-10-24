@@ -1967,7 +1967,80 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-c4-r1-standards",
+          "performer": "claude:rc-c4-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-standards-r1",
+            "digest": "sha256:706e64cef4db1afc8838817d9efa01378dce6183a3e670d6ea216f98b558acf7",
+            "excerpt": "## Standards\n\n2 findings, both judgment calls. Worst: S1, severity 4.\n\n- S1 | sev 4 | ask-user | conf 6 | internal/gate/gate_prose.go:250-252 | recordProse returns no findings when the tree lacks .bench/prose-exclusions, while the precedent NewGraderFromIndex refuses an absent policy (internal/prose/subject.go:94-97).\n- S2 | sev 3 | ask-user | conf 5 | internal/gate/gate_prose.go:216-217,235 | The record-prose refusal uses a bare operational refusal with no face and no route; every other agent-recoverable chunk-checkpoint refusal has a face (checkpoint.go:142-148, faces_gate.go:37-94).\n\n### Advice\n- Three discriminators mark a chunk checkpoint without one source.\n- committedSource returns a data clump that chunkSource already holds.\n- checkpoint.go and run_transaction.go near their line budgets.\n- runCheckpoint is a one-line pass-through.\n"
+          },
+          "axis": "Standards",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4-r1-spec",
+          "performer": "claude:rc-c4-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-spec-r1",
+            "digest": "sha256:503bb8a6b2dee161cb23169c1855095906af8191a87ad8642c53afdaab704575",
+            "excerpt": "## Spec\n\n3 findings. Worst: P2, severity 4.\n\n- P1 | sev 3 | auto-fix (test-only) | conf 6 | internal/reviewrecord/recordcmd/stage_test.go:190-216 | No test gives a gate-command requirement with no staged excerpt (RC48 why-clause).\n- P2 | sev 4 | ask-user | conf 7 | internal/gate/gate_prose.go:250-252 | Spec line 203 says the record prose is graded on every call; the absent-policy skip is unrecorded, and every consumer repo reaches it.\n- P3 | sev 3 | ask-user | conf 5 | internal/gate/checkpoint.go:280 | The chunk run uses the ordinary gate script instead of the prospective evaluation that spec line 197 names; in a repo with a real preparation step the key hashes a preparation the run never executes.\n\nRows: RC39, RC40, RC41, RC44, RC46 held; RC48 partial gap (P1).\n\n### Advice\n- The RC44 tracked-edit case cannot show the dirty refusal comes before the evidence pass.\n- BENCH-reference does not yet state the chunk dirty-checkout refusal (RC47, RC-C4B).\n"
+          },
+          "axis": "Spec",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4-r1-coverage",
+          "performer": "claude:rc-c4-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-coverage-r1",
+            "digest": "sha256:d5c7fc4fea8b0d0bcd4e06c917f3ef2db6a4bb4e051edded8c62101a8fd15490",
+            "excerpt": "## Coverage\n\n4 findings. Worst: C1, severity 6.\n\n- C1 | sev 6 | ask-user | conf 7 | internal/gate/gate_prose.go:253-256 | No chunk-checkpoint test gives the record grade a non-empty exclusion policy. Probe row 1 (drop the policy-entries loop): silent, restored yes.\n- C2 | sev 5 | ask-user | conf 7 | internal/gate/gate_prose.go:258-268 | The refusals of an unreadable policy, an unreadable record, and a malformed policy have no checkpoint test. Probe rows 3, 4, 5: silent, restored yes.\n- C3 | sev 5 | ask-user | conf 6 | internal/gate/gate_prose.go:265-268 | The edge-inventory symbolic link at the record path has no test.\n- C4 | sev 3 | ask-user | conf 6 | internal/gate/gate_prose.go:250-252 | The absent-policy skip has no spec row and no naming test. Probe row 2 (diagnostic on absent): bit, 25 tests.\n\n### Advice\n- The tip-guard preset at checkpoint.go:53 has no test.\n- RC34-RC38 and RC42 stay planned for RC-C4B.\n"
+          },
+          "axis": "Coverage",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2118,6 +2191,8 @@ RC-C2B consumed repair cycle 1 of 2 after its initial review (round r1). The rep
 
 RC-C3 consumed repair cycle 1 of 2 after its initial review (round r1). The test-only repair of ticket 04 at `a469af522` closed C1 and C3, and the coordinator confirmation `rc-c3-confirm-1` replaced a confirming round. That repair recorded only ticket 04's entries at its own commit, and ticket 05's entries at `0b649e867` carried forward with no restage.
 
+RC-C4 consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided S1, S2, P2, P3, and C4 on 2026-10-24. Opus/medium and sonnet/high agreed on P3. The fable/medium tie-break chose the skip and the face.
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
@@ -2136,6 +2211,11 @@ RC-C3 round r1: 1 finding. Worst issue: S1, a telegraphic fragment in the RC-C2B
 
 - S1 | auto-fix | confidence 5 | `reviews/chunk-repair-cycle.md` | The RC-C2B coordinator sentence ended in a fragment; this record commit rewrites it as an evidence-only correction.
 
+RC-C4 round r1: 2 findings. Worst issue: S1, the record prose grade skips an absent exclusion policy without a recorded rule.
+
+- S1 | auto-fix | confidence 6 | `internal/gate/gate_prose.go:250-252` | The consultants kept the skip. The repair pins it with a test, and the spec flags it.
+- S2 | auto-fix | confidence 5 | `internal/gate/gate_prose.go:216-217` | The consultants chose a refusal-route face for the prose refusal, through a widening into `internal/refusalroute/`.
+
 ## Spec
 
 RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
@@ -2147,6 +2227,12 @@ RC-C2 round r1: 0 findings. Worst issue: none.
 RC-C2B round r1: 0 findings. Worst issue: none.
 
 RC-C3 round r1: 0 findings. Worst issue: none.
+
+RC-C4 round r1: 3 findings. Worst issue: P2, the same unrecorded absent-policy skip.
+
+- P1 | auto-fix | confidence 6 | `internal/reviewrecord/recordcmd/stage_test.go:190-216` | No test gives a gate-command requirement with no staged excerpt.
+- P2 | auto-fix | confidence 7 | `internal/gate/gate_prose.go:250-252` | The skip is unrecorded; it closes with S1.
+- P3 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:280` | The consultants chose the prospective evaluation that spec line 197 names, through a widening to the worktree integration test.
 
 ## Coverage
 
@@ -2171,6 +2257,13 @@ RC-C3 round r1: 2 accepted findings. Worst issue: C1, an unplanned ticket graded
 - C1 | auto-fix | confidence 8 | `internal/preflight/check_floor.go:131-135` | No test gives an unplanned ticket an element that another chunk covers.
 - C3 | auto-fix | confidence 6 | `internal/preflight/check_floor.go:119-129` | No test catches floor elements that leak from one chunk into the next.
 
+RC-C4 round r1: 4 findings. Worst issue: C1, a non-empty exclusion policy that no checkpoint test uses.
+
+- C1 | auto-fix | confidence 7 | `internal/gate/gate_prose.go:253-256` | No chunk-checkpoint test gives the record grade a non-empty policy.
+- C2 | auto-fix | confidence 7 | `internal/gate/gate_prose.go:258-268` | No checkpoint test refuses an unreadable policy, an unreadable record, or a malformed policy.
+- C3 | auto-fix | confidence 6 | `internal/gate/gate_prose.go:265-268` | No test refuses a symbolic link at the record path.
+- C4 | auto-fix | confidence 6 | `internal/gate/gate_prose.go:250-252` | No test names the absent-policy skip; it closes with S1.
+
 ## Advice
 
 - The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
@@ -2185,3 +2278,6 @@ RC-C3 round r1: 2 accepted findings. Worst issue: C1, an unplanned ticket graded
 
 - RC-C3: no test pins the order of the red detail (Coverage C2, no binding requirement).
 - RC-C3: `.bench/commitment.json` still states the old plan-commit rule; it changes through `bench commitment plan`.
+
+- RC-C4: the tip-guard preset in `checkpoint.go` has no test.
+- RC-C4: three conditions mark a chunk checkpoint without one source.
