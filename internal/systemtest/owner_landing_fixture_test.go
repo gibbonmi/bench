@@ -56,7 +56,7 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	ready, release = landingBarrier(t, home)
 	f := testrepo.NewGateFixture(t.TempDir())
 	f.Environment = []string{"LAND_GATE_TALLY", "LAND_GATE_TREES", "LAND_RACE_READY", "LAND_RACE_RELEASE"}
-	gate := "set -eu\nruntime=$1\n" + f.Command("grep") + " -q '^Status: implemented$' \"$runtime/specs/x/spec.md\"\ntree=$(" + f.Command("git") + " -C \"$runtime\" write-tree)\nprintf '%s\\n' \"$tree\" >> \"$LAND_GATE_TREES\"\nif [ -f \"$runtime/loser.txt\" ]; then\n  printf l >> \"$LAND_GATE_TALLY\"\n  if [ ! -f \"$runtime/winner.txt\" ]; then\n    printf r > \"$LAND_RACE_READY\"\n    IFS= read -r _ < \"$LAND_RACE_RELEASE\"\n  fi\nelse\n  printf w >> \"$LAND_GATE_TALLY\"\nfi\n"
+	gate := "set -eu\nruntime=$1\n" + f.Command("grep") + " -q '^Status: implemented$' \"$runtime/specs/x/spec.md\"\ntree=$(" + f.Command("git") + " -C \"$runtime\" write-tree)\nprintf '%s\\n' \"$tree\" >> \"$LAND_GATE_TREES\"\nif [ -f \"$runtime/loser.txt\" ]; then\n  printf l >> \"$LAND_GATE_TALLY\"\n  if [ ! -f \"$runtime/winner.txt\" ]; then\n    " + landingRaceBarrier(f, landingBarrierWindow) + "  fi\nelse\n  printf w >> \"$LAND_GATE_TALLY\"\nfi\n"
 	if err := f.Write(root, gate, gate); err != nil {
 		t.Fatal(err)
 	}
@@ -230,6 +230,17 @@ func boundedWait(f *testrepo.GateFixture, window time.Duration) string {
 	return f.Command("timeout") + " --foreground " + strconv.FormatFloat(window.Seconds(), 'f', -1, 64) + " "
 }
 
+// landingBarrierWindow bounds a fixture gate's landing barrier. The barrier waits on its own
+// test, and the test binary's timeout bounds that test.
+var landingBarrierWindow = bounds.TestDeadline(bounds.GoTestTimeout)
+
+// landingRaceBarrier is the shell line where a fixture gate signals LAND_RACE_READY and then
+// waits on LAND_RACE_RELEASE. Each FIFO open blocks until its partner opens the other end,
+// so the ambient timeout bounds both steps. A gate that loses its partner ends after window.
+func landingRaceBarrier(f *testrepo.GateFixture, window time.Duration) string {
+	return boundedWait(f, window) + f.Command("sh") + " -c 'printf r > \"$1\" && IFS= read -r _ < \"$2\"' barrier \"$LAND_RACE_READY\" \"$LAND_RACE_RELEASE\"\n"
+}
+
 // artifactOracleFile names the file under the fixture home where the artifact gate publishes
 // its process ID. The gate leads the oracle group, so that ID is the group's ID.
 const artifactOracleFile = "artifact-oracle.pid"
@@ -241,8 +252,7 @@ func configureArtifactLandingFixture(t *testing.T, root string) {
 	// The selected executable resolves Go build inputs before the phase starts.
 	f.Command("go")
 	gate := "set -eu\nroot=${1:-$(" + git + " rev-parse --show-toplevel)}\nkit=${BENCH_KIT:?}\nbench=${BENCH_RUN_BINARY:?}\nprintf '%s\\n' \"$$\" > \"$HOME/" + artifactOracleFile + "\"\nexec " + f.Command("env") + " BENCH_KIT=\"$kit\" BENCH_RUN_BINARY=\"$bench\" \"$bench\" gate-phases \"$root\"\n"
-	// The barrier waits on its own test, and the test binary's timeout bounds that test.
-	barrier := boundedWait(f, bounds.TestDeadline(bounds.GoTestTimeout)) + f.Command("sh") + " -c 'printf r > \"$1\" && IFS= read -r _ < \"$2\"' barrier \"$LAND_RACE_READY\" \"$LAND_RACE_RELEASE\"\n"
+	barrier := landingRaceBarrier(f, landingBarrierWindow)
 	phase := "#!/bin/sh\nset -eu\nruntime=$(" + git + " rev-parse --show-toplevel)\n" + f.Command("grep") + " -q '^Status: implemented$' \"$runtime/specs/x/spec.md\"\ntree=$(" + git + " -C \"$runtime\" write-tree)\nprintf '%s\\n' \"$tree\" >> \"$LAND_GATE_TREES\"\nif [ -f \"$runtime/loser.txt\" ]; then\n  printf l >> \"$LAND_GATE_TALLY\"\nelse\n  printf w >> \"$LAND_GATE_TALLY\"\nfi\n" + barrier
 	if err := os.WriteFile(filepath.Join(root, ".bench", "landing-race-phase.sh"), []byte(f.Script(phase)), 0o755); err != nil {
 		t.Fatal(err)
