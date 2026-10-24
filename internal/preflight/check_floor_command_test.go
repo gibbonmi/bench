@@ -10,7 +10,7 @@ import (
 
 // floorOmission is the check-floor detail of the seeded package that the seeded plan omits.
 // The seeded plan runs the whole suite, so the fixture replaces it with a foreign command.
-var floorOmission = floorRedDetail([]string{omittedElement("one.md", "./internal/example")})
+var floorOmission = floorRedDetail([]string{c1Red("./internal/example")})
 
 // seedFloorRepo seeds the conformant fixture, folds a Go module into its base, and plans
 // a command that satisfies nothing. The ticket's package is then a floor element that no
