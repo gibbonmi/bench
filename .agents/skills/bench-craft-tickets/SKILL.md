@@ -15,7 +15,7 @@ commit is the grading rule.
 
 ## Draft the breakdown
 
-Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. Split a spec-backed ticket whose author context estimate passes about 175k tokens. Estimate a ticket from the byte total of its `Writes:` files plus its verification cycles, not from its expected reads.
+Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. Split a spec-backed ticket whose author context estimate passes about 150k tokens. Estimate a ticket from the byte total of its `Writes:` files plus its verification cycles, not from its expected reads.
 
 A ticket that creates a seam its sibling tickets consume is its own review chunk, and that chunk stays small. Its chunk review closes before any consumer ticket starts. A seam the implementation introduces counts the same as a seam the spec declares.
 
