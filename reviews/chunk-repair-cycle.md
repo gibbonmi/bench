@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:db40ae1366be2947e1a8e9abe37bf2174d04aec9eac2d6965940fd6ad7251ca2",
+  "plan_digest": "sha256:45fcb4bfa421e66e161cd5d27bd95a95cfb54666c13e9655df37ff661e53866a",
   "implementation_session": "",
   "chunks": [
     {
@@ -1723,9 +1723,9 @@
     {
       "id": "RC-C4",
       "base": "a469af52209db035ff0f271583be5d94951ccdc4",
-      "tip": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
-      "plan_digest": "sha256:db40ae1366be2947e1a8e9abe37bf2174d04aec9eac2d6965940fd6ad7251ca2",
-      "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+      "tip": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+      "plan_digest": "sha256:45fcb4bfa421e66e161cd5d27bd95a95cfb54666c13e9655df37ff661e53866a",
+      "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
       "acceptance_rows": [
         "RC44",
         "RC39",
@@ -1965,6 +1965,180 @@
           "requirement": "dirty-floor",
           "command": "bench test --package ./internal/refusalroute --package ./internal/reviewrecord/recordtest --package ./internal/worktree --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "t07r1-gate",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:94db291f96bda06e564c3b37db88424db7c08a4241eda1b34f2030f0ee69f9e9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,53694,544\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-record",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:35281a189d7c327115975b53d1211891199e13f5c0eab26c63ed015460761ffa",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4565,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-command",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:95818776aad17103a49b3e4400092bbc60d00521a2c1834cfc0c9980c403c234",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,31031,404\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-conformance",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:6bce115714b4684cc823c15ccea8f705eed1e35a9d1ba50d099d744345eaf31a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16929,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-system",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:2fef1df8954509a2e46cac39a5a95b15968395ffd7af5892c65613c4e0504a6f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,69082,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-floor",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:985ec6d7042efd9e2a605b6ab8a77f262149323261784f56b7f4f517dc4299e4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,31044,280\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-key-probe",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:602dc03a0dd85e2cb396090b8183887cb7106bbe4fe19c456913ad8850aa58c7",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,4,TestChunkCheckpointGradesTheRecordProseOnReuse,544,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,992\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,53968,544\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:68: checkpoint after the record prose is corrected = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointReuseKeepsTheEvidencePass,\"checkpoint_prepare_test.go:48: checkpoint after a record-only commit = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointReuse,\"review_checkpoint_test.go:137: checkpoint after an ordinary green of its subject = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestUnrecordedGapExitsOne,\"chunk_gap_test.go:107: rerun = exit 0: ; want the reused green verdict\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "key-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "frame the HEAD tip into the chunk-checkpoint oracle",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+              "digest": "sha256:602dc03a0dd85e2cb396090b8183887cb7106bbe4fe19c456913ad8850aa58c7",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,4,TestChunkCheckpointGradesTheRecordProseOnReuse,544,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,992\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,53968,544\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:68: checkpoint after the record prose is corrected = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointReuseKeepsTheEvidencePass,\"checkpoint_prepare_test.go:48: checkpoint after a record-only commit = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointReuse,\"review_checkpoint_test.go:137: checkpoint after an ordinary green of its subject = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestUnrecordedGapExitsOne,\"chunk_gap_test.go:107: rerun = exit 0: ; want the reused green verdict\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t07r1-prose-probe",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:8016157435dd52e26d5b17890cdaa115f780b73fc00bc4f8a1983b7cccf3a5f0",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,1,TestChunkCheckpointGradesTheRecordProseOnReuse,544,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,412\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,52222,544\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:66: checkpoint over record prose = 0 gate: green (fresh verdict reused for this tree)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "prose-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip the record prose grade after a reuse",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+              "digest": "sha256:8016157435dd52e26d5b17890cdaa115f780b73fc00bc4f8a1983b7cccf3a5f0",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,1,TestChunkCheckpointGradesTheRecordProseOnReuse,544,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,412\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,52222,544\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:66: checkpoint over record prose = 0 gate: green (fresh verdict reused for this tree)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -2174,6 +2348,27 @@
         ],
         "RC-C3": [
           "RC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:db40ae1366be2947e1a8e9abe37bf2174d04aec9eac2d6965940fd6ad7251ca2",
+      "to": "sha256:45fcb4bfa421e66e161cd5d27bd95a95cfb54666c13e9655df37ff661e53866a",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
         ]
       }
     }
