@@ -26,9 +26,9 @@ The `plan-commit` spec stage ran on Claude Code for FT380. An Opus coordinator r
 
 The research pairs disagreed twice, and a targeted read closed each disagreement. A Sonnet reader denied that the Markdown lane runs the coverage parser, and the code showed that it does. A Haiku reader found the `./cmd/bench` floor element that its Sonnet pair missed. Provider usage and charges remain unknown. The harness reported about 110k to 290k tokens for each reader.
 
-The `merge-target-lane` spec stage ran on Claude Code for FT335. An Opus coordinator ran four Opus/medium research pairs and one Opus/medium slicing pair. A fresh Opus/high writer sliced the two tickets. An Opus fork wrote the spec. Opus/medium reviewed both rounds by reviewer direction, and each round took 2 iterations. The spec round rejected a second production owner of the wrapper's kit rule, and the reviewer recorded two decisions. The ticket round rejected one chunk that held a seam ticket and its consumer.
+The `chunk-repair-cycle` spec stage ran on Claude Code for FT445. An Opus coordinator ran Opus/high and Fable/medium consultant pairs, and Sonnet/high broke their splits, by reviewer direction. An Opus fork wrote the spec. Opus/medium accepted it at iteration 2, after iteration 1 found two oracle defects in the prepared run and the delta operands.
 
-The research pairs disagreed once, about the root of the whole-gate run log, and a targeted read closed it. The slicing pair found a structure budget and a serial-ceiling pin that the spec had missed. Provider usage and charges remain unknown. The harness reported about 40k to 130k tokens for each reader, 250k for the fork, and 170k to 185k for the spec reviewer.
+An Opus/xhigh slicer charged 14 Haiku/high and Sonnet/medium readers and wrote 13 tickets in about 476k tokens and 32 minutes. It left a `check-floor` red of 31 package elements for the coordinator. Sonnet/high accepted the tickets at iteration 2. Iteration 1 found three chunks that each held a seam ticket and its consumer, as in the `merge-target-lane` ticket round. Provider usage and charges remain unknown.
 
 The `candidate-binary-install` spec stage ran on Claude Code for FT419. An Opus coordinator ran four Opus/medium research pairs and five Haiku/high slicing pairs, and it sliced seven tickets itself, six after the review merged one. An Opus/high fork wrote the spec. Opus/medium reviewed the spec round, which took 3 iterations. Two consultations between iterations 2 and 3 (Fable/medium and Sonnet/high) both found the same lifecycle deadlock, an unrelated landing whose refresh uninstalled the candidate. The ticket round took 5 iterations. Opus/medium graded the first two, and Fable/high and Opus/high graded the last three under the reviewer's delegated sign-off. In those three, the two graders found different blockers twice and agreed to approve at the fifth.
 
@@ -90,7 +90,7 @@ Two of the four rejected re-reviews found a blocker that the coordinator's own p
 - Name the existing owners, seams, fixture helpers, census tests, and the recurring review lessons in each author charge, including the comment sentence bound and the one-source rule.
 - Name the exact mutation kind, site, and red test of the plan probe in each author charge.
 - Before dispatch, list on the ticket `Writes:` line every caller of a changed helper, every test that counts or pins a removed row, and every decision-map source that the landing deletes.
-- In a multi-ticket chunk, let every author stage and record at the chunk tip, and commit the record once after the last author. Only the last ticket refreezes; after a refreeze, resume every session of that chunk to restage before the one record commit.
+- Before the FT445 record rules reach the installed candidate, a multi-ticket chunk records at the chunk tip, and a refreeze makes each session restage. In the FT445 build from RC-C3 on, each ticket records at its own commit and no ticket restages, by reviewer decision on 2026-10-24.
 - Charge each author to run each plan probe with its exact planned selection immediately before its `bench record excerpt` call, because the excerpt reads only the last call.
 - Run the `bench worktree build` and `doctor` rehearsal before the landing of a spec that changes Go build inputs.
 - Let each ticket author rewrite its own planned coverage cells in the ticket commit, so that each citation lands with its cited test.
@@ -100,7 +100,7 @@ Two of the four rejected re-reviews found a blocker that the coordinator's own p
 - Commit each plan edit before you read `check-floor`, because that check reads the committed plan.
 - After a repair commit, refreeze the chunk at the repair tip, never at a later record commit.
 - Charge each repair session to record its own ticket verifications under its session identity.
-- Expect a full confirming round after a test-only repair while `bench record confirmation` refuses an assignment plan commit inside its range.
+- Expect a full confirming round after a test-only repair until the FT438 exemption (FT445 RC-C1) reaches the installed candidate. After that, close a test-only repair with `bench record confirmation`.
 - Record a no-op-only review round with no finding ID, because a `no-op` finding records as a fail and costs a confirming entry.
 - Treat `--auto-approve` as approval for fence expansions, spec and ticket expansions, and repair rounds, and flag each judgment call.
 - Keep declared confidence unchanged, and separate unknown or abstained evidence from labeled claims. Require a claims table with integer confidences in every author and repair return; six `test-cost-signal` repairs returned `high` and abstained.

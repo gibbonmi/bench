@@ -749,7 +749,7 @@
           "criteria": [
             {
               "id": "FT405.verb",
-              "text": "bench record ticket \u003cslug\u003e --chunk \u003cid\u003e --ticket \u003cbasename\u003e writes the plan amendment when the digest moved, the chunk freeze for the last ticket, and one verification entry for each owed requirement in one record write."
+              "text": "bench record ticket \u003cslug\u003e --chunk \u003cid\u003e --ticket \u003cbasename\u003e writes the plan amendment when the digest moved, the chunk freeze for the last ticket (FT445 extends the refreeze to any ticket's record call), and one verification entry for each owed requirement in one record write."
             },
             {
               "id": "FT405.excerpt",
@@ -948,7 +948,7 @@
           "criteria": [
             {
               "id": "FT380-plan-commit.preflight-build",
-              "text": "The guidance requires bench commit --preflight-build \u003cslug\u003e for each plan commit before the next dispatch."
+              "text": "The guidance requires bench commit --preflight-build \u003cslug\u003e for each plan commit before the next dispatch. FT445 supersedes this rule with one build preflight for each dispatch."
             },
             {
               "id": "FT380-plan-commit.successor-delta",
@@ -1153,6 +1153,60 @@
           ]
         },
         {
+          "id": "FT445-repair-cycle",
+          "criteria": [
+            {
+              "id": "FT445-repair-cycle.own-commit",
+              "text": "Each ticket's verification entries bind to its own commit, so a later ticket's commit or a repair makes no other ticket restage."
+            },
+            {
+              "id": "FT445-repair-cycle.test-only",
+              "text": "A test-only repair whose delta adds only a completion-plan assignment block closes through bench record confirmation with no confirming round; every other plan change still takes one."
+            },
+            {
+              "id": "FT445-repair-cycle.one-preflight",
+              "text": "Each repair writes one plan commit, the check floor grades each chunk once, and each dispatch runs one build preflight."
+            },
+            {
+              "id": "FT445-repair-cycle.prepared-gate",
+              "text": "The checkpoint gate starts when a chunk freezes or a repair commits, and the chunk checkpoint reuses that green when only the record changed."
+            },
+            {
+              "id": "FT445-repair-cycle.delta",
+              "text": "A test-only delta after a whole green at the reviewed tip takes a delta checkpoint, and the landing gate always runs whole."
+            },
+            {
+              "id": "FT445-repair-cycle.exec-binary",
+              "text": "Exec calls of Bench commands reuse a fresh worktree binary when the measurement shows a net saving."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT445",
+              "path": "roadmap/FT445.md",
+              "identity": "sha256:b9ff687ae024b8c2b6e8b4af0803928aa3c7828da257e6be4f8de55aebcfd96c"
+            },
+            {
+              "id": "FT438",
+              "path": "roadmap/FT438.md",
+              "identity": "sha256:c19d21864ea039b3dd2ddbe93ff43a6aeba729e4d1c7834abb6399d803d82d11"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "chunk-repair-cycle",
+                "path": "specs/chunk-repair-cycle/spec.md",
+                "identity": "sha256:a5c35bc4efdffc271047b0370c3fce2efe68c4323ec06627715442333ec10b74"
+              },
+              "obligations": [
+                "FT445",
+                "FT438"
+              ]
+            }
+          ]
+        },
+        {
           "id": "FT360-shared-fixtures",
           "criteria": [
             {
@@ -1250,22 +1304,6 @@
           ]
         },
         {
-          "id": "FT438-test-only",
-          "criteria": [
-            {
-              "id": "FT438-test-only.assignment",
-              "text": "A test-only repair whose delta adds only a completion-plan assignment block closes through bench record confirmation with no confirming round; every other plan change still takes one."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT438",
-              "path": "roadmap/FT438.md",
-              "identity": "sha256:c19d21864ea039b3dd2ddbe93ff43a6aeba729e4d1c7834abb6399d803d82d11"
-            }
-          ]
-        },
-        {
           "id": "FT344-remedy",
           "criteria": [
             {
@@ -1321,7 +1359,7 @@
           "criteria": [
             {
               "id": "FT380-residual.before-publication",
-              "text": "A plan commit runs the coverage parser, the build preflight, and the check-floor row before it publishes."
+              "text": "A plan commit that no dispatch follows runs the coverage parser, the build preflight, and the check-floor row before it publishes. A plan commit that a dispatch follows takes its build preflight from the charge preparation (FT445)."
             }
           ],
           "sources": [
