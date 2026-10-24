@@ -130,9 +130,12 @@ func specRepaired(t *testing.T, change func(*recordtest.Fixture)) *recordtest.Fi
 // beyondAssignments is the refusal reason of a spec change outside the assignment block.
 const beyondAssignments = "the change reaches beyond the assignment block of the completion plan"
 
+// notTestOnlyPrefix opens the confirmation refusal of a delta that is not test-only.
+const notTestOnlyPrefix = "the delta to the chunk tip is not test-only: "
+
 // notTestOnly is the confirmation refusal of a delta that changes path for reason.
 func notTestOnly(path, reason string) string {
-	return "the delta to the chunk tip is not test-only: " + path + ": " + reason
+	return notTestOnlyPrefix + path + ": " + reason
 }
 
 // reassign commits the plan change that dispatches the repair session of ticket 1.md.
@@ -145,13 +148,64 @@ func TestRecordConfirmationAcceptsAnAssignmentOnlyPlanCommit(t *testing.T) {
 }
 
 // TestRecordConfirmationRefusesAPlanFenceChange covers RC2: a plan field outside the
-// assignment block, changed beside a repair dispatch, refuses by the spec path.
+// assignment block, changed beside a repair dispatch, refuses by the spec path. An execution
+// field beside the assignment block is outside it.
 func TestRecordConfirmationRefusesAPlanFenceChange(t *testing.T) {
-	f := specRepaired(t, func(f *recordtest.Fixture) {
-		reassign(f)
-		replan(f, "go test -count=1 ./...")
-	})
-	refuseArgs(t, f, notTestOnly(recordtest.Spec, beyondAssignments), confirmArgs(t, nil, "confirm-1", "F-1"))
+	for name, change := range map[string]func(*recordtest.Fixture){
+		"final requirement": func(f *recordtest.Fixture) { replan(f, "go test -count=1 ./...") },
+		"author limit": func(f *recordtest.Fixture) {
+			f.Plan.Execution.AuthorLimit++
+			f.RewritePlan()
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := specRepaired(t, func(f *recordtest.Fixture) {
+				reassign(f)
+				change(f)
+			})
+			refuseArgs(t, f, notTestOnly(recordtest.Spec, beyondAssignments), confirmArgs(t, nil, "confirm-1", "F-1"))
+		})
+	}
+}
+
+// TestFindReviewedPairRefusesASpecChange grades the spec exemption through FindReviewedPair,
+// because the record forms refuse a version 1 plan and an unreadable plan before the exemption
+// runs, and they derive the chunk digest from the tip. The axis results of a version 1 chunk sit at a reviewed tip, and the chunk moves to a
+// repair that adds a test file beside change.
+func TestFindReviewedPairRefusesASpecChange(t *testing.T) {
+	for _, tc := range []struct {
+		name, want, digest string
+		change             func(*recordtest.Fixture)
+	}{
+		{"version 1 plan", notTestOnly(recordtest.Spec, beyondAssignments), "", func(f *recordtest.Fixture) {
+			f.Plan.FinalVerification[0].Command = "go test -count=1 ./..."
+			f.WritePlan()
+		}},
+		{"deleted spec", notTestOnly(recordtest.Spec, ""), "", func(f *recordtest.Fixture) { f.Git("rm", "-q", "--", recordtest.Spec) }},
+		{"duplicate plan fence", notTestOnly(recordtest.Spec, ""), "", func(f *recordtest.Fixture) {
+			f.Write(recordtest.Spec, specText(f)+"\n```bench-completion-plan\n{}\n```\n")
+		}},
+		{"unreadable chunk digest", notTestOnlyPrefix, strings.Repeat("0", 40), nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := recordtest.New(t, 1)
+			base, _ := advance(f, "chunk 1")
+			f.RecordChunk(base)
+			f.Write("repair_test.go", "package fixture\n")
+			if tc.change != nil {
+				tc.change(f)
+			}
+			f.Commit("repair chunk 1")
+			f.Refreeze()
+			chunk := f.Record.Chunks[0]
+			if tc.digest != "" {
+				chunk.SourceDigest = tc.digest
+			}
+			if _, err := rr.FindReviewedPair(f.Root, recordtest.Spec, chunk); err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("reviewed pair error = %v, want %q", err, tc.want)
+			}
+		})
+	}
 }
 
 // TestRecordConfirmationRefusesATicketWidening covers RC3: a widened ticket `Writes:` line

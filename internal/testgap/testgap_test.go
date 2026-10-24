@@ -10,12 +10,12 @@ import (
 )
 
 func TestProveTestGap(t *testing.T) {
-	for _, name := range []string{"RC13 testdata", "RC13 root testdata", "RC13 testdata in a name", "RC14 deleted", "RC15 symlink", "RC16 mode change", "RC17 not Go", "RC17 not test", "RC17 later production file", "RC18 empty directory", "RC19 spaced path", "RC52 gitlink", "RC52 mixed hidden gitlink", "RC53 renamed", "added test", "executable test", "modified test", "equal trees", "invalid tree"} {
+	for _, name := range []string{"RC13 testdata", "RC13 root testdata", "RC13 testdata in a name", "RC14 deleted", "RC15 symlink", "RC16 mode change", "RC17 not Go", "RC17 not test", "RC17 later production file", "RC18 empty directory", "RC19 spaced path", "RC52 gitlink", "RC52 mixed hidden gitlink", "RC53 renamed", "added test", "executable test", "modified test", "two tests", "equal trees", "invalid tree"} {
 		t.Run(name, func(t *testing.T) {
 			f := gittest.NewTrees(t)
 			before := map[string]gittest.TreeEntry{"a_test.go": {Mode: "100644", Body: "package p // before\n"}}
 			after := map[string]gittest.TreeEntry{"a_test.go": {Mode: "100644", Body: "package p // after\n"}}
-			want, path := error(nil), "a_test.go"
+			want, path, also := error(nil), "a_test.go", []string{}
 			move := func(to string) {
 				before, after = map[string]gittest.TreeEntry{to: before[path]}, map[string]gittest.TreeEntry{to: after[path]}
 				path = to
@@ -66,6 +66,9 @@ func TestProveTestGap(t *testing.T) {
 				before = nil
 			case "executable test":
 				before[path], after[path] = gittest.TreeEntry{Mode: "100755", Body: before[path].Body}, gittest.TreeEntry{Mode: "100755", Body: after[path].Body}
+			case "two tests":
+				before["b_test.go"], after["b_test.go"] = before[path], after[path]
+				also = []string{"b_test.go"}
 			case "equal trees":
 				after = maps.Clone(before)
 			}
@@ -78,7 +81,7 @@ func TestProveTestGap(t *testing.T) {
 				left, want, path = strings.Repeat("0", 40), ErrUnreadable, ""
 			}
 			gittest.RequireVerdict(t, Prove(f.Root, left, right), want, path)
-			wantFiles := []string{path}
+			wantFiles := append([]string{path}, also...)
 			if want != nil || name == "equal trees" {
 				wantFiles = nil
 			}
