@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:e6111e13c1b938948744fe0b963f1d8ad713222530ac2a92b8bfa05f4785c040",
+  "plan_digest": "sha256:2a22a088386d37db0a964cbc4eb23354ccc311926f3d411cb53d727d543031a5",
   "implementation_session": "",
   "chunks": [
     {
@@ -1344,6 +1344,134 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RC-C3",
+      "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+      "tip": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+      "plan_digest": "sha256:2a22a088386d37db0a964cbc4eb23354ccc311926f3d411cb53d727d543031a5",
+      "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+      "acceptance_rows": [
+        "RC25",
+        "RC26",
+        "RC27",
+        "RC28",
+        "RC29",
+        "RC30",
+        "RC31",
+        "RC32",
+        "RC33",
+        "RC84"
+      ],
+      "verification": [
+        {
+          "id": "t04-preflight",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:fbbc51ba8b0f7db982c64d34de056c5808cc76791154f3e62c20d31671013fe7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,23846,379\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-record-command",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:d5e81d9505b0202c01a44c88f7b41327e9b1e37433d127e1cdb0d289220a0d0e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,20866,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-conformance",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:7cdded9a992dda9e6aeb65034cf5b74566d79c2112c93ec93d7150816711979b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12249,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-floor",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:8f9d0e9b1e0f7688f8a23a0db7004cfcbe7afd7b7977484bc19487fe5014c212",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19443,404\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3665,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-floor-probe",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:94d8d4125254b31e06d8d4e57555c9972a64cd2f78db50d8b80382ad7b82fb01",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,2,TestCheckFloorGradesTheChunkUnion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,821\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23677,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorGradesTheChunkUnion,\"check_floor_test.go:351: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: ./internal/y (add bench test --package ./internal/y) Next: exempt:false}, want green\",1\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorNamesTheChunkElement,\"check_floor_test.go:211: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: root-conformance (add bench test --check root-conformance); chunk c1: ./internal/x (add bench test --package ./i… (663 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "floor-probe",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "grade each ticket against its own requirements only",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+              "digest": "sha256:94d8d4125254b31e06d8d4e57555c9972a64cd2f78db50d8b80382ad7b82fb01",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,2,TestCheckFloorGradesTheChunkUnion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,821\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23677,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorGradesTheChunkUnion,\"check_floor_test.go:351: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: ./internal/y (add bench test --package ./internal/y) Next: exempt:false}, want green\",1\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorNamesTheChunkElement,\"check_floor_test.go:211: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: root-conformance (add bench test --check root-conformance); chunk c1: ./internal/x (add bench test --package ./i… (663 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1399,6 +1527,21 @@
     {
       "from": "sha256:bca0562cf26f7838331ce130f3e09067fdfc3748aa1ec7490ccb4b1098657830",
       "to": "sha256:e6111e13c1b938948744fe0b963f1d8ad713222530ac2a92b8bfa05f4785c040",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e6111e13c1b938948744fe0b963f1d8ad713222530ac2a92b8bfa05f4785c040",
+      "to": "sha256:2a22a088386d37db0a964cbc4eb23354ccc311926f3d411cb53d727d543031a5",
       "chunk_ids": {
         "RC-C1": [
           "RC-C1"
