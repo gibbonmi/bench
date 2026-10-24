@@ -1,7 +1,7 @@
 # Key the chunk checkpoint on the committed tree without the record
 
 Blocked by: 06-refuse-a-dirty-chunk-checkout.md
-Writes: internal/gate/checkpoint.go, internal/gate/gate.go, internal/gate/engine.go, internal/gate/evaluation.go, internal/gate/run_transaction.go, internal/gate/gate_prose.go, internal/gate/subject.go, internal/gate/complete_checkpoint.go, internal/gate/lane.go, internal/gate/checkpoint_prepare_test.go (new), internal/gate/review_checkpoint_test.go, internal/gate/refusal_route_test.go, internal/gate/complete_checkpoint_test.go, internal/gate/commitment_completion_test.go, internal/gate/cache_env_test.go, internal/gate/run_outcomes_test.go, internal/gate/prospective_owner_test.go, internal/reviewrecord/recordcmd/stage_test.go, .bench/BENCH-reference.md, docs/adr/0002-accepted-enforcement-postures.md
+Writes: internal/gate/checkpoint.go, internal/gate/gate.go, internal/gate/engine.go, internal/gate/evaluation.go, internal/gate/run_transaction.go, internal/gate/gate_prose.go, internal/gate/subject.go, internal/gate/complete_checkpoint.go, internal/gate/lane.go, internal/gate/checkpoint_prepare_test.go (new), internal/gate/review_checkpoint_test.go, internal/gate/refusal_route_test.go, internal/gate/complete_checkpoint_test.go, internal/gate/commitment_completion_test.go, internal/gate/cache_env_test.go, internal/gate/run_outcomes_test.go, internal/gate/prospective_owner_test.go, internal/reviewrecord/recordcmd/stage_test.go, .bench/BENCH-reference.md, docs/adr/0002-accepted-enforcement-postures.md, internal/refusalroute/faces_gate.go, internal/refusalroute/route_test.go, internal/worktree/delegated_integration_test.go
 Covers: RC39, RC40, RC41, RC46, RC48
 
 ## What to build
