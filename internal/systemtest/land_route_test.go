@@ -16,8 +16,8 @@ import (
 func TestWorktreeLandRouteSelectsOneOwnerFromEveryDirectory(t *testing.T) {
 	t.Parallel()
 	install := newLandRouteInstall(t)
-	primary := landRouteRepo(t, "land-route [primary]-")
-	source := landRouteRepo(t, "land-route [source]-")
+	primary := journeyRepo(t, "land-route [primary]-")
+	source := journeyRepo(t, "land-route [source]-")
 	plantRepositoryDecoys(t, primary)
 	plantRepositoryDecoys(t, source)
 	nested := filepath.Join(primary, "nested", "deep")
@@ -82,7 +82,7 @@ func TestWorktreeLandRouteGivesRecoveredGoPathToBroker(t *testing.T) {
 	}
 	install.bindBroker(t, []byte("#!/bin/sh\nprintf 'go=%s\\n' \"$(command -v go)\"\n"))
 
-	repo := landRouteRepo(t, "land-route [go recovery]-")
+	repo := journeyRepo(t, "land-route [go recovery]-")
 	shimDir, marker := landRouteGitShim(t)
 	path := shimDir + string(os.PathListSeparator) + privateToolPath(t,
 		"awk", "bash", "basename", "dirname", "env", "readlink", "sha256sum", "timeout", "tr")
@@ -107,7 +107,7 @@ func TestWorktreeLandRouteGivesRecoveredGoPathToBroker(t *testing.T) {
 func TestWorktreeLandRouteRefusesInheritedRoutingBeforeRepositoryReads(t *testing.T) {
 	t.Parallel()
 	install := newLandRouteInstall(t)
-	primary := landRouteRepo(t, "land-route [override]-")
+	primary := journeyRepo(t, "land-route [override]-")
 	plantRepositoryDecoys(t, primary)
 	// The install carries the one state the route would rebuild for. The override
 	// refusals stand ahead of that recovery, so no build runs on an inherited route.
@@ -162,7 +162,7 @@ func TestWorktreeLandRouteDoesNotRederiveTheBrokerPlatform(t *testing.T) {
 	t.Parallel()
 	install := newLandRouteInstall(t)
 	install.writeManifest(t, landRouteManifest(install.broker, landRouteVersion, "plan9-vax", fileDigest(t, install.broker)))
-	primary := landRouteRepo(t, "land-route [platform]-")
+	primary := journeyRepo(t, "land-route [platform]-")
 	plantRepositoryDecoys(t, primary)
 
 	shimDir, marker := landRouteGitShim(t)
@@ -301,7 +301,7 @@ func TestWorktreeLandRouteRefusesEveryUnauthenticatedBroker(t *testing.T) {
 		t.Run(row.name, func(t *testing.T) {
 			install := newLandRouteInstall(t)
 			row.breakIt(t, install)
-			repo := landRouteRepo(t, "land-route [refusal]-")
+			repo := journeyRepo(t, "land-route [refusal]-")
 			plantRepositoryDecoys(t, repo)
 
 			shimDir, marker := landRouteGitShim(t)

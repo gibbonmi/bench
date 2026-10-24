@@ -70,7 +70,7 @@ func TestDetectedProjectGateRejectsIgnoredDeclaredInput(t *testing.T) {
 // private home stayed empty.
 func TestAdoptionSmokeJourney(t *testing.T) {
 	t.Parallel()
-	repo := landRouteRepo(t, "adoption-smoke [journey]-")
+	repo := journeyRepo(t, "adoption-smoke [journey]-")
 	home := filepath.Join(t.TempDir(), "bench-home")
 	environment := []string{"BENCH_HOME=" + home, "BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
 	launch := func(program string, args ...string) processResult {

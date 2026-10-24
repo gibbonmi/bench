@@ -48,7 +48,7 @@ func TestGuardProjectionWriteHookDegraded(t *testing.T) {
 // the actual Bash hooks, with and without a core, and its sentinel file stays absent.
 func TestGuardProjectionNeverExecutes(t *testing.T) {
 	t.Parallel()
-	repo := landRouteRepo(t, "guard-projection [journey]-")
+	repo := journeyRepo(t, "guard-projection [journey]-")
 	installWrapper(t, repo)
 	live := []string{"BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
 	degraded := []string{"PATH=" + privateToolPath(t, "git", "cat")}
