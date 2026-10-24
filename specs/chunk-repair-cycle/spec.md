@@ -346,7 +346,7 @@ The authored version 1 plan states the verification obligations. The approved bu
         {"id": "preflight", "command": "bench test --package ./internal/preflight", "ticket": "04-grade-the-floor-per-chunk.md"},
         {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd", "ticket": "04-grade-the-floor-per-chunk.md"},
         {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "04-grade-the-floor-per-chunk.md"},
-        {"id": "floor", "command": "bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord", "ticket": "04-grade-the-floor-per-chunk.md"},
+        {"id": "floor", "command": "bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord --package ./cmd/bench", "ticket": "04-grade-the-floor-per-chunk.md"},
         {"id": "floor-probe", "command": "bench test --package ./internal/preflight", "probe": "grade each ticket against its own requirements only", "ticket": "04-grade-the-floor-per-chunk.md"},
         {"id": "guidance-conformance", "command": "bench test --check root-conformance", "ticket": "05-one-plan-commit-and-preflight-per-dispatch.md"},
         {"id": "guidance-floor", "command": "bench test --package ./internal/anchors --package ./cmd/bench", "ticket": "05-one-plan-commit-and-preflight-per-dispatch.md"}
