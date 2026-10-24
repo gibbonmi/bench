@@ -99,7 +99,7 @@ Do not describe that route as lacking direct-child cancellation.
 Port these callers through an owner with explicit grace, group termination, drain, and reap behavior.
 Keep each caller's evidence-preservation rules.
 The broader process census and platform policy remain design work.
-[FT362](../../roadmap/FT362.md:3).
+[FT362](../adr/0030-one-lifetime-owner-and-process-user-protection.md).
 
 ### Cheap checks currently defer predictable failures
 
@@ -343,7 +343,7 @@ Broader experiments do not block small correctness repairs.
 | 9 | [FT379](../../roadmap/FT379.md:1) | Apply the existing record-only correction decision and narrow confirming rounds. |
 | 10 | [FT358](../../roadmap/FT358.md:1) | Use the staged block-reader plan to fix inconsistent Markdown interpretation. |
 | 11 | [FT341](../../roadmap/FT341.md:1) | Repair terminal-child behavior and label addressing before completing routing migration. |
-| 12 | [FT362](../../roadmap/FT362.md:1) | Bound scanner and prep-release cancellation first; then share process ownership. |
+| 12 | [FT362](../adr/0030-one-lifetime-owner-and-process-user-protection.md) | Bound scanner and prep-release cancellation first; then share process ownership. |
 | 13 | [FT284](../../roadmap/FT284.md:1) | Preserve live decision references before recursive spec retirement. |
 
 ### Next: remove recurrent wasted work
