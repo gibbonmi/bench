@@ -40,7 +40,7 @@ const staleCoreAnswer = `bench: unknown subcommand: "guard-bench-follow-on"`
 
 func TestBenchFollowOnHookProcess(t *testing.T) {
 	t.Parallel()
-	repo := landRouteRepo(t, "follow-on [journey]-")
+	repo := journeyRepo(t, "follow-on [journey]-")
 	installWrapper(t, repo)
 	hook := filepath.Join(owner.kit, ".bench", "hooks", "block-bench-follow-on.sh")
 	if _, err := os.Stat(hook); err != nil {
@@ -229,7 +229,7 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 		}
 		return owner.runWithInput(dir, overrides, envelope, shellPath(t), hook)
 	}
-	repo := landRouteRepo(t, "follow-on-rim [journey]-")
+	repo := journeyRepo(t, "follow-on-rim [journey]-")
 	installWrapper(t, repo)
 	for _, envelope := range []string{
 		`{`,

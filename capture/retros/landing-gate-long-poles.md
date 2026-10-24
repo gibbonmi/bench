@@ -49,7 +49,7 @@ Brier mean 0.107 over 18 pairs; 2 abstentions (Standards S4 parked with no label
 
 - The coordinator refreshed four stale census citations after ticket 15 moved `TestEvidenceStatelessProcesses`, in a plan commit before the ticket 16 dispatch.
 - The coordinator closed the LGP34 record gap of LGP-C4B with an evidence-only Spec excerpt that pairs each ticket's before and after times.
-- The coordinator routed S4 (rename `landRouteRepo`) and C2 (a wider process-state rule) to the consultants. They agreed on no repair, and both became `bench idea` entries.
+- The coordinator routed S4 (rename the system-suite journey-repository wrapper) and C2 (a wider process-state rule) to the consultants. They agreed on no repair, and both became `bench idea` entries.
 - The coordinator committed the LGP-C4B repair records before four unrepaired tickets restaged, so the chunk had to refreeze at a record-only commit, and all six tickets restaged.
 - The coordinator first landed with a guessed request token and a reauthorize that unbound the FT402 delivery. Reauthorizing with the token of `bench commitment start` restored the binding. The scorecard already held this rule.
 

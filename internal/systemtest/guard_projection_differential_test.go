@@ -233,7 +233,7 @@ func differentialTuples(t *testing.T) []string {
 // wrapper, and a symlink alias of that wrapper.
 func differentialPrimary(t *testing.T) string {
 	t.Helper()
-	primary := landRouteRepo(t, "differential [primary]-")
+	primary := journeyRepo(t, "differential [primary]-")
 	if err := os.WriteFile(filepath.Join(primary, "README.md"), []byte("readme\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
