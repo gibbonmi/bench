@@ -1509,7 +1509,73 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-c3-r1-standards",
+          "performer": "claude:rc-c3-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ea405dec70245144ff5ea82d52d234bb30e5146",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-standards-r1",
+            "digest": "sha256:cfff446f6a7516f1a12ff21592ec8aaac7ee5c512a09bd057fae98a74dd2e25b",
+            "excerpt": "## Standards\n\n1 finding, worst severity 2.\n\n- S1 | sev 2 | auto-fix (evidence-only prose correction) | conf 5 | reviews/chunk-repair-cycle.md (RC-C2B prose line added at 7aa9256c8) | The coordinator sentence ends in the telegraphic fragment \"restored yes\".\n\n### Advice\n- bench-implement-spec.md:21 merged two ideas into one sentence near the procedural limit.\n- \"any floor edit\" uses \"floor\" bare where line 48 says \"check floor\".\n- CheckFloorFacts.omitted and a local variable share a name.\n- .bench/commitment.json:950-951 still states the old plan-commit rule; it changes through bench commitment plan.\n- No CHANGELOG entry covers the check-floor change.\n"
+          },
+          "axis": "Standards",
+          "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "tip": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c3-r1-spec",
+          "performer": "claude:rc-c3-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ea405dec70245144ff5ea82d52d234bb30e5146",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-spec-r1",
+            "digest": "sha256:0d7771b01f42560565fd7459adccfeb253639f136161b3a5e190157ea298b642",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. RC25-RC33 and RC84 hold. RC29: bench consumers reviewrecord.TicketRequirements lists only the reviewrecord callers, and ticketRequirements is gone. RC31, RC32, RC84 hold in bench-implement-spec.md:21, :62, :68. The anchored sentences stay verbatim.\n\n### Advice\n- ownership/premises.go:252 holds a membership check, not an ownership derivation.\n- bench-implement-spec.md:21 leaves the repair charge point implicit.\n- .bench/commitment.json:950-951 still requires --preflight-build for each plan commit.\n"
+          },
+          "axis": "Spec",
+          "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "tip": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c3-r1-coverage",
+          "performer": "claude:rc-c3-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ea405dec70245144ff5ea82d52d234bb30e5146",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-coverage-r1",
+            "digest": "sha256:0b506c7f619317f7140fc95a4ed310607405be81f70dcc4ee1409315270ecb6d",
+            "excerpt": "## Coverage\n\n3 findings. Worst: C1, severity 5.\n\n- C1 | sev 5 | auto-fix (test-only) | conf 8 | internal/preflight/check_floor.go:131-135 | An unplanned ticket graded against the plan-wide requirement union stays silent; no test gives an unplanned ticket an element another chunk covers. Probe mutant 5: silent, restored yes.\n- C2 | sev 3 | auto-fix (test-only) | conf 8 | internal/preflight/check_floor.go:129,133,168-172 | No test pins the red-detail order. Probe mutants 2 and 3: silent, restored yes.\n- C3 | sev 4 | auto-fix (test-only) | conf 6 | internal/preflight/check_floor.go:119-129 | No test catches floor elements shared across chunks (not measured; mutant 4 substring-miss).\n\nProbe set on check_floor.go: dedup -> true bit; chunk order reversed silent; unplanned first silent; shared elements invalid (substring-miss); unplanned plan-wide union silent; empty verification skip silent (equivalent in production). Restored yes on every run row.\n\n### Advice\n- The empty-verification chunk cannot reach check-floor; the plan refuses first.\n"
+          },
+          "axis": "Coverage",
+          "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "tip": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "finding_ids": [
+            "C1",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1620,7 +1686,9 @@ RC-C1 consumed repair cycle 1 of 2 after its initial review (round r1). The test
 
 RC-C2 consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `b721e5a7c` closed S1, and the confirming round r2 passed on all three axes with no new finding.
 
-RC-C2B consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `bda45ae07` closed S1 and C1 to C4, and the confirming round r2 passed on all three axes. The coordinator demonstrated the red of the C4 text expectation in `repair_test.go`: a reworded refusal in `change.go` failed `TestRecordRepairPreservesErrorIdentity/source_off_the_chunk_line`, restored yes.
+RC-C2B consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `bda45ae07` closed S1 and C1 to C4, and the confirming round r2 passed on all three axes. The coordinator demonstrated the red of the C4 text expectation in `repair_test.go`: a reworded refusal in `change.go` failed `TestRecordRepairPreservesErrorIdentity/source_off_the_chunk_line`, and the probe restored the file.
+
+RC-C3 consumed repair cycle 1 of 2 after its initial review (round r1).
 
 ## Standards
 
@@ -1636,6 +1704,10 @@ RC-C2B round r1: 1 finding. Worst issue: S1, a duplicated record-creation closur
 
 - S1 | auto-fix | confidence 6 | `internal/reviewrecord/ticket.go:95` | `RecordTicket` repeats the `create` closure and the created action of `RecordChunk`.
 
+RC-C3 round r1: 1 finding. Worst issue: S1, a telegraphic fragment in the RC-C2B record prose.
+
+- S1 | auto-fix | confidence 5 | `reviews/chunk-repair-cycle.md` | The RC-C2B coordinator sentence ended in a fragment; this record commit rewrites it as an evidence-only correction.
+
 ## Spec
 
 RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
@@ -1645,6 +1717,8 @@ RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red 
 RC-C2 round r1: 0 findings. Worst issue: none.
 
 RC-C2B round r1: 0 findings. Worst issue: none.
+
+RC-C3 round r1: 0 findings. Worst issue: none.
 
 ## Coverage
 
@@ -1664,6 +1738,11 @@ RC-C2B round r1: 4 findings. Worst issue: C1, a backward refreeze guard with no 
 - C3 | auto-fix | confidence 6 | `internal/reviewrecord/change.go:186-188` | No test reads `source_commit` from the verification form.
 - C4 | auto-fix | confidence 6 | `internal/reviewrecord/change.go:152` | The off-line refusal text and its marker have no direct assertion.
 
+RC-C3 round r1: 2 accepted findings. Worst issue: C1, an unplanned ticket graded against requirements of other chunks.
+
+- C1 | auto-fix | confidence 8 | `internal/preflight/check_floor.go:131-135` | No test gives an unplanned ticket an element that another chunk covers.
+- C3 | auto-fix | confidence 6 | `internal/preflight/check_floor.go:119-129` | No test catches floor elements that leak from one chunk into the next.
+
 ## Advice
 
 - The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
@@ -1675,3 +1754,6 @@ RC-C2B round r1: 4 findings. Worst issue: C1, a backward refreeze guard with no 
 
 - RC-C2B: the "verification at the reviewed digest" case sets a digest that the fixture already holds.
 - RC-C2B: a call at the tip reports `updated` with an unchanged tip, and the doc says it leaves the entry as is.
+
+- RC-C3: no test pins the order of the red detail (Coverage C2, no binding requirement).
+- RC-C3: `.bench/commitment.json` still states the old plan-commit rule; it changes through `bench commitment plan`.
