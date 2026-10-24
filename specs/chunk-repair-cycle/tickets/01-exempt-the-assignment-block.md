@@ -1,7 +1,7 @@
 # Exempt the assignment block from the test-only proof
 
 Blocked by: none
-Writes: internal/reviewrecord/confirmation.go, internal/reviewrecord/coverage.go, internal/reviewrecord/assignment.go, internal/reviewrecord/write.go, internal/reviewrecord/parse.go, internal/reviewrecord/plan.go, internal/reviewrecord/recordcmd/assignment.go, internal/reviewrecord/replacement_test.go, internal/reviewrecord/recordtest/confirmation.go, internal/reviewrecord/recordtest/fixture.go, internal/testgap/testgap.go, internal/testgap/testgap_test.go, internal/reviewrecord/recordcmd/confirmation_test.go, internal/gate/review_checkpoint_confirmation_test.go, docs/known-issues.md, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, .bench/BENCH-reference.md, projects/benchkit.md, .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .agents/commands/bench-review-implementation.md, .bench/commitment.json
+Writes: internal/reviewrecord/confirmation.go, internal/reviewrecord/coverage.go, internal/reviewrecord/assignment.go, internal/reviewrecord/write.go, internal/reviewrecord/parse.go, internal/reviewrecord/plan.go, internal/reviewrecord/recordcmd/assignment.go, internal/reviewrecord/replacement_test.go, internal/reviewrecord/recordtest/confirmation.go, internal/reviewrecord/recordtest/fixture.go, internal/testgap/testgap.go, internal/testgap/testgap_test.go, internal/reviewrecord/recordcmd/confirmation_test.go, internal/gate/review_checkpoint_confirmation_test.go, docs/known-issues.md, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, .bench/BENCH-reference.md, projects/benchkit.md, .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .agents/commands/bench-review-implementation.md, .bench/commitment.json, ROADMAP.md
 Covers: RC1, RC2, RC3, RC4, RC5, RC6, RC7
 
 ## What to build
@@ -20,7 +20,7 @@ Remove the FT438 row from `docs/known-issues.md`, because this ticket makes its 
 
 `.bench/BENCH-reference.md:549`, `projects/benchkit.md:44-45`, `.agents/commands/bench-review-implementation.md:47-49`, and `.agents/skills/bench-craft-line/references/bounded-repair-policy.md:56` state that a coordinator confirmation closes a test-only repair. Each sentence stays true. Edit one only if it states that any spec change takes a confirming round. The RC6 refusal text "the delta to the chunk tip is not test-only" stays, because `internal/reviewrecord/recordcmd/confirmation_test.go:105` and `internal/gate/review_checkpoint_confirmation_test.go:171-173` pin it.
 
-`.bench/commitment.json` is in this fence because the spec-stage close commits the deliverable binding inside the range that the plan-only preflight grades. The author does not edit it.
+`.bench/commitment.json` and `ROADMAP.md` are in this fence because the spec-stage close commits the deliverable binding and its recommended sequence inside the range that the plan-only preflight grades. The author does not edit them.
 
 ## Acceptance
 
