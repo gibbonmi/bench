@@ -305,6 +305,7 @@ The authored version 1 plan states the verification obligations. The approved bu
         {"id": "testgap", "command": "bench test --package ./internal/testgap"},
         {"id": "anchors", "command": "bench test --package ./internal/anchors"},
         {"id": "conformance", "command": "bench test --check root-conformance"},
+        {"id": "floor", "command": "bench test --package ./internal/reviewrecord/recordtest --package ./cmd/bench"},
         {"id": "exemption-probe", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "clear the whole plan fence instead of the assignment block"}
       ]
     },
@@ -318,6 +319,7 @@ The authored version 1 plan states the verification obligations. The approved bu
         {"id": "ownership", "command": "bench test --package ./internal/preflight/ownership"},
         {"id": "gate", "command": "bench test --package ./internal/gate"},
         {"id": "conformance", "command": "bench test --check root-conformance"},
+        {"id": "floor", "command": "bench test --package ./internal/landing --package ./internal/worktree --package ./internal/anchors --package ./cmd/bench"},
         {"id": "line-probe", "command": "bench test --package ./internal/gate", "probe": "drop the ancestry test of the entry commit"},
         {"id": "writer-probe", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "bind an earlier ticket to the chunk tip"}
       ]
@@ -329,6 +331,7 @@ The authored version 1 plan states the verification obligations. The approved bu
         {"id": "preflight", "command": "bench test --package ./internal/preflight"},
         {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
         {"id": "conformance", "command": "bench test --check root-conformance"},
+        {"id": "floor", "command": "bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord --package ./internal/anchors --package ./cmd/bench"},
         {"id": "floor-probe", "command": "bench test --package ./internal/preflight", "probe": "grade each ticket against its own requirements only"}
       ]
     },
@@ -341,6 +344,7 @@ The authored version 1 plan states the verification obligations. The approved bu
         {"id": "command", "command": "bench test --package ./cmd/bench"},
         {"id": "conformance", "command": "bench test --check root-conformance"},
         {"id": "system", "command": "bench test --check system"},
+        {"id": "floor", "command": "bench test --package ./internal/refusalroute --package ./internal/reviewrecord/recordtest --package ./internal/reviewrecord/recordcmd --package ./internal/worktree --package ./internal/anchors"},
         {"id": "key-probe", "command": "bench test --package ./internal/gate", "probe": "frame the HEAD tip into the chunk-checkpoint oracle"},
         {"id": "tip-probe", "command": "bench test --package ./internal/gate", "probe": "keep the tip-moved guard in the prepared run"},
         {"id": "prose-probe", "command": "bench test --package ./internal/gate", "probe": "skip the record prose grade after a reuse"}
@@ -353,6 +357,7 @@ The authored version 1 plan states the verification obligations. The approved bu
         {"id": "testreport", "command": "bench test --package ./internal/testreport"},
         {"id": "preflight", "command": "bench test --package ./internal/preflight"},
         {"id": "conformance", "command": "bench test --check root-conformance"},
+        {"id": "floor", "command": "bench test --package ./internal/conformance --package ./internal/gate --package ./internal/reviewrecord --package ./internal/reviewrecord/recordcmd"},
         {"id": "index-probe", "command": "bench test --package ./internal/testreport", "probe": "drop the system-suite package from the index"}
       ]
     },
@@ -364,6 +369,7 @@ The authored version 1 plan states the verification obligations. The approved bu
         {"id": "testgap", "command": "bench test --package ./internal/testgap"},
         {"id": "conformance", "command": "bench test --check root-conformance"},
         {"id": "system", "command": "bench test --check system"},
+        {"id": "floor", "command": "bench test --package ./internal/gate/authorization --package ./internal/reviewrecord --package ./internal/git --package ./internal/status --package ./internal/testreport"},
         {"id": "store-probe", "command": "bench test --package ./internal/gate", "probe": "write the delta green to the evidence store"},
         {"id": "tag-probe", "command": "bench test --package ./internal/gate", "probe": "admit a system-suite file to the delta"},
         {"id": "operand-probe", "command": "bench test --package ./internal/gate", "probe": "take the delta base from the record chunk tip"}
@@ -377,6 +383,7 @@ The authored version 1 plan states the verification obligations. The approved bu
         {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
         {"id": "conformance", "command": "bench test --check root-conformance"},
         {"id": "system", "command": "bench test --check system"},
+        {"id": "floor", "command": "bench test --package ./internal/freshness --package ./internal/treetarget --package ./internal/usage --package ./cmd/bench"},
         {"id": "stale-probe", "command": "bench test --package ./internal/worktree", "probe": "pass a stale worktree binary to the child"}
       ]
     }
