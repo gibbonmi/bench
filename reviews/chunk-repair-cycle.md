@@ -1276,6 +1276,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "rc-c2b-r2-standards",
+          "performer": "claude:rc-c2b-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-standards-r2",
+            "digest": "sha256:ced624069471e2d2c3a408fde7af928fbb35f39fd8516594a07455ca9e87e21b",
+            "excerpt": "## Standards\n\nRC-C2B confirming round (repair delta a6531d2da..bda45ae07). S1: closed. starter (write.go:111-130) owns the create closure, the started flag, and the created action; RecordChunk and RecordTicket both use it, with unchanged errors and actions. No new finding at severity 5 or more.\n\n### Advice\n- repair_test.go:59 rebuilds the refusal text of change.go:152 and needs a recorded red under the AGENTS.md exception.\n- The starter doc comment reads as a fragment.\n"
+          },
+          "axis": "Standards",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2b-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c2b-r2-spec",
+          "performer": "claude:rc-c2b-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-spec-r2",
+            "digest": "sha256:a2c69a2e4a633f7face3ffbe4c4b1fc4aa66534b1e0bc37747ef3cecdf6b08eb",
+            "excerpt": "## Spec\n\nRC-C2B confirming round (repair delta a6531d2da..bda45ae07). Behaviors preserved: yes. The starter refactor is a pure extraction; RC9-RC12, RC16, and RC24 are untouched; the new tests check stated or ticket-owned behavior; no acceptance changed. No new finding at severity 5 or more.\n\n### Advice\n- The off-line test pins the full message text, which the spec does not fix.\n- TestRecordVerificationWritesTheSourceCommit has no doc comment.\n"
+          },
+          "axis": "Spec",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2b-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c2b-r2-coverage",
+          "performer": "claude:rc-c2b-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-coverage-r2",
+            "digest": "sha256:a58191ccc57f1842c5f56c3d183f8983fcecd53a5bfe3df44d53c1eb761b872b",
+            "excerpt": "## Coverage\n\nRC-C2B confirming round (repair delta a6531d2da..bda45ae07). C1 closed (repair mutant bit), C2 closed (repair mutant bit), C3 closed (probe: entry.SourceCommit = source -> _ = source: bit, TestRecordVerificationWritesTheSourceCommit, restored yes), C4 closed by reading. No new finding at severity 5 or more.\n\n### Advice\n- C3 does not probe SourceCommit = call.Source.\n- The chunk != nil gate at change.go:186 may be unpinned.\n- C4's exact-string check breaks on a harmless rewording.\n"
+          },
+          "axis": "Coverage",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2b-r1-coverage"
+          ]
         }
       ]
     }
@@ -1355,7 +1421,7 @@ RC-C1 consumed repair cycle 1 of 2 after its initial review (round r1). The test
 
 RC-C2 consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `b721e5a7c` closed S1, and the confirming round r2 passed on all three axes with no new finding.
 
-RC-C2B consumed repair cycle 1 of 2 after its initial review (round r1).
+RC-C2B consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `bda45ae07` closed S1 and C1 to C4, and the confirming round r2 passed on all three axes. The coordinator demonstrated the red of the C4 text expectation in `repair_test.go`: a reworded refusal in `change.go` failed `TestRecordRepairPreservesErrorIdentity/source_off_the_chunk_line`, restored yes.
 
 ## Standards
 
