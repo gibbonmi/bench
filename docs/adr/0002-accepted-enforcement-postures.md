@@ -42,11 +42,15 @@ A record that implies coverage it does not have is worse than silence.
 
 5. **Gate execution — and through it the gated commit — reuses only a fresh
    green verdict for the identical closed oracle subject.** **Every other
-   consumer observes the verdict without granting authority.** The subject binds the
-   working tree, resolved oracle, and execution policy, plus every project-declared
-   environment, path, and tool input. Gate execution serializes on one lock. A
-   subject that still holds a fresh green under that lock is answered from the
-   record without a write. So reuse never slides its own freshness window.
+   consumer observes the verdict without granting authority.**
+
+   The subject binds the graded tree, resolved oracle, and execution policy, plus
+   every project-declared environment, path, and tool input. The graded tree is the
+   working tree, but a chunk checkpoint grades its committed tree without the review
+   record. The checkpoint grades that review record on every call. Gate execution
+   serializes on one lock. A subject that still holds a fresh green under that lock
+   is answered from the record without a write. So reuse never slides its own
+   freshness window.
 
    Any
    other state durably replaces the older verdict with a pending record. This

@@ -45,8 +45,8 @@ var (
 	RetainCompletion          = retainCompletion
 )
 
-// RunCheckpointArmed runs the checkpoint that args select at root, and calls arm once the run
-// holds its execution lock: after it accepts its subject and before it validates that
+// RunCheckpointArmed runs the chunk checkpoint that args select at root, and calls arm once the
+// run holds its execution lock: after it accepts its subject and before it validates that
 // subject. It answers the exit.
 func RunCheckpointArmed(t *testing.T, root string, args []string, arm func(), stderr io.Writer) int {
 	t.Helper()
@@ -55,7 +55,7 @@ func RunCheckpointArmed(t *testing.T, root string, args []string, arm func(), st
 		t.Fatal(err)
 	}
 	armed := func(ctx context.Context) (context.Context, func()) { arm(); return ctx, func() {} }
-	return executeAfterAcquire(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, io.Discard, stderr, armed, mode).ActionExit
+	return executeChunkCheckpoint(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, checkpoint.Spec, io.Discard, stderr, armed, mode).ActionExit
 }
 
 // RunCompletionTree grades tree as the gate verb grades a complete checkpoint of spec at tip,
@@ -67,8 +67,15 @@ func RunCompletionTree(root, spec, tip, tree string, stderr io.Writer) int {
 
 func runCheckpoint(t *testing.T, f *recordtest.Fixture) (int, string) {
 	t.Helper()
+	return runCheckpointWith(t, f)
+}
+
+// runCheckpointWith runs the gate verb's checkpoint of chunk 1 at the root of f, with flags
+// after it, and answers the exit and the output.
+func runCheckpointWith(t *testing.T, f *recordtest.Fixture, flags ...string) (int, string) {
+	t.Helper()
 	var out, err bytes.Buffer
-	code := RunCommand([]string{f.Root, "--checkpoint", recordtest.Spec, "--chunk", "1"}, &out, &err)
+	code := RunCommand(append([]string{f.Root, "--checkpoint", recordtest.Spec, "--chunk", "1"}, flags...), &out, &err)
 	return code, out.String() + err.String()
 }
 
@@ -110,34 +117,28 @@ func TestReviewCheckpoint(t *testing.T) {
 	}
 }
 
+// TestReviewCheckpointReuse grades reuse across purposes. A whole green of the stripped
+// subject serves the chunk checkpoint, because the evidence pass still runs on the reuse. A
+// chunk green never serves the complete purpose.
 func TestReviewCheckpointReuse(t *testing.T) {
 	f := checkpointFixture(t)
 	f.Complete()
 	f.Save()
 	f.Commit("retain complete evidence")
-	if result := Execute(context.Background(), f.Root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
-		t.Fatalf("ordinary: %+v", result)
+	stripped, err := rr.SourceDigest(f.Root, f.Tree(), recordtest.Spec)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if code, out := runCheckpoint(t, f); code != 0 {
-		t.Fatalf("checkpoint: %d %s", code, out)
+	if result := ExecuteTree(context.Background(), f.Root, stripped, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
+		t.Fatalf("ordinary green of the stripped subject: %+v", result)
 	}
-	if got := outcomeRuns(t, f.Root); got != 2 {
-		t.Fatalf("ordinary green satisfied stronger checkpoint: %d runs", got)
-	}
-	if code, out := runCheckpoint(t, f); code != 0 || !strings.Contains(out, "reused") {
-		t.Fatalf("checkpoint reuse: %d %s", code, out)
-	}
+	requireReuse(t, f, "after an ordinary green of its subject")
 	var out, diagnostic bytes.Buffer
 	if code := RunCommand([]string{f.Root, "--checkpoint", f.Record.Spec, "--complete"}, &out, &diagnostic); code != 0 {
 		t.Fatalf("complete checkpoint: %d %s", code, diagnostic.String())
 	}
-	if got := outcomeRuns(t, f.Root); got != 3 {
+	if got := outcomeRuns(t, f.Root); got != 2 {
 		t.Fatalf("chunk green satisfied complete purpose: %d runs", got)
-	}
-	f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
-	resave(t, f, "drop the Coverage review")
-	if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "missing Coverage") {
-		t.Fatalf("record mutation reused green: %d %s", code, out)
 	}
 }
 

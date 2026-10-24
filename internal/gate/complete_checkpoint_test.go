@@ -81,11 +81,17 @@ func publishedEvidence(t *testing.T, f *recordtest.Fixture) EvidenceInspection {
 // annotateRecord adds prose to the review record and leaves the evidence unchanged.
 func annotateRecord(t *testing.T, f *recordtest.Fixture) {
 	t.Helper()
+	appendRecordProse(t, f, "The orchestrator reconciled the final evidence.")
+}
+
+// appendRecordProse appends text as one paragraph of the review record of f.
+func appendRecordProse(t *testing.T, f *recordtest.Fixture, text string) {
+	t.Helper()
 	path, err := rr.RecordPath(recordtest.Spec)
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Write(path, string(outcomeRead(t, filepath.Join(f.Root, path)))+"\nThe orchestrator reconciled the final evidence.\n")
+	f.Write(path, string(outcomeRead(t, filepath.Join(f.Root, path)))+"\n"+text+"\n")
 }
 
 func assertNoOracleRun(t *testing.T, f *recordtest.Fixture) {

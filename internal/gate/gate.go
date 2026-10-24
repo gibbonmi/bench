@@ -181,7 +181,8 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 // It uses the first non-flag argument as root, or the current repository root. --fresh
 // requires execution instead of reuse; it can appear on either side of root. A checkpoint
 // refuses a checkout with an uncommitted change. A complete checkpoint grades the tree that
-// the landing publishes from the committed source; every other run grades the checkout.
+// the landing publishes from the committed source, and a chunk checkpoint grades the committed
+// source without its review record; every other run grades the checkout.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
 	root, mode, checkpoint, err := parseGateArgs(args, true)
 	if err != nil {
@@ -206,7 +207,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	case checkpoint.Complete:
 		result = executeCompleteCheckpoint(ctx, root, checkpoint.Spec, stdout, stderr, notifyGateSignals, mode)
 	case checkpoint.Chunk != "":
-		result = executeChunkCheckpoint(ctx, root, stdout, stderr, notifyGateSignals, mode)
+		result = executeChunkCheckpoint(ctx, root, checkpoint.Spec, stdout, stderr, notifyGateSignals, mode)
 	default:
 		result = executeAfterAcquire(ctx, root, stdout, stderr, notifyGateSignals, mode)
 	}

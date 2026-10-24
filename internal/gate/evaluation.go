@@ -26,6 +26,9 @@ type gateEvaluation struct {
 	checkpoint       Checkpoint
 	checkpointTip    string
 	completionSource string
+	// checkpointTree is the committed tree of a chunk checkpoint; it is empty on every other
+	// evaluation.
+	checkpointTree string
 	// completionFolder is the tickets-only folder whose prospective close completes a
 	// delivery with no checkpoint spec; it is empty on every other evaluation.
 	completionFolder string
@@ -50,15 +53,24 @@ func newGateEvaluation(root string) *gateEvaluation {
 	}
 }
 
-func newProspectiveTreeEvaluation(runtimeRoot, identityRoot, tree string) *gateEvaluation {
+// newCheckoutTreeEvaluation grades tree in the private checkout at runtimeRoot, under the
+// identity of identityRoot and the gate that an ordinary run resolves. A chunk checkpoint
+// grades its committed source this way, because that source is no publication for the
+// prospective gate to grade.
+func newCheckoutTreeEvaluation(runtimeRoot, identityRoot, tree string) *gateEvaluation {
 	return &gateEvaluation{
 		runtimeRoot:  runtimeRoot,
 		identityRoot: identityRoot,
-		prospective:  true,
 		preSource:    prospectiveTreeSource{root: identityRoot, treeID: tree},
 		validateTree: func(want string) error { return validateProspectiveCheckout(runtimeRoot, want) },
 		postSource:   workingTreeSource{root: runtimeRoot},
 	}
+}
+
+func newProspectiveTreeEvaluation(runtimeRoot, identityRoot, tree string) *gateEvaluation {
+	evaluation := newCheckoutTreeEvaluation(runtimeRoot, identityRoot, tree)
+	evaluation.prospective = true
+	return evaluation
 }
 
 func validateProspectiveCheckout(root, tree string) error {

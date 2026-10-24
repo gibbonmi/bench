@@ -51,6 +51,13 @@ func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Write
 }
 
 func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, owner runBinaryOwner) Result {
+	return executeCheckout(ctx, root, tree, stdout, stderr, arm, mode, owner, newProspectiveTreeEvaluation)
+}
+
+// executeCheckout runs tree in a private checkout of the prospective artifact owner, with root
+// as the storage and identity root. evaluate builds the evaluation over that checkout, so the
+// caller chooses the gate that grades the tree.
+func executeCheckout(ctx context.Context, root, tree string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, owner runBinaryOwner, evaluate func(checkout, root, tree string) *gateEvaluation) Result {
 	artifacts, err := openProspectiveArtifacts(root, tree)
 	if err != nil {
 		fmt.Fprintln(stderr, "prospective gate subject unavailable")
@@ -61,7 +68,7 @@ func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr
 	if owner == nil {
 		owner = prospectiveRunBinaryOwnerAt(checkout, artifacts.Root())
 	}
-	evaluation := checkpointEvaluation(ctx, newProspectiveTreeEvaluation(checkout, root, tree))
+	evaluation := checkpointEvaluation(ctx, evaluate(checkout, root, tree))
 	return executeSubjectOwning(ctx, checkout, root, stdout, stderr, arm, mode, evaluation, owner, root, durablefile.Native(), artifacts)
 }
 

@@ -72,6 +72,9 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		return operational(storageRoot, 0, stderr, "gate decision refused: "+decision.Refusal)
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "subject.accepted", Root: storageRoot, Mode: mode.String(), Detail: plan.Tree})
+	if refusal, refused := gradeCheckpointRecord(ctx, storageRoot, stderr); refused {
+		return refusal
+	}
 	if mode == reuseFreshGreen {
 		if reuse := reusableEvidence(storageRoot, plan, time.Now().UTC()); reuse.ReusableGreen {
 			logGateEvent(ctx, gateLogRecord{Event: "gate.reused", Root: storageRoot})
