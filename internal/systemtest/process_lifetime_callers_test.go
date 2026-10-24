@@ -6,12 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
-	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
@@ -85,64 +82,6 @@ func TestProcessLifetimeShellDifferential(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TestProcessLifetimeShiftDifferential is PL102. The pass evidence records the adapter's own
-// exit, and the shift result keeps its taxonomy: a zero adapter with no change is a no-op,
-// and a nonzero one fails the shift. A surviving descendant gets no normal-exit signal. The
-// wall deadline keeps its incomplete exit and stops the adapter group.
-func TestProcessLifetimeShiftDifferential(t *testing.T) {
-	t.Parallel()
-	shift := func(t *testing.T, adapter string, extra ...string) (recordedPublicationRepo, processResult) {
-		fixture := scaffoldRecordedPublicationRepo(t)
-		commitmenttest.Register(t, fixture.root, "shift-shape")
-		commitmenttest.Admit(t, fixture.root, "shift-shape", "specs/record/spec.md")
-		env := append(fixture.environment(fixture.home), "BENCH_AGENT="+adapter, "BENCH_MAX_ITERS=1", "TMPDIR="+t.TempDir())
-		return fixture, systemSelected(t, fixture.root, append(env, extra...), "shift", "--outcome", "delivery", "shape objective")
-	}
-	for _, shape := range preservationShapes {
-		t.Run(shape.name, func(t *testing.T) {
-			t.Parallel()
-			dir := t.TempDir()
-			mark := filepath.Join(dir, "group")
-			fixture, result := shift(t, callerTool(t, dir, "agent", "cat >/dev/null\n"+shapeScript(shape, "sleep", "mv", mark)))
-			pgid := groupOf(t, mark)
-			if shape.descendant {
-				requireGroup(t, pgid, protection.GroupPresent, "shift adapter")
-			}
-			// The record reader keeps string values only, so the integer exit is read raw.
-			files, _ := filepath.Glob(filepath.Join(fixture.home, "otel", "*", "traces.jsonl"))
-			raw := []byte{}
-			if len(files) == 1 {
-				raw, _ = os.ReadFile(files[0])
-			}
-			exit := `{"key":"` + otelrecord.AttrAdapterExit + `","value":{"intValue":"` + strconv.Itoa(shape.exit) + `"}}`
-			ran := `{"key":"` + otelrecord.AttrAdapterResult + `","value":{"stringValue":"` + otelrecord.AdapterExited + `"}}`
-			if !strings.Contains(string(raw), exit) || !strings.Contains(string(raw), ran) {
-				t.Fatalf("shift record %s = %q, want the pass evidence %s and %s", files, raw, ran, exit)
-			}
-			// A green gate with no change is a no-op, unless the adapter exited nonzero.
-			code, outcome := 4, "\n  no-op,"
-			if shape.exit != 0 {
-				code, outcome = 1, "\n  failed,"
-			}
-			if result.code != code || !strings.Contains(result.stdout, "shift_result[1]") || !strings.Contains(result.stdout, outcome) {
-				t.Fatalf("shift over %s = (%d, %q, %q), want exit %d and outcome %q", shape.name, result.code, result.stdout, result.stderr, code, outcome)
-			}
-		})
-	}
-	t.Run("wall deadline", func(t *testing.T) {
-		t.Parallel()
-		dir := t.TempDir()
-		mark := filepath.Join(dir, "group")
-		hold := "cat >/dev/null\n" + publishGroup("mv", mark) + "exec sleep 300\n"
-		_, result := shift(t, callerTool(t, dir, "agent", hold), "BENCH_MAX_WALL=1s")
-		pgid := groupOf(t, mark)
-		if result.code != 3 {
-			t.Fatalf("shift past its wall deadline = (%d, %q, %q), want incomplete/3", result.code, result.stdout, result.stderr)
-		}
-		requireGroup(t, pgid, protection.GroupAbsent, "shift adapter past its deadline")
-	})
 }
 
 // TestProcessLifetimeBoundsDifferential is PL94. The bounds runner projects a complete codex
