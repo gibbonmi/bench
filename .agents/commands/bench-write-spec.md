@@ -77,7 +77,7 @@ acceptance coverage, hostile-input attachment, and gate attachment; shaping sour
    After the last chunk, one review round on `craft-line`'s ticket review line grades the whole ticket set under `craft-tickets`' granularity, edge, and merge-or-split quiz. Its iteration cap is 2. The round returns accept or reject.
 
    After the ticket review accepts, `bench preflight build <slug> --plan-only` grades the whole ticket graph. Carry
-   its numbered title, `Blocked by:`, and delivered outcome list into the approval table. The spec and tickets
+   its numbered list into the approval table that `craft-tickets` defines. The spec and tickets
    receive one sign-off.
 
    Every review round follows one loop. The round declares its iteration cap before the first charge. The invoking session repairs a rejected spec or ticket set, and the same round grades the repair alone. The invoking session folds the findings of each round and names them in the verification log.

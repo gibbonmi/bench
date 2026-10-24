@@ -216,8 +216,8 @@ func TestRunGateReportsRed(t *testing.T) {
 // TestCheckpointOutcomeDeadlineWinsOverInterrupt pins the decided precedence when a
 // wall deadline and a pulled line race and both flags land before the next checkpoint.
 // The deadline outcome, incomplete/3, wins over interrupted/130. checkpoint's decision
-// is exercised through checkpointOutcome directly, since checkpoint itself exits the
-// process on a hit.
+// is exercised through checkpointOutcome directly, since checkpoint itself preserves the
+// worktree on a hit.
 func TestCheckpointOutcomeDeadlineWinsOverInterrupt(t *testing.T) {
 	s := &session{}
 	s.deadline.Store(true)

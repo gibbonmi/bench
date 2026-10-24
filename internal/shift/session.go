@@ -15,7 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate"
-	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -56,9 +55,8 @@ var timeNow = time.Now
 
 // session carries a running shift's state. The signal handler and the loop share one
 // view of the worktree root, the adapter lifetime, and the once-only teardown through it.
-// It also carries the fields the interrupt checkpoint needs to emit an honest
-// shift_result and record the intent outcome itself. os.Exit skips deferred cleanup, so
-// nothing at that path can rely on a defer.
+// It also carries the fields the checkpoint needs to preserve the work and resolve an honest
+// Result before the loop returns.
 type session struct {
 	agent  string
 	root   string
@@ -67,7 +65,6 @@ type session struct {
 
 	mainRoot string
 	branch   string
-	entry    *intent.Entry
 	record   *shiftRecord
 	released bool // set once teardown has released the worktree to the pool
 
@@ -107,17 +104,19 @@ func (s *session) touchedViolations(base string) (flagged string, violations int
 // refactorPhase pays down structural debt this shift touched, but only once the touched
 // scope is over budget, never pre-existing debt, and never mid-implementation. It runs
 // within the rcap budget, scopes each prompt to the flagged files, and stops on a no-op
-// pass. A refactor commit failure is returned as an error rather than swallowed, so the
-// caller can map it onto the outcome taxonomy honestly.
-func (s *session) refactorPhase(base string, rcap int) error {
+// pass. A stop returns the Result the caller finishes with: a checkpoint's Result, or the
+// evidence Result of a stage, commit, or rollback failure, which is never swallowed.
+func (s *session) refactorPhase(base string, rcap int) (stop Result, stopped bool) {
 	if _, violations := s.touchedViolations(base); violations == 0 {
-		return nil
+		return Result{}, false
 	}
 	fmt.Fprintln(s.stdout, "▶ structure over budget — refactor phase (split at green, not before)")
 	defer s.record.endPass()
 	attempted := 0
 	for r := 1; r <= rcap; r++ {
-		s.checkpoint()
+		if res, stop := s.checkpoint(); stop {
+			return res, true
+		}
 		flagged, violations := s.touchedViolations(base)
 		if violations == 0 {
 			break
@@ -127,13 +126,17 @@ func (s *session) refactorPhase(base string, rcap int) error {
 		fmt.Fprintf(s.stdout, "── refactor %d/%d ──\n", r, rcap)
 		pre := dirtyPaths(s.root)
 		s.record.adapterRan(s.runAdapter(passCtx, fmt.Sprintf(refactorPrompt, flagged)))
-		s.checkpoint()
+		if res, stop := s.checkpoint(); stop {
+			return res, true
+		}
 		post := dirtyPaths(s.root)
 		if s.runGate(passCtx) == 0 {
-			s.checkpoint()
+			if res, stop := s.checkpoint(); stop {
+				return res, true
+			}
 			if err := stageTouched(s.root, pre, post); err != nil {
 				fmt.Fprintf(s.stderr, "could not stage refactor %d: %v\n", r, err)
-				return fmt.Errorf("could not stage refactor pass %d", r)
+				return evidenceResult(s, fmt.Sprintf("could not stage refactor pass %d", r)), true
 			}
 			if nothingStaged(s.root) {
 				fmt.Fprintf(s.stdout, "  gate green, refactor %d made no staged change - stopping refactor phase\n", r)
@@ -141,16 +144,18 @@ func (s *session) refactorPhase(base string, rcap int) error {
 			}
 			if err := exec.Command("git", "-C", s.root, "commit", "-q", "-m", "refactor: reduce structural debt").Run(); err != nil {
 				fmt.Fprintf(s.stderr, "could not commit refactor %d: %v\n", r, err)
-				return fmt.Errorf("could not commit refactor pass %d", r)
+				return evidenceResult(s, fmt.Sprintf("could not commit refactor pass %d", r)), true
 			}
 			s.record.passCommitted(s.root)
 			fmt.Fprintf(s.stdout, "  ✓ tests green - refactor %d committed\n", r)
 		} else {
-			s.checkpoint()
+			if res, stop := s.checkpoint(); stop {
+				return res, true
+			}
 			fmt.Fprintln(s.stdout, "  ✗ refactor broke the gate — rolling back")
 			if err := rollback(s.root); err != nil {
 				fmt.Fprintf(s.stderr, "could not roll back refactor %d: %v\n", r, err)
-				return fmt.Errorf("could not roll back refactor pass %d", r)
+				return evidenceResult(s, fmt.Sprintf("could not roll back refactor pass %d", r)), true
 			}
 		}
 	}
@@ -163,7 +168,7 @@ func (s *session) refactorPhase(base string, rcap int) error {
 		}
 		fmt.Fprintf(s.stdout, "  ⚠ still over budget after %d refactor pass(es) - review manually, or run a Bench deep pass with bench structure and craft-seams.\n", n)
 	}
-	return nil
+	return Result{}, false
 }
 
 // stepAdapterStart is the startup transition of an adapter run: its lifetime is published
@@ -303,7 +308,7 @@ func (s *session) cancelRunningGate() {
 }
 
 // checkpointOutcome resolves which exit, if either, a checkpoint takes, tested directly
-// since checkpoint itself exits the process. Decided precedence: the wall deadline wins
+// without the preservation that checkpoint runs. Decided precedence: the wall deadline wins
 // over an interrupt when both flags are set. A deadline that fires while a pulled line
 // is already in flight still resolves incomplete/3, not interrupted/130. The deadline is
 // this shift's own bound, not an external signal. The taxonomy should not depend on
@@ -318,32 +323,24 @@ func (s *session) checkpointOutcome() (outcome Outcome, detail string, ok bool) 
 	return "", "", false
 }
 
-// checkpoint exits when a signal or the wall deadline has fired, after the running
+// checkpoint stops the loop when a signal or the wall deadline has fired, after the running
 // adapter or gate has already been signaled or cancelled. This is the well-defined point,
 // mirroring bash's trap-between-commands, at which an interrupt or deadline takes effect.
-// os.Exit skips deferred cleanup, so preservation, the shift_result block, and the intent
-// outcome are all run and recorded explicitly here, never left to a defer.
-func (s *session) checkpoint() {
-	if outcome, detail, ok := s.checkpointOutcome(); ok {
-		s.exitPreserving(outcome, detail)
+// On a stop it preserves any dirty work and returns the resolved Result; a teardown failure
+// here still resolves to failed/1, same as every other exit path. The caller returns that
+// Result through finish. A checkpoint never exits the process: a bounded caller prints the
+// response only after Loop returns, so a process exit drops the banner and the shift_result
+// block.
+func (s *session) checkpoint() (stop Result, stopped bool) {
+	outcome, detail, ok := s.checkpointOutcome()
+	if !ok {
+		return Result{}, false
 	}
-}
-
-// exitPreserving is checkpoint's shared exit path for both a signal and a wall-deadline
-// trip. It preserves any dirty work and resolves the outcome; a teardown failure here
-// still resolves to failed/1, same as every other exit path. It then hands off to finish
-// for the emit-record-exit-code sequence, the same single-sourced path every ordinary
-// Loop return uses, before exiting with its resolved code. os.Exit here, rather than a
-// return, is deliberate. This path is reached from inside the loop's own call stack via
-// checkpoint, and skips the deferred cleanup a normal return would trigger. See the
-// session doc comment.
-func (s *session) exitPreserving(outcome Outcome, detail string) {
 	recovery, teardownErr := s.preserveAndRecover(detail)
-	res := Result{Outcome: outcome, Branch: s.branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail}
 	if teardownErr != nil {
-		res = teardownFailureResult(s, recovery, teardownErr)
+		return teardownFailureResult(s, recovery, teardownErr), true
 	}
-	os.Exit(finish(s.stdout, s.stderr, s.mainRoot, s.entry, s.record, res))
+	return Result{Outcome: outcome, Branch: s.branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail}, true
 }
 
 // nothingStaged reports whether the index has no staged changes, the "gate green, no
