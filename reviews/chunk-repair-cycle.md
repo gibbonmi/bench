@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:68913aa65a504eabc2a572c91a8a600690705f0748af15025c62b7b900b5e4be",
+  "plan_digest": "sha256:525de4d7efd9137522a26e8497432f3cadb01473ce26d8c57dbbf2d5fba78694",
   "implementation_session": "",
   "chunks": [
     {
       "id": "RC-C1",
       "base": "59386368bcdacf9545d599eb5201311250ad84eb",
-      "tip": "ab1f498ff019cd1548677d142a63ec10b0e38326",
-      "plan_digest": "sha256:68913aa65a504eabc2a572c91a8a600690705f0748af15025c62b7b900b5e4be",
-      "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+      "tip": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+      "plan_digest": "sha256:525de4d7efd9137522a26e8497432f3cadb01473ce26d8c57dbbf2d5fba78694",
+      "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
       "acceptance_rows": [
         "RC1",
         "RC2",
@@ -177,6 +177,161 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,1,TestRecordConfirmationRefusesAPlanFenceChange,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,265\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,572\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,27046,265\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange,\"confirmation_test.go:154: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,e2b944dd49945f730e66648eb8dff744fe4c2dc2,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t01r1-record",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:847153a758bd82696b210ab6a7b6d20b436efb1647f12b4cd924aee9a464db0d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2766,110\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-record-command",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:e642229389cc8e4120e7a7c8a758a845fef2d81dc98aa630be15cbe338626d90",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,18219,272\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-gate",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:27093678f327fe8e6bed172d9851e7cdf2d8622a756c15cbc801ccd6f2cb932d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,31217,517\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-testgap",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:f8d77e9fd74e7d8defcf3254ae0245e72619f48000719342ca053aefc60dc7d0",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testgap,pass,247,21\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "testgap",
+          "command": "bench test --package ./internal/testgap",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-anchors",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:577076f8eb19252a4e60e1a94803e145edcf97367afa48be02de12df84c47c5d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,101,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-conformance",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:70180b15124881c601375171c511ac47db4e8f4bd0e20ee665dccd34874270a0",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13753,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-floor",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:e1c2693ad84759624da94c40fb9ce4eaee6f12842e798ccaf88151e692ff0cae",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22741,404\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "floor",
+          "command": "bench test --package ./internal/reviewrecord/recordtest --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-exemption-probe",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:9aabeab6ff0db3cd8929938d3443d9debc0eda64b0119ec8271f773ebc645c75",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,3,TestFindReviewedPairRefusesASpecChange/version_1_plan,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,272\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1301\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,18428,272\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestFindReviewedPairRefusesASpecChange/version_1_plan,\"confirmation_test.go:205: reviewed pair error = <nil>, want \\\"the delta to the chunk tip is not test-only: specs/example/spec.md: the change reaches beyond the assignment block of the completion plan\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/author_limit,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,880ef768dad40d212a83dbf86db4f8a1ec75ee3e,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/final_requirement,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,880ef768dad40d212a83dbf86db4f8a1ec75ee3e,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "exemption-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "clear the whole plan fence instead of the assignment block",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+              "digest": "sha256:9aabeab6ff0db3cd8929938d3443d9debc0eda64b0119ec8271f773ebc645c75",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,3,TestFindReviewedPairRefusesASpecChange/version_1_plan,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,272\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1301\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,18428,272\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestFindReviewedPairRefusesASpecChange/version_1_plan,\"confirmation_test.go:205: reviewed pair error = <nil>, want \\\"the delta to the chunk tip is not test-only: specs/example/spec.md: the change reaches beyond the assignment block of the completion plan\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/author_limit,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,880ef768dad40d212a83dbf86db4f8a1ec75ee3e,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/final_requirement,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,880ef768dad40d212a83dbf86db4f8a1ec75ee3e,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -256,7 +411,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:68913aa65a504eabc2a572c91a8a600690705f0748af15025c62b7b900b5e4be",
+      "to": "sha256:525de4d7efd9137522a26e8497432f3cadb01473ce26d8c57dbbf2d5fba78694",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
