@@ -10051,7 +10051,144 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c5-standards-r1",
+          "performer": "claude:plt-c5-standards-r1-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1d5ed145f9ef43127d327a7de9940fd7c6f576c0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c5-standards-r1-20261023",
+            "digest": "sha256:1e341099fab4e524487d88ca75e002a067c621e01a47a3e79003fca095514f2a",
+            "excerpt": "Standards axis, PL-C5 round r1. Evidence current=true at 0a2615604. One duplicated-knowledge defect can fail open: the recorded-store scan re-derives the store-naming rule. The author-flagged items are honest repetition or below the floor.\n\nFindings\nS1 | auto-fix | 6 | internal/subprocess/protection/directory.go:126 | AGENTS.md one source per fact | ObserveRecorded filters stores with strings.HasPrefix(entry.Name(), string(a.Kind)+\"-\"), re-deriving the rule Store produces at :61. If naming changes, the scan skips every store and returns Safe, memberUsers (internal/worktree/protection.go:913) reports UsersResolved, and reclaim removes a member with a live user. The r.Kind check at :137 already filters by kind; drop the prefix or share one helper. Owner 12.\n\nAdvice\n- 4: the pid-publication writer is spelled again at process_lifetime_callers_test.go:210 and process_lifetime_shift_test.go:787; shapeScript owns it.\n- 4: ObserveRecorded repeats discardNested's store-root walk (directory.go:114-140 vs :263-275); one iterator would hold the layout.\n- 3: protectWorktree in the shift test rebuilds checkoutObserver and copies protectCheckout (honest across packages).\n- 3: adapterPolicy matches stepPolicy and phasePolicy; values come from bounds constants (honest).\n- 3: toolPath is not reused at process_lifetime_test.go:71.\n"
+          },
+          "axis": "Standards",
+          "base": "c8bfa18c809d3895583c9d9817ae8f60fbfe846a",
+          "tip": "e889e640f8dfe1c4b8739e6945b036b0a67aa7f3",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c5-spec-r1",
+          "performer": "claude:plt-c5-spec-r1-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1d5ed145f9ef43127d327a7de9940fd7c6f576c0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c5-spec-r1-20261023",
+            "digest": "sha256:7300abb00b311abdebb4bbaff9919d44d59f85c5b36158d495838354384e3597",
+            "excerpt": "Spec axis, PL-C5 round r1. Evidence current=true at 0a2615604. Ticket 12's shift and reclaim behavior matches spec.md:477-488. Ticket 13 differs in the preservation matrix, the PL116 diagnostic, and part of the PL94/PL118 coverage. PL90 excluded by reviewer direction.\n\nFindings\nP1 | veto | 6 | internal/systemtest/process_lifetime_preservation_test.go:72-115, process_lifetime_callers_test.go:94-200 | \"PL92-PL102 compare the production baseline and migration over the same inputs.\" | Each differential compares against author-written expectations, not the 37ac80b8 binary; no recorded red backs the independent expectations. Owner 13.\nP2 | auto-fix | 6 | internal/subprocess/outcome.go:21-23 | \"Cleanup diagnostics name unresolved waiter, group, stream, identity, and persistence obligations.\" | Uncertified prints \"process protection protected: <nil>\" (Protection.Err is nil while users remain) and returns only the first failing category; Disposition.Unresolved (registration.go:33) already names the users. Owner 13.\nP3 | auto-fix | 5 | internal/systemtest/process_lifetime_callers_test.go:134-145 | \"Deadline precedence and the existing evidence taxonomy remain unchanged.\" | The shift deadline case checks only exit 3; finish (loop.go:22-31) emits shift_result on every checkpoint exit, so empty stdout means a route skips the taxonomy. Owner 13 (12 if the cause is in shift).\nP4 | auto-fix | 5 | process_lifetime_callers_test.go:151-200; preservation_test.go:72,104 | \"Start failure | Every census caller\"; PL94 canceled and timeout projections | Gate and exec have no start-failure shape; bounds has no canceled or timeout projection. Owner 13.\nP5 | auto-fix | 5 | internal/systemtest/process_lifetime_artifacts_test.go:76-113 | PL118 \"A blanket retention implementation leaves cache, bundle, binary, test, or worktree protection behind.\" | The test does not check the private test directory or a worktree protection store. Owner 13.\n\nAdvice\n- 4: loop.go:28-31 discards a protection-refused teardown; the reason is lost.\n- 3: ObserveRecorded seals stores at plan time.\n- 3: the reclaim path match is literal; a symlinked parent is untested.\n- 2: PL86/PL87 cite ticket 11's tests.\n- 2: the first cancellation request is sticky; the spec allows it.\n"
+          },
+          "axis": "Spec",
+          "base": "c8bfa18c809d3895583c9d9817ae8f60fbfe846a",
+          "tip": "e889e640f8dfe1c4b8739e6945b036b0a67aa7f3",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3",
+            "P4",
+            "P5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c5-coverage-r1",
+          "performer": "claude:plt-c5-coverage-r1-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1d5ed145f9ef43127d327a7de9940fd7c6f576c0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c5-coverage-r1-20261023",
+            "digest": "sha256:1a55cbb61ad5e5e2031a7e52d38ed37e63dc479e8fec2cd39126b91804a7caf7",
+            "excerpt": "Coverage axis, PL-C5 round r1. Evidence current=true at 0a2615604. One probe set on internal/subprocess/protection/directory.go (ObserveRecorded, the PL88 reclaim fact): the happy-path policy bites; neither fail-closed branch is covered.\n\nFindings\nC5-COV-1 | auto-fix | 5 | internal/subprocess/protection/directory.go:107-108, :117-119, :130-133 | P1 and P2 silent, restored; spec \"Reclaim finds each worktree store whose recorded resource path is the member's gitdir target, and it grades that store through SealAndObserve.\" | An unreadable worktree store record and an unlistable store root both reach memberUsers as UsersResolved, so the member is reclaimed with no red. ObserveRecorded has no direct test; TestProtectedReclaim covers readable stores only. Owner 12.\n\nProbes:\n- P1: unreadable store record fails open (case err != nil: continue): silent, restored.\n- P2: unlistable root returns Safe: silent, restored.\n- P3 control: rank comparison disabled: bit TestProtectedReclaim (protection_test.go:127), restored.\n\nAdvice\n- 3: a unit table over ObserveRecorded's states (no match, retired, unread record, unread root) would make the fail-closed comment checkable.\n- 3: PL94-PL102 Preserve/Drain swaps and PL118 stay unprobed this round.\n"
+          },
+          "axis": "Coverage",
+          "base": "c8bfa18c809d3895583c9d9817ae8f60fbfe846a",
+          "tip": "e889e640f8dfe1c4b8739e6945b036b0a67aa7f3",
+          "finding_ids": [
+            "C5-COV-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c5-standards-r2",
+          "performer": "claude:plt-c5-standards-r2-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1d5ed145f9ef43127d327a7de9940fd7c6f576c0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c5-standards-r2-20261023",
+            "digest": "sha256:83ac0eb4fa4cff22320d574a711fbc1557db3fb8fb51c852dd8cf84761aa2a99",
+            "excerpt": "Standards axis, PL-C5 confirming round r2. Evidence current=true at b90030050. S1 is closed; the repair delta adds no Standards defect at severity 5 or higher.\n\nFindings\nNo new finding.\n\nClosed: S1. Directory.storePrefix() (internal/subprocess/protection/directory.go:66-68) is the only store-name prefix; Store (:61) and ObserveRecorded (:128) use it. storeEntries() (root.go:43-55) merges the certify-then-ReadDir sequence of ObserveRecorded and discardNested. Uncertified decides through Disposition.Unresolved(); kitRootEnv and openPrivateRun merge their fixtures.\n\nAdvice\n- 4: publishGroup has a remaining copy at internal/systemtest/process_lifetime_shift_test.go:30 (ticket 12) and a variant at process_lifetime_cache_test.go:41.\n- Readability: outcome.go:57 prefixes \"protection %s: \" before Unresolved(), so the diagnostic names the state twice.\n"
+          },
+          "axis": "Standards",
+          "base": "c8bfa18c809d3895583c9d9817ae8f60fbfe846a",
+          "tip": "e889e640f8dfe1c4b8739e6945b036b0a67aa7f3",
+          "finding_ids": [],
+          "supersedes": [
+            "c5-standards-r1"
+          ]
+        },
+        {
+          "id": "c5-spec-r2",
+          "performer": "claude:plt-c5-spec-r2-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1d5ed145f9ef43127d327a7de9940fd7c6f576c0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c5-spec-r2-20261023",
+            "digest": "sha256:974010c89808f8f588bbee167aaac8e0bdb2f164f81d99a5cb4e4accf4694fd8",
+            "excerpt": "Spec axis, PL-C5 confirming round r2. Evidence current=true at b90030050. The repair delta closes P2, P4 and P5 in code; P1 is closed in the spec and ticket text by reviewer decision, and its nine reds must be recorded durably; the P3 disposition holds.\n\nFindings\nNo new finding.\n\nClosed: P2 (Uncertified joins every unresolved part; the protection part prints Disposition.Unresolved; TestUncertifiedNamesEveryUnresolvedPart, lifetime_test.go:268). P4 (TestProcessLifetimeStartFailureDifferential for gate and exec; bounds provider-timeout case; canceled unreachable because models.go:128 uses context.Background). P5 (TestProcessLifetimeArtifactsCompletedOwners checks the worktree store retired and the private test directory removed). P1 text closed; the reds are recorded in pl-c5-p1-reds.txt.\nP3 disposition holds: os.Exit in internal/shift/session.go:276 under Bound: boundResponse predates FT362; the PL102 deadline case asserts only exit 3.\n\nAdvice\n- 3: PL96, PL98 and PL99 still read \"match the baseline\"; one wording should cover all eleven.\n- 3: PL94's failure cell lists a canceled projection the test documents as unreachable.\n- 2: the protection part repeats the state.\n"
+          },
+          "axis": "Spec",
+          "base": "c8bfa18c809d3895583c9d9817ae8f60fbfe846a",
+          "tip": "e889e640f8dfe1c4b8739e6945b036b0a67aa7f3",
+          "finding_ids": [],
+          "supersedes": [
+            "c5-spec-r1"
+          ]
+        },
+        {
+          "id": "c5-coverage-r2",
+          "performer": "claude:plt-c5-coverage-r2-20261023",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1d5ed145f9ef43127d327a7de9940fd7c6f576c0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:plt-c5-coverage-r2-20261023",
+            "digest": "sha256:8727884d3fcd27c84cfde019cb732265fb0b105194a146ce727307fb3ec34348",
+            "excerpt": "Coverage axis, PL-C5 confirming round r2. Evidence current=true at b90030050. C5-COV-1 is closed.\n\nFindings\nNo new finding.\n\nProbes: internal/subprocess/protection/directory.go, unreadable-record branch swapped to `case err != nil: continue`, --package ./internal/subprocess/protection; bit TestObserveRecordedFailsClosed/unread_record (directory_test.go:180); restored yes.\n\nClosed: C5-COV-1.\n"
+          },
+          "axis": "Coverage",
+          "base": "c8bfa18c809d3895583c9d9817ae8f60fbfe846a",
+          "tip": "e889e640f8dfe1c4b8739e6945b036b0a67aa7f3",
+          "finding_ids": [],
+          "supersedes": [
+            "c5-coverage-r1"
+          ]
+        }
+      ]
     }
   ],
   "completion": {
@@ -10347,6 +10484,13 @@ The confirming round r4 passed the Standards and Spec axes. The Coverage axis fo
 Repair cycle 4 ran one repair session for ticket 11 (commit 7ed27ae69) under the reviewer's advance approval.
 The confirming round r5 passed on all three axes with no new finding.
 
+PL-C5 round r1 found 7 actionable findings. The reviewer closed Spec P1 on 2026-10-23 with each row's contract plus one demonstrated red per row.
+Repair cycle 1 of 2 ran one repair session for ticket 12 (commit 94ff46c78) and one for ticket 13 (commit b90030050).
+Spec P3 is a defect on main that predates this build: a checkpoint exit of `bench shift` drops its bounded response. A learning records it.
+
+The confirming round r2 passed on all three axes with no new finding.
+The reviewer deferred the native Darwin witness for PL90 to a follow-up on Darwin on 2026-10-23.
+
 ## Standards
 
 PL-C1 round r1: 2 findings. Worst issue: S2, a scheduling-dependent verdict in a PL66 test.
@@ -10386,6 +10530,10 @@ PL-C4 round r1: 8 findings. Worst issue: S1, the sealed-reopen policy has three 
 - S7 | no-op | confidence 2 | `internal/preprelease/lifetime_test.go:179` | The store-discard test helper copies are incidental text.
 - S8 | no-op | confidence 1 | `internal/worktree/protection.go:77` | The observer row references one validator function.
 
+PL-C5 round r1: 1 finding. Worst issue: S1, the reclaim scan derives the store-name prefix a second time.
+
+- S1 | auto-fix | confidence 8 | `internal/subprocess/protection/directory.go:126` | `ObserveRecorded` filtered stores with its own copy of the name prefix that `Store` produces. A naming change would make reclaim skip every store. One `storePrefix` helper now owns it. Owner: ticket 12.
+
 ## Spec
 
 PL-C1 round r1: 0 findings. Worst issue: none.
@@ -10417,6 +10565,14 @@ PL-C4 round r1: 6 findings. Worst issue: P2, a rebuilt selection's Close failure
 - P4 | no-op | confidence 2 | `internal/worktree/reset_apply.go:116-123` | The spec requires only that the store survive reset.
 - P5 | no-op | confidence 1 | `internal/worktree/exec.go:91-95` | Exit 1 after the wait delay is the required behavior.
 - P6 | no-op | confidence 1 | `internal/subprocess/protection/store.go:211` | The protection package does not build for Windows.
+
+PL-C5 round r1: 5 findings. Worst issue: P2, a protection failure printed no user and a nil cause.
+
+- P1 | veto | confidence 6 | `internal/systemtest/process_lifetime_preservation_test.go` | The matrix compared author expectations, not a baseline binary. The reviewer chose each row's contract plus one demonstrated red per row. Owner: ticket 13.
+- P2 | auto-fix | confidence 6 | `internal/subprocess/outcome.go:21-23` | `Uncertified` printed "process protection protected: <nil>" and only the first failing category. It now names the users and every unresolved part. Owner: ticket 13.
+- P3 | no-op | confidence 5 | `internal/systemtest/process_lifetime_callers_test.go:134-145` | The shift deadline path prints no `shift_result`. The cause predates this build, so a learning records it. Owner: none in this build.
+- P4 | auto-fix | confidence 5 | `internal/systemtest/process_lifetime_preservation_test.go` | Gate and exec lacked the start-failure shape, and bounds lacked the timeout projection. Owner: ticket 13.
+- P5 | auto-fix | confidence 5 | `internal/systemtest/process_lifetime_artifacts_test.go:76-113` | The completed-owners test did not check the private test directory or a worktree store. Owner: ticket 13.
 
 ## Coverage
 
@@ -10461,6 +10617,10 @@ PL-C4 round r4: 1 finding. Worst issue: C4-COV-r4-1, exec can report success ove
 
 - C4-COV-r4-1 | auto-fix | confidence 5 | `internal/worktree/exec.go:175-177` | No test bites exit 1 for a failed stream with child zero (ticket 11:20, :40). A test in `exec_lifetime_test.go` closes it. Owner: ticket 11.
 
+PL-C5 round r1: 1 finding. Worst issue: C5-COV-1, reclaim could pass an unreadable store with no red.
+
+- C5-COV-1 | auto-fix | confidence 5 | `internal/subprocess/protection/directory.go:107-133` | No test covered the fail-closed branches of `ObserveRecorded` for an unreadable store record or root. `TestObserveRecordedFailsClosed` now covers both. Owner: ticket 12.
+
 ## Advice
 
 - The bounds runner does not forward a caller's `cmd.Stdin`; no current caller sets it.
@@ -10493,3 +10653,6 @@ PL-C4 round r4: 1 finding. Worst issue: C4-COV-r4-1, exec can report success ove
 - PL-C4 r2: `withCleanupFailure` always exits 1, so the raw child code shows only in the report.
 - PL-C4 r3: two probe tests write the `mutant_report` heading by hand. A shared helper that renders it through `toon.TableTyped` would keep one source.
 - PL-C4 r5: the `process stream` prefix is formatted in `internal/subprocess/outcome.go` and `internal/bounds/bounds.go`, and two tests repeat it. One exported formatter would keep one source.
+- PL-C5 r2: the group-publish line has a remaining copy in `internal/systemtest/process_lifetime_shift_test.go`.
+- PL-C5 r2: the protection diagnostic names its state twice.
+- PL-C5 r2: the reclaim path match is literal, so a target spelled through a symlinked parent has no test.
