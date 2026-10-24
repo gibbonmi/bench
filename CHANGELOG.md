@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Shift checkpoint response
+
+- Fixed `bench shift`, which now prints its progress lines and its `shift_result` block when the wall deadline, a signal, or a teardown failure stops it at a checkpoint. The exit code does not change. Before, the shift exited the process at the checkpoint before its bounded response printed, so stdout was empty.
+
 ### Reset restore keeps later commits
 
 - Fixed `bench worktree reset --restore`, which now keeps the branch tip when the branch has commits after the envelope's tip. The restore merges the preserved index and working tree onto that tip. A merge conflict, or a branch that does not contain the envelope's tip, refuses the plan before any write. Before, the restore moved the branch back to the envelope's tip and dropped the later commits.

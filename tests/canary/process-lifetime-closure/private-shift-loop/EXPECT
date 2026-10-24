@@ -1,1 +1,1 @@
-internal/shift/session.go:211 sends syscall.SIGKILL to -cmd.Process.Pid outside internal/subprocess
+internal/shift/session.go:216 sends syscall.SIGKILL to -cmd.Process.Pid outside internal/subprocess
