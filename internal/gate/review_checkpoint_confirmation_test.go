@@ -298,7 +298,7 @@ func TestReviewCheckpointConfirmationRefusals(t *testing.T) {
 			moved := ""
 			if tc.change != nil {
 				moved = tc.change(f, reviewed)
-				f.Save()
+				resave(t, f, "retain the "+tc.name)
 			}
 			reason := strings.NewReplacer("<base>", f.Record.Chunks[0].Base, "<reviewed>", reviewed, "<moved>", moved).Replace(tc.reason)
 			code, out := runCheckpoint(t, f)

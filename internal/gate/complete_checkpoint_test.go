@@ -95,6 +95,20 @@ func assertNoOracleRun(t *testing.T, f *recordtest.Fixture) {
 	}
 }
 
+// requireCleanCheckoutRefusal requires that a checkpoint run of f refused its dirty checkout
+// alone: exit 1, no evidence reason, a next= route that commits the checkout, and no oracle
+// run.
+func requireCleanCheckoutRefusal(t *testing.T, f *recordtest.Fixture, code int, out, evidence string) {
+	t.Helper()
+	if code != 1 || !strings.Contains(out, cleanCheckoutRefusal) || strings.Contains(out, evidence) {
+		t.Errorf("dirty checkpoint = (%d, %q), want exit 1 and only %q", code, out, cleanCheckoutRefusal)
+	}
+	if !strings.Contains(out, "\nnext=bench commit --in ") {
+		t.Errorf("dirty checkpoint = %q, want a next= route that commits the checkout", out)
+	}
+	assertNoOracleRun(t, f)
+}
+
 func TestCompleteCheckpointGradesTheClosedTree(t *testing.T) {
 	f := closureSource(t, true)
 	if result := Execute(context.Background(), f.Root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
@@ -239,14 +253,7 @@ func TestCompleteCheckpointRefusesADirtyCheckout(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			f := tc.dirty(t)
 			code, out := completeCheckpoint(t, f)
-			if code != 1 || !strings.Contains(out, cleanCheckoutRefusal) || strings.Contains(out, "completion is incomplete or stale") {
-				t.Errorf("dirty complete checkpoint = (%d, %q), want exit 1 and only %q", code, out, cleanCheckoutRefusal)
-			}
-			// The refusal names the commit that cleans the checkout.
-			if !strings.Contains(out, "\nnext=bench commit --in ") {
-				t.Errorf("dirty complete checkpoint = %q, want a next= route that commits the checkout", out)
-			}
-			assertNoOracleRun(t, f)
+			requireCleanCheckoutRefusal(t, f, code, out, "completion is incomplete or stale")
 		})
 	}
 	// A fresh caller's rerun stays fresh, though the face does not force it.

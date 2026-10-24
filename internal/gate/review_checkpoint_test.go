@@ -98,7 +98,7 @@ func TestReviewCheckpoint(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			f := checkpointFixture(t)
 			tc.change(f)
-			f.Save()
+			resave(t, f, "retain the invalid evidence")
 			code, out := runCheckpoint(t, f)
 			if code == 0 || !strings.Contains(out, tc.reason) {
 				t.Fatalf("checkpoint accepted invalid evidence or lost reason: exit %d: %s", code, out)
@@ -135,7 +135,7 @@ func TestReviewCheckpointReuse(t *testing.T) {
 		t.Fatalf("chunk green satisfied complete purpose: %d runs", got)
 	}
 	f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
-	f.Save()
+	resave(t, f, "drop the Coverage review")
 	if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "missing Coverage") {
 		t.Fatalf("record mutation reused green: %d %s", code, out)
 	}
@@ -230,7 +230,7 @@ func TestReviewCheckpointCanonicalAxes(t *testing.T) {
 				}
 			}
 			f.Record.Chunks[0].Reviews = reviews
-			f.Save()
+			resave(t, f, "omit the "+axis+" review")
 			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "missing "+axis) {
 				t.Fatalf("canonical axis omitted without refusal: %d %s", code, out)
 			}
@@ -275,6 +275,7 @@ func TestReviewCheckpointMissingRecord(t *testing.T) {
 	if err := os.Remove(filepath.Join(f.Root, "reviews/example.md")); err != nil {
 		t.Fatal(err)
 	}
+	f.Commit("remove the review record")
 	if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "retain a valid native result record") {
 		t.Fatalf("missing legacy record passed checkpoint: %d %s", code, out)
 	}
@@ -294,6 +295,7 @@ func TestReviewCheckpointRefusalRoute(t *testing.T) {
 			if err := os.Remove(filepath.Join(f.Root, "reviews/example.md")); err != nil {
 				t.Fatal(err)
 			}
+			f.Commit("remove the review record")
 		}},
 		{"missing plan", "completion evidence", func(f *recordtest.Fixture) {
 			f.Write(recordtest.Spec, "# Example\n\nStatus: staged\n")
@@ -367,7 +369,7 @@ func TestReviewCheckpointFindingAndReviewIdentity(t *testing.T) {
 			case "pair":
 				r.Tip = f.Record.Chunks[0].Base
 			}
-			f.Save()
+			resave(t, f, "retain the invalid "+kind)
 			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "Standards") {
 				t.Fatalf("invalid axis accepted: %d %s", code, out)
 			}

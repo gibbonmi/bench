@@ -53,8 +53,9 @@ var gateFaces = []Face{
 		Route:     []Step{Command(Text("bench record"), Fact(FactForm), Text("--help"))},
 	},
 	{
-		// The landing publishes only committed bytes, so the caller commits its own
-		// uncommitted work and grades the committed source again.
+		// The landing publishes only committed bytes, and the chunk checkpoint grades only
+		// committed bytes. So the caller commits its own uncommitted work and grades the
+		// committed source again.
 		Verb:      Gate,
 		Name:      "checkpoint-dirty-checkout",
 		Authority: Agent,

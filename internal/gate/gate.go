@@ -179,9 +179,9 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 
 // RunCommand executes the gate-run plumbing command and records its completed verdict.
 // It uses the first non-flag argument as root, or the current repository root. --fresh
-// requires execution instead of reuse; it can appear on either side of root. A complete
-// checkpoint grades the tree that the landing publishes from the committed source; every
-// other run grades the checkout.
+// requires execution instead of reuse; it can appear on either side of root. A checkpoint
+// refuses a checkout with an uncommitted change. A complete checkpoint grades the tree that
+// the landing publishes from the committed source; every other run grades the checkout.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
 	root, mode, checkpoint, err := parseGateArgs(args, true)
 	if err != nil {
@@ -198,13 +198,15 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	ctx, finishSpan := beginGateSpan(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, mode.String())
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, mode.String())
-	// The candidate check precedes both execute paths, so its refusal comes before the owner
-	// lookup, the review-record read, and the chunk-gap write.
+	// The candidate check precedes every execute path, so its refusal comes before the
+	// clean-checkout check, the owner lookup, the review-record read, and the chunk-gap write.
 	result, refused := refuseUninstalled(ctx, root, checkpoint, stderr, mode)
 	switch {
 	case refused:
 	case checkpoint.Complete:
 		result = executeCompleteCheckpoint(ctx, root, checkpoint.Spec, stdout, stderr, notifyGateSignals, mode)
+	case checkpoint.Chunk != "":
+		result = executeChunkCheckpoint(ctx, root, stdout, stderr, notifyGateSignals, mode)
 	default:
 		result = executeAfterAcquire(ctx, root, stdout, stderr, notifyGateSignals, mode)
 	}

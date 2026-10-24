@@ -282,8 +282,8 @@ func gateFaceFixtures() []gateFaceFixture {
 }
 
 // evidenceFixture is the completion-evidence fixture: a delivery that the preflight read
-// grades green, with its review record removed. The read reports the gap, and the operator
-// writes the record back. The chunk is the one the conformant plan declares.
+// grades green, with its review record removed in a commit. The read reports the gap, and the
+// operator commits the record again. The chunk is the one the conformant plan declares.
 func evidenceFixture(record string) gateFaceFixture {
 	var saved []byte
 	return gateFaceFixture{
@@ -298,9 +298,14 @@ func evidenceFixture(record string) gateFaceFixture {
 			if err := os.Remove(filepath.Join(root, record)); err != nil {
 				t.Fatal(err)
 			}
-			return gateSet{f: &recordtest.Fixture{T: t, Root: root}}
+			f := &recordtest.Fixture{T: t, Root: root}
+			f.Commit("remove the review record")
+			return gateSet{f: f}
 		},
-		after: func(_ *testing.T, set gateSet) { set.f.Write(record, string(saved)) },
+		after: func(_ *testing.T, set gateSet) {
+			set.f.Write(record, string(saved))
+			set.f.Commit("restore the review record")
+		},
 	}
 }
 
@@ -318,9 +323,13 @@ func repairFixture(record string) gateFaceFixture {
 			saved = readFile(t, set.f.Root, record)
 			set.f.Record.Chunks[0].Reviews = set.f.Record.Chunks[0].Reviews[:2]
 			set.f.Save()
+			set.f.Commit("drop the Coverage review")
 			return set
 		},
-		after: func(_ *testing.T, set gateSet) { set.f.Write(record, string(saved)) },
+		after: func(_ *testing.T, set gateSet) {
+			set.f.Write(record, string(saved))
+			set.f.Commit("restore the Coverage review")
+		},
 	}
 }
 

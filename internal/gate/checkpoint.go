@@ -218,6 +218,44 @@ func refuseUninstalled(ctx context.Context, root string, checkpoint Checkpoint, 
 	return refuseWith(ctx, root, stderr, mode, face, err.Error(), raised.Values), true
 }
 
+// cleanCheckoutRefusal names the recovery for a checkpoint on a dirty checkout.
+const cleanCheckoutRefusal = "checkpoint requires a clean checkout: commit or remove each uncommitted change"
+
+// committedSource answers the HEAD commit of root and its tree. A checkpoint grades only
+// committed bytes, so a working tree that differs from that tree refuses, and the review
+// record has no exemption. It also answers whether it refused, and the refusal. A caller runs
+// it before the evidence pass and the oracle.
+func committedSource(ctx context.Context, root string, stderr io.Writer, mode runMode) (string, string, Result, bool) {
+	unavailable := func(err error) (string, string, Result, bool) {
+		return "", "", refuse(ctx, root, stderr, mode, faceSubjectUnavailable, "checkpoint source unavailable: "+err.Error()), true
+	}
+	tip, err := benchgit.ResolveCommit(root, "HEAD")
+	if err != nil {
+		return unavailable(err)
+	}
+	tree, err := benchgit.Output("-C", root, "rev-parse", "--verify", tip+"^{tree}")
+	if err != nil {
+		return unavailable(err)
+	}
+	working, err := workingTreeSource{root: root}.tree()
+	if err != nil {
+		return unavailable(err)
+	}
+	if working != tree {
+		return "", "", refuse(ctx, root, stderr, mode, faceDirtyCheckout, cleanCheckoutRefusal), true
+	}
+	return tip, tree, Result{}, false
+}
+
+// executeChunkCheckpoint grades the checkout of root under the chunk checkpoint that ctx
+// carries, once committedSource accepts that checkout.
+func executeChunkCheckpoint(ctx context.Context, root string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
+	if _, _, refusal, refused := committedSource(ctx, root, stderr, mode); refused {
+		return refusal
+	}
+	return executeAfterAcquire(ctx, root, stdout, stderr, arm, mode)
+}
+
 // rerunArguments composes the caller's gate arguments, each value rendered by Arg. A fresh
 // rerun names --fresh.
 func rerunArguments(checkpoint Checkpoint, fresh bool) string {

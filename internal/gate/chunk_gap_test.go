@@ -122,6 +122,7 @@ func TestRedCheckpointOpensNoGap(t *testing.T) {
 	f := chunkCheckpoint(t, 2, true)
 	f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
 	f.Save()
+	f.Commit("drop the Coverage review")
 	if code, out := checkpointChunk(t, f); code == 0 || !strings.Contains(out, "missing Coverage") {
 		t.Fatalf("checkpoint = exit %d: %s; want the missing Coverage refusal", code, out)
 	}

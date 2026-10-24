@@ -146,6 +146,7 @@ func TestCheckpointPersistedFields(t *testing.T) {
 		f, _ := declaredBuild(t, "build", 2)
 		f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
 		f.Save()
+		f.Commit("drop the Coverage review")
 		commitmenttest.RequireLedgerKept(t, f.Root, func() { refuseUninstalled(t, f, chunkArgs) })
 	})
 	t.Run("complete", func(t *testing.T) {

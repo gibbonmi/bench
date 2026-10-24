@@ -104,6 +104,7 @@ func TestGateCheckpointRoute(t *testing.T) {
 	}
 	f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
 	f.Save()
+	f.Commit("drop the Coverage review")
 	_, diagnostic, code = gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--chunk", "1")
 	if code == 0 || !strings.Contains(diagnostic, "missing Coverage") {
 		t.Fatalf("public wrapper lost checkpoint: %d %s", code, diagnostic)
