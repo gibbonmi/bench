@@ -136,10 +136,6 @@ func uncoveredFold(root, from, tip string) string {
 // follows reports whether the source digest of commit equals covered or differs from it
 // only by a comment-only gap.
 func follows(root, spec, commit, covered string) bool {
-	tree, err := sourceTree(root, commit)
-	if err != nil {
-		return false
-	}
-	digest, err := SourceDigest(root, tree, spec)
+	digest, err := commitDigest(root, spec, commit)
 	return err == nil && commentgap.Prove(root, covered, digest) == nil
 }

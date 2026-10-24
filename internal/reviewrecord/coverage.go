@@ -80,11 +80,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			}
 		}
 		if previous != nil {
-			baseTree, err := benchgit.Output("-C", root, "rev-parse", "--verify", chunk.Base+"^{tree}")
-			if err != nil {
-				return err
-			}
-			baseDigest, err := SourceDigest(root, baseTree, record.Spec)
+			baseDigest, err := commitDigest(root, record.Spec, chunk.Base)
 			if err != nil {
 				return err
 			}
