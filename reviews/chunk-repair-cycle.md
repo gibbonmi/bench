@@ -2213,6 +2213,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "rc-c4-r2-standards",
+          "performer": "claude:rc-c4-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-standards-r2",
+            "digest": "sha256:d535a58c7d12372061a8c61e82f621118822b51a716175e77344c73d64b0735a",
+            "excerpt": "## Standards\n\nRC-C4 confirming round (repair delta a91c31f29..0ddd2727d). S1: closed. The absent-policy skip is stated once, at gate_prose.go:237-250, and TestChunkCheckpointSkipsTheRecordGradeWithNoPolicy pins it. S2: closed. The checkpoint-record-prose face is in the registry at faces_gate.go:64-71, and the recovery text constant is gone. No new finding at severity 5 or more.\n\n### Advice\n- refusal_route_test.go is at its 400-line ceiling, so a later addition needs a split.\n- proseFixture couples the route walk to the prose fixture shape.\n"
+          },
+          "axis": "Standards",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c4-r2-spec",
+          "performer": "claude:rc-c4-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-spec-r2",
+            "digest": "sha256:be5ffe94c94d9f47111a8e72b748ea8bd42ec260af84d993a2fe03db1c71f69d",
+            "excerpt": "## Spec\n\nRC-C4 confirming round (repair delta a91c31f29..0ddd2727d). P1: closed. stage_test.go:202-205 requires the no-excerpt refusal from ownedStages. P2: closed. Spec line 203 and flagged addition 16 record the absent-policy skip, and a test pins it. P3: closed. executeChunkCheckpoint runs through executeTreeWithOwner, as spec line 197 states. RC39, RC40, RC41, RC44, RC46, and RC48 still hold. No new finding at severity 5 or more.\n"
+          },
+          "axis": "Spec",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c4-r2-coverage",
+          "performer": "claude:rc-c4-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-coverage-r2",
+            "digest": "sha256:bb4fe6bb4d1ae2ad7da9d49f6a41329b5cc816fda19588ae78eb17fd89636f7e",
+            "excerpt": "## Coverage\n\nRC-C4 confirming round (repair delta a91c31f29..0ddd2727d). C1, C2, C3, and C4: closed, and the repair mutant set bit each row. P1: closed. One probe of the ownedStages guard in ticket.go bit TestGateRequirementKeepsTheNativeExcerpt and restored the file. No new finding at severity 5 or more.\n\n### Advice\n- No test pins the prose grade's own refusal of a linked record alone, because the evidence pass refuses the link first.\n"
+          },
+          "axis": "Coverage",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4-r1-coverage"
+          ]
         }
       ]
     }
@@ -2386,7 +2452,7 @@ RC-C2B consumed repair cycle 1 of 2 after its initial review (round r1). The rep
 
 RC-C3 consumed repair cycle 1 of 2 after its initial review (round r1). The test-only repair of ticket 04 at `a469af522` closed C1 and C3, and the coordinator confirmation `rc-c3-confirm-1` replaced a confirming round. That repair recorded only ticket 04's entries at its own commit, and ticket 05's entries at `0b649e867` carried forward with no restage.
 
-RC-C4 consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided S1, S2, P2, P3, and C4 on 2026-10-24. Opus/medium and sonnet/high agreed on P3. The fable/medium tie-break chose the skip and the face.
+RC-C4 consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided S1, S2, P2, P3, and C4 on 2026-10-24. Opus/medium and sonnet/high agreed on P3. The fable/medium tie-break chose the skip and the face. The repair at `0ddd2727d` closed S1, S2, P1 to P3, and C1 to C4. The confirming round r2 passed on all three axes with no new finding.
 
 ## Standards
 
@@ -2476,3 +2542,5 @@ RC-C4 round r1: 4 findings. Worst issue: C1, a non-empty exclusion policy that n
 
 - RC-C4: the tip-guard preset in `checkpoint.go` has no test.
 - RC-C4: three conditions mark a chunk checkpoint without one source.
+- RC-C4: `refusal_route_test.go` is at its 400-line ceiling, so a later addition needs a split.
+- RC-C4: no test pins the prose grade's own refusal of a linked record, because the evidence pass refuses the link first.
