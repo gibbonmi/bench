@@ -32,6 +32,8 @@ and review cost that recent builds paid.
 
 ## Delivery queue
 
+**FT445 (HIGH) — a chunk repair commits once with no restage, and the checkpoint gate alone grades the chunk tip.**
+
 **FT215 (HIGH, decision required) — the path-aware lane closes its correctness edges before cost tuning.**
 
 **FT258 (HIGH, decision required) — `bench commit` derives a complete change set from the checkout.**
@@ -54,7 +56,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT366 (MEDIUM) — a PreToolUse guard refuses a pathless `rg` call through the shared command projection.**
 
-**FT362 (MEDIUM) — `subprocess` owns the process-group run, and the profile claim matches the tree.**
+**FT446 (MEDIUM) — a retired cache store leaves with its cache, inherited registration has one owner, and the Darwin witness runs.**
 
 **FT364 (MEDIUM, decision required) — the release machinery that no caller reaches is cut or parked.**
 
@@ -175,6 +177,7 @@ and the small cuts. The rows below hold the rest.
 **FT441 (MEDIUM, decision required) — the spec author re-reads each cited source and walks each lifecycle, and the spec review grades rows against the tree.**
 
 **FT442 (LOW) — a build widens each consumer file of a touched declaration before dispatch.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
