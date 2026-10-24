@@ -8,7 +8,7 @@ Decision source: Named reviewed artifact `roadmap/FT445.md`, with the reviewer a
 
 Persisted fields: review-record:chunks.verification.source_commit
 
-Verification log: 0 iteration(s) to accept — pending the spec review.
+Verification log: 4 iteration(s) to accept — the spec round took 2 (B1: the prepared run kept the tip-moved guard; B2: the delta operands read the stale record tip), and the ticket round took 2 (three chunks each held a seam ticket and its consumer).
 
 ## Problem
 
@@ -613,7 +613,7 @@ The walk applies the profile's hostile-input checklist to the record, the gate, 
 | Separate capability | Estimated work | Reason |
 |---|---|---|
 | FT314 landing reuse under the complete authorization key | 5 edits, 2 gate runs | Its own outcome owns the landing key. |
-| A pre-publication build preflight for each plan commit (FT380-residual) | 4 edits, 2 gate runs | Its criterion conflicts with change 4 and needs a reviewer decision. |
+| A pre-publication build preflight for each plan commit (FT380-residual) | 4 edits, 2 gate runs | The reviewer narrowed its criterion to one preflight before each dispatch on 2026-10-24. |
 | The standalone `bench record chunk` refusal after an assignment record (`docs/known-issues.md:13`) | 2 edits, 1 gate run | `bench record ticket` already applies the amendment step, and only the standalone form keeps the refusal. |
 | A file-overlap skip of owed checks | 6 edits, 2 gate runs | FT445 excludes it. |
 
@@ -674,6 +674,14 @@ Each item below goes beyond the literal decision source. Each cites its research
 4. The profile states that reduced-scope records are never authored (`projects/benchkit.md:469-473`) and that no stripped-subject phase schedule exists (lines 387-389). FT445 change 7 reverses both for the delta checkpoint. ADR 0002 posture 5 says that the subject binds the working tree. The reviewer approved the changes in FT445, and RC47 and RC75 update the text.
 5. `TestReviewCheckpointReuse` (`internal/gate/review_checkpoint_test.go:117-125`) pins that an ordinary green never satisfies a checkpoint. Under the new key, any whole green over the same stripped subject and oracle can serve, because the evidence pass still runs. The RC-C4 ticket rewrites that pin.
 6. FT445 change 6 reverses a deliberate strip in exec (`internal/worktree/exec.go:217-229`, `TestExecChildOwnsRatherThanInheritsItsRunBinary`). RC76 can stop it.
+
+### Reviewer decisions at sign-off (2026-10-24)
+
+1. The reviewer approved this spec and its 13 tickets, and vetoed no flagged contradiction.
+2. The spec-stage commitment plan narrows `FT380-residual.before-publication` to one build preflight before each dispatch. A plan commit that no dispatch follows keeps `--preflight-build`.
+3. The same plan records `FT380-plan-commit.preflight-build` as superseded by FT445. It also states in `FT405.verb` that any ticket's record call can refreeze the chunk.
+4. `internal/gate/` takes three new files over its directory budget: `delta_checkpoint.go`, `delta_checkpoint_test.go`, and `checkpoint_prepare_test.go`.
+5. From RC-C3 on, this build records each ticket at its own commit, and no ticket restages. By then, the installed candidate holds the RC-C2B record rules.
 
 ### Bootstrap authority
 
