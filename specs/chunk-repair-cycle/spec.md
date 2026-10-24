@@ -280,10 +280,10 @@ The worktree assignment owns `dist/bench`, and `Close` does nothing for an inher
 | RC-C1 / 01-exempt-the-assignment-block.md | A test-only repair with an assignment-only plan commit closes through the confirmation | RC1, RC2, RC3, RC4, RC5, RC6, RC7 | Confirmation refusals, checkpoint confirmation, known-issues anchor | no |
 | RC-C2 / 02-grade-entries-at-their-own-commit.md, 03-record-entries-at-the-own-commit.md | Each entry binds to its own commit, with no restage | RC8, RC9, RC10, RC11, RC12, RC13, RC14, RC15, RC16, RC17, RC18, RC19, RC20, RC21, RC22, RC23, RC24 | Record ticket, checkpoint evidence, ownership premise, parser | yes |
 | RC-C3 / 04-grade-the-floor-per-chunk.md, 05-one-plan-commit-and-preflight-per-dispatch.md | Chunk-level floor, one plan commit for each repair, and one preflight for each dispatch | RC25, RC26, RC27, RC28, RC29, RC30, RC31, RC32, RC33, RC84 | Check floor, assignment order, guidance budgets | no |
-| RC-C4 / 06-key-the-chunk-checkpoint-without-the-record.md, 07-prepare-the-checkpoint-gate.md | The prepared gate runs beside the review or confirmation, and the checkpoint reuses its green | RC34, RC35, RC36, RC37, RC38, RC39, RC40, RC41, RC42, RC43, RC44, RC45, RC46, RC47, RC48, RC49, RC50, RC51, RC52 | Prepare, reuse, evidence pass, record prose, dirty checkout, landing key | yes |
-| RC-C5 / 08-list-the-system-suite-in-the-selector.md | The selector and the floor select the system check | RC53, RC54, RC55, RC56, RC57 | Changed selection, writes floor | no |
-| RC-C6 / 09-run-the-delta-checkpoint.md | A test-only delta takes a delta checkpoint that no whole consumer accepts | RC58, RC59, RC60, RC61, RC62, RC63, RC64, RC65, RC66, RC67, RC68, RC69, RC70, RC71, RC72, RC73, RC74, RC75, RC82, RC83 | Delta checkpoint, delta operands, verdict class guard, complete checkpoint | yes |
-| RC-C7 / 10-measure-the-run-binary-cost.md, 11-reuse-the-worktree-binary-in-exec.md | Exec calls of Bench commands reuse a fresh worktree binary | RC76, RC77, RC78, RC79, RC80, RC81 | Exec environment, run-binary inherit | no |
+| RC-C4 / 06-refuse-a-dirty-chunk-checkout.md, 07-key-the-chunk-checkpoint-without-the-record.md, 08-prepare-the-checkpoint-gate.md | The prepared gate runs beside the review or confirmation, and the checkpoint reuses its green | RC34, RC35, RC36, RC37, RC38, RC39, RC40, RC41, RC42, RC43, RC44, RC45, RC46, RC47, RC48, RC49, RC50, RC51, RC52 | Prepare, reuse, evidence pass, record prose, dirty checkout, landing key | yes |
+| RC-C5 / 09-list-the-system-suite-in-the-selector.md | The selector and the floor select the system check | RC53, RC54, RC55, RC56, RC57 | Changed selection, writes floor | no |
+| RC-C6 / 10-run-the-delta-checkpoint.md, 11-record-and-reuse-the-delta-green.md | A test-only delta takes a delta checkpoint that no whole consumer accepts | RC58, RC59, RC60, RC61, RC62, RC63, RC64, RC65, RC66, RC67, RC68, RC69, RC70, RC71, RC72, RC73, RC74, RC75, RC82, RC83 | Delta checkpoint, delta operands, verdict class guard, complete checkpoint | yes |
+| RC-C7 / 12-measure-the-run-binary-cost.md, 13-reuse-the-worktree-binary-in-exec.md | Exec calls of Bench commands reuse a fresh worktree binary | RC76, RC77, RC78, RC79, RC80, RC81 | Exec environment, run-binary inherit | no |
 
 RC-C1 comes first, because change 3 needs the exemption. RC-C2 must land before RC-C3, because the chunk-level floor assumes that each entry is graded at its own commit. RC-C4 must land before RC-C6, because the delta checkpoint shares the prepared run decision and the subject key. RC-C5 lands before RC-C6, as precondition 3 requires. RC-C7 ships last, and its measurement can stop it.
 
@@ -334,7 +334,7 @@ The authored version 1 plan states the verification obligations. The approved bu
     },
     {
       "id": "RC-C4",
-      "tickets": ["06-key-the-chunk-checkpoint-without-the-record.md", "07-prepare-the-checkpoint-gate.md"],
+      "tickets": ["06-refuse-a-dirty-chunk-checkout.md", "07-key-the-chunk-checkpoint-without-the-record.md", "08-prepare-the-checkpoint-gate.md"],
       "verification": [
         {"id": "gate", "command": "bench test --package ./internal/gate"},
         {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
@@ -348,7 +348,7 @@ The authored version 1 plan states the verification obligations. The approved bu
     },
     {
       "id": "RC-C5",
-      "tickets": ["08-list-the-system-suite-in-the-selector.md"],
+      "tickets": ["09-list-the-system-suite-in-the-selector.md"],
       "verification": [
         {"id": "testreport", "command": "bench test --package ./internal/testreport"},
         {"id": "preflight", "command": "bench test --package ./internal/preflight"},
@@ -358,7 +358,7 @@ The authored version 1 plan states the verification obligations. The approved bu
     },
     {
       "id": "RC-C6",
-      "tickets": ["09-run-the-delta-checkpoint.md"],
+      "tickets": ["10-run-the-delta-checkpoint.md", "11-record-and-reuse-the-delta-green.md"],
       "verification": [
         {"id": "gate", "command": "bench test --package ./internal/gate"},
         {"id": "testgap", "command": "bench test --package ./internal/testgap"},
@@ -371,7 +371,7 @@ The authored version 1 plan states the verification obligations. The approved bu
     },
     {
       "id": "RC-C7",
-      "tickets": ["10-measure-the-run-binary-cost.md", "11-reuse-the-worktree-binary-in-exec.md"],
+      "tickets": ["12-measure-the-run-binary-cost.md", "13-reuse-the-worktree-binary-in-exec.md"],
       "verification": [
         {"id": "worktree", "command": "bench test --package ./internal/worktree"},
         {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
