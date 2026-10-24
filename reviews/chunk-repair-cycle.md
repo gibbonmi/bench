@@ -402,6 +402,45 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "rc-c1-confirm-1",
+          "performer": "claude:rc-orchestrator-20261024",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:rc-orchestrator-20261024:rc-c1-confirm-1",
+            "digest": "sha256:be67f8d53537ad94d60da4d32324be19e865e17bba63be884cd4d2c4ced31073",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,4,TestFindReviewedPairRefusesASpecChange/version_1_plan,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,272\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1679\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,18038,272\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestFindReviewedPairRefusesASpecChange/version_1_plan,\"confirmation_test.go:205: reviewed pair error = <nil>, want \\\"the delta to the chunk tip is not test-only: specs/example/spec.md: the change reaches beyond the assignment block of the completion plan\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/author_limit,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/final_requirement,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesASpecProseChange,\"confirmation_test.go:229: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "59386368bcdacf9545d599eb5201311250ad84eb",
+          "reviewed_tip": "ab1f498ff019cd1548677d142a63ec10b0e38326",
+          "repaired_tip": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "finding_ids": [
+            "P1",
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "disable the byte comparison of the cleared spec documents in proveTestOnly",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:rc-orchestrator-20261024:rc-c1-confirm-1",
+              "digest": "sha256:be67f8d53537ad94d60da4d32324be19e865e17bba63be884cd4d2c4ced31073",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,4,TestFindReviewedPairRefusesASpecChange/version_1_plan,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,272\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1679\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,18038,272\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestFindReviewedPairRefusesASpecChange/version_1_plan,\"confirmation_test.go:205: reviewed pair error = <nil>, want \\\"the delta to the chunk tip is not test-only: specs/example/spec.md: the change reaches beyond the assignment block of the completion plan\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/author_limit,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/final_requirement,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesASpecProseChange,\"confirmation_test.go:229: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -428,7 +467,7 @@
 
 ## Repair state
 
-RC-C1 consumed repair cycle 1 of 2 after its initial review (round r1). The run is under `--auto-approve`, so a later cycle past the allowance needs no stop.
+RC-C1 consumed repair cycle 1 of 2 after its initial review (round r1). The test-only repair at `2a1619cc0` closed P1 and C1 to C4, and the coordinator confirmation `rc-c1-confirm-1` replaced a confirming round. The run is under `--auto-approve`, so a later cycle past the allowance needs no stop.
 
 ## Standards
 
