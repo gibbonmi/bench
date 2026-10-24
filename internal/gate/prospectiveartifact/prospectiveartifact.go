@@ -15,6 +15,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // BundlePrefix names every prospective artifact bundle root. The prefix is the sweep's
@@ -24,8 +25,13 @@ const BundlePrefix = "bench-prospective-artifact-"
 // RecordName is the owner record's fixed name inside a bundle root.
 const RecordName = "owner.json"
 
-// RecordSchema is the one owner-record schema this version publishes and accepts.
-const RecordSchema = 1
+// RecordSchema is the owner-record schema this version publishes. It adds the protection
+// generation to the legacy schema.
+const RecordSchema = 2
+
+// LegacySchema is the owner record without a protection generation. The reader accepts it,
+// but it proves no user set, so the sweep retains its bundle.
+const LegacySchema = 1
 
 // RecordMode is the private mode the owner publishes its record with. A record any other
 // account can read, or the owner cannot rewrite, is not a published record.
@@ -35,11 +41,13 @@ const RecordMode os.FileMode = 0o600
 const CheckoutName = "checkout"
 
 // Record is the owner record's wire shape: the schema, the process that owns the bundle,
-// and the canonical Git common directory naming the repository the bundle belongs to.
+// the canonical Git common directory naming the repository the bundle belongs to, and the
+// bundle's protection generation. An owner without a protocol names no generation.
 type Record struct {
-	Schema    int    `json:"schema"`
-	OwnerPID  int    `json:"owner_pid"`
-	CommonDir string `json:"common_dir"`
+	Schema     int    `json:"schema"`
+	OwnerPID   int    `json:"owner_pid"`
+	CommonDir  string `json:"common_dir"`
+	Protection string `json:"protection,omitempty"`
 }
 
 // Owner holds one prospective checkout bundle.
@@ -47,6 +55,8 @@ type Owner struct {
 	root       string
 	repository string
 	remove     func(string, string) error
+	protocol   *protection.Protocol
+	generation protection.Generation
 	closeOnce  sync.Once
 	closeErr   error
 }
@@ -57,11 +67,13 @@ func (o *Owner) Root() string { return o.root }
 // Checkout returns the fixed checkout child path.
 func (o *Owner) Checkout() string { return filepath.Join(o.root, CheckoutName) }
 
-// Factory supplies the operating-system seams for a bundle owner.
+// Factory supplies the operating-system seams for a bundle owner. An unset Protection is the
+// installed protocol, and a process with none protects nothing.
 type Factory struct {
-	TempRoot string
-	Probe    func(int) error
-	Remove   func(string, string) error
+	TempRoot   string
+	Probe      func(int) error
+	Remove     func(string, string) error
+	Protection *protection.Protocol
 }
 
 // Open creates a bundle owner for repository.
@@ -83,17 +95,29 @@ func (f Factory) Open(repository string) (*Owner, error) {
 	if remove == nil {
 		remove = removeWorktree
 	}
-	if err := sweep(base, repository, common, f.probe(), remove); err != nil {
+	protocol := f.Protection
+	if protocol == nil {
+		protocol = protection.Installed()
+	}
+	if err := sweep(base, repository, common, f.probe(), remove, protocol); err != nil {
 		return nil, err
 	}
 	root, err := os.MkdirTemp(base, BundlePrefix)
 	if err != nil {
 		return nil, fmt.Errorf("create prospective artifact bundle: %w", err)
 	}
-	o := &Owner{root: root, repository: repository, remove: remove}
+	o := &Owner{root: root, repository: repository, remove: remove, protocol: protocol}
 	record := Record{Schema: RecordSchema, OwnerPID: os.Getpid(), CommonDir: common}
+	// The generation opens before the record names it and before any checkout use.
+	if protocol != nil {
+		if o.generation, err = bundleDirectory.Open(protocol, root); err != nil {
+			_ = os.RemoveAll(root)
+			return nil, fmt.Errorf("protect prospective artifact bundle: %w", err)
+		}
+		record.Protection = o.generation.Resource.ResourceID
+	}
 	if err := Publish(root, record); err != nil {
-		_ = os.RemoveAll(root)
+		_ = o.generation.Remove("prospective bundle "+root, nil, func() error { return os.RemoveAll(root) })
 		return nil, err
 	}
 	return o, nil
@@ -110,12 +134,40 @@ func (o *Owner) Materialize(tree string) error {
 	return nil
 }
 
-// Close removes the Git registration before it removes the owned bundle root.
-func (o *Owner) Close() error {
+// Resources names the bundle's generation for a launch that uses the checkout. An unprotected
+// bundle names none.
+func (o *Owner) Resources() []protection.Descriptor {
 	if o == nil {
 		return nil
 	}
-	o.closeOnce.Do(func() { o.closeErr = removeBundle(o.repository, o.root, o.Checkout(), o.remove) })
+	return o.generation.Resources()
+}
+
+// Close observes every registered user before it removes the Git registration and the
+// bundle root. An unresolved user retains the bundle, and Close returns that retention.
+func (o *Owner) Close() error {
+	return o.CloseAfter(nil)
+}
+
+// CloseAfter runs release for a nested owner inside the bundle, then closes the bundle. A
+// failed release retains the bundle, because removal would delete what that owner retains.
+// A nil owner runs release alone.
+func (o *Owner) CloseAfter(release func() error) error {
+	if o == nil {
+		if release == nil {
+			return nil
+		}
+		return release()
+	}
+	o.closeOnce.Do(func() {
+		if release != nil {
+			if err := release(); err != nil {
+				o.closeErr = fmt.Errorf("prospective bundle %s %w: %w", o.root, protection.ErrRetained, err)
+				return
+			}
+		}
+		o.closeErr = releaseBundle(o.generation, o.repository, o.root, o.remove)
+	})
 	return o.closeErr
 }
 
@@ -159,7 +211,7 @@ func canonicalBase(root string) (string, error) {
 	return filepath.Clean(resolved), nil
 }
 
-func sweep(base, repository, common string, probe func(int) error, remove func(string, string) error) error {
+func sweep(base, repository, common string, probe func(int) error, remove func(string, string) error, protocol *protection.Protocol) error {
 	entries, err := os.ReadDir(base)
 	if err != nil {
 		return fmt.Errorf("scan prospective artifact bundles: %w", err)
@@ -182,7 +234,19 @@ func sweep(base, repository, common string, probe func(int) error, remove func(s
 		if err := probe(record.OwnerPID); !errors.Is(err, syscall.ESRCH) {
 			continue
 		}
-		if err := removeBundle(repository, root, filepath.Join(root, CheckoutName), remove); err != nil {
+		// Owner death is not user proof. A record without a generation retains its bundle.
+		if record.Protection == "" || protocol == nil {
+			continue
+		}
+		resource, err := bundleDirectory.Describe(root)
+		if err != nil {
+			continue
+		}
+		resource.ResourceID = record.Protection
+		switch err := releaseBundle(protection.Generation{Protocol: protocol, Resource: resource}, repository, root, remove); {
+		case errors.Is(err, protection.ErrRetained):
+			continue
+		case err != nil:
 			return fmt.Errorf("recover prospective artifact bundle: %w", err)
 		}
 	}
@@ -191,7 +255,7 @@ func sweep(base, repository, common string, probe func(int) error, remove func(s
 
 // ReadPublished reads the owner record published at path and grades it against the
 // published shape: a private regular file carrying exactly one strict record of the
-// known schema. Every reader of a record, the sweep included, asks this one question.
+// current or legacy schema. Every reader of a record, the sweep included, asks this one question.
 func ReadPublished(path string) (Record, error) {
 	record, ok := readRecordAt(path)
 	if !ok {
@@ -216,7 +280,10 @@ func readRecordAt(path string) (Record, bool) {
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
 	var record Record
-	if decoder.Decode(&record) != nil || record.Schema != RecordSchema || record.OwnerPID <= 0 || record.CommonDir == "" {
+	if decoder.Decode(&record) != nil || record.OwnerPID <= 0 || record.CommonDir == "" {
+		return Record{}, false
+	}
+	if record.Schema != RecordSchema && (record.Schema != LegacySchema || record.Protection != "") {
 		return Record{}, false
 	}
 	if decoder.Decode(&struct{}{}) != io.EOF {
@@ -240,20 +307,27 @@ func publish(replacer durablefile.Replacer, root string, record Record) error {
 	return replacer.Replace(filepath.Join(root, RecordName), append(data, '\n'), RecordMode)
 }
 
-func removeBundle(repository, root, checkout string, remove func(string, string) error) error {
+// releaseBundle observes every user of the bundle's generation under its protocol lock. Only a
+// safe generation removes the Git registration, still under that lock, and then the bundle root
+// through the generation's safe removal.
+// An unresolved or unobserved generation returns protection.ErrRetained; a removal failure
+// returns itself.
+func releaseBundle(generation protection.Generation, repository, root string, remove func(string, string) error) error {
+	unregister := func() error { return unregisterCheckout(repository, filepath.Join(root, CheckoutName), remove) }
+	return generation.Remove("prospective bundle "+root, unregister, func() error { return os.RemoveAll(root) })
+}
+
+func unregisterCheckout(repository, checkout string, remove func(string, string) error) error {
 	worktrees, err := benchgit.Worktrees(repository)
 	if err != nil {
 		return err
 	}
 	for _, worktree := range worktrees {
 		if filepath.Clean(worktree.Path) == filepath.Clean(checkout) {
-			if err := remove(repository, checkout); err != nil {
-				return err
-			}
-			break
+			return remove(repository, checkout)
 		}
 	}
-	return os.RemoveAll(root)
+	return nil
 }
 
 func removeWorktree(repository, checkout string) error {

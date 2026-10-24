@@ -1,7 +1,7 @@
 # Refuse cache clean after unresolved CLI exit
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md
-Writes: internal/conformance/injected_ports_registry_test.go, internal/gate/lane.go, internal/gate/lifetime_resources_test.go (new), internal/gate/phases.go, internal/gate/run_transaction.go, internal/gate/runner.go, internal/gocache/clean.go, internal/gocache/lock.go, internal/gocache/protection.go (new), internal/gocache/protection_test.go (new), internal/systemtest/process_lifetime_cache_test.go (new)
+Writes: internal/conformance/injected_ports_registry_test.go, internal/gate/lane.go, internal/gate/lifetime_resources_test.go (new), internal/gate/phases.go, internal/gate/run_transaction.go, internal/gate/runner.go, internal/gocache/clean.go, internal/gocache/lock.go, internal/gocache/protection.go (new), internal/gocache/protection_test.go (new), internal/systemtest/process_lifetime_cache_test.go (new), internal/gate/run_durability.go, internal/gate/engine.go
 Covers: PL55, PL56, PL57, PL76, PL77, PL78
 
 ## What to build
@@ -25,8 +25,8 @@ Keep over-budget source files from gaining lines at this checkpoint.
 Move only cohesive outcome or phase composition into the co-owned runner or phases source when needed.
 Do not defer headroom debt to a successor.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -42,6 +42,11 @@ No successor caller must exist for this ticket's owned predicates.
 
 BENCH_KIT is supplied by bench test --check system through the existing sealed system owner.
 Do not introduce another subprocess fixture runner or private binary publisher.
+
+Each new system test calls t.Parallel and passes TMPDIR to its child by value.
+The closed system serial table gains no row.
+Compose gocache.HoldExclusive and gocache.Contended for the exclusive cleaner.
+The gate persistence helpers retainGreen, persistRecovering, and persistenceFailure live in internal/gate/run_durability.go.
 
 ## Acceptance
 
@@ -63,5 +68,7 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/gocache`
 - `bench test --package ./internal/gate`
 - `bench test --check system`
+- `bench test --check root-conformance`
+- `bench test --package ./internal/conformance`
 
 Mutation witness: Use only the dropped owner lock, treat unreadable records as empty, or publish green before terminal persistence. The second CLI cleaner and real gate record witnesses must fail.

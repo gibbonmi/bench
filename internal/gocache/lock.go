@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
+
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // LockFile is the name of the cache lock inside the Bench build cache. A holder locks it
@@ -24,10 +26,13 @@ func RecordLock(typ int16) syscall.Flock_t {
 // heldLock is one open descriptor on a lock path and the count of this process's holders
 // that share it. The count exists because closing any descriptor for a file drops every
 // record lock this process holds on that file, so two in-process holders must share one
-// descriptor and close it once.
+// descriptor and close it once. protocol and resource name the cache generation that a
+// holder protected, which the last release retires.
 type heldLock struct {
-	file  *os.File
-	count int
+	file     *os.File
+	count    int
+	protocol *protection.Protocol
+	resource protection.Descriptor
 }
 
 // held tracks this process's record locks by lock path. POSIX record locks are owned
@@ -40,10 +45,10 @@ var held = struct {
 }{paths: map[string]*heldLock{}}
 
 // Holder is one acquired record lock. Release returns the hold; the descriptor stays
-// open while any holder in this process still needs it.
+// open while any holder in this process still needs it. dir names the cache of a shared hold.
 type Holder struct {
-	path     string
-	released bool
+	path, dir string
+	released  bool
 }
 
 // Hold takes the shared cache lock for the Bench build cache that env derives, and keeps
@@ -66,7 +71,7 @@ func HoldDir(dir string) (*Holder, error) {
 	defer held.Unlock()
 	if entry := held.paths[path]; entry != nil {
 		entry.count++
-		return &Holder{path: path}, nil
+		return &Holder{path: path, dir: dir}, nil
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err
@@ -80,7 +85,7 @@ func HoldDir(dir string) (*Holder, error) {
 		return nil, err
 	}
 	held.paths[path] = &heldLock{file: file, count: 1}
-	return &Holder{path: path}, nil
+	return &Holder{path: path, dir: dir}, nil
 }
 
 // acquireShared requests the read lock and waits. The one holder that refuses it is a
@@ -140,11 +145,30 @@ func (h *Holder) Release() error {
 		return nil
 	}
 	delete(held.paths, h.path)
+	retireErr := entry.retire()
 	lock := RecordLock(syscall.F_UNLCK)
 	err := syscall.FcntlFlock(entry.file.Fd(), syscall.F_SETLK, &lock)
 	if closeErr := entry.file.Close(); err == nil {
 		err = closeErr
 	}
+	return errors.Join(retireErr, err)
+}
+
+// retire seals the protected generation before the shared lock drops, when no other process
+// holds the cache. A safe generation clears, and an unresolved user stays recorded and sealed.
+// A contended conversion keeps the generation open for the other holders.
+func (e *heldLock) retire() error {
+	if e.protocol == nil {
+		return nil
+	}
+	lock := RecordLock(syscall.F_WRLCK)
+	if err := syscall.FcntlFlock(e.file.Fd(), syscall.F_SETLK, &lock); err != nil {
+		if Contended(err) {
+			return nil
+		}
+		return err
+	}
+	_, err := e.protocol.SealAndObserve(e.resource, nil)
 	return err
 }
 

@@ -1,8 +1,9 @@
 // Package subprocess runs an external command and captures its outcome, and it
 // holds the termination signals a Bench command traps. Capture and CaptureMerged
 // share one exit-code derivation and differ only in whether stdout and stderr stay
-// separate or interleave. The package does not start, cancel, or kill a process
-// group. Each owner that detaches a child into its own group does that work itself.
+// separate or interleave. They own no process group. Lifetime owns one process
+// group: its start, cancellation, escalation, single waiter, owned streams, and
+// final cleanup window. Each caller supplies its own policy and windows.
 package subprocess
 
 import (

@@ -9,6 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"os"
 	"path/filepath"
 	"strings"
@@ -233,6 +234,18 @@ func TestRecordRouteAnswersItsUsage(t *testing.T) {
 	var stdout bytes.Buffer
 	if code := (Command{Stdout: &stdout}).Run([]string{"record", "--help"}); code != 0 || want == "" || stdout.String() != want {
 		t.Fatalf("record --help = exit %d, stdout %q; want exit 0 and the recordcmd usage %q", code, stdout.String(), want)
+	}
+}
+
+// TestRunInstallsProcessResources pins that dispatch installs the composition root's table
+// before any verb can launch, so production stays fail-closed. A refused verb installs it too.
+func TestRunInstallsProcessResources(t *testing.T) {
+	if code := (Command{}).Run([]string{"--no-such-verb"}); code != 2 {
+		t.Fatalf("unknown verb exit = %d, want 2", code)
+	}
+	installed := protection.Installed()
+	if installed == nil || len(installed.Validators) != len(processResources.Validators) || installed.Validators[protection.KindKitTest] == nil {
+		t.Fatalf("installed protocol = %+v, want the composition root's table with its kit-test row", installed)
 	}
 }
 

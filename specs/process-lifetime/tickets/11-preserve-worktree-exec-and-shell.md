@@ -1,7 +1,7 @@
 # Preserve worktree command policy with durable protection
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md, 06-refuse-clean-of-protected-cache.md, 07-retain-prospective-gate-artifacts.md, 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md, 10-preserve-focused-test-completion.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/exec.go, internal/worktree/exec_lifetime_test.go (new), internal/worktree/exec_test.go, internal/worktree/lifecycle.go, internal/worktree/pool_reclaim.go, internal/worktree/protection.go (new), internal/worktree/protection_test.go (new), internal/worktree/resume.go, internal/worktree/subshell.go, internal/worktree/subshell_lifetime_test.go (new), internal/worktree/subshell_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/exec.go, internal/worktree/exec_lifetime_test.go (new), internal/worktree/exec_test.go, internal/worktree/lifecycle.go, internal/worktree/pool_reclaim.go, internal/worktree/protection.go (new), internal/worktree/protection_test.go (new), internal/worktree/resume.go, internal/worktree/subshell.go, internal/worktree/subshell_lifetime_test.go (new), internal/worktree/subshell_test.go, internal/worktree/parallel_census_test.go, internal/subprocess/protection, internal/releaseevidence/protection.go, internal/gocache/protection.go, internal/gocache/clean.go
 Covers: PL81, PL82, PL114, PL115
 
 ## What to build
@@ -16,11 +16,13 @@ Expose the worktree Descriptor and install its existing assignment-identity vali
 Keep the reserved inherited/local vector through current environment routing; --env cannot replace it.
 Preserve command inputs, caller streams, assignment behavior, and the separate ExecWaitDelay.
 
-Exec can return child zero only after its own required stream and cleanup obligations complete.
+After ExecWaitDelay expiry, exec reports the forced close of its output on stderr and returns the child's exit code (BO69).
+Exec returns child zero only after its cleanup obligations complete.
 It releases no assignment on that return; durable users still prevent reuse and removal.
 Required enclosing owners consume unresolved disposition across that CLI boundary.
 
-Introduce the single protected-user predicate into release, cleanup planning/apply, reuse, and reclaim composition.
+Introduce the single protected-user predicate into release, cleanup planning/apply, and reuse composition.
+Ticket 12 brings reclaim to the same verdict through a store lookup by resource path.
 Fingerprint protection evidence and recheck under exclusion before apply.
 Do not add another pool cleanup rule.
 Ticket 12 completes and witnesses shift-specific rollback and recovery consumption.
@@ -29,8 +31,8 @@ PL114 and PL115 stay with this actual environment-routing consumer.
 Keep over-budget resume from gaining lines.
 Move only cohesive protection composition into this ticket's co-owned worktree protection source.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -43,6 +45,10 @@ This ticket belongs to PL-C4.
 Finish the preceding chunk review before this chunk starts.
 Its blockers include every prior overlapping Writes owner.
 No successor caller must exist for this ticket's owned predicates.
+
+Exec and shell take their base environment from ambient.environ through execEnv and subshellAt.
+Append the reserved vector after the extra and --env values; tests inject environ, not os.Environ.
+The protected-user predicate reads git and the call directory through ambient.run and ambient.dir.
 
 ## Acceptance
 
@@ -60,5 +66,12 @@ Preserve existing assertions and fixture mutation purpose.
 Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/worktree`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/conformance`
+- `bench test --package ./internal/gocache`
+- `bench test --package ./internal/releaseevidence`
+- `bench test --package ./internal/subprocess/protection`
+- `bench test --check system`
 
 Mutation witness: Add a normal-exit group kill, strip the descriptor vector, or release the interrupted shell lease. The real command, environment, and lease assertions must fail.

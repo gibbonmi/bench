@@ -16,6 +16,7 @@ package preprelease
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -24,12 +25,14 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/releaseevidence"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -157,21 +160,40 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
+	return run(ctx, root, Steps(root, kit), stdout, stderr)
+}
 
-	for _, step := range Steps(root, kit) {
+// run protects the release evidence of root before the first step, runs steps in order, and
+// releases that protection last. The release observes every registered user, the nested ones
+// too, so an unresolved user retains the evidence and refuses ship green.
+func run(ctx context.Context, root string, steps []Step, stdout, stderr io.Writer) int {
+	generation, err := releaseevidence.Protect(root)
+	if err != nil {
+		fmt.Fprintf(stderr, "prep-release: %v\n", err)
+		return 1
+	}
+	code := 0
+	for _, step := range steps {
 		fmt.Fprintf(stderr, "prep-release: %s\n", step.Name)
-		if err := runStep(ctx, root, step, stderr); err != nil {
+		if err := runStep(ctx, root, step, stderr, generation.Resources()...); err != nil {
 			fmt.Fprintf(stderr, "prep-release: %s failed: %v\n", step.Name, err)
 			if step.Name == preflightStep {
 				for _, attribution := range PreflightAttributions(root) {
 					fmt.Fprintf(stderr, "prep-release: %s\n", attribution)
 				}
 			}
-			return 1
+			code = 1
+			break
 		}
 	}
-	fmt.Fprintf(stdout, "prep-release: ship green (evidence at %s and %s)\n", IndexPath, ArtifactsDir)
-	return 0
+	if err := generation.Release("prep-release evidence", nil); err != nil {
+		fmt.Fprintf(stderr, "prep-release: %v\n", err)
+		return 1
+	}
+	if code == 0 {
+		fmt.Fprintf(stdout, "prep-release: ship green (evidence at %s and %s)\n", IndexPath, ArtifactsDir)
+	}
+	return code
 }
 
 // Refusal is the one diagnostic for a tree prep-release cannot start from. The cause is
@@ -223,22 +245,45 @@ func firstMissingTool() string {
 	return ""
 }
 
+// stepPolicy preserves a step's result after a normal exit. A cancellation sends TERM, and
+// KILL follows the shutdown grace.
+var stepPolicy = subprocess.Policy{
+	Normal: subprocess.Preserve,
+	Grace:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessShutdownGrace)),
+	Final:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessFinalWindow)),
+	Poll:   bounds.ProcessPoll,
+}
+
 // runStep executes one stage from root. The subprocess inherits the ambient environment
-// so the toolchain and PATH the maintainer resolved are the ones the scripts see, and it
-// dies with the run: a SIGINT partway through has to leave the evidence directory in the
-// state its own atomic promotion last left it, never half-written by a surviving child.
-func runStep(ctx context.Context, root string, step Step, stderr io.Writer) error {
+// so the toolchain and PATH the maintainer resolved are the ones the scripts see, and its
+// group stops with the run: a SIGINT partway through has to leave the evidence directory in
+// the state its own atomic promotion last left it, never half-written by a surviving child.
+// The launch registers on the inherited union plus the release-evidence resources, so a child
+// that outlives its shutdown keeps that evidence protected. A raw child status cannot certify
+// the step: an unresolved cleanup obligation, stream, or protection fails it.
+func runStep(ctx context.Context, root string, step Step, stderr io.Writer, resources ...protection.Descriptor) error {
 	if step.Run != nil {
 		return step.Run(root)
 	}
-	cmd := exec.CommandContext(ctx, step.Argv[0], step.Argv[1:]...)
+	cmd := exec.Command(step.Argv[0], step.Argv[1:]...)
 	cmd.Dir = root
 	cmd.Env = append(os.Environ(), step.Env...)
-	cmd.Stdout = stderr
-	cmd.Stderr = stderr
-	cmd.Cancel = func() error { return syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM) }
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	if err := cmd.Run(); err != nil {
+	streams := subprocess.Streams{Stdout: subprocess.Output{Writer: stderr}, MergeStderr: true}
+	// The run has no deadline, so every cancellation is an interruption.
+	outcome, err := subprocess.RunInherited(ctx, cmd, stepPolicy, streams, subprocess.Interrupt(syscall.SIGTERM), resources...)
+	if err != nil {
+		return err
+	}
+	var failed error
+	switch {
+	case outcome.Process.StartErr != nil:
+		failed = outcome.Process.StartErr
+	case outcome.Process.WaitErr != nil:
+		failed = outcome.Process.WaitErr
+	case outcome.Cancellation.Cause != subprocess.CauseNone:
+		failed = context.Cause(ctx)
+	}
+	if err := errors.Join(failed, outcome.Uncertified()); err != nil {
 		return fmt.Errorf("%s: %w", strings.Join(step.Argv, " "), err)
 	}
 	return nil

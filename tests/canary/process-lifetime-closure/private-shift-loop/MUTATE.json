@@ -1,0 +1,7 @@
+[
+  {
+    "path": "internal/shift/session.go",
+    "old": "\tcmd.Env = protection.Environ(adapterEnv, resources)\n",
+    "new": "\tcmd.Env = protection.Environ(adapterEnv, resources)\n\t// A reintroduced private shift loop owns its own group and signals it itself.\n\tcmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}\n\tdefer func() { _ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) }()\n"
+  }
+]

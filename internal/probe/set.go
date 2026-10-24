@@ -107,7 +107,8 @@ func decodeSetEnvelope(tables [][]cellReader) (setEnvelope, error) {
 }
 
 // setRun is one mutant set in flight: the subject, the held runs, the entries and their rows
-// in entry order, and the preserved table of a failed restore.
+// in entry order, the preserved table of a failed restore, and the failure line of a held
+// selection that did not close.
 type setRun struct {
 	replacer  durablefile.Replacer
 	root      string
@@ -117,6 +118,7 @@ type setRun struct {
 	entries   []setEntry
 	rows      []mutantRow
 	preserved string
+	cleanup   string
 }
 
 // runSet grades a mutant set in the single form's refusal order. One subject lock, one reread,
@@ -149,21 +151,29 @@ func runSet(replacer durablefile.Replacer, root string, parsed usage.Result, sub
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	s.ctx, s.runs = ctx, testreport.Hold(ctx, root, request)
-	defer func() { _ = s.runs.Close() }()
+	suffix := s.gradeAll(&e)
+	e.builds = s.runs.Builds()
+	if err := s.runs.Close(); err != nil {
+		s.cleanup = testreport.SelectionCleanupFailure(err)
+	}
+	return s.answer(e, suffix)
+}
+
+// gradeAll runs the baseline and then grades each matching entry in file order. It answers the
+// baseline report of a baseline that did not pass, or an empty suffix.
+func (s *setRun) gradeAll(e *setEnvelope) string {
 	baseline, report, _ := s.runs.Run()
 	e.baseline = string(baseline.Kind)
 	if baseline.Kind != testreport.OutcomePassed {
 		s.stopFrom(0, baselineCells(baseline))
-		e.builds = s.runs.Builds()
-		return s.answer(e, report)
+		return report
 	}
-	for i, entry := range entries {
+	for i, entry := range s.entries {
 		if !entry.mutant.miss && !s.grade(i, entry) {
 			break
 		}
 	}
-	e.builds = s.runs.Builds()
-	return s.answer(e, "")
+	return ""
 }
 
 // grade checks the stop conditions before entry i's write, and then preserves, writes, runs,
@@ -236,8 +246,9 @@ func unwritten(mutation string, cells verdictCells) mutantRow {
 }
 
 // answer renders the three tables and then the suffix: the preserved table of a failed
-// restore, the baseline report, and each started mutant's report. The command exit is 2 when a
-// restore failed, 0 when every row bit, and 1 otherwise.
+// restore, the baseline report, each started mutant's report, and the held selection's cleanup
+// failure. The command exit is 2 when a restore failed, 0 when every row bit and the selection
+// closed, and 1 otherwise.
 func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 	e.rows = s.rows
 	for _, row := range s.rows {
@@ -246,6 +257,9 @@ func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 			break
 		}
 		e.command = max(e.command, row.exit)
+	}
+	if s.cleanup != "" {
+		e.command = max(e.command, 1)
 	}
 	reports := ""
 	for i, row := range s.rows {
@@ -258,7 +272,7 @@ func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 		}
 		reports += heading + row.report
 	}
-	suffix = s.preserved + suffix + reports
+	suffix = s.preserved + suffix + reports + s.cleanup
 	e.trailing = len(suffix)
 	head, err := e.head()
 	if err != nil {
@@ -267,8 +281,8 @@ func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 	return head + suffix, e.command
 }
 
-// refuse answers a set whose tables the encoder refused. A kept copy still prints, and its
-// exit 2 overrides the render refusal's exit 1.
+// refuse answers a set whose tables the encoder refused. A kept copy and a cleanup failure
+// still print, and a kept copy's exit 2 overrides the render refusal's exit 1.
 func (s *setRun) refuse(err error, command int) (string, int) {
-	return toon.RenderError(err) + "\n" + s.preserved, max(command, 1)
+	return toon.RenderError(err) + "\n" + s.preserved + s.cleanup, max(command, 1)
 }

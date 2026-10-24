@@ -47,4 +47,5 @@ var Checks = []Check{
 	{Name: "ticket-grammar", Implementation: "checkTicketGrammar", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "claude-agent-definitions", Implementation: "checkClaudeAgentDefinitions", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "stdlib-reimplementation", Implementation: "checkStdlibReimplementation", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "process-lifetime-closure", Implementation: "checkProcessLifetimeClosure", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 }

@@ -21,78 +21,67 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/otelrecord"
+	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
 const processGroupCancelGrace = bounds.ProcessGroupCancelGrace
 
-type processGroupCancelGraceKey struct{}
-
-func processGroupGrace(ctx context.Context) time.Duration {
-	if grace, ok := ctx.Value(processGroupCancelGraceKey{}).(time.Duration); ok {
-		return grace
-	}
-	return processGroupCancelGrace
+// gateProcessPolicy kills and observes the remaining group after a normal exit. A
+// cancellation opens with the caller's catchable signal, and KILL follows the grace.
+var gateProcessPolicy = subprocess.Policy{
+	Normal: subprocess.Drain,
+	Grace:  bounds.ProcessWindow(bounds.FixedWindow(processGroupCancelGrace)),
+	Final:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessFinalWindow)),
+	Poll:   bounds.ProcessPoll,
 }
 
+// processGroupResult is the gate's execution form. Outcome holds the lifetime facts, and
+// the scalar fields present them. StartErr also names why a normal exit cannot succeed.
 type processGroupResult struct {
 	Code     int
 	StartErr error
 	// Cancelled reports that the context, not the command, decided the outcome. It is
 	// the only way to tell a killed command from one that chose the same exit code.
 	Cancelled bool
+	Outcome   subprocess.Outcome
 }
 
-func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResult {
-	if cmd.SysProcAttr == nil {
-		cmd.SysProcAttr = &syscall.SysProcAttr{}
+// gateCancelRequest answers a deadline that sends TERM for the gate timeout, and an
+// interruption that sends INT otherwise.
+func gateCancelRequest(ctx context.Context) (subprocess.Cause, syscall.Signal) {
+	if errors.Is(context.Cause(ctx), errGateTimeout) {
+		return subprocess.CauseDeadline, syscall.SIGTERM
 	}
-	cmd.SysProcAttr.Setpgid = true
-	if err := cmd.Start(); err != nil {
-		if ctx.Err() != nil {
-			return processGroupResult{Code: 130, StartErr: err, Cancelled: true}
-		}
+	return subprocess.CauseInterruption, syscall.SIGINT
+}
+
+// runProcessGroupCommand runs cmd as one group registered on each inherited and local resource.
+// The timeout needs the catchable opener most: with no operator present, the child's last
+// output is the only account of where the run stuck.
+func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd, local ...protection.Descriptor) processGroupResult {
+	streams := subprocess.Streams{Stdin: cmd.Stdin, Stdout: subprocess.Output{Writer: cmd.Stdout}, Stderr: subprocess.Output{Writer: cmd.Stderr}}
+	outcome, err := subprocess.RunInherited(ctx, cmd, gateProcessPolicy, streams, gateCancelRequest, local...)
+	if err != nil {
 		return processGroupResult{Code: 1, StartErr: err}
 	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		drainProcessGroup(cmd.Process.Pid)
-		return processGroupResult{Code: processExitCode(cmd, err)}
-	case <-ctx.Done():
-		// Both flavors of cancellation get the same cascade: a catchable signal, the
-		// grace, then SIGKILL. They differ only in which signal and which code.
-		//
-		// The deadline needs the grace most. It fires with no operator watching. So what
-		// the child says on its way out is the only account of what the run was stuck
-		// on. Opening with SIGKILL would take that account with it.
-		notice, code := syscall.SIGINT, 130
-		if errors.Is(context.Cause(ctx), errGateTimeout) {
-			notice, code = syscall.SIGTERM, 124
+	result := processGroupResult{StartErr: outcome.Process.StartErr, Outcome: outcome}
+	switch {
+	case outcome.Cancellation.Cause == subprocess.CauseDeadline:
+		result.Code, result.Cancelled = 124, true
+	case outcome.Cancellation.Cause == subprocess.CauseInterruption:
+		result.Code, result.Cancelled = 130, true
+	case result.StartErr != nil:
+		result.Code = 1
+	default:
+		result.Code = processExitCode(cmd, outcome.Process.WaitErr)
+		if result.StartErr = outcome.Uncertified(); result.StartErr != nil {
+			result.Code = 1
 		}
-		_ = syscall.Kill(-cmd.Process.Pid, notice)
-		select {
-		case <-done:
-			drainProcessGroup(cmd.Process.Pid)
-		case <-time.After(bounds.FixedWindow(processGroupGrace(ctx))):
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
-			drainProcessGroup(cmd.Process.Pid)
-		}
-		return processGroupResult{Code: code, Cancelled: true}
 	}
-}
-
-func drainProcessGroup(pgid int) {
-	_ = syscall.Kill(-pgid, syscall.SIGKILL)
-	for {
-		if err := syscall.Kill(-pgid, 0); errors.Is(err, syscall.ESRCH) {
-			return
-		}
-		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
-	}
+	return result
 }
 
 func processExitCode(cmd *exec.Cmd, err error) int {
@@ -134,21 +123,6 @@ type phaseResult struct {
 // produced one.
 func (r phaseResult) green() bool {
 	return r.Code == 0 && !r.Skipped && r.SkippedBy == ""
-}
-
-func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
-	// The phases run in their own process, so the run's record and trace come from the
-	// handoff that the run's parent composed.
-	ctx, closeRecord := otelrecord.AttachHandoff(ctx)
-	defer closeRecord()
-	skipLog, cleanup, err := newSkipLog()
-	if err != nil {
-		fmt.Fprintf(stderr, "gate: cannot open the capability skip log: %v\n", err)
-		fmt.Fprintln(stderr, "gate: red")
-		return 1
-	}
-	defer cleanup()
-	return runPhasesSerial(ctx, root, withSkipLog(phases, skipLog), skipLog, stdout, stderr)
 }
 
 func runPhasesSerial(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
@@ -380,7 +354,7 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		return result
 	}
 	cmd.Env = mergeEnv(baseEnv, phase.Env)
-	run := runProcessGroupCommand(ctx, cmd)
+	run := runProcessGroupCommand(ctx, cmd, phase.Resources...)
 	result.Interrupted = run.Cancelled
 	if run.StartErr != nil {
 		if run.Cancelled {

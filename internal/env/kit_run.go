@@ -12,18 +12,25 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // KitTestRun owns the private home and temporary directories for one kit test run.
 // A plain go test opens no run and receives none of this policy.
 type KitTestRun struct {
-	dir     string
-	entries []string
+	dir        string
+	entries    []string
+	generation protection.Generation
 }
 
 // OpenKitTestRun preserves Go's resolved settings before it replaces HOME.
 // The caller derives its build cache from the base environment before it merges Entries.
+// The run is protected under the installed protocol, and a process with none protects nothing.
 func OpenKitTestRun(base []string) (*KitTestRun, error) {
+	return openKitTestRun(base, protection.Installed())
+}
+
+func openKitTestRun(base []string, protocol *protection.Protocol) (*KitTestRun, error) {
 	if home := kitEnvValue(base, "HOME"); !filepath.IsAbs(home) {
 		return nil, errors.New("kit test run: HOME must be present and absolute")
 	}
@@ -43,6 +50,17 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 		return nil, fmt.Errorf("kit test run: TMPDIR: %w", err)
 	}
 	run := &KitTestRun{dir: dir}
+	var vector []protection.Descriptor
+	if protocol != nil {
+		inherited, err := protection.ParseVector(kitEnvValue(base, protection.Env))
+		if err == nil {
+			run.generation, err = kitRunProtection.Open(protocol, dir)
+		}
+		if err != nil {
+			return nil, errors.Join(fmt.Errorf("kit test run: protect TMPDIR run: %w", err), run.Close())
+		}
+		vector = append(inherited, run.generation.Resources()...)
+	}
 	for _, name := range []string{"h", "t", "c"} {
 		if err := os.Mkdir(filepath.Join(dir, name), 0o700); err != nil {
 			return nil, errors.Join(fmt.Errorf("kit test run: TMPDIR: %w", err), run.Close())
@@ -68,6 +86,8 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 	for _, name := range settingNames {
 		run.entries = append(run.entries, name+"="+settings[name])
 	}
+	// The vector names the inherited union plus this run, so an appending caller keeps both.
+	run.entries = append(run.entries, protection.Environ(nil, vector)...)
 	return run, nil
 }
 
@@ -101,9 +121,22 @@ func (r *KitTestRun) Entries() []string {
 	return append([]string(nil), r.entries...)
 }
 
+// Resources names the run's private generation for a launch that uses the run. An unprotected
+// run names none.
+func (r *KitTestRun) Resources() []protection.Descriptor {
+	return r.generation.Resources()
+}
+
+// Close removes the run through its generation's safe removal and returns the unresolved release
+// of a protected or uncertain run, which it retains.
 // Close restores directory access before removal, because tests can leave unreadable directories.
 // It does not follow symbolic links outside the run.
 func (r *KitTestRun) Close() error {
+	return r.generation.Remove("kit test run "+r.dir, nil, r.remove)
+}
+
+// remove deletes the run directory.
+func (r *KitTestRun) remove() error {
 	err := filepath.WalkDir(r.dir, func(path string, entry fs.DirEntry, err error) error {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil

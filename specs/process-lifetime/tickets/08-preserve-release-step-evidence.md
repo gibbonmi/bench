@@ -10,8 +10,8 @@ A real prep-release step retains its evidence after resistant descendant teardow
 Migrate the step through Lifetime with TERM and the accepted missing two-second grace.
 Preserve step order, attribution, normal policy, and existing publication authority.
 
-Create the release-evidence store in the repository common directory before any phase launches.
-Bind its generation to that repository and the canonical dist/preflight target.
+Create the release-evidence store under the process-user store root before any phase launches.
+Bind its generation to the checkout's canonical dist directory, which the exchange of dist/preflight does not replace.
 The store stays outside exchanged evidence and temporary stage directories.
 Expose its Descriptor and install the owner identity adapter in the existing CLI table.
 
@@ -20,8 +20,8 @@ Unresolved protection cannot authorize publication.
 Keep the existing atomic directory exchange; this ticket adds no replacement algorithm.
 Later preflight callers consume this same owner.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -50,5 +50,8 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/preprelease`
 - `bench test --package ./internal/releaseevidence`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/conformance`
 
 Mutation witness: Keep the store inside a swapped stage or delete an abandoned protected stage from its owner marker alone. The resistant-child evidence sentinel must survive and the erroneous success assertion must fail.

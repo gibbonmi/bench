@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -218,31 +217,18 @@ func loop(outcomeID, objectiveText string, refresh bool, stdout, stderr io.Write
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, subprocess.CancelSignals...)
 	defer signal.Stop(sigCh)
-	go func() {
-		sig := <-sigCh
-		s.interrupted.Store(true)
-		if sys, ok := sig.(syscall.Signal); ok {
-			s.killAdapter(sys)
-		} else {
-			s.killAdapter(syscall.SIGTERM)
-		}
-		s.cancelRunningGate()
-	}()
+	go func() { s.interrupt(<-sigCh) }()
 	defer func() {
 		if !s.preserve.Load() {
 			_ = s.teardown()
 		}
 	}()
 
-	// The wall deadline: on expiry it acts like a pulled line, killing the adapter process
+	// The wall deadline: on expiry it acts like a pulled line, stopping the adapter process
 	// group and cancelling a running gate. It sets deadline rather than interrupted, so
 	// the next checkpoint resolves incomplete/3 with a deadline detail, not interrupted/130.
 	if wallDur > 0 {
-		wallTimer := time.AfterFunc(bounds.FixedWindow(wallDur), func() {
-			s.deadline.Store(true)
-			s.killAdapter(syscall.SIGTERM)
-			s.cancelRunningGate()
-		})
+		wallTimer := time.AfterFunc(bounds.FixedWindow(wallDur), s.expire)
 		defer wallTimer.Stop()
 	}
 

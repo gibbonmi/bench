@@ -1,13 +1,14 @@
 package testreport
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/diff"
@@ -16,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -64,6 +66,9 @@ type focusedRequest struct {
 	check     string
 	fixtures  bool
 	checks    bool
+	// selection is the run binary that runSelected binds. Each Go child registers on its
+	// resources, so the selected executable stays retained while a child can run it.
+	selection *runbinary.Selection
 }
 
 func parseFocusedRequest(root string, args []string) (focusedRequest, string, int) {
@@ -148,7 +153,7 @@ func (request focusedRequest) listing() func(root string) (Outcome, string, int)
 	return nil
 }
 
-func runFocusedRequest(root string, request focusedRequest) (Outcome, string, int) {
+func runFocusedRequest(root string, request focusedRequest) (outcome Outcome, out string, code int) {
 	if outcome, out, code, answered := request.answerWithoutSelection(root); answered {
 		return outcome, out, code
 	}
@@ -158,8 +163,27 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	if err != nil {
 		return selectionFailure(err)
 	}
-	defer selection.Close()
+	defer func() {
+		if err := selection.Close(); err != nil {
+			outcome, out, code = withCleanupFailure(outcome, out, code, SelectionCleanupFailure(err))
+		}
+	}()
 	return runSelected(ctx, root, request, selection)
+}
+
+// SelectionCleanupFailure is the report line of a run-binary selection whose Close failed.
+func SelectionCleanupFailure(err error) string {
+	return toon.Errorf("Bench executable selection cleanup failed", err.Error()) + "\n"
+}
+
+// withCleanupFailure keeps the child's report and outcome beside a required cleanup failure,
+// and the run exits 1. A run that the child left green becomes a refusal, so no child exit
+// zero hides the failure.
+func withCleanupFailure(outcome Outcome, out string, code int, line string) (Outcome, string, int) {
+	if code == 0 {
+		outcome.Kind = OutcomeRefused
+	}
+	return outcome, out + line, 1
 }
 
 // answerWithoutSelection answers a listing, a refused check, and the prose check, which
@@ -188,6 +212,7 @@ func (request focusedRequest) answerWithoutSelection(root string) (outcome Outco
 
 // runSelected runs request under selection and ctx. The caller owns the selection's lifetime.
 func runSelected(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
+	request.selection = selection
 	if request.changed {
 		subject, kind, hint := diff.ResolveChangedSubject(root, request.base, request.sourceTip)
 		if kind != "" {
@@ -245,6 +270,11 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		return refusedOutcome(gocache.Refusal(env, err)+"\n", 1)
 	}
 	defer holder.Release()
+	local, err := holder.Resources()
+	if err != nil {
+		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
+	}
+	local = append(local, request.selection.Resources()...)
 	if gate.SystemSuiteRuns(root, environmentValue(env, "BENCH_KIT")) {
 		run, err := benchenv.OpenKitTestRun(env)
 		if err != nil {
@@ -252,55 +282,52 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		}
 		defer func() {
 			if err := run.Close(); err != nil {
-				outcome, out, code = refusedOutcome(toon.Errorf("kit test cleanup failed", err.Error())+"\n", 1)
+				outcome, out, code = withCleanupFailure(outcome, out, code, toon.Errorf("kit test cleanup failed", err.Error())+"\n")
 			}
 		}()
 		env = append(env, run.Entries()...)
+		local = append(local, run.Resources()...)
 	}
 	cmd.Env = env
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	stream, err := cmd.StdoutPipe()
+	return focusedResult(request, runGoChild(ctx, cmd, local))
+}
+
+// goChildPolicy preserves the group of a Go child that exits on its own. A cancellation
+// sends INT, and KILL follows the builder grace.
+var goChildPolicy = subprocess.Policy{
+	Normal: subprocess.Preserve,
+	Grace:  bounds.ProcessWindow(bounds.FixedWindow(runbinary.BuilderCancelGrace)),
+	Final:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessFinalWindow)),
+	Poll:   bounds.ProcessPoll,
+}
+
+// runGoChild runs cmd as one group that registers on the inherited union plus local, and it
+// captures the child's stdout. The cancellation of ctx interrupts the group. The captured
+// stdout is complete only when its stream status is complete.
+func runGoChild(ctx context.Context, cmd *exec.Cmd, local []protection.Descriptor) subprocess.Outcome {
+	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}}
+	outcome, err := subprocess.RunInherited(ctx, cmd, goChildPolicy, streams, subprocess.Interrupt(syscall.SIGINT), local...)
 	if err != nil {
-		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
+		return subprocess.Outcome{Process: subprocess.Process{StartErr: err}}
 	}
-	if err := cmd.Start(); err != nil {
-		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
-	}
-	type decoded struct {
-		report *report
-		err    error
-	}
-	decodedResult := make(chan decoded, 1)
-	decodedDone := make(chan struct{})
-	go func() {
-		report, err := decode(stream)
-		decodedResult <- decoded{report: report, err: err}
-		close(decodedDone)
-	}()
-	var result decoded
-	select {
-	case result = <-decodedResult:
-	case <-ctx.Done():
-		cancelGoProcessGroup(cmd, decodedDone)
-		result = <-decodedResult
-		_ = cmd.Wait()
+	return outcome
+}
+
+// focusedResult grades one focused Go child. Only a complete stdout stream is a report: a
+// forced, failed, or pending stream is no complete-output proof, and a raw child exit cannot
+// certify it or the child's cleanup and protection.
+func focusedResult(request focusedRequest, child subprocess.Outcome) (Outcome, string, int) {
+	switch {
+	case child.Cancellation.Cause != subprocess.CauseNone:
 		return interruptedOutcome(toon.Errorf("go test interrupted", goChildGroupCancelled)+"\n", 1)
+	case child.Process.StartErr != nil:
+		return refusedOutcome(toon.Errorf("go test failed to start", child.Process.StartErr.Error())+"\n", 1)
 	}
-	completed := make(chan error, 1)
-	done := make(chan struct{})
-	go func() {
-		completed <- cmd.Wait()
-		close(done)
-	}()
-	var waitErr error
-	select {
-	case waitErr = <-completed:
-	case <-ctx.Done():
-		cancelGoProcessGroup(cmd, done)
-		<-completed
-		return interruptedOutcome(toon.Errorf("go test interrupted", goChildGroupCancelled)+"\n", 1)
+	if err := child.Uncertified(); err != nil {
+		return refusedOutcome(toon.Errorf("go test cleanup incomplete", fmt.Sprintf("process exit %d; %v", child.Process.Code, err))+"\n", 1)
 	}
-	report, decodeErr := result.report, result.err
+	waitErr := child.Process.WaitErr
+	report, decodeErr := decode(bytes.NewReader(child.Streams.Stdout.Data))
 	if decodeErr != nil {
 		return refusedOutcome(toon.Errorf("go test output malformed", decodeErr.Error())+"\n", 1)
 	}
@@ -313,7 +340,7 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	if incomplete := report.incompletePackages(); len(incomplete) != 0 {
 		return refusedOutcome(toon.Errorf("go test reported incomplete packages", strings.Join(incomplete, ", "))+"\n", 1)
 	}
-	outcome = report.outcome()
+	outcome := report.outcome()
 	if request.run != "" && outcome.Kind == OutcomeNoTestRun {
 		return Outcome{Kind: OutcomeNoTestRun}, toon.Errorf("go test reported no test runs", "run pattern matched no tests") + "\n", 1
 	}
@@ -326,19 +353,6 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 		return outcome, out, 1
 	}
 	return outcome, out, 0
-}
-
-func cancelGoProcessGroup(cmd *exec.Cmd, completed <-chan struct{}) {
-	_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
-	select {
-	case <-completed:
-	case <-time.After(bounds.FixedWindow(runbinary.BuilderCancelGrace)):
-	}
-	drainGoProcessGroup(cmd.Process.Pid)
-}
-
-func drainGoProcessGroup(pgid int) {
-	_ = syscall.Kill(-pgid, syscall.SIGKILL)
 }
 
 func emptyReport(full bool, causes changedSelection) (Outcome, string, int) {

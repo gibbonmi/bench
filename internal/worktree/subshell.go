@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	refreshop "github.com/gibbonmi/bench/internal/refresh"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"go.opentelemetry.io/otel/attribute"
@@ -88,31 +89,47 @@ func subshellAt(root string, a ambient, shell string, environ []string, args []s
 	if shell == "" {
 		shell = "bash"
 	}
-	cmd := exec.Command(shell)
-	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = creation.Path, stdin, stdout, stderr
-	cmd.Env = withHome(environ, a.home)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	if err := cmd.Start(); err != nil {
+	failed := func(err error) int {
 		_ = os.Remove(lease)
 		fmt.Fprintf(stderr, "bench worktree shell: %v\n", err)
 		return release(otelrecord.WorkFailed)
 	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
+	resources, err := childResources(creation.Path, environ)
+	if err != nil {
+		return failed(err)
+	}
+	cmd := exec.Command(shell)
+	cmd.Dir, cmd.Env = creation.Path, protection.Environ(withHome(environ, a.home), resources)
+	streams := subprocess.Streams{Stdin: stdin, Stdout: subprocess.Output{Writer: stdout}, Stderr: subprocess.Output{Writer: stderr}}
+	lifetime := subprocess.NewLifetime(cmd, shellPolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: resources})
+	if err := lifetime.Start(); err != nil {
+		return failed(err)
+	}
+	done := make(chan subprocess.Outcome, 1)
+	go func() { outcome, _ := lifetime.Wait(); done <- outcome }()
 	select {
-	case <-done:
+	case outcome := <-done:
+		if outcome.Process.StartErr != nil {
+			return failed(outcome.Process.StartErr)
+		}
 		_ = os.Remove(lease)
 		return release(otelrecord.WorkCompleted)
 	case interrupted := <-interrupts:
-		_ = syscall.Kill(-cmd.Process.Pid, interrupted.(syscall.Signal))
-		select {
-		case <-done:
-		case <-time.After(bounds.FixedWindow(5 * time.Second)):
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
-		}
+		// The lifetime forwards the actual signal and returns after its grace and final
+		// window. The lease stays for a reclaim whatever the shutdown proved.
+		lifetime.Cancel(subprocess.CauseInterruption, interrupted.(syscall.Signal))
+		<-done
 		return end(128+int(interrupted.(syscall.Signal)), otelrecord.WorkInterrupted, otelrecord.CleanupRetained)
 	}
+}
+
+// shellPolicy keeps the shell's group after a normal exit. A cancellation forwards the
+// actual signal, and KILL follows a five-second grace.
+var shellPolicy = subprocess.Policy{
+	Normal: subprocess.Preserve,
+	Grace:  bounds.ProcessWindow(bounds.FixedWindow(5 * time.Second)),
+	Final:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessFinalWindow)),
+	Poll:   bounds.ProcessPoll,
 }
 
 func canonicalPath(path string) (string, error) {
@@ -391,7 +408,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 		[]byte("bench-explicit/v2"), []byte(common), []byte(defaultRef), []byte(defaultOID),
 		[]byte(target), []byte(admin), []byte(registration.Path), []byte(registration.BranchRef),
 		[]byte(strconv.FormatBool(registration.Detached)), []byte(strconv.FormatBool(registration.Locked)), []byte(registration.LockReason),
-		markerBytes, ledgerBytes, []byte(head), []byte(headRef), indexBytes, status, []byte(contentIdentity), leaseBytes, buildOutputEvidence,
+		markerBytes, ledgerBytes, []byte(head), []byte(headRef), indexBytes, status, []byte(contentIdentity), leaseBytes, buildOutputEvidence, protectionEvidence(admin),
 		[]byte(plan.landedTyped.String()), []byte(nestedEvidence), ignoredCanonical, []byte(plan.Recovery),
 		[]byte(strconv.FormatBool(options.DiscardIgnored)), []byte(strconv.FormatBool(options.DiscardBranch)),
 		[]byte(plan.Action), []byte(plan.ReasonCode), []byte(plan.Reason), []byte(strconv.FormatBool(plan.deleteBranch)), []byte(plan.branchRef), []byte(plan.branchOID),

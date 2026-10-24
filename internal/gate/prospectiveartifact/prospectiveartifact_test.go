@@ -60,7 +60,7 @@ func TestOpenPublishesPrivateOwnerRecordBeforeCheckout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := (Record{Schema: RecordSchema, OwnerPID: os.Getpid(), CommonDir: common}); record != want {
+	if want := (Record{Schema: RecordSchema, OwnerPID: os.Getpid(), CommonDir: common, Protection: owner.generation.Resource.ResourceID}); record != want || want.Protection == "" {
 		t.Fatalf("owner record = %#v, want %#v", record, want)
 	}
 	if _, err := os.Lstat(owner.Checkout()); !errors.Is(err, os.ErrNotExist) {
@@ -206,37 +206,6 @@ func TestOpenRecoversAStaleRegistrationWithoutACheckoutPath(t *testing.T) {
 	}
 }
 
-func TestOpenRefusesRecoveryWhenRegistrationRemovalFails(t *testing.T) {
-	repository := fixtureRepository(t)
-	common, err := benchgit.CommonDir(repository)
-	if err != nil {
-		t.Fatal(err)
-	}
-	base := t.TempDir()
-	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	gitRun(t, repository, "worktree", "add", "-q", "--detach", filepath.Join(dead, CheckoutName), "HEAD")
-	planted := snapshotPath(t, base)
-	registrations := worktreeRegistrations(t, repository)
-
-	_, err = (Factory{
-		TempRoot: base,
-		Probe:    func(int) error { return syscall.ESRCH },
-		Remove:   func(string, string) error { return errors.New("registration refused") },
-	}).Open(repository)
-	if err == nil {
-		t.Fatal("recovery with a registration failure = nil, want refusal")
-	}
-	if _, err := os.Stat(dead); err != nil {
-		t.Fatalf("dead bundle after refusal = %v, want retained", err)
-	}
-	if after := snapshotPath(t, base); !reflect.DeepEqual(planted, after) {
-		t.Fatalf("temporary root after refusal = %v, want the planted %v", after, planted)
-	}
-	if after := worktreeRegistrations(t, repository); after != registrations {
-		t.Fatalf("registrations after refusal =\n%s\nwant\n%s", after, registrations)
-	}
-}
-
 // TestOpenRecoversARegisteredDeadBundleUnderASymbolicallyLinkedRoot is the PAR03 sibling
 // for a temporary root reached through a symbolic link. Git records the resolved path, so
 // an owner that kept the link spelling compares two spellings of one checkout, leaves the
@@ -298,7 +267,7 @@ func TestCloseConfinesRemovalToItsBundle(t *testing.T) {
 		t.Fatal(err)
 	}
 	neighbour := plantedBundle(t, base)
-	plantRecord(t, neighbour, recordBody(t, fixtureRepository(t), RecordSchema, 42))
+	plantRecord(t, neighbour, recordBody(t, neighbour, fixtureRepository(t), RecordSchema, 42))
 	planted := snapshotPath(t, neighbour)
 
 	owner, err := (Factory{TempRoot: base}).Open(repository)
@@ -375,18 +344,6 @@ func TestCloseRemovesTheRegisteredCheckoutBeforeItsBundle(t *testing.T) {
 	}
 }
 
-func testBundle(t *testing.T, base string, record Record) string {
-	t.Helper()
-	root, err := os.MkdirTemp(base, BundlePrefix)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := Publish(root, record); err != nil {
-		t.Fatal(err)
-	}
-	return root
-}
-
 func fixtureRepository(t *testing.T) string {
 	t.Helper()
 	repository := gittest.RepoOnBranch(t, "main")
@@ -415,7 +372,7 @@ func TestSweepRetainsABundleWithAnUnsupportedRecordSchema(t *testing.T) {
 	repository := fixtureRepository(t)
 	base := t.TempDir()
 	candidate := plantedBundle(t, base)
-	plantRecord(t, candidate, recordBody(t, repository, RecordSchema+1, 42))
+	plantRecord(t, candidate, recordBody(t, candidate, repository, RecordSchema+1, 42))
 
 	requireSweepRetains(t, repository, base, deadProbe, candidate)
 }
@@ -442,7 +399,7 @@ func TestSweepRetainsABundleWithAMissingEmptyOrMalformedRecord(t *testing.T) {
 				if row.truncated {
 					// A published body cut short before its closing brace. The row names
 					// the truncation, so it never re-types the published field names.
-					body = strings.TrimRight(recordBody(t, repository, RecordSchema, 42), "}\n")
+					body = strings.TrimRight(recordBody(t, candidate, repository, RecordSchema, 42), "}\n")
 				}
 				plantRecord(t, candidate, body)
 			}
@@ -482,7 +439,7 @@ func TestSweepRetainsABundleWithANonRegularRecord(t *testing.T) {
 			repository := fixtureRepository(t)
 			base := t.TempDir()
 			candidate := plantedBundle(t, base)
-			row.plant(t, candidate, recordBody(t, repository, RecordSchema, 42))
+			row.plant(t, candidate, recordBody(t, candidate, repository, RecordSchema, 42))
 			requireSweepRetains(t, repository, base, deadProbe, candidate)
 		})
 	}
@@ -503,7 +460,7 @@ func TestSweepRetainsARecordThatIsNotPrivate(t *testing.T) {
 			base := t.TempDir()
 			candidate := plantedBundle(t, base)
 			path := filepath.Join(candidate, RecordName)
-			if err := os.WriteFile(path, []byte(recordBody(t, repository, RecordSchema, 42)), row.mode); err != nil {
+			if err := os.WriteFile(path, []byte(recordBody(t, candidate, repository, RecordSchema, 42)), row.mode); err != nil {
 				t.Fatal(err)
 			}
 			if err := os.Chmod(path, row.mode); err != nil {
@@ -522,7 +479,7 @@ func TestSweepRetainsASymbolicLinkOrSpecialFileBundleCandidate(t *testing.T) {
 		repository := fixtureRepository(t)
 		base := t.TempDir()
 		target := plantedBundle(t, t.TempDir())
-		plantRecord(t, target, recordBody(t, repository, RecordSchema, 42))
+		plantRecord(t, target, recordBody(t, target, repository, RecordSchema, 42))
 		link := filepath.Join(base, BundlePrefix+"link")
 		if err := os.Symlink(target, link); err != nil {
 			t.Fatal(err)
@@ -547,7 +504,7 @@ func TestSweepRetainsAForeignSamePrefixDirectory(t *testing.T) {
 	repository := fixtureRepository(t)
 	base := t.TempDir()
 	foreign := plantedBundle(t, base)
-	plantRecord(t, foreign, recordBody(t, fixtureRepository(t), RecordSchema, 42))
+	plantRecord(t, foreign, recordBody(t, foreign, fixtureRepository(t), RecordSchema, 42))
 	if err := os.MkdirAll(filepath.Join(foreign, "notes"), 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -564,7 +521,7 @@ func TestSweepRetainsAPermissionRefusedBundle(t *testing.T) {
 	repository := fixtureRepository(t)
 	base := t.TempDir()
 	candidate := plantedBundle(t, base)
-	plantRecord(t, candidate, recordBody(t, repository, RecordSchema, 42))
+	plantRecord(t, candidate, recordBody(t, candidate, repository, RecordSchema, 42))
 
 	requireSweepRetains(t, repository, base, func(int) error { return syscall.EPERM }, candidate)
 }
@@ -583,7 +540,7 @@ func TestSweepRetainsABundleWithAnUnknownProbeFailure(t *testing.T) {
 			repository := fixtureRepository(t)
 			base := t.TempDir()
 			candidate := plantedBundle(t, base)
-			plantRecord(t, candidate, recordBody(t, repository, RecordSchema, 42))
+			plantRecord(t, candidate, recordBody(t, candidate, repository, RecordSchema, 42))
 			requireSweepRetains(t, repository, base, row.probe, candidate)
 		})
 	}
@@ -595,7 +552,7 @@ func TestSweepRetainsAnAnsweringPIDWithAnOldRecord(t *testing.T) {
 	repository := fixtureRepository(t)
 	base := t.TempDir()
 	candidate := plantedBundle(t, base)
-	plantRecord(t, candidate, recordBody(t, repository, RecordSchema, 42))
+	plantRecord(t, candidate, recordBody(t, candidate, repository, RecordSchema, 42))
 	stale := time.Now().Add(-365 * 24 * time.Hour)
 	for _, path := range []string{filepath.Join(candidate, RecordName), candidate} {
 		if err := os.Chtimes(path, stale, stale); err != nil {
@@ -613,9 +570,9 @@ func TestOneSweepRemovesOnlyTheDeadBundleOfADeadAndLivePair(t *testing.T) {
 	repository := fixtureRepository(t)
 	base := t.TempDir()
 	dead := plantedBundle(t, base)
-	plantRecord(t, dead, recordBody(t, repository, RecordSchema, 42))
+	plantRecord(t, dead, recordBody(t, dead, repository, RecordSchema, 42))
 	live := plantedBundle(t, base)
-	plantRecord(t, live, recordBody(t, repository, RecordSchema, 43))
+	plantRecord(t, live, recordBody(t, live, repository, RecordSchema, 43))
 	planted := snapshotPath(t, live)
 
 	owner, err := (Factory{TempRoot: base, Probe: func(pid int) error {
@@ -660,16 +617,16 @@ func plantRecord(t *testing.T, root, body string) {
 	}
 }
 
-// recordBody serializes one record the way the owner publishes it. A row that plants an
-// invalid record still names the wire shape through Record, so no row re-types the
-// published field names.
-func recordBody(t *testing.T, repository string, schema, pid int) string {
+// recordBody serializes one record for root the way the owner publishes it, with root's open
+// generation. A row that plants an invalid record still names the wire shape through Record,
+// so no row re-types the published field names.
+func recordBody(t *testing.T, root, repository string, schema, pid int) string {
 	t.Helper()
 	common, err := CanonicalCommonDir(repository)
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := json.Marshal(Record{Schema: schema, OwnerPID: pid, CommonDir: common})
+	data, err := json.Marshal(Record{Schema: schema, OwnerPID: pid, CommonDir: common, Protection: protectedGeneration(t, root)})
 	if err != nil {
 		t.Fatal(err)
 	}

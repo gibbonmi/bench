@@ -2,7 +2,7 @@
 
 Blocked by: 01-own-lifetime-through-bounds.md
 Writes: DATA_HANDLING.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/process_resources.go (new), internal/anchors/registry_commitment.go, internal/bounds/bounds.go, internal/bounds/lifetime_test.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/gocache/clean.go, internal/gocache/lock.go, internal/gocache/protection.go (new), internal/gocache/protection_test.go (new), internal/subprocess, internal/systemtest/process_lifetime_test.go (new), tests/canary/data-handling-derivation/undocumented-passlist-var, tests/canary/package-core-guard/bounds-classify-limit-restated, tests/canary/package-core-guard/bounds-discovery-window-unwrapped, tests/canary/package-core-guard/bounds-dot-import-package-alias, tests/canary/package-core-guard/bounds-dot-import-wait, tests/canary/package-core-guard/bounds-duplicate-owner, tests/canary/package-core-guard/bounds-intent-window-fixed, tests/canary/package-core-guard/bounds-multiple-dot-import-wait, tests/canary/package-core-guard/bounds-parenthesized-wait, tests/canary/package-core-guard/bounds-raw-elapsed-wait, tests/canary/package-core-guard/bounds-raw-injected-wait, tests/canary/package-core-guard/bounds-raw-wait-deadline, tests/canary/package-core-guard/bounds-raw-wait-duration, tests/canary/package-core-guard/bounds-read-limit-restated, tests/canary/package-core-guard/bounds-reassigned-wait-duration, tests/canary/package-core-guard/bounds-redeclared-wait-duration, tests/canary/package-core-guard/bounds-worktree-window-unwrapped
-Covers: PL20, PL21, PL22, PL23, PL24, PL25, PL26, PL27, PL39, PL40, PL41, PL42, PL43, PL44, PL45, PL46, PL47, PL48, PL49, PL50, PL51, PL52, PL53, PL54, PL70, PL71, PL72, PL73, PL74, PL104, PL105, PL106, PL107, PL108, PL109, PL110, PL111, PL112, PL113, PL120
+Covers: PL20, PL21, PL22, PL23, PL24, PL26, PL27, PL39, PL40, PL41, PL42, PL43, PL44, PL45, PL46, PL47, PL48, PL49, PL50, PL51, PL52, PL53, PL54, PL70, PL71, PL72, PL73, PL74, PL104, PL105, PL106, PL107, PL108, PL109, PL110, PL111, PL112, PL113, PL120
 
 ## What to build
 
@@ -34,8 +34,8 @@ The nested CLI installs the same available validators and registers its provider
 Prove two nested users, partial records, sealed pending admission, and retained disposition after CLI exit.
 This checkpoint does not depend on later gate, focused-test, worktree, or shift migrations.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -52,6 +52,11 @@ No successor caller must exist for this ticket's owned predicates.
 BENCH_KIT is supplied by bench test --check system through the existing sealed system owner.
 Do not introduce another subprocess fixture runner or private binary publisher.
 
+Each new system test calls t.Parallel and passes TMPDIR to its child by value.
+The closed system serial table gains no row.
+Reuse gocache.Contended and the held-map Holder for same-process shared descriptors; add no second lock table.
+Persistence fault tests inject faults through the existing durablefile.Replacer seam.
+
 ## Acceptance
 
 - [ ] PL20: Protection persists before the child's resource-use marker.
@@ -59,7 +64,6 @@ Do not introduce another subprocess fixture runner or private binary publisher.
 - [ ] PL22: Later resource-publication failure prevents Start.
 - [ ] PL23: Failed rollback retains its partial pending record.
 - [ ] PL24: Partial known-identity publication retains the launch disposition.
-- [ ] PL25: Actor death retains a pending startup identity.
 - [ ] PL26: Two concurrent users require two complete group-absence proofs.
 - [ ] PL27: Sealed admission refuses new registration before Start.
 - [ ] PL39: A foreign binding prevents registration.
@@ -107,5 +111,14 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 - `bench test --package ./internal/bounds`
 - `bench test --package ./internal/gocache`
 - `bench test --check system`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/anchors`
+- `bench test --package ./internal/conformance`
+- `bench test --package ./internal/subprocess`
+- `bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample`
+- `bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample`
+- `bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample`
+- `bench test --package ./internal/subprocess/processtest`
 
 Mutation witness: Drop inherited descriptors from the real bounds launch. The nested-provider witness must fail through bench test --check system.

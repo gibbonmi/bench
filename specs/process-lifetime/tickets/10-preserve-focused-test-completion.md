@@ -1,8 +1,8 @@
 # Preserve focused test decoding through bounded cancellation
 
 Blocked by: 01-own-lifetime-through-bounds.md, 02-protect-nested-bounds-users.md, 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md, 06-refuse-clean-of-protected-cache.md, 07-retain-prospective-gate-artifacts.md, 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md
-Writes: internal/conformance/injected_ports_registry_test.go, internal/testreport/cancel_test.go, internal/testreport/command.go, internal/testreport/lifetime_test.go (new), internal/testreport/selection.go, internal/testreport/selection_test.go
-Covers: PL64, PL65, PL79, PL80, PL122
+Writes: internal/conformance/injected_ports_registry_test.go, internal/testreport/cancel_test.go, internal/testreport/command.go, internal/testreport/lifetime_test.go (new), internal/testreport/selection.go, internal/testreport/selection_test.go, internal/testreport/held_runs.go, internal/probe/set.go, internal/subprocess, internal/preprelease/preprelease.go, internal/releasepreflight/command.go, internal/gate/runner.go, internal/probe/set_test.go, internal/probe/set_cleanup_test.go (new)
+Covers: PL64, PL65, PL79, PL80, PL122, PL130
 
 ## What to build
 
@@ -20,8 +20,8 @@ The focused operation consumes Selection.Close and private-run Close errors befo
 Preserve child status beside required cleanup failure.
 Keep current command inputs and ordinary complete selection cleanup.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -35,6 +35,10 @@ Finish the preceding chunk review before this chunk starts.
 Its blockers include every prior overlapping Writes owner.
 No successor caller must exist for this ticket's owned predicates.
 
+Apply PL122 in runFocusedRequest, where the selection Close is deferred today.
+The private-run Close error is already consumed, and that consumption stays.
+Preserve repeated --package selection, and reuse the parking helper and installTestSelectionFactory.
+
 ## Acceptance
 
 - [ ] PL64: Focused-test cancellation resolves a descriptor-retaining descendant.
@@ -42,6 +46,7 @@ No successor caller must exist for this ticket's owned predicates.
 - [ ] PL79: Focused output requires terminal events for every package.
 - [ ] PL80: Package-list cancellation keeps current interruption attribution.
 - [ ] PL122: The focused run consumes selection Close failure.
+- [ ] PL130: The probe set consumes a held selection Close failure.
 
 ## Verification
 
@@ -52,5 +57,15 @@ Preserve existing assertions and fixture mutation purpose.
 Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/testreport`
+- `bench test --check root-conformance`
+- `bench test --package ./internal/conformance`
+- `bench test --package ./internal/gate`
+- `bench test --package ./internal/preprelease`
+- `bench test --package ./internal/probe`
+- `bench test --package ./internal/releasepreflight`
+- `bench test --package ./internal/subprocess`
+- `bench test --package ./internal/subprocess/processtest`
+- `bench test --package ./internal/subprocess/protection`
+- `bench test --package ./cmd/bench`
 
 Mutation witness: Treat forced EOF as a complete report, wait before decoder completion, or discard Selection.Close failure. The real report and retained executable witnesses must fail.

@@ -11,9 +11,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
-	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 )
 
@@ -32,6 +30,7 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 
 	cmd, childOut, childErr, done := startArtifactLand(t, root, home, tally, trees, ready, release, private, first, base)
 	awaitArtifactBarrier(t, ready, done, childOut, childErr)
+	oracle := artifactOracle(t, home)
 
 	bundle := oneProspectiveBundle(t, private)
 	requirePublishedArtifactOwnerRecord(t, bundle, cmd.Process.Pid, root)
@@ -51,7 +50,7 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 	if code := systemExitCode(<-done); code == 0 {
 		t.Fatal("killed prospective owner exited green")
 	}
-	releaseArtifactBarrier(t, release)
+	releaseArtifactOracle(t, release, oracle)
 
 	fresh := systemCreateLandingWorktree(t, root, home, "artifact-fresh", "artifact fresh")
 	systemCommit(t, fresh.path, "winner.txt", "fresh\n", "fresh prospective subject")
@@ -115,12 +114,14 @@ func requirePublishedArtifactOwnerRecord(t *testing.T, bundle string, pid int, r
 	if err != nil {
 		t.Fatal(err)
 	}
+	// The protection generation is the CLI owner's own, so the row requires one and compares the rest.
 	want := prospectiveartifact.Record{
-		Schema:    prospectiveartifact.RecordSchema,
-		OwnerPID:  pid,
-		CommonDir: common,
+		Schema:     prospectiveartifact.RecordSchema,
+		OwnerPID:   pid,
+		CommonDir:  common,
+		Protection: record.Protection,
 	}
-	if record != want {
+	if record != want || record.Protection == "" {
 		t.Fatalf("published owner record = %#v, want %#v", record, want)
 	}
 }
@@ -142,53 +143,6 @@ func artifactRootEntries(t *testing.T, root string) string {
 		described = append(described, entry.Name()+" "+info.Mode().String())
 	}
 	return strings.Join(described, "\n")
-}
-
-func releaseArtifactBarrier(t *testing.T, release string) {
-	t.Helper()
-	releaseWriter, err := os.OpenFile(release, os.O_WRONLY, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := releaseWriter.Write([]byte("go\n")); err != nil {
-		t.Fatal(err)
-	}
-	if err := releaseWriter.Close(); err != nil {
-		t.Fatal(err)
-	}
-}
-
-// awaitArtifactBarrier waits for a landing subprocess to open its prospective gate
-// barrier. The subprocess reads git worktree state on the way there, so that read is the
-// longest bound this wait contains.
-func awaitArtifactBarrier(t *testing.T, ready string, done <-chan error, stdout, stderr *bytes.Buffer) {
-	t.Helper()
-	window := bounds.TestDeadline(bounds.WorktreeListTimeout)
-	observed := make(chan error, 1)
-	go func() {
-		file, err := os.Open(ready)
-		if err != nil {
-			observed <- err
-			return
-		}
-		defer file.Close()
-		byteRead := make([]byte, 1)
-		_, err = file.Read(byteRead)
-		if err == nil && string(byteRead) != "r" {
-			err = errors.New("unexpected prospective gate barrier")
-		}
-		observed <- err
-	}()
-	select {
-	case err := <-observed:
-		if err != nil {
-			t.Fatal(err)
-		}
-	case err := <-done:
-		t.Fatalf("prospective owner ended before the artifact barrier: %v, stdout=%q, stderr=%q", err, stdout.String(), stderr.String())
-	case <-time.After(window):
-		t.Fatal(bounds.TestTimeoutVerdict("the prospective owner to reach the artifact barrier", window))
-	}
 }
 
 func oneProspectiveBundle(t *testing.T, root string) string {
@@ -272,6 +226,7 @@ func TestOneAuthorizationRecoversTheDeadBundleOfADeadAndLivePair(t *testing.T) {
 
 	deadCommand, deadOut, deadErr, deadDone := startArtifactAuthorization(t, root, home, tally, trees, ready, release, private, base, "artifact-dead", "loser.txt", "dead prospective subject")
 	awaitArtifactBarrier(t, ready, deadDone, deadOut, deadErr)
+	oracle := artifactOracle(t, home)
 	dead := otherProspectiveBundle(t, private, live)
 	deadCheckout := filepath.Join(dead, prospectiveartifact.CheckoutName)
 	requireCheckoutRegistered(t, root, deadCheckout, true)
@@ -281,7 +236,7 @@ func TestOneAuthorizationRecoversTheDeadBundleOfADeadAndLivePair(t *testing.T) {
 	if code := systemExitCode(<-deadDone); code == 0 {
 		t.Fatal("killed prospective owner exited green")
 	}
-	releaseArtifactBarrier(t, release)
+	releaseArtifactOracle(t, release, oracle)
 
 	_, freshOut, freshErr, freshDone := startArtifactAuthorization(t, root, home, tally, trees, ready, release, private, base, "artifact-fresh", "winner.txt", "fresh prospective subject")
 	awaitArtifactBarrier(t, ready, freshDone, freshOut, freshErr)

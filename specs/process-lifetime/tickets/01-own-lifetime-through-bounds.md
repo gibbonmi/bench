@@ -1,7 +1,7 @@
 # Own bounded lifetime through the bounds runner
 
 Blocked by: none
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_retained_workflow.go, internal/bounds/bounds.go, internal/bounds/bounds_test.go, internal/bounds/lifetime_test.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/subprocess, projects/benchkit.md, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/package-core-guard/bounds-classify-limit-restated, tests/canary/package-core-guard/bounds-discovery-window-unwrapped, tests/canary/package-core-guard/bounds-dot-import-package-alias, tests/canary/package-core-guard/bounds-dot-import-wait, tests/canary/package-core-guard/bounds-duplicate-owner, tests/canary/package-core-guard/bounds-intent-window-fixed, tests/canary/package-core-guard/bounds-multiple-dot-import-wait, tests/canary/package-core-guard/bounds-parenthesized-wait, tests/canary/package-core-guard/bounds-raw-elapsed-wait, tests/canary/package-core-guard/bounds-raw-injected-wait, tests/canary/package-core-guard/bounds-raw-wait-deadline, tests/canary/package-core-guard/bounds-raw-wait-duration, tests/canary/package-core-guard/bounds-read-limit-restated, tests/canary/package-core-guard/bounds-reassigned-wait-duration, tests/canary/package-core-guard/bounds-redeclared-wait-duration, tests/canary/package-core-guard/bounds-worktree-window-unwrapped, tests/canary/skill-description-budgets/budget-table-missing, tests/canary/skill-description-budgets/description-folded, tests/canary/skill-description-budgets/description-missing, tests/canary/skill-description-budgets/over-budget-command, tests/canary/skill-description-budgets/over-budget-description, tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading, tests/canary/workflow-guidance-anchors/benchkit-review-round-owner, tests/canary/workflow-guidance-anchors/benchkit-review-round-routing, tests/canary/workflow-guidance-anchors/benchkit-spec-ownership, tests/canary/workflow-guidance-anchors/benchkit-system-suite-route
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_retained_workflow.go, internal/bounds/bounds.go, internal/bounds/bounds_test.go, internal/bounds/lifetime_test.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/subprocess, projects/benchkit.md, tests/canary/guidance-prose-budgets/over-budget-skill, tests/canary/line-routing/line-binding-prose-drift, tests/canary/package-core-guard/bounds-classify-limit-restated, tests/canary/package-core-guard/bounds-discovery-window-unwrapped, tests/canary/package-core-guard/bounds-dot-import-package-alias, tests/canary/package-core-guard/bounds-dot-import-wait, tests/canary/package-core-guard/bounds-duplicate-owner, tests/canary/package-core-guard/bounds-intent-window-fixed, tests/canary/package-core-guard/bounds-multiple-dot-import-wait, tests/canary/package-core-guard/bounds-parenthesized-wait, tests/canary/package-core-guard/bounds-raw-elapsed-wait, tests/canary/package-core-guard/bounds-raw-injected-wait, tests/canary/package-core-guard/bounds-raw-wait-deadline, tests/canary/package-core-guard/bounds-raw-wait-duration, tests/canary/package-core-guard/bounds-read-limit-restated, tests/canary/package-core-guard/bounds-reassigned-wait-duration, tests/canary/package-core-guard/bounds-redeclared-wait-duration, tests/canary/package-core-guard/bounds-worktree-window-unwrapped, tests/canary/skill-description-budgets/budget-table-missing, tests/canary/skill-description-budgets/description-folded, tests/canary/skill-description-budgets/description-missing, tests/canary/skill-description-budgets/over-budget-command, tests/canary/skill-description-budgets/over-budget-description, tests/canary/workflow-guidance-anchors/benchkit-system-suite-route
 Covers: PL2, PL3, PL4, PL5, PL6, PL7, PL8, PL9, PL10, PL11, PL12, PL13, PL14, PL15, PL16, PL17, PL18, PL19, PL28, PL66, PL67, PL68, PL69, PL124, PL125
 
 ## What to build
@@ -31,8 +31,8 @@ Correct the profile owner claim when this first shared owner appears.
 Keep its other accepted guidance and anchor policy intact.
 Register each new fault port with its real producer at this checkpoint.
 
-Before implementation starts, confirm complete accepted and landed durable-file-replacement delivery.
-Its leaf, review-record caller, and native qualification must be complete.
+The durable-file-replacement delivery landed before this build entry.
+Its leaf, review-record caller, and Linux qualification are complete.
 Durable-caller-migration is not a prerequisite.
 Use one retained integration source and a fresh author for this ticket.
 
@@ -84,5 +84,14 @@ Co-owned closure holders receive only necessary reference or fixture updates.
 
 - `bench test --package ./internal/subprocess`
 - `bench test --package ./internal/bounds`
+- `bench test --check root-conformance`
+- `bench test --package ./cmd/bench`
+- `bench test --package ./internal/anchors`
+- `bench test --package ./internal/conformance`
+- `bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample`
+- `bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample`
+- `bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample`
+- `bench test --package ./internal/subprocess/protection`
+- `bench test --package ./internal/subprocess/processtest`
 
 Mutation witness: Omit remembered cancellation for a held Start, start a second waiter, or wait unconditionally on a blocked consumer. The corresponding real-child or controlled-start assertion must fail.

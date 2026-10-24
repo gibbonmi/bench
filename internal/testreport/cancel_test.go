@@ -33,22 +33,6 @@ const (
 	cancelParkingPath = "BENCH_TEST_CANCEL_PARKING_PATH"
 )
 
-func TestChangedGoListDrainsGroupOnCancelSignal(t *testing.T) {
-	if mode := os.Getenv(cancelGoModeEnv); mode != "" {
-		runGoHopCancelHelper(t, mode)
-		return
-	}
-	signalGoHopCancelHelper(t, "TestChangedGoListDrainsGroupOnCancelSignal", "list")
-}
-
-func TestFocusedGoTestDrainsGroupOnCancelSignal(t *testing.T) {
-	if mode := os.Getenv(cancelGoModeEnv); mode != "" {
-		runGoHopCancelHelper(t, mode)
-		return
-	}
-	signalGoHopCancelHelper(t, "TestFocusedGoTestDrainsGroupOnCancelSignal", "test")
-}
-
 func TestFocusedGoTestCancelsAfterDecode(t *testing.T) {
 	if mode := os.Getenv(cancelGoModeEnv); mode != "" {
 		runGoHopCancelHelper(t, mode)

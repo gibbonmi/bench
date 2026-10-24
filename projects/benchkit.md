@@ -399,8 +399,8 @@ through the installed wrapper under a private `BENCH_HOME`.
 The five command decision domains — gate, adopt, preflight, canary,
 and freshness — consume immutable values in process. Their ordinary tests create no
 repositories and start no operating-system processes. `internal/git` owns the one
-ordinary repository adapter; `internal/gate` owns the one ordinary controlled process
-group adapter.
+ordinary repository adapter. `internal/subprocess` owns process-group lifetime, and
+`internal/gate` keeps its gate adapter.
 
 Canary fixtures are immutable inputs to registered conformance checks. Each retained kit
 fixture has exactly one check owner. Its ordinary mutation test calls that owner directly,
@@ -464,6 +464,7 @@ current-state advertisement of its non-meta input bindings:
 | `ticket-grammar` | `catch-all` |
 | `claude-agent-definitions` | `catch-all` |
 | `stdlib-reimplementation` | `go-source` |
+| `process-lifetime-closure` | `go-source` |
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
 current exact green; partial/component and reduced-scope records are legacy input classes

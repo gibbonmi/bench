@@ -1727,6 +1727,14 @@
       "identity": "sha256:4adbb6afc01f4b8849173e4239cff6fc47a2935bf8886488804c709511155d07",
       "source": "a4c72441396b90253bdf78a04651378882c5fdda",
       "evidence": "0c7cec2815ac965f9686e7c1e89022e2b6178c36"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT362-process-lifetime",
+      "binding": "process-lifetime",
+      "identity": "sha256:13b0002589b86f4166e2448a2f84bd2df3ed519a702d02225679f968550e1ec4",
+      "source": "0fba401dfb43379beb46ed65dc933f9e31692cd5",
+      "evidence": "fe46a46bd06cbb56fc3208c5f7858d57119ce20c"
     }
   ]
 }

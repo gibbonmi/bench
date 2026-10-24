@@ -12,11 +12,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/structure"
+	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
@@ -52,7 +55,7 @@ structure, not behavior. Make one split, then stop — the loop re-checks and co
 var timeNow = time.Now
 
 // session carries a running shift's state. The signal handler and the loop share one
-// view of the worktree root, the adapter child, and the once-only teardown through it.
+// view of the worktree root, the adapter lifetime, and the once-only teardown through it.
 // It also carries the fields the interrupt checkpoint needs to emit an honest
 // shift_result and record the intent outcome itself. os.Exit skips deferred cleanup, so
 // nothing at that path can rely on a defer.
@@ -68,8 +71,13 @@ type session struct {
 	record   *shiftRecord
 	released bool // set once teardown has released the worktree to the pool
 
-	mu          sync.Mutex
-	adapter     *exec.Cmd // the in-flight adapter child, or nil between runs
+	mu sync.Mutex
+	// adapter is the lifetime of the in-flight adapter, or nil between runs. runAdapter
+	// stores it before Start, so a cancellation never waits on a published process.
+	adapter *subprocess.Lifetime
+	// cancel is the first shutdown request of the session. A request that arrives between
+	// adapter runs reaches the next lifetime before its Start.
+	cancel      subprocess.Cancellation
 	cancelGate  context.CancelFunc
 	interrupted atomic.Bool // set by the signal handler; parks the loop at its checkpoints
 	deadline    atomic.Bool // set by the wall timer; parks the loop like interrupted, but reads as incomplete
@@ -140,7 +148,10 @@ func (s *session) refactorPhase(base string, rcap int) error {
 		} else {
 			s.checkpoint()
 			fmt.Fprintln(s.stdout, "  ✗ refactor broke the gate — rolling back")
-			rollback(s.root)
+			if err := rollback(s.root); err != nil {
+				fmt.Fprintf(s.stderr, "could not roll back refactor %d: %v\n", r, err)
+				return fmt.Errorf("could not roll back refactor pass %d", r)
+			}
 		}
 	}
 	if _, violations := s.touchedViolations(base); violations == 0 {
@@ -155,52 +166,111 @@ func (s *session) refactorPhase(base string, rcap int) error {
 	return nil
 }
 
+// stepAdapterStart is the startup transition of an adapter run: its lifetime is published
+// to the cancellation paths, and its Start has not run. A test pauses it there.
+const stepAdapterStart shiftStep = "adapter-start"
+
+// adapterPolicy keeps the adapter's result after a normal exit. A cancellation sends the
+// caller's signal, and KILL follows the shutdown grace.
+var adapterPolicy = subprocess.Policy{
+	Normal: subprocess.Preserve,
+	Grace:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessShutdownGrace)),
+	Final:  bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessFinalWindow)),
+	Poll:   bounds.ProcessPoll,
+}
+
 // runAdapter invokes the harness adapter with the prompt written to its stdin and no
 // positional argument, with BENCH_SHIFT=1 armed, from the worktree root. BENCH_SHIFT=1
 // arms the Stop hook so the agent cannot declare done on red. Stdin transport keeps the
 // prompt out of the machine's process listing on the hop Bench controls. The child runs
-// in its own process group, so a pulled line can tear down the whole adapter tree, not
-// just the immediate child. The returned error, a spawn failure or a nonzero exit, is
-// evidence for progress, not the oracle. The gate still decides whether an iteration's
-// work counts. The adapter also gets the trace handoff for the pass span on ctx, after
-// every inherited value, so its line resolution records under this pass.
+// in its own process group under one lifetime, so a pulled line can tear down the whole
+// adapter tree, not just the immediate child. The lifetime is published before its Start,
+// so a cancellation during startup reaches the adapter. The launch registers on the
+// inherited resources and the worktree, so an adapter group that outlives the run keeps the
+// worktree protected. The returned error, a spawn failure or a nonzero exit, is evidence
+// for progress, not the oracle. The gate still decides whether an iteration's work counts.
+// The adapter also gets the trace handoff for the pass span on ctx, after every inherited
+// value, so its line resolution records under this pass.
 func (s *session) runAdapter(ctx context.Context, prompt string) error {
 	adapterEnv, err := env.Build(s.root)
 	if err != nil {
 		fmt.Fprintln(s.stderr, err)
 		return err
 	}
+	adapterEnv = otelrecord.WithHandoff(ctx, s.mainRoot, append(adapterEnv, "BENCH_SHIFT=1"))
+	resources, err := worktree.ChildResources(s.root, adapterEnv)
+	if err != nil {
+		fmt.Fprintln(s.stderr, err)
+		return err
+	}
 	cmd := exec.Command(s.agent)
 	cmd.Dir = s.root
-	cmd.Env = otelrecord.WithHandoff(ctx, s.mainRoot, append(adapterEnv, "BENCH_SHIFT=1"))
-	cmd.Stdin = strings.NewReader(prompt)
-	cmd.Stdout, cmd.Stderr = s.stdout, s.stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Env = protection.Environ(adapterEnv, resources)
+	streams := subprocess.Streams{Stdin: strings.NewReader(prompt), Stdout: subprocess.Output{Writer: s.stdout}, Stderr: subprocess.Output{Writer: s.stderr}}
+	lifetime := subprocess.NewLifetime(cmd, adapterPolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: resources})
 	s.mu.Lock()
-	s.adapter = cmd
+	s.adapter = lifetime
+	pending := s.cancel
 	s.mu.Unlock()
-	startErr := cmd.Start()
-	var runErr error
-	if startErr != nil {
-		runErr = startErr
-	} else {
-		runErr = cmd.Wait()
+	defer func() {
+		s.mu.Lock()
+		s.adapter = nil
+		s.mu.Unlock()
+	}()
+	if pending.Cause != subprocess.CauseNone {
+		lifetime.Cancel(pending.Cause, pending.Signal)
 	}
-	s.mu.Lock()
-	s.adapter = nil
-	s.mu.Unlock()
-	return runErr
+	if err := hitShift(shiftFault, stepAdapterStart); err != nil {
+		return err
+	}
+	if err := lifetime.Start(); err != nil {
+		return err
+	}
+	outcome, _ := lifetime.Wait()
+	if unresolved := outcome.Uncertified(); unresolved != nil {
+		// The worktree's protection keeps what the adapter group can still change.
+		fmt.Fprintf(s.stderr, "adapter: %v\n", unresolved)
+	}
+	if outcome.Process.StartErr != nil {
+		return outcome.Process.StartErr
+	}
+	return outcome.Process.WaitErr
 }
 
-// killAdapter signals the in-flight adapter's whole process group, so a pulled line
-// reaches the adapter and everything it spawned. It is a no-op when no adapter is running.
-func (s *session) killAdapter(sig syscall.Signal) {
+// cancelAdapter requests shutdown of the in-flight adapter's whole process group with
+// sig, so a pulled line reaches the adapter and everything it spawned. The session keeps
+// the first request, so an adapter run that has not published its lifetime yet receives
+// it before its Start.
+func (s *session) cancelAdapter(cause subprocess.Cause, sig syscall.Signal) {
 	s.mu.Lock()
-	cmd := s.adapter
-	s.mu.Unlock()
-	if cmd != nil && cmd.Process != nil {
-		_ = syscall.Kill(-cmd.Process.Pid, sig)
+	if s.cancel.Cause == subprocess.CauseNone {
+		s.cancel = subprocess.Cancellation{Cause: cause, Signal: sig}
 	}
+	adapter := s.adapter
+	s.mu.Unlock()
+	if adapter != nil {
+		adapter.Cancel(cause, sig)
+	}
+}
+
+// interrupt is the signal path: a pulled line forwards its own signal to the adapter and
+// cancels a running gate. The loop exits at its next checkpoint.
+func (s *session) interrupt(sig os.Signal) {
+	s.interrupted.Store(true)
+	sys, ok := sig.(syscall.Signal)
+	if !ok {
+		sys = syscall.SIGTERM
+	}
+	s.cancelAdapter(subprocess.CauseInterruption, sys)
+	s.cancelRunningGate()
+}
+
+// expire is the wall-deadline path. It acts like a pulled line, but it sets deadline
+// rather than interrupted, so the next checkpoint resolves incomplete/3.
+func (s *session) expire() {
+	s.deadline.Store(true)
+	s.cancelAdapter(subprocess.CauseDeadline, syscall.SIGTERM)
+	s.cancelRunningGate()
 }
 
 // runGate runs the gate against the session's worktree and reports its exit code
@@ -276,76 +346,8 @@ func (s *session) exitPreserving(outcome Outcome, detail string) {
 	os.Exit(finish(s.stdout, s.stderr, s.mainRoot, s.entry, s.record, res))
 }
 
-// teardown removes the shift scratch and releases the pool lease, exactly once whether
-// reached by the normal path, the deferred cleanup, or preserveAndRecover. It returns
-// the first error hit, today only the injectable teardown fault, since worktree.Release
-// does not itself report git failures. A real teardown problem is reported rather than
-// silently swallowed. A second call, the deferred safety net once preserve is already
-// set, is a no-op via sync.Once and returns nil.
-func (s *session) teardown() error {
-	var err error
-	s.teardownOne.Do(func() {
-		cleanupScratch(s.root)
-		if ferr := hitShift(shiftFault, stepTeardown); ferr != nil {
-			err = ferr
-			return
-		}
-		worktree.Release(s.root)
-		s.released = true
-	})
-	return err
-}
-
-// retainNotes keeps the notes of a shift that reached its first iteration. Every exit
-// after the first iteration runs preserveAndRecover, which calls it before any scratch
-// cleanup and on the retain path. An earlier exit has no notes to keep.
-func (s *session) retainNotes() {
-	if s.iterationsUsed > 0 {
-		s.record.retainNotes(s.root)
-	}
-}
-
-// preserveAndRecover is the one place a post-mutation failure preserves work before this
-// session's charged worktree leaves the process's hands. When nothing beyond scratch is
-// dirty, it releases through teardown and reports RecoveryNone. Otherwise it retains and
-// locks the worktree, leaving the dirty tree exactly where it is and never running
-// teardown/Release. The work stays visible at a path the operator can read, rather than
-// in a ref no command hands back. It always prints the resulting location and marks the
-// session so the deferred cleanup never re-finalizes this worktree.
-func (s *session) preserveAndRecover(reason string) (recovery string, teardownErr error) {
-	defer s.preserve.Store(true)
-	s.retainNotes()
-	if len(dirtyPaths(s.root)) == 0 {
-		return RecoveryNone, s.teardown()
-	}
-	if lockErr := worktree.RetainAndLock(s.root, "bench shift recovery: "+reason); lockErr != nil {
-		fmt.Fprintf(s.stderr, "could not retain worktree %s: %v\n", s.root, lockErr)
-	}
-	fmt.Fprintf(s.stdout, "  recovery: %s\n", recoveryWorktree(s.root))
-	return recoveryWorktree(s.root), nil
-}
-
-// teardownFailureResult is the one Result a teardown error resolves to, regardless of
-// what post-mutation path reached it. Its outcome is failed/1, with a detail naming
-// what is already safe, the branch, and the recovery pointer when one exists. The
-// teardown failure is real even when the work is not lost.
-func teardownFailureResult(s *session, recovery string, err error) Result {
-	detail := fmt.Sprintf("teardown failed: %v; branch %s is safe", err, s.branch)
-	if intent.HoldsRecovery(recovery) {
-		detail += "; recovery " + recovery
-	}
-	return Result{Outcome: OutcomeFailed, Branch: s.branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail}
-}
-
 // nothingStaged reports whether the index has no staged changes, the "gate green, no
 // change this iteration" signal.
 func nothingStaged(root string) bool {
 	return exec.Command("git", "-C", root, "diff", "--cached", "--quiet").Run() == nil
-}
-
-// rollback discards a red iteration's work while preserving the shift scratch, so the
-// next iteration still reads what the last one learned.
-func rollback(root string) {
-	_ = exec.Command("git", "-C", root, "reset", "-q", "--hard").Run()
-	_ = exec.Command("git", "-C", root, "clean", "-qfdx", "-e", ".bench-objective", "-e", ".bench-notes.md").Run()
 }

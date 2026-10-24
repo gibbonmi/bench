@@ -15,9 +15,11 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/durablefile"
+	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 type runBinaryOwner func(context.Context, string) (*runbinary.Selection, error)
@@ -47,6 +49,12 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 // own phase manifest never selects what runs against it. Every record the execution
 // persists goes through replacer.
 func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner, baseline string, replacer durablefile.Replacer) Result {
+	return executeSubjectOwning(ctx, runtimeRoot, storageRoot, stdout, stderr, arm, mode, evaluation, owner, baseline, replacer, nil)
+}
+
+// bundle, when set, is the prospective bundle the subject runs in. The oracle registers on it,
+// and no verdict is recorded until the selection and then the bundle release.
+func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner, baseline string, replacer durablefile.Replacer, bundle *prospectiveartifact.Owner) Result {
 	plan, err := evaluation.acceptPre()
 	if err != nil {
 		return refuse(ctx, storageRoot, stderr, mode, funnelFace(err), fmt.Sprintf("gate subject unavailable: %v", err))
@@ -136,7 +144,14 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 		}
 	}
 	defer holder.Release()
+	// The oracle registers on the cache generation, so a clean refuses while it lives on.
+	cache, err := holder.Resources()
+	if err != nil {
+		return operational(storageRoot, 0, stderr, "gate cache protection unavailable: "+err.Error())
+	}
 	var selection *runbinary.Selection
+	// The selection lives in the bundle, so the bundle releases only after the selection does.
+	release := func() error { return bundle.CloseAfter(selection.Close) }
 	if owner != nil && phaseTableGate(runtimeRoot, plan.Resolution) {
 		source := runBinarySource(runtimeRoot, storageRoot, plan)
 		logGateEvent(ctx, gateLogRecord{Event: "binary.select.start", Root: source})
@@ -154,7 +169,7 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 		}
 		logGateEvent(ctx, gateLogRecord{Event: "binary.select.finish", Root: source, Path: selection.Path})
 		defer func() {
-			err := selection.Close()
+			err := release()
 			record := gateLogRecord{Event: "binary.cleanup", Path: selection.Path}
 			if err != nil {
 				record.Detail = err.Error()
@@ -175,7 +190,11 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 		return persistenceFailure(storageRoot, 0, stderr, "gate pending persistence failed", err)
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
-	rc := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
+	// The code derives from the whole outcome, so an undrained group or open obligation is not green.
+	// The oracle can run the selected executable, so it registers on the selection too.
+	local := append(append(cache, bundle.Resources()...), selection.Resources()...)
+	run := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr, local...)
+	rc := run.Code
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.finish", Root: runtimeRoot, Exit: &rc})
 	if ctx.Err() != nil {
 		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, time.Now().UTC())}
@@ -199,6 +218,13 @@ func executeSubjectReplacing(ctx context.Context, runtimeRoot, storageRoot strin
 			inspection = inspectSubjectAt(storageRoot, after, time.Now().UTC())
 		}
 		return Result{GateExit: rc, ActionExit: 1, Inspection: inspection}
+	}
+	if rc != 0 && run.Outcome.Process.Started && run.Outcome.Protection.State != protection.Safe {
+		return unprotectedFailure(storageRoot, plan, rc, stderr, run)
+	}
+	// A nested user that outlives a zero exit keeps a resource; its release failure is no verdict.
+	if err := release(); err != nil {
+		return retainedFailure(storageRoot, plan, rc, stderr, "gate resource release failed: "+err.Error())
 	}
 	status := "red"
 	if rc == 0 {
@@ -317,8 +343,8 @@ func subjectChangeDiagnostic(root string, declaredPaths []string, before, after 
 	return "gate subject changed during execution"
 }
 
-func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer) int {
-	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr}, true).Code
+func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer, local ...protection.Descriptor) processGroupResult {
+	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr}, local...)
 }
 
 // ExecutionInProgress answers whether a gate run holds the checkout's execution

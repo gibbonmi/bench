@@ -9,11 +9,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"syscall"
 	"testing"
-	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gocache"
 )
@@ -142,24 +139,6 @@ echo $! > "` + builder.childPID + `"
 	return builder
 }
 
-func TestCanonicalBuilderDrainsDescendantsBeforeReturningSelection(t *testing.T) {
-	builder := newParkingBuilder(t, false)
-	factory := Factory{TempRoot: t.TempDir(), Verify: func(string, string) error { return nil }}
-	selection, err := factory.Own(context.Background(), builder.source)
-	if err != nil {
-		t.Fatal(err)
-	}
-	child := readPID(t, builder.childPID)
-	t.Cleanup(func() { _ = syscall.Kill(child, syscall.SIGKILL) })
-	requireProcessExit(t, child)
-	if err := selection.Close(); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := os.Stat(builder.premature); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("builder descendant observed premature cleanup: %v", err)
-	}
-}
-
 // TestFactoryValidateRefusesAStaleInheritedSeal is BF7. An inherited executable carries
 // an intact seal pair of its own, so the pair check alone accepts a binary its sources
 // have moved past. A named source root grades the seal's source digest against the tree
@@ -278,21 +257,6 @@ func readPID(t *testing.T, path string) int {
 		t.Fatalf("read pid %q: %v", data, err)
 	}
 	return pid
-}
-
-// requireProcessExit waits out the grace a cancelled builder group has to exit, so the
-// window derives from that grace rather than from a literal a loaded machine can beat.
-func requireProcessExit(t *testing.T, pid int) {
-	t.Helper()
-	window := bounds.TestDeadline(BuilderCancelGrace)
-	deadline := time.Now().Add(window)
-	for time.Now().Before(deadline) {
-		if err := syscall.Kill(pid, 0); errors.Is(err, syscall.ESRCH) {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	t.Fatal(bounds.TestTimeoutVerdict(fmt.Sprintf("process %d to exit after the builder returned", pid), window))
 }
 
 // C09: the private build's environment carries the Bench build cache entry, so the

@@ -2,6 +2,7 @@ package testreport
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -13,7 +14,8 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"syscall"
+
+	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
 const currentPackagePattern = "./..."
@@ -172,30 +174,14 @@ func currentPackagesWithEnvironment(ctx context.Context, root string, env []stri
 	cmd := exec.Command("go", "list", "-buildvcs=false", "-json", "-test", currentPackagePattern)
 	cmd.Dir = root
 	cmd.Env = env
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	var output bytes.Buffer
-	cmd.Stdout = &output
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("go list failed: %w", err)
-	}
-	completed := make(chan error, 1)
-	done := make(chan struct{})
-	go func() {
-		completed <- cmd.Wait()
-		close(done)
-	}()
-	var err error
-	select {
-	case err = <-completed:
-	case <-ctx.Done():
-		cancelGoProcessGroup(cmd, done)
-		err = <-completed
+	child := runGoChild(ctx, cmd, nil)
+	if child.Cancellation.Cause != subprocess.CauseNone {
 		return nil, fmt.Errorf("go list interrupted: %s", goChildGroupCancelled)
 	}
-	if err != nil {
+	if err := cmp.Or(child.Process.StartErr, child.Process.WaitErr, child.Uncertified()); err != nil {
 		return nil, fmt.Errorf("go list failed: %w", err)
 	}
-	decoder := json.NewDecoder(bytes.NewReader(output.Bytes()))
+	decoder := json.NewDecoder(bytes.NewReader(child.Streams.Stdout.Data))
 	var packages []listedPackage
 	for {
 		var pkg listedPackage

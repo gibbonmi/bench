@@ -21,8 +21,10 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -31,7 +33,8 @@ import (
 // phases that must complete green before this one starts. A need that ends red or
 // skipped skips this phase too, because it would grade an artifact its need never
 // produced. Dir is the phase's absolute working directory; empty means the runner's
-// root.
+// root. Resources names the phase-local generations its launch registers on, beside every
+// inherited one.
 //
 // Anchoring a declared directory is the producer's job. The graded root and the
 // runner's root are different trees in a linked repo. Only the producer knows which
@@ -44,6 +47,7 @@ type Phase struct {
 	Needs        []string
 	Dir          string
 	ExpectedRuns []string
+	Resources    []protection.Descriptor
 }
 
 var benchkitPhasesForCommand = BenchkitPhases
@@ -163,10 +167,13 @@ func RootConformanceRuns(root, kit string) bool {
 // graded root.
 const conformancePackagePath = "internal/conformance"
 
+// withRunBinary hands selection to every phase. A phase that receives the executable can run
+// it, so its launch registers on the selection's generation too.
 func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 	selected := make([]Phase, len(phases))
 	for i, phase := range phases {
 		selected[i] = phase
+		selected[i].Resources = append(append([]protection.Descriptor(nil), phase.Resources...), selection.Resources()...)
 		selected[i].Argv = append([]string(nil), phase.Argv...)
 		if len(selected[i].Argv) > 0 && selected[i].Argv[0] == runBinaryArgvToken {
 			selected[i].Argv[0] = selection.Path
@@ -308,12 +315,28 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 		}()
 		for i := range phases {
 			phases[i].Env = mergeEnv(phases[i].Env, run.Entries())
+			phases[i].Resources = append(phases[i].Resources, run.Resources()...)
 		}
 		base = withCheckoutGuard(base, root)
 	}
 	ctx, stop := subprocess.NotifyCancel(base)
 	defer stop()
 	return runPhases(ctx, kit, phases, stdout, stderr)
+}
+
+func runPhases(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
+	// The phases run in their own process, so the run's record and trace come from the
+	// handoff that the run's parent composed.
+	ctx, closeRecord := otelrecord.AttachHandoff(ctx)
+	defer closeRecord()
+	skipLog, cleanup, err := newSkipLog()
+	if err != nil {
+		fmt.Fprintf(stderr, "gate: cannot open the capability skip log: %v\n", err)
+		fmt.Fprintln(stderr, "gate: red")
+		return 1
+	}
+	defer cleanup()
+	return runPhasesSerial(ctx, root, withSkipLog(phases, skipLog), skipLog, stdout, stderr)
 }
 
 func shellcheckArgv(root string) []string {

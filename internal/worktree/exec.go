@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"slices"
 	"syscall"
-	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
@@ -15,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/shellcommand"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -120,38 +120,82 @@ func RunTreeChild(verb string, argv []string, dir, home string, stdin io.Reader,
 	return runChild(verb, argv, dir, home, baseEnviron(), nil, stdin, stdout, stderr)
 }
 
+// execPolicy keeps the child's group after a normal exit and waits ExecWaitDelay for
+// output that a descendant still holds open. An interruption sends INT, and KILL follows
+// the same delay.
+var execPolicy = subprocess.Policy{
+	Normal:      subprocess.Preserve,
+	Grace:       bounds.ProcessWindow(bounds.FixedWindow(bounds.ExecWaitDelay)),
+	Final:       bounds.ProcessWindow(bounds.FixedWindow(bounds.ProcessFinalWindow)),
+	OutputDelay: bounds.ProcessWindow(bounds.FixedWindow(bounds.ExecWaitDelay)),
+	Poll:        bounds.ProcessPoll,
+}
+
 // runChild is the one child runner of the exec verb and the tree-scoped call. It answers
-// the child's exit, 1 for a start failure, and 130 for an interrupt.
+// the child's exit, 1 for a start failure or a failed stream or unfinished cleanup, and 130
+// for an interrupt. A stream that the output delay forcibly closed is reported on stderr
+// and keeps the child's exit. The child registers on its resource vector before it starts. A normal
+// return releases no resource: a registered user that is still unresolved keeps its
+// protection, and the enclosing owner observes it.
 func runChild(verb string, argv []string, dir, home string, environ, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
-	cmd := exec.Command(argv[0], argv[1:]...)
-	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = dir, stdin, stdout, stderr
-	cmd.Env = execEnv(dir, home, environ, extraEnv)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	// A descendant of the child can hold an output pipe open after the child exits. The
-	// delay lets exec return at the child's own exit with the output that arrived.
-	cmd.WaitDelay = bounds.FixedWindow(bounds.ExecWaitDelay)
-	if err := cmd.Start(); err != nil {
+	resources, err := childResources(dir, environ)
+	if err != nil {
 		fmt.Fprintf(stderr, "%s: %v\n", verb, err)
 		return 1
 	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		return childExitCode(cmd, err)
-	case <-ctx.Done():
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
-		select {
-		case <-done:
-		case <-time.After(bounds.FixedWindow(bounds.ExecWaitDelay)):
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
-		}
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		return 130
+	cmd := exec.Command(argv[0], argv[1:]...)
+	cmd.Dir = dir
+	// The resource vector is a value the verb owns, so it lands after every --env value.
+	cmd.Env = protection.Environ(execEnv(dir, home, environ, extraEnv), resources)
+	streams := subprocess.Streams{Stdin: stdin, Stdout: subprocess.Output{Writer: stdout}, Stderr: subprocess.Output{Writer: stderr}}
+	lifetime := subprocess.NewLifetime(cmd, execPolicy, streams, subprocess.Registration{Protocol: protection.Installed(), Resources: resources})
+	if err := lifetime.Start(); err != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", verb, err)
+		return 1
 	}
+	cancel := context.AfterFunc(ctx, func() { lifetime.Cancel(subprocess.CauseInterruption, syscall.SIGINT) })
+	defer cancel()
+	outcome, _ := lifetime.Wait()
+	switch {
+	case outcome.Cancellation.Cause == subprocess.CauseInterruption:
+		return 130
+	case outcome.Process.StartErr != nil:
+		fmt.Fprintf(stderr, "%s: %v\n", verb, outcome.Process.StartErr)
+		return 1
+	}
+	code := lifetimeExitCode(outcome.Process)
+	forced, unfinished := childUnfinished(outcome)
+	if forced != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", verb, forced)
+	}
+	if code == 0 && unfinished != nil {
+		fmt.Fprintf(stderr, "%s: %v\n", verb, unfinished)
+		return 1
+	}
+	return code
+}
+
+// childUnfinished splits the child's incomplete state in two. forced names an owned
+// stream that the output delay closed: exec reports it and still returns the child's code,
+// so a descendant that holds the pipe cannot turn a child zero into a failure (BO69).
+// unfinished names any other stream or cleanup obligation that did not complete. It
+// leaves protection out: the enclosing owner consumes that disposition.
+func childUnfinished(o subprocess.Outcome) (forced, unfinished error) {
+	o.Protection = protection.Disposition{State: protection.Safe}
+	for _, stream := range []*subprocess.Stream{&o.Streams.Stdin, &o.Streams.Stdout, &o.Streams.Stderr} {
+		if stream.Status != subprocess.StreamClosed {
+			continue
+		}
+		if forced == nil {
+			// The outcome's own refusal names the stream, so the line keeps one format.
+			none := subprocess.Stream{Status: subprocess.StreamNone}
+			forced = subprocess.Outcome{Streams: subprocess.StreamSet{Stdin: *stream, Stdout: none, Stderr: none}, Protection: o.Protection}.Uncertified()
+		}
+		stream.Status = subprocess.StreamComplete
+	}
+	return forced, o.Uncertified()
 }
 
 // nameWorktree returns code, and names the tree the child ran in when that code is a
@@ -213,17 +257,38 @@ func withHome(base []string, home string) []string {
 	return append(capability.WithoutEnvironment(base, homeEnv), homeEnv+"="+home)
 }
 
+// lifetimeExitCode is the shell exit code of a Lifetime child. A child whose one waiter never
+// reported has no code of its own.
+func lifetimeExitCode(p subprocess.Process) int {
+	code := p.Code
+	if !p.Waited {
+		code = -1
+	}
+	return shellExitCode(code, p.Signal)
+}
+
 func childExitCode(cmd *exec.Cmd, err error) int {
 	if err == nil {
 		return 0
 	}
-	if cmd.ProcessState != nil {
-		if exit := cmd.ProcessState.ExitCode(); exit >= 0 {
-			return exit
-		}
-		if status, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok && status.Signaled() {
-			return 128 + int(status.Signal())
-		}
+	if cmd.ProcessState == nil {
+		return 1
 	}
-	return 1
+	var signal syscall.Signal
+	if status, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok && status.Signaled() {
+		signal = status.Signal()
+	}
+	return shellExitCode(cmd.ProcessState.ExitCode(), signal)
+}
+
+// shellExitCode is the one map from a child's end to the code that a worktree verb returns:
+// 128 plus the signal that ended the child, else its own code, or 1 when it has no code.
+func shellExitCode(code int, signal syscall.Signal) int {
+	switch {
+	case signal != 0:
+		return 128 + int(signal)
+	case code < 0:
+		return 1
+	}
+	return code
 }

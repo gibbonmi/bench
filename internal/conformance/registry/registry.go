@@ -135,6 +135,7 @@ var familyChecks = map[string]string{
 	"injected-ports":                "injected-port-registry",
 	"canonical-path-owner":          "canonical-path-owner",
 	"cancel-signal-registrations":   "cancel-signal-registrations",
+	"process-lifetime-closure":      "process-lifetime-closure",
 	"guidance-prose-budgets":        "guidance-prose-budgets",
 	"skill-description-budgets":     "skill-description-budgets",
 	"roadmap-detail-integrity":      "roadmap-detail-integrity",

@@ -4,6 +4,8 @@ package runbinary
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -32,7 +34,7 @@ func TestPdeathsigOwnerHelperProcess(t *testing.T) {
 }
 
 // TestBuilderChildDiesWithAnOwnerThatNeverDrains is LQ24. An owner killed mid-build never
-// reaches drainBuilderGroup, so the parent-death signal is the only thing left that
+// reaches its group drain, so the parent-death signal is the only thing left that
 // removes the builder child. The owner has to be its own process: the signal fires on the
 // death of the process that started the child, and the observer must outlive it.
 func TestBuilderChildDiesWithAnOwnerThatNeverDrains(t *testing.T) {
@@ -68,4 +70,19 @@ func awaitPID(t *testing.T, path string) int {
 	}
 	t.Fatal(bounds.TestTimeoutVerdict("the builder child to record its process id at "+path, window))
 	return 0
+}
+
+// requireProcessExit waits out the grace a cancelled builder group has to exit, so the
+// window derives from that grace rather than from a literal a loaded machine can beat.
+func requireProcessExit(t *testing.T, pid int) {
+	t.Helper()
+	window := bounds.TestDeadline(BuilderCancelGrace)
+	deadline := time.Now().Add(window)
+	for time.Now().Before(deadline) {
+		if err := syscall.Kill(pid, 0); errors.Is(err, syscall.ESRCH) {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal(bounds.TestTimeoutVerdict(fmt.Sprintf("process %d to exit after the builder returned", pid), window))
 }

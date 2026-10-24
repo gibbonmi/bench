@@ -1,6 +1,6 @@
 # Process lifetime ownership
 
-Status: staged
+Status: implemented
 
 Roadmap: FT362
 
@@ -29,8 +29,7 @@ Decision ticket 6 identifies those owners and the resulting retention obligation
 
 This outcome serves every repository that links the kit.
 Kit-only tests use the same lifetime and resource owners.
-This planning stage changes no delivery commitment.
-FT290 remains the active commitment.
+This outcome is the active delivery commitment, FT362-process-lifetime.
 
 ## Solution
 
@@ -181,7 +180,8 @@ It promises no bounded whole-CLI output through arbitrary blocked caller I/O.
 
 Worktree exec keeps its separate normal-output ExecWaitDelay.
 After child completion, the adapter waits that existing interval for complete output.
-Expiry closes only owned endpoints and reports incomplete output.
+Expiry closes only owned endpoints and reports incomplete output on stderr.
+Exec then returns the child's exit code, so a background descendant that holds the pipe cannot turn a child zero into a failure.
 It does not add a normal-exit group kill.
 
 Source: Go 1.25.14 os/exec, especially Wait, awaitGoroutines, and StdoutPipe.
@@ -244,7 +244,7 @@ Its lifetime outcome retains raw status for the separate shell repair.
 ### Durable protection schema
 
 A dependency-leaf package under `internal/subprocess/protection/` owns protection, admission, aggregation, and recovery observations.
-It imports the standard library and the planned durablefile publication leaf.
+It imports the standard library, the internal/jsonfile strict decoder, and the durablefile publication leaf.
 Both subprocess and resource owners use it.
 It does not replace resource derivation, assignment ownership, bundle ownership, or evidence authority.
 
@@ -258,6 +258,17 @@ A private store holds resource.json, lock, and the fixed users directory.
 The store and users directory have mode 0700.
 Each JSON record has mode 0600.
 One user.json file per random launch identifier resides in its user directory.
+
+Each store resides under one root for the effective user and the current boot.
+On Linux, the root is bench-process-UID/BOOT-ID under /dev/shm, or under /tmp when /dev/shm is absent.
+BOOT-ID is the kernel boot identifier.
+On darwin, the root resides under /private/tmp, and BOOT-ID is kern.bootsessionuuid.
+No environment variable selects the root.
+Each root directory is a real directory with mode 0700 that the effective user owns.
+Any other root condition prevents launch.
+The store name is the kind and the first 16 bytes of a SHA-256 digest of the canonical resource path and the binding, in hexadecimal.
+A store does not reside inside its resource.
+Safe removal deletes the store after it deletes the resource.
 
 The strict bounded reader rejects unknown fields, trailing JSON, duplicate identities, wrong modes, special files, and unreadable data.
 It does not follow record symlinks.
@@ -297,8 +308,14 @@ Pending marks the durable startup interval.
 Known records a successful launch.
 No-start records a locally proved failed or canceled start.
 The same live owner can close pending after it proves no start occurred.
-Recovery cannot infer no-start from actor death.
-Unknown startup identity can require indefinite retention.
+The actor starts each registered program through a start gate in the program's new group.
+The gate waits on an inherited pipe and executes the program only after the open signal.
+The actor sends that signal only after Started succeeds in every registered store.
+At end of file, the gate exits and executes nothing.
+An exec failure behind the gate remains a Start error.
+A pending user whose actor is currently absent therefore never ran program code, and recovery grades it no-start.
+A pending user whose actor answers a probe stays protected, because the PID can be reused.
+A launch with no registration uses no start gate.
 
 | Production protocol interface | Contract |
 |---|---|
@@ -321,26 +338,21 @@ A partial Prepare rollback uses the same replacement owner and retains uncertain
 Protection owns directory creation and terminal record deletion durability because those are resource-protocol operations.
 A deletion-sync failure returns uncertain cleanup.
 Caller-supplied bounds limits keep the package independent of bounds.
+Persistence fault tests inject faults through the existing durablefile.Replacer seam and add no second fault port.
 
 ### Build-entry prerequisite
 
-Complete durable-file-replacement delivery must be accepted and landed before any process-lifetime implementation begins.
-The prerequisite is specs/durable-file-replacement/spec.md with its leaf, real review-record caller, and native qualification.
-PL-C1 starts after that complete outcome lands.
-PL-C2 consumes its landed internal/durablefile API.
-The prerequisite completes Bench whole-spec acceptance, reconciliation, and landing; D-A is its internal chunk.
-
-durable-caller-migration is not a prerequisite.
-It owns the remaining caller migrations as a separate delivery.
-The split prerequisite specification is accepted, but its implementation is not delivered at this checkpoint.
-If the leaf contract changes, revise this dependency before process build entry.
+The durable-file-replacement and durable-caller-migration deliveries landed before this build entry.
+PL-C2 consumes the internal/durablefile leaf as it stands on main.
+Its native qualification holds on Linux, and the reviewer left macOS open on FT354 on 2026-10-12.
+If the leaf contract changes, revise this dependency before the affected ticket starts.
 
 ### Ordering, admission, and failure
 
 Resource owners acquire outer cleanup exclusions before protocol locks.
 Cache users acquire the existing shared cache lock first.
 Protocol operations deduplicate generations and lock stores in canonical absolute-path order.
-In-process users share descriptors under the existing POSIX record-lock rule.
+Each protocol lock is a flock on the store's lock file, held by one open file description, so in-process users exclude each other.
 No operation acquires a resource-owner exclusion while it holds a protocol lock.
 
 Prepare validates the complete descriptor vector before its first record mutation.
@@ -360,18 +372,18 @@ A partial update leaves pending records intact and the launch unresolved.
 The live owner attempts shutdown with its actual in-memory handle.
 It never reconstructs signal authority from records.
 Only that live owner can prove completion of its known startup interval.
-If it dies first, pending records retain resources.
+If it dies first, its pending records resolve as no-start, because its start gate never opened.
 
 SealAndObserve seals and grades the complete user set under cleanup exclusion and protocol locks.
 Removal stays under those exclusions until deletion completes.
-Registered pending users retain resources even before Start.
+Registered pending users retain resources while their actor lives.
 Known present or uncertain groups retain resources.
 Recovery sends no signal to recorded identities.
 
 For known users, release requires current ESRCH for every recorded group.
 It also requires complete local workers, or current actor ESRCH after all known groups are absent.
 Actor absence resolves only local workers.
-It does not resolve descendant presence or unknown startup identity.
+It does not resolve the presence of a known group or its descendants.
 A reused identity that answers a probe retains safely.
 Age grants no removal authority.
 
@@ -387,9 +399,12 @@ Each descriptor names store path, resource generation, kind, canonical resource 
 It contains the complete inherited resource union plus local owners.
 Each nested Bench lifetime calls Prepare before its separate group can use that union.
 Outer group absence cannot stand in for inner group absence.
+A process with no installed protocol, such as a Go test binary, registers no launch and leaves its inherited vector unchanged.
+A malformed vector still prevents launch, and every CLI entry installs the table before its first launch.
 
 The receiver validates descriptors against strict published records and each resource owner's identity validator.
-The validator checks the resource kind's recognized store location and existing owner identity.
+The validator derives the store from the kind, resource path, and binding, and requires the descriptor's store to be equal to it.
+It also checks existing owner identity.
 The protocol then checks generation equality and fixed record names.
 Descriptors cannot choose arbitrary files, symlinks, generations, repositories, or cleanup targets.
 Malformed, missing, foreign, and sealed descriptors prevent launch.
@@ -404,7 +419,8 @@ The protocol executes no recovered content and adds no recovery verb.
 
 Durable user records carry nested completion across CLI exit.
 The enclosing owner observes stores after its direct child's result.
-Missing completion, pending users, and unreadable records remain protected or uncertain.
+Missing completion, pending users with a live actor, and unreadable records remain protected or uncertain.
+An absent store names no user in the current boot.
 A nested CLI exit zero cannot authorize release while a separate registered group remains unresolved.
 Concurrent users stay distinct records.
 
@@ -412,12 +428,12 @@ Concurrent users stay distinct records.
 
 | Resource owner | Store and acquisition | Required consumers |
 |---|---|---|
-| Cache | bench-process-users/ under canonical cache, after shared lock | Holder completion, exclusive cleaner |
-| Prospective | process-users/ under validated bundle, before checkout use | Direct Close, sweep, gate, lane, evidence inspection |
-| Private binary | process-users/ under selection directory, before build or execution | Build-failure cleanup, Selection.Close, inherited users |
-| Private test run | process-users/ under run root, before child use | Entries propagation, Close, phase and focused-test owners |
-| Worktree and shift scratch | bench-process-users/ under worktree Git admin directory | Exec, shell, shift, reuse, explicit cleanup, pool reclaim |
-| Release evidence | Store under repository-bound evidence owner before phase launch | Prep-release, preflight finalization, replacement, publication |
+| Cache | Derived store for the canonical cache, after shared lock | Holder completion, exclusive cleaner |
+| Prospective | Derived store for the validated bundle, before checkout use | Direct Close, sweep, gate, lane, evidence inspection |
+| Private binary | Derived store for the selection directory, before build or execution | Build-failure cleanup, Selection.Close, inherited users |
+| Private test run | Derived store for the run root, before child use | Entries propagation, Close, phase and focused-test owners |
+| Worktree and shift scratch | Derived store for the worktree Git admin directory | Exec, shell, shift, reuse, explicit cleanup, pool reclaim |
+| Release evidence | Derived store for the repository-bound evidence owner, before phase launch | Prep-release, preflight finalization, replacement, publication |
 
 Cache completion clears ordinary protection before releasing its shared lock.
 Incomplete completion can drop the process-owned lock while durable protection remains.
@@ -444,7 +460,7 @@ Existing owner-death fixtures gain complete proof or expect retention.
 Canonical bundle ownership and the no-recovered-execution rule remain intact.
 
 Gate and lane propagate complete lifetime outcomes through nested entry points.
-RunCaptured must stop reducing the outcome to an integer before resource owners consume it.
+runCaptured must stop reducing the outcome to an integer before resource owners consume it.
 Unresolved protection permits no green record, retained green evidence, or lane pass.
 Protection persistence failure leaves the pending verdict posture.
 Phase order, subject identity, and evidence reuse authority remain unchanged.
@@ -459,6 +475,8 @@ Protected checkouts cannot return to the pool or pass cleanup apply.
 The existing planner includes protection evidence in its fingerprint.
 Apply rechecks that evidence under cleanup exclusion.
 Pool reclaim consumes the same protected-user verdict before key removal.
+A reclaimable member's repository is absent, so reclaim cannot derive its store from the checkout.
+Reclaim finds each worktree store whose recorded resource path is the member's gitdir target, and it grades that store through SealAndObserve.
 The implementation introduces no second cleanup predicate.
 
 Shift stores a lifetime handle instead of a mutable command before Start.
@@ -483,9 +501,9 @@ Ticket implementation preserves the accepted interface contracts above.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
 | PL-C1 / 01-own-lifetime-through-bounds.md | Bounded lifetime and unchanged bounds policy | PL2–PL19, PL28, PL66–PL69, PL124–PL125 | Lifetime and bounds package tests | no |
-| PL-C2 / 02-protect-nested-bounds-users.md | Durable admission and nested resource protection | PL20–PL27, PL39–PL54, PL70–PL74, PL104–PL113, PL120 | Protection tests and nested CLI witness | yes |
-| PL-C3 / 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md, 06-refuse-clean-of-protected-cache.md, 07-retain-prospective-gate-artifacts.md | Protected gate, cache, bundle, binary, and test resources | PL29–PL38, PL55–PL60, PL75–PL78, PL121, PL123 | Resource-owner and second-process cleanup witnesses | yes |
-| PL-C4 / 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md, 10-preserve-focused-test-completion.md, 11-preserve-worktree-exec-and-shell.md | Preserved release, testreport, and worktree policies | PL61–PL65, PL79–PL82, PL114–PL115, PL119, PL122 | Caller package tests | no |
+| PL-C2 / 02-protect-nested-bounds-users.md | Durable admission and nested resource protection | PL20–PL24, PL26–PL27, PL39–PL54, PL70–PL74, PL104–PL113, PL120 | Protection tests and nested CLI witness | yes |
+| PL-C3 / 03-migrate-gate-process-policy.md, 04-retain-selected-build-binaries.md, 05-protect-private-test-directories.md, 06-refuse-clean-of-protected-cache.md, 07-retain-prospective-gate-artifacts.md, 14-gate-registered-starts.md | Protected gate, cache, bundle, binary, and test resources | PL25, PL29–PL38, PL55–PL60, PL75–PL78, PL121, PL123, PL126–PL129 | Resource-owner and second-process cleanup witnesses | yes |
+| PL-C4 / 08-preserve-release-step-evidence.md, 09-bound-preflight-and-scanner-shutdown.md, 10-preserve-focused-test-completion.md, 11-preserve-worktree-exec-and-shell.md | Preserved release, testreport, and worktree policies | PL61–PL65, PL79–PL82, PL114–PL115, PL119, PL122, PL130 | Caller package tests | no |
 | PL-C5 / 12-retain-shift-scratch-through-recovery.md, 13-enforce-final-lifetime-closure.md | Shift recovery and final migration closure | PL1, PL83–PL103, PL116–PL118 | Actual shift race, caller differential matrix, native checks | yes |
 
 The first chunk supplies the lifetime and stream contract through the bounds caller.
@@ -501,7 +519,7 @@ The last closes recovery and the complete census.
 
 The version 1 plan declares future evidence, not executed implementation results.
 The coordinator adds required version 2 fresh-author assignments before dispatch.
-The complete landed durability prerequisite applies before the first ticket.
+The durability prerequisite landed before the first ticket.
 The implementation line remains the approved proposal, with no binding change.
 
 The first two chunks expose the shared lifetime and protection seams through real bounds consumers.
@@ -513,278 +531,13 @@ All caller migrations precede the final global census and differential reconcili
 Worktree descriptor rows PL114 and PL115 join PL-C4 with their actual consumer.
 This narrower consumer assignment preserves all predicates and the five stable chunk IDs.
 
-Every ticket co-names its canonical registry, anchor, and fixture closure.
+Every ticket names each registry, anchor, and fixture holder that its change can make stale.
 Direct blockers order each shared Writes path, including holder files kept unchanged.
 Over-budget sources gain no lines without a cohesive move into that ticket's owned files.
 No later ticket can pay that checkpoint's headroom debt.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "PL-C1",
-      "tickets": [
-        "01-own-lifetime-through-bounds.md"
-      ],
-      "verification": [
-        {
-          "id": "ticket-1-check-1",
-          "command": "bench test --package ./internal/subprocess"
-        },
-        {
-          "id": "ticket-1-check-2",
-          "command": "bench test --package ./internal/bounds"
-        },
-        {
-          "id": "ticket-1-omission",
-          "command": "bench test --package ./internal/subprocess",
-          "probe": "Omit remembered cancellation for a held Start, start a second waiter, or wait unconditionally on a blocked consumer. The corresponding real-child or controlled-start assertion must fail."
-        }
-      ]
-    },
-    {
-      "id": "PL-C2",
-      "tickets": [
-        "02-protect-nested-bounds-users.md"
-      ],
-      "verification": [
-        {
-          "id": "ticket-2-check-1",
-          "command": "bench test --package ./internal/subprocess/protection"
-        },
-        {
-          "id": "ticket-2-check-2",
-          "command": "bench test --package ./internal/bounds"
-        },
-        {
-          "id": "ticket-2-check-3",
-          "command": "bench test --package ./internal/gocache"
-        },
-        {
-          "id": "ticket-2-check-4",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "ticket-2-omission",
-          "command": "bench test --check system",
-          "probe": "Drop inherited descriptors from the real bounds launch. The nested-provider witness must fail through bench test --check system."
-        }
-      ]
-    },
-    {
-      "id": "PL-C3",
-      "tickets": [
-        "03-migrate-gate-process-policy.md",
-        "04-retain-selected-build-binaries.md",
-        "05-protect-private-test-directories.md",
-        "06-refuse-clean-of-protected-cache.md",
-        "07-retain-prospective-gate-artifacts.md"
-      ],
-      "verification": [
-        {
-          "id": "ticket-3-check-1",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "ticket-3-omission",
-          "command": "bench test --package ./internal/gate",
-          "probe": "Replace INT with TERM, map timeout to interruption, or omit normal group drain. The actual gate signal and descendant-survival fixtures must fail."
-        },
-        {
-          "id": "ticket-4-check-1",
-          "command": "bench test --package ./internal/runbinary"
-        },
-        {
-          "id": "ticket-4-omission",
-          "command": "bench test --package ./internal/runbinary",
-          "probe": "Remove normal builder drain or delete the selection before all registered groups are absent. The live descendant or executable-retention assertion must fail."
-        },
-        {
-          "id": "ticket-5-check-1",
-          "command": "bench test --package ./internal/env"
-        },
-        {
-          "id": "ticket-5-check-2",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "ticket-5-omission",
-          "command": "bench test --package ./internal/env",
-          "probe": "Drop the private-run descriptor or discard KitTestRun.Close failure. The child-owned file survives while a successful phase result must disappear."
-        },
-        {
-          "id": "ticket-6-check-1",
-          "command": "bench test --package ./internal/gocache"
-        },
-        {
-          "id": "ticket-6-check-2",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "ticket-6-check-3",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "ticket-6-omission",
-          "command": "bench test --package ./internal/gocache",
-          "probe": "Use only the dropped owner lock, treat unreadable records as empty, or publish green before terminal persistence. The second CLI cleaner and real gate record witnesses must fail."
-        },
-        {
-          "id": "ticket-7-check-1",
-          "command": "bench test --package ./internal/gate/prospectiveartifact"
-        },
-        {
-          "id": "ticket-7-check-2",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "ticket-7-check-3",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "ticket-7-check-4",
-          "command": "bench test --check docs-currency-workflow"
-        },
-        {
-          "id": "ticket-7-omission",
-          "command": "bench test --package ./internal/gate/prospectiveartifact",
-          "probe": "Restore owner-death-only sweep, ignore a nested registered group, or discard lane selection release failure. The real Close, second-process sweep, or green-record witness must fail."
-        }
-      ]
-    },
-    {
-      "id": "PL-C4",
-      "tickets": [
-        "08-preserve-release-step-evidence.md",
-        "09-bound-preflight-and-scanner-shutdown.md",
-        "10-preserve-focused-test-completion.md",
-        "11-preserve-worktree-exec-and-shell.md"
-      ],
-      "verification": [
-        {
-          "id": "ticket-8-check-1",
-          "command": "bench test --package ./internal/preprelease"
-        },
-        {
-          "id": "ticket-8-check-2",
-          "command": "bench test --package ./internal/releaseevidence"
-        },
-        {
-          "id": "ticket-8-omission",
-          "command": "bench test --package ./internal/preprelease",
-          "probe": "Keep the store inside a swapped stage or delete an abandoned protected stage from its owner marker alone. The resistant-child evidence sentinel must survive and the erroneous success assertion must fail."
-        },
-        {
-          "id": "ticket-9-check-1",
-          "command": "bench test --package ./internal/releasepreflight"
-        },
-        {
-          "id": "ticket-9-omission",
-          "command": "bench test --package ./internal/releasepreflight",
-          "probe": "Restore an unbounded scanner wait or accept promotion from child zero with unresolved cleanup. The real resistant scanner or protected promotion assertion must fail."
-        },
-        {
-          "id": "ticket-10-check-1",
-          "command": "bench test --package ./internal/testreport"
-        },
-        {
-          "id": "ticket-10-omission",
-          "command": "bench test --package ./internal/testreport",
-          "probe": "Treat forced EOF as a complete report, wait before decoder completion, or discard Selection.Close failure. The real report and retained executable witnesses must fail."
-        },
-        {
-          "id": "ticket-11-check-1",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "ticket-11-omission",
-          "command": "bench test --package ./internal/worktree",
-          "probe": "Add a normal-exit group kill, strip the descriptor vector, or release the interrupted shell lease. The real command, environment, and lease assertions must fail."
-        }
-      ]
-    },
-    {
-      "id": "PL-C5",
-      "tickets": [
-        "12-retain-shift-scratch-through-recovery.md",
-        "13-enforce-final-lifetime-closure.md"
-      ],
-      "verification": [
-        {
-          "id": "ticket-12-check-1",
-          "command": "bench test --package ./internal/shift"
-        },
-        {
-          "id": "ticket-12-check-2",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "ticket-12-check-3",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "ticket-12-omission",
-          "command": "bench test --package ./internal/shift",
-          "probe": "Read cmd.Process before the serialized transition, let an empty dirty set authorize removal, or trust a stale cleanup fingerprint. The actual resistant adapter and protected scratch witnesses must fail."
-        },
-        {
-          "id": "ticket-13-check-1",
-          "command": "bench test --package ./internal/conformance"
-        },
-        {
-          "id": "ticket-13-check-2",
-          "command": "bench test --package ./internal/subprocess"
-        },
-        {
-          "id": "ticket-13-check-3",
-          "command": "bench test --package ./internal/runbinary"
-        },
-        {
-          "id": "ticket-13-check-4",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "ticket-13-check-5",
-          "command": "bench test --check docs-currency-workflow"
-        },
-        {
-          "id": "ticket-13-omission",
-          "command": "bench test --package ./internal/conformance",
-          "probe": "Reintroduce a private scanner or shift loop, bypass one production caller, or certify output from child zero. The actual-tree audit or named caller differential must fail; restore and re-run the same check."
-        },
-        {
-          "id": "native-linux",
-          "command": "bench test --package ./internal/runbinary --run 'TestBuilderChildDiesWithAnOwnerThatNeverDrains'",
-          "probe": "On native Linux, omit Pdeathsig from the actual builder attributes. The direct builder child survives and the native witness fails, then passes after restoration."
-        },
-        {
-          "id": "native-darwin",
-          "command": "bench test --package ./internal/runbinary --run 'DarwinPolicy'",
-          "probe": "On native Darwin, omit the actual Setpgid setup. The resistant-group policy witness fails, then passes after restoration."
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "ordinary-integration",
-      "command": "bench test --package ./..."
-    },
-    {
-      "id": "system-integration",
-      "command": "bench test --check system"
-    },
-    {
-      "id": "coverage",
-      "command": "bench coverage --check process-lifetime"
-    },
-    {
-      "id": "ticket-grammar",
-      "command": "bench test --check ticket-grammar"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft362-process-lifetime-full-20261022","orchestrator_session":"claude:plt-orchestrator-20261022","author_limit":1,"assignments":{"01-own-lifetime-through-bounds.md":[{"session":"claude:plt-t01-author-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"55840de4b43a53731a5c5aa62b2451e904bb578e","native_ref":"claude-agent:bench-writer-high:plt-t01-author-20261022"},{"session":"claude:plt-t01-repair1-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"2b4a00859ad4f6bcbc02d32c8b402c5aa311a729","native_ref":"claude-agent:bench-writer-high:plt-t01-repair1-20261022","predecessor":"claude:plt-t01-author-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t01-author-20261022","preserved":"2b4a00859ad4f6bcbc02d32c8b402c5aa311a729"}],"02-protect-nested-bounds-users.md":[{"session":"claude:plt-t02-author-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"xhigh","source":"604379e5d257340bec0115af56bc17ad16829060","native_ref":"claude-agent:bench-writer-xhigh:plt-t02-author-20261022"},{"session":"claude:plt-t02-author2-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"xhigh","source":"f65606a8f5091baf53c10b975e25b7d2ca171444","native_ref":"claude-agent:bench-writer-xhigh:plt-t02-author2-20261022","predecessor":"claude:plt-t02-author-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:plt-t02-author-20261022","preserved":"f65606a8f5091baf53c10b975e25b7d2ca171444"},{"session":"claude:plt-t02-repair1-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"xhigh","source":"cce431dca3218eb7daeab5a30fa815610e89ba35","native_ref":"claude-agent:bench-writer-xhigh:plt-t02-repair1-20261022","predecessor":"claude:plt-t02-author2-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:plt-t02-author2-20261022","preserved":"cce431dca3218eb7daeab5a30fa815610e89ba35"}],"03-migrate-gate-process-policy.md":[{"session":"claude:plt-t03-author-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"b9b788289623893dcce304bc86c0a5b663f0e897","native_ref":"claude-agent:bench-writer-high:plt-t03-author-20261022"},{"session":"claude:plt-t03-repair1-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"5f675b171a283ed00a5b48855c565decb1b0380e","native_ref":"claude-agent:bench-writer-medium:plt-t03-repair1-20261022","predecessor":"claude:plt-t03-author-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t03-author-20261022","preserved":"5f675b171a283ed00a5b48855c565decb1b0380e"}],"04-retain-selected-build-binaries.md":[{"session":"claude:plt-t04-author-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"3ea54840cf27bf95e42f0581c04bc1b1c809858e","native_ref":"claude-agent:bench-writer-high:plt-t04-author-20261022"},{"session":"claude:plt-t04-repair1-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"6741fe22c866d553c3d20fc25c02322b28a634dc","native_ref":"claude-agent:bench-writer-medium:plt-t04-repair1-20261022","predecessor":"claude:plt-t04-author-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t04-author-20261022","preserved":"6741fe22c866d553c3d20fc25c02322b28a634dc"},{"session":"claude:plt-t04-repair2-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"303a8d10b8f59ea90742f8606937d06585bc0264","native_ref":"claude-agent:bench-writer-medium:plt-t04-repair2-20261022","predecessor":"claude:plt-t04-repair1-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t04-repair1-20261022","preserved":"303a8d10b8f59ea90742f8606937d06585bc0264"},{"session":"claude:plt-t04-repair3-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"148f5f7d9093b81d30ecd88e262b34fae990e39a","native_ref":"claude-agent:bench-writer-medium:plt-t04-repair3-20261022","predecessor":"claude:plt-t04-repair2-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t04-repair2-20261022","preserved":"148f5f7d9093b81d30ecd88e262b34fae990e39a"},{"session":"claude:plt-t04-repair4-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"8240c963d1f62c432f1e35804ae06565ce92bd4e","native_ref":"claude-agent:bench-writer-medium:plt-t04-repair4-20261023","predecessor":"claude:plt-t04-repair3-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t04-repair3-20261022","preserved":"8240c963d1f62c432f1e35804ae06565ce92bd4e"},{"session":"claude:plt-t04-repair5-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"cdb85c71686a4f782e9a7fcbffe8ecc9b5db8194","native_ref":"claude-agent:bench-writer-medium:plt-t04-repair5-20261023","predecessor":"claude:plt-t04-repair4-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t04-repair4-20261023","preserved":"cdb85c71686a4f782e9a7fcbffe8ecc9b5db8194"},{"session":"claude:plt-t04-repair6-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"aaa43438962ad218a901a038918af49608784013","native_ref":"claude-agent:bench-writer-medium:plt-t04-repair6-20261023","predecessor":"claude:plt-t04-repair5-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t04-repair5-20261023","preserved":"aaa43438962ad218a901a038918af49608784013"}],"05-protect-private-test-directories.md":[{"session":"claude:plt-t05-author-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"e54e4f1e7bcf06b98e5939b4cdf52f5cc4379105","native_ref":"claude-agent:bench-writer-high:plt-t05-author-20261022"},{"session":"claude:plt-t05-author2-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"213b3c7e589548faae1244929836aa8e1e5dbdda","native_ref":"claude-agent:bench-writer-high:plt-t05-author2-20261022","predecessor":"claude:plt-t05-author-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t05-author-20261022","preserved":"213b3c7e589548faae1244929836aa8e1e5dbdda"},{"session":"claude:plt-t05-repair1-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"b7878efc314b4df0ccec0f4e7d5b2f18f466dee3","native_ref":"claude-agent:bench-writer-medium:plt-t05-repair1-20261022","predecessor":"claude:plt-t05-author2-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t05-author2-20261022","preserved":"b7878efc314b4df0ccec0f4e7d5b2f18f466dee3"},{"session":"claude:plt-t05-repair2-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"918c78c13942079bb7e693d56814f3a525352c95","native_ref":"claude-agent:bench-writer-medium:plt-t05-repair2-20261022","predecessor":"claude:plt-t05-repair1-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t05-repair1-20261022","preserved":"918c78c13942079bb7e693d56814f3a525352c95"}],"06-refuse-clean-of-protected-cache.md":[{"session":"claude:plt-t06-author-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"e9c0d14e812565093016b1200d04c2ab31fa9aeb","native_ref":"claude-agent:bench-writer-high:plt-t06-author-20261022"},{"session":"claude:plt-t06-author2-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"8210b5fd87b33c1a157f2cb80211456df03322bb","native_ref":"claude-agent:bench-writer-high:plt-t06-author2-20261022","predecessor":"claude:plt-t06-author-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t06-author-20261022","preserved":"8210b5fd87b33c1a157f2cb80211456df03322bb"}],"07-retain-prospective-gate-artifacts.md":[{"session":"claude:plt-t07-author-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"89b97aacc830844449fede0f672e6725dd264b9b","native_ref":"claude-agent:bench-writer-high:plt-t07-author-20261022"},{"session":"claude:plt-t07-author2-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"ad6d11de49026919c78aac0d0ac91fbf444e79d1","native_ref":"claude-agent:bench-writer-high:plt-t07-author2-20261022","predecessor":"claude:plt-t07-author-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t07-author-20261022","preserved":"35b2d2b1c3dcde9e8ab5659d0cc69c2210f84880"},{"session":"claude:plt-t07-repair1-20261022","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"f44d12d4b1eed63a4ef6bbcdf232bc7078d6e2ec","native_ref":"claude-agent:bench-writer-medium:plt-t07-repair1-20261022","predecessor":"claude:plt-t07-author2-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t07-author2-20261022","preserved":"f44d12d4b1eed63a4ef6bbcdf232bc7078d6e2ec"},{"session":"claude:plt-t07-repair2-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"8e5b6aa6f25f977128b46f11f99f534530359fca","native_ref":"claude-agent:bench-writer-medium:plt-t07-repair2-20261023","predecessor":"claude:plt-t07-repair1-20261022","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t07-repair1-20261022","preserved":"8e5b6aa6f25f977128b46f11f99f534530359fca"}],"08-preserve-release-step-evidence.md":[{"session":"claude:plt-t08-author-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"5f9733dccad2595d2bbf934ff15edda6f3401552","native_ref":"claude-agent:bench-writer-high:plt-t08-author-20261023"}],"09-bound-preflight-and-scanner-shutdown.md":[{"session":"claude:plt-t09-author-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"8cf986149f2c5171035a5f05a2a1be1eb773b3f1","native_ref":"claude-agent:bench-writer-high:plt-t09-author-20261023"}],"10-preserve-focused-test-completion.md":[{"session":"claude:plt-t10-author-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"ce2d745533852330c0c9b9ee22472087f2cf9448","native_ref":"claude-agent:bench-writer-high:plt-t10-author-20261023"},{"session":"claude:plt-t10-repair1-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"19b60622d6af1faac7b41e5be8f3cf65a3df0aaf","native_ref":"claude-agent:bench-writer-medium:plt-t10-repair1-20261023","predecessor":"claude:plt-t10-author-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t10-author-20261023","preserved":"19b60622d6af1faac7b41e5be8f3cf65a3df0aaf"},{"session":"claude:plt-t10-repair2-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"9bd0c187295942f92d525a6e053a5fd3644af14b","native_ref":"claude-agent:bench-writer-medium:plt-t10-repair2-20261023","predecessor":"claude:plt-t10-repair1-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t10-repair1-20261023","preserved":"9bd0c187295942f92d525a6e053a5fd3644af14b"}],"11-preserve-worktree-exec-and-shell.md":[{"session":"claude:plt-t11-author-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"a93aa0b09e8f6d09332014f51a6d644a76a84645","native_ref":"claude-agent:bench-writer-high:plt-t11-author-20261023"},{"session":"claude:plt-t11-author2-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"7cf54d1e23e431fcdf9d1b2267b130fa7091f50d","native_ref":"claude-agent:bench-writer-high:plt-t11-author2-20261023","predecessor":"claude:plt-t11-author-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t11-author-20261023","preserved":"7cf54d1e23e431fcdf9d1b2267b130fa7091f50d"},{"session":"claude:plt-t11-repair1-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"daa10290e314a8fe59a8a2dd867f883c9b06b06c","native_ref":"claude-agent:bench-writer-medium:plt-t11-repair1-20261023","predecessor":"claude:plt-t11-author2-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t11-author2-20261023","preserved":"daa10290e314a8fe59a8a2dd867f883c9b06b06c"},{"session":"claude:plt-t11-repair2-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"66746f818fc136239a3190cdf2ff02e87c7724cf","native_ref":"claude-agent:bench-writer-medium:plt-t11-repair2-20261023","predecessor":"claude:plt-t11-repair1-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t11-repair1-20261023","preserved":"66746f818fc136239a3190cdf2ff02e87c7724cf"},{"session":"claude:plt-t11-repair3-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"618f23e277ad5e4215225da8a68cfc6c3f740c79","native_ref":"claude-agent:bench-writer-medium:plt-t11-repair3-20261023","predecessor":"claude:plt-t11-repair2-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t11-repair2-20261023","preserved":"618f23e277ad5e4215225da8a68cfc6c3f740c79"}],"12-retain-shift-scratch-through-recovery.md":[{"session":"claude:plt-t12-author-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"c8bfa18c809d3895583c9d9817ae8f60fbfe846a","native_ref":"claude-agent:bench-writer-high:plt-t12-author-20261023"},{"session":"claude:plt-t12-repair1-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"3a71e00659e339f359cf69e4b8a2b2d1c496a82e","native_ref":"claude-agent:bench-writer-medium:plt-t12-repair1-20261023","predecessor":"claude:plt-t12-author-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t12-author-20261023","preserved":"3a71e00659e339f359cf69e4b8a2b2d1c496a82e"}],"13-enforce-final-lifetime-closure.md":[{"session":"claude:plt-t13-author-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"e211a32a4b74b9e5babcd366d4484380721fb98d","native_ref":"claude-agent:bench-writer-high:plt-t13-author-20261023"},{"session":"claude:plt-t13-author2-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"be3b1954403e83b0eb52999b9da60dfb1d4ba315","native_ref":"claude-agent:bench-writer-high:plt-t13-author2-20261023","predecessor":"claude:plt-t13-author-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t13-author-20261023","preserved":"be3b1954403e83b0eb52999b9da60dfb1d4ba315"},{"session":"claude:plt-t13-author3-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"8263091c2572470bfb757e5e6085c32a754c2b85","native_ref":"claude-agent:bench-writer-high:plt-t13-author3-20261023","predecessor":"claude:plt-t13-author2-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t13-author2-20261023","preserved":"8263091c2572470bfb757e5e6085c32a754c2b85"},{"session":"claude:plt-t13-author4-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"9bd5a97309d9601e95e1990ecd96b49c0d653f47","native_ref":"claude-agent:bench-writer-high:plt-t13-author4-20261023","predecessor":"claude:plt-t13-author3-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t13-author3-20261023","preserved":"9bd5a97309d9601e95e1990ecd96b49c0d653f47"},{"session":"claude:plt-t13-repair1-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"94ff46c78c039995405a8a3848b90ef6311120c6","native_ref":"claude-agent:bench-writer-medium:plt-t13-repair1-20261023","predecessor":"claude:plt-t13-author4-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t13-author4-20261023","preserved":"94ff46c78c039995405a8a3848b90ef6311120c6"}],"14-gate-registered-starts.md":[{"session":"claude:plt-t14-author-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"high","source":"ab7399478c063e28e31caf2921bc5c7f76ae5112","native_ref":"claude-agent:bench-writer-high:plt-t14-author-20261023"},{"session":"claude:plt-t14-repair1-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"65a501d96e9292a950f37d31e4a0ac21507e0d97","native_ref":"claude-agent:bench-writer-medium:plt-t14-repair1-20261023","predecessor":"claude:plt-t14-author-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:plt-t14-author-20261023","preserved":"65a501d96e9292a950f37d31e4a0ac21507e0d97"},{"session":"claude:plt-t14-repair2-20261023","assignment":"a44704b5f487c9062aa7e553783d67bd","model":"opus","effort":"medium","source":"009705c9b1a10ada9681b012d6624c34358c5a21","native_ref":"claude-agent:bench-writer-medium:plt-t14-repair2-20261023","predecessor":"claude:plt-t14-repair1-20261023","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:plt-t14-repair1-20261023","preserved":"009705c9b1a10ada9681b012d6624c34358c5a21"}]}},"chunks":[{"id":"PL-C1","tickets":["01-own-lifetime-through-bounds.md"],"verification":[{"id":"ticket-1-check-1","command":"bench test --package ./internal/subprocess","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-2","command":"bench test --package ./internal/bounds","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-3","command":"bench test --check root-conformance","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-4","command":"bench test --package ./cmd/bench","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-5","command":"bench test --package ./internal/anchors","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-6","command":"bench test --package ./internal/conformance","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-7","command":"bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-8","command":"bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-9","command":"bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-10","command":"bench test --package ./internal/subprocess/protection","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-check-11","command":"bench test --package ./internal/subprocess/processtest","ticket":"01-own-lifetime-through-bounds.md"},{"id":"ticket-1-omission","command":"bench test --package ./internal/subprocess","probe":"Omit remembered cancellation for a held Start, start a second waiter, or wait unconditionally on a blocked consumer. The corresponding real-child or controlled-start assertion must fail.","ticket":"01-own-lifetime-through-bounds.md"}]},{"id":"PL-C2","tickets":["02-protect-nested-bounds-users.md"],"verification":[{"id":"ticket-2-check-1","command":"bench test --package ./internal/subprocess/protection","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-2","command":"bench test --package ./internal/bounds","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-3","command":"bench test --package ./internal/gocache","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-4","command":"bench test --check system","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-5","command":"bench test --check root-conformance","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-6","command":"bench test --package ./cmd/bench","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-7","command":"bench test --package ./internal/anchors","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-8","command":"bench test --package ./internal/conformance","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-9","command":"bench test --package ./internal/subprocess","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-10","command":"bench test --package ./tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-11","command":"bench test --package ./tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-12","command":"bench test --package ./tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-check-13","command":"bench test --package ./internal/subprocess/processtest","ticket":"02-protect-nested-bounds-users.md"},{"id":"ticket-2-omission","command":"bench test --check system","probe":"Drop inherited descriptors from the real bounds launch. The nested-provider witness must fail through bench test --check system.","ticket":"02-protect-nested-bounds-users.md"}]},{"id":"PL-C3","tickets":["03-migrate-gate-process-policy.md","04-retain-selected-build-binaries.md","05-protect-private-test-directories.md","06-refuse-clean-of-protected-cache.md","07-retain-prospective-gate-artifacts.md","14-gate-registered-starts.md"],"verification":[{"id":"ticket-3-check-1","command":"bench test --package ./internal/gate","ticket":"03-migrate-gate-process-policy.md"},{"id":"ticket-3-check-2","command":"bench test --check root-conformance","ticket":"03-migrate-gate-process-policy.md"},{"id":"ticket-3-check-3","command":"bench test --package ./internal/conformance","ticket":"03-migrate-gate-process-policy.md"},{"id":"ticket-3-omission","command":"bench test --package ./internal/gate","probe":"Replace INT with TERM, map timeout to interruption, or omit normal group drain. The actual gate signal and descendant-survival fixtures must fail.","ticket":"03-migrate-gate-process-policy.md"},{"id":"ticket-4-check-1","command":"bench test --package ./internal/runbinary","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-check-2","command":"bench test --check root-conformance","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-check-3","command":"bench test --package ./cmd/bench","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-check-4","command":"bench test --package ./internal/conformance","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-check-5","command":"bench test --package ./internal/subprocess/...","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-check-6","command":"bench test --package ./internal/gocache","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-check-7","command":"bench test --package ./internal/env","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-check-8","command":"bench test --package ./internal/gate/prospectiveartifact","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-check-9","command":"bench test --package ./internal/gate","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-check-10","command":"bench test --check system","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-4-omission","command":"bench test --package ./internal/runbinary","probe":"Remove normal builder drain or delete the selection before all registered groups are absent. The live descendant or executable-retention assertion must fail.","ticket":"04-retain-selected-build-binaries.md"},{"id":"ticket-5-check-1","command":"bench test --package ./internal/env","ticket":"05-protect-private-test-directories.md"},{"id":"ticket-5-check-2","command":"bench test --package ./internal/gate","ticket":"05-protect-private-test-directories.md"},{"id":"ticket-5-check-3","command":"bench test --check root-conformance","ticket":"05-protect-private-test-directories.md"},{"id":"ticket-5-check-4","command":"bench test --package ./cmd/bench","ticket":"05-protect-private-test-directories.md"},{"id":"ticket-5-check-5","command":"bench test --package ./internal/conformance","ticket":"05-protect-private-test-directories.md"},{"id":"ticket-5-check-6","command":"bench test --package ./internal/subprocess","ticket":"05-protect-private-test-directories.md"},{"id":"ticket-5-check-7","command":"bench test --package ./internal/subprocess/protection","ticket":"05-protect-private-test-directories.md"},{"id":"ticket-5-omission","command":"bench test --package ./internal/env","probe":"Drop the private-run descriptor or discard KitTestRun.Close failure. The child-owned file survives while a successful phase result must disappear.","ticket":"05-protect-private-test-directories.md"},{"id":"ticket-6-check-1","command":"bench test --package ./internal/gocache","ticket":"06-refuse-clean-of-protected-cache.md"},{"id":"ticket-6-check-2","command":"bench test --package ./internal/gate","ticket":"06-refuse-clean-of-protected-cache.md"},{"id":"ticket-6-check-3","command":"bench test --check system","ticket":"06-refuse-clean-of-protected-cache.md"},{"id":"ticket-6-check-4","command":"bench test --check root-conformance","ticket":"06-refuse-clean-of-protected-cache.md"},{"id":"ticket-6-check-5","command":"bench test --package ./internal/conformance","ticket":"06-refuse-clean-of-protected-cache.md"},{"id":"ticket-6-omission","command":"bench test --package ./internal/gocache","probe":"Use only the dropped owner lock, treat unreadable records as empty, or publish green before terminal persistence. The second CLI cleaner and real gate record witnesses must fail.","ticket":"06-refuse-clean-of-protected-cache.md"},{"id":"ticket-7-check-1","command":"bench test --package ./internal/gate/prospectiveartifact","ticket":"07-retain-prospective-gate-artifacts.md"},{"id":"ticket-7-check-2","command":"bench test --package ./internal/gate","ticket":"07-retain-prospective-gate-artifacts.md"},{"id":"ticket-7-check-3","command":"bench test --check system","ticket":"07-retain-prospective-gate-artifacts.md"},{"id":"ticket-7-check-4","command":"bench test --check docs-currency-workflow","ticket":"07-retain-prospective-gate-artifacts.md"},{"id":"ticket-7-check-5","command":"bench test --check root-conformance","ticket":"07-retain-prospective-gate-artifacts.md"},{"id":"ticket-7-check-6","command":"bench test --package ./cmd/bench","ticket":"07-retain-prospective-gate-artifacts.md"},{"id":"ticket-7-check-7","command":"bench test --package ./internal/anchors","ticket":"07-retain-prospective-gate-artifacts.md"},{"id":"ticket-7-check-8","command":"bench test --package ./internal/conformance","ticket":"07-retain-prospective-gate-artifacts.md"},{"id":"ticket-7-omission","command":"bench test --package ./internal/gate/prospectiveartifact","probe":"Restore owner-death-only sweep, ignore a nested registered group, or discard lane selection release failure. The real Close, second-process sweep, or green-record witness must fail.","ticket":"07-retain-prospective-gate-artifacts.md"},{"id":"ticket-14-check-1","command":"bench test --package ./internal/subprocess/...","ticket":"14-gate-registered-starts.md"},{"id":"ticket-14-check-2","command":"bench test --package ./cmd/bench","ticket":"14-gate-registered-starts.md"},{"id":"ticket-14-check-3","command":"bench test --package ./internal/anchors","ticket":"14-gate-registered-starts.md"},{"id":"ticket-14-check-4","command":"bench test --package ./internal/conformance","ticket":"14-gate-registered-starts.md"},{"id":"ticket-14-check-5","command":"bench test --check root-conformance","ticket":"14-gate-registered-starts.md"},{"id":"ticket-14-check-6","command":"bench test --check system","ticket":"14-gate-registered-starts.md"},{"id":"ticket-14-check-7","command":"bench test --package ./internal/gate","ticket":"14-gate-registered-starts.md"},{"id":"ticket-14-omission","command":"bench test --package ./internal/subprocess/...","probe":"Execute the program at end of file, or grade a pending user with an absent actor as protected. The ActorDeathBeforeOpen or PendingActorAbsent witness must fail.","ticket":"14-gate-registered-starts.md"}]},{"id":"PL-C4","tickets":["08-preserve-release-step-evidence.md","09-bound-preflight-and-scanner-shutdown.md","10-preserve-focused-test-completion.md","11-preserve-worktree-exec-and-shell.md"],"verification":[{"id":"ticket-8-check-1","command":"bench test --package ./internal/preprelease","ticket":"08-preserve-release-step-evidence.md"},{"id":"ticket-8-check-2","command":"bench test --package ./internal/releaseevidence","ticket":"08-preserve-release-step-evidence.md"},{"id":"ticket-8-check-3","command":"bench test --check root-conformance","ticket":"08-preserve-release-step-evidence.md"},{"id":"ticket-8-check-4","command":"bench test --package ./cmd/bench","ticket":"08-preserve-release-step-evidence.md"},{"id":"ticket-8-check-5","command":"bench test --package ./internal/conformance","ticket":"08-preserve-release-step-evidence.md"},{"id":"ticket-8-omission","command":"bench test --package ./internal/preprelease","probe":"Keep the store inside a swapped stage or delete an abandoned protected stage from its owner marker alone. The resistant-child evidence sentinel must survive and the erroneous success assertion must fail.","ticket":"08-preserve-release-step-evidence.md"},{"id":"ticket-9-check-1","command":"bench test --package ./internal/releasepreflight","ticket":"09-bound-preflight-and-scanner-shutdown.md"},{"id":"ticket-9-check-2","command":"bench test --check root-conformance","ticket":"09-bound-preflight-and-scanner-shutdown.md"},{"id":"ticket-9-check-3","command":"bench test --package ./internal/conformance","ticket":"09-bound-preflight-and-scanner-shutdown.md"},{"id":"ticket-9-omission","command":"bench test --package ./internal/releasepreflight","probe":"Restore an unbounded scanner wait or accept promotion from child zero with unresolved cleanup. The real resistant scanner or protected promotion assertion must fail.","ticket":"09-bound-preflight-and-scanner-shutdown.md"},{"id":"ticket-10-check-1","command":"bench test --package ./internal/testreport","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-2","command":"bench test --check root-conformance","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-3","command":"bench test --package ./internal/conformance","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-4","command":"bench test --package ./internal/gate","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-5","command":"bench test --package ./internal/preprelease","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-6","command":"bench test --package ./internal/probe","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-7","command":"bench test --package ./internal/releasepreflight","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-8","command":"bench test --package ./internal/subprocess","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-9","command":"bench test --package ./internal/subprocess/processtest","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-10","command":"bench test --package ./internal/subprocess/protection","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-check-11","command":"bench test --package ./cmd/bench","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-10-omission","command":"bench test --package ./internal/testreport","probe":"Treat forced EOF as a complete report, wait before decoder completion, or discard Selection.Close failure. The real report and retained executable witnesses must fail.","ticket":"10-preserve-focused-test-completion.md"},{"id":"ticket-11-check-1","command":"bench test --package ./internal/worktree","ticket":"11-preserve-worktree-exec-and-shell.md"},{"id":"ticket-11-check-2","command":"bench test --check root-conformance","ticket":"11-preserve-worktree-exec-and-shell.md"},{"id":"ticket-11-check-3","command":"bench test --package ./cmd/bench","ticket":"11-preserve-worktree-exec-and-shell.md"},{"id":"ticket-11-check-4","command":"bench test --package ./internal/conformance","ticket":"11-preserve-worktree-exec-and-shell.md"},{"id":"ticket-11-check-5","command":"bench test --package ./internal/gocache","ticket":"11-preserve-worktree-exec-and-shell.md"},{"id":"ticket-11-check-6","command":"bench test --package ./internal/releaseevidence","ticket":"11-preserve-worktree-exec-and-shell.md"},{"id":"ticket-11-check-7","command":"bench test --package ./internal/subprocess/protection","ticket":"11-preserve-worktree-exec-and-shell.md"},{"id":"ticket-11-check-8","command":"bench test --check system","ticket":"11-preserve-worktree-exec-and-shell.md"},{"id":"ticket-11-omission","command":"bench test --package ./internal/worktree","probe":"Add a normal-exit group kill, strip the descriptor vector, or release the interrupted shell lease. The real command, environment, and lease assertions must fail.","ticket":"11-preserve-worktree-exec-and-shell.md"}]},{"id":"PL-C5","tickets":["12-retain-shift-scratch-through-recovery.md","13-enforce-final-lifetime-closure.md"],"verification":[{"id":"ticket-12-check-1","command":"bench test --package ./internal/shift","ticket":"12-retain-shift-scratch-through-recovery.md"},{"id":"ticket-12-check-2","command":"bench test --package ./internal/worktree","ticket":"12-retain-shift-scratch-through-recovery.md"},{"id":"ticket-12-check-3","command":"bench test --check system","ticket":"12-retain-shift-scratch-through-recovery.md"},{"id":"ticket-12-check-4","command":"bench test --check root-conformance","ticket":"12-retain-shift-scratch-through-recovery.md"},{"id":"ticket-12-check-5","command":"bench test --package ./cmd/bench","ticket":"12-retain-shift-scratch-through-recovery.md"},{"id":"ticket-12-check-6","command":"bench test --package ./internal/worktree/reclaimpolicy","ticket":"12-retain-shift-scratch-through-recovery.md"},{"id":"ticket-12-check-7","command":"bench test --package ./internal/conformance","ticket":"12-retain-shift-scratch-through-recovery.md"},{"id":"ticket-12-check-8","command":"bench test --package ./internal/subprocess/protection","ticket":"12-retain-shift-scratch-through-recovery.md"},{"id":"ticket-12-omission","command":"bench test --package ./internal/shift","probe":"Read cmd.Process before the serialized transition, let an empty dirty set authorize removal, or trust a stale cleanup fingerprint. The actual resistant adapter and protected scratch witnesses must fail.","ticket":"12-retain-shift-scratch-through-recovery.md"},{"id":"ticket-13-check-1","command":"bench test --package ./internal/conformance","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-2","command":"bench test --package ./internal/subprocess","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-3","command":"bench test --package ./internal/runbinary","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-4","command":"bench test --check system","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-5","command":"bench test --check docs-currency-workflow","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-6","command":"bench test --check root-conformance","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-7","command":"bench test --package ./cmd/bench","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-8","command":"bench test --package ./internal/anchors","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-9","command":"bench test --package ./internal/subprocess/protection","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-10","command":"bench test --package ./internal/subprocess/processtest","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-check-11","command":"bench test --package ./internal/conformance/registry","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"ticket-13-omission","command":"bench test --package ./internal/conformance","probe":"Reintroduce a private scanner or shift loop, bypass one production caller, or certify output from child zero. The actual-tree audit or named caller differential must fail; restore and re-run the same check.","ticket":"13-enforce-final-lifetime-closure.md"},{"id":"native-linux","command":"bench test --package ./internal/runbinary --run 'TestBuilderChildDiesWithAnOwnerThatNeverDrains'","probe":"On native Linux, omit Pdeathsig from the actual builder attributes. The direct builder child survives and the native witness fails, then passes after restoration.","ticket":"13-enforce-final-lifetime-closure.md"}]}],"final_verification":[{"id":"ordinary-integration","command":"bench test --package ./..."},{"id":"system-integration","command":"bench test --check system"},{"id":"coverage","command":"bench coverage --check process-lifetime"},{"id":"ticket-grammar","command":"bench test --check ticket-grammar"}]}
 ```
 
 ## Testing decisions
@@ -811,6 +564,7 @@ No new phase or gate order is required.
 The migration-closure package test parses actual production call sites.
 It rejects group setup, negative-PID termination, and private waiter/drain ownership outside subprocess and platform adapters.
 It permits read-only absence observations and test-only process fixtures.
+New system and worktree tests obey the parallel census of their package.
 
 The closure check resolves import aliases and negative operands through syntax.
 It cannot treat comments as executable mechanics.
@@ -822,6 +576,9 @@ Existing tests retain their purpose unless replacement evidence demonstrates the
 Record that red before removing a duplicated expectation or expensive journey.
 Independent expectations require the repository's recorded omission exception.
 No runtime or test-cost saving is an acceptance claim.
+
+System tests pass no inherited protection vector to a nested CLI unless the test supplies one.
+A test subject therefore never registers on the stores of the gate that runs the suite.
 
 ### Seam diagram
 
@@ -858,135 +615,141 @@ The final implementation must demonstrate its stated omission red.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| PL1 | 1 | Every census entry reaches the shared lifetime owner. | planned `internal/conformance/process_lifetime_test.go` (OwnerEntries) | A production-entry audit detects a caller that retains its private owner. |
-| PL2 | 2 | A pre-canceled lifetime starts no child. | planned `internal/subprocess/lifetime_test.go` (PreCanceled) | The child's start marker appears if cancellation follows launch. |
-| PL3 | 3 | Cancellation during Start reaches the eventual resistant child. | planned `internal/subprocess/lifetime_test.go` (StartingCancel) | The child's readiness PID survives if cancellation loses the unpublished handle. |
-| PL4 | 4 | A failed Start creates no waiter. | planned `internal/subprocess/lifetime_test.go` (SpawnFailure) | A waiter counter exposes a failed-start wait. |
-| PL5 | 4 | Concurrent cancellation and completion create exactly one waiter. | planned `internal/subprocess/lifetime_test.go` (SingleWaiter) | An audited real-command owner detects a second Wait call. |
-| PL6 | 5 | Exit seven retains raw status seven and complete output. | planned `internal/subprocess/lifetime_test.go` (Nonzero) | A generic failure projection loses the child status or output. |
-| PL7 | 5 | Cleanup failure retains an already observed child exit. | planned `internal/subprocess/lifetime_test.go` (ExitAndIncomplete) | A replacement cleanup error erases the process result. |
-| PL8 | 6 | Captured output remains unread until its worker completes. | planned `internal/subprocess/lifetime_test.go` (DelayedCapture) | A blocked consumer exposes premature mutable-buffer access under race checks. |
-| PL9 | 6 | A direct caller file remains open after completion. | planned `internal/subprocess/lifetime_test.go` (CallerFile) | A subsequent caller write fails if teardown closes its file. |
-| PL10 | 6 | Forced owned-pipe closure returns incomplete output. | planned `internal/subprocess/lifetime_test.go` (ForcedClose) | An EOF-only projection accepts truncated output. |
-| PL11 | 6 | A blocked caller writer returns a pending stream snapshot. | planned `internal/subprocess/lifetime_test.go` (BlockedWriter) | Waiting on the writer holds the lifetime past its final deadline. |
-| PL12 | 7 | A TERM-resistant group receives KILL after its grace. | planned `internal/subprocess/lifetime_test.go` (ResistantGroup) | A live descendant-survival oracle exposes missing escalation. |
-| PL13 | 8 | An unresolved waiter returns incomplete by the final deadline. | planned `internal/subprocess/lifetime_test.go` (PendingWaiter) | An unconditional receive leaves the caller blocked. |
-| PL14 | 8 | A descriptor-retaining descendant cannot hold canceled decoding forever. | planned `internal/subprocess/lifetime_test.go` (InheritedDescriptor) | The live descendant and decoder remain unresolved past the final window without owned closure. |
-| PL15 | 9 | Current ESRCH marks the group absent. | planned `internal/subprocess/protection/observe_test.go` (Absent) | A positive-absence fixture cannot complete cleanup if ESRCH remains uncertain. |
-| PL16 | 9 | An answering probe marks the group present. | planned `internal/subprocess/protection/observe_test.go` (Present) | The protected resource disappears if presence becomes absence. |
-| PL17 | 9 | EPERM retains uncertain group state. | planned `internal/subprocess/protection/observe_test.go` (Permission) | Cleanup deletes the resource if every failed probe means gone. |
-| PL18 | 9 | An unknown probe error retains uncertainty. | planned `internal/subprocess/protection/observe_test.go` (UnknownError) | An ESRCH-only check omission permits deletion after an unrelated failure. |
-| PL19 | 10 | Preserve mode leaves a normal surviving group unsignaled. | planned `internal/subprocess/lifetime_test.go` (NormalPreserve) | The descendant dies before fixture cleanup if migration adds a blanket normal kill. |
-| PL20 | 19 | Protection persists before the child's resource-use marker. | planned `internal/subprocess/protection/registration_test.go` (Prelaunch) | The marker precedes the synced user record if launch happens first. |
-| PL21 | 20 | First user-publication failure prevents Start. | planned `internal/subprocess/protection/registration_test.go` (FirstPublishFailure) | A child marker appears if the persistence error is ignored. |
-| PL22 | 20 | Later resource-publication failure prevents Start. | planned `internal/subprocess/protection/registration_test.go` (PartialPublish) | A child uses an unprotected second resource if partial success permits launch. |
-| PL23 | 20 | Failed rollback retains its partial pending record. | planned `internal/subprocess/protection/registration_test.go` (RollbackFailure) | Removing partial records hides an uncertain transaction. |
-| PL24 | 21 | Partial known-identity publication retains the launch disposition. | planned `internal/subprocess/protection/registration_test.go` (IdentityPublishFailure) | One completed write wrongly certifies the whole resource union. |
-| PL25 | 21 | Actor death retains a pending startup identity. | planned `internal/subprocess/protection/recovery_test.go` (UnknownStartup) | Owner-PID-only recovery removes a potentially live child's resource. |
-| PL26 | 22 | Two concurrent users require two complete group-absence proofs. | planned `internal/subprocess/protection/recovery_test.go` (OverlappingUsers) | The first completion deletes the second live user's resource. |
-| PL27 | 23 | Sealed admission refuses new registration before Start. | planned `internal/subprocess/protection/registration_test.go` (SealedAdmission) | A late start marker exposes the cleanup check-then-launch race. |
-| PL28 | 13 | Bounds preserves immediate-KILL cancellation classification. | planned `internal/bounds/lifetime_test.go` (BoundsCancel) | An added grace or changed canceled status breaks its policy witness. |
-| PL29 | 11 | Gate interruption retains INT and exit 130. | planned `internal/gate/lifetime_test.go` (GateInterrupt) | The child's signal log exposes an incorrect TERM or KILL opener. |
-| PL30 | 11 | Gate timeout retains TERM and exit 124. | planned `internal/gate/lifetime_test.go` (GateTimeout) | The cause fixture fails if timeout becomes interruption. |
-| PL31 | 11 | Gate normal completion drains the remaining group. | planned `internal/gate/lifetime_test.go` (GateNormalDrain) | A readiness descendant survives if normal drain disappears. |
-| PL32 | 11, 25 | An unresolved nested phase prevents retained green evidence. | planned `internal/systemtest/process_lifetime_test.go` (NestedGate) | The real inner group survives despite outer group absence and child zero. |
-| PL33 | 25 | Incomplete cleanup prevents a lane pass record. | planned `internal/gate/lifetime_resources_test.go` (LaneIncomplete) | A pass appears if lane aggregation consumes only child codes. |
-| PL34 | 12 | Builder normal completion drains its remaining group. | planned `internal/runbinary/lifetime_test.go` (BuilderNormalDrain) | The selection returns while a builder descendant remains live. |
-| PL35 | 12 | Builder cancellation keeps TERM and its existing grace. | planned `internal/runbinary/lifetime_test.go` (BuilderCancel) | A signal log and descendant oracle detect premature KILL or absent escalation. |
-| PL36 | 28 | Selection.Close retains a protected private executable. | planned `internal/runbinary/lifetime_resources_test.go` (BinaryClose) | The selection directory disappears if Close ignores registered users. |
-| PL37 | 29 | KitTestRun.Close retains a protected private directory. | planned `internal/env/kit_run_lifetime_test.go` (KitRunClose) | The private home disappears while a registered child owns its files. |
-| PL38 | 29 | The gate consumes private-directory Close failure. | planned `internal/gate/lifetime_resources_test.go` (PhaseCloseError) | A successful phase hides the enclosing resource failure. |
-| PL39 | 39 | A foreign binding prevents registration. | planned `internal/subprocess/protection/record_test.go` (ForeignBinding) | An unrelated store gains a user if inherited paths supply authority. |
-| PL40 | 39 | Malformed protection retains the resource. | planned `internal/subprocess/protection/record_test.go` (Malformed) | A parse failure becomes an empty user set and permits removal. |
-| PL41 | 39 | A protection symlink prevents admission. | planned `internal/subprocess/protection/record_test.go` (Symlink) | The outside sentinel changes if the receiver follows the descriptor. |
-| PL42 | 39 | Trailing JSON prevents admission. | planned `internal/subprocess/protection/record_test.go` (TrailingJSON) | A second record hides admission state if a JSON prefix is accepted. |
-| PL43 | 39 | Unknown record fields prevent admission. | planned `internal/subprocess/protection/record_test.go` (UnknownField) | An unsupported wire shape gains current-schema authority. |
-| PL44 | 39 | Wrong record mode retains the resource. | planned `internal/subprocess/protection/record_test.go` (WrongMode) | A nonprivate record becomes safe-release proof. |
-| PL45 | 39 | Duplicate user identity makes the set uncertain. | planned `internal/subprocess/protection/record_test.go` (DuplicateUser) | Deduplication hides the second conflicting group identity. |
-| PL46 | 23 | An admitted pending user blocks removal after sealing. | planned `internal/subprocess/protection/registration_test.go` (SealPending) | The resource disappears before its admitted child starts. |
-| PL47 | 23 | An admitted user can finish after sealing. | planned `internal/subprocess/protection/registration_test.go` (FinishSealed) | Completed resources leak if sealing freezes existing updates. |
-| PL48 | 22 | Reversed resource vectors acquire locks without deadlock. | planned `internal/subprocess/protection/registration_test.go` (LockOrder) | Two cooperating processes expose opposing lock acquisition order. |
-| PL49 | 24 | A nested CLI registers its separate group before use. | planned `internal/systemtest/process_lifetime_test.go` (NestedRegistration) | The inner use marker precedes its durable protection if propagation disappears. |
-| PL50 | 24 | Overlapping nested users retain independent records. | planned `internal/systemtest/process_lifetime_test.go` (NestedOverlap) | The second child loses its resource when the first CLI completes. |
-| PL51 | 25 | Missing nested completion prevents outer safe release. | planned `internal/subprocess/protection/recovery_test.go` (MissingCompletion) | Child exit zero substitutes for a missing terminal record. |
-| PL52 | 31 | Recovery requires current absence for every known group. | planned `internal/subprocess/protection/recovery_test.go` (RecoverKnown) | A stale complete field authorizes deletion while its group answers. |
-| PL53 | 31 | Recovery sends no signal to recorded identities. | planned `internal/subprocess/protection/recovery_test.go` (NoStaleSignal) | The signal audit changes if recovery targets a reused PGID. |
-| PL54 | 31 | Record age grants no removal authority. | planned `internal/subprocess/protection/recovery_test.go` (OldRecord) | An old answering identity loses its resource under an age-only rule. |
-| PL55 | 26 | A second-process cache clean refuses unresolved protection. | planned `internal/systemtest/process_lifetime_cache_test.go` (SecondProcessClean) | The initiating CLI has exited and dropped its lock before the real cleaner attempts deletion. |
-| PL56 | 26 | The exclusive cleaner retains unreadable protection. | planned `internal/gocache/protection_test.go` (UnreadableProtection) | A go-clean marker appears if unreadable state becomes an empty set. |
-| PL57 | 26, 40 | Completed cache protection clears before shared-lock release. | planned `internal/gocache/protection_test.go` (CompletedHold) | An observer sees an unlocked active record if release order reverses. |
-| PL58 | 27 | Prospective Close retains an unresolved group user. | planned `internal/gate/prospectiveartifact/lifetime_test.go` (DirectClose) | The checkout vanishes if protection applies only during sweep. |
-| PL59 | 27 | A second-process sweep retains surviving prospective users. | planned `internal/systemtest/process_lifetime_artifacts_test.go` (SecondProcessSweep) | Owner death wrongly authorizes deletion while the registered group remains alive. |
-| PL60 | 27 | A legacy prospective record retains ambiguous cleanup proof. | planned `internal/gate/prospectiveartifact/lifetime_test.go` (LegacyRecord) | Owner death removes a schema-1 bundle that records no complete user set. |
-| PL61 | 14 | Prep-release retains evidence after incomplete phase shutdown. | planned `internal/preprelease/lifetime_test.go` (PrepIncomplete) | The evidence directory disappears behind a resistant descendant. |
-| PL62 | 14 | External preflight refuses promotion after incomplete cleanup. | planned `internal/releasepreflight/lifetime_test.go` (ExternalIncomplete) | A promoted green record appears while protection remains pending. |
-| PL63 | 14 | Scanner cancellation escalates a TERM-resistant child. | planned `internal/releasepreflight/lifetime_test.go` (ScannerCancel) | The scanner survives if its old unbounded wait remains. |
-| PL64 | 15 | Focused-test cancellation resolves a descriptor-retaining descendant. | planned `internal/testreport/lifetime_test.go` (FocusedPipeCancel) | The descendant-survival oracle exposes a decoder blocked before Wait. |
-| PL65 | 15 | Malformed focused JSON remains a decode failure. | planned `internal/testreport/lifetime_test.go` (MalformedJSON) | Child zero falsely certifies unreadable report data. |
-| PL66 | 8 | Wait and stream obligations share one final cleanup window. | planned `internal/subprocess/lifetime_test.go` (SingleFinalWindow) | Sequential fresh deadlines exceed the selected shutdown bound. |
-| PL67 | 8 | The unbounded-verdict switch keeps teardown finite. | planned `internal/bounds/lifetime_test.go` (FixedShutdown) | A resistant group outlives the outer wait if teardown uses VerdictWindow. |
-| PL68 | 32 | An incomplete worker holds only required resources. | planned `internal/subprocess/lifetime_test.go` (WorkerOwnership) | An unrelated closeable sentinel remains retained by the unfinished owner. |
-| PL69 | 6 | Blocked caller stdin yields a pending local worker. | planned `internal/subprocess/lifetime_test.go` (BlockedInput) | Wait blocks indefinitely if independent completion covers only output. |
-| PL70 | 40 | A proved no-start removes its protection durably. | planned `internal/subprocess/protection/registration_test.go` (NoStartComplete) | A canceled prepared run leaks a terminal user without the no-start close path. |
-| PL71 | 19 | Resource-record sync failure prevents first launch. | planned `internal/subprocess/protection/registration_test.go` (ResourceSyncFailure) | A child marker appears if renamed but unsynced protection permits use. |
-| PL72 | 38, 40 | Deletion-sync failure returns uncertain cleanup. | planned `internal/subprocess/protection/registration_test.go` (DeleteSyncFailure) | The owner reports success despite failed durable terminal publication. |
-| PL73 | 31, 32 | Actor absence resolves workers only after known groups are absent. | planned `internal/subprocess/protection/recovery_test.go` (WorkerActorDeath) | A live descendant loses its resource if actor death resolves the complete user. |
-| PL74 | 39 | A missing inherited resource record prevents Start. | planned `internal/subprocess/protection/record_test.go` (MissingDescriptorTarget) | The missing path silently drops from the resource union. |
-| PL75 | 27, 40 | A fresh no-user prospective bundle remains removable. | planned `internal/gate/prospectiveartifact/lifetime_test.go` (EmptyCurrentBundle) | A universal retention rule leaks unused ordinary bundles. |
-| PL76 | 26 | An absent cache clean creates no directory. | planned `internal/gocache/protection_test.go` (AbsentCache) | Admission before the absence branch creates new state during a zero-result clean. |
-| PL77 | 26 | An empty cache with complete protection remains cleanable. | planned `internal/gocache/protection_test.go` (EmptyCache) | A blanket record-presence refusal blocks ordinary cleanup. |
-| PL78 | 25 | Gate terminal persistence failure permits no retained green. | planned `internal/gate/lifetime_resources_test.go` (GateTerminalFailure) | The green store appears if certification precedes safe terminal persistence. |
-| PL79 | 15 | Focused output requires terminal events for every package. | planned `internal/testreport/lifetime_test.go` (IncompletePackage) | A partial decoded report passes under an EOF-only check. |
-| PL80 | 15 | Package-list cancellation keeps current interruption attribution. | planned `internal/testreport/lifetime_test.go` (ListCancel) | A generic owner error loses the go-list diagnostic. |
-| PL81 | 16 | Exec normal-output delay adds no normal group kill. | planned `internal/worktree/exec_lifetime_test.go` (ExecNormalPipe) | The descendant dies before fixture cleanup if migration adds drain-on-exit. |
-| PL82 | 17 | Shell interruption retains its lease after complete shutdown. | planned `internal/worktree/subshell_lifetime_test.go` (ShellSignal) | Completed shutdown incorrectly releases the signal-path assignment. |
-| PL83 | 18 | Actual shift startup cancellation reaches a resistant adapter. | planned `internal/shift/lifetime_test.go` (ActualStartRace) | The live adapter survives if session cancellation still races cmd.Process. |
-| PL84 | 18 | Shift deadline keeps precedence over simultaneous interruption. | planned `internal/shift/lifetime_test.go` (DeadlinePrecedence) | The result becomes interrupted/130 instead of its existing incomplete policy. |
-| PL85 | 18, 30 | Recovery retains protected scratch in a clean worktree. | planned `internal/systemtest/process_lifetime_shift_test.go` (CleanProtectedRecovery) | An empty dirty set authorizes scratch removal or release. |
-| PL86 | 30 | Explicit cleanup rechecks protection before apply. | planned `internal/worktree/protection_test.go` (ProtectedApply) | A user admitted after the plan loses its checkout if apply trusts the old fingerprint. |
-| PL87 | 30 | Pool reuse refuses a protected checkout. | planned `internal/worktree/protection_test.go` (ProtectedAcquire) | Reset or clean changes the child's protected sentinel. |
-| PL88 | 30 | Pool reclaim retains protected member users. | planned `internal/worktree/protection_test.go` (ProtectedReclaim) | Bulk key removal bypasses member protection. |
-| PL89 | 33 | Linux parent death still kills the direct builder child. | planned `internal/runbinary/pdeathsig_linux_test.go` (ParentDeath) | The real child survives owner SIGKILL if Pdeathsig disappears. |
-| PL90 | 34 | Native Darwin preserves its group policy. | planned `internal/runbinary/lifetime_darwin_test.go` (DarwinPolicy) | A resistant child survives if the native platform adapter loses Setpgid. |
-| PL91 | 1, 35 | The final tree has no private production lifetime loop. | planned `internal/conformance/process_lifetime_test.go` (MigrationClosure) | A reintroduced private scanner or shift loop turns the graded-tree check red. |
-| PL92 | 11, 36 | Gate preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (GateDifferential) | A changed normal code, output, or policy differs on the same canned fixture. |
-| PL93 | 12, 36 | Builder preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (BuilderDifferential) | The same normal fixture exposes changed executable validation or output. |
-| PL94 | 13, 36 | Bounds preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (BoundsDifferential) | The same fixture exposes changed start, exit, complete, canceled, or timeout projection. |
-| PL95 | 14, 36 | Prep-release preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (PrepDifferential) | The same step fixture exposes changed attribution or ordering. |
-| PL96 | 14, 36 | External preflight preserved fixtures match the baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (ExternalDifferential) | The same input and normal output expose a changed phase result. |
-| PL97 | 14, 36 | Scanner preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (ScannerDifferential) | Valid, malformed, and exit-3 scanner fixtures expose changed finding policy. |
-| PL98 | 15, 36 | Focused-test preserved fixtures match the baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (FocusedDifferential) | The same terminal, malformed, and incomplete JSON expose changed package policy. |
-| PL99 | 15, 36 | Package-list preserved fixtures match the baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (ListDifferential) | The same package data and errors expose changed selection behavior. |
-| PL100 | 16, 36 | Exec preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (ExecDifferential) | Canned stdin, stderr, exit, environment, and assignment fixtures expose changed command inputs. |
-| PL101 | 17, 36 | Shell preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (ShellDifferential) | The same zero, nonzero, and signal fixtures expose an unapproved shell status repair. |
-| PL102 | 18, 36 | Shift preserved fixtures match the production baseline. | planned `internal/systemtest/process_lifetime_preservation_test.go` (ShiftDifferential) | The same adapter result and deadline inputs expose changed evidence taxonomy. |
+| PL1 | 1 | Every census entry reaches the shared lifetime owner. | `internal/conformance/process_lifetime_test.go` (`TestProcessLifetimeOwnerEntries`) | A production-entry audit detects a caller that retains its private owner. |
+| PL2 | 2 | A pre-canceled lifetime starts no child. | `internal/subprocess/lifetime_test.go` (`TestLifetimePreCanceled`) | The child's start marker appears if cancellation follows launch. |
+| PL3 | 3 | Cancellation during Start reaches the eventual resistant child. | `internal/subprocess/lifetime_test.go` (`TestLifetimeStartingCancel`) | The child's readiness PID survives if cancellation loses the unpublished handle. |
+| PL4 | 4 | A failed Start creates no waiter. | `internal/subprocess/lifetime_test.go` (`TestLifetimeSpawnFailure`) | A waiter counter exposes a failed-start wait. |
+| PL5 | 4 | Concurrent cancellation and completion create exactly one waiter. | `internal/subprocess/lifetime_test.go` (`TestLifetimeSingleWaiter`) | An audited real-command owner detects a second Wait call. |
+| PL6 | 5 | Exit seven retains raw status seven and complete output. | `internal/subprocess/lifetime_test.go` (`TestLifetimeNonzero`) | A generic failure projection loses the child status or output. |
+| PL7 | 5 | Cleanup failure retains an already observed child exit. | `internal/subprocess/lifetime_test.go` (`TestLifetimeExitAndIncomplete`) | A replacement cleanup error erases the process result. |
+| PL8 | 6 | Captured output remains unread until its worker completes. | `internal/subprocess/lifetime_test.go` (`TestLifetimeDelayedCapture`) | A blocked consumer exposes premature mutable-buffer access under race checks. |
+| PL9 | 6 | A direct caller file remains open after completion. | `internal/subprocess/lifetime_test.go` (`TestLifetimeCallerFile`) | A subsequent caller write fails if teardown closes its file. |
+| PL10 | 6 | Forced owned-pipe closure returns incomplete output. | `internal/subprocess/lifetime_test.go` (`TestLifetimeForcedClose`) | An EOF-only projection accepts truncated output. |
+| PL11 | 6 | A blocked caller writer returns a pending stream snapshot. | `internal/subprocess/lifetime_test.go` (`TestLifetimeBlockedWriter`) | Waiting on the writer holds the lifetime past its final deadline. |
+| PL12 | 7 | A TERM-resistant group receives KILL after its grace. | `internal/subprocess/lifetime_test.go` (`TestLifetimeResistantGroup`) | A live descendant-survival oracle exposes missing escalation. |
+| PL13 | 8 | An unresolved waiter returns incomplete by the final deadline. | `internal/subprocess/lifetime_test.go` (`TestLifetimePendingWaiter`) | An unconditional receive leaves the caller blocked. |
+| PL14 | 8 | A descriptor-retaining descendant cannot hold canceled decoding forever. | `internal/subprocess/lifetime_test.go` (`TestLifetimeInheritedDescriptor`) | The live descendant and decoder remain unresolved past the final window without owned closure. |
+| PL15 | 9 | Current ESRCH marks the group absent. | `internal/subprocess/protection/observe_test.go` (`TestObserveGroupAbsent`) | A positive-absence fixture cannot complete cleanup if ESRCH remains uncertain. |
+| PL16 | 9 | An answering probe marks the group present. | `internal/subprocess/protection/observe_test.go` (`TestObserveGroupPresent`) | The protected resource disappears if presence becomes absence. |
+| PL17 | 9 | EPERM retains uncertain group state. | `internal/subprocess/protection/observe_test.go` (`TestObserveGroupPermission`) | Cleanup deletes the resource if every failed probe means gone. |
+| PL18 | 9 | An unknown probe error retains uncertainty. | `internal/subprocess/protection/observe_test.go` (`TestObserveGroupUnknownError`) | An ESRCH-only check omission permits deletion after an unrelated failure. |
+| PL19 | 10 | Preserve mode leaves a normal surviving group unsignaled. | `internal/subprocess/lifetime_test.go` (`TestLifetimeNormalPreserve`) | The descendant dies before fixture cleanup if migration adds a blanket normal kill. |
+| PL20 | 19 | Protection persists before the child's resource-use marker. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationPrelaunch`) | The marker precedes the synced user record if launch happens first. |
+| PL21 | 20 | First user-publication failure prevents Start. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationFirstPublishFailure`) | A child marker appears if the persistence error is ignored. |
+| PL22 | 20 | Later resource-publication failure prevents Start. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationPartialPublish`) | A child uses an unprotected second resource if partial success permits launch. |
+| PL23 | 20 | Failed rollback retains its partial pending record. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationRollbackFailure`) | Removing partial records hides an uncertain transaction. |
+| PL24 | 21 | Partial known-identity publication retains the launch disposition. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationIdentityPublishFailure`) | One completed write wrongly certifies the whole resource union. |
+| PL25 | 21 | A pending user resolves as no-start when its actor is absent and stays protected while its actor answers. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryPendingActorAbsent`) | Recovery keeps a dead actor's pending record forever, or releases a pending user whose actor PID answers. |
+| PL26 | 22 | Two concurrent users require two complete group-absence proofs. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryOverlappingUsers`) | The first completion deletes the second live user's resource. |
+| PL27 | 23 | Sealed admission refuses new registration before Start. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationSealedAdmission`) | A late start marker exposes the cleanup check-then-launch race. |
+| PL28 | 13 | Bounds preserves immediate-KILL cancellation classification. | `internal/bounds/lifetime_test.go` (`TestBoundsCancel`) | An added grace or changed canceled status breaks its policy witness. |
+| PL29 | 11 | Gate interruption retains INT and exit 130. | `internal/gate/lifetime_test.go` (`TestGateInterruptOpensWithINTAndExits130`) | The child's signal log exposes an incorrect TERM or KILL opener. |
+| PL30 | 11 | Gate timeout retains TERM and exit 124. | `internal/gate/lifetime_test.go` (`TestGateTimeoutOpensWithTERMAndExits124`) | The cause fixture fails if timeout becomes interruption. |
+| PL31 | 11 | Gate normal completion drains the remaining group. | `internal/gate/lifetime_test.go` (`TestGateNormalDrainRemovesReadyDescendant`) | A readiness descendant survives if normal drain disappears. |
+| PL32 | 11, 25 | An unresolved nested phase prevents retained green evidence. | `internal/systemtest/process_lifetime_test.go` (`TestProcessLifetimeNestedGate`) | The real inner group survives despite outer group absence and child zero. |
+| PL33 | 25 | Incomplete cleanup prevents a lane pass record. | `internal/gate/lifetime_resources_test.go` (`TestLaneIncomplete`) | A pass appears if lane aggregation consumes only child codes. |
+| PL34 | 12 | Builder normal completion drains its remaining group. | `internal/runbinary/lifetime_test.go` (`TestBuilderNormalDrain`) | The selection returns while a builder descendant remains live. |
+| PL35 | 12 | Builder cancellation keeps TERM and its existing grace. | `internal/runbinary/lifetime_test.go` (`TestBuilderCancel`) | A signal log and descendant oracle detect premature KILL or absent escalation. |
+| PL36 | 28 | Selection.Close retains a protected private executable. | `internal/runbinary/lifetime_resources_test.go` (`TestBinaryClose`) | The selection directory disappears if Close ignores registered users. |
+| PL37 | 29 | KitTestRun.Close retains a protected private directory. | `internal/env/kit_run_lifetime_test.go` (`TestKitRunClose`) | The private home disappears while a registered child owns its files. |
+| PL38 | 29 | The gate consumes private-directory Close failure. | `internal/gate/lifetime_resources_test.go` (`TestPhaseCloseError`) | A successful phase hides the enclosing resource failure. |
+| PL39 | 39 | A foreign binding prevents registration. | `internal/subprocess/protection/record_test.go` (`TestRecordForeignBinding`) | An unrelated store gains a user if inherited paths supply authority. |
+| PL40 | 39 | Malformed protection retains the resource. | `internal/subprocess/protection/record_test.go` (`TestRecordMalformed`) | A parse failure becomes an empty user set and permits removal. |
+| PL41 | 39 | A protection symlink prevents admission. | `internal/subprocess/protection/record_test.go` (`TestRecordSymlink`) | The outside sentinel changes if the receiver follows the descriptor. |
+| PL42 | 39 | Trailing JSON prevents admission. | `internal/subprocess/protection/record_test.go` (`TestRecordTrailingJSON`) | A second record hides admission state if a JSON prefix is accepted. |
+| PL43 | 39 | Unknown record fields prevent admission. | `internal/subprocess/protection/record_test.go` (`TestRecordUnknownField`) | An unsupported wire shape gains current-schema authority. |
+| PL44 | 39 | Wrong record mode retains the resource. | `internal/subprocess/protection/record_test.go` (`TestRecordWrongMode`) | A nonprivate record becomes safe-release proof. |
+| PL45 | 39 | Duplicate user identity makes the set uncertain. | `internal/subprocess/protection/record_test.go` (`TestRecordDuplicateUser`) | Deduplication hides the second conflicting group identity. |
+| PL46 | 23 | An admitted pending user blocks removal after sealing. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationSealPending`) | The resource disappears before its admitted child starts. |
+| PL47 | 23 | An admitted user can finish after sealing. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationFinishSealed`) | Completed resources leak if sealing freezes existing updates. |
+| PL48 | 22 | Reversed resource vectors acquire locks without deadlock. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationLockOrder`) | Two cooperating processes expose opposing lock acquisition order. |
+| PL49 | 24 | A nested CLI registers its separate group before use. | `internal/systemtest/process_lifetime_test.go` (`TestProcessLifetimeNestedRegistration`) | The inner use marker precedes its durable protection if propagation disappears. |
+| PL50 | 24 | Overlapping nested users retain independent records. | `internal/systemtest/process_lifetime_test.go` (`TestProcessLifetimeNestedOverlap`) | The second child loses its resource when the first CLI completes. |
+| PL51 | 25 | Missing nested completion prevents outer safe release. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryMissingCompletion`) | Child exit zero substitutes for a missing terminal record. |
+| PL52 | 31 | Recovery requires current absence for every known group. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryRecoverKnown`) | A stale complete field authorizes deletion while its group answers. |
+| PL53 | 31 | Recovery sends no signal to recorded identities. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryNoStaleSignal`) | The signal audit changes if recovery targets a reused PGID. |
+| PL54 | 31 | Record age grants no removal authority. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryOldRecord`) | An old answering identity loses its resource under an age-only rule. |
+| PL55 | 26 | A second-process cache clean refuses unresolved protection. | `internal/systemtest/process_lifetime_cache_test.go` (`TestProcessLifetimeCacheSecondProcessClean`) | The initiating CLI has exited and dropped its lock before the real cleaner attempts deletion. |
+| PL56 | 26 | The exclusive cleaner retains unreadable protection. | `internal/gocache/protection_test.go` (`TestProtectionUnreadableProtection`) | A go-clean marker appears if unreadable state becomes an empty set. |
+| PL57 | 26, 40 | Completed cache protection clears before shared-lock release. | `internal/gocache/protection_test.go` (`TestProtectionCompletedHold`) | An observer sees an unlocked active record if release order reverses. |
+| PL58 | 27 | Prospective Close retains an unresolved group user. | `internal/gate/prospectiveartifact/lifetime_test.go` (`TestDirectClose`) | The checkout vanishes if protection applies only during sweep. |
+| PL59 | 27 | A second-process sweep retains surviving prospective users. | `internal/systemtest/process_lifetime_artifacts_test.go` (`TestProcessLifetimeArtifactsSecondProcessSweep`) | Owner death wrongly authorizes deletion while the registered group remains alive. |
+| PL60 | 27 | A legacy prospective record retains ambiguous cleanup proof. | `internal/gate/prospectiveartifact/lifetime_test.go` (`TestLegacyRecord`) | Owner death removes a schema-1 bundle that records no complete user set. |
+| PL61 | 14 | Prep-release retains evidence after incomplete phase shutdown. | `internal/preprelease/lifetime_test.go` (`TestPrepIncomplete`) | The evidence directory disappears behind a resistant descendant. |
+| PL62 | 14 | External preflight refuses promotion after incomplete cleanup. | `internal/releasepreflight/lifetime_test.go` (`TestExternalIncomplete`) | A promoted green record appears while protection remains pending. |
+| PL63 | 14 | Scanner cancellation escalates a TERM-resistant child. | `internal/releasepreflight/lifetime_test.go` (`TestScannerCancel`) | The scanner survives if its old unbounded wait remains. |
+| PL64 | 15 | Focused-test cancellation resolves a descriptor-retaining descendant. | `internal/testreport/lifetime_test.go` (`TestFocusedPipeCancel`) | The descendant-survival oracle exposes a decoder blocked before Wait. |
+| PL65 | 15 | Malformed focused JSON remains a decode failure. | `internal/testreport/lifetime_test.go` (`TestMalformedJSON`) | Child zero falsely certifies unreadable report data. |
+| PL66 | 8 | Wait and stream obligations share one final cleanup window. | `internal/subprocess/lifetime_test.go` (`TestLifetimeSingleFinalWindow`) | Sequential fresh deadlines exceed the selected shutdown bound. |
+| PL67 | 8 | The unbounded-verdict switch keeps teardown finite. | `internal/bounds/lifetime_test.go` (`TestBoundsFixedShutdown`) | A resistant group outlives the outer wait if teardown uses VerdictWindow. |
+| PL68 | 32 | An incomplete worker holds only required resources. | `internal/subprocess/lifetime_test.go` (`TestLifetimeWorkerOwnership`) | An unrelated closeable sentinel remains retained by the unfinished owner. |
+| PL69 | 6 | Blocked caller stdin yields a pending local worker. | `internal/subprocess/lifetime_test.go` (`TestLifetimeBlockedInput`) | Wait blocks indefinitely if independent completion covers only output. |
+| PL70 | 40 | A proved no-start removes its protection durably. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationNoStartComplete`) | A canceled prepared run leaks a terminal user without the no-start close path. |
+| PL71 | 19 | Resource-record sync failure prevents first launch. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationResourceSyncFailure`) | A child marker appears if renamed but unsynced protection permits use. |
+| PL72 | 38, 40 | Deletion-sync failure returns uncertain cleanup. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationDeleteSyncFailure`) | The owner reports success despite failed durable terminal publication. |
+| PL73 | 31, 32 | Actor absence resolves workers only after known groups are absent. | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryWorkerActorDeath`) | A live descendant loses its resource if actor death resolves the complete user. |
+| PL74 | 39 | A missing inherited resource record prevents Start. | `internal/subprocess/protection/record_test.go` (`TestRecordMissingDescriptorTarget`) | The missing path silently drops from the resource union. |
+| PL75 | 27, 40 | A fresh no-user prospective bundle remains removable. | `internal/gate/prospectiveartifact/lifetime_test.go` (`TestEmptyCurrentBundle`) | A universal retention rule leaks unused ordinary bundles. |
+| PL76 | 26 | An absent cache clean creates no directory. | `internal/gocache/protection_test.go` (`TestProtectionAbsentCache`) | Admission before the absence branch creates new state during a zero-result clean. |
+| PL77 | 26 | An empty cache with complete protection remains cleanable. | `internal/gocache/protection_test.go` (`TestProtectionEmptyCache`) | A blanket record-presence refusal blocks ordinary cleanup. |
+| PL78 | 25 | Gate terminal persistence failure permits no retained green. | `internal/gate/lifetime_resources_test.go` (`TestGateTerminalFailure`) | The green store appears if certification precedes safe terminal persistence. |
+| PL79 | 15 | Focused output requires terminal events for every package. | `internal/testreport/lifetime_test.go` (`TestIncompletePackage`) | A partial decoded report passes under an EOF-only check. |
+| PL80 | 15 | Package-list cancellation keeps current interruption attribution. | `internal/testreport/lifetime_test.go` (`TestListCancel`) | A generic owner error loses the go-list diagnostic. |
+| PL81 | 16 | Exec normal-output delay adds no normal group kill. | `internal/worktree/exec_lifetime_test.go` (`TestExecNormalPipe`) | The descendant dies before fixture cleanup if migration adds drain-on-exit. |
+| PL82 | 17 | Shell interruption retains its lease after complete shutdown. | `internal/worktree/subshell_lifetime_test.go` (`TestShellSignal`) | Completed shutdown incorrectly releases the signal-path assignment. |
+| PL83 | 18 | Actual shift startup cancellation reaches a resistant adapter. | `internal/shift/lifetime_test.go` (`TestActualStartRace`) | The live adapter survives if session cancellation still races cmd.Process. |
+| PL84 | 18 | Shift deadline keeps precedence over simultaneous interruption. | `internal/shift/lifetime_test.go` (`TestDeadlinePrecedence`) | The result becomes interrupted/130 instead of its existing incomplete policy. |
+| PL85 | 18, 30 | Recovery retains protected scratch in a clean worktree. | `internal/systemtest/process_lifetime_shift_test.go` (`TestProcessLifetimeCleanProtectedRecovery`) | An empty dirty set authorizes scratch removal or release. |
+| PL86 | 30 | Explicit cleanup rechecks protection before apply. | `internal/worktree/protection_test.go` (`TestCleanupPlanFingerprintsProtection`) | A user admitted after the plan loses its checkout if apply trusts the old fingerprint. |
+| PL87 | 30 | Pool reuse refuses a protected checkout. | `internal/worktree/protection_test.go` (`TestPoolKeepsProtectedCheckout`) | Reset or clean changes the child's protected sentinel. |
+| PL88 | 30 | Pool reclaim retains protected member users. | `internal/worktree/protection_test.go` (`TestProtectedReclaim`) | Bulk key removal bypasses member protection. |
+| PL89 | 33 | Linux parent death still kills the direct builder child. | `internal/runbinary/pdeathsig_linux_test.go` (`TestBuilderChildDiesWithAnOwnerThatNeverDrains`) | The real child survives owner SIGKILL if Pdeathsig disappears. |
+| PL90 | 34 | Native Darwin preserves its group policy. | deferred: a follow-up native Darwin run; the Darwin policy test cross-compiles on this Linux host | A resistant child survives if the native platform adapter loses Setpgid. |
+| PL91 | 1, 35 | The final tree has no private production lifetime loop. | `internal/conformance/process_lifetime_closure_test.go` (`TestProcessLifetimeMigrationClosure`) | A reintroduced private scanner or shift loop turns the graded-tree check red. |
+| PL92 | 11, 36 | Gate preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_preservation_test.go` (`TestProcessLifetimeGateDifferential`) | A changed normal code, output, or policy differs on the same canned fixture. |
+| PL93 | 12, 36 | Builder preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_callers_test.go` (`TestProcessLifetimeBuilderDifferential`) | The same normal fixture exposes changed executable validation or output. |
+| PL94 | 13, 36 | Bounds preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_callers_test.go` (`TestProcessLifetimeBoundsDifferential`) | The same fixture exposes changed start, exit, complete, canceled, or timeout projection. |
+| PL95 | 14, 36 | Prep-release preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_release_callers_test.go` (`TestProcessLifetimePrepDifferential`) | The same step fixture exposes changed attribution or ordering. |
+| PL96 | 14, 36 | External preflight preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_release_callers_test.go` (`TestProcessLifetimeExternalDifferential`) | The same input and normal output expose a changed phase result. |
+| PL97 | 14, 36 | Scanner preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_release_callers_test.go` (`TestProcessLifetimeScannerDifferential`) | Valid, malformed, and exit-3 scanner fixtures expose changed finding policy. |
+| PL98 | 15, 36 | Focused-test preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_callers_test.go` (`TestProcessLifetimeFocusedDifferential`) | The same terminal, malformed, and incomplete JSON expose changed package policy. |
+| PL99 | 15, 36 | Package-list preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_callers_test.go` (`TestProcessLifetimeListDifferential`) | The same package data and errors expose changed selection behavior. |
+| PL100 | 16, 36 | Exec preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_preservation_test.go` (`TestProcessLifetimeExecDifferential`) | Canned stdin, stderr, exit, environment, and assignment fixtures expose changed command inputs. |
+| PL101 | 17, 36 | Shell preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_callers_test.go` (`TestProcessLifetimeShellDifferential`) | The same zero, nonzero, and signal fixtures expose an unapproved shell status repair. |
+| PL102 | 18, 36 | Shift preserved fixtures match their row contract. | `internal/systemtest/process_lifetime_callers_test.go` (`TestProcessLifetimeShiftDifferential`) | The same adapter result and deadline inputs expose changed evidence taxonomy. |
 | PL103 | 37 | Migration preserves the declared scope exclusions. | review-owned, whole-spec fence review | Independent review rejects plain Capture migration, shell repair, and new escaped-descendant guarantees. |
-| PL104 | 39 | A FIFO protection record prevents admission without blocking. | planned `internal/subprocess/protection/record_test.go` (FIFO) | A child starts or the record reader blocks if special-file checks follow open. |
-| PL105 | 39 | A directory at a record path prevents admission. | planned `internal/subprocess/protection/record_test.go` (Directory) | A nonfile path silently becomes an empty record. |
-| PL106 | 39 | Unsupported schema prevents admission. | planned `internal/subprocess/protection/record_test.go` (WrongSchema) | An unrecognized record gains current-schema authority. |
-| PL107 | 39 | Duplicate JSON fields prevent admission. | planned `internal/subprocess/protection/record_test.go` (DuplicateField) | A later duplicate silently overrides the admission or binding field. |
-| PL108 | 39 | Oversized protection data prevents admission. | planned `internal/subprocess/protection/record_test.go` (Oversized) | The reader accepts a record beyond the supplied control limit. |
-| PL109 | 39 | Conflicting generations at one store prevent registration. | planned `internal/subprocess/protection/record_test.go` (GenerationConflict) | Deduplication hides a changed resource generation. |
-| PL110 | 39 | Control-byte descriptor paths prevent launch. | planned `internal/subprocess/protection/record_test.go` (UnsafePath) | The child marker appears under an unsafe descriptor. |
-| PL111 | 39 | Space and glob paths retain exact resource identity. | planned `internal/subprocess/protection/record_test.go` (AwkwardPath) | Splitting or expansion changes the store that receives protection. |
-| PL112 | 39 | Repeated identical descriptors create one user per resource. | planned `internal/subprocess/protection/registration_test.go` (DescriptorDedup) | Two records or duplicate lock acquisition reveal inconsistent union handling. |
-| PL113 | 7, 9 | A failed KILL remains unresolved until absence is proved. | planned `internal/subprocess/lifetime_test.go` (SignalFailure) | An ignored termination error falsely completes cleanup while the group remains present. |
-| PL114 | 24 | Worktree environment transforms retain the resource vector. | planned `internal/worktree/exec_lifetime_test.go` (DescriptorEnvironment) | Nested CLI registration disappears if routing strips the reserved entry. |
-| PL115 | 24 | Worktree --env cannot override the resource vector. | planned `internal/worktree/exec_lifetime_test.go` (DescriptorOverride) | The child sees a replacement store if user values win over owner propagation. |
-| PL116 | 38 | Cleanup failure names each unresolved obligation once. | planned `internal/subprocess/lifetime_test.go` (IncompleteDiagnostic) | An empty or duplicated obligation projection hides the actual retained reason. |
-| PL117 | 30 | Shift refuses rollback while resource users remain unresolved. | planned `internal/shift/lifetime_test.go` (ProtectedRollback) | Reset or clean changes evidence that the unresolved child can still modify. |
-| PL118 | 40 | Ordinary complete resource users release their resources. | planned `internal/systemtest/process_lifetime_artifacts_test.go` (CompletedOwners) | A blanket retention implementation leaves cache, bundle, binary, test, or worktree protection behind. |
-| PL119 | 14 | Abandoned release-stage cleanup retains protected evidence. | planned `internal/releaseevidence/protection_test.go` (ProtectedStageCleanup) | The stage disappears if cleanup treats its old owner marker as sufficient authority. |
-| PL120 | 22 | OpenResource preserves users when a second owner joins. | planned `internal/subprocess/protection/registration_test.go` (ResourceJoin) | A fresh generation overwrites the first live user's protection without this join rule. |
-| PL121 | 27 | Sweep retains a live prospective owner with no group users. | planned `internal/gate/prospectiveartifact/lifetime_test.go` (LiveUnusedOwner) | A second producer removes the first owner's checkout before its child registration. |
-| PL122 | 25 | The focused run consumes selection Close failure. | planned `internal/testreport/lifetime_test.go` (SelectionCloseFailure) | Child zero becomes the operation result while the selected executable stays protected. |
-| PL123 | 25 | The lane consumes its selection-release failure. | planned `internal/gate/lifetime_resources_test.go` (LaneSelectionCloseFailure) | A void release closure hides protected executable retention behind a lane pass. |
-| PL124 | 3, 8 | Pending Start returns incomplete within the cancellation deadline. | planned `internal/subprocess/lifetime_test.go` (BlockedStart) | A held start worker blocks cancellation if control waits on the startup mutex. |
-| PL125 | 3, 4 | Late successful Start receives shutdown and one waiter. | planned `internal/subprocess/lifetime_test.go` (LateStart) | Releasing the held worker leaves a live child if an incomplete return discards its pending cancellation. |
+| PL104 | 39 | A FIFO protection record prevents admission without blocking. | `internal/subprocess/protection/record_test.go` (`TestRecordFIFO`) | A child starts or the record reader blocks if special-file checks follow open. |
+| PL105 | 39 | A directory at a record path prevents admission. | `internal/subprocess/protection/record_test.go` (`TestRecordDirectory`) | A nonfile path silently becomes an empty record. |
+| PL106 | 39 | Unsupported schema prevents admission. | `internal/subprocess/protection/record_test.go` (`TestRecordWrongSchema`) | An unrecognized record gains current-schema authority. |
+| PL107 | 39 | Duplicate JSON fields prevent admission. | `internal/subprocess/protection/record_test.go` (`TestRecordDuplicateField`) | A later duplicate silently overrides the admission or binding field. |
+| PL108 | 39 | Oversized protection data prevents admission. | `internal/subprocess/protection/record_test.go` (`TestRecordOversized`) | The reader accepts a record beyond the supplied control limit. |
+| PL109 | 39 | Conflicting generations at one store prevent registration. | `internal/subprocess/protection/record_test.go` (`TestRecordGenerationConflict`) | Deduplication hides a changed resource generation. |
+| PL110 | 39 | Control-byte descriptor paths prevent launch. | `internal/subprocess/protection/record_test.go` (`TestRecordUnsafePath`) | The child marker appears under an unsafe descriptor. |
+| PL111 | 39 | Space and glob paths retain exact resource identity. | `internal/subprocess/protection/record_test.go` (`TestRecordAwkwardPath`) | Splitting or expansion changes the store that receives protection. |
+| PL112 | 39 | Repeated identical descriptors create one user per resource. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationDescriptorDedup`) | Two records or duplicate lock acquisition reveal inconsistent union handling. |
+| PL113 | 7, 9 | A failed KILL remains unresolved until absence is proved. | `internal/subprocess/lifetime_test.go` (`TestLifetimeSignalFailure`) | An ignored termination error falsely completes cleanup while the group remains present. |
+| PL114 | 24 | Worktree environment transforms retain the resource vector. | `internal/worktree/exec_lifetime_test.go` (`TestExecDescriptorEnvironment`) | Nested CLI registration disappears if routing strips the reserved entry. |
+| PL115 | 24 | Worktree --env cannot override the resource vector. | `internal/worktree/exec_lifetime_test.go` (`TestExecDescriptorOverride`) | The child sees a replacement store if user values win over owner propagation. |
+| PL116 | 38 | Cleanup failure names each unresolved obligation once. | `internal/subprocess/lifetime_test.go` (`TestLifetimeIncompleteDiagnostic`) | An empty or duplicated obligation projection hides the actual retained reason. |
+| PL117 | 30 | Shift refuses rollback while resource users remain unresolved. | `internal/shift/lifetime_test.go` (`TestProtectedRollback`) | Reset or clean changes evidence that the unresolved child can still modify. |
+| PL118 | 40 | Ordinary complete resource users release their resources. | `internal/systemtest/process_lifetime_artifacts_test.go` (`TestProcessLifetimeArtifactsCompletedOwners`) | A blanket retention implementation leaves cache, bundle, binary, test, or worktree protection behind. |
+| PL119 | 14 | Abandoned release-stage cleanup retains protected evidence. | `internal/releaseevidence/protection_test.go` (`TestProtectedStageCleanup`) | The stage disappears if cleanup treats its old owner marker as sufficient authority. |
+| PL120 | 22 | OpenResource preserves users when a second owner joins. | `internal/subprocess/protection/registration_test.go` (`TestRegistrationResourceJoin`) | A fresh generation overwrites the first live user's protection without this join rule. |
+| PL121 | 27 | Sweep retains a live prospective owner with no group users. | `internal/gate/prospectiveartifact/lifetime_test.go` (`TestLiveUnusedOwner`) | A second producer removes the first owner's checkout before its child registration. |
+| PL122 | 25 | The focused run consumes selection Close failure. | `internal/testreport/lifetime_test.go` (`TestSelectionCloseFailure`) | Child zero becomes the operation result while the selected executable stays protected. |
+| PL123 | 25 | The lane consumes its selection-release failure. | `internal/gate/lifetime_resources_test.go` (`TestLaneSelectionCloseFailure`) | A void release closure hides protected executable retention behind a lane pass. |
+| PL124 | 3, 8 | Pending Start returns incomplete within the cancellation deadline. | `internal/subprocess/lifetime_test.go` (`TestLifetimeBlockedStart`) | A held start worker blocks cancellation if control waits on the startup mutex. |
+| PL125 | 3, 4 | Late successful Start receives shutdown and one waiter. | `internal/subprocess/lifetime_test.go` (`TestLifetimeLateStart`) | Releasing the held worker leaves a live child if an incomplete return discards its pending cancellation. |
+| PL126 | 39 | The store derives from kind, resource path, and binding under the per-user boot root, and no environment variable changes it. | `internal/subprocess/protection/directory_test.go` (`TestStoreRoot`) | A nested CLI with a rewritten TMPDIR refuses a legitimate descriptor if the environment selects the root. |
+| PL127 | 39 | A root that is a link, has another owner, or has a wider mode prevents launch. | `internal/subprocess/protection/directory_test.go` (`TestStoreRootRefusal`) | A shared or foreign root lets another user forge protection records. |
+| PL128 | 21 | A gated program never runs when its actor dies before the open signal. | `internal/subprocess/startgate_test.go` (`TestStartGateActorDeathBeforeOpen`) | The program's start marker appears if the gate executes at end of file. |
+| PL129 | 21 | An exec failure behind the start gate remains a Start error. | `internal/subprocess/startgate_test.go` (`TestStartGateExecFailure`) | A missing program reports a child exit instead of a failed start. |
+| PL130 | 25 | The probe set consumes a held selection Close failure. | `internal/probe/set_cleanup_test.go` (`TestSetSelectionCloseFailure`) | A mutant set exits zero and prints no cleanup line while the held executable stays protected. |
 
 ### Preservation fixtures
 
-PL92–PL102 compare the production baseline and migration over the same inputs.
+PL92–PL102 compare the migration against each row's stated contract over the same inputs.
+Each row's independent expectations carry one demonstrated red, as the AGENTS.md test-expectation exception requires.
 They ignore elapsed-time fields and use canned output.
 Each row names one caller's differential predicate.
 The compared input family contains the producer shapes below.
@@ -1039,7 +802,8 @@ It composes existing canonical-path policy instead of adding another resolver.
 
 Won't handle: Escaped unregistered descendants — the gate and builder retain their existing process-group contract.
 
-Won't handle: Native Windows lifetime semantics — releasepreflight keeps its current non-Unix fallback outside this migration.
+Won't handle: Native Windows lifetime semantics — the protection package does not build for Windows, so releasepreflight carries no non-Unix fallback.
+Deferred: the native Darwin witness for PL90 — the build host is Linux, so TestBuilderDarwinPolicy is cross-compiled here, and a follow-up run on Darwin records its native result (reviewer decision, 2026-10-23).
 
 Won't handle: Bounded arbitrary caller I/O — exec retains caller-owned streams and explicit incomplete facts.
 
@@ -1058,10 +822,9 @@ This spec-only pass writes none of its production or test paths.
 Ticket design partitions it after independent spec review.
 No writer receives all of internal or worktree.
 
-The closure inventory uses the existing tickets.BoundFiles, anchors.ReferencingFiles, and canary.FixturePins owners.
-Starting with this complete fence, their transitive requirements reach a fixed point.
+The preflight closure owners are retired.
+The gate and the check-floor row find each missing Writes path, and the coordinator widens a Writes line through bench spec widen.
 Command-package and worktree edits co-name the five command registry files.
-Profile, glossary, and data-policy edits co-name every referring anchor registry.
 Individual fixture units below close their BASE, overlay, and mutation pins.
 No fixture-family prefix grants unrelated writes.
 
@@ -1069,7 +832,7 @@ The added holders retain their existing assertions, diagnostics, and mutation pu
 Update only references or fixtures made stale by the approved ownership changes.
 A holder that needs no content change remains co-owned and unchanged.
 Do not weaken a check, remove an assertion, or change caller policy to close the fence.
-PL103 retains whole-spec fence review, and the existing preflight closure rows grade the later ticket slices.
+PL103 retains whole-spec fence review, and the gate grades each later ticket slice against its Writes line.
 
 - `cmd/bench/process_resources.go`
 - `internal/subprocess/`
@@ -1185,18 +948,7 @@ Closure holders:
 - `tests/canary/skill-description-budgets/description-missing/`
 - `tests/canary/skill-description-budgets/over-budget-command/`
 - `tests/canary/skill-description-budgets/over-budget-description/`
-- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading/`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner/`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing/`
-- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership/`
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route/`
-- `tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary/`
-- `tests/canary/workflow-guidance-anchors/context-coverage-map-term/`
-- `tests/canary/workflow-guidance-anchors/context-coverage-row-parts/`
-- `tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary/`
-- `tests/canary/workflow-guidance-anchors/context-decision-map-term/`
-- `tests/canary/workflow-guidance-anchors/context-reader-sweep-term/`
-- `tests/canary/workflow-guidance-anchors/context-ticket-vocabulary/`
 
 Reviewer disposition: specification accepted at the retained checkpoint, ticket-graph review pending
 
@@ -1245,25 +997,14 @@ Read sources: Testreport cancellation, worktree exec and shell, builder drain, p
 
 Read enforcement: Coverage parser and citations, conformance registry and checks, injected-port registry, cancellation registration, gate entry, and project profile
 
-Read closure: internal/tickets/registry_data.go, internal/preflight/closure.go, internal/preflight/gather.go, internal/anchors/references.go, and internal/canary/inventory.go
+Read closure: internal/canary/pins.go
 
-The author enumerated the fence through the existing accessors in a disposable read-only helper outside the repository.
-The fixed point adds 12 registry files and 37 individually named fixture units.
+The planning author enumerated the fence through closure accessors that a later delivery retired.
 No production test or gate ran for that enumeration.
 
 Read data policy: DATA_HANDLING.md and SECURITY.md
 
-Read dependency: specs/durable-file-replacement/spec.md from maintenance-primitives-spec
-Accepted split SHA256: 05c79801d3746e5250fb23d7261f66827f971e6d26c0f9661ec7aaff48a0c2f8
-Read graph-bearing SHA256: 4eacd9370ea59bf7003f897aa14e3e2702382b393b3db115727c094e61243333
-
-Read excluded successor: specs/durable-caller-migration/spec.md from maintenance-primitives-spec
-Accepted split SHA256: 32b04d2f6d1ce773170d1641eb3408a998d84656104c9fbf9702474f92c2ea66
-Read graph-bearing SHA256: 2d606f650bb99d3c6daa3d040f504f432210d7e0cdf5f428b53ddbb1878be1ee
-
-The source reads include ticket graph text added after independent split-spec acceptance.
-The prerequisite retains its seventeen accepted rows and the successor retains its remaining thirty-five rows.
-Build-entry prerequisite owns this process specification dependency and its implementation admission rule.
+Read dependency: internal/durablefile on main
 
 The data policy treats local records as mutable evidence and excludes same-user adversarial security guarantees.
 The protection protocol shares that posture.
@@ -1279,7 +1020,7 @@ DATA_HANDLING names the production record owner without duplicating its schema v
 | Duration registry | Bounds, gate, builder, exec, shell, testreport | Selected caller policies, PL28, PL66–PL67 |
 | Cache protection | Hold and exclusive clean, gate, lane, focused test | Shared lock before registration, PL55–PL57 |
 | Prospective identity | Open, ReadPublished, Publish, Close, sweep, gate engine, lane | One strict owner, PL58–PL60, PL75 |
-| Selected binary | Factory build-failure cleanup, Selection.Close, gate transaction, lane selection, focused test selection | PL36 and close-error composition |
+| Selected binary | Factory build-failure cleanup, Selection.Close, runbinary Shared, testreport HeldRuns, gate transaction, lane selection, focused test selection | PL36 and close-error composition |
 | Private test directory | OpenKitTestRun, Entries, Close, phases, testreport, preflight | PL37–PL38 and nested registration |
 | Worktree protection | Exec, shell, acquire, release, cleanup transaction, pool reclaim, shift teardown and recovery | PL82, PL85–PL88, PL117 |
 | Release evidence | Preflight finalization, atomic promotion, abandoned-stage cleanup, prep-release phase | PL61–PL62 and protection owner |
@@ -1292,10 +1033,13 @@ This includes focused selection cleanup and the lane's selection-release closure
 No completed child code can hide those failures.
 
 Release evidence protection lives outside dist/preflight and temporary stage directories.
-The repository common directory holds its store under bench-process-resources/release-evidence.
-Its identity binds the repository and canonical dist/preflight target.
+Its store is a derived store under the process-user store root.
+Its identity binds the checkout's canonical dist directory, because the exchange replaces dist/preflight.
 It protects phase-authored evidence before any phase starts.
 FinalizeEvidence, promotion, and abandoned-stage cleanup consume its disposition before replacement or deletion.
+A promotion that runs inside a registered user of the open generation does not seal that generation.
+The enclosing owner seals and observes the generation after its step, and that disposition decides the result.
+Two concurrent release runs in one checkout are guarded only at the start, where an unresolved earlier user refuses the new run.
 The existing atomic exchange remains the publication owner.
 
 ### Pre-review proof checklist
@@ -1355,6 +1099,8 @@ No acceptance row names a test-only helper across a package seam.
 | Ticket 6: unknown users and no stale-record signals | PL25, PL52–PL54, PL73 |
 | Ticket 6: shift recovery and actual startup race | PL83–PL88, PL117 |
 | Ticket 6: native platform distinction | PL89–PL90 |
+| Reviewer decision 2026-10-23: process-user stores on tmpfs | PL126–PL127 |
+| Reviewer decision 2026-10-23: start gate builds now | PL25, PL128–PL129 |
 | Map exclusions | PL103 and Won't handle lines |
 
 ### Flagged additions
@@ -1369,7 +1115,7 @@ They add no capability beyond the map's resource and stream obligations.
 - Worktree reuse and reclaim consume protected-user disposition.
 - The next prospective schema retains ambiguous legacy proof.
 - Release evidence keeps protection outside its exchanged output directories.
-- Protection record publication consumes the complete delivery named in Build-entry prerequisite.
+- Protection record publication consumes the landed internal/durablefile leaf.
 
 These decisions take PL20–PL27, PL39–PL60, PL70–PL78, PL85–PL88, PL104–PL115, and PL119–PL123.
 Independent review must remove any unlisted acceptance expansion.
