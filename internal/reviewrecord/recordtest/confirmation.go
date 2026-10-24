@@ -14,15 +14,33 @@ func ConfirmationProbe() rr.Probe {
 	return bitProbe("omit the repaired assertion")
 }
 
-// Refreeze moves the last recorded chunk to the current tip, as the chunk form does after a
-// repair. The tip and the source digest move, the chunk verification is retained again at
-// the new digest, and the reviews keep their pair.
+// Refreeze moves the last recorded chunk to the current tip and the current plan, as the chunk
+// form does after a repair. The tip, the plan digest, and the source digest move, the chunk
+// verification is retained again at the new digest, and the reviews keep their pair.
 func (f *Fixture) Refreeze() {
 	f.T.Helper()
 	chunk := &f.Record.Chunks[len(f.Record.Chunks)-1]
-	chunk.Tip = f.Tip()
+	chunk.Tip, chunk.PlanDigest = f.Tip(), f.Plan.Digest
 	digest, verification := f.freeze(chunk.ID, "chunk-"+chunk.ID+"-"+chunk.Tip)
 	chunk.SourceDigest, chunk.Verification = digest, append(chunk.Verification, verification...)
+}
+
+// Reassign commits the assignment-only plan change that dispatches a repair session: through
+// the assignment writer, ticket gains a user-directed replacement of its current author. The
+// plan reloads, so the fixture record names the new plan digest.
+func (f *Fixture) Reassign(ticket string) {
+	f.T.Helper()
+	execution, history := f.Plan.Execution, f.Plan.Execution.Assignments[ticket]
+	repair := Assign("repair-" + ticket)
+	repair.Predecessor, repair.Trigger = history[len(history)-1].Session, "user-directed"
+	repair.Stopped, repair.Preserved = "fixture:stopped-"+ticket, "fixture-preserved-"+ticket
+	call := rr.AssignmentCall{Source: f.Tip(), Ticket: ticket, Assignment: repair, RunID: execution.RunID,
+		OrchestratorSession: execution.OrchestratorSession, ReviewMode: execution.ReviewMode, AuthorLimit: execution.AuthorLimit}
+	if _, err := rr.RecordAssignment(f.Root, f.spec, call); err != nil {
+		f.T.Fatal(err)
+	}
+	f.Commit("dispatch the repair of " + ticket)
+	f.Reload()
 }
 
 // Confirm appends to the last recorded chunk the confirmation that the completion

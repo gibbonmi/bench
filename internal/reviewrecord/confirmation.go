@@ -1,11 +1,13 @@
 package reviewrecord
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
+	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/testgap"
 )
 
@@ -69,7 +71,7 @@ var errAtChunkPair = errors.New("the axis results sit at the chunk pair")
 // spec names the record that the source digest excludes. It refuses a missing axis, results
 // at different pairs or at the chunk pair, a reviewed tip equal to the chunk base, a
 // reviewed tip outside the line from the chunk base to the chunk tip, and a delta from the
-// reviewed digest to the chunk digest that testgap.Prove refuses. Each refusal names the
+// reviewed digest to the chunk digest that proveTestOnly refuses. Each refusal names the
 // chunk.
 func FindReviewedPair(root, spec string, chunk Chunk) (ReviewedPair, error) {
 	scope := chunk.reviewed().scope
@@ -118,11 +120,62 @@ func FindReviewedPair(root, spec string, chunk Chunk) (ReviewedPair, error) {
 	if err != nil {
 		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, err)
 	}
-	if err := testgap.Prove(root, digest, chunk.SourceDigest); err != nil {
+	if err := proveTestOnly(root, spec, digest, chunk.SourceDigest); err != nil {
 		return ReviewedPair{}, fmt.Errorf("%s: stale axis results at the reviewed tip %s: the delta to the chunk tip is not test-only: %w; review the three axes at the chunk pair", scope, tip, err)
 	}
 	slices.Sort(findings)
 	return ReviewedPair{Tip: tip, Digest: digest, Findings: slices.Compact(findings)}, nil
+}
+
+// errBeyondAssignments marks a spec change outside the assignment block of its plan.
+var errBeyondAssignments = errors.New("the change reaches beyond the assignment block of the completion plan")
+
+// proveTestOnly answers testgap.Prove for the delta from the reviewed digest to the later
+// digest, with one exemption for the spec. The spec passes when every other changed path
+// passes testgap.Prove and the two spec documents are byte-equal once each clears the
+// assignment block of its completion plan.
+func proveTestOnly(root, spec, reviewed, later string) error {
+	err := testgap.Prove(root, reviewed, later)
+	if err == nil {
+		return nil
+	}
+	trees, rest := []string{reviewed, later}, []string{"", ""}
+	for i, tree := range trees {
+		if rest[i], err = benchgit.TreeWithoutFile(root, tree, spec); err != nil {
+			return err
+		}
+	}
+	if err := testgap.Prove(root, rest[0], rest[1]); err != nil {
+		return err
+	}
+	cleared := [][]byte{nil, nil}
+	for i, tree := range trees {
+		if cleared[i], err = withoutAssignments(root, tree, spec); err != nil {
+			return fmt.Errorf("%s: %w", spec, err)
+		}
+	}
+	if !bytes.Equal(cleared[0], cleared[1]) {
+		return fmt.Errorf("%s: %w", spec, errBeyondAssignments)
+	}
+	return nil
+}
+
+// withoutAssignments returns the spec document in tree with no assignment block in its
+// completion plan, encoded as RecordAssignment encodes the plan. An absent block and an
+// empty block clear alike.
+func withoutAssignments(root, tree, spec string) ([]byte, error) {
+	data, err := benchgit.ReadTreeFile(root, tree, spec)
+	if err != nil {
+		return nil, err
+	}
+	plan, err := parsePlan(data)
+	if err != nil {
+		return nil, err
+	}
+	if plan.Execution != nil {
+		plan.Execution.Assignments = nil
+	}
+	return withPlan(data, plan)
 }
 
 // checkChunkReviews grades the reviews of chunk. With the three current axis results at the

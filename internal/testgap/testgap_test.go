@@ -2,6 +2,7 @@ package testgap
 
 import (
 	"maps"
+	"slices"
 	"strings"
 	"testing"
 
@@ -77,6 +78,13 @@ func TestProveTestGap(t *testing.T) {
 				left, want, path = strings.Repeat("0", 40), ErrUnreadable, ""
 			}
 			gittest.RequireVerdict(t, Prove(f.Root, left, right), want, path)
+			wantFiles := []string{path}
+			if want != nil || name == "equal trees" {
+				wantFiles = nil
+			}
+			if files, _ := TestFiles(f.Root, left, right); !slices.Equal(files, wantFiles) {
+				t.Fatalf("test files = %q, want %q", files, wantFiles)
+			}
 		})
 	}
 }

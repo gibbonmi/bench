@@ -65,10 +65,10 @@ func confirmedFixture(t *testing.T, repair func(*recordtest.Fixture)) (*recordte
 	return f, reviewed
 }
 
-// TestReviewCheckpointPassesAWrittenConfirmation grades the confirmation that the record
-// writer derives for the repaired fixture: the chunk checkpoint passes with it.
-func TestReviewCheckpointPassesAWrittenConfirmation(t *testing.T) {
-	f, _ := repairedFixture(t, modifyTest)
+// passWrittenConfirmation commits the confirmation that the record writer derives for the
+// repaired fixture f and requires that the chunk checkpoint passes with it.
+func passWrittenConfirmation(t *testing.T, f *recordtest.Fixture) {
+	t.Helper()
 	call := rr.ConfirmationCall{Chunk: "1", Findings: []string{"F-1"},
 		Evidence: rr.Evidence{ID: "confirm-1", Performer: recordtest.Orchestrator, Model: "unknown", Effort: "unknown", NativeRef: recordtest.Native("mutation failed; restore passed")},
 		Probe:    recordtest.ConfirmationProbe()}
@@ -82,6 +82,25 @@ func TestReviewCheckpointPassesAWrittenConfirmation(t *testing.T) {
 	if got := outcomeRuns(t, f.Root); got != 1 {
 		t.Fatalf("oracle runs = %d, want 1", got)
 	}
+}
+
+// TestReviewCheckpointPassesAWrittenConfirmation grades the written confirmation of a repair
+// that changes one test file.
+func TestReviewCheckpointPassesAWrittenConfirmation(t *testing.T) {
+	f, _ := repairedFixture(t, modifyTest)
+	passWrittenConfirmation(t, f)
+}
+
+// TestReviewCheckpointConfirmationAcceptsAnAssignmentOnlyPlanCommit covers RC5: after the test
+// repair, an assignment-only plan commit dispatches the repair session, and the chunk
+// checkpoint passes with the written confirmation of that delta.
+func TestReviewCheckpointConfirmationAcceptsAnAssignmentOnlyPlanCommit(t *testing.T) {
+	f, _ := repairedFixture(t, modifyTest)
+	f.Reassign(f.Plan.Chunks[0].Tickets[0])
+	f.Refreeze()
+	f.Save()
+	f.Commit("retain the chunk at the repair dispatch")
+	passWrittenConfirmation(t, f)
 }
 
 // repairAgain commits a second test-only repair and refreezes the chunk at it, with no new

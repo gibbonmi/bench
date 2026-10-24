@@ -102,7 +102,7 @@ func TestRecordConfirmationRefusals(t *testing.T) {
 			review(t, f, "Spec", "spec-2")
 			review(t, f, "Coverage", "coverage-2")
 		}},
-		{"non-test delta", "repair.go", "the delta to the chunk tip is not test-only: repair.go: path is not a Go test file", []string{"F-1"}, nil},
+		{"non-test delta", "repair.go", notTestOnly("repair.go", "path is not a Go test file"), []string{"F-1"}, nil},
 		{"omitted finding", "repair_test.go", "chunk 1: confirmation confirm-1 closes the findings [], and the open findings at the reviewed pair are [F-1]", nil, nil},
 		{"extra finding", "repair_test.go", "closes the findings [F-1 F-2], and the open findings at the reviewed pair are [F-1]", []string{"F-1", "F-2"}, nil},
 	} {
@@ -114,6 +114,65 @@ func TestRecordConfirmationRefusals(t *testing.T) {
 			refuseArgs(t, f, tc.want, confirmArgs(t, nil, "confirm-1", tc.findings...))
 		})
 	}
+}
+
+// specRepaired is the repaired fixture of repaired at a test file, after change commits a
+// spec-folder change: the record amends to the plan at the new tip, and chunk 1 moves there.
+func specRepaired(t *testing.T, change func(*recordtest.Fixture)) *recordtest.Fixture {
+	t.Helper()
+	f, _ := repaired(t, "repair_test.go")
+	change(f)
+	amend(t, f)
+	record(t, f, "1", onlyChunk(t, f).Base, f.Tip())
+	return f
+}
+
+// beyondAssignments is the refusal reason of a spec change outside the assignment block.
+const beyondAssignments = "the change reaches beyond the assignment block of the completion plan"
+
+// notTestOnly is the confirmation refusal of a delta that changes path for reason.
+func notTestOnly(path, reason string) string {
+	return "the delta to the chunk tip is not test-only: " + path + ": " + reason
+}
+
+// reassign commits the plan change that dispatches the repair session of ticket 1.md.
+func reassign(f *recordtest.Fixture) { f.Reassign("1.md") }
+
+// TestRecordConfirmationAcceptsAnAssignmentOnlyPlanCommit covers RC1: a delta of one test file
+// and one assignment-only plan commit records the confirmation.
+func TestRecordConfirmationAcceptsAnAssignmentOnlyPlanCommit(t *testing.T) {
+	succeed(t, specRepaired(t, reassign), confirmArgs(t, nil, "confirm-1", "F-1"))
+}
+
+// TestRecordConfirmationRefusesAPlanFenceChange covers RC2: a plan field outside the
+// assignment block, changed beside a repair dispatch, refuses by the spec path.
+func TestRecordConfirmationRefusesAPlanFenceChange(t *testing.T) {
+	f := specRepaired(t, func(f *recordtest.Fixture) {
+		reassign(f)
+		replan(f, "go test -count=1 ./...")
+	})
+	refuseArgs(t, f, notTestOnly(recordtest.Spec, beyondAssignments), confirmArgs(t, nil, "confirm-1", "F-1"))
+}
+
+// TestRecordConfirmationRefusesATicketWidening covers RC3: a widened ticket `Writes:` line
+// stays a non-test path beside an assignment-only plan commit.
+func TestRecordConfirmationRefusesATicketWidening(t *testing.T) {
+	f := specRepaired(t, func(f *recordtest.Fixture) {
+		reassign(f)
+		editTicket(t, f, "1.md", func(text string) string { return string(recordtest.WithTicketWrite([]byte(text), "repair_test.go")) })
+	})
+	refuseArgs(t, f, notTestOnly(f.TicketPath("1.md"), "path is not a Go test file"), confirmArgs(t, nil, "confirm-1", "F-1"))
+}
+
+// TestRecordConfirmationRefusesASpecProseChange covers RC4: a seam cell outside the plan fence,
+// changed beside an assignment-only plan commit, refuses by the spec path.
+func TestRecordConfirmationRefusesASpecProseChange(t *testing.T) {
+	f := specRepaired(t, func(f *recordtest.Fixture) {
+		reassign(f)
+		f.Write(recordtest.Spec, strings.Replace(specText(f), recordtest.Body, recordtest.Body+"| RC1 | `repair_test.go` (`TestRepair`). |\n\n", 1))
+		f.Commit("cite the repair test")
+	})
+	refuseArgs(t, f, notTestOnly(recordtest.Spec, beyondAssignments), confirmArgs(t, nil, "confirm-1", "F-1"))
 }
 
 // TestRecordConfirmationImportsOneMutantRow covers RC38 for a mutant-set answer: --mutant 2
