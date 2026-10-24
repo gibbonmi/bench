@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
@@ -371,5 +372,22 @@ func TestTicketPrefixesTheEvidenceIDOnce(t *testing.T) {
 	succeed(t, f, ticketArgs(t, "1", "1.md", "p", "--base", base))
 	if ids, want := verificationIDs(chunkEntry(t, f, "1")), []string{"p-tests", "p-additional"}; !slices.Equal(ids, want) {
 		t.Fatalf("verification IDs = %q, want %q", ids, want)
+	}
+}
+
+// A ticket record call with a --tip that does not descend from the chunk tip leaves the chunk
+// entry as it was: the base and the tip stay, and the freeze cell is none.
+func TestTicketBeforeTheChunkTipLeavesTheChunkEntry(t *testing.T) {
+	f, home := pooled(t, 3, twoTickets)
+	own := stagedBeforeTheTip(t, f, home)
+	frozen := chunkEntry(t, f, "2")
+	out := succeed(t, f, ticketArgs(t, "2", "2.md", "early", "--tip", own))
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("ticket")
+	if chunk := chunkEntry(t, f, "2"); err != nil || len(rows) != 1 || rows[0].(map[string]any)["freeze"] != "none" || chunk.Base != frozen.Base || chunk.Tip != frozen.Tip {
+		t.Errorf("chunk 2 after the 2.md call at %s = %s..%s with the output %q, want %s..%s with freeze none", own, chunk.Base, chunk.Tip, out, frozen.Base, frozen.Tip)
 	}
 }

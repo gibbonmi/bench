@@ -174,6 +174,18 @@ func TestRecordVerificationDefaultsToTheChunkTip(t *testing.T) {
 	}
 }
 
+func TestRecordVerificationWritesTheSourceCommit(t *testing.T) {
+	f := linked(t, 1)
+	base, own := advance(f, "chunk 1 first commit")
+	_, tip := advance(f, "chunk 1")
+	record(t, f, "1", base, tip)
+	verify(t, f, map[string]string{"--source": own})
+	verify(t, f, unprobed)
+	if results := chunkResults(t, f); len(results) != 2 || results[0].SourceCommit != own || results[1].SourceCommit != tip {
+		t.Fatalf("source commits of %+v, want the named source %s and then the chunk tip %s", results, own, tip)
+	}
+}
+
 func TestRecordVerificationRefusesAStaleSource(t *testing.T) {
 	f := recorded(t, 1)
 	advance(f, "later")

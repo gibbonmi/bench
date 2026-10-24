@@ -91,12 +91,7 @@ func RecordTicket(root, spec string, call TicketCall) (TicketRecord, error) {
 		return TicketRecord{}, err
 	}
 	var result TicketRecord
-	created := false
-	create := func(string) (Record, error) {
-		record, err := createRecord(spec, plan, call.Tip)
-		created = err == nil
-		return record, err
-	}
+	start := &starter{spec: spec, tip: call.Tip, plan: plan}
 	steps := map[string]func(*Record) error{
 		FormAmendment: func(record *Record) error {
 			if currentPlan(*record, plan, call.Tip) == nil {
@@ -140,7 +135,7 @@ func RecordTicket(root, spec string, call TicketCall) (TicketRecord, error) {
 			return nil
 		},
 	}
-	err = write(root, spec, create, func(record *Record) error {
+	err = write(root, spec, start.create, func(record *Record) error {
 		for _, step := range TicketSteps() {
 			if err := steps[step.Form](record); err != nil {
 				return err
@@ -148,9 +143,7 @@ func RecordTicket(root, spec string, call TicketCall) (TicketRecord, error) {
 		}
 		return nil
 	})
-	if created {
-		result.Action = "created"
-	}
+	result.Action = start.action(result.Action)
 	return result, err
 }
 
