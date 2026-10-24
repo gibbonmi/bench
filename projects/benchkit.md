@@ -470,7 +470,8 @@ A green verdict records the exact whole subject and oracle. Reuse is allowed onl
 current exact green; partial/component and reduced-scope records are legacy input classes
 that fail closed and are never authored. Prospective execution uses the same complete
 phase architecture. A stale exact verdict stays stale rather than being softened by path
-classification.
+classification. A chunk checkpoint keys its green to the committed tree without the review
+record. A prepared chunk run writes a green under that key before the record commit.
 
 `BENCH_REQUIRE_CAPABILITIES=1` makes capability skips fatal. Without it, capability
 rows stay informational because a developer host may legitimately lack optional

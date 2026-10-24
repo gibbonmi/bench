@@ -52,6 +52,10 @@ A record that implies coverage it does not have is worse than silence.
    is answered from the record without a write. So reuse never slides its own
    freshness window.
 
+   A prepared chunk run grades the same subject and writes its green under the same key.
+   It grades no review record and no completion evidence. So a record commit during that
+   run leaves its green valid, and the chunk checkpoint after it reuses that green.
+
    Any
    other state durably replaces the older verdict with a pending record. This
    happens before running that exact subject, and the gate atomically records

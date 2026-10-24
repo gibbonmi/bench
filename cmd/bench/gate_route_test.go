@@ -74,16 +74,49 @@ func gateRoute(t *testing.T, root string, args ...string) (string, string, int) 
 	return out.String(), diagnostic.String(), code
 }
 
-func TestShellWrapperRejectsUnknownGateShapes(t *testing.T) {
-	for _, args := range [][]string{{"pin"}, {"--fresh", "unexpected"}, {"--brief"}, {"--checkpoint"}, {"--checkpoint", "specs/x/spec.md"}, {"--chunk", "1"}, {"--checkpoint", "specs/x/spec.md", "--chunk", "1", "--complete"}} {
-		out, diagnostic, code := gateRoute(t, "", args...)
-		if code != 2 || out != "" || diagnostic != gate.CommandUsage+"\n" {
-			t.Fatalf("gate %v: %d %q %q", args, code, out, diagnostic)
-		}
+// requireGateUsage requires that the public wrapper at root answers args with the usage line
+// on stderr and exit 2.
+func requireGateUsage(t *testing.T, root string, args ...string) {
+	t.Helper()
+	out, diagnostic, code := gateRoute(t, root, args...)
+	if code != 2 || out != "" || diagnostic != gate.CommandUsage+"\n" {
+		t.Fatalf("gate %v: %d %q %q", args, code, out, diagnostic)
 	}
 }
 
-func TestGateCheckpointRoute(t *testing.T) {
+func TestShellWrapperRejectsUnknownGateShapes(t *testing.T) {
+	for _, args := range [][]string{{"pin"}, {"--fresh", "unexpected"}, {"--brief"}, {"--checkpoint"}, {"--checkpoint", "specs/x/spec.md"}, {"--chunk", "1"}, {"--checkpoint", "specs/x/spec.md", "--chunk", "1", "--complete"}} {
+		requireGateUsage(t, "", args...)
+	}
+}
+
+// preparedRouteFixture is the recorded checkpoint fixture whose chunk the public wrapper
+// prepares green, so a usage error after it belongs to the refused shape alone.
+func preparedRouteFixture(t *testing.T) *recordtest.Fixture {
+	t.Helper()
+	f := checkpointRouteFixture(t)
+	if _, diagnostic, code := gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--chunk", "1", "--prepare"); code != 0 {
+		t.Fatalf("public prepared chunk checkpoint: %d %s", code, diagnostic)
+	}
+	return f
+}
+
+// TestCheckpointPrepareRefusesComplete covers RC50: the complete form has no prepared run.
+func TestCheckpointPrepareRefusesComplete(t *testing.T) {
+	f := preparedRouteFixture(t)
+	requireGateUsage(t, f.Root, "--checkpoint", f.Record.Spec, "--complete", "--prepare")
+}
+
+// TestCheckpointPrepareRefusesNoCheckpoint covers RC51: a prepared run grades a checkpoint
+// subject, so a prepare with no checkpoint names nothing to grade.
+func TestCheckpointPrepareRefusesNoCheckpoint(t *testing.T) {
+	requireGateUsage(t, preparedRouteFixture(t).Root, "--prepare")
+}
+
+// checkpointRouteFixture is one recorded and completed chunk under a gate that exits 0, at a
+// spec path that holds a space and glob bytes.
+func checkpointRouteFixture(t *testing.T) *recordtest.Fixture {
+	t.Helper()
 	f := recordtest.AttachAt(t, gittest.RepoOnBranch(t, "main"), 1, "specs/example [*] space/spec.md")
 	f.Write(".bench/gate.sh", "#!/bin/sh\nexit 0\n")
 	if err := os.Chmod(filepath.Join(f.Root, ".bench/gate.sh"), 0755); err != nil {
@@ -94,6 +127,11 @@ func TestGateCheckpointRoute(t *testing.T) {
 	f.Complete()
 	f.Save()
 	f.Commit("record evidence")
+	return f
+}
+
+func TestGateCheckpointRoute(t *testing.T) {
+	f := checkpointRouteFixture(t)
 	_, diagnostic, code := gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--chunk", "1")
 	if code != 0 {
 		t.Fatalf("public chunk checkpoint: %d %s", code, diagnostic)

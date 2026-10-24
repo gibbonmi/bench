@@ -23,6 +23,9 @@ import (
 type Checkpoint struct {
 	Spec, Chunk string
 	Complete    bool
+	// Prepare selects the prepared run of a chunk checkpoint. It stays out of the purpose JSON,
+	// so the complete form keeps its key.
+	Prepare bool `json:"-"`
 }
 type checkpointKey struct{}
 type verbKey struct{}
@@ -56,7 +59,7 @@ func checkpointEvaluation(ctx context.Context, evaluation *gateEvaluation) *gate
 
 func (checkpoint Checkpoint) validate() error {
 	if checkpoint.Spec == "" {
-		if checkpoint.Chunk != "" || checkpoint.Complete {
+		if checkpoint.Chunk != "" || checkpoint.Complete || checkpoint.Prepare {
 			return errors.New("checkpoint spec is required")
 		}
 		return nil
@@ -67,6 +70,9 @@ func (checkpoint Checkpoint) validate() error {
 	if (checkpoint.Chunk != "") == checkpoint.Complete || hasUnsafeText(checkpoint.Chunk) {
 		return errors.New("select one checkpoint chunk or complete")
 	}
+	if checkpoint.Prepare && checkpoint.Complete {
+		return errors.New("prepare a chunk checkpoint only")
+	}
 	return nil
 }
 
@@ -76,6 +82,7 @@ const (
 	flagCheckpoint = "--checkpoint"
 	flagChunk      = "--chunk"
 	flagComplete   = "--complete"
+	flagPrepare    = "--prepare"
 )
 
 func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, error) {
@@ -104,6 +111,8 @@ func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, e
 			}
 		case flagComplete:
 			checkpoint.Complete = true
+		case flagPrepare:
+			checkpoint.Prepare = true
 		default:
 			if !plumbing || root != "" || strings.HasPrefix(arg, "-") {
 				return "", mode, checkpoint, errors.New("unknown gate argument")
@@ -267,7 +276,8 @@ func sourceUnavailable(ctx context.Context, root string, stderr io.Writer, mode 
 // once committedSource accepts the checkout. That tree runs through the prospective owner in
 // a private checkout, with root as the storage and identity root, so a record-only commit
 // keeps the subject of an earlier chunk green. The evidence pass and the record grade still
-// read the record from the HEAD tree on every call.
+// read the record from the HEAD tree on every call. A prepared run carries no accepted
+// source, so it grades no record prose.
 func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
 	tip, tree, refusal, refused := committedSource(ctx, root, stderr, mode)
 	if refused {
@@ -277,12 +287,14 @@ func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stde
 	if err != nil {
 		return sourceUnavailable(ctx, root, stderr, mode, err)
 	}
-	ctx = context.WithValue(ctx, chunkSourceKey{}, chunkSource{tip: tip, tree: tree})
+	if checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint); !checkpoint.Prepare {
+		ctx = context.WithValue(ctx, chunkSourceKey{}, chunkSource{tip: tip, tree: tree})
+	}
 	return executeTreeWithOwner(ctx, root, stripped, stdout, stderr, arm, mode, nil)
 }
 
 // rerunArguments composes the caller's gate arguments, each value rendered by Arg. A fresh
-// rerun names --fresh.
+// rerun names --fresh, and the rerun of a prepared run prepares again.
 func rerunArguments(checkpoint Checkpoint, fresh bool) string {
 	var args []string
 	if fresh {
@@ -294,6 +306,9 @@ func rerunArguments(checkpoint Checkpoint, fresh bool) string {
 			args = append(args, flagComplete)
 		} else {
 			args = append(args, flagChunk, refusalroute.Arg("id", checkpoint.Chunk))
+		}
+		if checkpoint.Prepare {
+			args = append(args, flagPrepare)
 		}
 	}
 	return strings.Join(args, " ")
@@ -307,6 +322,12 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 		return subject{}, err
 	}
 	if e.checkpoint.Spec == "" && e.completionFolder == "" {
+		return plan, nil
+	}
+	// A prepared run grades its subject alone, so it reads no tip and no evidence. A record
+	// commit during the run then moves no accepted tip, and its key holds only the stripped
+	// tree that it captured.
+	if e.checkpoint.Prepare {
 		return plan, nil
 	}
 	tip, err := benchgit.ResolveCommit(e.identityRoot, "HEAD")

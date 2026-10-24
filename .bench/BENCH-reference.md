@@ -338,6 +338,8 @@ file at the path answers a structured refusal at exit 1.
 
 A reviewed spec-backed build keeps its serial ticket commits in one retained integration source. Its approved plan groups tickets into coherent chunks. Before the first dispatch, the plan amendment declares version 2 with a delegate execution block. The amendment splits each chunk verification into one verification for each ticket. The last ticket's author freezes each chunk's base and current tip. Each accepted finding of the chunk review goes to a fresh repair session under the repair rule of `.bench/BENCH.md`.
 
+When a chunk freezes or a repair commits, the orchestrator also starts the prepared run of the chunk checkpoint.
+
 A worktree `bench commit`
 runs the fast lane on a private checkout of the composed snapshot, and a lane pass
 publishes onto the worktree branch. The lane writes a lane record and no gate
@@ -380,7 +382,8 @@ A green `bench gate --checkpoint <spec-path> --chunk <id>` in a bound worktree o
 build's chunk gap when the plan names a later chunk. The first
 `bench record assignment` of the next chunk closes the gap. That record refuses
 until the source holds the default branch tip, and its refusal names the fold
-and `bench record fold`. The last chunk opens no gap.
+and `bench record fold`. The last chunk opens no gap. A prepared run opens no gap,
+because it grades no evidence.
 
 The reviewer grants one landing a landing override with
 `bench commitment override --assignment <id> --reason <text>`. The verb runs only
@@ -562,6 +565,13 @@ It keys its verdict to that tree, so a record-only commit reuses its green.
 Each call still grades the record evidence and the record prose, and the complete checkpoint keeps its purpose in its key.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.
 
+`--prepare` with `--chunk <id>` starts the prepared run of the chunk checkpoint.
+It runs the gate on the same subject and writes its green under the same key.
+It skips the evidence pass, the record prose grade, and the tip-moved guard.
+So a record write or a record commit during the run leaves its green valid.
+The chunk checkpoint after the record commit reuses that green.
+A change of the spec or another source path, or an expired green, makes the checkpoint run the gate again.
+
 The document is one object with a `phases` array. Each phase carries:
 
 - `name` (required) — the phase's addressable identity. It fills the `phase`
@@ -620,6 +630,10 @@ more row names the file that holds the complete stream.
 A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table, one
 `capability-skips` line, and then `gate: green`. Above seven phases the table
 collapses to one `phases: N/N green` row.
+
+A run that reuses a fresh green of its subject prints one
+`gate: green (fresh verdict reused for this tree)` line and runs no phase. So a chunk
+checkpoint after a green prepared run of its subject prints that line alone.
 
 The complete phase stream goes to `.logs/gate-<run>.out`. That file sits beside
 the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.

@@ -166,6 +166,20 @@ func TestCompleteCheckpointEvidenceNamesThePublishedTree(t *testing.T) {
 	}
 }
 
+// TestCompleteCheckpointIgnoresAPreparedChunkGreen covers RC45. The complete checkpoint keeps
+// its own key, so a prepared chunk green of the same source never serves it: the complete
+// checkpoint runs the gate, and its green names the published tree.
+func TestCompleteCheckpointIgnoresAPreparedChunkGreen(t *testing.T) {
+	f := closureSource(t, false)
+	requirePrepared(t, f)
+	if code, out := completeCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 2 {
+		t.Fatalf("complete checkpoint after a prepared chunk green = %d %s after %d runs; want a second run", code, out, outcomeRuns(t, f.Root))
+	}
+	if got := publishedEvidence(t, f); !got.ReusableGreen {
+		t.Fatalf("published tree of HEAD has no reusable green under the completion obligation: %+v", got)
+	}
+}
+
 func TestCompleteCheckpointGradesTheImplementedStatus(t *testing.T) {
 	stagedGate := func(g *testrepo.GateFixture, script string) string {
 		return script + `if ` + g.Command("grep") + ` -q '^Status: staged$' '` + recordtest.Spec + `'; then exit 8; fi

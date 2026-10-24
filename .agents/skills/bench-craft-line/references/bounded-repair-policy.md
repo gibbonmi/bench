@@ -46,6 +46,8 @@ A native review can pass with no finding IDs while its prose retains optional ad
 A review-record prose correction is evidence-only only when it changes no finding, source identity, observation, disposition, or verification claim.
 A comment-only Go correction that the checkpoint accepts is evidence-only despite its source change, and the orchestrator commits it with no plan assignment.
 A comment-only correction before the green checkpoint stays evidence-only and still takes a refreeze.
+A comment-only Go correction changes the chunk-checkpoint subject, so the checkpoint after it runs the gate again.
+A record-only correction keeps that subject, so a prepared green still serves the checkpoint.
 
 Evidence-only corrections consume no repair cycle. Batch all cited corrections before verification.
 A correction that changes only the review record consumes no repair cycle, even when it changes a disposition.
@@ -60,6 +62,10 @@ Required verification, acceptance reconciliation, and completion checkpoints rem
 Unresolved findings, stale source identity, missing axes, and incomplete verification still block completion.
 Repeat independent review only for a later semantic change or a cross-chunk concern that invalidates earlier evidence.
 The coordinator commits the final review record before starting the whole-project gate. It does not edit the gate subject while the gate runs.
+
+A prepared chunk run excludes the review record from its subject.
+So the coordinator can write and commit the record while that run holds the gate lock.
+The Land section of `/bench-implement-spec` orders the coordinator probe, the prepared run, and the chunk checkpoint.
 
 ## State and handoff
 
