@@ -66,6 +66,17 @@ var parallelCensusCases = []struct {
 	{"local names", "func TestLocal(t *testing.T) { t.Parallel(); seen := map[string]bool{\"starts\": true}; seen[\"terminal\"] = true }\n", nil, nil},
 	{"process temporary root", "func TestTemp(t *testing.T) { t.Setenv(\"TMPDIR\", t.TempDir()) }\n", map[string]string{"TestTemp": "binds process state"},
 		[]string{"planted_test.go:5: TestTemp binds TMPDIR in the process"}},
+	{"process temporary root by a variable key", "func TestTempKey(t *testing.T) { key := \"TMPDIR\"; t.Setenv(key, t.TempDir()) }\n", map[string]string{"TestTempKey": "binds process state"},
+		[]string{"planted_test.go:5: TestTempKey binds TMPDIR in the process"}},
+	{"process environment set", "func TestHome(t *testing.T) { t.Parallel(); os.Setenv(\"HOME\", t.TempDir()) }\n", nil,
+		[]string{"planted_test.go:5: TestHome calls t.Parallel() and changes process state with os.Setenv"}},
+	{"process environment unset", "func TestHome(t *testing.T) { t.Parallel(); os.Unsetenv(\"HOME\") }\n", nil,
+		[]string{"planted_test.go:5: TestHome calls t.Parallel() and changes process state with os.Unsetenv"}},
+	{"process directory through a helper", "func TestMove(t *testing.T) { t.Parallel(); enter(t.TempDir()) }\n\nfunc enter(dir string) { os.Chdir(dir) }\n", nil,
+		[]string{"planted_test.go:5: TestMove calls t.Parallel() and changes process state with os.Chdir through enter"}},
+	{"serial process state", "func TestHome(t *testing.T) { os.Setenv(\"HOME\", t.TempDir()); os.Chdir(t.TempDir()) }\n", map[string]string{"TestHome": "binds process state"}, nil},
+	{"owner receiver by another name", "func (s *systemOwner) pick() string { return s.repos[0] }\n", nil,
+		[]string{"planted_test.go:5: pick does not name its systemOwner receiver o"}},
 }
 
 // ledgerLockCases holds the planted cases of TestLedgerWritesHoldTheOwnerLock.
