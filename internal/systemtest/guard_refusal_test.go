@@ -105,7 +105,7 @@ func TestGitGuardMissingBinaryPreservesRecovery(t *testing.T) {
 // diagnostic, and the hook passes the core's refusal through unchanged.
 func TestGitGuardHookAndCoreParseRefusal(t *testing.T) {
 	t.Parallel()
-	repo := landRouteRepo(t, "guard-refusal [journey]-")
+	repo := journeyRepo(t, "guard-refusal [journey]-")
 	installWrapper(t, repo)
 	live := []string{"BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
 	hooked := runGitGuardHook(t, gitGuardHookPath(), repo, live, occurrenceCommand)

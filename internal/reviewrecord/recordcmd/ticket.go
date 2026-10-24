@@ -139,7 +139,7 @@ func (r ownedRuns) calls(source string) ([]reviewrecord.VerificationCall, error)
 	for i, staged := range r.stages {
 		requirement := r.owed[i]
 		call := reviewrecord.VerificationCall{Chunk: r.chunk, Source: source, Requirement: requirement.ID, ExitCode: staged.Exit, Evidence: r.evidence}
-		call.Evidence.ID, call.Evidence.NativeRef = evidenceID(r.prefix, requirement.ID), nativeOf(r.evidence.NativeRef.Ref, staged.Output)
+		call.Evidence.ID, call.Evidence.NativeRef = reviewrecord.EvidenceID(r.prefix, requirement.ID), nativeOf(r.evidence.NativeRef.Ref, staged.Output)
 		if requirement.Probe != "" {
 			var out string
 			if call.ExitCode, call.Probe, out = stagedProbe(staged); out != "" {
@@ -149,16 +149,6 @@ func (r ownedRuns) calls(source string) ([]reviewrecord.VerificationCall, error)
 		calls = append(calls, call)
 	}
 	return calls, nil
-}
-
-// evidenceID is the evidence ID of requirement under prefix. A requirement ID that already
-// starts with the prefix and a hyphen is the evidence ID, so the prefix occurs once. Any other
-// requirement ID follows the prefix and a hyphen.
-func evidenceID(prefix, requirement string) string {
-	if strings.HasPrefix(requirement, prefix+"-") {
-		return requirement
-	}
-	return prefix + "-" + requirement
 }
 
 // stagedProbe reads the probe of a staged answer. A single-form answer binds the staged exit,

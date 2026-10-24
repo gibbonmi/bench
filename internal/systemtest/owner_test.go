@@ -417,7 +417,7 @@ func copyKitRepository(t *testing.T, pattern string) string {
 	if listed.code != 0 {
 		t.Fatalf("list the kit files = (%d, %q)", listed.code, listed.stderr)
 	}
-	repo := landRouteRepo(t, pattern)
+	repo := journeyRepo(t, pattern)
 	for _, name := range strings.Split(strings.TrimSuffix(listed.stdout, "\x00"), "\x00") {
 		source, target := filepath.Join(owner.kit, name), filepath.Join(repo, name)
 		info, err := os.Lstat(source)
@@ -459,7 +459,7 @@ const strippedJourneyMarker = "branch-native-stripped-distribution"
 
 func TestStrippedDistributionJourney(t *testing.T) {
 	t.Parallel()
-	repo := landRouteRepo(t, "stripped [journey]-")
+	repo := journeyRepo(t, "stripped [journey]-")
 	if result := owner.runSelected(repo, "link", "copy"); result.code != 0 {
 		t.Fatalf("stripped install exit = %d: %s", result.code, result.stderr)
 	}
