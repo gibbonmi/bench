@@ -296,132 +296,138 @@ The authored version 1 plan states the verification obligations. The approved bu
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
   "chunks": [
     {
       "id": "RC-C1",
       "tickets": ["01-exempt-the-assignment-block.md"],
       "verification": [
-        {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
-        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "testgap", "command": "bench test --package ./internal/testgap"},
-        {"id": "anchors", "command": "bench test --package ./internal/anchors"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "floor", "command": "bench test --package ./internal/reviewrecord/recordtest --package ./cmd/bench"},
-        {"id": "exemption-probe", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "clear the whole plan fence instead of the assignment block"}
+        {"id": "record", "command": "bench test --package ./internal/reviewrecord", "ticket": "01-exempt-the-assignment-block.md"},
+        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd", "ticket": "01-exempt-the-assignment-block.md"},
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "01-exempt-the-assignment-block.md"},
+        {"id": "testgap", "command": "bench test --package ./internal/testgap", "ticket": "01-exempt-the-assignment-block.md"},
+        {"id": "anchors", "command": "bench test --package ./internal/anchors", "ticket": "01-exempt-the-assignment-block.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "01-exempt-the-assignment-block.md"},
+        {"id": "floor", "command": "bench test --package ./internal/reviewrecord/recordtest --package ./cmd/bench", "ticket": "01-exempt-the-assignment-block.md"},
+        {"id": "exemption-probe", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "clear the whole plan fence instead of the assignment block", "ticket": "01-exempt-the-assignment-block.md"}
       ]
     },
     {
       "id": "RC-C2",
       "tickets": ["02-grade-entries-at-their-own-commit.md"],
       "verification": [
-        {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
-        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "record-fixture", "command": "bench test --package ./internal/reviewrecord/recordtest"},
-        {"id": "ownership", "command": "bench test --package ./internal/preflight/ownership"},
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "floor", "command": "bench test --package ./internal/landing --package ./internal/worktree --package ./cmd/bench"},
-        {"id": "line-probe", "command": "bench test --package ./internal/gate", "probe": "drop the ancestry test of the entry commit"}
+        {"id": "record", "command": "bench test --package ./internal/reviewrecord", "ticket": "02-grade-entries-at-their-own-commit.md"},
+        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd", "ticket": "02-grade-entries-at-their-own-commit.md"},
+        {"id": "record-fixture", "command": "bench test --package ./internal/reviewrecord/recordtest", "ticket": "02-grade-entries-at-their-own-commit.md"},
+        {"id": "ownership", "command": "bench test --package ./internal/preflight/ownership", "ticket": "02-grade-entries-at-their-own-commit.md"},
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "02-grade-entries-at-their-own-commit.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "02-grade-entries-at-their-own-commit.md"},
+        {"id": "floor", "command": "bench test --package ./internal/landing --package ./internal/worktree --package ./cmd/bench", "ticket": "02-grade-entries-at-their-own-commit.md"},
+        {"id": "line-probe", "command": "bench test --package ./internal/gate", "probe": "drop the ancestry test of the entry commit", "ticket": "02-grade-entries-at-their-own-commit.md"}
       ]
     },
     {
       "id": "RC-C2B",
       "tickets": ["03-record-entries-at-the-own-commit.md"],
       "verification": [
-        {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
-        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "record-fixture", "command": "bench test --package ./internal/reviewrecord/recordtest"},
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "floor", "command": "bench test --package ./internal/anchors --package ./cmd/bench"},
-        {"id": "writer-probe", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "bind an earlier ticket to the chunk tip"}
+        {"id": "record", "command": "bench test --package ./internal/reviewrecord", "ticket": "03-record-entries-at-the-own-commit.md"},
+        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd", "ticket": "03-record-entries-at-the-own-commit.md"},
+        {"id": "record-fixture", "command": "bench test --package ./internal/reviewrecord/recordtest", "ticket": "03-record-entries-at-the-own-commit.md"},
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "03-record-entries-at-the-own-commit.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "03-record-entries-at-the-own-commit.md"},
+        {"id": "floor", "command": "bench test --package ./internal/anchors --package ./cmd/bench", "ticket": "03-record-entries-at-the-own-commit.md"},
+        {"id": "writer-probe", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "bind an earlier ticket to the chunk tip", "ticket": "03-record-entries-at-the-own-commit.md"}
       ]
     },
     {
       "id": "RC-C3",
       "tickets": ["04-grade-the-floor-per-chunk.md", "05-one-plan-commit-and-preflight-per-dispatch.md"],
       "verification": [
-        {"id": "preflight", "command": "bench test --package ./internal/preflight"},
-        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "floor", "command": "bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord --package ./internal/anchors --package ./cmd/bench"},
-        {"id": "floor-probe", "command": "bench test --package ./internal/preflight", "probe": "grade each ticket against its own requirements only"}
+        {"id": "preflight", "command": "bench test --package ./internal/preflight", "ticket": "04-grade-the-floor-per-chunk.md"},
+        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd", "ticket": "04-grade-the-floor-per-chunk.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "04-grade-the-floor-per-chunk.md"},
+        {"id": "floor", "command": "bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord", "ticket": "04-grade-the-floor-per-chunk.md"},
+        {"id": "floor-probe", "command": "bench test --package ./internal/preflight", "probe": "grade each ticket against its own requirements only", "ticket": "04-grade-the-floor-per-chunk.md"},
+        {"id": "guidance-conformance", "command": "bench test --check root-conformance", "ticket": "05-one-plan-commit-and-preflight-per-dispatch.md"},
+        {"id": "guidance-floor", "command": "bench test --package ./internal/anchors --package ./cmd/bench", "ticket": "05-one-plan-commit-and-preflight-per-dispatch.md"}
       ]
     },
     {
       "id": "RC-C4",
       "tickets": ["06-refuse-a-dirty-chunk-checkout.md", "07-key-the-chunk-checkpoint-without-the-record.md"],
       "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
-        {"id": "command", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/refusalroute --package ./internal/reviewrecord/recordtest --package ./internal/reviewrecord/recordcmd --package ./internal/worktree"},
-        {"id": "key-probe", "command": "bench test --package ./internal/gate", "probe": "frame the HEAD tip into the chunk-checkpoint oracle"},
-        {"id": "prose-probe", "command": "bench test --package ./internal/gate", "probe": "skip the record prose grade after a reuse"}
+        {"id": "dirty-gate", "command": "bench test --package ./internal/gate", "ticket": "06-refuse-a-dirty-chunk-checkout.md"},
+        {"id": "dirty-conformance", "command": "bench test --check root-conformance", "ticket": "06-refuse-a-dirty-chunk-checkout.md"},
+        {"id": "dirty-floor", "command": "bench test --package ./internal/refusalroute --package ./internal/reviewrecord/recordtest --package ./internal/worktree --package ./cmd/bench", "ticket": "06-refuse-a-dirty-chunk-checkout.md"},
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "07-key-the-chunk-checkpoint-without-the-record.md"},
+        {"id": "record", "command": "bench test --package ./internal/reviewrecord", "ticket": "07-key-the-chunk-checkpoint-without-the-record.md"},
+        {"id": "command", "command": "bench test --package ./cmd/bench", "ticket": "07-key-the-chunk-checkpoint-without-the-record.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "07-key-the-chunk-checkpoint-without-the-record.md"},
+        {"id": "system", "command": "bench test --check system", "ticket": "07-key-the-chunk-checkpoint-without-the-record.md"},
+        {"id": "floor", "command": "bench test --package ./internal/reviewrecord/recordcmd", "ticket": "07-key-the-chunk-checkpoint-without-the-record.md"},
+        {"id": "key-probe", "command": "bench test --package ./internal/gate", "probe": "frame the HEAD tip into the chunk-checkpoint oracle", "ticket": "07-key-the-chunk-checkpoint-without-the-record.md"},
+        {"id": "prose-probe", "command": "bench test --package ./internal/gate", "probe": "skip the record prose grade after a reuse", "ticket": "07-key-the-chunk-checkpoint-without-the-record.md"}
       ]
     },
     {
       "id": "RC-C4B",
       "tickets": ["08-prepare-the-checkpoint-gate.md"],
       "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "command", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/refusalroute --package ./internal/anchors"},
-        {"id": "tip-probe", "command": "bench test --package ./internal/gate", "probe": "keep the tip-moved guard in the prepared run"}
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "08-prepare-the-checkpoint-gate.md"},
+        {"id": "command", "command": "bench test --package ./cmd/bench", "ticket": "08-prepare-the-checkpoint-gate.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "08-prepare-the-checkpoint-gate.md"},
+        {"id": "system", "command": "bench test --check system", "ticket": "08-prepare-the-checkpoint-gate.md"},
+        {"id": "floor", "command": "bench test --package ./internal/refusalroute --package ./internal/anchors", "ticket": "08-prepare-the-checkpoint-gate.md"},
+        {"id": "tip-probe", "command": "bench test --package ./internal/gate", "probe": "keep the tip-moved guard in the prepared run", "ticket": "08-prepare-the-checkpoint-gate.md"}
       ]
     },
     {
       "id": "RC-C5",
       "tickets": ["09-list-the-system-suite-in-the-selector.md"],
       "verification": [
-        {"id": "testreport", "command": "bench test --package ./internal/testreport"},
-        {"id": "preflight", "command": "bench test --package ./internal/preflight"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/conformance --package ./internal/gate --package ./internal/reviewrecord --package ./internal/reviewrecord/recordcmd"},
-        {"id": "index-probe", "command": "bench test --package ./internal/testreport", "probe": "drop the system-suite package from the index"}
+        {"id": "testreport", "command": "bench test --package ./internal/testreport", "ticket": "09-list-the-system-suite-in-the-selector.md"},
+        {"id": "preflight", "command": "bench test --package ./internal/preflight", "ticket": "09-list-the-system-suite-in-the-selector.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "09-list-the-system-suite-in-the-selector.md"},
+        {"id": "system", "command": "bench test --check system", "ticket": "09-list-the-system-suite-in-the-selector.md"},
+        {"id": "floor", "command": "bench test --package ./internal/conformance --package ./internal/gate --package ./internal/reviewrecord --package ./internal/reviewrecord/recordcmd", "ticket": "09-list-the-system-suite-in-the-selector.md"},
+        {"id": "index-probe", "command": "bench test --package ./internal/testreport", "probe": "drop the system-suite package from the index", "ticket": "09-list-the-system-suite-in-the-selector.md"}
       ]
     },
     {
       "id": "RC-C6",
       "tickets": ["10-run-the-delta-checkpoint.md"],
       "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "testgap", "command": "bench test --package ./internal/testgap"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/gate/authorization --package ./internal/reviewrecord"},
-        {"id": "tag-probe", "command": "bench test --package ./internal/gate", "probe": "admit a system-suite file to the delta"},
-        {"id": "operand-probe", "command": "bench test --package ./internal/gate", "probe": "take the delta base from the record chunk tip"}
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "10-run-the-delta-checkpoint.md"},
+        {"id": "testgap", "command": "bench test --package ./internal/testgap", "ticket": "10-run-the-delta-checkpoint.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "10-run-the-delta-checkpoint.md"},
+        {"id": "system", "command": "bench test --check system", "ticket": "10-run-the-delta-checkpoint.md"},
+        {"id": "floor", "command": "bench test --package ./internal/gate/authorization --package ./internal/reviewrecord", "ticket": "10-run-the-delta-checkpoint.md"},
+        {"id": "tag-probe", "command": "bench test --package ./internal/gate", "probe": "admit a system-suite file to the delta", "ticket": "10-run-the-delta-checkpoint.md"},
+        {"id": "operand-probe", "command": "bench test --package ./internal/gate", "probe": "take the delta base from the record chunk tip", "ticket": "10-run-the-delta-checkpoint.md"}
       ]
     },
     {
       "id": "RC-C6B",
       "tickets": ["11-record-and-reuse-the-delta-green.md"],
       "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/git --package ./internal/status --package ./internal/testreport"},
-        {"id": "store-probe", "command": "bench test --package ./internal/gate", "probe": "write the delta green to the evidence store"}
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "11-record-and-reuse-the-delta-green.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "11-record-and-reuse-the-delta-green.md"},
+        {"id": "system", "command": "bench test --check system", "ticket": "11-record-and-reuse-the-delta-green.md"},
+        {"id": "floor", "command": "bench test --package ./internal/git --package ./internal/status --package ./internal/testreport", "ticket": "11-record-and-reuse-the-delta-green.md"},
+        {"id": "store-probe", "command": "bench test --package ./internal/gate", "probe": "write the delta green to the evidence store", "ticket": "11-record-and-reuse-the-delta-green.md"}
       ]
     },
     {
       "id": "RC-C7",
       "tickets": ["12-measure-the-run-binary-cost.md", "13-reuse-the-worktree-binary-in-exec.md"],
       "verification": [
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/freshness --package ./internal/treetarget --package ./internal/usage --package ./cmd/bench"},
-        {"id": "stale-probe", "command": "bench test --package ./internal/worktree", "probe": "pass a stale worktree binary to the child"}
+        {"id": "measure-conformance", "command": "bench test --check root-conformance", "ticket": "12-measure-the-run-binary-cost.md"},
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "13-reuse-the-worktree-binary-in-exec.md"},
+        {"id": "runbinary", "command": "bench test --package ./internal/runbinary", "ticket": "13-reuse-the-worktree-binary-in-exec.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "13-reuse-the-worktree-binary-in-exec.md"},
+        {"id": "system", "command": "bench test --check system", "ticket": "13-reuse-the-worktree-binary-in-exec.md"},
+        {"id": "floor", "command": "bench test --package ./internal/freshness --package ./internal/treetarget --package ./internal/usage --package ./cmd/bench", "ticket": "13-reuse-the-worktree-binary-in-exec.md"},
+        {"id": "stale-probe", "command": "bench test --package ./internal/worktree", "probe": "pass a stale worktree binary to the child", "ticket": "13-reuse-the-worktree-binary-in-exec.md"}
       ]
     }
   ],
@@ -435,7 +441,28 @@ The authored version 1 plan states the verification obligations. The approved bu
     {"id": "worktree", "command": "bench test --package ./internal/worktree"},
     {"id": "conformance", "command": "bench test --check root-conformance"},
     {"id": "system", "command": "bench test --check system"}
-  ]
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft445-repair-cycle-full-20261024",
+    "orchestrator_session": "claude:rc-orchestrator-20261024",
+    "author_limit": 1,
+    "assignments": {
+      "01-exempt-the-assignment-block.md": [],
+      "02-grade-entries-at-their-own-commit.md": [],
+      "03-record-entries-at-the-own-commit.md": [],
+      "04-grade-the-floor-per-chunk.md": [],
+      "05-one-plan-commit-and-preflight-per-dispatch.md": [],
+      "06-refuse-a-dirty-chunk-checkout.md": [],
+      "07-key-the-chunk-checkpoint-without-the-record.md": [],
+      "08-prepare-the-checkpoint-gate.md": [],
+      "09-list-the-system-suite-in-the-selector.md": [],
+      "10-run-the-delta-checkpoint.md": [],
+      "11-record-and-reuse-the-delta-green.md": [],
+      "12-measure-the-run-binary-cost.md": [],
+      "13-reuse-the-worktree-binary-in-exec.md": []
+    }
+  }
 }
 ```
 
