@@ -14,28 +14,34 @@ func ConfirmationProbe() rr.Probe {
 	return bitProbe("omit the repaired assertion")
 }
 
-// Refreeze moves the last recorded chunk to the current tip and the current plan, as the chunk
-// form does after a repair. The tip, the plan digest, and the source digest move, the chunk
-// verification is retained again at the new digest, and the reviews keep their pair.
+// Refreeze moves the last recorded chunk to the current tip and the current plan, as a record
+// call after a repair does. The tip, the plan digest, and the source digest move. Each
+// verification entry keeps the commit that it graded, and the reviews keep their pair.
 func (f *Fixture) Refreeze() {
 	f.T.Helper()
 	chunk := &f.Record.Chunks[len(f.Record.Chunks)-1]
-	chunk.Tip, chunk.PlanDigest = f.Tip(), f.Plan.Digest
-	digest, verification := f.freeze(chunk.ID, "chunk-"+chunk.ID+"-"+chunk.Tip)
-	chunk.SourceDigest, chunk.Verification = digest, append(chunk.Verification, verification...)
+	chunk.Tip, chunk.PlanDigest, chunk.SourceDigest = f.Tip(), f.Plan.Digest, f.digestAt(f.Tip())
+}
+
+// RecordAtTip appends to the last recorded chunk one entry for each planned requirement, by its
+// current owner and bound to the current tip, as the record call of a repair session does.
+func (f *Fixture) RecordAtTip() {
+	f.T.Helper()
+	chunk := &f.Record.Chunks[len(f.Record.Chunks)-1]
+	_, verification := f.freeze(chunk.ID, "chunk-"+chunk.ID+"-"+f.Tip())
+	chunk.Verification = append(chunk.Verification, verification...)
 }
 
 // LaterTicket commits a later ticket that writes later.txt and each path of paths, and moves
-// the last recorded chunk and its reviews to that commit and the current plan. Each
-// verification entry keeps the commit that it graded.
+// the last recorded chunk and its reviews to that commit and the current plan through Refreeze.
 func (f *Fixture) LaterTicket(paths ...string) {
 	f.T.Helper()
 	for _, path := range append([]string{"later.txt"}, paths...) {
 		f.Write(path, "later ticket\n")
 	}
 	f.Commit("later ticket")
+	f.Refreeze()
 	chunk := &f.Record.Chunks[len(f.Record.Chunks)-1]
-	chunk.Tip, chunk.PlanDigest, chunk.SourceDigest = f.Tip(), f.Plan.Digest, f.digestAt(f.Tip())
 	for i := range chunk.Reviews {
 		chunk.Reviews[i].Tip, chunk.Reviews[i].SourceDigest = chunk.Tip, chunk.SourceDigest
 	}

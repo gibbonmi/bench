@@ -144,8 +144,7 @@ func RecordChunk(root, spec, id, base, tip string) (string, Chunk, error) {
 }
 
 // ErrNoChunkEntry marks a result that needs a current chunk entry first: the record is
-// absent, the chunk has no entry, or the result names a source that the entry does not
-// hold.
+// absent, the chunk has no entry, or the result names a source off the line of the entry.
 var ErrNoChunkEntry = errors.New("the result needs a current chunk entry")
 
 // ErrProbe marks a result whose probe does not match the planned probe of its requirement.

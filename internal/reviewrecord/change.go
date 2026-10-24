@@ -98,11 +98,43 @@ func changeChunk(record *Record, plan Plan, digest, id, base, tip string) (strin
 	return action, *chunk, nil
 }
 
+// RunBinding answers the commit that boundCommit binds a chunk result from a run at commit to,
+// and whether EntryCurrent holds for chunk and an entry at that commit.
+func RunBinding(root, spec string, chunk Chunk, commit string) (string, bool, error) {
+	bound, err := boundCommit(root, spec, chunk, commit)
+	if err != nil {
+		return "", false, err
+	}
+	digest, err := commitDigest(root, spec, bound)
+	if err != nil {
+		return "", false, err
+	}
+	current, err := EntryCurrent(root, spec, chunk, Verification{Evidence: Evidence{SourceDigest: digest}, SourceCommit: bound})
+	return bound, current, err
+}
+
+// boundCommit answers the chunk tip for an empty commit and for a descendant of the tip with
+// the chunk digest, which differs from the tip only in the record, and commit otherwise.
+func boundCommit(root, spec string, chunk Chunk, commit string) (string, error) {
+	if commit == "" || commit == chunk.Tip {
+		return chunk.Tip, nil
+	}
+	if descends, err := isAncestor(root, chunk.Tip, commit); err != nil || !descends {
+		return commit, err
+	}
+	digest, err := commitDigest(root, spec, commit)
+	if err != nil || digest != chunk.SourceDigest {
+		return commit, err
+	}
+	return chunk.Tip, nil
+}
+
 // changeVerification appends one completed verification result to the chunk list or to
 // the completion list. The plan at the source tree under root supplies the requirement,
 // its command, its probe mutation, and the role; the source tree supplies the source
 // digest. A final result can also name the merged-test requirement of a fold package. A
-// chunk result must name the source of its chunk entry. The answer is the entry as written.
+// chunk result binds to the source commit that RunBinding answers, and that binding must be
+// current for the chunk entry. The answer is the entry as written.
 func changeVerification(root, spec string, record *Record, call VerificationCall) (Verification, error) {
 	list, source, requirement := &record.Completion.Verification, call.Source, Requirement{}
 	var chunk *Chunk
@@ -112,16 +144,17 @@ func changeVerification(root, spec string, record *Record, call VerificationCall
 			return Verification{}, err
 		}
 		list = &chunk.Verification
-		if source == "" {
-			source = chunk.Tip
+		current := false
+		if source, current, err = RunBinding(root, spec, *chunk, source); err != nil {
+			return Verification{}, err
+		}
+		if !current {
+			return Verification{}, Repair{Form: FormChunk, Chunk: chunk.ID, Err: fmt.Errorf("source %s is not on the chunk line %s..%s: %w", source, chunk.Base, chunk.Tip, ErrNoChunkEntry)}
 		}
 	}
 	digest, plan, err := atSource(root, spec, source)
 	if err != nil {
 		return Verification{}, err
-	}
-	if chunk != nil && digest != chunk.SourceDigest {
-		return Verification{}, Repair{Form: FormChunk, Chunk: chunk.ID, Err: fmt.Errorf("source %s differs from the source of chunk %s: %w", source, chunk.ID, ErrNoChunkEntry)}
 	}
 	if chunk != nil {
 		requirement, err = ChunkRequirement(plan, source, chunk.ID, call.Requirement)
@@ -150,6 +183,9 @@ func changeVerification(root, spec string, record *Record, call VerificationCall
 	}
 	entry := Verification{Evidence: call.Evidence, Requirement: requirement.ID, Command: requirement.Command, ExitCode: &exitCode}
 	entry.Role, entry.SourceDigest, entry.State, entry.Outcome = role, digest, "completed", outcome
+	if chunk != nil {
+		entry.SourceCommit = source
+	}
 	if call.Probe != nil {
 		probe := *call.Probe
 		probe.Mutation, probe.NativeRef = requirement.Probe, call.Evidence.NativeRef

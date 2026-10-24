@@ -92,12 +92,14 @@ func TestReviewCheckpointPassesAWrittenConfirmation(t *testing.T) {
 }
 
 // TestReviewCheckpointConfirmationAcceptsAnAssignmentOnlyPlanCommit covers RC5: after the test
-// repair, an assignment-only plan commit dispatches the repair session, and the chunk
-// checkpoint passes with the written confirmation of that delta.
+// repair, an assignment-only plan commit dispatches the repair session, which records the
+// entries of its ticket, and the chunk checkpoint passes with the written confirmation of that
+// delta.
 func TestReviewCheckpointConfirmationAcceptsAnAssignmentOnlyPlanCommit(t *testing.T) {
 	f, _ := repairedFixture(t, modifyTest)
 	f.Reassign(f.Plan.Chunks[0].Tickets[0])
 	f.Refreeze()
+	f.RecordAtTip()
 	f.Save()
 	f.Commit("retain the chunk at the repair dispatch")
 	passWrittenConfirmation(t, f)
@@ -129,6 +131,15 @@ func TestReviewCheckpointCarriesConfirmedResults(t *testing.T) {
 		{name: "modified test", repair: modifyTest},
 		{name: "complete", repair: modifyTest, after: func(f *recordtest.Fixture, _ string) { retainCompletion(f) }, complete: true},
 		{name: "added test", repair: addTest},
+		// Each verification entry keeps the reviewed commit that it graded, so the
+		// entries at the reviewed digest stay current after the repair moves the tip.
+		{name: "verification at the reviewed digest", repair: modifyTest, after: func(f *recordtest.Fixture, _ string) {
+			chunk := &f.Record.Chunks[0]
+			for i := range chunk.Verification {
+				chunk.Verification[i].SourceDigest = chunk.Reviews[0].SourceDigest
+			}
+			f.Save()
+		}},
 		{name: "second confirmation", repair: modifyTest, after: func(f *recordtest.Fixture, reviewed string) {
 			repairAgain(f)
 			f.Confirm("confirm-2", reviewed, "F-1")
@@ -232,6 +243,10 @@ func TestReviewCheckpointConfirmationRefusals(t *testing.T) {
 			for i := range chunk.Reviews {
 				chunk.Reviews[i].Base = reviewed
 			}
+			// The entries at the reviewed tip sit at the chunk base, so they move to the tip.
+			for i := range chunk.Verification {
+				f.Bind(&chunk.Verification[i], chunk.Tip)
+			}
 			return ""
 		}},
 		{"author carried result", `chunk 1: invalid Standards performer "<moved>"`, "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
@@ -269,13 +284,6 @@ func TestReviewCheckpointConfirmationRefusals(t *testing.T) {
 		}},
 		{"other reviewed tip", "chunk 1: confirmation confirm-1 names the reviewed tip <base>, and the axis results sit at <reviewed>", "confirmation", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			latest(f).ReviewedTip = f.Record.Chunks[0].Base
-			return ""
-		}},
-		{"verification at the reviewed digest", "chunk 1: verification tests is incomplete, failed, or stale", "verification", modifyTest, func(f *recordtest.Fixture, _ string) string {
-			chunk := &f.Record.Chunks[0]
-			for i := range chunk.Verification {
-				chunk.Verification[i].SourceDigest = chunk.Reviews[0].SourceDigest
-			}
 			return ""
 		}},
 		{"one carried session", "chunk 1: use three distinct review sessions", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {

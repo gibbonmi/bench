@@ -217,6 +217,24 @@ func TestVerificationChecksTheRowExit(t *testing.T) {
 	refuseVerify(t, f, "— --exit-code 1 differs from the imported mutants.exit_code 0\n", importingRow(t, data, 1, "2"))
 }
 
+// A mutant-set stage records its row: the row's exit, not the set's command exit, and the row's
+// probe values.
+func TestTicketImportsAMutantRow(t *testing.T) {
+	produce, _ := setProducer(t, linked(t, 1))
+	data, command := silentThenBiting(produce)
+	f, home := pooled(t, 1)
+	base, _ := advance(f, "chunk 1")
+	stageOwed(f, home, "1", "1.md")
+	run := f.Run(command, data)
+	run.Mutant = 2
+	f.Stage(home, "1", "tests", run)
+	succeed(t, f, ticketArgs(t, "1", "1.md", "p", "--base", base))
+	got := chunkEntry(t, f, "1").Verification[0]
+	if got.Probe == nil || *got.ExitCode != 0 || got.Probe.Outcome != "bit" || got.Probe.ExitCode != 1 || got.Probe.Restore != "pass" {
+		t.Errorf("mutant row entry = exit %d, probe %+v; want exit 0 and the biting row", *got.ExitCode, got.Probe)
+	}
+}
+
 // A mutant-set answer without --mutant refuses by name and routes to --mutant.
 func TestVerificationRefusesAMutantSetWithoutARow(t *testing.T) {
 	f := recorded(t, 1)
@@ -277,5 +295,22 @@ func TestVerificationHelpFieldSources(t *testing.T) {
 		if !strings.Contains(description, source) {
 			t.Errorf("verification help = %q, want %q", description, source)
 		}
+	}
+}
+
+// RT63: the ticket help lists the ticket steps of the completion order, in order.
+func TestTicketHelpFollowsCompletionOrder(t *testing.T) {
+	want := []string{}
+	for _, step := range rr.TicketSteps() {
+		want = append(want, step.Form)
+	}
+	var description string
+	for _, row := range recordcmd.HelpRows() {
+		if strings.HasPrefix(row.Suffix, " ticket ") {
+			description = row.Description
+		}
+	}
+	if _, order, ok := strings.Cut(description, "write in the order "); !ok || !slices.Equal(strings.Split(order, ", "), want) {
+		t.Fatalf("ticket help %q, want the order %q", description, want)
 	}
 }

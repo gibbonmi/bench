@@ -23,8 +23,8 @@ var ticketForm = form{name: reviewrecord.FormTicket, description: "write the ent
 // ticket writes the entries that one ticket owes from the stages of its owed requirements,
 // through reviewrecord.RecordTicket at --tip, HEAD by default. Before the write it refuses, in
 // order, what reviewrecord.TicketRequirements refuses for the plan at the tip, a planned seam
-// cell for the last ticket, and an owed requirement with no stage. After the write it removes
-// the stages that it used.
+// cell, and an owed requirement with no stage. After the write it removes the stages that it
+// used.
 func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	values := maps.Clone(parsed.Flags)
 	if _, ok := values["--tip"]; !ok {
@@ -45,16 +45,14 @@ func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	if err != nil {
 		return f.refuse(err.Error())
 	}
-	owed, last, err := reviewrecord.TicketRequirements(plan, call.Tip, call.Chunk, call.Ticket)
+	owed, err := reviewrecord.TicketRequirements(plan, call.Tip, call.Chunk, call.Ticket)
 	if err != nil {
 		return f.refuse(err.Error())
 	}
-	if call.Ticket == last {
-		if out, code := refusePlanned(f, root, spec, call.Tip, chunkRows(call.Chunk)); out != "" {
-			return out, code
-		}
+	if out, code := refusePlanned(f, root, spec, call.Tip, chunkRows(call.Chunk)); out != "" {
+		return out, code
 	}
-	runs := ownedRuns{chunk: call.Chunk, prefix: values["--id-prefix"], owed: owed,
+	runs := ownedRuns{root: root, spec: spec, chunk: call.Chunk, prefix: values["--id-prefix"], owed: owed,
 		evidence: reviewrecord.Evidence{Performer: values["--performer"], Model: values["--model"], Effort: values["--effort"], NativeRef: reviewrecord.NativeRef{Ref: values["--ref"]}}}
 	if runs.record, err = reviewrecord.RecordPath(spec); err != nil {
 		return f.refuse(err.Error())
@@ -109,25 +107,31 @@ func ownedStages(home, root, slug, chunk string, owed []reviewrecord.Requirement
 }
 
 // ownedRuns is the stage of each owed requirement of one ticket call, in owed order, with the
-// record path of the spec and the evidence fields that every entry shares.
+// root and the spec of the record, its record path, and the evidence fields that every entry
+// shares.
 type ownedRuns struct {
-	chunk, record, prefix string
-	evidence              reviewrecord.Evidence
-	owed                  []reviewrecord.Requirement
-	stages                []responsebound.Staged
+	root, spec, chunk, record, prefix string
+	evidence                          reviewrecord.Evidence
+	owed                              []reviewrecord.Requirement
+	stages                            []responsebound.Staged
 }
 
-// calls answers the chunk verification call of each owed requirement at source from its stage.
-// It refuses a stage whose run commit is not source, then a stage whose run had a dirty path
-// other than the record path, each as a repair of the excerpt form that names the requirement.
-func (r ownedRuns) calls(source string) ([]reviewrecord.VerificationCall, error) {
+// calls answers the chunk verification call of each owed requirement from its stage, with the
+// run commit as the source. It refuses a stage whose run reviewrecord.RunBinding does not find
+// current for entry, the chunk entry, then a stage whose run had a dirty path other than the
+// record path, each as a repair of the excerpt form that names the requirement.
+func (r ownedRuns) calls(entry reviewrecord.Chunk) ([]reviewrecord.VerificationCall, error) {
 	restage := func(i int, format string, args ...any) error {
 		id := r.owed[i].ID
 		return reviewrecord.Repair{Form: reviewrecord.FormExcerpt, Chunk: r.chunk, Requirement: id, Err: fmt.Errorf("requirement %s: "+format, append([]any{id}, args...)...)}
 	}
 	for i, staged := range r.stages {
-		if staged.Head != source {
-			return nil, restage(i, "the staged run is at %s, not the chunk source %s", staged.Head, source)
+		_, current, err := reviewrecord.RunBinding(r.root, r.spec, entry, staged.Head)
+		if err != nil {
+			return nil, err
+		}
+		if !current {
+			return nil, restage(i, "the staged run at %s is not on the chunk line %s..%s", staged.Head, entry.Base, entry.Tip)
 		}
 	}
 	for i, staged := range r.stages {
@@ -138,7 +142,7 @@ func (r ownedRuns) calls(source string) ([]reviewrecord.VerificationCall, error)
 	calls := []reviewrecord.VerificationCall{}
 	for i, staged := range r.stages {
 		requirement := r.owed[i]
-		call := reviewrecord.VerificationCall{Chunk: r.chunk, Source: source, Requirement: requirement.ID, ExitCode: staged.Exit, Evidence: r.evidence}
+		call := reviewrecord.VerificationCall{Chunk: r.chunk, Source: staged.Head, Requirement: requirement.ID, ExitCode: staged.Exit, Evidence: r.evidence}
 		call.Evidence.ID, call.Evidence.NativeRef = reviewrecord.EvidenceID(r.prefix, requirement.ID), nativeOf(r.evidence.NativeRef.Ref, staged.Output)
 		if requirement.Probe != "" {
 			var out string

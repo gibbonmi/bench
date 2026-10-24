@@ -204,11 +204,6 @@ func TestCheckpointRefusesARelabeledEntryDigest(t *testing.T) {
 // repair moves the tip, the probe entry stays at the reviewed commit and passes.
 func TestCheckpointCarriesAnotherTicketsProbeForward(t *testing.T) {
 	f, _ := confirmedFixture(t, modifyTest)
-	chunk := &f.Record.Chunks[0]
-	// The repair records no entry, so each current entry is one of the first freeze.
-	chunk.Verification = chunk.Verification[:len(f.Plan.Chunks[0].Verification)]
-	f.Save()
-	f.Commit("carry the entries at the reviewed commit")
 	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 1 {
 		t.Fatalf("checkpoint with the carried probe entry = %d %s", code, out)
 	}

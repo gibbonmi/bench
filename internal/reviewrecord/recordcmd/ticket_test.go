@@ -2,9 +2,6 @@ package recordcmd_test
 
 import (
 	"bytes"
-	"errors"
-	"io/fs"
-	"os"
 	"reflect"
 	"slices"
 	"strings"
@@ -58,16 +55,6 @@ func stageOwed(f *recordtest.Fixture, home, chunk, ticket string, dirty ...strin
 	}
 }
 
-// recordPath is the record path of the fixture spec, as a run's dirty paths name it.
-func recordPath(t *testing.T) string {
-	t.Helper()
-	path, err := rr.RecordPath(recordtest.Spec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return path
-}
-
 // freezeChunk1 commits a chunk 1 change and records ticket 1.md with the prefix c1 and an
 // explicit base. It answers the chunk 1 tip.
 func freezeChunk1(t *testing.T, f *recordtest.Fixture, home string) string {
@@ -78,42 +65,22 @@ func freezeChunk1(t *testing.T, f *recordtest.Fixture, home string) string {
 	return tip
 }
 
-// recordBytes answers the record bytes of f, or nil when the record is absent.
-func recordBytes(t *testing.T, f *recordtest.Fixture) []byte {
+// stagedBeforeTheTip commits 2.md and then 3.md in chunk 2 of a twoTickets fixture, stages the
+// runs of each ticket at its own commit, and records 3.md. The 2.md runs carry dirty. It answers
+// the 2.md commit.
+func stagedBeforeTheTip(t *testing.T, f *recordtest.Fixture, home string, dirty ...string) string {
 	t.Helper()
-	data, err := os.ReadFile(recordFile(t, f))
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil
-	}
-	if err != nil {
-		t.Fatal(err)
-	}
-	return data
+	freezeChunk1(t, f, home)
+	_, own := advance(f, "ticket 2.md")
+	stageOwed(f, home, "2", "2.md", dirty...)
+	advance(f, "ticket 3.md")
+	stageOwed(f, home, "2", "3.md")
+	succeed(t, f, ticketArgs(t, "2", "3.md", "last"))
+	return own
 }
 
-// chunkEntry is the entry of chunk id in the record of f.
-func chunkEntry(t *testing.T, f *recordtest.Fixture, id string) rr.Chunk {
-	t.Helper()
-	for _, chunk := range read(t, f).Chunks {
-		if chunk.ID == id {
-			return chunk
-		}
-	}
-	t.Fatalf("the record holds no chunk %s", id)
-	return rr.Chunk{}
-}
-
-// verificationIDs is the evidence ID of each verification entry of chunk, in record order.
-func verificationIDs(chunk rr.Chunk) []string {
-	ids := []string{}
-	for _, entry := range chunk.Verification {
-		ids = append(ids, entry.ID)
-	}
-	return ids
-}
-
-// RT21, RT22, RT23, RT24, RT28, RT29, RT30, RT31, RT32, RT36, RT60, RT61: each refusal names its
-// cause and leaves the record bytes and every staged excerpt as they were.
+// RT21, RT22, RT23, RT24, RT28, RT29, RT30, RT31, RT32, RT36, RT60, RT61, RC24: each refusal names
+// its cause and leaves the record bytes and every staged excerpt as they were.
 func TestTicketRefusals(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -139,20 +106,20 @@ func TestTicketRefusals(t *testing.T) {
 			base, _ := advance(f, "chunk 1")
 			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "these owed requirements have no staged excerpt: tests, additional"
 		}},
-		{"stage from another commit", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
+		{"stage at the chunk base", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
 			f, home := pooled(t, 1)
 			stageOwed(f, home, "1", "1.md")
 			base, _ := advance(f, "chunk 1")
-			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement tests: the staged run is at " + f.Git("rev-parse", "HEAD^")
+			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement tests: the staged run at " + base + " is not on the chunk line " + base + ".."
 		}},
-		{"later stage from another commit", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
+		{"later stage off the chunk tip", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
 			f, home := pooled(t, 1)
-			base, _ := advance(f, "chunk 1")
+			base, tip := advance(f, "chunk 1")
 			stageOwed(f, home, "1", "1.md")
 			run := f.Run(0, "ok\n")
-			run.Head = base
+			run.Head = f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "commit-tree", tip+"^{tree}", "-p", base, "-m", "off the chunk line")
 			f.Stage(home, "1", "additional", run)
-			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement additional: the staged run is at " + base
+			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement additional: the staged run at " + run.Head + " is not on the chunk line " + base + ".." + tip
 		}},
 		{"stage with a dirty Go file", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
 			f, home := pooled(t, 1)
@@ -166,12 +133,10 @@ func TestTicketRefusals(t *testing.T) {
 			stageOwed(f, home, "1", "1.md", recordPath(t), "main.go")
 			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement tests: the staged run had the dirty path main.go"
 		}},
-		{"earlier ticket with no chunk entry", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
+		{"dirty stage at an earlier ticket commit", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
 			f, home := pooled(t, 3, twoTickets)
-			freezeChunk1(t, f, home)
-			advance(f, "chunk 2")
-			stageOwed(f, home, "2", "2.md")
-			return f, home, ticketArgs(t, "2", "2.md", "p"), "chunk 2 has no entry: the result needs a current chunk entry; write it with bench record ticket '" + slug(t) + "' --chunk '2' --ticket '3.md' "
+			stagedBeforeTheTip(t, f, home, "main.go")
+			return f, home, ticketArgs(t, "2", "2.md", "early"), "requirement tests: the staged run had the dirty path main.go"
 		}},
 		{"first chunk with no base", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
 			f, home := pooled(t, 1)
@@ -248,15 +213,18 @@ func TestTicketFreezesTheFirstChunk(t *testing.T) {
 	}
 }
 
-// A requirement ID that already starts with the prefix and a hyphen is the evidence ID, and
-// any other requirement ID takes the prefix once.
-func TestTicketPrefixesTheEvidenceIDOnce(t *testing.T) {
-	f, home := pooled(t, 1, func(plan *rr.Plan) { plan.Chunks[0].Verification[0].ID = "p-tests" })
-	base, _ := advance(f, "chunk 1")
+// RC16: each written entry carries the commit of its staged run.
+func TestTicketWritesTheSourceCommit(t *testing.T) {
+	f, home := pooled(t, 1)
+	base, tip := advance(f, "chunk 1")
 	stageOwed(f, home, "1", "1.md")
 	succeed(t, f, ticketArgs(t, "1", "1.md", "p", "--base", base))
-	if ids, want := verificationIDs(chunkEntry(t, f, "1")), []string{"p-tests", "p-additional"}; !slices.Equal(ids, want) {
-		t.Fatalf("verification IDs = %q, want %q", ids, want)
+	commits := []string{}
+	for _, entry := range chunkEntry(t, f, "1").Verification {
+		commits = append(commits, entry.SourceCommit)
+	}
+	if want := []string{tip, tip}; !slices.Equal(commits, want) {
+		t.Errorf("entry source commits = %q, want the staged run head %q", commits, want)
 	}
 }
 
@@ -344,57 +312,84 @@ func TestTicketRefreezeKeepsTheBase(t *testing.T) {
 	}
 }
 
-// RT25: an earlier ticket's call records its result at the chunk tip and leaves the chunk entry,
-// even when HEAD moved past it.
-func TestTicketEarlierTicketKeepsTheEntry(t *testing.T) {
+// The first record call of a chunk creates its entry, whichever ticket of the chunk makes it.
+func TestTicketEarlierTicketCreatesTheChunkEntry(t *testing.T) {
+	f, home := pooled(t, 3, twoTickets)
+	freezeChunk1(t, f, home)
+	_, tip := advance(f, "chunk 2")
+	stageOwed(f, home, "2", "2.md")
+	succeed(t, f, ticketArgs(t, "2", "2.md", "p"))
+	if chunk := chunkEntry(t, f, "2"); chunk.Tip != tip || !slices.Equal(verificationIDs(chunk), []string{"p-tests"}) {
+		t.Errorf("chunk 2 after the 2.md call = tip %s with %q, want tip %s with [p-tests]", chunk.Tip, verificationIDs(chunk), tip)
+	}
+}
+
+// RC9: after a later ticket moved the chunk tip past an earlier ticket's commit, the earlier
+// ticket's record call writes its entries at the commit where it staged them.
+func TestTicketRecordsAtItsOwnCommitOnTheChunkLine(t *testing.T) {
+	f, home := pooled(t, 3, twoTickets)
+	own := stagedBeforeTheTip(t, f, home)
+	succeed(t, f, ticketArgs(t, "2", "2.md", "early"))
+	var want rr.Verification
+	f.Bind(&want, own)
+	results := chunkEntry(t, f, "2").Verification
+	if got := results[len(results)-1]; got.ID != "early-tests" || got.SourceCommit != own || got.SourceDigest != want.SourceDigest {
+		t.Errorf("earlier ticket entry = %s at %s with digest %s, want early-tests at %s with digest %s", got.ID, got.SourceCommit, got.SourceDigest, own, want.SourceDigest)
+	}
+}
+
+// repairedEarlierTicket records both tickets of chunk 2 of a twoTickets fixture at the chunk tip,
+// then commits a repair of 2.md and records 2.md with its runs staged at that repair commit. It
+// answers the chunk 2 entry before the repair and the repair commit.
+func repairedEarlierTicket(t *testing.T) (*recordtest.Fixture, rr.Chunk, string) {
+	t.Helper()
 	f, home := pooled(t, 3, twoTickets)
 	freezeChunk1(t, f, home)
 	advance(f, "chunk 2")
 	stageOwed(f, home, "2", "3.md")
 	succeed(t, f, ticketArgs(t, "2", "3.md", "last"))
+	stageOwed(f, home, "2", "2.md")
+	succeed(t, f, ticketArgs(t, "2", "2.md", "early"))
 	frozen := chunkEntry(t, f, "2")
-	advance(f, "after the freeze")
-	run := f.Run(0, biting)
-	run.Head = frozen.Tip
-	f.Stage(home, "2", "tests", run)
+	_, repair := advance(f, "repair 2.md")
+	stageOwed(f, home, "2", "2.md")
+	succeed(t, f, ticketArgs(t, "2", "2.md", "repair"))
+	return f, frozen, repair
+}
+
+// RC11: a non-last ticket's record call at a commit past the chunk tip refreezes the chunk at
+// that commit and keeps the chunk base.
+func TestNonLastTicketRefreezesAtItsRepairCommit(t *testing.T) {
+	f, frozen, repair := repairedEarlierTicket(t)
+	if chunk := chunkEntry(t, f, "2"); chunk.Base != frozen.Base || chunk.Tip != repair {
+		t.Errorf("chunk 2 after the 2.md repair = %s..%s, want %s..%s", chunk.Base, chunk.Tip, frozen.Base, repair)
+	}
+}
+
+// RC10: a repair session's record call appends the entries of its own ticket and leaves every
+// other entry as it was.
+func TestRepairRecordLeavesOtherTicketsEntries(t *testing.T) {
+	f, frozen, _ := repairedEarlierTicket(t)
+	chunk, kept := chunkEntry(t, f, "2"), len(frozen.Verification)
+	ids := verificationIDs(chunk)
+	if len(ids) != kept+1 || ids[kept] != "repair-tests" || !reflect.DeepEqual(chunk.Verification[:kept], frozen.Verification) {
+		t.Errorf("chunk 2 results after the 2.md repair = %q, want %q unchanged and then repair-tests", ids, verificationIDs(frozen))
+	}
+}
+
+// RC12: a run staged at a record-only descendant of the chunk tip binds the tip, and its record
+// call leaves the tip unchanged.
+func TestTicketStagedAfterARecordCommitBindsTheTip(t *testing.T) {
+	f, home := pooled(t, 3, twoTickets)
+	freezeChunk1(t, f, home)
+	_, tip := advance(f, "chunk 2")
+	stageOwed(f, home, "2", "3.md")
+	succeed(t, f, ticketArgs(t, "2", "3.md", "last"))
+	f.Commit("record 3.md")
+	stageOwed(f, home, "2", "2.md")
 	succeed(t, f, ticketArgs(t, "2", "2.md", "early"))
 	chunk := chunkEntry(t, f, "2")
-	if chunk.Base != frozen.Base || chunk.Tip != frozen.Tip || len(chunk.Verification) != 2 || chunk.Verification[1].ID != "early-tests" {
-		t.Errorf("chunk 2 after the earlier ticket = %+v, want the pair %s..%s and the result early-tests", chunk, frozen.Base, frozen.Tip)
-	}
-}
-
-// A mutant-set stage records its row: the row's exit, not the set's command exit, and the row's
-// probe values.
-func TestTicketImportsAMutantRow(t *testing.T) {
-	produce, _ := setProducer(t, linked(t, 1))
-	data, command := silentThenBiting(produce)
-	f, home := pooled(t, 1)
-	base, _ := advance(f, "chunk 1")
-	stageOwed(f, home, "1", "1.md")
-	run := f.Run(command, data)
-	run.Mutant = 2
-	f.Stage(home, "1", "tests", run)
-	succeed(t, f, ticketArgs(t, "1", "1.md", "p", "--base", base))
-	got := chunkEntry(t, f, "1").Verification[0]
-	if got.Probe == nil || *got.ExitCode != 0 || got.Probe.Outcome != "bit" || got.Probe.ExitCode != 1 || got.Probe.Restore != "pass" {
-		t.Errorf("mutant row entry = exit %d, probe %+v; want exit 0 and the biting row", *got.ExitCode, got.Probe)
-	}
-}
-
-// RT63: the ticket help lists the ticket steps of the completion order, in order.
-func TestTicketHelpFollowsCompletionOrder(t *testing.T) {
-	want := []string{}
-	for _, step := range rr.TicketSteps() {
-		want = append(want, step.Form)
-	}
-	var description string
-	for _, row := range recordcmd.HelpRows() {
-		if strings.HasPrefix(row.Suffix, " ticket ") {
-			description = row.Description
-		}
-	}
-	if _, order, ok := strings.Cut(description, "write in the order "); !ok || !slices.Equal(strings.Split(order, ", "), want) {
-		t.Fatalf("ticket help %q, want the order %q", description, want)
+	if got := chunk.Verification[len(chunk.Verification)-1]; chunk.Tip != tip || got.SourceCommit != tip {
+		t.Errorf("after a record commit, chunk 2 tip = %s and early-tests binds %s, want both %s", chunk.Tip, got.SourceCommit, tip)
 	}
 }
