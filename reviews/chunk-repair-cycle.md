@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:f1fc33ce170a8cf2b185d2cd081dc053ced014083d0f5da6cd840e228bf93107",
+  "plan_digest": "sha256:bca0562cf26f7838331ce130f3e09067fdfc3748aa1ec7490ccb4b1098657830",
   "implementation_session": "",
   "chunks": [
     {
@@ -904,6 +904,168 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RC-C2B",
+      "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+      "tip": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+      "plan_digest": "sha256:bca0562cf26f7838331ce130f3e09067fdfc3748aa1ec7490ccb4b1098657830",
+      "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+      "acceptance_rows": [
+        "RC9",
+        "RC10",
+        "RC11",
+        "RC12",
+        "RC16",
+        "RC24"
+      ],
+      "verification": [
+        {
+          "id": "t03-record",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:a6fd0bd7fc5a6257edfad3ec69eb8b11cbb459232c88eb9af2d5928a587ebfc3",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3282,111\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-record-command",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:afa767055993f042ec5b7d4d8c439ff4331b186f3ba91499822e04fa78777946",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,20562,277\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-record-fixture",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "record-fixture",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-gate",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:894a53688bd14d0ac4e305f2c9912e321504ebfac810ee424616221c09f23aa4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,37813,527\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-conformance",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:3710f4f59bb70b3b5a9ec9b335da2a22c2463c68aee47aa3d6c205cb466f0461",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12484,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-floor",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:5618d6adcad5d5b059b18f4409781da43ad54cb07b41424589fbf09e3333ec35",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22150,404\n  github.com/gibbonmi/bench/internal/anchors,pass,102,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/anchors --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-writer-probe",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:08a2166c654cd9787e59c2814f9a3aa626e9970cb27088dd5cde087cb25e43ea",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,1,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,277\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,20548,277\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,\"ticket_test.go:337: earlier ticket entry = early-tests at 2c0f5d8e7c19e7a555b1ef278b47266a6ff34df7 with digest 37b1ff8d87b492aa99b99f4199bac58f858c14f8, want early-tests at 11ac1f6ff63709f32333fad816d644e0e834d1ba with digest e80601fec2c040… (266 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "writer-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "bind an earlier ticket to the chunk tip",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+              "digest": "sha256:08a2166c654cd9787e59c2814f9a3aa626e9970cb27088dd5cde087cb25e43ea",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,1,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,277\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,20548,277\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,\"ticket_test.go:337: earlier ticket entry = early-tests at 2c0f5d8e7c19e7a555b1ef278b47266a6ff34df7 with digest 37b1ff8d87b492aa99b99f4199bac58f858c14f8, want early-tests at 11ac1f6ff63709f32333fad816d644e0e834d1ba with digest e80601fec2c040… (266 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -935,6 +1097,18 @@
     {
       "from": "sha256:1dfc3c1f28c98e409ade20a689c66a8b4fc652d771b8dd2f17687a1e24578e74",
       "to": "sha256:f1fc33ce170a8cf2b185d2cd081dc053ced014083d0f5da6cd840e228bf93107",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f1fc33ce170a8cf2b185d2cd081dc053ced014083d0f5da6cd840e228bf93107",
+      "to": "sha256:bca0562cf26f7838331ce130f3e09067fdfc3748aa1ec7490ccb4b1098657830",
       "chunk_ids": {
         "RC-C1": [
           "RC-C1"
