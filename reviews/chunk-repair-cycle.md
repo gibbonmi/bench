@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:1dfc3c1f28c98e409ade20a689c66a8b4fc652d771b8dd2f17687a1e24578e74",
+  "plan_digest": "sha256:f1fc33ce170a8cf2b185d2cd081dc053ced014083d0f5da6cd840e228bf93107",
   "implementation_session": "",
   "chunks": [
     {
@@ -446,9 +446,9 @@
     {
       "id": "RC-C2",
       "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
-      "tip": "4af3d955c58d75eae6d061ad598ea00707ad23d1",
-      "plan_digest": "sha256:1dfc3c1f28c98e409ade20a689c66a8b4fc652d771b8dd2f17687a1e24578e74",
-      "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+      "tip": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+      "plan_digest": "sha256:f1fc33ce170a8cf2b185d2cd081dc053ced014083d0f5da6cd840e228bf93107",
+      "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
       "acceptance_rows": [
         "RC8",
         "RC13",
@@ -617,6 +617,161 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,527\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,355\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35093,527\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,\"review_checkpoint_test.go:162: checkpoint = 0 ; want the stale entry refused\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t02r1-record",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:fb77143fd4f470e1fc78f4a9aaab04389a4d7178d8d22f2f74a8b32bc457d49c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3342,111\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-record-command",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:f88b7318ed695f89d1db69744d770a94cfc93e668d1126c6056fdf93614765ee",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17669,272\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-record-fixture",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-fixture",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ownership",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:9b5a20a827a28bbf4d14718e458cb63220d5bf41556288d74ddb3d4caa7c1a89",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,7444,179\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ownership",
+          "command": "bench test --package ./internal/preflight/ownership",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-gate",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:27519b1eccf40b89976c43a33a4fa48b9f7add2d258244e34c23f8e8aaa35e8f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,35235,527\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-conformance",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:6decfb18a91ed775c62887c0094b9f38733122ce18f4e9a3db372dc1fff3dcbf",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12843,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-floor",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:cba3a894999aa62f21fe28186d003aabfb6570f324aaf83a58e2885903ccad2b",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,27008,404\n  github.com/gibbonmi/bench/internal/landing,pass,10974,221\n  github.com/gibbonmi/bench/internal/worktree,pass,73303,1514\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "floor",
+          "command": "bench test --package ./internal/landing --package ./internal/worktree --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-line-probe",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:043cef4e8c069894e4b93944e4e0b8292bfd8730fa1bf526a86a45b9303b281f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,527\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,355\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35519,527\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,\"review_checkpoint_test.go:162: checkpoint = 0 ; want the stale entry refused\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "line-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the ancestry test of the entry commit",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+              "digest": "sha256:043cef4e8c069894e4b93944e4e0b8292bfd8730fa1bf526a86a45b9303b281f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,527\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,355\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35519,527\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,\"review_checkpoint_test.go:162: checkpoint = 0 ; want the stale entry refused\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -708,6 +863,18 @@
       "chunk_ids": {
         "RC-C1": [
           "RC-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1dfc3c1f28c98e409ade20a689c66a8b4fc652d771b8dd2f17687a1e24578e74",
+      "to": "sha256:f1fc33ce170a8cf2b185d2cd081dc053ced014083d0f5da6cd840e228bf93107",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
         ]
       }
     }
