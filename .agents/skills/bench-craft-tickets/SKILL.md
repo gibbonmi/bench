@@ -15,7 +15,7 @@ commit is the grading rule.
 
 ## Draft the breakdown
 
-Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. A rewrite ticket is sized by the lines the ticket author must read, not the lines it edits.
+Gather context: the spec, or the conversation. Explore the codebase if you have not. Put any prefactoring that makes the change easy first, as its own ticket. Then draft the vertical slices. Split a spec-backed ticket whose author context estimate passes about 175k tokens. Estimate a ticket from the byte total of its `Writes:` files plus its verification cycles, not from its expected reads.
 
 A ticket that creates a seam its sibling tickets consume is its own review chunk, and that chunk stays small. Its chunk review closes before any consumer ticket starts. A seam the implementation introduces counts the same as a seam the spec declares.
 
@@ -32,7 +32,7 @@ Start with each ticket's delivered outcome and its smallest complete slice of be
 
 Shared writes determine serial order, but they do not merge independently useful outcomes. Split independently useful outcomes. Merge a fragment that cannot deliver or verify a result alone. Plan the ticket evidence without implementing the feature or requiring an existing executable red.
 
-**Reviewer-approved breakdown**: before assigning spec-backed tickets, the coordinator presents the reviewer a numbered list — title, `Blocked by:`, and delivered outcome — for every ticket.
+**Reviewer-approved breakdown**: before assigning spec-backed tickets, the coordinator presents the reviewer a numbered list — title, `Blocked by:`, delivered outcome, and context estimate — for every ticket.
 Ask the reviewer about granularity, dependencies, and merges or splits. Iterate and record approval.
 For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out in `.bench/BENCH.md` is the sole no-round-trip exception.
 The light path is the exception: `.bench/BENCH.md`'s right-size table is the one ticket's standing approval, and `.bench/BENCH.md` owns its author.
