@@ -2,7 +2,7 @@
 
 Blocked by: none
 
-Writes: internal/shift/session.go, internal/shift/loop.go, internal/shift/fault_test.go, internal/shift/lifetime_test.go, internal/shift/shift_test.go, internal/systemtest/process_lifetime_callers_test.go, internal/systemtest/process_lifetime_shift_test.go, CHANGELOG.md
+Writes: internal/shift/session.go, internal/shift/loop.go, internal/shift/fault_test.go, internal/shift/lifetime_test.go, internal/shift/shift_test.go, internal/systemtest/process_lifetime_callers_test.go, internal/systemtest/process_lifetime_shift_test.go, tests/canary/process-lifetime-closure/private-shift-loop/EXPECT, CHANGELOG.md
 
 Covers: none
 
