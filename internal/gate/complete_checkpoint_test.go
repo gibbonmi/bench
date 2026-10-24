@@ -11,7 +11,6 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/landing/published"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
-	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -87,10 +86,7 @@ func annotateRecord(t *testing.T, f *recordtest.Fixture) {
 // appendRecordProse appends text as one paragraph of the review record of f.
 func appendRecordProse(t *testing.T, f *recordtest.Fixture, text string) {
 	t.Helper()
-	path, err := rr.RecordPath(recordtest.Spec)
-	if err != nil {
-		t.Fatal(err)
-	}
+	path := fixtureRecord(t)
 	f.Write(path, string(outcomeRead(t, filepath.Join(f.Root, path)))+"\n"+text+"\n")
 }
 

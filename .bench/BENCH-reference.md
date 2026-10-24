@@ -556,7 +556,9 @@ Before the first dispatch, the plan amendment makes the authored version 1 fence
 The `bench-review-record` fence in `reviews/<slug>.md` holds the evidence the checkpoint grades.
 When the record lacks an entry that one `bench record` form writes, the checkpoint refusal routes to the help of that form.
 Each other evidence refusal routes to `bench preflight review <slug>`.
-The chunk checkpoint keys its verdict to the committed tree without the record, so a record-only commit reuses its green.
+
+The chunk checkpoint grades the committed tree without the record through prospective execution.
+It keys its verdict to that tree, so a record-only commit reuses its green.
 Each call still grades the record evidence and the record prose, and the complete checkpoint keeps its purpose in its key.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.
 

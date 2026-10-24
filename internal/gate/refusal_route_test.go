@@ -220,6 +220,7 @@ func gateFaceFixtures() []gateFaceFixture {
 		evidenceFixture(record),
 		repairFixture(record),
 		dirtyFixture(record),
+		proseFixture(record),
 		candidateFixture(),
 		overlapFixture(),
 		{
@@ -335,7 +336,8 @@ func repairFixture(record string) gateFaceFixture {
 
 // dirtyFixture is the dirty-checkout fixture: the completion record waits uncommitted in a
 // linked worktree that an assignment owns. The label holds a space, so the route quotes it.
-func dirtyFixture(record string) gateFaceFixture {
+// Each prepare step writes into the checkout before its review evidence commits.
+func dirtyFixture(record string, prepare ...func(*recordtest.Fixture)) gateFaceFixture {
 	const label = "gate route"
 	return gateFaceFixture{
 		face:     "checkpoint-dirty-checkout",
@@ -345,7 +347,7 @@ func dirtyFixture(record string) gateFaceFixture {
 		build: func(t *testing.T) gateSet {
 			t.Setenv("BENCH_HOME", t.TempDir())
 			t.Setenv("BENCH_KIT", t.TempDir())
-			f := gate.AttachedCheckpointFixture(t, linkedAttach)
+			f := gate.AttachedCheckpointFixture(t, linkedAttach, prepare...)
 			commitmenttest.Register(t, f.Root, label)
 			commitmenttest.Admit(t, f.Root, label, recordtest.Spec)
 			f.Complete()
@@ -353,6 +355,16 @@ func dirtyFixture(record string) gateFaceFixture {
 			return gateSet{f: f, label: label}
 		},
 	}
+}
+
+// proseFixture commits a record sentence over the prose bound under the dirty-checkout fixture.
+func proseFixture(record string) gateFaceFixture {
+	fixture, saved := dirtyFixture(record, gate.ProsePolicy), ""
+	dirty := fixture.build
+	fixture.face, fixture.args = "checkpoint-record-prose", chunkArgs
+	fixture.build = func(t *testing.T) gateSet { set := dirty(t); saved = gate.CommitOverBoundRecord(t, set.f); return set }
+	fixture.carry = map[int]func(*testing.T, gateSet){0: func(_ *testing.T, set gateSet) { set.f.Write(record, saved) }}
+	return fixture
 }
 
 // linkedAttach attaches the review fixture to the primary checkout, approves its delivery

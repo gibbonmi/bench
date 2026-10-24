@@ -43,6 +43,8 @@ func attachedCheckpointFixture(t *testing.T, attach func(testing.TB, string, int
 var (
 	AttachedCheckpointFixture = attachedCheckpointFixture
 	RetainCompletion          = retainCompletion
+	ProsePolicy               = prosePolicy
+	CommitOverBoundRecord     = commitOverBoundRecord
 )
 
 // RunCheckpointArmed runs the chunk checkpoint that args select at root, and calls arm once the

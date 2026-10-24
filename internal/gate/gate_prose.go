@@ -213,13 +213,10 @@ func classifiedBlob(stream io.ReadCloser) ([]byte, string) {
 	return classified.Data, ""
 }
 
-// recordProseRefusal names the recovery for review record prose over the bounds.
-const recordProseRefusal = "checkpoint review record prose refused: correct the record prose and commit it"
-
 // gradeCheckpointRecord grades the review record prose of the chunk checkpoint that ctx
 // carries. The run grades the tree without the record, and a reuse runs nothing, so a caller
 // grades the record before its reuse return. It answers whether it refused, and the refusal.
-func gradeCheckpointRecord(ctx context.Context, root string, stderr io.Writer) (Result, bool) {
+func gradeCheckpointRecord(ctx context.Context, root string, stderr io.Writer, mode runMode) (Result, bool) {
 	source, chunk := ctx.Value(chunkSourceKey{}).(chunkSource)
 	if !chunk {
 		return Result{}, false
@@ -232,12 +229,13 @@ func gradeCheckpointRecord(ctx context.Context, root string, stderr io.Writer) (
 	for _, finding := range findings {
 		fmt.Fprintln(stderr, finding)
 	}
-	return operational(root, 0, stderr, recordProseRefusal), true
+	return refuse(ctx, root, stderr, mode, faceRecordProse, "checkpoint review record prose refused"), true
 }
 
 // recordProse answers one diagnostic for each prose finding of the review record of spec in
 // tree, as the staged form grades a staged blob. The record blob and the exclusion-policy blob
-// come from tree. A tree with no exclusion policy has no prose rule, so it answers none.
+// come from tree. The prose package holds a tree with no exclusion policy ungradeable
+// (prose.NewGraderFromIndex), so the record grade skips such a tree and answers none.
 func recordProse(root, tree, spec string) []string {
 	record, err := reviewrecord.RecordPath(spec)
 	if err != nil {

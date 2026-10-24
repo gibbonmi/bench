@@ -141,6 +141,7 @@ type checkpointFace struct{ name, form string }
 var (
 	faceCompletionEvidence = checkpointFace{name: "checkpoint-completion-evidence"}
 	faceDirtyCheckout      = checkpointFace{name: "checkpoint-dirty-checkout"}
+	faceRecordProse        = checkpointFace{name: "checkpoint-record-prose"}
 	faceComposition        = checkpointFace{name: "checkpoint-composition"}
 	faceTipMoved           = checkpointFace{name: "checkpoint-tip-moved"}
 	faceSubjectUnavailable = checkpointFace{name: "checkpoint-subject-unavailable"}
@@ -263,10 +264,10 @@ func sourceUnavailable(ctx context.Context, root string, stderr io.Writer, mode 
 }
 
 // executeChunkCheckpoint grades the HEAD tree of root without the review record of spec,
-// once committedSource accepts the checkout. That tree runs in a private checkout with root
-// as the storage and identity root, so a record-only commit keeps the subject of an earlier
-// chunk green. The evidence pass and the record grade still read the record from the HEAD
-// tree on every call.
+// once committedSource accepts the checkout. That tree runs through the prospective owner in
+// a private checkout, with root as the storage and identity root, so a record-only commit
+// keeps the subject of an earlier chunk green. The evidence pass and the record grade still
+// read the record from the HEAD tree on every call.
 func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
 	tip, tree, refusal, refused := committedSource(ctx, root, stderr, mode)
 	if refused {
@@ -277,7 +278,7 @@ func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stde
 		return sourceUnavailable(ctx, root, stderr, mode, err)
 	}
 	ctx = context.WithValue(ctx, chunkSourceKey{}, chunkSource{tip: tip, tree: tree})
-	return executeCheckout(ctx, root, stripped, stdout, stderr, arm, mode, nil, newCheckoutTreeEvaluation)
+	return executeTreeWithOwner(ctx, root, stripped, stdout, stderr, arm, mode, nil)
 }
 
 // rerunArguments composes the caller's gate arguments, each value rendered by Arg. A fresh

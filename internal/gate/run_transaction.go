@@ -72,7 +72,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		return operational(storageRoot, 0, stderr, "gate decision refused: "+decision.Refusal)
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "subject.accepted", Root: storageRoot, Mode: mode.String(), Detail: plan.Tree})
-	if refusal, refused := gradeCheckpointRecord(ctx, storageRoot, stderr); refused {
+	if refusal, refused := gradeCheckpointRecord(ctx, storageRoot, stderr, mode); refused {
 		return refusal
 	}
 	if mode == reuseFreshGreen {

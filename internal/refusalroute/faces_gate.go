@@ -62,6 +62,14 @@ var gateFaces = []Face{
 		Route:     []Step{commitAt(FactLabel), gateRerun},
 	},
 	{
+		// The chunk checkpoint grades the prose of the committed review record under the
+		// committed exclusion policy, so a correction of either counts only after its commit.
+		Verb:      Gate,
+		Name:      "checkpoint-record-prose",
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("correct the review record or the prose exclusion file that the diagnostics name")), commitAt(FactLabel), gateRerun},
+	},
+	{
 		// The landing's closure transform refuses the spec: its status or its delivery
 		// closure is the reviewer's to change.
 		Verb:      Gate,

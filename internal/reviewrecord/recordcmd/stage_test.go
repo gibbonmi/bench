@@ -186,7 +186,8 @@ func TestExcerptKeysAHostileRequirementInsideTheScope(t *testing.T) {
 
 // RC48: a requirement whose planned command runs the gate keeps the staged native excerpt. The
 // excerpt form stages only the retained call of that planned command, a reused green as it
-// printed included. The ticket entry then holds those staged bytes with their digest.
+// printed included, and the ticket form refuses that requirement with no staged excerpt. The
+// ticket entry then holds the staged bytes with their digest.
 func TestGateRequirementKeepsTheNativeExcerpt(t *testing.T) {
 	f, home := recordtest.Staging(t)
 	planned := []string{"--checkpoint", recordtest.Spec, "--chunk", "1"}
@@ -198,9 +199,12 @@ func TestGateRequirementKeepsTheNativeExcerpt(t *testing.T) {
 	if out, code := recordcmd.Command(f.Root, stageArgs(t, "quoted")); code != 1 || !strings.Contains(out, "differs from the planned command") {
 		t.Fatalf("excerpt of another gate call = exit %d, output %q; want the planned-command refusal", code, out)
 	}
+	f.Stage(home, "1", "tests", f.Run(0, biting))
+	if out, code := recordcmd.Command(f.Root, ticketArgs(t, "1", "1.md", "g", "--base", base)); code != 1 || !strings.Contains(out, "have no staged excerpt: quoted") {
+		t.Fatalf("ticket with no staged gate excerpt = exit %d, output %q; want the refusal of the gate requirement", code, out)
+	}
 	f.Retain(home, "gate", planned, 0, reused)
 	succeed(t, f, stageArgs(t, "quoted"))
-	f.Stage(home, "1", "tests", f.Run(0, biting))
 	succeed(t, f, ticketArgs(t, "1", "1.md", "g", "--base", base))
 	record, err := rr.Read(f.Root, recordtest.Spec)
 	if err != nil {

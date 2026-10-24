@@ -67,11 +67,17 @@ func delegatedJourneyFixture(t *testing.T) *delegatedJourney {
 	home := filepath.Join(t.TempDir(), "bench-home")
 	root := newWorktreeRepo(t)
 	mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
-	// The ordinary gate runs at every chunk checkpoint, before any status
-	// transform exists. Only the prospective gate asserts the published
-	// transition, so it is the script the landing must run. Both stay POSIX.
+	// Every chunk checkpoint and the landing run the prospective gate. A chunk
+	// checkpoint grades its tree without the review record, before any status
+	// transform exists, and the landing grades the published tree with the record.
+	// So the prospective gate asserts the published transition wherever the record
+	// is present. Both scripts stay POSIX.
+	record, err := rr.RecordPath(delegatedJourneySpec)
+	if err != nil {
+		t.Fatal(err)
+	}
 	f := testrepo.NewGateFixture(t.TempDir())
-	if err := f.Write(root, "set -eu\n[ -f tracked.txt ]\n", "set -eu\nruntime=$1\n"+f.Command("grep")+" -q '^Status: implemented$' "+delegatedJourneySpec+"\n"); err != nil {
+	if err := f.Write(root, "set -eu\n[ -f tracked.txt ]\n", "set -eu\nruntime=$1\n[ ! -e "+record+" ] || "+f.Command("grep")+" -q '^Status: implemented$' "+delegatedJourneySpec+"\n"); err != nil {
 		t.Fatal(err)
 	}
 	gitRun(t, root, "add", ".bench")
