@@ -346,12 +346,12 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT360-shared-fixtures
-2. FT411
-3. FT314-gate-reuse
-4. FT125-exact-readers
-5. FT375-residual
-6. FT438-test-only
+1. FT445-repair-cycle
+2. FT360-shared-fixtures
+3. FT411
+4. FT314-gate-reuse
+5. FT125-exact-readers
+6. FT375-residual
 7. FT344-remedy
 8. FT406-rebuild
 9. FT366-rg-guard
