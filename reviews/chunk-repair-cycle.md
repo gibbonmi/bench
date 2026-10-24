@@ -1908,6 +1908,63 @@
               "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,1,TestChunkCheckpointGradesTheRecordProseOnReuse,533,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,412\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,49666,533\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:64: checkpoint over record prose = 0 gate: green (fresh verdict reused for this tree)\",2\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t06-dirty-gate",
+          "performer": "claude:rc-t06-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4d79fad0bc756227cb050a2079213794ae6e5d17",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t06-author-20261024",
+            "digest": "sha256:42810aaff60499d67991473bb65961c6da31f948377df5365982a19136bc444f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,35753,530\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0b97628459ab7f45c84b760459cc812a19fd4885",
+          "requirement": "dirty-gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t06-dirty-conformance",
+          "performer": "claude:rc-t06-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4d79fad0bc756227cb050a2079213794ae6e5d17",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t06-author-20261024",
+            "digest": "sha256:45735cb69836475a9dd0b6a504685843233338088bf5901007d167bd4a192244",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13093,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0b97628459ab7f45c84b760459cc812a19fd4885",
+          "requirement": "dirty-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t06-dirty-floor",
+          "performer": "claude:rc-t06-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4d79fad0bc756227cb050a2079213794ae6e5d17",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t06-author-20261024",
+            "digest": "sha256:510489ad30ad7ef77a585e5be2e5ee8dec74a53fdb190ecf761f62d6f7bf2c00",
+            "excerpt": "packages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,26447,404\n  github.com/gibbonmi/bench/internal/refusalroute,pass,6,22\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/worktree,pass,72099,1514\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0b97628459ab7f45c84b760459cc812a19fd4885",
+          "requirement": "dirty-floor",
+          "command": "bench test --package ./internal/refusalroute --package ./internal/reviewrecord/recordtest --package ./internal/worktree --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": []
