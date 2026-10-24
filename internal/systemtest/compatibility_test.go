@@ -59,7 +59,7 @@ func runCompatibilityDoctor(t *testing.T) (processResult, string, string) {
 
 func newCompatibilitySession(t *testing.T) compatibilitySession {
 	t.Helper()
-	repo := landRouteRepo(t, "compatibility [journey]-")
+	repo := journeyRepo(t, "compatibility [journey]-")
 	if result := owner.runSelected(repo, "link", "copy"); result.code != 0 {
 		t.Fatalf("link fixture = %d; stdout=%q stderr=%q", result.code, result.stdout, result.stderr)
 	}
@@ -344,7 +344,7 @@ func TestCompatibilityConcurrentWriters(t *testing.T) {
 	if err := os.Symlink(filepath.Dir(hook), alias); err != nil {
 		t.Fatal(err)
 	}
-	other := landRouteRepo(t, "compatibility [other]-")
+	other := journeyRepo(t, "compatibility [other]-")
 	compatibilitytest.RemovePreserving(t, filepath.Join(other, ".bench", "gate.sh"))
 	systemGitOutput(t, other, "config", "core.hooksPath", alias)
 	t.Cleanup(func() { systemGitOutput(t, other, "config", "--unset", "core.hooksPath") })
@@ -389,7 +389,7 @@ func TestCompatibilityConcurrentWriters(t *testing.T) {
 	if after := compatibilitytest.SnapshotHome(t, filepath.Dir(hook)); !reflect.DeepEqual(before, after) {
 		t.Error("competing writer changed the shared hook")
 	}
-	if result := owner.runSelected(landRouteRepo(t, "compatibility [disjoint]-"), "link", "copy"); result.code != 0 {
+	if result := owner.runSelected(journeyRepo(t, "compatibility [disjoint]-"), "link", "copy"); result.code != 0 {
 		t.Errorf("disjoint writer was blocked: %#v", result)
 	}
 }

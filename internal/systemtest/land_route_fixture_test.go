@@ -177,7 +177,9 @@ func plantRepositoryDecoys(t *testing.T, root string) {
 	}
 }
 
-func landRouteRepo(t *testing.T, name string) string {
+// journeyRepo returns a new journey repository from the system owner and fails t
+// on an error.
+func journeyRepo(t *testing.T, name string) string {
 	t.Helper()
 	repo, err := owner.journeyRepository(name)
 	if err != nil {

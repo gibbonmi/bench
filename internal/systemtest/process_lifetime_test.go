@@ -53,7 +53,7 @@ func newNestedFixture(t *testing.T) nestedFixture {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = holder.Release() })
-	f := nestedFixture{repo: landRouteRepo(t, "process lifetime [journey]-"), bin: t.TempDir(), marks: t.TempDir()}
+	f := nestedFixture{repo: journeyRepo(t, "process lifetime [journey]-"), bin: t.TempDir(), marks: t.TempDir()}
 	f.protocol = &protection.Protocol{Validators: protection.Validators{protection.KindCache: gocache.ValidateProtection}, ReadLimit: bounds.ControlRecordLimit}
 	if f.cache, err = holder.Protect(f.protocol); err != nil {
 		t.Fatal(err)

@@ -22,7 +22,7 @@ const wrapperPoolHomeRefusal = "the Bench pool home needs BENCH_HOME set, or HOM
 // both legs run.
 func TestWrapperNamesTheMissingPoolHome(t *testing.T) {
 	t.Parallel()
-	repo := landRouteRepo(t, "wrapper-pool-home [journey]-")
+	repo := journeyRepo(t, "wrapper-pool-home [journey]-")
 	wrapper := filepath.Join(owner.kit, "bin", "bench.sh")
 	// An override with no "=" removes that variable from the child environment.
 	launch := func(overrides ...string) processResult {
