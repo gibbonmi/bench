@@ -619,7 +619,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-c2-r1-standards",
+          "performer": "claude:rc-c2-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-standards-r1",
+            "digest": "sha256:0ed5734158da7771af3c5f67333fee0db03d56611dfa4a0001de77ca25cd1689",
+            "excerpt": "## Standards\n\n3 findings. Worst: S1, severity 3, a duplicated tree-to-digest derivation.\n\n- S1 | sev 3 | auto-fix | conf 6 | internal/reviewrecord/coverage.go:83-87 (also internal/reviewrecord/fold.go:138-145) | The diff extracts commitDigest (check.go:123) and leaves two byte-equivalent derivations of the same fact in the same package (AGENTS.md one source per fact).\n- S2 | sev 3 | auto-fix | conf 6 | internal/gate/review_checkpoint_commits_test.go:15 | TestReviewCheckpointLaterSource moves between files unchanged; no acceptance row asks for the move.\n- S3 | sev 3 | ask-user | conf 4 | specs/chunk-repair-cycle/spec.md:298 | The ticket 02 author is assigned opus/xhigh while the spec declares opus/high.\n\n### Advice\n- The full-object-id rule applies to completion entries, which accept and ignore a commit.\n- A stale entry gets no cause in its refusal text.\n- freeze hashes one tip N+1 times; digestAt lives in confirmation.go but fixture.go uses it.\n- OffLine repeats the identity config pair of fixture.go.\n- The Verification doc comment states another function's behavior.\n"
+          },
+          "axis": "Standards",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "4af3d955c58d75eae6d061ad598ea00707ad23d1",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2-r1-spec",
+          "performer": "claude:rc-c2-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-spec-r1",
+            "digest": "sha256:ba2be08507533cae3eb1c0f2b995726d52e0750aa0e2563a1c88e55f273a5d4e",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. All 11 mapped rows (RC8, RC13-RC15, RC17-RC23) hold by re-derivation from the frozen tip 4af3d955c.\n\nPredicate against the spec: strict descent with a separate C == base test, tip ancestry, digest of C's tree, legacy empty-commit rule, full-object-id parse rule, adoption at the checkpoint and the reused-test premise. The \"verification at the reviewed digest\" case flips with ticket 03.\n\n### Advice\n- RC17 uses a single-ticket fixture; EntryCurrent ignores the ticket.\n- An absent but well-formed commit returns a plain error with no route.\n- The RC13-RC15 and RC19 cases call Save without Commit; ticket 06's RC44 must commit them.\n"
+          },
+          "axis": "Spec",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "4af3d955c58d75eae6d061ad598ea00707ad23d1",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2-r1-coverage",
+          "performer": "claude:rc-c2-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-coverage-r1",
+            "digest": "sha256:b36ed00d09a7e324398c5904b7cb6190348b4eea28f97f6264ba77e9e346e96b",
+            "excerpt": "## Coverage\n\n0 findings. Every surviving mutant fails closed.\n\nProbe set on internal/reviewrecord/check.go: atBase -> false bit; offBase descend drop invalid (build failed); offBase error swallowed silent; offTip error swallowed silent; legacy rule -> true bit. Restored yes on every row.\n\n### Advice\n- A1: the failed-ancestry-query path in chunkLine has no test (rows 3 and 4 silent); the entry still refuses as stale.\n- A2: the source_commit parse rule has no uppercase or off-by-one length case.\n- A3: the offBase branch has no measured probe row.\n- A4: the premise call site is graded only through RC21.\n"
+          },
+          "axis": "Coverage",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "4af3d955c58d75eae6d061ad598ea00707ad23d1",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -656,15 +719,25 @@
 
 RC-C1 consumed repair cycle 1 of 2 after its initial review (round r1). The test-only repair at `2a1619cc0` closed P1 and C1 to C4, and the coordinator confirmation `rc-c1-confirm-1` replaced a confirming round. The run is under `--auto-approve`, so a later cycle past the allowance needs no stop.
 
+RC-C2 consumed repair cycle 1 of 2 after its initial review (round r1).
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
+
+RC-C2 round r1: 3 findings. Worst issue: S1, a third derivation of the source digest of a commit's tree.
+
+- S1 | auto-fix | confidence 6 | `internal/reviewrecord/coverage.go:83-87` | `commitDigest`, `baseDigest`, and `follows` in `fold.go` derive one fact three times.
+- S2 | no-op | confidence 6 | `internal/gate/review_checkpoint_commits_test.go:15` | The author moved the test to keep the gate test file under its 400-line budget.
+- S3 | no-op | confidence 4 | `specs/chunk-repair-cycle/spec.md:298` | The scorecard decision moves a harder, uncertain-seam ticket one effort step up, and the assignment commit records it.
 
 ## Spec
 
 RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
 
 - P1 | auto-fix | confidence 5 | `specs/chunk-repair-cycle/tickets/01-exempt-the-assignment-block.md:19` | The mirrored `FT438` row of `TestTicketSlicingAnchors` has no recorded red.
+
+RC-C2 round r1: 0 findings. Worst issue: none.
 
 ## Coverage
 
@@ -675,8 +748,13 @@ RC-C1 round r1: 4 findings. Worst issue: C2, the error returns of the exemption 
 - C3 | auto-fix | confidence 8 | `internal/reviewrecord/confirmation.go` | No test changes an execution field other than the assignments, so clearing the whole execution block stays silent (spec.md:144).
 - C4 | auto-fix | confidence 7 | `internal/testgap/testgap.go` | No test changes two accepted test paths, so an overwrite of the `TestFiles` list stays silent.
 
+RC-C2 round r1: 0 findings. Worst issue: none.
+
 ## Advice
 
 - The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
 - Citations into files that ticket 01 edited moved by a few lines; no rule requires a refresh between chunks.
 - The early `Prove` return and a spec path with spaces have no test.
+
+- RC-C2: a failed ancestry query in `chunkLine` has no test, and the entry still refuses as stale.
+- RC-C2: the `source_commit` parse rule has no uppercase or length-boundary case.
