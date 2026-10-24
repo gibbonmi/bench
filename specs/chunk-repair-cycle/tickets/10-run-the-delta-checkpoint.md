@@ -2,15 +2,15 @@
 
 Blocked by: 09-list-the-system-suite-in-the-selector.md
 Writes: internal/gate/checkpoint.go, internal/gate/delta_checkpoint.go (new), internal/gate/delta_checkpoint_test.go (new), internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/chunk_gap.go, internal/gate/engine.go, internal/gate/gate_go.go, internal/gate/phases.go, internal/gate/phases_test.go, internal/gate/tag_census_test.go, internal/gate/report.go, internal/gate/complete_checkpoint_test.go, internal/gate/review_checkpoint_confirmation_test.go, internal/gate/authorization/authorization.go, internal/reviewrecord/confirmation.go, internal/reviewrecord/confirmation_test.go, internal/reviewrecord/write.go, internal/testgap/testgap.go, internal/testgap/testgap_test.go, .bench/BENCH-reference.md, projects/benchkit.md
-Covers: RC58, RC59, RC60, RC61, RC62, RC63, RC64, RC65, RC66, RC67, RC68, RC71, RC72, RC73
+Covers: RC58, RC59, RC60, RC61, RC62, RC63, RC64, RC65, RC66, RC67, RC71, RC72, RC73
 
 ## What to build
 
-Review chunk: RC-C6. RC-C4 (the prepared run and the subject key) and RC-C5 (the system suite in the selector) land first.
+Review chunk: RC-C6. RC-C4 and RC-C4B (the subject key and the prepared run) and RC-C5 (the system suite in the selector) land first.
 
 A test-only delta after a whole green at the reviewed tip takes a delta checkpoint: gofmt, vet, `go test` of the changed packages, and root conformance. Any other delta runs the whole gate. A delta green authorizes no landing, no complete checkpoint, and no later whole checkpoint.
 
-The chunk checkpoint decides its run in this order: reuse a whole green of the current subject key (RC-C4); run the delta set when the delta is eligible; run the whole gate. `--fresh` skips the reuse and the delta (`internal/gate/checkpoint.go:65,83-84`). Ticket 11 adds the delta-green reuse step and makes the prepared run share this decision; until then the prepared run keeps its whole run, because it needs a green that a later call can reuse. Plug the decision in before the run seam (`internal/gate/run_transaction.go:43,57,75-95`), which is at 381 of 400 lines.
+The chunk checkpoint decides its run in this order: reuse a whole green of the current subject key (RC-C4); run the delta set when the delta is eligible; run the whole gate. `--fresh` skips the reuse and the delta (`internal/gate/checkpoint.go:65,83-84`). Ticket 11 adds the delta-green reuse step and makes the prepared run share this decision; until then the prepared run keeps its whole run, because it needs a green that a later call can reuse. Plug the decision in before the run seam (`internal/gate/run_transaction.go:43,57,75-95`), which is at 381 of 400 lines. Add only the call there, and put the decision in `delta_checkpoint.go`.
 
 The delta has two operands. The base is the record-stripped tree of the reviewed tip, and the subject is the record-stripped tree that the run grades. Add one `reviewrecord` derivation of the reviewed tip that takes a target commit. It applies the pair checks of `FindReviewedPair` (`internal/reviewrecord/confirmation.go:74-112`): one pair for all three axes, a tip other than the chunk base, a tip that descends from the chunk base, a tip other than the target, and a tip that is an ancestor of the target. The derivation takes the subject's HEAD commit as its target and never reads the chunk tip or the chunk digest of the record. `FindReviewedPair` composes it with the chunk tip as its target, so the confirmation and the delta share one rule. Keep the `FindReviewedPair(root, spec, chunk)` signature, because `internal/reviewrecord/write.go:272` and `confirmation.go:136` call it, and keep the refusal texts that `internal/reviewrecord/confirmation_test.go` and `internal/gate/review_checkpoint_confirmation_test.go` pin.
 
@@ -40,7 +40,6 @@ A delta row plants a red in a package outside the delta set. The delta stays gre
 - [ ] RC65: a delta that touches the system-suite package runs the whole gate.
 - [ ] RC66: a delta that touches a race-table package runs the whole gate.
 - [ ] RC67: after a green delta, the landing inspection is not green and the evidence store holds no new entry.
-- [ ] RC68: a complete checkpoint after a delta-only chunk runs the whole gate.
 - [ ] RC71: `--fresh` on an eligible delta runs the whole gate.
 - [ ] RC72: a green delta checkpoint opens the chunk gap.
 - [ ] RC73: a red delta run makes the checkpoint red and records no green.

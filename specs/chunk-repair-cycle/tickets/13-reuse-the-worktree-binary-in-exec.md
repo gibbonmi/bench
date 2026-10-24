@@ -28,6 +28,5 @@ RC81 is review-owned: the final reconciliation of the build measures one test-on
 - [ ] RC78: an exec call of a `bench` child with a stale `dist/bench` omits the variable and prints `bench worktree build`.
 - [ ] RC79: an exec call of a non-Bench child runs no freshness check and keeps today's environment.
 - [ ] RC80: a child that inherits a binary that became stale refuses and names `bench worktree build`.
-- [ ] RC81: the final reconciliation records the wall time of one test-only repair cycle against the 45-to-60-minute baseline.
 - [ ] An `--in` tree-target child keeps today's environment.
 - [ ] The probe "pass a stale worktree binary to the child" bites in `bench test --package ./internal/worktree`.

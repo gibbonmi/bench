@@ -6,7 +6,7 @@ Covers: RC9, RC10, RC11, RC12, RC16, RC24
 
 ## What to build
 
-Review chunk: RC-C2.
+Review chunk: RC-C2B. The RC-C2 review closes before this ticket starts, because this ticket adopts the predicate that ticket 02 exports.
 
 `bench record ticket` writes each ticket's verification and probe entries at the commit of the staged run, so a tip move makes no ticket stage again. A repair session runs each owed check once at its repair commit, and its record call refreezes the chunk at that commit.
 

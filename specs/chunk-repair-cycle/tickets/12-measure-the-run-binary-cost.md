@@ -12,7 +12,7 @@ Measure three values in the integration worktree and record them, with the exact
 
 - the wall time of `freshness.Digest`, which the exec check of ticket 13 pays once for each `bench` child (`internal/freshness/freshness_verify.go:23-40`);
 - the wall time of one run-binary selection that a `bench` child pays today, when exec strips `BENCH_RUN_BINARY` (`internal/worktree/exec.go:214-252`);
-- the count of exec calls that select a binary in one test-only repair cycle.
+- the count of exec calls that select a binary in one test-only repair cycle. Walk the test-only repair sequence that `.agents/commands/bench-implement-spec.md` states at this ticket's base once. List the command of each step, and count each `bench worktree exec` call whose child is `bench`.
 
 Record the net saving for each repair: the selection cost times the call count, less the digest cost times the count of `bench` children. If the net saving is not positive, the build stops RC-C7 here and returns to the spec.
 

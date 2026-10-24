@@ -8,7 +8,7 @@ Covers: RC25, RC26, RC27, RC28, RC29, RC30
 
 Review chunk: RC-C3.
 
-`check-floor` grades the union of a chunk's floor elements against the union of the chunk's requirements. A package that several tickets of one chunk write then needs one floor requirement in that chunk. A requirement of another chunk covers nothing, and a `--changed` run satisfies no element. RC-C2 lands first, because the chunk floor assumes that each entry is graded at its own commit.
+`check-floor` grades the union of a chunk's floor elements against the union of the chunk's requirements. A package that several tickets of one chunk write then needs one floor requirement in that chunk. A requirement of another chunk covers nothing, and a `--changed` run satisfies no element. RC-C2 and RC-C2B land first, because the chunk floor assumes that each entry is graded at its own commit.
 
 Change `checkFloorCheck` (`internal/preflight/check_floor.go:127-151`) to grade each chunk once. Remove `ticketRequirements` (`check_floor.go:106-123`); its one caller is `check_floor.go:136`. `reviewrecord.TicketRequirements` (`internal/reviewrecord/ticket.go:39-58`) stays the one ownership derivation, and the chunk union calls no ownership filter. Each requirement still names one owner ticket, and `requirementsValid` keeps the rule that every ticket owes one requirement (`internal/reviewrecord/plan.go:193-196`).
 
