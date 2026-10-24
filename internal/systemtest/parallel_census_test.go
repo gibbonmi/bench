@@ -7,15 +7,15 @@ package systemtest
 // t.Parallel(), and serial when systemSerialTests holds a row for it. Parallel tests
 // share the one owner, so a parallel test must not reach the owner's repositories or name
 // a ledger field outside an owner writer. An owner writer writes a ledger field, and the
-// owner mutex holds each of its ledger-field references. No function binds TMPDIR in the
-// process.
+// owner mutex holds each of its ledger-field references. Every systemOwner method names
+// its receiver ownerReceiver, because the census follows owner selectors by that name.
+// The process-state rules are in their own file.
 
 import (
 	"fmt"
 	"go/ast"
 	"go/token"
 	"sort"
-	"strconv"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/testcensus"
@@ -98,9 +98,29 @@ func (p systemPackage) where(fn systemFunc, pos token.Pos) string {
 	return fmt.Sprintf("%s:%d", fn.file, p.fset.Position(pos).Line)
 }
 
+// ownerReceiver is the receiver name of every systemOwner method.
+const ownerReceiver = "o"
+
 // ownerValue reports whether name spells the owner value: owner for the package's owner,
-// and o for a systemOwner receiver.
-func ownerValue(name string) bool { return name == "owner" || name == "o" }
+// and ownerReceiver for a systemOwner receiver.
+func ownerValue(name string) bool { return name == "owner" || name == ownerReceiver }
+
+// namesOwnerReceiver reports whether decl names its receiver ownerReceiver when decl is a
+// systemOwner method. A function with any other receiver, or with no receiver, passes.
+func namesOwnerReceiver(decl *ast.FuncDecl) bool {
+	if decl.Recv == nil || len(decl.Recv.List) != 1 {
+		return true
+	}
+	recv := decl.Recv.List[0]
+	typ := recv.Type
+	if star, ok := typ.(*ast.StarExpr); ok {
+		typ = star.X
+	}
+	if ident, ok := typ.(*ast.Ident); !ok || ident.Name != "systemOwner" {
+		return true
+	}
+	return len(recv.Names) == 1 && recv.Names[0].Name == ownerReceiver
+}
 
 // ownerSelector splits a selector on the owner value into that value and the name it
 // selects. Any other node selects nothing.
@@ -203,13 +223,20 @@ func (p systemPackage) callees(body *ast.BlockStmt) []systemFunc {
 	return found
 }
 
-// reach names the first owner-repository reference and the first ledger-field reference
-// that test reaches through its body and the functions it can run, each with the helper
-// it reaches the reference through. A ledger field in the test body counts even under the
+// reached holds the first reference of each kind that a test reaches, each with the
+// helper it reaches the reference through: an owner-repository reference, a ledger-field
+// reference, and a processStateCalls call.
+type reached struct {
+	repos, ledger, state string
+}
+
+// reach names the first reference of each kind in reached that test reaches through its
+// body and the functions it can run. A ledger field in the test body counts even under the
 // owner mutex. Inside an owner writer the walk drops only the ledger rule. The visited set
 // keys a function by the ledger rule, so a function that a writer runs still grades its
 // ledger references when the test also reaches it outside every writer.
-func (p systemPackage) reach(test systemFunc) (repos, ledger string) {
+func (p systemPackage) reach(test systemFunc) reached {
+	var r reached
 	type visit struct {
 		decl   *ast.FuncDecl
 		graded bool
@@ -218,10 +245,15 @@ func (p systemPackage) reach(test systemFunc) (repos, ledger string) {
 	var walk func(fn systemFunc, through string, graded bool)
 	walk = func(fn systemFunc, through string, graded bool) {
 		ast.Inspect(fn.decl.Body, func(node ast.Node) bool {
-			if value, name := ownerSelector(node); name == "repos" && repos == "" {
-				repos = value + ".repos" + through
-			} else if graded && ledgerFields[name] && ledger == "" {
-				ledger = value + "." + name + through
+			if value, name := ownerSelector(node); name == "repos" && r.repos == "" {
+				r.repos = value + ".repos" + through
+			} else if graded && ledgerFields[name] && r.ledger == "" {
+				r.ledger = value + "." + name + through
+			}
+			if call, ok := node.(*ast.CallExpr); ok && r.state == "" {
+				if name := processStateCall(call); name != "" {
+					r.state = name + through
+				}
 			}
 			return true
 		})
@@ -239,13 +271,14 @@ func (p systemPackage) reach(test systemFunc) (repos, ledger string) {
 		}
 	}
 	walk(test, "", true)
-	return repos, ledger
+	return r
 }
 
 // systemParallelCensus reports every top-level test in dir that calls no t.Parallel()
-// and has no serial row, every parallel test that reaches the owner's repositories or a
-// ledger field, and every function that binds TMPDIR in the process. serialTableCensus
-// grades the reason of each row.
+// and has no serial row, every parallel test that reaches the owner's repositories, a
+// ledger field, or a process-state change, every systemOwner method that does not name its
+// receiver ownerReceiver, and every function that binds TMPDIR in the process.
+// serialTableCensus grades the reason of each row.
 func systemParallelCensus(dir string, serial map[string]string) ([]string, error) {
 	pkg, err := parseSystemPackage(dir)
 	if err != nil {
@@ -253,60 +286,33 @@ func systemParallelCensus(dir string, serial map[string]string) ([]string, error
 	}
 	var reports []string
 	for _, fn := range pkg.all {
+		name, where := fn.decl.Name.Name, pkg.where(fn, fn.decl.Name.Pos())
+		if !namesOwnerReceiver(fn.decl) {
+			reports = append(reports, fmt.Sprintf("%s: %s does not name its systemOwner receiver %s", where, name, ownerReceiver))
+		}
 		if !testcensus.IsTopLevelTest(fn.decl) {
 			continue
 		}
-		name, where := fn.decl.Name.Name, pkg.where(fn, fn.decl.Name.Pos())
 		if !testcensus.CallsParallelDirectly(fn.decl) {
 			if _, row := serial[name]; !row {
 				reports = append(reports, fmt.Sprintf("%s: %s calls no t.Parallel() and has no serial row", where, name))
 			}
 			continue
 		}
-		repos, ledger := pkg.reach(fn)
-		if repos != "" {
-			reports = append(reports, fmt.Sprintf("%s: %s calls t.Parallel() and reaches %s", where, name, repos))
+		r := pkg.reach(fn)
+		if r.repos != "" {
+			reports = append(reports, fmt.Sprintf("%s: %s calls t.Parallel() and reaches %s", where, name, r.repos))
 		}
-		if ledger != "" {
-			reports = append(reports, fmt.Sprintf("%s: %s calls t.Parallel() and names %s", where, name, ledger))
+		if r.ledger != "" {
+			reports = append(reports, fmt.Sprintf("%s: %s calls t.Parallel() and names %s", where, name, r.ledger))
+		}
+		if r.state != "" {
+			reports = append(reports, fmt.Sprintf("%s: %s calls t.Parallel() and changes process state with %s", where, name, r.state))
 		}
 	}
 	reports = append(reports, pkg.tempRootBindings()...)
 	sort.Strings(reports)
 	return reports, nil
-}
-
-// tempRootBindings reports every function in the package that binds TMPDIR in the process.
-// Parallel tests share the process environment, so a test gives each child its private
-// temporary root as an explicit environment value instead.
-func (p systemPackage) tempRootBindings() []string {
-	var reports []string
-	for _, fns := range p.funcs {
-		for _, fn := range fns {
-			ast.Inspect(fn.decl.Body, func(node ast.Node) bool {
-				if call, ok := node.(*ast.CallExpr); ok && bindsTempRoot(call) {
-					reports = append(reports, fmt.Sprintf("%s: %s binds TMPDIR in the process", p.where(fn, call.Pos()), fn.decl.Name.Name))
-				}
-				return true
-			})
-		}
-	}
-	return reports
-}
-
-// bindsTempRoot reports whether call is a Setenv call on any receiver whose name argument
-// is the literal TMPDIR.
-func bindsTempRoot(call *ast.CallExpr) bool {
-	method, ok := call.Fun.(*ast.SelectorExpr)
-	if !ok || method.Sel.Name != "Setenv" || len(call.Args) != 2 {
-		return false
-	}
-	name, ok := call.Args[0].(*ast.BasicLit)
-	if !ok || name.Kind != token.STRING {
-		return false
-	}
-	value, err := strconv.Unquote(name.Value)
-	return err == nil && value == "TMPDIR"
 }
 
 // ledgerLockCensus reports every ledger-field write outside the owner mutex, except in
@@ -334,9 +340,10 @@ func ledgerLockCensus(dir string) ([]string, error) {
 }
 
 // TestSystemParallelCensus proves the census refuses a test with no t.Parallel() call and
-// no serial row, a parallel test that reaches the owner's repositories or names a
-// ledger field outside an owner writer, and a TMPDIR binding in the process, and that the
-// live package passes. (Coverage rows LGP25, LGP29, LGP30.)
+// no serial row, a parallel test that reaches the owner's repositories, names a ledger
+// field outside an owner writer, or changes process state, a systemOwner receiver by
+// another name, and a TMPDIR binding in the process, and that the live package passes.
+// (Coverage rows LGP25, LGP29, LGP30.)
 func TestSystemParallelCensus(t *testing.T) {
 	t.Parallel()
 	for _, row := range parallelCensusCases {

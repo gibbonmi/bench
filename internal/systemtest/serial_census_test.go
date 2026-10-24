@@ -50,7 +50,7 @@ func serialTableCensus(dir string, serial map[string]string) ([]string, error) {
 		case testcensus.CallsParallelDirectly(fn.decl):
 			reports = append(reports, fmt.Sprintf("serial row %s names a test that calls t.Parallel()", name))
 		default:
-			if repos, _ := pkg.reach(fn); repos == "" && reason == ownerRepositories {
+			if repos := pkg.reach(fn).repos; repos == "" && reason == ownerRepositories {
 				reports = append(reports, fmt.Sprintf("serial row %s holds the owner-repository reason and reaches no owner.repos", name))
 			} else if repos != "" && reason != ownerRepositories {
 				reports = append(reports, fmt.Sprintf("serial row %s reaches %s without the owner-repository reason", name, repos))
