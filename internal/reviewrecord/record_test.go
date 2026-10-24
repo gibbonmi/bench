@@ -49,11 +49,32 @@ func TestProbeChecksAgree(t *testing.T) {
 	} {
 		probe.Mutation = requirement.Probe
 		verification := Verification{Evidence: Evidence{Performer: "author", Role: "author-verification", SourceDigest: chunk.SourceDigest, State: "completed", Outcome: "pass"}, Requirement: requirement.ID, Command: requirement.Command, ExitCode: &zero, Probe: &probe}
-		planned := checkVerification([]Verification{verification}, []Requirement{requirement}, Plan{}, record, chunk.SourceDigest, Repair{Chunk: chunk.ID})
+		current := func(entry Verification) (bool, error) { return EntryCurrent("", "", chunk, entry) }
+		planned := checkVerification([]Verification{verification}, []Requirement{requirement}, Plan{}, record, current, Repair{Chunk: chunk.ID})
 		chunk.Confirmations = []Confirmation{{Evidence: Evidence{Performer: "reconciler", SourceDigest: chunk.SourceDigest, State: "completed"}, Base: chunk.Base, ReviewedTip: "reviewed", RepairedTip: chunk.Tip, Probe: probe}}
 		confirmed := confirms(chunk, ReviewedPair{Tip: "reviewed"}, "reconciler")
 		if (planned == nil) != (confirmed == nil) || (i == 0 && planned != nil) {
 			t.Errorf("probe %+v: planned-probe check %v, confirmation check %v; want one verdict, and a pass for the probe that bit", probe, planned, confirmed)
+		}
+	}
+}
+
+// TestParseRefusesAMalformedSourceCommit covers RC23: a chunk entry parses with a full
+// object id as its source commit, and refuses a short or hostile commit text.
+func TestParseRefusesAMalformedSourceCommit(t *testing.T) {
+	full := strings.Repeat("b", 40)
+	for _, commit := range []string{full, full[:12], full + "\nforged"} {
+		record := renderRecord("ok")
+		entry := record.Completion.Verification[0]
+		entry.SourceCommit = commit
+		record.Completion.Verification = nil
+		record.Chunks = []Chunk{{ID: "1", Base: full, Tip: full, PlanDigest: "sha256:plan", SourceDigest: full, Verification: []Verification{entry}}}
+		data, err := json.Marshal(record)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Parse(data); (commit == full) != (err == nil) || err != nil && !strings.Contains(err.Error(), "invalid source commit") {
+			t.Errorf("source commit %q: parse = %v; want only the full object id to parse", commit, err)
 		}
 	}
 }

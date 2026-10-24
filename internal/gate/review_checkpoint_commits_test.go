@@ -12,6 +12,52 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
+func TestReviewCheckpointLaterSource(t *testing.T) {
+	for _, committed := range []bool{false, true} {
+		t.Run(map[bool]string{false: "dirty source", true: "unreviewed repair"}[committed], func(t *testing.T) {
+			f := checkpointFixture(t)
+			f.Write("source.txt", "later repair\n")
+			if committed {
+				f.Commit("unreviewed repair")
+			}
+			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "chunk 1: stale reviewed source") {
+				t.Fatalf("uncovered delta accepted: %d %s", code, out)
+			}
+		})
+	}
+}
+
+// laterTicketFixture is one recorded chunk whose verification sits at the commit of its
+// first ticket. A later ticket's commit, which also writes each path of plants, then
+// holds the chunk tip and its reviews.
+func laterTicketFixture(t *testing.T, plants ...string) *recordtest.Fixture {
+	t.Helper()
+	f := checkpointFixture(t)
+	f.LaterTicket(plants...)
+	f.Save()
+	f.Commit("retain the later chunk tip")
+	return f
+}
+
+// bindTo answers the entry change that binds an entry to commit through f.
+func bindTo(f *recordtest.Fixture, commit string) func(*rr.Verification) {
+	return func(entry *rr.Verification) { f.Bind(entry, commit) }
+}
+
+// refusesStaleEntries applies change to each chunk 1 entry of f and requires that the
+// checkpoint refuses the stale entry before the oracle runs.
+func refusesStaleEntries(t *testing.T, f *recordtest.Fixture, change func(*rr.Verification)) {
+	t.Helper()
+	for i := range f.Record.Chunks[0].Verification {
+		change(&f.Record.Chunks[0].Verification[i])
+	}
+	f.Save()
+	if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "chunk 1: verification tests is incomplete, failed, or stale") {
+		t.Fatalf("checkpoint = %d %s; want the stale entry refused", code, out)
+	}
+	assertNoOracleRun(t, f)
+}
+
 // TestReviewCheckpointUncoveredRangeNamesItsCommits grades the uncovered-source face.
 // A repair committed after the last chunk review leaves a range no review covers, and the
 // refusal names that range, so the caller does not find the commits by hand.

@@ -340,14 +340,14 @@ func (f *Fixture) RecordChunk(base string) {
 }
 
 // freeze is the source digest of the current tip and the verification of planned chunk id
-// at that digest, whose IDs start with prefix.
+// bound to that tip, whose IDs start with prefix.
 func (f *Fixture) freeze(id, prefix string) (string, []rr.Verification) {
 	f.T.Helper()
-	digest, err := rr.SourceDigest(f.Root, f.Tree(), f.Record.Spec)
-	if err != nil {
-		f.T.Fatal(err)
+	verification := f.Verification(prefix, "", f.Plan.Chunk(id).Verification)
+	for i := range verification {
+		f.Bind(&verification[i], f.Tip())
 	}
-	return digest, f.Verification(prefix, digest, f.Plan.Chunk(id).Verification)
+	return f.digestAt(f.Tip()), verification
 }
 
 func (f *Fixture) Complete() {

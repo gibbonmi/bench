@@ -35,8 +35,9 @@ type reusedTestExpected struct {
 // reusedTest grades one reused-test premise against its committed test declaration and its
 // source-bound review record. A premise turns green only when the test exists at the
 // recorded source commit and current source tip, the record passes CheckTrees for the
-// named chunk at that source commit, and the selected verification carries a restored,
-// biting behavioral probe of the named test subject with red_needle in its native excerpt.
+// named chunk at that source commit, and the selected verification is current for the
+// chunk and carries a restored, biting behavioral probe of the named test subject with
+// red_needle in its native excerpt.
 func (c *census) reusedTest(item PremiseItem) (string, error) {
 	subject, expected, err := decodeReusedTest(item)
 	if err != nil {
@@ -72,7 +73,7 @@ func (c *census) reusedTest(item PremiseItem) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("record %s chunk %s has no active verification %s", subject.RecordSpec, subject.Chunk, subject.Verification)
 	}
-	if err := checkVerificationProbe(verification, subject, expected, sourceDigest); err != nil {
+	if err := checkVerificationProbe(c.root, chunk, verification, subject, expected); err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%s (%s) is certified by %s chunk %s verification %s at %s", subject.Path, subject.Function, subject.RecordSpec, subject.Chunk, subject.Verification, subject.EvidenceCommit), nil
@@ -202,11 +203,16 @@ func selectVerification(items []reviewrecord.Verification, name string) (reviewr
 	return reviewrecord.Verification{}, false
 }
 
-// checkVerificationProbe grades the selected verification and its probe excerpt against
-// the expected mutation, restoration, subject identity, and behavioral failure needle.
-func checkVerificationProbe(verification reviewrecord.Verification, subject reusedTestSubject, expected reusedTestExpected, sourceDigest string) error {
-	if verification.SourceDigest != sourceDigest {
-		return fmt.Errorf("verification %s source digest %s does not match %s", subject.Verification, verification.SourceDigest, sourceDigest)
+// checkVerificationProbe grades the selected verification of chunk for its currency under
+// reviewrecord.EntryCurrent, and its probe excerpt against the expected mutation,
+// restoration, subject identity, and behavioral failure needle.
+func checkVerificationProbe(root string, chunk reviewrecord.Chunk, verification reviewrecord.Verification, subject reusedTestSubject, expected reusedTestExpected) error {
+	current, err := reviewrecord.EntryCurrent(root, subject.RecordSpec, chunk, verification)
+	if err != nil {
+		return fmt.Errorf("verification %s currency for chunk %s does not read: %w", subject.Verification, subject.Chunk, err)
+	}
+	if !current {
+		return fmt.Errorf("verification %s at entry commit %q and source digest %s is not current for chunk %s", subject.Verification, verification.SourceCommit, verification.SourceDigest, subject.Chunk)
 	}
 	if verification.State != "completed" || verification.Outcome != "pass" || verification.ExitCode == nil || *verification.ExitCode != 0 {
 		return fmt.Errorf("verification %s is not a completed passing run", subject.Verification)

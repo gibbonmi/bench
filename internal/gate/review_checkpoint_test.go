@@ -13,6 +13,7 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
+	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -140,18 +141,85 @@ func TestReviewCheckpointReuse(t *testing.T) {
 	}
 }
 
-func TestReviewCheckpointLaterSource(t *testing.T) {
-	for _, committed := range []bool{false, true} {
-		t.Run(map[bool]string{false: "dirty source", true: "unreviewed repair"}[committed], func(t *testing.T) {
-			f := checkpointFixture(t)
-			f.Write("source.txt", "later repair\n")
-			if committed {
-				f.Commit("unreviewed repair")
-			}
-			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "chunk 1: stale reviewed source") {
-				t.Fatalf("uncovered delta accepted: %d %s", code, out)
-			}
+// TestCheckpointAcceptsAnEntryAtAnEarlierTicketCommit covers RC8: the chunk verification
+// stays at the commit of the first ticket after a later ticket moves the tip.
+func TestCheckpointAcceptsAnEntryAtAnEarlierTicketCommit(t *testing.T) {
+	f := laterTicketFixture(t)
+	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("checkpoint with the entries at an earlier ticket commit = %d %s", code, out)
+	}
+}
+
+// TestCheckpointRefusesAnEntryOffTheChunkLine covers RC13 and the descent from the chunk base.
+// Each entry names the digest of its own commit, so only the line test refuses it.
+func TestCheckpointRefusesAnEntryOffTheChunkLine(t *testing.T) {
+	for name, commit := range map[string]func(*recordtest.Fixture) string{
+		"side commit":     func(f *recordtest.Fixture) string { return f.OffLine() },
+		"before the base": func(f *recordtest.Fixture) string { return f.Git("rev-parse", f.Record.Chunks[0].Base+"^") },
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := laterTicketFixture(t)
+			refusesStaleEntries(t, f, bindTo(f, commit(f)))
 		})
+	}
+}
+
+// TestCheckpointRefusesAnEntryAtTheChunkBase covers RC14: the ancestry query is reflexive, so
+// only the base test refuses an entry at the chunk base.
+func TestCheckpointRefusesAnEntryAtTheChunkBase(t *testing.T) {
+	f := laterTicketFixture(t)
+	refusesStaleEntries(t, f, bindTo(f, f.Record.Chunks[0].Base))
+}
+
+// TestCheckpointKeepsTheLegacyEntryRule covers RC18: an entry with no commit at the chunk
+// digest passes.
+func TestCheckpointKeepsTheLegacyEntryRule(t *testing.T) {
+	f := checkpointFixture(t)
+	for i := range f.Record.Chunks[0].Verification {
+		f.Record.Chunks[0].Verification[i].SourceCommit = ""
+	}
+	f.Save()
+	f.Commit("retain the entries with no commit")
+	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("checkpoint with entries at the chunk digest and no commit = %d %s", code, out)
+	}
+}
+
+// TestCheckpointRefusesAStaleLegacyEntry covers RC19: an entry with no commit at the digest of
+// the first ticket refuses after a later ticket moves the chunk digest.
+func TestCheckpointRefusesAStaleLegacyEntry(t *testing.T) {
+	f := laterTicketFixture(t)
+	refusesStaleEntries(t, f, func(entry *rr.Verification) { entry.SourceCommit = "" })
+}
+
+// TestCheckpointRefusesARelabeledEntryDigest covers RC15: an entry at the commit of the first
+// ticket that names the chunk digest refuses, because that digest is not the digest of its
+// commit.
+func TestCheckpointRefusesARelabeledEntryDigest(t *testing.T) {
+	f := laterTicketFixture(t)
+	refusesStaleEntries(t, f, func(entry *rr.Verification) { entry.SourceDigest = f.Record.Chunks[0].SourceDigest })
+}
+
+// TestCheckpointCarriesAnotherTicketsProbeForward covers RC17: after a confirmed test-only
+// repair moves the tip, the probe entry stays at the reviewed commit and passes.
+func TestCheckpointCarriesAnotherTicketsProbeForward(t *testing.T) {
+	f, _ := confirmedFixture(t, modifyTest)
+	chunk := &f.Record.Chunks[0]
+	// The repair records no entry, so each current entry is one of the first freeze.
+	chunk.Verification = chunk.Verification[:len(f.Plan.Chunks[0].Verification)]
+	f.Save()
+	f.Commit("carry the entries at the reviewed commit")
+	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("checkpoint with the carried probe entry = %d %s", code, out)
+	}
+}
+
+// TestCheckpointRunsTheGateWithCarriedEntries covers RC22: every entry is current at the
+// commit of the first ticket, and the gate still grades the chunk tip that holds a red.
+func TestCheckpointRunsTheGateWithCarriedEntries(t *testing.T) {
+	f := laterTicketFixture(t, ".gate-red")
+	if code, out := runCheckpoint(t, f); code != 7 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("checkpoint over a planted red = %d %s; want the gate exit 7 after one run", code, out)
 	}
 }
 

@@ -74,7 +74,8 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			return fmt.Errorf("chunk %s: stale acceptance rows", chunk.ID)
 		}
 		if verification {
-			if err := checkVerification(chunk.Verification, planned.Verification, plan, record, chunk.SourceDigest, Repair{Chunk: chunk.ID}); err != nil {
+			current := func(entry Verification) (bool, error) { return EntryCurrent(root, record.Spec, *chunk, entry) }
+			if err := checkVerification(chunk.Verification, planned.Verification, plan, record, current, Repair{Chunk: chunk.ID}); err != nil {
 				return err
 			}
 		}

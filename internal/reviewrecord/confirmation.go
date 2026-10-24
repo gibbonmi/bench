@@ -94,29 +94,19 @@ func FindReviewedPair(root, spec string, chunk Chunk) (ReviewedPair, error) {
 	if tip == chunk.Tip {
 		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, errAtChunkPair)
 	}
-	// The ancestry query is reflexive, so it accepts a reviewed tip equal to the chunk base.
-	if tip == chunk.Base {
+	fault, err := chunkLine(root, chunk, tip)
+	if err != nil {
+		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, err)
+	}
+	switch fault {
+	case atBase:
 		return ReviewedPair{}, fmt.Errorf("%s: empty reviewed pair %s..%s; review the three axes at a tip after the chunk base", scope, chunk.Base, tip)
-	}
-	descends, err := isAncestor(root, chunk.Base, tip)
-	if err != nil {
-		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, err)
-	}
-	if !descends {
+	case offBase:
 		return ReviewedPair{}, fmt.Errorf("%s: reviewed tip %s does not descend from the chunk base %s", scope, tip, chunk.Base)
-	}
-	precedes, err := isAncestor(root, tip, chunk.Tip)
-	if err != nil {
-		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, err)
-	}
-	if !precedes {
+	case offTip:
 		return ReviewedPair{}, fmt.Errorf("%s: reviewed tip %s is not an ancestor of the chunk tip %s", scope, tip, chunk.Tip)
 	}
-	tree, err := sourceTree(root, tip)
-	if err != nil {
-		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, err)
-	}
-	digest, err := SourceDigest(root, tree, spec)
+	digest, err := commitDigest(root, spec, tip)
 	if err != nil {
 		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, err)
 	}
