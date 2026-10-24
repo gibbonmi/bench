@@ -836,6 +836,72 @@
           "tip": "4af3d955c58d75eae6d061ad598ea00707ad23d1",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "rc-c2-r2-standards",
+          "performer": "claude:rc-c2-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-standards-r2",
+            "digest": "sha256:52f50002b4a69af97505d4f9e4e98f7088e9d43f3392b07bf67630b770f7dd81",
+            "excerpt": "## Standards\n\nRC-C2 confirming round (repair delta 4af3d955c..b721e5a7c). S1: closed. commitDigest (check.go:123-129) is the one source; follows (fold.go:138-141) and the checkSource base path (coverage.go:82) call it with unchanged error handling. No new finding at severity 5 or more.\n\n### Advice\n- coverage.go:54 repeats sourceTree's rev-parse without --quiet (severity 3).\n- atSource repeats the two-step body of commitDigest; leave it (severity 2).\n- commitDigest could sit beside sourceTree in source.go (severity 2).\n"
+          },
+          "axis": "Standards",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c2-r2-spec",
+          "performer": "claude:rc-c2-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-spec-r2",
+            "digest": "sha256:bc0fc03d36749d6b33937c712c8d2835c8000ecc918dfd74232ab6801b16f5b6",
+            "excerpt": "## Spec\n\nRC-C2 confirming round (repair delta 4af3d955c..b721e5a7c). Behaviors preserved: yes. The RC-C2 predicate is untouched; the chunk-chain base digest and the fold digest compute the same values; the widening to fold.go stays inside ticket 02's signed-off directory; no acceptance changed. No new finding at severity 5 or more.\n\n### Advice\n- atSource and plan.go:155 hold similar derivations outside the delta.\n- The unreadable-base error text changed; no test pins it.\n"
+          },
+          "axis": "Spec",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c2-r2-coverage",
+          "performer": "claude:rc-c2-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-coverage-r2",
+            "digest": "sha256:e06834280065681339d3d3331363a40292c0d70bd0db9a486aa370cf8d4b7d5b",
+            "excerpt": "## Coverage\n\nRC-C2 confirming round (repair delta 4af3d955c..b721e5a7c). S1-repair coverage: held. Probe: fold.go commitDigest(root, spec, commit) -> commitDigest(root, spec, covered): bit, 1 failed, TestRecordFoldRefusesANonFold/unreviewed_work, restored yes. No changed error path lost coverage. No new finding at severity 5 or more.\n\n### Advice\n- No test pins the false branch of follows at fold.go:93.\n- The checkSource base-unreadable error text changed and no test pins it.\n"
+          },
+          "axis": "Coverage",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2-r1-coverage"
+          ]
         }
       ]
     }
@@ -886,7 +952,7 @@
 
 RC-C1 consumed repair cycle 1 of 2 after its initial review (round r1). The test-only repair at `2a1619cc0` closed P1 and C1 to C4, and the coordinator confirmation `rc-c1-confirm-1` replaced a confirming round. The run is under `--auto-approve`, so a later cycle past the allowance needs no stop.
 
-RC-C2 consumed repair cycle 1 of 2 after its initial review (round r1).
+RC-C2 consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `b721e5a7c` closed S1, and the confirming round r2 passed on all three axes with no new finding.
 
 ## Standards
 
