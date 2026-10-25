@@ -1207,6 +1207,30 @@
           ]
         },
         {
+          "id": "FT314-gate-reuse",
+          "criteria": [
+            {
+              "id": "FT314-gate-reuse.key",
+              "text": "An unchanged landing composition reuses gate evidence only under the complete authorization key, and any key change runs the full gate."
+            },
+            {
+              "id": "FT314-gate-reuse.grade-key",
+              "text": "One grade key, separate from authorization, names the tree minus the declared evidence paths, the run-binary digest, the toolchain, the schedule, and the capability posture, and each verb looks up a grade before it checks its own conditions."
+            },
+            {
+              "id": "FT314-gate-reuse.premise",
+              "text": "The grade key builds on the FT445 chunk key without the review record and on the delta green, and the spec measures the saving of the key on recorded merge-then-land pairs before any code change."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT314",
+              "path": "roadmap/FT314.md",
+              "identity": "sha256:264903c22ff37e51a3e009b46a96a43267b9ad5c38934d96f3af4fd222f662ea"
+            }
+          ]
+        },
+        {
           "id": "FT360-shared-fixtures",
           "criteria": [
             {
@@ -1242,22 +1266,6 @@
               "id": "FT411",
               "path": "roadmap/FT411.md",
               "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
-            }
-          ]
-        },
-        {
-          "id": "FT314-gate-reuse",
-          "criteria": [
-            {
-              "id": "FT314-gate-reuse.key",
-              "text": "An unchanged landing composition reuses gate evidence only under the complete authorization key, and any key change runs the full gate."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT314",
-              "path": "roadmap/FT314.md",
-              "identity": "sha256:264903c22ff37e51a3e009b46a96a43267b9ad5c38934d96f3af4fd222f662ea"
             }
           ]
         },

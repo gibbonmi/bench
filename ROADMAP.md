@@ -174,6 +174,14 @@ and the small cuts. The rows below hold the rest.
 
 **FT442 (LOW) — a build widens each consumer file of a touched declaration before dispatch.**
 
+**FT447 (MEDIUM) — the bounded repair policy states the three repair-cost rules of the FT445 build.**
+
+**FT448 (MEDIUM) — a repair record reruns the requirements that its delta reaches and carries the rest forward.**
+
+**FT452 (MEDIUM) — the planned-cell refusal of `bench record ticket` reads only the ticket's own `Covers:` rows.**
+
+**FT453 (LOW) — the Claude line binding names Haiku as a reviewer-allowed model, and the agent-line guard accepts it.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -198,7 +206,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
 
-**FT402 (MEDIUM) — the landing gate costs less time and keeps its failure detection.**
+**FT402 (MEDIUM) — a command run caches its pure git queries, and serial worktree tests move into the parallel phase.**
 
 **FT411 (MEDIUM, decision required) — tests that add no value are cut, and their coverage stays with the tests that subsume them.**
 
@@ -209,6 +217,12 @@ and the small cuts. The rows below hold the rest.
 **FT404 (LOW, decision required) — each conformance check states the scope that its detector grades.**
 
 **FT444 (LOW) — each retro improvement item names its fix lever.**
+
+**FT449 (MEDIUM, decision required) — each gate unit keeps a verdict keyed by its declared input closure.**
+
+**FT450 (MEDIUM) — a landing queue composes ready sources in order, grades the stack once, and bisects a red.**
+
+**FT451 (MEDIUM) — the gate grades each lane-passed tip in the background, so a checkpoint or a landing looks up its verdict.**
 
 ## Release qualification
 
@@ -327,6 +341,7 @@ recommended table is sequencing advice.
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305 | Adoption follows durable execution. |
+| FT451 | FT314 | The background grade looks up the FT314 grade key. |
 
 ### Recommended
 
@@ -339,12 +354,15 @@ recommended table is sequencing advice.
 | FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
 | FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
+| FT449 | FT314 | Unit verdicts wait for the measured saving of one grade key. |
+| FT450 | FT314 | The queue reuses the grade key for each composed stack. |
+| FT451 | FT255 | Background grades share the explicit machine budget. |
 
 ## Recommended sequence
 
-1. FT360-shared-fixtures
-2. FT411
-3. FT314-gate-reuse
+1. FT314-gate-reuse
+2. FT360-shared-fixtures
+3. FT411
 4. FT125-exact-readers
 5. FT375-residual
 6. FT344-remedy
