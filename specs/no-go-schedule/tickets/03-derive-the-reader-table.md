@@ -12,7 +12,7 @@ The derivation is one pure function in `reader_table.go`. Its inputs are the pac
 
 It refuses the table when a listed package has no log, when a log is empty or malformed, or when an operation word is unknown. It also refuses when `internal/conformance` does not read every covered family.
 
-`internal/git` gains a reader of the tracked symbolic links of a tree, built on `ListTree` (`internal/git/tree.go:151`). It also gains the store's directory name beside `DeltaCacheFile` (`internal/git/git.go:177-179`).
+`internal/git` gains a reader of the tracked symbolic links of a tree, built on `ListTree` (`internal/git/tree.go:154`). It also gains the store's directory name beside `DeltaCacheFile` (`internal/git/git.go:177-179`).
 
 `reader_store.go` owns the run's log directory and the table store. For a whole run of the kit's built-in table, the owner creates the log directory and sets `BENCH_GATE_TESTLOG` in the phase environment. After the run, it lists the test packages with `go list`, using the build flags and tags that ticket 02's traced phase builder supplies, not a restated list. It reads each package's log through `testLogKey`.
 

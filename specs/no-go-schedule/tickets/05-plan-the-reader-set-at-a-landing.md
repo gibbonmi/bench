@@ -16,7 +16,7 @@ The changed paths come from `ComposedChanges` between the destination and the gr
 
 `internal/git/history.go` adds `FirstParentsAfter(root, marker, destination string) ([]string, error)`. It lists the first-parent commits after the green marker up to the destination, oldest first. The chain case asks `gate.ReaderRecorded` for the tree of each listed commit. Tickets 07 and 08 read the chain through the same function.
 
-The census forbids a direct process or `git init` constructor in the gate's and the Git package's tests (`internal/conformance/ordinary_build_census_test.go:69-80`). Build the fixtures through the `gittest` helpers.
+The census caps the direct process and `git init` constructors in the gate's and the Git package's tests at one each (`internal/conformance/ordinary_build_census_test.go:69-87`). Build the fixtures through the `gittest` helpers, and add no direct constructor.
 
 `internal/gate/run_transaction.go` holds 397 lines. Put the plan and its dispatch in `reader_plan.go`, and keep `run_transaction.go` at 400 lines or fewer.
 
