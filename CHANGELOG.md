@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Drain cross-source reads
+
+- Changed `/bench-drain`, which now charges each read delegate to read a topic that another scope drains and to report the overlap. Before retained batch authorship starts, the coordinator reads each new or merged row against every drained source on its topic. The coordinator also reads the row against the shipped changelog entry of the build that each source follows. Before, a charge could fence a read delegate off a topic, so a row could miss the lessons of a retro or a changelog entry on the same topic.
+
 ### Workflow-step reads
 
 - Changed the `Workflow-step writes` class of the `craft-spec` pre-review proof checklist. For each new workflow step, the spec author now also lists each read in the callee chain of the step. For each read, the author names the HEAD, the record state, and the capture source that the read sees at the lifecycle point of the step. Before, the class traced only the writes, so a read that a record commit during the step voids stayed hidden until review.

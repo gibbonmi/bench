@@ -66,8 +66,12 @@ Skip a scope when its indexed source set is empty. Charge every delegate under
 
 Read delegates edit nothing, take no new inventory, and use only the snapshot and its named paths.
 Each read delegate returns these fields: proposed owner, classification, occurrence, evidence, and reviewer decision.
+Charge each read delegate to read a topic that another scope drains and to report the overlap.
 
 Resolve duplicate incidents and reviewer decisions before retained batch authorship starts.
+Read each new or merged row against every drained source on its topic, not only the unit that opened it.
+Also read the row against the shipped changelog entry of the build that each source follows.
+
 Verify that the tree stayed unchanged. Keep sealed capture retirement, the handoff,
 verification, and landing with the coordinator. Implement-now delegates may run while other reads continue. Route their line through `craft-line` and keep their authorship under `.bench/BENCH.md`.
 
