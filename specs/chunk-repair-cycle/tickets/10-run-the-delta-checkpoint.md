@@ -1,7 +1,7 @@
 # Run a delta checkpoint for a test-only delta after a whole green
 
 Blocked by: 09-list-the-system-suite-in-the-selector.md
-Writes: internal/gate/checkpoint.go, internal/gate/delta_checkpoint.go (new), internal/gate/delta_checkpoint_test.go (new), internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/chunk_gap.go, internal/gate/engine.go, internal/gate/gate_go.go, internal/gate/phases.go, internal/gate/phases_test.go, internal/gate/tag_census_test.go, internal/gate/report.go, internal/gate/complete_checkpoint_test.go, internal/gate/review_checkpoint_confirmation_test.go, internal/gate/authorization/authorization.go, internal/reviewrecord/confirmation.go, internal/reviewrecord/confirmation_test.go, internal/reviewrecord/write.go, internal/testgap/testgap.go, internal/testgap/testgap_test.go, .bench/BENCH-reference.md, projects/benchkit.md
+Writes: internal/gate/checkpoint.go, internal/gate/delta_checkpoint.go (new), internal/gate/delta_checkpoint_test.go (new), internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/chunk_gap.go, internal/gate/engine.go, internal/gate/gate_go.go, internal/gate/phases.go, internal/gate/phases_test.go, internal/gate/tag_census_test.go, internal/gate/report.go, internal/gate/complete_checkpoint_test.go, internal/gate/review_checkpoint_confirmation_test.go, internal/gate/authorization/authorization.go, internal/reviewrecord/confirmation.go, internal/reviewrecord/confirmation_test.go, internal/reviewrecord/write.go, internal/testgap/testgap.go, internal/testgap/testgap_test.go, .bench/BENCH-reference.md, projects/benchkit.md, CHANGELOG.md
 Covers: RC58, RC59, RC60, RC61, RC62, RC63, RC64, RC65, RC66, RC67, RC71, RC72, RC73
 
 ## What to build
