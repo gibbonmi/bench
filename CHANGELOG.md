@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Workflow-step reads
+
+- Changed the `Workflow-step writes` class of the `craft-spec` pre-review proof checklist. For each new workflow step, the spec author now also lists each read in the callee chain of the step. For each read, the author names the HEAD, the record state, and the capture source that the read sees at the lifecycle point of the step. Before, the class traced only the writes, so a read that a record commit during the step voids stayed hidden until review.
+
 ### Chunk repair cycle
 
 - Changed `bench record confirmation`, which now accepts a test-only repair whose only other change is an assignment-only plan commit. The chunk checkpoint accepts that confirmation. Before, the assignment record changed the spec, so the test-only proof refused it.
