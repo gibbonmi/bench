@@ -3908,6 +3908,44 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "rc-c6b-confirm-1",
+          "performer": "claude:rc-orchestrator-20261024",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a1693c0c5c621ce28cfd87638cc6c8a30115c796",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:rc-orchestrator-20261024",
+            "digest": "sha256:50a313ee476659b55b043ce240a18741a4c7a9bec7beb2c793fc6b4a1b8435b6",
+            "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRedStaysRed,585,1,0,null,yes\n  2,bit,omit,failed,1,TestDeltaGreenNeedsTheCurrentBase,585,1,0,null,yes\n  3,bit,omit,failed,1,TestDeltaGreenNeedsAValidRecord,585,1,0,null,yes\n  4,bit,swap,failed,4,TestCheckpointPrepareTakesTheDelta,585,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2887\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71459,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:176: evidence after a red delta = {Tree:8af9fc206fb61f3321392e3c8c5308f8e14aa283 Oracle:d26b306b04e52568c7dfeeb15f6cd4a84ce1444c95ffefdafe4257687a2305d4 RecordedAt:0001-01-01 00:00:00 +0000 UTC ReusableGreen:false R… (339 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70659,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:331: prepared run = 0 gate: green (delta green reused for this subject)\",2\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71795,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsAValidRecord,\"lane_record_test.go:349: checkpoint after an invalid delta record = 0 gate: green (delta green reused for this subject)\",2\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71592,585\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:287: delta record = {Schema:1 State: Status: Tree:4dc710cc1cd79935a8cb98a664772e0bbf0abae3 Oracle: RecordedAt:2026-10-25T15:29:42Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:193: delta record = {Schema:1 State: Status: Tree:18fb76e3c12567b76ed4ed1ac0c61a8954ad41a0 Oracle: RecordedAt:2026-10-25T15:29:21Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:0000000000000000000000000000000000… (537 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:263: delta record = {Schema:1 State: Status: Tree:9715373d91d3211a1ab18ec342c26174db41f0b8 Oracle: RecordedAt:2026-10-25T15:29:41Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:324: delta record = {Schema:1 State: Status: Tree:3b2e613446bd53e80407cf0cb8a1039bc89324c6 Oracle: RecordedAt:2026-10-25T15:29:42Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "reviewed_tip": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "repaired_tip": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "omit the tree term of the delta reuse",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:rc-orchestrator-20261024",
+              "digest": "sha256:50a313ee476659b55b043ce240a18741a4c7a9bec7beb2c793fc6b4a1b8435b6",
+              "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRedStaysRed,585,1,0,null,yes\n  2,bit,omit,failed,1,TestDeltaGreenNeedsTheCurrentBase,585,1,0,null,yes\n  3,bit,omit,failed,1,TestDeltaGreenNeedsAValidRecord,585,1,0,null,yes\n  4,bit,swap,failed,4,TestCheckpointPrepareTakesTheDelta,585,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2887\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71459,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:176: evidence after a red delta = {Tree:8af9fc206fb61f3321392e3c8c5308f8e14aa283 Oracle:d26b306b04e52568c7dfeeb15f6cd4a84ce1444c95ffefdafe4257687a2305d4 RecordedAt:0001-01-01 00:00:00 +0000 UTC ReusableGreen:false R… (339 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70659,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:331: prepared run = 0 gate: green (delta green reused for this subject)\",2\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71795,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsAValidRecord,\"lane_record_test.go:349: checkpoint after an invalid delta record = 0 gate: green (delta green reused for this subject)\",2\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71592,585\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:287: delta record = {Schema:1 State: Status: Tree:4dc710cc1cd79935a8cb98a664772e0bbf0abae3 Oracle: RecordedAt:2026-10-25T15:29:42Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:193: delta record = {Schema:1 State: Status: Tree:18fb76e3c12567b76ed4ed1ac0c61a8954ad41a0 Oracle: RecordedAt:2026-10-25T15:29:21Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:0000000000000000000000000000000000… (537 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:263: delta record = {Schema:1 State: Status: Tree:9715373d91d3211a1ab18ec342c26174db41f0b8 Oracle: RecordedAt:2026-10-25T15:29:41Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:324: delta record = {Schema:1 State: Status: Tree:3b2e613446bd53e80407cf0cb8a1039bc89324c6 Oracle: RecordedAt:2026-10-25T15:29:42Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -4313,6 +4351,8 @@ The RC-C6 repair at `8b79ba0ab` closed all eight findings, and `7562758544` corr
 The RC-C6 confirming round r2 passed on all three axes with no new finding. It needed no reaffirmation round, because the record held the repair's reds before the round started.
 
 RC-C6B consumed repair cycle 1 of 2 after its initial review (round r1). The coordinator accepted C1 to C4 as test-only fixes with no consultant round, and it narrowed C4 to the stored `run_binary` value. The coordinator probe before the axes found the same gap as C2: the omitted tree term of `reusableDelta` left `./internal/gate` green.
+
+The test-only repair at `ef387b3f9` closed C1 to C4, and the coordinator confirmation `rc-c6b-confirm-1` replaced a confirming round. The coordinator probe of `internal/gate/delta_checkpoint.go` bit each finding's mutant, and every row restored the file. A red delta that writes its record failed `TestDeltaCheckpointRedStaysRed`. The omitted tree term failed `TestDeltaGreenNeedsTheCurrentBase`, and the omitted `Ready` term failed `TestDeltaGreenNeedsAValidRecord`. A constant run-binary digest failed four tests, the first `TestCheckpointPrepareTakesTheDelta`.
 
 ## Standards
 
