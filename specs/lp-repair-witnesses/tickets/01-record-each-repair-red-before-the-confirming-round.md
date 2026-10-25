@@ -18,7 +18,9 @@ Each red names the mutation, the killing test, and the restore.
 The Land section of the implementation command states that the review record holds each red of that return before the confirming round's charge.
 `bench record verification --probe-result <file>` retains the red of a planned probe requirement.
 The orchestrator writes each other red as prose in the review record outside the fenced record block.
-The implementation command is at its line budget, so the diff joins two wrapped lines of that file and changes none of their words.
+The implementation command is at its line budget, so the diff joins two wrapped lines of the entry orientation into one and changes none of their words.
+The diff also removes the blank line after the exit handoff heading, as the entry orientation heading already does.
+No mutation fixture quotes the bytes of those lines.
 
 The project instructions count an independent test expectation only when its red is recorded and demonstrated.
 That rule stays in the project instructions, because each linked repo owns its own instructions.

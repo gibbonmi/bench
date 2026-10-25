@@ -8,7 +8,6 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 This implementation phase starts from an approved spec, or from a change small enough for the light path. It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams. If there is no spec, the change must fit the light path in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fit the light path, route to `/bench-write-spec` first. If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there. A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.
 
 ## Exit handoff
-
 Close by reporting the implemented stories, each acceptance row's coverage status, and the landed commits. A reviewed spec-backed build closes through the "Land" section below. A light-path build goes straight to `/bench-final-check`. A build that stops short exits through "When the build stops short" below, which recommends its one durable next action.
 
 ## Declare the line, validate the tickets, route the venue
@@ -35,7 +34,8 @@ Before each approved slice, identify its acceptance target and existing verifica
 
 A material action changes behavior, a verification target, or a premise that determines the next action. After each material action, rerun that route. Inspect the result before continuing. One material action can contain several related edits before the rerun. If a result contradicts the approved behavior or seam, stop. Route it through the wrong-spec path under "When the build stops short."
 
-Work approved tickets in dependency order inside their planned chunks. Use TDD only where `craft-tdd` marks the seam. When the spec carries a coverage map, seed the harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row. The spec and the ticket are final. Do not evaluate another approach. Implement the ticket as written, run its focused checks, then continue to the commit below.
+Work approved tickets in dependency order inside their planned chunks. Use TDD only where `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
+harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row. The spec and the ticket are final. Do not evaluate another approach. Implement the ticket as written, run its focused checks, then continue to the commit below.
 
 Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph. At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).
 
