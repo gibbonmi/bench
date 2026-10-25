@@ -240,6 +240,10 @@ func CanonicalOrdinarySelection(tier Tier, names []string) ([]string, error) {
 // RootConformanceTest is the explicit ship rehearsal entry point.
 const RootConformanceTest = "TestRootConformance"
 
+// FixtureBiteTest is the ordinary test that proves each retained canary fixture bites
+// through its registered owner.
+const FixtureBiteTest = "TestEveryRetainedFixtureBitesThroughRegisteredOwner"
+
 const timingFileName = "bench-conformance-timing"
 
 // TimingPath is the per-check timing file for a graded root, or "" when that root carries

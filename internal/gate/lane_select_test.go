@@ -305,7 +305,7 @@ func TestSelectLaneByClass(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			selected, classes := SelectLane(BenchkitLane("/repo", "/repo"), tc.changes, tc.embeds)
+			selected, classes := SelectLane(BenchkitLane("/repo", "/repo"), tc.changes, TreeFacts{EmbedTargets: tc.embeds})
 			if got := laneCheckNames(selected); !reflect.DeepEqual(got, tc.checks) {
 				t.Errorf("selected checks = %v, want %v", got, tc.checks)
 			}
@@ -316,7 +316,7 @@ func TestSelectLaneByClass(t *testing.T) {
 	}
 	for _, anchor := range anchors.Entries() {
 		for _, change := range []ComposedChange{laneChange(anchor.File), laneDeletion(anchor.File)} {
-			selected, classes := SelectLane(BenchkitLane("/repo", "/repo"), []ComposedChange{change}, nil)
+			selected, classes := SelectLane(BenchkitLane("/repo", "/repo"), []ComposedChange{change}, TreeFacts{})
 			if !slices.Contains(classes, "anchor-registry") || !slices.Contains(laneCheckNames(selected), "docs-currency-workflow") {
 				t.Errorf("registered change %+v selects %v with classes %v", change, laneCheckNames(selected), classes)
 			}
@@ -341,7 +341,7 @@ func TestSelectLaneReturnsADeclaredSubsequence(t *testing.T) {
 		{laneChange("bin/x.sh")},
 		{laneChange("a.go"), laneChange("bin/x.sh")},
 	} {
-		selected, _ := SelectLane(declared, changes, nil)
+		selected, _ := SelectLane(declared, changes, TreeFacts{})
 		next := 0
 		for _, check := range selected {
 			for next < len(declared) && declared[next].Name != check.Name {
