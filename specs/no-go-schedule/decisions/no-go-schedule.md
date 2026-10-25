@@ -28,7 +28,7 @@ Standing preference for the spec: slice the tickets in the spec session itself,
 with no delegate. Keep each ticket implementation under 150k tokens of context.
 
 A map-owned asset stays in the map's assets folder,
-decisions/no-go-schedule/assets/.
+specs/no-go-schedule/decisions/no-go-schedule/assets/.
 
 ## Decisions so far
 
@@ -104,6 +104,6 @@ decisions/no-go-schedule/assets/.
 - Path: `docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md`
   Supports: the whole-gate landing rule that #14 amends.
   Drift: a change to the ADR.
-- Path: `decisions/no-go-schedule/assets/research.md`
+- Path: `specs/no-go-schedule/decisions/no-go-schedule/assets/research.md`
   Supports: the measurements and the probes behind #2, #7, #8, #10, and #11.
   Drift: a new landing mix, a new reader package, or a new Go toolchain.
