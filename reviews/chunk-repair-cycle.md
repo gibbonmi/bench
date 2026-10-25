@@ -3047,6 +3047,74 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "rc-c5-r2-spec",
+          "performer": "claude:rc-c5-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-spec-r2",
+            "digest": "sha256:94414f55f679a31bdc538b74d40e4d3364ea1b2928ce64d63aa3046c02e524c1",
+            "excerpt": "## Spec\n\nRC-C5 delta-only reaffirmation (repair delta 78202f768..e05ef7e0d). Earlier evidence still holds: RC53-RC57 cite tests that exist and check the row's behavior, and bench coverage reports the map as mapped. The new --run rule is stricter, stays inside RC55 and RC56, and leaves RC28 true. The changelog bullet claims only what ticket 09 and its repair deliver. No new finding at severity 5 or more.\n\n### Advice\n- Ticket 09 and the spec do not state the --run rule; a short sentence in ticket 09 would close that.\n"
+          },
+          "axis": "Spec",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c5-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c5-r2-standards",
+          "performer": "claude:rc-c5-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-standards-r2",
+            "digest": "sha256:733bce9b41992e5107795fe7485154cf8f1fb664ae316d3ee40b6046af573658",
+            "excerpt": "## Standards\n\nRC-C5 confirming round (repair delta 78202f768..e05ef7e0d). S1, S2, and S4: closed. S3: open for the record only. Request.Filtered() holds the explicit-run fact once, both branches of satisfies read it, and the removed guard loses nothing because parseFocusedRequest refuses --run on a check with no pattern. No new finding at severity 5 or more.\n\n- S3 | sev 3 | auto-fix | conf 7 | reviews/chunk-repair-cycle.md | The record holds no red of the two filtered-run cases.\n\n### Advice\n- Run() still spells the explicit-run test instead of reading Filtered().\n- The new --run changelog sentence has no stated before-behavior.\n"
+          },
+          "axis": "Standards",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "finding_ids": [
+            "S3"
+          ],
+          "supersedes": [
+            "rc-c5-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c5-r2-coverage",
+          "performer": "claude:rc-c5-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-coverage-r2",
+            "digest": "sha256:5ea2105ed673d903a6ff649bb0e9db7239c4dd7c9c04e4a08bc9d67596189dc2",
+            "excerpt": "## Coverage\n\nRC-C5 confirming round (repair delta 78202f768..e05ef7e0d). C1, C2, and C3: closed. The suite import row pins the mixed-run argv order, the no-suite row pins the absence of suite operands and environment, and both floor forms refuse --run all. The table rewrite and the writeListingGo delegation dropped no assertion. No new finding at severity 5 or more.\n\n### Advice\n- No test literal pins the system element's command text any more; floorCommand has one generic branch.\n- Request.Filtered has no direct row in selection_facts_test.go.\n"
+          },
+          "axis": "Coverage",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c5-r1-coverage"
+          ]
         }
       ]
     }
@@ -3323,6 +3391,8 @@ RC-C4B consumed repair cycle 1 of 2 after its initial review (round r1). The con
 The RC-C4B repair at `665bc44fb` closed S1 to S4 and the pin. In the confirming round r2, Standards raised S5, because the pin's red was not on record. The coordinator demonstrated that red: removing the `json:"-"` tag from `Checkpoint.Prepare` failed `TestCompleteCheckpointPurposeOmitsPrepare`, and the probe restored the file.
 
 RC-C5 consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided C3 on 2026-10-24: opus/medium and sonnet/high both chose a request accessor for an explicit run, used by both floor forms. The coordinator accepted C1 and C2 as test-only fixes.
+
+The RC-C5 repair at `8dc575f27` and `e05ef7e0d` closed S1 to S4 and C1 to C3. Its probe of `internal/preflight/check_floor.go` demonstrated the red of the filtered-run cases. The check form reverted to the sentinel compare failed `TestCheckFloorOwesTheSystemCheck`. The package form reverted to the sentinel compare failed `TestCheckFloorRejectsAFilteredRun`. Its probe of `internal/testreport/selection.go` bit `TestChangedSelectionSelectsTheSystemSuite` for each of the three C1 and C2 mutations, and every row restored the file.
 
 ## Standards
 
