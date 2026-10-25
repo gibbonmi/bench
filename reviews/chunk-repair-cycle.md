@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:834cc5b8fe96129f12e1df67ee87ceb805610b9c13ae057518c1e7f55112e839",
+  "plan_digest": "sha256:9df303de1190b8a2b58cea0854e93d4cef5aa07974d706c84a5ab48dd523a257",
   "implementation_session": "",
   "chunks": [
     {
@@ -3947,6 +3947,39 @@
           }
         }
       ]
+    },
+    {
+      "id": "RC-C7",
+      "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+      "tip": "28314fb45718b985aaa65ea1d95120d29315712c",
+      "plan_digest": "sha256:9df303de1190b8a2b58cea0854e93d4cef5aa07974d706c84a5ab48dd523a257",
+      "source_digest": "6a87fe45b0d009fa64030e6d0b2ffce2375a78d0",
+      "acceptance_rows": [
+        "RC76",
+        "RC81"
+      ],
+      "verification": [
+        {
+          "id": "t12-measure-conformance",
+          "performer": "claude:rc-t12-author-20261025",
+          "role": "author-verification",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6a87fe45b0d009fa64030e6d0b2ffce2375a78d0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t12-author-20261025",
+            "digest": "sha256:31562746a45c342ae9ecf8d20b6a52ef30196f3bda6ce6d1838bfed50851894a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14650,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "28314fb45718b985aaa65ea1d95120d29315712c",
+          "requirement": "measure-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -4290,6 +4323,39 @@
     {
       "from": "sha256:35029ba1b18a8812846fc1dd55fef51e0c5eeaeec6bc3db2880c4ae29e9ee2a1",
       "to": "sha256:834cc5b8fe96129f12e1df67ee87ceb805610b9c13ae057518c1e7f55112e839",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
+        ],
+        "RC-C6": [
+          "RC-C6"
+        ],
+        "RC-C6B": [
+          "RC-C6B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:834cc5b8fe96129f12e1df67ee87ceb805610b9c13ae057518c1e7f55112e839",
+      "to": "sha256:9df303de1190b8a2b58cea0854e93d4cef5aa07974d706c84a5ab48dd523a257",
       "chunk_ids": {
         "RC-C1": [
           "RC-C1"
