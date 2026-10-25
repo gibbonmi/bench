@@ -2688,6 +2688,28 @@
           "supersedes": [
             "rc-c4b-r1-coverage"
           ]
+        },
+        {
+          "id": "rc-c4b-r3-standards",
+          "performer": "claude:rc-c4b-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-standards-r2",
+            "digest": "sha256:e65ec55dc4caa43733958f574ded0da0bbcd755a404ba214ff6b5c1dc2dd380d",
+            "excerpt": "## Standards\n\nRC-C4B reaffirmation of S5 (record-only correction 38bb0c221). S5: closed. The Repair state records the coordinator's red: the removal of the json:\"-\" tag from Checkpoint.Prepare failed TestCompleteCheckpointPurposeOmitsPrepare, and the probe restored the file. No new finding at severity 5 or more.\n"
+          },
+          "axis": "Standards",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4b-r2-standards"
+          ]
         }
       ]
     }
