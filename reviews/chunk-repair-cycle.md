@@ -2620,6 +2620,74 @@
           "tip": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "rc-c4b-r2-standards",
+          "performer": "claude:rc-c4b-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-standards-r2",
+            "digest": "sha256:c03dec214be85109192ac0e297674889b64d71a67ad2aa4b91cf062581873527",
+            "excerpt": "## Standards\n\nRC-C4B confirming round (repair delta 1838a97f4..665bc44fb). S1, S2, S3, and S4: closed. The reference points to the implement phase for the prepared-run trigger, the stale sentence is qualified, gradesSubjectAlone holds the prepared-run decision once, and the changelog group matches tickets 01-08. 1 new finding.\n\n- S5 | sev 5 | auto-fix | conf 6 | internal/gate/checkpoint_prepare_test.go:234-241 | The independent literal in TestCompleteCheckpointPurposeOmitsPrepare has no recorded red in the review record, as the AGENTS.md exception requires.\n\n### Advice\n- The changelog's old-key sentence omits the HEAD tip, and its prepared-run bullet omits the tip-moved guard skip.\n- gradesSubjectAlone names the consequence of the Prepare flag as a one-line alias.\n"
+          },
+          "axis": "Standards",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "finding_ids": [
+            "S5"
+          ],
+          "supersedes": [
+            "rc-c4b-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c4b-r2-spec",
+          "performer": "claude:rc-c4b-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-spec-r2",
+            "digest": "sha256:d4814a4ea7efa16b73118128c1f0b213516ddd7ca6f67318f067a39926cc1e51",
+            "excerpt": "## Spec\n\nRC-C4B confirming round (repair delta 1838a97f4..665bc44fb). Rows RC34-RC38, RC42, RC45, and RC49-RC52 still hold by trace, and RC43 and RC47 still hold in the guidance and documents. The gradesSubjectAlone predicate gives the same truth value at all three sites. The changelog bullets claim nothing beyond the spec and tickets 01-08, and the widening obeys the plan-expansion rule. No new finding at severity 5 or more.\n\n### Advice\n- The plan commit message of 16f4900f3 cites no decision reference; the widening and the learning entry carry it.\n"
+          },
+          "axis": "Spec",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4b-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c4b-r2-coverage",
+          "performer": "claude:rc-c4b-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-coverage-r2",
+            "digest": "sha256:b32ef3eb3ce0550cd423818b5201828fad88c7187b706e82b14501c7c30c982b",
+            "excerpt": "## Coverage\n\nRC-C4B confirming round (repair delta 1838a97f4..665bc44fb). A1: closed. TestCompleteCheckpointPurposeOmitsPrepare pins the complete purpose bytes, and the removal of json:\"-\" bit it. All three gradesSubjectAlone sites are pinned: one probe of the early return in applyCheckpoint bit 8 tests and restored the file. The refactor dropped no assertion. No new finding at severity 5 or more.\n\n### Advice\n- gradesSubjectAlone is an alias of Prepare, so a later mode that sets only some of the three sites would need its own tests.\n"
+          },
+          "axis": "Coverage",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4b-r1-coverage"
+          ]
         }
       ]
     }
@@ -2842,6 +2910,8 @@ RC-C4 consumed repair cycle 1 of 2 after its initial review (round r1). The cons
 
 RC-C4B consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided S4 on 2026-10-24. Opus/medium chose the last ticket, sonnet/high chose ticket 08, and the fable/medium tie-break chose ticket 08 because RC-C7 can stop before ticket 13. Both consultants also chose a test-only pin of the complete form's purpose bytes from Coverage advice.
 
+The RC-C4B repair at `665bc44fb` closed S1 to S4 and the pin. In the confirming round r2, Standards raised S5, because the pin's red was not on record. The coordinator demonstrated that red: removing the `json:"-"` tag from `Checkpoint.Prepare` failed `TestCompleteCheckpointPurposeOmitsPrepare`, and the probe restored the file.
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
@@ -2871,6 +2941,10 @@ RC-C4B round r1: 4 findings. Worst issue: S1, two derivations of the prepared-ru
 - S2 | auto-fix | confidence 6 | `.bench/BENCH-reference.md:565` | A stale sentence says each call grades the record evidence and prose.
 - S3 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:290` | The prose skip keys on an absent context value, not on the prepared flag.
 - S4 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:85` | The consultants chose a changelog section for tickets 01 to 08, through a widening of ticket 08.
+
+RC-C4B round r2: 1 finding. Worst issue: S5, the pin's red was not on record.
+
+- S5 | auto-fix | confidence 6 | `internal/gate/checkpoint_prepare_test.go:234-241` | The Repair state records the coordinator's red of the pin.
 
 ## Spec
 
