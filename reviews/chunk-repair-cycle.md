@@ -3882,6 +3882,8 @@ The RC-C5 repair at `8dc575f27` and `e05ef7e0d` closed S1 to S4 and C1 to C3. It
 
 RC-C6 consumed repair cycle 1 of 2 after its initial review (round r1). The coordinator accepted all eight findings as fixes with no consultant round. Standards S2, Spec P2, and Coverage C2 name one defect, the timeout path that the delta run repeats.
 
+The RC-C6 repair at `8b79ba0ab` closed all eight findings, and `7562758544` corrected the spec's manifest guard sentence. Its probe of `internal/gate/delta_checkpoint.go` demonstrated four reds, and every row restored the file. A delta run with its timeout branch turned off failed `TestDeltaCheckpointTimesOutAsAWholeRun`. Removing the Go-module clause failed the `no Go module` case, and accepting a refused manifest failed the `refused manifest` case. Unanchoring the conformance filter failed `TestDeltaCheckpointRunsTheDeltaSet`.
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
