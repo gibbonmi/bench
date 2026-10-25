@@ -3115,6 +3115,28 @@
           "supersedes": [
             "rc-c5-r1-coverage"
           ]
+        },
+        {
+          "id": "rc-c5-r3-standards",
+          "performer": "claude:rc-c5-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-standards-r2",
+            "digest": "sha256:e359b8c8ac9c1f3220e9340a21f892058cb273dfa59a30e17f7b8089142aff1b",
+            "excerpt": "## Standards\n\nRC-C5 reaffirmation of S3 (record-only correction 04df0f34d). S3: closed. The Repair state records the repair's reds: the check form reverted to the sentinel compare failed TestCheckFloorOwesTheSystemCheck, and the package form reverted to the sentinel compare failed TestCheckFloorRejectsAFilteredRun. No new finding at severity 5 or more.\n"
+          },
+          "axis": "Standards",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c5-r2-standards"
+          ]
         }
       ]
     }
