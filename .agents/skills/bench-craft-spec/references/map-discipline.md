@@ -39,7 +39,7 @@ section also governs each current-code claim in the spec prose.
   - `Derived expectations` names the grader of each derived expectation. No expectation comes from the code under test.
   - `Consolidated rules`, when a spec consolidates repeated rules, gives a consolidation table of each site's old rule and new rule. Each changed cell of the consolidation table maps to an acceptance row, a flagged addition, or a Won't handle line.
   - `Quantified obligations` checks every quantified obligation at each affected site and across all tickets.
-  - `Workflow-step writes`, for each new workflow step, traces every write through the digests that later checkpoints compare.
+  - `Workflow-step writes`, for each new workflow step, traces every write through the digests that later checkpoints compare. It also lists each read in the callee chain of the step. For each read, it names the HEAD, the record state, and the capture source that the read sees at the lifecycle point of the step.
 - The changed-function caller sweep runs `bench consumers` for each changed function, unexported functions included.
 - Each canary row and each conformance row traces to its executed root before the coverage map locks.
 - The reader sweep lists each named consumer of the decision fact.
