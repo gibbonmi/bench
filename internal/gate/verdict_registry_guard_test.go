@@ -14,8 +14,9 @@ import (
 
 func TestVerdictRecordClassRegistryMatchesExpectation(t *testing.T) {
 	want := []struct {
-		name   string
-		fields []string
+		name    string
+		fields  []string
+		refused bool
 	}{
 		{
 			name:   "full verdict",
@@ -26,8 +27,14 @@ func TestVerdictRecordClassRegistryMatchesExpectation(t *testing.T) {
 			fields: []string{"oracle", "owner_pid", "schema", "started_at", "state", "tree"},
 		},
 		{
-			name:   "lane record",
-			fields: []string{"lane", "outcome", "recorded_at", "run_binary", "schema", "tree"},
+			name:    "lane record",
+			fields:  []string{"lane", "outcome", "recorded_at", "run_binary", "schema", "tree"},
+			refused: true,
+		},
+		{
+			name:    "delta record",
+			fields:  []string{"base_tree", "delta", "recorded_at", "run_binary", "schema", "tree"},
+			refused: true,
 		},
 	}
 
@@ -41,6 +48,9 @@ func TestVerdictRecordClassRegistryMatchesExpectation(t *testing.T) {
 		}
 		if got.validate == nil {
 			t.Errorf("record class %d has no validator", i)
+		}
+		if refused := got.reuseRefusal != ""; refused != row.refused {
+			t.Errorf("record class %d reuse refusal = %q, want refused %t", i, got.reuseRefusal, row.refused)
 		}
 	}
 }
@@ -59,6 +69,8 @@ func TestVerdictRecordClassesAtInspect(t *testing.T) {
 		{name: "mixed_class_invalid", state: Invalid, make: inspectMixedClassRecord},
 		{name: "full_invalid_status", state: Invalid, make: inspectFullInvalidStatusRecord},
 		{name: "pending_owner_pid_zero_invalid", state: Invalid, make: inspectPendingOwnerZeroRecord},
+		{name: "delta_ready", state: Ready, make: inspectDeltaRecord(strings.Repeat("a", 64))},
+		{name: "delta_run_binary_invalid", state: Invalid, make: inspectDeltaRecord("a")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := outcomeFixture(t)
@@ -160,6 +172,17 @@ func inspectPendingOwnerZeroRecord(tree, oracle string, now time.Time) []byte {
 		"schema": 1, "state": "pending", "tree": tree, "oracle": oracle,
 		"started_at": now.Add(-time.Minute).Format(time.RFC3339), "owner_pid": 0,
 	})
+}
+
+// inspectDeltaRecord answers the maker of a delta record over the subject tree whose run
+// binary is runBinary.
+func inspectDeltaRecord(runBinary string) func(string, string, time.Time) []byte {
+	return func(tree, _ string, now time.Time) []byte {
+		return inspectJSON(verdictRecord{
+			Schema: verdictSchema, Tree: tree, BaseTree: tree, Delta: `["./."]`, RunBinary: runBinary,
+			RecordedAt: now.Add(-time.Minute).Format(time.RFC3339),
+		})
+	}
 }
 
 func inspectJSON(value any) []byte {

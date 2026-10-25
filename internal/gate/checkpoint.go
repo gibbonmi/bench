@@ -33,6 +33,10 @@ type verbKey struct{}
 // chunkSourceKey carries the committed source that a chunk checkpoint accepted.
 type chunkSourceKey struct{}
 
+// deltaSourceKey carries the HEAD source of a chunk checkpoint, prepared or not, to the delta
+// decision, which derives the reviewed tip from the record of that source.
+type deltaSourceKey struct{}
+
 // chunkSource is the HEAD commit and the HEAD tree of a chunk checkpoint.
 type chunkSource struct{ tip, tree string }
 
@@ -76,10 +80,10 @@ func (checkpoint Checkpoint) validate() error {
 	return nil
 }
 
-// gradesSubjectAlone reports a prepared run, which accepts no committed source. So it reads
-// no tip, no completion evidence, and no record prose, and it opens no chunk gap. A record
+// gradesSubjectAlone reports a prepared run, which accepts no committed source. So it guards
+// no tip, reads no completion evidence and no record prose, and opens no chunk gap. A record
 // commit during the run then moves no accepted tip, and its key holds only the stripped tree
-// that it captured.
+// that it captured. Only its delta decision reads the record, from the source it captured.
 func (checkpoint Checkpoint) gradesSubjectAlone() bool { return checkpoint.Prepare }
 
 // The gate's flags. The parser, the usage line, and a route's rerun read these spellings.
@@ -292,8 +296,10 @@ func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stde
 	if err != nil {
 		return sourceUnavailable(ctx, root, stderr, mode, err)
 	}
+	source := chunkSource{tip: tip, tree: tree}
+	ctx = context.WithValue(ctx, deltaSourceKey{}, source)
 	if checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint); !checkpoint.gradesSubjectAlone() {
-		ctx = context.WithValue(ctx, chunkSourceKey{}, chunkSource{tip: tip, tree: tree})
+		ctx = context.WithValue(ctx, chunkSourceKey{}, source)
 	}
 	return executeTreeWithOwner(ctx, root, stripped, stdout, stderr, arm, mode, nil)
 }

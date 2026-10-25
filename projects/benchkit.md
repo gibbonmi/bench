@@ -116,7 +116,8 @@ The pre-push hook guards the default branch. This line only states the binding.)
   the SessionStart hook and the user both call. It ranks the signals that fire on a
   fixed severity ladder and leads with the next action. It reads gate state from the
   **gate cache** (`<git-dir>/bench-last-gate`, written durably by gate execution),
-  never from a cold gate run.
+  never from a cold gate run. A green delta checkpoint writes only
+  `<git-dir>/bench-last-delta`, which the dashboard does not read.
 
   The contract (gate-tested) shows only on signal, keeps a five-row budget, and treats a
   stale-green as not a clean bill. It also gives one combined capture-drain row (parked
@@ -468,11 +469,14 @@ current-state advertisement of its non-meta input bindings:
 | `process-lifetime-closure` | `go-source` |
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
-current exact green; partial/component and reduced-scope records are legacy input classes
-that fail closed and are never authored. Prospective execution uses the same complete
-phase architecture. A stale exact verdict stays stale rather than being softened by path
-classification. A chunk checkpoint keys its green to the committed tree without the review
-record. A prepared chunk run writes a green under that key before the record commit.
+current exact green; partial/component records are legacy input classes that fail closed and
+are never authored. The one reduced record is the delta class, the green of a delta set. Only
+a later chunk checkpoint of the same base and subject reuses it.
+
+Prospective execution uses the same complete phase architecture. A stale exact verdict stays stale rather than being
+softened by path classification. A chunk checkpoint keys its green to the committed tree
+without the review record. A prepared chunk run writes a green under that key, or a delta
+green, before the record commit.
 
 `BENCH_REQUIRE_CAPABILITIES=1` makes capability skips fatal. Without it, capability
 rows stay informational because a developer host may legitimately lack optional

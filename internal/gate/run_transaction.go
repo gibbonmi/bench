@@ -189,7 +189,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	// The oracle can run the selected executable, so it registers on the selection too.
 	local := append(append(cache, bundle.Resources()...), selection.Resources()...)
 	if delta, eligible := deltaPlan(ctx, storageRoot, runtimeRoot, plan, mode); eligible {
-		return runDelta(ctx, runCtx, runtimeRoot, storageRoot, declaredPaths, delta, evaluation, local, release, stdout, stderr)
+		return runDelta(ctx, runCtx, runtimeRoot, storageRoot, gitdir, declaredPaths, delta, evaluation, local, selection, release, replacer, stdout, stderr)
 	}
 	// Persist the interrupted posture before the oracle starts. The branch-native gate
 	// always grades the complete subject; there is no component partition to retain.

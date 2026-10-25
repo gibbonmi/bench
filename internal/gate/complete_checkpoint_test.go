@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -177,6 +178,23 @@ func TestCompleteCheckpointIgnoresAPreparedChunkGreen(t *testing.T) {
 	}
 	if got := publishedEvidence(t, f); !got.ReusableGreen {
 		t.Fatalf("published tree of HEAD has no reusable green under the completion obligation: %+v", got)
+	}
+}
+
+// TestCompleteCheckpointIgnoresADeltaGreen covers RC68. The one green of the chunk is a delta
+// green, which the complete checkpoint never reads, so the complete checkpoint runs the whole
+// gate.
+func TestCompleteCheckpointIgnoresADeltaGreen(t *testing.T) {
+	inheritFixtureBinary(t)
+	var base string
+	f := attachedCheckpointFixture(t, recordtest.AttachDelegated, seedRepair, deltaGate(t))
+	confirmRepair(f, repairChunk(f, graded(t, func(f *recordtest.Fixture) { base = strippedSubject(t, f); modifyTest(f) })))
+	requireDelta(t, f, 0, "./.")
+	requireDeltaGreen(t, f, base)
+	retainCompletion(f)
+	before := gateSchedules(t, f)
+	if code, out := completeCheckpoint(t, f); code != 0 || !slices.Equal(gateSchedules(t, f), append(before, wholeSchedule)) {
+		t.Fatalf("complete checkpoint after a delta green = %d %s with the schedules %q; want one more whole run", code, out, gateSchedules(t, f))
 	}
 }
 
