@@ -15,6 +15,7 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // OG25: the record names the composed tree, the lane identity, and the outcome. OG16 and
@@ -311,7 +312,8 @@ func TestCheckpointPrepareRunsWholeForANonTestRepair(t *testing.T) {
 // TestDeltaGreenNeedsTheCurrentBase covers RC83. A new review round moves the three axis
 // results to the test repair, so the base moves, and the delta green over the old base serves
 // no run. The prepared run shares the run decision of the chunk checkpoint and runs no
-// evidence pass, so the fixture moves the results alone.
+// evidence pass, so the fixture moves the results alone. Before the round, a second test
+// commit on the same base is a new subject, so the delta green of the first serves it no run.
 func TestDeltaGreenNeedsTheCurrentBase(t *testing.T) {
 	f := frozenDeltaFixture(t)
 	first := strippedSubject(t, f)
@@ -319,6 +321,7 @@ func TestDeltaGreenNeedsTheCurrentBase(t *testing.T) {
 	modifyTest(f)
 	f.Commit("repair the test")
 	round, second := f.Tip(), strippedSubject(t, f)
+	requirePreparedDelta(t, f, first)
 	// A fresh prepared run grades the test repair whole, so the new base has its green.
 	if code, out := runCheckpointWith(t, f, flagPrepare, flagFresh); code != 0 {
 		t.Fatalf("fresh prepared run = %d %s", code, out)
@@ -332,6 +335,19 @@ func TestDeltaGreenNeedsTheCurrentBase(t *testing.T) {
 	f.Save()
 	f.Commit("review the test repair")
 	requirePreparedDelta(t, f, second)
+}
+
+// TestDeltaGreenNeedsAValidRecord is the witness that a delta record of the current base and
+// subject whose run_binary is invalid serves no run, so the checkpoint runs the delta set again.
+func TestDeltaGreenNeedsAValidRecord(t *testing.T) {
+	f := deltaFixture(t, graded(t, modifyTest))
+	requireDelta(t, f, 0, "./.")
+	path := deltaRecordPath(t, f)
+	outcomeWrite(t, filepath.Dir(path), filepath.Base(path), strings.Replace(string(outcomeRead(t, path)), `"run_binary":"`, `"run_binary":"x`, 1), 0o600)
+	code, out := runCheckpoint(t, f)
+	if schedules := gateSchedules(t, f); code != 0 || strings.Contains(out, deltaReusedLine) || len(schedules) != 3 {
+		t.Fatalf("checkpoint after an invalid delta record = %d %s with the schedules %q; want a second run of the delta set", code, out, schedules)
+	}
 }
 
 // TestDeltaGreenPersistenceFailureFailsTheCheckpoint is the witness that a green delta whose
@@ -358,8 +374,8 @@ func requirePreparedDelta(t *testing.T, f *recordtest.Fixture, base string) {
 	requireDeltaGreen(t, f, base)
 }
 
-// requireDeltaGreen requires that the delta record in the Git dir of f names base and the
-// current subject of f.
+// requireDeltaGreen requires that the delta record in the Git dir of f names base, the
+// current subject of f, and the digest of the selected fixture executable.
 func requireDeltaGreen(t *testing.T, f *recordtest.Fixture, base string) {
 	t.Helper()
 	var record verdictRecord
@@ -367,8 +383,9 @@ func requireDeltaGreen(t *testing.T, f *recordtest.Fixture, base string) {
 	if err == nil {
 		err = json.Unmarshal(data, &record)
 	}
-	if want := strippedSubject(t, f); err != nil || record.BaseTree != base || record.Tree != want {
-		t.Fatalf("delta record = %+v, %v; want the base %s and the subject %s", record, err, base, want)
+	binary, _ := fileDigest(os.Getenv(runbinary.Env))
+	if want := strippedSubject(t, f); err != nil || record.BaseTree != base || record.Tree != want || record.RunBinary != binary {
+		t.Fatalf("delta record = %+v, %v; want the base %s, the subject %s, and the run binary %s", record, err, base, want, binary)
 	}
 }
 

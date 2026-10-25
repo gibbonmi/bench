@@ -167,12 +167,13 @@ func TestDeltaCheckpointTimesOutAsAWholeRun(t *testing.T) {
 }
 
 // TestDeltaCheckpointRedStaysRed covers RC73: a red delta reds the checkpoint, records no
-// green, and runs no whole gate after it.
+// green and no delta record, and runs no whole gate after it.
 func TestDeltaCheckpointRedStaysRed(t *testing.T) {
 	f := deltaFixture(t, graded(t, func(f *recordtest.Fixture) { f.Write(plantedRed, "package fixture\n") }))
 	requireDelta(t, f, 7, "./.")
-	if got := InspectTree(f.Root, strippedSubject(t, f)); got.ReusableGreen {
-		t.Fatalf("evidence after a red delta = %+v; want no reusable green", got)
+	_, err := os.Stat(deltaRecordPath(t, f))
+	if got := InspectTree(f.Root, strippedSubject(t, f)); got.ReusableGreen || !os.IsNotExist(err) {
+		t.Fatalf("evidence after a red delta = %+v with the delta record stat %v; want no reusable green and no delta record", got, err)
 	}
 }
 
