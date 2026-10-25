@@ -54,7 +54,8 @@ const goChildGroupCancelled = "child process group cancelled"
 
 type focusedRequest struct {
 	// packageExprs holds the package patterns in argv order: one for each `--package`, or
-	// the one legacy or default operand.
+	// the one legacy or default operand. A `--changed` run replaces them with the operands
+	// of its selection.
 	packageExprs []string
 	// causes is the `--changed` selection; it is nil for every other form.
 	causes    changedSelection
@@ -110,7 +111,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if hasSourceTip && !hasBase {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--source-tip"), 2
 	}
-	if hasCheck && !isNamedCheck(check) {
+	if hasCheck && !IsNamedCheck(check) {
 		return focusedRequest{}, unknownCheck(check), 2
 	}
 	packageOperands := parsed.Repeated["--package"]
@@ -213,6 +214,7 @@ func (request focusedRequest) answerWithoutSelection(root string) (outcome Outco
 // runSelected runs request under selection and ctx. The caller owns the selection's lifetime.
 func runSelected(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
 	request.selection = selection
+	var suiteEnv []string
 	if request.changed {
 		subject, kind, hint := diff.ResolveChangedSubject(root, request.base, request.sourceTip)
 		if kind != "" {
@@ -222,14 +224,14 @@ func runSelected(ctx context.Context, root string, request focusedRequest, selec
 		if err != nil {
 			return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 		}
-		causes, err := resolveChangedPackagesWithEnvironment(ctx, root, subject.Paths, changedEnv)
+		causes, operands, systemEnv, err := resolveChangedRun(ctx, root, subject.Paths, changedEnv)
 		if err != nil {
 			return refusedOutcome(toon.Errorf("changed selection failed", err.Error())+"\n", 1)
 		}
 		if len(causes) == 0 {
 			return emptyReport(request.full, causes)
 		}
-		request.causes = causes
+		request.causes, request.packageExprs, suiteEnv = causes, operands, systemEnv
 	}
 	if request.check != "" {
 		return runNamedCheck(ctx, root, request, selection)
@@ -238,16 +240,12 @@ func runSelected(ctx context.Context, root string, request focusedRequest, selec
 	if request.run != "" {
 		operands = append(operands, "-run", request.run)
 	}
-	if len(request.causes) != 0 {
-		operands = append(operands, request.causes.packages()...)
-	} else {
-		operands = append(operands, request.packageExprs...)
-	}
+	operands = append(operands, request.packageExprs...)
 	env, err := selectedRunEnvironment(os.Environ(), selection)
 	if err != nil {
 		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
-	return runGoTest(ctx, root, request, focusedTestArgv(operands...), env)
+	return runGoTest(ctx, root, request, focusedTestArgv(operands...), append(env, suiteEnv...))
 }
 
 // focusedTestArgv is the `bench test` invocation over one operand list. It takes its

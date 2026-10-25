@@ -60,10 +60,11 @@ func gatherCheckFloor(ctx context.Context, root string, parsed []tickets.Ticket,
 	return facts
 }
 
-// floorElements is one ticket's floor: root conformance where it applies, each package
-// that the ticket writes, and the command tests for a command package or an embed. An
-// entry can name a command package that holds no package yet, and a directory entry can
-// hold a command package below it, so both the entries and the floor packages are asked.
+// floorElements is one ticket's floor: root conformance where it applies, each check and
+// each package that the ticket writes, and the command tests for a command package or an
+// embed. An entry can name a command package that holds no package yet, and a directory
+// entry can hold a command package below it, so both the entries and the floor packages
+// are asked.
 func floorElements(ctx context.Context, root string, writes []string, conformance bool) ([]string, error) {
 	floor, err := testreport.WritesFloor(ctx, root, writes)
 	if err != nil {
@@ -73,7 +74,7 @@ func floorElements(ctx context.Context, root string, writes []string, conformanc
 	if conformance {
 		elements = append(elements, testreport.RootConformanceCheckName)
 	}
-	elements = append(elements, floor.Packages...)
+	elements = append(append(elements, floor.Checks...), floor.Packages...)
 	commandWrite := slices.ContainsFunc(writes, func(entry string) bool {
 		path, _ := tickets.WritesPath(entry)
 		return tickets.CommandPackage(path)
@@ -172,16 +173,18 @@ func floorRedDetail(omitted []string) string {
 }
 
 // satisfies applies the satisfaction rules to one selection. A form that runs no test
-// satisfies nothing. Only the root-conformance check satisfies its element. A package
-// element needs an unfiltered package run that is not `--changed`, whose target equals
-// the element or covers it at a segment boundary. A run of several package expressions
-// satisfies each element that one of its expressions satisfies.
+// satisfies nothing. Only a run of the named check satisfies a check element, and a check
+// that takes a run pattern must run unfiltered. A package element needs an unfiltered
+// package run that is not `--changed`, whose target equals the element or covers it at a
+// segment boundary. A run of several package expressions satisfies each element that one
+// of its expressions satisfies.
 func satisfies(selection testreport.Request, element string) bool {
 	if !selection.Runs() {
 		return false
 	}
-	if element == testreport.RootConformanceCheckName {
-		return selection.Form() == testreport.CheckForm && selection.Target() == element
+	if testreport.IsNamedCheck(element) {
+		unfiltered := !testreport.CheckTakesRun(element) || selection.Run() == testreport.AllTests
+		return selection.Form() == testreport.CheckForm && selection.Target() == element && unfiltered
 	}
 	if selection.Form() != testreport.PackageForm || selection.Run() != testreport.AllTests || selection.Changed() {
 		return false
@@ -207,7 +210,7 @@ func packageCovers(target, element string) bool {
 
 // floorCommand is the exact command that satisfies one element.
 func floorCommand(element string) string {
-	if element == testreport.RootConformanceCheckName {
+	if testreport.IsNamedCheck(element) {
 		return testCommand + " --check " + element
 	}
 	return reviewrecord.PackageTestCommand(element)

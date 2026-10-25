@@ -15,6 +15,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 - Changed `bench gate --checkpoint <spec-path> --chunk <id>`, which now refuses a checkout that differs from HEAD with the `checkpoint-dirty-checkout` face. An uncommitted review record also refuses. Before, only the complete checkpoint refused a dirty checkout.
 - Changed the key of the chunk checkpoint to the committed HEAD tree without the review record, so a record-only commit reuses the chunk green. The chunk checkpoint still grades the record evidence and the record prose from the committed tree. Before, the key held the working tree and the record bytes.
 - Added `bench gate --checkpoint <spec-path> --chunk <id> --prepare`. It runs the gate on the subject of the chunk checkpoint and writes its green before the record commit, so the checkpoint after that commit reuses the green. It skips the evidence pass and the record prose grade, and it opens no chunk gap. `--prepare` with `--complete` or without `--checkpoint` is a usage error at exit 2.
+- Changed `bench test --changed` in the kit checkout, which now runs the system suite as `bench test --check system` runs it when a system-suite test file changes or when a change reaches a package that the system suite imports. The `check-floor` row of `bench preflight build` now owes `bench test --check system` for a ticket that writes the system suite. Before, the changed selection refused a system-suite file as outside every current package, and the floor named no system check.
 
 ### Shift checkpoint response
 

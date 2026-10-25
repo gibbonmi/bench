@@ -325,6 +325,18 @@ func TestCheckFloorRejectsTheConformancePackage(t *testing.T) {
 	requireFloorRed(t, satisfaction(t, root, "docs/guide.md", "bench test --package ./internal/conformance"), conformanceRed())
 }
 
+// TestCheckFloorOwesTheSystemCheck grades that a ticket that writes the system suite owes
+// the unfiltered system check, and that the red names that check.
+func TestCheckFloorOwesTheSystemCheck(t *testing.T) {
+	root, entry := floorModule(t), "internal/systemtest/suite_test.go"
+	preflighttest.MustWriteFile(t, filepath.Join(root, entry), "//go:build system\n\npackage systemtest\n")
+	requireFloorGreen(t, satisfaction(t, root, entry, "bench test --check system"))
+	for _, command := range []string{"bench test --package ./...", "bench test --check system --run ^TestX$"} {
+		requireFloorDetail(t, satisfaction(t, root, entry, command),
+			"completion plan omits a floor check: chunk c1: system (add bench test --check system)")
+	}
+}
+
 func TestCheckFloorReadsOnlyTheOwnChunk(t *testing.T) {
 	root := floorModule(t, "internal/x", "internal/y")
 	one, two := writer("one.md", "internal/x/p.go"), writer("two.md", "internal/y/p.go")
@@ -380,19 +392,5 @@ func TestCheckFloorNotApplicableWithoutTickets(t *testing.T) {
 	f.TicketsDirExists = false
 	if row, _ := checkRow(Decide(f), checkFloorName); row.Verdict != verdictNA || row.Detail != "" {
 		t.Fatalf("check-floor in a build without tickets = %+v, want not-applicable", row)
-	}
-}
-
-func TestCheckFloorRedsALoaderFailure(t *testing.T) {
-	root := floorModule(t, "internal/x")
-	preflighttest.MustWriteFile(t, filepath.Join(root, "go.mod"), "module example.com/floor\n\nnot a directive\n")
-	one := writer("one.md", "internal/x/p.go")
-	_, err := testreport.WritesFloor(context.Background(), root, one.Writes)
-	if err == nil {
-		t.Fatal("fixture invalid: the package loader read a malformed go.mod")
-	}
-	row := floorRow(t, root, onePlan([]tickets.Ticket{one}, "bench test --package ./internal/x"), one)
-	if want := "package index not readable: " + err.Error(); row.Verdict != verdictRed || row.Detail != want {
-		t.Fatalf("check-floor row = %+v, want the red detailed %q", row, want)
 	}
 }

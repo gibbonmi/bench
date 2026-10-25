@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -15,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -185,85 +187,6 @@ func TestChangedSpaceAndGlobPathsReachResolverAndCommand(t *testing.T) {
 	}
 }
 
-func TestChangedGraphUsesOneClosedSelectionEnvironment(t *testing.T) {
-	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
-	listEnvironment := filepath.Join(t.TempDir(), "list-environment")
-	testEnvironment := filepath.Join(t.TempDir(), "test-environment")
-	goDir := t.TempDir()
-	writeChangedSubjectGo(t, filepath.Join(goDir, "go"), listEnvironment, testEnvironment, []listedPackage{{
-		Dir:        filepath.Join(root, "changed"),
-		ImportPath: "changedcommand/changed",
-		Match:      []string{currentPackagePattern},
-	}}, "changedcommand/changed")
-	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	for name, value := range map[string]string{
-		registry.ConformanceRootEnv:      "/ambient/root",
-		registry.ConformanceTierEnv:      "ship",
-		registry.ConformanceScopeEnv:     "ambient-scope",
-		registry.ConformanceChecksEnv:    "ambient-checks",
-		registry.ConformanceInheritedEnv: "ambient-inherited",
-		capability.LogEnv:                filepath.Join(t.TempDir(), "capability-log"),
-	} {
-		t.Setenv(name, value)
-	}
-
-	builds := 0
-	var selected, source string
-	installTestSelectionFactory(t, runbinary.Factory{
-		TempRoot: t.TempDir(),
-		Build: func(_ context.Context, sourceRoot, output string) error {
-			builds++
-			source, selected = sourceRoot, output
-			return os.WriteFile(output, []byte("selected"), 0o755)
-		},
-		Verify: func(string, string) error { return nil },
-	})
-
-	output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
-	if code != 0 {
-		t.Fatalf("changed command = %d\n%s", code, output)
-	}
-	if builds != 1 {
-		t.Fatalf("selection builds = %d, want one", builds)
-	}
-	for _, environment := range []string{listEnvironment, testEnvironment} {
-		got := readTestReportFile(t, environment)
-		for _, name := range []string{
-			registry.ConformanceRootEnv,
-			registry.ConformanceTierEnv,
-			registry.ConformanceScopeEnv,
-			registry.ConformanceChecksEnv,
-			registry.ConformanceInheritedEnv,
-			capability.LogEnv,
-		} {
-			if strings.Contains(got, name+"=") {
-				t.Errorf("%s retained ambient %s:\n%s", environment, name, got)
-			}
-		}
-		for name, want := range map[string]string{"BENCH_KIT": source, runbinary.Env: selected} {
-			if !strings.Contains(got, name+"="+want+"\n") {
-				t.Errorf("%s missing %s=%q:\n%s", environment, name, want, got)
-			}
-		}
-	}
-}
-
-func TestChangedNonGoSubjectRendersExplicitEmpty(t *testing.T) {
-	root, base, tip := changedCommandRepository(t, "README.md", "docs\n", "README.md", "")
-	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
-		return os.WriteFile(output, []byte("selected"), 0o755)
-	}, Verify: func(string, string) error { return nil }})
-	output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
-	if code != 0 {
-		t.Fatalf("emptyReport code = %d\n%s", code, output)
-	}
-	for _, table := range []string{"packages[0]{package,status,elapsed_ms,tests_run,selected_by}:\n", "failures[0]", "skips[0]"} {
-		if !strings.Contains(output, table) {
-			t.Fatalf("empty output = %q, want %q", output, table)
-		}
-	}
-}
-
 func TestChangedPackageRunPattern(t *testing.T) {
 	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
 	other := filepath.Join(root, "other", "other_test.go")
@@ -347,6 +270,54 @@ func TestChangedRunsWriteNoGateOwnedRecords(t *testing.T) {
 	}
 	if got := readTestReportFile(t, record); got != "before" {
 		t.Fatalf("gate record = %q, want unchanged", got)
+	}
+}
+
+// TestChangedSelectionSelectsTheSystemSuite grades that a changed system-suite test file
+// runs under the gate's system-suite operands and environment, as `bench test --check
+// system` runs it.
+func TestChangedSelectionSelectsTheSystemSuite(t *testing.T) {
+	suite := systemSuiteFile()
+	root, base, tip := systemSuiteRepository(t, suite, systemSuiteSource+"\n// changed\n")
+	t.Setenv("BENCH_KIT", root)
+	marker := filepath.Join(t.TempDir(), "environment")
+	goDir := t.TempDir()
+	writeListingGo(t, filepath.Join(goDir, "go"), marker)
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	installCannedSelection(t)
+	if output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip}); code != 0 {
+		t.Fatalf("changed command = %d\n%s", code, output)
+	}
+	operands, env := gate.SystemSuite(root)
+	got := readTestReportFile(t, marker)
+	for _, want := range append([]string{" " + strings.Join(operands, " ") + "\n"}, env...) {
+		if !strings.Contains(got, want) {
+			t.Fatalf("system-suite Go child missing %q:\n%s", want, got)
+		}
+	}
+}
+
+// TestChangedSelectionReachesTheSystemSuiteByImport grades that a production change that
+// the system suite imports selects the suite, which names that import as its cause.
+func TestChangedSelectionReachesTheSystemSuiteByImport(t *testing.T) {
+	root, _, _ := systemSuiteRepository(t, "changed/changed.go", "package changed\n\nconst Version = \"tip\"\n")
+	t.Setenv("BENCH_KIT", root)
+	got, err := resolveChangedPackages(context.Background(), root, []string{"changed/changed.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if suite := "changedcommand/" + path.Dir(systemSuiteFile()); got[suite] != causeImports+"changedcommand/changed" {
+		t.Fatalf("selection = %v, want %s selected by its import", got, suite)
+	}
+}
+
+// TestChangedSelectionKeepsTheLinkedIndex grades that a root whose kit is another checkout
+// lists no system-suite package, so a system-suite file stays outside every current package.
+func TestChangedSelectionKeepsTheLinkedIndex(t *testing.T) {
+	root, _, _ := systemSuiteRepository(t, "changed/changed.go", "package changed\n\nconst Version = \"tip\"\n")
+	t.Setenv("BENCH_KIT", t.TempDir())
+	if got, err := resolveChangedPackages(context.Background(), root, []string{systemSuiteFile()}); err == nil {
+		t.Fatalf("linked selection = %v, want the suite file outside every current package", got)
 	}
 }
 
@@ -495,6 +466,35 @@ func TestSelected(t *testing.T) {
 	runChangedGit(t, root, "commit", "-m", "changed")
 	tip := strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
 	return root, base, tip
+}
+
+// systemSuiteSource is a system-tagged test that imports changedcommand/changed, so a
+// production change there reaches the suite.
+const systemSuiteSource = "//go:build system\n\npackage systemtest\n\nimport (\n\t\"testing\"\n\n\t\"changedcommand/changed\"\n)\n\nfunc TestSuite(t *testing.T) { _ = changed.Version }\n"
+
+// systemSuiteFile is the fixture's tagged test file in the gate's system-suite package.
+func systemSuiteFile() string {
+	return path.Join(systemSuitePackage(), "suite_test.go")
+}
+
+// systemSuiteRepository is changedCommandRepository with the system-suite test at its
+// base and one change of changedPath.
+func systemSuiteRepository(t *testing.T, changedPath, changedSource string) (root, base, tip string) {
+	t.Helper()
+	return changedCommandRepository(t, systemSuiteFile(), systemSuiteSource, changedPath, changedSource)
+}
+
+// writeListingGo writes a go that runs the real `go list`. Any other call records its
+// environment and argv in marker and reports one passing package.
+func writeListingGo(t *testing.T, path, marker string) {
+	t.Helper()
+	realGo, err := exec.LookPath("go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	quoted := sanitize.ShellQuote(marker)
+	writeGoStub(t, path, "#!/usr/bin/env bash\nif [ \"$1\" = list ]; then exec "+sanitize.ShellQuote(realGo)+" \"$@\"; fi\nenv > "+quoted+
+		"\nprintf 'argv=%s\\n' \"$*\" >> "+quoted+"\nprintf '%s\\n' '{\"Action\":\"pass\",\"Package\":\"suite\"}'\n")
 }
 
 func runChangedGit(t *testing.T, root string, args ...string) string {

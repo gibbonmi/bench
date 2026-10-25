@@ -1,10 +1,13 @@
 package testreport
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // changedCommandOverOnePackage runs `Command --changed` over one changed Go file of the
@@ -44,5 +47,21 @@ func TestChangedEmptyDiffCarriesSelectedBy(t *testing.T) {
 	want := "packages[0]{package,status,elapsed_ms,tests_run,selected_by}:"
 	if !strings.HasPrefix(output, want) || code != 0 {
 		t.Fatalf("Command = (%d, %q), want (0, prefix %q)", code, output, want)
+	}
+}
+
+func TestChangedNonGoSubjectRendersExplicitEmpty(t *testing.T) {
+	root, base, tip := changedCommandRepository(t, "README.md", "docs\n", "README.md", "")
+	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
+		return os.WriteFile(output, []byte("selected"), 0o755)
+	}, Verify: func(string, string) error { return nil }})
+	output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
+	if code != 0 {
+		t.Fatalf("emptyReport code = %d\n%s", code, output)
+	}
+	for _, table := range []string{"packages[0]{package,status,elapsed_ms,tests_run,selected_by}:\n", "failures[0]", "skips[0]"} {
+		if !strings.Contains(output, table) {
+			t.Fatalf("empty output = %q, want %q", output, table)
+		}
 	}
 }
