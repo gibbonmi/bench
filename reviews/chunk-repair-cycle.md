@@ -3979,7 +3979,72 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-c7-r1-standards",
+          "performer": "claude:rc-c7-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6a87fe45b0d009fa64030e6d0b2ffce2375a78d0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-standards-20261025",
+            "digest": "sha256:81a12bc18effe24d89972030a3fcfb06292658ee2f806190f5d8730969811249",
+            "excerpt": "## Standards axis, RC-C7 (frozen pair ef387b3..5a3524a)\n\nCount: 2 findings kept (1 at severity 5, 1 at severity 3). Worst: stale spec text for the dropped exec reuse.\n\n- S5, confidence 9, specs/chunk-repair-cycle/spec.md:262-272, also :46, :331-335, :307, :27. auto-fix. The plan commit dropped ticket 13 and RC77-RC80, but the spec still describes the dropped exec reuse as current design (BENCH.md invariant 3).\n- S3, confidence 8, specs/chunk-repair-cycle/assets/run-binary-cost.md:107 (also :44, :101, :126). no-op, advice only. The asset's stop decision reads \"RC-C7 continues with ticket 13\".\n\nImplementation command: plausibly contributed to S5; a plan commit that drops a ticket has no sweep step for prose that describes the dropped behavior.\n"
+          },
+          "axis": "Standards",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "28314fb45718b985aaa65ea1d95120d29315712c",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c7-r1-spec",
+          "performer": "claude:rc-c7-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6a87fe45b0d009fa64030e6d0b2ffce2375a78d0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-spec-20261025",
+            "digest": "sha256:1d77d147f20bf9019354d8c10efca0645932ce065039715b9662556843cdb9d7",
+            "excerpt": "## Spec axis, RC-C7\n\nSpec axis: 5 findings. Worst: severity 4, F1. Nothing at severity 5 or higher.\n\n- F1 sev 4, conf 8. spec.md:46, :262-272, :331-335. The descope left three current-state descriptions of the dropped exec reuse. auto-fix.\n- F2 sev 3, conf 7. assets/run-binary-cost.md:44, :107, :121-126 and tickets/12:13, :19 still treat ticket 13 as live. no-op (Advice).\n- F3 sev 2, conf 5. run-binary-cost.md:116: the empty source root claim holds for a direct Inherit only. no-op.\n- F4 sev 2, conf 6. The asset's probe facts come from code reading only; held_runs.go:75-81 supports them. no-op.\n- F5 sev 2, conf 6. roadmap/FT445.md:18 still lists change 6. no-op; the board row belongs to the reviewer or the final reconciliation.\n\nRC76: met. RC81 assignment: consistent.\n\nImplementation command: contributed in part to F1 and F2; the descope step has no sweep of current-state text for the dropped behavior.\n"
+          },
+          "axis": "Spec",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "28314fb45718b985aaa65ea1d95120d29315712c",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c7-r1-coverage",
+          "performer": "claude:rc-c7-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6a87fe45b0d009fa64030e6d0b2ffce2375a78d0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-coverage-20261025",
+            "digest": "sha256:a918b0b5e683a603c4dd1e3106f21767e4098aecbd8dbfc049154ba9fa09c772",
+            "excerpt": "Coverage axis, RC-C7, frozen pair ef387b3f9..5a3524aaa.\n\nCount: 2 findings, both severity 3 or lower (Advice). Worst issue: the asset still states the pre-drop decision. No correctness defect. No probe ran; the delta holds no Go code.\n\n- sev 3, conf 7, assets/run-binary-cost.md:313,413,427-433. no-op (Advice). The asset still says RC-C7 continues with ticket 13.\n- sev 3, conf 6, roadmap/FT445.md:18. no-op (Advice, reviewer-owned). The roadmap row still lists change 6.\n\nThe measurement supports its conclusion: the subject has no Go change, both formulas recompute, a cold cache can only raise the saving, the count of 8 selecting children holds in code, and held_runs.go:75-81 confirms the probe refusal. No RC77-RC80 cell, test name, or gate check remains.\n\nImplementation command: did not contribute. No command change is necessary.\n"
+          },
+          "axis": "Coverage",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "28314fb45718b985aaa65ea1d95120d29315712c",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -4420,6 +4485,8 @@ RC-C6B consumed repair cycle 1 of 2 after its initial review (round r1). The coo
 
 The test-only repair at `ef387b3f9` closed C1 to C4, and the coordinator confirmation `rc-c6b-confirm-1` replaced a confirming round. The coordinator probe of `internal/gate/delta_checkpoint.go` bit each finding's mutant, and every row restored the file. A red delta that writes its record failed `TestDeltaCheckpointRedStaysRed`. The omitted tree term failed `TestDeltaGreenNeedsTheCurrentBase`, and the omitted `Ready` term failed `TestDeltaGreenNeedsAValidRecord`. A constant run-binary digest failed four tests, the first `TestCheckpointPrepareTakesTheDelta`.
 
+RC-C7 consumed repair cycle 1 of 2 after its initial review (round r1). Standards S1 and Spec P1 name one defect: the spec still describes the dropped exec reuse as current design. The spec is on no `Writes:` line, so the coordinator corrects it in one prose-only plan commit.
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
@@ -4470,6 +4537,10 @@ RC-C6 round r1: 4 findings. Worst issue: S1, a conformance filter derived twice.
 
 RC-C6B round r1: 0 findings at severity 4 or more. Worst issue: none; eight items at severity 3 or lower go to Advice.
 
+RC-C7 round r1: 1 finding. Worst issue: S1, spec text that describes the dropped exec reuse as current design.
+
+- S1 | auto-fix | confidence 9 | `specs/chunk-repair-cycle/spec.md:262-272` | The summary, the solution, the RC-C7 decision section, the prior art, and the seam diagram still describe the exec reuse.
+
 ## Spec
 
 RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
@@ -4498,6 +4569,10 @@ RC-C6 round r1: 2 findings. Worst issue: P1, a reference sentence that omits eli
 - P2 | auto-fix | confidence 5 | `internal/gate/delta_checkpoint.go:118` | A delta timeout differs from a whole-run timeout.
 
 RC-C6B round r1: 0 findings at severity 4 or more. Worst issue: none; RC68 to RC70, RC74, RC75, RC82, and RC83 are met, and five items at severity 3 or lower go to Advice.
+
+RC-C7 round r1: 1 finding. Worst issue: P1, the same stale spec text; RC76 is met, and the RC81 assignment is consistent.
+
+- P1 | auto-fix | confidence 8 | `specs/chunk-repair-cycle/spec.md:46` | The solution, the RC-C7 decision section, and the seam diagram contradict the reviewer decision; it closes with S1.
 
 ## Coverage
 
@@ -4549,6 +4624,8 @@ RC-C6B round r1: 4 findings. Worst issue: C1, a red delta that can write a delta
 - C3 | auto-fix | confidence 8 | `internal/gate/delta_checkpoint.go:180` | No test gives the reuse an invalid delta record with matching operands.
 - C4 | auto-fix | confidence 7 | `internal/gate/delta_checkpoint.go:160` | No test asserts that the stored `run_binary` is the digest of the selected executable.
 
+RC-C7 round r1: 0 findings at severity 4 or more. Worst issue: none; the measurement supports its stop decision, and no dropped row, test, or check remains.
+
 ## Advice
 
 - The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
@@ -4584,3 +4661,7 @@ RC-C6B round r1: 4 findings. Worst issue: C1, a red delta that can write a delta
 - RC-C6B: the digest read relies on a commented invariant of a selected executable, and no test pins the read order or the digest failure path.
 - RC-C6B: the delta reuse compares no `run_binary` and has no freshness window; the spec does not decide either.
 - RC-C6B: "whole checkpoint" is a new prose term in the reference and the changelog.
+
+- RC-C7: the run-binary cost asset and ticket 12 still name ticket 13 as the next step; the spec records the reviewer decision that dropped it.
+- RC-C7: `roadmap/FT445.md` still lists change 6; the closing drain owns the row.
+- RC-C7: the asset keeps no measurement source, so its commands cannot run again as written.
