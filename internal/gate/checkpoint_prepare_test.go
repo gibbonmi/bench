@@ -2,6 +2,7 @@ package gate
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -227,6 +228,15 @@ func TestGateUsageNamesPrepare(t *testing.T) {
 	var stdout bytes.Buffer
 	if code := Command([]string{"--help"}, nil, &stdout, io.Discard); code != 0 || !strings.Contains(stdout.String(), flagPrepare) {
 		t.Fatalf("gate --help = %d %q; want a usage line that names %s", code, stdout.String(), flagPrepare)
+	}
+}
+
+// TestCompleteCheckpointPurposeOmitsPrepare pins the purpose bytes that the key of a complete
+// checkpoint hashes.
+func TestCompleteCheckpointPurposeOmitsPrepare(t *testing.T) {
+	const want = `{"Spec":"specs/example/spec.md","Chunk":"","Complete":true}`
+	if got, err := json.Marshal(Checkpoint{Spec: "specs/example/spec.md", Complete: true}); err != nil || string(got) != want {
+		t.Fatalf("complete checkpoint purpose = %s %v; want %s", got, err, want)
 	}
 }
 

@@ -338,7 +338,7 @@ file at the path answers a structured refusal at exit 1.
 
 A reviewed spec-backed build keeps its serial ticket commits in one retained integration source. Its approved plan groups tickets into coherent chunks. Before the first dispatch, the plan amendment declares version 2 with a delegate execution block. The amendment splits each chunk verification into one verification for each ticket. The last ticket's author freezes each chunk's base and current tip. Each accepted finding of the chunk review goes to a fresh repair session under the repair rule of `.bench/BENCH.md`.
 
-When a chunk freezes or a repair commits, the orchestrator also starts the prepared run of the chunk checkpoint.
+The Land section of `/bench-implement-spec` says when the orchestrator starts the prepared run of the chunk checkpoint.
 
 A worktree `bench commit`
 runs the fast lane on a private checkout of the composed snapshot, and a lane pass
@@ -562,7 +562,7 @@ Each other evidence refusal routes to `bench preflight review <slug>`.
 
 The chunk checkpoint grades the committed tree without the record through prospective execution.
 It keys its verdict to that tree, so a record-only commit reuses its green.
-Each call still grades the record evidence and the record prose, and the complete checkpoint keeps its purpose in its key.
+Each call without `--prepare` still grades the record evidence and the record prose, and the complete checkpoint keeps its purpose in its key.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.
 
 `--prepare` with `--chunk <id>` starts the prepared run of the chunk checkpoint.

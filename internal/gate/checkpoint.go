@@ -76,6 +76,12 @@ func (checkpoint Checkpoint) validate() error {
 	return nil
 }
 
+// gradesSubjectAlone reports a prepared run, which accepts no committed source. So it reads
+// no tip, no completion evidence, and no record prose, and it opens no chunk gap. A record
+// commit during the run then moves no accepted tip, and its key holds only the stripped tree
+// that it captured.
+func (checkpoint Checkpoint) gradesSubjectAlone() bool { return checkpoint.Prepare }
+
 // The gate's flags. The parser, the usage line, and a route's rerun read these spellings.
 const (
 	flagFresh      = "--fresh"
@@ -275,9 +281,8 @@ func sourceUnavailable(ctx context.Context, root string, stderr io.Writer, mode 
 // executeChunkCheckpoint grades the HEAD tree of root without the review record of spec,
 // once committedSource accepts the checkout. That tree runs through the prospective owner in
 // a private checkout, with root as the storage and identity root, so a record-only commit
-// keeps the subject of an earlier chunk green. The evidence pass and the record grade still
-// read the record from the HEAD tree on every call. A prepared run carries no accepted
-// source, so it grades no record prose.
+// keeps the subject of an earlier chunk green. The evidence pass and the record grade read
+// the record from the HEAD tree of the source that the call accepts.
 func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
 	tip, tree, refusal, refused := committedSource(ctx, root, stderr, mode)
 	if refused {
@@ -287,7 +292,7 @@ func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stde
 	if err != nil {
 		return sourceUnavailable(ctx, root, stderr, mode, err)
 	}
-	if checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint); !checkpoint.Prepare {
+	if checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint); !checkpoint.gradesSubjectAlone() {
 		ctx = context.WithValue(ctx, chunkSourceKey{}, chunkSource{tip: tip, tree: tree})
 	}
 	return executeTreeWithOwner(ctx, root, stripped, stdout, stderr, arm, mode, nil)
@@ -324,10 +329,7 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	if e.checkpoint.Spec == "" && e.completionFolder == "" {
 		return plan, nil
 	}
-	// A prepared run grades its subject alone, so it reads no tip and no evidence. A record
-	// commit during the run then moves no accepted tip, and its key holds only the stripped
-	// tree that it captured.
-	if e.checkpoint.Prepare {
+	if e.checkpoint.gradesSubjectAlone() {
 		return plan, nil
 	}
 	tip, err := benchgit.ResolveCommit(e.identityRoot, "HEAD")

@@ -214,7 +214,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	finishLog(result)
 	finishSpan(result)
-	if result.ActionExit == 0 && checkpoint.Chunk != "" && !checkpoint.Prepare {
+	if result.ActionExit == 0 && checkpoint.Chunk != "" && !checkpoint.gradesSubjectAlone() {
 		return openChunkGap(root, checkpoint, stderr)
 	}
 	return result.ActionExit
