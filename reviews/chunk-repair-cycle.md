@@ -2853,7 +2853,77 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-c5-r1-standards",
+          "performer": "claude:rc-c5-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-standards-r1",
+            "digest": "sha256:988927545bcea368db4c45a048d9e0f37bd87a018170931f6c70c56e628ffe7c",
+            "excerpt": "## Standards\n\n4 findings. Worst: S1, severity 4.\n\n- S1 | sev 4 | auto-fix | conf 8 | CHANGELOG.md:18 | The first sentence of the new bullet is 40 words, over the 25-word bound for a descriptive sentence.\n- S2 | sev 4 | auto-fix | conf 7 | internal/preflight/check_floor_test.go:335-336 | TestCheckFloorOwesTheSystemCheck restates the full red detail as a literal instead of the existing c1Red seam.\n- S3 | sev 3 | auto-fix | conf 6 | internal/preflight/check_floor_test.go:334 | The --check system --run ^TestX$ case pins the unfiltered guard with no recorded red.\n- S4 | sev 4 | auto-fix | conf 6 | internal/testreport/selection_test.go:489 | writeListingGo repeats the recording stub of writeCheckGo in check_test.go:294.\n\n### Advice\n- resolveChangedRun derives the system import path a second time through a loader closure.\n- systemSuitePackage reads the first operand without a leading dash from gate.SystemSuite.\n- floorElements merges Checks and Packages, and satisfies and floorCommand sort them apart again.\n"
+          },
+          "axis": "Standards",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c5-r1-spec",
+          "performer": "claude:rc-c5-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-spec-r1",
+            "digest": "sha256:58ede75786b0f94b2a577d8397aea71e71149b6d205144d973359096a3255ae4",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. RC53-RC56 hold by trace at dbc23a663, and RC57 holds: bench consumers gate.SystemSuite lists the index, and no second tag or package list enters the selector. The linked-repository acceptance holds through TestChangedSelectionKeepsTheLinkedIndex. The changelog bullet claims only what ticket 09 delivers.\n\n### Advice\n- A go.mod change gives the floor ./... without the system check, while the changed selection selects the suite; no row decides it.\n- A fold that merges a system-suite test owes no system run, as before.\n- In a mixed changed run, -tags=system and the suite environment apply to the other selected packages too.\n"
+          },
+          "axis": "Spec",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c5-r1-coverage",
+          "performer": "claude:rc-c5-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-coverage-r1",
+            "digest": "sha256:de770cf929af8d93cfed6536ecc203ed05e53e3a5b7761f8451073838750606a",
+            "excerpt": "## Coverage\n\n3 findings. Worst: C1, severity 7. One mutant set of 6 on internal/testreport/selection.go: 2 bit and 4 silent, all restored.\n\n- C1 | sev 7 | ask-user | conf 8 | internal/testreport/selection.go:132 | No test runs a changed selection that holds the suite plus another package; dropping or reordering the other packages stayed silent (mutants 1 and 2).\n- C2 | sev 5 | ask-user | conf 7 | internal/testreport/selection.go:127 | No test pins the !selected guard, so a suite that the change does not select can run with its environment (mutant 5, silent).\n- C3 | sev 3 | ask-user | conf 7 | internal/preflight/check_floor.go:186 | A plan command with --run all satisfies the unfiltered rule, because the run pattern collides with the AllTests sentinel; the package form has the same collision.\n\n### Advice\n- The IsDir half of the suite-directory guard is silent (mutant 4).\n- The consumer line that appends the suite environment in command.go was not probed.\n"
+          },
+          "axis": "Coverage",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3100,6 +3170,8 @@ RC-C4B consumed repair cycle 1 of 2 after its initial review (round r1). The con
 
 The RC-C4B repair at `665bc44fb` closed S1 to S4 and the pin. In the confirming round r2, Standards raised S5, because the pin's red was not on record. The coordinator demonstrated that red: removing the `json:"-"` tag from `Checkpoint.Prepare` failed `TestCompleteCheckpointPurposeOmitsPrepare`, and the probe restored the file.
 
+RC-C5 consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided C3 on 2026-10-24: opus/medium and sonnet/high both chose a request accessor for an explicit run, used by both floor forms. The coordinator accepted C1 and C2 as test-only fixes.
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
@@ -3134,6 +3206,13 @@ RC-C4B round r2: 1 finding. Worst issue: S5, the pin's red was not on record.
 
 - S5 | auto-fix | confidence 6 | `internal/gate/checkpoint_prepare_test.go:234-241` | The Repair state records the coordinator's red of the pin.
 
+RC-C5 round r1: 4 findings. Worst issue: S1, a changelog sentence over the prose bound.
+
+- S1 | auto-fix | confidence 8 | `CHANGELOG.md:18` | The first sentence of the new bullet is 40 words.
+- S2 | auto-fix | confidence 7 | `internal/preflight/check_floor_test.go:335-336` | The test restates the red detail instead of the `c1Red` seam.
+- S3 | auto-fix | confidence 6 | `internal/preflight/check_floor_test.go:334` | The filtered-run case has no recorded red.
+- S4 | auto-fix | confidence 6 | `internal/testreport/selection_test.go:489` | `writeListingGo` repeats the recording stub of `writeCheckGo`.
+
 ## Spec
 
 RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
@@ -3153,6 +3232,8 @@ RC-C4 round r1: 3 findings. Worst issue: P2, the same unrecorded absent-policy s
 - P3 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:280` | The consultants chose the prospective evaluation that spec line 197 names, through a widening to the worktree integration test.
 
 RC-C4B round r1: 0 findings. Worst issue: none.
+
+RC-C5 round r1: 0 findings. Worst issue: none.
 
 ## Coverage
 
@@ -3186,6 +3267,12 @@ RC-C4 round r1: 4 findings. Worst issue: C1, a non-empty exclusion policy that n
 
 RC-C4B round r1: 0 findings. Worst issue: none.
 
+RC-C5 round r1: 3 findings. Worst issue: C1, a mixed changed run with no test.
+
+- C1 | auto-fix | confidence 8 | `internal/testreport/selection.go:132` | No test runs the suite with another selected package.
+- C2 | auto-fix | confidence 7 | `internal/testreport/selection.go:127` | No test keeps an unselected suite out of the run.
+- C3 | auto-fix | confidence 7 | `internal/preflight/check_floor.go:186` | The consultants chose an accessor, so `--run all` counts as a filtered run in both floor forms.
+
 ## Advice
 
 - The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
@@ -3209,3 +3296,6 @@ RC-C4B round r1: 0 findings. Worst issue: none.
 - RC-C4B: the guidance starts a prepared run at the last chunk's freeze, which no chunk checkpoint consumes.
 - RC-C4B: the guidance does not say outright that the prepared run starts after the record commit.
 - RC-C4B: no test covers a red prepared run or a prepared run on a chunk id that the record lacks.
+
+- RC-C5: a `go.mod` change gives the floor `./...` without the system check, while the changed selection selects the suite.
+- RC-C5: in a mixed changed run, the system tag and environment also reach the other selected packages.
