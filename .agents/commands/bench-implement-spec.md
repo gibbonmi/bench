@@ -5,8 +5,7 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 # /bench-implement-spec — do the work at the seams
 
 ## Entry orientation
-This implementation phase starts from an approved spec, or from a change small enough for the light path. It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams. If there is no spec, the change must fit the light path in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fit the light path, route to `/bench-write-spec` first.
-If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there. A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.
+This implementation phase starts from an approved spec, or from a change small enough for the light path. It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams. If there is no spec, the change must fit the light path in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fit the light path, route to `/bench-write-spec` first. If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there. A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.
 
 ## Exit handoff
 
@@ -36,8 +35,7 @@ Before each approved slice, identify its acceptance target and existing verifica
 
 A material action changes behavior, a verification target, or a premise that determines the next action. After each material action, rerun that route. Inspect the result before continuing. One material action can contain several related edits before the rerun. If a result contradicts the approved behavior or seam, stop. Route it through the wrong-spec path under "When the build stops short."
 
-Work approved tickets in dependency order inside their planned chunks. Use TDD only where `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
-harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row. The spec and the ticket are final. Do not evaluate another approach. Implement the ticket as written, run its focused checks, then continue to the commit below.
+Work approved tickets in dependency order inside their planned chunks. Use TDD only where `craft-tdd` marks the seam. When the spec carries a coverage map, seed the harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row. The spec and the ticket are final. Do not evaluate another approach. Implement the ticket as written, run its focused checks, then continue to the commit below.
 
 Apply `craft-line`'s retained implementation continuation policy throughout the ticket graph. At initial review or before post-review repairs, including resumed work, read [the bounded repair policy](../skills/bench-craft-line/references/bounded-repair-policy.md).
 
@@ -66,6 +64,8 @@ A build folds `main` with `bench worktree merge --from main <target>` before the
 Retain author verification and all three native review results in `reviews/<slug>.md`. After the last ticket of a chunk, that ticket's author freezes the chunk and records the chunk entry with `bench record ticket`. Each ticket author stages its verification and probe runs at its own ticket commit, and `bench record ticket` binds each entry to the commit of its run. The author stages with only the record path dirty, and one record commit on the ordinary lane follows the last author's record. When a chunk freezes, start `bench gate --checkpoint specs/<slug>/spec.md --chunk <id> --prepare` beside the review axes, but only when each axis probes in its own worktree. When a repair commits, run the coordinator probe first, then start that prepared run beside the confirmation.
 
 Before a repair dispatch, run `bench record assignment`, then `bench spec widen` and any floor edit, then one `bench commit`. A repair session runs each check that its ticket owes once at its repair commit, and its `bench record ticket` call refreezes the chunk at that commit. Before a successor chunk starts, run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>`. Wait on the PID of the prepared run before this checkpoint, because a checkpoint refuses while that run holds the gate lock. An ordinary lane pass or ordinary green cannot replace this checkpoint, and when evidence fails, follow its named record or review action. After a repair, apply the bounded repair policy's current-evidence rule and its narrow evidence-only exception before retrying.
+
+Before the orchestrator prepares the charge of a confirming round, the review record holds each red that the repair's `Witness return:` field reports. `bench record verification --probe-result <file>` retains the red of a planned probe requirement. The orchestrator writes each other red as prose in `reviews/<slug>.md` outside the fenced record, then commits the record.
 
 After the last chunk, reconcile every acceptance row and the integrated behavior. The last chunk runs no chunk checkpoint gate, because the complete checkpoint that `/bench-final-check` owns grades every chunk again. The last chunk keeps its chunk entry, its verification entries, and its three review entries. From the clean destination, hand the accepted source to `bench worktree land`; it composes, gates, publishes `Status: implemented`, and releases the source. Then run `/bench-final-check`.
 

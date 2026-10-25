@@ -26,6 +26,7 @@ Focused suite: <exact command>
 Independent biting probe: <property, mutation kind, site, and expected red>
 Debug route: start with `.agents/commands/bench-debug.md`; return the recorded cause
 Repair context: <fold targets and author context, each read by the coordinator before this charge names it>
+Witness return: <the demonstrated red of each independent test expectation that the repair adds: mutation, killing test, restored>
 ```
 
 ## In the charge
