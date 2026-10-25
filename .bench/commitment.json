@@ -1228,6 +1228,18 @@
               "path": "roadmap/FT449.md",
               "identity": "sha256:aecfc7841b28375bd75e04e58cf812152d083e9f8d6f298c8d51766e6831688d"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "no-go-schedule",
+                "path": "specs/no-go-schedule/spec.md",
+                "identity": "sha256:7c3eee512e4a1211029af93d100e93a16722b4370432a205a3cb7f1d32865cc5"
+              },
+              "obligations": [
+                "FT449"
+              ]
+            }
           ]
         },
         {
