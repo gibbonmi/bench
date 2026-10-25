@@ -3736,7 +3736,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-c6b-r1-standards",
+          "performer": "claude:rc-c6b-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6b-standards-20261025",
+            "digest": "sha256:64e179eeafe85b1a9d6e6d06a0c0bd5d52bb77ea185d2954994691d4e4925dbe",
+            "excerpt": "## Standards\n\nRC-C6B round r1 (7562758544..1234e9ecde). Count: 8 findings, all severity 3 or lower. Worst: severity 3, advice only. No correctness defect, no hard violation.\n\n### Advice\n- Sev 3: delta_checkpoint.go:158-160 relies on a commented invariant that an eligible delta always has a selected run binary; no nil dereference is reachable today.\n- Sev 3: verdict_registry.go:53-63 repeats the content-address and recordTimeAt tail of validateLaneRecord.\n- Sev 3: checkpoint.go:55-57,299-303 keeps deltaSourceKey and chunkSourceKey for one chunkSource value.\n- Sev 2: the new delta tests sit in lane_record_test.go; the coverage map records the placement.\n- Sev 2: new test comments tag spec row ids; the tree already uses the `covers RC<n>` form.\n- Sev 2: testreport tests hard-code \".git/bench-last-delta\" like their neighbours.\n- Sev 2: \"whole checkpoint\" is a new prose term at BENCH-reference.md:650 and CHANGELOG.md:20.\n- Sev 2: reusableDelta tells the delta class by BaseTree equality, not by a declared class posture.\n\nThe implementation command did not contribute. No command change is necessary.\n"
+          },
+          "axis": "Standards",
+          "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "tip": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c6b-r1-spec",
+          "performer": "claude:rc-c6b-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6b-spec-20261025",
+            "digest": "sha256:7d236ec6a26d815cb33cff2dd81cac94c2e9070f4376cceb6e1f1e5b7919b12c",
+            "excerpt": "## Spec\n\nRC-C6B round r1 (7562758544..1234e9ecde). Result: 0 findings at severity 4 or higher. Worst issue: severity 3 (Advice). Verdict: positive.\n\nRow verdicts: RC68 met, RC69 met, RC70 met, RC74 met, RC75 met, RC82 met, RC83 met. The run decision order is whole-green reuse, delta reuse, delta run, whole run; --fresh skips the first three.\n\n### Advice\n- Sev 3: the delta reuse runs after the lock and the run-binary selection; the order is still correct.\n- Sev 2: the RC83 test uses prepared runs, not the non-prepared chunk checkpoint.\n- Sev 2: the new delta reuse line is documented in the reference; the spec is silent on it.\n- Sev 3: reusableDelta has no freshness window and no run_binary comparison; the spec does not decide this.\n- Sev 1: the range repoints the RC68, RC69, RC74, RC82, RC83 seam cells to the real tests.\n\nThe implementation command did not cause any issue. No command change is necessary.\n"
+          },
+          "axis": "Spec",
+          "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "tip": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c6b-r1-coverage",
+          "performer": "claude:rc-c6b-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6b-coverage-20261025",
+            "digest": "sha256:0c501bfa91c476e7d0d73d75b726c5b5b3a7253793f330c92cbeea97799d6787",
+            "excerpt": "## Coverage\n\nRC-C6B round r1 (7562758544..1234e9ecde): 4 findings at severity 4 or higher, plus 4 advice items. Probe: bench probe internal/gate/delta_checkpoint.go --mutants (15 mutants, baseline pass, every row restored yes).\n\n1. Sev 7, conf 9. delta_checkpoint.go:165 (`if rc == 0`). Nothing pins that a red delta writes no delta record. Mutant 4 (`rc >= 0`) silent. auto-fix (add the test).\n2. Sev 7, conf 9. delta_checkpoint.go:180 (`loaded.record.Tree == delta.plan.Tree`). No test varies the subject tree while holding the base. Mutant 2 silent. auto-fix (add the test).\n3. Sev 4, conf 8. delta_checkpoint.go:180 (`loaded.state == Ready`). An invalid delta record with matching operands would be reused. Mutant 3 silent. auto-fix (add the test).\n4. Sev 4, conf 7. delta_checkpoint.go:160,166. The digest failure path, the digest-before-settleRun order, and the stored run_binary value are unpinned. Mutants 5, 9, 10 silent. ask-user; mutant 9 alone is a one-line requireDeltaGreen assertion.\n\n### Advice\n- A. Sev 2: the gate.reused log event is unpinned (mutant 7 silent). Telemetry only.\n- B. Sev 3: reuse never compares run_binary with the current selection; the spec is silent.\n- C. Sev 3: validateDeltaRecord's empty-delta, base_tree, and recordTimeAt branches have no case of their own (inferred, not probed).\n- D. Sev 2: removing `.UTC()` alone was not probed.\n\nThe implementation command contributed only indirectly: one named probe for three conjuncts and an rc guard. No command change is necessary.\n"
+          },
+          "axis": "Coverage",
+          "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "tip": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -4107,6 +4173,8 @@ The RC-C6 repair at `8b79ba0ab` closed all eight findings, and `7562758544` corr
 
 The RC-C6 confirming round r2 passed on all three axes with no new finding. It needed no reaffirmation round, because the record held the repair's reds before the round started.
 
+RC-C6B consumed repair cycle 1 of 2 after its initial review (round r1). The coordinator accepted C1 to C4 as test-only fixes with no consultant round, and it narrowed C4 to the stored `run_binary` value. The coordinator probe before the axes found the same gap as C2: the omitted tree term of `reusableDelta` left `./internal/gate` green.
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
@@ -4155,6 +4223,8 @@ RC-C6 round r1: 4 findings. Worst issue: S1, a conformance filter derived twice.
 - S3 | auto-fix | confidence 6 | `.bench/BENCH-reference.md:546` | One term names the whole phase table and the delta table.
 - S4 | auto-fix | confidence 10 | `internal/gate/delta_checkpoint_test.go:234` | A comment repeats a word.
 
+RC-C6B round r1: 0 findings at severity 4 or more. Worst issue: none; eight items at severity 3 or lower go to Advice.
+
 ## Spec
 
 RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
@@ -4181,6 +4251,8 @@ RC-C6 round r1: 2 findings. Worst issue: P1, a reference sentence that omits eli
 
 - P1 | auto-fix | confidence 6 | `.bench/BENCH-reference.md:638-639` | The reference omits the cases that run the whole gate.
 - P2 | auto-fix | confidence 5 | `internal/gate/delta_checkpoint.go:118` | A delta timeout differs from a whole-run timeout.
+
+RC-C6B round r1: 0 findings at severity 4 or more. Worst issue: none; RC68 to RC70, RC74, RC75, RC82, and RC83 are met, and five items at severity 3 or lower go to Advice.
 
 ## Coverage
 
@@ -4225,6 +4297,13 @@ RC-C6 round r1: 2 findings. Worst issue: C1, a kit-table guard that is half isol
 - C1 | auto-fix | confidence 6 | `internal/gate/delta_checkpoint.go:66` | Two clauses of the kit-table guard have no isolating test.
 - C2 | auto-fix | confidence 5 | `internal/gate/delta_checkpoint.go:118-120` | No test pins the delta timeout path.
 
+RC-C6B round r1: 4 findings. Worst issue: C1, a red delta that can write a delta green with no red.
+
+- C1 | auto-fix | confidence 9 | `internal/gate/delta_checkpoint.go:165` | No test pins that a red delta writes no delta record.
+- C2 | auto-fix | confidence 9 | `internal/gate/delta_checkpoint.go:180` | No test changes the subject tree on one base, so the tree term of the reuse is unpinned.
+- C3 | auto-fix | confidence 8 | `internal/gate/delta_checkpoint.go:180` | No test gives the reuse an invalid delta record with matching operands.
+- C4 | auto-fix | confidence 7 | `internal/gate/delta_checkpoint.go:160` | No test asserts that the stored `run_binary` is the digest of the selected executable.
+
 ## Advice
 
 - The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
@@ -4254,3 +4333,9 @@ RC-C6 round r1: 2 findings. Worst issue: C1, a kit-table guard that is half isol
 
 - RC-C6: the prepared run stays whole only because it carries no chunk source; ticket 11 pins it.
 - RC-C6: the system-suite package is picked out of the suite operands in three places.
+
+- RC-C6B: `validateDeltaRecord` repeats the tail of `validateLaneRecord`.
+- RC-C6B: two context keys carry one chunk source value.
+- RC-C6B: the digest read relies on a commented invariant of a selected executable, and no test pins the read order or the digest failure path.
+- RC-C6B: the delta reuse compares no `run_binary` and has no freshness window; the spec does not decide either.
+- RC-C6B: "whole checkpoint" is a new prose term in the reference and the changelog.
