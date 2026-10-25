@@ -43,7 +43,7 @@ The orchestrator starts the checkpoint gate when a chunk freezes or a repair com
 
 A test-only delta after a whole green at the reviewed tip takes a delta checkpoint. The delta checkpoint runs gofmt, vet, the changed packages, and root conformance. A delta that touches a tagged or race-table package runs the whole gate. The landing gate always runs whole.
 
-An exec call of a Bench command reuses the worktree's fresh `dist/bench`. The change ships last, after a measurement shows a net saving.
+The build measures the run-binary cost of exec calls. Exec keeps its private selection for each Bench child, because the measured saving does not pay for the reuse.
 
 ## User stories
 
@@ -259,17 +259,11 @@ A red delta makes the checkpoint red, with no fallback to the whole gate. A gree
 
 The gate output prints the delta phases table and the line `gate: green (delta checkpoint)`. `.bench/BENCH-reference.md` Gate output owns that account. `projects/benchkit.md` (lines 339-348, 387-389, 469-472) names the delta schedule as the one reduced schedule and the delta class as the one reduced record.
 
-### Run-binary reuse in exec (RC-C7)
+### The run-binary cost of exec (RC-C7)
 
-The first ticket measures the wall time of `freshness.Digest`, of one run-binary selection, and the count of exec calls that select a binary in one test-only repair. If the measured net saving for each repair is not positive, the build stops this chunk and returns to the spec.
+The RC-C7 ticket measures the wall time of `freshness.Digest`, of one run-binary selection, and the count of exec calls that select a binary in one test-only repair. It records the net saving for each repair and the wrapper route for an inherited `BENCH_RUN_BINARY` in the chunk's measurement asset.
 
-When the base name of the child's `argv[0]` is `bench`, `exec` runs `freshness.VerifyAt(worktree, worktree, dist/bench)` (`internal/freshness/freshness_verify.go:23-40`). On a pass, it sets `BENCH_RUN_BINARY` to the worktree's `dist/bench`. On a refusal, it omits the variable, the child builds its private selection as today, and exec prints `bench worktree build` on stderr. For any other `argv[0]`, exec runs no freshness check and keeps today's environment (`internal/worktree/exec.go:244-252`).
-
-The child's `ReuseOrOwn`, `Inherit`, and `Validate` sequence checks the source digest again (`internal/runbinary/runbinary.go:155-183`). A binary that became stale after the exec check refuses, and the refusal names `bench worktree build`.
-
-The worktree assignment owns `dist/bench`, and `Close` does nothing for an inherited selection (`internal/runbinary/runbinary.go:232-235`). The spec adds no new process owner. The comment at `internal/worktree/exec.go:217-229` changes, because `Inherit` with a named root checks the source digest.
-
-`uncertain`: the wrapper may treat an inherited `BENCH_RUN_BINARY` as its own resolution (`internal/systemtest/owner_environment_test.go:38`). The measurement ticket reads that route before the second ticket starts.
+Exec keeps today's environment for every child: it strips `BENCH_RUN_BINARY`, and each Bench child makes its private selection (`internal/worktree/exec.go:217-252`). The reviewer decision during the build states why.
 
 ## Implementation chunks
 
@@ -286,7 +280,7 @@ The worktree assignment owns `dist/bench`, and `Close` does nothing for an inher
 | RC-C6B / 11-record-and-reuse-the-delta-green.md | The delta green has its own record class, and only the chunk checkpoint reuses it | RC68, RC69, RC70, RC74, RC75, RC82, RC83 | Verdict class guard, complete checkpoint, prepared delta | yes |
 | RC-C7 / 12-measure-the-run-binary-cost.md | The run-binary cost of exec is measured, and the repair cycle is timed | RC76, RC81 | Measurement record | no |
 
-RC-C1 comes first, because change 3 needs the exemption. A seam chunk closes its review before its consumer chunk starts (`craft-tickets`): RC-C2 before RC-C2B, RC-C4 before RC-C4B, and RC-C6 before RC-C6B. RC-C2 and RC-C2B land before RC-C3, because the chunk-level floor assumes that each entry is graded at its own commit. RC-C4 and RC-C4B land before RC-C6, because the delta checkpoint shares the prepared run decision and the subject key. RC-C5 lands before RC-C6, as precondition 3 requires. RC-C7 ships last, and its measurement can stop it.
+RC-C1 comes first, because change 3 needs the exemption. A seam chunk closes its review before its consumer chunk starts (`craft-tickets`): RC-C2 before RC-C2B, RC-C4 before RC-C4B, and RC-C6 before RC-C6B. RC-C2 and RC-C2B land before RC-C3, because the chunk-level floor assumes that each entry is graded at its own commit. RC-C4 and RC-C4B land before RC-C6, because the delta checkpoint shares the prepared run decision and the subject key. RC-C5 lands before RC-C6, as precondition 3 requires. RC-C7 ships last, and it holds only the measurement.
 
 ### Completion plan
 
@@ -304,7 +298,7 @@ The authored version 1 plan states the verification obligations. The approved bu
 - A row that compares a run against a reuse uses the phase rows and the reuse line, never elapsed times.
 - A delta row plants a red in a package outside the delta set. The delta must stay green there, and the whole run must go red. That proves the delta ran only its set.
 - The gate seam observes every change of this spec: the checkpoint gate, the prepared run, and the delta checkpoint all run through `bench gate`.
-- Prior art: `TestReviewCheckpointReuse` (reuse refusals), `TestReviewCheckpointConfirmationRefusals` (test-only proof), `TestTicketRefusals` (stage refusals), `TestCheckFloorReadsOnlyTheOwnChunk` (floor scope), `TestVerdictRecordClassRegistryMatchesExpectation` (class table), `TestExecChildOwnsRatherThanInheritsItsRunBinary` (exec environment).
+- Prior art: `TestReviewCheckpointReuse` (reuse refusals), `TestReviewCheckpointConfirmationRefusals` (test-only proof), `TestTicketRefusals` (stage refusals), `TestCheckFloorReadsOnlyTheOwnChunk` (floor scope), `TestVerdictRecordClassRegistryMatchesExpectation` (class table).
 - No fixed wall-clock threshold enters the gate. The final reconciliation measures the repair cycle as review-owned evidence.
 
 ### Seam diagram
@@ -327,12 +321,6 @@ trigger: the orchestrator before a successor chunk
     ▼
 HEAD commit ──▶ [ chunk checkpoint: reuse | delta | whole ] ──▶ evidence pass + record prose + chunk gap
                    ◀ tests: planted red outside the delta, store and cache files, landing inspection
-
-trigger: bench worktree exec with a Bench argv[0]
-    │
-    ▼
-dist/bench + seal ──▶ [ exec freshness check ] ──▶ BENCH_RUN_BINARY or a private build
-                        ◀ tests: child environment, stale-binary refusal
 ```
 
 ### Acceptance coverage map
