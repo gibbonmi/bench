@@ -6,7 +6,7 @@ Roadmap: FT449
 
 Decision source: `specs/no-go-schedule/decisions/no-go-schedule.md` (ready compiled map).
 
-Verification log: pending — the spec review and the ticket review have not run.
+Verification log: 4 iteration(s) to accept — Opus/medium accepted the spec in 2 iterations, after repairs of the chunk rows, the missing-log refusal, and the `-exec` quoting. Opus/medium accepted the tickets in 2 iterations, after repairs of the old-argv pins and the reader-record query.
 
 ## Problem
 
