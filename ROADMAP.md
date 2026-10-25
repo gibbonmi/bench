@@ -218,7 +218,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT444 (LOW) — each retro improvement item names its fix lever.**
 
-**FT449 (MEDIUM, decision required) — each gate unit keeps a verdict keyed by its declared input closure.**
+**FT449 (HIGH) — a landing that changes no Go file runs a reduced schedule that one reader census bounds.**
 
 **FT450 (MEDIUM) — a landing queue composes ready sources in order, grades the stack once, and bisects a red.**
 
@@ -354,7 +354,6 @@ recommended table is sequencing advice.
 | FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
 | FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
-| FT449 | FT314 | Unit verdicts wait for the measured saving of one grade key. |
 | FT450 | FT314 | The queue reuses the grade key for each composed stack. |
 | FT451 | FT255 | Background grades share the explicit machine budget. |
 
