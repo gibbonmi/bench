@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:1ae1c0cfa9857af1135e5615b5a5e4de59e1561667a5e3ffb50a3697d555b935",
+  "plan_digest": "sha256:35029ba1b18a8812846fc1dd55fef51e0c5eeaeec6bc3db2880c4ae29e9ee2a1",
   "implementation_session": "",
   "chunks": [
     {
@@ -3612,6 +3612,131 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RC-C6B",
+      "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+      "tip": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+      "plan_digest": "sha256:35029ba1b18a8812846fc1dd55fef51e0c5eeaeec6bc3db2880c4ae29e9ee2a1",
+      "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+      "acceptance_rows": [
+        "RC68",
+        "RC69",
+        "RC70",
+        "RC74",
+        "RC75",
+        "RC82",
+        "RC83"
+      ],
+      "verification": [
+        {
+          "id": "t11-gate",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:cecf1b4e8fcac0c12c0c16375605f00ed21459592ef135a27c5170f97c6d8b09",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,56219,584\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t11-conformance",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:bfa6e571ddef8084277738071585f7ce0e0be446864468b15428ba079229088b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13294,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t11-system",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:21cdeefe7cb7c987645d92eebfdcfb4f491c57029a26d73eb65fea97c44937db",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,54517,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t11-floor",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:ee59afc57cd11ca2f18d1aaba31de6e8db7537a72d540d17cf39d9c2e4e03292",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1328,179\n  github.com/gibbonmi/bench/internal/status,pass,5971,142\n  github.com/gibbonmi/bench/internal/testreport,pass,61150,283\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/git --package ./internal/status --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t11-store-probe",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:565811d66961aaef3253afdb77408f4adb7bc608d41e3ea5a526ab11ac5907d7",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,11,TestCheckpointPrepareRunsWholeForANonTestRepair,584,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2709\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,54884,584\nfailures[11]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareRunsWholeForANonTestRepair,\"lane_record_test.go:301: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:286: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JIX4RS/t/TestCheckpointPrepareTakesTheDelta1059107337/002/.git/bench… (391 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:192: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:261: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:328: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JIX4RS/t/TestDeltaGreenNeedsTheCurrentBase2759964528/002/.git/bench-… (390 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenPersistenceFailureFailsTheCheckpoint,\"lane_record_test.go:345: checkpoint with an unwritable delta record = 0 ; want exit 1 and the persistence cause\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "store-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "write the delta green to the evidence store",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+              "digest": "sha256:565811d66961aaef3253afdb77408f4adb7bc608d41e3ea5a526ab11ac5907d7",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,11,TestCheckpointPrepareRunsWholeForANonTestRepair,584,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2709\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,54884,584\nfailures[11]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareRunsWholeForANonTestRepair,\"lane_record_test.go:301: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:286: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JIX4RS/t/TestCheckpointPrepareTakesTheDelta1059107337/002/.git/bench… (391 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:192: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:261: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:328: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JIX4RS/t/TestDeltaGreenNeedsTheCurrentBase2759964528/002/.git/bench-… (390 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenPersistenceFailureFailsTheCheckpoint,\"lane_record_test.go:345: checkpoint with an unwritable delta record = 0 ; want exit 1 and the persistence cause\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -3895,6 +4020,36 @@
     {
       "from": "sha256:3338d5e1a1e6e5357371e347dba405bc42aabeb04e395860b50010dee382da99",
       "to": "sha256:1ae1c0cfa9857af1135e5615b5a5e4de59e1561667a5e3ffb50a3697d555b935",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
+        ],
+        "RC-C6": [
+          "RC-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1ae1c0cfa9857af1135e5615b5a5e4de59e1561667a5e3ffb50a3697d555b935",
+      "to": "sha256:35029ba1b18a8812846fc1dd55fef51e0c5eeaeec6bc3db2880c4ae29e9ee2a1",
       "chunk_ids": {
         "RC-C1": [
           "RC-C1"
