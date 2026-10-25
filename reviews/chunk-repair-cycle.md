@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:45fcb4bfa421e66e161cd5d27bd95a95cfb54666c13e9655df37ff661e53866a",
+  "plan_digest": "sha256:7952bb4f575ccc795e0f267b2232e7d7e9e2097388f56cd7ed8f375e321f34f8",
   "implementation_session": "",
   "chunks": [
     {
@@ -2281,6 +2281,156 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RC-C4B",
+      "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+      "tip": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+      "plan_digest": "sha256:7952bb4f575ccc795e0f267b2232e7d7e9e2097388f56cd7ed8f375e321f34f8",
+      "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+      "acceptance_rows": [
+        "RC34",
+        "RC35",
+        "RC36",
+        "RC37",
+        "RC38",
+        "RC42",
+        "RC43",
+        "RC45",
+        "RC47",
+        "RC49",
+        "RC50",
+        "RC51",
+        "RC52"
+      ],
+      "verification": [
+        {
+          "id": "t08-gate",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:09756b3a0345d42c345a671ed899e4d4860f9fcdff23c0f575aa0611c3d200b9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,47370,554\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-command",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:3a5a5d01bcaae629e9d6ad3b08a29a10d61e4c64c71b6ed29b3728df1c5c6b07",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,23225,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-conformance",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:7bfcf857f0353143820280df77b661679781411e5150c198ae2e438bdf25dbe1",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15143,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-system",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:4d098bfa88f365ff4c0c72597cac1c999ae6cb77e3abd02cc3ece1200d5e720b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,60485,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-floor",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:18f4460b239580541811ca4f62c52b15dc9d363607bbba72e7b16e533e6dfea1",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,108,123\n  github.com/gibbonmi/bench/internal/refusalroute,pass,5,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/refusalroute --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-tip-probe",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:824a7a8af01706870e559dc6f3e9b816da45104a8e7577c5e8123aa6803efe5c",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,1,TestCheckpointPrepareSurvivesARecordCommit,554,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,436\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,47909,554\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareSurvivesARecordCommit,\"checkpoint_prepare_test.go:220: prepared run across a record commit = 1 gate subject changed before execution: checkpoint source tip changed\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "tip-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "keep the tip-moved guard in the prepared run",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+              "digest": "sha256:824a7a8af01706870e559dc6f3e9b816da45104a8e7577c5e8123aa6803efe5c",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,1,TestCheckpointPrepareSurvivesARecordCommit,554,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,436\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,47909,554\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareSurvivesARecordCommit,\"checkpoint_prepare_test.go:220: prepared run across a record commit = 1 gate subject changed before execution: checkpoint source tip changed\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2420,6 +2570,27 @@
     {
       "from": "sha256:db40ae1366be2947e1a8e9abe37bf2174d04aec9eac2d6965940fd6ad7251ca2",
       "to": "sha256:45fcb4bfa421e66e161cd5d27bd95a95cfb54666c13e9655df37ff661e53866a",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:45fcb4bfa421e66e161cd5d27bd95a95cfb54666c13e9655df37ff661e53866a",
+      "to": "sha256:7952bb4f575ccc795e0f267b2232e7d7e9e2097388f56cd7ed8f375e321f34f8",
       "chunk_ids": {
         "RC-C1": [
           "RC-C1"
