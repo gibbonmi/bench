@@ -1207,6 +1207,30 @@
           ]
         },
         {
+          "id": "FT449-no-go-schedule",
+          "criteria": [
+            {
+              "id": "FT449-no-go-schedule.census",
+              "text": "One census derives the checks and packages that read each non-Go path, and a check that binds a catch-all input sends its paths to the whole gate."
+            },
+            {
+              "id": "FT449-no-go-schedule.reduced",
+              "text": "A landing whose every changed path is inside the census and is not a Go file runs only the reduced set, and any other landing runs the whole gate."
+            },
+            {
+              "id": "FT449-no-go-schedule.fresh",
+              "text": "A periodic fresh run grades the whole gate, and a reduced green never authorizes another subject."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT449",
+              "path": "roadmap/FT449.md",
+              "identity": "sha256:aecfc7841b28375bd75e04e58cf812152d083e9f8d6f298c8d51766e6831688d"
+            }
+          ]
+        },
+        {
           "id": "FT314-gate-reuse",
           "criteria": [
             {
@@ -1219,7 +1243,7 @@
             },
             {
               "id": "FT314-gate-reuse.premise",
-              "text": "The grade key builds on the FT445 chunk key without the review record and on the delta green, and the spec measures the saving of the key on recorded merge-then-land pairs before any code change."
+              "text": "The grade key builds on the FT445 chunk key without the review record and on the delta green. Since FT335 a merge runs the lane, so the spec measures the saving of the key on checkpoint-then-landing compositions and retries before any code change."
             }
           ],
           "sources": [
@@ -1227,6 +1251,42 @@
               "id": "FT314",
               "path": "roadmap/FT314.md",
               "identity": "sha256:264903c22ff37e51a3e009b46a96a43267b9ad5c38934d96f3af4fd222f662ea"
+            }
+          ]
+        },
+        {
+          "id": "FT450-landing-queue",
+          "criteria": [
+            {
+              "id": "FT450-landing-queue.stack",
+              "text": "Ready landing sources compose in order and grade once as one stack, and each source keeps its own spec transition."
+            },
+            {
+              "id": "FT450-landing-queue.bisect",
+              "text": "A red stack bisects with whole gates, and the red is attributed to one source."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT450",
+              "path": "roadmap/FT450.md",
+              "identity": "sha256:e64022ee0abc00a61e024a8f94fb5dcc03514ed9f5178498401b16a9bcb33834"
+            }
+          ]
+        },
+        {
+          "id": "FT448-repair-carry",
+          "criteria": [
+            {
+              "id": "FT448-repair-carry.reach",
+              "text": "A repair entry reruns each requirement that the changed-package selector reaches from the repair delta and carries each other requirement forward."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT448",
+              "path": "roadmap/FT448.md",
+              "identity": "sha256:cc75f4a334e370d68b209684fdd82d871af1dcabbedcdb5be286b8c4f422c875"
             }
           ]
         },
