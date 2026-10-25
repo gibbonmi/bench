@@ -1,7 +1,7 @@
 # Derive and persist the reader table after a green whole kit run
 
 Blocked by: 01-compute-the-oracle-identity.md, 02-record-a-test-log-per-package.md
-Writes: internal/gate/reader_families.go (new), internal/gate/reader_table.go (new), internal/gate/reader_table_test.go (new), internal/gate/reader_store.go (new), internal/gate/reader_store_test.go (new), internal/gate/run_transaction.go, internal/git/git.go, internal/git/tree.go
+Writes: internal/gate/reader_families.go (new), internal/gate/reader_table.go (new), internal/gate/reader_table_test.go (new), internal/gate/reader_store.go (new), internal/gate/reader_store_test.go (new), internal/gate/run_transaction.go, internal/gate/run_settle.go (new), internal/git/git.go, internal/git/tree.go
 Covers: NG13, NG14, NG15, NG16, NG17, NG18, NG19, NG20, NG21, NG22, NG23, NG24, NG25, NG26, NG27, NG28, NG71
 
 ## What to build
@@ -14,11 +14,11 @@ It refuses the table when a listed package has no log, when a log is empty or ma
 
 `internal/git` gains a reader of the tracked symbolic links of a tree, built on `ListTree` (`internal/git/tree.go:151`). It also gains the store's directory name beside `DeltaCacheFile` (`internal/git/git.go:177-179`).
 
-`reader_store.go` owns the run's log directory and the table store. For a whole run of the kit's built-in table, the owner creates the log directory and sets `BENCH_GATE_TESTLOG` in the phase environment. After the run, it lists the test packages with `go list`, using the build flags and tags of the traced `test` call.
+`reader_store.go` owns the run's log directory and the table store. For a whole run of the kit's built-in table, the owner creates the log directory and sets `BENCH_GATE_TESTLOG` in the phase environment. After the run, it lists the test packages with `go list`, using the build flags and tags that ticket 02's traced phase builder supplies, not a restated list. It reads each package's log through `testLogKey`.
 
 After a green verdict persists, the owner derives the table and persists it in the common Git directory, keyed by the graded tree, with the run's identity digest. A red run, an interrupted run, and a failed derivation persist no table, and a failed derivation leaves the green unchanged. The owner removes the log directory in every case. The store keeps at most 32 tables and never removes the table of the green marker's tree.
 
-`internal/gate/run_transaction.go` holds 397 lines. Add only call sites there, and keep the file at 400 lines or fewer.
+`internal/gate/run_transaction.go` holds 397 lines, and tickets 03, 05, and 07 each add call sites there. First move `settleRun` and its helpers into the new file `run_settle.go`, with no change of behavior, to free headroom for all three tickets. Keep `run_transaction.go` at 400 lines or fewer.
 
 ## Acceptance
 

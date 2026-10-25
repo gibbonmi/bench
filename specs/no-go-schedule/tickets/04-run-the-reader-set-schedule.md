@@ -2,7 +2,7 @@
 
 Blocked by: 03-derive-the-reader-table.md
 Writes: internal/gate/reader_set.go (new), internal/gate/reader_set_test.go (new), internal/gate/delta_checkpoint.go, internal/gate/report.go, internal/gate/verdict_registry.go, internal/gate/verdict.go, internal/gate/gate.go, internal/gate/verdict_registry_guard_test.go, internal/gate/durable_replacement_test.go, internal/git/git.go
-Covers: NG29, NG30, NG31, NG32, NG33, NG34, NG35, NG36
+Covers: NG29, NG30, NG31, NG32, NG33, NG34, NG35, NG36, NG79, NG80
 
 ## What to build
 
@@ -16,7 +16,11 @@ The reader phases hold no `gofmt`, `vet`, or `shellcheck` phase. A malformed ent
 
 The reader record is a new class in `verdictRecordClasses`, with its own reuse refusal. It carries the graded tree, the destination tree, the green marker commit, the reader schedule, the run binary, and the record time. The store keeps one record for each graded tree, under a directory name that `internal/git/git.go` declares.
 
-A run function beside `runDelta` runs an eligible reader set. It writes the reader record on green through the durable replacer. It writes no full verdict, no pending record, and no evidence, and a red writes no record. `gate.Result` states the schedule that ran, so a later ticket can attribute it. This ticket adds no caller that selects the reader set; ticket 05 adds it.
+A run function beside `runDelta` runs an eligible reader set. It writes the reader record on green through the durable replacer. It writes no full verdict, no pending record, and no evidence, and a red writes no record. This ticket adds no caller that selects the reader set; ticket 05 adds it.
+
+`gate.Result` gains the field `Schedule`, with the values `whole`, `delta`, and `reader`, so that ticket 06 can attribute a reader run. The exported query `gate.ReaderRecorded(root, tree string) (bool, error)` answers whether the store holds a valid reader record for a tree. Tickets 05, 06, and 08 read the store only through it.
+
+`gateEnv` strips the reader schedule from the inherited environment, beside the delta schedule (`internal/gate/gate.go:160-167`), and the owner sets it again only on the phase child of a reader run.
 
 Add the class to the class-count pin (`internal/gate/verdict_registry_guard_test.go:30-42`) and the record to the durable-replacement entries (`internal/gate/durable_replacement_test.go:59`).
 
@@ -29,3 +33,5 @@ Add the class to the class-count pin (`internal/gate/verdict_registry_guard_test
 - [ ] A green reader run writes one reader record for its tree and leaves the verdict cache and the evidence store byte-identical.
 - [ ] A reader record never makes its tree reusable green.
 - [ ] A red reader run writes no reader record.
+- [ ] `gate.ReaderRecorded` answers true for a tree with a valid reader record and false for a tree without one.
+- [ ] A phase child's environment holds no reader schedule that it inherited.

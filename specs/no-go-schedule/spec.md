@@ -122,7 +122,7 @@ The posture enters the identity only. A green recorded under one posture therefo
 
 ### The trace
 
-The kit's whole `test` phase argv becomes these seven elements: `go`, `test`, `-trimpath`, `-count=1`, `-timeout=10m0s`, `-exec=<bench-run-binary> gate-go exec`, and `./...`. The sixth element is one element. A linked repository's `test` phase, the delta set, and the reader set keep their current argv.
+The trace applies when `RootConformanceRuns(root, kit)` holds, the test that `rootConformanceEnv` already uses. The kit's whole `test` phase argv then becomes these seven elements: `go`, `test`, `-trimpath`, `-count=1`, `-timeout=10m0s`, `-exec=<bench-run-binary> gate-go exec`, and `./...`. The sixth element is one element. A linked repository's `test` phase, the delta set, and the reader set keep their current argv.
 
 `cmd/go` splits the `-exec` value with its quoted-string rules. `withRunBinary` therefore replaces the run-binary token inside the `-exec=` element with the selection path in quoted form, so a path with a space stays one word. Its second caller, the lane at `internal/gate/lane.go:306`, carries no `-exec=` element, so the lane is unchanged.
 
@@ -131,6 +131,8 @@ The kit's whole `test` phase argv becomes these seven elements: `go`, `test`, `-
 `internal/subprocess` owns the image replacement, as it owns the start gate. The shim creates the log file before the replacement, so a test binary that never starts leaves an empty file, not a missing one.
 
 The gate owner creates the log directory for a whole run of the kit's built-in table and passes it in the phase environment. After the run, the owner derives the table, persists it on green, and removes the directory.
+
+`gateEnv` strips `BENCH_GATE_TESTLOG` and the reader schedule from every inherited environment, as it strips the delta schedule (`internal/gate/gate.go:160-167`). The owner sets them again on the one phase child that runs the table. So a nested gate run inside a test, such as a system journey, never writes into the outer run's logs and never runs the outer schedule.
 
 ### The reader table
 
@@ -181,6 +183,8 @@ A green reader set prints its phase table and then `gate: green (reader set)`. A
 
 The reader record is a new record class with its own reuse refusal. It carries the graded tree, the destination tree, the green marker commit, the reader schedule, the run binary, and the record time. The gate writes one reader record for each graded tree, in a store keyed by the tree. A green reader set writes no full verdict, no pending record, and no evidence.
 
+One exported query, `gate.ReaderRecorded(root, tree)`, answers whether the store holds a valid reader record for a tree. The resume marker policy and the gate inspection read the store only through it.
+
 ### The landing plan
 
 `landReviewed` puts the destination commit and the green marker in the gate context, as `gate.WithCompletion` does for a completion. Only that call sets the value. A merge, a plain `bench gate`, a `--fresh` run, and a checkpoint carry no landing value, so they keep their schedules.
@@ -230,8 +234,8 @@ Each chunk is one coherent outcome with one review checkpoint. A chunk's predece
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | NG-C1 / `01-compute-the-oracle-identity.md` | One pass computes the tree-free oracle identity beside the oracle digest | NG1, NG2, NG3, NG4 | Completion-plan checks | no |
-| NG-C2 / `02-record-a-test-log-per-package.md`, `03-derive-the-reader-table.md` | Each whole kit run records test logs and persists a reader table on green | NG5, NG6, NG7, NG8, NG9, NG10, NG11, NG12, NG13, NG14, NG15, NG16, NG17, NG18, NG19, NG20, NG21, NG22, NG23, NG24, NG25, NG26, NG27, NG28, NG71, NG72 | Completion-plan checks | yes |
-| NG-C3 / `04-run-the-reader-set-schedule.md`, `05-plan-the-reader-set-at-a-landing.md`, `06-publish-a-reader-landing.md` | A covered kit landing runs the reader set, publishes, and keeps the marker | NG29, NG30, NG31, NG32, NG33, NG34, NG35, NG36, NG37, NG38, NG39, NG40, NG41, NG42, NG43, NG44, NG45, NG46, NG47, NG48, NG49, NG50, NG51, NG52, NG53, NG54, NG55, NG56, NG57, NG58, NG59, NG60, NG73, NG74, NG75, NG76, NG77 | Completion-plan checks | yes |
+| NG-C2 / `02-record-a-test-log-per-package.md`, `03-derive-the-reader-table.md` | Each whole kit run records test logs and persists a reader table on green | NG5, NG6, NG7, NG8, NG9, NG10, NG11, NG12, NG13, NG14, NG15, NG16, NG17, NG18, NG19, NG20, NG21, NG22, NG23, NG24, NG25, NG26, NG27, NG28, NG71, NG72, NG81 | Completion-plan checks | yes |
+| NG-C3 / `04-run-the-reader-set-schedule.md`, `05-plan-the-reader-set-at-a-landing.md`, `06-publish-a-reader-landing.md` | A covered kit landing runs the reader set, publishes, and keeps the marker | NG29, NG30, NG31, NG32, NG33, NG34, NG35, NG36, NG37, NG38, NG39, NG40, NG41, NG42, NG43, NG44, NG45, NG46, NG47, NG48, NG49, NG50, NG51, NG52, NG53, NG54, NG55, NG56, NG57, NG58, NG59, NG60, NG73, NG74, NG75, NG76, NG77, NG79, NG80 | Completion-plan checks | yes |
 | NG-C4 / `07-hold-the-whole-gate-after-a-red.md` | A red whole landing run holds the whole gate and names its suspects | NG61, NG62, NG63, NG64, NG78 | Completion-plan checks | no |
 | NG-C5 / `08-show-reader-green-on-the-dashboard.md` | The gate signal shows a reader-record tip as reader green | NG65, NG66, NG67 | Completion-plan checks | no |
 | NG-C6 / `09-amend-the-landing-rule-docs.md` | The ADR, the profile, the reference, and the glossary state the reader set | NG68, NG69, NG70 | Completion-plan checks | yes |
@@ -351,6 +355,9 @@ The gate's own whole run grades this build at every chunk checkpoint and at the 
 | NG76 | 21 | A change that removes the gitlink `docs/module` runs the whole gate | planned TestReaderPlanRunsWholeForARemovedGitlink in internal/gate/reader_plan_test.go | A plan that reads only the new mode misses the old gitlink. |
 | NG77 | 19 | A change to `docs/t.txt`, which a fixture `_test.go` file embeds, runs the whole gate | planned TestReaderPlanRunsWholeForATestFileEmbed in internal/gate/reader_plan_test.go | A scan of non-test sources alone misses the test-file directive. |
 | NG78 | 46 | A red whole landing run after two reader-record commits lists both commits as suspects in its result | planned TestRedWholeLandingListsTheSuspects in internal/gate/reader_hold_test.go | A red path without the chain walk returns no suspect. |
+| NG79 | 39 | `gate.ReaderRecorded` answers true for a tree with a valid reader record and false for a tree without one | planned TestReaderRecordedAnswersForItsTree in internal/gate/reader_set_test.go | A query that reads any record, or none, answers the same for both trees. |
+| NG80 | 34 | A phase child's environment holds no reader schedule that it inherited | planned TestPhaseChildrenDropTheReaderSchedule in internal/gate/reader_set_test.go | Without the strip, a nested gate run inside a reader set runs the reduced schedule. |
+| NG81 | 1 | A phase child's environment holds no `BENCH_GATE_TESTLOG` that it inherited | planned TestPhaseChildrenDropTheTestLogDirectory in internal/gate/testlog_exec_test.go | Without the strip, a nested gate run writes into the outer run's logs. |
 
 Not covered: story 24 — row NG38 covers the child readers inside the reader-package union, so no separate row exists.
 Not covered: story 25 — row NG29 covers the `system` phase of every reader schedule, so no separate row exists.
@@ -385,6 +392,7 @@ Not covered: story 47 — row NG36 shows that a red reader set writes no record,
 - A tracer for child processes, such as `strace`: about 10 edits and 3 gate runs, and a host dependency.
 - The reuse of a merge verdict by its landing, which FT314 owns.
 - A landing queue, which FT450 owns.
+- The reader-green wording in the handoff pin block (`internal/handoff/facts.go:247`) and in the dashboard page (`internal/dashboard/render.go:86`). Map decision #12 names the ambient dashboard only: about 4 edits and 1 gate run.
 
 ## Further notes
 
@@ -417,7 +425,7 @@ The author read these current-code facts in this session:
 
 | fact the build changes | readers and writers | disposition |
 | --- | --- | --- |
-| The kit `test` argv | `internal/conformance/ordinary_build_census_test.go:39`, `internal/gate/branch_native_phases_test.go:104`, `projects/benchkit.md:346` | Ticket 02 writes all three. |
+| The kit `test` argv | `internal/conformance/ordinary_build_census_test.go:39`, `internal/gate/branch_native_phases_test.go:104`, `internal/gate/lane_test.go:72-87`, `internal/gate/delta_checkpoint_test.go:34-50` with its stub run binary, `projects/benchkit.md:346` | Ticket 02 writes all five. |
 | The record-class list | `internal/gate/verdict_registry_guard_test.go:30-42` pins the class count | Ticket 04 writes it. |
 | The reviewed publish kinds | `internal/landing/lane_test.go:56-59` | Ticket 06 keeps both assertions and adds NG57 in a new file. |
 | The authorization kinds | `internal/landing/merge.go:127`, `internal/worktree/merge_refusal.go:43-96`, `internal/commit/commit.go:223`, `internal/worktree/land.go:252` | A merge and a commit never receive `reader green`, so their switches stay unchanged. |
@@ -436,10 +444,10 @@ The writers of the new stores are the gate owner alone, under the gate lock. The
 | #1 the terms | NG70 and the existing `CONTEXT.md` entries |
 | #2 the covered families | NG13, NG37, NG40 |
 | #3 the kit only | NG11, NG53 |
-| #4 the landing only | NG52 |
+| #4 the landing only | NG52, NG80 |
 | #5 the complete conformance entry | NG29, NG38 |
-| #6 the reader record and the marker | NG34, NG35, NG58, NG59 |
-| #7 the derived table | NG5 to NG28, NG71, NG72 |
+| #6 the reader record and the marker | NG34, NG35, NG58, NG59, NG79 |
+| #7 the derived table | NG5 to NG28, NG71, NG72, NG81 |
 | #8 the bounds | NG46 to NG51, NG62 |
 | #9 the red after reader landings | NG61 to NG64, NG78 |
 | #10 the child readers | NG23 |

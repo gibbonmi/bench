@@ -6,7 +6,7 @@ Covers: NG65, NG66, NG67
 
 ## What to build
 
-`gate.Inspect` reports two more facts. The first says whether the current tree holds a reader record. The second is the count of reader-record commits after the green marker up to HEAD, from the history reader of ticket 05.
+`gate.Inspect` reports two more facts. The first says whether the current tree holds a reader record, from `gate.ReaderRecorded`. The second is the count of reader-record commits after the green marker up to HEAD, from `git.FirstParentsAfter` and `gate.ReaderRecorded`.
 
 `GateVerdict` (`internal/status/status.go:437-458`) carries both facts. When the gate row would read stale and the current tree holds a reader record, `appendGateInfo` prints `reader green (<n> of 5)` with no command, at the stale row's rank. No stale row prints for that tip. A stale tip with no reader record keeps the stale row and its `bench gate` route (`internal/status/status.go:463-468`).
 

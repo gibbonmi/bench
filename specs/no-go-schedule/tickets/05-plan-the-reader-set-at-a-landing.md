@@ -14,7 +14,9 @@ The reader packages are the union of the table's readers of each changed family,
 
 The changed paths come from `ComposedChanges` between the destination and the graded tree, with both modes (`internal/gate/lane_select.go:26-33`). The embed case reads a new scan in `internal/packagesurface` that reads every Go file of the tree, test files included. It matches a changed path by the directive's exact path, by a path below it, or by its glob. The existing `EmbedTargets` keeps its contract for the lane. The shellcheck case reads `shellcheckFiles`, and the plan tests inject the inventory.
 
-`internal/git/history.go` lists the first-parent commits after the green marker up to the destination. The chain case reads one reader record for the tree of each listed commit.
+`internal/git/history.go` adds `FirstParentsAfter(root, marker, destination string) ([]string, error)`. It lists the first-parent commits after the green marker up to the destination, oldest first. The chain case asks `gate.ReaderRecorded` for the tree of each listed commit. Tickets 07 and 08 read the chain through the same function.
+
+The census forbids a direct process or `git init` constructor in the gate's and the Git package's tests (`internal/conformance/ordinary_build_census_test.go:69-80`). Build the fixtures through the `gittest` helpers.
 
 `internal/gate/run_transaction.go` holds 397 lines. Put the plan and its dispatch in `reader_plan.go`, and keep `run_transaction.go` at 400 lines or fewer.
 
