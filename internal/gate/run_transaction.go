@@ -186,6 +186,11 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		plan.Env = mergeEnv(plan.Env, []string{baselinePolicyEnv + "=" + baseline})
 	}
 	plan.Env = withGateRunLogEnv(ctx, plan.Env)
+	// The oracle can run the selected executable, so it registers on the selection too.
+	local := append(append(cache, bundle.Resources()...), selection.Resources()...)
+	if delta, eligible := deltaPlan(ctx, storageRoot, runtimeRoot, plan, mode); eligible {
+		return runDelta(ctx, runCtx, runtimeRoot, storageRoot, declaredPaths, delta, evaluation, local, release, stdout, stderr)
+	}
 	// Persist the interrupted posture before the oracle starts. The branch-native gate
 	// always grades the complete subject; there is no component partition to retain.
 	pending := interruptedRecord(plan, time.Now().UTC())
@@ -194,8 +199,6 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
 	// The code derives from the whole outcome, so an undrained group or open obligation is not green.
-	// The oracle can run the selected executable, so it registers on the selection too.
-	local := append(append(cache, bundle.Resources()...), selection.Resources()...)
 	run := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr, local...)
 	rc := run.Code
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.finish", Root: runtimeRoot, Exit: &rc})
@@ -213,21 +216,9 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		}
 		return Result{GateExit: 124, ActionExit: 124, Inspection: inspectAt(storageRoot, time.Now().UTC())}
 	}
-	after, err := evaluation.capturePost()
-	if err != nil || !sameSubject(plan, after) {
-		fmt.Fprintln(stderr, subjectChangeDiagnostic(runtimeRoot, declaredPaths, plan, after, err))
-		inspection := inspectAt(storageRoot, time.Now().UTC())
-		if err == nil {
-			inspection = inspectSubjectAt(storageRoot, after, time.Now().UTC())
-		}
-		return Result{GateExit: rc, ActionExit: 1, Inspection: inspection}
-	}
-	if rc != 0 && run.Outcome.Process.Started && run.Outcome.Protection.State != protection.Safe {
-		return unprotectedFailure(storageRoot, plan, rc, stderr, run)
-	}
-	// A nested user that outlives a zero exit keeps a resource; its release failure is no verdict.
-	if err := release(); err != nil {
-		return retainedFailure(storageRoot, plan, rc, stderr, "gate resource release failed: "+err.Error())
+	after, refusal, refused := settleRun(evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
+	if refused {
+		return refusal
 	}
 	status := "red"
 	if rc == 0 {
@@ -248,6 +239,30 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		return persistenceFailure(storageRoot, rc, stderr, "gate final persistence failed", err)
 	}
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, time.Now().UTC())}
+}
+
+// settleRun checks a finished oracle run before any verdict: the subject after the run is
+// the subject that it graded, a failed run left a safe protection state, and the run's
+// resources release. It answers the subject after the run, or the refusal and true.
+func settleRun(evaluation executionEvaluation, runtimeRoot, storageRoot string, declaredPaths []string, plan subject, run processGroupResult, release func() error, stderr io.Writer) (subject, Result, bool) {
+	rc := run.Code
+	after, err := evaluation.capturePost()
+	if err != nil || !sameSubject(plan, after) {
+		fmt.Fprintln(stderr, subjectChangeDiagnostic(runtimeRoot, declaredPaths, plan, after, err))
+		inspection := inspectAt(storageRoot, time.Now().UTC())
+		if err == nil {
+			inspection = inspectSubjectAt(storageRoot, after, time.Now().UTC())
+		}
+		return after, Result{GateExit: rc, ActionExit: 1, Inspection: inspection}, true
+	}
+	if rc != 0 && run.Outcome.Process.Started && run.Outcome.Protection.State != protection.Safe {
+		return after, unprotectedFailure(storageRoot, plan, rc, stderr, run), true
+	}
+	// A nested user that outlives a zero exit keeps a resource; its release failure is no verdict.
+	if err := release(); err != nil {
+		return after, retainedFailure(storageRoot, plan, rc, stderr, "gate resource release failed: "+err.Error()), true
+	}
+	return after, Result{}, false
 }
 
 // takeExecutionLock requests the non-blocking write lock on the gate lock file. Tests

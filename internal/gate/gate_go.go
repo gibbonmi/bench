@@ -2,7 +2,8 @@ package gate
 
 // The two toolchain steps whose argv is policy rather than a plain command. Gofmt
 // belongs to the dev phase table; the filtered core test set belongs only to the
-// explicit ship workflow.
+// explicit ship workflow. The gofmt, vet, and test phases of the dev table, which the
+// delta set shares, also live here.
 
 import (
 	"bytes"
@@ -15,6 +16,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -103,6 +105,21 @@ func GateGoArgv(kit, step, root string) []string {
 
 func gatePhaseGoArgv(step, root string) []string {
 	return []string{runBinaryArgvToken, "gate-go", step, root}
+}
+
+// sourcePhases are the gofmt and vet phases over the whole root.
+func sourcePhases(root string) []Phase {
+	return []Phase{
+		{Name: canary.PhaseGofmt, Argv: gatePhaseGoArgv("gofmt", root)},
+		// vet needs no gate-go wrapper: it exits nonzero on its own findings and carries
+		// no policy the argv would have to encode.
+		{Name: canary.PhaseVet, Argv: []string{"go", "-C", root, "vet", trimPath, "./..."}},
+	}
+}
+
+// testPhase is the test phase over operands. It carries the root-conformance environment.
+func testPhase(root, kit string, operands ...string) Phase {
+	return Phase{Name: canary.PhaseTest, Argv: BaseTestArgv("", operands...), Dir: root, Env: rootConformanceEnv(root, kit)}
 }
 
 // CoreTestPackages enumerates the packages the core `go test` step runs at tier: the

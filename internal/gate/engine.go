@@ -35,7 +35,7 @@ func InspectTree(root, tree string) EvidenceInspection {
 
 // InspectTreeContext checks retained evidence for the same obligation used by execution.
 func InspectTreeContext(ctx context.Context, root, tree string) EvidenceInspection {
-	return inspectProspective(ctx, root, tree, time.Now())
+	return inspectProspective(ctx, root, tree, time.Now(), true)
 }
 
 // ExecuteTree executes or reuses the gate for tree and returns its evidence inspection.
@@ -87,7 +87,9 @@ func ValidateProjectGreen(root, branch string) EvidenceInspection {
 	return inspectEvidence(root, plan, time.Now())
 }
 
-func inspectProspective(ctx context.Context, root, tree string, now time.Time) EvidenceInspection {
+// inspectProspective reports retained exact evidence for tree as the prospective owner keys
+// it. expires selects the freshness window, and the delta base reads with no window.
+func inspectProspective(ctx context.Context, root, tree string, now time.Time, expires bool) EvidenceInspection {
 	artifacts, err := openProspectiveArtifacts(root, tree)
 	if err != nil {
 		return EvidenceInspection{Reason: "subject unavailable"}
@@ -98,7 +100,7 @@ func inspectProspective(ctx context.Context, root, tree string, now time.Time) E
 	if err != nil || plan.Tree != tree {
 		return EvidenceInspection{Reason: "subject unavailable"}
 	}
-	return inspectEvidence(root, plan, now)
+	return inspectEvidenceWindowed(root, plan, now, expires)
 }
 
 func inspectEvidence(root string, plan subject, now time.Time) EvidenceInspection {

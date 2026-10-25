@@ -44,6 +44,12 @@ func addPlanFile(f *recordtest.Fixture) {
 func repairedFixture(t *testing.T, repair func(*recordtest.Fixture)) (*recordtest.Fixture, string) {
 	t.Helper()
 	f := attachedCheckpointFixture(t, recordtest.AttachDelegated, seedRepair)
+	return f, repairChunk(f, repair)
+}
+
+// repairChunk fails the Standards result of chunk 1 of f with F-1, commits repair, and
+// refreezes the chunk at the repair with no confirmation. It answers the reviewed tip.
+func repairChunk(f *recordtest.Fixture, repair func(*recordtest.Fixture)) string {
 	reviewed := f.Record.Chunks[0].Tip
 	standards := &f.Record.Chunks[0].Reviews[0]
 	standards.Outcome, standards.FindingIDs = "fail", []string{"F-1"}
@@ -52,22 +58,28 @@ func repairedFixture(t *testing.T, repair func(*recordtest.Fixture)) (*recordtes
 	f.Refreeze()
 	f.Save()
 	f.Commit("retain the refrozen chunk")
-	return f, reviewed
+	return reviewed
 }
 
 // confirmedFixture is the repaired fixture with a confirmation that closes F-1.
 func confirmedFixture(t *testing.T, repair func(*recordtest.Fixture)) (*recordtest.Fixture, string) {
 	t.Helper()
 	f, reviewed := repairedFixture(t, repair)
-	f.Confirm("confirm-1", reviewed, "F-1")
-	f.Save()
-	f.Commit("retain the confirmation")
+	confirmRepair(f, reviewed)
 	return f, reviewed
 }
 
-// passWrittenConfirmation commits the confirmation that the record writer derives for the
-// repaired fixture f and requires that the chunk checkpoint passes with it.
-func passWrittenConfirmation(t *testing.T, f *recordtest.Fixture) {
+// confirmRepair commits the confirmation that closes F-1 of the repaired fixture f, whose
+// axis results sit at the reviewed tip reviewed.
+func confirmRepair(f *recordtest.Fixture, reviewed string) {
+	f.Confirm("confirm-1", reviewed, "F-1")
+	f.Save()
+	f.Commit("retain the confirmation")
+}
+
+// retainWrittenConfirmation commits the confirmation that the record writer derives for the
+// repaired fixture f.
+func retainWrittenConfirmation(t *testing.T, f *recordtest.Fixture) {
 	t.Helper()
 	call := rr.ConfirmationCall{Chunk: "1", Findings: []string{"F-1"},
 		Evidence: rr.Evidence{ID: "confirm-1", Performer: recordtest.Orchestrator, Model: "unknown", Effort: "unknown", NativeRef: recordtest.Native("mutation failed; restore passed")},
@@ -76,6 +88,13 @@ func passWrittenConfirmation(t *testing.T, f *recordtest.Fixture) {
 		t.Fatal(err)
 	}
 	f.Commit("retain the written confirmation")
+}
+
+// passWrittenConfirmation retains the written confirmation of the repaired fixture f and
+// requires that the chunk checkpoint passes with it.
+func passWrittenConfirmation(t *testing.T, f *recordtest.Fixture) {
+	t.Helper()
+	retainWrittenConfirmation(t, f)
 	if code, out := runCheckpoint(t, f); code != 0 {
 		t.Fatalf("checkpoint with the written confirmation = %d %s", code, out)
 	}
@@ -97,12 +116,18 @@ func TestReviewCheckpointPassesAWrittenConfirmation(t *testing.T) {
 // delta.
 func TestReviewCheckpointConfirmationAcceptsAnAssignmentOnlyPlanCommit(t *testing.T) {
 	f, _ := repairedFixture(t, modifyTest)
+	dispatchRepair(f)
+	passWrittenConfirmation(t, f)
+}
+
+// dispatchRepair commits an assignment-only plan commit that dispatches the repair session of
+// the repaired fixture f, which records the entries of its ticket at the refrozen chunk.
+func dispatchRepair(f *recordtest.Fixture) {
 	f.Reassign(f.Plan.Chunks[0].Tickets[0])
 	f.Refreeze()
 	f.RecordAtTip()
 	f.Save()
 	f.Commit("retain the chunk at the repair dispatch")
-	passWrittenConfirmation(t, f)
 }
 
 // repairAgain commits a second test-only repair and refreezes the chunk at it, with no new

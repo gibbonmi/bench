@@ -543,9 +543,9 @@ shaped like the kit's; it is not the route the kit itself takes.
 The ordinary test phase carries the graded root and the dev tier to the
 conformance entry point. The conformance registry owns check order,
 subject, and tier. That one ordinary test run executes the complete dev-tier
-check set, meta checks included, and so validates the registry itself. There
-is no separate conformance phase, driver, or per-check evidence partition.
-`gate --fresh`, prospective execution, and ship remain full boundaries.
+check set, meta checks included, and so validates the registry itself. The phase
+table has no separate conformance phase, driver, or per-check evidence partition.
+`gate --fresh`, the landing's prospective execution, and ship remain full boundaries.
 
 `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` checks the named chunk's
 source-bound author verification and three independent review results before advancement.
@@ -634,6 +634,12 @@ collapses to one `phases: N/N green` row.
 A run that reuses a fresh green of its subject prints one
 `gate: green (fresh verdict reused for this tree)` line and runs no phase. So a chunk
 checkpoint after a green prepared run of its subject prints that line alone.
+
+A chunk checkpoint runs the delta set when its change since the reviewed tip is test-only
+and that tip has a whole green. The delta set is gofmt, vet, the changed test packages, and
+root conformance. Its run prints the phase table of those phases and then
+`gate: green (delta checkpoint)`. That green writes no verdict, so no landing and no later
+checkpoint accepts it.
 
 The complete phase stream goes to `.logs/gate-<run>.out`. That file sits beside
 the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.

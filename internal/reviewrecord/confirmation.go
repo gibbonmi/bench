@@ -63,17 +63,39 @@ type ReviewedPair struct {
 	Findings    []string
 }
 
-// errAtChunkPair marks three current axis results that sit at the chunk pair, so no earlier
-// pair holds them.
-var errAtChunkPair = errors.New("the axis results sit at the chunk pair")
+// atTargetPair marks three current axis results that sit at the pair from the chunk base to
+// the target, so no earlier pair holds them. name names the target: chunk names the chunk tip.
+type atTargetPair struct{ name string }
 
-// FindReviewedPair derives the reviewed pair of chunk from the current result of each axis.
-// spec names the record that the source digest excludes. It refuses a missing axis, results
-// at different pairs or at the chunk pair, a reviewed tip equal to the chunk base, a
-// reviewed tip outside the line from the chunk base to the chunk tip, and a delta from the
-// reviewed digest to the chunk digest that proveTestOnly refuses. Each refusal names the
-// chunk.
+func (e atTargetPair) Error() string { return "the axis results sit at the " + e.name + " pair" }
+
+// FindReviewedPair derives the reviewed pair of chunk as ReviewedAt does, with the chunk tip
+// as the target. spec names the record that the source digest excludes. It also refuses a
+// delta from the reviewed digest to the chunk digest that TestOnlyFiles refuses. Each refusal
+// names the chunk.
 func FindReviewedPair(root, spec string, chunk Chunk) (ReviewedPair, error) {
+	reviewed, err := reviewedAt(root, spec, chunk, chunk.Tip, "chunk")
+	if err != nil {
+		return ReviewedPair{}, err
+	}
+	if _, err := TestOnlyFiles(root, spec, reviewed.Digest, chunk.SourceDigest); err != nil {
+		return ReviewedPair{}, fmt.Errorf("%s: stale axis results at the reviewed tip %s: the delta to the chunk tip is not test-only: %w; review the three axes at the chunk pair", chunk.reviewed().scope, reviewed.Tip, err)
+	}
+	return reviewed, nil
+}
+
+// ReviewedAt derives the reviewed pair of chunk from the current result of each axis, with
+// target, a full commit ID, in the place of the chunk tip. It refuses a missing axis, results
+// at different pairs or at the target pair, a reviewed tip equal to the chunk base, and a
+// reviewed tip outside the line from the chunk base to target. It reads neither the chunk tip
+// nor the chunk digest, so a target after the chunk tip that the record names still finds the
+// earlier reviewed tip.
+func ReviewedAt(root, spec string, chunk Chunk, target string) (ReviewedPair, error) {
+	return reviewedAt(root, spec, chunk, target, "target")
+}
+
+// reviewedAt is ReviewedAt, and its refusals name target with name.
+func reviewedAt(root, spec string, chunk Chunk, target, name string) (ReviewedPair, error) {
 	scope := chunk.reviewed().scope
 	tip, mixed, pairs, findings := "", false, []string{}, []string{}
 	for _, axis := range Axes() {
@@ -91,10 +113,13 @@ func FindReviewedPair(root, spec string, chunk Chunk) (ReviewedPair, error) {
 	if mixed {
 		return ReviewedPair{}, fmt.Errorf("%s: mixed review pairs: %s; record the three axes at one pair from the chunk base %s", scope, strings.Join(pairs, ", "), chunk.Base)
 	}
-	if tip == chunk.Tip {
-		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, errAtChunkPair)
+	if tip == target {
+		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, atTargetPair{name})
 	}
-	fault, err := chunkLine(root, chunk, tip)
+	// The line check reads target in the place of the chunk tip.
+	line := chunk
+	line.Tip = target
+	fault, err := chunkLine(root, line, tip)
 	if err != nil {
 		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, err)
 	}
@@ -104,50 +129,60 @@ func FindReviewedPair(root, spec string, chunk Chunk) (ReviewedPair, error) {
 	case offBase:
 		return ReviewedPair{}, fmt.Errorf("%s: reviewed tip %s does not descend from the chunk base %s", scope, tip, chunk.Base)
 	case offTip:
-		return ReviewedPair{}, fmt.Errorf("%s: reviewed tip %s is not an ancestor of the chunk tip %s", scope, tip, chunk.Tip)
+		return ReviewedPair{}, fmt.Errorf("%s: reviewed tip %s is not an ancestor of the %s tip %s", scope, tip, name, target)
 	}
 	digest, err := commitDigest(root, spec, tip)
 	if err != nil {
 		return ReviewedPair{}, fmt.Errorf("%s: %w", scope, err)
 	}
-	if err := proveTestOnly(root, spec, digest, chunk.SourceDigest); err != nil {
-		return ReviewedPair{}, fmt.Errorf("%s: stale axis results at the reviewed tip %s: the delta to the chunk tip is not test-only: %w; review the three axes at the chunk pair", scope, tip, err)
-	}
 	slices.Sort(findings)
 	return ReviewedPair{Tip: tip, Digest: digest, Findings: slices.Compact(findings)}, nil
+}
+
+// ChunkEntry answers the entry of chunk id in the record of spec in tree, a tree ID.
+func ChunkEntry(root, tree, spec, id string) (Chunk, error) {
+	record, err := ReadTree(root, tree, spec)
+	if err != nil {
+		return Chunk{}, err
+	}
+	chunk, err := entryOf(&record, id)
+	if err != nil {
+		return Chunk{}, err
+	}
+	return *chunk, nil
 }
 
 // errBeyondAssignments marks a spec change outside the assignment block of its plan.
 var errBeyondAssignments = errors.New("the change reaches beyond the assignment block of the completion plan")
 
-// proveTestOnly answers testgap.Prove for the delta from the reviewed digest to the later
+// TestOnlyFiles answers testgap.TestFiles for the delta from the reviewed digest to the later
 // digest, with one exemption for the spec. The spec passes when every other changed path
-// passes testgap.Prove and the two spec documents are byte-equal once each clears the
-// assignment block of its completion plan.
-func proveTestOnly(root, spec, reviewed, later string) error {
-	err := testgap.Prove(root, reviewed, later)
+// passes testgap.TestFiles and the two spec documents are byte-equal once each clears the
+// assignment block of its completion plan. The answer then lists the other changed paths.
+func TestOnlyFiles(root, spec, reviewed, later string) ([]string, error) {
+	files, err := testgap.TestFiles(root, reviewed, later)
 	if err == nil {
-		return nil
+		return files, nil
 	}
 	trees, rest := []string{reviewed, later}, []string{"", ""}
 	for i, tree := range trees {
 		if rest[i], err = benchgit.TreeWithoutFile(root, tree, spec); err != nil {
-			return err
+			return nil, err
 		}
 	}
-	if err := testgap.Prove(root, rest[0], rest[1]); err != nil {
-		return err
+	if files, err = testgap.TestFiles(root, rest[0], rest[1]); err != nil {
+		return nil, err
 	}
 	cleared := [][]byte{nil, nil}
 	for i, tree := range trees {
 		if cleared[i], err = withoutAssignments(root, tree, spec); err != nil {
-			return fmt.Errorf("%s: %w", spec, err)
+			return nil, fmt.Errorf("%s: %w", spec, err)
 		}
 	}
 	if !bytes.Equal(cleared[0], cleared[1]) {
-		return fmt.Errorf("%s: %w", spec, errBeyondAssignments)
+		return nil, fmt.Errorf("%s: %w", spec, errBeyondAssignments)
 	}
-	return nil
+	return files, nil
 }
 
 // withoutAssignments returns the spec document in tree with no assignment block in its
@@ -177,7 +212,7 @@ func withoutAssignments(root, tree, spec string) ([]byte, error) {
 func checkChunkReviews(root string, record Record, plan Plan, chunk *Chunk, excluded []string, reviewerCount int) error {
 	pair := chunk.reviewed()
 	reviewed, err := FindReviewedPair(root, record.Spec, *chunk)
-	if errors.Is(err, errAtChunkPair) || err != nil && len(chunk.Confirmations) == 0 {
+	if errors.As(err, new(atTargetPair)) || err != nil && len(chunk.Confirmations) == 0 {
 		return checkReviews(pair, excluded, reviewerCount)
 	}
 	refused := func(form string, err error) error {

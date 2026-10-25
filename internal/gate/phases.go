@@ -103,13 +103,7 @@ func toolchainPhases(root, kit string) []Phase {
 	if !goModule || err != nil {
 		return nil
 	}
-	phases := []Phase{
-		{Name: canary.PhaseGofmt, Argv: gatePhaseGoArgv("gofmt", root)},
-		// vet needs no gate-go wrapper: it exits nonzero on its own findings and carries
-		// no policy the argv would have to encode.
-		{Name: canary.PhaseVet, Argv: []string{"go", "-C", root, "vet", trimPath, "./..."}},
-		{Name: canary.PhaseTest, Argv: BaseTestArgv("", "./..."), Dir: root, Env: rootConformanceEnv(root, kit)},
-	}
+	phases := append(sourcePhases(root), testPhase(root, kit, "./..."))
 	if sameDirectory(root, kit) && declaresRaceTest(root) {
 		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: raceDriverArgv(), Dir: root, ExpectedRuns: raceTestNames()})
 	}
@@ -134,7 +128,7 @@ func GoModuleRoot(root string) bool {
 
 // rootConformanceEnv points the ordinary test phase at the tree under grade. This way
 // the conformance registry's checks run inside the oracle, instead of skipping for an
-// unset root. There is no separate conformance phase or driver. Go owns package
+// unset root. The whole table has no separate conformance phase or driver. Go owns package
 // scheduling inside the one ordinary test driver. This is what makes that driver
 // grade the live tree rather than only the fixtures.
 //
@@ -289,7 +283,7 @@ func phasesCommandAtKitWithContext(base context.Context, root, kit string, stdou
 }
 
 func phasesCommandAtKitWithSelection(base context.Context, root, kit string, selection *runbinary.Selection, stdout, stderr io.Writer) (code int) {
-	phases, err := phaseTable(root, kit)
+	phases, err := scheduledTable(root, kit)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1

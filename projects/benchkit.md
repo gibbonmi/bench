@@ -385,7 +385,8 @@ broker names in `BENCH_GATE_BASELINE`. A named baseline the run cannot read refu
 it never falls back to the tree under grade. Phase children do not inherit that name.
 
 There is no separate contract or conformance dev driver, per-package loop, nested Go test, fixture-executing
-canary phase, component partition, or stripped-subject phase schedule. An
+canary phase, or component partition. The one reduced schedule is the delta set of a chunk
+checkpoint, which grades a test-only change after a whole green at the reviewed tip. An
 environment-class skip observed by the oracle is red and names the test that emitted it.
 A check the gate failed to stage has no verdict, so it cannot count as green.
 
