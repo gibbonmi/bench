@@ -277,9 +277,9 @@ The gate's own whole run grades this build at every chunk checkpoint and at the 
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| NG1 | 14 | Two subjects that differ only in their tree have one identity digest and two oracle digests | planned TestOracleIdentityIgnoresTheTree in internal/gate/oracle_identity_test.go | An identity that frames the tree differs across the two subjects. |
-| NG2 | 15 | Setting `BENCH_REQUIRE_CAPABILITIES=1` changes the identity digest of one subject | planned TestOracleIdentityCarriesTheCapabilityPosture in internal/gate/oracle_identity_test.go | An identity without the posture stays equal across the two postures. |
-| NG3 | 14 | Changing the bytes of a declared tool changes both the identity digest and the oracle digest | planned TestOracleIdentityAndOracleShareTheClosure in internal/gate/oracle_identity_test.go | A second derivation that skips the closure keeps one digest equal. |
+| NG1 | 14 | Two subjects that differ only in their tree have one identity digest and two oracle digests | `internal/gate/oracle_identity_test.go` (`TestOracleIdentityIgnoresTheTree`) | An identity that frames the tree differs across the two subjects. |
+| NG2 | 15 | Setting `BENCH_REQUIRE_CAPABILITIES=1` changes the identity digest of one subject | `internal/gate/oracle_identity_test.go` (`TestOracleIdentityCarriesTheCapabilityPosture`) | An identity without the posture stays equal across the two postures. |
+| NG3 | 14 | Changing the bytes of a declared tool changes both the identity digest and the oracle digest | `internal/gate/oracle_identity_test.go` (`TestOracleIdentityAndOracleShareTheClosure`) | A second derivation that skips the closure keeps one digest equal. |
 | NG4 | 16 | The oracle digest keeps every frame and its order from before this build | review-owned: the diff of `buildSubjectForTree` adds frames only to the identity digest | A reordered or added oracle frame changes the digest of every current green. |
 | NG5 | 1 | With `BENCH_GATE_TESTLOG` set, the shim runs the binary with `-test.testlogfile=<dir>/<package key>.log` before its arguments | planned TestGateGoExecAddsTheTestLog in internal/gate/testlog_exec_test.go | A shim that drops the flag leaves the probe binary's recorded argv without it. |
 | NG6 | 1 | Without `BENCH_GATE_TESTLOG`, the shim runs the binary with its arguments unchanged | planned TestGateGoExecWithoutALogDirectory in internal/gate/testlog_exec_test.go | A shim that always adds the flag changes the recorded argv. |

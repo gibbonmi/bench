@@ -85,10 +85,13 @@ type manifest struct {
 
 type subject struct {
 	Tree, Oracle string
-	Closed       bool
-	Reason       string
-	Resolution   Resolution
-	Env          []string
+	// Identity is the tree-free oracle identity: every oracle frame but the tree, and then
+	// the capability posture. A landing compares it across trees.
+	Identity   string
+	Closed     bool
+	Reason     string
+	Resolution Resolution
+	Env        []string
 }
 
 // durableReplace installs rec as the verdict cache of gitdir through replacer.

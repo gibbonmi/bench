@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -69,17 +70,23 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 	if reason != "" {
 		s.Closed, s.Reason = false, reason
 	}
-	h := sha256.New()
-	for _, value := range []string{policy, identityRoot, tree, resolutionName(res.Kind), res.Command, pathEnv, manifestIdentity} {
-		frame(h, value)
+	// h is the oracle digest and id the identity digest. Every frame but the tree goes to
+	// both through w, so the oracle frames keep their order.
+	h, id := sha256.New(), sha256.New()
+	w := io.MultiWriter(h, id)
+	frame(w, policy)
+	frame(w, identityRoot)
+	frame(h, tree)
+	for _, value := range []string{resolutionName(res.Kind), res.Command, pathEnv, manifestIdentity} {
+		frame(w, value)
 	}
-	c := &identityCollector{w: h, entryLimit: manifestEntryLimit(), runtimeRoot: root, identityRoot: identityRoot}
+	c := &identityCollector{w: w, entryLimit: manifestEntryLimit(), runtimeRoot: root, identityRoot: identityRoot}
 	if res.Kind != None {
 		if err := c.hashResolution(root, res, pathEnv); err != nil {
 			s.open("launcher closure unavailable")
 		}
 	}
-	if err := hashProspectivePreparation(c, h, root, identityRoot, pathEnv); err != nil {
+	if err := hashProspectivePreparation(c, w, root, identityRoot, pathEnv); err != nil {
 		s.open("launcher closure unavailable")
 	}
 	if m != nil {
@@ -89,20 +96,20 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 		}
 		for _, entry := range supplied {
 			s.Env = append(s.Env, entry[0]+"="+entry[1])
-			frame(h, "environment")
-			frame(h, entry[0])
-			frame(h, entry[1])
+			frame(w, "environment")
+			frame(w, entry[0])
+			frame(w, entry[1])
 		}
 		for _, path := range m.Paths {
-			frame(h, "path")
-			frame(h, path)
+			frame(w, "path")
+			frame(w, path)
 			if err := c.hashRepoPath(root, path); err != nil {
 				s.open("declared path unavailable")
 			}
 		}
 		for _, tool := range m.Tools {
-			frame(h, "tool")
-			frame(h, tool)
+			frame(w, "tool")
+			frame(w, tool)
 			if err := c.hashExecutable(root, tool, pathEnv, false, 0); err != nil {
 				s.open("declared tool unavailable")
 			}
@@ -121,6 +128,9 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 		return subject{}, err
 	}
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
+	frame(id, requireCapabilitiesEnv)
+	frame(id, strconv.FormatBool(strict()))
+	s.Identity = hex.EncodeToString(id.Sum(nil))
 	return s, nil
 }
 
