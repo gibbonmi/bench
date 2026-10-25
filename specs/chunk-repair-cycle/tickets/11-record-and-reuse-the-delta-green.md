@@ -1,7 +1,7 @@
 # Record the delta green in its own class and reuse it only at the chunk checkpoint
 
 Blocked by: 10-run-the-delta-checkpoint.md
-Writes: internal/gate/delta_checkpoint.go (new), internal/gate/delta_checkpoint_test.go (new), internal/gate/checkpoint.go, internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/verdict.go, internal/gate/verdict_registry.go, internal/gate/verdict_registry_guard_test.go, internal/gate/composed_green.go, internal/gate/lane.go, internal/gate/lane_record_test.go, internal/gate/durable_replacement_test.go, internal/gate/complete_checkpoint_test.go, internal/git/git.go, internal/testreport/testreport_test.go, internal/testreport/check_test.go, internal/status/status_gatecache_test.go, .bench/BENCH-reference.md, projects/benchkit.md
+Writes: internal/gate/delta_checkpoint.go (new), internal/gate/delta_checkpoint_test.go (new), internal/gate/checkpoint.go, internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/verdict.go, internal/gate/verdict_registry.go, internal/gate/verdict_registry_guard_test.go, internal/gate/composed_green.go, internal/gate/lane.go, internal/gate/lane_record_test.go, internal/gate/durable_replacement_test.go, internal/gate/complete_checkpoint_test.go, internal/git/git.go, internal/testreport/testreport_test.go, internal/testreport/check_test.go, internal/status/status_gatecache_test.go, .bench/BENCH-reference.md, projects/benchkit.md, CHANGELOG.md
 Covers: RC68, RC69, RC70, RC74, RC75, RC82, RC83
 
 ## What to build
