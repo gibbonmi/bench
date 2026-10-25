@@ -1,7 +1,7 @@
 # Amend the landing rule docs for the reader set
 
 Blocked by: 07-hold-the-whole-gate-after-a-red.md, 08-show-reader-green-on-the-dashboard.md
-Writes: docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md, projects/benchkit.md, .bench/BENCH-reference.md, CONTEXT.md, .bench/commitment.json, decisions/no-go-schedule.md (deleted), decisions/no-go-schedule/ (deleted)
+Writes: docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md, projects/benchkit.md, .bench/BENCH-reference.md, CONTEXT.md, .bench/commitment.json, decisions/no-go-schedule.md (deleted), decisions/no-go-schedule/assets/research.md (deleted), decisions/no-go-schedule/tickets/1.md (deleted), decisions/no-go-schedule/tickets/2.md (deleted), decisions/no-go-schedule/tickets/3.md (deleted), decisions/no-go-schedule/tickets/4.md (deleted), decisions/no-go-schedule/tickets/5.md (deleted), decisions/no-go-schedule/tickets/6.md (deleted), decisions/no-go-schedule/tickets/7.md (deleted), decisions/no-go-schedule/tickets/8.md (deleted), decisions/no-go-schedule/tickets/9.md (deleted), decisions/no-go-schedule/tickets/10.md (deleted), decisions/no-go-schedule/tickets/11.md (deleted), decisions/no-go-schedule/tickets/12.md (deleted), decisions/no-go-schedule/tickets/13.md (deleted), decisions/no-go-schedule/tickets/14.md (deleted)
 Covers: NG68, NG69, NG70
 
 ## What to build
