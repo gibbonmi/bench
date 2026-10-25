@@ -118,6 +118,9 @@ below. Promote whatever of the spec stays durable onto its roadmap row first.
 Leave that row with no spec path named; the row survives only as the residual
 work the spec did not ship.
 
+A row or spec retirement can break a link in a file outside `ROADMAP.md`, `roadmap/`, and `capture/`.
+Repair that link through an implement-now light-path fix, so it lands before the batch worktree opens.
+
 ## 2. Drain occurrence evidence
 
 An entry feeds a row only when it changes the row's priority, scope, or `Next:`.
