@@ -4062,6 +4062,72 @@
           "tip": "28314fb45718b985aaa65ea1d95120d29315712c",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "rc-c7-r2-standards",
+          "performer": "claude:rc-c7-r2-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-r2-standards-20261025",
+            "digest": "sha256:ae5d409fb4253f4dfbfd88e168e3338c9acbc3290a40869fe1f7b43690dcce43",
+            "excerpt": "## Standards axis, RC-C7 r2 (repair delta 5a3524aaa..866726ad6)\n\nS1 is closed. No new finding at severity 5 or higher. The solution, the RC-C7 decision section, the chunk-order sentence, the prior-art list, and the seam diagram now state the decided state. The sweep left no current-state description of the reuse. The edits obey invariant 3 and the STE rules.\n\n### Advice\n- spec.md:476: the dated consultant table still names the exec reuse; the reviewer decision supersedes it.\n- spec.md:405: the RC76 row says \"the first RC-C7 ticket\".\n- spec.md:264: one carried-over sentence of about 33 words.\n"
+          },
+          "axis": "Standards",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "d4adb19cd49c612e6c629a28132d2a8684206c5e",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c7-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c7-r2-spec",
+          "performer": "claude:rc-c7-r2-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-r2-spec-20261025",
+            "digest": "sha256:b5ebc6a4bebac3cfc76dae6493db5aac626594308781aceb15fe9cee51507a82",
+            "excerpt": "## Spec axis, RC-C7 r2 (repair delta 5a3524aaa..866726ad6)\n\nP1 is closed. No new finding at severity 5 or higher. The corrected text agrees with the reviewer decision, the Won't handle line, contradiction 6, the chunk table, and ticket 12. The delta changes no acceptance row, coverage cell, or plan fence. bench coverage --check: ok, 80 rows. RC76 and RC81 keep their rows and owners.\n\n### Advice\n- spec.md:123: story 50 reads like a pending change.\n- spec.md:567: VerifyAt and Inherit stay in the cited-symbol list.\n- tickets/12:13,19 and the asset still mention ticket 13 (r1 F2).\n"
+          },
+          "axis": "Spec",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "d4adb19cd49c612e6c629a28132d2a8684206c5e",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c7-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c7-r2-coverage",
+          "performer": "claude:rc-c7-r2-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-r2-coverage-20261025",
+            "digest": "sha256:45b9fcf89d5958a38a7b152ec50c028207e757cc9d38a9418100cced003a079f",
+            "excerpt": "## Coverage axis, RC-C7 r2 (repair delta 5a3524aaa..866726ad6)\n\nReaffirmed, delta-only. The delta changes no coverage-map row, test reference, or check that a row needs. The removed prior-art test and seam-diagram block backed only the dropped RC77-RC80. No Go file changes. New findings at severity 5 or higher: none. Evidence sha256:6df878c9 current=true at 866726ad6.\n"
+          },
+          "axis": "Coverage",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "d4adb19cd49c612e6c629a28132d2a8684206c5e",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c7-r1-coverage"
+          ]
         }
       ]
     }
@@ -4541,6 +4607,12 @@ RC-C6B consumed repair cycle 1 of 2 after its initial review (round r1). The coo
 The test-only repair at `ef387b3f9` closed C1 to C4, and the coordinator confirmation `rc-c6b-confirm-1` replaced a confirming round. The coordinator probe of `internal/gate/delta_checkpoint.go` bit each finding's mutant, and every row restored the file. A red delta that writes its record failed `TestDeltaCheckpointRedStaysRed`. The omitted tree term failed `TestDeltaGreenNeedsTheCurrentBase`, and the omitted `Ready` term failed `TestDeltaGreenNeedsAValidRecord`. A constant run-binary digest failed four tests, the first `TestCheckpointPrepareTakesTheDelta`.
 
 RC-C7 consumed repair cycle 1 of 2 after its initial review (round r1). Standards S1 and Spec P1 name one defect: the spec still describes the dropped exec reuse as current design. The spec is on no `Writes:` line, so the coordinator corrects it in one prose-only plan commit.
+
+The RC-C7 correction at `d4adb19cd` closed S1 and P1, and the refreeze at `866726ad6` recorded the ticket 12 verification at that tip. The confirming round r2 passed on all three axes with no new finding. Standards and Spec re-reviewed the repair delta in full, and Coverage gave a delta-only reaffirmation.
+
+RC81, final reconciliation: the RC-C6B test-only repair cycle took 40 minutes 23 seconds. It ran from the findings commit to the green checkpoint, on 2026-10-25 from 10:56 to 11:36. That is below the 45-to-60-minute baseline, and it misses the 11-to-14-minute target.
+
+The repair author took about 26 minutes for four tests, the plan rows with the system suite, the store probe, and an extra mutant set. The coordinator probe and confirmation took about 8 minutes. The checkpoint ran whole with `--fresh` in 5 minutes 40 seconds, because the bootstrap rule keeps the candidate from serving its own delta checkpoint. No restage ran.
 
 ## Standards
 
