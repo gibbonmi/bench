@@ -117,3 +117,20 @@ func TestChangedGraphUsesOneClosedSelectionEnvironment(t *testing.T) {
 		}
 	}
 }
+
+func TestChangedRunsWriteNoGateOwnedRecords(t *testing.T) {
+	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
+	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
+		return os.WriteFile(output, []byte("selected"), 0o755)
+	}, Verify: func(string, string) error { return nil }})
+	record := filepath.Join(root, ".git", "bench-last-gate")
+	if err := os.WriteFile(record, []byte("before"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip}); code != 0 {
+		t.Fatalf("changed run = %d\n%s", code, output)
+	}
+	if got := readTestReportFile(t, record); got != "before" {
+		t.Fatalf("gate record = %q, want unchanged", got)
+	}
+}

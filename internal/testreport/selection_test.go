@@ -256,44 +256,41 @@ func TestChangedRenameHalvesSelectIndependently(t *testing.T) {
 	}
 }
 
-func TestChangedRunsWriteNoGateOwnedRecords(t *testing.T) {
-	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
-	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
-		return os.WriteFile(output, []byte("selected"), 0o755)
-	}, Verify: func(string, string) error { return nil }})
-	record := filepath.Join(root, ".git", "bench-last-gate")
-	if err := os.WriteFile(record, []byte("before"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip}); code != 0 {
-		t.Fatalf("changed run = %d\n%s", code, output)
-	}
-	if got := readTestReportFile(t, record); got != "before" {
-		t.Fatalf("gate record = %q, want unchanged", got)
-	}
-}
-
-// TestChangedSelectionSelectsTheSystemSuite grades that a changed system-suite test file
-// runs under the gate's system-suite operands and environment, as `bench test --check
-// system` runs it.
+// TestChangedSelectionSelectsTheSystemSuite grades the Go child of a changed run in a kit
+// root. A selected suite runs as `bench test --check system` runs it: its operands come
+// first, so the tag reaches the build, and its environment is added. Other selected
+// packages follow. A selection without the suite carries neither.
 func TestChangedSelectionSelectsTheSystemSuite(t *testing.T) {
-	suite := systemSuiteFile()
-	root, base, tip := systemSuiteRepository(t, suite, systemSuiteSource+"\n// changed\n")
-	t.Setenv("BENCH_KIT", root)
-	marker := filepath.Join(t.TempDir(), "environment")
-	goDir := t.TempDir()
-	writeListingGo(t, filepath.Join(goDir, "go"), marker)
-	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	installCannedSelection(t)
-	if output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip}); code != 0 {
-		t.Fatalf("changed command = %d\n%s", code, output)
-	}
-	operands, env := gate.SystemSuite(root)
-	got := readTestReportFile(t, marker)
-	for _, want := range append([]string{" " + strings.Join(operands, " ") + "\n"}, env...) {
-		if !strings.Contains(got, want) {
-			t.Fatalf("system-suite Go child missing %q:\n%s", want, got)
-		}
+	for _, tc := range []struct {
+		name, path, source, others string
+		suite                      bool
+	}{
+		{name: "suite file", path: systemSuiteFile(), source: systemSuiteSource + "\n// changed\n", suite: true},
+		{name: "suite import", path: "changed/changed.go", source: "package changed\n\nconst Version = \"tip\"\n", others: " changedcommand/changed", suite: true},
+		{name: "no suite", path: "other/other.go", source: "package other\n", others: " changedcommand/other"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, base, tip := systemSuiteRepository(t, tc.path, tc.source)
+			t.Setenv("BENCH_KIT", root)
+			marker := filepath.Join(t.TempDir(), "environment")
+			goDir := t.TempDir()
+			writeListingGo(t, filepath.Join(goDir, "go"), marker)
+			t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+			installCannedSelection(t)
+			if output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip}); code != 0 {
+				t.Fatalf("changed command = %d\n%s", code, output)
+			}
+			operands, env := gate.SystemSuite(root)
+			argv, got := tc.others+"\n", readTestReportFile(t, marker)
+			if tc.suite {
+				argv = " " + strings.Join(operands, " ") + argv
+			}
+			for _, fact := range append(append([]string{argv}, operands...), env...) {
+				if want := tc.suite || fact == argv; strings.Contains(got, fact) != want {
+					t.Fatalf("Go child holds %q = %t, want %t:\n%s", fact, !want, want, got)
+				}
+			}
+		})
 	}
 }
 
@@ -484,17 +481,16 @@ func systemSuiteRepository(t *testing.T, changedPath, changedSource string) (roo
 	return changedCommandRepository(t, systemSuiteFile(), systemSuiteSource, changedPath, changedSource)
 }
 
-// writeListingGo writes a go that runs the real `go list`. Any other call records its
-// environment and argv in marker and reports one passing package.
+// writeListingGo writes a go that runs the real `go list`, and hands any other call to the
+// recording go of writeCheckGo.
 func writeListingGo(t *testing.T, path, marker string) {
 	t.Helper()
 	realGo, err := exec.LookPath("go")
 	if err != nil {
 		t.Fatal(err)
 	}
-	quoted := sanitize.ShellQuote(marker)
-	writeGoStub(t, path, "#!/usr/bin/env bash\nif [ \"$1\" = list ]; then exec "+sanitize.ShellQuote(realGo)+" \"$@\"; fi\nenv > "+quoted+
-		"\nprintf 'argv=%s\\n' \"$*\" >> "+quoted+"\nprintf '%s\\n' '{\"Action\":\"pass\",\"Package\":\"suite\"}'\n")
+	writeCheckGo(t, path+"-recording", marker)
+	writeGoStub(t, path, "#!/usr/bin/env bash\nif [ \"$1\" = list ]; then exec "+sanitize.ShellQuote(realGo)+" \"$@\"; fi\nexec "+sanitize.ShellQuote(path+"-recording")+" \"$@\"\n")
 }
 
 func runChangedGit(t *testing.T, root string, args ...string) string {

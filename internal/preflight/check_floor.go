@@ -173,20 +173,19 @@ func floorRedDetail(omitted []string) string {
 }
 
 // satisfies applies the satisfaction rules to one selection. A form that runs no test
-// satisfies nothing. Only a run of the named check satisfies a check element, and a check
-// that takes a run pattern must run unfiltered. A package element needs an unfiltered
-// package run that is not `--changed`, whose target equals the element or covers it at a
-// segment boundary. A run of several package expressions satisfies each element that one
-// of its expressions satisfies.
+// satisfies nothing, and a run with a run pattern is filtered, `--run all` included. Only an
+// unfiltered run of the named check satisfies a check element. A package element needs an
+// unfiltered package run that is not `--changed`, whose target equals the element or covers
+// it at a segment boundary. A run of several package expressions satisfies each element
+// that one of its expressions satisfies.
 func satisfies(selection testreport.Request, element string) bool {
 	if !selection.Runs() {
 		return false
 	}
 	if testreport.IsNamedCheck(element) {
-		unfiltered := !testreport.CheckTakesRun(element) || selection.Run() == testreport.AllTests
-		return selection.Form() == testreport.CheckForm && selection.Target() == element && unfiltered
+		return selection.Form() == testreport.CheckForm && selection.Target() == element && !selection.Filtered()
 	}
-	if selection.Form() != testreport.PackageForm || selection.Run() != testreport.AllTests || selection.Changed() {
+	if selection.Form() != testreport.PackageForm || selection.Filtered() || selection.Changed() {
 		return false
 	}
 	return slices.ContainsFunc(selection.Packages(), func(target string) bool {

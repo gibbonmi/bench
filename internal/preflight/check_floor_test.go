@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/testreport"
@@ -262,10 +263,12 @@ func TestCheckFloorKeepsTheReverseBoundary(t *testing.T) {
 		c1Red("./internal/git"))
 }
 
+// TestCheckFloorRejectsAFilteredRun includes `--run all`, a pattern, not the all-tests fact.
 func TestCheckFloorRejectsAFilteredRun(t *testing.T) {
 	root := floorModule(t, "internal/x")
-	requireFloorRed(t, satisfaction(t, root, "internal/x/p.go", "bench test --package ./internal/x --run '^TestA$|^TestB$'"),
-		c1Red("./internal/x"))
+	for _, command := range []string{"bench test --package ./internal/x --run '^TestA$|^TestB$'", "bench test --package ./internal/x --run all"} {
+		requireFloorRed(t, satisfaction(t, root, "internal/x/p.go", command), c1Red("./internal/x"))
+	}
 }
 
 func TestCheckFloorRejectsAChangedRun(t *testing.T) {
@@ -331,9 +334,8 @@ func TestCheckFloorOwesTheSystemCheck(t *testing.T) {
 	root, entry := floorModule(t), "internal/systemtest/suite_test.go"
 	preflighttest.MustWriteFile(t, filepath.Join(root, entry), "//go:build system\n\npackage systemtest\n")
 	requireFloorGreen(t, satisfaction(t, root, entry, "bench test --check system"))
-	for _, command := range []string{"bench test --package ./...", "bench test --check system --run ^TestX$"} {
-		requireFloorDetail(t, satisfaction(t, root, entry, command),
-			"completion plan omits a floor check: chunk c1: system (add bench test --check system)")
+	for _, command := range []string{"bench test --package ./...", "bench test --check system --run ^TestX$", "bench test --check system --run all"} {
+		requireFloorRed(t, satisfaction(t, root, entry, command), c1Red(gate.SystemPhaseName))
 	}
 }
 
