@@ -3318,7 +3318,79 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-c6-r1-standards",
+          "performer": "claude:rc-c6-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-standards-r1",
+            "digest": "sha256:9b656f42d8d47b5268c9a0859a89626aeca708e596d8ab49e4a25bea15d4ef7d",
+            "excerpt": "## Standards\n\n4 findings. Worst: S1, severity 4.\n\n- S1 | sev 4 | auto-fix | conf 8 | internal/gate/delta_checkpoint.go:149 | The -run ^TestRootConformance$ filter is derived here and again at internal/testreport/selection_facts.go:93.\n- S2 | sev 3 | auto-fix | conf 6 | internal/gate/delta_checkpoint.go:118-120 | runDelta repeats the cancel and timeout classification of the whole path and prints no gate: timeout line.\n- S3 | sev 3 | auto-fix | conf 6 | .bench/BENCH-reference.md:546 | \"The phase table\" names both the whole table, which has no conformance phase, and the delta table, which has one.\n- S4 | sev 1 | auto-fix | conf 10 | internal/gate/delta_checkpoint_test.go:234 | A comment repeats the word \"repair\".\n\n### Advice\n- The system-suite package is picked out of the SystemSuite operands three ways.\n- runDelta and settleRun take long parameter lists of same-typed strings.\n- The CHANGELOG bullet uses a list as its subject.\n"
+          },
+          "axis": "Standards",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c6-r1-spec",
+          "performer": "claude:rc-c6-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-spec-r1",
+            "digest": "sha256:d12b8a4e8311d183662f1d4609c0f38e1f64994f4a5fcd189658e492b5591408",
+            "excerpt": "## Spec\n\n2 findings. Worst: P1, severity 3.\n\n- P1 | sev 3 | auto-fix | conf 6 | .bench/BENCH-reference.md:638-639 | The reference states delta eligibility as test-only plus a whole green, but the code also runs whole for a system-suite or race-table file, a non-kit phase table, no changed test file, and --fresh.\n- P2 | sev 3 | auto-fix | conf 5 | internal/gate/delta_checkpoint.go:118 | A delta timeout prints no gate: timeout line and exits with the killed child's code, unlike the whole path.\n\n### Advice\n- The spec's eligibility list does not record the two fail-closed guards.\n- The prepared run stays whole only because it carries no chunk source.\n- ReviewedAt has no direct unit test with a target other than the chunk tip.\n"
+          },
+          "axis": "Spec",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c6-r1-coverage",
+          "performer": "claude:rc-c6-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-coverage-r1",
+            "digest": "sha256:5366cabc6aa4d22ac9aeb9a0d0dd1ee03cb94c397943f03ff0eebfda1f6ea3ff",
+            "excerpt": "## Coverage\n\n2 findings. Worst: C1, severity 4. One mutant set of 9 on internal/gate/delta_checkpoint.go: 3 bit and 6 silent, all restored.\n\n- C1 | sev 4 | auto-fix | conf 6 | internal/gate/delta_checkpoint.go:66 | Two of the four clauses of narrowsKitTable have no isolating test: the Go-module clause and the manifest read error (mutants 3 and 4, silent).\n- C2 | sev 3 | auto-fix | conf 5 | internal/gate/delta_checkpoint.go:118-120 | No test pins the delta timeout path (mutant 5, silent).\n\n### Advice\n- The schedule refusal has one input that both clauses reject (mutants 1 and 2, silent).\n- Dropping the anchors from the conformance -run stays silent (mutant 6).\n"
+          },
+          "axis": "Coverage",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3623,6 +3695,8 @@ RC-C5 consumed repair cycle 1 of 2 after its initial review (round r1). The cons
 
 The RC-C5 repair at `8dc575f27` and `e05ef7e0d` closed S1 to S4 and C1 to C3. Its probe of `internal/preflight/check_floor.go` demonstrated the red of the filtered-run cases. The check form reverted to the sentinel compare failed `TestCheckFloorOwesTheSystemCheck`. The package form reverted to the sentinel compare failed `TestCheckFloorRejectsAFilteredRun`. Its probe of `internal/testreport/selection.go` bit `TestChangedSelectionSelectsTheSystemSuite` for each of the three C1 and C2 mutations, and every row restored the file.
 
+RC-C6 consumed repair cycle 1 of 2 after its initial review (round r1). The coordinator accepted all eight findings as fixes with no consultant round. Standards S2, Spec P2, and Coverage C2 name one defect, the timeout path that the delta run repeats.
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
@@ -3664,6 +3738,13 @@ RC-C5 round r1: 4 findings. Worst issue: S1, a changelog sentence over the prose
 - S3 | auto-fix | confidence 6 | `internal/preflight/check_floor_test.go:334` | The filtered-run case has no recorded red.
 - S4 | auto-fix | confidence 6 | `internal/testreport/selection_test.go:489` | `writeListingGo` repeats the recording stub of `writeCheckGo`.
 
+RC-C6 round r1: 4 findings. Worst issue: S1, a conformance filter derived twice.
+
+- S1 | auto-fix | confidence 8 | `internal/gate/delta_checkpoint.go:149` | The gate and `internal/testreport` each derive the root-conformance filter.
+- S2 | auto-fix | confidence 6 | `internal/gate/delta_checkpoint.go:118-120` | The delta run repeats the timeout classification and prints no timeout line.
+- S3 | auto-fix | confidence 6 | `.bench/BENCH-reference.md:546` | One term names the whole phase table and the delta table.
+- S4 | auto-fix | confidence 10 | `internal/gate/delta_checkpoint_test.go:234` | A comment repeats a word.
+
 ## Spec
 
 RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
@@ -3685,6 +3766,11 @@ RC-C4 round r1: 3 findings. Worst issue: P2, the same unrecorded absent-policy s
 RC-C4B round r1: 0 findings. Worst issue: none.
 
 RC-C5 round r1: 0 findings. Worst issue: none.
+
+RC-C6 round r1: 2 findings. Worst issue: P1, a reference sentence that omits eligibility rules.
+
+- P1 | auto-fix | confidence 6 | `.bench/BENCH-reference.md:638-639` | The reference omits the cases that run the whole gate.
+- P2 | auto-fix | confidence 5 | `internal/gate/delta_checkpoint.go:118` | A delta timeout differs from a whole-run timeout.
 
 ## Coverage
 
@@ -3724,6 +3810,11 @@ RC-C5 round r1: 3 findings. Worst issue: C1, a mixed changed run with no test.
 - C2 | auto-fix | confidence 7 | `internal/testreport/selection.go:127` | No test keeps an unselected suite out of the run.
 - C3 | auto-fix | confidence 7 | `internal/preflight/check_floor.go:186` | The consultants chose an accessor, so `--run all` counts as a filtered run in both floor forms.
 
+RC-C6 round r1: 2 findings. Worst issue: C1, a kit-table guard that is half isolated.
+
+- C1 | auto-fix | confidence 6 | `internal/gate/delta_checkpoint.go:66` | Two clauses of the kit-table guard have no isolating test.
+- C2 | auto-fix | confidence 5 | `internal/gate/delta_checkpoint.go:118-120` | No test pins the delta timeout path.
+
 ## Advice
 
 - The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
@@ -3750,3 +3841,6 @@ RC-C5 round r1: 3 findings. Worst issue: C1, a mixed changed run with no test.
 
 - RC-C5: a `go.mod` change gives the floor `./...` without the system check, while the changed selection selects the suite.
 - RC-C5: in a mixed changed run, the system tag and environment also reach the other selected packages.
+
+- RC-C6: the prepared run stays whole only because it carries no chunk source; ticket 11 pins it.
+- RC-C6: the system-suite package is picked out of the suite operands in three places.
