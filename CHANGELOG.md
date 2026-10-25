@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Lane fixture bite
+
+- Changed the kit commit lane, which now runs the `fixture-bite` check when a commit changes a path that a retained canary fixture pins. The check runs the fixture bite test alone through `bench test --package`. The new `canary-pin` path class selects it, and the lane reads the pins from the canary inventory of the composed checkout. Before, a reflow of a pinned guidance line passed the lane, and the landing gate found the broken fixture anchor.
+
 ### Drain cross-source reads
 
 - Changed `/bench-drain`, which now charges each read delegate to read a topic that another scope drains and to report the overlap. Before retained batch authorship starts, the coordinator reads each new or merged row against every drained source on its topic. The coordinator also reads the row against the shipped changelog entry of the build that each source follows. Before, a charge could fence a read delegate off a topic, so a row could miss the lessons of a retro or a changelog entry on the same topic.

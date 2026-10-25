@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
@@ -217,6 +218,61 @@ func laneRefusesArgv(t *testing.T, marker string) {
 			return os.WriteFile(output, []byte(script), 0o755)
 		},
 		Verify: func(string, string) error { return nil },
+	}
+}
+
+// TestSelectLaneByCanaryPin states the checks a pinned path adds. A pinned path of any
+// content class selects the fixture bite check, and an unpinned Markdown path does not.
+func TestSelectLaneByCanaryPin(t *testing.T) {
+	pins := TreeFacts{FixturePins: []string{".agents/commands/x.md", "internal/x/y.go"}}
+	for _, tc := range []struct {
+		path            string
+		checks, classes []string
+	}{
+		{".agents/commands/x.md", []string{"prose", "docs-currency-workflow", "guidance-prose-budgets", fixtureBiteCheck}, []string{"markdown", "canary-pin"}},
+		{"internal/x/y.go", []string{"gofmt", "vet", "build", "structure", fixtureBiteCheck}, []string{"go-source", "canary-pin"}},
+		{".agents/commands/unpinned.md", []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"}, []string{"markdown"}},
+	} {
+		selected, classes := SelectLane(BenchkitLane("/repo", "/repo"), []ComposedChange{laneChange(tc.path)}, pins)
+		if got := laneCheckNames(selected); !reflect.DeepEqual(got, tc.checks) || !reflect.DeepEqual(classes, tc.classes) {
+			t.Errorf("%s selects %v with classes %v, want %v with %v", tc.path, got, classes, tc.checks, tc.classes)
+		}
+	}
+}
+
+// TestBenchkitLaneRunsTheFixtureBiteTestForAPinnedPath grades the pin derivation on the
+// composed checkout. The fixture inventory in the tree pins `note.md`, so a change to that
+// file selects the fixture bite check, and a red bite test refuses the commit under the
+// check's own name. A lane that read a copied pin list, or no list, would pass.
+func TestBenchkitLaneRunsTheFixtureBiteTestForAPinnedPath(t *testing.T) {
+	root := outcomeFixture(t)
+	fixture := filepath.Join("tests", "canary", "example-family", "planted")
+	outcomeWrite(t, root, filepath.Join(fixture, "EXPECT"), "planted diagnostic\n", 0o644)
+	outcomeWrite(t, root, filepath.Join(fixture, "MUTATE.json"), `[{"path":"note.md","old":"a","new":"b"}]`, 0o644)
+	outcomeWrite(t, root, "note.md", "# Note\n\na\n", 0o644)
+	outcomeCommit(t, root, "pinned")
+	base := outcomeGit(t, root, "rev-parse", "HEAD^{commit}")
+	outcomeWrite(t, root, "note.md", "# Note\n\na reflowed\n", 0o644)
+	outcomeCommit(t, root, "reflow")
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	changes, err := ComposedChanges(root, base, tree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	laneRefusesArgv(t, registry.FixtureBiteTest)
+
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree, Lane: "benchkit", Selective: true,
+		Checks: BenchkitLane(root, root), Changes: changes,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Passed() || result.Check != fixtureBiteCheck {
+		t.Fatalf("lane outcome %s on check %q, want a fail on %s", result.Outcome, result.Check, fixtureBiteCheck)
+	}
+	if want := []string{"markdown", "canary-pin"}; !reflect.DeepEqual(result.Classes, want) {
+		t.Errorf("lane classes = %v, want %v", result.Classes, want)
 	}
 }
 

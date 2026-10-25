@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
@@ -63,8 +64,12 @@ const defaultLaneName = "lane"
 // verification seams rather than paying a real build.
 var laneRunBinary = runbinary.Factory{}
 
+// fixtureBiteCheck names the lane check that runs the fixture bite test alone.
+const fixtureBiteCheck = "fixture-bite"
+
 // BenchkitLane is the built-in fast lane for the kit root: gofmt, prose, vet, build,
-// structure, and then one check per document family the registry binds. A Bench-owned
+// structure, then one check per document family the registry binds, and last the
+// fixture bite test. A Bench-owned
 // check carries the run-binary token, which the run replaces with the executable it
 // selected, and the two toolchain checks run the tool directly. The structure check
 // carries the base token, so the growth ratchet reads what the commit composes. The
@@ -72,16 +77,21 @@ var laneRunBinary = runbinary.Factory{}
 // Go argv does: the private checkout is a linked worktree under a temporary directory,
 // and Go's own discovery skips its `.git` file and adopts whatever `.git` directory sits
 // above it. The whole-project test phase is deliberately absent. The lane is the worktree
-// commit's check, and the landing's gate stays the one full grade.
+// commit's check, and the landing's gate stays the one full grade. The fixture bite check
+// runs one ordinary test, because a fixture quotes the bytes of the paths it pins and only
+// that test materializes the fixture against those bytes.
 func BenchkitLane(root, kit string) []Phase {
 	_ = kit
-	return append([]Phase{
+	checks := append([]Phase{
 		{Name: "gofmt", Argv: []string{runBinaryArgvToken, "gate-go", "gofmt"}},
 		{Name: "prose", Argv: []string{runBinaryArgvToken, "gate-prose", root, "--", LaneNamedMarkdownToken}},
 		{Name: "vet", Argv: []string{"go", "vet", trimPath, "./..."}},
 		{Name: "build", Argv: []string{"go", "build", trimPath, DisableBuildVCS, "./..."}},
 		{Name: "structure", Argv: []string{runBinaryArgvToken, "structure", "--growth", LaneBaseToken}},
 	}, documentLaneChecks()...)
+	return append(checks, Phase{Name: fixtureBiteCheck, Argv: []string{
+		runBinaryArgvToken, "test", "--package", "./" + conformancePackagePath, "--run", "^" + registry.FixtureBiteTest + "$",
+	}})
 }
 
 // RunLane grades the composed tree against the declared checks and records one lane

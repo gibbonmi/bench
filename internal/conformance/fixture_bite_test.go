@@ -66,7 +66,7 @@ func TestFixtureBiteProofArchitecture(t *testing.T) {
 			functions[function.Name.Name] = function
 		}
 	}
-	live := functions["TestEveryRetainedFixtureBitesThroughRegisteredOwner"]
+	live := functions[registry.FixtureBiteTest]
 	runner := functions["runFixtureUniverse"]
 	if live == nil || runner == nil {
 		t.Fatal("fixture proof needs its live test and producer-derived runner")

@@ -7,11 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/anchors"
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/packagesurface"
@@ -114,14 +116,22 @@ const (
 const UnknownClass = "unknown"
 
 // PathClass is one row of the lane's path-class table. Name is the class a lane line
-// reports. Match answers whether a path belongs to the class, and it reads the composed
-// checkout's embed targets because one row's membership is derived rather than spelled.
+// reports. Match answers whether a path belongs to the class, and it reads facts of the
+// composed checkout because some rows derive their membership rather than spell it.
 // Checks names the lane checks the class selects, by check name, so a row can name a
 // check the declared lane does not carry.
 type PathClass struct {
 	Name   string
-	Match  func(path string, embedTargets []string) bool
+	Match  func(path string, tree TreeFacts) bool
 	Checks []string
+}
+
+// TreeFacts are the path sets the lane reads from the composed checkout. EmbedTargets
+// are the targets of the Go embed directives, and FixturePins are the paths the retained
+// canary fixtures pin.
+type TreeFacts struct {
+	EmbedTargets []string
+	FixturePins  []string
 }
 
 // laneClasses orders the content classes, the anchor class, and the document families.
@@ -130,13 +140,13 @@ type PathClass struct {
 var laneClasses = append([]PathClass{
 	{
 		Name:   "go-source",
-		Match:  func(path string, _ []string) bool { return strings.HasSuffix(path, ".go") },
+		Match:  func(path string, _ TreeFacts) bool { return strings.HasSuffix(path, ".go") },
 		Checks: []string{"gofmt", "vet", "build", "structure"},
 	},
 	{
 		Name: "go-build-input",
-		Match: func(path string, embedTargets []string) bool {
-			return path == "go.mod" || path == "go.sum" || slices.Contains(embedTargets, path)
+		Match: func(path string, tree TreeFacts) bool {
+			return path == "go.mod" || path == "go.sum" || slices.Contains(tree.EmbedTargets, path)
 		},
 		Checks: []string{"vet", "build"},
 	},
@@ -144,15 +154,22 @@ var laneClasses = append([]PathClass{
 	// Markdown change selects them. The class claims no copy of either check's file list.
 	{
 		Name:   "markdown",
-		Match:  func(path string, _ []string) bool { return strings.HasSuffix(path, ".md") },
+		Match:  func(path string, _ TreeFacts) bool { return strings.HasSuffix(path, ".md") },
 		Checks: []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"},
 	},
 	{
 		Name:   "prose-policy",
-		Match:  func(path string, _ []string) bool { return path == prose.ExclusionFile },
+		Match:  func(path string, _ TreeFacts) bool { return path == prose.ExclusionFile },
 		Checks: []string{"prose"},
 	},
 	anchorRegistryClass(),
+	// A fixture copies or quotes the bytes of each path it pins, so a reflow of a pinned
+	// line can stop the fixture from biting while every document check stays green.
+	{
+		Name:   "canary-pin",
+		Match:  func(path string, tree TreeFacts) bool { return slices.Contains(tree.FixturePins, path) },
+		Checks: []string{fixtureBiteCheck},
+	},
 }, documentClasses()...)
 
 func anchorRegistryClass() PathClass {
@@ -162,7 +179,7 @@ func anchorRegistryClass() PathClass {
 	}
 	return PathClass{
 		Name:   "anchor-registry",
-		Match:  func(path string, _ []string) bool { return files[path] },
+		Match:  func(path string, _ TreeFacts) bool { return files[path] },
 		Checks: []string{"docs-currency-workflow"},
 	}
 }
@@ -208,7 +225,7 @@ func documentClasses() []PathClass {
 		match := family.match
 		classes = append(classes, PathClass{
 			Name:   string(family.source),
-			Match:  func(path string, _ []string) bool { return match(path) },
+			Match:  func(path string, _ TreeFacts) bool { return match(path) },
 			Checks: documentRegistryChecks(family.source),
 		})
 	}
@@ -254,10 +271,10 @@ func LaneClasses() []PathClass {
 // that names a check the lane does not declare adds nothing, so the result is always a
 // subsequence of the declared list. The unknown class selects every declared check, and
 // it is reported last because the table does not carry it.
-func SelectLane(checks []Phase, changes []ComposedChange, embedTargets []string) ([]Phase, []string) {
+func SelectLane(checks []Phase, changes []ComposedChange, tree TreeFacts) ([]Phase, []string) {
 	matched := map[string]bool{}
 	for _, change := range changes {
-		for _, name := range changeClasses(change, embedTargets) {
+		for _, name := range changeClasses(change, tree) {
 			matched[name] = true
 		}
 	}
@@ -287,7 +304,7 @@ func SelectLane(checks []Phase, changes []ComposedChange, embedTargets []string)
 // changeClasses answers the classes one composed change carries. Either side's mode is
 // read, so a typechange to or from a link, and a deleted submodule pointer, are unknown
 // rather than classified by a name the tree no longer backs.
-func changeClasses(change ComposedChange, embedTargets []string) []string {
+func changeClasses(change ComposedChange, tree TreeFacts) []string {
 	for _, mode := range []string{change.SrcMode, change.DstMode} {
 		if mode == symlinkMode || mode == gitlinkMode {
 			return []string{UnknownClass}
@@ -295,7 +312,7 @@ func changeClasses(change ComposedChange, embedTargets []string) []string {
 	}
 	var names []string
 	for _, class := range laneClasses {
-		if class.Match(change.Path, embedTargets) {
+		if class.Match(change.Path, tree) {
 			names = append(names, class.Name)
 		}
 	}
@@ -308,8 +325,8 @@ func changeClasses(change ComposedChange, embedTargets []string) []string {
 // selectLaneChecks answers the checks one run grades, their names, and the classes that
 // selected them. A lane that is not selective runs its declared list, and it reports no
 // class: a project's own lane keeps the meaning its manifest gives it. A selective lane
-// reads the embed targets from the composed checkout, so the membership rule grades the
-// tree under commit rather than the working tree beside it.
+// reads the embed targets and the fixture pins from the composed checkout, so the
+// membership rule grades the tree under commit rather than the working tree beside it.
 func selectLaneChecks(req LaneRequest, checkout string) (checks []Phase, names, classes []string, err error) {
 	if !req.Selective {
 		return req.Checks, laneCheckNames(req.Checks), nil, nil
@@ -318,7 +335,12 @@ func selectLaneChecks(req LaneRequest, checkout string) (checks []Phase, names, 
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("gate: lane embed targets unavailable: %w", err)
 	}
-	selected, classes := SelectLane(req.Checks, req.Changes, embedTargets)
+	pins, err := canary.FixturePins(checkout)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("gate: lane fixture pins unavailable: %w", err)
+	}
+	tree := TreeFacts{EmbedTargets: embedTargets, FixturePins: slices.Sorted(maps.Keys(pins))}
+	selected, classes := SelectLane(req.Checks, req.Changes, tree)
 	if len(selected) == 0 {
 		return nil, nil, nil, errors.New("gate: lane selects no check")
 	}
