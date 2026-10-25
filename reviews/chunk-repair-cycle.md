@@ -2430,7 +2430,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rc-c4b-r1-standards",
+          "performer": "claude:rc-c4b-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-standards-r1",
+            "digest": "sha256:6510b7a8fc38cfde7385189868e0512b5ec4ca4c3da9edfe921c4e7f00f2ab06",
+            "excerpt": "## Standards\n\n4 findings. Worst: S1, severity 4.\n\n- S1 | sev 4 | auto-fix | conf 7 | .bench/BENCH-reference.md:341 | The reference starts the prepared run at every freeze, but bench-implement-spec.md:66 starts it only when each axis probes in its own worktree, so one rule has two derivations that disagree.\n- S2 | sev 3 | auto-fix | conf 6 | .bench/BENCH-reference.md:565 | The sentence \"Each call still grades the record evidence and the record prose\" contradicts the new prepared-run paragraph at line 570.\n- S3 | sev 3 | auto-fix | conf 5 | internal/gate/checkpoint.go:290 | The prepared run's skip of the source is derived twice: applyCheckpoint tests the flag, and gradeCheckpointRecord keys the prose skip to an absent context value.\n- S4 | sev 3 | ask-user | conf 5 | internal/gate/checkpoint.go:85 | The new public --prepare flag has no typed CHANGELOG.md entry, and no FT445 ticket's Writes: line holds CHANGELOG.md.\n\n### Advice\n- bench-implement-spec.md:68 merges a descriptive clause with an imperative.\n- ADR 0002 posture 5 and the bounded repair policy use \"prepared chunk run\" without a definition.\n- expireEvidence couples the test to the persisted recorded_at field.\n- TestGateUsageNamesPrepare is a weaker duplicate of the hand-typed row in help_inventory_test.go:128.\n"
+          },
+          "axis": "Standards",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4b-r1-spec",
+          "performer": "claude:rc-c4b-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-spec-r1",
+            "digest": "sha256:e9c15c6f8b0ed8461d97dd600eabd88674afa06d27a2aacb759b998616ffaa13",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. RC34-RC38, RC42, RC45, and RC49-RC52 hold by trace at cb2a96952. RC43 holds in bench-implement-spec.md:66,68, and RC47 holds in the reference, the profile, the bounded repair policy, and ADR 0002 posture 5. RC35 lives in chunk_gap_test.go, where the gap fixture is, and the row cites it there.\n\n### Advice\n- The guidance starts a prepared run at the last chunk's freeze, which no chunk checkpoint consumes; the spec requires it as written.\n- The guidance does not say outright that the prepared run starts after the record commit.\n- bounded-repair-policy.md:64 keeps its unqualified sentence; the paragraph at :66-68 qualifies it.\n"
+          },
+          "axis": "Spec",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4b-r1-coverage",
+          "performer": "claude:rc-c4b-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-coverage-r1",
+            "digest": "sha256:fbc95d71c056b42f0bcca0422154540e246d40e48dc493649846efaf0b9f3d65",
+            "excerpt": "## Coverage\n\n0 findings. Worst issue: none. One mutant set of 8 on internal/gate/checkpoint.go: 7 bit and 1 silent, all restored. The silent row removed json:\"-\" from Checkpoint.Prepare.\n\n### Advice\n- No test pins the complete form's purpose bytes, so a lost json:\"-\" tag on Checkpoint.Prepare stays silent.\n- No test runs a prepared run on a chunk id that the record lacks.\n- No test covers a red prepared run.\n"
+          },
+          "axis": "Coverage",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2625,6 +2691,8 @@ RC-C3 consumed repair cycle 1 of 2 after its initial review (round r1). The test
 
 RC-C4 consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided S1, S2, P2, P3, and C4 on 2026-10-24. Opus/medium and sonnet/high agreed on P3. The fable/medium tie-break chose the skip and the face. The repair at `0ddd2727d` closed S1, S2, P1 to P3, and C1 to C4. The confirming round r2 passed on all three axes with no new finding.
 
+RC-C4B consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided S4 on 2026-10-24. Opus/medium chose the last ticket, sonnet/high chose ticket 08, and the fable/medium tie-break chose ticket 08 because RC-C7 can stop before ticket 13. Both consultants also chose a test-only pin of the complete form's purpose bytes from Coverage advice.
+
 ## Standards
 
 RC-C1 round r1: 0 findings. Worst issue: none.
@@ -2648,6 +2716,13 @@ RC-C4 round r1: 2 findings. Worst issue: S1, the record prose grade skips an abs
 - S1 | auto-fix | confidence 6 | `internal/gate/gate_prose.go:250-252` | The consultants kept the skip. The repair pins it with a test, and the spec flags it.
 - S2 | auto-fix | confidence 5 | `internal/gate/gate_prose.go:216-217` | The consultants chose a refusal-route face for the prose refusal, through a widening into `internal/refusalroute/`.
 
+RC-C4B round r1: 4 findings. Worst issue: S1, two derivations of the prepared-run trigger that disagree.
+
+- S1 | auto-fix | confidence 7 | `.bench/BENCH-reference.md:341` | The reference drops the condition that each axis probes in its own worktree.
+- S2 | auto-fix | confidence 6 | `.bench/BENCH-reference.md:565` | A stale sentence says each call grades the record evidence and prose.
+- S3 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:290` | The prose skip keys on an absent context value, not on the prepared flag.
+- S4 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:85` | The consultants chose a changelog section for tickets 01 to 08, through a widening of ticket 08.
+
 ## Spec
 
 RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
@@ -2665,6 +2740,8 @@ RC-C4 round r1: 3 findings. Worst issue: P2, the same unrecorded absent-policy s
 - P1 | auto-fix | confidence 6 | `internal/reviewrecord/recordcmd/stage_test.go:190-216` | No test gives a gate-command requirement with no staged excerpt.
 - P2 | auto-fix | confidence 7 | `internal/gate/gate_prose.go:250-252` | The skip is unrecorded; it closes with S1.
 - P3 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:280` | The consultants chose the prospective evaluation that spec line 197 names, through a widening to the worktree integration test.
+
+RC-C4B round r1: 0 findings. Worst issue: none.
 
 ## Coverage
 
@@ -2696,6 +2773,8 @@ RC-C4 round r1: 4 findings. Worst issue: C1, a non-empty exclusion policy that n
 - C3 | auto-fix | confidence 6 | `internal/gate/gate_prose.go:265-268` | No test refuses a symbolic link at the record path.
 - C4 | auto-fix | confidence 6 | `internal/gate/gate_prose.go:250-252` | No test names the absent-policy skip; it closes with S1.
 
+RC-C4B round r1: 0 findings. Worst issue: none.
+
 ## Advice
 
 - The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
@@ -2715,3 +2794,7 @@ RC-C4 round r1: 4 findings. Worst issue: C1, a non-empty exclusion policy that n
 - RC-C4: three conditions mark a chunk checkpoint without one source.
 - RC-C4: `refusal_route_test.go` is at its 400-line ceiling, so a later addition needs a split.
 - RC-C4: no test pins the prose grade's own refusal of a linked record, because the evidence pass refuses the link first.
+
+- RC-C4B: the guidance starts a prepared run at the last chunk's freeze, which no chunk checkpoint consumes.
+- RC-C4B: the guidance does not say outright that the prepared run starts after the record commit.
+- RC-C4B: no test covers a red prepared run or a prepared run on a chunk id that the record lacks.
