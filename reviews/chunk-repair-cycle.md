@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/chunk-repair-cycle/spec.md",
-  "plan_digest": "sha256:5582b967bf63e088ac4e2a0e57c6d5977f7511793d1b9b8465bfcc6f7690bbf6",
+  "plan_digest": "sha256:22690b62e0e3e86ada7998c0151c19faa5bd24dfa0e8b7076e533cc98193c3ba",
   "implementation_session": "",
   "chunks": [
     {
@@ -2716,9 +2716,9 @@
     {
       "id": "RC-C5",
       "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
-      "tip": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
-      "plan_digest": "sha256:5582b967bf63e088ac4e2a0e57c6d5977f7511793d1b9b8465bfcc6f7690bbf6",
-      "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+      "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+      "plan_digest": "sha256:22690b62e0e3e86ada7998c0151c19faa5bd24dfa0e8b7076e533cc98193c3ba",
+      "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
       "acceptance_rows": [
         "RC53",
         "RC54",
@@ -2849,6 +2849,131 @@
               "ref": "claude-agent:bench-writer-high:rc-t09-author-20261024",
               "digest": "sha256:96c9995b8f1b4caa9b6a0cdf70cc1703f805e4bf5a9d85e3a0d81d1856edc7a9",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/selection.go,swap,failed,2,TestChangedSelectionReachesTheSystemSuiteByImport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,280\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,556\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,81807,280\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionReachesTheSystemSuiteByImport,\"selection_test.go:310: selection = map[changedcommand/changed:changed], want changedcommand/internal/systemtest selected by its import\",1\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite,\"selection_test.go:289: changed command = 1\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t09r1-testreport",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:c3b3c53b498230df9efcf8752cc88cd91cd4eb441fab92ed67c86e47e6b5909a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,77777,283\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-preflight",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:bac878711c4215e8b6aee6e519db9293b9894cfe36d7b0329208b258de1439c9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,35968,380\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-conformance",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:c93d5e2194e90197ad4237bf2ad9e5892f8c162693f8dbc9640d14f777087b20",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16960,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-system",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:9de2897041b71619df3a6ccfeb9e182abf66bcf81a9ca2190c58558adbd0e0cb",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,69322,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-floor",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:61c12601e441cc2ed7b3dfbe29e1e29d013d300e2c7c3e0c91c6c843b20ff8eb",
+            "excerpt": "packages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,51924,1142\n  github.com/gibbonmi/bench/internal/gate,pass,63893,555\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,6188,112\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,36331,280\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/conformance --package ./internal/gate --package ./internal/reviewrecord --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-index-probe",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:031d89eef5ae3925bb00802ef9b7573df3ae562755b68b7b58bb630711240bb4",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/selection.go,swap,failed,3,TestChangedSelectionReachesTheSystemSuiteByImport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,283\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,74708,283\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionReachesTheSystemSuiteByImport,\"selection_test.go:307: selection = map[changedcommand/changed:changed], want changedcommand/internal/systemtest selected by its import\",1\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite/suite_file,\"selection_test.go:281: changed command = 1\",2\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite/suite_import,\"selection_test.go:290: Go child holds \\\" -tags=system ./internal/systemtest changedcommand/changed\\\\\\\\n\\\" = false, want true:\",84\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "index-probe",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the system-suite package from the index",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+              "digest": "sha256:031d89eef5ae3925bb00802ef9b7573df3ae562755b68b7b58bb630711240bb4",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/selection.go,swap,failed,3,TestChangedSelectionReachesTheSystemSuiteByImport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,283\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,74708,283\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionReachesTheSystemSuiteByImport,\"selection_test.go:307: selection = map[changedcommand/changed:changed], want changedcommand/internal/systemtest selected by its import\",1\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite/suite_file,\"selection_test.go:281: changed command = 1\",2\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite/suite_import,\"selection_test.go:290: Go child holds \\\" -tags=system ./internal/systemtest changedcommand/changed\\\\\\\\n\\\" = false, want true:\",84\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -3147,6 +3272,33 @@
         ],
         "RC-C4B": [
           "RC-C4B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:5582b967bf63e088ac4e2a0e57c6d5977f7511793d1b9b8465bfcc6f7690bbf6",
+      "to": "sha256:22690b62e0e3e86ada7998c0151c19faa5bd24dfa0e8b7076e533cc98193c3ba",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
         ]
       }
     }
